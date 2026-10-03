@@ -1,0 +1,176 @@
+{
+  "method": "31x31 RGB master patches, +/-5px integer translation minimizing absolute channel difference. Head top is first row with five foreground pixels above 60 in x130..349/y250..499. Read-only, no image transformations. Patch results also respond to redraw/shading changes and are not anatomy certification.",
+  "releaseAnchorTolerancePixels": 1,
+  "releaseApproved": false,
+  "selectedPoseOrder": [1, 2, 3, 3, 2, 1],
+  "measurements": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/crunches/1.png",
+      "sha256": "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f",
+      "headTop": 440,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/crunches/2.png",
+      "sha256": "df16be278a38c7f7a2acf8de77a0ac4f739524b7412ede20c8aad1d2a25605df",
+      "headTop": 353,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1141,
+          "y": 814,
+          "dx": 1,
+          "dy": 2,
+          "meanChannelDifference": 2.414498785986819
+        },
+        "nearToeSole": {
+          "x": 1347,
+          "y": 829,
+          "dx": 3,
+          "dy": 0,
+          "meanChannelDifference": 4.9042663891779394
+        },
+        "farToeSole": {
+          "x": 1433,
+          "y": 759,
+          "dx": 3,
+          "dy": 1,
+          "meanChannelDifference": 4.605619146722164
+        },
+        "farHeelSole": {
+          "x": 1261,
+          "y": 738,
+          "dx": 1,
+          "dy": 0,
+          "meanChannelDifference": 18.04856052722858
+        },
+        "pelvisFloor": {
+          "x": 815,
+          "y": 786,
+          "dx": -1,
+          "dy": 1,
+          "meanChannelDifference": 3.596253902185224
+        }
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/crunches/3.png",
+      "sha256": "5e2ae11af79f51c7d0e8a17a573df9f77267ab1072c95bcbb2846ad404a57697",
+      "headTop": 322,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 1.6021505376344085
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 2.908081859174471
+        },
+        "farToeSole": {
+          "x": 1432,
+          "y": 758,
+          "dx": 2,
+          "dy": 0,
+          "meanChannelDifference": 4.259105098855359
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 15.66944155393687
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 2.5726673603884844
+        }
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/crunches/rejected-intermediate-too-high.png",
+      "sha256": "ff73c8919a056bfd70a61e98c887d56d61787b0b212a6b7847b644c809559888",
+      "headTop": 309,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1142,
+          "y": 814,
+          "dx": 2,
+          "dy": 2,
+          "meanChannelDifference": 3.1127297953520636
+        },
+        "nearToeSole": {
+          "x": 1348,
+          "y": 829,
+          "dx": 4,
+          "dy": 0,
+          "meanChannelDifference": 5.901144640998959
+        },
+        "farToeSole": {
+          "x": 1433,
+          "y": 758,
+          "dx": 3,
+          "dy": 0,
+          "meanChannelDifference": 5.419007977800902
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 15.413458203260493
+        },
+        "pelvisFloor": {
+          "x": 817,
+          "y": 786,
+          "dx": 1,
+          "dy": 1,
+          "meanChannelDifference": 3.314602844259452
+        }
+      }
+    }
+  ]
+}

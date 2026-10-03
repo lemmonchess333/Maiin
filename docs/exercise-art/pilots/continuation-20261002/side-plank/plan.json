@@ -1,0 +1,74 @@
+{
+  "exerciseId": "side-plank",
+  "name": "Side Plank",
+  "status": "incomplete-contact-repair-required",
+  "variation": "Forearm side plank with straight stacked legs; one side demonstrated, then repeat on the other side. This is a timed hold, not repeated hip dips.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canvas": [1536, 1024],
+  "camera": "Fixed front-side three-quarter, head left and feet right; near side of abdomen visible, support forearm and stacked feet unobscured.",
+  "anchors": [
+    "support forearm and elbow contact",
+    "outer edge of lower shoe",
+    "camera and floor plane"
+  ],
+  "invariants": [
+    "limb lengths",
+    "head and body proportions",
+    "shoe dimensions",
+    "muscle hierarchy"
+  ],
+  "muscles": {
+    "primary": ["obliques"],
+    "secondary": ["abdominal stabilisers", "support shoulder"],
+    "note": "Qualitative hierarchy, not measured activation; no through-body view."
+  },
+  "source": "src/lib/exercises.ts: side-plank instructions",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set your support",
+      "cue": "Place your elbow under your shoulder; stack feet.",
+      "t": 0,
+      "state": "Side-lying with hips resting on floor, legs straight and stacked, lower forearm on floor, upper hand on hip."
+    },
+    {
+      "frame": 2,
+      "label": "Lift your hips",
+      "cue": "Press through your forearm and lift your hips.",
+      "t": 0.5,
+      "state": "Hips halfway raised; support forearm and lower shoe remain planted, no torso twist."
+    },
+    {
+      "frame": 3,
+      "label": "Find your line",
+      "cue": "Align your head, hips and feet without twisting.",
+      "t": 1,
+      "state": "Full side plank, straight shoulder-hip-ankle line, elbow under shoulder, upper hand on hip."
+    },
+    {
+      "frame": 4,
+      "label": "Hold and breathe",
+      "cue": "Hold this position for time, breathing normally.",
+      "t": 1,
+      "state": "Same full side plank. The still depicts a sustained hold, not a pulse.",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower with control",
+      "cue": "After your hold, lower your hips slowly.",
+      "t": 0.5,
+      "state": "Same halfway position on the controlled exit.",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "label": "Rest and switch",
+      "cue": "Rest your hips, then repeat on the other side.",
+      "t": 0,
+      "state": "Return to setup; pause or switch sides for the next timed hold.",
+      "reusedFrom": 1
+    }
+  ],
+  "releaseApproved": false
+}

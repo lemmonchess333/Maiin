@@ -1,0 +1,10 @@
+{
+  "reference": "form-frames/crunches/3.webp",
+  "referenceSha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
+  "image": "crunches.png",
+  "imageSha256": "70be05e793469824849fc523e5d607a1b2021ee12d8dba42fadd1bf9e408070f",
+  "method": "image_gen.imagegen transparent derivative. Reviewed separately: minor outline and framing differences; guide frames unchanged.",
+  "reviewStatus": "reviewed",
+  "reviewedAt": "2026-10-03T09:52:43.264303+00:00",
+  "reviewEvidence": "docs/exercise-art/releases/2026-10-03/crunches-evidence"
+}

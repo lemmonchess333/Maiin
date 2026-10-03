@@ -1,0 +1,11 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep 'donkey-calf-raise'",
+  "stats": {
+    "startTime": "2026-10-03T15:14:49.396Z",
+    "duration": 17293.249,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

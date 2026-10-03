@@ -1,0 +1,81 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "stats": {
+    "startTime": "2026-10-03T09:22:27.748Z",
+    "duration": 129478.63799999999,
+    "expected": 27,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-1.png",
+      "sha256": "75eafe9ff21eee1905525125686f8fc2d8ad57b7af233f230fb4b9c347712f43"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-2.png",
+      "sha256": "19d9aa1067f8c80d484ec2021b90fbde2306ea1e34009e821a786492eeb35aa1"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-3.png",
+      "sha256": "91b71430e7e76b0e99ec7ef52eabd8beb22a0927317663952f777b6a38399ae5"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-4.png",
+      "sha256": "ea546f6ce29d828e720052c49933669d0b3ee3ca2a9c00313eeb5fc5bb9de140"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-5.png",
+      "sha256": "e1e5b5c8a8fd5bc5fc240c7277619476e5506a49a54b349b5302fe1e4ba52740"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-6.png",
+      "sha256": "d2a6bd7e75f6d3fa67137fd604b9da4fb86727925ce9d4b84fccef54817fd352"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-card.png",
+      "sha256": "6c0628c3f43ce9da3d98663b32f67f804c5a81aaf19c7381807a92aa1edd1b99"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/dark-page.png",
+      "sha256": "5d9389302c5a2f536ad2963c900d5e4075e5ed8157cd8cd9c354eb63ea09c84f"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-1.png",
+      "sha256": "e423ca2820b1222566c41b88eec81a42e65b1c384efeed74bfa6159cdae0f1a5"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-2.png",
+      "sha256": "34e0bfdb8439e18a8cec9df9a887e227ee4b5af0e5b055c4a8c018978b0e5e75"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-3.png",
+      "sha256": "37687896da07f304be413d702f3bf2330c547e226e81c6c86275fcad36316344"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-4.png",
+      "sha256": "e9fba59d6879e3a69fec87e7335c5259448372e79ed9fac2253de8a9b4651234"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-5.png",
+      "sha256": "c404ea3b7419a73ddfad9f50f3eb4c3ef390fa8d64b009aefe8066fbce86a174"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-6.png",
+      "sha256": "10007f6c7146b1db91345418699e82dd16f9894c5df89a9b068197b3955d7d1f"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-card.png",
+      "sha256": "f329d2812bd838ec1a4bd5650a85bbcff8bbd102893dbc61d5d8e2eb00cff58a"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/plank-evidence/light-page.png",
+      "sha256": "525ec55d1ad39fc22d78ae93909965b421364cc68bc0470123c048d4ee01e8db"
+    }
+  ]
+}

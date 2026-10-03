@@ -1,0 +1,39 @@
+{
+  "baseCommit": "fafb3c873bd6e6e273e917be8a0754e20cbada0c",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10870,
+    "testsSkipped": 367,
+    "testsFailed": 0
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "startTime": "2026-10-03T06:12:12.813Z",
+    "duration": 54743.157,
+    "expected": 21,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "focusedTests": {
+    "passed": 207,
+    "files": 4
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5879.0,
+    "baselineKB": 5878.1
+  },
+  "delivery": {
+    "frameCount": 6,
+    "frameBytes": 3437788,
+    "cardBytes": 29350,
+    "sourcePngToWebpRgbPixels": "exact equality for all six frames",
+    "endpointCheck": "Exact endpoint WebP file bytes; zero perceptual screenshot pixel differences at pixelmatch threshold 0.02 to accommodate measured browser compositor rounding."
+  },
+  "scope": "Hanging Leg Raise approved on the working branch; Side Plank remains incomplete and inactive."
+}

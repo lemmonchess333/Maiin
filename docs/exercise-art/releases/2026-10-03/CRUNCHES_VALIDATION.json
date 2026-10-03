@@ -1,0 +1,52 @@
+{
+  "baseCommit": "e8704db2ff40183675c329bc9d9d6f265a687b8d",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10874,
+    "testsSkipped": 367,
+    "testsFailed": 0,
+    "durationSeconds": 314.14
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "startTime": "2026-10-03T09:55:53.590Z",
+    "duration": 149034.239,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "initialRunFindings": "28 passed; one db-row load timeout and one leg-raise screenshot mismatch. Saved endpoint images measured 144 differing channels, maximum 4/255. Applied the existing production perceptual comparison with zero mismatching pixels at threshold 0.02 including AA; exact source hashes remain required. Full rerun passes."
+  },
+  "afterBrowserTestEdit": {
+    "typecheck": "passed",
+    "eslint": "passed"
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5880.9,
+    "baselineKB": 5878.1
+  },
+  "delivery": {
+    "frameCount": 6,
+    "uniquePoses": 3,
+    "frameBytes": 3508792,
+    "cardBytes": 22012,
+    "dimensions": [1536, 1024],
+    "cardDimensions": [480, 227],
+    "sourcePngToWebpRgbPixels": "Exact equality for all six frames."
+  },
+  "coverage": {
+    "released": 59,
+    "approved": 50,
+    "ownerReleasedWithFindings": 3,
+    "historicalNeedsReview": 6,
+    "withoutReleasedArt": 82,
+    "inScope": 141,
+    "releasedFrameBytes": 175681846
+  },
+  "scope": "Crunches composite repair integrated on the working branch; original draft remains unchanged. No merge or deployment."
+}

@@ -1,0 +1,54 @@
+{
+  "variation": "Unassisted Nordic hamstring curl through a controlled partial range, ankles secured with a fixed padded strap. Straight torso and thighs, arms crossed, slow eccentric and hamstring-led return.",
+  "camera": "Fixed side three-quarter view facing right, showing knee pad, both ankle restraints and body line.",
+  "equipment": "Thick knee pad and anchored padded ankle strap on a rigid low floor platform; no partner.",
+  "primary": "Hamstrings",
+  "secondary": "Calves",
+  "fixedAnchors": ["knee pad floor corners", "ankle strap anchors"],
+  "invariants": [
+    "athlete limb lengths",
+    "platform and pad dimensions",
+    "strap mounting points"
+  ],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Anchor and brace",
+      "cue": "Secure ankles; cross arms and brace straight.",
+      "pose": "Upright kneeling, hips extended, shins supported, ankles secured."
+    },
+    {
+      "frame": 2,
+      "label": "Lean forward slowly",
+      "cue": "Lean forward from your knees, staying straight.",
+      "pose": "Straight torso/thigh line tilts forward approximately25degrees from upright, knees/ankles fixed."
+    },
+    {
+      "frame": 3,
+      "label": "Control your range",
+      "cue": "Lower only as far as you control.",
+      "pose": "Straight torso/thigh line tilts about45degrees, no hip hinge; controlled partial range."
+    },
+    {
+      "frame": 4,
+      "label": "Keep tension",
+      "cue": "Keep hips extended and hamstrings under tension.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Pull back upright",
+      "cue": "Use your hamstrings to pull yourself back.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Reset tall",
+      "cue": "Return upright without bending at your hips.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "nordic-hamstring-curl",
+  "status": "six-frame-draft",
+  "releaseApproved": false
+}

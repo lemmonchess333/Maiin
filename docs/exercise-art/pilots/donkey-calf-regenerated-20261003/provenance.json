@@ -1,0 +1,37 @@
+{
+  "exerciseId": "donkey-calf-raise",
+  "releaseApproved": true,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/donkey-calf-raise/1.png",
+    "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c"
+  },
+  "builder": {
+    "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/build.py",
+    "sha256": "f26cfdd58a14b8be88035e00e7385406c72597b450dde467e0701e3f0a14bf9d"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/1.png",
+      "sha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0"
+    },
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/2.png",
+      "sha256": "f3661bde06952404e30ca083fbbaa853b13eb1d47a1264405bfa2db619a8016f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/3.png",
+      "sha256": "437e04a2663fd0cb42894d1bfcdf24eb7bc05b3f2de666d579b9e1ee4dc8ead9"
+    }
+  ],
+  "cueSha256": "9c652187f219822935753c46262cc9be76ccc23bf31e05636122bfc96cf784bf",
+  "reviewFindings": [
+    "Refined near/far hand and forefoot-sole contact regions now match setup pixels exactly. Original drifting versions and failed contour/scale trials are retained separately.",
+    "Small local contact translations and forefoot flexion joins preserve the raised heel and remove the earlier seams. One rigid rear lever/plate assembly and fixed supports remain unchanged.",
+    "Selected repaired frames approved for production after native and mobile review; see docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json."
+  ],
+  "releaseReview": "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json"
+}

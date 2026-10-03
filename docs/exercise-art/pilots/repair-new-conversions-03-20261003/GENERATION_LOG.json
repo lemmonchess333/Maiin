@@ -1,0 +1,179 @@
+[
+  {
+    "id": "pistol-squat",
+    "frame": 3,
+    "target": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/3.png",
+    "instruction": "Repair reference 3's scene registration against reference 2. Replace the white background with uniform BLACK. The planted LEFT-screen working shoe must coincide exactly with the standing master's shoe: heel x214 y1360, forefoot x427 y1372, sole bottom y1392 on the 1024x1536 canvas. Move the deep-squat figure DOWN about67px without rescaling or changing the pose, then preserve the exact master working-shoe silhouette. Preserve limb lengths and deep squat, rightward free leg and forward arms. Entire body visible, no text.",
+    "prompt": "Tropos anatomical exercise artwork repair. First reference is identity, second is fixed exercise master, third is target to edit. Same faceless white-grey athlete with smooth featureless pelvis, white shoes and purple muscle hierarchy. Repair reference 3's scene registration against reference 2. Replace the white background with uniform BLACK. The planted LEFT-screen working shoe must coincide exactly with the standing master's shoe: heel x214 y1360, forefoot x427 y1372, sole bottom y1392 on the 1024x1536 canvas. Move the deep-squat figure DOWN about67px without rescaling or changing the pose, then preserve the exact master working-shoe silhouette. Preserve limb lengths and deep squat, rightward free leg and forward arms. Entire body visible, no text.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/3.png"
+    ],
+    "source": "/workspace/generated_images/exec-f5570649-f1f7-483f-b887-c1d86dcb1669.png",
+    "sourceSha256": "78d3f07370ce22dd47614f611580c0672c60ce03bd5a5e105be38cb0997cdba9",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png",
+        "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b",
+        "retainedSnapshotPath": "docs/exercise-art/masters/pistol-squat/1.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/3.png",
+        "sha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/3.png"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 1,
+    "target": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+    "instruction": "Correct the donkey calf raise START into a clearly stretched bottom position. Keep this EXACT black background, machine base, camera and hand handles fixed. The step top is too deep: shorten only its back/right edge so ONLY balls of feet and toes are supported, heels overhang freely to the RIGHT. Lower both heels below the platform top by approximately40px, ankle dorsiflexion, knees softly straight. Lower pelvis and horizontal back cushion consistently with ankle descent. Maintain torso hinge, fixed hands and body segment lengths. Cushion stays ON TOP of lower back, no side-hip pad. Full machine visible, no text. Same1536x1024.",
+    "prompt": "Tropos anatomical exercise artwork repair. First reference is identity, second is fixed exercise master, third is target to edit. Same faceless white-grey athlete with smooth featureless pelvis, white shoes and purple muscle hierarchy. Correct the donkey calf raise START into a clearly stretched bottom position. Keep this EXACT black background, machine base, camera and hand handles fixed. The step top is too deep: shorten only its back/right edge so ONLY balls of feet and toes are supported, heels overhang freely to the RIGHT. Lower both heels below the platform top by approximately40px, ankle dorsiflexion, knees softly straight. Lower pelvis and horizontal back cushion consistently with ankle descent. Maintain torso hinge, fixed hands and body segment lengths. Cushion stays ON TOP of lower back, no side-hip pad. Full machine visible, no text. Same1536x1024.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-fb51c114-2108-4de8-bb83-5d553e386eea.png",
+    "sourceSha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png",
+        "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+        "retainedSnapshotPath": "docs/exercise-art/masters/donkey-calf-raise/superseded-20261003.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+        "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 3,
+    "target": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+    "instruction": "Create the TOP donkey calf raise from the corrected bottom master. Keep the pure BLACK background and EXACTLY stationary machine base, shorter forefoot step and hand handles. Pivot both shoes about the SAME forefoot balls on step edge: raise heels about80px above their low position, visibly steep shoe angle about35degrees. Ankles plantarflex, knees softly straight. Pelvis and horizontal loading cushion rise together along guided carriage, torso stays hinged, hands fixed. Preserve body segment lengths and rigid platform. Clearly show toe-supported heel raise, not another flat shoe. No labels. Same1536x1024.",
+    "prompt": "Tropos exercise art edit. First reference canonical athlete, second fixed scene master, third target. Faceless white-grey athlete, smooth pelvis, white shoes, purple target muscles. Create the TOP donkey calf raise from the corrected bottom master. Keep the pure BLACK background and EXACTLY stationary machine base, shorter forefoot step and hand handles. Pivot both shoes about the SAME forefoot balls on step edge: raise heels about80px above their low position, visibly steep shoe angle about35degrees. Ankles plantarflex, knees softly straight. Pelvis and horizontal loading cushion rise together along guided carriage, torso stays hinged, hands fixed. Preserve body segment lengths and rigid platform. Clearly show toe-supported heel raise, not another flat shoe. No labels. Same1536x1024.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-dd54e6d4-a75a-4ced-9849-1fce308dbb80.png",
+    "sourceSha256": "8366407c3f57b82ae7019e8474af379c76e67c248e97f1386001fa244723191c",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+        "sha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-1.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+        "sha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-1.png"
+      }
+    ]
+  },
+  {
+    "id": "glute-ham-raise",
+    "frame": 2,
+    "target": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+    "instruction": "Change ONLY the white background of reference 3 to uniform pure BLACK, matching reference 2. Preserve every athlete and GHD machine pixel position, dimensions, pose, contours, fine texture and purple shading. No equipment or anatomy redraw. Background replacement only, including internal gaps between machine bars. Native landscape canvas unchanged.",
+    "prompt": "Tropos exercise art edit. First reference canonical athlete, second fixed scene master, third target. Faceless white-grey athlete, smooth pelvis, white shoes, purple target muscles. Change ONLY the white background of reference 3 to uniform pure BLACK, matching reference 2. Preserve every athlete and GHD machine pixel position, dimensions, pose, contours, fine texture and purple shading. No equipment or anatomy redraw. Background replacement only, including internal gaps between machine bars. Native landscape canvas unchanged.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png"
+    ],
+    "source": "/workspace/generated_images/exec-8618e4db-3865-42fb-939f-441ca03db2f1.png",
+    "sourceSha256": "29c3c6982d2be7c3ecf92b5d8618b13b50efee9e090f447587738fc25fa3215c",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png",
+        "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42",
+        "retainedSnapshotPath": "docs/exercise-art/masters/glute-ham-raise/1.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+        "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 2,
+    "prompt": "Create ONLY the halfway heel-rise pose between reference2 bottom and reference3 top, using reference2 as fixed scene master and reference1 athlete identity. Same donkey calf raise on pure BLACK background. Heel height exactly halfway between low and high poses: shoes incline upward to RIGHT by about15degrees, toes fixed on the short step. Keep exact machine step size from reference2, particularly its short rear edge; reference3 wrongly lengthened step, do not inherit that. Pelvis and horizontal cushion slightly higher than reference2, lower than3; hands fixed, knees softly straight, hip hinge unchanged. Preserve all floor base and hand support pixels fromreference2. White-grey faceless athlete, purple calves, lighter soleus, smooth pelvis, white shoes, no text, same1536x1024.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+      "/workspace/generated_images/exec-dd54e6d4-a75a-4ced-9849-1fce308dbb80.png"
+    ],
+    "source": "/workspace/generated_images/exec-52f86478-7707-4433-9fae-07e00f098cea.png",
+    "sourceSha256": "6718d2386119c656e1eb36ec5b65b1663aa4b174caf5612965eeb40c61a042f0",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+        "sha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-1.png"
+      },
+      {
+        "path": "/workspace/generated_images/exec-dd54e6d4-a75a-4ced-9849-1fce308dbb80.png",
+        "sha256": "8366407c3f57b82ae7019e8474af379c76e67c248e97f1386001fa244723191c",
+        "retainedSnapshotPath": "/workspace/generated_images/exec-dd54e6d4-a75a-4ced-9849-1fce308dbb80.png"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 2,
+    "retry": true,
+    "prompt": "Edit SECOND reference with a very small localized ankle movement. This is NEUTRAL ANKLE midway, NOT a tiptoe calf raise. Keep forefoot and toes at their exact pixels. Bring hanging heels up ONLY about25pixels until shoe soles are almost HORIZONTAL at the same height as forefeet. Do NOT make steep angled shoes. Heel elevation ends at step top height. Keep the short step, all floor supports, handles, camera, black background and most athlete body exactly unchanged. Lower-back pad stays in contact; pelvis rises only slightly. First reference identity. Faceless anatomical white-grey athlete, strongest purple calves, no text, native1536x1024. The only meaningful visual difference from second reference is heels just level with toes.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-b1e69d3c-d46f-4db7-9b7d-f7a9e97dc16b.png",
+    "sourceSha256": "4df62a551731d8e44e146cf82b8598f1471f4be271317555bc184b333bc4121e",
+    "referenceHashes": [
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "retainedSnapshotPath": "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      },
+      {
+        "path": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+        "sha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936",
+        "retainedSnapshotPath": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-1.png"
+      }
+    ]
+  }
+]

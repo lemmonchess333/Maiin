@@ -1,0 +1,45 @@
+{
+  "tool": "image_gen.imagegen",
+  "generatedAt": "2026-10-03",
+  "masterPose": "Full plank hold; selected as frame 3. Knee-supported setup is its lower-body edit.",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/plank/1.png",
+    "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+  },
+  "plan": {
+    "path": "docs/exercise-art/pilots/plank-20261003/plan.json",
+    "sha256": "1c32e0edb1ec172956c173897e9577ff433361546818c63c5f7213fa7095a90c"
+  },
+  "images": [
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/1.png",
+      "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+    },
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/2.png",
+      "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+    },
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/3.png",
+      "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/4.png",
+      "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/5.png",
+      "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/plank-20261003/6.png",
+      "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+    }
+  ],
+  "selectedPoseOrder": [1, 1, 3, 3, 3, 1],
+  "review": "docs/exercise-art/releases/2026-10-03/plank.json"
+}

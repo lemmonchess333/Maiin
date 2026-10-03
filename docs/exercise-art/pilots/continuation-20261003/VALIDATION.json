@@ -1,0 +1,46 @@
+{
+  "baseCommit": "f16195eb460b6e7f573239ac81f8fc8585cc7235",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10870,
+    "testsSkipped": 367,
+    "testsFailed": 0,
+    "durationSeconds": 261.2,
+    "initialRunFinding": "One recovery-manifest test asserted the exact previous three-element loop. Updated it to require recovery participation while allowing new draft batches; focused 3-test suite and full rerun pass."
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "startTime": "2026-10-03T08:32:32.382Z",
+    "duration": 69649.602,
+    "expected": 24,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "draftIntegrity": {
+    "sets": 17,
+    "selectedFrames": 102,
+    "uniquePoses": 65,
+    "nativeBytes": 100085419,
+    "errors": []
+  },
+  "provenance": "Canonical, master, formatted plan and all PNG hashes checked against files.",
+  "productionInventory": "Equal to committed inventory: 57 released, 84 of 141 without released art; no public assets changed.",
+  "artworkReview": {
+    "releaseApproved": false,
+    "contactLimitPixels": 1,
+    "maximumMeasuredSelectedContactShift": {
+      "x": 3,
+      "y": 2
+    },
+    "remainingFindings": [
+      "Fixed shoe contacts exceed release tolerance.",
+      "Uneven setup/intermediate/peak spacing.",
+      "Independent anatomy and hand-contact review still required before release."
+    ],
+    "sidePlank": "Remains excluded with prior 12px shoe drift; no new retries."
+  }
+}

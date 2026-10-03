@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching, integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 32,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/1.png",
+      "sha256": "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6",
+      "anchors": {
+        "nearPlatformBolt": {
+          "reference": [699, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farPlatformBolt": {
+          "reference": [58, 925],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/2.png",
+      "sha256": "16fc9cad4585602906a8f6fb6b20bab80b4df47fa2c57c352a93f957b83c2ece",
+      "anchors": {
+        "nearPlatformBolt": {
+          "reference": [699, 944],
+          "dx": 0,
+          "dy": -22,
+          "meanChannelDifference": 40.81254724111867
+        },
+        "farPlatformBolt": {
+          "reference": [58, 925],
+          "dx": -1,
+          "dy": -22,
+          "meanChannelDifference": 37.10430839002267
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/3.png",
+      "sha256": "f7b11011486baa93e567b19e49882317883474a4698c50dbc36d9dc303c8e4d6",
+      "anchors": {
+        "nearPlatformBolt": {
+          "reference": [699, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 9.377173091458806
+        },
+        "farPlatformBolt": {
+          "reference": [58, 925],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 11.430083144368858
+        }
+      }
+    }
+  ]
+}

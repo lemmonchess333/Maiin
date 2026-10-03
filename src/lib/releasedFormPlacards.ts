@@ -15,6 +15,118 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "calf-raise": placard(
+    "calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Stand tall; lower heels below the step."],
+      [
+        0.5,
+        "Raise your heels",
+        "Push through forefeet; keep knees softly straight.",
+      ],
+      [1, "Squeeze your calves", "Lift heels high and squeeze your calves."],
+      [1, "Hold the top", "Pause briefly; keep your torso upright."],
+      [0.5, "Lower slowly", "Lower your heels slowly without bouncing."],
+      [0, "Return to stretch", "Let heels sink below the step gently."],
+    ]
+  ),
+  "standing-calf-raise": placard(
+    "standing-calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Stand tall; lower heels below the step."],
+      [
+        0.5,
+        "Raise your heels",
+        "Push through forefeet; keep knees softly straight.",
+      ],
+      [1, "Squeeze your calves", "Lift heels high and squeeze your calves."],
+      [1, "Hold the top", "Pause briefly; keep your torso upright."],
+      [0.5, "Lower slowly", "Lower your heels slowly without bouncing."],
+      [0, "Return to stretch", "Let heels sink below the step gently."],
+    ]
+  ),
+
+  "donkey-calf-raise": placard(
+    "donkey-calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Brace forward; let heels lower below platform."],
+      [
+        0.5,
+        "Rise through your toes",
+        "Lift heels while keeping knees softly straight.",
+      ],
+      [1, "Reach the top", "Rise onto toes and squeeze your calves."],
+      [
+        1,
+        "Control the top",
+        "Pause briefly without bouncing or bending knees.",
+      ],
+      [0.5, "Lower slowly", "Lower heels slowly against the resistance."],
+      [0, "Return to stretch", "Let heels sink below the platform gently."],
+    ]
+  ),
+  shrugs: placard(
+    "shrugs",
+    ["Upper trapezius"],
+    [],
+    [
+      [0, "Set your stance", "Stand tall; hold dumbbells beside your thighs."],
+      [0.5, "Begin shrug", "Raise your shoulders straight toward your ears."],
+      [1, "Reach the top", "Keep your elbows straight and neck neutral."],
+      [
+        1,
+        "Pause briefly",
+        "Squeeze your traps without rolling your shoulders.",
+      ],
+      [0.5, "Lower slowly", "Lower shoulders slowly; keep your arms straight."],
+      [0, "Return to start", "Settle shoulders; keep your stance and grip."],
+    ]
+  ),
+  crunches: placard(
+    "crunches",
+    ["Rectus abdominis"],
+    ["Obliques"],
+    [
+      [0, "Set and brace", "Plant feet; rest hands lightly behind head."],
+      [0.5, "Begin curl", "Curl your shoulders up using your abs."],
+      [1, "Lift shoulders", "Lift shoulder blades; keep lower back down."],
+      [1, "Pause briefly", "Pause without pulling on your neck."],
+      [0.5, "Lower slowly", "Lower your shoulders slowly with control."],
+      [0, "Return to floor", "Rest shoulders; keep your feet planted."],
+    ]
+  ),
+  plank: placard(
+    "plank",
+    ["Rectus abdominis", "Obliques"],
+    ["Glutes", "Anterior deltoids"],
+    [
+      [0, "Set forearms", "Place elbows beneath shoulders; rest your knees."],
+      [0, "Brace first", "Brace your abs before lifting your knees."],
+      [1, "Extend and lift", "Extend legs; lift knees from the floor."],
+      [1, "Find your line", "Keep head, hips and heels aligned."],
+      [1, "Hold and breathe", "Hold for time while breathing normally."],
+      [0, "Lower knees", "Finish your hold; lower your knees gently."],
+    ]
+  ),
+  "leg-raise": placard(
+    "leg-raise",
+    ["Rectus abdominis"],
+    ["Obliques"],
+    [
+      [0, "Hang and brace", "Hang with straight arms; brace without swinging."],
+      [0.5, "Begin raise", "Raise both straight legs without kicking."],
+      [1, "Reach parallel", "Bring your legs level with your hips."],
+      [1, "Hold control", "Pause briefly; keep your torso steady."],
+      [0.5, "Lower slowly", "Lower both legs together under control."],
+      [0, "Return to hang", "Return below your hips without swinging back."],
+    ]
+  ),
   "clean-and-press": placard(
     "clean-and-press",
     ["Glutes", "Hamstrings", "Front Delts"],

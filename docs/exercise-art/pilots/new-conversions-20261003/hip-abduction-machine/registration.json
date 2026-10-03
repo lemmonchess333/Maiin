@@ -1,0 +1,63 @@
+{
+  "method": "21x21 RGB patch matching, integer translation within +/-4px. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/1.png",
+      "sha256": "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4",
+      "anchors": {
+        "towerUpperLeftBolt": {
+          "reference": [244, 107],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearBaseFoot": {
+          "reference": [597, 1417],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/2.png",
+      "sha256": "8cd0972f15f4271e197878d02a094364bd9908c3a77e2fe2a308caea6dce8a35",
+      "anchors": {
+        "towerUpperLeftBolt": {
+          "reference": [244, 107],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 5.865457294028722
+        },
+        "nearBaseFoot": {
+          "reference": [597, 1417],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.272108843537415
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/3.png",
+      "sha256": "73b6d75c2219d275db47eec35e13ebba98e768812c10b3491300e6cb49a7328e",
+      "anchors": {
+        "towerUpperLeftBolt": {
+          "reference": [244, 107],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 5.349962207105064
+        },
+        "nearBaseFoot": {
+          "reference": [597, 1417],
+          "dx": 3,
+          "dy": 1,
+          "meanChannelDifference": 1.8480725623582765
+        }
+      }
+    }
+  ]
+}

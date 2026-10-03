@@ -1,0 +1,47 @@
+{
+  "method": "Generated upright standing poses retain native athlete and shoe pixels. Exact fixed-frame regions and one rigid selected weight-stack layer preserve equipment. No body warping or resizing.",
+  "frames": [
+    {
+      "frame": 1,
+      "selectedStackLiftPixels": 0,
+      "fixedRegions": [
+        [0, 420, 530, 700],
+        [0, 986, 530, 1536],
+        [0, 1340, 1024, 1536],
+        [855, 405, 1024, 1536],
+        [508, 1298, 575, 1331]
+      ],
+      "fixedContacts": [],
+      "maxPixelErrors": [0, 0, 0, 0, 0],
+      "sha256": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74"
+    },
+    {
+      "frame": 2,
+      "selectedStackLiftPixels": 8,
+      "fixedRegions": [
+        [0, 420, 530, 700],
+        [0, 986, 530, 1536],
+        [0, 1340, 1024, 1536],
+        [855, 405, 1024, 1536],
+        [508, 1298, 575, 1331]
+      ],
+      "fixedContacts": [],
+      "maxPixelErrors": [0, 0, 0, 0, 0],
+      "sha256": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27"
+    },
+    {
+      "frame": 3,
+      "selectedStackLiftPixels": 64,
+      "fixedRegions": [
+        [0, 420, 530, 700],
+        [0, 986, 530, 1536],
+        [0, 1340, 1024, 1536],
+        [855, 405, 1024, 1536],
+        [508, 1298, 575, 1331]
+      ],
+      "fixedContacts": [],
+      "maxPixelErrors": [0, 0, 0, 0, 0],
+      "sha256": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "exerciseId": "pistol-squat",
+  "tools": ["image_gen", "previously authorized fixed-contact compositing"],
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/1.png",
+    "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/1.png",
+      "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/2.png",
+      "sha256": "4b57dfde09fca1cfa1f55268fa57e06ad9dd3168acfa50b1f93aad2c3b83306e"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/3.png",
+      "sha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/repaired-background-3.png",
+      "sha256": "78d3f07370ce22dd47614f611580c0672c60ce03bd5a5e105be38cb0997cdba9"
+    }
+  ],
+  "builder": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/build.py",
+    "sha256": "b1062292fbed71340a81849c3fa592826974e3647dc7564a78e315d35319f6a6"
+  },
+  "cueSha256": "c65bbe5c9c403d2799c8fd1638764be7416514693865790ad7cec8babb7bbcf7",
+  "reviewFindings": [
+    "Repaired black background and fixed the planted working sole and lower shoe by rigidly translating each lowering pose and reusing the master contact region. A 70-row contour-aligned calf bridge prevents a doubled edge.",
+    "The shoe region is exact, but the calf bridge is locally resampled and must be reviewed for anatomy and sharpness. Whole-body proportions and balance remain unapproved."
+  ]
+}

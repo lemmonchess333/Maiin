@@ -1,0 +1,11 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep 'released (calf-raise|standing-calf-raise):'",
+  "stats": {
+    "startTime": "2026-10-03T16:06:06.989Z",
+    "duration": 18134.876,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

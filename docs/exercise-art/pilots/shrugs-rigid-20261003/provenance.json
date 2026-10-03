@@ -1,0 +1,55 @@
+{
+  "method": "User-authorized layer compositing after rejected redraw and grip-patch trials. Original generated athlete poses preserved outside the fixed-leg and equipment repair regions.",
+  "equipmentGeneration": {
+    "tool": "image_gen.imagegen",
+    "transparentBackground": true,
+    "source": "dumbbell-source.png",
+    "promptSummary": "One isolated modest grey hex dumbbell matching the screen-right equipment in the exercise master, front head left, rear head right, complete grip, no person, no text or cast shadow. Canonical athlete supplied as style reference."
+  },
+  "files": [
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/build.mjs",
+      "sha256": "af795f2639f154b229b0dcdf2ec531e78a5a2df9cc12d61a499bbad01fda256e"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/sources.json",
+      "sha256": "ad49bf75382b6766156da0780ddc0929835efed3f45aa46a757b9b944311aca6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/composition.json",
+      "sha256": "81c5b5b3facee61a4db1fd04ae6f1c4bae17e7841b63283aa2d008b88884e480"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/rigidity.json",
+      "sha256": "547f4c2bc4a8bed30ba71dcef0402cf89dd21983ed0a277120de82e6f5361688"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/fixed-support-review-20261003.json",
+      "sha256": "e75119a0c2cca393dfd6c76f010ec94b2a71537a7780ac5a797b879bf7d02064"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/dumbbell-source.png",
+      "sha256": "cbc77bf125d25502f56c6d95a93615c6f61f5a2e21fbcb3498377263d61eb9e8"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/dumbbell-layer.png",
+      "sha256": "8b750313c7b8daa98e708f4c3486faf9cd02d8153f85cb581774e4d3ece7488c"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/dumbbell-far.png",
+      "sha256": "4dc40b39165e308c8b1c14cb590d01a411f85c3accd01cb396730738271a631c"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/dumbbell-near.png",
+      "sha256": "3607728478bd50779e2cb48d60f906169d812fe586355c57132f4601dbdb0bb4"
+    },
+    {
+      "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/masters/1.png",
+      "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838"
+    }
+  ]
+}

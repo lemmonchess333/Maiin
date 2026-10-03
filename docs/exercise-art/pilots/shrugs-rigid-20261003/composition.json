@@ -1,0 +1,95 @@
+{
+  "releaseApproved": false,
+  "method": "One imagegen dumbbell source assembled into two fixed perspective layers. Head and shaft sizing is fixed once per camera projection, with no frame-to-frame scaling or rotation. Integer translations follow each straight arm; original hands and thigh restore foreground occlusion. Fixed legs remain unchanged. Build metadata does not grant release approval.",
+  "equipment": {
+    "sha256": "8b750313c7b8daa98e708f4c3486faf9cd02d8153f85cb581774e4d3ece7488c"
+  },
+  "layers": [
+    {
+      "name": "far",
+      "origin": [238, 709],
+      "shifts": [
+        [0, 0],
+        [2, -46],
+        [5, -88]
+      ],
+      "hand": [300, 668, 360, 813],
+      "frontWidth": 90,
+      "rearX": 110,
+      "width": 194,
+      "height": 114,
+      "sha256": "4dc40b39165e308c8b1c14cb590d01a411f85c3accd01cb396730738271a631c"
+    },
+    {
+      "name": "near",
+      "origin": [554, 722],
+      "shifts": [
+        [0, 0],
+        [0, -41],
+        [-2, -86]
+      ],
+      "hand": [635, 675, 706, 824],
+      "frontWidth": 98,
+      "rearX": 130,
+      "width": 214,
+      "height": 114,
+      "sha256": "3607728478bd50779e2cb48d60f906169d812fe586355c57132f4601dbdb0bb4"
+    }
+  ],
+  "frames": [
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/1.png",
+      "pose": 1,
+      "sha256": "275af7efa1eabf34e10d70e19f56c4d6765accf78f1a543814188ee7fe538b23",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/1.png",
+        "sha256": "4921bd1068faf05e19d5e804b5e70e1f39d4379572721a598c3f4284d1ad44ff"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/2.png",
+      "pose": 2,
+      "sha256": "cc817264ffb8eae2356b59fcd57113693d9f62ed6c73f796c143851c728e5030",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/2.png",
+        "sha256": "14c47bacfed0b331b54a9369ce59f96b2ff500f4b231f7cd13d10ac3fc8cab22"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/3.png",
+      "pose": 3,
+      "sha256": "c92efdedace7e2c2936817daeb89fba74b545cddd2001e1dd436eaf482485019",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/3.png",
+        "sha256": "4166c7f93f9ad49d99e69acd43cfcfbb6340d69fddd279e9fec2e6a788568c72"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/4.png",
+      "pose": 3,
+      "sha256": "c92efdedace7e2c2936817daeb89fba74b545cddd2001e1dd436eaf482485019",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/3.png",
+        "sha256": "4166c7f93f9ad49d99e69acd43cfcfbb6340d69fddd279e9fec2e6a788568c72"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/5.png",
+      "pose": 2,
+      "sha256": "cc817264ffb8eae2356b59fcd57113693d9f62ed6c73f796c143851c728e5030",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/2.png",
+        "sha256": "14c47bacfed0b331b54a9369ce59f96b2ff500f4b231f7cd13d10ac3fc8cab22"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/6.png",
+      "pose": 1,
+      "sha256": "275af7efa1eabf34e10d70e19f56c4d6765accf78f1a543814188ee7fe538b23",
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/1.png",
+        "sha256": "4921bd1068faf05e19d5e804b5e70e1f39d4379572721a598c3f4284d1ad44ff"
+      }
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "method": "Exact translated RGB patch comparison for three unoccluded weight faces. Equipment-layer dimensions and hashes are fixed by the compositor. Occluded far rear head is certified only by shared layer construction and visual review, not a visible-patch claim.",
+  "measurements": [
+    {
+      "pose": 1,
+      "patch": "farFrontFace",
+      "x": 263,
+      "y": 744,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 1,
+      "patch": "nearFrontFace",
+      "x": 579,
+      "y": 757,
+      "size": 30,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 1,
+      "patch": "nearRearFace",
+      "x": 724,
+      "y": 757,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 2,
+      "patch": "farFrontFace",
+      "x": 265,
+      "y": 698,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 2,
+      "patch": "nearFrontFace",
+      "x": 579,
+      "y": 716,
+      "size": 30,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 2,
+      "patch": "nearRearFace",
+      "x": 724,
+      "y": 716,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 3,
+      "patch": "farFrontFace",
+      "x": 268,
+      "y": 656,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 3,
+      "patch": "nearFrontFace",
+      "x": 577,
+      "y": 671,
+      "size": 30,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    },
+    {
+      "pose": 3,
+      "patch": "nearRearFace",
+      "x": 722,
+      "y": 671,
+      "size": 25,
+      "channelDifferences": 0,
+      "maxDifference": 0
+    }
+  ]
+}

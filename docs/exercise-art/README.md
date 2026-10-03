@@ -1,5 +1,57 @@
 # Exercise artwork migration
 
+## Current checkpoint — 3 October 2026
+
+The owner clarified the calf raise with an upright shoulder-pad machine screenshot. The [standing calf release](releases/2026-10-03/STANDING_CALF_RAISE.md) now supplies the matching sequence to both Calf Raise and Standing Calf Raise. The earlier [donkey calf release](releases/2026-10-03/DONKEY_CALF_RAISE.md) is a separate exercise variation. Other unfinished conversions remain in review.
+
+The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Glute-Ham Raise and Pistol Squat remain drafts. The calf raise has since been regenerated, refined and approved separately.
+
+The [second new-conversion batch](pilots/new-conversions-02-20261003/README.md) adds Nordic Hamstring Curl, Hip Adduction Machine and Sissy Squat: another 18 native draft frames with catalogue-based sequences, source hashes and mobile playback evidence. All three were previously unconverted. Fixed-equipment drift is recorded, so the drafts remain outside production.
+
+The [new-conversion batch](pilots/new-conversions-20261003/README.md) adds Cuban Press and Hip Abduction Machine: 12 native draft frames with plans, provenance and mobile playback evidence. Both were previously unconverted. They remain outside production pending the recorded anatomy/equipment findings; existing repair sets were left alone.
+
+The reviewed Hanging Leg Raise, Plank and Crunches guides are now live on Firebase Hosting from commit `f527f68`. [Production verification](releases/2026-10-03/PRODUCTION_VERIFICATION.json) checks all 18 delivered frames and three thumbnails against local SHA-256 hashes.
+
+The [Shrugs repair](releases/2026-10-03/SHRUGS.md) now adds a reviewed branch guide with fixed legs and reusable rigid equipment layers. Four fixed-body patches and nine visible equipment-face comparisons pass exactly; mobile playback passes in both themes. It is now live on Firebase Hosting from `1cf1f24`; [production verification](releases/2026-10-03/SHRUGS_PRODUCTION_VERIFICATION.json) confirms all six frames, the card thumbnail and the registry bundle match the reviewed local build.
+
+The [forearm Plank release](releases/2026-10-03/PLANK.md) adds a reviewed
+entry, timed hold and controlled exit, six lossless delivery files, exact cues
+and a transparent card thumbnail. Its four measured arm supports stay within
+the existing 1px limit. The full hold intentionally remains still.
+
+The [Crunches repair](releases/2026-10-03/CRUNCHES.md) adds six reviewed
+frames with fixed feet and pelvis through authorized layer compositing.
+All five measured support patches now have zero drift. The original failed
+draft is preserved separately, with its contact findings unchanged.
+
+Hanging Leg Raise is now integrated as a reviewed production guide on this
+branch. The [release record](releases/2026-10-03/README.md) covers six lossless
+WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.
+The branch registry now contains **63 released sets** (54 approved, 3 owner-released
+with findings, 6 historical sets needing review). Of the 141 in-scope exercises,
+78 still have no released artwork.
+Side Plank remains incomplete and excluded. The [local contact repair trials](pilots/side-plank-composite-20261003/README.md) fix vertical support drift but retain a measured fist mismatch; neither trial is approved. `inventory.json` reflects this
+branch's current registry, not deployment status.
+
+## Previous checkpoint — 2 October 2026
+
+The live registry now contains **56 released sets**: 47 with recorded approval,
+3 owner-released with findings, and 6 historical sets needing review. The
+current integrity audit reports no errors and 165,641,054 delivered bytes.
+`inventory.json` has been regenerated from `scripts/audit-form-art.ts --json`;
+85 of the 141 in-scope exercises still have no released artwork. This count
+includes exercises with existing drafts and is not a count of untouched work.
+
+The [October continuation](pilots/continuation-20261002/README.md) adds a
+six-frame Hanging Leg Raise draft using the canonical athlete, fixed-grip
+measurements and mobile player evidence. Side Plank has a corrected setup
+master but its raised candidates fail contact registration and remain
+incomplete. Neither set is activated in production. The new complete draft is
+included in `check:form-drafts` and the account-free review fixture.
+
+The sections below record the original September migration checkpoint and
+its release controls; their old coverage/byte totals are historical.
+
 Recovered on 7 September 2026 from current main `ea6e786`. The earlier local
 checkout and unpushed work were removed during workspace maintenance; this
 branch rebuilds that work on top of the newer app fixes.

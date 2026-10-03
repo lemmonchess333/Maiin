@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 32,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+      "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+      "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/3.png",
+      "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

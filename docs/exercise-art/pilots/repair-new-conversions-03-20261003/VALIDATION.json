@@ -1,0 +1,42 @@
+{
+  "baseCommit": "6962c87e5b5a2d6d9fe6a4ebe299de9371765018",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "durationSeconds": 277.72,
+    "scope": "All repaired image selections and endpoint pins finalized before verification. Documentation wording and evidence finalized during the run; selected image bytes unchanged."
+  },
+  "browser": {
+    "startTime": "2026-10-03T13:41:25.207Z",
+    "duration": 25021.642,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "fixedRegions": {
+    "framesChecked": 18,
+    "maximumPixelError": 0,
+    "backgroundCornerMaximumAllowed": 15,
+    "passed": true,
+    "anatomyApproval": false
+  },
+  "draftAudit": {
+    "sets": 25,
+    "selectedFrames": 150,
+    "uniquePoses": 90,
+    "nativeBytes": 151609018,
+    "errors": []
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5881.9
+  },
+  "productionAssetsChanged": false,
+  "releaseApproved": false
+}

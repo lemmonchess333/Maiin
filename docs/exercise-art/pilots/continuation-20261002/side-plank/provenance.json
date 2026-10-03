@@ -1,0 +1,36 @@
+{
+  "tool": "image_gen.imagegen",
+  "generatedAt": "2026-10-02",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/side-plank/1.png",
+    "sha256": "def24ed878af8075ead35553ee8b1142ff4f2c973058e150477a6d5c0d1f2786"
+  },
+  "plan": {
+    "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/plan.json",
+    "sha256": "56ad4789f626997be8172cca2a452d991c64ec385b55cdccdc00c1de1fcfc83a"
+  },
+  "images": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/1.png",
+      "sha256": "def24ed878af8075ead35553ee8b1142ff4f2c973058e150477a6d5c0d1f2786"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/raised-contact-drift.png",
+      "sha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/rejected-contact-repair.png",
+      "sha256": "ba9167cc74bde3d4f20e19f72df46047587eb690d39d22afa2cefbcdc952e7dd"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/rejected-foreshortened-support.png",
+      "sha256": "1c0d55de732c51bbe64f70a9960e0a681d3facc809cba11012b7a36b79c76f49"
+    }
+  ],
+  "productionAssetsChanged": false,
+  "releaseApproved": false
+}

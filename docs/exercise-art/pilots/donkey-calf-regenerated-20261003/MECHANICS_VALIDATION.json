@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "scope": "Exact stationary machine, near/far hand and forefoot-sole contact pixels; analytic rigid lever length and fixed pivot; identical reverse-pose reuse. No anatomical approval.",
+  "releaseApproved": false,
+  "frames": [
+    {
+      "frame": 1,
+      "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
+      "fixedRegionMaxErrors": [0, 0, 0, 0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738702
+    },
+    {
+      "frame": 2,
+      "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1",
+      "fixedRegionMaxErrors": [0, 0, 0, 0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738703
+    },
+    {
+      "frame": 3,
+      "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67",
+      "fixedRegionMaxErrors": [0, 0, 0, 0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738702
+    }
+  ]
+}

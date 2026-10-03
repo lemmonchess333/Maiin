@@ -1,0 +1,9 @@
+{
+  "method": "Exact copies of stationary machine regions from selected setup; original body poses retained.",
+  "sources": ["1.png", "repaired-background-2.png", "3.png"],
+  "fixedRegions": [
+    [0, 650, 1536, 1024],
+    [1080, 450, 1260, 650]
+  ],
+  "releaseApproved": false
+}

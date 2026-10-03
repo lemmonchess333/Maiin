@@ -1,0 +1,271 @@
+{
+  "exerciseId": "shrugs",
+  "version": "anatomy-v3-rigid-2026-10-03",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native rigid-layer and production-player review",
+  "reviewedAt": "2026-10-03T11:11:54.559348+00:00",
+  "reference": {
+    "path": "form-frames/shrugs/3.webp",
+    "sha256": "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+    "anchors": {
+      "screenLeftSole": {
+        "x": 335,
+        "y": 1408
+      },
+      "screenRightSole": {
+        "x": 609,
+        "y": 1468
+      },
+      "screenLeftKneeContour": {
+        "x": 437,
+        "y": 982
+      },
+      "screenRightKneeContour": {
+        "x": 587,
+        "y": 1051
+      }
+    },
+    "invariantDimensions": {
+      "soleSupportSpan": 280.49242414011826,
+      "farEquipmentLayerWidth": 194,
+      "nearEquipmentLayerWidth": 214
+    }
+  },
+  "cueSha256": "c21454de45a2081ceb17416f6a618c94c4f6805a5f71b2d42d39313f1303a727",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomical athlete, white trainers and featureless pelvis. Existing upper-body source poses preserved; equipment is a separately generated reusable asset matching the illustration style."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native fixed 1024x1536 canvas and three-quarter front camera. No pose scaling or warping. Two equipment projections are sized once from one asset, then moved by integer translation without per-frame scaling or rotation."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three full poses and native grip close-ups inspected: two straight arms, neutral neck, shoulders elevating and lowering without rolling, fingers around the grips, consistent legs and feet. Far thigh naturally occludes the far rear plate. Rejected patch-copy trials with wrist/thigh seams remain separate."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One transparent dumbbell source assembled into fixed far and near projection layers, widths 194 and 214px. Shared head/shaft imagery and fixed dimensions prevent per-frame redraw. All nine checks of three visible weight-face patches return zero changed RGB channels after translation. The occluded far rear plate is reviewed through construction and native views, not falsely certified by a visible patch."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both sole patches and both knee patches match setup exactly: zero x/y shift and zero mean RGB difference. Entire lower region below y860 remains identical to setup. Original hands remain foreground over each translated grip; native inspection finds continuous contact."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Feet remain planted; shoulders elevate with straight arms and dumbbells at the sides. Weights rise 46/88px on the far side and 41/86px on the near side across key poses. No leg bounce or shoulder rotation. Original upper-body anatomy is independently reviewed rather than inferred from equipment invariants."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple is on the upper trapezius throughout. Production key names Upper trapezius without falsely highlighting forearms or assigning quantitative activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues fit the seven-word budget and match the catalogue dumbbell shrug: stand tall, raise shoulders toward ears, straight elbows and neutral neck, brief squeeze without rolling, controlled lowering, return with fixed stance and grip."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three joint configurations ordered 1,2,3,3,2,1 in six separate native files. The top is intentionally reused for a brief squeeze. All six lossless WebPs equal repaired PNG RGB pixels; endpoint bytes match exactly. Mobile playback validation is recorded separately. All 33 mobile browser checks passed, including source/display endpoint equality and reduced motion."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual production player and standard transparent card inspected at 393x852 in light mode, including setup, intermediate and peak. Full poses and cues remain visible, equipment and grips read correctly, no backdrop fragments or horizontal overflow. Manual steps, real 6-to-1 loop and reduced motion pass."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual production player and standard transparent card inspected at 393x852 in dark mode, including setup, intermediate and peak. Full poses and cues remain visible, equipment and grips read correctly, no backdrop fragments or horizontal overflow. Manual steps, real 6-to-1 loop and reduced motion pass."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/shrugs/1.webp",
+      "sha256": "ac4765e0fbc0cf9def2d46d24f6f641d17a890601f9eedca165b6c91b430b57c",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/1.png",
+        "sha256": "275af7efa1eabf34e10d70e19f56c4d6765accf78f1a543814188ee7fe538b23"
+      }
+    },
+    {
+      "path": "form-frames/shrugs/2.webp",
+      "sha256": "610a3b518dcebd484f3cbfcb907fb8e7e18c98ade551ad6c4c23b8d947d9ed75",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/2.png",
+        "sha256": "cc817264ffb8eae2356b59fcd57113693d9f62ed6c73f796c143851c728e5030"
+      }
+    },
+    {
+      "path": "form-frames/shrugs/3.webp",
+      "sha256": "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/3.png",
+        "sha256": "c92efdedace7e2c2936817daeb89fba74b545cddd2001e1dd436eaf482485019"
+      }
+    },
+    {
+      "path": "form-frames/shrugs/4.webp",
+      "sha256": "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/4.png",
+        "sha256": "c92efdedace7e2c2936817daeb89fba74b545cddd2001e1dd436eaf482485019"
+      }
+    },
+    {
+      "path": "form-frames/shrugs/5.webp",
+      "sha256": "610a3b518dcebd484f3cbfcb907fb8e7e18c98ade551ad6c4c23b8d947d9ed75",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/5.png",
+        "sha256": "cc817264ffb8eae2356b59fcd57113693d9f62ed6c73f796c143851c728e5030"
+      }
+    },
+    {
+      "path": "form-frames/shrugs/6.webp",
+      "sha256": "ac4765e0fbc0cf9def2d46d24f6f641d17a890601f9eedca165b6c91b430b57c",
+      "anchors": {
+        "screenLeftSole": {
+          "x": 335,
+          "y": 1408
+        },
+        "screenRightSole": {
+          "x": 609,
+          "y": 1468
+        },
+        "screenLeftKneeContour": {
+          "x": 437,
+          "y": 982
+        },
+        "screenRightKneeContour": {
+          "x": 587,
+          "y": 1051
+        }
+      },
+      "invariantDimensions": {
+        "soleSupportSpan": 280.49242414011826,
+        "farEquipmentLayerWidth": 194,
+        "nearEquipmentLayerWidth": 214
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/6.png",
+        "sha256": "275af7efa1eabf34e10d70e19f56c4d6765accf78f1a543814188ee7fe538b23"
+      }
+    }
+  ]
+}

@@ -5,12 +5,29 @@ import ExerciseRigDemo from "../../src/components/ExerciseRigDemo";
 import ExerciseFormFrames from "../../src/components/ExerciseFormFrames";
 import { getAuthoredBeats, getFormBeats } from "../../src/lib/bodyRig";
 import { FORM_ARTWORK } from "../../src/lib/formArtwork";
+import {
+  getFormArtCutout,
+  formArtCutoutUrl,
+} from "../../src/lib/formArtCutouts";
 import { Button } from "../../src/components/ui/Button";
 import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
+import continuation from "../../docs/exercise-art/pilots/continuation-20261002/MANIFEST.json";
+import octoberThird from "../../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json";
+import newConversions from "../../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json";
+import newConversions02 from "../../docs/exercise-art/pilots/new-conversions-02-20261003/MANIFEST.json";
+import newConversions03 from "../../docs/exercise-art/pilots/new-conversions-03-20261003/MANIFEST.json";
 
 const batchDrafts = Object.fromEntries(
-  [...batch.completeDraftSets, ...recovered.completeDraftSets].map((set) => [
+  [
+    ...batch.completeDraftSets,
+    ...recovered.completeDraftSets,
+    ...continuation.completeDraftSets,
+    ...octoberThird.completeDraftSets,
+    ...newConversions.completeDraftSets,
+    ...newConversions02.completeDraftSets,
+    ...newConversions03.completeDraftSets,
+  ].map((set) => [
     `${set.exerciseId} (draft)`,
     {
       name: set.exerciseId,
@@ -22,7 +39,7 @@ const batchDrafts = Object.fromEntries(
         image: frame.path,
       })),
     },
-  ]),
+  ])
 );
 
 export default function Review() {
@@ -33,7 +50,9 @@ export default function Review() {
     const root = document.documentElement;
     const previous = root.classList.contains("dark");
     root.classList.toggle("dark", dark);
-    return () => { root.classList.toggle("dark", previous); };
+    return () => {
+      root.classList.toggle("dark", previous);
+    };
   }, [dark]);
   const [step, setStep] = useState(0);
   const [request, setRequest] = useState<{ index: number; serial: number }>();
@@ -48,16 +67,17 @@ export default function Review() {
   const curlDraft = id === "db-curl (draft)";
   const batchDraft = batchDrafts[id];
   const draft = curlDraft || Boolean(batchDraft);
+  const cardArt = draft ? null : getFormArtCutout(id);
   const hasReleasedArtwork = Object.hasOwn(
     FORM_ARTWORK,
-    id.replace(/ \(draft\)$/, ""),
+    id.replace(/ \(draft\)$/, "")
   );
   const beats = curlDraft
     ? getAuthoredBeats("db-curl")!.map((beat, i) => ({
         ...beat,
         image: `docs/exercise-art/pilots/db-curl/${draftFiles[i]}`,
       }))
-    : batchDraft?.beats ?? getFormBeats(id)!;
+    : (batchDraft?.beats ?? getFormBeats(id)!);
   return (
     <div className={dark ? "dark" : ""}>
       <main className="min-h-screen bg-background text-foreground p-4">
@@ -75,11 +95,13 @@ export default function Review() {
                 setStep(0);
               }}
             >
-              {[...Object.keys(FORM_ARTWORK), "db-curl (draft)", ...Object.keys(batchDrafts)].map(
-                (value) => (
-                  <option key={value}>{value}</option>
-                )
-              )}
+              {[
+                ...Object.keys(FORM_ARTWORK),
+                "db-curl (draft)",
+                ...Object.keys(batchDrafts),
+              ].map((value) => (
+                <option key={value}>{value}</option>
+              ))}
             </select>
           </label>
           <Button variant="outline" onClick={() => setDark((value) => !value)}>
@@ -90,7 +112,7 @@ export default function Review() {
               <p role="status" className="text-small text-muted-foreground">
                 {hasReleasedArtwork
                   ? "Original PNG preview. Production artwork is available for this exercise; recorded review findings remain below."
-                  : "Unreleased draft. Visual and mobile playback checks remain outstanding."}
+                  : "Unreleased draft. Review findings and any outstanding checks are recorded below."}
               </p>
               <ExerciseFormFrames
                 key={`${id}-${request?.serial ?? 0}`}
@@ -121,6 +143,17 @@ export default function Review() {
               onStep={setStep}
               stepRequest={request}
             />
+          )}
+          {cardArt && (
+            <div className="ds-card p-3" data-testid="card-artwork">
+              <img
+                src={formArtCutoutUrl(cardArt)}
+                alt={`${id} card artwork`}
+                width={cardArt.width}
+                height={cardArt.height}
+                className="h-28 w-full object-contain"
+              />
+            </div>
           )}
           {beats.map((beat, i) => (
             <Button

@@ -1,0 +1,74 @@
+{
+  "exerciseId": "crunches",
+  "name": "Crunches",
+  "status": "draft-contact-and-spacing-review-required",
+  "variation": "Supine bent-knee abdominal crunch with hands lightly behind head; no sit-up or neck pull.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canvas": [1536, 1024],
+  "camera": "Fixed side three-quarter, head left and feet right, slight elevation shows both arms and both planted shoes.",
+  "anchors": [
+    "both shoe soles",
+    "pelvis and lower-back floor contact",
+    "floor and camera"
+  ],
+  "invariants": [
+    "shoe dimensions",
+    "femur and shin lengths",
+    "knee positions",
+    "hand-to-head relationship"
+  ],
+  "muscles": {
+    "primary": ["rectus abdominis"],
+    "secondary": ["obliques"],
+    "note": "Qualitative visible hierarchy. Catalogue hip flexors are deep and are not drawn through the body."
+  },
+  "source": "src/lib/exercises.ts: crunches",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set and brace",
+      "cue": "Plant feet; rest hands lightly behind head.",
+      "t": 0,
+      "state": "Back and shoulder blades resting on floor, knees bent, feet flat, hands lightly supporting head."
+    },
+    {
+      "frame": 2,
+      "label": "Begin curl",
+      "cue": "Curl your shoulders up using your abs.",
+      "t": 0.5,
+      "state": "Shoulder blades beginning to lift, ribs moving toward pelvis; head follows torso, elbows open."
+    },
+    {
+      "frame": 3,
+      "label": "Lift shoulders",
+      "cue": "Lift shoulder blades; keep lower back down.",
+      "t": 1,
+      "state": "Small crunch peak with shoulder blades clear; lower back and pelvis stay grounded; no sit-up."
+    },
+    {
+      "frame": 4,
+      "label": "Pause briefly",
+      "cue": "Pause without pulling on your neck.",
+      "t": 1,
+      "state": "Same peak briefly held.",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower slowly",
+      "cue": "Lower your shoulders slowly with control.",
+      "t": 0.5,
+      "state": "Controlled return through the intermediate curl.",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return to floor",
+      "cue": "Rest shoulders; keep your feet planted.",
+      "t": 0,
+      "state": "Shoulder blades return to floor; no foot or pelvis displacement.",
+      "reusedFrom": 1
+    }
+  ],
+  "releaseApproved": false
+}

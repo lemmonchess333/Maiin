@@ -1,0 +1,87 @@
+{
+  "method": "31x31 RGB master patches; integer translation search +/-5px minimizing absolute difference. No image edits. Zero best-fit translation does not establish identical pixels or anatomical dimensions.",
+  "selectedPoseOrder": [1, 2, 3, 3, 2, 1],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/1.png",
+      "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01",
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63,
+          "meanChannelDifference": 0
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45,
+          "meanChannelDifference": 0
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94,
+          "meanChannelDifference": 0
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/2.png",
+      "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff",
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63,
+          "meanChannelDifference": 11.34547346514048
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45,
+          "meanChannelDifference": 9.552896288588276
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94,
+          "meanChannelDifference": 4.702393340270551
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35,
+          "meanChannelDifference": 4.267082899757197
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/3.png",
+      "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794",
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63,
+          "meanChannelDifference": 14.53763440860215
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45,
+          "meanChannelDifference": 13.329171002428026
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94,
+          "meanChannelDifference": 6.0350329517863335
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35,
+          "meanChannelDifference": 5.284772806104752
+        }
+      }
+    }
+  ]
+}

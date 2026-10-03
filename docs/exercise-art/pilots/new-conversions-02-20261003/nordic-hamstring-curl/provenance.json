@@ -1,0 +1,33 @@
+{
+  "exerciseId": "nordic-hamstring-curl",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/nordic-hamstring-curl/1.png",
+    "sha256": "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6"
+  },
+  "generationSources": [
+    {
+      "path": "/workspace/generated_images/exec-e408f6e0-ddd7-4ff4-849b-7c4435331948.png",
+      "sha256": "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6"
+    },
+    {
+      "path": "/workspace/generated_images/exec-ba64e559-0937-4d43-b311-2e99e40e7e13.png",
+      "sha256": "16fc9cad4585602906a8f6fb6b20bab80b4df47fa2c57c352a93f957b83c2ece"
+    },
+    {
+      "path": "/workspace/generated_images/exec-812742c5-5df9-452b-9b39-180be544cf04.png",
+      "sha256": "f7b11011486baa93e567b19e49882317883474a4698c50dbc36d9dc303c8e4d6"
+    }
+  ],
+  "cueSha256": "7ee0fa4ab97c4cc7589f470bd1df575eaa737f61992648e446883bb1139d3b6e",
+  "reviewFindings": [
+    "Three distinct poses, six separate native files in order 1,2,3,3,2,1. Controlled partial-range variation with hamstring-led return; no unshown floor push-off or assistance band is claimed.",
+    "The early-lean edit shifts the platform upward and changes body length. The deeper pose was derived directly from the fixed master to avoid carrying that scene drift forward, but body proportions still need review. Fixed supports and anatomy are not approved.",
+    "Arms remain crossed and the ankle strap remains visible; secondary calf highlight is lighter than hamstrings. No compositing, warping, rescaling or other code-based image repair was applied."
+  ]
+}

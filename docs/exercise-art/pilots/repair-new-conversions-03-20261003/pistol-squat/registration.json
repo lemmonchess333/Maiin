@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 96,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/1.png",
+      "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
+      "anchors": {
+        "workingHeel": {
+          "reference": [226, 1354],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "workingToe": {
+          "reference": [424, 1372],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/2.png",
+      "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
+      "anchors": {
+        "workingHeel": {
+          "reference": [226, 1354],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "workingToe": {
+          "reference": [424, 1372],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/3.png",
+      "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
+      "anchors": {
+        "workingHeel": {
+          "reference": [226, 1354],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "workingToe": {
+          "reference": [424, 1372],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

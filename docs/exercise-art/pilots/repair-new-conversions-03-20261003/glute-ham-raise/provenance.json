@@ -1,0 +1,40 @@
+{
+  "exerciseId": "glute-ham-raise",
+  "tools": ["image_gen", "previously authorized fixed-contact compositing"],
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+    "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/glute-ham-raise/1.png",
+      "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/glute-ham-raise/2.png",
+      "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/glute-ham-raise/3.png",
+      "sha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/glute-ham-raise/repaired-background-2.png",
+      "sha256": "29c3c6982d2be7c3ecf92b5d8618b13b50efee9e090f447587738fc25fa3215c"
+    }
+  ],
+  "builder": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/build.py",
+    "sha256": "b1062292fbed71340a81849c3fa592826974e3647dc7564a78e315d35319f6a6"
+  },
+  "cueSha256": "5b1d72bae561cfacfc36c327560496dfaa6f32a7783ae1f36920f1bfe6ce8f18",
+  "reviewFindings": [
+    "Repaired the white middle-frame background to black. Selected base and footplate regions are copied exactly from the setup, removing fixed-equipment redraw within those regions.",
+    "Body proportions, changing knee-pad contact and full-range mechanics still require review. This remains a partial-range draft; fixed machine pixels do not establish anatomical approval."
+  ]
+}

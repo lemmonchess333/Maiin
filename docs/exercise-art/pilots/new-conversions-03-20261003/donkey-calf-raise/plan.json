@@ -1,0 +1,58 @@
+{
+  "variation": "Machine donkey calf raise with roughly90degree hip hinge and lower-back loading pad, forefeet supported on raised step, full controlled ankle plantarflexion and dorsiflexion.",
+  "camera": "Fixed side three-quarter facing left; heel clearance and lower-back pad visible.",
+  "equipment": "Real donkey calf machine with forefoot step, fixed forward hand supports, vertical moving lower-back loading pad on a guided carriage.",
+  "primary": "Gastrocnemius",
+  "secondary": "Soleus lighter",
+  "fixedAnchors": [
+    "forefoot step corners",
+    "hand support frame",
+    "machine floor feet"
+  ],
+  "invariants": [
+    "athlete limb lengths",
+    "step dimensions",
+    "loading-pad dimensions"
+  ],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set your stretch",
+      "cue": "Brace forward; let heels lower below platform.",
+      "pose": "Hips hinged approximately90degrees, balls of feet supported, heels below step, lower-back pad in contact."
+    },
+    {
+      "frame": 2,
+      "label": "Rise through your toes",
+      "cue": "Lift heels while keeping knees softly straight.",
+      "pose": "Heels halfway raised, ankles plantarflexing; pelvis and loading pad rise together."
+    },
+    {
+      "frame": 3,
+      "label": "Reach the top",
+      "cue": "Rise onto toes and squeeze your calves.",
+      "pose": "Heels fully raised in controlled range; forefeet remain on same step, pad contacts lower back."
+    },
+    {
+      "frame": 4,
+      "label": "Control the top",
+      "cue": "Pause briefly without bouncing or bending knees.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower slowly",
+      "cue": "Lower heels slowly against the resistance.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return to stretch",
+      "cue": "Let heels sink below the platform gently.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "donkey-calf-raise",
+  "status": "six-frame-draft",
+  "releaseApproved": false
+}

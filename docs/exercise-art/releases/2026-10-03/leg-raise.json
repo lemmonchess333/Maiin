@@ -1,0 +1,264 @@
+{
+  "exerciseId": "leg-raise",
+  "version": "anatomy-v3-2026-10-03",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native artwork and production-player review",
+  "reviewedAt": "2026-10-03T06:01:20.266Z",
+  "reference": {
+    "path": "form-frames/leg-raise/3.webp",
+    "sha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507",
+    "anchors": {
+      "screenLeftGrip": {
+        "x": 513,
+        "y": 63
+      },
+      "screenRightGrip": {
+        "x": 724,
+        "y": 45
+      },
+      "screenLeftBarJoint": {
+        "x": 75,
+        "y": 94
+      },
+      "screenRightBarJoint": {
+        "x": 942,
+        "y": 35
+      }
+    },
+    "invariantDimensions": {
+      "horizontalGripSpacing": 211,
+      "horizontalBarJointSpan": 867
+    }
+  },
+  "cueSha256": "2478b18c1b62a4f3774a163d2320d4ccdd7c63cfb637a5013858b3aa7fe6442a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "All three unique native poses retain the canonical faceless white-grey athlete, trainers and qualitative muscle shading. Delivery WebP pixels equal those reviewed PNGs exactly."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed 1024x1536 scene, identical camera and canvas. Full hands and shoes are visible in all poses; no per-frame crop or resize."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review of hang, partial raise and horizontal endpoint: two arms, two legs, consistent body proportions, straight arms and legs, neutral head/trunk. Apparent leg foreshortening is consistent with the fixed three-quarter view."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "The same rigid bar and posts remain in all frames. Two closed grips stay attached; no extra bar, detached weight or apparatus change."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Four named grip/bar-joint patches have zero best-fit integer translation. PNG and lossless WebP RGB pixels match, preserving those measurements. Shading differs between generated poses; zero translation does not imply identical anatomy."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both legs rise from below the hips to approximately hip height and return under control. Arms and trunk remain still; no bent-knee substitution, backward kick or visible swing."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple rectus abdominis and pale obliques stay consistent. The on-screen key describes visible shading; deep hip flexors are not painted through the body."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The six production cues describe the exact straight-leg variation and each fits the seven-word dwell budget. Partial raise makes no unsupported joint-angle claim. Return cue explicitly avoids swinging back."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Production ExerciseRigDemo routes leg-raise to the six delivered WebPs with exact registered cues. All six frames were inspected in order; autoplay crosses 6-to-1 using byte-identical endpoint files. Displayed endpoint comparison allows only measured compositor rounding (pixelmatch threshold 0.02, zero differing pixels, antialiasing included). Peak frame 4 intentionally holds 3. Reduced motion remains still and permits stepping."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual production frames and card image inspected at 393x852 in light mode. All native WebPs load at 1024x1536; hands, shoes and equipment remain visible. Captions and seven-word cues are legible, no horizontal overflow, no page errors. Card thumbnail has a transparent background and preserves the raised-leg pose."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual production frames and card image inspected at 393x852 in dark mode. All native WebPs load at 1024x1536; hands, shoes and equipment remain visible. Captions and seven-word cues are legible, no horizontal overflow, no page errors. Card thumbnail has a transparent background and preserves the raised-leg pose."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/leg-raise/1.webp",
+      "sha256": "9ce55626814c523cee72881391e8853b0ce71b9cf290828c166512f584526c27",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/1.png",
+        "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    },
+    {
+      "path": "form-frames/leg-raise/2.webp",
+      "sha256": "0b8c930ec8495e7bf01d903be42654f710894a74ef18b7114256416b06a74f2d",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/2.png",
+        "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    },
+    {
+      "path": "form-frames/leg-raise/3.webp",
+      "sha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/3.png",
+        "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    },
+    {
+      "path": "form-frames/leg-raise/4.webp",
+      "sha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/4.png",
+        "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    },
+    {
+      "path": "form-frames/leg-raise/5.webp",
+      "sha256": "0b8c930ec8495e7bf01d903be42654f710894a74ef18b7114256416b06a74f2d",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/5.png",
+        "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    },
+    {
+      "path": "form-frames/leg-raise/6.webp",
+      "sha256": "9ce55626814c523cee72881391e8853b0ce71b9cf290828c166512f584526c27",
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/6.png",
+        "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01"
+      },
+      "anchors": {
+        "screenLeftGrip": {
+          "x": 513,
+          "y": 63
+        },
+        "screenRightGrip": {
+          "x": 724,
+          "y": 45
+        },
+        "screenLeftBarJoint": {
+          "x": 75,
+          "y": 94
+        },
+        "screenRightBarJoint": {
+          "x": 942,
+          "y": 35
+        }
+      },
+      "invariantDimensions": {
+        "horizontalGripSpacing": 211,
+        "horizontalBarJointSpan": 867
+      }
+    }
+  ]
+}

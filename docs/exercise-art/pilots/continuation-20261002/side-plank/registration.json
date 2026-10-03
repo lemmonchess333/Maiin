@@ -1,0 +1,34 @@
+{
+  "method": "Last row with at least five RGB pixels above 60 in named fixed contact regions. This detects vertical support drift, not anatomy or technique. No source image changes.",
+  "regions": {
+    "forearmAndFist": [80, 700, 380, 850],
+    "lowerShoe": [1270, 735, 1495, 870]
+  },
+  "contacts": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/1.png",
+      "sha256": "def24ed878af8075ead35553ee8b1142ff4f2c973058e150477a6d5c0d1f2786",
+      "contacts": {
+        "forearmAndFist": 797,
+        "lowerShoe": 820
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/raised-contact-drift.png",
+      "sha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+      "contacts": {
+        "forearmAndFist": 793,
+        "lowerShoe": 808
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/rejected-contact-repair.png",
+      "sha256": "ba9167cc74bde3d4f20e19f72df46047587eb690d39d22afa2cefbcdc952e7dd",
+      "contacts": {
+        "forearmAndFist": 794,
+        "lowerShoe": 808
+      }
+    }
+  ],
+  "releaseApproved": false
+}

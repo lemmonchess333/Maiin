@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test";
 // Account-free fixture; no Firebase credentials, sign-in or production deployment.
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: "form-art-review.pw.ts",
+  testMatch: ["form-art-review.pw.ts", "form-art-release.pw.ts"],
   outputDir: "test-results/form-art",
   forbidOnly: !!process.env.CI,
   fullyParallel: false,

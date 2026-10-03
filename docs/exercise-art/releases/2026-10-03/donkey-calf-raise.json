@@ -1,0 +1,264 @@
+{
+  "exerciseId": "donkey-calf-raise",
+  "version": "anatomy-v3-fixed-contacts-2026-10-03",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native contact, rigid-link and production-player review",
+  "reviewedAt": "2026-10-03T15:21:18.716234+00:00",
+  "reference": {
+    "path": "form-frames/donkey-calf-raise/3.webp",
+    "sha256": "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+    "anchors": {
+      "nearHand": {
+        "x": 383,
+        "y": 485
+      },
+      "farHand": {
+        "x": 455,
+        "y": 496
+      },
+      "forefootSole": {
+        "x": 711,
+        "y": 757
+      },
+      "rearPivot": {
+        "x": 1231,
+        "y": 374
+      }
+    },
+    "invariantDimensions": {
+      "pivotToPadMount": 366.7860411738702,
+      "machineSupportSpan": 891
+    }
+  },
+  "cueSha256": "35ffebdfacb30e2785334a4c1353b26d1496514303c6c15da82506a83c5ec74c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey athlete, white shoes and smooth pelvis retained. New side-view master is archived with source hashes."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 side view. Rejected regenerated camera change is excluded. Whole body is not rescaled; local contact adjustments are recorded in builder."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native full frames and enlarged wrist/shoe views reviewed. Knees softly straight, stable hip hinge, neutral neck; raised heels join ankles without the rejected vertical seams. Local forefoot sole alignment models shoe flexion; arms remain connected to fixed grips."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "A single lever-and-plate layer rotates around the rear pivot at0,3.1,5.2degrees. Constant cushion follows the same endpoint; rear post and base reuse setup pixels."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both declared hand patches and the forefoot-sole region are pixel-exact in all poses. This measures sole contact rather than the rotating shoe upper. Fixed-support validation retains zero error."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Forefeet stay supported on short step, heels descend below and rise above it. Hip/back-pad elevation follows calf raise; weight plate moves with the same rigid lever. No knee-driven squat or floating pivot."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strong purple gastrocnemius with lighter soleus retained through all poses; no activation percentages claimed."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six original catalogue-based cues, all at most seven words, teach stretch, heel rise, calf squeeze, control, lower and return."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six separate lossless native files follow1,2,3,3,2,1. Hold and return reuse mechanically identical poses; source/delivery RGB equality verified."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "393x852 production player in light theme: six native delivery frames, exact cues, transparent card, touch controls, no overflow or page errors. Native and mobile screenshots inspected; reduced-motion playback also passes. Evidence: donkey-calf-evidence/."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "393x852 production player in dark theme: six native delivery frames, exact cues, transparent card, touch controls, no overflow or page errors. Native and mobile screenshots inspected; reduced-motion playback also passes. Evidence: donkey-calf-evidence/."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/donkey-calf-raise/1.webp",
+      "sha256": "8a660d4f0a218201d987309387eb86f1bba7a928ba2e49f4035ab39237e1255e",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+        "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c"
+      }
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/2.webp",
+      "sha256": "e7d03fdea2eea80da7610a57819513baa85f4bb69774cafc39c7b9b00acbc7aa",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/2.png",
+        "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1"
+      }
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/3.webp",
+      "sha256": "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/3.png",
+        "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67"
+      }
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/4.webp",
+      "sha256": "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/4.png",
+        "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67"
+      }
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/5.webp",
+      "sha256": "e7d03fdea2eea80da7610a57819513baa85f4bb69774cafc39c7b9b00acbc7aa",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/5.png",
+        "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1"
+      }
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/6.webp",
+      "sha256": "8a660d4f0a218201d987309387eb86f1bba7a928ba2e49f4035ab39237e1255e",
+      "anchors": {
+        "nearHand": {
+          "x": 383,
+          "y": 485
+        },
+        "farHand": {
+          "x": 455,
+          "y": 496
+        },
+        "forefootSole": {
+          "x": 711,
+          "y": 757
+        },
+        "rearPivot": {
+          "x": 1231,
+          "y": 374
+        }
+      },
+      "invariantDimensions": {
+        "pivotToPadMount": 366.7860411738702,
+        "machineSupportSpan": 891
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/6.png",
+        "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c"
+      }
+    }
+  ]
+}

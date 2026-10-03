@@ -1,0 +1,144 @@
+{
+  "releaseApproved": false,
+  "scope": "Exact fixed-region comparison and four 16x16 dark background corner patches; does not validate anatomy, full equipment geometry or mechanics.",
+  "regions": {
+    "pistol-squat": [[0, 1300, 500, 1536]],
+    "glute-ham-raise": [
+      [0, 650, 1536, 1024],
+      [1080, 450, 1260, 650]
+    ],
+    "donkey-calf-raise": [
+      [0, 850, 1536, 1024],
+      [0, 220, 340, 850],
+      [715, 300, 845, 850]
+    ]
+  },
+  "frames": [
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 1,
+      "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 2,
+      "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 3,
+      "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 4,
+      "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 5,
+      "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "frame": 6,
+      "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
+      "cornerMaximumChannel": 2,
+      "fixedRegionMaximumErrors": [0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 1,
+      "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 2,
+      "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 3,
+      "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 4,
+      "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 5,
+      "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "glute-ham-raise",
+      "frame": 6,
+      "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 1,
+      "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 2,
+      "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 3,
+      "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 4,
+      "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 5,
+      "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "frame": 6,
+      "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+      "cornerMaximumChannel": 1,
+      "fixedRegionMaximumErrors": [0, 0, 0]
+    }
+  ]
+}

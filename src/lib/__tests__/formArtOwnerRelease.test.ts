@@ -95,6 +95,10 @@ describe("owner-authorized artwork activation", () => {
       "dragon-flag",
       "l-sit",
       "clean-and-press",
+      "leg-raise",
+      "plank",
+      "crunches",
+      "shrugs",
       "glute-bridge",
     ]) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");

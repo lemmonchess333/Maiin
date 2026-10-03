@@ -1,0 +1,165 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "stats": {
+    "startTime": "2026-10-02T23:28:31.430Z",
+    "duration": 78184.98899999999,
+    "expected": 18,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "title": "incline-db-press: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "incline-db-press: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "incline-db-press: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-shoulder-press: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-shoulder-press: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-shoulder-press: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-row: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-row: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "db-row: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "romanian-deadlift: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "romanian-deadlift: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "romanian-deadlift: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "lat-pulldown: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "lat-pulldown: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "lat-pulldown: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "leg-raise: six frames and loop in dark",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "leg-raise: six frames and loop in light",
+      "ok": true,
+      "statuses": ["expected"]
+    },
+    {
+      "title": "leg-raise: reduced motion stays still and permits stepping",
+      "ok": true,
+      "statuses": ["expected"]
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-1.png",
+      "sha256": "04caeefa8a16af463e93f4522da5894e2801fe4b93243894d99064430fc69f1a"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-2.png",
+      "sha256": "f0fef7d556032757d8a1c6de1cd997a46ff683f57f6f8db258f8dc8e9d62b6f7"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-3.png",
+      "sha256": "d5d4bfb204cb43eefff42ba00e7ed334bab1f92eb283353d1374cac686bc7602"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-4.png",
+      "sha256": "2e0607fb86060956e2f5ffb4b77a2bca46b3a181f2ab15a2ade9a90a74c8340f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-5.png",
+      "sha256": "8c61f0a070834b49311fcb4142e0a469fcb4e47365a5309e29c30ea53ebc5f42"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-6.png",
+      "sha256": "dfd87ea62141254e0f78e3bb47adb89f0e69b90523d1e6a09ed4d7f5d44ad139"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/dark-page.png",
+      "sha256": "126ab56299ce5bd4494023b7a131b0bd772faad48e00a4004a111f2c971a1423"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-1.png",
+      "sha256": "fe288decb6a2663c82e118df28797183eb9ebfb1237189d8e8670fa4178a15f0"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-2.png",
+      "sha256": "5cc5959ee8a765e28fb7b70e34152b8c69ecb26ce6f82c8501c374b7babf941f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-3.png",
+      "sha256": "7622a593cb5e1e99e2c3d68c171ec90e05026bdde57b9fcbc5570e64b3345266"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-4.png",
+      "sha256": "8bfa774a519211ca1ae08b8a70129057f47dc6008eac123321cc76d955de47f8"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-5.png",
+      "sha256": "5b4246e9f063524f36def8827daef77b06379fb775111983d5c8efe5c9c436e8"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-6.png",
+      "sha256": "6277127c9bafaaa4276f281e41dc9c6283bd336d34aeb109fb73ba6e011a9c69"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/evidence/light-page.png",
+      "sha256": "0ab22519552b92773c60bdda36d1923a3c04693ac512ed0bb180ecf722e86afa"
+    }
+  ]
+}

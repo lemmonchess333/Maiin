@@ -1,0 +1,82 @@
+{
+  "method": "21x21 RGB patch matching, integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 8,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/1.png",
+      "sha256": "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc",
+      "anchors": {
+        "postBaseFrontBolt": {
+          "reference": [152, 1310],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "supportHand": {
+          "reference": [141, 495],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearForefoot": {
+          "reference": [548, 1366],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/2.png",
+      "sha256": "75dea4697a2afafd1185064be3e75e0b28d9ff5d5dcf26f227927fbf25399248",
+      "anchors": {
+        "postBaseFrontBolt": {
+          "reference": [152, 1310],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 9.10506424792139
+        },
+        "supportHand": {
+          "reference": [141, 495],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 12.873771730914589
+        },
+        "nearForefoot": {
+          "reference": [548, 1366],
+          "dx": -2,
+          "dy": 1,
+          "meanChannelDifference": 4.520786092214664
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/3.png",
+      "sha256": "b04fe6b2edad11776d31c93af3bf80fe62625e5e44c84a835d0bffb2065aee12",
+      "anchors": {
+        "postBaseFrontBolt": {
+          "reference": [152, 1310],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 8.374149659863946
+        },
+        "supportHand": {
+          "reference": [141, 495],
+          "dx": -1,
+          "dy": -1,
+          "meanChannelDifference": 17.85034013605442
+        },
+        "nearForefoot": {
+          "reference": [548, 1366],
+          "dx": -3,
+          "dy": 1,
+          "meanChannelDifference": 5.425547996976569
+        }
+      }
+    }
+  ]
+}

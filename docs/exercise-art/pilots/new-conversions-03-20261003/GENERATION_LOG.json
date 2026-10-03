@@ -1,0 +1,218 @@
+[
+  {
+    "id": "glute-ham-raise",
+    "frame": 1,
+    "prompt": "ONE anatomical GLUTE-HAM RAISE setup on realistic GHD, landscape1536x1024. Attached canonical bald facelesswhitegrey athlete, finecontours,white trainers, smoothneutralfeaturelesspelvis withoutclothingseams. Side threequarter facingLEFT. GHD has broadstablefloorframe, rounded twin thighpads aroundcenter, ankle rollerassembly and footplate toRIGHT. Athlete startsUPRIGHT withthighs pressedagainstfrontpad, lowerlegs extend behind towardRIGHT, feet firmlysecured betweenanklerollersandfootplate. Hands crossedoverchest, corebraced, hips extended; knee-to-head linevertical. Headaroundx750y100,kneesaroundx750y650,securedanklesaroundx1170y650. Clearleftspaceforlaterlean. Strongpurple HAMSTRINGS, glutesandcalves lighterlilac, othermuscleswhitegrey. EntirebodyandGHDfitwithmargins, blackbackground, no text/arrows/collage. This is glutehamcurl beginning, not Roman-chair backextension or pronehyperextension.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "source": "/workspace/generated_images/exec-c190c9e5-5f3a-4ee1-b0d8-328e7c6c7169.png",
+    "sourceSha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 1,
+    "prompt": "ONE scientific anatomical DONKEY CALF RAISE machine setup, landscape1536x1024blackbackground. Attached canonicalfacelessbaldwhitegrey athlete,finecontours,whitetrainers,featurelessneutralpelvisnogarmentseams. Fixed side-threequarter facingLEFT. Athletehinges forwardabout90degreesat hips, torso nearlyhorizontal, legs nearlystraight, hands on fixed forwardhandles atleft. A modestblack loadingpad presses onLOWERBACK justabovehips, attachedtoaverticalguidedcarriage that can rise withpelvis. Correctrealistic grey donkeycalfmachine, stablefloorbase, raisedsmallforefootstep atright. BOTH BALLS OF FEET supportedonstep edge, heels hang beyondandbelowstep forstartingcalfstretch. Show bothheels and bothforefootcontacts clearly. Knees notlocked, headneutralwithspine. Primarycalf gastrocnemius strongpurple, soleuslighter; allothermuscleswhitegrey. Nohelper,nohorses,nooversizedweights. Entireathleteequipmentvisiblewithmargins. Do notplacepadonthoracicneckback. No text.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "source": "/workspace/generated_images/exec-b9803170-30f3-4920-8d59-22fb377473db.png",
+    "sourceSha256": "070b8f27f6c9e6cb5c86dd7eaf44fcc0671a276911b16ffb5485bff12da4759a",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      }
+    ]
+  },
+  {
+    "id": "pistol-squat",
+    "frame": 1,
+    "prompt": "ONE anatomical PISTOL SQUAT startingbalance pose, portrait1024x1536blackbackground. Attached canonicalbald facelesswhitegreyathlete,finedarkcontours,whitetrainers,smoothneutralfeaturelesspelvisnogarments. Fullbody side-threequarter facingRIGHT. Stand on ONE workingleg withfootfullyflat onfloor, kneealmoststraight. Otherleg extendsstraightforward towardRIGHT andslightlydownward, its shoeclearlyofffloor. Armsbothreachforwardatshoulderheight forbalance. Workingfootaroundx350y1410, freefootaroundx700y1310; leave rightwardspaceforstraightfreelegduringlaterdeepsquat. Alllimbsnormalproportions. Strongpurple workinglegquadriceps ONLY, workinggluteshamstringslighterlilac, coresubtlepale, freel egwhitegrey. Samecanonicalidentity. Fullbodyandsuspendedfootwithinmargins, no equipment, no text/arrows/collage. This is balancedstanding setup, not squattingyet.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "source": "/workspace/generated_images/exec-38db85e5-a765-4932-9886-3f344eb88263.png",
+    "sourceSha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      }
+    ]
+  },
+  {
+    "id": "glute-ham-raise",
+    "frame": 2,
+    "prompt": "Edit SECOND image only GLUTE-HAM RAISE earlylowering. AllGHDmetalframe, floorfeet, padandanklerollers andsecuredfeet staypixelstationary. Extendknees totilt straightknee-hip-shoulder-headchain towardLEFT byabout25degrees. Hipsstayextended, notwaist-onlyhinge. Armsremaincrossed. Knees remainagainstpad, anklessecuredinsamerollers, shinsmayrotateonlyasphysicallyneeded. Exactbodylimblengths, camera1536x1024blackcanvas, allhardwarerigidandsame. Headmovesleftanddownnaturally, do notzoom. Hamstringsstrongpurple, glutesandcalveslighter, restwhitegrey. No text.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-ca69b23a-374f-441f-83ab-d4e1c47a13eb.png",
+    "sourceSha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png",
+        "retainedPath": "docs/exercise-art/masters/glute-ham-raise/1.png",
+        "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42"
+      }
+    ]
+  },
+  {
+    "id": "pistol-squat",
+    "frame": 2,
+    "prompt": "Edit SECOND image only PISTOL SQUAT halfwaydescent on SAMEworkingleg. Keep plantedshoe exactlyatitsoriginalfloorposition, heelandforefootflat, workingknee tracks overtoes. Bendworkingkneeandhip tohalfdepth, hipsbackanddown, torsoleansforwardnaturallyforbalance. Nonworkingleg remainsstraightforward andofffloor, armsforward. Do notswaplegs, changebodyproportions, zoomortranslatewholeathlete. Keepcamera1024x1536blackcanvas. Primaryworkingquadricepsstrongpurple, workinggluteshamstringspale, freelegwhitegrey. Entirefreefootandfingersvisible. Noequipment,text,arrows.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-ab3ce363-be6d-45a2-a56b-844f1740c687.png",
+    "sourceSha256": "4b57dfde09fca1cfa1f55268fa57e06ad9dd3168acfa50b1f93aad2c3b83306e",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png",
+        "retainedPath": "docs/exercise-art/masters/pistol-squat/1.png",
+        "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 1,
+    "retry": true,
+    "prompt": "Correct SECOND image DONKEY CALF RAISE setup only. Replace the vertical black pad hanging against the side ofthehip with a WIDE HORIZONTAL padded saddle resting onTOP of LOWERBACK overpelvis, visibly applyingDOWNWARDload fromtheverticalguidedcarriage. It mustlooklikea real donkeycalf machine backpad, not a waistbeltorverticalstrap. Lowerbothheels belowthetopofstep intoa relaxedcalfstretch while keepingballs ofbothfeetfirmlyontheedge; heels hangfreebehindedge. Hipsbodylower slightly withheels, kneesremainsoftlystraight, hiphingeabout90degrees, handsongrips. Keepmachinefloorbase,stepandforwardhandlesfixed, same1536x1024blackcanvas, canonicalanatomy, purplecalves, no text.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-1e7cad99-9785-4700-8c79-bd0d8c84383b.png",
+    "sourceSha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png",
+        "retainedPath": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/rejected/setup-pad-and-heels.png",
+        "sha256": "070b8f27f6c9e6cb5c86dd7eaf44fcc0671a276911b16ffb5485bff12da4759a"
+      }
+    ]
+  },
+  {
+    "id": "glute-ham-raise",
+    "frame": 2,
+    "instruction": "Create an EARLY glute-ham raise lowering pose from the upright master. Lean the straight head-hip-knee line ONLY 15 degrees to the LEFT from vertical, an intentionally small movement. Arms crossed. Rotate about the supported knees without folding at hips. Keep ankle rollers and feet secured exactly in place. Preserve the entire GHD machine pixel positions and body lengths.",
+    "prompt": "Edit the second reference, using the first only for athlete identity. Tropos anatomical exercise instruction artwork, faceless white and grey athlete, smooth featureless pelvis, white shoes, white background, purple target muscles. No text or labels. Same native aspect, camera, scale, equipment and identity. Create an EARLY glute-ham raise lowering pose from the upright master. Lean the straight head-hip-knee line ONLY 15 degrees to the LEFT from vertical, an intentionally small movement. Arms crossed. Rotate about the supported knees without folding at hips. Keep ankle rollers and feet secured exactly in place. Preserve the entire GHD machine pixel positions and body lengths.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-b65e8883-e8ed-4f95-b4ea-9f0044aa413f.png",
+    "sourceSha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/glute-ham-raise/1.png",
+        "retainedPath": "docs/exercise-art/masters/glute-ham-raise/1.png",
+        "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42"
+      }
+    ]
+  },
+  {
+    "id": "pistol-squat",
+    "frame": 3,
+    "instruction": "Create the deep bottom of this pistol squat, same working leg. Lower the hips close to the planted heel by flexing working knee and hip. The free leg stays straight in front to the RIGHT, off the floor. Both arms forward for balance, torso inclines naturally. Working shoe stays EXACTLY at the master's floor coordinates; do not lift or translate it. Preserve limb lengths and full-body framing.",
+    "prompt": "Edit the second reference, using the first only for athlete identity. Tropos anatomical exercise instruction artwork, faceless white and grey athlete, smooth featureless pelvis, white shoes, white background, purple target muscles. No text or labels. Same native aspect, camera, scale, equipment and identity. Create the deep bottom of this pistol squat, same working leg. Lower the hips close to the planted heel by flexing working knee and hip. The free leg stays straight in front to the RIGHT, off the floor. Both arms forward for balance, torso inclines naturally. Working shoe stays EXACTLY at the master's floor coordinates; do not lift or translate it. Preserve limb lengths and full-body framing.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-711bff39-f0ab-4eca-a987-be7860f5f5ad.png",
+    "sourceSha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/pistol-squat/1.png",
+        "retainedPath": "docs/exercise-art/masters/pistol-squat/1.png",
+        "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 3,
+    "instruction": "Create the TOP of a donkey calf raise. Keep forefoot balls fixed on the step. Raise both heels clearly by ankle plantarflexion, keeping knees softly straight. Torso stays hinged horizontally, hands fixed at handles. The horizontal pad resting on top of lower back rises with pelvis along its guided carriage. Keep fixed step, handles, frame, camera and all limb lengths identical.",
+    "prompt": "Edit the second reference, using the first only for athlete identity. Tropos anatomical exercise instruction artwork, faceless white and grey athlete, smooth featureless pelvis, white shoes, white background, purple target muscles. No text or labels. Same native aspect, camera, scale, equipment and identity. Create the TOP of a donkey calf raise. Keep forefoot balls fixed on the step. Raise both heels clearly by ankle plantarflexion, keeping knees softly straight. Torso stays hinged horizontally, hands fixed at handles. The horizontal pad resting on top of lower back rises with pelvis along its guided carriage. Keep fixed step, handles, frame, camera and all limb lengths identical.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-211c2124-6461-443a-a32c-f0db8dfd7547.png",
+    "sourceSha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png",
+        "retainedPath": "docs/exercise-art/masters/donkey-calf-raise/superseded-20261003.png",
+        "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393"
+      }
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "frame": 2,
+    "prompt": "Edit second reference as exact scene master, first reference for anatomical athlete identity. Create the MIDWAY donkey calf raise pose: raise heels about 4cm from their current low position, through ankle plantarflexion only, balls of both feet planted on the SAME platform edge. Keep knees softly straight, same torso hip hinge, hands fixed on handles. Lower back and its horizontal loading cushion rise a little together along vertical carriage. Keep all stationary machine feet, step corners, handles and body segment lengths identical. Faceless white-grey anatomical athlete, purple calf highlights, white shoes, white background, no labels, same landscape framing.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-a9067594-f7a2-4142-929e-dda78b86b746.png",
+    "sourceSha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f",
+    "referenceSnapshots": [
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolReferencePath": "/workspace/Maiin/docs/exercise-art/masters/donkey-calf-raise/1.png",
+        "retainedPath": "docs/exercise-art/masters/donkey-calf-raise/superseded-20261003.png",
+        "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393"
+      }
+    ]
+  }
+]

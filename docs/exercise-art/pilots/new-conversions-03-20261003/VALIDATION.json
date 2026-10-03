@@ -1,0 +1,38 @@
+{
+  "baseCommit": "6017c5b8ec8aa07e2a6928ea2f4802ddf9ee227c",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "durationSeconds": 271.15,
+    "scope": "All three new sets registered before the full run. Review notes and evidence documentation finalized during the run; native images and code unchanged."
+  },
+  "browser": {
+    "startTime": "2026-10-03T13:15:30.495Z",
+    "duration": 24951.864999999998,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "finalDraftAudit": {
+    "newSets": 3,
+    "newFrames": 18,
+    "newUniquePoses": 9,
+    "totalRegisteredDraftSets": 25,
+    "totalRegisteredDraftFrames": 150,
+    "totalUniquePoses": 90,
+    "nativeBytes": 157259354,
+    "errors": []
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5881.9
+  },
+  "productionAssetsChanged": false,
+  "releaseApproved": false
+}

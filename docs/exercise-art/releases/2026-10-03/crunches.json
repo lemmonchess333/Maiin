@@ -1,0 +1,292 @@
+{
+  "exerciseId": "crunches",
+  "version": "anatomy-v3-composite-2026-10-03",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native composite and production-player review",
+  "reviewedAt": "2026-10-03T09:52:43.264303+00:00",
+  "reference": {
+    "path": "form-frames/crunches/3.webp",
+    "sha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
+    "anchors": {
+      "nearHeelSole": {
+        "x": 1140,
+        "y": 812
+      },
+      "nearToeSole": {
+        "x": 1344,
+        "y": 829
+      },
+      "farToeSole": {
+        "x": 1430,
+        "y": 758
+      },
+      "farHeelSole": {
+        "x": 1260,
+        "y": 738
+      },
+      "pelvisFloor": {
+        "x": 816,
+        "y": 785
+      }
+    },
+    "invariantDimensions": {
+      "nearShoeSupportSpan": 204.70710783946902,
+      "farShoeSupportSpan": 171.1724276862369
+    }
+  },
+  "cueSha256": "b113b9b5922d27e015f6c98056ca68d97f5930fd574143fab2824cc566352602",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey anatomical athlete, white shoes and purple abdominal emphasis preserved. Thumbnail is a separately reviewed transparent derivative."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native 1536x1024 canvas, head left and feet right. No pose scaling or warping. User-authorized compositing follows the pelvic boundary with a 20px blend."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Two arms and two bent legs remain consistent. Hands rest behind the head, shoulders curl upward, pelvis and lower back stay down. Native join close-ups show no doubled silhouette after curved-mask revision."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight floor crunch; no equipment or changing external objects."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Five support patches have zero translation and zero RGB difference. The entire fixed region copies setup pixels exactly. Both shoe support spans are invariant. These measurements certify fixed supports, not every anatomical feature."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Shoulder blades rise in a small crunch while feet and pelvis stay planted. Moving upper-body pixels outside the narrow join are unchanged from source. No sit-up or floating supports."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Rectus abdominis uses strongest purple; obliques use lighter purple. Visible muscle hierarchy matches the production key without activation measurement claims."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match setup, curl, shoulder lift, pause, controlled lowering and return. Each fits seven words. Begin curl does not claim a half-angle: head-top spacing is uneven (440,353,322)."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three key poses ordered 1,2,3,3,2,1. All six lossless WebPs match repaired PNG RGB exactly; endpoints are identical. Targeted production playback and reduced-motion checks passed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "393x852 production guide reviewed in light mode: poses and cues remain visible. Initial keyed thumbnail retained floor shadows and was rejected; replacement transparent cutout reviewed on white before export. Final production card and page inspected after export: no visible floor-shadow fragments or black halo."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "393x852 production guide reviewed in dark mode: poses and cues visible, no overflow. Transparent derivative retains the same crunch pose. Final exported card and page inspected in dark mode."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/crunches/1.webp",
+      "sha256": "7ea2f4eb76bd48f38da40a8c2faf493b1f698b89f7ab836bdbc69bd0fdc23780",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/1.png",
+        "sha256": "f420e541f102a4724b32cb215786e3d6d2fd10f037d541ea585acda914980593"
+      }
+    },
+    {
+      "path": "form-frames/crunches/2.webp",
+      "sha256": "49c7cd8e7da32f13a32deab59d6c2ad8b083c7b2daf01d6b53d1898ae3296bbe",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/2.png",
+        "sha256": "09ef69328109c61319c6758a0b90ee0f0aaa8e5ed517d6b689d4ac60ccaced7f"
+      }
+    },
+    {
+      "path": "form-frames/crunches/3.webp",
+      "sha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/3.png",
+        "sha256": "8aff776a798eed6de8c7ffc80cfd52e36195ee9f914bd0fddb58795ad4444ca8"
+      }
+    },
+    {
+      "path": "form-frames/crunches/4.webp",
+      "sha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/4.png",
+        "sha256": "8aff776a798eed6de8c7ffc80cfd52e36195ee9f914bd0fddb58795ad4444ca8"
+      }
+    },
+    {
+      "path": "form-frames/crunches/5.webp",
+      "sha256": "49c7cd8e7da32f13a32deab59d6c2ad8b083c7b2daf01d6b53d1898ae3296bbe",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/5.png",
+        "sha256": "09ef69328109c61319c6758a0b90ee0f0aaa8e5ed517d6b689d4ac60ccaced7f"
+      }
+    },
+    {
+      "path": "form-frames/crunches/6.webp",
+      "sha256": "7ea2f4eb76bd48f38da40a8c2faf493b1f698b89f7ab836bdbc69bd0fdc23780",
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSupportSpan": 204.70710783946902,
+        "farShoeSupportSpan": 171.1724276862369
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/crunches-composite-20261003/6.png",
+        "sha256": "f420e541f102a4724b32cb215786e3d6d2fd10f037d541ea585acda914980593"
+      }
+    }
+  ]
+}

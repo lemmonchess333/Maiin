@@ -1,0 +1,36 @@
+{
+  "exerciseId": "pistol-squat",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/pistol-squat/1.png",
+    "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b"
+  },
+  "generationSources": [
+    {
+      "selectedFrame": 1,
+      "path": "/workspace/generated_images/exec-38db85e5-a765-4932-9886-3f344eb88263.png",
+      "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b"
+    },
+    {
+      "selectedFrame": 2,
+      "path": "/workspace/generated_images/exec-ab3ce363-be6d-45a2-a56b-844f1740c687.png",
+      "sha256": "4b57dfde09fca1cfa1f55268fa57e06ad9dd3168acfa50b1f93aad2c3b83306e"
+    },
+    {
+      "selectedFrame": 3,
+      "path": "/workspace/generated_images/exec-711bff39-f0ab-4eca-a987-be7860f5f5ad.png",
+      "sha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451"
+    }
+  ],
+  "cueSha256": "c65bbe5c9c403d2799c8fd1638764be7416514693865790ad7cec8babb7bbcf7",
+  "reviewFindings": [
+    "Three unique poses show single-leg standing, midway lowering and deep lowering, then reused 3,2,1. Same working leg and forward free leg are retained.",
+    "The planted shoe shifts upward between poses, despite the fixed-floor plan. Working-limb proportions and torso balance need review. No fixed-contact approval is claimed.",
+    "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+  ]
+}

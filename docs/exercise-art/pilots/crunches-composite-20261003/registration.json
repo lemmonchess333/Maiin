@@ -1,0 +1,134 @@
+{
+  "method": "31x31 RGB master patches, +/-5px integer translation minimizing absolute channel difference. Head top is first row with five foreground pixels above 60 in x130..349/y250..499. Read-only, no image transformations. Patch results also respond to redraw/shading changes and are not anatomy certification.",
+  "releaseAnchorTolerancePixels": 1,
+  "releaseApproved": false,
+  "selectedPoseOrder": [1, 2, 3, 3, 2, 1],
+  "measurements": [
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/1.png",
+      "sha256": "f420e541f102a4724b32cb215786e3d6d2fd10f037d541ea585acda914980593",
+      "headTop": 440,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/2.png",
+      "sha256": "09ef69328109c61319c6758a0b90ee0f0aaa8e5ed517d6b689d4ac60ccaced7f",
+      "headTop": 353,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/3.png",
+      "sha256": "8aff776a798eed6de8c7ffc80cfd52e36195ee9f914bd0fddb58795ad4444ca8",
+      "headTop": 322,
+      "anchors": {
+        "nearHeelSole": {
+          "x": 1140,
+          "y": 812,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearToeSole": {
+          "x": 1344,
+          "y": 829,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farToeSole": {
+          "x": 1430,
+          "y": 758,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeelSole": {
+          "x": 1260,
+          "y": 738,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "pelvisFloor": {
+          "x": 816,
+          "y": 785,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

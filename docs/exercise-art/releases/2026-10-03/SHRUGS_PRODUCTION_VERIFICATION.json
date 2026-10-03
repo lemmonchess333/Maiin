@@ -1,0 +1,78 @@
+{
+  "commit": "1cf1f243845072c2203db934a33125bb113ae36f",
+  "url": "https://adaptive-fitness-af8bb.firebaseapp.com",
+  "checkedAt": "2026-10-03T11:40:59.470264+00:00",
+  "assets": [
+    {
+      "path": "form-frames/shrugs/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "ac4765e0fbc0cf9def2d46d24f6f641d17a890601f9eedca165b6c91b430b57c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/shrugs/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "610a3b518dcebd484f3cbfcb907fb8e7e18c98ade551ad6c4c23b8d947d9ed75",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/shrugs/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/shrugs/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/shrugs/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "610a3b518dcebd484f3cbfcb907fb8e7e18c98ade551ad6c4c23b8d947d9ed75",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/shrugs/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "ac4765e0fbc0cf9def2d46d24f6f641d17a890601f9eedca165b6c91b430b57c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-art/shrugs.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
+      "matchesLocal": true
+    }
+  ],
+  "registryBundle": {
+    "path": "assets/formArtwork-9192iEb9.js",
+    "sha256": "7a6dfc5a2b6a6018c5b17e5fa9ccc25af3bce12ed3f7f49da1027d3d6e35aea2",
+    "matchesLocal": true,
+    "containsShrugsRelease": true
+  },
+  "workflowRun": 37120201404,
+  "localVerify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "durationSeconds": 264.51
+  },
+  "dependencyAudit": {
+    "high": 6,
+    "moderate": 11,
+    "critical": 0,
+    "dependencyFilesUnchangedFromPreviousDeployment": true
+  }
+}

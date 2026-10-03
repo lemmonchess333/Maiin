@@ -41,6 +41,92 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "calf-raise": {
+    version: "anatomy-v3-upright-reference-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/calf-raise/${i + 1}.webp`
+    ),
+    reference: "form-frames/calf-raise/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/calf-raise.json",
+  },
+  "standing-calf-raise": {
+    version: "anatomy-v3-upright-reference-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/standing-calf-raise/${i + 1}.webp`
+    ),
+    reference: "form-frames/standing-calf-raise/3.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-03/standing-calf-raise.json",
+  },
+
+  "donkey-calf-raise": {
+    version: "anatomy-v3-fixed-contacts-2026-10-03",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/donkey-calf-raise/${i + 1}.webp`
+    ),
+    reference: "form-frames/donkey-calf-raise/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json",
+  },
+  shrugs: {
+    version: "anatomy-v3-rigid-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/shrugs/${i + 1}.webp`
+    ),
+    reference: "form-frames/shrugs/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/shrugs.json",
+  },
+  crunches: {
+    version: "anatomy-v3-composite-2026-10-03",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/crunches/${i + 1}.webp`
+    ),
+    reference: "form-frames/crunches/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/crunches.json",
+  },
+  plank: {
+    version: "anatomy-v3-2026-10-03",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/plank/${i + 1}.webp`
+    ),
+    reference: "form-frames/plank/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/plank.json",
+  },
+  "leg-raise": {
+    version: "anatomy-v3-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/leg-raise/${i + 1}.webp`
+    ),
+    reference: "form-frames/leg-raise/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/leg-raise.json",
+  },
   "clean-and-press": {
     version: "anatomy-v3-2026-10-02",
     status: "approved",

@@ -1,9 +1,10 @@
 {
   "catalogue": 152,
   "inScope": 141,
-  "existingSets": 7,
-  "newlyApproved": 0,
-  "releasedBytes": 3483250,
+  "existingSets": 6,
+  "newlyApproved": 54,
+  "ownerReleasedWithFindings": 3,
+  "releasedBytes": 190497826,
   "errors": [],
   "inventory": [
     {
@@ -20,27 +21,27 @@
       "name": "Incline Bench Press",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3598116
     },
     {
       "id": "decline-bench",
       "name": "Decline Bench Press",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3998592
     },
     {
       "id": "db-bench",
       "name": "Dumbbell Bench Press",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3270356
     },
     {
       "id": "incline-db-press",
@@ -56,54 +57,54 @@
       "name": "Decline Dumbbell Press",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4299364
     },
     {
       "id": "db-flyes",
       "name": "Dumbbell Flyes",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3296968
     },
     {
       "id": "cable-crossover",
       "name": "Cable Crossover",
       "equipment": "Cable Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3474408
     },
     {
       "id": "chest-press-machine",
       "name": "Chest Press Machine",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3145776
     },
     {
       "id": "pec-deck",
       "name": "Pec Deck",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3237852
     },
     {
       "id": "machine-chest-fly",
       "name": "Machine Chest Fly",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3218216
     },
     {
       "id": "smith-bench-press",
@@ -119,45 +120,45 @@
       "name": "Push-Ups",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3145868
     },
     {
       "id": "pike-push-up",
       "name": "Pike Push-Up",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4203836
     },
     {
       "id": "weighted-push-ups",
       "name": "Weighted Push-Ups",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3105876
     },
     {
       "id": "barbell-floor-press",
       "name": "Barbell Floor Press",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3250084
     },
     {
       "id": "weighted-chest-dip",
       "name": "Weighted Chest Dip",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2836196
     },
     {
       "id": "deadlift",
@@ -209,9 +210,9 @@
       "name": "Meadows Row",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3493508
     },
     {
       "id": "pull-ups",
@@ -327,8 +328,8 @@
       "equipment": "Dumbbells",
       "inScope": true,
       "authoredBeats": 6,
-      "status": "existing-needs-review",
-      "bytes": 420916
+      "status": "approved",
+      "bytes": 2539196
     },
     {
       "id": "reverse-pec-deck",
@@ -353,9 +354,9 @@
       "name": "Front Raise",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2926548
     },
     {
       "id": "reverse-flyes",
@@ -380,9 +381,9 @@
       "name": "Arnold Press",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2842344
     },
     {
       "id": "shoulder-press-machine",
@@ -407,27 +408,27 @@
       "name": "Barbell Upright Row",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3061848
     },
     {
       "id": "shrugs",
       "name": "Shrugs",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2864460
     },
     {
       "id": "barbell-shrug",
       "name": "Barbell Shrug",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3199012
     },
     {
       "id": "cuban-press",
@@ -443,9 +444,9 @@
       "name": "Lu Raise",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2370962
     },
     {
       "id": "landmine-press",
@@ -461,18 +462,18 @@
       "name": "Barbell Curl",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "owner-released-with-findings",
+      "bytes": 363948
     },
     {
       "id": "ez-bar-curl",
       "name": "EZ Bar Curl",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2833528
     },
     {
       "id": "db-curl",
@@ -480,8 +481,8 @@
       "equipment": "Dumbbells",
       "inScope": true,
       "authoredBeats": 6,
-      "status": "needs-artwork",
-      "bytes": 0
+      "status": "approved",
+      "bytes": 3418156
     },
     {
       "id": "incline-db-curl",
@@ -497,27 +498,27 @@
       "name": "Hammer Curl",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3540988
     },
     {
       "id": "cross-body-hammer-curl",
       "name": "Cross-Body Hammer Curl",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3361716
     },
     {
       "id": "zottman-curl",
       "name": "Zottman Curl",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3467498
     },
     {
       "id": "preacher-curl",
@@ -551,27 +552,27 @@
       "name": "Concentration Curl",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3975296
     },
     {
       "id": "spider-db-curl",
       "name": "Spider Dumbbell Curl",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3439412
     },
     {
       "id": "reverse-barbell-curl",
       "name": "Reverse Barbell Curl",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3211580
     },
     {
       "id": "rope-tricep-pushdown",
@@ -623,9 +624,9 @@
       "name": "Bench Dips",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3887604
     },
     {
       "id": "close-grip-bench",
@@ -641,9 +642,9 @@
       "name": "Tricep Kickback",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2982912
     },
     {
       "id": "single-arm-cable-pushdown",
@@ -677,9 +678,9 @@
       "name": "Diamond Push-Ups",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2976208
     },
     {
       "id": "squat",
@@ -687,8 +688,8 @@
       "equipment": "Barbell",
       "inScope": true,
       "authoredBeats": 6,
-      "status": "needs-artwork",
-      "bytes": 0
+      "status": "owner-released-with-findings",
+      "bytes": 350728
     },
     {
       "id": "front-squat",
@@ -704,9 +705,9 @@
       "name": "Goblet Squat",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "owner-released-with-findings",
+      "bytes": 301846
     },
     {
       "id": "sissy-squat",
@@ -839,9 +840,9 @@
       "name": "Bodyweight Squat",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2968044
     },
     {
       "id": "walking-dumbbell-lunges",
@@ -875,18 +876,18 @@
       "name": "Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4660540
     },
     {
       "id": "standing-calf-raise",
       "name": "Standing Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4660540
     },
     {
       "id": "seated-calf-raise",
@@ -902,9 +903,9 @@
       "name": "Donkey Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2630440
     },
     {
       "id": "single-leg-calf-raise",
@@ -929,9 +930,9 @@
       "name": "Glute Bridge",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4260636
     },
     {
       "id": "hip-abduction-machine",
@@ -974,18 +975,18 @@
       "name": "Plank",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3094212
     },
     {
       "id": "superman-hold",
       "name": "Superman Hold",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4102376
     },
     {
       "id": "side-plank",
@@ -1010,108 +1011,108 @@
       "name": "Crunches",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3508792
     },
     {
       "id": "bicycle-crunch",
       "name": "Bicycle Crunch",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4393214
     },
     {
       "id": "decline-sit-up",
       "name": "Decline Sit-Up",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3479192
     },
     {
       "id": "leg-raise",
       "name": "Hanging Leg Raise",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3437788
     },
     {
       "id": "toe-touches",
       "name": "Toe Touches",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3020048
     },
     {
       "id": "russian-twist",
       "name": "Russian Twist",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4070272
     },
     {
       "id": "mountain-climbers",
       "name": "Mountain Climbers",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4120108
     },
     {
       "id": "cable-crunch",
       "name": "Cable Crunch",
       "equipment": "Cable Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3659508
     },
     {
       "id": "cable-woodchopper",
       "name": "Cable Woodchopper",
       "equipment": "Cable Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3770676
     },
     {
       "id": "pallof-press",
       "name": "Pallof Press",
       "equipment": "Cable Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4410096
     },
     {
       "id": "dead-bug",
       "name": "Dead Bug",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2687568
     },
     {
       "id": "dragon-flag",
       "name": "Dragon Flag",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4435752
     },
     {
       "id": "ab-wheel",
@@ -1127,18 +1128,18 @@
       "name": "L-Sit",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4565916
     },
     {
       "id": "clean-and-press",
       "name": "Clean and Press",
       "equipment": "Barbell",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2008968
     },
     {
       "id": "kettlebell-swing",

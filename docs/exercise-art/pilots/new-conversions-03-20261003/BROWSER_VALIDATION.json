@@ -1,0 +1,12 @@
+{
+  "stats": {
+    "startTime": "2026-10-03T13:15:30.495Z",
+    "duration": 24951.864999999998,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep 'glute-ham-raise|donkey-calf-raise|pistol-squat'",
+  "scope": "Playback mechanics and integrity only; does not approve technique, contacts or background continuity."
+}

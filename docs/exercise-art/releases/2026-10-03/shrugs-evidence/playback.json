@@ -1,0 +1,129 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "stats": {
+    "startTime": "2026-10-03T11:10:06.755Z",
+    "duration": 86871.973,
+    "expected": 33,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-1.png",
+      "sha256": "373c0e86a6794579bb34ec11b908cebef29e9760b832b2b3408da36804e07cc8"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-2.png",
+      "sha256": "8dba51996b3a7498966386b0d08bf365ac9ebceb1a2ce38589479b658e7d8dc7"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-3.png",
+      "sha256": "aa7aeee52c9f9139c1b7ac192577bc162f65752b9522bece4ad3004214e71d4c"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-4.png",
+      "sha256": "b9a84349ad3072aa4fa7003be5b05bf9685e7312654f7fe43624328270e67803"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-5.png",
+      "sha256": "a5b76b6f56fac676eed1a069f8b7faed71154998153020998b0353479320268c"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-6.png",
+      "sha256": "4caaeef2221b11f4190951eb1e45fe308f63ff012cb29bd360de4956b160a246"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-card.png",
+      "sha256": "a6334d37167f583e8b9ad19458be84151aef06eda8ce5f30e70a47a937a47f5f"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-page.png",
+      "sha256": "c26381fdf2ea2f2c3fb3ac34e021b49b45ad81050355a6c7c284fd0b3d076701"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-1.png",
+      "sha256": "113264feb0b0bb7b287c434f5151809bbab2b38626607b0990b8f09883340318"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-2.png",
+      "sha256": "c34ef4905d920eb8da5bee509ad15589c7746ce4243b5311ff3ba926c273f699"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-3.png",
+      "sha256": "b60397e66e7ee36a79b3321d6631b487955572b9418124a9d6723982662c8782"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-4.png",
+      "sha256": "b60397e66e7ee36a79b3321d6631b487955572b9418124a9d6723982662c8782"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-5.png",
+      "sha256": "c34ef4905d920eb8da5bee509ad15589c7746ce4243b5311ff3ba926c273f699"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/dark-pixels-6.png",
+      "sha256": "113264feb0b0bb7b287c434f5151809bbab2b38626607b0990b8f09883340318"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-1.png",
+      "sha256": "2f869499cf000557da690ab30b698d09ebddf00e8ff5b601720ee39c83ddc079"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-2.png",
+      "sha256": "ca761d88b6e445c5c4ddf1a166305eb84253e926460e4dc64b49a3bfca6e41b2"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-3.png",
+      "sha256": "b092f91188c46431725d51b3f7ddd6ef47e44f39feae29f4546a721ab86ccf8f"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-4.png",
+      "sha256": "3805b0e15d608fe468d64f40c8778bc79ab4769e9932d7a3476b29bccd842e74"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-5.png",
+      "sha256": "4d66d379632c0d0fd2956479ba15a2ac0f362d8124dc7e23c3839ec7b7e20c23"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-6.png",
+      "sha256": "ce5ab31c9d2f5491d76088797488c71fd7fd96ebcdbfe6a3e3c7dc5b2b8c981e"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-card.png",
+      "sha256": "296480527c12f237ec13e3696be958174e824c81b629c8955aa4fe6939827479"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-page.png",
+      "sha256": "e69ec4b8081e72df273e4ae1de2bab036bf7aab68a426d63a7f3f18911da77e3"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-1.png",
+      "sha256": "113264feb0b0bb7b287c434f5151809bbab2b38626607b0990b8f09883340318"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-2.png",
+      "sha256": "c34ef4905d920eb8da5bee509ad15589c7746ce4243b5311ff3ba926c273f699"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-3.png",
+      "sha256": "b60397e66e7ee36a79b3321d6631b487955572b9418124a9d6723982662c8782"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-4.png",
+      "sha256": "b60397e66e7ee36a79b3321d6631b487955572b9418124a9d6723982662c8782"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-5.png",
+      "sha256": "c34ef4905d920eb8da5bee509ad15589c7746ce4243b5311ff3ba926c273f699"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/shrugs-evidence/light-pixels-6.png",
+      "sha256": "113264feb0b0bb7b287c434f5151809bbab2b38626607b0990b8f09883340318"
+    }
+  ]
+}

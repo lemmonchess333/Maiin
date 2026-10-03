@@ -1,0 +1,54 @@
+{
+  "variation": "Seated selectorized hip adduction with pads inside thighs; comfortable wide start, squeeze inward, controlled outward return.",
+  "camera": "Fixed front slight three-quarter showing both inner-thigh pads, hand grips and feet.",
+  "equipment": "Real hip adduction machine, fixed seat/backrest and handles, two pivoting pad/footrest assemblies, enclosed resistance tower.",
+  "primary": "Adductors",
+  "secondary": "Glutes subtle where visible",
+  "fixedAnchors": [
+    "tower corners",
+    "machine floor feet",
+    "fixed seat and backrest"
+  ],
+  "invariants": ["pad dimensions", "lever lengths", "athlete limb proportions"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set your starting width",
+      "cue": "Rest inner thighs against pads; grip handles.",
+      "pose": "Seated supported, knees comfortably wide and bent90degrees, pads against inner thighs."
+    },
+    {
+      "frame": 2,
+      "label": "Squeeze inward",
+      "cue": "Bring knees together against the pads.",
+      "pose": "Thighs halfway toward midline, feet and pads move with legs."
+    },
+    {
+      "frame": 3,
+      "label": "Finish the squeeze",
+      "cue": "Squeeze inner thighs without lifting your hips.",
+      "pose": "Knees nearly together with pads between; back and pelvis supported."
+    },
+    {
+      "frame": 4,
+      "label": "Control the closed position",
+      "cue": "Keep your back supported and core braced.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Open slowly",
+      "cue": "Let knees open slowly against resistance.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return under tension",
+      "cue": "Reach your starting width without relaxing completely.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "hip-adduction-machine",
+  "status": "six-frame-draft",
+  "releaseApproved": false
+}

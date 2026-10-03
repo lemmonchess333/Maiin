@@ -1,0 +1,54 @@
+{
+  "baseCommit": "600ebfbbb8193abce2f705cc35fbbb9e5914a228",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10872,
+    "testsSkipped": 367,
+    "testsFailed": 0,
+    "durationSeconds": 300.95
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "startTime": "2026-10-03T09:22:27.748Z",
+    "duration": 129478.63799999999,
+    "expected": 27,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0,
+    "initialRunFinding": "One legacy Hanging Leg Raise draft endpoint screenshot differed. Added explicit font readiness and image decoding waits and saved endpoint screenshots; all 27 checks pass on rerun with its exact byte comparison unchanged."
+  },
+  "afterBrowserTestEdit": {
+    "typecheck": "passed",
+    "eslint": "passed"
+  },
+  "bundleBudget": {
+    "command": "npm run check:dist-size",
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5880.0,
+    "baselineKB": 5878.1
+  },
+  "delivery": {
+    "frameCount": 6,
+    "uniquePoses": 2,
+    "frameBytes": 3094212,
+    "cardBytes": 16868,
+    "dimensions": [1536, 1024],
+    "cardDimensions": [480, 193],
+    "sourcePngToWebpRgbPixels": "Exact equality for all six frames.",
+    "provenance": "Canonical, master, formatted plan and all PNG hashes rechecked against files."
+  },
+  "coverage": {
+    "released": 58,
+    "approved": 49,
+    "ownerReleasedWithFindings": 3,
+    "historicalNeedsReview": 6,
+    "withoutReleasedArt": 83,
+    "inScope": 141,
+    "releasedFrameBytes": 172173054
+  },
+  "scope": "Plank is integrated on the working branch. Side Plank and Crunches remain unreleased. No deployment or merge."
+}

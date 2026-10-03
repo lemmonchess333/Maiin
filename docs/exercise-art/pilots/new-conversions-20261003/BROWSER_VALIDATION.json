@@ -1,0 +1,12 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep cuban-press|hip-abduction-machine",
+  "stats": {
+    "startTime": "2026-10-03T12:09:23.914Z",
+    "duration": 17057.477,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": "Six checks for two new drafts: dark/light frame order, image dimensions, cues, actual autoplay loop, touch targets, no overflow/errors, reduced motion. Not visual release approval."
+}

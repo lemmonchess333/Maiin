@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 32,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+      "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/2.png",
+      "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/3.png",
+      "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

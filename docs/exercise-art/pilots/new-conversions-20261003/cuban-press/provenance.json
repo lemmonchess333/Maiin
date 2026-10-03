@@ -1,0 +1,49 @@
+{
+  "exerciseId": "cuban-press",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/cuban-press/1.png",
+    "sha256": "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d"
+  },
+  "generationSources": [
+    {
+      "path": "/workspace/generated_images/exec-b7865472-249d-45bf-9e8f-30e37433b076.png",
+      "sha256": "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d"
+    },
+    {
+      "path": "/workspace/generated_images/exec-d1173c75-2f7f-40ab-90b1-63c7ff9e8424.png",
+      "sha256": "2c8ce43fa1394d964859b24b147598cd35ef25cc97c15daab423a59c599bbffb"
+    },
+    {
+      "path": "/workspace/generated_images/exec-c5e1b4c7-3f3f-47b4-854e-ad070e92eb19.png",
+      "sha256": "23dd37fd828723b080b34c7244e2bee708da6cccbdda2171a93e268941fa6710"
+    },
+    {
+      "path": "/workspace/generated_images/exec-afb7aae0-1734-4969-99f5-be4621c51782.png",
+      "sha256": "804f74a4c6ce5f3f43c91dc902cc8ab852ebf4f0ad9fbead49abd87e8fcc46e5"
+    }
+  ],
+  "cueSha256": "4e6fcbd52dd7be598a1889c0c10f78db1c66d20fd596039ecafa849d8ca0afdc",
+  "reviewFindings": [
+    "Four unique poses across six separate native frames: setup, row, rotate, press, lower, reverse rotation. The 6-to-1 transition completes lowering to thighs; frames6 and1 intentionally differ.",
+    "First rotation candidate changed body scale and was excluded. Selected retry retains the master framing.",
+    "Overhead frame visibly enlarges the dumbbells and lengthens the arms relative to the other poses. Equipment and anatomy checks remain unresolved; not approved for release. No repair of previously converted exercises was undertaken."
+  ],
+  "excluded": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/rejected/setup-no-headroom.png",
+      "sha256": "a010dbe197721b3d1fae8c8e39ed55606edf62653e69de7e473120121456c846",
+      "reason": "Insufficient overhead space before adjacent frames."
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/rejected/rotation-scale-change.png",
+      "sha256": "05b1be6d90b898c64c3de3c790e31090b91a25c9ad7ab735c6a865b243a0ef4a",
+      "reason": "Changed athlete scale and camera framing."
+    }
+  ]
+}

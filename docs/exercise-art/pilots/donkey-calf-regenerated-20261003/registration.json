@@ -1,0 +1,133 @@
+{
+  "method": "Per-anchor RGB contact-patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseReview": "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json",
+  "searchRadiusPixels": 12,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/./frames/1.png",
+      "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
+      "anchors": {
+        "rearPivot": {
+          "reference": [1231, 374],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "baseBolt": {
+          "reference": [1054, 816],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearHand": {
+          "reference": [383, 485],
+          "patchWidth": 19,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHand": {
+          "reference": [456, 496],
+          "patchWidth": 17,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "forefootSole": {
+          "reference": [711, 756],
+          "patchWidth": 11,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/./frames/2.png",
+      "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1",
+      "anchors": {
+        "rearPivot": {
+          "reference": [1231, 374],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "baseBolt": {
+          "reference": [1054, 816],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearHand": {
+          "reference": [383, 485],
+          "patchWidth": 19,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHand": {
+          "reference": [456, 496],
+          "patchWidth": 17,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "forefootSole": {
+          "reference": [711, 756],
+          "patchWidth": 11,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/./frames/3.png",
+      "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67",
+      "anchors": {
+        "rearPivot": {
+          "reference": [1231, 374],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "baseBolt": {
+          "reference": [1054, 816],
+          "patchWidth": 21,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearHand": {
+          "reference": [383, 485],
+          "patchWidth": 19,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHand": {
+          "reference": [456, 496],
+          "patchWidth": 17,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "forefootSole": {
+          "reference": [711, 756],
+          "patchWidth": 11,
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

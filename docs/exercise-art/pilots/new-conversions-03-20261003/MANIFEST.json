@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "batch": "new-conversions-03-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 18,
+  "completeDraftSets": [
+    {
+      "exerciseId": "glute-ham-raise",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter facing left, full GHD and athlete visible.",
+      "anchors": ["GHD floor feet", "ankle restraint assembly", "footplate"],
+      "equipment": "Rigid GHD with rounded thigh pads, ankle rollers and footplate; no added weight.",
+      "muscles": {
+        "primary": ["Hamstrings"],
+        "secondary": ["Glutes and calves lighter"]
+      },
+      "reviewFindings": [
+        "Repaired the white middle-frame background to black. Selected base and footplate regions are copied exactly from the setup, removing fixed-equipment redraw within those regions.",
+        "Body proportions, changing knee-pad contact and full-range mechanics still require review. This remains a partial-range draft; fixed machine pixels do not establish anatomical approval."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+          "caption": "SET UPRIGHT 1/6",
+          "cue": "Secure feet; brace with arms across chest.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 784122,
+          "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+          "caption": "BEGIN LOWERING 2/6",
+          "cue": "Lower slowly by extending at your knees.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 800013,
+          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/3.png",
+          "caption": "CONTROL YOUR RANGE 3/6",
+          "cue": "Keep knees, hips and head aligned.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/4.png",
+          "caption": "STAY BRACED 4/6",
+          "cue": "Keep hips extended and hamstrings under tension.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/5.png",
+          "caption": "CURL UPWARD 5/6",
+          "cue": "Use hamstrings and glutes to rise smoothly.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 800013,
+          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/6.png",
+          "caption": "RETURN UPRIGHT 6/6",
+          "cue": "Finish tall without arching your lower back.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 784122,
+          "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "donkey-calf-raise",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed near-orthographic side view, facing left. Both heels and forefoot supports visible.",
+      "anchors": [
+        "Rear pivot",
+        "Forefoot support edge",
+        "Front hand supports",
+        "Machine floor base"
+      ],
+      "equipment": "Plate-loaded donkey calf machine: rear pivot behind athlete, rigid lever to articulated horizontal lower-back pad, modest plate on lever, separate front fixed handles, short forefoot step with unobstructed heel clearance.",
+      "muscles": {
+        "primary": ["Gastrocnemius"],
+        "secondary": ["Soleus lighter"]
+      },
+      "reviewFindings": [
+        "Refined near/far hand and forefoot-sole contact regions now match setup pixels exactly. Original drifting versions and failed contour/scale trials are retained separately.",
+        "Small local contact translations and forefoot flexion joins preserve the raised heel and remove the earlier seams. One rigid rear lever/plate assembly and fixed supports remain unchanged.",
+        "Selected repaired frames approved for production after native and mobile review; see docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+          "caption": "SET YOUR STRETCH 1/6",
+          "cue": "Brace forward; let heels lower below platform.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 668913,
+          "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/2.png",
+          "caption": "RISE THROUGH YOUR TOES 2/6",
+          "cue": "Lift heels while keeping knees softly straight.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 689803,
+          "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/3.png",
+          "caption": "REACH THE TOP 3/6",
+          "cue": "Rise onto toes and squeeze your calves.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 758897,
+          "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/4.png",
+          "caption": "CONTROL THE TOP 4/6",
+          "cue": "Pause briefly without bouncing or bending knees.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 758897,
+          "sha256": "a17afce059f76df52d506570a11355b05014a627bef0a6f0cae3caee9405dc67",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/5.png",
+          "caption": "LOWER SLOWLY 5/6",
+          "cue": "Lower heels slowly against the resistance.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 689803,
+          "sha256": "efb08b9f57d19915ecfa2c09b44c9ea6df4fa4703dbd7ff0b191f7ccba1bf1f1",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/6.png",
+          "caption": "RETURN TO STRETCH 6/6",
+          "cue": "Let heels sink below the platform gently.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 668913,
+          "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "pistol-squat",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter facing right, both shoes and working-foot heel visible.",
+      "anchors": ["working-foot heel contact", "working-foot forefoot contact"],
+      "equipment": "Bodyweight on level floor, no bench or assistance.",
+      "muscles": {
+        "primary": ["Quadriceps of working leg"],
+        "secondary": ["Glutes, hamstrings and core lighter"]
+      },
+      "reviewFindings": [
+        "Repaired black background and fixed the planted working sole and lower shoe by rigidly translating each lowering pose and reusing the master contact region. A 70-row contour-aligned calf bridge prevents a doubled edge.",
+        "The shoe region is exact, but the calf bridge is locally resampled and must be reviewed for anatomy and sharpness. Whole-body proportions and balance remain unapproved."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/1.png",
+          "caption": "BALANCE ON ONE LEG 1/6",
+          "cue": "Stand on one leg; extend the other.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 776596,
+          "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/2.png",
+          "caption": "SIT BACK AND DOWN 2/6",
+          "cue": "Bend your standing knee; keep heel planted.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1083602,
+          "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/3.png",
+          "caption": "REACH CONTROLLED DEPTH 3/6",
+          "cue": "Lower near your heel without losing balance.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 676053,
+          "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/4.png",
+          "caption": "KEEP YOUR POSITION 4/6",
+          "cue": "Keep free leg lifted and knee aligned.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 676053,
+          "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/5.png",
+          "caption": "DRIVE UPWARD 5/6",
+          "cue": "Push through your planted foot to stand.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1083602,
+          "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/6.png",
+          "caption": "FINISH BEFORE SWITCHING 6/6",
+          "cue": "Stand tall, then repeat the other side.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 776596,
+          "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

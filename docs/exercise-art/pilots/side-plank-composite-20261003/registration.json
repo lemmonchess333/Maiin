@@ -1,0 +1,58 @@
+{
+  "method": "Setup contact-layer transplant with smooth joining bands. Last row containing >=5 pixels above RGB 60; contact rows alone do not establish anatomy or technique.",
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/1.png",
+      "sha256": "def24ed878af8075ead35553ee8b1142ff4f2c973058e150477a6d5c0d1f2786"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/side-plank/raised-contact-drift.png",
+      "sha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3"
+    }
+  ],
+  "output": {
+    "path": "docs/exercise-art/pilots/side-plank-composite-20261003/raised-contact-trial.png",
+    "sha256": "08380ff13bf34640d436e2f65a05b76f99ed180271ce138cc2ef02dd93cd064f"
+  },
+  "regions": {
+    "forearmAndFist": [80, 700, 380, 850],
+    "lowerShoe": [1270, 735, 1495, 870]
+  },
+  "setup": {
+    "forearmAndFist": 797,
+    "lowerShoe": 820
+  },
+  "originalRaised": {
+    "forearmAndFist": 793,
+    "lowerShoe": 808
+  },
+  "repairedRaised": {
+    "forearmAndFist": 797,
+    "lowerShoe": 820
+  },
+  "releaseApproved": false,
+  "translatedTrial": {
+    "path": "docs/exercise-art/pilots/side-plank-composite-20261003/raised-translated-contacts.png",
+    "sha256": "a929a0df27256e25e2ce3dbc607caaabcf8e31f7a17ee3e901b1ad491ee378a5",
+    "contacts": {
+      "forearmAndFist": 797,
+      "lowerShoe": 820
+    },
+    "method": "Raised forearm layer translated (-4,+4)px; shoe layers translated (0,+12)px. Smooth spatial joins at y620..710 / x1100..1290, bilinear RGB sampling. No silhouette crossfade. These corrections only address measured contact position; identity and dimension review remains required."
+  },
+  "extentCheck": {
+    "method": "Foreground bounds above RGB60 in clipped ROIs; not whole-limb dimensions. Fist right edge still moves 6px after vertical correction.",
+    "regions": {
+      "fist": [250, 725, 390, 815],
+      "lowerShoe": [1290, 748, 1495, 840]
+    },
+    "setup": {
+      "fist": [250, 726, 370, 798],
+      "lowerShoe": [1290, 748, 1469, 820]
+    },
+    "translated": {
+      "fist": [250, 725, 364, 797],
+      "lowerShoe": [1290, 748, 1469, 820]
+    }
+  }
+}

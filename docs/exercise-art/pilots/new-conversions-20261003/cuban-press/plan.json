@@ -1,0 +1,50 @@
+{
+  "exerciseId": "cuban-press",
+  "status": "six-frame-draft",
+  "releaseApproved": false,
+  "variation": "Standing light-dumbbell Cuban press, upright row then external rotation then overhead press, reversing each segment.",
+  "camera": "Fixed frontal slight three-quarter full body portrait with overhead clearance.",
+  "primary": "Deltoids",
+  "secondary": "Rotator cuff and upper traps",
+  "fixedAnchors": ["left shoe floor contact", "right shoe floor contact"],
+  "invariants": ["athlete proportions", "shoe dimensions", "dumbbell geometry"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Stand tall; hold light weights at thighs.",
+      "pose": "Arms down; light dumbbells in front of thighs."
+    },
+    {
+      "frame": 2,
+      "label": "Lead with elbows",
+      "cue": "Raise elbows, keeping weights below them.",
+      "pose": "Elbows at shoulder height, upper arms out; forearms point down, weights at lower chest."
+    },
+    {
+      "frame": 3,
+      "label": "Rotate upward",
+      "cue": "Rotate weights upward without moving elbows.",
+      "pose": "Upper arms unchanged, elbows bent ninety degrees, forearms upright."
+    },
+    {
+      "frame": 4,
+      "label": "Press overhead",
+      "cue": "Press overhead without arching your back.",
+      "pose": "Arms extended overhead, ribs down, light weights above shoulders."
+    },
+    {
+      "frame": 5,
+      "label": "Lower to shoulder height",
+      "cue": "Lower slowly into the upright forearm position.",
+      "reuse": 3
+    },
+    {
+      "frame": 6,
+      "label": "Reverse the rotation",
+      "cue": "Rotate down, then lower toward your thighs.",
+      "reuse": 2,
+      "transition": "Return to frame1 completes the controlled lowering segment."
+    }
+  ]
+}

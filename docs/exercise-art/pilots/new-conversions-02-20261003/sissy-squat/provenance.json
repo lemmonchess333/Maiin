@@ -1,0 +1,33 @@
+{
+  "exerciseId": "sissy-squat",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/sissy-squat/1.png",
+    "sha256": "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc"
+  },
+  "generationSources": [
+    {
+      "path": "/workspace/generated_images/exec-0d96dbf3-f863-4cf0-aabc-1fbe914515e6.png",
+      "sha256": "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc"
+    },
+    {
+      "path": "/workspace/generated_images/exec-209aff0a-9d66-4ead-bb4b-a8b9e081b2cf.png",
+      "sha256": "75dea4697a2afafd1185064be3e75e0b28d9ff5d5dcf26f227927fbf25399248"
+    },
+    {
+      "path": "/workspace/generated_images/exec-32c63c90-e499-4bc1-be9b-cd314407bb08.png",
+      "sha256": "b04fe6b2edad11776d31c93af3bf80fe62625e5e44c84a835d0bffb2065aee12"
+    }
+  ],
+  "cueSha256": "e92eb71819f8bbd5400c824b47584631ad253872f8e9ab7fa424966d5c662543",
+  "reviewFindings": [
+    "Three unique poses in six native files: standing, shallow lowering, moderate lowering, control, rise, standing. Bodyweight supported variation; no added load.",
+    "Post and hand remain visually aligned, but the support arm appears longer as the torso moves away. Hip extension, limb proportions and forefoot contacts need review before approval. The generated camera is closer to frontal three-quarter than the planned side view, reducing the clarity of joint alignment.",
+    "No code-based image repair and no changes to existing exercise guides. This is a draft, not a release."
+  ]
+}

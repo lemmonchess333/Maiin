@@ -1,0 +1,11 @@
+{
+  "stats": {
+    "startTime": "2026-10-03T13:41:25.207Z",
+    "duration": 25021.642,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": "9 mobile checks: light/dark playback, endpoint source hashes, cues, loop and reduced motion. Does not grant visual approval."
+}
