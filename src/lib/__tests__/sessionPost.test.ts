@@ -66,7 +66,6 @@ import {
 } from "@/lib/shareComposer";
 import {
   createSessionShare,
-  isSessionShareAction,
   liveSessionPost,
   withdrawSessionPost,
 } from "@/lib/sessionPost";
@@ -360,14 +359,5 @@ describe("a workout shared before its save lands", () => {
     expect(readDoc(`users/${UID}/workouts/${id}`)).toMatchObject({
       sharedActivityId: outcome.activityId,
     });
-  });
-});
-
-describe("isSessionShareAction", () => {
-  it("accepts an action and refuses anything else crossing the receipt boundary", () => {
-    expect(isSessionShareAction(workoutShare())).toBe(true);
-    expect(isSessionShareAction(async () => {})).toBe(false);
-    expect(isSessionShareAction({ post: () => {} })).toBe(false);
-    expect(isSessionShareAction(undefined)).toBe(false);
   });
 });

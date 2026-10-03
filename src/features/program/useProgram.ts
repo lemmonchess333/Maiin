@@ -7,34 +7,23 @@ import {
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
+import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import {
-  commitWorkoutCompletion,
-  type ProgrammeCompletionContext,
-} from "@/lib/workoutCompletion";
+  completeLift,
+  liftSessionDay,
+  liftWorkoutId,
+} from "@/lib/liftCompletion";
 import {
   applySessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
 import { useState, useEffect, useCallback } from "react";
 import { captureError } from "@/lib/errorReporting";
-import {
-  doc,
-  getDoc,
-  getDocFromCache,
-  onSnapshot,
-  Timestamp,
-} from "firebase/firestore";
-import {
-  hasQueuedWorkoutCompletion,
-  queueWorkoutCompletion,
-  workoutCompletionDayIdentity,
-} from "@/lib/offlineQueue";
+import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
+import { workoutCompletionDayIdentity } from "@/lib/offlineQueue";
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
-import { stripUndefined } from "@/lib/firestoreGuards";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
-import type { ActivityPost } from "@/lib/activityPost";
-import { createSessionShare } from "@/lib/sessionPost";
 import type {
   BlockDurationWeeks,
   BlockPace,
@@ -76,7 +65,6 @@ import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
-import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 
@@ -164,7 +152,6 @@ import {
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
-import { projectWorkoutSets } from "./workoutSetRecord";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
@@ -1384,6 +1371,7 @@ export function useProgram() {
         throw new Error("Workout completion is missing its idempotency key.");
       }
 
+      const workoutId = liftWorkoutId("programme", sessionData.completionId);
       const updated: ProgramState = {
         ...programState,
         workouts: programState.workouts.map((d, i) =>
@@ -1392,7 +1380,7 @@ export function useProgram() {
                 ...d,
                 completed: true,
                 skipped: false,
-                completedWorkoutId: `programme-${sessionData.completionId}`,
+                completedWorkoutId: workoutId,
               }
             : d
         ),
@@ -1402,157 +1390,16 @@ export function useProgram() {
         }),
       };
 
-      // Local date key so the written workout is picked up by the
-      // useEffectiveTargets / useHomeData filters, which both format in
-      // the viewer's local timezone via isWorkoutOnDate. Lift3: dated by
-      // the session's START when the caller supplies it.
-      const today = localDateString(
-        typeof sessionData.startedAt === "number" &&
-          Number.isFinite(sessionData.startedAt)
-          ? new Date(sessionData.startedAt)
-          : new Date()
-      );
-
-      // Build exercises array — from actual setLogs when available,
-      // otherwise from planned data (every set assumed completed).
-      const sessionExercises =
+      // The exercises the session ran: its prescription, or (a day marked
+      // done without one) the day's, at the baseline this completion's
+      // progression started from.
+      const ran =
         sessionData.prescription?.exercises ??
         day.exercises.map((ex) =>
           ex.sessionProgression?.id === sessionData.completionId
             ? ex.sessionProgression.baseline
             : ex
         );
-      const exercises = sessionExercises.map((ex, exIndex) => {
-        const logs = sessionData.setLogs?.[exIndex];
-        // D2: the no-logs fallback keeps its historical shape — the last
-        // ATTEMPTED load and the last actual reps, which is the best guess
-        // available when a day is marked done without a live session.
-        const plannedWeight = ex.lastAttemptedWeight || ex.weight;
-        const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
-
-        // D2: one shared projection across all three call sites (here,
-        // Routine, and the server command reducer). The planned pair recorded
-        // on each set is the PRESCRIPTION — `ex.reps` / `ex.weight` — because
-        // that is what `applyProgression` scores the actual against, and what
-        // it overwrites a moment later. The fallback branch below has no
-        // prescription to preserve, so it reuses its own planned values.
-        const sets = logs
-          ? projectWorkoutSets(logs, {
-              sets: ex.sets,
-              reps: ex.reps,
-              weightKg: ex.weight,
-            })
-          : projectWorkoutSets(undefined, {
-              sets: ex.sets,
-              reps: plannedReps,
-              weightKg: plannedWeight,
-            });
-
-        // Trimmed, and omitted entirely when empty: a whitespace-only note
-        // would otherwise persist an empty string that reads as "there is a
-        // note" to every consumer that checks for presence.
-        const note = sessionData.exerciseNotes?.[exIndex]?.trim();
-
-        return {
-          exerciseId: ex.exerciseId,
-          exerciseName: ex.name,
-          category: ex.movementCategory,
-          ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
-          ...(note ? { notes: note } : {}),
-          sets,
-          // D2: how many sets were PRESCRIBED, against `sets.length` which is
-          // how many were completed. The array stays completed-only — every
-          // downstream reader (workoutBurn's completedSetCount, the volume
-          // tallies, the PR scan) assumes that, and emitting incomplete rows
-          // would silently move calories, tonnage and PRs for every user. This
-          // recovers "planned 4, did 3" additively, with no reader moved.
-          plannedSetCount: ex.sets,
-          caloriesBurned: 0,
-        };
-      });
-
-      const tonnage = exercises.reduce(
-        (t, ex) =>
-          t +
-          (ex.repUnit === "seconds"
-            ? 0
-            : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
-        0
-      );
-      const performedExercises = exercises.filter((ex) => ex.sets.length > 0);
-      const completedSetCount = exercises.reduce(
-        (c, ex) => c + ex.sets.length,
-        0
-      );
-
-      // Require bodyweight to compute a sensible burn. If it's missing we
-      // save the workout anyway — the helper returns 0 — but log so the
-      // operator can notice.
-      const bodyweightKg = profile?.weightKg ?? 0;
-      if (bodyweightKg <= 0) {
-        logger.warn(
-          "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0"
-        );
-      }
-
-      const durationMinutes =
-        sessionData.durationMinutes && sessionData.durationMinutes > 0
-          ? sessionData.durationMinutes
-          : 0;
-      const effectiveDurationMin =
-        durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
-
-      const totalCalories = estimateLiftBurn({
-        durationMinutes,
-        tonnageKg: tonnage,
-        bodyweightKg,
-        completedSetCount,
-      });
-
-      // ── CORE persistence boundary — atomic programme + workout write.
-      // Pre-packet-15 this was saveProgram(updated) FOLLOWED BY a separate
-      // workout write inside a log-only catch: a workout-write failure left
-      // the day permanently completed with no matching workout record (a
-      // split state that broke History / calorie totals / performance). One
-      // writeBatch commits both or neither. The id is deterministic
-      // (programme-<completionId>) so a retried Finish overwrites the same
-      // doc rather than appending a second log.
-      const workoutId = `programme-${sessionData.completionId}`;
-      const queued =
-        navigator.onLine === false ||
-        hasQueuedWorkoutCompletion(user.uid, workoutId);
-      let sync: Promise<"synced" | "failed">;
-
-      const workoutData = stripUndefined({
-        date: today,
-        exercises,
-        totalCalories,
-        burnContext: { bodyweightKg },
-        durationMinutes: effectiveDurationMin,
-        /* The field every SERVER consumer of a workout doc reads —
-               `workoutChallengeIncrements` (total_volume + the hybrid
-               score's kg term) and `liftVolumeKgFor` (lifetime volume).
-               It was computed here for the social activity post and never
-               written onto the workout itself, so all three credited zero
-               for every lift ever logged. */
-        totalVolume: tonnage,
-        notes: `${sessionData.prescription?.dayName ?? day.dayName} — Programme Week ${sessionData.programmeContext?.weekNumber ?? programState.weekNumber}`,
-        createdAt: Timestamp.now(),
-        source: "programme",
-        completionId: sessionData.completionId,
-        sessionVariant: sessionData.sessionVariant,
-        // D2: session-level provenance for any per-set RPE above. Helms
-        // p139 keeps novices on %1RM rather than RPE for their first
-        // month, and p73 claims accuracy only for lifters who are
-        // advanced AND RPE-familiar AND near failure — so a future
-        // consumer must be able to tell whose number it is holding rather
-        // than calibrating on an uncalibrated beginner's guess. Recorded
-        // once per session because it cannot vary within one.
-        rpeProvenance: {
-          experience: profile?.experience,
-          shownByDefault: showsRpeByDefault(toExperience(profile?.experience)),
-        },
-      });
 
       const dayIdentity = workoutCompletionDayIdentity(day);
       const savedContext =
@@ -1572,7 +1419,7 @@ export function useProgram() {
               ? {
                   progression: {
                     completionId: sessionData.completionId,
-                    date: today,
+                    date: liftSessionDay(sessionData.startedAt),
                     prescription: sessionData.prescription,
                     setLogs: sessionData.setLogs,
                     sessionVariant: sessionData.sessionVariant,
@@ -1597,103 +1444,59 @@ export function useProgram() {
           completionContext.progression
         );
 
-      try {
-        if (!queued) {
-          committedState = await commitWorkoutCompletion(
-            db,
-            user.uid,
-            workoutId,
-            workoutData,
-            completionContext
-          );
-          sync = Promise.resolve("synced");
-        } else {
-          sync = queueWorkoutCompletion(
-            db,
-            user.uid,
-            workoutId,
-            workoutData,
-            completionContext
-          );
-          void sync.then((status) => {
-            if (status === "failed" && auth.currentUser?.uid === user.uid)
-              void refetchProgramState();
-          });
-        }
-        // Optimistic while offline; completion receipt carries the distinction.
-        if (auth.currentUser?.uid === user.uid) {
-          if (committedState) setProgramState(committedState);
-          else await refetchProgramState();
-        }
-      } catch (error) {
-        logger.error("[Program] completion batch failed:", error);
-        toast.error(
-          "Couldn't save your workout. Your session is still ready to retry."
-        );
-        throw error;
-      }
-
-      // Sharing happens on the finish screen once the save has landed:
-      // automatically when the user has said so, or from its share button.
-      // Built here because only this scope knows what was performed.
-      const uniqueCategories = [
-        ...new Set(performedExercises.map((ex) => ex.category).filter(Boolean)),
-      ];
-      const share = createSessionShare({
+      // ── CORE persistence boundary: the workout and the plan in one
+      // transaction (`commitWorkoutCompletion`, through `completeLift`).
+      // Pre-packet-15 the plan was saved and the workout written after it
+      // inside a log-only catch, so a failed workout write left the day
+      // done with no workout behind it. The id is deterministic
+      // (programme-<completionId>), so a retried Finish writes the same
+      // workout rather than a second one. A failure throws to the workout
+      // screen, which keeps the session and says so.
+      const { committed, ...receipt } = await completeLift({
         uid: user.uid,
-        type: "workout",
-        source: { kind: "workout", id: workoutId },
-        preview: () => ({
-          type: "workout",
-          title: day.dayName,
-          meta: [
-            `${performedExercises.length} exercise${performedExercises.length === 1 ? "" : "s"}`,
-            tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()} kg volume`
-              : "",
-            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-          ].filter(Boolean),
-        }),
-        payload: (decision): ActivityPost => ({
-          authorId: user.uid,
-          authorName: profile?.displayName || "Athlete",
-          ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-          type: "workout" as const,
-          visibility: decision.visibility,
-          ...(decision.caption ? { caption: decision.caption } : {}),
-          workoutName: day.dayName,
-          activityTitle: day.dayName,
-          exerciseCount: performedExercises.length,
-          totalVolume: tonnage,
-          duration: effectiveDurationMin * 60,
-          muscleGroups: uniqueCategories,
-          // Exercises — full list (was previously sliced to 3) with
-          // structured fields per exercise so feed viewers can
-          // "Save as routine" (PR 4) without parsing the summary
-          // string. ActivityCard renders only the top 3 visually
-          // for compactness; the rest sit on the doc for the routine
-          // copy flow.
-          exercises: performedExercises.map((ex) => {
-            const setCount = ex.sets.length;
-            const targetReps = ex.sets[0]?.reps ?? 0;
-            const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
-            return {
-              name: ex.exerciseName,
-              exerciseId: ex.exerciseId,
-              summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-              setCount,
-              targetReps,
-              targetWeightKg,
-            };
-          }),
-        }),
+        author: {
+          displayName: profile?.displayName,
+          photoURL: profile?.photoURL,
+        },
+        source: "programme",
+        completionId: sessionData.completionId,
+        startedAt: sessionData.startedAt,
+        ran,
+        setLogs: sessionData.setLogs,
+        exerciseNotes: sessionData.exerciseNotes,
+        durationMinutes: sessionData.durationMinutes,
+        bodyweightKg: profile?.weightKg ?? 0,
+        title: day.dayName,
+        notes: `${sessionData.prescription?.dayName ?? day.dayName} — Programme Week ${sessionData.programmeContext?.weekNumber ?? programState.weekNumber}`,
+        extra: {
+          sessionVariant: sessionData.sessionVariant,
+          // D2: session-level provenance for any per-set RPE. Helms p139
+          // keeps novices on %1RM rather than RPE for their first month,
+          // and p73 claims accuracy only for lifters who are advanced AND
+          // RPE-familiar AND near failure, so a later reader must be able
+          // to tell whose number it holds. Once per session: it cannot
+          // vary within one.
+          rpeProvenance: {
+            experience: profile?.experience,
+            shownByDefault: showsRpeByDefault(
+              toExperience(profile?.experience)
+            ),
+          },
+        },
+        completion: completionContext,
       });
-      return {
-        workoutId,
-        share,
-        syncStatus: queued ? ("queued" as const) : ("synced" as const),
-        sync,
-      };
+      if (receipt.syncStatus === "synced") committedState = committed ?? null;
+      else
+        void receipt.sync.then((status) => {
+          if (status === "failed" && auth.currentUser?.uid === user.uid)
+            void refetchProgramState();
+        });
+      // Optimistic while offline; the receipt carries the difference.
+      if (auth.currentUser?.uid === user.uid) {
+        if (committedState) setProgramState(committedState);
+        else await refetchProgramState();
+      }
+      return receipt;
     },
     [programState, user, profile, refetchProgramState]
   );

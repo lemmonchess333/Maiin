@@ -1,26 +1,13 @@
 import type { SessionPrescription } from "@/features/program/sessionCompletion";
-import { commitWorkoutCompletion } from "@/lib/workoutCompletion";
+import { completeLift } from "@/lib/liftCompletion";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { format } from "date-fns";
-import { Timestamp } from "firebase/firestore";
-import {
-  hasQueuedWorkoutCompletion,
-  queueWorkoutCompletion,
-} from "@/lib/offlineQueue";
-import { logger } from "../lib/logger";
-import { auth, db } from "../lib/firebase";
+import { auth } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
 import { exerciseFromRoutine } from "../features/program/routineExercise";
 import { Skeleton } from "../components/LoadingSkeleton";
 import WorkoutSession from "../components/WorkoutSession";
-import { estimateLiftBurn } from "../lib/workoutBurn";
-import { workoutTonnageKg } from "../hooks/useWorkouts";
-import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
-import type { ActivityPost } from "../lib/activityPost";
-import { createSessionShare } from "../lib/sessionPost";
-import { toast } from "@/lib/toast";
 
 /* Synthetic dayIndex used by saved-routine sessions.
    useWorkoutDraft keys drafts on dayIndex. Program days are 0-6, so
@@ -40,11 +27,10 @@ const ROUTINE_DAY_INDEX = -1;
  *   - Synthetic dayIndex (-1) so useWorkoutDraft scopes the in-flight
  *     draft to "the routine session" without overwriting any program
  *     day's draft.
- *   - A custom onCompleteDay handler that writes a workout doc with
- *     `source: "routine"` (instead of "programme") and skips the
- *     program-state mutation completeWorkoutDay does. Sharing goes
- *     through the same `createSessionShare` as useProgram, so the
- *     social loop stays identical.
+ *   - A custom onCompleteDay handler that saves through the same
+ *     `completeLift` as a programme day, with `source: "routine"` and
+ *     no plan to move on, so the workout, its post and the sharing
+ *     that follows are a programme workout's.
  */
 export default function Routine() {
   const { routineId } = useParams<{ routineId: string }>();
@@ -122,162 +108,31 @@ export default function Routine() {
         );
       }
 
-      // Lift3: dated by the session's START, as the programme writer is.
-      const today = format(
-        typeof sessionData.startedAt === "number" &&
-          Number.isFinite(sessionData.startedAt)
-          ? new Date(sessionData.startedAt)
-          : new Date(),
-        "yyyy-MM-dd"
-      );
-      // Deterministic id — a retried/resumed Finish overwrites the same doc.
-      const workoutId = `routine-${sessionData.completionId}`;
-
-      const exercises = (
-        sessionData.prescription?.exercises ?? synthDay.exercises
-      ).map((ex, exIndex) => {
-        const logs = sessionData?.setLogs?.[exIndex];
-        // D2: the same shared projection the programme path uses. These two
-        // were independent copies of identical logic, which is exactly the
-        // shape CLAUDE.md's "the tested copy does not prove the running copy"
-        // rule warns about — widening one and forgetting the other would have
-        // left routine sessions silently three-field.
-        const sets = projectWorkoutSets(logs, {
-          sets: ex.sets,
-          reps: ex.reps,
-          weightKg: ex.weight,
-        });
-        const note = sessionData.exerciseNotes?.[exIndex]?.trim();
-        return {
-          exerciseId: ex.exerciseId,
-          exerciseName: ex.name,
-          category: ex.movementCategory,
-          /* Carried onto the doc, conditionally, exactly as the programme
-             writers do. Without it the persisted session loses the unit
-             the runner just used: ExerciseHistory charts a hold on the
-             reps axis, and the server's volume derivation — which reads
-             this field to skip timed work — cannot tell it apart from
-             weight moved. */
-          ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
-          ...(note ? { notes: note } : {}),
-          sets,
-          caloriesBurned: 0,
-        };
-      });
-
-      /* Was a fifth inline copy of the tonnage reduce, and an unguarded
-         one. Marking timed exercises above makes that guard load-bearing
-         for the first time — a routine's weighted plank would otherwise
-         bank 20 kg × 60 s as 1,200 kg — so rather than add a sixth
-         correct copy, this now calls the shared helper (#2045), which
-         owns the rule and is tested for it. `exercises` is already the
-         WorkoutExercise shape it takes. */
-      const tonnage = workoutTonnageKg({ exercises });
-      const completedSetCount = exercises.reduce(
-        (c, ex) => c + ex.sets.length,
-        0
-      );
-      const bodyweightKg = profile?.weightKg ?? 0;
-      const durationMinutes =
-        sessionData?.durationMinutes && sessionData.durationMinutes > 0
-          ? sessionData.durationMinutes
-          : 0;
-      const totalCalories = estimateLiftBurn({
-        durationMinutes,
-        tonnageKg: tonnage,
-        bodyweightKg,
-        completedSetCount,
-      });
-      const effectiveDurationMin =
-        durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
-
-      // ── CORE write. Propagate a failure so WorkoutSession keeps the
-      // completed session mounted, retains the draft, and re-enables Save.
-      const queued =
-        navigator.onLine === false ||
-        hasQueuedWorkoutCompletion(user.uid, workoutId);
-      let sync: Promise<"synced" | "failed">;
-      const workoutData = {
-        date: today,
-        exercises,
-        totalCalories,
-        burnContext: { bodyweightKg: profile?.weightKg ?? 0 },
-        durationMinutes: effectiveDurationMin,
-        /* Same omission as the programme path: every server consumer of
-             a workout doc reads `totalVolume`, and it was only ever
-             written onto the social activity post. */
-        totalVolume: tonnage,
-        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
-        createdAt: Timestamp.now(),
+      // The same completion as a programme day's (`completeLift`), without
+      // the plan: a routine takes no part in progression. Its post lists
+      // what was done, as a programme workout's does, not the routine as
+      // written. A failure throws to the workout screen, which keeps the
+      // session and says so.
+      const { committed: _noPlan, ...receipt } = await completeLift({
+        uid: user.uid,
+        author: {
+          displayName: profile?.displayName,
+          photoURL: profile?.photoURL,
+        },
         source: "routine",
         completionId: sessionData.completionId,
-        routineId: routine.id,
-        routineName: routine.name,
-      };
-      try {
-        if (!queued) {
-          await commitWorkoutCompletion(db, user.uid, workoutId, workoutData);
-          sync = Promise.resolve("synced");
-        } else {
-          sync = queueWorkoutCompletion(db, user.uid, workoutId, workoutData);
-        }
-      } catch (err) {
-        logger.error("[Routine] completion write failed:", err);
-        toast.error("Couldn't save workout. Try again.");
-        throw err;
-      }
-
-      // Sharing happens on the finish screen once the save has landed, the
-      // same way as a programme workout. The title is the routine's name so
-      // the post names the workout the way the user thinks of it.
-      const share = createSessionShare({
-        uid: user.uid,
-        type: "workout",
-        source: { kind: "workout", id: workoutId },
-        preview: () => ({
-          type: "workout",
-          title: routine.name,
-          meta: [
-            `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()} kg volume`
-              : "",
-            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-          ].filter(Boolean),
-        }),
-        payload: (decision): ActivityPost => ({
-          authorId: user.uid,
-          authorName: profile?.displayName || "Athlete",
-          ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-          type: "workout" as const,
-          visibility: decision.visibility,
-          ...(decision.caption ? { caption: decision.caption } : {}),
-          workoutName: routine.name,
-          activityTitle: routine.name,
-          exerciseCount: synthDay.exercises.length,
-          totalVolume: tonnage,
-          duration: effectiveDurationMin * 60,
-          exercises: synthDay.exercises.map((ex) => {
-            const setCount = ex.sets;
-            const targetReps = ex.reps;
-            const targetWeightKg = ex.weight;
-            return {
-              name: ex.name,
-              exerciseId: ex.exerciseId,
-              summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-              setCount,
-              targetReps,
-              targetWeightKg,
-            };
-          }),
-        }),
+        startedAt: sessionData.startedAt,
+        ran: sessionData.prescription?.exercises ?? synthDay.exercises,
+        setLogs: sessionData.setLogs,
+        exerciseNotes: sessionData.exerciseNotes,
+        durationMinutes: sessionData.durationMinutes,
+        bodyweightKg: profile?.weightKg ?? 0,
+        // The post names the workout the way the user thinks of it.
+        title: routine.name,
+        notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
+        extra: { routineId: routine.id, routineName: routine.name },
       });
-      return {
-        workoutId,
-        share,
-        syncStatus: queued ? ("queued" as const) : ("synced" as const),
-        sync,
-      };
+      return receipt;
     },
     [user, routine, synthDay, profile]
   );

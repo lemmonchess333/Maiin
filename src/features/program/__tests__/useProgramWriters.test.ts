@@ -2066,6 +2066,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     });
 
     failNextFirestore("commit");
+    vi.mocked(toast.error).mockClear();
     await expect(
       result.current.completeWorkoutDay(0, session("cid-2"))
       // The fake generates the message from the injected code, so match
@@ -2074,6 +2075,9 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     ).rejects.toThrow(/permission-denied/);
     // No split state: the day is still not completed in local state.
     expect(result.current.programState?.workouts[0].completed).toBe(false);
+    // The workout screen says it couldn't save. The writer saying so too
+    // put two of the same message on screen.
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("persists sessionVariant on the PRIVATE workout doc — easier_today saves truthfully (PROGRAM-ADAPT-01)", async () => {

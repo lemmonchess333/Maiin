@@ -108,12 +108,13 @@ export interface Workout {
  *  doc, old and new.
  *
  *  Timed exercises contribute NOTHING, because their `reps` is a duration
- *  and `weightKg × reps` is not a weight moved. That rule is the writers'
- *  — both `useProgram.completeWorkoutDay` and the server command reducer
- *  reduce with `repUnit === "seconds" ? 0 : …` — and this copy was missing
- *  it, so a weighted plank counted here and not there. `weighted-plank` is
- *  a real catalog exercise, so a 20 kg / 60 s hold added 1,200 kg to every
- *  surface below and to none of the recorded session totals.
+ *  and `weightKg × reps` is not a weight moved. That rule was the writers'
+ *  (the server command reducer still reduces with `repUnit === "seconds"
+ *  ? 0 : …`) and this copy was missing it, so a weighted plank counted
+ *  here and not there. `weighted-plank` is a real catalog exercise, so a
+ *  20 kg / 60 s hold added 1,200 kg to every surface below and to none of
+ *  the recorded session totals. The client's writers now save the total
+ *  this returns (`liftCompletion`).
  *
  *  This is the widest-read of the copies: History's volume card and chart,
  *  WorkoutDetail, the weekly recap, the solo feed, the share sheet, and

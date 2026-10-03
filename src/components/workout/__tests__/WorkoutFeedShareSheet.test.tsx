@@ -116,7 +116,29 @@ describe("WorkoutFeedShareSheet", () => {
       // placeholder from the plan.
       totalVolume: 960,
       duration: 52 * 60,
+      muscleGroups: ["push"],
     });
+  });
+
+  it("writes the rows the feed card draws, as the finish screens do", async () => {
+    // Its rows had no summary, and the feed card that drew the post broke.
+    renderSheet();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /share to followers/i })
+    );
+
+    await waitFor(() => expect(postActivityMock).toHaveBeenCalledTimes(1));
+    expect(postActivityMock.mock.calls[0][0].exercises).toEqual([
+      {
+        name: "Barbell Bench Press",
+        exerciseId: "bench-press",
+        summary: "2×8×60 kg",
+        setCount: 2,
+        targetReps: 8,
+        targetWeightKg: 60,
+      },
+    ]);
   });
 
   it("never routes through compose() — that would obey the stored default", async () => {

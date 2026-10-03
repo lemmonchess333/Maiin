@@ -10,8 +10,7 @@ import {
   activityExercisesToRoutine,
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
-import { formatExerciseSummary } from "../../lib/exerciseSummary";
-import { EXERCISES } from "../../lib/exercises";
+import { liftPostRows } from "../../lib/liftPost";
 import { movementCategoryLabel } from "../../lib/exerciseMovementCategory";
 import CommentSheet from "./CommentSheet";
 import SaveRoutineSheet from "./SaveRoutineSheet";
@@ -186,15 +185,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const avatarColor = isRun ? THEME.running : THEME.lifting;
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
 
-  const exercises = activity?.exercises as
-    | Array<{
-        name: string;
-        summary: string;
-        setCount?: number;
-        targetReps?: number;
-        targetWeightKg?: number;
-      }>
-    | undefined;
+  /* Every shape of lift post the feed holds, read one way: a post made
+     from a saved workout once wrote rows with no summary, and drawing them
+     broke the card. */
+  const exercises = liftPostRows(activity?.exercises);
   const prCount = activity?.prCount as number | undefined;
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
@@ -356,34 +350,16 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             PR 4.5: rows are tappable for compare-this-lift when the
             payload has structured fields and the user isn't the
             author (no point comparing yourself to yourself). */}
-        {exercises && exercises.length > 0 && (
+        {exercises.length > 0 && (
           <div className="space-y-1">
             {exercises.slice(0, 3).map((ex, i) => {
-              const hasStructured =
-                typeof ex.setCount === "number" &&
-                typeof ex.targetReps === "number" &&
-                typeof ex.targetWeightKg === "number";
-              /* Recompute the summary from structured fields when
-                 available so the "0kg" leakage in old posts gets
-                 fixed at render time without a backfill. Pre-PR-4
-                 activities lack structured fields and fall back to
-                 the persisted string. */
-              // Look up exerciseId from the static EXERCISES catalogue
-              // by name so the BW-vs-uncalibrated decision in
-              // formatExerciseSummary uses the actual movement type.
-              // Activity posts don't carry exerciseId today; matching on
-              // name is the safe inference.
-              const exMeta = EXERCISES.find((e) => e.name === ex.name);
-              const displaySummary = hasStructured
-                ? formatExerciseSummary({
-                    setCount: ex.setCount as number,
-                    targetReps: ex.targetReps as number,
-                    targetWeightKg: ex.targetWeightKg as number,
-                    exerciseId: exMeta?.id,
-                  })
-                : ex.summary;
+              /* The summary is formatted from the row's figures when it
+                 has any, so the "0kg" in old posts is fixed as it is drawn,
+                 without a backfill. */
+              const displaySummary = ex.summary;
+              const structured = ex.structured;
               const canCompare =
-                !!user?.uid && activity?.authorId !== user.uid && hasStructured;
+                !!user?.uid && activity?.authorId !== user.uid && !!structured;
               /* BW rows are quieter than weighted rows so a list of
                  mixed bodyweight + loaded movements doesn't read with
                  the same visual weight per row — kg numbers should
@@ -419,12 +395,11 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                   type="button"
                   key={i}
                   onClick={() =>
+                    structured &&
                     setCompareTarget({
                       name: ex.name,
                       summary: displaySummary,
-                      setCount: ex.setCount as number,
-                      targetReps: ex.targetReps as number,
-                      targetWeightKg: ex.targetWeightKg as number,
+                      ...structured,
                     })
                   }
                   aria-label={`Compare your ${ex.name}`}

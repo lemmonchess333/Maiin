@@ -78,19 +78,41 @@ describe("feed post fields: postActivity and firestore.rules agree", () => {
   });
 
   it("the session savers type their posts, so an unknown field fails the build", () => {
-    /* The three savers build the post in a callback that createSessionShare
-       hands to postActivity and to the offline queue. TypeScript checks a
-       literal's extra fields only where it meets a declared type, so each
-       callback's return is annotated: an unannotated one would carry any
-       field straight to the rules. */
+    /* A saver hands createSessionShare a callback that builds the post,
+       and createSessionShare posts or queues it. TypeScript checks a
+       literal's extra fields only where it meets a declared type, so every
+       post is built where one is declared: the run's callback is annotated,
+       and a lift's post is built by liftPost, declared to return
+       ActivityPost. An undeclared builder would carry any field straight to
+       the rules. */
+    const read = (file: string) =>
+      readFileSync(resolve(repoRoot, file), "utf8");
+    const run = read("src/pages/RunSummary.tsx");
+    expect(run).toContain("createSessionShare(");
+    expect(run).toContain("payload: (decision): ActivityPost => ({");
+    expect(run).not.toContain("postActivity(");
+
+    const liftPost = read("src/lib/liftPost.ts");
+    const builder = liftPost.slice(
+      liftPost.indexOf("export function liftPost("),
+      liftPost.indexOf(
+        "\nexport ",
+        liftPost.indexOf("export function liftPost(")
+      )
+    );
+    expect(builder).toContain("): ActivityPost {");
+    const lift = read("src/lib/liftCompletion.ts");
+    expect(lift).toContain("createSessionShare(");
+    expect(lift).toMatch(/payload: \(decision\) =>\s+liftPost\(/);
+    expect(lift).not.toContain("postActivity(");
+    // The two lift writers save through completeLift, never by hand.
     for (const file of [
-      "src/pages/RunSummary.tsx",
       "src/pages/Routine.tsx",
       "src/features/program/useProgram.ts",
     ]) {
-      const source = readFileSync(resolve(repoRoot, file), "utf8");
-      expect(source, file).toContain("createSessionShare(");
-      expect(source, file).toContain("payload: (decision): ActivityPost => ({");
+      const source = read(file);
+      expect(source, file).toContain("completeLift(");
+      expect(source, file).not.toContain("createSessionShare(");
       expect(source, file).not.toContain("postActivity(");
     }
     const helper = readFileSync(

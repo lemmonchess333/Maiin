@@ -21,6 +21,20 @@
  */
 export const CAPTION_MAX = 140;
 
+/** One exercise on a lift post (`liftPost`): what was done, as the feed
+ *  card draws it and "Save as routine" copies it. */
+export interface PostedExercise {
+  name: string;
+  exerciseId?: string;
+  /** "3×8×60 kg": the row as drawn. */
+  summary: string;
+  /** Sets done. */
+  setCount: number;
+  /** The first set's reps (seconds for a timed hold) and load. */
+  targetReps: number;
+  targetWeightKg: number;
+}
+
 export type ActivityPost = {
   authorId: string;
   authorName: string;
@@ -44,9 +58,10 @@ export type ActivityPost = {
   elevationGain?: number;
   calories?: number;
   muscleGroups?: string[];
-  /** The rules cap the list's length and nothing inside it; the share
-   *  sheets write two shapes. */
-  exercises?: Array<{ name: string } & Record<string, unknown>>;
+  /** The rules cap the list's length and nothing inside it. Every lift
+   *  post builds its rows in `liftPost`; the feed holds older shapes too,
+   *  which `liftPostRows` reads. */
+  exercises?: PostedExercise[];
   prHit?: boolean;
   prExercise?: string;
   prWeight?: number;

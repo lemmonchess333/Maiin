@@ -115,10 +115,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { localDateString } from "@/lib/dateHelpers";
-import {
-  isSessionShareAction,
-  type SessionShareAction,
-} from "@/lib/sessionPost";
+import type { SessionShareAction } from "@/lib/sessionPost";
+import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -208,10 +206,11 @@ interface Props {
   deloadWeek?: boolean;
   progressionBaseline?: ProgramExercise[];
   programmeContext?: ProgrammeCompletionContext;
+  /** Saves the session (`completeLift`) and hands back its receipt. */
   onCompleteDay: (
     dayIndex: number,
     sessionData: CompletedSessionData
-  ) => Promise<unknown>;
+  ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
 }
 
@@ -1200,14 +1199,7 @@ export default function WorkoutSession({
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
       const queuedReceipt =
-        receipt &&
-        typeof receipt === "object" &&
-        "syncStatus" in receipt &&
-        receipt.syncStatus === "queued" &&
-        "sync" in receipt &&
-        receipt.sync instanceof Promise
-          ? (receipt.sync as Promise<"synced" | "failed">)
-          : null;
+        receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
         clearDraft(completionIdRef.current);
         setSaved(true);
@@ -1266,14 +1258,7 @@ export default function WorkoutSession({
         })();
       }
 
-      if (
-        receipt &&
-        typeof receipt === "object" &&
-        "share" in receipt &&
-        isSessionShareAction(receipt.share)
-      ) {
-        setShareAction(receipt.share);
-      }
+      setShareAction(receipt.share);
     } catch (error) {
       // The core save failed. Do NOT clear the draft, reset set logs, close
       // the session, or mint a new completion id — the user taps the (now
