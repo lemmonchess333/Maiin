@@ -1,4 +1,5 @@
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
+import LiftPurpose from "@/components/program/LiftPurpose";
 /**
  * PR-1: per-day action sheet — canonical surface (post-PR-3).
  *
@@ -185,7 +186,7 @@ export default function DayActionSheet({
     return !!extras && extras.length > 0;
   }, [dateKey, unclaimedByDate]);
 
-  if (!open || !resolved) return null;
+  if (!open || !resolved || !dateKey) return null;
 
   const { lift, run } = resolved;
   const hasLift = lift.workout !== null && lift.index !== null;
@@ -720,6 +721,11 @@ export default function DayActionSheet({
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
                   {lift.workout.dayName || "Lift"}
                 </p>
+                <LiftPurpose
+                  programme={programState}
+                  day={lift.workout}
+                  date={dateKey}
+                />
               </div>
               <div className="shrink-0 pt-1">
                 {lift.status === "completed" && (

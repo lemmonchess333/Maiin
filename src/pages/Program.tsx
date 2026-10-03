@@ -30,6 +30,7 @@ import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
+import LiftPurpose from "@/components/program/LiftPurpose";
 import {
   deloadDismissKey,
   pickLiftAdvice,
@@ -1331,6 +1332,18 @@ function ProgramInner() {
                             ? " The main lifts still take longer than your available time."
                             : ""}
                         </p>
+                      )}
+
+                      {/* The reason sits behind a tap, as "Why this run"
+                          does on the Run tab, and on the same days: one
+                          still to train this week. */}
+                      {(status === "today" || status === "upcoming") && (
+                        <LiftPurpose
+                          programme={programState}
+                          day={selectedWorkout}
+                          date={localDateString()}
+                          className="px-3"
+                        />
                       )}
 
                       {/* PROGRAM-ADAPT-01, post-de-interception home: the

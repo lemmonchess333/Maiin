@@ -262,7 +262,10 @@ const FOCUS_OPTIONS: {
   {
     id: "fat_loss",
     label: "Lose fat",
-    desc: "Higher density, more conditioning",
+    // The engine gives this focus the general reps, not high-rep
+    // "conditioning" work: the lifting keeps strength while the calorie
+    // deficit does the fat loss (GOAL_PROFILES.fat_loss).
+    desc: "Keeps your strength and muscle as you lose fat",
     icon: <Flame size={18} style={{ color: THEME.brand }} />,
   },
   {

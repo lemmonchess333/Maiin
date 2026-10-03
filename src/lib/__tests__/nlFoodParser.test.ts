@@ -11,14 +11,15 @@ describe("parseFoodText", () => {
   });
 
   it("parses a single food item with correct macros", () => {
+    // No amount: one 150 g cooked portion, the main protein of a plate.
     const result = parseFoodText("chicken");
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       name: "Chicken",
-      calories: 165,
-      protein: 31,
+      calories: 248,
+      protein: 47,
       carbs: 0,
-      fat: 4,
+      fat: 6,
     });
   });
 
@@ -69,10 +70,10 @@ describe("parseFoodText", () => {
   it("matches food names case-insensitively", () => {
     const result = parseFoodText("CHICKEN");
     expect(result).toHaveLength(1);
-    expect(result[0].calories).toBe(165);
-    expect(result[0].protein).toBe(31);
+    expect(result[0].calories).toBe(248);
+    expect(result[0].protein).toBe(47);
     expect(result[0].carbs).toBe(0);
-    expect(result[0].fat).toBe(4);
+    expect(result[0].fat).toBe(6);
   });
 
   it("handles number glued to food name (no space): '2chocolate bars'", () => {
@@ -84,7 +85,7 @@ describe("parseFoodText", () => {
   it("handles typos via fuzzy matching: 'chciken' → chicken", () => {
     const result = parseFoodText("chciken");
     expect(result).toHaveLength(1);
-    expect(result[0].calories).toBe(165);
+    expect(result[0].calories).toBe(248);
   });
 
   it("handles depluralized forms: 'chocolate bars' → chocolate", () => {
@@ -131,12 +132,14 @@ describe("parseFoodText", () => {
 
 describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   it("scales macros against serving grams for '200g chicken'", () => {
-    // chicken serving = "100g cooked", 165 cal: 200g is two servings.
-    // (The row said "85g cooked" over the same 165 cal until 2026-09-28,
-    // and this test accepted the 388 cal that produced.)
+    // chicken serving = "150g cooked", 248 cal: 200g is 4/3 of a serving.
+    // That is 165 cal per 100 g, the reference, give or take the rounding
+    // of the 150 g portion (247.5 to 248), so 331 rather than 330.
+    // (The row said "85g cooked" over 165 cal until 2026-09-28, and this
+    // test accepted the 388 cal that produced.)
     const result = parseFoodText("200g chicken");
     expect(result).toHaveLength(1);
-    expect(result[0].calories).toBe(330);
+    expect(result[0].calories).toBe(331);
     expect(result[0].portionLabel).toBe("200g");
   });
 
@@ -178,8 +181,8 @@ describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   it("tolerates whitespace between number and unit: '200 g chicken'", () => {
     const result = parseFoodText("200 g chicken");
     expect(result).toHaveLength(1);
-    // The same two 100 g servings as "200g chicken", space or none.
-    expect(result[0].calories).toBe(330);
+    // The same amount as "200g chicken", space or none.
+    expect(result[0].calories).toBe(331);
     expect(result[0].portionLabel).toBe("200g");
   });
 
@@ -277,7 +280,7 @@ describe("parseFoodText — conjunctions", () => {
   it('"chicken and rice" keeps the rice', () => {
     const result = parseFoodText("chicken and rice");
     expect(result).toHaveLength(2);
-    expect(result[0]).toMatchObject({ name: "Chicken", calories: 165 });
+    expect(result[0]).toMatchObject({ name: "Chicken", calories: 248 });
     expect(result[1].name).toBe("Rice");
     expect(result[1].carbs).toBeGreaterThan(0);
   });
@@ -347,13 +350,65 @@ describe("built-in servings lead with grams or ml", () => {
 
   it("shows the grams first in a suggestion", () => {
     const chicken = getFoodSuggestions("chicken breast")[0];
-    expect(chicken.serving).toBe("100g cooked");
+    expect(chicken.serving).toBe("150g cooked");
   });
 
   it("still scales a weighed portion against the leading grams", () => {
-    // 100g cooked, 165 cal: 300g is exactly three servings. This pinned
+    // 150g cooked, 248 cal: 300g is exactly two servings. This pinned
     // 170g at 330 cal, the product of a row that put 100 g of chicken's
     // figures under an 85 g label; foodDbIntegrity now checks the rows.
-    expect(parseFoodText("300g chicken breast")[0].calories).toBe(495);
+    expect(parseFoodText("300g chicken breast")[0].calories).toBe(496);
+  });
+});
+
+describe("a typed food with no amount logs a portion someone eats", () => {
+  /* The main protein of a plate is 150 g cooked, and foods eaten in pieces,
+     slices or smaller amounts keep 100 g. At 100 g, "salmon, potatoes,
+     broccoli" logged 393 kcal and "chicken breast, rice" 365, about a fifth
+     short of the plate, and logged intake is what the adaptive TDEE learns
+     from. Each case compares the bare food with the same food weighed, so
+     it holds whatever the row's figures are. */
+  const total = (text: string) =>
+    parseFoodText(text).reduce((sum, item) => sum + item.calories, 0);
+
+  it.each([
+    "chicken",
+    "chicken breast",
+    "turkey",
+    "beef",
+    "steak",
+    "mince",
+    "ground beef",
+    "pork",
+    "lamb",
+    "duck",
+    "salmon",
+    "fish",
+    "cod",
+    "tofu",
+    "tempeh",
+  ])("%s with no amount is a 150 g portion", (food) => {
+    expect(parseFoodText(food)[0].calories).toBe(
+      parseFoodText(`150g ${food}`)[0].calories
+    );
+  });
+
+  it.each([
+    "chicken thigh",
+    "chicken wing",
+    "ham",
+    "tuna",
+    "crab",
+    "liver",
+    "mackerel",
+  ])("%s with no amount stays 100 g", (food) => {
+    expect(parseFoodText(food)[0].calories).toBe(
+      parseFoodText(`100g ${food}`)[0].calories
+    );
+  });
+
+  it("logs a typed dinner at the size of the plate", () => {
+    expect(total("salmon, potatoes, broccoli")).toBe(497);
+    expect(total("chicken breast, rice")).toBe(448);
   });
 });
