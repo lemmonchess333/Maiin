@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching, integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 96,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/1.png",
+      "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57",
+      "anchors": {
+        "towerUpperSeam": {
+          "reference": [197, 128],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearRoundFloorFoot": {
+          "reference": [653, 1404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/2.png",
+      "sha256": "e06a1e5a1095cf9ab8126bb2654622db1cd8465be3f8a82f43e4a815affadcbb",
+      "anchors": {
+        "towerUpperSeam": {
+          "reference": [197, 128],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 3.8321995464852607
+        },
+        "nearRoundFloorFoot": {
+          "reference": [653, 1404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 6.653061224489796
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/3.png",
+      "sha256": "4b36b67f6505fde4746551c1527b9622c604789dd25f89ec7ba329a8ebe2a907",
+      "anchors": {
+        "towerUpperSeam": {
+          "reference": [197, 128],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.977324263038549
+        },
+        "nearRoundFloorFoot": {
+          "reference": [653, 1404],
+          "dx": -60,
+          "dy": -14,
+          "meanChannelDifference": 9.052910052910052
+        }
+      }
+    }
+  ]
+}

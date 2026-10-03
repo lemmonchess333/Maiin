@@ -1,0 +1,54 @@
+{
+  "exerciseId": "sissy-squat",
+  "status": "six-frame-draft",
+  "releaseApproved": false,
+  "variation": "Bodyweight supported sissy squat: fixed hand support, heels rise, knees move forward while hips remain extended and torso leans back; controlled partial range.",
+  "camera": "Fixed side three-quarter, facing left, full athlete and anchored balance post visible.",
+  "equipment": "Rigid floor-anchored vertical hand support; no external load.",
+  "primary": "Quadriceps",
+  "secondary": "Hip flexors subtle",
+  "fixedAnchors": [
+    "support post base",
+    "support hand position",
+    "shoe forefoot contacts"
+  ],
+  "invariants": ["athlete limb lengths", "post dimensions", "shoe dimensions"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Stand and support",
+      "cue": "Stand tall; hold a solid balance support.",
+      "pose": "Standing straight, feet shoulder width, one hand on fixed vertical post."
+    },
+    {
+      "frame": 2,
+      "label": "Begin lowering",
+      "cue": "Lift heels; move knees forward, torso back.",
+      "pose": "Shallow knee bend with heels raised, forefoot contacts fixed and hips extended."
+    },
+    {
+      "frame": 3,
+      "label": "Control your depth",
+      "cue": "Lower comfortably while keeping your hips extended.",
+      "pose": "Moderate controlled bend, knees forward, torso and thighs aligned back; not an extreme floor touch."
+    },
+    {
+      "frame": 4,
+      "label": "Stay controlled",
+      "cue": "Keep tension through your quads and support.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Drive upward",
+      "cue": "Squeeze your quads to rise under control.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Finish tall",
+      "cue": "Return tall and lower your heels gently.",
+      "reuse": 1
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "exerciseId": "hip-adduction-machine",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/hip-adduction-machine/1.png",
+    "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57"
+  },
+  "generationSources": [
+    {
+      "path": "/workspace/generated_images/exec-35b89af7-f73e-409f-b279-8140922bd41a.png",
+      "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57"
+    },
+    {
+      "path": "/workspace/generated_images/exec-b89bf59a-5d56-4328-8372-826934cff5d8.png",
+      "sha256": "e06a1e5a1095cf9ab8126bb2654622db1cd8465be3f8a82f43e4a815affadcbb"
+    },
+    {
+      "path": "/workspace/generated_images/exec-6e7eb811-521b-4396-94cf-5789d9e46854.png",
+      "sha256": "4b36b67f6505fde4746551c1527b9622c604789dd25f89ec7ba329a8ebe2a907"
+    }
+  ],
+  "cueSha256": "64321fc04f149724385d8a3c23f5dd9e756be46fac43c0de9645ab177ed9a968",
+  "reviewFindings": [
+    "Three distinct poses, six native files in order 1,2,3,3,2,1. Pads are inside thighs and the sequence closes then returns outward, distinct from hip abduction.",
+    "The closed pose moves the near round floor support inward with the footrest, although stationary base feet should remain fixed. Pad/footrest lever geometry, limb dimensions and far-hand grip remain unapproved.",
+    "The closed pose also reveals an extra row of tower details that was absent in the master. The plan called for an enclosed tower; no cable routing or stack-travel validation is claimed. No production release."
+  ]
+}

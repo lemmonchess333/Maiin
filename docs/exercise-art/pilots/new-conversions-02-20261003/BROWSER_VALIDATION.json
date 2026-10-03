@@ -1,0 +1,12 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep 'nordic-hamstring-curl|hip-adduction-machine|sissy-squat'",
+  "stats": {
+    "startTime": "2026-10-03T12:42:59.800Z",
+    "duration": 25328.461,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": "Nine final-batch checks: light/dark playback and reduced motion for three new drafts. Not visual release approval."
+}

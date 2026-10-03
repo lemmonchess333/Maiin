@@ -1,0 +1,36 @@
+{
+  "baseCommit": "5125bb90997988e5c29a530de83ba25979d51423",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "durationSeconds": 278.28,
+    "scope": "Full repository run started with Nordic and Hip Adduction registered. Sissy Squat was added as draft-only data while tests ran; final-batch integrity, changed-file lint, browser checks and commit typecheck validate that addition."
+  },
+  "browser": {
+    "startTime": "2026-10-03T12:42:59.800Z",
+    "duration": 25328.461,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "finalDraftAudit": {
+    "newSets": 3,
+    "newFrames": 18,
+    "newUniquePoses": 9,
+    "totalRegisteredDraftSets": 22,
+    "totalRegisteredDraftFrames": 132,
+    "errors": []
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5881.9
+  },
+  "productionAssetsChanged": false,
+  "releaseApproved": false
+}

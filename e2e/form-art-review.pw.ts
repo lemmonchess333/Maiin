@@ -46,7 +46,20 @@ const newConversions: typeof import("../docs/exercise-art/pilots/new-conversions
       "utf8"
     )
   );
+const newConversions02: typeof import("../docs/exercise-art/pilots/new-conversions-02-20261003/MANIFEST.json") =
+  JSON.parse(
+    readFileSync(
+      new URL(
+        "../docs/exercise-art/pilots/new-conversions-02-20261003/MANIFEST.json",
+        import.meta.url
+      ),
+      "utf8"
+    )
+  );
 const targets = new Set([
+  "sissy-squat",
+  "nordic-hamstring-curl",
+  "hip-adduction-machine",
   "cuban-press",
   "hip-abduction-machine",
   "crunches",
@@ -62,11 +75,19 @@ const sets = [
   ...continuation.completeDraftSets,
   ...octoberThird.completeDraftSets,
   ...newConversions.completeDraftSets,
+  ...newConversions02.completeDraftSets,
 ].filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
 const endpointHashes: Record<string, string> = {
+  "sissy-squat":
+    "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc",
+  "nordic-hamstring-curl":
+    "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6",
+  "hip-adduction-machine":
+    "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57",
+
   "cuban-press":
     "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d",
   "hip-abduction-machine":

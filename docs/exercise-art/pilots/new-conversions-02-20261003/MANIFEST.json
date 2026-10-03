@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "batch": "new-conversions-02-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 18,
+  "completeDraftSets": [
+    {
+      "exerciseId": "nordic-hamstring-curl",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter view facing right, showing knee pad, both ankle restraints and body line.",
+      "anchors": ["knee pad floor corners", "ankle strap anchors"],
+      "equipment": "Thick knee pad and anchored padded ankle strap on a rigid low floor platform; no partner.",
+      "muscles": {
+        "primary": ["Hamstrings"],
+        "secondary": ["Calves"]
+      },
+      "reviewFindings": [
+        "Three distinct poses, six separate native files in order 1,2,3,3,2,1. Controlled partial-range variation with hamstring-led return; no unshown floor push-off or assistance band is claimed.",
+        "The early-lean edit shifts the platform upward and changes body length. The deeper pose was derived directly from the fixed master to avoid carrying that scene drift forward, but body proportions still need review. Fixed supports and anatomy are not approved.",
+        "Arms remain crossed and the ankle strap remains visible; secondary calf highlight is lighter than hamstrings. No compositing, warping, rescaling or other code-based image repair was applied."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/1.png",
+          "caption": "ANCHOR AND BRACE 1/6",
+          "cue": "Secure ankles; cross arms and brace straight.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 738849,
+          "sha256": "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/2.png",
+          "caption": "LEAN FORWARD SLOWLY 2/6",
+          "cue": "Lean forward from your knees, staying straight.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 812876,
+          "sha256": "16fc9cad4585602906a8f6fb6b20bab80b4df47fa2c57c352a93f957b83c2ece",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/3.png",
+          "caption": "CONTROL YOUR RANGE 3/6",
+          "cue": "Lower only as far as you control.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1116257,
+          "sha256": "f7b11011486baa93e567b19e49882317883474a4698c50dbc36d9dc303c8e4d6",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/4.png",
+          "caption": "KEEP TENSION 4/6",
+          "cue": "Keep hips extended and hamstrings under tension.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1116257,
+          "sha256": "f7b11011486baa93e567b19e49882317883474a4698c50dbc36d9dc303c8e4d6",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/5.png",
+          "caption": "PULL BACK UPRIGHT 5/6",
+          "cue": "Use your hamstrings to pull yourself back.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 812876,
+          "sha256": "16fc9cad4585602906a8f6fb6b20bab80b4df47fa2c57c352a93f957b83c2ece",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/nordic-hamstring-curl/frames/6.png",
+          "caption": "RESET TALL 6/6",
+          "cue": "Return upright without bending at your hips.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 738849,
+          "sha256": "995b93515a4644f321ce93b21949aa4aecf4a4afe04ab8e5613f6441c0f754c6",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "hip-adduction-machine",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed front slight three-quarter showing both inner-thigh pads, hand grips and feet.",
+      "anchors": [
+        "tower corners",
+        "machine floor feet",
+        "fixed seat and backrest"
+      ],
+      "equipment": "Real hip adduction machine, fixed seat/backrest and handles, two pivoting pad/footrest assemblies, enclosed resistance tower.",
+      "muscles": {
+        "primary": ["Adductors"],
+        "secondary": ["Glutes subtle where visible"]
+      },
+      "reviewFindings": [
+        "Three distinct poses, six native files in order 1,2,3,3,2,1. Pads are inside thighs and the sequence closes then returns outward, distinct from hip abduction.",
+        "The closed pose moves the near round floor support inward with the footrest, although stationary base feet should remain fixed. Pad/footrest lever geometry, limb dimensions and far-hand grip remain unapproved.",
+        "The closed pose also reveals an extra row of tower details that was absent in the master. The plan called for an enclosed tower; no cable routing or stack-travel validation is claimed. No production release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/1.png",
+          "caption": "SET YOUR STARTING WIDTH 1/6",
+          "cue": "Rest inner thighs against pads; grip handles.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1426163,
+          "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/2.png",
+          "caption": "SQUEEZE INWARD 2/6",
+          "cue": "Bring knees together against the pads.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1370360,
+          "sha256": "e06a1e5a1095cf9ab8126bb2654622db1cd8465be3f8a82f43e4a815affadcbb",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/3.png",
+          "caption": "FINISH THE SQUEEZE 3/6",
+          "cue": "Squeeze inner thighs without lifting your hips.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1456627,
+          "sha256": "4b36b67f6505fde4746551c1527b9622c604789dd25f89ec7ba329a8ebe2a907",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/4.png",
+          "caption": "CONTROL THE CLOSED POSITION 4/6",
+          "cue": "Keep your back supported and core braced.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1456627,
+          "sha256": "4b36b67f6505fde4746551c1527b9622c604789dd25f89ec7ba329a8ebe2a907",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/5.png",
+          "caption": "OPEN SLOWLY 5/6",
+          "cue": "Let knees open slowly against resistance.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1370360,
+          "sha256": "e06a1e5a1095cf9ab8126bb2654622db1cd8465be3f8a82f43e4a815affadcbb",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/hip-adduction-machine/frames/6.png",
+          "caption": "RETURN UNDER TENSION 6/6",
+          "cue": "Reach your starting width without relaxing completely.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1426163,
+          "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "sissy-squat",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter, facing left, full athlete and anchored balance post visible.",
+      "anchors": [
+        "support post base",
+        "support hand position",
+        "shoe forefoot contacts"
+      ],
+      "equipment": "Rigid floor-anchored vertical hand support; no external load.",
+      "muscles": {
+        "primary": ["Quadriceps"],
+        "secondary": ["Hip flexors subtle"]
+      },
+      "reviewFindings": [
+        "Three unique poses in six native files: standing, shallow lowering, moderate lowering, control, rise, standing. Bodyweight supported variation; no added load.",
+        "Post and hand remain visually aligned, but the support arm appears longer as the torso moves away. Hip extension, limb proportions and forefoot contacts need review before approval. The generated camera is closer to frontal three-quarter than the planned side view, reducing the clarity of joint alignment.",
+        "No code-based image repair and no changes to existing exercise guides. This is a draft, not a release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/1.png",
+          "caption": "STAND AND SUPPORT 1/6",
+          "cue": "Stand tall; hold a solid balance support.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 929198,
+          "sha256": "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/2.png",
+          "caption": "BEGIN LOWERING 2/6",
+          "cue": "Lift heels; move knees forward, torso back.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1309132,
+          "sha256": "75dea4697a2afafd1185064be3e75e0b28d9ff5d5dcf26f227927fbf25399248",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/3.png",
+          "caption": "CONTROL YOUR DEPTH 3/6",
+          "cue": "Lower comfortably while keeping your hips extended.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1301359,
+          "sha256": "b04fe6b2edad11776d31c93af3bf80fe62625e5e44c84a835d0bffb2065aee12",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/4.png",
+          "caption": "STAY CONTROLLED 4/6",
+          "cue": "Keep tension through your quads and support.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1301359,
+          "sha256": "b04fe6b2edad11776d31c93af3bf80fe62625e5e44c84a835d0bffb2065aee12",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/5.png",
+          "caption": "DRIVE UPWARD 5/6",
+          "cue": "Squeeze your quads to rise under control.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1309132,
+          "sha256": "75dea4697a2afafd1185064be3e75e0b28d9ff5d5dcf26f227927fbf25399248",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-02-20261003/sissy-squat/frames/6.png",
+          "caption": "FINISH TALL 6/6",
+          "cue": "Return tall and lower your heels gently.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 929198,
+          "sha256": "5aa2d54d5a09c7ca7f01bf333904942cb29323d459cd279ad782bbf28b7c28bc",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

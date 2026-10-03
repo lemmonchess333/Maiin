@@ -4,6 +4,8 @@
 
 Current owner priority: convert the remaining unconverted exercises. Leave already improved guides and existing repair work alone unless the owner asks to revisit them.
 
+The [second new-conversion batch](pilots/new-conversions-02-20261003/README.md) adds Nordic Hamstring Curl, Hip Adduction Machine and Sissy Squat: another 18 native draft frames with catalogue-based sequences, source hashes and mobile playback evidence. All three were previously unconverted. Fixed-equipment drift is recorded, so the drafts remain outside production.
+
 The [new-conversion batch](pilots/new-conversions-20261003/README.md) adds Cuban Press and Hip Abduction Machine: 12 native draft frames with plans, provenance and mobile playback evidence. Both were previously unconverted. They remain outside production pending the recorded anatomy/equipment findings; existing repair sets were left alone.
 
 The reviewed Hanging Leg Raise, Plank and Crunches guides are now live on Firebase Hosting from commit `f527f68`. [Production verification](releases/2026-10-03/PRODUCTION_VERIFICATION.json) checks all 18 delivered frames and three thumbnails against local SHA-256 hashes.
