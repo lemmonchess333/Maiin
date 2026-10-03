@@ -1,0 +1,153 @@
+{
+  "method": "Read-only 31x31 RGB patches, +/-20px integer search against pose 1. Drift diagnoses redraws, not anatomical correctness; no image edits or automatic approval.",
+  "selectedPoseOrder": [1, 2, 3, 3, 2, 1],
+  "poses": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/1.png",
+      "sha256": "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
+      "anchors": {
+        "padNearCorner": {
+          "x": 1197,
+          "y": 831
+        },
+        "padLeftCorner": {
+          "x": 1001,
+          "y": 800
+        },
+        "nearKnee": {
+          "x": 1200,
+          "y": 790
+        },
+        "farHeel": {
+          "x": 1333,
+          "y": 691
+        }
+      },
+      "matching": {
+        "padNearCorner": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "padLeftCorner": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearKnee": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 198.4363877921587,
+        "secondSupportSpan": 165.80108564180154
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/2.png",
+      "sha256": "8af89ad2d0b0c924dc9cba1784fd42106f94d092c42286bddbc83a43ab27dd89",
+      "anchors": {
+        "padNearCorner": {
+          "x": 1198,
+          "y": 833
+        },
+        "padLeftCorner": {
+          "x": 1001,
+          "y": 800
+        },
+        "nearKnee": {
+          "x": 1202,
+          "y": 790
+        },
+        "farHeel": {
+          "x": 1333,
+          "y": 691
+        }
+      },
+      "matching": {
+        "padNearCorner": {
+          "dx": 1,
+          "dy": 2,
+          "meanChannelDifference": 6.02670828997572
+        },
+        "padLeftCorner": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.553936871314603
+        },
+        "nearKnee": {
+          "dx": 2,
+          "dy": 0,
+          "meanChannelDifference": 4.49843912591051
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 8.47173083593479
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 199.7448372299019,
+        "secondSupportSpan": 164.20109622045769
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/3.png",
+      "sha256": "638c57ea43d4eb9846b027f36f67a7550c29c8fb8cdfb2fa30a67e710057d798",
+      "anchors": {
+        "padNearCorner": {
+          "x": 1197,
+          "y": 831
+        },
+        "padLeftCorner": {
+          "x": 1001,
+          "y": 800
+        },
+        "nearKnee": {
+          "x": 1197,
+          "y": 788
+        },
+        "farHeel": {
+          "x": 1333,
+          "y": 689
+        }
+      },
+      "matching": {
+        "padNearCorner": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 3.696496704821367
+        },
+        "padLeftCorner": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.714880332986472
+        },
+        "nearKnee": {
+          "dx": -3,
+          "dy": -2,
+          "meanChannelDifference": 10.558446063128686
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": -2,
+          "meanChannelDifference": 7.351023239680888
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 198.4363877921587,
+        "secondSupportSpan": 168.21712160181556
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "exerciseId": "kettlebell-swing",
+  "tool": "image_gen",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeSources": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/sources/pose-1.png",
+      "sha256": "8123b1a9c554e5fae3bf63258f4cec79d942531ca9017cf9b6f0d2977f3c78ad",
+      "bytes": 509490
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/sources/pose-2.png",
+      "sha256": "5ebb3ec58dff4a1f76d40abd501be6179acec811452217ce105ada9068fcd00c",
+      "bytes": 927492
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/sources/pose-3.png",
+      "sha256": "66791213d5023a9d17b4b92ccab862849d8ac329ed5d2ed5f563f09c2dad74be",
+      "bytes": 618712
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/sources/rejected-shallow-hinge.png",
+      "sha256": "d0edcd53c08edae537980cea42036ece461d1480643fbad4ea5a7838d35992da",
+      "bytes": 645801
+    }
+  ],
+  "processing": "Native PNG bytes copied unchanged. Slots 4, 5, 6 reuse 3, 2, 1; no body warping or equipment compositing.",
+  "reviewFindings": [
+    "Corrected backswing replaces the rejected shallow hinge; three poses show hinge, ascent and chest-height float.",
+    "Read-only patch matching measures both far-shoe contacts 7px upward in the top pose; near shoe moves 1px. This exceeds the existing 1px fixed-anchor release limit. Handle/grip readability and dynamic hip-driven timing also need review. Remains a draft.",
+    "Mobile review: the swing athlete is too small within the landscape canvas; a consistent tighter framing across all poses is required before release."
+  ],
+  "releaseApproved": false
+}

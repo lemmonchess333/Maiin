@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "batch": "new-conversions-05-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 12,
+  "completeDraftSets": [
+    {
+      "exerciseId": "ab-wheel",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed near side three-quarter facing left, full athlete and wheel with room ahead.",
+      "anchors": ["knees on pad", "pad corners", "floor plane"],
+      "equipment": "One compact dual-tread ab wheel and thin dark kneeling pad.",
+      "muscles": {
+        "primary": ["Rectus abdominis", "Obliques"],
+        "secondary": ["Lats", "Shoulders lighter"]
+      },
+      "reviewFindings": [
+        "Three distinct poses show a kneeling setup, forward rollout and extended range, then reverse. Both hands remain at the wheel and knees remain on the pad.",
+        "Read-only patch matching measures near-knee shifts up to 3px horizontally / 2px vertically, and a pad-corner shift of 2px vertically. These exceed the existing 1px fixed-anchor release limit. Wheel dimensions also need consistency review. Remains a draft."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/1.png",
+          "caption": "SET YOUR BRACE 1/6",
+          "cue": "Kneel; grip the wheel under your shoulders.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 779508,
+          "sha256": "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/2.png",
+          "caption": "ROLL FORWARD 2/6",
+          "cue": "Roll forward slowly with your core braced.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 793457,
+          "sha256": "8af89ad2d0b0c924dc9cba1784fd42106f94d092c42286bddbc83a43ab27dd89",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/3.png",
+          "caption": "CONTROL YOUR REACH 3/6",
+          "cue": "Stop before your lower back starts arching.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1196775,
+          "sha256": "638c57ea43d4eb9846b027f36f67a7550c29c8fb8cdfb2fa30a67e710057d798",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/4.png",
+          "caption": "KEEP YOUR BRACE 4/6",
+          "cue": "Keep ribs down and hips extended.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1196775,
+          "sha256": "638c57ea43d4eb9846b027f36f67a7550c29c8fb8cdfb2fa30a67e710057d798",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/5.png",
+          "caption": "PULL BACK SMOOTHLY 5/6",
+          "cue": "Use your abs to draw the wheel back.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 793457,
+          "sha256": "8af89ad2d0b0c924dc9cba1784fd42106f94d092c42286bddbc83a43ab27dd89",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/frames/6.png",
+          "caption": "RESET UNDER SHOULDERS 6/6",
+          "cue": "Return with control; keep your brace.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 779508,
+          "sha256": "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "kettlebell-swing",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed near side three-quarter facing left, full athlete and bell with headroom.",
+      "anchors": [
+        "left shoe floor contact",
+        "right shoe floor contact",
+        "floor plane"
+      ],
+      "equipment": "One dark kettlebell, level floor.",
+      "muscles": {
+        "primary": ["Glutes", "Hamstrings"],
+        "secondary": ["Core", "Shoulders lighter"]
+      },
+      "reviewFindings": [
+        "Corrected backswing replaces the rejected shallow hinge; three poses show hinge, ascent and chest-height float.",
+        "Read-only patch matching measures both far-shoe contacts 7px upward in the top pose; near shoe moves 1px. This exceeds the existing 1px fixed-anchor release limit. Handle/grip readability and dynamic hip-driven timing also need review. Remains a draft.",
+        "Mobile review: the swing athlete is too small within the landscape canvas; a consistent tighter framing across all poses is required before release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/1.png",
+          "caption": "HINGE BACK 1/6",
+          "cue": "Hinge back; guide the bell between legs.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 509490,
+          "sha256": "8123b1a9c554e5fae3bf63258f4cec79d942531ca9017cf9b6f0d2977f3c78ad",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/2.png",
+          "caption": "DRIVE YOUR HIPS 2/6",
+          "cue": "Drive through your feet and extend hips.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 927492,
+          "sha256": "5ebb3ec58dff4a1f76d40abd501be6179acec811452217ce105ada9068fcd00c",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/3.png",
+          "caption": "LET THE BELL FLOAT 3/6",
+          "cue": "Stand tall; let the bell reach chest height.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 618712,
+          "sha256": "66791213d5023a9d17b4b92ccab862849d8ac329ed5d2ed5f563f09c2dad74be",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/4.png",
+          "caption": "STAY TALL 4/6",
+          "cue": "Brace your abs without leaning back.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 618712,
+          "sha256": "66791213d5023a9d17b4b92ccab862849d8ac329ed5d2ed5f563f09c2dad74be",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/5.png",
+          "caption": "GUIDE THE DESCENT 5/6",
+          "cue": "Let the bell fall; keep arms relaxed.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 927492,
+          "sha256": "5ebb3ec58dff4a1f76d40abd501be6179acec811452217ce105ada9068fcd00c",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/6.png",
+          "caption": "HINGE AGAIN 6/6",
+          "cue": "Hinge back as the bell passes your legs.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 509490,
+          "sha256": "8123b1a9c554e5fae3bf63258f4cec79d942531ca9017cf9b6f0d2977f3c78ad",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

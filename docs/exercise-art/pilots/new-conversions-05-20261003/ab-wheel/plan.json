@@ -1,0 +1,22 @@
+{
+  "variation": "Kneeling ab wheel rollout within a neutral-spine range; return without collapsing the hips.",
+  "camera": "Fixed near side three-quarter facing left, full athlete and wheel with room ahead.",
+  "equipment": "One compact dual-tread ab wheel and thin dark kneeling pad.",
+  "anchors": ["knees on pad", "pad corners", "floor plane"],
+  "muscles": {
+    "primary": ["Rectus abdominis", "Obliques"],
+    "secondary": ["Lats", "Shoulders lighter"]
+  },
+  "beats": [
+    [0, "Set your brace", "Kneel; grip the wheel under your shoulders."],
+    [0.5, "Roll forward", "Roll forward slowly with your core braced."],
+    [1, "Control your reach", "Stop before your lower back starts arching."],
+    [1, "Keep your brace", "Keep ribs down and hips extended."],
+    [0.5, "Pull back smoothly", "Use your abs to draw the wheel back."],
+    [0, "Reset under shoulders", "Return with control; keep your brace."]
+  ],
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "exerciseId": "ab-wheel",
+  "status": "draft-awaiting-review",
+  "releaseApproved": false
+}

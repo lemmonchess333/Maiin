@@ -76,7 +76,19 @@ const newConversions04: typeof import("../docs/exercise-art/pilots/new-conversio
       "utf8"
     )
   );
+const newConversions05: typeof import("../docs/exercise-art/pilots/new-conversions-05-20261003/MANIFEST.json") =
+  JSON.parse(
+    readFileSync(
+      new URL(
+        "../docs/exercise-art/pilots/new-conversions-05-20261003/MANIFEST.json",
+        import.meta.url
+      ),
+      "utf8"
+    )
+  );
 const targets = new Set([
+  "ab-wheel",
+  "kettlebell-swing",
   "seated-calf-raise",
   "farmers-carry",
   "glute-ham-raise",
@@ -104,11 +116,17 @@ const sets = [
   ...newConversions02.completeDraftSets,
   ...newConversions03.completeDraftSets,
   ...newConversions04.completeDraftSets,
+  ...newConversions05.completeDraftSets,
 ].filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
 const endpointHashes: Record<string, string> = {
+  "ab-wheel":
+    "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
+  "kettlebell-swing":
+    "8123b1a9c554e5fae3bf63258f4cec79d942531ca9017cf9b6f0d2977f3c78ad",
+
   "seated-calf-raise":
     "c3f4549e51e7a6574b0cdbf1e3deaaa01192de487865a7a8bf676b264a770bc9",
   "farmers-carry":

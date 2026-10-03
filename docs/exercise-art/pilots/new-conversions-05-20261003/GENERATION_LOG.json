@@ -1,0 +1,72 @@
+{
+  "mapping": {
+    "ab-wheel": {
+      "1": "/workspace/generated_images/exec-de748ba0-2c6d-428f-9647-43fadc0b73d9.png",
+      "2": "/workspace/generated_images/exec-f517494d-4077-4ca7-91a6-f1a84a08080d.png",
+      "3": "/workspace/generated_images/exec-8522a970-9d8f-4425-81fe-b135004de5e4.png"
+    },
+    "kettlebell-swing": {
+      "1": "/workspace/generated_images/exec-e0bc321b-b14c-4b8a-8c25-9087faaebe3d.png",
+      "2": "/workspace/generated_images/exec-aa55e8c9-1f71-4319-9a12-541347bef406.png",
+      "3": "/workspace/generated_images/exec-fe9b0acc-f827-4147-949d-72d5efd4239a.png"
+    }
+  },
+  "generations": [
+    {
+      "id": "ab-wheel",
+      "pose": 1,
+      "prompt": "Create ONE educational kneeling Ab Wheel Rollout SETUP illustration using reference anatomical style: faceless white-grey adult athlete, opaque charcoal shorts, white shoes, solid black background. Purple abdominals and obliques, lighter lats/shoulders. Landscape1536x1024, near-side three-quarter camera facing LEFT, fullbody centered with generous empty space to LEFT for subsequent rollout. Athlete kneels on one thin dark rectangular pad, both knees clearly supported, shins behind toward right. Hips extend forward from knees, no sitting on heels. Straight arms point vertically down, both hands naturally grip opposite ends of ONE horizontal axle of a compact black dual-tread ab wheel directly beneath shoulders. Elbows straight but not hyperextended, ribs tucked and low back neutral, head aligned. Wheel on ground, circular wheel credible, no extra wheels or extra limbs. Show both hands and both knees. No text, labels, arrows or logos.",
+      "referenced_image_paths": [
+        "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+      ]
+    },
+    {
+      "id": "kettlebell-swing",
+      "pose": 1,
+      "prompt": "Create ONE educational two-handed Russian Kettlebell Swing BACKSWING illustration using reference anatomical style: faceless white-grey adult athlete, opaque charcoal shorts, white shoes, solidblack background. Purple hamstrings and visible glute area below shorts, lighter core, no shoulder emphasis. Landscape1536x1024, near side three-quarter camera facing LEFT, entirebody with generous headroom for standing and clear space to LEFT for chest-height swing. Feet shoulderwidth, firmly planted at lower center-right. Athlete hinges hips BACK toward right with modest knee bend, shins nearly vertical, flat neutral back, head in line with spine; chest faces diagonally down left. Both straight relaxed arms extend down/back BETWEEN thighs, BOTH hands grip ONE dark kettlebell handle; bell high between legs close to groin in backswing, not onfloor, not dangling at knees. Credible hips-back athletic hinge, not deep squat. Bell round compact body and one U-shaped handle. No text, labels, arrows, logos or other figures.",
+      "referenced_image_paths": [
+        "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+      ]
+    },
+    {
+      "id": "kettlebell-swing",
+      "pose": 1,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-4e81adac-58bb-4d8b-b228-48bb4f50539d.png"
+      ],
+      "prompt": "Correct this backswing into a true deep HIP HINGE, and give full standing headroom. Keep landscape1536x1024 and blackbackground but make the athlete SMALLER with feet around y900 and generous empty space above: the torso should be almost horizontal, hips pushed FAR BACK toward right, knees only moderately bent, shins almost vertical, head aligned with spine around y470. Side three-quarter facing LEFT with much more side view. Both straight arms sweep back between thighs with hands HIGH near upper inner thighs and kettlebell behind knee line at upper thigh level, not hanging in front of knees. Feet shoulderwidth anchored levelground. Flat back, no spinal flexion or squat. Charcoal shorts, anatomy and white shoes same style. Hamstring highlights subtle purple, no purple buttock protruding outside shorts. This is the swing backswing peak, not a deadlift pickup. Single figure."
+    },
+    {
+      "id": "ab-wheel",
+      "pose": 2,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-de748ba0-2c6d-428f-9647-43fadc0b73d9.png"
+      ],
+      "prompt": "Create MIDWAY rollout from this exact ab wheel setup. Same1536x1024canvas, camera, athlete size, shorts, anatomy, purplecore and blackbackground. Both knee contacts and darkpad MUST remain exactly where shown; shins and shoes stay behind knees at same positions. Move the same small abwheel about200pixels LEFT across ground; both hands remain gripping the two handles. Straight arms now angle forward-left about35degrees from vertical. Torso/hips descend and extend forward as a connected neutral-spine line from knees through hips to shoulders; no back arch, hips not sitting back. Head moves naturally left/down with shoulders, neck neutral. All body and wheel visible. One wheel with same dimensions and axle. No text."
+    },
+    {
+      "id": "ab-wheel",
+      "pose": 3,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-de748ba0-2c6d-428f-9647-43fadc0b73d9.png"
+      ],
+      "prompt": "Create CONTROLLED FULL rollout from this exact ab wheel setup. Same1536x1024canvas, camera, athlete size, shorts, anatomy, purplecore and blackbackground. Both knee contacts and darkpad MUST remain exactly where shown; shins and shoes stay behind knees at same positions. Roll the SAME wheel far LEFT about450pixels; hands maintain natural grip on both handles, elbows straight. Athlete lowers chest close to floor in a long extended kneeling plank: nearly straight line knees-hips-shoulders, ribs tucked, no lower-back arch and no sagging waist. Arms extend forward nearly overhead, shoulders flexed, wheel ahead of head to left. Head inline withspine eyesdown, never lookingup. Range remains controlled, allbody and wheel insidecanvas. Samewheel dimensions, singleathlete, no text."
+    },
+    {
+      "id": "kettlebell-swing",
+      "pose": 2,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-e0bc321b-b14c-4b8a-8c25-9087faaebe3d.png"
+      ],
+      "prompt": "Create MID-ASCENT kettlebell swing from this exact master. Keep1536x1024blackcanvas, fixed side threequartercamera facingLEFT, same athlete size, same shoes planted at EXACT same coordinates and stance. Athlete extends hips and knees toward upright; torso now only15degrees forward of vertical, shoulders rising naturally. Both arms straight and relaxed, now slope downward-forward about45degrees, both hands grip same ONE kettlebell out in front at about WAIST height to LEFT. Bell follows a swing arc, not a curl; elbows straight, shoulders not shrugged. Keep kettlebell and handle exactly same size as reference. Charcoalshorts, white-grey anatomy, hamstring highlights. No leanback, no squat, no extra figures or text. Preserve generous headroom."
+    },
+    {
+      "id": "kettlebell-swing",
+      "pose": 3,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-e0bc321b-b14c-4b8a-8c25-9087faaebe3d.png"
+      ],
+      "prompt": "Create TOP OF RUSSIAN SWING from this exact master. Keep1536x1024blackcanvas, fixed side threequartercamera facingLEFT, same athlete size, same shoes planted at EXACT same coordinates and stance. Athlete now stands fully upright with straight knees and extended hips, ribs down, NO leaningback. Both straight arms extend horizontally forwardLEFT at CHEST height holding the SAME dark kettlebell with both hands on samehandle. Bell floats at chestheight in front, never overhead. Shoulders down, no shrug, neutral wrists. Same kettlebell body/handle size and circularshape. Head naturally at top of standing torso with amplemargin, not cropped. Samecharcoalshorts, whitegrey anatomy, purple hamstring accents, subtle core. Singlefigure, no text."
+    }
+  ]
+}
