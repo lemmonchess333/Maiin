@@ -14,6 +14,7 @@ import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
 import continuation from "../../docs/exercise-art/pilots/continuation-20261002/MANIFEST.json";
 import octoberThird from "../../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json";
+import newConversions from "../../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json";
 
 const batchDrafts = Object.fromEntries(
   [
@@ -21,6 +22,7 @@ const batchDrafts = Object.fromEntries(
     ...recovered.completeDraftSets,
     ...continuation.completeDraftSets,
     ...octoberThird.completeDraftSets,
+    ...newConversions.completeDraftSets,
   ].map((set) => [
     `${set.exerciseId} (draft)`,
     {

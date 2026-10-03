@@ -36,7 +36,19 @@ const octoberThird: typeof import("../docs/exercise-art/pilots/continuation-2026
     )
   );
 
+const newConversions: typeof import("../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json") =
+  JSON.parse(
+    readFileSync(
+      new URL(
+        "../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json",
+        import.meta.url
+      ),
+      "utf8"
+    )
+  );
 const targets = new Set([
+  "cuban-press",
+  "hip-abduction-machine",
   "crunches",
   "db-row",
   "db-shoulder-press",
@@ -49,11 +61,17 @@ const sets = [
   ...batch.completeDraftSets,
   ...continuation.completeDraftSets,
   ...octoberThird.completeDraftSets,
+  ...newConversions.completeDraftSets,
 ].filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
 const endpointHashes: Record<string, string> = {
+  "cuban-press":
+    "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d",
+  "hip-abduction-machine":
+    "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4",
+
   crunches: "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f",
   "leg-raise":
     "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01",
@@ -149,7 +167,14 @@ for (const set of sets) {
             path: info.outputPath(`${theme}-endpoint-first.png`),
           });
         }
-        if (index === 5) {
+        if (index === 5 && set.exerciseId === "cuban-press") {
+          // Cuban Press reverses rotation in frame6; lowering finishes on 6→1.
+          expect(frame.sha256).toBe(
+            "2c8ce43fa1394d964859b24b147598cd35ef25cc97c15daab423a59c599bbffb"
+          );
+          expect(frame.progress).toBe(0.33);
+        }
+        if (index === 5 && set.exerciseId !== "cuban-press") {
           expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
           expect(frame.progress).toBe(0);
           expect(startPixels).toBeDefined();

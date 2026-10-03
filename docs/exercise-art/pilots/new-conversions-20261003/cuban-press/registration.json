@@ -1,0 +1,82 @@
+{
+  "method": "21x21 RGB patch matching, integer translation within +/-4px. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/1.png",
+      "sha256": "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d",
+      "anchors": {
+        "leftShoeToe": {
+          "reference": [371, 1382],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "rightShoeToe": {
+          "reference": [536, 1424],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/2.png",
+      "sha256": "2c8ce43fa1394d964859b24b147598cd35ef25cc97c15daab423a59c599bbffb",
+      "anchors": {
+        "leftShoeToe": {
+          "reference": [371, 1382],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.873015873015873
+        },
+        "rightShoeToe": {
+          "reference": [536, 1424],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 3.441421012849584
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/3.png",
+      "sha256": "23dd37fd828723b080b34c7244e2bee708da6cccbdda2171a93e268941fa6710",
+      "anchors": {
+        "leftShoeToe": {
+          "reference": [371, 1382],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 5.3061224489795915
+        },
+        "rightShoeToe": {
+          "reference": [536, 1424],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 4.916855631141345
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/4.png",
+      "sha256": "804f74a4c6ce5f3f43c91dc902cc8ab852ebf4f0ad9fbead49abd87e8fcc46e5",
+      "anchors": {
+        "leftShoeToe": {
+          "reference": [371, 1382],
+          "dx": 0,
+          "dy": -1,
+          "meanChannelDifference": 6.210884353741497
+        },
+        "rightShoeToe": {
+          "reference": [536, 1424],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 6.0854119425548
+        }
+      }
+    }
+  ]
+}

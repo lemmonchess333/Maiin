@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 3 October 2026
 
+Current owner priority: convert the remaining unconverted exercises. Leave already improved guides and existing repair work alone unless the owner asks to revisit them.
+
+The [new-conversion batch](pilots/new-conversions-20261003/README.md) adds Cuban Press and Hip Abduction Machine: 12 native draft frames with plans, provenance and mobile playback evidence. Both were previously unconverted. They remain outside production pending the recorded anatomy/equipment findings; existing repair sets were left alone.
+
 The reviewed Hanging Leg Raise, Plank and Crunches guides are now live on Firebase Hosting from commit `f527f68`. [Production verification](releases/2026-10-03/PRODUCTION_VERIFICATION.json) checks all 18 delivered frames and three thumbnails against local SHA-256 hashes.
 
 The [Shrugs repair](releases/2026-10-03/SHRUGS.md) now adds a reviewed branch guide with fixed legs and reusable rigid equipment layers. Four fixed-body patches and nine visible equipment-face comparisons pass exactly; mobile playback passes in both themes. It is now live on Firebase Hosting from `1cf1f24`; [production verification](releases/2026-10-03/SHRUGS_PRODUCTION_VERIFICATION.json) confirms all six frames, the card thumbnail and the registry bundle match the reviewed local build.

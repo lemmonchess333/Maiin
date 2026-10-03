@@ -1,0 +1,50 @@
+{
+  "exerciseId": "hip-abduction-machine",
+  "status": "six-frame-draft",
+  "releaseApproved": false,
+  "variation": "Seated selectorized hip abduction, pads outside knees, back supported, opening legs against resistance then controlled return.",
+  "camera": "Fixed front three-quarter view showing both outside knee pads and the full seated athlete; enclosed resistance tower behind the seat.",
+  "equipment": "Real seated hip-abduction machine with backrest, fixed hand grips and two pivoting foot/pad assemblies; resistance routing enclosed, no invented visible cable travel.",
+  "primary": "Gluteus medius and visible lateral glutes",
+  "secondary": "Hip flexors subtle where visible",
+  "fixedAnchors": ["machine floor feet", "backrest", "hand grips"],
+  "invariants": ["pad dimensions", "lever lengths", "athlete proportions"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set and brace",
+      "cue": "Keep back supported; grip both handles.",
+      "pose": "Knees near neutral hip width, outside thighs touching outer pads, feet on moving rests."
+    },
+    {
+      "frame": 2,
+      "label": "Open your hips",
+      "cue": "Push both knees outward against the pads.",
+      "pose": "Halfway abduction; pads and foot rests pivot with legs."
+    },
+    {
+      "frame": 3,
+      "label": "Reach your comfortable range",
+      "cue": "Open comfortably without lifting your hips.",
+      "pose": "Comfortable full abduction, knees wider, pelvis stable."
+    },
+    {
+      "frame": 4,
+      "label": "Control the wide position",
+      "cue": "Squeeze outer glutes; keep your back supported.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Return slowly",
+      "cue": "Bring knees inward slowly against resistance.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Keep tension",
+      "cue": "Return to start without releasing the tension.",
+      "reuse": 1
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "batch": "new-conversions-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 12,
+  "completeDraftSets": [
+    {
+      "exerciseId": "cuban-press",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed frontal slight three-quarter full body portrait with overhead clearance.",
+      "anchors": ["left shoe floor contact", "right shoe floor contact"],
+      "equipment": "Two matching light dumbbells",
+      "muscles": {
+        "primary": ["Deltoids"],
+        "secondary": ["Rotator cuff and upper traps"]
+      },
+      "reviewFindings": [
+        "Four unique poses across six separate native frames: setup, row, rotate, press, lower, reverse rotation. The 6-to-1 transition completes lowering to thighs; frames6 and1 intentionally differ.",
+        "First rotation candidate changed body scale and was excluded. Selected retry retains the master framing.",
+        "Overhead frame visibly enlarges the dumbbells and lengthens the arms relative to the other poses. Equipment and anatomy checks remain unresolved; not approved for release. No repair of previously converted exercises was undertaken."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall; hold light weights at thighs.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 572338,
+          "sha256": "e031e4017960a145f150374ecb4b03ae09e32eb1aedd419af62dbe378ac7236d",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/2.png",
+          "caption": "LEAD WITH ELBOWS 2/6",
+          "cue": "Raise elbows, keeping weights below them.",
+          "progress": 0.33,
+          "dimensions": [1024, 1536],
+          "bytes": 1227032,
+          "sha256": "2c8ce43fa1394d964859b24b147598cd35ef25cc97c15daab423a59c599bbffb",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/3.png",
+          "caption": "ROTATE UPWARD 3/6",
+          "cue": "Rotate weights upward without moving elbows.",
+          "progress": 0.66,
+          "dimensions": [1024, 1536],
+          "bytes": 1223388,
+          "sha256": "23dd37fd828723b080b34c7244e2bee708da6cccbdda2171a93e268941fa6710",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/4.png",
+          "caption": "PRESS OVERHEAD 4/6",
+          "cue": "Press overhead without arching your back.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1083445,
+          "sha256": "804f74a4c6ce5f3f43c91dc902cc8ab852ebf4f0ad9fbead49abd87e8fcc46e5",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/5.png",
+          "caption": "LOWER TO SHOULDER HEIGHT 5/6",
+          "cue": "Lower slowly into the upright forearm position.",
+          "progress": 0.66,
+          "dimensions": [1024, 1536],
+          "bytes": 1223388,
+          "sha256": "23dd37fd828723b080b34c7244e2bee708da6cccbdda2171a93e268941fa6710",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/cuban-press/frames/6.png",
+          "caption": "REVERSE THE ROTATION 6/6",
+          "cue": "Rotate down, then lower toward your thighs.",
+          "progress": 0.33,
+          "dimensions": [1024, 1536],
+          "bytes": 1227032,
+          "sha256": "2c8ce43fa1394d964859b24b147598cd35ef25cc97c15daab423a59c599bbffb",
+          "reusedFrom": 2
+        }
+      ]
+    },
+    {
+      "exerciseId": "hip-abduction-machine",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed front three-quarter view showing both outside knee pads and the full seated athlete; enclosed resistance tower behind the seat.",
+      "anchors": ["machine floor feet", "backrest", "hand grips"],
+      "equipment": "Real seated hip-abduction machine with backrest, fixed hand grips and two pivoting foot/pad assemblies; resistance routing enclosed, no invented visible cable travel.",
+      "muscles": {
+        "primary": ["Gluteus medius and visible lateral glutes"],
+        "secondary": ["Hip flexors subtle where visible"]
+      },
+      "reviewFindings": [
+        "Three unique poses across six native frames: start, midway, wide, hold, midway return, start.",
+        "Initial master put one pad between the thighs; selected setup places both pads outside thighs.",
+        "The full-open near shoe changes orientation substantially and the far hand/handle contact is obscured. Pad/lever geometry and seated limb lengths need review; no equipment physics approval. Enclosed resistance tower does not expose cable routing or stack travel."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/1.png",
+          "caption": "SET AND BRACE 1/6",
+          "cue": "Keep back supported; grip both handles.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1437956,
+          "sha256": "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/2.png",
+          "caption": "OPEN YOUR HIPS 2/6",
+          "cue": "Push both knees outward against the pads.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1231759,
+          "sha256": "8cd0972f15f4271e197878d02a094364bd9908c3a77e2fe2a308caea6dce8a35",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/3.png",
+          "caption": "REACH YOUR COMFORTABLE RANGE 3/6",
+          "cue": "Open comfortably without lifting your hips.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1230108,
+          "sha256": "73b6d75c2219d275db47eec35e13ebba98e768812c10b3491300e6cb49a7328e",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/4.png",
+          "caption": "CONTROL THE WIDE POSITION 4/6",
+          "cue": "Squeeze outer glutes; keep your back supported.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1230108,
+          "sha256": "73b6d75c2219d275db47eec35e13ebba98e768812c10b3491300e6cb49a7328e",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/5.png",
+          "caption": "RETURN SLOWLY 5/6",
+          "cue": "Bring knees inward slowly against resistance.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1231759,
+          "sha256": "8cd0972f15f4271e197878d02a094364bd9908c3a77e2fe2a308caea6dce8a35",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/frames/6.png",
+          "caption": "KEEP TENSION 6/6",
+          "cue": "Return to start without releasing the tension.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1437956,
+          "sha256": "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

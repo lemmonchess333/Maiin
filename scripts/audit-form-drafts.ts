@@ -6,6 +6,7 @@ import manifest from "../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../docs/exercise-art/RECOVERED_DRAFTS.json";
 import continuation from "../docs/exercise-art/pilots/continuation-20261002/MANIFEST.json";
 import octoberThird from "../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json";
+import newConversions from "../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json";
 
 // Integrity only. This command never grants visual or technique approval.
 const errors: string[] = [];
@@ -14,7 +15,13 @@ const unique = new Set<string>();
 const root = resolve("docs/exercise-art/pilots");
 let count = 0;
 let bytes = 0;
-for (const current of [manifest, recovered, continuation, octoberThird]) {
+for (const current of [
+  manifest,
+  recovered,
+  continuation,
+  octoberThird,
+  newConversions,
+]) {
   let selected = 0;
   for (const set of current.completeDraftSets) {
     if (ids.has(set.exerciseId))

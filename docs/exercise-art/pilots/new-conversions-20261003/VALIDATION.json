@@ -1,0 +1,36 @@
+{
+  "baseCommit": "e971c1bb7fbfcd43a1ed78f6f501c701a64d5e84",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "durationSeconds": 265.02
+  },
+  "browser": {
+    "startTime": "2026-10-03T12:09:23.914Z",
+    "duration": 17057.477,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "drafts": {
+    "newSets": 2,
+    "newFrames": 12,
+    "newUniquePoses": 7,
+    "totalRegisteredDraftSets": 19,
+    "totalRegisteredDraftFrames": 114,
+    "integrityErrors": []
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5881.9
+  },
+  "productionAssetsChanged": false,
+  "releaseApproved": false,
+  "scope": "Two previously unconverted exercise IDs now have six-frame drafts in the review fixture. Both retain recorded visual findings and are not production releases. Existing guides and repairs unchanged."
+}

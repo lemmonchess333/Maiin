@@ -1,0 +1,40 @@
+{
+  "exerciseId": "hip-abduction-machine",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/hip-abduction-machine/1.png",
+    "sha256": "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4"
+  },
+  "generationSources": [
+    {
+      "path": "/workspace/generated_images/exec-5e6e58ed-c17a-4e45-87ab-e8ff26deee54.png",
+      "sha256": "ae2f82204ae6fc95feebc8b73a0adc23d82a38bef76799316349f80e853589d4"
+    },
+    {
+      "path": "/workspace/generated_images/exec-37bd5a2a-e11c-46b2-b0eb-6e4b6c82e2f2.png",
+      "sha256": "8cd0972f15f4271e197878d02a094364bd9908c3a77e2fe2a308caea6dce8a35"
+    },
+    {
+      "path": "/workspace/generated_images/exec-6f1196f6-ff8a-4413-aa60-dbac5560ae54.png",
+      "sha256": "73b6d75c2219d275db47eec35e13ebba98e768812c10b3491300e6cb49a7328e"
+    }
+  ],
+  "cueSha256": "f8d48b1c0b0855db5fa5e8695d96e896e1515c72c0f1eb4412556ee1ac6cb888",
+  "reviewFindings": [
+    "Three unique poses across six native frames: start, midway, wide, hold, midway return, start.",
+    "Initial master put one pad between the thighs; selected setup places both pads outside thighs.",
+    "The full-open near shoe changes orientation substantially and the far hand/handle contact is obscured. Pad/lever geometry and seated limb lengths need review; no equipment physics approval. Enclosed resistance tower does not expose cable routing or stack travel."
+  ],
+  "excluded": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-20261003/hip-abduction-machine/rejected/inside-pad.png",
+      "sha256": "9ebeec60b659e7d1a0c068edf650f74ade3e8277d4e4ba3f6cbbd487d193736c",
+      "reason": "Near thigh pad inside knees; wrong side for abduction."
+    }
+  ]
+}
