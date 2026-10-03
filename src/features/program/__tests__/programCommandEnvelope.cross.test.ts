@@ -57,19 +57,18 @@ vi.mock("firebase/functions", () => ({
   httpsCallable: () => mockCall,
 }));
 
-/** The real shape `useProgram.logExercise` posts (useProgram.ts ~2005): the
- *  precondition triple, the exercise instance, and the actual set. Invented
- *  fields are rejected by `assertKeys`, which is the point — this fixture is
- *  only meaningful if it is the command production actually sends. */
-const LOG_EXERCISE_COMMAND = {
-  kind: "logExercise" as const,
+/** The real shape `useProgram.skipWorkoutDay` posts: the command's kind and
+ *  id, and the precondition triple. Invented fields are rejected by
+ *  `assertKeys`, which is the point — this fixture is only meaningful if it
+ *  is the command production actually sends. (It was a `logExercise` set
+ *  until #2284 moved progression to the finish and the app stopped sending
+ *  one.) */
+const SKIP_WORKOUT_DAY_COMMAND = {
+  kind: "skipWorkoutDay" as const,
   commandId: "11111111-1111-4111-8111-111111111111",
   dayIndex: 0,
   expectedWeekNumber: 1,
   expectedDaySignature: "sig-abc",
-  exerciseInstanceId: "inst-1",
-  actual: { weight: 60, reps: 8, completed: true },
-  today: "2026-08-04",
 };
 
 beforeEach(() => {
@@ -81,7 +80,7 @@ describe("programme command envelope — client send ↔ server unwrap", () => {
   it("what the client posts survives the server's unwrap and validates", async () => {
     const { sendProgramCommand } = await import("../programCommandClient");
     await sendProgramCommand(
-      LOG_EXERCISE_COMMAND as unknown as Parameters<
+      SKIP_WORKOUT_DAY_COMMAND as unknown as Parameters<
         typeof sendProgramCommand
       >[0]
     );
@@ -94,13 +93,13 @@ describe("programme command envelope — client send ↔ server unwrap", () => {
     // "A programme command object is required."
     const unwrapped = serverUnwrap(overTheWire);
     const validated = programCommands.assertClientProgramCommand(unwrapped);
-    expect(validated.kind).toBe("logExercise");
+    expect(validated.kind).toBe("skipWorkoutDay");
   });
 
   it("the payload IS the command — no wrapper property", async () => {
     const { sendProgramCommand } = await import("../programCommandClient");
     await sendProgramCommand(
-      LOG_EXERCISE_COMMAND as unknown as Parameters<
+      SKIP_WORKOUT_DAY_COMMAND as unknown as Parameters<
         typeof sendProgramCommand
       >[0]
     );
@@ -110,16 +109,16 @@ describe("programme command envelope — client send ↔ server unwrap", () => {
     // starts wrapping, this fails and the server's unwrap must be revisited.
     const overTheWire = captured[0] as Record<string, unknown>;
     expect(overTheWire).not.toHaveProperty("command");
-    expect(overTheWire.kind).toBe("logExercise");
+    expect(overTheWire.kind).toBe("skipWorkoutDay");
   });
 
   it("the server still accepts a wrapped payload (queued-outbox tolerance)", () => {
     // Deployed clients and localStorage outbox entries may hold either shape
     // while the fix rolls out; both must land.
     const validated = programCommands.assertClientProgramCommand(
-      serverUnwrap({ command: LOG_EXERCISE_COMMAND })
+      serverUnwrap({ command: SKIP_WORKOUT_DAY_COMMAND })
     );
-    expect(validated.kind).toBe("logExercise");
+    expect(validated.kind).toBe("skipWorkoutDay");
   });
 
   it("an undefined unwrap is rejected — the pre-fix production behaviour", () => {

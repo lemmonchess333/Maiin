@@ -94,7 +94,12 @@ function session(
     ...(variant === "full" ? {} : { sessionVariant: variant }),
     prescription: {
       exercises: execution.exercises,
-      progressionBaseline: execution.sourceIndexes.map((i) => day.exercises[i]),
+      // As WorkoutSession pairs them: each exercise run with its stored row.
+      progressionBaseline: execution.exercises.map(
+        (ex) =>
+          day.exercises.find((stored) => stored.instanceId === ex.instanceId) ??
+          ex
+      ),
     },
     setLogs: execution.exercises.map((ex) =>
       Array.from({ length: ex.sets }, () => ({

@@ -84,7 +84,9 @@ describe("buildEasierSession", () => {
       "Overhead Press",
       "Lateral Raise",
     ]);
-    expect(plan.sourceIndexes).toEqual([0, 1, 2]);
+    expect(plan.exercises.map((e) => e.exerciseId)).toEqual(
+      input.exercises.map((e) => e.exerciseId)
+    );
     expect(input).toEqual(snapshot); // stored prescription untouched
     expect(buildEasierSession(input)).toEqual(plan); // deterministic
   });

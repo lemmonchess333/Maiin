@@ -40,10 +40,15 @@ describe("recurring lift time", () => {
         expect(
           plan.exercises.some((next) => next.instanceId === ex.instanceId)
         ).toBe(true);
-      for (const [i, index] of plan.sourceIndexes.entries()) {
-        expect(plan.exercises[i].instanceId).toBe(
-          day.exercises[index].instanceId
-        );
+      // The finished session finds each exercise's stored row by its
+      // instanceId, so every one kept must still be the stored row's, in
+      // the day's order, at its load.
+      const positions = plan.exercises.map((next) =>
+        day.exercises.findIndex((ex) => ex.instanceId === next.instanceId)
+      );
+      expect(positions).not.toContain(-1);
+      expect(positions).toEqual([...positions].sort((a, b) => a - b));
+      for (const [i, index] of positions.entries()) {
         expect(plan.exercises[i].weight).toBe(day.exercises[index].weight);
         expect(plan.exercises[i].sets).toBeLessThanOrEqual(
           day.exercises[index].sets

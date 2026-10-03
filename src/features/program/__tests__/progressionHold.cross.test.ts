@@ -7,9 +7,12 @@ import type { ActiveTrainingBlock } from "../programTypes";
 
 /**
  * Parity guard (Blk2 / P6): the "easing back in" progression hold is now
- * double-sited. The client decides it in `useProgram.logExercise`
- * (`isProgressionHeld` over `blockWeekOf`); the server decides it again in the
- * `logExercise` command reducer, via `functions/lib/progressionHold.js`.
+ * double-sited. The client decides it when a workout is finished
+ * (`sessionCompletion.applySessionProgression`: `isProgressionHeld` over
+ * `blockWeekOf`); the server decides it again in the `logExercise` command
+ * reducer, via `functions/lib/progressionHold.js`. The app has sent no
+ * `logExercise` since #2284 moved progression to the finish, but the server
+ * still accepts one, so the two must still agree.
  *
  * These copies MUST agree, and the failure mode if they don't is silent: both
  * branches write a plausible-looking exercise, so a returning lifter simply

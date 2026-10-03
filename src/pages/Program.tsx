@@ -1833,17 +1833,15 @@ function ProgramInner() {
           // the day — the stored programme day is never mutated, and
           // the LIFT-01 draft identity derives from the trimmed layout
           // so a full-session draft can't restore into an express run
-          // (or vice versa). The session logs sets positionally over
-          // the TRIMMED list, while logExercise and completeWorkoutDay
-          // index into the STORED day — both callbacks realign through
-          // plan.sourceIndexes so a dropped accessory can't shift
-          // progression or the saved record onto the wrong lift.
+          // (or vice versa). The session logs and saves the TRIMMED
+          // list; progression finds each exercise's row in the STORED
+          // day by instanceId (`progressionBaseline` below, then
+          // `applySessionProgression`), so a dropped accessory can't
+          // shift progression onto the wrong lift.
           const storedDay = programState.workouts[sessionDayIndex];
           // Easier today (PROGRAM-ADAPT-01) is the same execution-clone
           // contract as Express: a reduced COPY runs; the stored day is
-          // untouched. Its sourceIndexes are the identity mapping
-          // (nothing dropped), so the generic realignment below is a
-          // no-op that keeps one code path for all trimmed variants.
+          // untouched, and nothing is dropped.
           const plan =
             sessionVariant === "full"
               ? null

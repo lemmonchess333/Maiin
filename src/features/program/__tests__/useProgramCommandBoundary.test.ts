@@ -753,7 +753,6 @@ describe("every migrated writer sends a command the server accepts", () => {
       await c.addExercisesToDayCmd(0, ["bench-press"]);
       await c.replaceExerciseInDay(0, "i-a", "back-squat");
       await c.restoreRemovedExercise(0);
-      await c.logExercise(0, 0, 8, 60);
       await c.skipWorkoutDay(0);
       await c.restoreWorkoutDay(1);
       await c.setNextWorkout(0);
@@ -772,7 +771,6 @@ describe("every migrated writer sends a command the server accepts", () => {
     );
     expect(kinds).toContain("skipWorkoutDay");
     expect(kinds).toContain("setNextWorkout");
-    expect(kinds).toContain("logExercise");
     expect(kinds).toContain("setProgramSettings");
     expect(kinds).toContain("reorderExercises");
     expect(kinds).toContain("removeExercise");
@@ -828,65 +826,4 @@ describe("every migrated writer sends a command the server accepts", () => {
     const kinds = sendProgramCommand.mock.calls.map((a) => (a[0] as any).kind);
     expect(kinds).toContain("startTrainingBlock");
   });
-});
-
-describe("completed-set progression corrections", () => {
-  it.each(["online", "offline"])(
-    "keeps one performance entry and the same session identity when %s",
-    async (connection) => {
-      const hook = await mounted();
-      if (connection === "offline") {
-        sendProgramCommand.mockRejectedValue(
-          callableError("functions/unavailable")
-        );
-      } else {
-        // The production writer refetches after acknowledgement. Make that
-        // read return the real reducer's result, rather than an unchanged mock.
-        let serverState = hook.result.current.programState!;
-        const { applyProgramCommand } = createRequire(import.meta.url)(
-          "../../../../functions/lib/programCommands.js"
-        );
-        sendProgramCommand.mockImplementation(async (command) => {
-          serverState = applyProgramCommand({
-            state: serverState,
-            profile: stableProfile,
-            command,
-            now: Date.now(),
-          }).state;
-          seedFirestore({
-            [PROGRAM]: serverState as unknown as Record<string, unknown>,
-          });
-          return undefined;
-        });
-      }
-      const before =
-        hook.result.current.programState!.workouts[0].exercises[0]
-          .performanceHistory?.length ?? 0;
-      await act(async () => {
-        await hook.result.current.logExercise(0, 0, 8, 60, undefined, {
-          id: "edit-session",
-        });
-      });
-      await act(async () => {
-        await hook.result.current.logExercise(0, 0, 6, 60, undefined, {
-          id: "edit-session",
-          correction: true,
-        });
-      });
-      expect(sendProgramCommand).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          kind: "logExercise",
-          sessionId: "edit-session",
-          correction: true,
-          actual: expect.objectContaining({ reps: 6 }),
-        })
-      );
-      const row = hook.result.current.programState!.workouts[0].exercises[0];
-      expect(row.performanceHistory).toHaveLength(before + 1);
-      expect(row.lastPerformance?.reps).toBe(6);
-      expect(row.sessionProgression?.baseline).not.toHaveProperty(
-        "sessionProgression"
-      );
-    }
-  );
 });

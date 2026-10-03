@@ -36,12 +36,8 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { isProgressionHeld, represcribeWorkouts } from "./represcribe";
-import {
-  blockWeekOf,
-  legacyToActiveBlock,
-  type TrainingBlock,
-} from "./trainingBlock";
+import { represcribeWorkouts } from "./represcribe";
+import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
@@ -56,9 +52,7 @@ import {
   advanceWeek,
   shouldAdvanceWeek,
   generateWeekPrescription,
-  applyProgression,
 } from "./programEngine";
-import { PERFORMANCE_HISTORY_CAP } from "./programEngine";
 import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
@@ -2201,160 +2195,6 @@ export function useProgram() {
     [programState, runProgramCommand]
   );
 
-  // Log exercise performance with auto-progression
-  const logExercise = useCallback(
-    async (
-      dayIndex: number,
-      exerciseIndex: number,
-      actualReps: number,
-      actualWeight: number,
-      actualRpe?: number,
-      session?: { id: string; correction?: boolean }
-    ) => {
-      if (!programState) return;
-      const currentDay = programState.workouts[dayIndex];
-      if (currentDay?.completed && currentDay.completedWorkoutId)
-        throw new Error("This workout is saved. Correct it from History.");
-
-      const settings = programState.settings ?? {
-        autoProgression: true,
-        microloading: true,
-      };
-      const storedExercise =
-        programState.workouts[dayIndex]?.exercises[exerciseIndex];
-      if (!storedExercise)
-        throw new Error("This exercise is no longer in your workout.");
-      if (
-        session?.correction &&
-        storedExercise.sessionProgression?.id !== session.id
-      ) {
-        throw new Error(
-          "This session’s progression can no longer be corrected. Refresh your workout."
-        );
-      }
-      const { sessionProgression, ...currentExercise } = storedExercise;
-      const exercise =
-        session && sessionProgression?.id === session.id
-          ? sessionProgression.baseline
-          : currentExercise;
-
-      // Blk2: an "easing back in" block holds load for its first two weeks,
-      // so a returning lifter's numbers cannot go backwards while they find
-      // their feet and a miss cannot be read as a stall. Deliberately NOT
-      // done by flipping `settings.autoProgression` — that is a switch the
-      // user owns in Lift plan settings, and a block must not silently move
-      // someone's setting. Unlike the autoProgression:false branch below,
-      // this one still APPENDS to performanceHistory: the sessions happened
-      // and the user should see them.
-      const held = isProgressionHeld(
-        programState.trainingBlock,
-        programState.trainingBlock
-          ? blockWeekOf(programState.trainingBlock, localDateString())
-          : null
-      );
-
-      let updatedExercise: ProgramExercise;
-      if (held) {
-        updatedExercise = {
-          ...exercise,
-          lastAttemptedWeight: actualWeight,
-          lastPerformance: {
-            sets: exercise.sets,
-            reps: actualReps,
-            weight: actualWeight,
-            completed: actualReps >= exercise.reps,
-          },
-          performanceHistory: [
-            ...(exercise.performanceHistory ?? []),
-            {
-              date: localDateString(),
-              weight: actualWeight,
-              repsCompleted: actualReps,
-              repsTarget: exercise.reps,
-            },
-            // D2: one cap across all three sites. Was 20 here and 10 in the
-            // engine, so a lifter under an active block silently kept twice
-            // the history of one who was not.
-          ].slice(-PERFORMANCE_HISTORY_CAP),
-        };
-      } else if (settings.autoProgression) {
-        updatedExercise = applyProgression(
-          exercise,
-          actualReps,
-          actualWeight,
-          programState.goal,
-          settings.microloading,
-          actualRpe
-        );
-      } else {
-        updatedExercise = {
-          ...exercise,
-          lastAttemptedWeight: actualWeight,
-          lastPerformance: {
-            sets: exercise.sets,
-            reps: actualReps,
-            weight: actualWeight,
-            completed: actualReps >= exercise.reps,
-          },
-        };
-      }
-
-      if (session)
-        updatedExercise.sessionProgression = {
-          id: session.id,
-          baseline: exercise,
-        };
-
-      if (
-        updatedExercise.plateauCount > 0 &&
-        updatedExercise.plateauCount !== exercise.plateauCount
-      ) {
-        toast("Plateau detected — variation may rotate", { icon: "⚠️" });
-      }
-
-      const updatedWorkouts = programState.workouts.map((day, di) => {
-        if (di !== dayIndex) return day;
-        return {
-          ...day,
-          exercises: day.exercises.map((ex, ei) =>
-            ei === exerciseIndex ? updatedExercise : ex
-          ),
-        };
-      });
-
-      // Through the boundary. The exercise is addressed by instanceId, not
-      // index — the command's whole job is to survive a stale client, and an
-      // index is only meaningful against the array the client happened to be
-      // holding. `today` is the one input the server cannot derive (see
-      // functions/lib/progressionHold.js); everything above is recomputed
-      // server-side from its own copy of the state.
-      const precondition = workoutDayPrecondition(programState, dayIndex);
-      if (!precondition) return;
-      const outcome = await runProgramCommand(
-        {
-          kind: "logExercise",
-          commandId: generateInstanceId(),
-          ...precondition,
-          exerciseInstanceId: exercise.instanceId,
-          actual: {
-            weight: actualWeight,
-            reps: actualReps,
-            completed: actualReps >= exercise.reps,
-          },
-          today: localDateString(),
-          ...(actualRpe === undefined ? {} : { actualRpe }),
-          ...(session ? { sessionId: session.id } : {}),
-          ...(session?.correction ? { correction: true } : {}),
-        },
-        (state) => ({ ...state, workouts: updatedWorkouts }),
-        "Couldn't save that set."
-      );
-      if (!changeStands(outcome) && session?.correction)
-        throw new Error("Couldn’t update your workout. Please try again.");
-    },
-    [programState, runProgramCommand]
-  );
-
   /* `updateExercise` (manual sets/reps/weight override) was DELETED here
    * rather than migrated. It had zero consumers: defined, returned from the
    * hook, and referenced by no component, page or test anywhere in `src`.
@@ -3625,7 +3465,6 @@ export function useProgram() {
     skipWorkoutDay,
     setNextWorkout,
     advanceToNextWeek,
-    logExercise,
     updateSettings,
     regenerateProgram,
     saveProgram,
