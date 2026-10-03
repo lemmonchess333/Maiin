@@ -1,6 +1,7 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
+import { invalidateLiftRecords } from "@/lib/liftRecordsStore";
 import {
   pendingDocumentWrites,
   flushQueue,
@@ -26,6 +27,12 @@ import { logger } from "@/lib/logger";
  * deleted is REBUILT from surviving runs (third amendment); partner
  * streaks and milestone badges stay. The confirmation copy says so
  * rather than implying a clean undo.
+ *
+ * A deleted workout also marks the best-lift map stale, in the same
+ * commit, so its next load rebuilds the bests from the workouts that
+ * remain: a mis-logged best must not stay the best to beat. The map is a
+ * cache only this app writes (`liftRecordsStore.ts`), so its repair is
+ * here rather than in the trigger.
  *
  * `deleteDoc` is raw on purpose. The `firestoreWrite` guards exist to
  * strip `undefined` (which Firestore rejects) and to survive offline-queue
@@ -89,7 +96,15 @@ export async function deleteLoggedSession({
   if (sharedActivityId) {
     await deleteDocGuarded(doc(db, "activities", sharedActivityId));
   }
-  await deleteDocGuarded(doc(db, "users", uid, COLLECTION[kind], id));
+  const session = doc(db, "users", uid, COLLECTION[kind], id);
+  if (kind === "run") {
+    await deleteDocGuarded(session);
+    return;
+  }
+  const batch = writeBatch(db);
+  batch.delete(session);
+  invalidateLiftRecords(batch, uid);
+  await batch.commit();
 }
 
 /** Where a feed post came from — carried on queued shares so the drain

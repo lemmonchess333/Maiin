@@ -153,7 +153,9 @@ describe("DeleteSessionAction", () => {
   });
 
   it("keeps the session and stays put when the delete fails", async () => {
-    failNextFirestore("deleteDoc", { path: "users/u1/workouts/w-1" });
+    // A workout is deleted in one batch with the best-lift map's
+    // invalidation (liftRecordsStore.ts), so the batch is what fails.
+    failNextFirestore("commit");
     renderAction();
     fireEvent.click(
       screen.getByRole("button", { name: /delete this workout/i })

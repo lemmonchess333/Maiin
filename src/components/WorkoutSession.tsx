@@ -66,21 +66,22 @@ import {
   flushCompletionSurfaces,
 } from "@/lib/completionSurfaceCounter";
 import {
-  buildPRMap,
-  bumpSessionCounts,
   checkSetPR,
   exerciseBest,
   type SetPR,
   recordSetBest,
-  buildVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
-  nextVolumeBest,
   type PRMap,
   type RepBucket,
   type VolumeBestMap,
   getRepBucket,
 } from "@/lib/prTracking";
+import {
+  commitLiftRecords,
+  loadLiftRecords,
+  type LiftRecords,
+} from "@/lib/liftRecordsStore";
 import {
   suggestNextLoad,
   type ProgressionSuggestion,
@@ -406,7 +407,8 @@ export default function WorkoutSession({
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
   const recordBaseline = useRef<PRMap>({});
-  const recordsRevisionRef = useRef(0);
+  /** The map as loaded: what this session's records are committed over. */
+  const loadedRecordsRef = useRef<LiftRecords | null>(null);
   const volumeBaseline = useRef<VolumeBestMap>({});
   const [editingSet, setEditingSet] = useState<{
     exIdx: number;
@@ -507,130 +509,19 @@ export default function WorkoutSession({
         return updated;
       });
 
-      // Load persisted PR map, or build from history if not available.
-      // `map` and `sessionCounts` are tracked SEPARATELY: a legacy doc that
-      // carries a map but predates sessionCounts used to fall into the
-      // rebuild branch below, which REPLACED the persisted map with a
-      // 50-workout-window rebuild — and a window that misses the user's
-      // real best fires a false "PR!" for a lift WORSE than one they've
-      // already logged (probe-measured 2026-08-05: 90×1 celebrated against
-      // a window best of 85 while the persisted map held 100). The
-      // persisted map only ever ratchets, so when it exists it wins;
-      // the rebuild then fills in only what's missing.
-      let mapLoaded = false;
-      let countsLoaded = false;
-      let volumeBestLoaded = false;
-      let recordsInvalidated = false;
+      // The best-lift map, as stored or rebuilt from history
+      // (liftRecordsStore.ts). If it cannot be read, this session celebrates
+      // no bests and leaves the stored map alone.
       try {
-        const { doc: fbDoc, getDoc: fbGetDoc } =
-          await import("firebase/firestore");
-        const prMapDoc = await fbGetDoc(
-          fbDoc(db, "users", user.uid, "stats", "prMap")
-        );
-        if (prMapDoc.exists()) {
-          const data = prMapDoc.data();
-          recordsRevisionRef.current = data.revision ?? 0;
-          recordsInvalidated = data.invalidated === true;
-          if (data.map && !recordsInvalidated) {
-            recordBaseline.current = data.map as PRMap;
-            setPrMap(recordBaseline.current);
-            mapLoaded = true;
-          }
-          if (data.sessionCounts && !recordsInvalidated) {
-            setSessionCounts(data.sessionCounts as Record<string, number>);
-            countsLoaded = true;
-          }
-          if (data.volumeBest && !recordsInvalidated) {
-            volumeBaseline.current = data.volumeBest as VolumeBestMap;
-            setVolumeBest(volumeBaseline.current);
-            volumeBestLoaded = true;
-          }
-        }
-      } catch {
-        // Fall through to rebuild from history
-      }
-
-      const recordHistory = recordsInvalidated
-        ? await fetchSavedWorkouts(user.uid, { all: true })
-        : recent;
-      if (!mapLoaded || !countsLoaded) {
-        // Fall back to building from last 50 workouts — only the pieces
-        // that are actually missing.
-        const history = recordHistory.map((data) => {
-          return {
-            date: data.date,
-            exercises: (data.exercises || []).map(
-              (ex: {
-                exerciseName: string;
-                repUnit?: "reps" | "seconds";
-                sets: { weightKg: number; reps: number; type?: string }[];
-              }) => ({
-                exerciseName: ex.exerciseName,
-                /* Carried for the same reason the volumeBest projection
-                   carries it: buildPRMap now applies the live PR gate (no
-                   warm-ups, no holds), and a projection that strips the
-                   fields makes that gate unreachable on exactly the path
-                   that REPLACES the live-built map. */
-                repUnit: ex.repUnit,
-                sets: (ex.sets || []).map((s) => ({
-                  weightKg: s.weightKg || 0,
-                  reps: s.reps || 0,
-                  type: s.type,
-                })),
-              })
-            ),
-          };
-        });
-        if (!mapLoaded) {
-          recordBaseline.current = buildPRMap(history);
-          setPrMap(recordBaseline.current);
-        }
-
-        if (!countsLoaded) {
-          // Count sessions per exercise for 3-session minimum filter
-          const counts: Record<string, number> = {};
-          for (const w of history) {
-            const seen = new Set<string>();
-            for (const ex of w.exercises) {
-              if (!seen.has(ex.exerciseName)) {
-                counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
-                seen.add(ex.exerciseName);
-              }
-            }
-          }
-          setSessionCounts(counts);
-        }
-      }
-
-      if (!volumeBestLoaded) {
-        // Legacy stats/prMap docs predate volumeBest — rebuild from the
-        // same 50-workout window so the first post-upgrade session doesn't
-        // spray false volume PRs.
-        const historyForVolume = recordHistory.map((data) => {
-          return {
-            date: data.date,
-            exercises: (data.exercises || []).map(
-              (ex: {
-                exerciseName: string;
-                repUnit?: "reps" | "seconds";
-                sets: { weightKg: number; reps: number }[];
-              }) => ({
-                exerciseName: ex.exerciseName,
-                /* Carried, because this projection is all buildVolumeBest
-                   sees. Stripping it made the timed-exercise exclusion
-                   unreachable regardless of what the helper did — the
-                   saved workout knows its unit; this copy of it did not. */
-                repUnit: ex.repUnit,
-                sets: (ex.sets || []).map((s) => ({
-                  weightKg: s.weightKg || 0,
-                  reps: s.reps || 0,
-                })),
-              })
-            ),
-          };
-        });
-        volumeBaseline.current = buildVolumeBest(historyForVolume);
-        setVolumeBest(volumeBaseline.current);
+        const records = await loadLiftRecords(user.uid, recent);
+        loadedRecordsRef.current = records;
+        recordBaseline.current = records.map;
+        setPrMap(records.map);
+        setSessionCounts(records.sessionCounts);
+        volumeBaseline.current = records.volumeBest;
+        setVolumeBest(records.volumeBest);
+      } catch (error) {
+        logger.warn("[WorkoutSession] best-lift map unavailable", error);
       }
     };
 
@@ -1347,76 +1238,27 @@ export default function WorkoutSession({
         });
       } else acknowledge();
 
-      // Persist PR map to Firestore for history beyond 50-session window.
+      // Persist the best-lift map for history beyond the recent window.
       // Best-effort — the workout already committed above.
-      if (user?.uid && Object.keys(prMap).length > 0) {
+      const loadedRecords = loadedRecordsRef.current;
+      if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
         void (async () => {
           try {
             if (queuedReceipt && (await queuedReceipt) !== "synced") return;
             if (auth.currentUser?.uid !== user.uid) return;
-            // Backlog #2: persist volume bests derived from the FINAL set
-            // logs — undo-safe (an undone set never inflates the record).
-            const volDate = localDateString();
-            /* The rule (a hold has no volume) and the carry-forward live in
-             `nextVolumeBest`, where a test can reach them — this block had
-             none, in a file that has none. */
-            const finalVolumeBest: VolumeBestMap = nextVolumeBest(
-              volumeBest,
-              setLogs.map((exSets, exIdx) => ({
+            // From the FINAL set logs, so an undone set never inflates a
+            // record. Warm-ups are not volume, and an exercise with none
+            // of its working sets done was not trained.
+            await commitLiftRecords(user.uid, loadedRecords, {
+              map: prMap,
+              lifts: setLogs.map((exSets, exIdx) => ({
                 name: day.exercises[exIdx]?.name ?? "",
                 repUnit: day.exercises[exIdx]?.repUnit,
                 sets: exSets
                   .filter((s2) => s2.completed && s2.type !== "warmup")
                   .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
               })),
-              volDate
-            );
-            // THIS session counts toward the 3-session minimum. The counts
-            // were loaded, never incremented, and persisted back verbatim —
-            // so they froze at their first-persist values and the PR gate
-            // never opened for anyone whose doc predated their third session
-            // (see bumpSessionCounts). Only exercises with a completed
-            // working set count: an all-skipped exercise wasn't trained.
-            const finalSessionCounts = bumpSessionCounts(
-              sessionCounts,
-              setLogs.flatMap((exSets, exIdx) => {
-                const name = day.exercises[exIdx]?.name;
-                if (!name) return [];
-                return exSets.some((s2) => s2.completed && s2.type !== "warmup")
-                  ? [name]
-                  : [];
-              })
-            );
-            const { doc: fbDoc } = await import("firebase/firestore");
-            const { Timestamp } = await import("firebase/firestore");
-            if (auth.currentUser?.uid !== user.uid) return;
-            const { runTransaction } = await import("firebase/firestore");
-            const ref = fbDoc(db, "users", user.uid, "stats", "prMap");
-            await runTransaction(db, async (transaction) => {
-              const current = await transaction.get(ref);
-              if (auth.currentUser?.uid !== user.uid) return;
-              const revision = current.data()?.revision ?? 0;
-              if (revision !== recordsRevisionRef.current) {
-                // Another save/correction invalidated this session's baseline.
-                transaction.set(
-                  ref,
-                  { invalidated: true, revision: revision + 1 },
-                  { merge: true }
-                );
-                return;
-              }
-              transaction.set(
-                ref,
-                {
-                  map: prMap,
-                  sessionCounts: finalSessionCounts,
-                  volumeBest: finalVolumeBest,
-                  updatedAt: Timestamp.now(),
-                  invalidated: false,
-                  revision: revision + 1,
-                },
-                { merge: true }
-              );
+              date: localDateString(),
             });
           } catch {
             // Non-critical — map can be rebuilt from history

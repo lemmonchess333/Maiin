@@ -318,13 +318,16 @@ export function exerciseSessionVolume(
  * (`users/{uid}/stats/prMap.volumeBest`), so an unscored hold wasn't inert
  * — it wrote a weight×seconds figure under the name "volume" and kept it
  * there for whatever reads the map next.
+ *
+ * Warm-up sets are not volume either: the same predicate as `buildPRMap`
+ * and the live session, so a rebuilt best is one a session can beat.
  */
 export function buildVolumeBest(
   workouts: {
     exercises: {
       exerciseName: string;
       repUnit?: "reps" | "seconds";
-      sets: { weightKg: number; reps: number }[];
+      sets: { weightKg: number; reps: number; type?: string }[];
     }[];
     date: string;
   }[]
@@ -333,7 +336,11 @@ export function buildVolumeBest(
   for (const w of workouts) {
     for (const ex of w.exercises) {
       if (ex.repUnit === "seconds") continue;
-      const vol = exerciseSessionVolume(ex.sets);
+      const vol = exerciseSessionVolume(
+        ex.sets.filter((set) =>
+          isSetEligibleForStrengthPr(set.type ?? "working", ex.repUnit)
+        )
+      );
       if (vol > 0 && vol > (best[ex.exerciseName]?.volume ?? 0)) {
         best[ex.exerciseName] = { volume: vol, date: w.date };
       }

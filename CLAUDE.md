@@ -139,6 +139,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `weather.ts`            | Weather API integration for runs                               |
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
+| `liftRecordsStore.ts`   | Best-lift map: load or rebuild, checked commit, invalidation   |
 | `scheduleUtils.ts`      | Weekly schedule generation (lift/run/rest)                     |
 | `exercises.ts`          | Exercise database                                              |
 | `workoutTemplates.ts`   | Workout template library                                       |
