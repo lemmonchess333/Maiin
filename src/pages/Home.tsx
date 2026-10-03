@@ -48,6 +48,7 @@ import {
 } from "@/lib/trainingResolver";
 import { summariseWeek } from "@/lib/weekSummary";
 import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
+import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
@@ -246,12 +247,12 @@ export default function Home() {
     () =>
       resolveHomeLift({
         scheduled: resolvedToday.lift,
-        workouts: programState?.workouts,
+        programme: programState,
         sessionsToday: new Set(
           workouts.filter((w) => w.date === todayKey).map((w) => w.id)
         ),
       }),
-    [resolvedToday.lift, programState?.workouts, workouts, todayKey]
+    [resolvedToday.lift, programState, workouts, todayKey]
   );
 
   // What was done, by date: the strip fills a day for a logged lift
@@ -343,7 +344,7 @@ export default function Home() {
       // A lift day names the workout that will be next by then, in the
       // programme's order, as today's card does.
       const tomorrowLift = next.lift.workout
-        ? (nextLiftAfter(homeLift, programState?.workouts) ?? {
+        ? (nextLiftAfter(homeLift, programState) ?? {
             index: next.lift.index,
             workout: next.lift.workout,
           })
@@ -744,7 +745,7 @@ export default function Home() {
       mealCount: 1,
     }).firstWorkout;
   const restDayFirstWorkoutIndex = brandNewLifter
-    ? (programState?.workouts?.findIndex((w) => !w.completed) ?? -1)
+    ? nextUpIndex(programState)
     : -1;
   const restDayFirstWorkout =
     restDayFirstWorkoutIndex >= 0

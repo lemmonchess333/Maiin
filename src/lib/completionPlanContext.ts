@@ -1,4 +1,5 @@
 import type { ProgramState } from "@/features/program/programTypes";
+import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { blockWeekOf, focusLabel } from "@/features/program/trainingBlock";
 import { liftDayLine } from "@/lib/liftDayLabel";
 
@@ -17,19 +18,12 @@ export function liftCompletionContext(
   const done = state.workouts.filter(
     (day, index) => day.completed || index === completedIndex
   ).length;
-  const available = state.workouts
-    .map((day, index) => ({ day, index }))
-    .filter(
-      ({ day, index }) =>
-        index !== completedIndex && !day.completed && !day.skipped
-    );
-  const next =
-    available.find(({ index }) => index === state.nextWorkoutOverride) ??
-    available[0];
+  // Passing over the session just finished: the plan may not show it done.
+  const next = state.workouts[nextUpIndex(state, completedIndex)];
   return {
     progress: `${week} · ${done} of ${state.workouts.length} planned lifts complete`,
     next: next
-      ? `Next: ${liftDayLine(next.day.dayName)}`
+      ? `Next: ${liftDayLine(next.dayName)}`
       : "All planned lifts complete — review your week on Train",
   };
 }

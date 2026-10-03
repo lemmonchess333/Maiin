@@ -29,7 +29,7 @@ describe("resolveHomeLift", () => {
     // A Friday sign-up: the weekday maps to D, the programme starts at A.
     const lift = resolveHomeLift({
       scheduled: scheduled(3, plan),
-      workouts: plan,
+      programme: { workouts: plan },
       sessionsToday: new Set(),
     });
     expect(lift.workout?.dayName).toBe("A");
@@ -44,7 +44,7 @@ describe("resolveHomeLift", () => {
     ];
     const lift = resolveHomeLift({
       scheduled: scheduled(3, done),
-      workouts: done,
+      programme: { workouts: done },
       sessionsToday: new Set(["w1"]),
     });
     expect(lift.workout?.dayName).toBe("A");
@@ -59,7 +59,7 @@ describe("resolveHomeLift", () => {
     ];
     const lift = resolveHomeLift({
       scheduled: scheduled(0, done),
-      workouts: done,
+      programme: { workouts: done },
       sessionsToday: new Set(),
     });
     expect(lift.workout?.dayName).toBe("B");
@@ -69,7 +69,7 @@ describe("resolveHomeLift", () => {
     const skipped = [day("A", { skipped: true }), ...plan.slice(1)];
     const lift = resolveHomeLift({
       scheduled: scheduled(1, skipped),
-      workouts: skipped,
+      programme: { workouts: skipped },
       sessionsToday: new Set(),
     });
     expect(lift.workout?.dayName).toBe("B");
@@ -80,10 +80,33 @@ describe("resolveHomeLift", () => {
     expect(
       resolveHomeLift({
         scheduled: rest,
-        workouts: plan,
+        programme: { workouts: plan },
         sessionsToday: new Set(),
       })
     ).toBe(rest);
+  });
+
+  it("offers the workout chosen with Make this next, as Train does", () => {
+    const lift = resolveHomeLift({
+      scheduled: scheduled(0, plan),
+      programme: { workouts: plan, nextWorkoutOverride: 2 },
+      sessionsToday: new Set(),
+    });
+    expect(lift.workout?.dayName).toBe("C");
+    expect(lift.index).toBe(2);
+    expect(lift.isStartable).toBe(true);
+  });
+
+  it("goes back to the order once the chosen workout is done", () => {
+    const done = plan.map((w, i) =>
+      i === 2 ? { ...w, completed: true, completedWorkoutId: "w3" } : w
+    );
+    const lift = resolveHomeLift({
+      scheduled: scheduled(0, done),
+      programme: { workouts: done, nextWorkoutOverride: 2 },
+      sessionsToday: new Set(),
+    });
+    expect(lift.workout?.dayName).toBe("A");
   });
 
   it("falls back to the weekday's slot once the week is all done", () => {
@@ -92,7 +115,7 @@ describe("resolveHomeLift", () => {
     expect(
       resolveHomeLift({
         scheduled: slot,
-        workouts: all,
+        programme: { workouts: all },
         sessionsToday: new Set(),
       })
     ).toBe(slot);
@@ -105,10 +128,10 @@ describe("nextLiftAfter", () => {
   it("is the one after today's while today's is still to do", () => {
     const today = resolveHomeLift({
       scheduled: scheduled(0, plan),
-      workouts: plan,
+      programme: { workouts: plan },
       sessionsToday: new Set(),
     });
-    expect(nextLiftAfter(today, plan)?.workout.dayName).toBe("B");
+    expect(nextLiftAfter(today, { workouts: plan })?.workout.dayName).toBe("B");
   });
 
   it("is the next undone one once today's is done", () => {
@@ -118,14 +141,25 @@ describe("nextLiftAfter", () => {
     ];
     const today = resolveHomeLift({
       scheduled: scheduled(0, done),
-      workouts: done,
+      programme: { workouts: done },
       sessionsToday: new Set(["w1"]),
     });
-    expect(nextLiftAfter(today, done)?.workout.dayName).toBe("B");
+    expect(nextLiftAfter(today, { workouts: done })?.workout.dayName).toBe("B");
+  });
+
+  it("is the next in order after a chosen workout today", () => {
+    const programme = { workouts: plan, nextWorkoutOverride: 2 };
+    const today = resolveHomeLift({
+      scheduled: scheduled(0, plan),
+      programme,
+      sessionsToday: new Set(),
+    });
+    expect(today.workout?.dayName).toBe("C");
+    expect(nextLiftAfter(today, programme)?.workout.dayName).toBe("A");
   });
 
   it("is null when nothing is left", () => {
     const all = plan.map((w) => ({ ...w, completed: true }));
-    expect(nextLiftAfter(scheduled(0, all), all)).toBeNull();
+    expect(nextLiftAfter(scheduled(0, all), { workouts: all })).toBeNull();
   });
 });

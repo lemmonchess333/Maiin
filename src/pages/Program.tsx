@@ -15,6 +15,7 @@ import {
 } from "@/features/program/liftDayStatus";
 import { useProgram } from "@/features/program/useProgram";
 import { changeStands } from "@/features/program/programOutcome";
+import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -589,17 +590,10 @@ function ProgramInner() {
   const deloadNotice = useDismissOnce(deloadDismissKey(noticeWeekKey));
   const recoveryNotice = useDismissOnce(recoveryDismissKey(noticeWeekKey));
 
-  // Today index: first incomplete workout (respects nextWorkoutOverride)
+  // Today index: the next-up cursor, the session Home offers too.
   const todayIndex = useMemo(() => {
     if (!programState || viewingHistoryIndex !== null) return -1;
-    if (programState.nextWorkoutOverride != null) {
-      const oi = programState.workouts.findIndex(
-        (d, i) =>
-          i === programState.nextWorkoutOverride && !d.completed && !d.skipped
-      );
-      if (oi >= 0) return oi;
-    }
-    return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
+    return nextUpIndex(programState);
   }, [programState, viewingHistoryIndex]);
 
   const easierRecommendation = useEasierTodayRecommendation(
@@ -1781,12 +1775,10 @@ function ProgramInner() {
             // still the one to look at.
             if (changeStands(outcome)) {
               haptic("medium");
-              // Auto-advance to next incomplete day
-              const nextIncomplete = displayWorkouts.findIndex(
-                (d, i) => i !== skipTargetDay && !d.completed && !d.skipped
-              );
-              if (nextIncomplete >= 0) {
-                handleSelect(nextIncomplete);
+              // On to the session that is up next now.
+              const nextUp = nextUpIndex(programState, skipTargetDay);
+              if (nextUp >= 0) {
+                handleSelect(nextUp);
               }
             }
           }

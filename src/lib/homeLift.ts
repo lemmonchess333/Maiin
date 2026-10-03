@@ -1,16 +1,19 @@
-import type { WorkoutDay } from "@/features/program/programTypes";
+import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
+import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { ResolvedLift } from "@/lib/trainingResolver";
+
+type Programme = Pick<ProgramState, "workouts" | "nextWorkoutOverride">;
 
 /**
  * The lift Home's today card offers.
  *
  * Whether today is a lifting day comes from the week's schedule. Which
- * workout comes from the programme's order: the first one not yet done or
- * skipped, the one Train names "Up next" and starts. Lifts run in order
- * whatever the weekday (ADR-0002), so a calendar surface does not choose
- * the session. Picking it by weekday showed a new person who joined on a
- * Friday "Full Body Circuit D" while their plan and Train offered A, and
- * offered Monday's A again after A was done on Friday.
+ * workout comes from the next-up cursor (`nextUpCursor.ts`): the one Train
+ * names "Up next" and starts, including one chosen with "Make this next".
+ * Lifts run in order whatever the weekday (ADR-0002), so a calendar surface
+ * does not choose the session. Picking it by weekday showed a new person
+ * who joined on a Friday "Full Body Circuit D" while their plan and Train
+ * offered A, and offered Monday's A again after A was done on Friday.
  *
  * A workout finished today stays on the card, done. When every workout
  * of the week is done or skipped, the weekday's own slot stands, which is
@@ -18,16 +21,17 @@ import type { ResolvedLift } from "@/lib/trainingResolver";
  */
 export function resolveHomeLift({
   scheduled,
-  workouts,
+  programme,
   sessionsToday,
 }: {
   /** Today's lift as the week's schedule resolves it. */
   scheduled: ResolvedLift;
-  /** The programme's workouts, in order. */
-  workouts: readonly WorkoutDay[] | undefined;
+  /** The programme: its workouts, in order, and the one chosen to go next. */
+  programme: Programme | null | undefined;
   /** Ids of the sessions logged today. */
   sessionsToday: ReadonlySet<string>;
 }): ResolvedLift {
+  const workouts = programme?.workouts;
   if (scheduled.index === null || !workouts?.length) return scheduled;
 
   const doneToday = workouts.findIndex(
@@ -38,7 +42,7 @@ export function resolveHomeLift({
   );
   if (doneToday >= 0) return lift(doneToday, workouts[doneToday], "completed");
 
-  const next = workouts.findIndex((w) => !w.completed && !w.skipped);
+  const next = nextUpIndex(programme);
   if (next < 0) return scheduled;
   return lift(next, workouts[next], "planned");
 }
@@ -63,12 +67,13 @@ function lift(
  */
 export function nextLiftAfter(
   today: ResolvedLift,
-  workouts: readonly WorkoutDay[] | undefined
+  programme: Programme | null | undefined
 ): { index: number; workout: WorkoutDay } | null {
-  if (!workouts?.length) return null;
-  const skip = today.status === "planned" ? today.index : null;
-  const index = workouts.findIndex(
-    (w, i) => !w.completed && !w.skipped && i !== skip
+  const index = nextUpIndex(
+    programme,
+    today.status === "planned" ? today.index : null
   );
-  return index >= 0 ? { index, workout: workouts[index] } : null;
+  return index >= 0 && programme
+    ? { index, workout: programme.workouts[index] }
+    : null;
 }
