@@ -439,6 +439,9 @@ function declineWithReason(base: string, reason: string): ProgramOutcome {
   return declined(reason);
 }
 
+/** See `readiness` on the hook's return. */
+export type ProgramReadiness = "pending" | "ready" | "failed";
+
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
@@ -496,6 +499,8 @@ export function useProgram() {
    * fresh load starts. The mirror subscribes and unsubscribes with it.
    */
   const [mirrorReady, setMirrorReady] = useState(false);
+  /** The load failed for this account: `mirrorReady` will not come. */
+  const [loadFailed, setLoadFailed] = useState(false);
   const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(
     null
   );
@@ -505,6 +510,7 @@ export function useProgram() {
     let cancelled = false;
     const loadProgram = async () => {
       setMirrorReady(false);
+      setLoadFailed(false);
       if (!user || !profile) {
         setProgramState(null);
         setLoading(false);
@@ -776,6 +782,7 @@ export function useProgram() {
 
     loadProgram().catch((err) => {
       logger.error("Failed to load program:", err);
+      if (!cancelled) setLoadFailed(true);
       setLoading(false);
     });
 
@@ -3387,6 +3394,16 @@ export function useProgram() {
     programState,
     prescription,
     loading,
+    /** Whether the plan can be acted on. `loading` turns false on the
+     *  cached copy, which is right to show but can be behind the server, so
+     *  a write built on it may be refused. "ready" once the server's copy
+     *  has been read and migrated for this account (`mirrorReady`, which
+     *  the week rollovers wait on too); "failed" if that read failed. */
+    readiness: (mirrorReady
+      ? "ready"
+      : loadFailed
+        ? "failed"
+        : "pending") as ProgramReadiness,
     completeWorkoutDay,
     skipWorkoutDay,
     setNextWorkout,

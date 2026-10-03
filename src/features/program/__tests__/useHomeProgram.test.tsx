@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useLayoutEffect } from "react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { useLayoutEffect, useState } from "react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import { homeProgramSnapshot } from "../homeProgramSnapshot";
 import {
@@ -22,6 +28,8 @@ const h = vi.hoisted(() => ({
   controllerMounts: 0,
   skip: vi.fn(),
   state: null as unknown,
+  readiness: "ready" as "pending" | "ready" | "failed",
+  publish: null as ((value: unknown) => void) | null,
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
@@ -48,7 +56,13 @@ vi.mock("../HomeProgramController", () => {
     }) {
       useLayoutEffect(() => {
         h.controllerMounts++;
-        publish({ loading: false, programState: h.state, skipRunDay: h.skip });
+        h.publish = publish;
+        publish({
+          loading: false,
+          readiness: h.readiness,
+          programState: h.state,
+          skipRunDay: h.skip,
+        });
       }, [publish]);
       return null;
     },
@@ -58,6 +72,7 @@ import { useHomeProgram } from "../useHomeProgram";
 
 function Harness() {
   const model = useHomeProgram();
+  const [error, setError] = useState<string | null>(null);
   return (
     <>
       {model.controller}
@@ -66,7 +81,14 @@ function Harness() {
           ? `Week ${model.programState.weekNumber}`
           : "Loading"}
       </p>
-      <button onClick={() => void model.skipRunDay("run")}>Skip</button>
+      <button
+        onClick={() =>
+          void model.skipRunDay("run").catch((e: Error) => setError(e.message))
+        }
+      >
+        Skip
+      </button>
+      {error && <p role="alert">{error}</p>}
     </>
   );
 }
@@ -104,6 +126,8 @@ beforeEach(() => {
   ).programState;
   h.skip.mockReset().mockResolvedValue(undefined);
   h.controllerMounts = 0;
+  h.readiness = "ready";
+  h.publish = null;
 });
 describe("Home defers the programme controller", () => {
   /* `controllerImports` counts how many times the MOCK FACTORY ran, and a
@@ -169,5 +193,63 @@ describe("Home defers the programme controller", () => {
           read.path === "users/bob/programState/current"
       )
     ).toBe(true);
+  });
+});
+
+describe("Home acts on the server's copy of the plan", () => {
+  /* The engine paints the cached copy first (`loading` false) and reads the
+     server's after. A write built on the cache can be refused when the
+     server has moved on (a rollover on another device, a run that started
+     recovery), so a tap on Home waits for `readiness`, not `loading`. */
+  const published = (readiness: "pending" | "ready" | "failed") => ({
+    loading: false,
+    readiness,
+    programState: h.state,
+    skipRunDay: h.skip,
+  });
+
+  it("waits until the engine has read the server's copy", async () => {
+    h.readiness = "pending";
+    emit(h.state as ProgramState, true);
+    render(<Harness />);
+    await flushSnapshots();
+    fireEvent.click(screen.getByText("Skip"));
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+    expect(h.skip).not.toHaveBeenCalled();
+    act(() => h.publish!(published("ready")));
+    await waitFor(() => expect(h.skip).toHaveBeenCalledWith("run"));
+  });
+
+  it("waits again while the engine reloads", async () => {
+    // The engine reads the plan afresh whenever the profile changes, and is
+    // pending again until it has. A tap in that window waits too, rather
+    // than taking the engine it already has.
+    emit(h.state as ProgramState, true);
+    render(<Harness />);
+    await flushSnapshots();
+    fireEvent.click(screen.getByText("Skip"));
+    await waitFor(() => expect(h.skip).toHaveBeenCalledTimes(1));
+    act(() => h.publish!(published("pending")));
+    fireEvent.click(screen.getByText("Skip"));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(h.skip).toHaveBeenCalledTimes(1);
+    act(() => h.publish!(published("ready")));
+    await waitFor(() => expect(h.skip).toHaveBeenCalledTimes(2));
+  });
+
+  it("says the plan could not be loaded when that read fails", async () => {
+    h.readiness = "pending";
+    emit(h.state as ProgramState, true);
+    render(<Harness />);
+    await flushSnapshots();
+    fireEvent.click(screen.getByText("Skip"));
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+    act(() => h.publish!(published("failed")));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load your programme. Please try again."
+    );
+    expect(h.skip).not.toHaveBeenCalled();
   });
 });

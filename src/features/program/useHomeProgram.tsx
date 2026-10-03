@@ -76,9 +76,11 @@ export function useHomeProgram() {
     (value: ProgramController) => {
       if (!uid || auth.currentUser?.uid !== uid) return;
       api.current = { uid, value };
-      if (!value.loading) {
+      // Act on the server's copy, not the cached one the engine paints
+      // first: a write built on a stale cache is refused.
+      if (value.readiness !== "pending") {
         pending.current.splice(0).forEach(({ resolve, reject }) => {
-          if (value.programState) resolve(value);
+          if (value.readiness === "ready" && value.programState) resolve(value);
           else
             reject(
               new Error("Couldn't load your programme. Please try again.")
@@ -107,7 +109,7 @@ export function useHomeProgram() {
       throw new Error("Account changed");
     if (
       api.current?.uid === uid &&
-      !api.current.value.loading &&
+      api.current.value.readiness === "ready" &&
       api.current.value.programState
     )
       return api.current.value;
@@ -171,7 +173,9 @@ export function useHomeProgram() {
     };
   }
   const Controller =
-    loadedController && loadedController.uid === uid ? loadedController.component : null;
+    loadedController && loadedController.uid === uid
+      ? loadedController.component
+      : null;
   return {
     programState:
       snapshot && snapshot.uid === uid ? snapshot.programState : null,
