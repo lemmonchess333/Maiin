@@ -1,7 +1,7 @@
 /**
  * Data-integrity guards on the built-in food table.
  *
- * `nlFoodParser`'s `FOOD_DB` is 218 hand-authored rows of calories, protein,
+ * `nlFoodParser`'s `FOOD_DB` is 219 hand-authored rows of calories, protein,
  * carbs, fat and a serving string. `nlFoodParser.test.ts` covers the PARSER
  * thoroughly — quantities, units, compound "X with Y", fuzzy matching — and
  * nothing at all checks the TABLE. A mistyped macro there is silent: the parse
@@ -129,7 +129,7 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     /* Guards the regex, not the data. A silently-empty scan would make every
        assertion below vacuously true — the exact shape of tautology this
        codebase keeps finding in its own tests. */
-    expect(ROWS.length).toBe(218);
+    expect(ROWS.length).toBe(219);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
       calories: 248,
@@ -241,7 +241,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
     // 91% of the table is mass- or volume-scalable.
-    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(199);
+    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(200);
   });
 });
 
@@ -262,7 +262,7 @@ describe("FOOD_DB — a row's numbers are for the serving it names", () => {
   const REFERENCE_KCAL_PER_100G: Record<string, number> = {
     "chicken breast": 165, // roasted, meat only
     "chicken thigh": 209, // roasted, meat only
-    "chicken wing": 203, // roasted, meat only
+    "chicken wing": 290, // roasted, meat and skin
     "ground beef": 254, // 80% lean, pan-browned
     pork: 242, // loin, roasted
     salmon: 206, // farmed Atlantic, cooked
