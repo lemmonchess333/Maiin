@@ -167,6 +167,15 @@ the comment on the build step, and the activation order in
    whose build number is not higher than the last one. Bump
    `package.json` to move the version testers and the App Store see; the
    build number takes care of itself.
+7. The app is iPhone-only: `TARGETED_DEVICE_FAMILY = 1` on both of the App
+   target's configurations, pinned by `iosProjectWiring.test.ts`. App Store
+   Connect then asks for iPhone screenshots only. An iPad still installs
+   it and runs it as an iPhone app, and App Review tries it there too, so
+   purchases on an iPad go through the App Store like any iPhone's
+   (`isNativeIOS()` reads the native shell, not the user agent). Apple
+   does not let an app drop iPad support once a version with it is on the
+   App Store, so this has to be settled before the first release, not
+   after.
 
 #### Optional: auto-build on release
 
