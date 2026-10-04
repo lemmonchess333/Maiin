@@ -907,18 +907,14 @@ includes:
 I'm on Windows with no Mac or Xcode access. There is no separate iOS
 branch; all iOS-related files (`ios/App/App/Info.plist`,
 `ios/App/App/PrivacyInfo.xcprivacy`, `capacitor.config.ts`, the
-Capacitor deps in `package.json`) live on this branch. They're
-prepared but unbuildable until someone opens the `.xcworkspace` in
-Xcode on a Mac.
+Capacitor deps in `package.json`) live on this branch.
 
-**The hard truth:** App Store submission is physically impossible
-without a Mac. Xcode is the only way to produce the `.ipa` that
-TestFlight accepts. Options:
-
-- Borrow a Mac for a day
-- Rent MacinCloud / MacStadium (~$20-40 for a day)
-- Buy a used Mac mini (~$400 M1)
-- Partner with someone who has one
+**No Mac is needed.** This section used to say App Store submission was
+impossible without one. `deploy-ios.yml` now archives the app on one of
+GitHub's macOS runners and uploads it to TestFlight, and it signs the
+build from an App Store Connect API key, so every input comes from a
+website: the secrets in `docs/ios-release.md`, then Actions → **Deploy
+iOS to TestFlight** → Run workflow.
 
 Everything below is filtered by what's actually doable from Windows.
 
