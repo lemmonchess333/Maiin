@@ -330,3 +330,62 @@ describe("the Terms identify the trader", () => {
     expect(TERMS_PROSE).toMatch(/agreement between you and/);
   });
 });
+
+describe("the Terms say what App Review 1.2 asks of a social app", () => {
+  /* Apple rejects an app with user content whose terms do not make it
+     clear there is no tolerance for objectionable content or abusive
+     users, and that reports get a timely response. */
+  it("state the zero-tolerance rule, and what happens to content and accounts", () => {
+    expect(TERMS_PROSE).toMatch(
+      /zero tolerance for objectionable content and abusive users/
+    );
+    expect(TERMS_PROSE).toMatch(/Content that breaks these rules is removed/);
+    expect(TERMS_PROSE).toMatch(/can be suspended or removed from Tropos/);
+  });
+
+  it("promise the 24-hour review the report alert reminds the owner of", () => {
+    // The promise is kept by a person reading the alert email, which
+    // repeats it (functions/lib/reportAlert.js). If either changes alone,
+    // the owner is working to a different number from the one users read.
+    const ALERT = read("../../../functions/lib/reportAlert.js").replace(
+      /\s+/g,
+      " "
+    );
+    expect(TERMS_PROSE).toMatch(/Reports are reviewed within 24 hours/);
+    expect(ALERT).toMatch(/reports are reviewed within 24 hours/);
+  });
+
+  it("say only what the filter, reports and blocks actually cover", () => {
+    // Each claim is a feature: the word filter (profanityFilter.ts), report
+    // targets for posts, comments and profiles (REPORT_TARGET_TYPES), and
+    // blocking.
+    expect(TERMS_PROSE).toMatch(/filters objectionable language/);
+    expect(TERMS_PROSE).toMatch(/report a post, comment or profile/);
+    const SOCIAL = read("../socialApi.ts");
+    for (const target of ["activity", "comment", "user", "space_post"]) {
+      expect(SOCIAL).toContain(`"${target}"`);
+    }
+    expect(SOCIAL).toMatch(/export async function blockUser/);
+  });
+});
+
+describe("the Terms describe the subscription the app sells", () => {
+  it("Pro is monthly or yearly, through Apple's In-App Purchase", () => {
+    expect(TERMS_PROSE).toMatch(
+      /a monthly or a yearly auto-renewing subscription/
+    );
+    expect(TERMS_PROSE).toMatch(/In-App Purchase/);
+    // The plans that exist. A new plan (a lifetime one, say) fails here
+    // until the Terms describe it.
+    expect(read("../proPlans.ts")).toMatch(
+      /export type PlanId = "monthly" \| "yearly";/
+    );
+  });
+
+  it("no longer offers a lifetime purchase or a store Tropos is not in", () => {
+    // Section 4 described "Lifetime purchases", which never existed, and
+    // refunds through Google Play and the web, where nothing is sold.
+    expect(TERMS_PROSE).not.toMatch(/lifetime/i);
+    expect(TERMS_PROSE).not.toMatch(/Google Play/);
+  });
+});
