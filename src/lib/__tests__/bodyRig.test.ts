@@ -4861,6 +4861,19 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("return to a braced plank");
         continue;
       }
+      if (id === "treadmill") {
+        // Walking advances through a periodic gait phase, rather than
+        // reversing a joint excursion. The wrap must preserve cadence.
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(beats[0].label).toBe("Contact");
+        expect(beats[3].label).toBe("Switch");
+        expect(beats[3].cue).toContain("other heel");
+        expect(beats[0].cue).toContain("hands off rails");
+        continue;
+      }
       if (id === "box-jumps") {
         // Flight, landing and the backward step-down are successive phases.
         // Reversing a scalar jump would incorrectly show jumping down.

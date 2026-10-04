@@ -697,6 +697,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793",
     sha256: "469cc238ac34dbaa628d867ab8c6f2bbfb40881d4e1454f15371fa0889a9c998",
   },
+  treadmill: {
+    src: "form-art/treadmill.webp",
+    width: 480,
+    height: 335,
+    keyed: true,
+    source: "form-frames/treadmill/1.webp",
+    sourceSha256:
+      "1356b4d578933822a3a9751b5fb4acf546f3b9274527d0dddc59725eb582de4f",
+    sha256: "faa3332757b19376ef55584a508418a6d25964e76da7a3babd622a027eb02fa4",
+  },
   "tricep-kickback": {
     src: "form-art/tricep-kickback.webp",
     width: 480,

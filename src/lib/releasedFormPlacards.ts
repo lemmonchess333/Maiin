@@ -15,6 +15,35 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  treadmill: placard(
+    "treadmill",
+    ["Quads", "Calves"],
+    ["Glutes", "Hamstrings"],
+    [
+      [0, "Contact", "Step naturally; keep your hands off rails."],
+      [
+        0.16666666666666666,
+        "Load",
+        "Transfer weight smoothly onto your front foot.",
+      ],
+      [
+        0.3333333333333333,
+        "Swing",
+        "Swing your opposite leg forward without rushing.",
+      ],
+      [0.5, "Switch", "Land the other heel; stay upright."],
+      [
+        0.6666666666666666,
+        "Transfer",
+        "Let your arms counter your leg movement.",
+      ],
+      [
+        0.8333333333333334,
+        "Return",
+        "Keep walking with an even, comfortable stride.",
+      ],
+    ]
+  ),
   "box-jumps": placard(
     "box-jumps",
     ["Quads", "Glutes"],
