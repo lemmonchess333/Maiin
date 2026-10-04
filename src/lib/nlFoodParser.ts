@@ -129,11 +129,19 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 11,
     serving: "100g cooked",
   },
+  /* Meat and skin: nobody skins a wing. */
   "chicken wing": {
-    calories: 203,
-    protein: 30,
+    calories: 290,
+    protein: 27,
     carbs: 0,
-    fat: 8,
+    fat: 19,
+    serving: "100g cooked",
+  },
+  wing: {
+    calories: 290,
+    protein: 27,
+    carbs: 0,
+    fat: 19,
     serving: "100g cooked",
   },
   turkey: {
@@ -1566,6 +1574,7 @@ const FOOD_ALIASES: Record<string, string> = {
   mash: "mashed potato",
   omelet: "omelette", // US ↔ UK
   houmous: "hummus", // the UK supermarket spelling
+  wing: "chicken wing", // wings are chicken wings
   lager: "beer", // a lager is a beer; the row is the same
   "french fries": "fries",
   courgette: "zucchini", // UK ↔ US
@@ -1579,6 +1588,41 @@ const FOOD_ALIASES: Record<string, string> = {
 /** Canonical form of a FOOD_DB key. Non-aliased keys pass through. */
 function canonicalKey(key: string): string {
   return FOOD_ALIASES[key] ?? key;
+}
+
+/**
+ * What one of a food weighs, for foods weighed by the portion but eaten
+ * in pieces. A count of them counts pieces: "6 chicken wings" logged six
+ * 100 g portions, 600 g of wings, and "10 almonds" 280 g of nuts. Weights
+ * are edible portions from USDA household measures. A bare food keeps its
+ * portion, and a count of something else ("2 cans of sardines", "3 bowls
+ * of grapes") keeps counting that.
+ */
+const PIECE_GRAMS: Record<string, number> = {
+  "chicken wing": 34,
+  wing: 34,
+  "chicken thigh": 52,
+  prawns: 6,
+  shrimp: 6,
+  sardines: 12,
+  strawberries: 12,
+  grapes: 5,
+  cherries: 8,
+  mushroom: 18,
+  mushrooms: 18,
+  almonds: 1.2,
+  cashews: 1.6,
+};
+
+/** The grams of one piece when `rest` names the food itself, plural or
+ *  not, and nothing it comes in. */
+function pieceGrams(key: string, rest: string): number | null {
+  const grams = PIECE_GRAMS[key];
+  if (!grams) return null;
+  const typed = rest.toLowerCase().trim();
+  const singular = typed.split(/\s+/).map(depluralize).join(" ");
+  const keySingular = key.split(/\s+/).map(depluralize).join(" ");
+  return typed === key || singular === keySingular ? grams : null;
 }
 
 /** A British (imperial) pint. */
@@ -1610,6 +1654,8 @@ function extractQty(segment: string): {
   /** How the row's name opens when it is not the portion label alone:
    *  "1 pint of" before "lager". */
   namePrefix?: string;
+  /** A number or "a"/"an" was typed: "6 wings", "a wing". */
+  counted?: boolean;
   rest: string;
 } {
   // Mass: "200g chicken" / "1.5kg rice" / "200 g chicken"
@@ -1666,17 +1712,21 @@ function extractQty(segment: string): {
   // "2 eggs" or "2.5 servings"
   const match = segment.match(/^(\d+(?:\.\d+)?)\s+(.+)/);
   if (match) {
-    return { qty: parseFloat(match[1]), rest: match[2].trim() };
+    return { qty: parseFloat(match[1]), counted: true, rest: match[2].trim() };
   }
   // "2chocolate" — number glued to text (no space)
   const gluedMatch = segment.match(/^(\d+(?:\.\d+)?)([a-zA-Z].*)$/);
   if (gluedMatch) {
-    return { qty: parseFloat(gluedMatch[1]), rest: gluedMatch[2].trim() };
+    return {
+      qty: parseFloat(gluedMatch[1]),
+      counted: true,
+      rest: gluedMatch[2].trim(),
+    };
   }
   // "a slice of toast" → qty=1, rest="slice of toast"
   const aMatch = segment.match(/^an?\s+(.+)/i);
   if (aMatch) {
-    return { qty: 1, rest: aMatch[1].trim() };
+    return { qty: 1, counted: true, rest: aMatch[1].trim() };
   }
   return { qty: 1, rest: segment };
 }
@@ -1760,7 +1810,6 @@ const NOT_TYPOS = new Set([
   "soba",
   "beet",
   "chops",
-  "wing",
 ]);
 
 /** The table names its dishes with "and" ("fish and chips"); people
@@ -2021,7 +2070,7 @@ export function parseFoodText(input: string): ParsedFood[] {
   const results: ParsedFood[] = [];
 
   for (const segment of segments) {
-    const { qty, grams, ml, portionLabel, namePrefix, rest } =
+    const { qty, grams, ml, portionLabel, namePrefix, counted, rest } =
       extractQty(segment);
 
     // Mass/volume-prefixed inputs skip the compound `with` path —
@@ -2083,7 +2132,11 @@ export function parseFoodText(input: string): ParsedFood[] {
       // entry stays honest. Better than silently producing the
       // count-prefix bug (200x macros).
       let multiplier = qty;
-      if (grams !== undefined) {
+      const piece = counted ? pieceGrams(key, rest) : null;
+      if (piece) {
+        const servingGrams = parseServingGrams(item.serving);
+        if (servingGrams) multiplier = (qty * piece) / servingGrams;
+      } else if (grams !== undefined) {
         const servingGrams = parseServingGrams(item.serving);
         if (servingGrams) multiplier = grams / servingGrams;
       } else if (ml !== undefined) {

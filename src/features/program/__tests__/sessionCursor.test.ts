@@ -14,7 +14,12 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { clampExerciseIndex, nextIncompleteSet } from "../sessionCursor";
+import {
+  clampExerciseIndex,
+  isExerciseDone,
+  isSetOutstanding,
+  nextIncompleteSet,
+} from "../sessionCursor";
 
 describe("clampExerciseIndex", () => {
   it("leaves an in-range cursor alone", () => {
@@ -77,5 +82,50 @@ describe("nextIncompleteSet", () => {
       exerciseIndex: 1,
       setIndex: 0,
     });
+  });
+});
+
+describe("a warm-up is optional once the working sets have begun", () => {
+  const warm = (completed = false) => ({ completed, type: "warmup" });
+  const work = (completed = false) => ({ completed, type: "working" });
+
+  it("waits while nothing that counts is done", () => {
+    const sets = [warm(), warm(), work(), work()];
+    expect(isSetOutstanding(sets, 0)).toBe(true);
+    expect(nextIncompleteSet([sets])).toEqual({
+      exerciseIndex: 0,
+      setIndex: 0,
+    });
+  });
+
+  it("is skipped once a working set is done, so the cursor moves on", () => {
+    /* A lifter who went straight to set 1 was sent back to the ramp after
+       every set. */
+    const sets = [warm(), warm(), work(true), work()];
+    expect(isSetOutstanding(sets, 0)).toBe(false);
+    expect(isSetOutstanding(sets, 3)).toBe(true);
+    expect(nextIncompleteSet([sets])).toEqual({
+      exerciseIndex: 0,
+      setIndex: 3,
+    });
+  });
+
+  it("does not hold the exercise open", () => {
+    expect(isExerciseDone([warm(), work(true), work(true)])).toBe(true);
+    expect(isExerciseDone([warm(true), work(true), work()])).toBe(false);
+    expect(nextIncompleteSet([[warm(), work(true)], [work(true)]])).toBeNull();
+  });
+
+  it("counts a drop set or a set to failure as a set that counts", () => {
+    const sets = [warm(), { completed: true, type: "dropset" }, work()];
+    expect(isSetOutstanding(sets, 0)).toBe(false);
+    expect(
+      isSetOutstanding([warm(), { completed: false, type: "failure" }], 1)
+    ).toBe(true);
+  });
+
+  it("treats a set without a type as one that counts", () => {
+    expect(isSetOutstanding([{ completed: false }], 0)).toBe(true);
+    expect(isExerciseDone([{ completed: true }])).toBe(true);
   });
 });

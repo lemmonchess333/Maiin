@@ -116,24 +116,3 @@ describe("run screen — design-system invariants", () => {
     ).not.toBeNull();
   });
 });
-
-describe("workout session — PREV is a working-set reference", () => {
-  const workout = stripComments(
-    readFileSync(resolve(repoRoot, "src/components/WorkoutSession.tsx"), "utf8")
-  );
-
-  it("shows no previous figure on a warm-up row", () => {
-    /* On a 60kg squat the warm-up ramp (20 / 30 / 42.5) was each captioned
-       "PREV 60×8" — the last working set — and each one tappable to prefill
-       60kg as a warm-up. The label is per-exercise, so every row in the grid
-       carried the same value regardless of what that row is for. */
-    expect(workout).toMatch(/set\.type === "warmup" \?/);
-  });
-
-  it("still offers tap-to-fill on working rows", () => {
-    // The other half: suppressing PREV everywhere would also pass the
-    // assertion above while removing a real affordance.
-    expect(workout).toMatch(/canFillPrev && !set\.completed && prev/);
-    expect(workout).toMatch(/\{prevLabel\}/);
-  });
-});

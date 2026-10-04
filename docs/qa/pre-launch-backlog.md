@@ -6,6 +6,32 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Run recording: pauses, each fix's own time, smoothed climb (2026-10-04)
+
+Affects: `src/lib/gps.ts` (`pausedMs`, `movingClockMs`, `segmentMetres`,
+`fixTimestamp`, `readingVerdict`, `climbBySegment`), `src/hooks/useGPS.ts`
+(`pause` / `resume`), `src/pages/Run.tsx`.
+
+Splits, best efforts, the live pace and the ghost now count moving time:
+nothing is recorded while the run's clock is stopped. A point is stamped
+with when its fix was taken, not when it arrived. Unit and property tests
+cover the rules; these need a phone outside.
+
+- [ ] **A backgrounded run on iOS.** Lock the phone for a kilometre or
+      two. Back in the app, the route should have no straight-line jump
+      and the split for that stretch a believable pace. iOS hands fixes
+      over in a batch; before, the batch after its first fix was thrown
+      away as a teleport.
+- [ ] **Auto-pause at a crossing.** Stand for a minute with auto-pause on:
+      the run's time stops, the distance does not creep, and the split
+      that contains the stop reads at running pace. Then the same with
+      Pause pressed while auto-paused, which used to count the time since
+      the last resume twice.
+- [ ] **Standing with auto-pause off.** Twenty seconds still should leave
+      the route quality "good" on the finish screen, not "poor".
+- [ ] **Climb on a known hill.** A run with a known climb should read
+      close to it; a flat run should read a few metres, not hundreds.
+
 ## The new logo, icon and launch animation (2026-10-01)
 
 Affects: `src/assets/brand/app-icon.svg`, the iOS AppIcon set (default,

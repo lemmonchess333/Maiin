@@ -39,7 +39,9 @@ describe("ResponsiveContainer heights", () => {
 
   it("finds the charts it pins", () => {
     // Anchor: the absence check below is vacuous if nothing matched.
-    expect(containers.length).toBeGreaterThanOrEqual(9);
+    // 9 → 8: the run pages' splits bar chart went, for a table
+    // (`components/run/SplitsTable`) with no container of its own.
+    expect(containers.length).toBeGreaterThanOrEqual(8);
   });
 
   it("gives every container a numeric height, not a percentage", () => {

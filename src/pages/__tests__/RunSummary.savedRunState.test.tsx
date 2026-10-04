@@ -26,6 +26,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 
@@ -42,6 +43,7 @@ const h = vi.hoisted(() => ({
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
   track: vi.fn(),
+  mapProps: [] as Record<string, unknown>[],
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -85,9 +87,11 @@ const week = vi.hoisted(() => ({
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => week.pulse }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: h.track }));
-vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
-vi.mock("@/components/analytics/SplitsBarChart", () => ({
-  default: () => null,
+vi.mock("@/components/run/RunMapLazy", () => ({
+  default: (props: Record<string, unknown>) => {
+    h.mapProps.push(props);
+    return null;
+  },
 }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({
   default: () => null,
@@ -360,5 +364,95 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+});
+
+describe("RunSummary — splits, best efforts and the route key", () => {
+  /** `n` fixes stepping ~111 m north every `dtSec` seconds. */
+  function track(n: number, dtSec: number) {
+    return Array.from({ length: n }, (_, i) => ({
+      lat: 51.5 + i * 0.001,
+      lon: 0,
+      rawLat: 51.5 + i * 0.001,
+      rawLon: 0,
+      altitude: null,
+      accuracy: 5,
+      speed: null,
+      timestamp: 1_700_000_000_000 + i * dtSec * 1000,
+    }));
+  }
+  function lap(km: number, paceSeconds: number) {
+    return {
+      km,
+      time: paceSeconds,
+      pace: "",
+      paceSeconds,
+      elevationGain: 0,
+      elevationLoss: 0,
+    };
+  }
+  /** A finished run, not yet saved, with the laps it recorded. */
+  function renderFinished(run: Record<string, unknown>) {
+    return render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/run-summary",
+            state: {
+              elevationGain: 0,
+              runConfig: { activityType: "freerun" },
+              ...run,
+            },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+  beforeEach(() => {
+    h.mapProps.length = 0;
+  });
+
+  it("shows the splits once, as one table, with the unit spaced", async () => {
+    renderFinished({
+      points: [],
+      distance: 3200,
+      elapsed: 1150,
+      splits: [lap(1, 372), lap(2, 364), lap(3, 352)],
+    });
+    const table = await screen.findByRole("table", { name: "Splits" });
+    expect(screen.getAllByRole("table")).toHaveLength(1);
+    const [, body] = within(table).getAllByRole("rowgroup");
+    const rows = within(body)
+      .getAllByRole("row")
+      .map((row) =>
+        Array.from(row.children)
+          .map((cell) => (cell.textContent ?? "").replace(/\s+/g, " ").trim())
+          .join(" ")
+      );
+    expect(rows).toEqual(["1 6:12 /km", "2 6:04 /km", "3, fastest 5:52 /km"]);
+    // The second, loose list of the same laps is gone: its "km 1" rows
+    // and its "Average" footer.
+    expect(screen.queryByText(/^km 1$/)).toBeNull();
+    expect(screen.queryByText("Average")).toBeNull();
+  });
+
+  it("lists best efforts from the track and keys the pace-coloured route", async () => {
+    const points = track(13, 30);
+    renderFinished({
+      points,
+      distance: 1334,
+      elapsed: 360,
+      splits: [lap(1, 270)],
+    });
+    const efforts = await screen.findByRole("region", { name: "Best efforts" });
+    expect(
+      within(efforts).getByText("1K").nextElementSibling?.textContent
+    ).toBe("4:30");
+    expect(screen.getByRole("img", { name: /^Route pace/ })).toBeVisible();
+    expect(h.mapProps.at(-1)?.paceColored).toBe(true);
   });
 });
