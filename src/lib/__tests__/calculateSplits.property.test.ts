@@ -12,7 +12,12 @@
  * the function uses. Deterministic (seeded PRNG).
  */
 import { describe, it, expect } from "vitest";
-import { calculateSplits, totalDistance, type GPSPoint } from "../gps";
+import {
+  calculateSplits,
+  detectBestEfforts,
+  totalDistance,
+  type GPSPoint,
+} from "../gps";
 
 function mulberry32(seed: number): () => number {
   let a = seed;
@@ -88,6 +93,69 @@ describe("calculateSplits structure (property-based)", () => {
       const a = calculateSplits(path);
       if (totalDistance(path) < 1000) expect(a).toEqual([]);
       expect(calculateSplits(path)).toEqual(a); // deterministic
+    }
+  });
+});
+
+/** A run at a plausible pace: a fix every 1–3 s, 2–6 m/s. */
+function genRun(rnd: () => number, fixes: number): GPSPoint[] {
+  const pts: GPSPoint[] = [pt(0, 1_700_000_000_000)];
+  let lat = 0;
+  let ts = pts[0].timestamp;
+  for (let i = 0; i < fixes; i++) {
+    const dt = 1 + Math.floor(rnd() * 3);
+    lat += ((2 + rnd() * 4) * dt) / 111_195;
+    ts += dt * 1000;
+    pts.push(pt(lat, ts));
+  }
+  return pts;
+}
+
+/** The same run with the clock held for `heldMs` just before point `at`:
+ *  the shape useGPS records a pause in — later points are later on the
+ *  wall clock by the hold, and carry it in `pausedMs`. */
+function withHold(run: GPSPoint[], at: number, heldMs: number): GPSPoint[] {
+  return run.map((p, i) =>
+    i < at
+      ? p
+      : {
+          ...p,
+          timestamp: p.timestamp + heldMs,
+          pausedMs: (p.pausedMs ?? 0) + heldMs,
+        }
+  );
+}
+
+describe("moving time (property-based)", () => {
+  it("a hold of any length, anywhere, changes no split and no best effort", () => {
+    /* The runner stood still; nothing was recorded. Splits and best
+       efforts are about running, so they must come out exactly as if the
+       stop never happened — on the wall clock (the old code) every split
+       and effort spanning it grew by the whole hold. */
+    const rnd = mulberry32(912);
+    for (let i = 0; i < 300; i++) {
+      const run = genRun(rnd, 400 + Math.floor(rnd() * 3000));
+      let held = run;
+      const holds = 1 + Math.floor(rnd() * 3);
+      for (let k = 0; k < holds; k++) {
+        const at = 1 + Math.floor(rnd() * (run.length - 1));
+        held = withHold(held, at, Math.round(rnd() * 900_000));
+      }
+      const plain = calculateSplits(run);
+      const paused = calculateSplits(held);
+      expect(paused).toHaveLength(plain.length);
+      paused.forEach((s, k) => {
+        expect(s.time).toBeCloseTo(plain[k].time, 6);
+        expect(s.km).toBe(plain[k].km);
+      });
+      const d = totalDistance(run);
+      expect(totalDistance(held)).toBeCloseTo(d, 6);
+      expect(detectBestEfforts(held, d)).toEqual(
+        detectBestEfforts(run, d).map((e) => ({
+          ...e,
+          time: expect.closeTo(e.time, 6),
+        }))
+      );
     }
   });
 });

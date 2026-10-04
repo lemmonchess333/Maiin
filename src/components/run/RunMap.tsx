@@ -4,7 +4,7 @@ import "@/lib/maplibreWorker";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import { splitRouteSegments } from "@/lib/routeSegments";
-import type { GPSPoint } from "../../lib/gps";
+import { movingSecondsBetween, pausedMsOf, type GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
 import { routePaceColor } from "./routePace";
@@ -278,15 +278,24 @@ export default function RunMap({
         }[] = [];
         for (let i = 1; i < visiblePoints.length; i++) {
           if (visiblePoints[i].breakBefore) continue;
+          /* The line across a pause was not run: nothing is recorded while
+             the clock is held, so it joins where the runner stopped to
+             where they set off. Timed on the wall clock it read as the
+             slowest stretch of the run. It has no pace, so it gets no
+             pace colour, and only the route's dark casing shows there. */
+          if (pausedMsOf(visiblePoints[i]) > pausedMsOf(visiblePoints[i - 1])) {
+            continue;
+          }
           const dist = haversineQuick(
             visiblePoints[i - 1].lat,
             visiblePoints[i - 1].lon,
             visiblePoints[i].lat,
             visiblePoints[i].lon
           );
-          const timeDiff =
-            (visiblePoints[i].timestamp - visiblePoints[i - 1].timestamp) /
-            1000;
+          const timeDiff = movingSecondsBetween(
+            visiblePoints[i - 1],
+            visiblePoints[i]
+          );
           const segPace =
             timeDiff > 0 && dist > 0
               ? (timeDiff / dist) * 1000

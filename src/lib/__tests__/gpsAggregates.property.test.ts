@@ -7,12 +7,15 @@
  *   - totalDistance is non-negative and equals the sum of consecutive haversine
  *     segments (and is monotonic — appending a point never DECREASES it)
  *   - totalElevationGain is non-negative and only ever counts UPWARD altitude
- *     moves above the 2 m noise gate (a descending-only track gains nothing)
+ *     moves (a descending-only track gains nothing), and reading a track
+ *     backwards swaps its climb and its descent exactly — the smoothing is
+ *     centred and the hysteresis has no direction, so neither favours one
  *
  * Deterministic (seeded PRNG).
  */
 import { describe, it, expect } from "vitest";
 import {
+  climbBySegment,
   totalDistance,
   totalElevationGain,
   haversine,
@@ -110,6 +113,18 @@ describe("totalElevationGain (property-based)", () => {
         pts.push(pt(51 + k * 0.001, -0.1, alt));
       }
       expect(totalElevationGain(pts)).toBe(0);
+    }
+  });
+
+  it("reading a track backwards swaps its climb and its descent", () => {
+    const rnd = mulberry32(875);
+    const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+    for (let i = 0; i < 2000; i++) {
+      const track = genTrack(rnd, Math.floor(rnd() * 60));
+      const forward = climbBySegment(track);
+      const backward = climbBySegment([...track].reverse());
+      expect(sum(backward.loss)).toBeCloseTo(sum(forward.gain), 6);
+      expect(sum(backward.gain)).toBeCloseTo(sum(forward.loss), 6);
     }
   });
 });
