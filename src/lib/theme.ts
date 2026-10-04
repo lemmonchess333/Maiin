@@ -156,9 +156,9 @@ export const THEME = {
   chartGrid: "rgba(255,255,255,0.05)",
   chartTooltipBg: "#242429",
 
-  // Pace colours (for splits — used in both themes)
+  // Pace colours (for splits — used in both themes). The route map's
+  // middle step is `warning`, amber (`routePace.ts`).
   paceFast: "#4DB872",
-  paceOnTarget: "#7B72E9",
   paceSlow: "#D4637A",
   // Gradient helpers — subtler transitions
   gradient: {

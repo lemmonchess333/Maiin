@@ -10,6 +10,12 @@
  * One table, read by both `RunMap` (to colour) and `PaceLegend` (to draw
  * the key), so the key cannot describe a different set of colours from
  * the one on the route: a step added here appears in both.
+ *
+ * Three steps, green to amber to coral, so the colours read as one scale
+ * from faster to slower. A brand-purple step around the average sat
+ * between green and amber until 2026-10-04: purple is the lifting colour,
+ * and in the middle of a fast-to-slow scale it read as a fourth thing
+ * rather than a step between two others.
  */
 import { THEME } from "@/lib/theme";
 
@@ -23,9 +29,7 @@ export interface RoutePaceStep {
 export const ROUTE_PACE_STEPS: readonly RoutePaceStep[] = [
   // More than 8% quicker than the run's average.
   { below: 0.92, color: THEME.paceFast },
-  // Within a few percent of the average.
-  { below: 1.03, color: THEME.paceOnTarget },
-  // Up to 10% slower.
+  // Around the average: from 8% quicker to 10% slower.
   { below: 1.1, color: THEME.warning },
   // Slower than that.
   { below: Infinity, color: THEME.paceSlow },
