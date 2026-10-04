@@ -41,6 +41,7 @@ import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import EditSetSheet from "@/components/workout/EditSetSheet";
+import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -142,17 +143,6 @@ interface WorkoutDay {
   exercises: ProgramExercise[];
   completed: boolean;
 }
-
-/* What each set type's badge looks like: tokens, at the tint their text
-   steps are measured on (tokenContrast.test.ts). The menu's own hex dots,
-   and a micro-palette of Tailwind colours beside them, were a third
-   palette on the screen. */
-const SET_TYPE_CHIP: Record<SetType, string> = {
-  working: "bg-muted text-foreground",
-  warmup: "bg-warning/10 text-warning-strong",
-  dropset: "bg-primary/10 text-primary-strong",
-  failure: "bg-destructive/10 text-destructive-strong",
-};
 
 /** "Set 2" → "set 2", for the middle of a sentence. */
 const lowerFirst = (text: string) =>
@@ -1816,14 +1806,10 @@ export default function WorkoutSession({
                           }}
                           className="mx-auto flex size-11 items-center justify-center rounded-xl transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95"
                         >
-                          <span
-                            className={cn(
-                              "flex size-8 items-center justify-center rounded-lg text-sm font-bold font-mono tabular-nums",
-                              SET_TYPE_CHIP[type]
-                            )}
-                          >
-                            {setBadge(currentSets, setIdx)}
-                          </span>
+                          <SetTypeChip
+                            type={type}
+                            label={setBadge(currentSets, setIdx)}
+                          />
                         </button>
                         {priorLabel === null ? (
                           <span
@@ -2056,15 +2042,11 @@ export default function WorkoutSession({
                         "bg-primary/5 ring-1 ring-inset ring-primary/40"
                     )}
                   >
-                    <span
-                      className={cn(
-                        "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold font-mono tabular-nums",
-                        SET_TYPE_CHIP[type]
-                      )}
-                      aria-hidden="true"
-                    >
-                      {setBadge(preview, typeSheet)}
-                    </span>
+                    <SetTypeChip
+                      type={type}
+                      label={setBadge(preview, typeSheet)}
+                      className="mt-0.5"
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block text-base font-semibold text-foreground">
                         {SET_TYPE_COPY[type].name}

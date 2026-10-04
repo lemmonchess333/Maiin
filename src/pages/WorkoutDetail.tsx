@@ -27,16 +27,27 @@
  * snapshot resolves.
  */
 import { useState } from "react";
-import { formatVolume } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
+import {
+  SET_TYPE_COPY,
+  asSetType,
+  setBadge,
+  setName,
+} from "@/features/program/setLabels";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import SectionHeading from "@/components/ui/SectionHeading";
+import StatFigure from "@/components/ui/StatFigure";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import SetTypeChip from "@/components/workout/SetTypeChip";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -50,36 +61,100 @@ import {
   type Workout,
 } from "@/hooks/useWorkouts";
 
-/** One stat in the primary row. Mirrors RunDetail's StatPill. */
-function StatPill({
-  value,
-  label,
-  color,
-}: {
-  value: string;
-  label: string;
-  color?: string;
-}) {
-  return (
-    <div className="flex-1 py-3 text-center">
-      <p
-        className="text-2xl font-bold font-mono tabular-nums leading-none"
-        style={{ color: color || "hsl(var(--foreground))" }}
-      >
-        {value}
-      </p>
-      <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
-        {label}
-      </p>
-    </div>
-  );
-}
-
 /** Working sets only. Warm-ups are logged on the same list but are not the
  *  session's work, and counting them inflates every set total on the page —
- *  the same filter `SessionCompleteScreen` applies to its SETS stat. */
+ *  the same filter `SessionCompleteScreen` applies to its sets figure. A set
+ *  saved before set types were recorded is a working set, as the export
+ *  has always read it. */
 function workingSets(ex: Workout["exercises"][number]) {
-  return (ex.sets ?? []).filter((s) => s.type !== "warmup");
+  return (ex.sets ?? [])
+    .filter((s) => s.type !== "warmup")
+    .map((s) => ({ ...s, type: s.type ?? "working" }));
+}
+
+/** What a set did, as the workout screen writes it: "60 kg × 8", a hold's
+ *  seconds, or a bodyweight set's reps. */
+function setResult(
+  set: { reps: number; weightKg: number },
+  timed: boolean
+): { shown: string; spoken: string } {
+  const reps = set.reps || 0;
+  if (timed) return { shown: `${reps} s`, spoken: `${reps} seconds` };
+  const repWord = reps === 1 ? "rep" : "reps";
+  if (!(set.weightKg > 0)) {
+    return { shown: `${reps} ${repWord}`, spoken: `${reps} ${repWord}` };
+  }
+  return {
+    shown: `${set.weightKg} kg × ${reps}`,
+    spoken: `${set.weightKg} kg, ${reps} ${repWord}`,
+  };
+}
+
+/** One exercise of the saved session: its drawing and name, then each set
+ *  with the badge the workout screen gave it, so a drop set reads "D" here
+ *  as it did there (setLabels). */
+function ExerciseRecord({
+  exercise,
+}: {
+  exercise: Workout["exercises"][number];
+}) {
+  const sets = workingSets(exercise);
+  const timed = exercise.repUnit === "seconds";
+  return (
+    <Card padded={false}>
+      <div className="flex items-center gap-3 p-3">
+        <ExerciseThumb exerciseId={exercise.exerciseId} size="sm" />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold text-foreground text-balance">
+            {exercise.exerciseName}
+          </h3>
+          <p className="text-sm text-muted-foreground font-mono tabular-nums">
+            {sets.length} {sets.length === 1 ? "set" : "sets"}
+          </p>
+        </div>
+      </div>
+      {sets.length > 0 && (
+        <ol className="border-t border-border/40">
+          {sets.map((set, i) => {
+            const type = asSetType(set.type);
+            const result = setResult(set, timed);
+            const kind =
+              type === "dropset" || type === "failure"
+                ? `, ${SET_TYPE_COPY[type].name.toLowerCase()}`
+                : "";
+            return (
+              <li
+                key={i}
+                className="flex items-center gap-3 border-b border-border/40 px-3 py-1.5 last:border-b-0"
+              >
+                <SetTypeChip type={type} label={setBadge(sets, i)} />
+                <span
+                  aria-hidden="true"
+                  className="text-base font-semibold font-mono tabular-nums text-foreground"
+                >
+                  {result.shown}
+                </span>
+                <span className="sr-only">
+                  {`${setName(sets, i)}${kind}: ${result.spoken}`}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+      {/* The note the lifter typed during the session. This is the point
+          of keeping it: "Level 8, 6.0 incline" is the machine setting they
+          want back next time, and until now it was discarded on Finish.
+          Absent on every session logged before notes were persisted, so
+          the row simply does not render rather than showing an empty
+          label. */}
+      {exercise.notes && (
+        <p className="border-t border-border/40 px-3 py-2 text-sm text-muted-foreground">
+          {exercise.notes}
+        </p>
+      )}
+    </Card>
+  );
 }
 
 export default function WorkoutDetail() {
@@ -143,6 +218,21 @@ function WorkoutDetailContent() {
   const tonnage = workoutTonnageKg(workout);
   const exercises = workout.exercises ?? [];
   const totalSets = exercises.reduce((n, ex) => n + workingSets(ex).length, 0);
+  // Holds count toward neither weight nor reps: their `reps` are seconds.
+  const totalReps = exercises.reduce(
+    (n, ex) =>
+      ex.repUnit === "seconds"
+        ? n
+        : n + workingSets(ex).reduce((t, set) => t + (set.reps || 0), 0),
+    0
+  );
+  /* The finish screen's three figures, written by the same rule
+     (`liftFigures`), so the page you come back to says what it said. */
+  const figures = [
+    durationFigure(workout.durationMinutes ?? 0),
+    workFigure(tonnage, totalReps),
+    setsFigure(totalSets),
+  ];
 
   const title = workoutTitle(workout);
 
@@ -169,45 +259,41 @@ function WorkoutDetailContent() {
           onClick={() => navigate(-1)}
         />
 
-        {/* Header — mirrors RunDetail: identity + date left, share right. */}
+        {/* Header (DS3), as RunDetail's: the sport, the session's name,
+            when. Share makes the picture card. */}
         <div>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">
-                Lift
-              </p>
-              <h1 className="text-xl font-extrabold text-foreground truncate">
+              <p className="text-sm font-bold text-lifting-strong">Lift</p>
+              <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words">
                 {title}
               </h1>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setCardOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-primary/8 text-lifting-strong shrink-0"
+              leftIcon={<Share2 className="size-4" aria-hidden="true" />}
+              className="shrink-0"
             >
-              <Share2 className="size-3.5" />
               Share
-            </button>
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{dateStr}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
 
-        {/* Primary stats */}
-        <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
-          <StatPill value={`${workout.durationMinutes ?? 0}`} label="Minutes" />
-          <StatPill
-            value={formatVolume(tonnage).value}
-            label="kg Volume"
-            color={THEME.lifting}
-          />
-          <StatPill value={`${totalSets}`} label="Sets" />
+        <div className="grid grid-cols-3 divide-x divide-border">
+          {figures.map((figure) => (
+            <StatFigure
+              key={figure.unit}
+              value={figure.format(figure.to)}
+              unit={figure.unit}
+            />
+          ))}
         </div>
 
-        {/* Exercise breakdown — the thing no other surface shows. */}
-        <div className="space-y-2">
-          <p className="text-caption uppercase tracking-widest text-muted-foreground px-1">
-            Exercises
-          </p>
+        {/* The session's sets — the thing no other surface shows. */}
+        <section aria-labelledby="workout-exercises" className="space-y-2">
+          <SectionHeading id="workout-exercises">Exercises</SectionHeading>
           {exercises.length === 0 ? (
             <EmptyState
               compact
@@ -216,52 +302,11 @@ function WorkoutDetailContent() {
               sub="This session was saved without any logged sets."
             />
           ) : (
-            exercises.map((ex, i) => {
-              const sets = workingSets(ex);
-              return (
-                <div
-                  key={`${ex.exerciseId}-${i}`}
-                  className="rounded-xl bg-card card-shadow p-3 space-y-2"
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-foreground min-w-0 truncate">
-                      {ex.exerciseName}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                      {sets.length} {sets.length === 1 ? "set" : "sets"}
-                    </p>
-                  </div>
-                  {sets.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {sets.map((s, si) => (
-                        <span
-                          key={si}
-                          className="px-2 py-1 rounded-lg bg-muted text-xs font-mono tabular-nums text-foreground"
-                        >
-                          {ex.repUnit === "seconds"
-                            ? `${s.reps}s`
-                            : `${s.reps}×`}
-                          {s.weightKg > 0 ? ` ${s.weightKg} kg` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {/* The note the lifter typed during the session. This is
-                      the point of keeping it: "Level 8, 6.0 incline" is the
-                      machine setting they want back next time, and until now
-                      it was discarded on Finish. Absent on every session
-                      logged before notes were persisted, so the row simply
-                      does not render rather than showing an empty label. */}
-                  {ex.notes && (
-                    <p className="text-xs text-muted-foreground italic">
-                      {ex.notes}
-                    </p>
-                  )}
-                </div>
-              );
-            })
+            exercises.map((ex, i) => (
+              <ExerciseRecord key={`${ex.exerciseId}-${i}`} exercise={ex} />
+            ))
           )}
-        </div>
+        </section>
 
         {/* Secondary share destinations. The image card is the header
             action (it's the one that leaves the app); these two publish

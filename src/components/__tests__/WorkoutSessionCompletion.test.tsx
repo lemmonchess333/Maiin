@@ -1035,6 +1035,85 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
       ).toBeInTheDocument();
     }
   });
+
+  it("fills a set from last time on a tap, until the set is done", async () => {
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "test",
+            exerciseName: "Test exercise",
+            sets: [
+              { reps: 8, weightKg: 60 },
+              { reps: 6, weightKg: 62.5 },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () => openSession());
+    const weight = screen.getByLabelText("Set 2 weight");
+    const reps = screen.getByLabelText("Set 2 reps");
+    fireEvent.change(weight, { target: { value: "50" } });
+    fireEvent.change(reps, { target: { value: "3" } });
+    expect(weight).toHaveValue(50);
+    const lastTime = () =>
+      screen.getByRole("button", {
+        name: "Last time 62.5 × 6. Use it for set 2",
+      });
+    fireEvent.click(lastTime());
+    expect(weight).toHaveValue(62.5);
+    expect(reps).toHaveValue(6);
+
+    // A done set is the record of what was lifted: last time no longer
+    // writes over it.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[1]
+    );
+    expect(lastTime()).toBeDisabled();
+  });
+
+  it("gives a warm-up no previous figure", async () => {
+    /* Captioned with a working set, every ramp row read "100 × 5" on a
+       100 kg squat, and a tap loaded the top set as the first warm-up. */
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "squat",
+            exerciseName: "Barbell Squat",
+            sets: [
+              { reps: 5, weightKg: 100 },
+              { reps: 5, weightKg: 100 },
+              { reps: 5, weightKg: 100 },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () =>
+      openSession(writer(), vi.fn(), {
+        exerciseId: "squat",
+        name: "Barbell Squat",
+        weight: 100,
+      })
+    );
+    // The working sets carry last time's figure...
+    expect(
+      screen.getByRole("button", {
+        name: "Last time 100 × 5. Use it for set 1",
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Warm-up 1 weight")).toHaveValue(20);
+    // ...and the three warm-ups carry none.
+    expect(
+      screen.queryAllByRole("button", { name: /Use it for warm-up/ })
+    ).toHaveLength(0);
+  });
 });
 
 describe("WorkoutSession — warm-ups are optional", () => {

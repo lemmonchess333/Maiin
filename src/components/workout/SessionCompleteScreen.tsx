@@ -11,6 +11,7 @@ import MiniMuscleFigure, {
 import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
 import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
 import { liftDayLine } from "@/lib/liftDayLabel";
+import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
@@ -76,23 +77,10 @@ export default function SessionCompleteScreen({
   // Deadlift focus". A routine's own name, with no separator, is itself.
   const dayLabel = liftDayLine(dayName);
 
-  const minutes = sessionDurationMinutes;
-  /* Each figure is its number plus how to write it, so the finish can
-     count up to it (DS3) and still write every step as the figure is
-     written: "1:05" once past an hour, grouped thousands for weight. */
-  const clock = (m: number) => {
-    const whole = Math.round(m);
-    return whole >= 60
-      ? `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`
-      : String(whole);
-  };
-  const duration = {
-    to: minutes,
-    format: clock,
-    // "1:00" is an hour and no minutes; under it, "hours" read as one
-    // figure in hours ("1:00 hours").
-    unit: minutes >= 60 ? "hr:min" : minutes === 1 ? "minute" : "minutes",
-  };
+  /* The three figures are written by `liftFigures`, the rule the saved
+     session's page uses too, so the page you come back to says what the
+     finish said. */
+  const duration = durationFigure(sessionDurationMinutes);
 
   /* Timed exercises contribute no tonnage — a hold's `reps` is a
      DURATION, so weight × reps is not a weight moved. Every writer
@@ -117,12 +105,8 @@ export default function SessionCompleteScreen({
     );
   }, 0);
 
-  const grouped = (n: number) => Math.round(n).toLocaleString("en-GB");
-
-  /* A bodyweight session lifts no load the app can weigh, and "0 kg
-     lifted" over a set of pull-ups reads as nothing done. Its reps are
-     the honest measure, so they take the middle number. Holds still
-     count for neither: their `reps` are seconds. */
+  /* A bodyweight session's reps take the middle number (`workFigure`).
+     Holds count for neither: their `reps` are seconds. */
   const totalReps = setLogs.reduce((sum, logs, exIdx) => {
     if (exercises[exIdx]?.repUnit === "seconds") return sum;
     return (
@@ -132,14 +116,7 @@ export default function SessionCompleteScreen({
         .reduce((t, s) => t + s.reps, 0)
     );
   }, 0);
-  const work =
-    totalVolume > 0 || totalReps === 0
-      ? { to: totalVolume, format: grouped, unit: "kg lifted" }
-      : {
-          to: totalReps,
-          format: grouped,
-          unit: totalReps === 1 ? "rep" : "reps",
-        };
+  const work = workFigure(totalVolume, totalReps);
 
   // WORKING sets only. This was the one header stat that did not exclude
   // warm-ups, so it counted the auto-generated ramp that VOLUME and the
@@ -149,6 +126,7 @@ export default function SessionCompleteScreen({
   const totalSetsCompleted = setLogs
     .flat()
     .filter((s) => s.completed && s.type !== "warmup").length;
+  const sets = setsFigure(totalSetsCompleted);
 
   /* New bests (DS3: gold means a personal best and nothing else). A
      "best" beat the exercise's previous best; a "bucket-first" is the
@@ -261,11 +239,7 @@ export default function SessionCompleteScreen({
         >
           <StatFigure size="lg" count={duration} unit={duration.unit} />
           <StatFigure size="lg" count={work} unit={work.unit} />
-          <StatFigure
-            size="lg"
-            count={{ to: totalSetsCompleted, format: grouped }}
-            unit={totalSetsCompleted === 1 ? "set" : "sets"}
-          />
+          <StatFigure size="lg" count={sets} unit={sets.unit} />
         </motion.div>
 
         {bests.length > 0 && (
