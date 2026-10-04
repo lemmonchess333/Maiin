@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "zercher-squat": placard(
+    "zercher-squat",
+    ["Quadriceps"],
+    ["Glutes", "Abs", "Upper back"],
+    [
+      [0, "Setup", "Cradle the bar in your elbow creases."],
+      [0.5, "Lower", "Brace firmly; bend your hips and knees."],
+      [1, "Depth", "Keep elbows inside knees; chest stays tall."],
+      [0.5, "Drive", "Push through your feet without rolling forward."],
+      [0, "Stand", "Stand tall; keep the bar close."],
+      [0, "Reset", "Brace again before the next controlled squat."],
+    ]
+  ),
   "landmine-squat": placard(
     "landmine-squat",
     ["Quadriceps"],

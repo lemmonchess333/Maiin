@@ -697,6 +697,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "621f3efee49e900e99a31fb5d3a9c4d8ab08f93bb4479d00c03427781f41b9d7",
     sha256: "03ed2e2e5e8ae6f8e6a938dc9750488fce7c42ad810cabeebf2dcdf44553ec65",
   },
+  "zercher-squat": {
+    src: "form-art/zercher-squat.webp",
+    width: 320,
+    height: 480,
+    keyed: true,
+    source: "form-frames/zercher-squat/1.webp",
+    sourceSha256:
+      "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a",
+    sha256: "c014a7aef09db96557f0d5cefdf6e5c9ba268d0f7295214e1e0d40dcf97bfa25",
+  },
   "zottman-curl": {
     src: "form-art/zottman-curl.webp",
     width: 220,

@@ -432,6 +432,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "zercher-squat": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1024,
+    height: 1536,
+    reference: 1,
+  },
   "zottman-curl": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

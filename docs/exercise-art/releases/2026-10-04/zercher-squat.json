@@ -1,0 +1,170 @@
+{
+  "exerciseId": "zercher-squat",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T16:03:27.419Z",
+  "reference": {
+    "path": "form-frames/zercher-squat/1.webp",
+    "sha256": "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a"
+  },
+  "cueSha256": "ef31168819d813983de57f617c5c5cf76c9f30a37eabc14f2e360040d1a4824a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Same canonical bald faceless white-grey anatomical athlete, white trainers and smooth neutral pelvis in all frames. Master and canonical supplied to every edit."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed1024x1536 oblique-front scene with no crop or rescale. Native head and torso scale, bar width and both foot positions inspected across three distinct poses."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Upright braced standing setup, early descent, deep squat below parallel, drive and standing reset. Both knees bend and track with the feet, elbows stay inside knees and ankles connect naturally to planted trainers. Final ankle joins repaired with imagegen and inspected at native resolution."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Straight horizontal bar with one modest matching plate per side. Bar rests in both elbow creases; folded forearms and clasped hands are above shaft. Same bar and plate dimensions through vertical travel; no front rack or hand grip substituted."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Actual bright shoe edges and sole bottoms measured from pixels. Left width223px throughout and sole1408or1409; rightwidth186or187 and sole1476 throughout. Both contacts within1px and dimensions within1percent. ROI tops are clipped and not used as dimensions; measured widths and sole bottoms are not clipped."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar stays cradled against torso and moves down/up with the athlete. Heels planted and body controlled; no forward bar rolling, plate changes or equipment detachment."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quadriceps strong purple, glutes abdomen and upperback pale lilac following catalogue rig. Other anatomy white-grey; qualitative muscle emphasis."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues cover elbow cradle, bracing and lowering, knees/elbows and tall chest at depth, drive without forward roll, standing and reset. Each cue at most seven words and matches its pose."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Standing, early descent, deep squat, corresponding ascent, standing and reset. Identical valid return poses reuse source pixels. All six and6to1 reviewed manually in actual sequential player."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six final PNGs and6to1 loop inspected in actual ExerciseFormFrames at390x844 light mode on4October2026. Full athlete, bar ends, elbow cradle and both shoes visible, captions/cues readable. Lossless WebP pixels equal reviewed PNGs."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 dark mode on4October2026. Equipment and anatomy remain legible; no clipping or blank frame."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/zercher-squat/1.webp",
+      "sha256": "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    },
+    {
+      "path": "form-frames/zercher-squat/2.webp",
+      "sha256": "c2307ca5c7e2fe3c97eceb7c5aa37915779e7bb4c156a9a264718314b233158c",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "path": "form-frames/zercher-squat/3.webp",
+      "sha256": "a01fa5cbf134262a39058ca4424d3c1128b94d3104285336d0e579ce8b6e6220",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1409
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "path": "form-frames/zercher-squat/4.webp",
+      "sha256": "c2307ca5c7e2fe3c97eceb7c5aa37915779e7bb4c156a9a264718314b233158c",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "path": "form-frames/zercher-squat/5.webp",
+      "sha256": "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    },
+    {
+      "path": "form-frames/zercher-squat/6.webp",
+      "sha256": "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a",
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    }
+  ]
+}

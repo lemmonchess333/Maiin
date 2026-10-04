@@ -1,0 +1,150 @@
+{
+  "generator": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "selected": [
+    {
+      "file": "1-master.png",
+      "sha256": "2685888f573ad427ec5d69756143a8004b3c22e81b2bb413245df4d9a39e7e0d"
+    },
+    {
+      "file": "2-half-candidate.png",
+      "sha256": "f38f4d120f3782603d0b432ad20272aab96e40ca48cd0bbb8f3ef191ed759baf"
+    },
+    {
+      "file": "3-depth-clean.png",
+      "sha256": "890aecc93ee194d0f96254b248dc9ae43db3677c88570fa817de1d239691929a"
+    }
+  ],
+  "generationIds": [
+    "a2c8a072-3e0f-4a7f-b0a8-17ced0301ec2",
+    "3c609c6d-9c4a-48e7-a26d-2afb1c3b6dbc",
+    "68cece87-54fa-458e-917d-97aaa80e4cc5"
+  ],
+  "frameOrder": [
+    "1-master.png",
+    "2-half-candidate.png",
+    "3-depth-clean.png",
+    "2-half-candidate.png",
+    "1-master.png",
+    "1-master.png"
+  ],
+  "depthHistory": "Depthfc9afe64 from accepted half pose had4px left sole drift. Previously authorized stationary-shoe master copies corrected contacts but introduced ankle seams. Imagegen68cece87 repaired joins using master+canonical. Final entire imagegen output is used with no subsequent code patch. Earlier drifting depth candidates rejected.",
+  "contactRepair": {
+    "authorization": "Previously authorized stationary-contact/master-copy repairs; no moving anatomy transforms.",
+    "source": "1-master.png",
+    "target": "3-depth-from-half.png",
+    "regions": [
+      {
+        "left": 250,
+        "top": 1278,
+        "width": 250,
+        "height": 150
+      },
+      {
+        "left": 500,
+        "top": 1328,
+        "width": 215,
+        "height": 174
+      }
+    ]
+  },
+  "measurements": [
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    },
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1409
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 186
+      }
+    },
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    },
+    {
+      "anchors": {
+        "leftSole": {
+          "x": 272,
+          "y": 1408
+        },
+        "rightSole": {
+          "x": 505,
+          "y": 1476
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 223,
+        "rightShoeWidth": 187
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}
