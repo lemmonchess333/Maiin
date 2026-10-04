@@ -215,6 +215,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 1,
   },
+  "farmers-carry": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 768,
+    height: 1600,
+    reference: 1,
+  },
   "front-raise": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

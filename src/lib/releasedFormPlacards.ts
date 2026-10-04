@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "farmers-carry": placard(
+    "farmers-carry",
+    ["Forearms"],
+    ["Trapezius", "Abs", "Quadriceps"],
+    [
+      [0, "Lead step", "Take short steps; keep weights steady."],
+      [0.2, "Support", "Stand tall over your supporting foot."],
+      [0.4, "Opposite step", "Step through without swinging the weights."],
+      [0.6, "Transfer", "Keep shoulders packed and core braced."],
+      [0.8, "Next step", "Bring the other foot through smoothly."],
+      [0, "Continue", "Continue walking with short controlled steps."],
+    ]
+  ),
   thrusters: placard(
     "thrusters",
     ["Quadriceps", "Front deltoids"],

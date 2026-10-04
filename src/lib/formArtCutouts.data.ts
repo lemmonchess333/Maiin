@@ -337,6 +337,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "4812ee408e88da86a1fda7f80b03f0acd1c709d8ab6e49e4a43fa80878dca6e2",
     sha256: "39bd1d274b1c767d188867b23e4dfe77004783b58c7ea524fe16417780d15ffe",
   },
+  "farmers-carry": {
+    src: "form-art/farmers-carry.webp",
+    width: 204,
+    height: 480,
+    keyed: true,
+    source: "form-frames/farmers-carry/1.webp",
+    sourceSha256:
+      "ce1331be36dbb8adfd355acc8ce61136280aaed1c6c1b6e17d137f878118b89b",
+    sha256: "d005b01e2d6c7973c12849f428d9f6f7e7ed2f5ad6026b3bbc454116274daaf4",
+  },
   "front-raise": {
     src: "form-art/front-raise.webp",
     width: 181,
