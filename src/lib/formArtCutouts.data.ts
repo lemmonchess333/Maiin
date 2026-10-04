@@ -587,6 +587,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b5e8eb9e7c552413d557c53f61aa9948f8674ae1debdcf987f5aeaa696b7fcfa",
     sha256: "2a48e80837ebeba858632f2d37fddd055ddd891888dedf6105b2c2bfe9c5930a",
   },
+  "sled-push-pull": {
+    src: "form-art/sled-push-pull.webp",
+    width: 480,
+    height: 222,
+    keyed: true,
+    source: "form-frames/sled-push-pull/1.webp",
+    sourceSha256:
+      "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e",
+    sha256: "4ebfc8afc5e1d59050be42933a2ed5ee152080bb418520a8c9e70cc56506a5c2",
+  },
   "spider-db-curl": {
     src: "form-art/spider-db-curl.webp",
     width: 471,

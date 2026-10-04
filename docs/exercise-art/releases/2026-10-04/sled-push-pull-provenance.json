@@ -1,0 +1,198 @@
+{
+  "generator": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "file": "1-push-grips-candidate.png",
+      "sha256": "308b889bb41a50b53a2d2538ea3efc710d0217af387a8524fcc7fe2a4b135321"
+    },
+    {
+      "file": "2-push-color-candidate.png",
+      "sha256": "de9f34f80dc984f6908efb36ab8bf6e82323b6d2b7bcdc94c72fa4292c1ece2c"
+    },
+    {
+      "file": "3-push-travel-candidate.png",
+      "sha256": "f4ce9ebceaefe41a87ce8f2ca0abe540976c1873c7aca22ddc2406ab145ef985"
+    },
+    {
+      "file": "4-rope-scene-candidate.png",
+      "sha256": "f12556dc53ae11e4856e580f0b2487eaa3279acbc346f01da320bf621aef2ca5"
+    },
+    {
+      "file": "5-rope-draw-candidate.png",
+      "sha256": "0f4632a15e363cb8349daafb7b39f9ccb92db37d5963896bda731ad045dcb6ea"
+    },
+    {
+      "file": "6-rope-travel-candidate.png",
+      "sha256": "71c1c311d459dc94e75b3006cf68e2597c899ac8bd37a9c8c9c22883bdf03011"
+    }
+  ],
+  "generationIds": [
+    "1ba21d60-3ac0-45db-a244-c89e177c5872",
+    "17fe3b39-339c-41e3-85af-6b8d00c35969",
+    "c156282b-3ded-475e-9c15-90685c366fbe",
+    "c768c4b6-6bab-402f-a85d-59ecf1de505d",
+    "ddc91ae1-8a48-405b-9fdd-cfd8f3788d79",
+    "4b45608d-3d13-4c44-a388-b1805664420a"
+  ],
+  "repairs": [
+    {
+      "frame": 1,
+      "source": "1-push-grips-candidate.png",
+      "equipmentBoxes": [],
+      "changedPixels": 0,
+      "changedOutsideEquipment": 0
+    },
+    {
+      "frame": 2,
+      "source": "2-push-color-candidate.png",
+      "equipmentBoxes": [
+        {
+          "left": 1153,
+          "top": 640,
+          "width": 192,
+          "height": 127
+        }
+      ],
+      "changedPixels": 19165,
+      "changedOutsideEquipment": 0
+    },
+    {
+      "frame": 3,
+      "source": "3-push-travel-candidate.png",
+      "equipmentBoxes": [
+        {
+          "left": 1191,
+          "top": 640,
+          "width": 192,
+          "height": 127
+        }
+      ],
+      "changedPixels": 19251,
+      "changedOutsideEquipment": 0
+    },
+    {
+      "frame": 4,
+      "source": "4-rope-scene-candidate.png",
+      "equipmentBoxes": [
+        {
+          "left": 1033,
+          "top": 401,
+          "width": 27,
+          "height": 62
+        },
+        {
+          "left": 1058,
+          "top": 450,
+          "width": 29,
+          "height": 32
+        },
+        {
+          "left": 1110,
+          "top": 640,
+          "width": 192,
+          "height": 127
+        }
+      ],
+      "changedPixels": 16886,
+      "changedOutsideEquipment": 0
+    },
+    {
+      "frame": 5,
+      "source": "5-rope-draw-candidate.png",
+      "equipmentBoxes": [
+        {
+          "left": 960,
+          "top": 401,
+          "width": 27,
+          "height": 62
+        },
+        {
+          "left": 985,
+          "top": 450,
+          "width": 29,
+          "height": 32
+        },
+        {
+          "left": 1035,
+          "top": 640,
+          "width": 192,
+          "height": 127
+        }
+      ],
+      "changedPixels": 19016,
+      "changedOutsideEquipment": 0
+    },
+    {
+      "frame": 6,
+      "source": "6-rope-travel-candidate.png",
+      "equipmentBoxes": [
+        {
+          "left": 912,
+          "top": 401,
+          "width": 27,
+          "height": 62
+        },
+        {
+          "left": 937,
+          "top": 450,
+          "width": 29,
+          "height": 32
+        },
+        {
+          "left": 987,
+          "top": 640,
+          "width": 192,
+          "height": 127
+        }
+      ],
+      "changedPixels": 21936,
+      "changedOutsideEquipment": 0
+    }
+  ],
+  "measurements": [
+    {
+      "frame": 1,
+      "leftFront": 73,
+      "leftBack": 168,
+      "plateSpan": [1121, 1281],
+      "loadingPost": [1187, 1212]
+    },
+    {
+      "frame": 2,
+      "leftFront": 73,
+      "leftBack": 168,
+      "plateSpan": [1164, 1324],
+      "loadingPost": [1230, 1255]
+    },
+    {
+      "frame": 3,
+      "leftFront": 73,
+      "leftBack": 168,
+      "plateSpan": [1202, 1362],
+      "loadingPost": [1268, 1293]
+    },
+    {
+      "frame": 4,
+      "leftFront": 73,
+      "leftBack": 168,
+      "plateSpan": [1121, 1281],
+      "loadingPost": [1187, 1212]
+    },
+    {
+      "frame": 5,
+      "leftFront": 74,
+      "leftBack": 167,
+      "plateSpan": [1046, 1206],
+      "loadingPost": [1112, 1137]
+    },
+    {
+      "frame": 6,
+      "leftFront": 73,
+      "leftBack": 168,
+      "plateSpan": [998, 1158],
+      "loadingPost": [1064, 1089]
+    }
+  ],
+  "losslessPixelsVerified": true
+}

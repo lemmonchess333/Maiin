@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "sled-push-pull": placard(
+    "sled-push-pull",
+    ["Quadriceps", "Glutes"],
+    ["Calves", "Abs"],
+    [
+      [0, "Push setup", "Grip low handles; lean forward and brace."],
+      [0.2, "Drive", "Push through your feet with short strides."],
+      [0.4, "Alternate", "Drive the other leg; keep arms long."],
+      [0.6, "Rope setup", "Switch to rope; brace with soft knees."],
+      [0.8, "Pull", "Pull hand over hand toward your ribs."],
+      [0, "Alternate/reset", "Alternate hands; reset before pushing again."],
+    ]
+  ),
   "farmers-carry": placard(
     "farmers-carry",
     ["Forearms"],

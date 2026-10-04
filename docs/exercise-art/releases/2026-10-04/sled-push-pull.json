@@ -1,0 +1,170 @@
+{
+  "exerciseId": "sled-push-pull",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T15:16:40.860Z",
+  "reference": {
+    "path": "form-frames/sled-push-pull/1.webp",
+    "sha256": "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e"
+  },
+  "cueSha256": "c928982fadb62873056628fb8ce51cc2b5be46fef8c7da9842b457463568f585",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Same canonical bald faceless white-grey mannequin and white trainers across six individually generated poses; smooth neutral pelvis. Frozen push and rope setup sources retain scale and identity."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique side view, athlete left and sled right, common 1536x1024 viewport without crop or resize. Two actual left mat-edge anchors remain within one pixel; right mat corners have small generation drift and are not claimed invariant."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native inspection traced both legs through alternating short push strides and both arms through setup and opposite hand rope draws. Neutral spine, soft knees in pulling stance, two visible grips; no mirrored or code-warped moving anatomy."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same two-runner sled, two handles and one modest plate. Rope-phase handle lengths restored from each source cap/shaft. Exact master plate/loading post copied at measured sled translations. Equipment-only repair boxes contain every changed pixel; no anatomy changes. Measured plate contour 161px and loading post 26px in every frame."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both push hands visibly contact separate handles; each rope draw grips a continuous taut rope from low attachment, with slack behind hands. Static physical mat left edges supply world anchors within one pixel. Moving sled and walking feet are not falsely treated as stationary contacts."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Sled moves right through push frames with alternating support, then left through rope pulls. Plate/post translations relative to first frame:0,43,81,0,-75,-123px. Explicit setup switch between modes; rope slack accumulates behind hands and stays away from shoes. Pulling feet remain grounded."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple quadriceps/glutes and pale lilac calves/abs throughout, with subtle forearm/upper-back contribution. Same qualitative model hierarchy, no numerical activation claim."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six exact cues visually reviewed with matching frames, each at most seven words. Setup, alternating push, rope setup, hand draw and alternate/reset explicitly distinguished."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final repaired PNGs and 6-to-1 loop manually stepped in actual ExerciseFormFrames. Frames3-to4 switch exercise mode; frame6 cue explicitly instructs reset before pushing again. No claim of uninterrupted movement across those transitions."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six final repaired frames and closing loop inspected in actual player at390x844 in light mode on4October2026. Full athlete, sled, shoes and rope fit; cue and phase labels legible. Lossless WebP pixels equal reviewed PNGs."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six final repaired frames and closing loop inspected in actual player at390x844 in dark mode on4October2026, after final plate repair. Alternating limbs, rope path and full equipment visible."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/sled-push-pull/1.webp",
+      "sha256": "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e",
+      "anchors": {
+        "matLeftFront": {
+          "x": 73,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 168,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    },
+    {
+      "path": "form-frames/sled-push-pull/2.webp",
+      "sha256": "514d7841370eec29341fc7bb51bcce8c637bb07eca17c400137d005834f9da1e",
+      "anchors": {
+        "matLeftFront": {
+          "x": 73,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 168,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    },
+    {
+      "path": "form-frames/sled-push-pull/3.webp",
+      "sha256": "ffb85c071460c09624d8811841da4c2fed007a0a804bb29e9bead3e596907241",
+      "anchors": {
+        "matLeftFront": {
+          "x": 73,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 168,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    },
+    {
+      "path": "form-frames/sled-push-pull/4.webp",
+      "sha256": "0565aaaf0d58cd5e7e3ad262a0a5ad64ce74f379e8e50e4035df31d264856341",
+      "anchors": {
+        "matLeftFront": {
+          "x": 73,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 168,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    },
+    {
+      "path": "form-frames/sled-push-pull/5.webp",
+      "sha256": "1099e1049ec00b7f37679bb52141f416194b61ec8c33bf397d835130a071dc19",
+      "anchors": {
+        "matLeftFront": {
+          "x": 74,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 167,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    },
+    {
+      "path": "form-frames/sled-push-pull/6.webp",
+      "sha256": "a861195845ebd7251df792a40f235816119ceb37d68ac9079cc3176e610f79c3",
+      "anchors": {
+        "matLeftFront": {
+          "x": 73,
+          "y": 854
+        },
+        "matLeftBack": {
+          "x": 168,
+          "y": 734
+        }
+      },
+      "invariantDimensions": {
+        "weightPlateContourWidth": 161,
+        "loadingPostWidth": 26
+      }
+    }
+  ]
+}
