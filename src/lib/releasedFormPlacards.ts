@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "incline-db-press": placard(
+    "incline-db-press",
+    ["Upper Chest"],
+    ["Front Delts", "Triceps"],
+    [
+      [0, "Stretch", "Keep your shoulder blades set."],
+      [0.3333333333333333, "Begin Press", "Press upward with straight wrists."],
+      [0.6666666666666666, "Continue", "Bring the weights slightly inward."],
+      [1, "Top", "Finish over your upper chest."],
+      [0.6666666666666666, "Lower", "Lower both weights under control."],
+      [0.3333333333333333, "Return", "Return slowly to your upper chest."],
+    ]
+  ),
   "incline-treadmill-walk": placard(
     "incline-treadmill-walk",
     ["Glutes", "Calves"],
