@@ -83,11 +83,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
-import {
-  splitLabel,
-  primaryGoalLabel,
-  isCycleEndWeek,
-} from "@/features/program/programEngine";
+import { splitLabel, isCycleEndWeek } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
@@ -805,37 +801,35 @@ function ProgramInner() {
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
   };
 
-  // W1b legibility line: "Built for [lifting goal] · [split] · [N] days/week"
+  // W1b legibility line: "[split] · [N] days/week", from persisted
+  // programState fields (splitType + actual workout count).
   //
   // Pre-W1a the Program-page subtitle hardcoded a binary split check
   // (`ppl` vs "Upper / Lower") — so full_body, bro_split, ppl_x2, and
-  // fat-loss-circuit users all saw the wrong label. This helper replaces
-  // it with a full legibility line built from persisted programState
-  // fields (primaryGoal + splitType + actual workout count).
+  // fat-loss-circuit users all saw the wrong label.
   //
   // Edge handling:
-  //   - Run-only athletes (workouts.length === 0): skip the split and
-  //     days clause — "Built for Running Support" alone is the truth.
-  //   - Legacy docs without primaryGoal: `primaryGoalLabel(undefined)`
-  //     falls back to "General Fitness" so the line still renders.
+  //   - Run-only athletes (workouts.length === 0): no split or days, so
+  //     the line names the focus and says there are no lift days.
+  //   - Legacy docs without primaryGoal read as the general focus, which
+  //     is what the engine built for them (`goalProfileFor(undefined)`).
   //   - Day count uses workouts.length (actual) rather than
   //     profile.daysPerWeek (requested) — reflects what the engine
   //     produced after the W1a 7-day cap.
   const programHeaderLine = (() => {
     if (!programState) return "";
-    const goalText = primaryGoalLabel(programState.primaryGoal);
     const dayCount = programState.workouts.length;
     // Run-only: no lift days means no week row beneath, so this is the
-    // only line that says why the tab is empty. The goal stays here.
-    if (dayCount === 0) return `Built for ${goalText}`;
+    // only line that says why the tab is empty. The focus stays here, in
+    // Settings' words, as everywhere else on Train.
+    if (dayCount === 0)
+      return `${focusLabel(programState.primaryGoal ?? "general")} · no lift days`;
     const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
-    // The GOAL is deliberately absent from this branch. The week row
-    // states it on every render — as `focusLabel` while a block runs
-    // ("Build muscle") and as `primaryGoalLabel` otherwise
-    // ("Hypertrophy"). Carrying it here as well meant the page named one
-    // field twice, and with a block running it named it twice in two
-    // different vocabularies, which reads as two settings that disagree.
-    // Split and day count are stated in words nowhere else, so they stay.
+    // The focus is deliberately absent from this branch. The week row
+    // states it on every render, in Settings' words (`focusLabel`), with
+    // or without a block running. Carrying it here as well named one
+    // field twice. Split and day count are stated in words nowhere else,
+    // so they stay.
     return `${splitLabel(programState.splitType)} · ${daysLabel}`;
   })();
 

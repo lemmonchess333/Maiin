@@ -328,6 +328,47 @@ describe("parseFoodText — conjunctions", () => {
     );
     expect(names).toEqual(["Eggs (x2)", "Toast", "Banana"]);
   });
+
+  it('"on" joins two foods: beans on toast is beans and toast', () => {
+    /* The longest name alone won, so this was a slice of toast. */
+    expect(parseFoodText("beans on toast").map((r) => r.name)).toEqual([
+      "Beans",
+      "Toast",
+    ]);
+    expect(parseFoodText("2 eggs on toast").map((r) => r.name)).toEqual([
+      "Eggs (x2)",
+      "Toast",
+    ]);
+  });
+
+  it('"on" before something that is not a food leaves the phrase whole', () => {
+    expect(parseFoodText("chicken on the bone")).toEqual([
+      { ...parseFoodText("chicken")[0], name: "Chicken on the bone" },
+    ]);
+  });
+
+  it("a flavour of crisps is one bag, however the and is written", () => {
+    for (const bag of [
+      "salt and vinegar crisps",
+      "cheese and onion crisps",
+      "sour cream and onion crisps",
+      "salt & vinegar crisps",
+      "cheese & onion crisps",
+    ]) {
+      const rows = parseFoodText(bag);
+      expect(rows, bag).toHaveLength(1);
+      expect(rows[0].calories, bag).toBe(parseFoodText("crisps")[0].calories);
+    }
+    expect(parseFoodText("2 bags of cheese and onion crisps")[0].calories).toBe(
+      2 * parseFoodText("crisps")[0].calories
+    );
+  });
+
+  it('"&" names a dish as "and" does', () => {
+    expect(parseFoodText("fish & chips")).toEqual([
+      { ...parseFoodText("fish and chips")[0], name: "Fish & chips" },
+    ]);
+  });
 });
 
 describe("built-in servings lead with grams or ml", () => {
@@ -410,5 +451,252 @@ describe("a typed food with no amount logs a portion someone eats", () => {
   it("logs a typed dinner at the size of the plate", () => {
     expect(total("salmon, potatoes, broccoli")).toBe(497);
     expect(total("chicken breast, rice")).toBe(448);
+  });
+});
+
+describe("chips are chips, crisps are crisps", () => {
+  /* The app speaks British English. "Chips" logged a 28 g bag of crisps,
+     so "steak and chips" came to 152 kcal for the side. */
+  it("logs chips as the fries they are", () => {
+    expect(parseFoodText("chips")[0].calories).toBe(
+      parseFoodText("fries")[0].calories
+    );
+    expect(parseFoodText("chips")[0].calories).toBe(365);
+  });
+
+  it("logs the chips in steak and chips", () => {
+    const rows = parseFoodText("steak and chips");
+    expect(rows.map((r) => r.name)).toEqual(["Steak", "Chips"]);
+    expect(rows[1].calories).toBe(365);
+  });
+
+  it("keeps fish and chips as one dish", () => {
+    const rows = parseFoodText("fish and chips");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].calories).toBe(595);
+  });
+
+  it.each(["crisps", "potato chips"])("logs %s as the snack", (food) => {
+    expect(parseFoodText(food)[0].calories).toBe(152);
+  });
+
+  it("logs tortilla chips as tortilla chips, not a tortilla", () => {
+    /* The longest name in the text wins, and "tortilla" is longer than
+       "chips", so this logged a wrap. */
+    expect(parseFoodText("tortilla chips")[0].name).toBe("Tortilla chips");
+    expect(parseFoodText("tortilla chips")[0].calories).toBe(140);
+  });
+
+  it("logs potato chips as crisps, not a potato", () => {
+    expect(parseFoodText("potato chips")[0].name).toBe("Potato chips");
+  });
+
+  it("merges chips typed beside fries into one row, as one food", () => {
+    expect(parseFoodText("chips, fries")).toHaveLength(1);
+    expect(parseFoodText("crisps, potato chips")).toHaveLength(1);
+  });
+});
+
+describe("a typo never turns one food into another", () => {
+  /* A correction that lands on a different food logs the wrong thing with
+     no warning, where a food the table does not know is flagged as
+     unknown. Each word here is a real food or drink a letter or two from
+     a row, and each was logged as that row: cider as liver, toffee as
+     coffee, a pasty as pasta, 6 wings as 6 glasses of wine. None has a
+     row of its own; give one a row and it leaves this list. */
+  it.each([
+    ["cider", "liver"],
+    ["quiche", "juice"],
+    ["gammon", "salmon"],
+    ["pasty", "pasta"],
+    ["pasties", "pasta"],
+    ["kippers", "pepper"],
+    ["bangers", "burger"],
+    ["hake", "cake"],
+    ["toffee", "coffee"],
+    ["roast", "toast"],
+    ["chops", "chips"],
+    ["port", "pork"],
+    ["sherry", "cherry"],
+    ["bitter", "butter"],
+    ["batter", "butter"],
+    ["soba", "soda"],
+    ["beet", "beef"],
+    ["wings", "wine"],
+    ["leek", "beef"],
+    ["lemon", "melon"],
+    ["salsa", "salad"],
+    ["pesto", "pasta"],
+    ["stew", "steak"],
+    ["cola", "corn"],
+    ["ale", "kale"],
+    ["gin", "wine"],
+    ["cob", "cod"],
+    ["bun", "tuna"],
+  ])("%s is not %s", (word) => {
+    expect(parseFoodText(word)[0].unrecognized).toBe(true);
+  });
+
+  it.each([
+    ["chciken", "chicken"],
+    ["chiken", "chicken"],
+    ["rcie", "rice"],
+    ["tuan", "tuna"],
+    ["mlik", "milk"],
+    ["cofee", "coffee"],
+    ["salmom", "salmon"],
+    ["bananna", "banana"],
+    ["avacado", "avocado"],
+    ["brocolli", "broccoli"],
+  ])("%s is still %s", (typo, food) => {
+    const [typed] = parseFoodText(typo);
+    const [meant] = parseFoodText(food);
+    expect(typed.unrecognized).toBeUndefined();
+    expect(typed).toMatchObject({
+      calories: meant.calories,
+      protein: meant.protein,
+      carbs: meant.carbs,
+      fat: meant.fat,
+    });
+  });
+});
+
+describe("foods that were logged as their neighbours", () => {
+  /* Each of these matched a different row: Coke the cake row, a spring
+     onion a whole onion, garlic bread a clove of garlic, a mince pie
+     150 g of mince. */
+  it.each([
+    ["coke", 139],
+    ["diet coke", 1],
+    ["spring onion", 5],
+    ["garlic bread", 204],
+    ["mince pie", 224],
+    ["jam", 56],
+    ["sugar", 16],
+    ["mash", 226],
+    ["mashed potato", 226],
+  ])("%s logs %i kcal", (food, kcal) => {
+    expect(parseFoodText(food)[0].calories).toBe(kcal);
+  });
+
+  it("counts mince pies as pies", () => {
+    /* "pies" lost its e as well as its s, which left "mince". */
+    expect(parseFoodText("2 mince pies")[0].calories).toBe(2 * 224);
+    expect(parseFoodText("2 pies")[0].calories).toBe(
+      2 * parseFoodText("pie")[0].calories
+    );
+  });
+
+  it("logs lager as the beer it is, and merges the two", () => {
+    expect(parseFoodText("lager")).toEqual([
+      { ...parseFoodText("beer")[0], name: "Lager" },
+    ]);
+    expect(parseFoodText("beer, lager")).toHaveLength(1);
+  });
+
+  it("reads the American omelet and the British houmous", () => {
+    expect(parseFoodText("omelet")[0].calories).toBe(
+      parseFoodText("omelette")[0].calories
+    );
+    expect(parseFoodText("houmous")[0].calories).toBe(
+      parseFoodText("hummus")[0].calories
+    );
+  });
+});
+
+describe("milk in tea or coffee is a splash", () => {
+  /* "Tea with milk" added a 240 ml glass of milk to the cup, 152 kcal for
+     a cup of tea, on a drink logged several times a day. */
+  const splash = (food: string) => {
+    const [glass] = parseFoodText(`240ml ${food}`);
+    return (glass.calories * 30) / 240;
+  };
+
+  it.each(["tea", "coffee", "cup of tea", "espresso"])(
+    "%s with milk adds 30 ml of milk",
+    (drink) => {
+      expect(parseFoodText(`${drink} with milk`)[0].calories).toBe(
+        Math.round(parseFoodText(drink)[0].calories + splash("milk"))
+      );
+    }
+  );
+
+  it("whatever the milk", () => {
+    expect(parseFoodText("tea with oat milk")[0].calories).toBe(
+      Math.round(parseFoodText("tea")[0].calories + splash("oat milk"))
+    );
+  });
+
+  it("and a count is cups of it", () => {
+    expect(parseFoodText("2 cups of tea with milk")[0].calories).toBe(
+      Math.round(2 * (parseFoodText("tea")[0].calories + splash("milk")))
+    );
+  });
+
+  it("only the milk: cream keeps its tablespoon", () => {
+    expect(parseFoodText("coffee with cream")[0].calories).toBe(
+      parseFoodText("coffee")[0].calories + parseFoodText("cream")[0].calories
+    );
+  });
+
+  it("but milk on cereal is still a glass of it", () => {
+    expect(parseFoodText("cereal with milk")[0].calories).toBe(
+      parseFoodText("cereal")[0].calories + parseFoodText("milk")[0].calories
+    );
+  });
+
+  it("and sugar is its own row", () => {
+    expect(parseFoodText("tea with milk and 2 sugars")).toEqual([
+      parseFoodText("tea with milk")[0],
+      parseFoodText("2 sugars")[0],
+    ]);
+  });
+});
+
+describe("a pint is 568 ml", () => {
+  /* A British pint. Read as a count, a pint of beer logged one 355 ml
+     can and a pint of milk one 240 ml glass. */
+  it.each([
+    ["a pint of beer", "beer", 1],
+    ["pint of lager", "lager", 1],
+    ["a pint of milk", "milk", 1],
+    ["2 pints of lager", "lager", 2],
+    ["1.5 pints of beer", "beer", 1.5],
+    ["half a pint of milk", "milk", 0.5],
+    ["half pint of beer", "beer", 0.5],
+  ] as const)("%s", (text, food, pints) => {
+    const [row] = parseFoodText(text);
+    expect(row.calories).toBe(
+      parseFoodText(`${568 * pints}ml ${food}`)[0].calories
+    );
+    expect(row.portionLabel).toBe(
+      pints === 0.5 ? "half a pint" : `${pints} pint${pints === 1 ? "" : "s"}`
+    );
+  });
+
+  it("names the row the way it was ordered", () => {
+    expect(parseFoodText("a pint of lager")[0].name).toBe("1 pint of lager");
+    expect(parseFoodText("2 pints of beer")[0].name).toBe("2 pints of beer");
+    expect(parseFoodText("half a pint of milk")[0].name).toBe(
+      "Half a pint of milk"
+    );
+  });
+
+  it("keeps the pint on a drink it does not know", () => {
+    expect(parseFoodText("a pint of cider")[0]).toMatchObject({
+      name: "1 pint of cider",
+      portionLabel: "1 pint",
+      unrecognized: true,
+    });
+  });
+
+  it("does not read pinto beans as pints", () => {
+    expect(parseFoodText("pinto beans")[0].portionLabel).toBeUndefined();
+  });
+
+  it("and joins a round the way any amount does", () => {
+    expect(
+      parseFoodText("2 pints of beer and a packet of crisps").map((r) => r.name)
+    ).toEqual(["2 pints of beer", "Packet of crisps"]);
   });
 });

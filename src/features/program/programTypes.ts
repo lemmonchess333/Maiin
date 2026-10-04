@@ -744,10 +744,10 @@ export interface ProgramState {
   /**
    * Lifting goal declared at onboarding. Added in W1a so the procedural
    * engine can scale rep ranges to the user's actual request on regen,
-   * and so the Program page UI can surface "Built for [goal] · [split]"
-   * legibility. Optional for backward compatibility with pre-W1a docs —
+   * and so Train can name the focus (its week row, in Settings' words).
+   * Optional for backward compatibility with pre-W1a docs —
    * `normalizeProgramState` backfills from `UserProfile.primaryGoal` at
-   * read time; UI falls back to `"General Fitness"` if still missing.
+   * read time; UI reads a still-missing one as the general focus.
    */
   primaryGoal?: PrimaryGoal;
   /**

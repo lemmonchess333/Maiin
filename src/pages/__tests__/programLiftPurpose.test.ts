@@ -43,3 +43,19 @@ describe("Train's lift tab explains the session", () => {
     );
   });
 });
+
+describe("Train names the focus in Settings' words", () => {
+  it("does not use the engine's own labels anywhere on the page", () => {
+    expect(code).not.toMatch(/primaryGoalLabel/);
+  });
+
+  it("names a run-only plan's focus and says it has no lift days", () => {
+    /* No week row renders without lift days, so the header is the one
+       line that names the focus there, and it uses the same words. */
+    const at = code.indexOf("no lift days");
+    expect(at).toBeGreaterThan(-1);
+    expect(code.slice(Math.max(0, at - 160), at)).toMatch(
+      /focusLabel\(programState\.primaryGoal \?\? "general"\)/
+    );
+  });
+});

@@ -1,7 +1,7 @@
 /**
  * Data-integrity guards on the built-in food table.
  *
- * `nlFoodParser`'s `FOOD_DB` is 201 hand-authored rows of calories, protein,
+ * `nlFoodParser`'s `FOOD_DB` is 218 hand-authored rows of calories, protein,
  * carbs, fat and a serving string. `nlFoodParser.test.ts` covers the PARSER
  * thoroughly — quantities, units, compound "X with Y", fuzzy matching — and
  * nothing at all checks the TABLE. A mistyped macro there is silent: the parse
@@ -93,7 +93,7 @@ const ROWS = readFoodDb();
  * ethanol carries ~7 kcal/g and is not protein, carbohydrate or fat. Nothing
  * else in the table may miss its calories this way.
  */
-const ALCOHOL = new Set(["wine", "beer"]);
+const ALCOHOL = new Set(["wine", "beer", "lager"]);
 
 /**
  * Rows served as a composite item, where a gram weight would be a fiction —
@@ -104,6 +104,7 @@ const ALCOHOL = new Set(["wine", "beer"]);
  */
 const COMPOSITE_SERVINGS = new Set([
   "omelette",
+  "omelet",
   "wrap",
   "sandwich",
   "burger",
@@ -128,7 +129,7 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     /* Guards the regex, not the data. A silently-empty scan would make every
        assertion below vacuously true — the exact shape of tautology this
        codebase keeps finding in its own tests. */
-    expect(ROWS.length).toBe(201);
+    expect(ROWS.length).toBe(218);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
       calories: 248,
@@ -158,10 +159,11 @@ describe("FOOD_DB — macros reconcile with calories", () => {
     ).toEqual([]);
   });
 
-  it("and the alcohol exceptions are exactly the two known ones", () => {
-    /* Stated as an equality so a third under-counting row cannot be waved
-       through as "probably a drink". Both fail Atwater by a lot, which is the
-       ethanol, and both are listed deliberately. */
+  it("and the alcohol exceptions are exactly the known drinks", () => {
+    /* Stated as an equality so another under-counting row cannot be waved
+       through as "probably a drink". Each fails Atwater by a lot, which is
+       the ethanol, and each is listed deliberately; lager is the beer row
+       under the name people order it by. */
     const undercounted = ROWS.filter((r) => {
       const atwater = r.protein * 4 + r.carbs * 4 + r.fat * 9;
       return (
@@ -239,7 +241,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
     // 91% of the table is mass- or volume-scalable.
-    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(183);
+    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(199);
   });
 });
 
@@ -285,7 +287,14 @@ describe("FOOD_DB — a row's numbers are for the serving it names", () => {
     potato: 93, // baked, with skin
     "sweet potato": 86, // raw
     fries: 312, // fast food
-    chips: 536, // potato crisps, salted
+    chips: 312, // UK chips: the fries row
+    crisps: 536, // potato crisps, salted
+    "potato chips": 536, // US for crisps
+    mash: 113, // home-prepared, whole milk and butter
+    "mashed potato": 113,
+    "spring onion": 32, // scallions, raw
+    jam: 278, // jams and preserves
+    sugar: 387, // granulated
     banana: 89,
     apple: 52,
     avocado: 160,
