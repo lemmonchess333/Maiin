@@ -21,7 +21,7 @@ export default function TermsOfService() {
             Terms of Service
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: August 2026
+            Last updated: October 2026
           </p>
         </div>
 
@@ -62,24 +62,34 @@ export default function TermsOfService() {
               4. Subscriptions &amp; Payments
             </h2>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              <li>Tropos offers free and Pro subscription tiers.</li>
               <li>
-                Subscriptions auto-renew at the selected interval (monthly or
-                annually) unless cancelled at least 24 hours before the end of
-                the current billing period.
+                Tropos is free to use. Tropos Pro is an optional paid
+                subscription.
               </li>
               <li>
-                You can manage or cancel your subscription at any time through
-                your device settings or the App Store.
+                Pro is offered as a monthly or a yearly auto-renewing
+                subscription, bought through Apple&apos;s In-App Purchase. The
+                price and billing period are shown before you confirm.
               </li>
               <li>
-                Lifetime purchases are a one-time payment with no recurring
-                charges.
+                Payment is charged to your Apple ID account when you confirm the
+                purchase. Where a free trial is offered, it becomes a paid
+                subscription when it ends unless you cancel before then.
               </li>
               <li>
-                Refunds are handled according to the policies of the platform
-                through which you subscribed (Apple App Store, Google Play, or
-                web).
+                A subscription renews automatically at the end of each billing
+                period unless auto-renew is turned off at least 24 hours before
+                the period ends. Your account is charged for the renewal within
+                the 24 hours before the period ends.
+              </li>
+              <li>
+                You can manage or cancel your subscription at any time in your
+                Apple ID account settings. Cancelling stops the next renewal;
+                Pro stays active until the end of the period you have paid for.
+              </li>
+              <li>
+                Refunds are handled by Apple under its own policies. We cannot
+                cancel or refund App Store purchases on your behalf.
               </li>
             </ul>
           </section>
@@ -120,7 +130,36 @@ export default function TermsOfService() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              7. Health Disclaimer
+              7. Objectionable Content and Abusive Users
+            </h2>
+            <p>
+              Tropos has zero tolerance for objectionable content and abusive
+              users. You may not post anything that other people can see,
+              whether a post, comment, caption, photo or display name, that:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+              <li>harasses, bullies, threatens or abuses anyone</li>
+              <li>is hateful or discriminatory, including slurs</li>
+              <li>is sexually explicit</li>
+              <li>is violent or graphic, or encourages self-harm</li>
+              <li>is spam, a scam or deliberately misleading</li>
+              <li>impersonates another person or organisation</li>
+              <li>is otherwise unlawful or objectionable</li>
+            </ul>
+            <p>
+              Tropos filters objectionable language out of what is posted. You
+              can report a post, comment or profile, and block the person behind
+              it. Reports are reviewed within 24 hours.
+            </p>
+            <p>
+              Content that breaks these rules is removed, and the accounts that
+              post it can be suspended or removed from Tropos without notice.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-semibold text-foreground">
+              8. Health Disclaimer
             </h2>
             <p>
               Tropos is a fitness tracking tool, not a medical device. The App
@@ -133,7 +172,7 @@ export default function TermsOfService() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              8. Limitation of Liability
+              9. Limitation of Liability
             </h2>
             <p>
               To the maximum extent permitted by law, Tropos and its creators
@@ -145,7 +184,7 @@ export default function TermsOfService() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              9. Account Termination
+              10. Account Termination
             </h2>
             <p>
               We may suspend or terminate your account if you violate these
@@ -162,7 +201,7 @@ export default function TermsOfService() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              10. Changes to These Terms
+              11. Changes to These Terms
             </h2>
             <p>
               We may update these Terms from time to time. We will notify you of
@@ -173,7 +212,7 @@ export default function TermsOfService() {
 
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">
-              11. Contact
+              12. Contact
             </h2>
             <p>
               Tropos is operated by{" "}

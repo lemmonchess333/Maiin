@@ -9,6 +9,7 @@ import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
 import { routePaceColor } from "./routePace";
 import { lapMetresFor, type DistanceUnit } from "@/lib/distanceUnits";
+import { addBasemapCredit, basemapStyle } from "@/lib/basemap";
 
 interface RunMapProps {
   points: GPSPoint[];
@@ -44,11 +45,6 @@ interface RunMapProps {
    */
   targetRoute?: GPSPoint[];
 }
-
-const TILE_STYLES = {
-  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-};
 
 export default function RunMap({
   points,
@@ -110,14 +106,25 @@ export default function RunMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
+      style: basemapStyle(darkMode),
       center: initialCenter,
       zoom: 16,
+      // Off here so the credit can be placed: addBasemapCredit adds it.
       attributionControl: false,
       interactive: interactive,
       dragRotate: false,
       pitchWithRotate: false,
     });
+    /* The basemap's credit, in a corner none of the map's users cover.
+       The live run's sheet covers the bottom of its map in every snap, and
+       the top-left holds the GPS indicator; its top-right is clear, the
+       zoom stack sitting at mid-height. Every other map keeps the
+       bottom-left clear: RunDetail's Replay button is bottom-right, and
+       the summary and preview maps have nothing over them. */
+    const removeCredit = addBasemapCredit(
+      map,
+      liveControls ? "top-right" : "bottom-left"
+    );
 
     const onLoad = () => {
       // Target route (the plan you're following) — a faded line drawn FIRST so
@@ -231,6 +238,7 @@ export default function RunMap({
       map.off("dragstart", onUserGesture);
       map.off("zoomstart", onUserGesture);
       map.off("rotatestart", onUserGesture);
+      removeCredit();
       map.remove();
       mapRef.current = null;
       // Null the marker refs too — they pointed at markers the removed map
@@ -542,6 +550,10 @@ export default function RunMap({
   return (
     <div
       ref={containerRef}
+      // Which basemap is drawn, for the credit's dark styling
+      // (components.css). An attribute, not a class: MapLibre adds its
+      // own classes to this element, and React rewrites className.
+      data-map-theme={darkMode ? "dark" : "light"}
       className={`relative w-full ${height} ${className}`}
     >
       {liveControls && (

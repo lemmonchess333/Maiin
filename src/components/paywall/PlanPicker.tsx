@@ -11,7 +11,8 @@ import { weeklyPriceLabel, type PlanId, type ProPlan } from "@/lib/proPlans";
  *
  * Prices come in via `plans` (Apple-localised on the RC build through
  * `useProPlanPrices`), never from here — this component knows nothing
- * about money beyond how to lay it out.
+ * about money beyond how to lay it out. The weekly figure is worked out
+ * from each plan's own price and currency (`weeklyPriceLabel`).
  */
 interface Props {
   plans: ProPlan[];
@@ -36,6 +37,9 @@ export default function PlanPicker({
     >
       {plans.map((plan) => {
         const isSelected = selectedPlan === plan.id;
+        // In the plan's own currency, or nothing: never pounds beside a
+        // dollar price.
+        const weekly = weeklyPriceLabel(plan);
         return (
           <button
             key={plan.id}
@@ -97,9 +101,11 @@ export default function PlanPicker({
               </p>
               {/* Weekly anchoring (Sub3): both plans in the same per-week
                   unit makes the annual saving legible. */}
-              <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                {weeklyPriceLabel(plan.id)}
-              </p>
+              {weekly ? (
+                <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                  {weekly}
+                </p>
+              ) : null}
             </div>
           </button>
         );

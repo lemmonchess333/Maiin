@@ -10,8 +10,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
+import { useState } from "react";
 import ProfileInfoSection from "../ProfileInfoSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { DISPLAY_NAME_LENGTH_MESSAGE } from "@/lib/displayName";
 
 afterEach(() => cleanup());
 
@@ -264,5 +267,83 @@ describe("ProfileInfoSection — weight and height in the chosen units", () => {
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
     expect(inches.value).toBe("9");
+  });
+});
+
+/* The name is public and this field writes the profile directly, so it
+   meets Onboarding's rules here: 2 to 30 characters, and nothing the word
+   filter flags (App Review 1.2). The name lives in the page's state, so
+   the field is rendered with a real one. */
+describe("ProfileInfoSection — the display name", () => {
+  function NameHarness({
+    profile,
+    updateProfile,
+  }: {
+    profile: UserProfile;
+    updateProfile: (p: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  }) {
+    const [name, setName] = useState(profile.displayName ?? "");
+    return (
+      <ProfileInfoSection
+        profile={profile}
+        name={name}
+        setName={setName}
+        updateProfile={updateProfile}
+        inline
+      />
+    );
+  }
+
+  function renderName(profile = makeProfile({ displayName: "Test" })) {
+    const updateProfile = vi.fn(
+      async (_patch: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(<NameHarness profile={profile} updateProfile={updateProfile} />);
+    return { updateProfile, input: screen.getByLabelText("Name") };
+  }
+
+  it("saves a clean name, trimmed", async () => {
+    const { updateProfile, input } = renderName();
+    fireEvent.change(input, { target: { value: "  Sam Kerr  " } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("refuses a name the word filter flags, says why, and saves nothing", async () => {
+    const { updateProfile, input } = renderName();
+    fireEvent.change(input, { target: { value: "shit head" } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      OBJECTIONABLE_NAME_MESSAGE
+    );
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(updateProfile).not.toHaveBeenCalled();
+    // The field keeps what was typed, so it can be corrected.
+    expect((input as HTMLInputElement).value).toBe("shit head");
+  });
+
+  it("refuses a name shorter than two characters", async () => {
+    const { updateProfile, input } = renderName();
+    fireEvent.change(input, { target: { value: "S" } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      DISPLAY_NAME_LENGTH_MESSAGE
+    );
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("drops the message once the name is edited again", async () => {
+    const { input } = renderName();
+    fireEvent.change(input, { target: { value: "shit head" } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "Sam" } });
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

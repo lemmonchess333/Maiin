@@ -13,6 +13,7 @@ import {
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
+import { warmPrivacyZones } from "../hooks/usePrivacyZones";
 import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import { useRunTimer } from "../hooks/useRunTimer";
@@ -211,7 +212,16 @@ export default function Run() {
   // (heartRateSource.ts is inert until the HealthKit plugin lands), so this
   // resolves to bpm:null today and the HR readout stays hidden.
   const hr = useHeartRate({ live: true });
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
+  // The account's privacy zones, from the server, before the run starts
+  // (usually at home, with a signal). A run is saved only with its zones
+  // cut out, and at a finish with no signal the finish screen can't ask
+  // the server, so it uses the list confirmed here (usePrivacyZones).
+  // Best effort: offline it does nothing, and the save asks at the finish.
+  const runnerUid = user?.uid;
+  useEffect(() => {
+    if (runnerUid) void warmPrivacyZones(runnerUid);
+  }, [runnerUid]);
   // Phase B1: programme state drives the Run-setup prefill + context
   // strip + post-save plan reconciliation. The hook is cheap (single
   // getDoc, Firestore caches the warm reads) and runs unconditionally

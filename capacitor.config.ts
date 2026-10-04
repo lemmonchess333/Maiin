@@ -42,11 +42,26 @@ const config: CapacitorConfig = {
       providers: ["google.com", "apple.com"],
     },
   },
-  // Capacitor 8.4+ avoids the App Check Swift package identity collision.
   experimental: {
     ios: {
       spm: {
+        // Package traits need Swift tools 6.1 (Xcode 16.3+); without this
+        // the CLI refuses the traits below.
+        swiftToolsVersion: "6.1",
+        // Capacitor 8.4+ avoids the App Check Swift package identity
+        // collision.
         packageOptions: { "@capacitor-firebase/app-check": { symlink: true } },
+        // Nothing here tracks, so nothing links what tracking needs.
+        // Analytics builds without Google's advertising-ID support, and
+        // Authentication with the Google Sign-In SDK only: the Facebook SDK
+        // it links by default is never used (providers above are Google and
+        // Apple; Apple sign-in needs no third-party SDK). The App Tracking
+        // Transparency calls the plugin compiles in either way are patched
+        // out (patches/@capacitor-firebase+authentication+*.patch).
+        packageTraits: {
+          "@capacitor-firebase/analytics": ["AnalyticsWithoutAdIdSupport"],
+          "@capacitor-firebase/authentication": ["Google"],
+        },
       },
     },
   },

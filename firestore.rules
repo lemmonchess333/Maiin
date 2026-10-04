@@ -826,7 +826,15 @@ service cloud.firestore {
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visibility']);
+            .hasOnly(['visibility'])
+        // A flagged activity stays private. The word filter
+        // (onActivityCreated) and a moderator's Hide content both flag
+        // it and make it private; without this its author could make
+        // it public again with one write, undoing both.
+        && (
+          resource.data.get('flagged', false) != true
+          || request.resource.data.visibility == 'private'
+        );
       allow delete: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid;

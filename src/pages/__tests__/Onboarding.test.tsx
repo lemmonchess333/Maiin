@@ -16,6 +16,7 @@ import {
 } from "@/lib/onboardingDraft";
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 const { complete, refresh } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
@@ -190,6 +191,28 @@ describe("onboarding chapters and commit", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("one of your answers wasn’t accepted");
+    expect(alert).not.toHaveTextContent("connection");
+  });
+  it("holds the plan while the display name is one the word filter flags", () => {
+    // The name is public, so it meets the filter posts and comments do.
+    saveOnboardingDraft("setup-test", { ...draft, displayName: "shit head" });
+    open();
+    expect(screen.getByText(OBJECTIONABLE_NAME_MESSAGE)).toBeInTheDocument();
+    const start = screen.getByRole("button", { name: "Start my plan" });
+    expect(start).toBeDisabled();
+    fireEvent.click(start);
+    expect(complete).not.toHaveBeenCalled();
+  });
+  it("shows the server's own sentence when it refuses the display name", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockRejectedValue({
+      code: "functions/failed-precondition",
+      message: OBJECTIONABLE_NAME_MESSAGE,
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(OBJECTIONABLE_NAME_MESSAGE);
     expect(alert).not.toHaveTextContent("connection");
   });
   it("does not allow a typed past race date to be committed", () => {

@@ -49,6 +49,7 @@ import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
+import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
@@ -698,16 +699,22 @@ export default function Onboarding() {
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
+      // A failed-precondition carries a sentence written for the person
+      // (e.g. the server refusing a display name the word filter flags).
+      const refusal =
+        code === "failed-precondition" ? describeRejection(err) : null;
       setSaveError(
         code === "unauthenticated"
           ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
             ? "Please wait a moment, then try creating your plan again. Your answers are saved."
-            : code === "invalid-argument"
-              ? // The server refused an answer, so a retry on a better
-                // connection would fail the same way.
-                "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
-              : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
+            : refusal
+              ? refusal
+              : code === "invalid-argument"
+                ? // The server refused an answer, so a retry on a better
+                  // connection would fail the same way.
+                  "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
+                : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
       );
     } finally {
       pending.current = false;
@@ -1538,7 +1545,7 @@ export default function Onboarding() {
                 </p>
                 {!displayNameValidation.valid && (
                   <p className="text-sm text-destructive-strong" role="alert">
-                    Enter a name between 2 and 30 characters.
+                    {displayNameValidation.message}
                   </p>
                 )}
               </div>

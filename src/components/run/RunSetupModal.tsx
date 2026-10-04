@@ -38,6 +38,7 @@ import {
   getCurrentWeather,
   getWeatherIcon,
   getRunningTip,
+  WEATHER_CREDIT,
   type WeatherData,
 } from "@/lib/weather";
 import { paceMinSec, distanceValue } from "@/lib/runLabels";
@@ -484,6 +485,11 @@ export default function RunSetupModal({
                   </p>
                 );
               })()}
+              {/* MET Norway's licence (CC BY 4.0) asks for this wherever
+                  its weather is shown. */}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {WEATHER_CREDIT}
+              </p>
             </div>
           </motion.div>
         )}

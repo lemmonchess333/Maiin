@@ -47,6 +47,16 @@ vi.mock("../../../lib/auth", () => ({
   useUid: () => ({ user: { uid: "u-self" } }).user?.uid ?? null,
 }));
 
+const addBlockedMock = vi.fn();
+vi.mock("@/hooks/useBlockedUsers", () => ({
+  useBlockedUsers: () => ({
+    blocked: new Set<string>(),
+    ready: true,
+    addBlocked: addBlockedMock,
+    removeBlocked: vi.fn(),
+  }),
+}));
+
 import ReportModal from "../ReportModal";
 
 function renderWith(node: React.ReactElement) {
@@ -57,6 +67,34 @@ beforeEach(() => {
   reportContentMock.mockClear();
   blockUserMock.mockClear();
   hideMock.mockClear();
+  addBlockedMock.mockClear();
+});
+
+describe("ReportModal — what it calls the thing being reported", () => {
+  it.each([
+    ["activity", "activity"],
+    ["comment", "comment"],
+    ["user", "user"],
+    ["space_post", "post"],
+    ["space_post_comment", "comment"],
+  ] as const)("a %s report says %s", (targetType, noun) => {
+    renderWith(
+      <ReportModal
+        targetType={targetType}
+        targetId="t-1"
+        targetAuthorUid="u-other"
+        onClose={() => {}}
+      />
+    );
+    // The dialog is named by the heading, and neither shows a storage key.
+    expect(
+      screen.getByRole("dialog", { name: `Report ${noun}` })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`Why are you reporting this ${noun}?`)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/space_post/)).toBeNull();
+  });
 });
 
 describe("ReportModal — category picker", () => {
@@ -288,6 +326,28 @@ describe("ReportModal — submit orchestration", () => {
       fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
     });
     expect(blockUserMock).toHaveBeenCalledWith("u-self", "u-other");
+    // The block applies on the next render everywhere the list is read,
+    // not after a reload (S4a pin 5).
+    expect(addBlockedMock).toHaveBeenCalledWith("u-other");
+  });
+
+  it("does not mark the author blocked when the block write fails", async () => {
+    blockUserMock.mockRejectedValueOnce(new Error("offline"));
+    renderWith(
+      <ReportModal
+        targetType="activity"
+        targetId="act-1"
+        targetAuthorUid="u-other"
+        onClose={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Block this user/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
+    });
+    expect(blockUserMock).toHaveBeenCalledTimes(1);
+    expect(addBlockedMock).not.toHaveBeenCalled();
   });
 
   it("skips reportContent when only Hide is checked (informant-free fast path)", async () => {

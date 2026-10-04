@@ -59,8 +59,8 @@ image shows regional countryside at Ivinghoe Beacon, not the advertised course.
 The Forth cover depicts the road bridges, not the nearby railway bridge.
 
 The bundle allowance changes only the measured catalogue (`spaceDefs`,
-14,953 to 19,963 bytes) and editorial-reference (`spaceTypes`, 12,610 to
-15,963 bytes) chunks, plus their corresponding total. This accounts for the
+14,953 to 19,963 bytes) and editorial-reference (`spaceTypes`, 14,355 to
+15,969 bytes) chunks, plus their corresponding total. This accounts for the
 15 definitions, their photo references and the distance guard; other chunk
 allowances stay as they were.
 

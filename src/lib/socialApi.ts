@@ -796,7 +796,18 @@ export type ReportCategory =
   | "impersonation"
   | "other";
 
-export type ReportTargetType = "activity" | "comment" | "user" | "space_post";
+/** What can be reported: exactly the server's TARGET_TYPES
+ *  (functions/lib/reportTargets.js), pinned by reportTargets.cross.test.ts.
+ *  Build a scoped targetId with src/lib/reportTargetIds.ts. */
+export const REPORT_TARGET_TYPES = [
+  "activity",
+  "comment",
+  "user",
+  "space_post",
+  "space_post_comment",
+] as const;
+
+export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 
 export interface ReportContentInput {
   targetType: ReportTargetType;

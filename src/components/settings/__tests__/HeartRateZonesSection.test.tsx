@@ -19,7 +19,6 @@ const mockHeartRate = {
   maxHr: 190,
   maxHrSource: "estimated" as "estimated" | "measured",
   zones: [] as unknown[],
-  liveAvailable: false,
 };
 vi.mock("@/hooks/useHeartRate", () => ({
   useHeartRate: () => mockHeartRate,
@@ -94,6 +93,20 @@ describe("HeartRateZonesSection", () => {
 
     expect(await screen.findByText(/between 100 and 240/i)).toBeInTheDocument();
     expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("says where the zones come from, and promises no live heart rate", () => {
+    /* It said "Live heart rate streams in the app during runs (Apple
+       Watch / HealthKit)", and no heart-rate source exists on any
+       platform (heartRateSource.ts). */
+    renderSection();
+    expect(
+      screen.getByText(
+        "Zones come from your age, or from the max heart rate you enter."
+      )
+    ).toBeInTheDocument();
+    const text = document.body.textContent ?? "";
+    expect(text).not.toMatch(/live heart rate|streams|apple watch|healthkit/i);
   });
 
   it("surfaces a failed save instead of pretending it worked", async () => {

@@ -6,6 +6,9 @@ const {
   normalizeCreateReportInput,
   resolveReportTarget,
   isReportTargetError,
+  queueContentHide,
+  HIDEABLE_TARGET_TYPES,
+  TARGET_TYPES,
 } = require("../lib/reportTargets");
 
 /**
@@ -240,5 +243,216 @@ describe("resolveReportTarget — reporter visibility on private/followers", () 
     await expect(
       resolveReportTarget({ firestore, targetType: "activity", targetId: "a1" })
     ).resolves.toMatchObject({ targetUid: "author-9" });
+  });
+});
+
+describe("space_post_comment — the Space comment target", () => {
+  it("is a target type, and one Hide content can act on", () => {
+    expect(TARGET_TYPES).toContain("space_post_comment");
+    expect(HIDEABLE_TARGET_TYPES).toContain("space_post_comment");
+    // A profile has no content of its own; its action is Restrict user.
+    expect(HIDEABLE_TARGET_TYPES).not.toContain("user");
+  });
+
+  it("takes exactly three ids, space:post:comment", () => {
+    const out = normalizeCreateReportInput({
+      targetType: "space_post_comment",
+      targetId: "runners:p1:c1",
+      category: "harassment",
+    });
+    expect(out).toMatchObject({
+      targetType: "space_post_comment",
+      targetId: "runners:p1:c1",
+    });
+    for (const targetId of ["runners:p1", "runners:p1:c1:x", "runners::c1"]) {
+      expect(() =>
+        normalizeCreateReportInput({
+          targetType: "space_post_comment",
+          targetId,
+          category: "spam",
+        })
+      ).toThrow();
+    }
+  });
+
+  it("leaves the two-part ids of comment and space_post as they were", () => {
+    expect(() =>
+      normalizeCreateReportInput({
+        targetType: "comment",
+        targetId: "a1:c1:extra",
+        category: "spam",
+      })
+    ).toThrow();
+    expect(
+      normalizeCreateReportInput({
+        targetType: "space_post",
+        targetId: "runners:p1",
+        category: "spam",
+      }).targetId
+    ).toBe("runners:p1");
+  });
+
+  it("resolves the comment's author, its text, and the post holding its count", async () => {
+    const { firestore, txReader } = makeFs({
+      "spaces/runners/posts/p1": { authorId: "poster", body: "B" },
+      "spaces/runners/posts/p1/comments/c1": {
+        authorId: "commenter",
+        authorName: "Sam",
+        text: "rude words",
+      },
+    });
+    const r = await resolveReportTarget({
+      firestore,
+      reader: txReader,
+      reporterUid: "stranger",
+      targetType: "space_post_comment",
+      targetId: "runners:p1:c1",
+    });
+    expect(r.targetUid).toBe("commenter");
+    expect(r.targetRef._path).toBe("spaces/runners/posts/p1/comments/c1");
+    expect(r.parentRef._path).toBe("spaces/runners/posts/p1");
+    expect(r.preview).toEqual({
+      authorId: "commenter",
+      authorName: "Sam",
+      text: "rude words",
+      spaceId: "runners",
+      postId: "p1",
+    });
+  });
+
+  it("is unavailable when the comment or its post is gone", async () => {
+    const noComment = makeFs({ "spaces/runners/posts/p1": { authorId: "x" } });
+    await expectFail(
+      resolveReportTarget({
+        firestore: noComment.firestore,
+        targetType: "space_post_comment",
+        targetId: "runners:p1:c1",
+      }),
+      "report-target-unavailable"
+    );
+    const noPost = makeFs({
+      "spaces/runners/posts/p1/comments/c1": { authorId: "commenter" },
+    });
+    await expectFail(
+      resolveReportTarget({
+        firestore: noPost.firestore,
+        targetType: "space_post_comment",
+        targetId: "runners:p1:c1",
+      }),
+      "report-target-unavailable"
+    );
+  });
+
+  it("an activity comment also resolves the activity holding its count", async () => {
+    const { firestore } = makeFs({
+      "comments/a1/items/c1": { authorId: "commenter", text: "hi" },
+      "activities/a1": { authorId: "author-9", visibility: "public" },
+    });
+    const r = await resolveReportTarget({
+      firestore,
+      targetType: "comment",
+      targetId: "a1:c1",
+    });
+    expect(r.parentRef._path).toBe("activities/a1");
+  });
+});
+
+describe("queueContentHide — what Hide content writes", () => {
+  function recorder() {
+    const writes = [];
+    return {
+      writes,
+      transaction: {
+        update: (ref, data) => writes.push(["update", ref._path, data]),
+        delete: (ref) => writes.push(["delete", ref._path]),
+      },
+    };
+  }
+  const ref = (path) => ({ _path: path });
+  const deps = {
+    adminUid: "admin-1",
+    serverTimestamp: () => "SERVER_TS",
+    increment: (n) => ({ increment: n }),
+  };
+
+  it("makes an activity private and flags it, keeping the document", () => {
+    const { writes, transaction } = recorder();
+    const outcome = queueContentHide({
+      transaction,
+      target: { targetType: "activity", targetRef: ref("activities/a1") },
+      ...deps,
+    });
+    expect(outcome).toBe("flagged-private");
+    expect(writes).toEqual([
+      [
+        "update",
+        "activities/a1",
+        {
+          flagged: true,
+          flaggedBy: "admin",
+          flaggedByAdminUid: "admin-1",
+          flaggedAt: "SERVER_TS",
+          visibility: "private",
+        },
+      ],
+    ]);
+  });
+
+  it.each([
+    ["comment", "comments/a1/items/c1", "activities/a1"],
+    [
+      "space_post_comment",
+      "spaces/runners/posts/p1/comments/c1",
+      "spaces/runners/posts/p1",
+    ],
+  ])(
+    "deletes a %s and takes one off its parent's commentCount",
+    (targetType, path, parentPath) => {
+      const { writes, transaction } = recorder();
+      const outcome = queueContentHide({
+        transaction,
+        target: {
+          targetType,
+          targetRef: ref(path),
+          parentRef: ref(parentPath),
+        },
+        ...deps,
+      });
+      expect(outcome).toBe("deleted");
+      expect(writes).toEqual([
+        ["delete", path],
+        ["update", parentPath, { commentCount: { increment: -1 } }],
+      ]);
+    }
+  );
+
+  it("deletes a space post (it has no visibility to turn off)", () => {
+    const { writes, transaction } = recorder();
+    expect(
+      queueContentHide({
+        transaction,
+        target: {
+          targetType: "space_post",
+          targetRef: ref("spaces/runners/posts/p1"),
+        },
+        ...deps,
+      })
+    ).toBe("deleted");
+    expect(writes).toEqual([["delete", "spaces/runners/posts/p1"]]);
+  });
+
+  it("refuses a profile, which has no content to hide", () => {
+    const { writes, transaction } = recorder();
+    expect(() =>
+      queueContentHide({
+        transaction,
+        target: {
+          targetType: "user",
+          targetRef: ref("users/u1/public/profile"),
+        },
+        ...deps,
+      })
+    ).toThrow(TypeError);
+    expect(writes).toEqual([]);
   });
 });

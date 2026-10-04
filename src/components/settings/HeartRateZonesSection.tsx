@@ -17,6 +17,10 @@ import type { UserProfile } from "@/lib/auth";
  *
  * `null`/absent maxHeartRate → fall back to the Tanaka age estimate; with no
  * age either, we prompt for it rather than render bogus bands.
+ *
+ * The section says where the zones come from and nothing about live heart
+ * rate: heartRateSource.ts has no source on any platform, so nothing
+ * streams. Copy that names a live feature waits for the feature.
  */
 export default function HeartRateZonesSection({
   updateProfile,
@@ -26,7 +30,7 @@ export default function HeartRateZonesSection({
     opts?: { throwOnError?: boolean; allowProtected?: boolean }
   ) => Promise<unknown>;
 }) {
-  const { maxHr, maxHrSource, zones, liveAvailable } = useHeartRate();
+  const { maxHr, maxHrSource, zones } = useHeartRate();
 
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
@@ -112,9 +116,7 @@ export default function HeartRateZonesSection({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              {liveAvailable
-                ? "Live heart rate streams during runs."
-                : "Live heart rate streams in the app during runs (Apple Watch / HealthKit)."}
+              Zones come from your age, or from the max heart rate you enter.
             </p>
           </>
         ) : (

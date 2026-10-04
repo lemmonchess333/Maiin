@@ -109,6 +109,7 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
+import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 
 function setOnline(value: boolean) {
   Object.defineProperty(navigator, "onLine", {
@@ -120,7 +121,7 @@ function setOnline(value: boolean) {
 const modal = () => screen.getByTestId("stub-modal");
 
 async function openAndCapture() {
-  render(<FoodAnalyzer date="2026-08-18" />);
+  render(<FoodAnalyzer date="2026-08-18" aiConsent={AI_ALLOWED} />);
   // The analyzer auto-opens the camera after a 150ms mount delay.
   await waitFor(() => expect(modal().dataset.open).toBe("true"));
   fireEvent.click(screen.getByText("stub-capture"));
@@ -172,7 +173,7 @@ describe("FoodAnalyzer — scan outcome routing", () => {
   it("barcode lookup offline pre-empts with honest copy, no raw 'Failed to fetch'", async () => {
     setOnline(false);
     const { toast } = await import("@/lib/toast");
-    render(<FoodAnalyzer date="2026-08-18" />);
+    render(<FoodAnalyzer date="2026-08-18" aiConsent={AI_ALLOWED} />);
     await waitFor(() => expect(modal().dataset.open).toBe("true"));
     fireEvent.click(screen.getByText("stub-barcode"));
     await waitFor(() =>
@@ -312,7 +313,7 @@ describe("FoodAnalyzer — how a barcode lookup failed", () => {
 
   async function lookUp(response: () => Promise<unknown>) {
     vi.stubGlobal("fetch", vi.fn(response));
-    render(<FoodAnalyzer date="2026-08-18" />);
+    render(<FoodAnalyzer date="2026-08-18" aiConsent={AI_ALLOWED} />);
     await waitFor(() => expect(modal().dataset.open).toBe("true"));
     let answer: unknown;
     await act(async () => {

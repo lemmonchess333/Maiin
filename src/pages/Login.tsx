@@ -28,6 +28,13 @@ type LoadingAction = "email" | "google" | "apple" | "reset" | null;
  *  account opens on sign-in, as "Welcome back" is only true there. */
 type View = "welcome" | "signIn" | "signUp";
 
+/* A link inside the agreement sentence. Underlined, so it reads as a link
+   without relying on colour; 44px tall for the thumb, with the negative
+   margin keeping the sentence's own line height (the Sign up toggle below
+   uses the same trick). */
+const AGREEMENT_LINK =
+  "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium text-foreground underline underline-offset-2 hover:text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm";
+
 export default function Login() {
   const {
     signIn,
@@ -480,6 +487,25 @@ export default function Login() {
           </Button>
         </div>
 
+        {/* Agreeing to the Terms. App Review 1.2 wants the people who
+            post in an app to have agreed to terms that rule out
+            objectionable content and abusive users. Every button on this
+            screen can create an account: the email form on Sign up, and
+            Apple and Google on either screen the first time they are
+            used. So the line sits under all of them, on both screens. The
+            links are the signed-out /terms and /privacy routes. */}
+        <p className="text-center text-xs text-muted-foreground">
+          By continuing, you agree to the{" "}
+          <Link to="/terms" className={AGREEMENT_LINK}>
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link to="/privacy" className={AGREEMENT_LINK}>
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
         {/* Toggle */}
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
@@ -495,23 +521,6 @@ export default function Login() {
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
-
-        {/* Legal links */}
-        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-          <Link
-            to="/privacy"
-            className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
-          >
-            Privacy Policy
-          </Link>
-          <span aria-hidden="true">·</span>
-          <Link
-            to="/terms"
-            className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
-          >
-            Terms of Service
-          </Link>
-        </div>
       </div>
     </div>
   );

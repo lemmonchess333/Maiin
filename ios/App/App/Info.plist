@@ -38,19 +38,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Tropos uses your camera to scan food and barcodes for faster logging.</string>
+	<string>Tropos uses the camera to scan meals, nutrition labels and barcodes, and to take progress photos, your profile photo and photos for Space posts.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Tropos uses your location to track runs and calculate distance.</string>
+	<string>Tropos uses your location to record your runs and their distance, to show the weather before a run, to start a route you plan, and to place a privacy zone you add.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Tropos uses your location in the background so run tracking continues while your screen is locked.</string>
 	<key>UIBackgroundModes</key>
@@ -58,7 +51,9 @@
 		<string>location</string>
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Tropos lets you attach progress photos to track visual changes over time.</string>
+	<string>Tropos opens your photo library when you choose a photo: a meal, nutrition label or barcode to log food, a progress photo, your profile photo, or a photo for a Space post or a share card.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Tropos saves an image to your photo library only when you choose to save one, such as a share card, a progress photo comparison or a meal photo.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Tropos reads your step count from Health to show today's steps on Home.</string>
 	<key>NSHealthUpdateUsageDescription</key>

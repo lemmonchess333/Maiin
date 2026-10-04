@@ -274,9 +274,12 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
   it("renders the exhausted caption with a working upgrade action at remaining === 0 (real quota)", () => {
     const onUpgrade = vi.fn();
     renderComposer({ scanUsage: quota({ remaining: 0 }), onUpgrade });
+    // Pro's own daily cap, not "unlimited": the server stops Pro at
+    // DAILY_AI_LIMITS too.
     const cta = screen.getByRole("button", {
-      name: /out of scans — upgrade for unlimited/i,
+      name: "Out of scans · upgrade for 100 a day · resets 10 Jun",
     });
+    expect(cta.textContent).not.toMatch(/unlimited/i);
     fireEvent.click(cta);
     expect(onUpgrade).toHaveBeenCalledTimes(1);
   });

@@ -2311,6 +2311,48 @@ suite(
       );
     });
 
+    // App Review 1.2: the word filter (onActivityCreated) and a moderator's
+    // Hide content flag an activity and make it private. Its author must
+    // not be able to make it public again.
+    it("owner cannot make a flagged activity public or followers-only again", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity({ visibility: "private" }),
+          flagged: true,
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      for (const visibility of ["public", "followers"]) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "A1"),
+            { visibility },
+            { merge: true }
+          )
+        );
+      }
+    });
+
+    it("an unflagged private activity can still be made public (the flag is what holds it)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity({ visibility: "private" }),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { visibility: "public" },
+          { merge: true }
+        )
+      );
+    });
+
     it("client cannot directly write comment doc (server-only)", async () => {
       await env.withSecurityRulesDisabled(async (ctx) => {
         const db = ctx.firestore();

@@ -1,3 +1,5 @@
+import { DAILY_AI_LIMITS } from "@/lib/subscription";
+
 interface ScanQuotaIndicatorProps {
   remaining: number;
   resetDate: Date;
@@ -29,6 +31,8 @@ function formatResetDate(date: Date): string {
  *   remaining === 1 → "1 free scan left · resets {date}" — informational
  *                     caption, no action.
  *   remaining === 0 → exhausted copy with the upgrade action (tappable).
+ *                     It names Pro's daily cap, not "unlimited": the
+ *                     server stops Pro at DAILY_AI_LIMITS too.
  */
 export default function ScanQuotaIndicator({
   remaining,
@@ -45,7 +49,8 @@ export default function ScanQuotaIndicator({
           onClick={onUpgrade}
           className="text-caption text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
-          Out of scans — upgrade for unlimited · resets {resetStr}
+          Out of scans · upgrade for {DAILY_AI_LIMITS.pro.image_ai} a day ·
+          resets {resetStr}
         </button>
       </div>
     );

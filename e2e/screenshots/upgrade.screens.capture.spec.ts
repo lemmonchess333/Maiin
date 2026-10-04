@@ -2,9 +2,10 @@
  * The Pro offer page (`/upgrade`) — the first screen a new account sees
  * after onboarding, and the one surface the funnel work of 2026-09-13
  * reshaped end to end with no frame in the capture channel. Both beats,
- * both themes: the offer (headline, preview rail, "No payment due
- * today", Continue / Continue with Free) and the plans (picker, trial
- * timeline, the trial CTA).
+ * both themes: the offer (headline, preview rail, the price after the
+ * trial — "7 days free, then £34.99 a year" — with "No payment due today"
+ * under it, Continue / Continue with Free) and the plans (picker, trial
+ * timeline, the trial CTA with its price directly beneath it).
  *
  * Same rig as review.screens.capture.spec.ts. Entered as `from=onboarding`
  * so the copy is the one a new account reads; the seeded e2e user is on

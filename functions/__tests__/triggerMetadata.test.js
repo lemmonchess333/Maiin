@@ -91,6 +91,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["MAPBOX_DIRECTIONS_TOKEN"],
   },
+  // The pre-run weather strip, from MET Norway (currentWeather.js). MET needs no
+  // key, so nothing to provision: its terms ask for a User-Agent instead.
+  getCurrentWeather: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   releasePushDeviceToken: {
     kind: "callable",
     maxInstances: 100,
@@ -303,10 +310,21 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/comments/{activityId}/items/{commentId}",
   },
+  // The word filter over space posts. On every write, not only creates:
+  // an author can edit a post's title and body.
+  onSpacePostWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/spaces/{spaceId}/posts/{postId}",
+  },
+  // RESEND_API_KEY for the email that tells the owner a report came in.
   createReport: {
     kind: "callable",
     maxInstances: 100,
-    secrets: [],
+    secrets: ["RESEND_API_KEY"],
   },
   listPendingReports: {
     kind: "callable",

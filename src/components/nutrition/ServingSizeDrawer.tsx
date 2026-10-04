@@ -3,6 +3,7 @@ import { Plus, Minus, AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { OFF_CREDIT } from "@/lib/offNutrition";
 
 interface Props {
   food: {
@@ -233,6 +234,13 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
         >
           Log food
         </button>
+
+        {/* The food is an Open Food Facts search result (Food opens this
+            sheet for nothing else), and the database's licence (ODbL)
+            asks for a credit wherever its data is shown. */}
+        <p className="mt-3 text-center text-micro text-muted-foreground">
+          {OFF_CREDIT}
+        </p>
       </div>
     </BottomSheet>
   );

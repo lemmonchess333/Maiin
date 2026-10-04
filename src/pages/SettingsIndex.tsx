@@ -39,6 +39,7 @@ import SettingsAvatar from "@/components/settings/SettingsAvatar";
 import SettingsOfflineBanner from "@/components/settings/SettingsOfflineBanner";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { haptic } from "@/lib/haptic";
+import { isRemotePushOffered } from "@/lib/pushNotifications";
 
 declare const __APP_VERSION__: string;
 
@@ -47,6 +48,10 @@ interface SectionRow {
   slug: string;
   label: string;
   description: string;
+  /** The description where the app offers no remote push (the native
+   *  app: see isRemotePushOffered), for a row whose description names
+   *  push. */
+  descriptionWithoutPush?: string;
   icon: LucideIcon;
   /** Icon colour for a row that belongs to a sport or to food. */
   tint?: string;
@@ -106,6 +111,7 @@ const GROUPS: SectionGroup[] = [
         slug: "notifications",
         label: "Notifications",
         description: "Reminders, push, activity",
+        descriptionWithoutPush: "Reminders, activity",
         icon: Bell,
         migrated: true,
       },
@@ -171,6 +177,8 @@ export default function SettingsIndex() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
+  // The native app has no push switch, so no row there says "push".
+  const pushOffered = isRemotePushOffered();
 
   const plan =
     tier === "pro" ? (
@@ -224,7 +232,10 @@ export default function SettingsIndex() {
               <SettingsRow
                 key={row.slug}
                 label={row.label}
-                description={row.description}
+                description={
+                  (!pushOffered && row.descriptionWithoutPush) ||
+                  row.description
+                }
                 icon={row.icon}
                 iconClassName={row.tint}
                 value={row.slug === "subscription" ? plan : undefined}

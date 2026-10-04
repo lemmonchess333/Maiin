@@ -3,9 +3,7 @@
   "sources": [
     {
       "raceId": "valencia-marathon",
-      "assets": [
-        "space-valencia-marathon.webp"
-      ],
+      "assets": ["space-valencia-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/the-city-of-arts-and-sciences-in-valencia-5-O5f9NxD2s",
       "downloadUrl": "https://images.unsplash.com/photo-1741118585542-7f659501d7af?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -30,9 +28,7 @@
     },
     {
       "raceId": "houston-marathon",
-      "assets": [
-        "space-houston-marathon.webp"
-      ],
+      "assets": ["space-houston-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/houston-texas-skyline-is-visible-on-a-sunny-day-9fKKJowOJDM",
       "downloadUrl": "https://images.unsplash.com/photo-1746311528667-1038fe0c8c46?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -57,9 +53,7 @@
     },
     {
       "raceId": "seville-marathon",
-      "assets": [
-        "space-seville-marathon.webp"
-      ],
+      "assets": ["space-seville-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/plaza-de-espana-square-with-historic-buildings-and-sky-XIUe1ZwIsro",
       "downloadUrl": "https://images.unsplash.com/photo-1762625368913-a005c896556b?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -84,9 +78,7 @@
     },
     {
       "raceId": "cambridge-half",
-      "assets": [
-        "space-cambridge-half.webp"
-      ],
+      "assets": ["space-cambridge-half.webp"],
       "sourceUrl": "https://unsplash.com/photos/stone-bridge-over-a-calm-river-with-reflections-h0kX9E6WjfQ",
       "downloadUrl": "https://images.unsplash.com/photo-1766838407941-3ba0a7a01a4f?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -117,9 +109,7 @@
     },
     {
       "raceId": "bath-half",
-      "assets": [
-        "space-bath-half.webp"
-      ],
+      "assets": ["space-bath-half.webp"],
       "sourceUrl": "https://unsplash.com/photos/pulteney-bridge-in-bath-with-shops-and-river-5RL72VxGme0",
       "downloadUrl": "https://images.unsplash.com/photo-1759497634481-21b7416ba892?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -144,9 +134,7 @@
     },
     {
       "raceId": "barcelona-marathon",
-      "assets": [
-        "space-barcelona-marathon.webp"
-      ],
+      "assets": ["space-barcelona-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/panoramic-view-of-barcelona-cityscape-with-sagrada-familia-PAKlGZNVUQM",
       "downloadUrl": "https://images.unsplash.com/photo-1776770765859-cca1ac470e8a?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -177,9 +165,7 @@
     },
     {
       "raceId": "sydney-marathon",
-      "assets": [
-        "space-sydney-marathon.webp"
-      ],
+      "assets": ["space-sydney-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/sydney-harbour-opera-house-cityscape-and-boats-under-clear-sky-EqNp_gwIn3A",
       "downloadUrl": "https://images.unsplash.com/photo-1783004851932-c6eadb070038?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -204,9 +190,7 @@
     },
     {
       "raceId": "amsterdam-marathon",
-      "assets": [
-        "space-amsterdam-marathon.webp"
-      ],
+      "assets": ["space-amsterdam-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/canal-in-amsterdam-with-buildings-and-boats-n3TDcELL4C8",
       "downloadUrl": "https://images.unsplash.com/photo-1747650245388-2dfdaf57aed2?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -231,9 +215,7 @@
     },
     {
       "raceId": "rotterdam-marathon",
-      "assets": [
-        "space-rotterdam-marathon.webp"
-      ],
+      "assets": ["space-rotterdam-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-large-bridge-spanning-over-a-large-body-of-water-mzrPiJ2Rnxc",
       "downloadUrl": "https://images.unsplash.com/photo-1690360994204-3d10cc73a08d?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -258,9 +240,7 @@
     },
     {
       "raceId": "copenhagen-marathon",
-      "assets": [
-        "space-copenhagen-marathon.webp"
-      ],
+      "assets": ["space-copenhagen-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/nyhavn-copenhagen-iC2FHfd3TuM",
       "downloadUrl": "https://images.unsplash.com/photo-1526662075745-edd1c71a4cff?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -285,9 +265,7 @@
     },
     {
       "raceId": "oxford-half",
-      "assets": [
-        "space-oxford-half.webp"
-      ],
+      "assets": ["space-oxford-half.webp"],
       "sourceUrl": "https://unsplash.com/photos/the-radcliffe-camera-building-is-shown-with-the-sky-kPA7X2BgqV8",
       "downloadUrl": "https://images.unsplash.com/photo-1749225595496-06cd2c49fa2b?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -312,9 +290,7 @@
     },
     {
       "raceId": "great-bristol-10k",
-      "assets": [
-        "space-great-bristol-10k.webp"
-      ],
+      "assets": ["space-great-bristol-10k.webp"],
       "sourceUrl": "https://unsplash.com/photos/the-historic-clifton-suspension-bridge-spans-a-lush-green-gorge-VA-jwbDBhBk",
       "downloadUrl": "https://images.unsplash.com/photo-1784471396874-489f6e058374?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -345,9 +321,7 @@
     },
     {
       "raceId": "edinburgh-5k",
-      "assets": [
-        "space-edinburgh-5k.webp"
-      ],
+      "assets": ["space-edinburgh-5k.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-from-the-top-of-a-hill-r3kbHQKBRm0",
       "downloadUrl": "https://images.unsplash.com/photo-1701800774163-2e6c1568b421?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -372,9 +346,7 @@
     },
     {
       "raceId": "river-ness-5k",
-      "assets": [
-        "space-river-ness-5k.webp"
-      ],
+      "assets": ["space-river-ness-5k.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-river-with-a-boat-on-it-LFZRAohU2DI",
       "downloadUrl": "https://images.unsplash.com/photo-1662405550936-6e0546ca169f?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -399,9 +371,7 @@
     },
     {
       "raceId": "brighton-half",
-      "assets": [
-        "space-brighton-half.webp"
-      ],
+      "assets": ["space-brighton-half.webp"],
       "sourceUrl": "https://unsplash.com/photos/brighton-pier-with-the-ocean-and-beach-zWyEAiJL_Vc",
       "downloadUrl": "https://images.unsplash.com/photo-1758896154586-f0cd71a207ee?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
@@ -426,9 +396,7 @@
     },
     {
       "raceId": "tokyo-marathon",
-      "assets": [
-        "space-tokyo-marathon.webp"
-      ],
+      "assets": ["space-tokyo-marathon.webp"],
       "sourceUrl": "https://unsplash.com/photos/tokyo-tower-illuminated-at-dusk-with-city-skyline-IocJwyqRv3M",
       "downloadUrl": "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=2400&q=85&fm=jpg",
       "license": "Unsplash License",
