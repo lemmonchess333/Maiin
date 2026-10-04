@@ -76,8 +76,9 @@ export default function NutritionSection({
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
 
-  /* Home's "How targets work" tip deep-links to #calorie-targets rather
-     than dumping a second copy of this explanation onto Home. The chain
+  /* #calorie-targets is this explanation's address. Home's "How targets
+     work" tip linked here until the first-visit guide (FV1) took its
+     message into the walk's Food stop; a link to it still lands. The chain
      below (Base TDEE -> offset -> Daily target) sits well under the fold
      on this page, so arriving without a scroll would land the user on
      the goal-weight stepper and read as a dead link. Same shape as

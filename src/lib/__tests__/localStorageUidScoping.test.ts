@@ -62,6 +62,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "ONE key holding uid-TAGGED entries, filtered per-uid on flush (#820)",
   "tropos.share.queue": "same uid-tagged-entries shape (#820)",
   "tropos.program.commandOutbox": "same uid-tagged-entries shape",
+  "tropos-guide-under-automation":
+    "a capture spec's switch that turns the first-visit guide on in an automated browser, planted before the account it films exists; the app only reads it",
 };
 
 /**

@@ -117,6 +117,8 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { localDateString } from "@/lib/dateHelpers";
 import type { SessionShareAction } from "@/lib/sessionPost";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
+import GuideHint from "@/components/guide/GuideHint";
+import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -212,6 +214,10 @@ interface Props {
     sessionData: CompletedSessionData
   ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
+  /** The account has never finished a workout: the guide's first-set hint
+   *  may point at the first row (FV1). Train knows this; a saved routine
+   *  doesn't pass it. */
+  firstWorkout?: boolean;
 }
 
 export default function WorkoutSession({
@@ -226,6 +232,7 @@ export default function WorkoutSession({
   programmeContext,
   onCompleteDay,
   onClose,
+  firstWorkout = false,
 }: Props) {
   const { user, profile } = useAuth();
   const [initialDay] = useState(incomingDay);
@@ -1333,8 +1340,26 @@ export default function WorkoutSession({
       )
     : 0;
 
+  // The guide's first-set hint (FV1): an account's first workout, before
+  // any set is done, while nothing sits over the rows.
+  const anySetDone = setLogs.some((sets) => sets.some((set) => set.completed));
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+      <GuideHint
+        id="first-set"
+        layer="session"
+        placement="bottom"
+        when={
+          firstWorkout &&
+          currentExIndex === 0 &&
+          !anySetDone &&
+          !showResumePrompt &&
+          !editingSet &&
+          !rest
+        }
+        body={autoRest ? undefined : FIRST_SET_BODY_NO_AUTO_REST}
+      />
       {editingSet && (
         <EditSetSheet
           set={setLogs[editingSet.exIdx][editingSet.setIdx]}
@@ -1926,6 +1951,13 @@ export default function WorkoutSession({
                             <button
                               type="button"
                               aria-label="Mark set complete"
+                              data-guide-anchor={
+                                firstWorkout &&
+                                currentExIndex === 0 &&
+                                setIdx === currentSetIndex
+                                  ? "first-set"
+                                  : undefined
+                              }
                               onClick={() => void completeSet(setIdx)}
                               className="group size-11 flex items-center justify-center active:scale-90"
                             >

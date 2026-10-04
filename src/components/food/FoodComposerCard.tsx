@@ -183,7 +183,7 @@ function FoodComposerCard({
         {/* The field and the Scan button share a row; the dropdown sits
             below both at the row's full width, outside the flex row so
             it can never stretch the button. */}
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-guide-anchor="food-composer">
           <div className="relative min-w-0 flex-1">
             {/* The pencil is the manual-entry control — a 44px button
                 leading the field, where it had been a decorative glyph

@@ -119,6 +119,7 @@ import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
+import GuideHint from "@/components/guide/GuideHint";
 
 /**
  * IMPORTANT:
@@ -260,7 +261,7 @@ function ProgramInner() {
     [setSearchParams]
   );
 
-  const { workouts: recentWorkouts } = useWorkouts();
+  const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
   // Per-exercise best working set from last session containing that exercise
   const lastPerformanceMap = useMemo(() => {
@@ -1109,7 +1110,7 @@ function ProgramInner() {
                 vertical position as the Run tab's selector, and it drives
                 the session content below. */}
           <TrackProgrammeSectionView section="day_stepper">
-            <div>
+            <div data-guide-anchor="train-order">
               <ProgrammeWeekSelector
                 sport="lift"
                 ariaLabel="Lift sessions"
@@ -1119,6 +1120,14 @@ function ProgramInner() {
               />
             </div>
           </TrackProgrammeSectionView>
+          {/* The guide's hint on a first visit to the lift tab (FV1): the
+              rotation is the one thing about Train that the screen can't
+              say by itself. Not while a session is open over the page. */}
+          <GuideHint
+            id="train-order"
+            placement="top"
+            when={liftSelectorCells.length > 1 && sessionDayIndex === null}
+          />
 
           {/* Experience auto-detection: evidence-triggered level suggestion.
                 Renders null almost always — only when the v2 exhaustion
@@ -1886,6 +1895,7 @@ function ProgramInner() {
                   : undefined
               }
               progressionBaseline={storedDay.exercises}
+              firstWorkout={!workoutsLoading && recentWorkouts.length === 0}
               programmeContext={{
                 weekNumber: programState.weekNumber,
                 dayIndex: sessionDayIndex,

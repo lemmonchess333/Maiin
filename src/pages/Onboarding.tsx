@@ -631,11 +631,9 @@ export default function Onboarding() {
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
-        // Re-read the completed profile at the same relevant Train tab.
-        // Preserve the hosting basename as well as the selected activity.
-        window.location.assign(
-          `${import.meta.env.BASE_URL || "/"}${firstActivityPath.slice(1)}`
-        );
+        // Re-read the completed profile on Home, where the first-visit
+        // walk starts. Preserve the hosting basename.
+        window.location.assign(import.meta.env.BASE_URL || "/");
         return;
       }
 
@@ -687,13 +685,15 @@ export default function Onboarding() {
       // onboardingComplete=true makes App.tsx switch to the authenticated
       // route set. The first screen of the app is the Pro offer (the
       // Cal AI / MacroFactor placement: the product, shown once, right
-      // after the plan is made), and its "Continue with Free" lands on the
-      // activity shown in the review. `replace` keeps Back from returning
-      // into the finished onboarding flow; `state.next` carries the
-      // destination so the offer page needs no knowledge of the plan.
+      // after the plan is made), and its "Continue with Free" lands on Home,
+      // whose first card is the session the review led with and where the
+      // first-visit walk starts (FV1; until then it opened Train on the
+      // review's activity). `replace` keeps Back from returning into the
+      // finished onboarding flow; `state.next` carries the destination so
+      // the offer page needs no knowledge of the plan.
       navigate("/upgrade?from=onboarding", {
         replace: true,
-        state: { next: firstActivityPath },
+        state: { next: "/" },
       });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
@@ -718,9 +718,6 @@ export default function Onboarding() {
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
-  const firstActivityPath = runningFirst
-    ? "/program?tab=run"
-    : "/program?tab=lift";
   const firstRun = plan.programState.runDays
     ?.filter((run) => run.date && run.date >= currentDate)
     .sort((a, b) => a.date!.localeCompare(b.date!))[0];

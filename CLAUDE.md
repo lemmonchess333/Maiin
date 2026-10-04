@@ -227,7 +227,7 @@ run-surface feature modules.
 `useFoodAnalysis`, `useMealReminders`
 
 **UI & UX:**
-`useCoachMarks`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
+`useCoachMarks`, `useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
 
 **Payments:**
 `useProCheckout`
@@ -1076,6 +1076,17 @@ or touching a CTA button, route it through `Button` with the variant above.
   `claudeMdFreshness.test.ts` fails when a name here stops rendering or
   falls out of order; nothing notices a section missing from the line, so
   re-read it against `src/pages/Home.tsx` when you add one to Home.
+- **First-visit guide (FV1, owner 2026-10-04):** setup's "Continue with
+  Free" lands on Home, where a new account's first visit gets a
+  three-stop walk (`GuideWalk`: today's session, the first-week card,
+  Food), once, in its first seven days, as the visit's one coordinator
+  surface. The Tropos mark is the guide (no character; the house voice
+  holds). Settings → Support & legal → Show me around replays it; a
+  first-week row opens its step; `GuideHint` turns up once in each place
+  after that (Train's order, the first set, Food's composer, the first
+  run). Rules and words are in `firstGuide.ts`. It never shows under
+  automation unless a capture spec sets `tropos-guide-under-automation`
+  to `on` in localStorage, so specs that don't ask for it never meet it.
 - **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)

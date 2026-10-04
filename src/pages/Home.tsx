@@ -16,8 +16,21 @@ import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { isWithinActivationWindow } from "@/lib/activationFraming";
-import { firstWeek } from "@/lib/firstWeek";
+import { firstWeek, type FirstWeekItemKey } from "@/lib/firstWeek";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
+import GuideWalk from "@/components/guide/GuideWalk";
+import {
+  guideAllowedHere,
+  guideRequest,
+  rowStop,
+  todayCard,
+  walkOffered,
+  walkStops,
+  WALK_SEEN_KEY,
+  type GuideStop,
+} from "@/lib/firstGuide";
+import { useGuideWalkReady } from "@/hooks/useGuideWalkReady";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
@@ -25,7 +38,7 @@ import { useHomeProgram } from "@/features/program/useHomeProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import BrandMark from "@/components/ui/BrandMark";
@@ -566,6 +579,107 @@ export default function Home() {
     priority: 30,
     eligible: firstWeekState !== null,
   });
+
+  /* The first-visit guide (FV1, firstGuide.ts). A new account's first visit
+     gets the walk: once, in its first seven days, as the visit's one
+     blocking surface, once its first card is drawn and the launch
+     animation has gone. Settings' "Show me around" plays it again, and a
+     first-week row opens the one stop that does what the row names. */
+  const location = useLocation();
+  const [guideAllowed] = useState(guideAllowedHere);
+  const { dismissed: walkSeen, dismiss: markWalkSeen } =
+    useDismissOnce(WALK_SEEN_KEY);
+  const guideCard = todayCard(session);
+  const firstWeekItems =
+    welcomeCard.visible && firstWeekState ? firstWeekState.items.length : 0;
+  const guideStops = useMemo(
+    () => walkStops({ today: guideCard, firstWeekItems }),
+    [guideCard, firstWeekItems]
+  );
+  const homeSettled = countsLoaded && !programLoading;
+  const walkDue =
+    guideAllowed &&
+    homeSettled &&
+    walkOffered({ startKey, todayKey, seen: walkSeen });
+  const walkReady = useGuideWalkReady(walkDue, guideStops[0]?.target);
+  const guideSurface = useSurface({
+    id: "first-visit-guide",
+    priority: 45,
+    eligible: walkDue && walkReady === "ready",
+  });
+  const replayAsked = guideRequest(location.state) === "walk";
+  const [rowWalk, setRowWalk] = useState<GuideStop | null>(null);
+  const autoWalk = guideSurface.active && walkDue;
+  // Kept stable between renders: the walk re-measures when its stops change.
+  const walk = useMemo((): {
+    stops: GuideStop[];
+    from: "first-visit" | "replay" | "first-week-row";
+  } | null => {
+    if (replayAsked && homeSettled)
+      return { stops: guideStops, from: "replay" };
+    if (rowWalk) return { stops: [rowWalk], from: "first-week-row" };
+    if (autoWalk) return { stops: guideStops, from: "first-visit" };
+    return null;
+  }, [replayAsked, homeSettled, guideStops, rowWalk, autoWalk]);
+  // The Health steps prompt waits for the walk, so a new account meets the
+  // app before it is asked for anything.
+  const walkHoldsPrompts = !!walk || (walkDue && walkReady !== "gave-up");
+  // Whether this walk has shown a stop yet: it starts with the first one
+  // seen, whichever that is (a stop with nothing to point at is passed).
+  const walkShowing = useRef(false);
+  const onWalkStep = (index: number, stop: GuideStop) => {
+    if (!walk) return;
+    if (!walkShowing.current) {
+      walkShowing.current = true;
+      trackLifecycle("guide_started", {
+        walk: walk.from,
+        count: walk.stops.length,
+      });
+    }
+    trackLifecycle("guide_step_viewed", {
+      walk: walk.from,
+      stop: stop.id,
+      stepIndex: index,
+    });
+  };
+  const onWalkClose = (result: { finished: boolean; index: number }) => {
+    if (!walk) return;
+    walkShowing.current = false;
+    trackLifecycle(result.finished ? "guide_finished" : "guide_skipped", {
+      walk: walk.from,
+      stop: walk.stops[result.index]?.id,
+      stepIndex: result.index,
+    });
+    if (walk.from === "first-week-row") {
+      setRowWalk(null);
+      return;
+    }
+    markWalkSeen();
+    if (walk.from === "first-visit") guideSurface.dismiss();
+    if (replayAsked)
+      navigate(location.pathname, { replace: true, state: null });
+  };
+  /* A first-week row opens its step: the session card that does it, when
+     today's card is it (one stop, pointed out where the person already
+     is); otherwise Train; Food with the composer pointed out; the weigh-in
+     sheet. */
+  const openFirstWeekItem = (key: FirstWeekItemKey) => {
+    closePeek();
+    if (key === "weigh-in") {
+      setShowWeightSheet(true);
+      return;
+    }
+    if (key === "meal") {
+      navigate("/food", { state: { guide: "food-composer" } });
+      return;
+    }
+    const stop = rowStop(key, guideCard);
+    if (stop) {
+      setRowWalk(stop);
+      return;
+    }
+    navigate(key === "run" ? "/program?tab=run" : "/program?tab=lift");
+  };
   /* EVERY day in the strip opens its detail card, today included.
      There is no special case for today, and the argument for one — that
      its peek would duplicate the session cards below — does not hold.
@@ -854,12 +968,17 @@ export default function Home() {
           explainer banners (#995). */}
       {welcomeCard.visible && firstWeekState && (
         <motion.div
+          data-guide-stop="first-week"
           variants={{
             hidden: { opacity: 0, y: 8 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <FirstWeekCard week={firstWeekState} onDismiss={dismissCoachMarks} />
+          <FirstWeekCard
+            week={firstWeekState}
+            onDismiss={dismissCoachMarks}
+            onOpen={openFirstWeekItem}
+          />
         </motion.div>
       )}
 
@@ -874,6 +993,7 @@ export default function Home() {
       </SectionErrorBoundary>
 
       <motion.div
+        data-guide-stop="food"
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -1035,23 +1155,11 @@ export default function Home() {
           weight-log flow. (Contrast the age/sex nudge above, which is
           KEPT because a missing value there corrupts the TDEE math.) */}
 
-        {/* Nutr1 one-time explainer (expenditure-inclusive model),
-          relocated here into the Today group (2026-07-20) so the
-          education lane always renders below the week strip in one
-          consistent spot. It previously lived above the groups and,
-          whenever it won the lane (e.g. once goal-weight was cut),
-          jumped to the very top of the page above the week strip.
-          Dismiss-once via the versioned tipKey; surfaces the
-          deficit×big-session tension the #976 lock required. */}
-        <ContextualTipBanner
-          tipKey="nutrition-expenditure-inclusive-v1"
-          lanePriority={10}
-          title="Your activity is already in your target"
-          description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
-          visible={!!profile}
-          ctaLabel="How targets work"
-          ctaHref="/settings/nutrition#calorie-targets"
-        />
+        {/* The Nutr1 explainer ("Your activity is already in your target")
+          was here. The first-visit walk's Food stop says it now (FV1). The
+          first-week card holds the tip lane for a new account's first
+          week, so the banner never reached anyone in that week, the one
+          that most needed it. */}
 
         {/* Progressive profiling (fast-start PRD, final nudge): experience.
           Onboarding defaults experience to "intermediate" without asking;
@@ -1231,7 +1339,11 @@ export default function Home() {
           is derived: connecting or dismissing persists primingShown, which
           flips this false. On web status is "unavailable" so it never opens. */}
       <StepsPrimingModal
-        open={stepsData.status === "unprompted" && !stepsData.primingShown}
+        open={
+          stepsData.status === "unprompted" &&
+          !stepsData.primingShown &&
+          !walkHoldsPrompts
+        }
         onConnect={stepsData.connect}
         onDismiss={function () {
           void stepsData.dismissPriming();
@@ -1257,6 +1369,16 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
+
+      {walk && (
+        <GuideWalk
+          key={walk.from}
+          stops={walk.stops}
+          fromHeader={walk.from !== "first-week-row"}
+          onStep={onWalkStep}
+          onClose={onWalkClose}
+        />
+      )}
 
       {/* ProModal for trial/upgrade strip */}
       <AnimatePresence>

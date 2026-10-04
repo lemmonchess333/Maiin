@@ -6,6 +6,33 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The first-visit guide (2026-10-04)
+
+Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
+`src/pages/Home.tsx`, `src/pages/Onboarding.tsx` (Continue now lands on
+Home), the hints on Train, the workout screen, Food and the run screen.
+
+The walk's stops, the hints' rules and the row actions are pinned by unit
+tests; jsdom draws no layout, so where the card sits and how the mark
+moves need a phone.
+
+- [ ] **The walk on a new account.** Sign up, finish setup, Continue with
+      Free: Home opens and dims around the first card, and the mark lifts
+      out of the header into the card. Next, Next, Done; the mark goes
+      back into the header.
+- [ ] **A small phone (SE).** The walk scrolls the Food card into view for
+      the third stop, and no card hides under the tab bar or the Dynamic
+      Island's status bar.
+- [ ] **VoiceOver** reads each stop's title and words, and focus starts on
+      Next.
+- [ ] **Reduce Motion:** no flight, the cards fade.
+- [ ] **The hints**, each once: Train's lift tab, the first set of the
+      first workout (it sits above the workout screen), Food's composer,
+      the run screen before a first run. Tapping the thing a hint points
+      at closes it and still does what it does.
+- [ ] **Health steps prompt** (native only): on a new account it opens
+      after the walk, not over it.
+
 ## The new logo, icon and launch animation (2026-10-01)
 
 Affects: `src/assets/brand/app-icon.svg`, the iOS AppIcon set (default,

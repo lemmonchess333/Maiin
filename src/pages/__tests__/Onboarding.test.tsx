@@ -164,7 +164,7 @@ describe("onboarding chapters and commit", () => {
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/upgrade?from=onboarding → /program?tab=lift"
+        /^\/upgrade\?from=onboarding → \/$/
       )
     );
     builder.mockRestore();
@@ -222,7 +222,7 @@ describe("the review in the person's own units", () => {
 });
 
 describe("activity-relevant setup", () => {
-  it("creates a genuine free-running-only plan, skips lift setup and opens the Run tab", async () => {
+  it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();
     fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -289,7 +289,7 @@ describe("activity-relevant setup", () => {
     });
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/upgrade?from=onboarding → /program?tab=run"
+        /^\/upgrade\?from=onboarding → \/$/
       )
     );
   });
@@ -312,7 +312,7 @@ describe("activity-relevant setup", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
     expect(screen.getByText("5 per week")).toBeInTheDocument();
   });
-  it("keeps a running-first hybrid review on the Run tab while preserving its lifts", async () => {
+  it("keeps a running-first hybrid review led by its run while preserving its lifts", async () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
       primaryGoal: "running",
@@ -327,7 +327,7 @@ describe("activity-relevant setup", () => {
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/upgrade?from=onboarding → /program?tab=run"
+        /^\/upgrade\?from=onboarding → \/$/
       )
     );
   });

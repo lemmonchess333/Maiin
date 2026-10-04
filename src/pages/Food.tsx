@@ -10,7 +10,9 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import GuideHint from "@/components/guide/GuideHint";
+import { guideRequest } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useUid } from "@/lib/auth";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
@@ -155,6 +157,9 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const guideAsked = guideRequest(location.state);
   const FOOD_TAP_BACK_DAYS = 90;
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const minDateStr = format(
@@ -1958,6 +1963,21 @@ export default function Food() {
           scanOverrides={scanOverrides}
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
+        />
+        {/* The guide's hint on a first visit (FV1), and the step the
+            first-week card's "Log your first meal" opens. The request
+            rides in the router state and is cleared when it closes. */}
+        <GuideHint
+          id="food-composer"
+          when
+          requested={guideAsked === "food-composer"}
+          onClose={() => {
+            if (guideAsked)
+              navigate(location.pathname + location.search, {
+                replace: true,
+                state: null,
+              });
+          }}
         />
       </motion.div>
       {usual && (

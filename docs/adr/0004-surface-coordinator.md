@@ -124,3 +124,31 @@ priority line above reads Trial (40) > FellBehind (30) > LiftReturn (28) >
 GoalReached (25) for Home. The Badge-under-FellBehind suppression has
 nothing left to guard: nothing about a badge opens unasked.
 `homeSurfaceRegistry.test.ts` pins that Home registers no `badge` surface.
+
+## Amendment 2026-10-04 — the first-visit walk
+
+Owner call from the first-visit guide decision page (FV1). A new account's
+first visit to Home gets a three-stop walk: the page dims around today's
+session, the first-week card and the Food card in turn (`GuideWalk`).
+
+- **It is a tier-4 surface**, `first-visit-guide`, priority 45: above
+  Trial (40), so the line for Home reads FirstVisitGuide (45) > Trial (40)
+  > FellBehind (30) > LiftReturn (28) > GoalReached (25). It is eligible
+  > only in an account's first seven days and only until it has been seen
+  > (`walkOffered`, `firstGuide.ts`), and only once its first card is drawn
+  > and the launch animation has left the screen (`useGuideWalkReady`), so
+  > it never spends the visit's budget on a page that isn't there yet.
+- **Replays are click-only**, like ProModal: Settings → Support & legal →
+  Show me around, and the one stop a first-week row opens, render directly
+  and are not routed through the coordinator.
+- **The Health steps prompt waits for it.** `StepsPrimingModal` is outside
+  the coordinator (native only, once ever); it now opens only when no walk
+  is showing or due, so a new account meets the app before it is asked
+  for anything.
+- **The hints are tier 3.** The guide's one-time hints (Train's order, the
+  first set, the food composer, the first run) are anchored bubbles rather
+  than inline cards, but they go through the education lane at priority
+  35, so they never show beside another tip (`GuideHint`).
+
+`homeSurfaceRegistry.test.ts` pins the registration and that the walk
+outranks every other Home surface.
