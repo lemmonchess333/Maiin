@@ -13,12 +13,14 @@
  *     (joined server-side so the page doesn't need read access
  *     to /reports/ or to other users' activities)
  *   - "Dismiss" — mark resolved, leave target alone
- *   - "Hide content" — mark resolved AND set target.flagged +
- *     visibility: 'private'
+ *   - "Hide content" — mark resolved AND take the reported content out
+ *     of the app: an activity is flagged and made private; a comment
+ *     (activity or Space post) or a Space post is deleted. The server
+ *     says which reports it can act on (`targetHideable`).
+ *   - "Restrict user" — mark resolved AND restrict the target's author
  *
  * Out of v1: pagination beyond 50, status filters
- * (pending/resolved), ban-user flow, target-comment delete.
- * Each is a small follow-up.
+ * (pending/resolved), ban-user flow. Each is a small follow-up.
  */
 import { useCallback, useEffect, useState } from "react";
 import { useUid } from "@/lib/auth";
@@ -26,6 +28,7 @@ import { isAdminUid } from "@/lib/adminAuth";
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
+import type { ReportTargetType } from "@/lib/socialApi";
 import { Loader2, ShieldAlert, EyeOff, Check, UserX } from "lucide-react";
 
 interface ReportTarget {
@@ -44,6 +47,7 @@ interface ReportTarget {
   title?: string | null;
   body?: string | null;
   spaceId?: string;
+  postId?: string;
 }
 
 interface Report {
@@ -51,12 +55,16 @@ interface Report {
   reporterId: string | null;
   /** Packet 14 — CANONICAL type, server-resolved from the authority marker.
    *  null for a legacy / non-actionable report (see targetActionable). */
-  targetType: "activity" | "comment" | "user" | "space_post" | null;
+  targetType: ReportTargetType | null;
   targetId: string | null;
   targetUid: string | null;
   /** True iff the server re-resolved a live target from a valid authority
    *  marker — the ONLY reports on which hide/restrict may be applied. */
   targetActionable: boolean;
+  /** True iff Hide content can act on it: a live activity, comment, Space
+   *  post or Space comment (reportTargets.HIDEABLE_TARGET_TYPES). Absent
+   *  from a server older than the field. */
+  targetHideable?: boolean;
   /** Display-only diagnostics from the stored (untrusted) report doc. They
    *  never select a target for an action. */
   reportedTargetType: string | null;
@@ -74,6 +82,23 @@ const REASON_LABEL: Record<Report["reason"], string> = {
   other: "Other",
 };
 
+/** What was reported, for the card header. The target type is a storage
+ *  key, not a label. */
+const TARGET_LABEL: Record<ReportTargetType, string> = {
+  activity: "Activity",
+  comment: "Comment",
+  user: "Profile",
+  space_post: "Space post",
+  space_post_comment: "Space comment",
+};
+
+/** Whether Hide content applies. The server decides; a server older than
+ *  `targetHideable` could hide activities only. */
+function canHide(report: Report): boolean {
+  if (!report.targetActionable) return false;
+  return report.targetHideable ?? report.targetType === "activity";
+}
+
 /** One read of the pending queue through the admin-gated callable. */
 async function readPendingReports(): Promise<Report[]> {
   const callable = httpsCallable<unknown, { reports: Report[] }>(
@@ -87,7 +112,11 @@ async function readPendingReports(): Promise<Report[]> {
 function targetPreview(report: Report): string {
   const t = report.target;
   if (!t) return "(target unavailable)";
-  if (report.targetType === "comment") return t.text || "(empty comment)";
+  if (
+    report.targetType === "comment" ||
+    report.targetType === "space_post_comment"
+  )
+    return t.text || "(empty comment)";
   if (report.targetType === "user") return t.displayName || "(user)";
   if (report.targetType === "space_post")
     return t.title || t.body || "(empty post)";
@@ -242,9 +271,9 @@ export default function AdminModeration() {
                 <header className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                      {report.targetType ??
-                        report.reportedTargetType ??
-                        "unknown"}{" "}
+                      {report.targetType
+                        ? TARGET_LABEL[report.targetType]
+                        : (report.reportedTargetType ?? "unknown")}{" "}
                       · {REASON_LABEL[report.reason]}
                     </p>
                     <p className="text-caption font-mono tabular-nums text-muted-foreground mt-0.5">
@@ -293,20 +322,17 @@ export default function AdminModeration() {
                       action can be applied.
                     </p>
                   )}
-                  {report.targetActionable &&
-                    report.targetType === "activity" && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          void resolveReport(report.reportId, true)
-                        }
-                        className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
-                      >
-                        <EyeOff className="size-3.5" aria-hidden="true" />
-                        Hide content
-                      </button>
-                    )}
+                  {canHide(report) && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void resolveReport(report.reportId, true)}
+                      className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                    >
+                      <EyeOff className="size-3.5" aria-hidden="true" />
+                      Hide content
+                    </button>
+                  )}
                   {/* Restrict user — writes globalRestrictedUids/{targetUid}
                       atomically with resolution. Gated on targetActionable so
                       a non-revalidated report can never restrict a user. */}

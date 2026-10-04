@@ -142,6 +142,16 @@ const PINNED: Record<string, string> = {
   // person, one sentence either way.
   "functions/lib/objectionableText.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // Report targets: the types and id shapes the server validates, which the
+  // client builds (REPORT_TARGET_TYPES, reportTargetIds.ts). A mismatch
+  // refuses every report of that kind.
+  "functions/lib/reportTargets.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
+  // The report alert email's labels mirror the report form's
+  // (src/lib/reportCategories.ts), so the owner reads the reason the
+  // reporter picked.
+  "functions/lib/reportAlert.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   // Admin allowlist. BOTH copies run — the server as the trust boundary on

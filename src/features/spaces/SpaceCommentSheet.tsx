@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, Trash2 } from "lucide-react";
+import { MoreHorizontal, Send, Trash2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { describeRejection } from "@/lib/callableErrors";
 import { Spinner } from "@/components/ui/Spinner";
 import { IconButton } from "@/components/ui/IconButton";
 import Avatar from "@/components/Avatar";
+import CommentPanels, {
+  type CommentPanel,
+} from "@/components/social/CommentPanels";
 import { useAuth } from "@/lib/auth";
 import {
   addSpacePostComment,
@@ -13,11 +15,17 @@ import {
   getSpacePostComments,
   type SpacePostComment,
 } from "@/lib/socialApi";
+import {
+  containsProfanity,
+  OBJECTIONABLE_COMMENT_MESSAGE,
+} from "@/lib/profanityFilter";
+import { spacePostCommentReportTargetId } from "@/lib/reportTargetIds";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 
 /**
@@ -26,6 +34,13 @@ import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
  * space callables rather than parameterising that sheet across two
  * backends with different capabilities (space comments ship without
  * reactions in v1 — an honest smaller surface, not a downgrade).
+ *
+ * Moderation is the same as on the activity sheet (App Review 1.2):
+ * someone else's comment can be reported (target `space_post_comment`)
+ * and its author blocked, and a blocked author's comments drop out of the
+ * list. Those happen in the sheet, in place of the list (CommentPanels).
+ * Objectionable text is refused before it is sent, with the sentence the
+ * callable refuses it with.
  *
  * Reads are tap-gated by construction: the sheet only mounts its fetch
  * when opened. Adds/deletes report a count delta up so the card's
@@ -47,10 +62,19 @@ export default function SpaceCommentSheet({
 }) {
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
+  const { blocked } = useBlockedUsers();
   const [comments, setComments] = useState<SpacePostComment[] | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  /* One comment being acted on (options, report, block, delete) shows in
+     place of the list; null is the list. A closed sheet reopens on the
+     list. */
+  const [panel, setPanel] = useState<CommentPanel | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setPanel(null);
+  }
   const loadedForRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -77,6 +101,13 @@ export default function SpaceCommentSheet({
     // Comments are public content: the callable refuses an unverified
     // email. Held here as well as on the button.
     if (!user || !trimmed || sending || gate.needsVerification) return;
+    // The word filter, caught before the round-trip. The callable is the
+    // boundary and refuses the same text with the same sentence.
+    if (containsProfanity(trimmed)) {
+      toast.error(OBJECTIONABLE_COMMENT_MESSAGE);
+      haptic("error");
+      return;
+    }
     setSending(true);
     haptic("light");
     try {
@@ -130,54 +161,90 @@ export default function SpaceCommentSheet({
     }
   };
 
+  /* A blocked author's comments drop out, as their posts drop out of the
+     space (Space.tsx). Your own are never in the blocked set. */
+  const visibleComments =
+    comments?.filter((c) => !c.authorId || !blocked.has(c.authorId)) ?? null;
+
   return (
-    <>
-      <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
+    <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
+      {panel ? (
+        <div className="overflow-y-auto min-h-0 px-4 py-3">
+          <CommentPanels
+            panel={panel}
+            onChange={setPanel}
+            reportTarget={(comment) => ({
+              targetType: "space_post_comment",
+              targetId: spacePostCommentReportTargetId(
+                spaceId,
+                postId,
+                comment.id
+              ),
+            })}
+            onDelete={(comment) => void remove(comment.id)}
+          />
+        </div>
+      ) : (
         <div className="px-4 space-y-3 pb-2">
-          {comments === null && (
+          {visibleComments === null && (
             <div className="flex items-center justify-center py-6">
               <Spinner size="sm" variant="muted" label="Loading comments" />
             </div>
           )}
 
-          {comments !== null && comments.length === 0 && (
+          {visibleComments !== null && visibleComments.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
               No comments yet — start the thread.
             </p>
           )}
 
-          {comments?.map((c) => (
-            <div key={c.id} className="flex items-start gap-2.5">
-              <Avatar
-                photoURL={c.authorPhotoURL}
-                displayName={c.authorName || "Athlete"}
-                size="sm"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {c.authorName || "Athlete"}
-                  </p>
-                  <span className="text-caption text-muted-foreground shrink-0">
-                    {c.createdAt?.toDate
-                      ? getTimeAgo(c.createdAt.toDate())
-                      : ""}
-                  </span>
-                </div>
-                <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
-                  {c.text}
-                </p>
-              </div>
-              {user?.uid === c.authorId && (
-                <IconButton
-                  aria-label="Delete comment"
-                  onClick={() => setPendingDeleteId(c.id)}
-                  icon={<Trash2 className="size-4" />}
-                  className="text-muted-foreground"
+          {visibleComments?.map((c) => {
+            const isOwn = user?.uid === c.authorId;
+            return (
+              <div key={c.id} className="flex items-start gap-2.5">
+                <Avatar
+                  photoURL={c.authorPhotoURL}
+                  displayName={c.authorName || "Athlete"}
+                  size="sm"
                 />
-              )}
-            </div>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {c.authorName || "Athlete"}
+                    </p>
+                    <span className="text-caption text-muted-foreground shrink-0">
+                      {c.createdAt?.toDate
+                        ? getTimeAgo(c.createdAt.toDate())
+                        : ""}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
+                    {c.text}
+                  </p>
+                </div>
+                {isOwn ? (
+                  <IconButton
+                    aria-label="Delete comment"
+                    onClick={() => setPanel({ kind: "delete", comment: c })}
+                    icon={<Trash2 className="size-4" />}
+                    className="text-muted-foreground"
+                  />
+                ) : c.authorId ? (
+                  // Someone else's comment: Report and Block user.
+                  <IconButton
+                    aria-label={
+                      c.authorName
+                        ? `More options for ${c.authorName}'s comment`
+                        : "More options for this comment"
+                    }
+                    onClick={() => setPanel({ kind: "options", comment: c })}
+                    icon={<MoreHorizontal className="size-4" />}
+                    className="text-muted-foreground"
+                  />
+                ) : null}
+              </div>
+            );
+          })}
 
           {user && gate.needsVerification && (
             <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
@@ -204,21 +271,7 @@ export default function SpaceCommentSheet({
             </div>
           )}
         </div>
-      </BottomSheet>
-      <ConfirmDialog
-        open={pendingDeleteId !== null}
-        title="Delete comment?"
-        description="This can't be undone."
-        confirmLabel="Delete"
-        destructive
-        overSheet
-        onConfirm={() => {
-          const id = pendingDeleteId;
-          setPendingDeleteId(null);
-          if (id) void remove(id);
-        }}
-        onCancel={() => setPendingDeleteId(null)}
-      />
-    </>
+      )}
+    </BottomSheet>
   );
 }

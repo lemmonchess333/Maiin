@@ -26,8 +26,9 @@
 const DEFAULT_ALERT_EMAIL = "support@troposfit.com";
 const DEFAULT_TIMEOUT_MS = 8000;
 
-/** Labels for the reasons the report form offers. Mirrors CATEGORIES in
- *  src/components/social/ReportModal.tsx. */
+/** Labels for the reasons the report form offers: mirrors the labels in
+ *  src/lib/reportCategories.ts, pinned by
+ *  src/lib/__tests__/reportTargets.cross.test.ts. */
 const CATEGORY_LABELS = Object.freeze({
   harassment: "Harassment or bullying",
   spam: "Spam or misleading",
