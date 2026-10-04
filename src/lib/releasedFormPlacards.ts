@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "box-jumps": placard(
+    "box-jumps",
+    ["Quads", "Glutes"],
+    ["Calves"],
+    [
+      [0, "Setup", "Face the box; keep your knees soft."],
+      [0.2, "Load", "Dip slightly; swing both arms behind you."],
+      [0.4, "Jump", "Drive upward; bring both feet forward."],
+      [0.6, "Land", "Land softly with both feet together."],
+      [0.8, "Stand", "Stand fully upright on the box."],
+      [1, "Step Down", "Step down backward; lower one foot first."],
+    ]
+  ),
   "battle-ropes": placard(
     "battle-ropes",
     ["Front deltoids"],

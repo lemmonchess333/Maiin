@@ -1,0 +1,260 @@
+{
+  "generator": "Built-in imagegen; authorized uniform scene framing and stationary equipment/contact copies",
+  "selectedGenerationIds": [
+    "93cb17e3-9f0f-4e50-80f1-7d8bef730edb",
+    "2a5d71da-ae9f-456c-93f6-a2316824d449",
+    "59601859-e6be-4c62-9657-75d5b56d012f",
+    "2703b54b-73e0-49c0-844f-15afeeb1bcf2",
+    "411da951-e971-4396-b95d-fc006742654b",
+    "95d60df4-9f6f-418a-b84c-9b605899bf6f"
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "file": "1.png",
+      "sha256": "d5787915a98e0ce641173d968569917e9d15ea0dd874dfb08f92dd4960b9d7b3"
+    },
+    {
+      "file": "2.png",
+      "sha256": "50c99174f435f99c8b25e343054affb9409b18be2820862d95817aedd6291ee2"
+    },
+    {
+      "file": "3.png",
+      "sha256": "595cf290140654a7986f0b740fba61fe6ba9771362a74637ad3b7204e344b277"
+    },
+    {
+      "file": "4.png",
+      "sha256": "00ac41c3fc51c2fb81b2a3bdb833c366d245d17c5749f27631f11ffc3d7369aa"
+    },
+    {
+      "file": "5.png",
+      "sha256": "8bfa6f4015cc93ed3cd1123a0644e18e79e71753dd839969864f909dfd596ef9"
+    },
+    {
+      "file": "6.png",
+      "sha256": "93bc148f4d883ff757fd338aab7e92650f708d443ffe3b1fa553d31503e5fb9e"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 300,
+      "top": 30,
+      "width": 850,
+      "height": 920
+    },
+    "report": [
+      {
+        "file": "1-master.png",
+        "excludedVisiblePixels": 0
+      },
+      {
+        "file": "2-load-candidate.png",
+        "excludedVisiblePixels": 0
+      },
+      {
+        "file": "3-flight-candidate.png",
+        "excludedVisiblePixels": 0
+      },
+      {
+        "file": "4-landing-candidate.png",
+        "excludedVisiblePixels": 0
+      },
+      {
+        "file": "5-proportion-candidate.png",
+        "excludedVisiblePixels": 0
+      },
+      {
+        "file": "6-stepdown-aligned.png",
+        "excludedVisiblePixels": 0
+      }
+    ]
+  },
+  "boxRepair": {
+    "source": "review-1.png",
+    "rect": {
+      "left": 400,
+      "top": 695,
+      "width": 345,
+      "height": 195
+    },
+    "frames": [2, 3, 4, 5, 6],
+    "scope": "Stationary box front and side below the top surface. Rectangle contains no athlete pixels; feet and anatomy unchanged."
+  },
+  "contactRepair": [
+    {
+      "source": 1,
+      "target": 2,
+      "rect": {
+        "left": 140,
+        "top": 818,
+        "width": 118,
+        "height": 62
+      }
+    },
+    {
+      "source": 1,
+      "target": 2,
+      "rect": {
+        "left": 258,
+        "top": 820,
+        "width": 80,
+        "height": 25
+      }
+    },
+    {
+      "source": 4,
+      "target": 5,
+      "rect": {
+        "left": 474,
+        "top": 640,
+        "width": 183,
+        "height": 54
+      }
+    }
+  ],
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearSole": {
+          "x": 205,
+          "y": 861
+        },
+        "farSole": {
+          "x": 283,
+          "y": 832
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearSoleBandWidth": 80,
+        "farSoleBandWidth": 66
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearSole": {
+          "x": 205,
+          "y": 861
+        },
+        "farSole": {
+          "x": 283,
+          "y": 832
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearSoleBandWidth": 80,
+        "farSoleBandWidth": 66
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearTopSole": {
+          "x": 541,
+          "y": 689
+        },
+        "farTopSole": {
+          "x": 616,
+          "y": 674
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearTopSoleBandWidth": 74,
+        "farTopSoleBandWidth": 60
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearTopSole": {
+          "x": 541,
+          "y": 689
+        },
+        "farTopSole": {
+          "x": 616,
+          "y": 674
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearTopSoleBandWidth": 74,
+        "farTopSoleBandWidth": 60
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}

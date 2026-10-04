@@ -4861,6 +4861,23 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("return to a braced plank");
         continue;
       }
+      if (id === "box-jumps") {
+        // Flight, landing and the backward step-down are successive phases.
+        // Reversing a scalar jump would incorrectly show jumping down.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Setup",
+          "Load",
+          "Jump",
+          "Land",
+          "Stand",
+          "Step Down",
+        ]);
+        expect(beats[3].cue).toContain("both feet together");
+        expect(beats[4].cue).toContain("fully upright");
+        expect(beats[5].cue).toContain("Step down backward");
+        continue;
+      }
       if (id === "mountain-climbers") {
         // Each leg returns to plank before the opposite leg starts. The
         // scalar knee-drive amount reverses at that deliberate reset.

@@ -75,6 +75,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 1,
   },
+  "box-jumps": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 850,
+    height: 920,
+    reference: 1,
+  },
   burpees: {
     folder: "2026-10-04",
     version: "anatomy-v3-2026-10-04",

@@ -127,6 +127,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00",
     sha256: "62ca3976d9beff700eef308f8a74185ca9925b91c7b46fbbf21788e72acdb9be",
   },
+  "box-jumps": {
+    src: "form-art/box-jumps.webp",
+    width: 470,
+    height: 480,
+    keyed: true,
+    source: "form-frames/box-jumps/1.webp",
+    sourceSha256:
+      "6e7e7789bb01c3b4ff01ff56aac1fd5f516351972f6298ae0f4bb742066661bd",
+    sha256: "80df33fb3bcbb60ee8ad63841e53798e9ace4b94af1d631a4442d766f6f74edf",
+  },
   burpees: {
     src: "form-art/burpees.webp",
     width: 126,
