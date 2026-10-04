@@ -373,15 +373,13 @@ export default function PrivacyPolicy() {
                 prevent purchase theft. Expired records are removed by scheduled
                 retention policies; removal is not instantaneous. An outstanding
                 subscription cancellation request is kept until it is resolved.
-                Deletion also leaves: the record that an account has used its
-                free trial, which stops a second free trial; records of
-                password-reset requests, which hold the email address a reset
-                was asked for; and the records of Apple&apos;s subscription
-                notifications, kept so each is handled once. Outside Tropos,
-                RevenueCat keeps its subscription records, Stripe keeps its
-                records of any purchase made on the web, and Google keeps
-                analytics data under its Google Analytics retention settings,
-                each under its own policy.
+                Deletion also leaves records of password-reset requests, which
+                hold the email address a reset was asked for, and the records of
+                Apple&apos;s subscription notifications, kept so each is handled
+                once. Outside Tropos, RevenueCat keeps its subscription records,
+                Stripe keeps its records of any purchase made on the web, and
+                Google keeps analytics data under its Google Analytics retention
+                settings, each under its own policy.
               </li>
               <li>
                 <strong className="text-foreground">
