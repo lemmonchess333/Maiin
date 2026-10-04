@@ -1062,7 +1062,15 @@ service cloud.firestore {
         // Winter and spring additions
         'valencia-marathon', 'houston-marathon', 'seville-marathon',
         'brighton-half', 'tokyo-marathon', 'cambridge-half',
-        'bath-half', 'barcelona-marathon'
+        'bath-half', 'barcelona-marathon',
+        'sydney-marathon',
+        'amsterdam-marathon',
+        'rotterdam-marathon',
+        'copenhagen-marathon',
+        'oxford-half',
+        'great-bristol-10k',
+        'edinburgh-5k',
+        'river-ness-5k'
       ];
     }
 

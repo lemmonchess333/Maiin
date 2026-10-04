@@ -18,7 +18,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
@@ -133,6 +133,34 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+it("requires London's assigned day and sends that day to the training editor", async () => {
+  function TrainingDestination() {
+    const location = useLocation();
+    return <output data-testid="training-query">{location.search}</output>;
+  }
+  render(
+    <MemoryRouter initialEntries={["/space/london-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+        <Route path="/settings/run-plan" element={<TrainingDestination />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  const train = await screen.findByRole("button", {
+    name: "Train for this race",
+  });
+  expect(screen.getByText("24–25 April 2027")).toBeInTheDocument();
+  expect(train).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Your assigned race day"), {
+    target: { value: "2027-04-24" },
+  });
+  expect(train).toBeEnabled();
+  fireEvent.click(train);
+  expect(await screen.findByTestId("training-query")).toHaveTextContent(
+    "date=2027-04-24"
+  );
+});
+
 describe("Space page", () => {
   it("hides the retired coach posts and puts the pinned team note above the members", async () => {
     seedFirestore({
@@ -237,4 +265,24 @@ describe("Space page", () => {
       "false"
     );
   });
+});
+
+it("shows an expired race as awaiting its next edition without a training action", async () => {
+  vi.setSystemTime(new Date("2099-01-01T12:00:00Z"));
+  render(
+    <MemoryRouter initialEntries={["/space/berlin-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  expect(
+    await screen.findByText("Next date to be announced")
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Train for this race/i })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /Visit official website/i })
+  ).toHaveAttribute("href", "https://www.bmw-berlin-marathon.com/en/");
 });

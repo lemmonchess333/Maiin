@@ -54,6 +54,14 @@ const SPACE_IDS = Object.freeze([
   "cambridge-half",
   "bath-half",
   "barcelona-marathon",
+  "sydney-marathon",
+  "amsterdam-marathon",
+  "rotterdam-marathon",
+  "copenhagen-marathon",
+  "oxford-half",
+  "great-bristol-10k",
+  "edinburgh-5k",
+  "river-ness-5k",
 ]);
 
 module.exports = { SPACE_IDS };

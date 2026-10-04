@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6040411,
+  "total": 6042997,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2555,
@@ -265,7 +265,7 @@
     "socialApi": 7400,
     "socialPreferenceKeys": 356,
     "Space": 25752,
-    "spaceDefs": 12367,
+    "spaceDefs": 14953,
     "spaceTypes": 12610,
     "sparkles": 495,
     "star": 473,

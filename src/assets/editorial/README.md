@@ -151,3 +151,15 @@ future course. The scope and date sources are documented in
 | southampton-marathon   | Colin Osborne      | [Photo](https://unsplash.com/photos/a-marina-filled-with-lots-of-boats-next-to-tall-buildings-7w4nbbYLJKY)      |
 | boston-marathon        | Jun Ren            | [Photo](https://unsplash.com/photos/w5PnmpqSX_s)                                                                |
 | berlin-marathon        | Xander Gonera      | [Photo](https://unsplash.com/photos/the-brandenburg-gate-in-berlin-germany-EmGJdoIvp3A)                         |
+### Race catalogue and missing covers — 2026-10-04
+
+Sixteen licensed Unsplash destination photographs cover the eight new races
+and the eight existing races that had no photograph. All 42 races now have a
+local cover. Credits, source and licence links, original/output hashes and crop
+details are recorded in
+[`sources-race-expansion-2026-10-04.json`](./sources-race-expansion-2026-10-04.json).
+
+The images retain their original colour, ship at 1000–1200 px wide and remain
+under 120 KB each. Review covered directory cards in both themes, the wider
+393 × 176 Space-header crop, and 3× brightness. These are destination images,
+not official race photography or a promise about the course.

@@ -3,9 +3,9 @@ name: Sync race events to Firestore
 # RACE-EVENTS-REMOTE (locked 2026-07-20): on merge to main, mirror the
 # race event blocks from spaceDefs.ts into `config/raceEvents` so date
 # updates reach every platform — including native binaries that
-# haven't updated — without an app release. Git stays the source of
-# truth; this workflow is the ONLY writer of the doc (rules deny all
-# client writes), so drift is structurally impossible.
+# haven't updated — without an app release. Retain dates verified by the
+# daily refresher unless a reviewed bundled-date change supersedes them.
+# Both Admin writers share a concurrency group; client writes are denied.
 
 on:
   push:
@@ -13,8 +13,14 @@ on:
       - main
     paths:
       - "src/features/spaces/spaceDefs.ts"
+      - "scripts/sync-race-events.ts"
+      - "scripts/races/remote-events.ts"
   # Manual trigger for the first backfill run / re-sync on demand.
   workflow_dispatch:
+
+concurrency:
+  group: race-events-writer
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -24,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
