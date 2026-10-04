@@ -124,6 +124,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "chest-supported-db-row": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1100,
+    height: 980,
+    reference: 1,
+  },
   "clean-and-press": {
     folder: "2026-10-02",
     version: "anatomy-v3-2026-10-02",

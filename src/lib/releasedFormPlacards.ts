@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "chest-supported-db-row": placard(
+    "chest-supported-db-row",
+    ["Mid Back"],
+    ["Rhomboids", "Rear Delts", "Biceps"],
+    [
+      [0, "Stretch", "Let both dumbbells hang below your shoulders."],
+      [0.5, "Row", "Pull with your chest on the pad."],
+      [1, "Hips", "Row both dumbbells toward your hips."],
+      [1, "Squeeze", "Briefly squeeze your shoulder blades together."],
+      [0.5, "Lower", "Lower both weights under control."],
+      [0, "Return", "Fully extend; keep your chest supported."],
+    ]
+  ),
   "db-row": placard(
     "db-row",
     ["Lats"],

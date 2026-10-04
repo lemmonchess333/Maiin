@@ -197,6 +197,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30",
     sha256: "743de2f9a7c0585e3d4c3f1c68eac55a21363e5857757ece539ea975133772ed",
   },
+  "chest-supported-db-row": {
+    src: "form-art/chest-supported-db-row.webp",
+    width: 480,
+    height: 428,
+    keyed: true,
+    source: "form-frames/chest-supported-db-row/1.webp",
+    sourceSha256:
+      "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e",
+    sha256: "beb4222028105ad646fe4da80eecc0f6facb25de5071fdfd03d106cc092f2e4b",
+  },
   "clean-and-press": {
     src: "form-art/clean-and-press.webp",
     width: 480,

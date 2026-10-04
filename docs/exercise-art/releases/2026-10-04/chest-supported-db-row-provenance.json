@@ -1,0 +1,280 @@
+{
+  "generator": "Historical built-in imagegen poses plus built-in equipment cleanup; authorized fixed equipment/contact copies and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "historicalSource": "docs/exercise-art/pilots/repairs-20260921/chest-supported-db-row",
+  "historicalRepairGenerationIds": null,
+  "historicalRepairIdNote": "Not recorded; pre-repair generation IDs are not attributed to repaired images.",
+  "selectedCleanupGenerationIds": [
+    "ac8aeb01-e7dc-482a-a00f-bdec1a32175c",
+    "0c0d8876-d1be-45bd-bf68-c7656f8a5fc7"
+  ],
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-recovered.png",
+      "sha256": "facd5247eb6b45fade298dd250ddf789428b9a8f808bf11a59c1607cf7e86505"
+    },
+    {
+      "file": "originals/2-recovered.png",
+      "sha256": "6c01ec0b4667c434eeccd3c35481c92b21ed6ca3164632681c3b7cf7d375fff2"
+    },
+    {
+      "file": "originals/3-recovered.png",
+      "sha256": "ca932d6fc16f5944b5c95065a4c3c3ef85804a8a249a67476afc986fa3b303b3"
+    },
+    {
+      "file": "originals/1-pad-cleaned.png",
+      "sha256": "5d3fd6e584cb39352bb753a7917b6aa6f982e5a66bc565c4e3bbad0b128b8b21"
+    },
+    {
+      "file": "originals/2-pad-cleaned.png",
+      "sha256": "e72fa346531a6124a670567bcde4b024edcfbfc8b1acc6d12761cebd46418067"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "88c7e66a48c2d2e8b2720b456fff7873920cbf88134be90004413cb6e2c7f531"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "dfe2a788864cb31b9dcfb7cc2ccc6181683347a4a202222ee89e64817fef1a18"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "335f0e22cad69f61fdbd6e80247ce625bbb51417f22f8c2678dae603504f50c5"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "335f0e22cad69f61fdbd6e80247ce625bbb51417f22f8c2678dae603504f50c5"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "dfe2a788864cb31b9dcfb7cc2ccc6181683347a4a202222ee89e64817fef1a18"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "88c7e66a48c2d2e8b2720b456fff7873920cbf88134be90004413cb6e2c7f531"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 260,
+      "top": 0,
+      "width": 1100,
+      "height": 980
+    },
+    "regions": [
+      {
+        "left": 930,
+        "top": 680,
+        "width": 180,
+        "height": 115
+      },
+      {
+        "left": 1150,
+        "top": 725,
+        "width": 195,
+        "height": 145
+      }
+    ],
+    "evidence": [
+      {
+        "frame": 1,
+        "pose": 1,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 2,
+        "pose": 2,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 3,
+        "pose": 3,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 4,
+        "pose": 3,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 5,
+        "pose": 2,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 6,
+        "pose": 1,
+        "outsideVisiblePixels": 0
+      }
+    ],
+    "method": "Common crop without scaling; equipment pilot plus exact stationary planted-shoe source copies. Not yet release approved."
+  },
+  "benchRepair": {
+    "reference": "2-pad-cleaned.png",
+    "benchPoly": "738,530 806,537 812,589 932,803 1057,842 1057,895 523,955 282,905 282,815 622,784 678,660 722,530",
+    "foregroundPoly": "568,517 675,517 675,627 699,638 716,663 714,693 704,715 669,724 648,708 568,714",
+    "method": "Equipment-only lower metalwork master-copy polygon and front-foot rectangle (430,875,105,85); no brightness filtering, no pad-tip overlay; original foreground arm/weight pixels restored without transformation in start pose. Pilot requires native join and occlusion inspection before use."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}

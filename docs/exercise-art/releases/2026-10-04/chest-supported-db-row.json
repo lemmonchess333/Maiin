@@ -1,0 +1,240 @@
+{
+  "exerciseId": "chest-supported-db-row",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1100,
+  "height": 980,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T23:29:02.416Z",
+  "reference": {
+    "path": "form-frames/chest-supported-db-row/1.webp",
+    "sha256": "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e"
+  },
+  "cueSha256": "54ca3735623b04b570d1498e173a0afb03c7e4ddc3d0aba98bcbc601eaa92985",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, smooth neutral featureless pelvis and white trainers retained. Canonical hash matches the historical repair provenance. No moving anatomy transformed in code."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter side camera facing left; common1100x980 crop from1536x1024 sources, no scaling and zero excluded visible pixels."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three unique native poses inspected. Both elbows flex and travel back, wrists remain neutral, chest remains on inclined pad and feet stay planted. No torso heave."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two compact grey hex dumbbells stay attached to neutral grips. Lower bench metalwork copied identically from cleaned intermediate pose with exact foreground restoration in start. Broad pad-tip and brightness-filter methods rejected; final narrow polygon retains clean pad contour and solid bolts."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Four pixel-derived floor contacts and three invariant dimensions identical in six exports: both bench feet, both soles, bench support span and shoe widths. Chest-pad and hand-dumbbell contacts reviewed visually."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Exact catalogue chest-supported two-dumbbell row on inclined bench. Full stretch, pull toward hips, peak squeeze and controlled return. No unsupported single-arm substitution."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple mid/upper back emphasis with lighter lilac rear-deltoid and biceps regions. Anterior/lateral shoulders, legs and forearms remain white-grey; historical shoulder-colour repairs retained."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match stretch,row,hips,squeeze,lower,return. Scalar0,.5,1,1,.5,0 and sequence1,2,3,3,2,1 include deliberate peak hold and matching return configurations."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames manually stepped through all six and6to1 in both themes after final narrow-mask repair. Stable framing and stationary support contacts."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six1100x980 frames and6to1 inspected at390x844 in actual ExerciseFormFrames light mode on2026-10-05. Full equipment, athlete, captions and controls visible."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames dark mode on2026-10-05. No clipping or visible equipment jumps; muscle hierarchy and cues readable."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Chest-supported dumbbell row",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": [
+        "frontBenchContact",
+        "rearBenchContact",
+        "farSole",
+        "nearSole"
+      ],
+      "dimensionNames": ["benchSupportSpan", "farShoeWidth", "nearShoeWidth"],
+      "evidence": "Pixel-derived floor edges and widths; exact master-copy stationary contact regions. Moving arm/dumbbell reviewed separately."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/chest-supported-db-row/1.webp",
+      "sha256": "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "path": "form-frames/chest-supported-db-row/2.webp",
+      "sha256": "6bd9c7f0bc42e21667e9ffcae57e8abfd10d5c23474c6265d6f4e14473bac1aa",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "path": "form-frames/chest-supported-db-row/3.webp",
+      "sha256": "09a746db296ae17c70e29d1b749c0882093bd02fbc03fa1c1fdc278c18711dc0",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "path": "form-frames/chest-supported-db-row/4.webp",
+      "sha256": "09a746db296ae17c70e29d1b749c0882093bd02fbc03fa1c1fdc278c18711dc0",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "path": "form-frames/chest-supported-db-row/5.webp",
+      "sha256": "6bd9c7f0bc42e21667e9ffcae57e8abfd10d5c23474c6265d6f4e14473bac1aa",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    },
+    {
+      "path": "form-frames/chest-supported-db-row/6.webp",
+      "sha256": "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e",
+      "anchors": {
+        "frontBenchContact": {
+          "x": 208,
+          "y": 946
+        },
+        "rearBenchContact": {
+          "x": 739,
+          "y": 888
+        },
+        "farSole": {
+          "x": 714,
+          "y": 789
+        },
+        "nearSole": {
+          "x": 945,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 534.1582162618114,
+        "farShoeWidth": 173,
+        "nearShoeWidth": 177
+      }
+    }
+  ]
+}
