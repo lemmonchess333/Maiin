@@ -1126,7 +1126,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 **The rule (when grilling):** before locking a decision that introduces user-visible abstractions, multi-step flows, or new state machines in our domain, consult what the dominant apps do for the same pattern. Surfacing concepts those apps hide is a sign we're overcomplicating; inventing concepts those apps don't have is fine when there's a Tropos-specific reason, but the bar is "explicitly justified," not "it sounded right."
 
-**Reference apps by domain** (audit summaries live in `CONTEXT.md`):
+**Reference apps by domain** (audit summaries live in `GLOSSARY.md`):
 
 - **Run tracking + training plans:** Strava, Nike Run Club, Garmin Connect, TrainingPeaks
 - **Food logging:** MyFitnessPal, Cronometer, MacroFactor, Lose It!
@@ -1140,7 +1140,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - If 3+ reference apps do X invisibly — Tropos should surface X only when there's an explicit Tropos-specific reason.
 - If 3+ reference apps do X with a one-tap confirmation — match that; don't gold-plate.
 - If 3+ reference apps don't have X at all — strong signal the feature doesn't justify the build.
-- When deviating, write the reason into `CONTEXT.md` so future grills can revisit it.
+- When deviating, write the reason into `GLOSSARY.md` so future grills can revisit it.
 
 ## Pre-launch QA backlog
 
@@ -1185,11 +1185,11 @@ calls with both options measured, and the ratchet baselines it left.
 
 ### Domain docs
 
-Single-context. `CONTEXT.md` at repo root (seed; fill with domain
-vocabulary as it crystallises); ADRs in `docs/adr/`. See
-`docs/agents/domain.md`. The domain skills call the glossary
-`GLOSSARY.md`: here it is `CONTEXT.md`'s "Domain glossary" section. Update
-that, and don't create a `GLOSSARY.md`.
+Single-context. `GLOSSARY.md` at repo root holds the domain terms (its
+"Domain glossary" section) and the reference-app research; ADRs are in
+`docs/adr/`. See `docs/agents/domain.md`. It was `CONTEXT.md` until
+2026-10-04, and plan-file rows and ADRs from before then still call it that.
+Don't create a `GLOSSARY-MAP.md`: this repo has one context.
 
 Training-programming evidence handoffs (integrated 2026-08-09): start at
 `docs/training-programming-claude-handoff.md`, which indexes the lifting

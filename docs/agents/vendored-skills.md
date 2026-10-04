@@ -80,9 +80,9 @@ listed.
   did, the hook reworded v1.3.1's new copies, and in `to-questionnaire` it
   merged an example's last line into its closing tag. A new repo-owned
   skill needs its own `!` line there to be formatted.
-- **The glossary file:** upstream's domain skills call it `GLOSSARY.md`; this
-  repo's is `CONTEXT.md` (see `docs/agents/domain.md`). Leave the skills'
-  wording alone. The mapping lives in this repo's config, not in the copies.
+- **The glossary file:** this repo's is `GLOSSARY.md`, the name upstream's
+  domain skills use (it was `CONTEXT.md` until 2026-10-04), so the copies
+  need no mapping. `docs/agents/domain.md` says what is in it.
 - **react-doctor:** `npm pack react-doctor@latest`, then copy
   `package/dist/skills/react-doctor/`. `npm run doctor` already runs the
   latest CLI, so only the skill text can fall behind.

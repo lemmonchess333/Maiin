@@ -1,6 +1,6 @@
 # Tropos — Competitive Analysis & Gap Backlog
 
-**Date:** 2026-05-29 · **Method:** web research (2026 reviews, official feature pages, app-store listings, teardowns, Reddit/YouTube) synthesised by 5 parallel research agents, plus the existing run-domain audit in `CONTEXT.md`. **Honesty caveat:** this is research-synthesis, _not_ hands-on app usage — we could not install/drive the iOS apps. Treat specific numbers (pricing, accuracy %) as "as reported," re-verify before quoting externally.
+**Date:** 2026-05-29 · **Method:** web research (2026 reviews, official feature pages, app-store listings, teardowns, Reddit/YouTube) synthesised by 5 parallel research agents, plus the existing run-domain audit in `GLOSSARY.md`. **Honesty caveat:** this is research-synthesis, _not_ hands-on app usage — we could not install/drive the iOS apps. Treat specific numbers (pricing, accuracy %) as "as reported," re-verify before quoting externally.
 
 **Scope:** Run/plans (Strava, Nike Run Club, Garmin Connect, TrainingPeaks, Runna) · Food (MyFitnessPal, Cronometer, MacroFactor, Lose It!) · Lifting (Hevy, Strong, Fitbod) · Weight (Renpho, Withings, Happy Scale) · Streaks/Social (Duolingo, Apple Activity, Strava-social).
 
@@ -14,7 +14,7 @@ Tropos is a pre-launch **hybrid** app doing run-tracking + periodised run plans 
 
 - **The hybrid thesis is real and underserved.** Strava=run/social, MacroFactor=food, Hevy=lift — each owns one lane. The runner-who-lifts / lifter-who-runs has to stitch 3 apps together. TrainingPeaks adding strength and Runna's _weak_ strength side both validate the intersection Tropos targets.
 - **Adaptive nutrition is genuinely best-in-class.** Adaptive TDEE from weight trend + plateau detection + **day-type macro targeting (lift/run/rest)** is exactly MacroFactor's moat — the category gold standard — _plus_ a cross-domain twist (fuel by training load) no single-domain app can do. **(2026-06-02 correction: the _day-type macros_ part is real and shipped; _adaptive TDEE from weight trend_ is NOT built yet — TDEE is static Mifflin. Being built in #976. The SWOT "S" claims on lines below that cite an adaptive-TDEE engine are aspirational until then.)**
-- **Adaptive training + graceful failure.** Auto-enter recovery (a Tropos innovation per `CONTEXT.md`) and the just-shipped **one-tap Realign / finish-safely** loop match or beat Garmin's adaptive coaching and Runna's "Not Feeling 100%" — and beat NRC/Strava's static plans outright.
+- **Adaptive training + graceful failure.** Auto-enter recovery (a Tropos innovation per `GLOSSARY.md`) and the just-shipped **one-tap Realign / finish-safely** loop match or beat Garmin's adaptive coaching and Runna's "Not Feeling 100%" — and beat NRC/Strava's static plans outright.
 - **Lifting intelligence foundation:** performance index (0-100), load bands, deload detection, muscle-group body diagram — Fitbod-class concepts already in the engine.
 - **Multi-modal food capture** (camera AI/Gemini, NL, voice, barcode) matches Lose It!/MacroFactor.
 - Calm, anti-anxiety design; offline queue; pre-launch agility (can build the right primitives before legacy debt).

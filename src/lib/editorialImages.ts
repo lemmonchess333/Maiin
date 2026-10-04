@@ -7,7 +7,7 @@
  * while their peer activity feeds stay user-generated content. Tropos
  * follows the same line: photography here powers editorial cards; the
  * activity feed keeps user-data imagery (route scenes, muscle
- * figures). Recorded in CONTEXT.md under "Editorial imagery".
+ * figures). Recorded in GLOSSARY.md under "Editorial imagery".
  *
  * HOW TO ADD PHOTOS (operator): drop licensed images (Unsplash /
  * Pexels licence or owned) into `src/assets/editorial/` using the
