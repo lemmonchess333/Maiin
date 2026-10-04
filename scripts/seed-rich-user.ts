@@ -486,9 +486,9 @@ async function main() {
       participantCount: 84,
     });
 
-  // One follow relationship: Social's solo-first gate (isNewUser =
-  // 0 follows) suppresses the activity list entirely, so
-  // without this the seeded cards above never render on any sub-tab.
+  // One follow relationship: Social's zero-follow gate once hid the
+  // activity list entirely (the solo-first layout, retired in Soc12), so
+  // without it the seeded cards above never rendered on any sub-tab.
   // The rich user is by definition established — a 1-follow graph is
   // the honest fixture (Following stays locked until 3, Explore shows
   // the community cards).
