@@ -26,7 +26,7 @@ function noisy(t) {
     /net::ERR/i,
     /identitytoolkit/i,
     /Failed to load resource.*(404|503)/i,
-    /open-meteo/i,
+    /getCurrentWeather/i,
     /openfreemap/i,
   ].some((re) => re.test(t));
 }

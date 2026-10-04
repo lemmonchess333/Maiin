@@ -41,6 +41,9 @@
          style-src needs nothing for it. basemap.test.ts holds this list
          to the origin the maps use.
 
+         There is no weather host: the phone asks the getCurrentWeather
+         callable (*.cloudfunctions.net), which asks MET Norway.
+
          form-action 'self': no form posts anywhere but the app's own
          origin (Stripe Checkout is a redirect, not a form post). The
          anti-framing directive, frame-ancestors, is deliberately NOT
@@ -61,7 +64,6 @@
         https://*.appspot.com
         https://*.cloudfunctions.net
         https://world.openfoodfacts.org
-        https://api.open-meteo.com
         https://tiles.openfreemap.org
         https://raw.githubusercontent.com
         https://js.stripe.com

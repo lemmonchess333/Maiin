@@ -1,43 +1,70 @@
 /**
- * Weather Pre-Run Tips — Open-Meteo API, 10-minute cache, activity-aware tips.
+ * Weather pre-run tips: the current weather for the run setup strip, a
+ * 10-minute cache, and activity-aware tips.
+ *
+ * The phone does not call a weather service. It sends its position,
+ * rounded to two decimal places (about a kilometre), to Tropos's
+ * getCurrentWeather callable (functions/weather.js), which asks MET
+ * Norway. MET sees neither the phone's address nor a precise place. Until
+ * 2026-10 this called Open-Meteo's free API directly with full-precision
+ * coordinates: that API is for non-commercial use only, and its licence
+ * needed a credit the app never showed.
+ *
+ * MET's data is CC BY 4.0, so wherever weather shows, WEATHER_CREDIT goes
+ * with it. The weather codes are WMO's, which the server maps MET's
+ * symbols onto (weatherSymbols.cross.test.ts holds the two together); the
+ * description is MET's own wording.
  */
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 export interface WeatherData {
   temperature: number;
   feelsLike: number;
   humidity: number;
+  /** km/h, which the tips below are written in. */
   windSpeed: number;
   weatherCode: number;
   description: string;
 }
 
+/** The credit MET Norway's licence asks for, shown wherever weather is. */
+export const WEATHER_CREDIT = "Weather data from MET Norway";
+
 // 10-minute module-level cache
 let cachedWeather: { data: WeatherData; timestamp: number } | null = null;
 const CACHE_TTL = 10 * 60 * 1000;
 
-const WMO_CODES: Record<number, string> = {
-  0: "Clear sky",
-  1: "Mainly clear",
-  2: "Partly cloudy",
-  3: "Overcast",
-  45: "Fog",
-  48: "Rime fog",
-  51: "Light drizzle",
-  53: "Moderate drizzle",
-  55: "Dense drizzle",
-  61: "Slight rain",
-  63: "Moderate rain",
-  65: "Heavy rain",
-  71: "Slight snow",
-  73: "Moderate snow",
-  75: "Heavy snow",
-  80: "Slight rain showers",
-  81: "Moderate rain showers",
-  82: "Violent rain showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm with hail",
-  99: "Thunderstorm with heavy hail",
-};
+/** Two decimal places, about 1.1 km: all a forecast needs, and all the app
+ *  hands on. The server rounds again, for a client that does not. */
+export function roundCoord(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** The server's answer, if it has the shape the strip draws, as a copy
+ *  holding only those fields. */
+export function asWeatherData(value: unknown): WeatherData | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  const numbers = [
+    "temperature",
+    "feelsLike",
+    "humidity",
+    "windSpeed",
+    "weatherCode",
+  ] as const;
+  for (const key of numbers) {
+    if (typeof v[key] !== "number" || !Number.isFinite(v[key])) return null;
+  }
+  if (typeof v.description !== "string" || !v.description) return null;
+  return {
+    temperature: v.temperature as number,
+    feelsLike: v.feelsLike as number,
+    humidity: v.humidity as number,
+    windSpeed: v.windSpeed as number,
+    weatherCode: v.weatherCode as number,
+    description: v.description,
+  };
+}
 
 export async function getCurrentWeather(): Promise<WeatherData | null> {
   // Return cache if fresh
@@ -61,20 +88,16 @@ export async function getCurrentWeather(): Promise<WeatherData | null> {
       })
     );
 
-    const { latitude, longitude } = pos.coords;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code&timezone=auto`;
-    const res = await fetch(url);
-    const json = await res.json();
-    const c = json.current;
-
-    const data: WeatherData = {
-      temperature: Math.round(c.temperature_2m),
-      feelsLike: Math.round(c.apparent_temperature),
-      humidity: c.relative_humidity_2m,
-      windSpeed: Math.round(c.wind_speed_10m),
-      weatherCode: c.weather_code,
-      description: WMO_CODES[c.weather_code] || "Unknown",
-    };
+    const lookup = httpsCallable<{ lat: number; lon: number }, unknown>(
+      getFunctions(),
+      "getCurrentWeather"
+    );
+    const { data: answer } = await lookup({
+      lat: roundCoord(pos.coords.latitude),
+      lon: roundCoord(pos.coords.longitude),
+    });
+    const data = asWeatherData(answer);
+    if (!data) return null;
 
     cachedWeather = { data, timestamp: Date.now() };
     return data;

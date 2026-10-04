@@ -91,6 +91,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["MAPBOX_DIRECTIONS_TOKEN"],
   },
+  // The pre-run weather strip, from MET Norway (weather.js). MET needs no
+  // key, so nothing to provision: its terms ask for a User-Agent instead.
+  getCurrentWeather: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   releasePushDeviceToken: {
     kind: "callable",
     maxInstances: 100,
