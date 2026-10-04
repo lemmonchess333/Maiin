@@ -337,10 +337,7 @@ describe("GuideWalk", () => {
       // The Food stop sits below the fold: the walk scrolled the page.
       y = 420;
       fireEvent.click(await cardShown("Done"));
-      expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith({
-        top: 0,
-        behavior: "smooth",
-      });
+      expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 0 });
       // The mark waits for the page to come back before it flies home:
       // longer than the flight takes, and nothing has ended.
       await act(async () => {

@@ -18,7 +18,6 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { isWithinActivationWindow } from "@/lib/activationFraming";
 import { firstWeek, type FirstWeekItemKey } from "@/lib/firstWeek";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
-import GuideWalk from "@/components/guide/GuideWalk";
 import {
   guideAllowedHere,
   guideRequest,
@@ -104,6 +103,11 @@ const ProModal = lazyRetry(() => import("@/components/ProModal"));
 const DayActionSheet = lazyRetry(
   () => import("@/components/program/DayActionSheet")
 );
+
+/* FV1: the first-visit walk lazy-loads the same way. It runs in an
+   account's first seven days and on a replay, so it stays out of Home's
+   own chunk for everyone past their first week. */
+const GuideWalk = lazyRetry(() => import("@/components/guide/GuideWalk"));
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -1371,13 +1375,15 @@ export default function Home() {
       </AnimatePresence>
 
       {walk && (
-        <GuideWalk
-          key={walk.from}
-          stops={walk.stops}
-          fromHeader={walk.from !== "first-week-row"}
-          onStep={onWalkStep}
-          onClose={onWalkClose}
-        />
+        <Suspense fallback={null}>
+          <GuideWalk
+            key={walk.from}
+            stops={walk.stops}
+            fromHeader={walk.from !== "first-week-row"}
+            onStep={onWalkStep}
+            onClose={onWalkClose}
+          />
+        </Suspense>
       )}
 
       {/* ProModal for trial/upgrade strip */}

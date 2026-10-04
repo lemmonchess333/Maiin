@@ -66,9 +66,11 @@ function targetBand(): { top: number; bottom: number } {
 /**
  * Scrolls the page so the target, and the card beside it, are in view
  * when they aren't already. On a tall phone the first two stops need
- * nothing; the Food card sits below the fold on every phone.
+ * nothing; the Food card sits below the fold on every phone. No explicit
+ * behaviour: the stylesheet's scroll-behavior decides, smooth unless
+ * Reduce Motion is on (reducedMotionScroll.spec.ts).
  */
-function bringIntoView(el: HTMLElement, reduce: boolean) {
+function bringIntoView(el: HTMLElement) {
   const r = el.getBoundingClientRect();
   const band = targetBand();
   const screenBottom = window.innerHeight - 8;
@@ -76,10 +78,7 @@ function bringIntoView(el: HTMLElement, reduce: boolean) {
   const fitsBelow = inBand && r.bottom + CARD_ROOM <= screenBottom;
   const fitsAbove = inBand && r.top - CARD_ROOM >= band.top;
   if (fitsBelow || fitsAbove) return;
-  window.scrollBy({
-    top: r.top - band.top,
-    behavior: reduce ? "instant" : "smooth",
-  });
+  window.scrollBy({ top: r.top - band.top });
 }
 
 /** The header's mark, when it is on screen to fly from or back to. */
@@ -223,7 +222,7 @@ export default function GuideWalk({
         return;
       }
       if (startScroll.current === null) startScroll.current = window.scrollY;
-      bringIntoView(el, reduce);
+      bringIntoView(el);
       setTarget(el);
       setSpot(box(el.getBoundingClientRect()));
 
@@ -338,8 +337,7 @@ export default function GuideWalk({
     setClosing(true);
     const back = fromHeader ? startScroll.current : null;
     const scrollBack = back !== null && Math.abs(window.scrollY - back) > 1;
-    if (scrollBack)
-      window.scrollTo({ top: back, behavior: reduce ? "instant" : "smooth" });
+    if (scrollBack) window.scrollTo({ top: back });
     const slot = slotRef.current;
     if (!fromHeader || reduce || !markHome || !slot) {
       later(() => end(finished, index), FADE_S + 0.05);
