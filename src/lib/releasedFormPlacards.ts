@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "battle-ropes": placard(
+    "battle-ropes",
+    ["Front deltoids"],
+    ["Abs", "Forearms"],
+    [
+      [0, "Wave A", "Lift one hand; lower the other."],
+      [0.2, "Alternate", "Alternate arms; keep your knees softly bent."],
+      [0.4, "Switch", "Keep your torso still as hands switch."],
+      [0.6, "Wave B", "Lift the opposite hand; drive waves forward."],
+      [0.8, "Return", "Reverse arm positions without rocking your torso."],
+      [0, "Repeat", "Keep alternating; send waves toward the anchor."],
+    ]
+  ),
   "man-maker": placard(
     "man-maker",
     ["Chest", "Upper back", "Shoulders"],

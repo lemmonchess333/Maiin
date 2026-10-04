@@ -47,6 +47,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 3,
   },
+  "battle-ropes": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1536,
+    height: 1024,
+    reference: 1,
+  },
   "bench-dips": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

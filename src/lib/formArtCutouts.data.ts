@@ -77,6 +77,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a0c2d040ea999078cc2ad37d8fccb37577a70f3849bf4a60fb4e7f6fc9aa634f",
     sha256: "b6f830ff75247d29c6e125a2b76743f1815dfbb2300354e7b64622362bcbbcf6",
   },
+  "battle-ropes": {
+    src: "form-art/battle-ropes.webp",
+    width: 480,
+    height: 305,
+    keyed: true,
+    source: "form-frames/battle-ropes/1.webp",
+    sourceSha256:
+      "80c9779b804c9a3ccb4b3c7d14232dd37860eacbd4f92fc92aae2929e94c018d",
+    sha256: "be6e0cd3cb342a739e6af7d5091eb228c2bb7508be127047c6369754bc38c34b",
+  },
   "bench-dips": {
     src: "form-art/bench-dips.webp",
     width: 480,

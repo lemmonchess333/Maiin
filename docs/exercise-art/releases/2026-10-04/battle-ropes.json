@@ -1,0 +1,211 @@
+{
+  "exerciseId": "battle-ropes",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T17:29:50.362Z",
+  "reference": {
+    "path": "form-frames/battle-ropes/1.webp",
+    "sha256": "80c9779b804c9a3ccb4b3c7d14232dd37860eacbd4f92fc92aae2929e94c018d"
+  },
+  "cueSha256": "f01a91d2e09ece14ec66e9e075661bb2fd4d2fce56ccc0e2f0f4ea7d7039ff94",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey anatomical athlete, neutral pelvis and trainers. Canonical and exercise master supplied to imagegen edits; no code-generated moving anatomy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique camera and full1536x1024 composition. No per-pose scaling, crop or mirroring. Native views retain complete athlete, two rope branches and anchor."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All six native final frames inspected: wide planted stance, flexed knees and braced torso; opposing arm positions progress through a full cycle. Hands grip individual handles, wrists and elbows remain connected."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Exactly two continuous braided branches traced from the handles to a common anchor. Code equipment paths over imagegen poses, followed by imagegen material refinement. Crossing scans resolved apparent extra-strand shading in frame4: two bands match the pilot."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Authorized exact master copies of stationary shoes and anchor base. Final pixel-derived sole/base anchors and complete horizontal widths are identical in all six images. No ROI-clipped heights used."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Wave phase advances toward the fixed anchor across six positions and6to1. Planned projected arc lengths are constant1373/1213 pixels; final raster paths follow them closely by visible-pixel sampling and native review. This is an illustrative sequence, not a calibrated physical simulation or claim of exact world-space lengths."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Anterior deltoids strong purple, abdomen and forearms pale lilac, matching the existing Battle Ropes rig. Secondary muscles remain visually lighter."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues describe alternating arms, soft knees, stable torso and waves toward the anchor; each at most seven words and agrees with its visible pose."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6and6to1 reviewed manually. Opposing arms exchange height, waves move toward the anchor, shoes and camera stay fixed. Full rope paths remain in frame."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final reviewPNG1..6 and6to1 inspected in actual ExerciseFormFrames at390x844 light mode4October2026. Full figure, two ropes and anchor remain visible; labels and cues readable without clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6finalframes and6to1 inspected at390x844 dark mode. Athlete, wave silhouettes, muscle hierarchy and captions remain readable."
+    }
+  },
+  "airborneFrames": [],
+  "contactPhases": [
+    {
+      "name": "Planted feet and anchor",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["nearSoleEdge", "farSoleEdge", "anchorBaseEdge"],
+      "dimensionNames": ["nearShoeWidth", "farShoeWidth", "anchorBaseWidth"],
+      "evidence": "Exact stationary master copies; actual edge pixels and complete horizontal extents measured in all six final frames."
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/battle-ropes/1.webp",
+      "sha256": "80c9779b804c9a3ccb4b3c7d14232dd37860eacbd4f92fc92aae2929e94c018d",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "path": "form-frames/battle-ropes/2.webp",
+      "sha256": "968f8007eec8d3a7a94ab6c05f1b5c1470d84441c8054e34fa4d7a3031792859",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "path": "form-frames/battle-ropes/3.webp",
+      "sha256": "480e8a9570a5a1430a93896971f234b3b3ef52774ef5ce1d648530556f15b3f6",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "path": "form-frames/battle-ropes/4.webp",
+      "sha256": "60f10e4f3722229d425de6af9319a62463ca0eceb310a1b7182e165ae7efe8d9",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "path": "form-frames/battle-ropes/5.webp",
+      "sha256": "5a87100c9367ada0b601d90e366ee58eafd8d91968e64f68e08e0f504cf7e7b0",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "path": "form-frames/battle-ropes/6.webp",
+      "sha256": "5506a54a2064bc20f880773d5bc86976fa013438f83a8b95ee4e5be345ac2126",
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    }
+  ]
+}

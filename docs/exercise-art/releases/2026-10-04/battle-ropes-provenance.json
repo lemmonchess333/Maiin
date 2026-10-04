@@ -1,0 +1,491 @@
+{
+  "generator": "built-in imagegen with previously authorized equipment-only path construction and fixed-contact copies",
+  "selectedGenerationIds": [
+    "be4adf39-315e-4c8f-9dfb-d66ed8ee5cd7",
+    "29a45f1b-cff3-4e2d-94b2-2acd39fcd500",
+    "dad78997-bda0-488d-95eb-093d3d6a7c48",
+    "6114df15-1ece-48b9-9afc-20047dc7867b",
+    "31d054b3-7964-403b-ac19-1b4297642922",
+    "fd3eb663-397d-43d4-9973-9bd45ead991d"
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "file": "1.png",
+      "sha256": "b3f9af27cf0dafb1840e43a3e6e04549b998d2139d55654e6f29fc110c8d1992"
+    },
+    {
+      "file": "2.png",
+      "sha256": "b487d6e0a30774297757c9cb135caf68b1f7cfd84bcb2b8cf2f1a7dcaca98ca8"
+    },
+    {
+      "file": "3.png",
+      "sha256": "a37c3dfa116c44994c3cd4d701403c485f31296ea35dcedad4d1af50765579d0"
+    },
+    {
+      "file": "4.png",
+      "sha256": "f91d95b766e8dd8dbf371f5cbc91a0b43b06ce7d70a8ad35b640c394b7eb57ae"
+    },
+    {
+      "file": "5.png",
+      "sha256": "0ae6c0cf2dcee8eaba0ca5c898cd1d91b8a8fc0339a091cf3f9a6f253f1b6ad1"
+    },
+    {
+      "file": "6.png",
+      "sha256": "f70c9a6c8f1f362c9ef7ad2a7e7bccb9fbca334bfeb9951a0407d5ffc2aaa2e1"
+    }
+  ],
+  "contactRepair": {
+    "method": "Previously user-authorized exact master copies of stationary contact regions. No moving anatomy, rope path, hand or pose transformed.",
+    "master": "1-travel-refined-candidate.png",
+    "sha256": "8da6f26da1fb2b3d6ba5711e49f1c55aa48691fcfb598da738b020c557a40b5f",
+    "regions": [
+      {
+        "name": "near planted shoe",
+        "left": 55,
+        "top": 735,
+        "width": 125,
+        "height": 110
+      },
+      {
+        "name": "far planted shoe",
+        "left": 330,
+        "top": 705,
+        "width": 170,
+        "height": 95
+      },
+      {
+        "name": "fixed anchor base",
+        "left": 1330,
+        "top": 866,
+        "width": 195,
+        "height": 66
+      }
+    ]
+  },
+  "plannedGeometry": {
+    "note": "Pilot only. Equal projected arc lengths; not calibrated world-space lengths. Texture, grip joints and anchor wrapping require visual validation.",
+    "frames": [
+      [
+        {
+          "amplitude": 148.32746638717254,
+          "length": 1373.0000000000223,
+          "start": [305, 390],
+          "end": [1410, 835],
+          "phase": 0
+        },
+        {
+          "amplitude": 147.4048131406107,
+          "length": 1212.99999999971,
+          "start": [488, 523],
+          "end": [1438, 840],
+          "phase": 0.5
+        }
+      ],
+      [
+        {
+          "amplitude": 158.46040302744768,
+          "length": 1372.9999999999459,
+          "start": [325, 387],
+          "end": [1410, 835],
+          "phase": 0.16666666666666666
+        },
+        {
+          "amplitude": 143.27138054090938,
+          "length": 1213.0000000001623,
+          "start": [495, 481],
+          "end": [1438, 840],
+          "phase": 0.6666666666666666
+        }
+      ],
+      [
+        {
+          "amplitude": 157.2165355044035,
+          "length": 1373.0000000002217,
+          "start": [315, 410],
+          "end": [1410, 835],
+          "phase": 0.3333333333333333
+        },
+        {
+          "amplitude": 139.92262663373367,
+          "length": 1212.9999999995948,
+          "start": [521, 378],
+          "end": [1438, 840],
+          "phase": 0.8333333333333333
+        }
+      ],
+      [
+        {
+          "amplitude": 156.45038793195454,
+          "length": 1373.0000000000405,
+          "start": [304, 474],
+          "end": [1410, 835],
+          "phase": 0.5
+        },
+        {
+          "amplitude": 117.53302773081487,
+          "length": 1212.9999999997794,
+          "start": [497, 273],
+          "end": [1438, 840],
+          "phase": 1
+        }
+      ],
+      [
+        {
+          "amplitude": 151.74547875699318,
+          "length": 1372.9999999999598,
+          "start": [306, 445],
+          "end": [1410, 835],
+          "phase": 0.6666666666666666
+        },
+        {
+          "amplitude": 148.71230219819154,
+          "length": 1213.000000000145,
+          "start": [515, 410],
+          "end": [1438, 840],
+          "phase": 1.1666666666666665
+        }
+      ],
+      [
+        {
+          "amplitude": 153.1188791157092,
+          "length": 1373.000000000308,
+          "start": [327, 391],
+          "end": [1410, 835],
+          "phase": 0.8333333333333334
+        },
+        {
+          "amplitude": 157.23565198709366,
+          "length": 1213.0000000003004,
+          "start": [523, 474],
+          "end": [1438, 840],
+          "phase": 1.3333333333333335
+        }
+      ]
+    ]
+  },
+  "rasterPathDiagnostics": [
+    {
+      "frame": 1,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [109, 828],
+        "soleRight": [124, 828]
+      },
+      "farFoot": {
+        "left": 347,
+        "right": 481,
+        "width": 135,
+        "sole": [438, 779],
+        "soleRight": [442, 779]
+      },
+      "ropes": [
+        {
+          "samples": 159,
+          "maxDistanceToVisibleRope": 3,
+          "centrelineCoverage": 0.9685534591194969,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 185,
+          "maxDistanceToVisibleRope": 5,
+          "centrelineCoverage": 0.9027027027027027,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [116, 828],
+        "soleRight": [126, 828]
+      },
+      "farFoot": {
+        "left": 347,
+        "right": 481,
+        "width": 135,
+        "sole": [429, 778],
+        "soleRight": [448, 778]
+      },
+      "ropes": [
+        {
+          "samples": 161,
+          "maxDistanceToVisibleRope": 11,
+          "centrelineCoverage": 0.9440993788819876,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 186,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.9516129032258065,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [111, 828],
+        "soleRight": [126, 828]
+      },
+      "farFoot": {
+        "left": 347,
+        "right": 482,
+        "width": 136,
+        "sole": [429, 778],
+        "soleRight": [448, 778]
+      },
+      "ropes": [
+        {
+          "samples": 161,
+          "maxDistanceToVisibleRope": 9,
+          "centrelineCoverage": 0.9316770186335404,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 190,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.9473684210526315,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [111, 828],
+        "soleRight": [127, 828]
+      },
+      "farFoot": {
+        "left": 346,
+        "right": 481,
+        "width": 136,
+        "sole": [428, 778],
+        "soleRight": [448, 778]
+      },
+      "ropes": [
+        {
+          "samples": 159,
+          "maxDistanceToVisibleRope": 9,
+          "centrelineCoverage": 0.9245283018867925,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 187,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.9625668449197861,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [111, 828],
+        "soleRight": [126, 828]
+      },
+      "farFoot": {
+        "left": 347,
+        "right": 482,
+        "width": 136,
+        "sole": [430, 778],
+        "soleRight": [448, 778]
+      },
+      "ropes": [
+        {
+          "samples": 159,
+          "maxDistanceToVisibleRope": 8,
+          "centrelineCoverage": 0.9245283018867925,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 190,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.9421052631578948,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "nearFoot": {
+        "left": 67,
+        "right": 162,
+        "width": 96,
+        "sole": [116, 828],
+        "soleRight": [125, 828]
+      },
+      "farFoot": {
+        "left": 346,
+        "right": 482,
+        "width": 137,
+        "sole": [431, 778],
+        "soleRight": [447, 778]
+      },
+      "ropes": [
+        {
+          "samples": 162,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.8888888888888888,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        },
+        {
+          "samples": 190,
+          "maxDistanceToVisibleRope": 4,
+          "centrelineCoverage": 0.9473684210526315,
+          "note": "Distance from intended centreline to visible grey pixels, excludes athlete and anchor. Does not independently prove exact length or topology."
+        }
+      ]
+    }
+  ],
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "nearSoleEdge": {
+          "x": 109,
+          "y": 828
+        },
+        "farSoleEdge": {
+          "x": 438,
+          "y": 779
+        },
+        "anchorBaseEdge": {
+          "x": 1439,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 96,
+        "farShoeWidth": 135,
+        "anchorBaseWidth": 166
+      }
+    }
+  ],
+  "losslessPixelsVerified": true,
+  "history": "Initial rope branches had inconsistent wave progression. Retained imagegen athlete poses, removed ropes, rendered travelling-wave equipment paths and refined material using imagegen. Frame4 initial visual extra-branch suspicion was disproved by pixel-band scans against the pilot; original refinement retained. All intermediate images and prompts retained locally."
+}
