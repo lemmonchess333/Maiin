@@ -102,8 +102,8 @@ const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
 
-// The pre-run weather strip, from MET Norway through this server (weather.js).
-exports.getCurrentWeather = require("./weather").getCurrentWeather;
+// The pre-run weather strip, from MET Norway through this server (currentWeather.js).
+exports.getCurrentWeather = require("./currentWeather").getCurrentWeather;
 
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting

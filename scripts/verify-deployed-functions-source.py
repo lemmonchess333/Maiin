@@ -35,6 +35,7 @@ def verify():
         "applyProgramCommand": training_paths,
         "onWorkoutCreated": training_paths,
         "onWorkoutUpdated": training_paths,
+        "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
     }
     for name, paths in targets.items():
         endpoint = (

@@ -1,5 +1,5 @@
 /**
- * getCurrentWeather (weather.js), driven through `.run(data, context)`
+ * getCurrentWeather (currentWeather.js), driven through `.run(data, context)`
  * from the index that deploys it, with MET's fetch stubbed. The per-user
  * limiter and the deletion lock are swapped on their shared modules (the
  * callable calls both through the module), so nothing reaches Firestore.
@@ -14,7 +14,10 @@ process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const { getCurrentWeather } = require("../index");
-const { _weatherService, WEATHER_CALLS_PER_HOUR } = require("../weather");
+const {
+  _weatherService,
+  WEATHER_CALLS_PER_HOUR,
+} = require("../currentWeather");
 
 const CONTEXT = { auth: { uid: "runner" } };
 

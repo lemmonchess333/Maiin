@@ -4,7 +4,7 @@
  *
  * The phone does not call a weather service. It sends its position,
  * rounded to two decimal places (about a kilometre), to Tropos's
- * getCurrentWeather callable (functions/weather.js), which asks MET
+ * getCurrentWeather callable (functions/currentWeather.js), which asks MET
  * Norway. MET sees neither the phone's address nor a precise place. Until
  * 2026-10 this called Open-Meteo's free API directly with full-precision
  * coordinates: that API is for non-commercial use only, and its licence

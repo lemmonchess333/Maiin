@@ -2,13 +2,13 @@
  * getCurrentWeather — the current weather for the pre-run strip
  * (RunSetupModal), from MET Norway, for signed-in users.
  *
- * The phone used to call Open-Meteo's free API directly, with
- * full-precision coordinates. That API is for non-commercial use only,
- * and its CC BY 4.0 licence needed a credit the app never showed. This
- * proxy asks MET Norway instead (commercial use allowed, credited in the
- * app as "Weather data from MET Norway"), and MET sees this server, not
- * the phone: no IP address, and a place rounded to two decimal places.
- * The client rounds before sending and the server rounds again.
+ * The phone never calls a weather service itself. This proxy asks MET
+ * Norway, whose data may be used commercially and is credited in the app
+ * as "Weather data from MET Norway"; Open-Meteo's free API, which the
+ * phone once called, is for non-commercial use only. MET sees this
+ * server, not the phone: no IP address, and a place rounded to two
+ * decimal places. The client rounds before sending and the server rounds
+ * again.
  *
  * lib/metWeather.js owns the pure logic: the symbol mapping, feels-like,
  * the per-place cache that honours MET's Expires header. This module owns

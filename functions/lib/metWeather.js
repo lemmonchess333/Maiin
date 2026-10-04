@@ -1,6 +1,6 @@
 /**
  * Current weather from MET Norway's Locationforecast 2.0 (compact): the
- * pure half of the getCurrentWeather callable (functions/weather.js).
+ * pure half of the getCurrentWeather callable (functions/currentWeather.js).
  *
  * MET's data may be used commercially under CC BY 4.0, credited to "MET
  * Norway"; the app says "Weather data from MET Norway" wherever it shows
@@ -273,7 +273,7 @@ function headerOf(response, name) {
 
 /**
  * The forecast service: MET behind a per-place cache. One per function
- * instance (functions/weather.js); tests make their own with a fake fetch
+ * instance (functions/currentWeather.js); tests make their own with a fake fetch
  * and clock.
  *
  * A place is cached by its rounded coordinates until MET's Expires time
