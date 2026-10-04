@@ -56,6 +56,20 @@ an automated integrity check.
     and cue hashes, named fixed anchors, invariant dimensions, technique checks
     and mobile light/dark evidence. Any asset or cue edit invalidates approval.
 
+For a sequence with changing floor contacts, the release record may declare
+`contactPhases`: named groups of at least two one-based frame numbers, each
+with its own `referenceFrame`, at least two `anchorNames` and two
+`dimensionNames`, and evidence explaining which physical contacts remain
+fixed. Measurements stay in each frame's `anchors` and
+`invariantDimensions`; the same one-pixel/one-percent limits apply within
+each group. Groups may overlap (for example, palms and toes).
+Every frame must belong to a measured contact group or appear once in
+`airborneFrames`, with a `frame`, measured `takeoffFrame` and `landingFrame`,
+and evidence of ground clearance, consistent body scale and the landing
+transition. Airborne frames cannot also claim planted contacts. This does
+not replace native anatomy/camera review or either mobile review. Existing
+records without phases retain their all-frame measurement requirements.
+
 Cost rule: inspect each pilot before buying its adjacent frames. Reuse identical
 poses when mechanically appropriate. Stop repeating a failed generation method;
 record the specific failure and change the method before another batch.

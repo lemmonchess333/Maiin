@@ -80,4 +80,102 @@ describe("artwork release evidence", () => {
       validateArtworkReview(review, expected).length
     ).toBeGreaterThanOrEqual(3);
   });
+
+  const jumping = () => ({
+    ...passing(),
+    contactPhases: [
+      {
+        name: "Planted hands",
+        frames: [1, 2, 3, 4, 5],
+        referenceFrame: 2,
+        anchorNames: ["heel", "toe"],
+        dimensionNames: ["plateDiameter", "shoeLength"],
+        evidence: "Contacts remain fixed during these floor beats.",
+      },
+    ],
+    airborneFrames: [
+      {
+        frame: 6,
+        takeoffFrame: 5,
+        landingFrame: 1,
+        evidence: "Both feet clear the same floor; scale and landing reviewed.",
+      },
+    ],
+  });
+
+  it("checks grounded phases without falsely fixing an airborne body to the floor", () => {
+    const review = jumping();
+    review.frames[5].anchors.heel.y = 800;
+    review.frames[5].anchors.toe.y = 800;
+    expect(validateArtworkReview(review, expected)).toEqual([]);
+    review.frames[3].anchors.heel.y -= 5;
+    expect(validateArtworkReview(review, expected)).toContain(
+      "Frame 4: fixed anchor heel.y drift."
+    );
+    review.frames[2].invariantDimensions.shoeLength = 130;
+    expect(validateArtworkReview(review, expected)).toContain(
+      "Frame 3: invariant shoeLength drift."
+    );
+  });
+
+  it("does not let phases omit frames or disguise grounded drift as flight", () => {
+    const review = jumping();
+    review.contactPhases[0].frames = [1, 2, 3, 4];
+    const errors = validateArtworkReview(review, expected);
+    expect(errors).toContain("Frame 5: no contact-phase or airborne evidence.");
+    expect(errors.some((e) => e.includes("measured takeoff"))).toBe(true);
+    const overlap = jumping();
+    overlap.airborneFrames[0].frame = 3;
+    expect(
+      validateArtworkReview(overlap, expected).some((e) =>
+        e.includes("unique flight")
+      )
+    ).toBe(true);
+  });
+
+  it("rejects empty phases, singleton phases and invalid frame references", () => {
+    const base = jumping();
+    for (const change of [
+      { frames: [2] },
+      { frames: [1, 1] },
+      { frames: [0, 2] },
+      { frames: [1, 7] },
+      { frames: [1, 2.5] },
+      { referenceFrame: 6 },
+      { anchorNames: [] },
+      { anchorNames: ["heel", "heel"] },
+      { dimensionNames: ["shoeLength"] },
+      { evidence: "" },
+    ]) {
+      expect(
+        validateArtworkReview(
+          { ...base, contactPhases: [{ ...base.contactPhases[0], ...change }] },
+          expected
+        ).length
+      ).toBeGreaterThan(0);
+    }
+    expect(
+      validateArtworkReview({ ...base, contactPhases: [] }, expected).length
+    ).toBeGreaterThan(0);
+    expect(
+      validateArtworkReview({ ...base, airborneFrames: undefined }, expected)
+        .length
+    ).toBeGreaterThan(0);
+  });
+
+  it("rejects invented measurement names, invalid values and missing flight evidence", () => {
+    const review = jumping();
+    review.contactPhases[0].anchorNames = ["heel", "invented"];
+    expect(validateArtworkReview(review, expected).length).toBeGreaterThan(0);
+    const bad = jumping();
+    bad.frames[1].anchors.heel.x = NaN;
+    expect(validateArtworkReview(bad, expected).length).toBeGreaterThan(0);
+    const flight = jumping();
+    flight.airborneFrames[0].evidence = "";
+    expect(
+      validateArtworkReview(flight, expected).some((e) =>
+        e.includes("unique flight")
+      )
+    ).toBe(true);
+  });
 });

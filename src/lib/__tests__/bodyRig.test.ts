@@ -4829,6 +4829,22 @@ describe("form beats — the caption is a claim about the frame", () => {
       const beats = getAuthoredBeats(id)!;
       const first = beats[0].t;
       const last = beats[beats.length - 1].t;
+      if (id === "burpees") {
+        // This compound movement ends airborne, then lands into the next
+        // squat. It is not a single joint's outward-and-return scalar loop.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.25, 0.5, 0.25, 0, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Squat",
+          "Plank",
+          "Lower",
+          "Press",
+          "Tuck",
+          "Jump",
+        ]);
+        expect(beats[2].cue).toContain("chest to the floor");
+        expect(beats[5].cue).toContain("land softly");
+        continue;
+      }
       if (id === "mountain-climbers") {
         // Each leg returns to plank before the opposite leg starts. The
         // scalar knee-drive amount reverses at that deliberate reset.

@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  burpees: placard(
+    "burpees",
+    ["Chest", "Quadriceps"],
+    ["Abs", "Front deltoids"],
+    [
+      [0, "Squat", "Squat down; plant palms ahead of feet."],
+      [0.25, "Plank", "Jump feet back into a straight plank."],
+      [0.5, "Lower", "Bend elbows; lower chest to the floor."],
+      [0.25, "Press", "Press back up without sagging your hips."],
+      [0, "Tuck", "Jump feet toward hands; prepare to rise."],
+      [1, "Jump", "Jump upward; land softly into your squat."],
+    ]
+  ),
   "pistol-squat": placard(
     "pistol-squat",
     ["Quadriceps"],

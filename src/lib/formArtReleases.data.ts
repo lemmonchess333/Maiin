@@ -68,6 +68,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 1,
   },
+  burpees: {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 768,
+    height: 1088,
+    reference: 6,
+  },
   "cable-crossover": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

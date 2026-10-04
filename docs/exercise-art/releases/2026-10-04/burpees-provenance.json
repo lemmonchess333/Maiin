@@ -1,0 +1,112 @@
+{
+  "generator": "built-in imagegen",
+  "originalCanvas": [1536, 1024],
+  "masterSha256": "62c29f1a2aeba6d04547d5b8ecb05d0280f20cb637abcfad4f7bdb933ce2f3b2",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "bottomGenerations": [
+    "ed28387c-6a3b-43f6-ad14-76e97feaf522",
+    "eb0a15bd-67a0-49bf-9e0f-447df388ab8a"
+  ],
+  "uniformBottomTranslation": {
+    "x": 0,
+    "y": 44
+  },
+  "contactRepair": [
+    {
+      "input": "1-squat-aligned.png",
+      "output": "1-squat-fixed.png",
+      "areas": [
+        {
+          "name": "nearFingerContact",
+          "left": 875,
+          "top": 925,
+          "width": 82,
+          "height": 23
+        },
+        {
+          "name": "farFingerContact",
+          "left": 1010,
+          "top": 915,
+          "width": 80,
+          "height": 23
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "3a17b93496bbccb52d74d81dcfde418a7ef16e4effec0132037b9de163b23710"
+    },
+    {
+      "input": "3-grounded-feet.png",
+      "output": "3-grounded-fixed.png",
+      "areas": [
+        {
+          "name": "nearFingerContact",
+          "left": 875,
+          "top": 925,
+          "width": 82,
+          "height": 23
+        },
+        {
+          "name": "farFingerContact",
+          "left": 1010,
+          "top": 915,
+          "width": 80,
+          "height": 23
+        },
+        {
+          "name": "plantedToeContacts",
+          "left": 485,
+          "top": 887,
+          "width": 112,
+          "height": 35
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "24a0f22217dec77ea636635a74ee8c43334709e82dff530bfc95e454beec9186"
+    }
+  ],
+  "framing": {
+    "viewport": {
+      "left": 432,
+      "top": 0,
+      "width": 768,
+      "height": 1024
+    },
+    "paddingTopBottom": 32,
+    "outputSize": [768, 1088],
+    "scale": 1,
+    "note": "Identical viewport and position adjustment for every frame; removes empty sides only. No body rescaling or pose change in this step.",
+    "frames": [
+      {
+        "source": "1-squat-fixed.png",
+        "output": "framed-1.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "source": "2-plank-aligned.png",
+        "output": "framed-2.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "source": "3-grounded-fixed.png",
+        "output": "framed-3.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "source": "2-plank-aligned.png",
+        "output": "framed-4.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "source": "1-squat-fixed.png",
+        "output": "framed-5.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "source": "6-jump-black.png",
+        "output": "framed-6.png",
+        "excludedBrightPixels": 0
+      }
+    ]
+  },
+  "losslessPixelsVerified": true
+}
