@@ -52,6 +52,39 @@ describe("race picker browsing", () => {
       })
     );
   });
+  it("keeps ultras out of the plan picker even after clearing all filters", () => {
+    render(<RaceGoalPlanner {...base} {...callbacks()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "all" },
+    });
+    fireEvent.change(screen.getByLabelText("Distance"), {
+      target: { value: "all" },
+    });
+    expect(
+      screen.queryByRole("option", { name: "Ultra" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Race to the|Chiltern 50/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /City of Lincoln 10K/ })
+    ).toBeInTheDocument();
+  });
+  it("keeps the picker closed when the only upcoming event is an ultra", () => {
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...callbacks()}
+        upcomingRaces={[spaceDef("chiltern-50")!]}
+        selectedEventSpaceId=""
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: "Choose an upcoming race" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Target date")).toBeInTheDocument();
+  });
   it("does not offer the elapsed day of a two-day race", () => {
     render(
       <RaceGoalPlanner

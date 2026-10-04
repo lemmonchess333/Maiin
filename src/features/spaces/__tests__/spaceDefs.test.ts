@@ -16,10 +16,10 @@ import {
 } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
-  it("ships the locked sets: 8 interest + 42 races", () => {
+  it("ships the curated sets: 8 interest + 57 races", () => {
     expect(SPACE_DEFS.filter((d) => d.kind === "interest")).toHaveLength(8);
-    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(42);
-    expect(SPACE_DEFS).toHaveLength(50);
+    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(57);
+    expect(SPACE_DEFS).toHaveLength(65);
   });
 
   it("ids are unique, url-safe slugs", () => {
@@ -62,9 +62,14 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
     for (const d of SPACE_DEFS) {
       if (!d.event) continue;
       expect(d.event.dateKey, d.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(["5k", "10k", "half", "marathon"], d.id).toContain(
+      expect(["5k", "10k", "half", "marathon", "ultra"], d.id).toContain(
         d.event.distance
       );
+      if (d.event.distance === "ultra") {
+        expect(d.event.distanceKm, d.id).toBeGreaterThan(42.195);
+      } else {
+        expect(d.event.distanceKm, d.id).toBeUndefined();
+      }
       expect(d.event.city.length, d.id).toBeGreaterThan(0);
       expect(
         ["GB", "US", "FR", "DE", "IE", "ES", "JP", "AU", "NL", "DK"],
@@ -86,7 +91,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
 
   it("raceSpaceDefs() returns all races sorted soonest first", () => {
     const races = raceSpaceDefs();
-    expect(races).toHaveLength(42);
+    expect(races).toHaveLength(57);
     const keys = races.map((d) => d.event!.dateKey);
     expect(keys).toEqual([...keys].sort());
   });
@@ -101,7 +106,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
     const dayAfter = "2026-10-05";
     const after = upcomingRaceSpaceDefs(dayAfter).map((d) => d.event!.dateKey);
     expect(after).not.toContain(first);
-    expect(after).toHaveLength(41);
+    expect(after).toHaveLength(56);
     // Far future: everything hidden, none invented.
     expect(upcomingRaceSpaceDefs("2099-01-01")).toHaveLength(0);
   });

@@ -164,3 +164,16 @@ The images retain their original colour, ship at 1000–1200 px wide and remain
 under 120 KB each. Review covered directory cards in both themes, the wider
 393 × 176 Space-header crop, and 3× brightness. These are destination images,
 not official race photography or a promise about the course.
+
+### Shorter races and ultras — 2026-10-04
+
+Fifteen additional race covers use eight new licensed destination photographs
+and the existing Edinburgh, Valencia, York and Inverness images. Races in the
+same location can share the same photograph. All covers are landscape WebP,
+at least 800 px wide and below 120 KB. Source links, photographers, licences,
+hashes and reuse references are in
+[`sources-short-races-ultras-2026-10-04.json`](./sources-short-races-ultras-2026-10-04.json).
+
+The new locations are Bournemouth, Sheffield, Lincoln, the Forth road bridges,
+the Kelpies, the South Downs, Avebury and the Chiltern Hills. These illustrate
+the destination or region, not an official race image or course guarantee.

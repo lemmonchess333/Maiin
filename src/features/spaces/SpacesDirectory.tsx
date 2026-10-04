@@ -20,11 +20,12 @@
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import RaceFilterChips from "./RaceFilterChips";
 import {
   ALL_RACE_FILTERS,
   UK_RACE_FILTERS,
-  RACE_DISTANCE_LABELS,
+  raceDistanceLabel,
 } from "./raceBrowse";
 import { Link } from "react-router-dom";
 import {
@@ -151,7 +152,9 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
               : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
-          {RACE_DISTANCE_LABELS[event.distance]}
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
         </span>
       )}
 
