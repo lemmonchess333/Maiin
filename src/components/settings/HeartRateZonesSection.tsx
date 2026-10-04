@@ -19,10 +19,8 @@ import type { UserProfile } from "@/lib/auth";
  * age either, we prompt for it rather than render bogus bands.
  *
  * The section says where the zones come from and nothing about live heart
- * rate. It used to say "Live heart rate streams in the app during runs
- * (Apple Watch / HealthKit)", and nothing streams: heartRateSource.ts has no
- * source on any platform. Copy that names a live feature waits for the
- * feature.
+ * rate: heartRateSource.ts has no source on any platform, so nothing
+ * streams. Copy that names a live feature waits for the feature.
  */
 export default function HeartRateZonesSection({
   updateProfile,

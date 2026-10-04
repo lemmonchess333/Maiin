@@ -19,7 +19,6 @@ const mockHeartRate = {
   maxHr: 190,
   maxHrSource: "estimated" as "estimated" | "measured",
   zones: [] as unknown[],
-  liveAvailable: false,
 };
 vi.mock("@/hooks/useHeartRate", () => ({
   useHeartRate: () => mockHeartRate,

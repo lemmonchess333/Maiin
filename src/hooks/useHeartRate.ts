@@ -19,8 +19,10 @@ export interface HeartRateState {
   maxHrSource: "measured" | "estimate" | "unknown";
   /** The five zones for `maxHr` (empty when maxHr is unknown). */
   zones: HrZone[];
-  /** Whether this platform can stream live HR (false on web). */
-  liveAvailable: boolean;
+  /* No `liveAvailable` here: its one reader, Settings' zones section, said
+     heart rate "streams" while no source exists, and now says where the
+     zones come from instead. A surface that needs it when a source lands
+     can return it again; `bpm` is null until then. */
   /** Latest live bpm, or null when not streaming / no source. */
   bpm: number | null;
   /** Current zone (1–5), 0 below Z1, or null when not streaming. */
@@ -82,5 +84,5 @@ export function useHeartRate(opts: { live?: boolean } = {}): HeartRateState {
     return zoneForHr(bpm, maxHr);
   }, [bpm, maxHr]);
 
-  return { maxHr, maxHrSource, zones, liveAvailable, bpm, zone };
+  return { maxHr, maxHrSource, zones, bpm, zone };
 }
