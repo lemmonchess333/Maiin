@@ -357,6 +357,44 @@ describe("GuideWalk", () => {
     }
   });
 
+  it("a walk led from the header starts at the top of the page, and ends there", async () => {
+    const restore = layOutEverything();
+    const scrolled = Object.getOwnPropertyDescriptor(window, "scrollY");
+    // Arrived part-way down, as the replay from Settings can.
+    let y = 260;
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      get: () => y,
+    });
+    const scrollTo = vi.fn((arg?: ScrollToOptions | number) => {
+      if (typeof arg === "object" && arg.top !== undefined) y = arg.top;
+    });
+    window.scrollTo = scrollTo as unknown as typeof window.scrollTo;
+    headerMark();
+    target("a");
+    target("b", 400);
+    target("c", 560);
+    const onClose = vi.fn();
+    try {
+      render(<GuideWalk stops={STOPS} fromHeader onClose={onClose} />);
+      fireEvent.click(await cardShown());
+      expect(scrollTo).toHaveBeenCalledExactlyOnceWith({
+        top: 0,
+        behavior: "instant",
+      });
+      fireEvent.click(await cardShown());
+      fireEvent.click(await cardShown("Done"));
+      await waitFor(() =>
+        expect(onClose).toHaveBeenCalledWith({ finished: true, index: 2 })
+      );
+      // It began at the top, so it had nothing to give back.
+      expect(scrollTo).toHaveBeenCalledOnce();
+    } finally {
+      if (scrolled) Object.defineProperty(window, "scrollY", scrolled);
+      restore();
+    }
+  });
+
   it("a stop opened from the first-week card leaves the page where it is", async () => {
     const scrolled = Object.getOwnPropertyDescriptor(window, "scrollY");
     // Scrolled down to the first-week card, whose row asks about today.

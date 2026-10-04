@@ -412,6 +412,17 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
 });
 
 describe("Upgrade — where 'not now' goes", () => {
+  /* The offer is scrolled to reach its button on a small phone, and the
+     app keeps a page's scroll across a route change, so going forward
+     has to start the next screen at its top. */
+  let scrollTo: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    scrollTo.mockRestore();
+  });
+
   function Probe() {
     const location = useLocation();
     return (
@@ -436,26 +447,29 @@ describe("Upgrade — where 'not now' goes", () => {
     );
   }
 
-  it("from onboarding, 'Continue with Free' lands on the first activity it was handed", () => {
+  it("from onboarding, 'Continue with Free' lands where it was sent, at the top", () => {
     renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
     fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent(
       "/program?tab=run"
     );
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
   it("from onboarding with the handoff state lost, it lands on Home rather than nowhere", () => {
     renderWithProbe("?from=onboarding");
     fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/);
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
   });
 
-  it("from anywhere else, 'Not now' goes back", () => {
+  it("from anywhere else, 'Not now' goes back, where the page it left keeps its place", () => {
     renderWithProbe("?from=food");
     fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent(
       "/settings"
     );
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it("checkout from the trial-ended prompt is attributed to it", async () => {

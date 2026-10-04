@@ -221,7 +221,15 @@ export default function GuideWalk({
         setIndex(i);
         return;
       }
-      if (startScroll.current === null) startScroll.current = window.scrollY;
+      if (startScroll.current === null) {
+        /* A walk led from the header begins at the top of Home, where the
+           mark and the first stop are: the replay arrives from Settings
+           with that page's scroll, and the app keeps a page's scroll
+           across a route change. Instant, before anything is drawn. */
+        if (fromHeader && window.scrollY > 0)
+          window.scrollTo({ top: 0, behavior: "instant" });
+        startScroll.current = window.scrollY;
+      }
       bringIntoView(el);
       setTarget(el);
       setSpot(box(el.getBoundingClientRect()));
@@ -249,7 +257,7 @@ export default function GuideWalk({
     return () => cancelAnimationFrame(raf);
     // `end` reads only refs and the parent's callback.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, stops, closing, reduce]);
+  }, [index, stops, closing, reduce, fromHeader]);
 
   /* The opening, once the card first has its place: the mark flies out of
      the header into the card and the card fades in as it travels. With
