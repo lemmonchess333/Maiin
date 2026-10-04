@@ -81,6 +81,10 @@ vi.mock("@/components/WeekPulseView", () => ({ default: () => null }));
 vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";
+import {
+  resetConfirmedPrivacyZones,
+  warmPrivacyZones,
+} from "@/hooks/usePrivacyZones";
 import { haversine } from "@/lib/gps";
 import { pendingDocumentWrites } from "@/lib/offlineQueue";
 import {
@@ -166,6 +170,9 @@ async function saveWithReadsHeld() {
 let online: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
   resetFirestore();
+  // The confirmed lists outlive a screen, as they would in the app; each
+  // test starts from a fresh launch.
+  resetConfirmedPrivacyZones();
   localStorage.clear();
   seedFirestore({ [`${ZONES}/home`]: { name: "Home", ...HOME } });
   online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
@@ -242,5 +249,36 @@ describe("RunSummary — privacy zones are cut before a run is written", () => {
     const { points, inZone } = savedTrace();
     expect(points.length).toBeGreaterThan(5);
     expect(inZone).toEqual([]);
+  });
+  it("with zones confirmed on the run screen before the run, a finish with no signal saves them cut without asking the server", async () => {
+    // Before the run, with a signal: the run screen asks the server.
+    await warmPrivacyZones("runner");
+    // At the finish there is none: the listener can answer only from the
+    // cache, and any read of the server would hang.
+    setSnapshotMetadata(ZONES, { fromCache: true });
+    renderFinished();
+    const save = await screen.findByRole("button", { name: "Save run" });
+    deferReads();
+    fireEvent.click(save);
+    await screen.findByRole("button", { name: "Done" });
+    expect(pendingReads()).not.toContain(ZONES);
+    const { points, inZone } = savedTrace();
+    expect(points.length).toBeGreaterThan(5);
+    expect(inZone).toEqual([]);
+  });
+
+  it("a warm-up with no signal changes nothing: the save still asks the server", async () => {
+    failNextFirestore("getDocs", { path: ZONES });
+    await warmPrivacyZones("runner");
+    expect(unfiredFailures()).toEqual([]);
+
+    setSnapshotMetadata(ZONES, { fromCache: true });
+    renderFinished();
+    const zoneRead = await saveWithReadsHeld();
+    expect(queued()).toHaveLength(0);
+
+    releaseRead(zoneRead);
+    await screen.findByRole("button", { name: "Done" });
+    expect(savedTrace().inZone).toEqual([]);
   });
 });
