@@ -106,6 +106,13 @@ export async function getDocs(ref: CollectionRef) {
   return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
 }
 
+/** Server-only query read, the collection twin of `getDocFromServer`: the
+ *  fake's normal reads ARE server reads, so it is `getDocs`, and it shares
+ *  `getDocs`' failure injection and deferral. */
+export async function getDocsFromServer(ref: CollectionRef) {
+  return getDocs(ref);
+}
+
 /**
  * Cache-only read. The fake models a COLD cache: it always rejects with
  * Firestore's `unavailable`, which is what the real SDK does for a

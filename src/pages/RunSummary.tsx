@@ -54,7 +54,7 @@ import {
   type PaceInsightRun,
 } from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
-import { applyPrivacyZones } from "../lib/privacyZones";
+import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
@@ -110,6 +110,12 @@ import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
+
+/** Why a save stopped short when the privacy zones could not be checked
+ *  (offline before they had loaded, or the read refused). Shown in the
+ *  Retry banner, under "Couldn't save your run". */
+const PRIVACY_ZONES_UNCHECKED =
+  "Privacy zones are cut from the route before it's saved, and they couldn't be checked. Try again when you're online.";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -358,6 +364,7 @@ export default function RunSummary() {
     zones: privacyZones,
     loading: privacyZonesLoading,
     error: privacyZonesError,
+    confirmZones: confirmPrivacyZones,
   } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
@@ -919,6 +926,38 @@ export default function RunSummary() {
     // picked explicitly, so a runner who started on the default saw none.
     const effectiveShoeId = runConfig?.shoeId ?? defaultShoe?.id ?? null;
     try {
+      /* Privacy zones come out of the trace before the run is written, as
+         the Privacy Policy says. The trace on screen was cut with whatever
+         the zone listener had delivered, which is nothing before its first
+         answer or after it fails, so a run saved then kept its whole
+         trace. The save now waits for zones the server has confirmed: the
+         listener's last server answer, else a server read. If neither can
+         be had, nothing is written and the Retry banner says why. A run
+         with no trace has nothing to cut, and a Retry that resumes a run
+         already queued writes no trace again (its zones were cut then). */
+      let savedPoints = points;
+      if (savedRunId === null && state.points.length > 0) {
+        let zones: PrivacyZone[];
+        try {
+          zones = await confirmPrivacyZones();
+        } catch (error) {
+          logger.warn("[RunSave] privacy zones unconfirmed:", error);
+          throw new Error(PRIVACY_ZONES_UNCHECKED);
+        }
+        // The trace on screen was cut with these same zones; keep it, so
+        // the saved route matches the map.
+        if (zones !== privacyZones) {
+          savedPoints = applyPrivacyZones(state.points, zones);
+        }
+        // The wait can outlast the account the run belongs to.
+        if (
+          auth.currentUser?.uid !== user.uid ||
+          runOwnerRef.current !== user.uid
+        ) {
+          setSaveStatus("idle");
+          return;
+        }
+      }
       /* The save (`completeRun`): the device's copy is queued before any
          server write, under an id a retry keeps. A Retry after the run was
          saved but a later step failed resumes against that id rather than
@@ -933,7 +972,7 @@ export default function RunSummary() {
         runId: savedRunId ?? runIdRef.current,
         alreadySaved: savedRunId !== null,
         run: {
-          points,
+          points: savedPoints,
           distance,
           elapsed,
           avgPaceSeconds,
@@ -953,7 +992,7 @@ export default function RunSummary() {
           bestEfforts,
         },
         // Loading or unread privacy settings withhold the route.
-        route: runPostRoute(points, {
+        route: runPostRoute(savedPoints, {
           withheld: Boolean(privacyZonesLoading || privacyZonesError),
           showEnds: profile?.hideSharedRouteEnds === false,
         }),
