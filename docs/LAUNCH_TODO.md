@@ -942,8 +942,11 @@ Code side is ready. No code changes needed for any of these.
 
 ### Firebase CLI (works on Windows via `npm i -g firebase-tools`)
 
-2. `firebase functions:config:set apple.*` with `.p8` contents
-   (`#2` above) — needs the `.p8` downloaded from App Store Connect
+2. `firebase functions:secrets:set APPLE_KEY_ID`, `APPLE_ISSUER_ID` and
+   `APPLE_PRIVATE_KEY` (the `.p8` contents), as in `#2` above — needs
+   the `.p8` downloaded from App Store Connect. (This line used to say
+   `functions:config:set apple.*`, which throws under firebase-functions
+   v7; `npm run secrets:check` in `functions/` prints every secret to set.)
 3. `firebase deploy --only functions:verifyApplePurchase,functions:appleIAPWebhook,functions:restoreApplePurchases,functions:deleteMyAccount`
 4. `firebase deploy --only firestore:rules` — activates tightened
    rules + fixes the `/crews/` → `/groups/` path bug

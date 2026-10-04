@@ -9,9 +9,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { isAdminUid, getAdminUidAllowlist, assertAdminCallable } = require(
-  "../adminAuth",
-);
+const {
+  isAdminUid,
+  getAdminUidAllowlist,
+  assertAdminCallable,
+} = require("../adminAuth");
 
 const originalEnv = { ...process.env };
 
@@ -97,10 +99,11 @@ describe("isAdminUid", () => {
   });
 
   it("re-reads env on every call (no module-load capture)", () => {
-    // Pin that the gate isn't cached at module load — operators
-    // can update the allowlist via functions:config:set without
-    // a redeploy if the underlying mechanism supports it. The
-    // env var changes are picked up next call.
+    // Pin that the gate isn't cached at module load: whatever
+    // process.env.ADMIN_UIDS holds at the call is the allowlist.
+    // In production the value comes from functions/.env and changes
+    // with a functions deploy (functions:config:set is gone under
+    // firebase-functions v7); the env var is read on the next call.
     process.env.ADMIN_UIDS = "uid-alice";
     expect(isAdminUid("uid-alice")).toBe(true);
     process.env.ADMIN_UIDS = "uid-bob";
@@ -121,7 +124,7 @@ describe("assertAdminCallable", () => {
     // generic 500.
     process.env.ADMIN_UIDS = "uid-alice";
     expect(() => assertAdminCallable("uid-bob")).toThrow(
-      /moderator privileges/i,
+      /moderator privileges/i
     );
   });
 
