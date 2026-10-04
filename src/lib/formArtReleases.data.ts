@@ -173,6 +173,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "db-row": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1014,
+    height: 1090,
+    reference: 1,
+  },
   "dead-bug": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

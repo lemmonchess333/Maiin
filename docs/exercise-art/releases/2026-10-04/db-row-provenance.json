@@ -1,0 +1,269 @@
+{
+  "generator": "Built-in imagegen; authorized stationary contact copies and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "exerciseMasterGenerationId": "8842b370-1871-4085-9a22-1ad47c157406",
+  "selectedGenerationIds": [
+    "8842b370-1871-4085-9a22-1ad47c157406",
+    "988f71da-d051-4ecc-98f8-27347e1d28fd",
+    "844b9a3e-a94c-4020-b1d5-1c8791c20711",
+    "72256867-9623-457d-bd6f-3f94a0edeaa1"
+  ],
+  "cleanupParent": "46b7ec37-6f12-459e-a6aa-326240cb7162",
+  "rejectedTintEdits": [
+    "a56a5eca-c674-4af5-b2d7-dc1f10ff4080",
+    "ddcfad0b-00ed-4b2a-b133-c2114ca3e599"
+  ],
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "9e0a337e265359ce5c48ac34f997682188de9f165e356335b5a1b6e037d7026f"
+    },
+    {
+      "file": "originals/2-early-candidate.png",
+      "sha256": "354697d39119ae44d1567aa4e1756003fcf02efd3ef89d58c30a91ecfda0bca2"
+    },
+    {
+      "file": "originals/3-late-row-candidate.png",
+      "sha256": "89c0abd8bbafe2fe7ccd060dbb1097e7d014e62792fc52245a8932229076e46d"
+    },
+    {
+      "file": "originals/4-top-candidate.png",
+      "sha256": "5b1c7951b4b1e00ba6aeb4df6262fc38d1920033df1ad19ff5597d1dcd10de49"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "0a89f32238e0d554d3f5e165d95613faac2c42d5deae8d55382b06cc1da6dcea"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "c548febef5b125be6571a04382f2b6be96fae4d2749208e5dbf0e33f56be19ca"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "0ef735112febaeb78eddcfefbbc36a6c4d3b491d5521e3401b61a580a0302c1a"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "4740545a2613bfa10a9ad82a54a9e3847dbf6a2c3f8ab84a1608730525ebe8a4"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "0ef735112febaeb78eddcfefbbc36a6c4d3b491d5521e3401b61a580a0302c1a"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "c548febef5b125be6571a04382f2b6be96fae4d2749208e5dbf0e33f56be19ca"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 5,
+      "top": 105,
+      "width": 1014,
+      "height": 1090
+    },
+    "regions": [
+      {
+        "left": 15,
+        "top": 965,
+        "width": 235,
+        "height": 115
+      },
+      {
+        "left": 825,
+        "top": 1060,
+        "width": 190,
+        "height": 130
+      },
+      {
+        "left": 415,
+        "top": 1040,
+        "width": 250,
+        "height": 145
+      }
+    ],
+    "method": "Common crop, no scaling. Exact stationary bench floor-support and planted shoe contact copies from exercise master. No moving anatomy modified.",
+    "evidence": [
+      {
+        "frame": 1,
+        "source": "1-master.png",
+        "sourceSha256": "9e0a337e265359ce5c48ac34f997682188de9f165e356335b5a1b6e037d7026f",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 2,
+        "source": "2-early-candidate.png",
+        "sourceSha256": "354697d39119ae44d1567aa4e1756003fcf02efd3ef89d58c30a91ecfda0bca2",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 3,
+        "source": "3-late-row-candidate.png",
+        "sourceSha256": "89c0abd8bbafe2fe7ccd060dbb1097e7d014e62792fc52245a8932229076e46d",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 4,
+        "source": "4-top-candidate.png",
+        "sourceSha256": "5b1c7951b4b1e00ba6aeb4df6262fc38d1920033df1ad19ff5597d1dcd10de49",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 5,
+        "source": "3-late-row-candidate.png",
+        "sourceSha256": "89c0abd8bbafe2fe7ccd060dbb1097e7d014e62792fc52245a8932229076e46d",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 6,
+        "source": "2-early-candidate.png",
+        "sourceSha256": "354697d39119ae44d1567aa4e1756003fcf02efd3ef89d58c30a91ecfda0bca2",
+        "outsideVisiblePixels": 0
+      }
+    ]
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftBenchContact": {
+          "x": 56,
+          "y": 952
+        },
+        "rightBenchContact": {
+          "x": 872,
+          "y": 1065
+        },
+        "plantedSole": {
+          "x": 588,
+          "y": 1059
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 823.786987030021,
+        "plantedShoeWidth": 226,
+        "leftBenchFootWidth": 214,
+        "rightBenchFootWidth": 171
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}

@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "db-row": placard(
+    "db-row",
+    ["Lats"],
+    ["Rhomboids", "Rear Delts", "Biceps"],
+    [
+      [0, "Stretch", "Keep your back long and level."],
+      [
+        0.3333333333333333,
+        "Start Row",
+        "Draw your elbow back along your ribs.",
+      ],
+      [
+        0.6666666666666666,
+        "Continue",
+        "Keep your supporting hand and knee still.",
+      ],
+      [1, "Hip", "Bring the dumbbell toward your hip."],
+      [0.6666666666666666, "Lower", "Lower slowly without twisting."],
+      [0.3333333333333333, "Return", "Finish with a controlled full stretch."],
+    ]
+  ),
   "incline-db-press": placard(
     "incline-db-press",
     ["Upper Chest"],
