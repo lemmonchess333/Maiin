@@ -25,9 +25,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({
   profile: null as any,
   programState: null as any,
-  steps: { status: "unavailable", primingShown: true } as {
+  steps: { status: "unavailable", primingShown: true, ready: true } as {
     status: string;
     primingShown: boolean;
+    ready: boolean;
   },
   track: vi.fn(),
 }));
@@ -314,13 +315,17 @@ function LocationProbe() {
   );
 }
 
-function renderHome(state?: unknown) {
-  return render(
+function homeAt(state?: unknown) {
+  return (
     <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
       <Home />
       <LocationProbe />
     </MemoryRouter>
   );
+}
+
+function renderHome(state?: unknown) {
+  return render(homeAt(state));
 }
 
 const walkSeen = () => localStorage.getItem(`u1:${WALK_SEEN_KEY}`);
@@ -345,7 +350,7 @@ async function press(name: "Next" | "Done" | "Skip" | "Got it") {
 beforeEach(() => {
   localStorage.clear();
   h.track.mockClear();
-  h.steps = { status: "unavailable", primingShown: true };
+  h.steps = { status: "unavailable", primingShown: true, ready: true };
   window.scrollBy = vi.fn();
   accountFrom(0);
 });
@@ -427,7 +432,7 @@ describe("the first-visit walk on Home", () => {
   });
 
   it("the Health steps prompt waits until the walk is over", async () => {
-    h.steps = { status: "unprompted", primingShown: false };
+    h.steps = { status: "unprompted", primingShown: false, ready: true };
     layOut();
     renderHome();
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
@@ -438,6 +443,27 @@ describe("the first-visit walk on Home", () => {
     );
     expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
     await press("Skip");
+    await waitFor(() =>
+      expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
+    );
+  });
+
+  it("the Health steps prompt waits for the account's saved answer", async () => {
+    // Walk seen, past the first week: nothing else holds the prompt, so
+    // only the answer can. Until it loads, "not asked yet" is the hook's
+    // default, not this account's: someone who had already answered saw
+    // the prompt open and close again (FV2).
+    localStorage.setItem(`u1:${WALK_SEEN_KEY}`, "1");
+    accountFrom(30);
+    h.steps = { status: "unprompted", primingShown: false, ready: false };
+    const view = renderHome();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    expect(screen.getByTestId("steps-prompt")).toHaveTextContent("closed");
+
+    h.steps = { status: "unprompted", primingShown: false, ready: true };
+    view.rerender(homeAt());
     await waitFor(() =>
       expect(screen.getByTestId("steps-prompt")).toHaveTextContent("open")
     );

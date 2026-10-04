@@ -35,7 +35,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 /* A short run in Hyde Park, at a pace the app will actually ACCEPT.
    `isValidReading` rejects any fix implying more than 12 m/s — the
@@ -70,7 +69,6 @@ test.describe("live run HUD", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

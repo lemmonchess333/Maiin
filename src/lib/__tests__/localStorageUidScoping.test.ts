@@ -26,7 +26,7 @@
  * built elsewhere is judged by NAME — which is why the allow-list below
  * exists and why every entry carries a reason rather than just a path.
  *
- * The primitives (`useDismissOnce`, `useCoachMarks`) are the preferred fix;
+ * The primitive (`useDismissOnce`) is the preferred fix;
  * `useUidForStorageKey()` is the escape hatch when the surface needs raw
  * access. Reaching for the allow-list should be rare, and only for state
  * that genuinely belongs to the DEVICE rather than the account.
@@ -259,7 +259,7 @@ describe("localStorage keys are uid-scoped", () => {
     expect(
       offenders,
       `localStorage is per-DEVICE, so an unscoped key is shared by every ` +
-        `account on the phone. Prefer useDismissOnce / useCoachMarks; use ` +
+        `account on the phone. Prefer useDismissOnce; use ` +
         `useUidForStorageKey() for raw access. If the state really belongs ` +
         `to the DEVICE, add it to DEVICE_SCOPED with the reason:\n  ` +
         offenders.join("\n  ")

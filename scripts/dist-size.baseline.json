@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6045653,
+  "total": 6040411,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2555,
@@ -271,7 +271,6 @@
     "star": 473,
     "startDay": 480,
     "StatFigure": 519,
-    "StreakReminderPrimingModal": 4479,
     "subscription": 960,
     "sun": 468,
     "Support": 3095,
@@ -301,7 +300,6 @@
     "useDismissOnce": 371,
     "useDistanceUnit": 169,
     "useEffectiveTargets": 12630,
-    "useFocusTrap": 763,
     "useGoalSpaces": 6905,
     "useHeartRate": 1245,
     "useHiddenActivities": 1316,

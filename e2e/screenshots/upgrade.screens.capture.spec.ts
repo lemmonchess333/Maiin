@@ -16,7 +16,6 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -29,7 +28,6 @@ test.describe("pro offer page screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {

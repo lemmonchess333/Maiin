@@ -11,7 +11,6 @@
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 const CAPTURE_USER = {
   email: "experience-capture@tropos.test",
@@ -32,7 +31,6 @@ test.describe("experience suggestion screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

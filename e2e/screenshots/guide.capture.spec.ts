@@ -185,9 +185,14 @@ test("a new account meets the guide: the walk, a first-week row and the hints", 
     .getByRole("navigation", { name: /main navigation/i })
     .boundingBox();
   expect(hint!.y + hint!.height).toBeLessThanOrEqual(tabBar!.y);
+  // One thing at a time (FV2): a free account's Pro line under the box
+  // waits until the hint has been closed.
+  const proLine = page.getByText("Photo logging is part of Pro");
+  await expect(proLine).toHaveCount(0);
   await shoot(page, "hint-food");
   await page.getByRole("button", { name: "Got it", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(proLine).toBeVisible();
 
   // Train's first visit: the order of the workouts.
   await page

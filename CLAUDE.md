@@ -227,7 +227,7 @@ run-surface feature modules.
 `useFoodAnalysis`, `useMealReminders`
 
 **UI & UX:**
-`useCoachMarks`, `useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
+`useGuideHint`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
 
 **Payments:**
 `useProCheckout`
@@ -341,7 +341,8 @@ breaks, `TZ=Pacific/Auckland` and `LC_ALL=de_DE.UTF-8` for the others.
 **Test ORDER is gated, and the shape of what it caught is the useful
 part.** All three survivors were global mutable state, and none was
 visible in written order: `WorkoutSessionCompletion.test.tsx` and
-`Coachmark.test.tsx` each left a fake-timer group holding jsdom's
+`Coachmark.test.tsx` (deleted with the component in FV2, 2026-10-04)
+each left a fake-timer group holding jsdom's
 animation-frame counter AND motion-dom's batcher shut, so later
 `toBeVisible()` assertions in the same file read `opacity: 0`; and
 `useHomeProgram.test.tsx` asserted a `vi.mock` factory counter that a

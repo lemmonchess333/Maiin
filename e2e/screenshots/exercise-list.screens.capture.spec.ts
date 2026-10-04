@@ -15,7 +15,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -33,7 +32,6 @@ test.describe("exercise list", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

@@ -61,9 +61,10 @@ async function main() {
   const base = db.collection("users").doc(uid);
 
   // ── Profile overlay: promote the cold-start seed user to a *mature*
-  //    profile. seed-e2e deliberately omits age/sex (drives the cold-start
-  //    "Personalise your calorie targets" nag); a rich/alive user has them,
-  //    so merge them in here. Keeps seed-e2e as the pure cold-start fixture. ──
+  //    profile. seed-e2e omits age/sex (it once drove Home's "Personalise
+  //    your calorie targets" nag, removed in FV2); a rich/alive user has
+  //    them, so merge them in here. Keeps seed-e2e as the pure cold-start
+  //    fixture. ──
   await base.set(
     {
       age: 31,

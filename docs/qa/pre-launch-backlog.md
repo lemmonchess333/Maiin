@@ -35,6 +35,13 @@ moves need a phone.
       at closes it and still does what it does.
 - [ ] **Health steps prompt** (native only): on a new account it opens
       after the walk, not over it.
+- [ ] **The Health steps prompt doesn't flash** (native only, FV2): an
+      account that already answered it, either way, sees no "Count your
+      steps" open and close as Home loads, on a cold start and on coming
+      back to Home from another tab.
+- [ ] **Food's first visit on a free account** (FV2): the guide's
+      "Logging food" hint shows on its own; "Photo logging is part of Pro"
+      appears under the food box once it is closed.
 
 ## The new logo, icon and launch animation (2026-10-01)
 
@@ -503,6 +510,8 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
 Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+
+**STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
 Wire-up history (rows below referenced surfaces that no longer exist): the Nutrition HealthScore wire-up was removed by PI2; the Programme running-icon coachmark's successor (`extras-pill-v1` in `HybridWeekRail`) was orphaned by the `2b4e07b8` navigation unification and deleted in #1882.
 

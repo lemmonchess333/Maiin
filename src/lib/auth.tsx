@@ -1585,12 +1585,12 @@ export function useUid() {
  *
  * Returns the signed-in uid, or `"anon"` for both "signed out" and "no
  * AuthProvider". The tolerance is the point and it is narrow: the callers
- * are leaf UI primitives (`useDismissOnce`, `useCoachMarks`) that render in
- * isolation in tests, and a banner must not crash a page because its
- * dismissal key had nowhere to look. Conflating signed-out with
- * no-provider is safe HERE because both mean the same thing to a storage
- * key — "not a known account" — and a signed-out dismissal correctly stops
- * applying the moment someone signs in.
+ * are leaf UI pieces (`useDismissOnce` and the cards that key their own
+ * dismissals) that render in isolation in tests, and a banner must not
+ * crash a page because its dismissal key had nowhere to look. Conflating
+ * signed-out with no-provider is safe HERE because both mean the same thing
+ * to a storage key — "not a known account" — and a signed-out dismissal
+ * correctly stops applying the moment someone signs in.
  *
  * Do NOT reach for this when you need to know WHO the user is. `"anon"` is
  * a bucket name, not an identity; use `useUid()`, which throws rather than

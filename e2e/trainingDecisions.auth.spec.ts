@@ -4,7 +4,6 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { signInAsTestUser } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 import { normalizeProgramState } from "../src/features/program/programTypes";
 import { buildPlan } from "../src/features/program/planBuilder";
@@ -141,7 +140,6 @@ test("training advice, saved correction and the next session agree", async ({
       })),
     });
     await current.set(state);
-    await suppressCoachmarks(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await signInAsTestUser(page, {
       email: user.email!,

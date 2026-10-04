@@ -5,6 +5,7 @@ import {
   GUIDE_HINTS,
   guideAllowed,
   guideRequest,
+  hintDue,
   hintSeenKey,
   rowStop,
   todayCard,
@@ -220,6 +221,23 @@ describe("guideRequest", () => {
     expect(guideRequest({ guide: "toString" })).toBeNull();
     expect(guideRequest({ guide: "nope" })).toBeNull();
     expect(guideRequest("walk")).toBeNull();
+  });
+});
+
+describe("hintDue", () => {
+  const due = { allowed: true, owed: true, requested: false, closed: false };
+
+  it("is due when the account is owed the hint, or a first-week row asked", () => {
+    expect(hintDue(due)).toBe(true);
+    expect(hintDue({ ...due, owed: false, requested: true })).toBe(true);
+  });
+
+  it("isn't due once closed, where the guide can't show, or when nobody wants it", () => {
+    expect(hintDue({ ...due, closed: true })).toBe(false);
+    expect(hintDue({ ...due, requested: true, closed: true })).toBe(false);
+    expect(hintDue({ ...due, allowed: false })).toBe(false);
+    expect(hintDue({ ...due, allowed: false, requested: true })).toBe(false);
+    expect(hintDue({ ...due, owed: false })).toBe(false);
   });
 });
 

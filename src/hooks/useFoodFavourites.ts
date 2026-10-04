@@ -391,9 +391,9 @@ export function useFoodFavourites() {
 
       // Graduation event = useCount crossing the threshold. Predicted
       // locally; the snapshot will catch up. Used by callers that
-      // want to celebrate the first-graduation moment (eg. PR 3
-      // Coachmark — fires on `previous < 2 && next >= 2` so multi-
-      // increment jumps from offline sync don't miss the trigger).
+      // want to mark the first-graduation moment. It fires on
+      // `previous < 2 && next >= 2`, so multi-increment jumps from
+      // offline sync don't miss the trigger.
       return {
         isNew:
           previousCount < GRADUATION_THRESHOLD &&

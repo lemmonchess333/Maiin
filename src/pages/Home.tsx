@@ -1117,21 +1117,6 @@ export default function Home() {
       </section>
 
       <div className="space-y-2" aria-label="Helpful tips">
-        {/* A1 contextual tip: nudge the user to add age + sex if
-          either is missing. These two fields drive TDEE precision
-          (calculateTDEE consumes both); without them the user gets
-          generic defaults and the calorie targets drift from
-          accurate. One-shot per dismiss — the banner doesn't re-
-          appear after dismissal even if the user re-introduces
-          the gap. */}
-        <ContextualTipBanner
-          tipKey="body-metrics-v1"
-          lanePriority={20}
-          title="Personalise your calorie targets"
-          description="Add your age and sex to make your calorie target more accurate."
-          visible={!profile?.age || !profile?.sex}
-        />
-
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
             after an earlier one was dismissed; gentle + dismiss-once. */}
@@ -1152,61 +1137,19 @@ export default function Home() {
           ) : null;
         })()}
 
-        {/* Goal-weight nudge REMOVED from Home (2026-07-20): it's an
-          optional refinement — the app runs fine on the maintenance
-          default — so it doesn't earn an interrupting full-width
-          banner. Goal weight stays fully settable in Settings + the
-          weight-log flow. (Contrast the age/sex nudge above, which is
-          KEPT because a missing value there corrupts the TDEE math.) */}
-
-        {/* The Nutr1 explainer ("Your activity is already in your target")
-          was here. The first-visit walk's Food stop says it now (FV1). The
-          first-week card holds the tip lane for a new account's first
-          week, so the banner never reached anyone in that week, the one
-          that most needed it. */}
-
-        {/* Progressive profiling (fast-start PRD, final nudge): experience.
-          Onboarding defaults experience to "intermediate" without asking;
-          once the user has actually trained, invite them to set it so
-          programme volume is tuned to reality. Same default-marker
-          heuristic as the goal-weight nudge: visible while the value
-          still equals the onboarding default — a genuine intermediate
-          dismisses once (dismiss-once semantics), anyone else sets it
-          and the banner never returns. */}
-        <ContextualTipBanner
-          tipKey="training-experience-v1"
-          lanePriority={10}
-          title="Tune your training volume"
-          description="Review your training experience if your programme needs a different starting point."
-          visible={
-            !!profile &&
-            workouts.length > 0 &&
-            (profile.experience ?? "intermediate") === "intermediate"
-          }
-          ctaLabel="Set experience"
-          ctaHref="/settings/lift-plan"
-        />
-
-        {/* Progressive profiling: race-goal invitation. Fast-start runners default
-          to freeform (Run9a); once they've logged a run, invite race-prep via
-          the Race Goal Planner (/settings/training, Run8/Run10). Hides when
-          already race_prep with a date, or on dismiss. Discovery nudge, so it
-          sits at the bottom of the lane priority. */}
-        <ContextualTipBanner
-          tipKey="race-goal-v1"
-          lanePriority={5}
-          title="Training for a race?"
-          description="Set a target date and we'll shape your runs into a race plan."
-          visible={
-            !!profile &&
-            !runStatsLoading &&
-            lifetimeRunCount > 0 &&
-            profile.runMode !== "race_prep" &&
-            !profile.raceGoal?.targetDate
-          }
-          ctaLabel="Set a race goal"
-          ctaHref="/settings/run-plan"
-        />
+        {/* What left this lane, and why, so none of it comes back by habit:
+          - The goal-weight nudge (2026-07-20): an optional refinement, the
+            app runs fine on the maintenance default.
+          - "Your activity is already in your target" (Nutr1): the walk's
+            Food stop says it (FV1). Behind the first-week card, it never
+            reached a new account in the week that most needed it.
+          - Three tips (FV2, 2026-10-04). The age-and-sex nudge: setup
+            always records both, and no Settings screen can change sex, so
+            its button could not do what it asked. The experience nudge:
+            written when setup didn't ask, it now asked people a week later
+            to check the answer they had just given. The race-goal
+            invitation: Train's Run tab carries the same card where run
+            plans live, and this copy only worked on days 8 to 14. */}
       </div>
 
       {/* Weight Log Bottom Sheet */}
@@ -1344,6 +1287,7 @@ export default function Home() {
           flips this false. On web status is "unavailable" so it never opens. */}
       <StepsPrimingModal
         open={
+          stepsData.ready &&
           stepsData.status === "unprompted" &&
           !stepsData.primingShown &&
           !walkHoldsPrompts

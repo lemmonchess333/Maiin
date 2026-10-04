@@ -190,6 +190,22 @@ export function walkOffered(input: {
   return day >= 1 && day <= FIRST_WEEK_DAYS;
 }
 
+/**
+ * Whether one of the guide's hints is due on this visit, so something else
+ * on the page can wait its turn (FV2: Food's Pro line under the food box
+ * waits for the food-box hint). Due while the guide may show here, the
+ * account is owed the hint or a first-week row asked for it, and it hasn't
+ * been closed.
+ */
+export function hintDue(input: {
+  allowed: boolean;
+  owed: boolean;
+  requested: boolean;
+  closed: boolean;
+}): boolean {
+  return input.allowed && !input.closed && (input.owed || input.requested);
+}
+
 /** The hints, one per place, each shown once to an account that has met
  *  the guide. */
 export const GUIDE_HINTS = {

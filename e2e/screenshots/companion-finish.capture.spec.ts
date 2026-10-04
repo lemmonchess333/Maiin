@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser, TEST_USER } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 
 const AUTH = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
@@ -66,7 +65,6 @@ for (const budget of [null, 30] as const) {
       });
       expect(copy.ok()).toBe(true);
     }
-    await suppressCoachmarks(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await signInAsTestUser(page, { email, password });
     if (budget !== null) {

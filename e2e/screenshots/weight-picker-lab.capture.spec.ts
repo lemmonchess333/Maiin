@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 
@@ -11,7 +10,6 @@ test("production scale is available in the development lab", async ({
 }) => {
   test.skip(!emulatorActive, "emulator capture only");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("dev/weight-picker");
   await expect(
@@ -57,7 +55,6 @@ test("weight sheet offers stone and a bounded date without saving", async ({
 }) => {
   test.skip(!emulatorActive, "emulator capture only");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("");
   await page.addStyleTag({
