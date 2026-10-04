@@ -1,0 +1,180 @@
+{
+  "generator": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "ad903f8e374d9ef1537c2c1bad852f4e9effcb0b4d986666c86bacd7e08ae357",
+  "selected": [
+    {
+      "file": "1-rack-grip-candidate.png",
+      "sha256": "4138d453c00c9de84930655df5281bea91ddc53d1364c3e6ed10a80b60deb902"
+    },
+    {
+      "file": "2-squat-candidate.png",
+      "sha256": "e6f6b16212becfabf17e24c48fdd79fcac5a9f993148d8d38746c23f58056673"
+    },
+    {
+      "file": "3-drive-candidate.png",
+      "sha256": "39a3b6428cb110b148fcec19bfaf136050155d707ff1a123f6a8e31bfe661574"
+    },
+    {
+      "file": "4-press-guided.png",
+      "sha256": "6d2a926140276886aa71b969533aa35c79643e4a65afc66916eb4459c8b41fe6"
+    },
+    {
+      "file": "5-overhead-guided.png",
+      "sha256": "d283194e6706ca47a2acf06c2c0df0e64f8deab52bc599f761ff68bceba84525"
+    }
+  ],
+  "generationIds": [
+    "00534447-f3f3-4a1f-aba5-aa1eec62ea1a",
+    "58566d30-6252-4207-a3e5-8c90605e3cdc",
+    "832fe09a-1fb0-425a-9511-0f3abfa4f5ce",
+    "cfc61c18-720e-4470-aac5-f4fc42b4bd28",
+    "eed09ebe-e6bd-4f06-9630-ada99a934c6d"
+  ],
+  "framing": {
+    "crop": {
+      "left": 432,
+      "top": 0,
+      "width": 768,
+      "height": 1024
+    },
+    "padding": 32,
+    "scale": 1,
+    "frames": [
+      {
+        "frame": 1,
+        "source": "fixed-1.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 2,
+        "source": "fixed-2.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 3,
+        "source": "fixed-3.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 4,
+        "source": "fixed-4.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 5,
+        "source": "fixed-5.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 6,
+        "source": "fixed-1.png",
+        "excludedBrightPixels": 0
+      }
+    ]
+  },
+  "soleRepair": [
+    {
+      "input": "1-rack-grip-candidate.png",
+      "output": "fixed-1.png",
+      "regions": [
+        {
+          "left": 655,
+          "top": 889,
+          "width": 115,
+          "height": 20
+        },
+        {
+          "left": 770,
+          "top": 879,
+          "width": 126,
+          "height": 22
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "353bb8f2b62a53a0d412999a84f066e34c83caa7637632f9c2cba9273cd9f522"
+    },
+    {
+      "input": "2-squat-candidate.png",
+      "output": "fixed-2.png",
+      "regions": [
+        {
+          "left": 655,
+          "top": 889,
+          "width": 115,
+          "height": 20
+        },
+        {
+          "left": 770,
+          "top": 879,
+          "width": 126,
+          "height": 22
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "9b5dbee47576ad7597c4b85cafd9d9829e07cb0dd453d74b57eeb4629fea106f"
+    },
+    {
+      "input": "3-drive-candidate.png",
+      "output": "fixed-3.png",
+      "regions": [
+        {
+          "left": 655,
+          "top": 889,
+          "width": 115,
+          "height": 20
+        },
+        {
+          "left": 770,
+          "top": 879,
+          "width": 126,
+          "height": 22
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "c9f01fc32c5d536495c1792d0788a1eb61315bb48615ff2008f37d37a68b0863"
+    },
+    {
+      "input": "4-press-guided.png",
+      "output": "fixed-4.png",
+      "regions": [
+        {
+          "left": 655,
+          "top": 889,
+          "width": 115,
+          "height": 20
+        },
+        {
+          "left": 770,
+          "top": 879,
+          "width": 126,
+          "height": 22
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "49c8fd66d7f907473e699689522437093e387597ba5c065dbc8e11843ddadb0f"
+    },
+    {
+      "input": "5-overhead-guided.png",
+      "output": "fixed-5.png",
+      "regions": [
+        {
+          "left": 655,
+          "top": 889,
+          "width": 115,
+          "height": 20
+        },
+        {
+          "left": 770,
+          "top": 879,
+          "width": 126,
+          "height": 22
+        }
+      ],
+      "changedPixelsOutsideRegions": 0,
+      "sha256": "9c3562b9dc31b2fda8e02b6bc054bd8b0b2c8a1fd6d2f1ca4ea9c013af947dac"
+    }
+  ],
+  "anatomyEdits": "Built-in imagegen only. Temporary green bar marks guided hand placement and were removed by imagegen. No anatomy warping or deterministic limb edits.",
+  "losslessPixelsVerified": true
+}

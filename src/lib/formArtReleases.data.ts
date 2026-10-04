@@ -376,6 +376,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  thrusters: {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 768,
+    height: 1088,
+    reference: 5,
+  },
   "toe-touches": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

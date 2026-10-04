@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  thrusters: placard(
+    "thrusters",
+    ["Quadriceps", "Front deltoids"],
+    ["Glutes", "Triceps"],
+    [
+      [0.5, "Rack", "Stand tall; bar rests on front shoulders."],
+      [0, "Squat", "Squat to parallel; keep elbows high."],
+      [0.25, "Drive", "Drive through feet; keep the bar racked."],
+      [0.75, "Press", "Use leg drive to press overhead."],
+      [1, "Overhead", "Extend arms overhead; keep your ribs braced."],
+      [0.5, "Return", "Lower to front rack; squat again smoothly."],
+    ]
+  ),
   burpees: placard(
     "burpees",
     ["Chest", "Quadriceps"],

@@ -617,6 +617,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
     sha256: "b9d0f02faf0f20f0b749814f395699fd73586d9ac16ee06b5c76198bdf78717b",
   },
+  thrusters: {
+    src: "form-art/thrusters.webp",
+    width: 329,
+    height: 480,
+    keyed: true,
+    source: "form-frames/thrusters/5.webp",
+    sourceSha256:
+      "b9ab2e02e2701596250e53b7d777037d3e3cf0bd4e51034a3597a199fde39102",
+    sha256: "ce2b31e33ad07a2c83fcaf59432cf18a9abea6286d3dce73e224404035bc7d80",
+  },
   "toe-touches": {
     src: "form-art/toe-touches.webp",
     width: 480,

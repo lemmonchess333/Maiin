@@ -1,0 +1,218 @@
+{
+  "exerciseId": "thrusters",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 768,
+  "height": 1088,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T14:20:42.997Z",
+  "reference": {
+    "path": "form-frames/thrusters/5.webp",
+    "sha256": "b9ab2e02e2701596250e53b7d777037d3e3cf0bd4e51034a3597a199fde39102"
+  },
+  "cueSha256": "83efafaaf5c93ab52854218bc70e7e607a5e96fe2bbc33a8bd2d892f471047a3",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomical athlete, white trainers, smooth neutral featureless pelvis. All five unique poses inspected at native1536x1024."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same oblique camera, body scale and floor; all frames receive identical x432..1199 crop and32px vertical padding, no resampling. Bright-content scan confirms nothing clipped."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review of front rack, parallel squat, rising drive, bent-elbow press and extended overhead pose. Two arms/two legs, natural high front-rack elbows, braced torso and planted heels. Rejected enlarged torso/shifted-head candidates are not used."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One straight bar with one modest plate per end throughout; hands remain attached. Guided near-hand and far-hand corrections remove obvious grip-width changes. Slight bar orientation changes through press were reviewed natively and in sequence; no equipment count changes or broken shaft."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both planted soles copied from the rack master only in two stationary contact rectangles; zero changed pixels outside them. Four actual scan-edge anchors and two widths now match exactly in every delivered frame; no blank-canvas anchors."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar stays supported in front rack through squat and initial leg drive; legs straighten before overhead lockout; controlled return to rack leads into next squat. No airborne phase or premature press from bottom."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quadriceps/front deltoids strongest purple; glutes/triceps lighter lilac, core subtle. Stable qualitative hierarchy and neutral unrelated muscles across five poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six reviewed cues match rack, parallel squat, leg drive, press, overhead lockout and return. The return reuses the same joint configuration as initial rack."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final PNGs and6-to-1 manually stepped in current ExerciseFormFrames. Native and phone review completed; lossless delivered WebP pixels equal reviewed PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and closing loop reviewed at390x844 in actual ExerciseFormFrames on4October2026. Entire bar and overhead reach fit, knees/hips/arms and exact cues remain readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and closing loop reviewed at390x844 dark theme. Initial/loop screenshot briefly showed blank image despite loaded pixels; navigating away/back confirmed rendered rack. Final visual inspection shows visible entire figure, bar and cues."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/thrusters/1.webp",
+      "sha256": "ef7f18fd9ae9fb6049c48a2e6f280ce6998590cc7180d165edbbcb2e736048a9",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/thrusters/2.webp",
+      "sha256": "3548f2d3c231fb6635eeb46f8fad658a987e4f44eda72b3e3751659b723e5c10",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/thrusters/3.webp",
+      "sha256": "e19b8ad9b385ec0a7359e6c1e8291599005db3d136d8e06c33df93112232181e",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/thrusters/4.webp",
+      "sha256": "6f57a1532f53729043cce178bd2a89e1fd5aac15a3f9c384d91b0f7cdf5a4204",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/thrusters/5.webp",
+      "sha256": "b9ab2e02e2701596250e53b7d777037d3e3cf0bd4e51034a3597a199fde39102",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/thrusters/6.webp",
+      "sha256": "ef7f18fd9ae9fb6049c48a2e6f280ce6998590cc7180d165edbbcb2e736048a9",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 231,
+          "y": 927
+        },
+        "nearSoleRight": {
+          "x": 330,
+          "y": 927
+        },
+        "farSoleLeft": {
+          "x": 341,
+          "y": 917
+        },
+        "farSoleRight": {
+          "x": 456,
+          "y": 917
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 100,
+        "farSoleWidth": 116
+      }
+    }
+  ]
+}
