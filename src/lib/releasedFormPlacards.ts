@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "man-maker": placard(
+    "man-maker",
+    ["Chest", "Upper back", "Shoulders"],
+    ["Quadriceps", "Abs"],
+    [
+      [0, "Push-Up", "Lower your chest between the dumbbells."],
+      [0.2, "Row One", "Row one weight; keep your hips square."],
+      [0.4, "Row Two", "Switch arms; resist twisting your torso."],
+      [0.6, "Clean", "Jump forward; clean both weights to shoulders."],
+      [0.8, "Press", "Stand tall; press both weights overhead."],
+      [1, "Reset", "Lower weights; return to a braced plank."],
+    ]
+  ),
   "zercher-squat": placard(
     "zercher-squat",
     ["Quadriceps"],

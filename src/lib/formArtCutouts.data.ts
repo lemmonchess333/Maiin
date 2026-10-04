@@ -457,6 +457,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b65f8b2e86ae81d78e972dab8398475892abde4aa409a24c326f3b0a659883ed",
     sha256: "28111ec20e951bb03db6bf0eae9985337abd95b3dbcf7a0068b452bd36b6546c",
   },
+  "man-maker": {
+    src: "form-art/man-maker.webp",
+    width: 181,
+    height: 480,
+    keyed: true,
+    source: "form-frames/man-maker/5.webp",
+    sourceSha256:
+      "3687c5ce5f0be552655dc3b05c8436fb55a23bf5afe7b82bb350ae98070d9c4d",
+    sha256: "4dbd9de9be413a45d8a7b2dcfa80df530cf8c937eafe0da0be133d357cc2f0c8",
+  },
   "meadows-row": {
     src: "form-art/meadows-row.webp",
     width: 480,

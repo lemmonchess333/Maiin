@@ -1,0 +1,217 @@
+{
+  "exerciseId": "man-maker",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 700,
+  "height": 920,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T16:38:25.429Z",
+  "reference": {
+    "path": "form-frames/man-maker/5.webp",
+    "sha256": "3687c5ce5f0be552655dc3b05c8436fb55a23bf5afe7b82bb350ae98070d9c4d"
+  },
+  "cueSha256": "0fd97b62b792938d85d607cc3f45ad5656fbd20c2b5c99901159e090da867db5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomical mannequin and white trainers, neutral pelvis. Canonical and exercise master supplied to pose edits; no mirrored limb poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "One oblique camera. Same authorized whole-scene resize and reposition applied to source poses, then identical700x920 crop at450,40. Zero visible pixels excluded. Native head/limb scale and equipment reviewed across all six positions."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review traced straight plank, bent-elbow push-up, each separate rowing arm, squat rack, standing press and plank reset. Both grips visible or naturally occluded; heels grounded during rack/press, arms extended overhead. Final press ankle joins repaired with imagegen and inspected continuous."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Exactly two modest hex dumbbells, firmly gripped. Supporting weight stays on floor during each row. Authorized exact master copies repair only stationary outer dumbbell ends, with no moving hand/anatomy transforms. Lifted weights retain matching visual geometry."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Near grounded-end phase1/2/6 and far phase1/3/6 measured from actual visible pixel edges. Dimensions are full end height and an off-centre vertical chord; neither vertical extent is clipped. Sole edge anchors and shoe widths match exactly in standing phase4/5. No clipped horizontal ROI widths used."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Push-up precedes both alternating rows, feet move forward into squat clean/rack, stand and press, then return to plank. Supporting arm and toes brace rows; no floating dumbbells or extra equipment. Six stills show key positions, cues describe transitions."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest, upper back and anterior deltoids strong purple; quadriceps and abdomen pale lilac, matching existing Man Maker rig. Hierarchy retained through all poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact cues describe push-up, first row, other arm, jump/clean, stand/press and plank reset. Each at most seven words. Row One/Two avoid ambiguous left/right labels in the oblique view."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six distinct poses preserve all named catalogue stages. Reset6 is high plank and leads correctly to bottom push-up1. No interpolation or limb mirroring. Manual sequence and6to1 loop inspected."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6finalPNGframes and6to1 inspected in actual ExerciseFormFrames390x844 light mode4October2026. Athlete, dumbbells, different row arms and captions/cues legible; no clipping or blank frames. LosslessWebPpixels equal reviewedPNGs."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6and6to1 inspected at390x844 dark mode4October2026. Equipment silhouettes, muscle hierarchy and captions remain readable."
+    }
+  },
+  "airborneFrames": [],
+  "contactPhases": [
+    {
+      "name": "Near dumbbell grounded",
+      "frames": [1, 2, 6],
+      "referenceFrame": 6,
+      "anchorNames": ["nearEndChordTop", "nearEndChordBottom"],
+      "dimensionNames": ["nearEndHeight", "nearEndVerticalChord"],
+      "evidence": "Near weight remains fixed while both hands support push-up/reset or far arm rows; actual hex end edge pixels measured."
+    },
+    {
+      "name": "Far dumbbell grounded",
+      "frames": [1, 3, 6],
+      "referenceFrame": 6,
+      "anchorNames": ["farEndChordTop", "farEndChordBottom"],
+      "dimensionNames": ["farEndHeight", "farEndVerticalChord"],
+      "evidence": "Far weight remains fixed while near arm rows or both hands support floor positions."
+    },
+    {
+      "name": "Clean to press feet",
+      "frames": [4, 5],
+      "referenceFrame": 4,
+      "anchorNames": ["farSoleEdge", "nearSoleEdge"],
+      "dimensionNames": ["farShoeWidth", "nearShoeWidth"],
+      "evidence": "Both shoes remain planted between rack and overhead press. Actual sole edge points and complete horizontal widths measured."
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/man-maker/1.webp",
+      "sha256": "e0dd51ac354c36ba2334536467d424986896461ec7cd86aca7f959698523badf",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "path": "form-frames/man-maker/2.webp",
+      "sha256": "624aa3d6ef86ae6ea37651e77b2b841ac1038b21ec9d6051961bd836dcacfe98",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39
+      }
+    },
+    {
+      "path": "form-frames/man-maker/3.webp",
+      "sha256": "2d40b83660bea15c5aa1e641577ecff7ec685c23dcdd23e9ed98e9c918609a87",
+      "anchors": {
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "path": "form-frames/man-maker/4.webp",
+      "sha256": "d5e163f171865be46e328a63a093df5800ee56654eddf2cd96fe562a6d098508",
+      "anchors": {
+        "farSoleEdge": {
+          "x": 144,
+          "y": 845
+        },
+        "nearSoleEdge": {
+          "x": 309,
+          "y": 874
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 105,
+        "nearShoeWidth": 80
+      }
+    },
+    {
+      "path": "form-frames/man-maker/5.webp",
+      "sha256": "3687c5ce5f0be552655dc3b05c8436fb55a23bf5afe7b82bb350ae98070d9c4d",
+      "anchors": {
+        "farSoleEdge": {
+          "x": 144,
+          "y": 845
+        },
+        "nearSoleEdge": {
+          "x": 309,
+          "y": 874
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 105,
+        "nearShoeWidth": 80
+      }
+    },
+    {
+      "path": "form-frames/man-maker/6.webp",
+      "sha256": "b073d71d04770a80efeeeccdb0c250d1244f0f1d4c771471668315fec9130ebe",
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    }
+  ]
+}

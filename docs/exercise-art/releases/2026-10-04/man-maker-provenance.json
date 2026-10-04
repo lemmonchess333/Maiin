@@ -1,0 +1,254 @@
+{
+  "generator": "built-in imagegen",
+  "selectedGenerationIds": [
+    "a0df6e4b-59d6-4513-a241-d879c00f03c8",
+    "7467f936-f56b-4126-8bc9-e6ddf71b9497",
+    "bda6eabf-0c6c-4281-b5da-c2df08bf6013",
+    "73e88077-4f20-4f61-b6ca-4638e2663596",
+    "7fee5633-c6f5-4a79-a514-224873135efd",
+    "2fc62f18-c0ef-402c-b56c-2845eff4e30a"
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "file": "1.png",
+      "sha256": "a06d4bba1920eadabedb6c516c00ca6152ef5accde7415f67c26b32026bad734"
+    },
+    {
+      "file": "2.png",
+      "sha256": "19e98a14e24a6f7e3ea094153e85fce86956a00ba04daa1a3e10343ea460cf3b"
+    },
+    {
+      "file": "3.png",
+      "sha256": "14a421ab3cdd39802614f7175035a1636f7f3ffda608d631c725e214d69bb914"
+    },
+    {
+      "file": "4.png",
+      "sha256": "9d9c993ec9cc02f2107873fc55236a28b479fc0c32cd26eff17abb1a2237008d"
+    },
+    {
+      "file": "5.png",
+      "sha256": "54685d4bf0d0210dae772f53fd98c416f3a8a1da88eb9ebbac1c607c436889b4"
+    },
+    {
+      "file": "6.png",
+      "sha256": "77a5fb261ca1b61544825ad923f66fd72784c90166532f222ddb5d64dade841b"
+    }
+  ],
+  "history": "Original press candidates rejected for scale/contact drift. Standing rack0795f741 then common reframing, overheadpressd86d6c6f, backgroundfixa26d5607, authorized stationary shoe copies and final imagegen ankle repair7fee5633. Floorframes1/2/3 have authorized stationary dumbbell-end copies. Final common crop; all intermediate evidence retained locally.",
+  "framing": {
+    "authorization": "User explicitly approved uniform resize/reposition2October2026, recovered burpees-production-review/STATUS.md",
+    "input": [1536, 1024],
+    "resized": [1229, 819],
+    "offset": [154, 184],
+    "output": [1536, 1024],
+    "files": [
+      "1-pushup-candidate.png",
+      "2-far-row-candidate.png",
+      "3-near-row-candidate.png",
+      "4-clean-candidate.png",
+      "5-standing-rack.png",
+      "6-master.png"
+    ],
+    "note": "Same whole-scene scaling/placement for all sources; no pose or individual anatomy edits. Rounding differs by less than0.04percent betweenaxes."
+  },
+  "crop": {
+    "crop": {
+      "left": 450,
+      "top": 40,
+      "width": 700,
+      "height": 920
+    },
+    "resampling": false,
+    "report": [
+      {
+        "file": "fixed-1.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "file": "fixed-2.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "file": "fixed-3.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "file": "room-4-clean-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "file": "5-press-clean.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "file": "room-6-master.png",
+        "excludedBrightPixels": 0
+      }
+    ]
+  },
+  "equipmentRepair": {
+    "source": "room-6-master.png",
+    "regions": [
+      {
+        "left": 628,
+        "top": 850,
+        "width": 40,
+        "height": 55,
+        "frames": [1, 2]
+      },
+      {
+        "left": 496,
+        "top": 836,
+        "width": 38,
+        "height": 50,
+        "frames": [1, 3]
+      }
+    ],
+    "scope": "Previously authorized exact stationary equipment copies; only outer dumbbell end regions, no hands or moving anatomy."
+  },
+  "contactRepair": {
+    "source": "room-4-clean-candidate.png",
+    "target": "5-room-press-black.png",
+    "regions": [
+      {
+        "left": 565,
+        "top": 826,
+        "width": 145,
+        "height": 73
+      },
+      {
+        "left": 730,
+        "top": 854,
+        "width": 120,
+        "height": 78
+      }
+    ],
+    "authorization": "Previously authorized stationary contact/master copies; no moving anatomy transforms."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "farSoleEdge": {
+          "x": 144,
+          "y": 845
+        },
+        "nearSoleEdge": {
+          "x": 309,
+          "y": 874
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 105,
+        "nearShoeWidth": 80
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "farSoleEdge": {
+          "x": 144,
+          "y": 845
+        },
+        "nearSoleEdge": {
+          "x": 309,
+          "y": 874
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 105,
+        "nearShoeWidth": 80
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "nearEndChordTop": {
+          "x": 185,
+          "y": 819
+        },
+        "nearEndChordBottom": {
+          "x": 185,
+          "y": 857
+        },
+        "farEndChordTop": {
+          "x": 52,
+          "y": 803
+        },
+        "farEndChordBottom": {
+          "x": 52,
+          "y": 839
+        }
+      },
+      "invariantDimensions": {
+        "nearEndHeight": 50,
+        "nearEndVerticalChord": 39,
+        "farEndHeight": 46,
+        "farEndVerticalChord": 37
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}

@@ -292,6 +292,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 3,
   },
+  "man-maker": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 700,
+    height: 920,
+    reference: 5,
+  },
   "meadows-row": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

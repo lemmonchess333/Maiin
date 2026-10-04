@@ -4845,6 +4845,22 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("land softly");
         continue;
       }
+      if (id === "man-maker") {
+        // These are successive compound-movement phases, not a scalar
+        // joint excursion. The high-plank reset leads into the push-up.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Push-Up",
+          "Row One",
+          "Row Two",
+          "Clean",
+          "Press",
+          "Reset",
+        ]);
+        expect(beats[0].cue).toContain("Lower your chest");
+        expect(beats[5].cue).toContain("return to a braced plank");
+        continue;
+      }
       if (id === "mountain-climbers") {
         // Each leg returns to plank before the opposite leg starts. The
         // scalar knee-drive amount reverses at that deliberate reset.
