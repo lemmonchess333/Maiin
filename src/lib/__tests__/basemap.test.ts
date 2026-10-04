@@ -119,6 +119,32 @@ describe("every map carries the credit", () => {
   });
 });
 
+describe("the credit's styles", () => {
+  const css = readFileSync(
+    resolve(repoRoot, "src/lib/basemapCredit.css"),
+    "utf8"
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("load with every map that adds the credit", () => {
+    expect(
+      readFileSync(resolve(repoRoot, "src/lib/basemap.ts"), "utf8")
+    ).toMatch(/^import "\.\/basemapCredit\.css";$/m);
+  });
+
+  it("give the (i) a 44px tap target: 24px drawn, 10px each side", () => {
+    expect(css).toMatch(
+      /\.maplibregl-ctrl-attrib-button::after\s*\{[^}]*inset:\s*-10px;/
+    );
+  });
+
+  it("draw the dark credit in the fixed stage tokens, with no hex colour", () => {
+    expect(css).toMatch(
+      /\[data-map-theme="dark"\] \.maplibregl-ctrl-attrib\.maplibregl-compact\s*\{[^}]*hsl\(var\(--stage-raised\)/
+    );
+    expect(css.replace(/url\("[^"]*"\)/g, "")).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+  });
+});
+
 describe("addBasemapCredit", () => {
   type Listener = () => void;
   function fakeMap() {

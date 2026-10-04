@@ -426,54 +426,6 @@ html.guiding [data-brand-mark] {
   opacity: 0;
 }
 
-/* ─── MAP CREDIT ───────────────────────────────────────────────
-   The basemap's credit on every map (MapLibre's compact attribution
-   control, added by addBasemapCredit in src/lib/basemap.ts). Our maps
-   mark which basemap they draw with `data-map-theme`.
-
-   The open credit is held clear of the opposite corner, where the run
-   pages put their own controls (RunDetail's Replay, the planner's
-   Locate): it wraps rather than run under them. 8rem is the reserve
-   RunMap's own offline note keeps for a corner control. */
-[data-map-theme] .maplibregl-ctrl-bottom-left,
-[data-map-theme] .maplibregl-ctrl-top-right {
-  max-width: calc(100% - 8rem);
-}
-/* The (i) is drawn at 24px; this gives it the 44px Tropos tap target
-   without moving it. */
-[data-map-theme] .maplibregl-ctrl-attrib-button::after {
-  content: "";
-  position: absolute;
-  inset: -10px;
-}
-/* On the dark basemap MapLibre's white pill and black (i) were the
-   brightest thing on the map. The stage tokens are dark in both themes,
-   as the dark basemap is: the live run draws it for everyone. */
-[data-map-theme="dark"] .maplibregl-ctrl-attrib.maplibregl-compact {
-  background-color: hsl(var(--stage-raised) / 0.85);
-  color: hsl(var(--stage-muted));
-}
-[data-map-theme="dark"] .maplibregl-ctrl-attrib a {
-  color: hsl(var(--stage-foreground));
-}
-[data-map-theme="dark"]
-  .maplibregl-ctrl-attrib.maplibregl-compact
-  .maplibregl-ctrl-attrib-button {
-  background-color: transparent;
-  background-image: none;
-}
-/* MapLibre's own (i) shape, as a mask, so it takes a token colour. */
-[data-map-theme="dark"] .maplibregl-ctrl-attrib-button::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-color: hsl(var(--stage-foreground));
-  -webkit-mask: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill-rule%3D%22evenodd%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M4%2010a6%206%200%201%200%2012%200%206%206%200%201%200-12%200m5-3a1%201%200%201%200%202%200%201%201%200%201%200-2%200m0%203a1%201%200%201%201%202%200v3a1%201%200%201%201-2%200%22%2F%3E%3C%2Fsvg%3E")
-    center / 24px 24px no-repeat;
-  mask: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill-rule%3D%22evenodd%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20d%3D%22M4%2010a6%206%200%201%200%2012%200%206%206%200%201%200-12%200m5-3a1%201%200%201%200%202%200%201%201%200%201%200-2%200m0%203a1%201%200%201%201%202%200v3a1%201%200%201%201-2%200%22%2F%3E%3C%2Fsvg%3E")
-    center / 24px 24px no-repeat;
-}
-
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

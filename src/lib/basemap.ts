@@ -19,6 +19,8 @@ import {
   type ControlPosition,
   type Map as MapLibreMap,
 } from "maplibre-gl";
+// The credit's placement and dark styling, loaded with the maps.
+import "./basemapCredit.css";
 
 export const BASEMAP_ORIGIN = "https://tiles.openfreemap.org";
 
