@@ -22,6 +22,7 @@ import { usePushSettings } from "@/hooks/usePushSettings";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import {
+  isRemotePushOffered,
   registerDeviceToken,
   unregisterDeviceToken,
 } from "@/lib/pushNotifications";
@@ -51,6 +52,11 @@ export default function NotificationsSection({
   // server senders read, plus token register/revoke on the global toggle.
   const uid = useUid();
   const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
+  /* No remote push on the native app (no APNs, no push plugin, no service
+     worker in WKWebView): the switch could only fail there, so it and
+     everything under it is not offered. The reminders above are local and
+     stay. See isRemotePushOffered. */
+  const pushOffered = isRemotePushOffered();
 
   // #965 — fire a server→device test push to this user's registered tokens.
   const handleTestPush = async () => {
@@ -427,107 +433,114 @@ export default function NotificationsSection({
             global toggle requests OS permission + registers/revokes this
             device's FCM token; per-type toggles gate which senders may target
             the user (each sender checks the flag via the server-side
-            mayTargetUserConsent in functions/lib/pushConsent.js). */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div className="pr-3">
-            <p className="text-sm text-foreground">Push notifications</p>
-            <p className="text-xs text-muted-foreground">
-              Get nudges and recaps even when the app is closed
-            </p>
-          </div>
-          <Toggle
-            checked={pushConsent.enabled}
-            label="Toggle push notifications"
-            onChange={async () => {
-              haptic("light");
-              const next = !pushConsent.enabled;
-              trackSettingsEvent("settings_toggle_changed", {
-                toggle: "push_notifications",
-                value: next,
-              });
-              if (next) {
-                const granted = await requestNotificationPermission();
-                refreshPermission();
-                if (!granted) {
-                  toast.error(
-                    "Allow notifications in your browser settings to turn this on."
-                  );
-                  return;
-                }
-                await updatePushConsent({ enabled: true });
-                if (uid) {
-                  const result = await registerDeviceToken(uid);
-                  if (result.ok) {
-                    toast.success("Push on. This device is registered.");
-                  } else {
-                    // Surface the exact failure (iOS web push fails quietly).
-                    toast.error(
-                      `Couldn't register for push (${result.reason}${
-                        result.detail ? `: ${result.detail}` : ""
-                      }).`
-                    );
-                  }
-                }
-              } else {
-                await updatePushConsent({ enabled: false });
-                if (uid) {
-                  try {
-                    await unregisterDeviceToken(uid);
-                  } catch {
-                    // Server consent is already off, so no sender targets the
-                    // account while the user retries device cleanup online.
-                    toast.error(
-                      "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
-                    );
-                  }
-                }
-              }
-            }}
-          />
-        </div>
-
-        {pushConsent.enabled &&
-          (
-            [
-              ["streak", "Streak nudges"],
-              ["recap", "Weekly recap"],
-              ["badge", "Badge unlocked"],
-            ] as const
-          ).map(([type, label]) => (
-            <div
-              key={type}
-              className="flex items-center justify-between p-4 rounded-lg bg-muted"
-            >
-              <span className="text-sm text-foreground">{label}</span>
+            mayTargetUserConsent in functions/lib/pushConsent.js). Web only:
+            see pushOffered above. */}
+        {pushOffered && (
+          <>
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+              <div className="pr-3">
+                <p className="text-sm text-foreground">Push notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  Get nudges and recaps even when the app is closed
+                </p>
+              </div>
               <Toggle
-                checked={pushConsent[type]}
-                label={`Toggle ${label} push`}
-                onChange={() => {
+                checked={pushConsent.enabled}
+                label="Toggle push notifications"
+                onChange={async () => {
                   haptic("light");
-                  const next = !pushConsent[type];
+                  const next = !pushConsent.enabled;
                   trackSettingsEvent("settings_toggle_changed", {
-                    toggle: `push_${type}`,
+                    toggle: "push_notifications",
                     value: next,
                   });
-                  void updatePushConsent({ [type]: next });
+                  if (next) {
+                    const granted = await requestNotificationPermission();
+                    refreshPermission();
+                    if (!granted) {
+                      toast.error(
+                        "Allow notifications in your browser settings to turn this on."
+                      );
+                      return;
+                    }
+                    await updatePushConsent({ enabled: true });
+                    if (uid) {
+                      const result = await registerDeviceToken(uid);
+                      if (result.ok) {
+                        toast.success("Push on. This device is registered.");
+                      } else {
+                        // Surface the exact failure (iOS web push fails quietly).
+                        toast.error(
+                          `Couldn't register for push (${result.reason}${
+                            result.detail ? `: ${result.detail}` : ""
+                          }).`
+                        );
+                      }
+                    }
+                  } else {
+                    await updatePushConsent({ enabled: false });
+                    if (uid) {
+                      try {
+                        await unregisterDeviceToken(uid);
+                      } catch {
+                        // Server consent is already off, so no sender targets the
+                        // account while the user retries device cleanup online.
+                        toast.error(
+                          "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
+                        );
+                      }
+                    }
+                  }
                 }}
               />
             </div>
-          ))}
 
-        {/* #965 — on-demand test push so the user can confirm end-to-end
+            {pushConsent.enabled &&
+              (
+                [
+                  ["streak", "Streak nudges"],
+                  ["recap", "Weekly recap"],
+                  ["badge", "Badge unlocked"],
+                ] as const
+              ).map(([type, label]) => (
+                <div
+                  key={type}
+                  className="flex items-center justify-between p-4 rounded-lg bg-muted"
+                >
+                  <span className="text-sm text-foreground">{label}</span>
+                  <Toggle
+                    checked={pushConsent[type]}
+                    label={`Toggle ${label} push`}
+                    onChange={() => {
+                      haptic("light");
+                      const next = !pushConsent[type];
+                      trackSettingsEvent("settings_toggle_changed", {
+                        toggle: `push_${type}`,
+                        value: next,
+                      });
+                      void updatePushConsent({ [type]: next });
+                    }}
+                  />
+                </div>
+              ))}
+
+            {/* #965 — on-demand test push so the user can confirm end-to-end
             server→device delivery (works with the app closed in PWA mode). */}
-        {pushConsent.enabled && (
-          <button
-            type="button"
-            onClick={handleTestPush}
-            className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
-          >
-            <span className="text-sm text-foreground">Send a test push</span>
-            <span className="text-sm font-medium text-lifting-strong">
-              Send test
-            </span>
-          </button>
+            {pushConsent.enabled && (
+              <button
+                type="button"
+                onClick={handleTestPush}
+                className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
+              >
+                <span className="text-sm text-foreground">
+                  Send a test push
+                </span>
+                <span className="text-sm font-medium text-lifting-strong">
+                  Send test
+                </span>
+              </button>
+            )}
+          </>
         )}
       </div>
     </AccordionSection>
