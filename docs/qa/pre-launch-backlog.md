@@ -6,6 +6,55 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Privacy and consent for App Review (2026-10-04)
+
+Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
+`AiConsentSheet`, `FoodAnalyzer`, `FoodCameraModal`, the Settings switch,
+`functions/lib/aiConsent.js` in `analyzeFood` / `analyzeFoodText`), the
+run save's privacy zones (`RunSummary`, `usePrivacyZones`), the Privacy
+Policy, `ios/App/App/PrivacyInfo.xcprivacy`, the `Info.plist` purpose
+strings, the SPM traits in `capacitor.config.ts`, and the patched
+`@capacitor-firebase/authentication` (`patches/`).
+
+Unit tests pin the rules, the copy and the committed files; these need a
+phone, Xcode or a console.
+
+- [ ] **Functions deployed.** The deployed `analyzeFood` and
+      `analyzeFoodText` contain `refuseUnlessAiAllowed`. An account with
+      `aiAnalysisEnabled: false` gets 400 with reason
+      `ai-analysis-disabled` and no scan counted.
+- [ ] **The question over the scanner** (iPhone, Pro or trial account,
+      never asked): the first Meal photo opens "Send food to Google for
+      analysis?" above the scanner, not under it, with the camera still
+      running. Allow analyses the photo just taken. Not now leaves the
+      photo tabs saying "AI analysis is off", and Turn on asks again.
+- [ ] **A typed meal** on a fresh Pro or trial account asks first; Not
+      now logs it from the on-device parser.
+- [ ] **Settings → Social & privacy → AI food analysis** shows off for an
+      account that hasn't been asked.
+- [ ] **A run that ends offline.** If the finish screen loaded while
+      online, Save works offline. If it never reached the server, the
+      Retry banner says the privacy zones couldn't be checked, and Retry
+      saves once online, with the zone cut from the route.
+- [ ] **Archive** (Xcode 16.3 or later): the Swift tools 6.1 traits
+      resolve, the Facebook SDK is not fetched, GoogleSignIn is.
+- [ ] **No tracking framework in the binary:** `otool -L` on the built app
+      lists neither AppTrackingTransparency.framework nor
+      AdSupport.framework.
+- [ ] **Upload to App Store Connect:** no ITMS-91053 (missing
+      required-reason API) warning and no request for
+      `NSUserTrackingUsageDescription`. Xcode Organizer → Generate Privacy
+      Report lists the 16 data types.
+- [ ] **File the App Store privacy label** from the manifest's list: each
+      type linked to the user, none used for tracking, purposes as listed.
+- [ ] **Permission prompts** show the new words: the camera (the
+      scanner), adding to Photos (Save Image from a share card's share
+      sheet), location (the first run).
+- [ ] **The Policy's MET Norway and OpenFreeMap lines** hold once the
+      weather (MET Norway through a callable) and map (OpenFreeMap)
+      changes from the parallel branch are merged; until then the code
+      still calls Open-Meteo from the phone and CARTO for tiles.
+
 ## The first-visit guide (2026-10-04)
 
 Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
