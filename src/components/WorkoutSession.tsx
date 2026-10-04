@@ -143,13 +143,15 @@ interface WorkoutDay {
   completed: boolean;
 }
 
-/* What each set type's badge looks like. Tokens only: the menu's old
-   hex dots were a fourth palette on the screen. */
+/* What each set type's badge looks like: tokens, at the tint their text
+   steps are measured on (tokenContrast.test.ts). The menu's own hex dots,
+   and a micro-palette of Tailwind colours beside them, were a third
+   palette on the screen. */
 const SET_TYPE_CHIP: Record<SetType, string> = {
   working: "bg-muted text-foreground",
-  warmup: "bg-warning/15 text-warning-strong",
-  dropset: "bg-primary/12 text-primary-strong",
-  failure: "bg-destructive/12 text-destructive-strong",
+  warmup: "bg-warning/10 text-warning-strong",
+  dropset: "bg-primary/10 text-primary-strong",
+  failure: "bg-destructive/10 text-destructive-strong",
 };
 
 /** "Set 2" → "set 2", for the middle of a sentence. */
