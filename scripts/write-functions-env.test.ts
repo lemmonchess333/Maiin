@@ -13,7 +13,7 @@ const format = script.formatFunctionsEnv as (
 ) => string | null;
 
 /** firebase-tools 15.32.1's reading of one double-quoted line
- *  (lib/functions/env.js, `parse`), enough to round-trip what we write. */
+ *  (`parse`, in its functions env module), enough to round-trip what we write. */
 function parseLine(line: string): [string, string] {
   const m = /^([\w./]+)="((?:\\"|[^"])*)"$/.exec(line);
   if (!m) throw new Error(`not a double-quoted line: ${line}`);

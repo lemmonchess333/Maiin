@@ -43,7 +43,7 @@ export const FUNCTION_SETTINGS = [
   "STRIPE_RETURN_URL_ORIGINS",
 ];
 
-// firebase-tools' own escapes (formatUserEnvForWrite in lib/functions/env.js).
+// firebase-tools' own escapes (formatUserEnvForWrite, in its functions env module).
 const ESCAPES = {
   "\n": "\\n",
   "\r": "\\r",
