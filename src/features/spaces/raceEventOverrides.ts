@@ -23,6 +23,7 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { logger } from "@/lib/logger";
+import { validRaceDateKeys } from "./raceDates";
 import {
   RACE_COUNTRIES,
   raceSpaceDefs,
@@ -53,6 +54,7 @@ export function sanitizeRaceEventOverrides(raw: unknown): RaceEventOverrides {
     if (typeof v.dateKey === "string" && DATE_KEY_RE.test(v.dateKey)) {
       o.dateKey = v.dateKey;
     }
+    if (validRaceDateKeys(v.dateKeys, o.dateKey)) o.dateKeys = v.dateKeys;
     if (
       typeof v.websiteUrl === "string" &&
       v.websiteUrl.startsWith("https://") &&
@@ -98,7 +100,11 @@ export function resolveRaceEvent(
 ): SpaceEventInfo | undefined {
   if (!def.event) return undefined;
   const o = overrides[def.id];
-  return o ? { ...def.event, ...o } : def.event;
+  if (!o) return def.event;
+  const resolved = { ...def.event, ...o };
+  if (o.dateKey && o.dateKey !== def.event.dateKey && !o.dateKeys)
+    delete resolved.dateKeys;
+  return resolved;
 }
 
 /** Race defs with resolved events baked in (new objects — the bundled

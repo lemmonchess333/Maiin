@@ -18,7 +18,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
@@ -131,6 +131,34 @@ afterEach(() => {
   cleanup();
   expect(unfiredFailures()).toEqual([]);
   vi.useRealTimers();
+});
+
+it("requires London's assigned day and sends that day to the training editor", async () => {
+  function TrainingDestination() {
+    const location = useLocation();
+    return <output data-testid="training-query">{location.search}</output>;
+  }
+  render(
+    <MemoryRouter initialEntries={["/space/london-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+        <Route path="/settings/run-plan" element={<TrainingDestination />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  const train = await screen.findByRole("button", {
+    name: "Train for this race",
+  });
+  expect(screen.getByText("24–25 April 2027")).toBeInTheDocument();
+  expect(train).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Your assigned race day"), {
+    target: { value: "2027-04-24" },
+  });
+  expect(train).toBeEnabled();
+  fireEvent.click(train);
+  expect(await screen.findByTestId("training-query")).toHaveTextContent(
+    "date=2027-04-24"
+  );
 });
 
 describe("Space page", () => {

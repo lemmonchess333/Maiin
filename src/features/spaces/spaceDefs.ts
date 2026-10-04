@@ -55,6 +55,9 @@ export interface SpaceEventInfo {
   /** Race day, local date "YYYY-MM-DD". Verified against the official
    *  site when written — never guessed. */
   dateKey: string;
+  /** Confirmed race-day choices. dateKey is the final day of this edition;
+   * training must use the participant's chosen day, never the whole range. */
+  dateKeys?: string[];
   distance: RaceEventDistance;
   city: string;
   /** ISO country code for browsing; UK nations share GB. */
@@ -172,6 +175,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       // 2027 is the first two-day edition (Sat 24 + Sun 25 April);
       // dateKey carries the Sunday mass day.
       dateKey: "2027-04-25",
+      dateKeys: ["2027-04-24", "2027-04-25"],
       distance: "marathon",
       city: "London",
       countryCode: "GB",

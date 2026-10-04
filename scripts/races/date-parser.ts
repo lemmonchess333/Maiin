@@ -13,6 +13,13 @@ export interface DateSource {
   identity: string;
   /** Only the organiser's dedicated date element; never scan the whole page. */
   selector?: string;
+  identitySelector?: string;
+  /** Render only reviewed JavaScript pages in a fresh, anonymous browser. */
+  render?: boolean;
+  /** Two independently published entry-partner dates must agree. */
+  corroborate?: DateSource[];
+  /** Reviewed event with two adjacent race days (not an expo weekend). */
+  multipleRaceDays?: boolean;
   /** Optional tightly scoped statement inside the selected element. */
   pattern?: string;
   dateFormat?: "dmy";
@@ -46,8 +53,12 @@ export function validDateKey(value: unknown): value is string {
 }
 
 export function extractDates(text: string): string[] {
+  text = text.replace(
+    /\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\./gi,
+    "$1"
+  );
   const found = new Set<string>();
-  for (const m of text.matchAll(/\b(20\d{2})-(\d{2})-(\d{2})\b/g)) {
+  for (const m of text.matchAll(/\b(20\d{2})-(\d{2})-(\d{2})(?=\b|T\d{2}:)/g)) {
     const key = `${m[1]}-${m[2]}-${m[3]}`;
     if (validDateKey(key)) found.add(key);
   }
@@ -69,6 +80,13 @@ export function extractDates(text: string): string[] {
 
 /** Reject ambiguity, cancellation and multi-day events rather than guessing. */
 export function parseOfficialDate(html: string, source: DateSource): string {
+  const dates = parseOfficialDates(html, source);
+  if (dates.length !== 1)
+    throw new Error("Multiple race days require date selection");
+  return dates[0];
+}
+
+export function parseOfficialDates(html: string, source: DateSource): string[] {
   const dom = new JSDOM(html);
   try {
     const doc = dom.window.document;
@@ -120,7 +138,9 @@ export function parseOfficialDate(html: string, source: DateSource): string {
     if (source.selector) {
       if (
         !identity.test(
-          `${doc.title} ${doc.querySelector("h1")?.textContent ?? ""}`
+          source.identitySelector
+            ? (doc.querySelector(source.identitySelector)?.textContent ?? "")
+            : `${doc.title} ${doc.querySelector("h1")?.textContent ?? ""}`
         )
       )
         throw new Error("Page identity changed");
@@ -132,13 +152,29 @@ export function parseOfficialDate(html: string, source: DateSource): string {
           ? raw.match(new RegExp(source.pattern, "i"))?.[0]
           : raw;
         if (!text) continue;
-        // A date range or cancellation must be handled by a person.
-        if (
-          /cancelled|canceled|postponed|\b\d{1,2}(?:st|nd|rd|th)?\s*[-–/&]\s*\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]/i.test(
-            text
-          )
-        )
+        // Cancellation is never an automatic update. Only reviewed race-day
+        // ranges are supported; an expo weekend is not a pair of race days.
+        if (/cancelled|canceled|postponed/i.test(raw))
           throw new Error("Ambiguous date or status");
+        const range = text.match(
+          /\b(\d{1,2})(?:st|nd|rd|th)?\s*[-–/&]\s*(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(20\d{2})\b/i
+        );
+        if (range) {
+          if (!source.multipleRaceDays)
+            throw new Error("Ambiguous date or status");
+          if (text !== range[0])
+            throw new Error("Ambiguous multi-day race field");
+          const days = extractDates(
+            `${range[1]} ${range[3]} ${range[4]} / ${range[2]} ${range[3]} ${range[4]}`
+          );
+          if (
+            days.length !== 2 ||
+            Date.parse(days[1]) - Date.parse(days[0]) !== 86_400_000
+          )
+            throw new Error("Invalid multi-day race");
+          values.push(...days);
+          continue;
+        }
         const normalized =
           source.dateFormat === "dmy"
             ? text.replace(
@@ -154,14 +190,21 @@ export function parseOfficialDate(html: string, source: DateSource): string {
         );
       }
     }
-    const dates = [...new Set(values)];
-    if (dates.length !== 1)
+    const dates = [...new Set(values)].sort();
+    if (
+      dates.length !== 1 &&
+      !(
+        source.multipleRaceDays &&
+        dates.length === 2 &&
+        Date.parse(dates[1]) - Date.parse(dates[0]) === 86_400_000
+      )
+    )
       throw new Error(
         dates.length
           ? "Multiple dates need review"
           : "No unambiguous official date found"
       );
-    return dates[0];
+    return dates;
   } finally {
     dom.window.close();
   }

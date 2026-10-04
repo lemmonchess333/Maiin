@@ -4,6 +4,72 @@ import type { DateSource } from "./date-parser";
 // Dedicated date elements inspected on 2026-10-04. No whole-page date scraping:
 // news, entry deadlines and other distances frequently appear on these pages.
 const selectors: Record<string, Partial<DateSource>> = {
+  "chester-marathon": { render: true, selector: "main h1 + div span" },
+  "amsterdam-marathon": {
+    url: "https://www.tcsamsterdammarathon.eu/frequently-asked-questions",
+    selector: ".faq-item",
+    pattern: "The next edition is on \\d{1,2} [A-Za-z]+ 20\\d{2}",
+  },
+  "houston-marathon": {
+    url: "https://www.chevronhoustonmarathon.com/faqs/",
+    selector: ".et_pb_toggle_content p",
+    pattern:
+      "^The Chevron Houston Marathon and Aramco Houston Half Marathon will take place on.*",
+  },
+  "seville-marathon": {
+    url: "https://www.zurichmaratonsevilla.es/en/zms-faq",
+    selector: "h3 + p",
+    pattern: "^The Zurich Seville Marathon 20\\d{2} will take place on.*",
+  },
+  "paris-marathon": {
+    url: "https://www.asicsmarathondeparis.com/en/faq",
+    identity: "Marathon de Paris",
+    selector: "details p",
+    pattern:
+      "^The \\d+(?:st|nd|rd|th) edition of the ASICS Marathon de Paris will take place on.*",
+  },
+  "new-york-city-marathon": {
+    render: true,
+    selector: "[data-block-type='countdown-block'] time[datetime]",
+    allowedHosts: ["virtualcorral.nyrr.org"],
+  },
+  "great-birmingham-run": {
+    url: "https://info.greatrun.org/support/solutions",
+    selector: "a[href='/support/solutions/folders/80000704445']",
+    identitySelector: "a[href='/support/solutions/folders/80000704445']",
+  },
+  "great-manchester-run": {
+    url: "https://info.greatrun.org/support/solutions",
+    selector: "a[href='/support/solutions/folders/80000699828']",
+    identitySelector: "a[href='/support/solutions/folders/80000699828']",
+  },
+  // Great Run's main site blocks this runner. Require two independent charity
+  // entry providers to agree; never use an aggregator or a guessed date.
+  "great-bristol-10k": {
+    url: "https://www.cancerresearchuk.org/get-involved/find-an-event/great-bristol-10k",
+    identity: "Great Bristol 10K",
+    selector: "p.css-1ldkydh",
+    pattern: "^\\d{1,2}(?:st|nd|rd|th)? [A-Za-z]+ 20\\d{2}$",
+    corroborate: [
+      {
+        url: "https://www.bhf.org.uk/how-you-can-help/events/runs/great-bristol-run-10k",
+        identity: "Great Bristol Run 10K",
+        selector: ".generic-hero-bannner__copy__text",
+      },
+    ],
+  },
+  "great-north-run": {
+    url: "https://www.macmillan.org.uk/fundraise/charity-runs/great-north-run",
+    selector: ".event-details span",
+    pattern: "^\\d{1,2} [A-Za-z]+ 20\\d{2}$",
+    corroborate: [
+      {
+        url: "https://www.bhf.org.uk/greatnorthrun",
+        identity: "Great North Run",
+        selector: ".generic-hero-bannner__copy__text",
+      },
+    ],
+  },
   "cardiff-half": { selector: "aside.date time" },
   "royal-parks-half": { selector: ".o-header__date" },
   "yorkshire-marathon": { selector: ".start-date" },
@@ -64,8 +130,7 @@ const selectors: Record<string, Partial<DateSource>> = {
   "brighton-marathon": { selector: ".event-meta__date" },
   "the-big-half": { selector: ".event-meta__date", identity: "Big Half" },
   "london-10000": { selector: ".event-meta__date", identity: "London 10,?000" },
-  // London has a two-day edition. The parser deliberately reports this for review.
-  "london-marathon": { selector: ".event-meta__date" },
+  "london-marathon": { selector: ".event-meta__date", multipleRaceDays: true },
   "southampton-marathon": { selector: "h1.h1-hero" },
   "milton-keynes-marathon": {
     selector: "h3",

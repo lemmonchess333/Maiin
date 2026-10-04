@@ -24,11 +24,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Install browser for JavaScript organiser pages
+        run: npx playwright install --with-deps chromium
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - name: Refresh lapsed race dates from official sources
+      - name: Refresh lapsed race dates from reviewed sources
         run: npm run races:refresh -- --apply
       - name: Keep one issue for sources needing attention
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
@@ -47,9 +49,9 @@ jobs:
             }
             const clean = s => String(s).replace(/[|\r\n]/g, ' ');
             const body = [marker,
-              'These official sources need attention. The daily job will retry; races remain visible with “Next date TBA”. No guessed dates are published.',
+              'These race-date sources need attention. The daily job will retry; races remain visible with “Next date TBA”. No guessed dates are published.',
               '', '| Race | Last confirmed date | Reason | Source |', '| --- | --- | --- | --- |',
-              ...review.map(r => `| ${clean(r.name)} | ${r.current} | ${clean(r.detail)} | [Organiser](${r.sourceUrl}) |`),
+              ...review.map(r => `| ${clean(r.name)} | ${r.current} | ${clean(r.detail)} | [Date source](${r.sourceUrl}) |`),
               '', 'Update the dedicated selector in `scripts/races/sources.ts`, or verify the date and update `spaceDefs.ts`. A reviewed bundled-date change supersedes an automated value.'
             ].join('\n');
             const title = 'Race date sources need attention';

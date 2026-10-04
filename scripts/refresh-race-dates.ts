@@ -2,16 +2,11 @@
 /** Dry-run by default. --apply reads and updates config/raceEvents only.
  * --all checks every source without rolling an upcoming edition forward.
  * --today=YYYY-MM-DD and --report=path are useful for local diagnosis. */
-import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { raceSpaceDefs } from "../src/features/spaces/spaceDefs";
 import { DATE_SOURCES } from "./races/sources";
-import {
-  isNextEdition,
-  parseOfficialDate,
-  validDateKey,
-  type DateSource,
-} from "./races/date-parser";
+import { checkDateSource } from "./races/check-source";
+import { isNextEdition, validDateKey } from "./races/date-parser";
 import { preservedDate, type DateEvidence } from "./races/remote-events";
 
 const apply = process.argv.includes("--apply");
@@ -22,55 +17,6 @@ const today = arg("today") ?? new Date().toISOString().slice(0, 10);
 if (!validDateKey(today))
   throw new Error("--today must be a real YYYY-MM-DD date");
 if (apply && arg("today")) throw new Error("Clock overrides are dry-run only");
-
-async function fetchSource(
-  source: DateSource
-): Promise<{ html: string; url: string }> {
-  let url = source.url;
-  const hosts = new Set([
-    new URL(url).hostname,
-    ...(source.allowedHosts ?? []),
-  ]);
-  for (let redirects = 0; redirects < 4; redirects++) {
-    const target = new URL(url);
-    if (target.protocol !== "https:" || !hosts.has(target.hostname))
-      throw new Error("Unreviewed source redirect");
-    const response = await fetch(url, {
-      redirect: "manual",
-      signal: AbortSignal.timeout(20_000),
-      headers: {
-        "User-Agent": "TroposRaceDates/1.0 (official race date check)",
-        Accept: "text/html",
-      },
-    });
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      if (!location) throw new Error("Missing redirect location");
-      url = new URL(location, url).href;
-      continue;
-    }
-    if (!response.ok)
-      throw new Error(`Official site returned HTTP ${response.status}`);
-    if (!response.headers.get("content-type")?.includes("text/html"))
-      throw new Error("Source is not HTML");
-    const reader = response.body!.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        size += value.length;
-        if (size > 5_000_000) throw new Error("Source exceeds size limit");
-        chunks.push(value);
-      }
-    } finally {
-      await reader.cancel();
-    }
-    return { html: Buffer.concat(chunks).toString("utf8"), url };
-  }
-  throw new Error("Too many source redirects");
-}
 
 async function main() {
   // A local dry run needs neither Firebase credentials nor an AI service.
@@ -96,6 +42,8 @@ async function main() {
     status: string;
     sourceUrl: string;
     dateKey?: string;
+    dateKeys?: string[];
+    sourceUrls?: string[];
     detail?: string;
   }> = [];
   for (const race of raceSpaceDefs()) {
@@ -114,13 +62,15 @@ async function main() {
       sourceUrl: source.url,
     };
     try {
-      const { html, url } = await fetchSource(source);
-      const candidate = parseOfficialDate(html, source);
+      const checked = await checkDateSource(source);
+      const candidate = checked.dateKeys.at(-1)!;
       if (current >= today) {
         results.push({
           ...result,
           status: "upcoming",
           dateKey: candidate,
+          dateKeys: checked.dateKeys,
+          sourceUrls: checked.sources.map((s) => s.url),
           detail: "Upcoming edition retained",
         });
       } else if (candidate === current || candidate < today) {
@@ -141,14 +91,18 @@ async function main() {
         updates[race.id] = {
           dateKey: candidate,
           bundledDateKey: bundled,
-          sourceUrl: url,
+          sourceUrl: checked.sources[0].url,
+          dateKeys: checked.dateKeys,
+          sources: checked.sources,
           checkedAt: new Date().toISOString(),
-          sourceSha256: createHash("sha256").update(html).digest("hex"),
+          sourceSha256: checked.sources[0].sha256,
         };
         results.push({
           ...result,
           status: apply ? "updated" : "candidate",
           dateKey: candidate,
+          dateKeys: checked.dateKeys,
+          sourceUrls: checked.sources.map((s) => s.url),
         });
       }
     } catch (error) {
@@ -167,17 +121,30 @@ async function main() {
       const evidence = { ...(data.dateRefresh ?? {}) };
       for (const [id, update] of Object.entries(updates)) {
         // Re-read inside the transaction: never overwrite a concurrent correction.
-        if (events[id]?.dateKey !== existing.events?.[id]?.dateKey)
+        if (
+          events[id]?.dateKey !== existing.events?.[id]?.dateKey ||
+          JSON.stringify(events[id]?.dateKeys) !==
+            JSON.stringify(existing.events?.[id]?.dateKeys)
+        )
           throw new Error(`Concurrent date change for ${id}; retry next run`);
         const race = raceSpaceDefs().find((r) => r.id === id)!;
-        events[id] = { ...race.event, ...events[id], dateKey: update.dateKey };
+        events[id] = {
+          ...race.event,
+          ...events[id],
+          dateKey: update.dateKey,
+          dateKeys: update.dateKeys,
+        };
         evidence[id] = update;
       }
       tx.set(ref, { events, dateRefresh: evidence }, { merge: true });
     });
     const readback = (await ref.get()).data();
     for (const [id, update] of Object.entries(updates)) {
-      if (readback?.events?.[id]?.dateKey !== update.dateKey)
+      if (
+        readback?.events?.[id]?.dateKey !== update.dateKey ||
+        JSON.stringify(readback?.events?.[id]?.dateKeys) !==
+          JSON.stringify(update.dateKeys)
+      )
         throw new Error(`Readback failed for ${id}`);
     }
   }

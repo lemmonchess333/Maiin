@@ -46,6 +46,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { spaceDef, type SpaceEventInfo } from "@/features/spaces/spaceDefs";
 import {
+  raceEventDates,
+  formatRaceEventDate,
+} from "@/features/spaces/raceDates";
+import {
   resolveRaceEvent,
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
@@ -115,8 +119,16 @@ function RaceEventHeader({
   const todayKey = localDateString();
   const past = event.dateKey < todayKey;
   const isYourRace = profile?.raceGoal?.eventSpaceId === spaceId;
-  const raceDay = format(parseLocalDate(event.dateKey), "EEEE d MMMM yyyy");
-  const shortDay = format(parseLocalDate(event.dateKey), "d MMM yyyy");
+  const dates = raceEventDates(event);
+  const [chosenDay, setChosenDay] = useState("");
+  const trainingDate =
+    dates.length === 1
+      ? dates[0]
+      : dates.includes(chosenDay) && chosenDay >= todayKey
+        ? chosenDay
+        : "";
+  const raceDay = formatRaceEventDate(event, true);
+  const shortDay = formatRaceEventDate(event);
 
   return (
     <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
@@ -154,6 +166,29 @@ function RaceEventHeader({
         </p>
       </div>
 
+      {!past && !isYourRace && dates.length > 1 && (
+        <div className="space-y-1">
+          <label htmlFor="space-race-day" className="text-sm font-medium">
+            Your assigned race day
+          </label>
+          <select
+            id="space-race-day"
+            className="ds-input w-full"
+            value={trainingDate}
+            onChange={(e) => setChosenDay(e.target.value)}
+          >
+            <option value="">Choose the day on your entry</option>
+            {dates
+              .filter((d) => d >= todayKey)
+              .map((d) => (
+                <option key={d} value={d}>
+                  {format(parseLocalDate(d), "EEEE d MMMM yyyy")}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
+
       {isYourRace ? (
         <div
           className="flex items-center gap-2 rounded-xl px-3.5 py-3"
@@ -162,7 +197,14 @@ function RaceEventHeader({
           <Check className="size-4 shrink-0 text-running" aria-hidden />
           <p className="text-sm font-semibold text-foreground">
             Your race ·{" "}
-            <span className="font-mono tabular-nums">{shortDay}</span>
+            <span className="font-mono tabular-nums">
+              {profile?.raceGoal?.targetDate
+                ? format(
+                    parseLocalDate(profile.raceGoal.targetDate),
+                    "d MMM yyyy"
+                  )
+                : shortDay}
+            </span>
           </p>
         </div>
       ) : (
@@ -170,10 +212,11 @@ function RaceEventHeader({
           <Button
             variant="sport"
             fullWidth
+            disabled={!trainingDate}
             onClick={() =>
               navigate(
                 `/settings/run-plan?distance=${event.distance}&date=${
-                  event.dateKey
+                  trainingDate
                 }&eventName=${encodeURIComponent(name)}&spaceId=${spaceId}`
               )
             }

@@ -16,6 +16,32 @@ import { raceSpaceDefs, spaceDef } from "../spaceDefs";
 
 const BIG_HALF = spaceDef("the-big-half")!;
 
+it("validates both race days and removes the previous edition's choices on rollover", () => {
+  const london = spaceDef("london-marathon")!;
+  const dateKeys = ["2028-04-22", "2028-04-23"];
+  const valid = sanitizeRaceEventOverrides({
+    "london-marathon": { dateKey: dateKeys[1], dateKeys },
+  });
+  expect(resolveRaceEvent(london, valid)?.dateKeys).toEqual(dateKeys);
+  const rolled = sanitizeRaceEventOverrides({
+    "london-marathon": { dateKey: "2028-04-23" },
+  });
+  expect(resolveRaceEvent(london, rolled)?.dateKeys).toBeUndefined();
+  for (const invalid of [
+    ["2028-13-22", "2028-13-23"],
+    ["2028-04-21", "2028-04-23"],
+    [...dateKeys, "2028-04-24"],
+    [...dateKeys].reverse(),
+  ]) {
+    expect(
+      sanitizeRaceEventOverrides({
+        "london-marathon": { dateKey: "2028-04-23", dateKeys: invalid },
+      })["london-marathon"].dateKeys
+    ).toBeUndefined();
+  }
+  expect(london.event?.dateKeys).toEqual(["2027-04-24", "2027-04-25"]);
+});
+
 describe("sanitizeRaceEventOverrides", () => {
   it("keeps valid fields for known race ids", () => {
     const out = sanitizeRaceEventOverrides({

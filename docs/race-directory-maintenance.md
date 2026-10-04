@@ -37,6 +37,14 @@ and show the last edition separately. The training picker and training CTA
 still require an upcoming date. Existing personal goals are never moved to a
 new year by this process.
 
+London's confirmed 2027 edition has two race days, 24 and 25 April. The
+directory displays both; the Space page asks for the day on the runner's entry,
+and the training picker offers each day separately. A saved goal keeps its
+selected day. `dateKeys` carries the reviewed choices; `dateKey` is the final
+day for directory expiry and backwards compatibility. Older clients display
+that final day until updated, so release the client before promoting this
+two-day metadata.
+
 ## Daily GitHub job
 
 `.github/workflows/race-date-check.yml` runs at 07:23 UTC daily and can also
@@ -51,8 +59,9 @@ source and, where inspected, its dedicated race-date element. Otherwise it
 accepts only matching structured Event/SportsEvent data. It never chooses a
 random date elsewhere on a page or adds a year by assumption.
 
-Only one unambiguous next date can be published. Invalid dates, conflicting
-dates, multi-day events, unexpected redirects, HTTP failures and implausible
+Only an unambiguous next edition can be published. London explicitly supports
+two adjacent race days; other date ranges still require review. Invalid dates,
+conflicting dates, unexpected redirects, HTTP failures and implausible
 year jumps go to one deduplicated GitHub issue. Sources that still show the
 last edition are quietly retried the next day. Unchanged issues are not
 rewritten; the issue closes once no source needs review. The Actions run
@@ -72,6 +81,7 @@ by the catalogue sync.
 ## Local commands and rollout
 
 ```sh
+npx playwright install chromium      # once, for the two rendered sources
 npm run races:refresh -- --all        # dry-run every source; no credentials
 npm run races:refresh                # dry-run expired bundled dates only
 npm run races:refresh -- --apply      # uses Google application-default credentials
@@ -96,9 +106,28 @@ scripts, images or inconsistent markup. Those need an occasional adapter fix or
 manually verified catalogue date. The fallback keeps races visible throughout;
 this does not promise that every organiser can be scraped forever.
 
-The 4 October 2026 live dry run read unambiguous dates for 31 of 42 sources.
-The other 11 need review: Chester, Amsterdam, New York, Houston, Seville,
-Paris, London Marathon (two-day edition), Great Birmingham Run, Great Bristol
-Run, Great Manchester Run and Great North Run. The Great Run sites returned
-HTTP 403. Their already verified catalogue dates remain usable; an adapter
-failure never erases a date or a race.
+The source adapters cover all 42 races. Amsterdam, Houston, Seville and Paris
+use dedicated organiser FAQ statements. Chester and New York use a fresh
+anonymous Chromium browser to read their rendered event pages. The browser
+does not solve access challenges; an inaccessible event page stays in review.
+Main-frame navigation is limited to reviewed HTTPS hosts, including New York's
+normal waiting-room host, and the final page must be the organiser's event
+site. CI installs Chromium automatically. For a local installed browser,
+`RACE_BROWSER_EXECUTABLE_PATH` may point to its executable.
+
+Great Birmingham and Great Manchester use their event entries on Great Run's
+[official support page](https://info.greatrun.org/support/solutions). Great
+Bristol and Great North's main event sites blocked automated access, and their
+support entries were inconsistent or stale. These two races require agreement
+between independent charity entry providers:
+
+- Bristol 10K: [Cancer Research UK](https://www.cancerresearchuk.org/get-involved/find-an-event/great-bristol-10k)
+  and [British Heart Foundation](https://www.bhf.org.uk/how-you-can-help/events/runs/great-bristol-run-10k).
+- Great North: [Macmillan](https://www.macmillan.org.uk/fundraise/charity-runs/great-north-run)
+  and [British Heart Foundation](https://www.bhf.org.uk/greatnorthrun).
+
+These are entry-provider sources, not direct organiser announcements. Both
+must load, identify the same race and publish the same date. A failure or
+disagreement requires review; neither source is silently dropped. Evidence
+stores both URLs and response hashes. An adapter failure never erases a date
+or a race.

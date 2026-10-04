@@ -6,6 +6,8 @@ export interface DateEvidence {
   sourceUrl: string;
   checkedAt: string;
   sourceSha256: string;
+  dateKeys?: string[];
+  sources?: Array<{ url: string; sha256: string }>;
 }
 
 /** A reviewed change to the bundled date supersedes automation. Unrelated

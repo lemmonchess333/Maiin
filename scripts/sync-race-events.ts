@@ -30,6 +30,7 @@ for (const def of raceSpaceDefs()) {
   if (!def.event) continue;
   events[def.id] = {
     dateKey: def.event.dateKey,
+    dateKeys: def.event.dateKeys ?? [def.event.dateKey],
     websiteUrl: def.event.websiteUrl,
     city: def.event.city,
     countryCode: def.event.countryCode,
@@ -61,6 +62,10 @@ async function main(): Promise<void> {
         evidence
       );
       (events[race.id] as Record<string, unknown>).dateKey = dateKey;
+      (events[race.id] as Record<string, unknown>).dateKeys =
+        dateKey !== bundled
+          ? (evidence.dateKeys ?? [dateKey])
+          : (race.event!.dateKeys ?? [bundled]);
       if (dateKey !== bundled) dateRefresh[race.id] = evidence;
     }
     tx.set(ref, {

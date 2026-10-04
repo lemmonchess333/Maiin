@@ -27,7 +27,6 @@ import {
   RACE_DISTANCE_LABELS,
 } from "./raceBrowse";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
 import {
   Check,
   Dumbbell,
@@ -45,7 +44,8 @@ import {
 import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString } from "@/lib/dateHelpers";
+import { formatRaceEventDate } from "./raceDates";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -197,7 +197,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
               >
                 {event.dateKey < localDateString()
                   ? "Next date TBA"
-                  : format(parseLocalDate(event.dateKey), "d MMM yyyy")}
+                  : formatRaceEventDate(event)}
               </span>
               {" · "}
               {event.city} {event.countryFlag}
