@@ -6,6 +6,40 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
+
+Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
+`deploy-functions.yml` and `scripts/write-functions-env.mjs`, and the
+full-screen layers (`WorkoutSession`, `SessionCompleteScreen`, Social's
+people search, `FoodCameraModal`).
+
+Unit tests pin the API client, the settings file and the padding; these
+need Apple, the Cloud console or a phone.
+
+- [ ] **The first TestFlight run signs from the API key.** With only the
+      five secrets `docs/ios-release.md` asks for, Deploy iOS to
+      TestFlight makes a certificate and a profile named
+      `Tropos CI <serial>`, passes the import step's checks, archives and
+      uploads. A second run deletes the first run's profile and revokes
+      its certificate (Apple Developer → Certificates shows one Apple
+      Distribution certificate from these runs), and the first build
+      stays installable in TestFlight.
+- [ ] **Function settings from GitHub.** After setting `ADMIN_UIDS` and
+      the rest as repository variables and running Deploy production,
+      the "Write functions/.env from repository variables" step names
+      them, and the Cloud console shows them on `listPendingReports`,
+      `createReport` and the two RevenueCat functions. `/admin/moderation`
+      opens for that uid on the web build with no `VITE_ADMIN_UIDS`
+      secret.
+- [ ] **The status bar on a phone.** On the first TestFlight build, the
+      workout session, its finish screen, Social's people search and the
+      food camera keep their title and close button clear of the clock
+      and the Dynamic Island, with no doubled gap above them. The shell
+      sets `ios.contentInset: "automatic"`, so whether its web view
+      reports a top inset is unverified; pages and these layers pad by the
+      same `--safe-top`, so a gap on one is a gap on all. The run screens
+      are not covered yet.
+
 ## Privacy and consent for App Review (2026-10-04)
 
 Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
