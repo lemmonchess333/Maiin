@@ -54,6 +54,8 @@ vi.mock("maplibre-gl", () => {
       if (event === "click") taps.push(handler);
     }
     once() {}
+    off() {}
+    addControl() {}
     addSource() {}
     addLayer() {}
     getSource() {
@@ -65,7 +67,11 @@ vi.mock("maplibre-gl", () => {
     flyTo() {}
     remove() {}
   }
-  return { Map: FakeMap, setWorkerUrl: vi.fn() };
+  return {
+    Map: FakeMap,
+    AttributionControl: class {},
+    setWorkerUrl: vi.fn(),
+  };
 });
 
 afterEach(() => {

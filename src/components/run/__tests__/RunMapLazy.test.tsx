@@ -3,10 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   fail: true,
-  map: { on: vi.fn(), off: vi.fn(), remove: vi.fn() },
+  map: {
+    on: vi.fn(),
+    once: vi.fn(),
+    off: vi.fn(),
+    addControl: vi.fn(),
+    remove: vi.fn(),
+  },
 }));
 vi.mock("maplibre-gl", () => ({
   setWorkerUrl: vi.fn(),
+  AttributionControl: class {},
   Map: vi.fn(function () {
     if (h.fail) throw new Error("Failed to initialize WebGL");
     return h.map;

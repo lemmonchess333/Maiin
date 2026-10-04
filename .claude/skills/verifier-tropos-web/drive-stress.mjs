@@ -27,7 +27,7 @@ function noisy(t) {
     /identitytoolkit/i,
     /Failed to load resource.*(404|503)/i,
     /open-meteo/i,
-    /cartocdn/i,
+    /openfreemap/i,
   ].some((re) => re.test(t));
 }
 
