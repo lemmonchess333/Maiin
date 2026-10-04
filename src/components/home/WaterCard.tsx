@@ -30,9 +30,10 @@ const UNDO_WINDOW_MS = 4000;
  */
 function spokenVolume(ml: number): string {
   const label = formatWaterVolume(ml);
-  return label.endsWith(" L")
-    ? `${label.slice(0, -2)} litres`
-    : `${label.slice(0, -3)} millilitres`;
+  const litres = label.endsWith(" L");
+  const amount = litres ? label.slice(0, -2) : label.slice(0, -3);
+  const unit = litres ? "litre" : "millilitre";
+  return `${amount} ${amount === "1" ? unit : `${unit}s`}`;
 }
 
 /**
