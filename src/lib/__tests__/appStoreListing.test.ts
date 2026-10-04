@@ -130,7 +130,7 @@ describe("App Store listing: claims the code can contradict", () => {
 
   it("quotes the trial length the paywall offers", () => {
     const paywall = read("../proPlans.ts").match(
-      /Start your (\d+)-day free trial/
+      /export const TRIAL_DAYS = (\d+);/
     );
     expect(paywall).not.toBeNull();
     const quoted = [...everything.matchAll(/(\d+)-day free trial/g)].map(
