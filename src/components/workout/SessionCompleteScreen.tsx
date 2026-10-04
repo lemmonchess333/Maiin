@@ -199,7 +199,7 @@ export default function SessionCompleteScreen({
       animate={{ opacity: 1 }}
       role="region"
       aria-label="Session completion"
-      className="fixed inset-0 z-50 bg-background overflow-y-auto safe-area-pb"
+      className="fixed inset-0 z-50 bg-background overflow-y-auto pt-[var(--safe-top)] safe-area-pb"
     >
       <div className="max-w-md mx-auto px-5 py-8 space-y-6">
         {/* Hero Section */}

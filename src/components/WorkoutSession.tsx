@@ -1351,7 +1351,7 @@ export default function WorkoutSession({
   const anySetDone = setLogs.some((sets) => sets.some((set) => set.completed));
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
       <GuideHint
         id="first-set"
         layer="session"

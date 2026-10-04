@@ -1093,7 +1093,7 @@ export default function FoodCameraModal({
         role="dialog"
         aria-modal="true"
         aria-label="Camera unavailable"
-        className="fixed inset-0 z-[60] bg-background flex flex-col"
+        className="fixed inset-0 z-[60] bg-background flex flex-col pt-[var(--safe-top)]"
       >
         {/* Same escape-hatch rule as the camera return: the close X
             stays above the z-20 analysis overlay. */}
@@ -1213,7 +1213,7 @@ export default function FoodCameraModal({
           must stay tappable during a slow scan. Pre-fix it sat at
           z-10 UNDER the overlay, so an iOS user (no hardware back,
           no Escape key) had no way out until the request resolved. */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-4">
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-4 pt-[calc(var(--safe-top)+1rem)]">
         <button
           type="button"
           onClick={onClose}
