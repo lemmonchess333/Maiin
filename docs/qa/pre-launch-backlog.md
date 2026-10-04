@@ -18,13 +18,16 @@ moves need a phone.
 
 - [ ] **The walk on a new account.** Sign up, finish setup, Continue with
       Free: Home opens and dims around the first card, and the mark lifts
-      out of the header into the card. Next, Next, Done; the mark goes
-      back into the header.
-- [ ] **A small phone (SE).** The walk scrolls the Food card into view for
-      the third stop, and no card hides under the tab bar or the Dynamic
-      Island's status bar.
-- [ ] **VoiceOver** reads each stop's title and words, and focus starts on
-      Next.
+      out of the header into the card. Next: the card disappears, the
+      light moves, and the card fades in beside the next stop, never
+      mid-scroll. The third stop scrolls the Food card into view (it is
+      below the fold on every phone); Done scrolls back up and the mark
+      goes back into the header.
+- [ ] **A small phone (SE).** No card hides under the tab bar or the
+      Dynamic Island's status bar, and the Food hint turns above the
+      composer rather than lie across the tab bar.
+- [ ] **VoiceOver** reads each stop's title and words as the walk moves
+      on, and focus starts on Next and stays there.
 - [ ] **Reduce Motion:** no flight, the cards fade.
 - [ ] **The hints**, each once: Train's lift tab, the first set of the
       first workout (it sits above the workout screen), Food's composer,

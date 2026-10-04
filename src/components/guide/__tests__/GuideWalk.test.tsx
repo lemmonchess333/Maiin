@@ -316,6 +316,77 @@ describe("GuideWalk", () => {
     }
   });
 
+  it("gives back the scroll it borrowed before the mark flies home", async () => {
+    const restore = layOutEverything();
+    const scrolled = Object.getOwnPropertyDescriptor(window, "scrollY");
+    let y = 0;
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      get: () => y,
+    });
+    window.scrollTo = vi.fn() as typeof window.scrollTo;
+    headerMark();
+    target("a");
+    target("b", 400);
+    target("c", 560);
+    const onClose = vi.fn();
+    try {
+      render(<GuideWalk stops={STOPS} fromHeader onClose={onClose} />);
+      fireEvent.click(await cardShown());
+      fireEvent.click(await cardShown());
+      // The Food stop sits below the fold: the walk scrolled the page.
+      y = 420;
+      fireEvent.click(await cardShown("Done"));
+      expect(window.scrollTo).toHaveBeenCalledExactlyOnceWith({
+        top: 0,
+        behavior: "smooth",
+      });
+      // The mark waits for the page to come back before it flies home:
+      // longer than the flight takes, and nothing has ended.
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 700));
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      y = 0;
+      await waitFor(() =>
+        expect(onClose).toHaveBeenCalledExactlyOnceWith({
+          finished: true,
+          index: 2,
+        })
+      );
+    } finally {
+      if (scrolled) Object.defineProperty(window, "scrollY", scrolled);
+      restore();
+    }
+  });
+
+  it("a stop opened from the first-week card leaves the page where it is", async () => {
+    const scrolled = Object.getOwnPropertyDescriptor(window, "scrollY");
+    // Scrolled down to the first-week card, whose row asks about today.
+    let y = 300;
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      get: () => y,
+    });
+    window.scrollTo = vi.fn() as typeof window.scrollTo;
+    target("a");
+    const onClose = vi.fn();
+    try {
+      render(<GuideWalk stops={[STOPS[0]]} onClose={onClose} />);
+      const gotIt = await cardShown("Got it");
+      // The walk brought today's card up into view.
+      y = 0;
+      fireEvent.click(gotIt);
+      await waitFor(() =>
+        expect(onClose).toHaveBeenCalledWith({ finished: true, index: 0 })
+      );
+      // Today's card is what the row asked about; it stays in view.
+      expect(window.scrollTo).not.toHaveBeenCalled();
+    } finally {
+      if (scrolled) Object.defineProperty(window, "scrollY", scrolled);
+    }
+  });
+
   it("under Reduce Motion the mark stays in the card: no flight", async () => {
     setReducedMotion(true);
     const restore = layOutEverything();

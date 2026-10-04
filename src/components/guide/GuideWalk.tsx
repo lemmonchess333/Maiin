@@ -109,7 +109,9 @@ export interface GuideWalkProps {
  * The first-visit walk (FV1): the page dims around one thing at a time and
  * the guide's card says what it is for, with Skip and Next. The first-visit
  * walk starts with the Tropos mark lifting out of Home's header into the
- * card, and ends with it going back when the header is in view.
+ * card, and ends where it began: the page goes back to where it was (the
+ * Food stop scrolls it on every phone) and the mark flies back into the
+ * header.
  *
  * A stop whose target isn't on the page, or has no size, is passed over,
  * so a card the day doesn't show never gets a stop pointing at nothing;
@@ -136,10 +138,13 @@ export default function GuideWalk({
    *  stops, the spotlight glides rather than following scrolling at once. */
   const [settled, setSettled] = useState(false);
   const [closing, setClosing] = useState(false);
-  /** The mark in flight, between Home's header and the card. */
-  const [flyer, setFlyer] = useState<{ from: Box; flight: Flight } | null>(
-    null
-  );
+  /** The mark in flight, between Home's header and the card; `fade` when
+   *  it has nowhere to land. */
+  const [flyer, setFlyer] = useState<{
+    from: Box;
+    flight: Flight;
+    fade?: boolean;
+  } | null>(null);
   /** The card's own mark shows except while the flyer stands in for it. */
   const [markHome, setMarkHome] = useState(true);
   const [shown, setShown] = useState(false);
@@ -153,7 +158,10 @@ export default function GuideWalk({
   const viewed = useRef(new Set<number>());
   const ended = useRef(false);
   const opened = useRef(false);
+  /** Where the page was scrolled when the walk began. */
+  const startScroll = useRef<number | null>(null);
   const timers = useRef<number[]>([]);
+  const frame = useRef(0);
   const later = (fn: () => void, s: number) => {
     timers.current.push(window.setTimeout(fn, s * 1000));
   };
@@ -214,6 +222,7 @@ export default function GuideWalk({
         setIndex(i);
         return;
       }
+      if (startScroll.current === null) startScroll.current = window.scrollY;
       bringIntoView(el, reduce);
       setTarget(el);
       setSpot(box(el.getBoundingClientRect()));
@@ -289,28 +298,67 @@ export default function GuideWalk({
     const pending = timers.current;
     return () => {
       pending.forEach((t) => window.clearTimeout(t));
+      cancelAnimationFrame(frame.current);
       document.documentElement.classList.remove("guiding");
       if (before && before.isConnected) before.focus({ preventScroll: true });
     };
   }, []);
 
-  /* The ending: the card and the dim fade; on the first-visit walk the mark
-     flies back into the header when the header is in view. The walk
-     reports once that has run (a timer, as LaunchSplash does: framer's
-     completion callbacks can fire as a new target starts). */
+  /** Calls `fn` once the page has stopped scrolling: at `to` when a
+   *  scroll there was asked for, or after a while whatever happens. */
+  const whenScrolled = (to: number | null, fn: () => void) => {
+    const began = performance.now();
+    let last = window.scrollY;
+    let still = 0;
+    const look = () => {
+      const y = window.scrollY;
+      still = y === last ? still + 1 : 0;
+      last = y;
+      const arrived = to === null || Math.abs(y - to) <= 1;
+      if (
+        (arrived && still >= 2) ||
+        performance.now() - began > SETTLE_CAP_MS
+      ) {
+        fn();
+        return;
+      }
+      frame.current = requestAnimationFrame(look);
+    };
+    frame.current = requestAnimationFrame(look);
+  };
+
+  /* The ending: the card and the dim fade. The first-visit walk ends where
+     it began: it gives back the scroll it borrowed for a stop below the
+     fold, and the mark, held where the card had it, flies into the header
+     once the page has stopped. The walk reports once that has run (a
+     timer, as LaunchSplash does: framer's completion callbacks can fire
+     as a new target starts). */
   const close = (finished: boolean) => {
     if (closing || ended.current) return;
     setClosing(true);
+    const back = fromHeader ? startScroll.current : null;
+    const scrollBack = back !== null && Math.abs(window.scrollY - back) > 1;
+    if (scrollBack)
+      window.scrollTo({ top: back, behavior: reduce ? "instant" : "smooth" });
     const slot = slotRef.current;
-    const to = fromHeader && !reduce && markHome ? headerMark() : null;
-    if (to && slot) {
-      const from = box(slot.getBoundingClientRect());
-      setMarkHome(false);
-      setFlyer({ from, flight: flightBetween(from, to) });
-      later(() => end(finished, index), FLIGHT_S + 0.05);
+    if (!fromHeader || reduce || !markHome || !slot) {
+      later(() => end(finished, index), FADE_S + 0.05);
       return;
     }
-    later(() => end(finished, index), FADE_S + 0.05);
+    const from = box(slot.getBoundingClientRect());
+    const hold = { x: 0, y: 0, scale: 1 };
+    setMarkHome(false);
+    setFlyer({ from, flight: hold });
+    whenScrolled(scrollBack ? back : null, () => {
+      const to = headerMark();
+      if (to) {
+        setFlyer({ from, flight: flightBetween(from, to) });
+        later(() => end(finished, index), FLIGHT_S + 0.05);
+        return;
+      }
+      setFlyer({ from, flight: hold, fade: true });
+      later(() => end(finished, index), FADE_S + 0.05);
+    });
   };
 
   const next = () => {
@@ -477,13 +525,18 @@ export default function GuideWalk({
             width: flyer.from.width,
             height: flyer.from.height,
           }}
-          initial={{ x: 0, y: 0, scale: 1 }}
+          initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
           animate={{
             x: flyer.flight.x,
             y: flyer.flight.y,
             scale: flyer.flight.scale,
+            opacity: flyer.fade ? 0 : 1,
           }}
-          transition={{ duration: FLIGHT_S, ease: [0.65, 0, 0.25, 1] }}
+          transition={{
+            duration: FLIGHT_S,
+            ease: [0.65, 0, 0.25, 1],
+            opacity: { duration: FADE_S },
+          }}
         >
           <GuideMark className="size-full" cutClass="stroke-background" />
         </motion.div>
