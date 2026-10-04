@@ -50,10 +50,41 @@ phone, Xcode or a console.
 - [ ] **Permission prompts** show the new words: the camera (the
       scanner), adding to Photos (Save Image from a share card's share
       sheet), location (the first run).
-- [ ] **The Policy's MET Norway and OpenFreeMap lines** hold once the
-      weather (MET Norway through a callable) and map (OpenFreeMap)
-      changes from the parallel branch are merged; until then the code
-      still calls Open-Meteo from the phone and CARTO for tiles.
+
+## Credits, weather, push and exports for the App Store (2026-10-04)
+
+Affects: `src/lib/basemap.ts` (RunMap, RoutePlannerSheet), the new
+`getCurrentWeather` callable (`functions/currentWeather.js`,
+`functions/lib/metWeather.js`) and `src/lib/weather.ts`, the Open Food
+Facts credit (FoodAnalyzer, FoodSuggestionsDropdown, ServingSizeDrawer),
+`NotificationsSection`, and `src/lib/shareFile.ts` (the CSV exports,
+both Export GPX buttons, the share cards).
+
+Unit tests pin the rules; the tiles, MET's answer and the share sheet
+need a phone and a deploy.
+
+- [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
+      finish screen and the route planner draw OpenFreeMap's basemap in
+      both themes. The credit shows as each map opens and folds to its
+      (i) after five seconds; the (i) opens it again, and its links open
+      outside the app. On the live run it sits top-right, clear of the
+      GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
+- [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
+      with no secret. Open run setup with location allowed: the strip
+      shows the weather and "Weather data from MET Norway". The function
+      logs show no `weather.failed` with status 403 (MET refusing the
+      User-Agent) and no `weather.met_deprecated`.
+- [ ] **No push on the iPhone app.** Settings > Notifications shows the
+      meal, workout and streak reminders and no push switch; the Settings
+      list says "Reminders, activity". The web build still has the switch.
+- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+      workouts opens the share sheet; Save to Files saves a .csv that
+      opens in Numbers, then "Workouts exported" shows. Closing the sheet
+      says nothing. On a slow connection a "Workouts export ready" toast
+      may come instead: its Share opens the sheet. Export GPX on the
+      finish screen and on a saved run opens the sheet with a .gpx.
+- [ ] **Open Food Facts credit** under a barcode result, the search
+      results and the portion sheet, which still fits on an SE.
 
 ## The first-visit guide (2026-10-04)
 
