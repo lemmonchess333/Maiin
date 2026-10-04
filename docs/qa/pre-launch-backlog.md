@@ -32,13 +32,14 @@ need Apple, the Cloud console or a phone.
       opens for that uid on the web build with no `VITE_ADMIN_UIDS`
       secret.
 - [ ] **The status bar on a phone.** On the first TestFlight build, the
-      workout session, its finish screen, Social's people search and the
-      food camera keep their title and close button clear of the clock
-      and the Dynamic Island, with no doubled gap above them. The shell
-      sets `ios.contentInset: "automatic"`, so whether its web view
-      reports a top inset is unverified; pages and these layers pad by the
-      same `--safe-top`, so a gap on one is a gap on all. The run screens
-      are not covered yet.
+      workout session, its finish screen, Social's people search, the
+      food camera, the run screen (setup, countdown and the live map's
+      controls), the run summary and the Privacy Policy, Terms and
+      Support pages keep their first row clear of the clock and the
+      Dynamic Island, with no doubled gap above it. The shell sets
+      `ios.contentInset: "automatic"`, so whether its web view reports a
+      top inset is unverified; pages and these screens pad by the same
+      `--safe-top`, so a gap on one is a gap on all.
 
 ## Privacy and consent for App Review (2026-10-04)
 
