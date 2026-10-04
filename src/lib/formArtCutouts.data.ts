@@ -417,6 +417,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
     sha256: "dfbee104ef125836012cf0e3d4aa0fb078d30c875d914f940e69a6433f19f1ee",
   },
+  "incline-treadmill-walk": {
+    src: "form-art/incline-treadmill-walk.webp",
+    width: 480,
+    height: 361,
+    keyed: true,
+    source: "form-frames/incline-treadmill-walk/1.webp",
+    sourceSha256:
+      "b3dff293c1af2fb00942c3bc50f2effbc2a17e1981848dfff5368d947282f473",
+    sha256: "6382fdca540ab0d3dd39057a008d38759e24a40d189d63b2e6f8f0b8ed625c8a",
+  },
   "l-sit": {
     src: "form-art/l-sit.webp",
     width: 480,

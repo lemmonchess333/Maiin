@@ -15,6 +15,35 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "incline-treadmill-walk": placard(
+    "incline-treadmill-walk",
+    ["Glutes", "Calves"],
+    ["Quads", "Hamstrings"],
+    [
+      [0, "Contact", "Walk uphill; keep your hands free."],
+      [
+        0.16666666666666666,
+        "Load",
+        "Transfer weight smoothly onto your front foot.",
+      ],
+      [
+        0.3333333333333333,
+        "Swing",
+        "Swing your opposite leg forward without rushing.",
+      ],
+      [0.5, "Switch", "Land softly; lean slightly from your ankles."],
+      [
+        0.6666666666666666,
+        "Transfer",
+        "Let your arms counter your leg movement.",
+      ],
+      [
+        0.8333333333333334,
+        "Return",
+        "Keep walking with an even, comfortable stride.",
+      ],
+    ]
+  ),
   treadmill: placard(
     "treadmill",
     ["Quads", "Calves"],

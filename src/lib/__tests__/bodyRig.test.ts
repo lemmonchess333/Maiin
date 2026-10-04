@@ -4861,7 +4861,7 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("return to a braced plank");
         continue;
       }
-      if (id === "treadmill") {
+      if (id === "treadmill" || id === "incline-treadmill-walk") {
         // Walking advances through a periodic gait phase, rather than
         // reversing a joint excursion. The wrap must preserve cadence.
         for (let i = 0; i < beats.length; i++) {
@@ -4870,8 +4870,13 @@ describe("form beats — the caption is a claim about the frame", () => {
         }
         expect(beats[0].label).toBe("Contact");
         expect(beats[3].label).toBe("Switch");
-        expect(beats[3].cue).toContain("other heel");
-        expect(beats[0].cue).toContain("hands off rails");
+        if (id === "treadmill") {
+          expect(beats[3].cue).toContain("other heel");
+          expect(beats[0].cue).toContain("hands off rails");
+        } else {
+          expect(beats[3].cue).toContain("from your ankles");
+          expect(beats[0].cue).toContain("hands free");
+        }
         continue;
       }
       if (id === "box-jumps") {

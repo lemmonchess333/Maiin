@@ -1,0 +1,203 @@
+{
+  "generator": "Built-in imagegen; authorized uniform scene framing and stationary equipment/contact copies",
+  "selectedGenerationIds": [
+    "b6affd7b-3cb3-42a3-9bf9-d989e3461467",
+    "6101d3a1-7d2b-40cc-89eb-4bac8206c699",
+    "e0492ef8-9939-4da0-9be5-f4a17dbc93be",
+    "56e44685-70fa-4f88-9cd7-dcf6997055df",
+    "c39cb53d-dedb-42f4-8a43-38dc673e33e2",
+    "57fc5a11-c1e6-4690-9f70-8af6a19ab6b2"
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "file": "1.png",
+      "sha256": "415030b53e100b05173767a20cd50f1d749c770318048e8fc321a36786be4c4a"
+    },
+    {
+      "file": "2.png",
+      "sha256": "3175753f2efcb91b5432b89c57c3778ed31127d6bb42e1eac9bccfffd36c388c"
+    },
+    {
+      "file": "3.png",
+      "sha256": "076b67e720f10bf2c434fbfd3a22bab91e5943458c23e856688acfb2f1899ef0"
+    },
+    {
+      "file": "4.png",
+      "sha256": "b4041b2a3dde073f79ef7928cd99da6d4a5c454d3d0d04b6a1c1dd555e8ac00c"
+    },
+    {
+      "file": "5.png",
+      "sha256": "e3fb82ec60ffd6d8a912df10997718ab42e7f85283dfcab080ac6c1de59761ba"
+    },
+    {
+      "file": "6.png",
+      "sha256": "f77fa1c623109edf3ee689fedddd3ff8bcc30e4f4fd4ba754c8d145d86547e83"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 160,
+      "top": 30,
+      "width": 1250,
+      "height": 940
+    },
+    "evidence": [
+      {
+        "frame": 1,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 2,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 3,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 4,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 5,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 6,
+        "outsideVisiblePixels": 0
+      }
+    ]
+  },
+  "masterFraming": {
+    "source": "1-tight-candidate.png",
+    "sourceGeneration": "b6affd7b-3cb3-42a3-9bf9-d989e3461467",
+    "resize": [1382, 922],
+    "offset": [77, 51],
+    "canvas": [1536, 1024],
+    "method": "Authorized whole-scene uniform90% scale, rounded to integer pixels; no anatomy/pose change"
+  },
+  "equipmentRepair": {
+    "regions": [
+      {
+        "left": 980,
+        "top": 180,
+        "width": 440,
+        "height": 780
+      },
+      {
+        "left": 170,
+        "top": 805,
+        "width": 810,
+        "height": 155
+      }
+    ],
+    "method": "Copy only stationary machine pixels from master; regions exclude the athlete."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    }
+  ],
+  "losslessPixelsVerified": true,
+  "exportBackground": "PNG alpha flattened onto the authored black background before lossless WebP encoding; decoded RGB compared exactly"
+}

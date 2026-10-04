@@ -264,6 +264,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "incline-treadmill-walk": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1250,
+    height: 940,
+    reference: 1,
+  },
   "l-sit": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",
