@@ -141,7 +141,9 @@ function RaceEventHeader({
             color: "hsl(var(--running-strong))",
           }}
         >
-          <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
         </span>
         {event.elevation && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">

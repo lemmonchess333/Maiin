@@ -152,7 +152,9 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
               : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
-          <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
         </span>
       )}
 

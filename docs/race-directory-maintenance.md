@@ -94,8 +94,8 @@ source and, where inspected, its dedicated race-date element. Otherwise it
 accepts only matching structured Event/SportsEvent data. It never chooses a
 random date elsewhere on a page or adds a year by assumption.
 
-Only an unambiguous next edition can be published. London explicitly supports
-two adjacent race days; other date ranges still require review. Invalid dates,
+Only an unambiguous next edition can be published. London and Supernova Kelpies
+explicitly support two adjacent race days; other date ranges still require review. Invalid dates,
 conflicting dates, unexpected redirects, HTTP failures and implausible
 year jumps go to one deduplicated GitHub issue. Sources that still show the
 last edition are quietly retried the next day. Unchanged issues are not
