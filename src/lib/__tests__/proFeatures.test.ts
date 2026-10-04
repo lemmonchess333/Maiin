@@ -54,6 +54,23 @@ describe("PRO_FEATURES — registry shape", () => {
       expect(config.sourceLabel).toBe(registryKey);
     }
   });
+
+  it("hero titles say plainly where the feature lives, never 'Unlock …'", () => {
+    // House voice (CLAUDE.md): no "unlock / elevate / seamless". The titles
+    // take the shape of the Food page's "Photo logging is part of Pro".
+    expect(PRO_FEATURES.ai_food_logging.title).toBe(
+      "AI food logging is part of Pro"
+    );
+    expect(PRO_FEATURES.adaptive_tdee.title).toBe(
+      "Adaptive TDEE is part of Pro"
+    );
+    expect(PRO_FEATURES.adaptive_macros.title).toBe(
+      "Training-aware macros are part of Pro"
+    );
+    for (const config of Object.values(PRO_FEATURES)) {
+      expect(config.title).not.toMatch(/unlock/i);
+    }
+  });
 });
 
 describe("getProFeature", () => {

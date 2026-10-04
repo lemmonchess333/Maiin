@@ -1,4 +1,5 @@
 import { Unlock, Crown } from "lucide-react";
+import { TRIAL_DAYS, type ProPlan } from "@/lib/proPlans";
 
 /**
  * Trial-timeline transparency strip (Runna-teardown paywall pattern —
@@ -13,28 +14,33 @@ import { Unlock, Crown } from "lucide-react";
  * different thing with nothing to bill. Add a "Day 5 — we'll remind you"
  * step here only when a server-side reminder keyed on the billed trial's
  * end ships — here and nowhere else.
+ *
+ * The last step names what is then charged, for the plan the person has
+ * selected (App Store Guideline 3.1.2: the billed amount stated where the
+ * trial is). `plan` is the selected plan from `useProPlanPrices`, so on the
+ * App Store build the amount is in the storefront's currency.
  */
-const STEPS: {
-  icon: typeof Unlock;
-  when: string;
-  what: string;
-}[] = [
-  {
-    icon: Unlock,
-    when: "Today",
-    what: "Full Pro access. Every feature, no payment due.",
-  },
-  {
-    icon: Crown,
-    when: "Day 7",
-    what: "Your subscription starts unless you've cancelled. You can cancel any time before then.",
-  },
-];
+interface Props {
+  plan: ProPlan;
+}
 
-export default function TrialTimeline() {
+export default function TrialTimeline({ plan }: Props) {
+  const steps: { icon: typeof Unlock; when: string; what: string }[] = [
+    {
+      icon: Unlock,
+      when: "Today",
+      what: "Full Pro access. Every feature, no payment due.",
+    },
+    {
+      icon: Crown,
+      when: `Day ${TRIAL_DAYS}`,
+      what: `Your subscription starts at ${plan.price} ${plan.periodPhrase} unless you've cancelled. You can cancel any time before then.`,
+    },
+  ];
+
   return (
     <ol className="space-y-1.5" aria-label="How your free trial works">
-      {STEPS.map(({ icon: Icon, when, what }) => (
+      {steps.map(({ icon: Icon, when, what }) => (
         <li key={when} className="flex items-start gap-2.5">
           <span
             className="size-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-px"

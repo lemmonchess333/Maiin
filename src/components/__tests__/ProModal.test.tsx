@@ -11,6 +11,9 @@
  *   - Checkout receives the selected plan (test-pinned both for
  *     the default and after a tile switch)
  *   - featureKey="adaptive_tdee" renders the registry's title
+ *   - The trial CTA has its post-trial price directly beneath it, and the
+ *     timeline names it (App Store Guideline 3.1.2)
+ *   - No "unlimited" claim: Pro's photo scans are capped server-side
  *   - Restore-purchases is hidden on web, shown on native iOS
  *   - Checkout failure surfaces an inline role="alert" above the CTA
  *   - Close button has an accessible name and fires onClose
@@ -22,8 +25,10 @@ import {
   fireEvent,
   cleanup,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { DAILY_AI_LIMITS } from "@/lib/subscription";
 
 // Sub1a P1 — tests below vary `profile.hasUsedTrial` to exercise the
 // trial vs no-trial CTA paths. The hoisted ref pattern (mirroring
@@ -100,11 +105,24 @@ describe("ProModal — visible copy (no white-on-white regression)", () => {
   it("renders the feature list labels as visible text", () => {
     renderModal({ onClose: () => {} });
     // #977: bullets reconciled to the two real, runtime-gated Pro features.
-    expect(screen.getByText("Unlimited AI food photo logging")).toBeTruthy();
+    expect(screen.getByText("AI food photo logging")).toBeTruthy();
     expect(screen.getByText("Adaptive calorie target")).toBeTruthy();
     // Stripped vapor/free features must no longer be advertised.
     expect(screen.queryByText("Adaptive macros")).toBeNull();
     expect(screen.queryByText("Advanced insights")).toBeNull();
+  });
+
+  it("states Pro's daily scan cap rather than promising unlimited scans", () => {
+    // The server stops Pro at DAILY_AI_LIMITS.pro.image_ai photo scans a
+    // day, so "Unlimited" was a claim the product does not keep.
+    const { container } = renderModal({ onClose: () => {} });
+    expect(
+      screen.getByText(
+        `Log meals from a photo, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day. No manual searching.`
+      )
+    ).toBeInTheDocument();
+    expect(DAILY_AI_LIMITS.pro.image_ai).toBe(100);
+    expect(container.ownerDocument.body.textContent).not.toMatch(/unlimited/i);
   });
 });
 
@@ -153,13 +171,21 @@ describe("ProModal — plan radiogroup", () => {
     expect(cta.getAttribute("style") ?? "").not.toMatch(/gradient/);
   });
 
-  it("disclosure copy updates to reflect the billing frequency", () => {
+  it("disclosure copy updates to reflect the selected plan's price and period", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText(/Renews annually/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "£34.99 a year. Renews automatically until cancelled. Cancel any time."
+      )
+    ).toBeTruthy();
     const radios = screen.getAllByRole("radio");
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
-    expect(screen.getByText(/Renews monthly/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+      )
+    ).toBeTruthy();
   });
 });
 
@@ -214,7 +240,7 @@ describe("ProModal — feature-specific hero", () => {
     // pre-unification this used to silently fall back to the generic
     // "Upgrade to Pro" hero because the lookup key didn't match.
     const headings = screen.getAllByRole("heading", {
-      name: "Unlock Adaptive TDEE",
+      name: "Adaptive TDEE is part of Pro",
     });
     const visible = headings.find((h) => !h.className.includes("sr-only"));
     expect(visible).toBeTruthy();
@@ -271,6 +297,52 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     expect(
       screen.getByRole("button", { name: /Start your 7-day free trial/ })
     ).toBeTruthy();
+  });
+
+  it("the trial CTA has its price directly beneath it, as a label, not small print", () => {
+    // Guideline 3.1.2: the amount billed at least as prominent as the
+    // trial. The button names no price, so the next thing under it does.
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderModal({ onClose: () => {} });
+    const cta = screen.getByRole("button", {
+      name: "Start your 7-day free trial",
+    });
+    const beneath = cta.nextElementSibling as HTMLElement;
+    expect(beneath.textContent).toBe(
+      "7 days free, then £34.99 a year. Renews automatically until cancelled. Cancel any time."
+    );
+    const priceLine = within(beneath).getByText(
+      "7 days free, then £34.99 a year."
+    );
+    // The button label's own size and weight, in the text colour.
+    for (const cls of ["text-base", "font-semibold"]) {
+      expect(cta.className).toContain(cls);
+      expect(priceLine.className).toContain(cls);
+    }
+    expect(priceLine.className).toContain("text-foreground");
+
+    fireEvent.click(
+      screen
+        .getAllByRole("radio")
+        .find((r) => r.textContent?.includes("Monthly"))!
+    );
+    expect(
+      (
+        screen.getByRole("button", { name: "Start your 7-day free trial" })
+          .nextElementSibling as HTMLElement
+      ).textContent
+    ).toMatch(/^7 days free, then £3\.99 a month\. /);
+  });
+
+  it("the timeline's last step names what is then charged", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderModal({ onClose: () => {} });
+    const timeline = screen.getByRole("list", {
+      name: "How your free trial works",
+    });
+    expect(timeline.textContent).toContain(
+      "Day 7 — Your subscription starts at £34.99 a year unless you've cancelled."
+    );
   });
 
   it("after the onboarding free week — flag stamped or not — the CTA is the price, never a second trial", () => {
@@ -346,6 +418,17 @@ describe("ProModal — restore purchases visibility", () => {
     isNativeIOSMock.mockReturnValue(true);
     renderModal({ onClose: () => {} });
     expect(screen.getByText("Restore purchases")).toBeTruthy();
+  });
+
+  it("on iOS, says to manage or cancel in the Apple Account", () => {
+    isNativeIOSMock.mockReturnValue(true);
+    renderModal({ onClose: () => {} });
+    expect(
+      screen.getByText(
+        "£34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Apple ID/)).toBeNull();
   });
 });
 

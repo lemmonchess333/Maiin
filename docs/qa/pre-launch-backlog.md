@@ -1057,6 +1057,40 @@ sandbox Pro to nobody. Production purchases are unaffected.
       RevenueCat promotional grant does not grant Pro. Comps are written in
       Firestore directly.
 
+## Purchases on iPad, iPhone-only, the paywall's prices (2026-10-04)
+
+Affects: `src/lib/purchaseProvider.ts` (`isNativeIOS` reads the native
+shell, not the user agent), `ios/App/App.xcodeproj/project.pbxproj`
+(`TARGETED_DEVICE_FAMILY = 1`), `ios/App/App/Info.plist` (no iPad
+orientation list), `src/lib/proPlans.ts`, `src/hooks/useProPlanPrices.ts`,
+`src/pages/Upgrade.tsx`, `src/components/ProModal.tsx`,
+`src/components/TrialTimeline.tsx`, `src/components/paywall/`.
+
+Unit tests pin the routing with an iPad's desktop user agent, every price
+line, and the currency arithmetic against a simulated storefront. What no
+test reaches is a real iPad, a real storefront and App Store Connect.
+
+- [ ] **An iPad running the TestFlight build.** It opens as an iPhone app.
+      The paywall shows "Already purchased? Restore" and "Manage or cancel
+      in your Apple Account subscriptions"; Start opens Apple's purchase
+      sheet, never Stripe; once subscribed, Manage subscription (Settings →
+      Subscription) opens Apple's subscriptions page.
+- [ ] **A storefront not in pounds** (a US sandbox account). The offer's
+      lead line, the plan cards, the per-week figures, the "Save N%" on the
+      yearly card, the CTA, the line under it and the timeline's Day 7 are
+      all in dollars, and nothing on either beat or in ProModal shows £.
+      The prices match Apple's purchase sheet.
+- [ ] **The trial copy against Apple's sheet.** The paywall decides whether
+      to show the trial from the account's `hasUsedTrial`; Apple grants the
+      introductory offer per Apple Account. On a sandbox account that has
+      already used the intro offer, check what the sheet says against the
+      paywall's "7 days free, then …". If they disagree, the paywall needs
+      RevenueCat's intro-eligibility check (not built).
+- [ ] **App Store Connect after the first iPhone-only upload**: the build
+      lists iPhone only, and the version page asks for iPhone screenshots
+      only. Nothing has been released with iPad support, which is the only
+      time dropping it is allowed.
+
 ## Apple subscription uniqueness binding (PR #822)
 
 Affects: `functions/applePurchase.js`, new `appleSubscriptions/{originalTransactionId}` collection.
