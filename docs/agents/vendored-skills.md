@@ -9,16 +9,31 @@ listed.
 
 ## mattpocock/skills
 
-- **Skills:** codebase-design, diagnosing-bugs, domain-modeling,
+- **Skills:** ask-matt, code-review (here `code-review-matt`),
+  codebase-design, diagnosing-bugs, domain-modeling,
   git-guardrails-claude-code, grill-me, grill-with-docs, grilling, handoff,
-  improve-codebase-architecture, prototype, setup-matt-pocock-skills,
-  setup-pre-commit, tdd, to-spec, to-tickets, triage, writing-for-agents
+  implement, implement-spec, improve-codebase-architecture, pr, prototype,
+  research, retro, setup-matt-pocock-skills, setup-pre-commit, tdd, teach,
+  to-questionnaire, to-spec, to-tickets, triage, wait-what, wayfinder,
+  wizard, writing-for-agents
+- **Not copied:** migrate-to-shoehorn and scaffold-exercises, which are for
+  Matt's TypeScript courses, and the `in-progress` bucket.
 - **Source:** [mattpocock/skills](https://github.com/mattpocock/skills),
   `skills/<bucket>/<name>/`
-- **Version here:** v1.3, commit `d81f3a1` (2026-09-29)
-- **Local changes:** `prototype` asks before creating its throwaway branch
-  where the session is limited to a designated branch (`d11a8b7c`). Each
-  skill's `agents/openai.yaml` (Codex metadata) is left out.
+- **Version here:** v1.3.1, commit `24fe0ef` (2026-10-04)
+- **Local changes:**
+  - `prototype` asks before creating its throwaway branch where the session
+    is limited to a designated branch (`d11a8b7c`).
+  - `code-review` is renamed `code-review-matt`, folder and `name:` both,
+    because Claude Code has a built-in `code-review`. The two do different
+    jobs: the built-in hunts correctness bugs, Matt's checks the diff
+    against the repo's written standards and against the spec or ticket it
+    came from. The references in `ask-matt`, `implement`, `implement-spec`
+    and `tdd` say `code-review-matt` to match.
+  - `pr` opens with one line saying `.github/PULL_REQUEST_TEMPLATE.md` keeps
+    its sections, with the skill's template filling its Summary and Test
+    plan.
+  - Each skill's `agents/openai.yaml` (Codex metadata) is left out.
 - **Older copies kept:** caveman and zoom-out are the May 2026 copy
   (`5d84a020`). Upstream removed both in v1.0.
 
@@ -57,8 +72,9 @@ listed.
 - **mattpocock/skills:** clone it, copy each skill's folder over ours without
   `agents/`, and re-apply the local changes above. Then check that every skill
   the copies call is installed: `grep -rn 'Skill tool with' .claude/skills`.
-  Leave out upstream's `code-review`, which clashes with Claude Code's
-  built-in skill of that name.
+  Copy upstream's `code-review` into `code-review-matt` and rename it there
+  (see the local changes above). `/clear`, `/compact` and `/kill` in the
+  copies are Claude Code commands, not skills.
 - **The glossary file:** upstream's domain skills call it `GLOSSARY.md`; this
   repo's is `CONTEXT.md` (see `docs/agents/domain.md`). Leave the skills'
   wording alone. The mapping lives in this repo's config, not in the copies.
