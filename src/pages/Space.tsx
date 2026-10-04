@@ -140,12 +140,17 @@ function RaceEventHeader({
       </div>
 
       <div>
-        <p className="text-base font-bold font-mono tabular-nums text-foreground">
-          {raceDay}
+        <p
+          className={cn(
+            "text-base font-bold text-foreground",
+            !past && "font-mono tabular-nums"
+          )}
+        >
+          {past ? "Next date to be announced" : raceDay}
         </p>
         <p className="text-sm text-muted-foreground mt-0.5">
           {event.city} {event.countryFlag}
-          {past && " · Date passed — next edition coming"}
+          {past && ` · Last edition: ${shortDay}`}
         </p>
       </div>
 

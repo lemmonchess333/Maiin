@@ -2,16 +2,10 @@
 /**
  * Stale race-date tripwire (races plan, 2026-07-20).
  *
- * The race catalogue's ONLY recurring duty is pasting each race's
- * next-edition date forward once a year (Q2 lock: staleness is
- * derived — a passed `event.dateKey` hides the card and CTA but the
- * space stays alive, so nothing breaks while stale). The date LOOKUP
- * is deliberately human/agent work — dates are verified against each
- * race's official site, never guessed (Q5 lock; race dates don't
- * follow rules: London 10,000 moved May→September, London Marathon
- * 2027 became a two-day event). This script automates the NOTICING:
- * `race-date-check.yml` runs it monthly and files/updates a GitHub
- * issue when any race has lapsed.
+ * Local diagnostic for lapsed BUNDLED dates. The daily GitHub job now
+ * uses refresh-race-dates.ts, which also reads remote updates and checks
+ * official organisers. Expired races remain in the directory with a
+ * pending-date label; the training picker still requires a future date.
  *
  * Output: a JSON array of stale races on stdout (empty array = all
  * current). Always exits 0 — staleness is a work item, not a build

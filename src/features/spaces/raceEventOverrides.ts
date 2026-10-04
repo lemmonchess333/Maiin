@@ -3,9 +3,10 @@
  * metadata, so date updates reach every platform (including stale
  * native binaries) without an app release.
  *
- * Model: git is the SOURCE OF TRUTH (spaceDefs.ts, reviewed via PR);
+ * Model: Git owns race identity and reviewed bundled dates;
  * CI mirrors the race event blocks into the Firestore doc
- * `config/raceEvents` on merge (sync-race-events.yml). The client
+ * `config/raceEvents` on merge (sync-race-events.yml), preserving dates
+ * verified by the daily official-source refresher. The client
  * fetches that doc LAZILY — once per session, on the first race
  * surface touched — and merges it OVER the bundled event blocks.
  * Bundled values are the seed and the fallback: a failed read, an
@@ -127,6 +128,22 @@ export function upcomingResolvedRaceDefs(
     .sort((a, b) =>
       (a.event?.dateKey ?? "").localeCompare(b.event?.dateKey ?? "")
     );
+}
+
+/** Evergreen directory: confirmed dates first, awaiting editions last.
+ * The training picker continues to use upcomingResolvedRaceDefs. */
+export function directoryResolvedRaceDefs(
+  overrides: RaceEventOverrides,
+  todayKey: string
+): SpaceDef[] {
+  return applyRaceEventOverrides(raceSpaceDefs(), overrides).sort((a, b) => {
+    const aPast = a.event!.dateKey < todayKey;
+    const bPast = b.event!.dateKey < todayKey;
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    return aPast
+      ? a.name.localeCompare(b.name)
+      : a.event!.dateKey.localeCompare(b.event!.dateKey);
+  });
 }
 
 /* ── Session store (fetch once, share everywhere) ─────────────────── */

@@ -53,7 +53,7 @@ describe("race picker browsing", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(handlers.onDistanceChange).not.toHaveBeenCalled();
   });
-  it("keeps manual entry available when the chosen distance has no catalogue races", () => {
+  it("keeps manual entry available when the country and distance have no catalogue races", () => {
     const handlers = callbacks();
     render(
       <RaceGoalPlanner
@@ -68,6 +68,10 @@ describe("race picker browsing", () => {
       screen.getByRole("button", { name: "Choose an upcoming race" })
     );
     expect(screen.getByLabelText("Country")).toHaveValue("GB");
+    expect(screen.getByRole("option", { name: /Edinburgh Marathon Festival 5K/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "US" },
+    });
     expect(screen.getByText("No matching races")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Event name (optional)"), {
       target: { value: "My summer 5K" },

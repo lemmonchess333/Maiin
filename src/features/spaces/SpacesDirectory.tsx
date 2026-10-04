@@ -9,8 +9,8 @@
  *
  * Races & Events (races plan PR2): a second row of race-kind spaces —
  * RACE chip, race date + city under the name (Runna's card anatomy),
- * soonest first, past dates hidden (Q2: derived from dateKey, never
- * operated), filtered by a row of chips (two selects before the Social
+ * soonest first, then evergreen races awaiting their next date,
+ * filtered by a row of chips (two selects before the Social
  * pass). The Feed's compact "Spaces for you" row went in the same pass:
  * Together already leads with this directory.
  *
@@ -45,7 +45,7 @@ import {
 import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -188,8 +188,16 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
             /* Runna's race-card anatomy: race day + city, not a member
                count (membership lives on the space page header). */
             <span className="truncate">
-              <span className="font-mono tabular-nums">
-                {format(parseLocalDate(event.dateKey), "d MMM yyyy")}
+              <span
+                className={
+                  event.dateKey < localDateString()
+                    ? undefined
+                    : "font-mono tabular-nums"
+                }
+              >
+                {event.dateKey < localDateString()
+                  ? "Next date TBA"
+                  : format(parseLocalDate(event.dateKey), "d MMM yyyy")}
               </span>
               {" · "}
               {event.city} {event.countryFlag}
@@ -262,7 +270,7 @@ export default function SpacesDirectory() {
           <SectionHeading>Races & events</SectionHeading>
           <RaceFilterChips value={filters} onChange={setFilters} />
           {races.length > 0 ? (
-            <CardRow label="Upcoming races" entries={races} hideLabel />
+            <CardRow label="Race directory" entries={races} hideLabel />
           ) : (
             <EmptyState
               compact

@@ -10,6 +10,7 @@ import {
   sanitizeRaceEventOverrides,
   resolveRaceEvent,
   upcomingResolvedRaceDefs,
+  directoryResolvedRaceDefs,
 } from "../raceEventOverrides";
 import { raceSpaceDefs, spaceDef } from "../spaceDefs";
 
@@ -130,4 +131,17 @@ it("validates country codes and retains bundled countries for older remote paylo
       "boston-marathon": { dateKey: "2028-04-17" },
     })?.countryCode
   ).toBe("US");
+});
+
+it("keeps every recurring race discoverable, with confirmed dates before awaiting editions", () => {
+  const all = directoryResolvedRaceDefs({}, "2099-01-01");
+  expect(all).toHaveLength(raceSpaceDefs().length);
+  for (const id of ["berlin-marathon", "loch-ness-marathon", "london-10000"])
+    expect(all.some((r) => r.id === id)).toBe(true);
+  const restored = directoryResolvedRaceDefs(
+    { "berlin-marathon": { dateKey: "2099-09-26" } },
+    "2099-01-01"
+  );
+  expect(restored[0].id).toBe("berlin-marathon");
+  expect(upcomingResolvedRaceDefs({}, "2099-01-01")).toEqual([]);
 });

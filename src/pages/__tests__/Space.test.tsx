@@ -238,3 +238,23 @@ describe("Space page", () => {
     );
   });
 });
+
+it("shows an expired race as awaiting its next edition without a training action", async () => {
+  vi.setSystemTime(new Date("2099-01-01T12:00:00Z"));
+  render(
+    <MemoryRouter initialEntries={["/space/berlin-marathon"]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={<Space />} />
+      </Routes>
+    </MemoryRouter>
+  );
+  expect(
+    await screen.findByText("Next date to be announced")
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Train for this race/i })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /Visit official website/i })
+  ).toHaveAttribute("href", "https://www.bmw-berlin-marathon.com/en/");
+});

@@ -24,6 +24,9 @@ export const RACE_COUNTRIES = {
   IE: "Ireland",
   ES: "Spain",
   JP: "Japan",
+  AU: "Australia",
+  NL: "Netherlands",
+  DK: "Denmark",
 } as const;
 export type RaceCountryCode = keyof typeof RACE_COUNTRIES;
 
@@ -37,7 +40,7 @@ export type RaceEventDistance = "5k" | "10k" | "half" | "marathon";
  * locked 2026-07-19). Evergreen space, dated metadata: one space per
  * event forever; `dateKey` is pasted forward each edition. Everything
  * downstream derives from `dateKey < today` (card hidden from the
- * directory, CTA hidden, header shows the date as passed) — a stale
+ * training picker, CTA hidden; directory stays visible awaiting a new date) — a stale
  * date degrades gracefully, never lies.
  *
  * RACE-EVENTS-REMOTE (locked 2026-07-20): merging a change to this
@@ -300,7 +303,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-09-27",
+      dateKey: "2027-09-26",
       distance: "10k",
       city: "London",
       countryCode: "GB",
@@ -399,7 +402,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-09-27",
+      dateKey: "2027-09-26",
       distance: "marathon",
       city: "Inverness",
       countryCode: "GB",
@@ -559,7 +562,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-09-27",
+      dateKey: "2027-09-26",
       distance: "marathon",
       city: "Berlin",
       countryCode: "DE",
@@ -715,6 +718,135 @@ export const SPACE_DEFS: SpaceDef[] = [
       websiteUrl: "https://zurichmaratobarcelona.es/en/",
     },
   },
+  {
+    id: "sydney-marathon",
+    name: "Sydney Marathon",
+    tagline: "Harbour views and a major marathon in Sydney.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-08-29",
+      distance: "marathon",
+      city: "Sydney",
+      countryCode: "AU",
+      countryFlag: "🇦🇺",
+      websiteUrl: "https://www.tcssydneymarathon.com/marathon",
+    },
+  },
+  {
+    id: "amsterdam-marathon",
+    name: "Amsterdam Marathon",
+    tagline: "Canals, city streets and an Olympic Stadium finish.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-18",
+      distance: "marathon",
+      city: "Amsterdam",
+      countryCode: "NL",
+      countryFlag: "🇳🇱",
+      websiteUrl: "https://www.tcsamsterdammarathon.eu/",
+    },
+  },
+  {
+    id: "rotterdam-marathon",
+    name: "Rotterdam Marathon",
+    tagline: "A spring marathon through Rotterdam.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-11",
+      distance: "marathon",
+      city: "Rotterdam",
+      countryCode: "NL",
+      countryFlag: "🇳🇱",
+      websiteUrl: "https://nnmarathonrotterdam.nl/en/",
+    },
+  },
+  {
+    id: "copenhagen-marathon",
+    name: "Copenhagen Marathon",
+    tagline: "Run through the neighbourhoods of Denmark’s capital.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-09",
+      distance: "marathon",
+      city: "Copenhagen",
+      countryCode: "DK",
+      countryFlag: "🇩🇰",
+      websiteUrl: "https://copenhagenmarathon.dk/en/",
+    },
+  },
+  {
+    id: "oxford-half",
+    name: "Oxford Half Marathon",
+    tagline: "A half marathon through Oxford’s historic streets.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-11",
+      distance: "half",
+      city: "Oxford",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.oxfordhalf.com/",
+    },
+  },
+  {
+    id: "great-bristol-10k",
+    name: "Great Bristol Run 10K",
+    tagline: "Harbourside views and city streets over 10K.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-09",
+      distance: "10k",
+      city: "Bristol",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.greatrun.org/events/great-bristol-run/",
+    },
+  },
+  {
+    id: "edinburgh-5k",
+    name: "Edinburgh Marathon Festival 5K",
+    tagline: "Five kilometres in the surroundings of Holyrood Park.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-29",
+      distance: "5k",
+      city: "Edinburgh",
+      countryCode: "GB",
+      countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      websiteUrl: "https://www.edinburghmarathon.com/5k",
+    },
+  },
+  {
+    id: "river-ness-5k",
+    name: "River Ness 5K",
+    tagline: "A welcoming 5K through the Highland capital.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-09-26",
+      distance: "5k",
+      city: "Inverness",
+      countryCode: "GB",
+      countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      websiteUrl:
+        "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-5k",
+    },
+  },
 ];
 
 export const SPACE_IDS = SPACE_DEFS.map((d) => d.id);
@@ -735,9 +867,8 @@ export function raceSpaceDefs(): SpaceDef[] {
 /**
  * Upcoming races only (Q2 lock: everything derives from
  * `dateKey < today`). Race DAY itself still shows — it's the
- * community's biggest day; the card drops out the day after. A race
- * whose next-edition date hasn't been pasted forward simply
- * disappears from browse surfaces while its space stays fully alive.
+ * community's biggest day. Training pickers omit expired editions; the
+ * community directory keeps their evergreen Spaces visible.
  * `todayKey` is a local "YYYY-MM-DD" (dateHelpers.localDateString) —
  * lexicographic compare is date order for this shape.
  */
