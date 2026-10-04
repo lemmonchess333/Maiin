@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Back button */}
         <button

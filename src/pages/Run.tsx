@@ -9,6 +9,7 @@ import {
   useRef,
   useCallback,
   useReducer,
+  type CSSProperties,
 } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -1241,7 +1242,14 @@ export default function Run() {
   const isInvalid = liveInvalidReason !== null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
+    /* Not inside Layout, so nothing else pads it: every phase starts under
+       the iPhone's status bar, and the band takes the colour of the phase
+       beneath it (the setup screens follow the theme, the run is always
+       dark). fullScreenSafeArea.test.ts holds the padding. */
+    <div
+      className={`fixed inset-0 z-50 flex flex-col pt-[var(--safe-top)]${phase === "waiting" ? " bg-background" : ""}`}
+      style={phase === "waiting" ? undefined : { backgroundColor: THEME.bg }}
+    >
       <GuideHint
         id="first-run"
         layer="session"
@@ -1578,18 +1586,23 @@ export default function Run() {
         isOutdoorGpsRun(runConfig?.activityType) && (
           <div
             className="fixed inset-0 z-50 text-white"
-            style={{
-              backgroundColor: THEME.bg,
-              // MapLibre handles its own pan/pinch via pointer events (it works
-              // fine under touch-action:none), and the sheet owns its own drag.
-              // Locking touch-action + overscroll here stops iOS from
-              // rubber-banding / scrolling the page out from under a sheet drag
-              // or a map gesture.
-              touchAction: "none",
-              overscrollBehavior: "none",
-            }}
+            style={
+              {
+                backgroundColor: THEME.bg,
+                // The map runs under the status bar; the controls, the
+                // banners and RunMap's own note start below it.
+                "--map-overlay-top": "calc(var(--safe-top) + 0.5rem)",
+                // MapLibre handles its own pan/pinch via pointer events (it
+                // works fine under touch-action:none), and the sheet owns its
+                // own drag. Locking touch-action + overscroll here stops iOS
+                // from rubber-banding / scrolling the page out from under a
+                // sheet drag or a map gesture.
+                touchAction: "none",
+                overscrollBehavior: "none",
+              } as CSSProperties
+            }
           >
-            <div className="absolute top-3 left-4 z-50">
+            <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
               <GPSIndicator
                 accuracy={gps.gpsAccuracy}
                 isTracking={gps.isTracking}
@@ -1600,7 +1613,7 @@ export default function Run() {
 
             {(runConfig?.activityType === "tempo" ||
               runConfig?.activityType === "intervals") && (
-              <div className="absolute top-10 left-4 right-4 z-50">
+              <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
                 <PaceZoneBar
                   currentPace={paceAsNumber(currentDistance, timer.elapsed)}
                   targetPace={
@@ -1655,7 +1668,7 @@ export default function Run() {
                 Clear of the left GPS indicator + the tempo/interval
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
-            <div className="absolute inset-x-0 top-3 z-50 flex flex-col items-center gap-1.5 px-4">
+            <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
               {targetRoute ? (
                 <>
                   <RouteFollowChip

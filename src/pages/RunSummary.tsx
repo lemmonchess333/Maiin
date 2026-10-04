@@ -1123,7 +1123,11 @@ export default function RunSummary() {
   return (
     <div
       className="min-h-screen bg-background text-foreground"
-      style={{ paddingBottom: "var(--page-bottom-pad)" }}
+      // Outside Layout, so it pads for the status bar itself.
+      style={{
+        paddingTop: "var(--safe-top)",
+        paddingBottom: "var(--page-bottom-pad)",
+      }}
     >
       <div className="px-4 pt-4">
         <button

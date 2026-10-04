@@ -603,7 +603,9 @@ export default function RunMap({
         // max-w reserves ~8rem (2× a top-4 size-11 corner control) so the
         // pill can never sit under a corner button in any consumer; in the
         // active-run map it lines up with the existing centred GPS pills.
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        // `--map-overlay-top` is set by a map that runs under the status bar
+        // (the live run's); anywhere else the pill sits 0.5rem down.
+        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
           Map tiles unavailable. Check your connection. GPS status is shown
           separately.
         </div>
