@@ -75,6 +75,11 @@ listed.
   Copy upstream's `code-review` into `code-review-matt` and rename it there
   (see the local changes above). `/clear`, `/compact` and `/kill` in the
   copies are Claude Code commands, not skills.
+- **Formatting:** `.prettierignore` keeps the commit hook's formatter off
+  every copied skill, so the copies stay as upstream wrote them. Before it
+  did, the hook reworded v1.3.1's new copies, and in `to-questionnaire` it
+  merged an example's last line into its closing tag. A new repo-owned
+  skill needs its own `!` line there to be formatted.
 - **The glossary file:** upstream's domain skills call it `GLOSSARY.md`; this
   repo's is `CONTEXT.md` (see `docs/agents/domain.md`). Leave the skills'
   wording alone. The mapping lives in this repo's config, not in the copies.
