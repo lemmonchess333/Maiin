@@ -365,7 +365,9 @@ describe("FoodAnalyzer — the Open Food Facts credit", () => {
         }),
       }))
     );
-    render(<FoodAnalyzer date="2026-09-23" meal="breakfast" />);
+    render(
+      <FoodAnalyzer date="2026-09-23" meal="breakfast" aiConsent={AI_ALLOWED} />
+    );
     await waitFor(() => expect(modal().dataset.open).toBe("true"));
     fireEvent.click(screen.getByText("stub-barcode"));
     await screen.findByTestId("scan-result-sheet");
