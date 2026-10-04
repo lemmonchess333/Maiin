@@ -81,6 +81,7 @@ import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
 import { completeRun, runPostRoute } from "@/lib/runCompletion";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
+import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import {
@@ -1104,13 +1105,10 @@ export default function RunSummary() {
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
-    const blob = new Blob([gpx], { type: "application/gpx+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tropos-run-${Date.now()}.gpx`;
-    a.click();
-    URL.revokeObjectURL(url);
+    /* The share sheet on the iPhone, where a blob download is dropped
+       without a word, and a download on the web; the same handover and
+       the same words as RunDetail's Export GPX. */
+    void shareGpx(gpx, `tropos-run-${Date.now()}.gpx`).then(announceRouteShare);
   };
 
   const formatTime = (secs: number): string => {

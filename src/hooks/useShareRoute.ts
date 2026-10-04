@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import { usePrivacyZones } from "./usePrivacyZones";
-import { resolveShareRoute, shareRoute } from "@/lib/shareRoute";
+import {
+  announceRouteShare,
+  resolveShareRoute,
+  shareRoute,
+} from "@/lib/shareRoute";
 import type { GPSPoint } from "@/lib/gps";
 import { toast } from "@/lib/toast";
 
@@ -28,9 +32,7 @@ export function useShareRoute() {
         toast.error("That route is inside a privacy zone — nothing to share");
         return;
       }
-      const result = await shareRoute(name, safe);
-      if (result === "downloaded") toast.success("Route downloaded");
-      else if (result === "failed") toast.error("Couldn't share route");
+      announceRouteShare(await shareRoute(name, safe));
     },
     [zones, loading, error]
   );
