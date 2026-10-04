@@ -2,6 +2,10 @@ import { useState } from "react";
 import { auth } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { functionEndpoint } from "@/lib/functionEndpoint";
+import {
+  AI_ANALYSIS_OFF_MESSAGE,
+  AI_ANALYSIS_OFF_REASON,
+} from "@/lib/aiConsent";
 
 const FUNCTION_URL = functionEndpoint("analyzeFood");
 const TEXT_FUNCTION_URL = functionEndpoint("analyzeFoodText");
@@ -22,8 +26,14 @@ const ANALYZE_TIMEOUT_MS = 45_000;
    them user-facing. */
 function friendlyFoodAnalysisError(
   status: number,
-  serverMessage?: string
+  serverMessage?: string,
+  reason?: string
 ): string {
+  /* The account has turned AI analysis off (functions/lib/aiConsent.js
+     refuses it by this reason). The client asks before it sends, so this
+     is the server's backstop: the answer was changed on another device,
+     or the profile here is out of date. Say how to turn it back on. */
+  if (reason === AI_ANALYSIS_OFF_REASON) return AI_ANALYSIS_OFF_MESSAGE;
   if (serverMessage) return serverMessage;
   if (status === 401 || status === 403)
     return "Please sign in again to log food.";
@@ -97,7 +107,8 @@ export function useFoodAnalysis() {
         throw new Error(
           friendlyFoodAnalysisError(
             response.status,
-            errorBody?.message || errorBody?.error
+            errorBody?.message || errorBody?.error,
+            errorBody?.reason
           )
         );
       }
@@ -158,7 +169,15 @@ export function useFoodAnalysis() {
       });
 
       if (!response.ok) {
-        logger.error("[analyzeFoodText] HTTP error", response.status);
+        /* Null either way: the composer reads the meal on the phone and
+           logs it. A refusal because AI analysis is off is the person's
+           own setting doing its job, so it is noted, not reported. */
+        const errorBody = await response.json().catch(() => null);
+        if (errorBody?.reason === AI_ANALYSIS_OFF_REASON) {
+          logger.warn("[analyzeFoodText] AI analysis is off for this account");
+        } else {
+          logger.error("[analyzeFoodText] HTTP error", response.status);
+        }
         return null;
       }
       return await response.json();

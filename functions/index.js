@@ -1198,8 +1198,12 @@ exports.applyProgramCommand = functions
   });
 
 // ══════════════════════════════════════════════
-// EXISTING — analyzeFood (untouched)
+// EXISTING — analyzeFood
 // ══════════════════════════════════════════════
+
+// Permission before food goes to AI — shared by analyzeFood and
+// analyzeFoodText. See lib/aiConsent.js.
+const aiConsent = require("./lib/aiConsent");
 
 exports.analyzeFood = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -1241,6 +1245,20 @@ exports.analyzeFood = functions
           } else {
             throw err;
           }
+          return;
+        }
+
+        // Permission before food goes to AI: an account that has turned
+        // AI analysis off is refused here (failed-precondition, reason
+        // "ai-analysis-disabled"), ahead of the kill switch, the rate
+        // limit and the quota, so a refusal costs it nothing.
+        if (
+          await aiConsent.refuseUnlessAiAllowed(
+            admin.firestore(),
+            authUser.uid,
+            res
+          )
+        ) {
           return;
         }
 
@@ -1469,6 +1487,19 @@ exports.analyzeFoodText = functions
           } else {
             throw err;
           }
+          return;
+        }
+
+        // Permission before food goes to AI, as in analyzeFood: refused
+        // for an account that has turned AI analysis off, before anything
+        // is counted against it.
+        if (
+          await aiConsent.refuseUnlessAiAllowed(
+            admin.firestore(),
+            authUser.uid,
+            res
+          )
+        ) {
           return;
         }
 

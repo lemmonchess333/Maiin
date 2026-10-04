@@ -110,6 +110,15 @@ export type ScanFailureKind = "no-food" | "error" | "offline";
 export type PhotoLock = { onUpgrade: () => void };
 
 /**
+ * AI analysis is off for this account: it answered "Not now" when asked,
+ * or turned the switch off in Settings (src/lib/aiConsent.ts). Nothing is
+ * sent to Google, so the photo tabs say so where the shutter would be,
+ * with `onTurnOn` asking the same question the first scan asks. Barcode is
+ * not AI and works as ever.
+ */
+export type AiOff = { onTurnOn: () => void };
+
+/**
  * How a barcode lookup failed: the database answered and has no such
  * product ("not-found"), or it could not be asked ("unreachable":
  * offline, no connection, a server error).
@@ -160,6 +169,11 @@ type Props = {
    *  in Barcode mode, where a picked photo is read on the device rather
    *  than sent for AI analysis. */
   photoLock?: PhotoLock | null;
+  /** Set when the account has turned AI analysis off. The photo tabs say
+   *  so in place of the shutter and offer to turn it on; photo upload is
+   *  offered only in Barcode mode, as for a locked account. A photo lock
+   *  takes precedence: its offer is the one shown. */
+  aiOff?: AiOff | null;
   /** The mode the scanner opens on (default Meal). A locked account
    *  always opens on Barcode. */
   initialTab?: ScanMode;
@@ -203,9 +217,12 @@ export default function FoodCameraModal({
   onScanRetry,
   onRequestTypedInput,
   photoLock = null,
+  aiOff = null,
   initialTab = "food",
   onShown,
 }: Props) {
+  /* The photo tabs cannot send a picture: no Pro, or AI analysis off. */
+  const photoBlocked = Boolean(photoLock || aiOff);
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -648,9 +665,11 @@ export default function FoodCameraModal({
       ? barcodeHint
       : photoLock
         ? "Photo scanning is part of Pro"
-        : tab === "label"
-          ? "Fit the nutrition panel in the frame"
-          : "Fit the whole plate in the frame";
+        : aiOff
+          ? "AI analysis is off"
+          : tab === "label"
+            ? "Fit the nutrition panel in the frame"
+            : "Fit the whole plate in the frame";
   const scanLineStyle = {
     background: THEME.semantic.nutrition,
     boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
@@ -1058,14 +1077,14 @@ export default function FoodCameraModal({
   if (cameraBlocked) {
     /* In Barcode mode a picked photo is read on the device, which every
        account may do. In Meal or Label mode it is an AI scan, which a
-       locked account is not offered. */
+       locked account, or one with AI analysis off, is not offered. */
     const barcodeUpload = tab === "barcode";
     const deniedCopy =
       cameraState === "denied"
-        ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
+        ? "Camera access was denied. Here, Tropos uses the camera to scan meals, labels and barcodes. A meal or label photo is sent to Google for analysis and kept only on this device, never on our servers. Barcodes are read on the device."
         : barcodeUpload
           ? "No camera available right now. You can still log your meal by uploading a photo of its barcode or typing it in."
-          : photoLock
+          : photoBlocked
             ? "No camera available right now. You can still log your meal by typing it in."
             : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
@@ -1130,7 +1149,7 @@ export default function FoodCameraModal({
           <div className="w-full max-w-[320px] space-y-2 pt-2">
             {/* onFileChange routes by mode: a barcode photo to the reader
                 on the device, any other photo to AI analysis. */}
-            {(barcodeUpload || !photoLock) && (
+            {(barcodeUpload || !photoBlocked) && (
               <button
                 type="button"
                 onClick={() => {
@@ -1422,6 +1441,34 @@ export default function FoodCameraModal({
                 Scan a barcode
               </Button>
               <ScanProButton onUpgrade={photoLock.onUpgrade} />
+            </div>
+          ) : aiOff && tab !== "barcode" ? (
+            /* AI analysis is off: no shutter and no library, since either
+               would send a photo. "Turn on" asks the question the first
+               scan asks; the hint above the frame says why. */
+            <div className="h-[72px] flex items-center justify-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  haptic("light");
+                  setTab("barcode");
+                }}
+              >
+                Scan a barcode
+              </Button>
+              {/* The full name for a screen reader, which meets this
+                  button without the hint beside it; the visible words
+                  start it, so voice control still finds it. */}
+              <Button
+                variant="primary"
+                aria-label="Turn on AI analysis"
+                onClick={() => {
+                  haptic("light");
+                  aiOff.onTurnOn();
+                }}
+              >
+                Turn on
+              </Button>
             </div>
           ) : (
             <div className="flex items-center justify-between">

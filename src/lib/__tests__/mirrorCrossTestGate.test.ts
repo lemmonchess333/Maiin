@@ -251,6 +251,10 @@ const PINNED: Record<string, string> = {
   // declares it too, which is what makes this entry reachable.
   "functions/lib/aiScanQuota.js":
     "src/lib/__tests__/aiScanQuota.parity.cross.test.ts",
+  // Permission before food goes to AI. BOTH copies run: the client decides
+  // whether a photo or typed meal is sent to Gemini, the server whether
+  // analyzeFood / analyzeFoodText answer. One stored answer, read alike.
+  "functions/lib/aiConsent.js": "src/lib/__tests__/aiConsent.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.

@@ -13,6 +13,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AI_SWITCH_DESCRIPTION } from "@/lib/aiConsent";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ShareDefaults } from "@/lib/shareDefaults";
 import type { PrivacyZone } from "@/lib/privacyZones";
@@ -21,8 +22,7 @@ import type { User } from "firebase/auth";
 interface PrivacySectionProps {
   user: User | null;
   /** Subset of the profile fields read by this section. Required for
-   *  F1's aiAnalysisEnabled toggle which renders the switch in its
-   *  current state. */
+   *  the aiAnalysisEnabled switch, which shows on only for `true`. */
   profile: Pick<
     UserProfile,
     "aiAnalysisEnabled" | "hideSharedRouteEnds" | "shareDefaults"
@@ -85,31 +85,28 @@ export default function PrivacySection({
           updateShareDefaults={updateShareDefaults}
         />
 
-        {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
-          false = user opted out. Toggling off hides the AI CTAs and
-          refuses the underlying Gemini calls (gate lives downstream
-          in useFoodAnalysis — wired separately so the call-site
-          changes can be reviewed independently). */}
+        {/* AI food analysis — permission before food goes to Google (App
+            Review 5.1.2(i); the rule is in src/lib/aiConsent.ts). On only
+            once the person has said yes: undefined means not asked yet,
+            and the first scan or Pro typed meal asks (AiConsentSheet).
+            Turning it on here IS that yes, which is why the line under it
+            says what is sent and to whom. Off writes false: nothing more
+            is sent, and the server refuses it as well. */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
           <div className="flex-1 mr-3">
             <p className="text-sm font-medium text-foreground">
               AI food analysis
             </p>
             <p className="text-xs text-muted-foreground">
-              Allow Gemini to analyse food photos and refine text entries
+              {AI_SWITCH_DESCRIPTION}
             </p>
           </div>
           <Toggle
-            checked={profile?.aiAnalysisEnabled !== false}
+            checked={profile?.aiAnalysisEnabled === true}
             label="Toggle AI food analysis"
             onChange={async () => {
               haptic("light");
-              // The field is undefined-default-on: treat any non-false
-              // current value as "currently enabled" and flip to false.
-              // Subsequent flips toggle between true / false explicitly
-              // so the user can re-opt-in via the same control.
-              const currentlyEnabled = profile?.aiAnalysisEnabled !== false;
-              const next = !currentlyEnabled;
+              const next = profile?.aiAnalysisEnabled !== true;
               trackSettingsEvent("settings_toggle_changed", {
                 toggle: "ai_analysis_enabled",
                 value: next,
