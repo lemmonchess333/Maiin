@@ -1,4 +1,7 @@
-import { raceSpaceDefs } from "./src/features/spaces/spaceDefs";
+import {
+  isTrainableRaceEvent,
+  raceSpaceDefs,
+} from "./src/features/spaces/spaceDefs";
 /**
  * users/{uid} profile writes, against the real rules engine.
  *
@@ -425,10 +428,11 @@ suite("users/{uid} — raceGoal value gate", () => {
     }
   });
 
-  it("accepts every catalogue race binding, including international marathons", async () => {
-    // One write per catalogue race, so this test grows with the catalogue. It
+  it("accepts every trainable catalogue race binding", async () => {
+    // One write per supported race, so this test grows with the catalogue. It
     // ran past the default 5 s timeout on a slow CI runner.
     for (const race of raceSpaceDefs()) {
+      if (!isTrainableRaceEvent(race.event!)) continue;
       await assertSucceeds(
         write({
           raceGoal: {
@@ -441,6 +445,22 @@ suite("users/{uid} — raceGoal value gate", () => {
       );
     }
   }, 60_000);
+
+  it("refuses training plans for directory-only ultras", async () => {
+    for (const race of raceSpaceDefs()) {
+      if (isTrainableRaceEvent(race.event!)) continue;
+      await assertFails(
+        write({
+          raceGoal: {
+            distance: race.event!.distance,
+            targetDate: race.event!.dateKey,
+            eventName: race.name,
+            eventSpaceId: race.id,
+          },
+        })
+      );
+    }
+  });
 
   it("accepts null — the explicit clear on a freeform switch", async () => {
     // Run9 3a-ii: `null` is how a recovery exit drops a finished race. A gate
