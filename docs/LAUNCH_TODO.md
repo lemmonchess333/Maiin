@@ -287,7 +287,12 @@ contains all three required keys with the exact strings below:
 
 ### 9. App Store Connect metadata + assets
 
-- Screenshots (6.7" iPhone required)
+The listing is drafted in `docs/app-store/listing.md`: the text to paste,
+the privacy label, the age rating, the review notes, and what still has to
+change before the first submission.
+
+- Screenshots (6.9" iPhone required, and iPad unless the app becomes
+  iPhone-only)
 - Privacy policy URL
 - Support URL
 - Category: Health & Fitness
