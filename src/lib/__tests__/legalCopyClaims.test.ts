@@ -23,12 +23,31 @@
  * to read one number would test the mock.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { AI_CONSENT_COPY } from "@/lib/aiConsent";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (rel: string) => readFileSync(resolve(here, rel), "utf8");
+const repoRoot = resolve(here, "../../..");
+
+/** Every non-test source file under `dir` (relative to the repo root). */
+function sourceFiles(dir: string): string[] {
+  const out: string[] = [];
+  const walk = (abs: string) => {
+    for (const name of readdirSync(abs)) {
+      const path = join(abs, name);
+      if (statSync(path).isDirectory()) {
+        if (name !== "__tests__" && name !== "node_modules") walk(path);
+      } else if (/\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name)) {
+        out.push(path);
+      }
+    }
+  };
+  walk(resolve(repoRoot, dir));
+  return out;
+}
 
 const PRIVACY = read("../../pages/PrivacyPolicy.tsx");
 const TERMS = read("../../pages/TermsOfService.tsx");
@@ -38,6 +57,14 @@ const TERMS = read("../../pages/TermsOfService.tsx");
 const PRIVACY_PROSE = PRIVACY.replace(/\s+/g, " ");
 const TERMS_PROSE = TERMS.replace(/\s+/g, " ");
 const STORE = read("../foodPhotoStore.ts");
+const HEALTH_KIT = read("../healthKit.ts");
+const STEPS_HOOK = read("../../hooks/useSteps.ts");
+const ANALYTICS_REDACTION = read("../analyticsRedaction.ts");
+const SHARE_DEFAULTS_ROW = read(
+  "../../components/settings/ShareDefaultsRow.tsx"
+);
+const SETTINGS_INDEX = read("../../pages/SettingsIndex.tsx");
+const ACCOUNT_SECTION = read("../../components/settings/AccountSection.tsx");
 
 describe("meal-photo retention — the quoted window matches the code", () => {
   it("the Privacy Policy's number equals MAX_AGE_DAYS", () => {
@@ -179,6 +206,116 @@ describe("cross-references resolve", () => {
     // reinstate the reference deliberately.
     expect(PRIVACY_PROSE).not.toMatch(/Community Guidelines/);
     expect(TERMS_PROSE).not.toMatch(/Community Guidelines/);
+  });
+});
+
+describe("the AI question and the policy say the same things", () => {
+  /* The sheet that asks before food goes to Gemini (AiConsentSheet) makes
+     three claims, and the policy is where a reviewer checks them. If either
+     side drifts, the person agreed to something the policy does not say. */
+  const SHEET = AI_CONSENT_COPY.body;
+
+  it("both name Google's Gemini as where the food goes", () => {
+    expect(SHEET).toMatch(/Google's Gemini/);
+    expect(PRIVACY_PROSE).toMatch(/Google&apos;s Gemini on Vertex AI/);
+  });
+
+  it("both say Google does not train on it", () => {
+    expect(SHEET).toMatch(/Google doesn't use it to train its models/);
+    expect(PRIVACY_PROSE).toMatch(/Google does not use it to train its models/);
+  });
+
+  it("both say the photo is kept only on the phone, and neither that it never leaves", () => {
+    expect(SHEET).toMatch(/keeps photos only on this phone/);
+    expect(PRIVACY_PROSE).toMatch(/kept only on the device that took it/);
+    expect(SHEET).not.toMatch(/never leaves/i);
+  });
+
+  it("both point at the switch that exists", () => {
+    // The sheet and the policy send people to Settings › Social & privacy;
+    // that is the row's name in Settings.
+    expect(SHEET).toMatch(/Settings › Social & privacy/);
+    expect(PRIVACY_PROSE).toMatch(/Settings &gt; Social &amp; privacy/);
+    expect(SETTINGS_INDEX).toMatch(/label: "Social & privacy"/);
+  });
+});
+
+describe("Apple Health is read-only, and its count is never kept", () => {
+  it("the policy says so", () => {
+    expect(PRIVACY_PROSE).toMatch(/Tropos never writes to Apple Health/);
+    expect(PRIVACY_PROSE).toMatch(
+      /The step count is never stored and never sent anywhere/
+    );
+  });
+
+  it("the one HealthKit module asks to read steps and nothing else", () => {
+    // capacitor-health also offers WRITE_WORKOUTS. Asking for it would make
+    // "never writes" false the day it shipped.
+    const asked = HEALTH_KIT.match(/permissions:\s*\[([^\]]*)\]/g);
+    expect(asked).toEqual(['permissions: ["READ_STEPS"]']);
+    expect(HEALTH_KIT).not.toMatch(/WRITE_/);
+    // ...and no other module reaches the plugin around it.
+    const others = sourceFiles("src").filter(
+      (f) =>
+        !f.endsWith("lib/healthKit.ts") &&
+        /from\s+["']capacitor-health["']|import\(\s*["']capacitor-health["']\s*\)/.test(
+          readFileSync(f, "utf8")
+        )
+    );
+    expect(others).toEqual([]);
+  });
+
+  it("the account keeps only whether Health is connected, never the count", () => {
+    // users/{uid}/settings/healthKit is the one thing useSteps writes.
+    const flags = STEPS_HOOK.match(/interface HealthKitFlags \{([^}]*)\}/);
+    expect(flags).not.toBeNull();
+    // Optional fields too: `steps?: number` is exactly the field to catch.
+    const keys = [...flags![1].matchAll(/(\w+)\??:/g)].map((m) => m[1]);
+    expect(keys.sort()).toEqual(["connected", "primingShown"]);
+    expect(STEPS_HOOK.match(/setDocGuarded\(/g)).toHaveLength(1);
+    expect(STEPS_HOOK).toMatch(/setDocGuarded\(ref, merged,/);
+  });
+});
+
+describe("what the policy says about analytics, sharing and deletion holds", () => {
+  it("analytics never receives what the policy says it never receives", () => {
+    // "Analytics never receives your email address, your name, GPS routes,
+    // what you type about meals, or your notes" — held by the redaction
+    // every event passes through.
+    expect(PRIVACY_PROSE).toMatch(
+      /Analytics never receives your email address, your name, GPS routes, what you type about meals, or your notes/
+    );
+    for (const token of [
+      "email",
+      "displayname",
+      "latitude",
+      "longitude",
+      "coord",
+      "mealtext",
+      "note",
+    ]) {
+      expect(ANALYTICS_REDACTION).toContain(`"${token}"`);
+    }
+  });
+
+  it("no longer claims nothing is shared automatically, since it can be", () => {
+    expect(SHARE_DEFAULTS_ROW).toMatch(
+      /Shared with your followers automatically/
+    );
+    expect(PRIVACY_PROSE).not.toMatch(/Nothing is published automatically/);
+    expect(PRIVACY_PROSE).toMatch(/share runs or workouts automatically/);
+  });
+
+  it("makes no 'exclusively' or 'solely' claim about how data is used", () => {
+    // Analytics, including some fitness figures, reach Google Analytics, so
+    // a claim that data is used for one purpose alone is untrue.
+    expect(PRIVACY_PROSE).not.toMatch(/exclusively|solely/i);
+  });
+
+  it("names the deletion path the app has", () => {
+    expect(PRIVACY_PROSE).toMatch(/Settings &gt; Account &gt; Delete account/);
+    expect(SETTINGS_INDEX).toMatch(/label: "Account"/);
+    expect(ACCOUNT_SECTION).toMatch(/label="Delete account"/);
   });
 });
 
