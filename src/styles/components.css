@@ -419,6 +419,13 @@ html.launching [data-brand-mark] {
   opacity: 0;
 }
 
+/* While the first-visit guide's mark is out of Home's header, leading the
+   walk (GuideWalk), the header shows none: the page has one mark, and it
+   is the one that is talking. */
+html.guiding [data-brand-mark] {
+  opacity: 0;
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

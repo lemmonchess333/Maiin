@@ -17,8 +17,8 @@
  *   the priced CTA, disclosure, Restore, legal.
  *
  * Entry points, read from `?from=`: onboarding's save lands here with
- * `state.next` = the first activity, and "Continue with Free" goes
- * there; the Food page's photo-logging strip sends `from=food`; every
+ * `state.next` = Home (FV1; it was the first activity), and "Continue
+ * with Free" goes there; the Food page's photo-logging strip sends `from=food`; every
  * other caller (Settings, Home's trial strip, the AI-usage section)
  * gets the plain page and "Not now" goes back. The source rides into
  * every paywall event so the funnel can be read per entry.
@@ -207,12 +207,14 @@ export default function Upgrade() {
 
   /** Leave without buying. Onboarding handed us where to go next; a
    *  reload loses that state, so the onboarding entry falls back to
-   *  Home rather than to a Back that has nowhere to go. */
+   *  Home rather than to a Back that has nowhere to go. Going forward
+   *  starts the next screen at its top: on a small phone this page is
+   *  scrolled to reach the button, and the app keeps a page's scroll
+   *  across a route change, so Home would open part-way down. */
   const leave = () => {
-    if (next) {
-      navigate(next, { replace: true });
-    } else if (fromOnboarding) {
-      navigate("/", { replace: true });
+    if (next || fromOnboarding) {
+      window.scrollTo(0, 0);
+      navigate(next ?? "/", { replace: true });
     } else {
       navigate(-1);
     }

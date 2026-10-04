@@ -9,7 +9,6 @@ import type {
 } from "../src/features/program/programTypes";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
@@ -127,7 +126,6 @@ test.describe("Monday migration on an existing account", () => {
           },
         };
         await programmeRef.set(original);
-        await suppressCoachmarks(page);
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
         await page.clock.setFixedTime(now);
         await signInAsTestUser(page, {

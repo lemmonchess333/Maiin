@@ -4,7 +4,6 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
 test.describe("saved workout correction", () => {
@@ -59,7 +58,6 @@ test.describe("saved workout correction", () => {
             },
           ],
         });
-        await suppressCoachmarks(page);
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
         await signInAsTestUser(page, {
           email: user.email!,

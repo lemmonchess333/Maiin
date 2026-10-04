@@ -120,7 +120,7 @@ export default function RunTilePicker({
             </div>
           </button>
         )}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2" data-guide-anchor="first-run">
           {tiles.map((opt) => {
             const Icon = ICON_MAP[opt.icon] ?? Footprints;
             const band = chooserPaceFor(opt.type, paceTable, unit);

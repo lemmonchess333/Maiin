@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "./helpers/auth";
 import { settleImages } from "./helpers/settleImages";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { emulatorActive } from "./helpers/emulator";
 
 test.use({ viewport: { width: 393, height: 852 } });
@@ -11,7 +10,6 @@ test.describe("weekly layout confirmation on mobile", () => {
     test(`confirmation stays open and cancellation preserves the draft — ${colorScheme}`, async ({
       page,
     }, testInfo) => {
-      await suppressCoachmarks(page);
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       await signInAsTestUser(page);
       // Firebase's test-only banner covers the mobile bottom navigation.

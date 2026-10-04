@@ -154,6 +154,7 @@ export default function RunLaunchCard({
           leftIcon={<Play className="size-5" fill="currentColor" />}
           onClick={onStart}
           className="btn-start-run-pulse text-lg"
+          data-guide-anchor="first-run"
         >
           Start {workout.name}
         </Button>

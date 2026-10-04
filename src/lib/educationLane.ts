@@ -1,11 +1,12 @@
 /**
  * Education lane — pure core (#995, tier 3).
  *
- * Tier-3 education surfaces (the Home welcome coachmark, the two
- * ContextualTipBanner instances) are INLINE cards in the scroll, not overlays.
- * The #995 rule is "one dismissible education card visible at a time" — a new
- * user missing body metrics otherwise sees the welcome card + the
- * expenditure-inclusive explainer + the body-metrics nudge all stacked.
+ * Tier-3 education surfaces are one-time teaching: the first-visit guide's
+ * hints (anchored bubbles, FV1), Home's first-week card, and the "Still on
+ * track?" check-in every few weeks (a ContextualTipBanner). The #995 rule is
+ * "one dismissible education card visible at a time" — before it, a new user
+ * saw the welcome card and two tips stacked. FV2 (2026-10-04) removed three
+ * tips that no longer reached the people they were written for.
  *
  * Unlike the tier-4 coordinator there is NO per-open budget and NO drop: an
  * education card shows until the user dismisses it (its own dismiss-once
@@ -16,7 +17,7 @@
 
 export interface EducationRegistration {
   id: string;
-  /** Higher wins. Welcome 30 > body-metrics 20 > expenditure 10. */
+  /** Higher wins. Guide hints 35 > first-week card 30 > check-in 12. */
   priority: number;
   /** Card wants to show (its condition holds and it isn't dismissed). */
   eligible: boolean;

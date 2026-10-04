@@ -37,7 +37,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -85,7 +84,6 @@ test.describe("authenticated a11y invariants", () => {
   test("every authenticated route holds the login page's invariants", async ({
     page,
   }) => {
-    await suppressCoachmarks(page);
     await signInAsTestUser(page);
 
     const offences: Offence[] = [];

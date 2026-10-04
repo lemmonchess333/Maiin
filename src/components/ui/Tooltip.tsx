@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
- * Reserve `Tooltip` and `Coachmark` for genuinely opaque elements:
+ * Reserve `Tooltip` for genuinely opaque elements:
  * computed metrics where the formula isn't visible, icon-only navigation,
  * non-obvious state changes. If a clearer visible label fixes it, use
  * the label. Tropos reads as calm; stacked explainers make it nervy.
@@ -43,7 +43,7 @@ interface TooltipProps {
   content: ReactNode;
   /** Preferred placement; auto-flips when the anchor is too close to a viewport edge. */
   placement?: TooltipPlacement;
-  /** Controlled mode. Coachmark uses this to drive open state from useCoachMarks. */
+  /** Controlled mode, for a caller that drives the open state itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   closeOnOutsideTap?: boolean;

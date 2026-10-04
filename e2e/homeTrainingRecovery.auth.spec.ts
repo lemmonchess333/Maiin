@@ -9,7 +9,6 @@ import type {
 import { localWeekKey } from "../src/lib/dateHelpers";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
@@ -94,7 +93,6 @@ test.describe("Home training recovery", () => {
             type: "lift",
           })),
         });
-        await suppressCoachmarks(page);
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
         await page.clock.setFixedTime(saturday);
         await signInAsTestUser(page, {

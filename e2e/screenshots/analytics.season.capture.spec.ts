@@ -20,7 +20,6 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { signInAsTestUser } from "../helpers/auth";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -111,7 +110,6 @@ test.describe("analytics — a season of training", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

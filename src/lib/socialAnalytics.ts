@@ -17,7 +17,6 @@ import { emit } from "./analyticsClient";
 export type SocialEvent =
   | "social_tab_selected"
   | "social_feed_subtab_changed"
-  | "social_coachmark_dismissed"
   | "social_initial_render_ms"
   /** S4e-P13: Fires when the Find tab renders with the restricted-
    *  user gate visible (search input disabled + restriction banner
@@ -53,8 +52,6 @@ export interface SocialEventMetadata {
   tab?: SocialTab;
   /** social_feed_subtab_changed: which feed sub-tab. */
   subTab?: SocialFeedSubTab;
-  /** social_coachmark_dismissed: the storageKey of the dismissed mark. */
-  coachmarkKey?: string;
   /** social_initial_render_ms: rounded ms from mount to first
    *  non-loading render (target: <500ms p95 per Soc5 cross-cutting
    *  performance pin). */

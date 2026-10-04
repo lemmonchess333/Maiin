@@ -16,8 +16,20 @@ import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { isWithinActivationWindow } from "@/lib/activationFraming";
-import { firstWeek } from "@/lib/firstWeek";
+import { firstWeek, type FirstWeekItemKey } from "@/lib/firstWeek";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
+import {
+  guideAllowedHere,
+  guideRequest,
+  rowStop,
+  todayCard,
+  walkOffered,
+  walkStops,
+  WALK_SEEN_KEY,
+  type GuideStop,
+} from "@/lib/firstGuide";
+import { useGuideWalkReady } from "@/hooks/useGuideWalkReady";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
@@ -25,7 +37,7 @@ import { useHomeProgram } from "@/features/program/useHomeProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import BrandMark from "@/components/ui/BrandMark";
@@ -91,6 +103,11 @@ const ProModal = lazyRetry(() => import("@/components/ProModal"));
 const DayActionSheet = lazyRetry(
   () => import("@/components/program/DayActionSheet")
 );
+
+/* FV1: the first-visit walk lazy-loads the same way. It runs in an
+   account's first seven days and on a replay, so it stays out of Home's
+   own chunk for everyone past their first week. */
+const GuideWalk = lazyRetry(() => import("@/components/guide/GuideWalk"));
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -566,6 +583,107 @@ export default function Home() {
     priority: 30,
     eligible: firstWeekState !== null,
   });
+
+  /* The first-visit guide (FV1, firstGuide.ts). A new account's first visit
+     gets the walk: once, in its first seven days, as the visit's one
+     blocking surface, once its first card is drawn and the launch
+     animation has gone. Settings' "Show me around" plays it again, and a
+     first-week row opens the one stop that does what the row names. */
+  const location = useLocation();
+  const [guideAllowed] = useState(guideAllowedHere);
+  const { dismissed: walkSeen, dismiss: markWalkSeen } =
+    useDismissOnce(WALK_SEEN_KEY);
+  const guideCard = todayCard(session);
+  const firstWeekItems =
+    welcomeCard.visible && firstWeekState ? firstWeekState.items.length : 0;
+  const guideStops = useMemo(
+    () => walkStops({ today: guideCard, firstWeekItems }),
+    [guideCard, firstWeekItems]
+  );
+  const homeSettled = countsLoaded && !programLoading;
+  const walkDue =
+    guideAllowed &&
+    homeSettled &&
+    walkOffered({ startKey, todayKey, seen: walkSeen });
+  const walkReady = useGuideWalkReady(walkDue, guideStops[0]?.target);
+  const guideSurface = useSurface({
+    id: "first-visit-guide",
+    priority: 45,
+    eligible: walkDue && walkReady === "ready",
+  });
+  const replayAsked = guideRequest(location.state) === "walk";
+  const [rowWalk, setRowWalk] = useState<GuideStop | null>(null);
+  const autoWalk = guideSurface.active && walkDue;
+  // Kept stable between renders: the walk re-measures when its stops change.
+  const walk = useMemo((): {
+    stops: GuideStop[];
+    from: "first-visit" | "replay" | "first-week-row";
+  } | null => {
+    if (replayAsked && homeSettled)
+      return { stops: guideStops, from: "replay" };
+    if (rowWalk) return { stops: [rowWalk], from: "first-week-row" };
+    if (autoWalk) return { stops: guideStops, from: "first-visit" };
+    return null;
+  }, [replayAsked, homeSettled, guideStops, rowWalk, autoWalk]);
+  // The Health steps prompt waits for the walk, so a new account meets the
+  // app before it is asked for anything.
+  const walkHoldsPrompts = !!walk || (walkDue && walkReady !== "gave-up");
+  // Whether this walk has shown a stop yet: it starts with the first one
+  // seen, whichever that is (a stop with nothing to point at is passed).
+  const walkShowing = useRef(false);
+  const onWalkStep = (index: number, stop: GuideStop) => {
+    if (!walk) return;
+    if (!walkShowing.current) {
+      walkShowing.current = true;
+      trackLifecycle("guide_started", {
+        walk: walk.from,
+        count: walk.stops.length,
+      });
+    }
+    trackLifecycle("guide_step_viewed", {
+      walk: walk.from,
+      stop: stop.id,
+      stepIndex: index,
+    });
+  };
+  const onWalkClose = (result: { finished: boolean; index: number }) => {
+    if (!walk) return;
+    walkShowing.current = false;
+    trackLifecycle(result.finished ? "guide_finished" : "guide_skipped", {
+      walk: walk.from,
+      stop: walk.stops[result.index]?.id,
+      stepIndex: result.index,
+    });
+    if (walk.from === "first-week-row") {
+      setRowWalk(null);
+      return;
+    }
+    markWalkSeen();
+    if (walk.from === "first-visit") guideSurface.dismiss();
+    if (replayAsked)
+      navigate(location.pathname, { replace: true, state: null });
+  };
+  /* A first-week row opens its step: the session card that does it, when
+     today's card is it (one stop, pointed out where the person already
+     is); otherwise Train; Food with the composer pointed out; the weigh-in
+     sheet. */
+  const openFirstWeekItem = (key: FirstWeekItemKey) => {
+    closePeek();
+    if (key === "weigh-in") {
+      setShowWeightSheet(true);
+      return;
+    }
+    if (key === "meal") {
+      navigate("/food", { state: { guide: "food-composer" } });
+      return;
+    }
+    const stop = rowStop(key, guideCard);
+    if (stop) {
+      setRowWalk(stop);
+      return;
+    }
+    navigate(key === "run" ? "/program?tab=run" : "/program?tab=lift");
+  };
   /* EVERY day in the strip opens its detail card, today included.
      There is no special case for today, and the argument for one — that
      its peek would duplicate the session cards below — does not hold.
@@ -854,12 +972,17 @@ export default function Home() {
           explainer banners (#995). */}
       {welcomeCard.visible && firstWeekState && (
         <motion.div
+          data-guide-stop="first-week"
           variants={{
             hidden: { opacity: 0, y: 8 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <FirstWeekCard week={firstWeekState} onDismiss={dismissCoachMarks} />
+          <FirstWeekCard
+            week={firstWeekState}
+            onDismiss={dismissCoachMarks}
+            onOpen={openFirstWeekItem}
+          />
         </motion.div>
       )}
 
@@ -874,6 +997,7 @@ export default function Home() {
       </SectionErrorBoundary>
 
       <motion.div
+        data-guide-stop="food"
         variants={{
           hidden: { opacity: 0, y: 12 },
           visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
@@ -993,21 +1117,6 @@ export default function Home() {
       </section>
 
       <div className="space-y-2" aria-label="Helpful tips">
-        {/* A1 contextual tip: nudge the user to add age + sex if
-          either is missing. These two fields drive TDEE precision
-          (calculateTDEE consumes both); without them the user gets
-          generic defaults and the calorie targets drift from
-          accurate. One-shot per dismiss — the banner doesn't re-
-          appear after dismissal even if the user re-introduces
-          the gap. */}
-        <ContextualTipBanner
-          tipKey="body-metrics-v1"
-          lanePriority={20}
-          title="Personalise your calorie targets"
-          description="Add your age and sex to make your calorie target more accurate."
-          visible={!profile?.age || !profile?.sex}
-        />
-
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
             after an earlier one was dismissed; gentle + dismiss-once. */}
@@ -1028,73 +1137,19 @@ export default function Home() {
           ) : null;
         })()}
 
-        {/* Goal-weight nudge REMOVED from Home (2026-07-20): it's an
-          optional refinement — the app runs fine on the maintenance
-          default — so it doesn't earn an interrupting full-width
-          banner. Goal weight stays fully settable in Settings + the
-          weight-log flow. (Contrast the age/sex nudge above, which is
-          KEPT because a missing value there corrupts the TDEE math.) */}
-
-        {/* Nutr1 one-time explainer (expenditure-inclusive model),
-          relocated here into the Today group (2026-07-20) so the
-          education lane always renders below the week strip in one
-          consistent spot. It previously lived above the groups and,
-          whenever it won the lane (e.g. once goal-weight was cut),
-          jumped to the very top of the page above the week strip.
-          Dismiss-once via the versioned tipKey; surfaces the
-          deficit×big-session tension the #976 lock required. */}
-        <ContextualTipBanner
-          tipKey="nutrition-expenditure-inclusive-v1"
-          lanePriority={10}
-          title="Your activity is already in your target"
-          description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
-          visible={!!profile}
-          ctaLabel="How targets work"
-          ctaHref="/settings/nutrition#calorie-targets"
-        />
-
-        {/* Progressive profiling (fast-start PRD, final nudge): experience.
-          Onboarding defaults experience to "intermediate" without asking;
-          once the user has actually trained, invite them to set it so
-          programme volume is tuned to reality. Same default-marker
-          heuristic as the goal-weight nudge: visible while the value
-          still equals the onboarding default — a genuine intermediate
-          dismisses once (dismiss-once semantics), anyone else sets it
-          and the banner never returns. */}
-        <ContextualTipBanner
-          tipKey="training-experience-v1"
-          lanePriority={10}
-          title="Tune your training volume"
-          description="Review your training experience if your programme needs a different starting point."
-          visible={
-            !!profile &&
-            workouts.length > 0 &&
-            (profile.experience ?? "intermediate") === "intermediate"
-          }
-          ctaLabel="Set experience"
-          ctaHref="/settings/lift-plan"
-        />
-
-        {/* Progressive profiling: race-goal invitation. Fast-start runners default
-          to freeform (Run9a); once they've logged a run, invite race-prep via
-          the Race Goal Planner (/settings/training, Run8/Run10). Hides when
-          already race_prep with a date, or on dismiss. Discovery nudge, so it
-          sits at the bottom of the lane priority. */}
-        <ContextualTipBanner
-          tipKey="race-goal-v1"
-          lanePriority={5}
-          title="Training for a race?"
-          description="Set a target date and we'll shape your runs into a race plan."
-          visible={
-            !!profile &&
-            !runStatsLoading &&
-            lifetimeRunCount > 0 &&
-            profile.runMode !== "race_prep" &&
-            !profile.raceGoal?.targetDate
-          }
-          ctaLabel="Set a race goal"
-          ctaHref="/settings/run-plan"
-        />
+        {/* What left this lane, and why, so none of it comes back by habit:
+          - The goal-weight nudge (2026-07-20): an optional refinement, the
+            app runs fine on the maintenance default.
+          - "Your activity is already in your target" (Nutr1): the walk's
+            Food stop says it (FV1). Behind the first-week card, it never
+            reached a new account in the week that most needed it.
+          - Three tips (FV2, 2026-10-04). The age-and-sex nudge: setup
+            always records both, and no Settings screen can change sex, so
+            its button could not do what it asked. The experience nudge:
+            written when setup didn't ask, it now asked people a week later
+            to check the answer they had just given. The race-goal
+            invitation: Train's Run tab carries the same card where run
+            plans live, and this copy only worked on days 8 to 14. */}
       </div>
 
       {/* Weight Log Bottom Sheet */}
@@ -1231,7 +1286,12 @@ export default function Home() {
           is derived: connecting or dismissing persists primingShown, which
           flips this false. On web status is "unavailable" so it never opens. */}
       <StepsPrimingModal
-        open={stepsData.status === "unprompted" && !stepsData.primingShown}
+        open={
+          stepsData.ready &&
+          stepsData.status === "unprompted" &&
+          !stepsData.primingShown &&
+          !walkHoldsPrompts
+        }
         onConnect={stepsData.connect}
         onDismiss={function () {
           void stepsData.dismissPriming();
@@ -1257,6 +1317,18 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
+
+      {walk && (
+        <Suspense fallback={null}>
+          <GuideWalk
+            key={walk.from}
+            stops={walk.stops}
+            fromHeader={walk.from !== "first-week-row"}
+            onStep={onWalkStep}
+            onClose={onWalkClose}
+          />
+        </Suspense>
+      )}
 
       {/* ProModal for trial/upgrade strip */}
       <AnimatePresence>

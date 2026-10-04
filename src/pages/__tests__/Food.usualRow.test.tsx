@@ -29,7 +29,11 @@ vi.mock("@/lib/firebase", () => ({
   db: {},
   auth: { currentUser: { uid: "u1", getIdToken: async () => "test-token" } },
 }));
-vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
+vi.mock("@/lib/auth", () => ({
+  useUid: () => "u1",
+  // The guide's composer hint keeps its seen flag per account.
+  useUidForStorageKey: () => "u1",
+}));
 vi.mock("@/lib/subscription", () => ({
   useSubscription: () => ({ isPro: true }),
 }));

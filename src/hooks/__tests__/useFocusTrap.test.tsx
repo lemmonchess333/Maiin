@@ -4,8 +4,8 @@
  * triggering element on close.
  *
  * Pinning: this hook is critical for keyboard a11y on every overlay
- * surface (delete-account modal, vaul drawers, ConfirmDialog,
- * Coachmark). A regression would silently break Tab containment —
+ * surface (delete-account modal, vaul drawers, ConfirmDialog). A
+ * regression would silently break Tab containment —
  * users could escape the modal via Tab and lose track of where focus
  * landed.
  *
