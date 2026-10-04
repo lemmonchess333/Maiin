@@ -55,7 +55,7 @@ export async function warmPrivacyZones(uid: string): Promise<void> {
 }
 
 /** Tests only: forget every confirmed list, as a fresh launch would. */
-export function resetConfirmedPrivacyZones(): void {
+export function __resetConfirmedPrivacyZonesForTests(): void {
   confirmedZones.clear();
 }
 

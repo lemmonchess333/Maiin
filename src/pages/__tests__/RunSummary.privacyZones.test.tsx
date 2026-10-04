@@ -82,7 +82,7 @@ vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";
 import {
-  resetConfirmedPrivacyZones,
+  __resetConfirmedPrivacyZonesForTests,
   warmPrivacyZones,
 } from "@/hooks/usePrivacyZones";
 import { haversine } from "@/lib/gps";
@@ -172,7 +172,7 @@ beforeEach(() => {
   resetFirestore();
   // The confirmed lists outlive a screen, as they would in the app; each
   // test starts from a fresh launch.
-  resetConfirmedPrivacyZones();
+  __resetConfirmedPrivacyZonesForTests();
   localStorage.clear();
   seedFirestore({ [`${ZONES}/home`]: { name: "Home", ...HOME } });
   online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
