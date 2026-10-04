@@ -1,8 +1,9 @@
-import { logger } from "./logger";
 import { haptic } from "./haptic";
 import { toGPX, type GPSPoint } from "./gps";
 import { splitRouteSegments } from "./routeSegments";
 import { applyPrivacyZones, type PrivacyZone } from "./privacyZones";
+import { shareFile } from "./shareFile";
+import { toast } from "./toast";
 
 export type ShareRouteResult = "shared" | "downloaded" | "cancelled" | "failed";
 
@@ -32,26 +33,37 @@ export function routeSlug(name: string): string {
   return s || "route";
 }
 
-function canShareFile(file: File): boolean {
-  if (typeof navigator === "undefined" || !navigator.canShare) return false;
-  try {
-    return navigator.canShare({ files: [file] });
-  } catch {
-    return false;
-  }
+/** A .gpx file, the one place its type is set. */
+export function gpxFile(gpx: string, filename: string): File {
+  return new File([gpx], filename, { type: "application/gpx+xml" });
 }
 
 /**
- * Share a route as a .gpx via the native share sheet, falling back to a file
- * download on platforms without Web Share file support (desktop browsers).
+ * Hand a GPX document to the person: the share sheet (AirDrop, Messages,
+ * Save to Files, Open in Strava…), or a download on the web. The native
+ * app has no download, so there a file the sheet cannot take fails rather
+ * than reporting a download that never happened (see shareFile). A GPX is
+ * built from points already in memory, so the tap that asked is still
+ * fresh and a "blocked" sheet is simply a failure.
  *
- * Same mechanism as sharePhoto.ts: the Web Share API triggers the real iOS
- * share sheet inside the Capacitor WKWebView (AirDrop / Messages / Save to
- * Files / Open in Strava…), so no native plugin is needed. The GPX carries the
- * route name in <name> so a receiving Tropos restores it on import.
- *
- * Returns the outcome so callers can toast appropriately; "cancelled" (user
- * dismissed the sheet) is not an error.
+ * "cancelled" (the sheet was dismissed) is not an error.
+ */
+export async function shareGpx(
+  gpx: string,
+  filename: string,
+  title?: string
+): Promise<ShareRouteResult> {
+  const outcome = await shareFile(
+    gpxFile(gpx, filename),
+    title ? { title } : {}
+  );
+  if (outcome === "shared") haptic("success");
+  return outcome === "blocked" ? "failed" : outcome;
+}
+
+/**
+ * Share a route as a .gpx named for it. The GPX carries the route name in
+ * <name> so a receiving Tropos restores it on import.
  */
 export async function shareRoute(
   name: string,
@@ -63,40 +75,15 @@ export async function shareRoute(
   )
     return "failed";
 
-  const gpx = toGPX(points, name);
-  const filename = `${routeSlug(name)}.gpx`;
-  const file = new File([gpx], filename, { type: "application/gpx+xml" });
+  return shareGpx(toGPX(points, name), `${routeSlug(name)}.gpx`, name);
+}
 
-  if (canShareFile(file)) {
-    try {
-      await navigator.share({ files: [file], title: name });
-      haptic("success");
-      return "shared";
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") return "cancelled";
-      logger.warn("[shareRoute] share failed; trying download", err);
-      // fall through to the download path
-    }
-  }
-
-  try {
-    if (
-      typeof document === "undefined" ||
-      typeof URL.createObjectURL !== "function"
-    ) {
-      return "failed";
-    }
-    const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    return "downloaded";
-  } catch (err) {
-    logger.error("[shareRoute] download fallback failed", err);
-    return "failed";
-  }
+/**
+ * What a route export says when it ends. A share says nothing: the sheet
+ * was the confirmation. A download is confirmed, a failure said, and a
+ * dismissed sheet left alone.
+ */
+export function announceRouteShare(result: ShareRouteResult): void {
+  if (result === "downloaded") toast.success("Route downloaded");
+  else if (result === "failed") toast.error("Couldn't share route");
 }

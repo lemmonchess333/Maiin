@@ -19,6 +19,7 @@
  */
 import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
+import type { StorePrice } from "./proPlans";
 
 const RC_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_IOS_KEY as
   | string
@@ -208,15 +209,18 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
 }
 
 /**
- * Apple-localized display prices keyed by product id (e.g.
- * `{"com.tropos.app.pro.monthly": "£3.99"}`) from the current Offering, or
- * null when RC is disabled / offerings unavailable. Callers keep the
- * hardcoded proPlans strings as the fallback so the paywall never renders
- * priceless.
+ * Apple-localized prices keyed by product id from the current Offering, or
+ * null when RC is disabled / offerings unavailable. Each carries the string
+ * Apple's sheet shows AND the number and currency behind it, e.g.
+ * `{"com.tropos.app.pro.monthly": {priceString: "$4.99", price: 4.99,
+ * currencyCode: "USD"}}`, so the paywall can work out its per-week figures
+ * and the saving in the storefront's currency rather than in pounds.
+ * Callers keep the hardcoded proPlans prices as the fallback so the paywall
+ * never renders priceless.
  */
 export async function rcGetLocalizedPrices(): Promise<Record<
   string,
-  string
+  StorePrice
 > | null> {
   if (!isRevenueCatEnabled()) return null;
   try {
@@ -224,9 +228,10 @@ export async function rcGetLocalizedPrices(): Promise<Record<
     const offerings = await Purchases.getOfferings();
     const packages = offerings.current?.availablePackages;
     if (!packages || packages.length === 0) return null;
-    const prices: Record<string, string> = {};
+    const prices: Record<string, StorePrice> = {};
     for (const p of packages) {
-      prices[p.product.identifier] = p.product.priceString;
+      const { identifier, priceString, price, currencyCode } = p.product;
+      prices[identifier] = { priceString, price, currencyCode };
     }
     return prices;
   } catch (err) {

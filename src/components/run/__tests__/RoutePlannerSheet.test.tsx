@@ -40,8 +40,16 @@ vi.mock("@/lib/subscription", () => ({
 /** Every `new maplibregl.Map(...)` option bag, so the OPENING VIEW can be
  *  asserted — which is the thing that was broken and unpinned. */
 const mapOpts = vi.hoisted(
-  () => [] as { center: [number, number]; zoom: number }[]
+  () =>
+    [] as {
+      center: [number, number];
+      zoom: number;
+      style?: string;
+      attributionControl?: unknown;
+    }[]
 );
+/** The corner each control was added in. */
+const controlCorners = vi.hoisted(() => [] as string[]);
 
 const mapFailure = vi.hoisted(() => ({ enabled: false }));
 
@@ -54,6 +62,10 @@ vi.mock("maplibre-gl", () => {
     }
     on() {}
     once() {}
+    off() {}
+    addControl(_control: unknown, corner: string) {
+      controlCorners.push(corner);
+    }
     addSource() {}
     addLayer() {}
     getSource() {
@@ -65,12 +77,17 @@ vi.mock("maplibre-gl", () => {
     flyTo() {}
     remove() {}
   }
-  return { Map: FakeMap, setWorkerUrl: vi.fn() };
+  return {
+    Map: FakeMap,
+    AttributionControl: class {},
+    setWorkerUrl: vi.fn(),
+  };
 });
 
 afterEach(() => {
   cleanup();
   mapOpts.length = 0;
+  controlCorners.length = 0;
   mapFailure.enabled = false;
 });
 
@@ -130,6 +147,23 @@ describe("RoutePlannerSheet — where the map opens", () => {
        EVERY user landed here, because no caller passed initialCenter. */
     setup({ initialCenter: null });
     expect(mapOpts[0].zoom).toBeLessThan(5);
+  });
+});
+
+describe("RoutePlannerSheet — the basemap and its credit", () => {
+  it("draws OpenFreeMap's style and puts the credit bottom-left, clear of Locate", () => {
+    setup({ darkMode: true });
+    expect(mapOpts[0].style).toBe("https://tiles.openfreemap.org/styles/dark");
+    // MapLibre's default credit is off so the placed one is the only one.
+    expect(mapOpts[0].attributionControl).toBe(false);
+    expect(controlCorners).toEqual(["bottom-left"]);
+  });
+
+  it("uses the light style for a light planner", () => {
+    setup({ darkMode: false });
+    expect(mapOpts[0].style).toBe(
+      "https://tiles.openfreemap.org/styles/positron"
+    );
   });
 });
 

@@ -98,8 +98,10 @@ firebase functions:secrets:set BILLING_PREVIOUS_HMAC_SECRET   # = BILLING_HMAC_S
 > secret the code actually binds (7 today). The hand-written list above can
 > drift; the tool can't. Run it before every deploy.
 
-`ADMIN_UIDS` (moderation allowlist) is **not** a secret — set it as a
-plain env var (`functions/.env` or `--set-env-vars ADMIN_UIDS=uid1,uid2`).
+`ADMIN_UIDS` (moderation allowlist) and `MODERATION_ALERT_EMAIL` (where
+report alerts go, default `support@troposfit.com`) are **not** secrets —
+set them as plain env vars in `functions/.env`. Section 19 has the steps
+and what a deploy does with that file.
 
 **Safety gate:** a `firebase deploy` that references a bound secret which
 hasn't been provisioned **fails** before shipping — so provision all of
@@ -287,7 +289,12 @@ contains all three required keys with the exact strings below:
 
 ### 9. App Store Connect metadata + assets
 
-- Screenshots (6.7" iPhone required)
+The listing is drafted in `docs/app-store/listing.md`: the text to paste,
+the privacy label, the age rating, the review notes, and what still has to
+change before the first submission.
+
+- Screenshots (6.9" iPhone required; the app is iPhone-only, so no iPad
+  set)
 - Privacy policy URL
 - Support URL
 - Category: Health & Fitness
@@ -527,76 +534,136 @@ split is the real prerequisite work.
 
 ### 19. Moderation queue + profanity filter
 
-User-generated content surfaces (feed, comments, crews) have:
+User-generated content surfaces (feed activities, activity comments,
+Space posts, Space post comments, display names) have:
 
-- ✅ Report button (writes to `/reports/`)
-- ✅ Block user
+- ✅ Terms agreed at sign-up — the sign-in and sign-up screens say "By
+  continuing, you agree to the Terms and Privacy Policy." under every
+  button that can create an account (email, Apple, Google). Terms §7
+  states the zero-tolerance rule, that offending content is removed and
+  accounts can be suspended or removed, and that reports are reviewed
+  within 24 hours.
+- ✅ Report — activities, activity comments, Space posts, Space post
+  comments and profiles, all through the `createReport` callable
+  (comments from the ⋯ button on someone else's comment). The target
+  types and id shapes are pinned client↔server by
+  `src/lib/__tests__/reportTargets.cross.test.ts`.
+- ✅ Block user — from the feed card, a Space post, a profile, and any
+  comment. A blocked author's comments drop out of both comment sheets.
 - ✅ Moderation UI for reviewing the reports — `/admin/moderation`
   page gated on `VITE_ADMIN_UIDS` / `ADMIN_UIDS` (client + server).
-  Surfaces pending reports with target preview + dismiss / hide
-  actions; backed by `listPendingReports` + `resolveReport`
-  callables that re-check admin via `adminAuth.assertAdminCallable`.
-- ✅ Profanity / toxicity auto-filter — `onActivityCreated` /
-  `onCommentCreated` triggers run `leo-profanity` against
-  caption / workoutName / runName / comment.text. Profane
-  activities auto-flag to `visibility: 'private'`; profane
-  comments auto-delete with an audit row under
-  `/commentModeration/`. Client-side composer warns the user
-  inline at submit time as a UX nicety.
+  Pending reports with a target preview and Dismiss / Hide content /
+  Restrict user, backed by `listPendingReports` + `resolveReport`,
+  which re-check admin via `adminAuth.assertAdminCallable`. Hide
+  content works on every kind of content: an activity is made private,
+  a comment (either kind) or a Space post is deleted.
+- ✅ An email per report — `createReport` emails `MODERATION_ALERT_EMAIL`
+  (default `support@troposfit.com`) through Resend once the report is
+  stored: the reason, what was reported, the reporter's note and a link to
+  `/admin/moderation`. A failed email never fails the report. Setup below.
+- ✅ One word filter (`leo-profanity`, `functions/profanityFilter.js`
+  and its client mirror) on all public text: activity captions and
+  names (`onActivityCreated` makes them private), Space posts
+  (`onSpacePostWritten` removes them, edits included), comments of both
+  kinds (the callables refuse them, with a sentence the app shows;
+  `onCommentCreated` stays as the backstop) and display names
+  (`completeOnboarding` / `configurePlan` refuse them; the Settings name
+  field and Onboarding check them on the device). The app catches the
+  same text before sending it.
 - ✅ Published contact email — `support@troposfit.com` link in
   Settings → Support & Legal → "Report objectionable content"
   with a moderation-prefixed subject so the inbox can route.
 
 Apple Guideline 1.2 territory — landed pre-launch.
 
-#### Operator follow-up — register a moderator (deferred)
+#### Operator follow-up — register a moderator and the report alert
 
-The auto-filter runs unconditionally once functions deploy, but
-the `/admin/moderation` queue stays locked (fail-closed: empty
-allowlist → no admins → every callable rejects) until both
-`ADMIN_UIDS` (server) and `VITE_ADMIN_UIDS` (client) are set to
-the same uid. Step-by-step:
+The filter runs unconditionally once functions deploy, but the
+`/admin/moderation` queue stays locked (fail-closed: empty allowlist →
+no admins → every callable rejects) until both `ADMIN_UIDS` (server)
+and `VITE_ADMIN_UIDS` (client) hold the same uid. The report alert needs
+`RESEND_FROM` on `createReport` to reach any inbox but the Resend
+account owner's. Step-by-step:
 
 1. **Get the moderator's Firebase Auth UID** — Firebase Console →
    Authentication → Users, copy the UID column for the operator
    account (28-character string, mixed-case alphanumeric).
 
-2. **Set the server-side allowlist:**
+2. **Set the server-side variables.** These are plain env vars, not
+   secrets. `functions.config()` and `firebase functions:config:set` no
+   longer work (firebase-functions v7 removed them; the Runtime Config
+   API shut down 2025-12-31), so they go in `functions/.env`, which is
+   gitignored and stays on your machine:
 
    ```bash
-   firebase functions:config:set admin.uids="THE_UID_HERE" \
-     --project adaptive-fitness-af8bb
-   firebase deploy --only functions \
+   # functions/.env
+   ADMIN_UIDS=THE_UID_HERE
+   # Where report alerts go. Optional: this is the default.
+   MODERATION_ALERT_EMAIL=support@troposfit.com
+   # The sender. Without it Resend sends from onboarding@resend.dev, which
+   # only delivers to the Resend account owner's own address.
+   RESEND_FROM=Tropos <no-reply@troposfit.com>
+   # Optional: the origin the alert's /admin/moderation link opens on.
+   # Unset, it is the GitHub Pages app (https://lemmonchess333.github.io/Maiin/).
+   PUBLIC_APP_BASE_URL=https://troposfit.com/
+   ```
+
+   Multiple moderators: comma-separate, e.g. `ADMIN_UIDS=uid1,uid2,uid3`.
+   Then deploy the functions that read them, from an up-to-date checkout
+   of `main`:
+
+   ```bash
+   firebase deploy --only functions:listPendingReports,functions:resolveReport,functions:createReport \
      --project adaptive-fitness-af8bb
    ```
 
    Requires `npm install -g firebase-tools` + `firebase login`
-   (use `--no-localhost` if running over SSH / Codespaces).
+   (use `--no-localhost` if running over SSH / Codespaces). How
+   firebase-tools treats plain env vars (the same rules as
+   `REVENUECAT_SANDBOX_UIDS`, `docs/iap/revenuecat-setup.md` Part C):
+   a deploy WITH a `functions/.env` replaces the deployed functions'
+   variables with the file's contents, so keep every plain variable those
+   functions need in it; a CI deploy carries no `functions/.env` and keeps
+   what each function already has, but a function a CI deploy creates for
+   the first time gets none. Confirm the values in the Google Cloud
+   console (Cloud Functions → the function → Variables).
 
-   Multiple moderators later: comma-separate, e.g.
-   `admin.uids="uid1,uid2,uid3"`.
+   `createReport` also binds the `RESEND_API_KEY` secret. It is already
+   provisioned, and the runtime account can already read it (the password
+   reset and verification emails bind it), so no new grant is needed.
 
-3. **Set the client-side allowlist** — edit
-   `.github/workflows/deploy.yml`, add to the `npm run build`
-   step's `env:` block (must match step 2 exactly):
+3. **Set the client-side allowlist** — the web builds read
+   `VITE_ADMIN_UIDS` from a GitHub Actions **secret**
+   (`deploy.yml` and `deploy-hosting.yml` pass
+   `${{ secrets.VITE_ADMIN_UIDS }}`; it only decides whether the page
+   renders, the callables re-check `ADMIN_UIDS`). GitHub → the repo →
+   Settings → Secrets and variables → Actions → New repository secret,
+   name `VITE_ADMIN_UIDS`, value exactly the uid(s) from step 2. Then
+   re-run **Deploy production** (`workflow_dispatch`) so the web builds
+   pick it up. Do not write the uid into the workflow files.
 
-   ```yaml
-   VITE_ADMIN_UIDS: "THE_UID_HERE"
-   ```
-
-   Commit + push to main; GitHub Pages auto-redeploys in ~3
-   minutes.
-
-4. **Verify** — open `https://lemmonchess333.github.io/Maiin/admin/moderation`
+4. **Verify the queue** — open `/admin/moderation` on the hosted app
+   (`https://troposfit.com/admin/moderation` once that origin serves the
+   app, or `https://lemmonchess333.github.io/Maiin/admin/moderation`)
    while signed in as the operator account. Either "All clear. No
    pending reports." or a list of report cards = working. "Not
    authorised" = the UID didn't match somewhere (re-check step 1
-   against both env vars).
+   against both values).
 
-Until both are set, `/admin/moderation` 403s for everyone and the
-`listPendingReports` callable rejects all calls. The auto-flag
-triggers run regardless — they're independent of the allowlist
-and start filtering UGC the moment functions deploy.
+5. **Verify the alert** — file a test report from a second account and
+   confirm the email reaches the inbox (the pre-launch backlog row
+   "Report alert reaches the inbox" has the steps).
+
+Until both allowlists are set, `/admin/moderation` 403s for everyone and
+the `listPendingReports` callable rejects all calls. The filter triggers
+and refusals run regardless — they're independent of the allowlist and
+start filtering UGC the moment functions deploy.
+
+**Suspending an account.** Restrict user in the queue stops someone
+searching, following and inviting. To suspend an account outright, as
+Terms §7 allows, disable it in Firebase Console → Authentication → the
+user's row → Disable account (they cannot sign in again; a session
+already open lasts until its token expires, up to an hour).
 
 ### 20. README replacement — ✅ done
 
@@ -625,7 +692,7 @@ below now say so, and that is the difference between a tick and a tick worth
 trusting:
 
 - ✅ AI food analysis is an estimate, not medical advice — Privacy §8,
-  Terms §7
+  Terms §8 (health disclaimer; it was §7 until §7 became the moderation rule)
   - Re-checked 2026-08-12 against the PROPERTY (does the user actually see
     it, not merely does the policy say it): `FoodAnalyzer.tsx` surfaces
     "AI estimate — review carefully" and "AI estimate — adjust portions
@@ -714,12 +781,22 @@ trusting:
     that was deliberately never built. Both are covered by the existing
     "Stripe stays DORMANT — web storefront steer at launch" gate; closing
     that gate closes this.
+  - STATUS 2026-10-04: §4 now describes only what is sold, Pro as a
+    monthly or yearly auto-renewing subscription through Apple's In-App
+    Purchase, with Apple's renewal, cancellation and refund terms. The
+    "Lifetime purchases" line (no such product) and the Google Play and
+    web refund wording are gone; `legalCopyClaims.test.ts` pins the plan
+    list to `proPlans.ts`.
 - ✅ Social content moderation + reporting — Terms §5 (acceptable use),
   re-checked 2026-08-12 end to end rather than by presence of the word:
   `ReportModal.tsx` → `socialApi.createReport` → the `createReport`
   callable in `functions/index.js`. The path exists and connects.
   §6 (UGC removal), §9 (termination)
-- ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §9
+  - STATUS 2026-10-04: §7 is new: zero tolerance for objectionable
+    content and abusive users, what is not allowed, that it is removed and
+    the accounts can be suspended or removed, and that reports are
+    reviewed within 24 hours. Termination moved to §10.
+- ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §10 (was §9)
 
 Note: this is plain-language coverage of the real data practices, not a
 substitute for a lawyer's review before public launch.
@@ -865,8 +942,11 @@ Code side is ready. No code changes needed for any of these.
 
 ### Firebase CLI (works on Windows via `npm i -g firebase-tools`)
 
-2. `firebase functions:config:set apple.*` with `.p8` contents
-   (`#2` above) — needs the `.p8` downloaded from App Store Connect
+2. `firebase functions:secrets:set APPLE_KEY_ID`, `APPLE_ISSUER_ID` and
+   `APPLE_PRIVATE_KEY` (the `.p8` contents), as in `#2` above — needs
+   the `.p8` downloaded from App Store Connect. (This line used to say
+   `functions:config:set apple.*`, which throws under firebase-functions
+   v7; `npm run secrets:check` in `functions/` prints every secret to set.)
 3. `firebase deploy --only functions:verifyApplePurchase,functions:appleIAPWebhook,functions:restoreApplePurchases,functions:deleteMyAccount`
 4. `firebase deploy --only firestore:rules` — activates tightened
    rules + fixes the `/crews/` → `/groups/` path bug

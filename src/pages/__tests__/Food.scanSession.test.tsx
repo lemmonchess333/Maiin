@@ -41,6 +41,12 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => "u1",
   // The guide's composer hint keeps its seen flag per account.
   useUidForStorageKey: () => "u1",
+  // The AI permission gate reads the answer from the profile; this account
+  // has already said yes (aiConsentGate.test.tsx covers the question).
+  useAuth: () => ({
+    profile: { aiAnalysisEnabled: true },
+    updateProfile: vi.fn(async () => ({ ok: true })),
+  }),
 }));
 vi.mock("@/lib/subscription", () => ({
   useSubscription: () => ({ isPro: true }),

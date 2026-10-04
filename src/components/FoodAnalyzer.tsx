@@ -12,7 +12,7 @@ import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { useUid } from "@/lib/auth";
-import { offProductToPortion } from "@/lib/offNutrition";
+import { OFF_CREDIT, offProductToPortion } from "@/lib/offNutrition";
 import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
@@ -38,6 +38,7 @@ import {
 import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import type { AiConsentGate } from "@/hooks/useAiConsent";
 
 interface Props {
   date: string;
@@ -65,6 +66,11 @@ interface Props {
   /** Photo scanning is not on this account's tier: the scanner opens on
    *  Barcode and its photo tabs carry the Pro offer. See PhotoLock. */
   photoLock?: PhotoLock | null;
+  /** Permission before a photo goes to Google (src/lib/aiConsent.ts).
+   *  Required, with no default: a scanner that forgot it would send
+   *  photos nobody agreed to send. Food owns the gate, so the scanner and
+   *  the composer ask one question and share its answer. */
+  aiConsent: AiConsentGate;
   /** Fired each time the scanner comes on screen (the page's opening
    *  animation waits for it). */
   onCameraShown?: () => void;
@@ -171,6 +177,7 @@ export default function FoodAnalyzer({
   onRequestManualLog,
   effectiveDailyTarget,
   photoLock = null,
+  aiConsent,
   onCameraShown,
 }: Props) {
   const uid = useUid();
@@ -739,6 +746,17 @@ export default function FoodAnalyzer({
   // the modal instead of retaking.
   const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
     lastCaptureModeRef.current = mode;
+    /* Nothing goes to Google before the person has said yes. The first
+       photo asks (AiConsentSheet, over the scanner, the shot held); an
+       account that has said no is never sent one, and its photo tabs
+       offer the switch instead of a shutter. Offline nothing would be
+       sent either way, so the offline answer below comes first, without
+       a question. Anything but Allow drops the shot as if it was never
+       taken, and so does closing the scanner while the question is up. */
+    if (navigator.onLine) {
+      const consent = await aiConsent.ensure();
+      if (consent !== "allowed" || !cameraOpenRef.current) return;
+    }
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
@@ -866,6 +884,11 @@ export default function FoodAnalyzer({
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         photoLock={photoLock}
+        aiOff={
+          aiConsent.status === "off"
+            ? { onTurnOn: () => void aiConsent.ask() }
+            : null
+        }
         initialTab={cameraTab}
         onShown={onCameraShown}
         loading={showLoading}
@@ -1115,6 +1138,14 @@ export default function FoodAnalyzer({
                     className="rounded-full"
                   />
                 </div>
+              )}
+
+              {/* A barcode result is Open Food Facts' data, whose licence
+                  (ODbL) asks for a credit wherever it is shown. */}
+              {isBarcode && (
+                <p className="text-micro text-muted-foreground text-center">
+                  {OFF_CREDIT}
+                </p>
               )}
 
               {/* Per-item breakdown — editable for multi-item AI results,

@@ -14,7 +14,11 @@
  * key shape, so the compiler catches drift before runtime.
  *
  * `label` is the short noun used inline ("AI food photo logging").
- * `title` is the modal hero heading ("Unlock AI food logging").
+ * `title` is the modal hero heading ("AI food logging is part of Pro"):
+ * a plain statement of where the feature lives, in the shape of the Food
+ * page's Pro line ("Photo logging is part of Pro", deliberately not the
+ * same words, so a selector for one never finds the other). It was
+ * "Unlock …", which the house voice rules out.
  * `tagline` is the supporting copy under the title.
  * `sourceLabel` is the analytics dimension — emitted with the
  * paywall_viewed event so we can see which gates drive interest.
@@ -48,7 +52,7 @@ export interface ProFeatureConfig {
   key: ProFeatureKey;
   /** Short noun for inline use ("Performance Engine"). */
   label: string;
-  /** Modal hero heading ("Unlock Performance Engine"). */
+  /** Modal hero heading ("Adaptive TDEE is part of Pro"). */
   title: string;
   /** Supporting copy in the modal hero. */
   tagline: string;
@@ -60,21 +64,21 @@ export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
   ai_food_logging: {
     key: "ai_food_logging",
     label: "AI food photo logging",
-    title: "Unlock AI food logging",
+    title: "AI food logging is part of Pro",
     tagline: "Log meals from a photo. No manual searching.",
     sourceLabel: "ai_food_logging",
   },
   adaptive_tdee: {
     key: "adaptive_tdee",
     label: "Adaptive TDEE",
-    title: "Unlock Adaptive TDEE",
+    title: "Adaptive TDEE is part of Pro",
     tagline: "Adjust calorie targets using your real weight and intake trends.",
     sourceLabel: "adaptive_tdee",
   },
   adaptive_macros: {
     key: "adaptive_macros",
     label: "Training-aware macros",
-    title: "Unlock training-aware macros",
+    title: "Training-aware macros are part of Pro",
     tagline:
       "Shift carbs and fat around your training while keeping calories steady.",
     sourceLabel: "adaptive_macros",

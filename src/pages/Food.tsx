@@ -62,6 +62,8 @@ import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useAiConsent } from "@/hooks/useAiConsent";
+import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
@@ -287,6 +289,10 @@ export default function Food() {
   } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
+  /* Permission before food goes to Google (src/lib/aiConsent.ts). One
+     gate for the page: the composer uses it for typed meals and the
+     scanner gets it as a prop, so both ask the same question once. */
+  const aiConsent = useAiConsent();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   /* Optimistic-hide set for long-press → remove. Chips with an id
      in here are filtered from the rendered row immediately so the
@@ -929,7 +935,17 @@ export default function Food() {
     setNlParsing(true);
     let items: ParsedFood[];
     let confidence: string;
-    if (isPro) {
+    /* A Pro typed meal goes to Gemini only with the person's yes: asked
+       the first time (AiConsentSheet), and never sent once they have said
+       no, when it is read on the phone as a free account's is — and
+       logged all the same. Closing the question without an answer logs
+       nothing and keeps the draft, so Log asks again. */
+    const consent = isPro ? await aiConsent.gate.ensure() : null;
+    if (consent === "dismissed") {
+      setNlParsing(false);
+      return;
+    }
+    if (consent === "allowed") {
       try {
         const result = await analyzeFoodText(nlInput);
         if (result && result.items?.length > 0) {
@@ -2104,6 +2120,7 @@ export default function Food() {
                   }
                 : null
             }
+            aiConsent={aiConsent.gate}
             onSaved={() => {
               setScanOpen(false);
             }}
@@ -2303,6 +2320,10 @@ export default function Food() {
           />
         </Suspense>
       )}
+
+      {/* The one AI question, for the composer and the scanner alike. It
+          raises itself above the scanner when a photo asks. */}
+      <AiConsentSheet {...aiConsent.sheet} />
     </PageShell>
   );
 }

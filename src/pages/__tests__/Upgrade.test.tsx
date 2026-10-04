@@ -24,6 +24,7 @@ import {
   fireEvent,
   cleanup,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 
@@ -88,7 +89,16 @@ vi.mock("@/lib/subscription", async () => {
   };
 });
 
+// The plans the page prints. The pound plans by default, which is what the
+// real hook returns on the web; a storefront in another currency where a
+// test says so (`localizePlans`, what the hook does with Apple's prices).
+const plansMock = vi.fn<() => ProPlan[]>();
+vi.mock("@/hooks/useProPlanPrices", () => ({
+  useProPlanPrices: () => plansMock(),
+}));
+
 import Upgrade from "../Upgrade";
+import { PRO_PLANS, localizePlans, type ProPlan } from "@/lib/proPlans";
 
 function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
   return render(
@@ -121,6 +131,8 @@ beforeEach(() => {
   authProfileMock.mockReset();
   useSubscriptionMock.mockReset();
   isNativeIOSMock.mockReturnValue(false);
+  plansMock.mockReset();
+  plansMock.mockReturnValue(PRO_PLANS);
   // Baseline: free user on web with the post-trial flag set (so the
   // existing pricing-page tests rendering "Start Pro — £X" still pass).
   authProfileMock.mockReturnValue({ hasUsedTrial: true });
@@ -214,15 +226,23 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
     expect(screen.getByText("Start Pro — £3.99/mo")).toBeTruthy();
   });
 
-  it("disclosure flips between monthly/annually with the selected plan", () => {
+  it("disclosure flips between the yearly and monthly price with the selected plan", () => {
     renderPlans();
-    // Default yearly → "Renews annually"
-    expect(screen.getByText(/Renews annually/)).toBeTruthy();
+    // Default yearly: what is charged, that it renews, and how to stop it.
+    expect(
+      screen.getByText(
+        "£34.99 a year. Renews automatically until cancelled. Cancel any time."
+      )
+    ).toBeTruthy();
     const monthly = screen
       .getAllByRole("radio")
       .find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
-    expect(screen.getByText(/Renews monthly/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+      )
+    ).toBeTruthy();
   });
 });
 
@@ -305,6 +325,72 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
+  it("leads a trial-eligible offer with what is billed after the trial, above 'No payment due today'", () => {
+    // Guideline 3.1.2: the amount billed at least as prominent as the free
+    // trial. "No payment due today" used to be the bold line, with no price
+    // anywhere on the screen.
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderPage();
+    const lead = screen.getByText("7 days free, then £34.99 a year");
+    expect(lead.className).toContain("font-bold");
+    expect(lead.className).toContain("text-base");
+    const reassurance = screen.getByText("No payment due today");
+    expect(reassurance.className).not.toContain("font-bold");
+    expect(reassurance.className).toContain("text-muted-foreground");
+    // The price comes first in reading order.
+    expect(
+      lead.compareDocumentPosition(reassurance) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    // And the renewal terms are on this beat too.
+    expect(
+      screen.getByText(/Renews automatically until cancelled\./)
+    ).toBeInTheDocument();
+  });
+
+  it("the offer's price follows the plan picked on the plans beat", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(
+      screen
+        .getAllByRole("radio")
+        .find((r) => r.textContent?.includes("Monthly"))!
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to the Pro overview" })
+    );
+    expect(
+      screen.getByText("7 days free, then £3.99 a month")
+    ).toBeInTheDocument();
+  });
+
+  it("the trial CTA has the post-trial price directly beneath it, and the timeline names it", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    const cta = screen.getByRole("button", {
+      name: "Start your 7-day free trial",
+    });
+    const beneath = cta.nextElementSibling as HTMLElement;
+    expect(beneath.textContent).toBe(
+      "7 days free, then £34.99 a year. Renews automatically until cancelled. Cancel any time."
+    );
+    // As loud as the trial: the price line takes the button label's own
+    // size and weight.
+    const priceLine = within(beneath).getByText(
+      "7 days free, then £34.99 a year."
+    );
+    for (const cls of ["text-base", "font-semibold"]) {
+      expect(cta.className).toContain(cls);
+      expect(priceLine.className).toContain(cls);
+    }
+    expect(
+      screen.getByRole("list", { name: "How your free trial works" })
+        .textContent
+    ).toContain("Day 7 — Your subscription starts at £34.99 a year");
+  });
+
   it("after the onboarding free week the page shows the price — one trial per account, flag stamped or not", () => {
     authProfileMock.mockReturnValue({
       hasUsedTrial: false,
@@ -348,10 +434,10 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
 
   it("shows a post-trial user the prices instead of a trial promise", () => {
     renderPage();
-    expect(screen.queryByText("No payment due today")).toBeNull();
     expect(
-      screen.getAllByText(/£3\.99\/month or £34\.99\/year/).length
-    ).toBeGreaterThan(0);
+      screen.getByText("£3.99 a month or £34.99 a year")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No payment due today")).toBeNull();
   });
 
   it("Continue opens the plans; Back returns to the offer", () => {
@@ -408,6 +494,73 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     renderPage();
     expect(screen.getByText(/Already purchased/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
+  });
+
+  it("on iOS, both beats say where to cancel: the Apple Account", () => {
+    isNativeIOSMock.mockReturnValue(true);
+    renderPage();
+    expect(
+      screen.getByText(
+        "Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+      )
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByText(
+        "£34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Apple ID/)).toBeNull();
+  });
+});
+
+describe("Upgrade — a storefront that does not charge in pounds", () => {
+  const US = () =>
+    localizePlans({
+      monthly: { priceString: "$4.99", price: 4.99, currencyCode: "USD" },
+      yearly: { priceString: "$39.99", price: 39.99, currencyCode: "USD" },
+    });
+
+  it("trial offer and plans: every figure in dollars, none in pounds", () => {
+    plansMock.mockReturnValue(US());
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    const { container } = renderPage();
+    expect(
+      screen.getByText("7 days free, then $39.99 a year")
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain("£");
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // Anchor on the dollar figures before reading for a pound sign.
+    expect(
+      screen.getByText("7 days free, then $39.99 a year.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "How your free trial works" })
+        .textContent
+    ).toContain("$39.99 a year");
+    const cards = screen.getAllByRole("radio");
+    expect(cards.map((c) => c.textContent)).toEqual([
+      expect.stringContaining("$4.99/month"),
+      expect.stringContaining("$39.99/year"),
+    ]);
+    // The per-week anchors and the saving are this storefront's own.
+    for (const card of cards) expect(card.textContent).toMatch(/\/wk/);
+    expect(cards[1].textContent).toContain("Save 33%");
+    expect(container.textContent).not.toContain("£");
+  });
+
+  it("post-trial: the CTA and the summary are the store's prices, not the pound ones", () => {
+    plansMock.mockReturnValue(US());
+    const { container } = renderPage();
+    expect(
+      screen.getByText("$4.99 a month or $39.99 a year")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByRole("button", { name: "Start Pro — $39.99/yr" })
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain("£");
   });
 });
 
@@ -563,6 +716,11 @@ describe("Upgrade — Sub1 P2 cross-platform Pro guard", () => {
     // so the user recognises where to go. `getAllByText` because the
     // copy mentions "App Store" multiple times across heading + body.
     expect(screen.getAllByText(/App Store/i).length).toBeGreaterThan(0);
+    // Apple's current name for the account.
+    expect(
+      screen.getByText(/Manage your subscription in your Apple Account\./)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Apple ID/)).toBeNull();
     // No checkout CTA visible (no double-charging path).
     expect(screen.queryByRole("button", { name: /Start Pro/ })).toBeNull();
     expect(

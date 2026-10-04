@@ -8,12 +8,19 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("maplibre-gl", () => ({
   setWorkerUrl: vi.fn(),
+  AttributionControl: class {},
   Map: class {
     on(event: string, fn: () => void) {
       if (event === "load") state.load.push(fn);
       return this;
     }
+    once() {
+      return this;
+    }
     off() {
+      return this;
+    }
+    addControl() {
       return this;
     }
     addSource(name: string) {

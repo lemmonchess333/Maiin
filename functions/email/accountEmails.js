@@ -47,6 +47,8 @@ async function sendViaResend({ to, subject, html }) {
     );
   }
 }
+// Also the transport for createReport's moderation alert (lib/reportAlert.js).
+exports.sendViaResend = sendViaResend;
 
 /**
  * Forgot-password entry point (auth pass, 2026-07). UNAUTHENTICATED by design

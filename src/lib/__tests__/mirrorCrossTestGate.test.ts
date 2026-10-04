@@ -137,6 +137,21 @@ const PINNED: Record<string, string> = {
   // this file's own rule that is a cross-test, not an exemption.
   "functions/profanityFilter.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // The sentences a refused comment or name reads. The client says them when
+  // it catches the text first, the callables when they refuse it; one
+  // person, one sentence either way.
+  "functions/lib/objectionableText.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // Report targets: the types and id shapes the server validates, which the
+  // client builds (REPORT_TARGET_TYPES, reportTargetIds.ts). A mismatch
+  // refuses every report of that kind.
+  "functions/lib/reportTargets.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
+  // The report alert email's labels mirror the report form's
+  // (src/lib/reportCategories.ts), so the owner reads the reason the
+  // reporter picked.
+  "functions/lib/reportAlert.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   // Admin allowlist. BOTH copies run — the server as the trust boundary on
@@ -251,6 +266,16 @@ const PINNED: Record<string, string> = {
   // declares it too, which is what makes this entry reachable.
   "functions/lib/aiScanQuota.js":
     "src/lib/__tests__/aiScanQuota.parity.cross.test.ts",
+  // Permission before food goes to AI. BOTH copies run: the client decides
+  // whether a photo or typed meal is sent to Gemini, the server whether
+  // analyzeFood / analyzeFoodText answer. One stored answer, read alike.
+  "functions/lib/aiConsent.js": "src/lib/__tests__/aiConsent.cross.test.ts",
+  // MET Norway's weather symbols as the WMO codes src/lib/weather.ts reads
+  // for the strip's icon and the pre-run tips. Not a copy of client logic,
+  // but an agreement both sides must keep: a code the client does not know
+  // draws a sun over snow and silences the snow tip, with both suites green.
+  "functions/lib/metWeather.js":
+    "src/lib/__tests__/weatherSymbols.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.

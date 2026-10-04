@@ -5,16 +5,18 @@
  * paywall pattern): the first thing on screen is the PRODUCT doing the
  * thing Pro sells, not a price list.
  *
- *   Beat 1 — offer.  Headline, the product preview rail, the one
- *   reassurance a trial-eligible user needs ("No payment due today"),
- *   one CTA ("Continue"), and a visible way to keep using Free. Footer
- *   carries Restore (iOS), the billing disclosure and the legal links —
- *   App Store Guideline 3.1.2 wants those on every purchase surface,
- *   and this beat is one.
+ *   Beat 1 — offer.  Headline, the product preview rail, what it costs
+ *   (for a trial-eligible user "7 days free, then £34.99 a year", in bold,
+ *   with "No payment due today" under it: App Store Guideline 3.1.2 wants
+ *   the billed amount at least as prominent as the trial), one CTA
+ *   ("Continue"), and a visible way to keep using Free. Footer carries
+ *   Restore (iOS), the renewal terms and the legal links — 3.1.2 wants
+ *   those on every purchase surface, and this beat is one.
  *
  *   Beat 2 — plans.  The monthly / yearly picker (`PlanPicker`, shared
  *   with ProModal so the two cannot drift), the honest trial timeline,
- *   the priced CTA, disclosure, Restore, legal.
+ *   the CTA with the price directly beneath it (`RenewalDisclosure`),
+ *   Restore, legal.
  *
  * Entry points, read from `?from=`: onboarding's save lands here with
  * `state.next` = Home (FV1; it was the first activity), and "Continue
@@ -35,7 +37,11 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useSubscription, isCheckoutTrialEligible } from "@/lib/subscription";
+import {
+  useSubscription,
+  isCheckoutTrialEligible,
+  DAILY_AI_LIMITS,
+} from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -51,9 +57,12 @@ import {
 import { toast } from "@/lib/toast";
 import {
   DEFAULT_PLAN,
+  findPlan,
+  getBilledPriceLine,
   getCheckoutCtaLabel,
-  getRenewalDisclosure,
   getInlinePriceSummary,
+  getRenewalTerms,
+  TRIAL_DAYS,
   type PlanId,
 } from "@/lib/proPlans";
 import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
@@ -67,6 +76,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
+import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
 import ProDemoVideo from "@/components/paywall/ProDemoVideo";
 import { framesForFeature } from "@/components/paywall/previewFrames";
@@ -152,8 +162,10 @@ export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
-  // elsewhere (IAP slice 3, #1099).
+  // elsewhere (IAP slice 3, #1099). Every price on the page is read from
+  // these plans, never looked up by id, so it is all in one currency.
   const plans = useProPlanPrices();
+  const selected = findPlan(plans, selectedPlan);
 
   const { loading, error, startCheckout } = useProCheckout();
 
@@ -373,8 +385,8 @@ export default function Upgrade() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription from your Apple ID — Apple doesn&apos;t let
-            us cancel or refund App Store subscriptions on your behalf.
+            Manage your subscription in your Apple Account. Apple doesn&apos;t
+            let us cancel or refund App Store subscriptions on your behalf.
           </p>
           <a
             href="https://apps.apple.com/account/subscriptions"
@@ -424,7 +436,9 @@ export default function Upgrade() {
           </p>
           <ul className="space-y-1.5 text-sm text-foreground">
             {[
-              "Unlimited AI photo food logging",
+              // The server caps Pro scans (DAILY_AI_LIMITS), so not
+              // "unlimited": the number is the cap itself.
+              `AI photo food logging, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day`,
               "A calorie target that adapts to you",
               "Macros that shift with your training",
             ].map((f) => (
@@ -476,7 +490,7 @@ export default function Upgrade() {
           </div>
           <p className="text-xs text-muted-foreground">
             {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left on your
-            free trial. Subscribe anytime to keep all Pro features.
+            free trial. Subscribe any time to keep all Pro features.
           </p>
         </div>
       )}
@@ -520,19 +534,30 @@ export default function Upgrade() {
             }
           />
 
+          {/* What it costs leads. With the trial, the trial and the price
+              are one bold sentence, so the amount billed is as prominent as
+              the trial (Guideline 3.1.2), and "No payment due today" is the
+              reassurance under it rather than the headline over a page
+              with no price on it. The plan is the one selected: yearly
+              until the person picks another on the plans beat. */}
           {withTrial ? (
-            <p className="flex items-center justify-center gap-2 text-base font-bold text-foreground">
-              <Check
-                className="size-5"
-                strokeWidth={3}
-                aria-hidden="true"
-                style={{ color: THEME.success }}
-              />
-              No payment due today
-            </p>
+            <div className="space-y-1 text-center">
+              <p className="text-base font-bold text-foreground text-balance">
+                {getBilledPriceLine(selected, true)}
+              </p>
+              <p className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+                <Check
+                  className="size-4"
+                  strokeWidth={3}
+                  aria-hidden="true"
+                  style={{ color: THEME.success }}
+                />
+                No payment due today
+              </p>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center">
-              {getInlinePriceSummary()}. Cancel any time.
+              {getInlinePriceSummary(plans)}
             </p>
           )}
 
@@ -554,8 +579,8 @@ export default function Upgrade() {
 
           <p className="text-caption text-muted-foreground text-center leading-snug">
             {withTrial
-              ? "Billing starts when your free trial ends, unless you cancel before then."
-              : `${getInlinePriceSummary()}. Renews until cancelled.`}
+              ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
+              : getRenewalTerms(platform)}
           </p>
           {footer}
         </section>
@@ -573,7 +598,7 @@ export default function Upgrade() {
             </h1>
             <p className="text-sm text-muted-foreground">
               {withTrial
-                ? "7 days free on either plan. Cancel before it ends and you pay nothing."
+                ? `${TRIAL_DAYS} days free on either plan. Cancel before it ends and you pay nothing.`
                 : "Both plans include everything in Pro."}
             </p>
           </div>
@@ -598,7 +623,7 @@ export default function Upgrade() {
           ) : null}
 
           {/* Sub1a trial transparency — what actually happens, before the ask. */}
-          {withTrial ? <TrialTimeline /> : null}
+          {withTrial ? <TrialTimeline plan={selected} /> : null}
 
           {/* Direct purchase CTA — never opens another modal. */}
           <Button
@@ -617,19 +642,23 @@ export default function Upgrade() {
                 <span>Starting checkout…</span>
               </>
             ) : (
-              <span>{getCheckoutCtaLabel(selectedPlan, withTrial)}</span>
+              <span>{getCheckoutCtaLabel(selected, withTrial)}</span>
             )}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center">
-            {getRenewalDisclosure(selectedPlan, platform)}
-          </p>
+          {/* Directly beneath the button: what it charges, after the trial
+              when there is one, and that it renews. */}
+          <RenewalDisclosure
+            plan={selected}
+            platform={platform}
+            withTrial={withTrial}
+          />
 
           {footer}
 
           {/* Inline price-summary fallback for users who scrolled past
               the plan cards on a small viewport. */}
-          <p className="sr-only">Pricing: {getInlinePriceSummary()}.</p>
+          <p className="sr-only">Pricing: {getInlinePriceSummary(plans)}.</p>
         </section>
       )}
     </div>

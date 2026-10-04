@@ -253,12 +253,12 @@ export interface UserProfilePreferences {
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   audioCues?: boolean;
-  /** F1 privacy toggle: user opt-out for Gemini-backed food analysis
-   *  (image AI + NL text refinement). Undefined / missing = enabled
-   *  (default behaviour). Set to false via Settings → Privacy to
-   *  disable; AI CTAs hide and the underlying calls refuse. The
-   *  manual parse / barcode paths are unaffected — only AI calls
-   *  are gated. */
+  /** Permission before food goes to Google's Gemini (meal and label
+   *  photos, Pro typed meals): undefined = not asked yet (the first AI
+   *  request asks), true = allowed, false = off (nothing is sent, and
+   *  the server refuses it too). Written by the consent sheet and the
+   *  Settings → Social & privacy switch. Barcodes and the on-device
+   *  parser are not AI and are unaffected. See src/lib/aiConsent.ts. */
   aiAnalysisEnabled?: boolean;
   /** Device IANA timezone (e.g. "Europe/London"), captured on boot (#962).
    *  Read server-side for scan-quota day-keying + streak-nudge local-hour

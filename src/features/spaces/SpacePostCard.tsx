@@ -38,6 +38,7 @@ import { distanceValue, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { deleteDocGuarded } from "@/lib/firestoreWrite";
+import { spacePostReportTargetId } from "@/lib/reportTargetIds";
 
 export default function SpacePostCard({
   spaceId,
@@ -362,7 +363,7 @@ export default function SpacePostCard({
       {showReport && (
         <ReportModal
           targetType="space_post"
-          targetId={`${spaceId}:${postId}`}
+          targetId={spacePostReportTargetId(spaceId, postId)}
           targetAuthorUid={post.authorId}
           onClose={() => setShowReport(false)}
         />

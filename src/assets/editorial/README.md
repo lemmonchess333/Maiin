@@ -151,6 +151,7 @@ future course. The scope and date sources are documented in
 | southampton-marathon   | Colin Osborne      | [Photo](https://unsplash.com/photos/a-marina-filled-with-lots-of-boats-next-to-tall-buildings-7w4nbbYLJKY)      |
 | boston-marathon        | Jun Ren            | [Photo](https://unsplash.com/photos/w5PnmpqSX_s)                                                                |
 | berlin-marathon        | Xander Gonera      | [Photo](https://unsplash.com/photos/the-brandenburg-gate-in-berlin-germany-EmGJdoIvp3A)                         |
+
 ### Race catalogue and missing covers — 2026-10-04
 
 Sixteen licensed Unsplash destination photographs cover the eight new races

@@ -29,12 +29,16 @@ def verify():
         "resumeAccountDeletions": deletion_paths,
         "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
         "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
-        "addCommentCallable": comment_paths,
-        "addSpacePostCommentCallable": comment_paths,
+        "addCommentCallable": comment_paths + ["lib/objectionableText.js"],
+        "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
+        # Moderation (App Review 1.2): the report alert and the Space post filter.
+        "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
+        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
         "onWorkoutCreated": training_paths,
         "onWorkoutUpdated": training_paths,
+        "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
     }
     for name, paths in targets.items():
         endpoint = (

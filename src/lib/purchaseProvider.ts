@@ -66,16 +66,18 @@ export interface PurchaseOptions {
   withTrial?: boolean;
 }
 
-// Detect if running inside a native iOS Capacitor shell.
-// Uses Capacitor.isNativePlatform() — the old `!!window.Capacitor`
-// check was truthy on web too, so mobile-web Safari on an iPhone (which
-// matches the UA test) was wrongly treated as native iOS and routed to
-// Apple IAP instead of Stripe.
+// True inside the native iOS Capacitor shell, on an iPhone or an iPad.
+//
+// Asks Capacitor which shell the bundle runs in, never the user agent. An
+// iPad's WKWebView reports a desktop Mac user agent (Capacitor's default
+// content mode, "recommended", is desktop-class on iPad), so the old
+// `/iPhone|iPad|iPod/` test sent every iPad purchase down the Stripe path,
+// hid Restore and printed the web's renewal wording — on the device App
+// Review also tests the iPhone build on. `getPlatform()` is "ios" exactly
+// when the native iOS bridge is present, so mobile Safari on an iPhone is
+// still the web (the case the older `!!window.Capacitor` check got wrong).
 export function isNativeIOS(): boolean {
-  return (
-    Capacitor.isNativePlatform() &&
-    /iPhone|iPad|iPod/i.test(navigator.userAgent)
-  );
+  return Capacitor.getPlatform() === "ios";
 }
 
 // Apple IAP product IDs — configure these in App Store Connect

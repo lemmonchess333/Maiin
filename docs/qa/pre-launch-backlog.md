@@ -6,6 +6,137 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Privacy and consent for App Review (2026-10-04)
+
+Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
+`AiConsentSheet`, `FoodAnalyzer`, `FoodCameraModal`, the Settings switch,
+`functions/lib/aiConsent.js` in `analyzeFood` / `analyzeFoodText`), the
+run save's privacy zones (`RunSummary`, `usePrivacyZones`), the Privacy
+Policy, `ios/App/App/PrivacyInfo.xcprivacy`, the `Info.plist` purpose
+strings, the SPM traits in `capacitor.config.ts`, and the patched
+`@capacitor-firebase/authentication` (`patches/`).
+
+Unit tests pin the rules, the copy and the committed files; these need a
+phone, Xcode or a console.
+
+- [ ] **Functions deployed.** The deployed `analyzeFood` and
+      `analyzeFoodText` contain `refuseUnlessAiAllowed`. An account with
+      `aiAnalysisEnabled: false` gets 400 with reason
+      `ai-analysis-disabled` and no scan counted.
+- [ ] **The question over the scanner** (iPhone, Pro or trial account,
+      never asked): the first Meal photo opens "Send food to Google for
+      analysis?" above the scanner, not under it, with the camera still
+      running. Allow analyses the photo just taken. Not now leaves the
+      photo tabs saying "AI analysis is off", and Turn on asks again.
+- [ ] **A typed meal** on a fresh Pro or trial account asks first; Not
+      now logs it from the on-device parser.
+- [ ] **Settings → Social & privacy → AI food analysis** shows off for an
+      account that hasn't been asked.
+- [ ] **A run that ends offline.** If the finish screen loaded while
+      online, Save works offline. If it never reached the server, the
+      Retry banner says the privacy zones couldn't be checked, and Retry
+      saves once online, with the zone cut from the route.
+- [ ] **Archive** (Xcode 16.3 or later): the Swift tools 6.1 traits
+      resolve, the Facebook SDK is not fetched, GoogleSignIn is.
+- [ ] **No tracking framework in the binary:** `otool -L` on the built app
+      lists neither AppTrackingTransparency.framework nor
+      AdSupport.framework.
+- [ ] **Upload to App Store Connect:** no ITMS-91053 (missing
+      required-reason API) warning and no request for
+      `NSUserTrackingUsageDescription`. Xcode Organizer → Generate Privacy
+      Report lists the 16 data types.
+- [ ] **File the App Store privacy label** from the manifest's list: each
+      type linked to the user, none used for tracking, purposes as listed.
+- [ ] **Permission prompts** show the new words: the camera (the
+      scanner), adding to Photos (Save Image from a share card's share
+      sheet), location (the first run).
+
+## Credits, weather, push and exports for the App Store (2026-10-04)
+
+Affects: `src/lib/basemap.ts` (RunMap, RoutePlannerSheet), the new
+`getCurrentWeather` callable (`functions/currentWeather.js`,
+`functions/lib/metWeather.js`) and `src/lib/weather.ts`, the Open Food
+Facts credit (FoodAnalyzer, FoodSuggestionsDropdown, ServingSizeDrawer),
+`NotificationsSection`, and `src/lib/shareFile.ts` (the CSV exports,
+both Export GPX buttons, the share cards).
+
+Unit tests pin the rules; the tiles, MET's answer and the share sheet
+need a phone and a deploy.
+
+- [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
+      finish screen and the route planner draw OpenFreeMap's basemap in
+      both themes. The credit shows as each map opens and folds to its
+      (i) after five seconds; the (i) opens it again, and its links open
+      outside the app. On the live run it sits top-right, clear of the
+      GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
+- [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
+      with no secret. Open run setup with location allowed: the strip
+      shows the weather and "Weather data from MET Norway". The function
+      logs show no `weather.failed` with status 403 (MET refusing the
+      User-Agent) and no `weather.met_deprecated`.
+- [ ] **No push on the iPhone app.** Settings > Notifications shows the
+      meal, workout and streak reminders and no push switch; the Settings
+      list says "Reminders, activity". The web build still has the switch.
+- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+      workouts opens the share sheet; Save to Files saves a .csv that
+      opens in Numbers, then "Workouts exported" shows. Closing the sheet
+      says nothing. On a slow connection a "Workouts export ready" toast
+      may come instead: its Share opens the sheet. Export GPX on the
+      finish screen and on a saved run opens the sheet with a .gpx.
+- [ ] **Open Food Facts credit** under a barcode result, the search
+      results and the portion sheet, which still fits on an SE.
+
+## User content moderation for App Review 1.2 (2026-10-04)
+
+Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,
+`src/components/social/CommentSheet.tsx`, `CommentPanels.tsx`, `ReportForm.tsx`,
+`src/features/spaces/SpaceCommentSheet.tsx`, `src/pages/AdminModeration.tsx`;
+`functions/index.js` (`createReport`, `listPendingReports`, `resolveReport`,
+the two comment callables, `completeOnboarding`, `configurePlan`, the new
+`onSpacePostWritten` trigger), `functions/lib/reportTargets.js`,
+`reportAlert.js`, `objectionableText.js`, `spacePostModeration.js`.
+Operator setup (ADMIN_UIDS, MODERATION_ALERT_EMAIL, RESEND_FROM, the
+VITE_ADMIN_UIDS secret): `docs/LAUNCH_TODO.md` §19.
+
+The callables, the trigger and the email are tested against an in-memory
+Firestore with Resend mocked at `fetch`; whether an email actually lands, and
+how the sheets feel on a phone, need the real thing.
+
+- [ ] **Report alert reaches the inbox.** After the first Deploy production
+      run carrying this work, and with `functions/.env` set and
+      `createReport` deployed as §19 says: sign in as a second account,
+      report someone's comment with a note. Within a minute an email titled
+      "New report: …" arrives at `MODERATION_ALERT_EMAIL`
+      (`support@troposfit.com` when unset), carrying the reason, what was
+      reported, the note, and an "Open the moderation queue" link that opens
+      `/admin/moderation` with the report on it. If nothing arrives, Cloud
+      Logging for `createReport` has a `createReport.alert_failed` line with
+      Resend's answer; with no `RESEND_FROM` the sender is
+      `onboarding@resend.dev`, which Resend only delivers to its own
+      account owner's address.
+- [ ] **Deployed source.** `scripts/verify-deployed-functions-source.py`
+      now reads back `createReport` and `onSpacePostWritten` (and the
+      word filter's module on both comment callables) after every
+      functions deploy. Confirm the first Deploy production run after this
+      work logs "Verified deployed source" for each.
+- [ ] **Hide content on each kind.** From the queue, hide a reported Space
+      comment, an activity comment and a Space post. Each is gone for a
+      third account, and the comment counts on the post or activity drop by
+      one.
+- [ ] **Report and Block user from a comment, on a phone.** The ⋯ on
+      someone else's comment opens its options inside the sheet; the report
+      form fits and scrolls on a small phone (SE) with Submit reachable;
+      Block user removes their comments from the list. Delete on your own
+      comment now confirms in the sheet and deletes on the first tap of
+      Delete (the old confirm dialog closed the sheet on the first tap).
+- [ ] **A Space post that trips the filter is removed.** A clean post edited
+      to objectionable text with a direct SDK write is gone from the space
+      within seconds (the app itself refuses the text first).
+- [ ] **The Terms line on sign-in and sign-up** wraps cleanly on a small
+      phone, and its two links open the Terms and the Privacy Policy while
+      signed out. `public/legal/terms.html` carries the same October 2026
+      Terms as `TermsOfService.tsx`.
+
 ## The first-visit guide (2026-10-04)
 
 Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
@@ -1056,6 +1187,40 @@ sandbox Pro to nobody. Production purchases are unaffected.
       subscriber record (purchase history keyed by the uid) in place, and a
       RevenueCat promotional grant does not grant Pro. Comps are written in
       Firestore directly.
+
+## Purchases on iPad, iPhone-only, the paywall's prices (2026-10-04)
+
+Affects: `src/lib/purchaseProvider.ts` (`isNativeIOS` reads the native
+shell, not the user agent), `ios/App/App.xcodeproj/project.pbxproj`
+(`TARGETED_DEVICE_FAMILY = 1`), `ios/App/App/Info.plist` (no iPad
+orientation list), `src/lib/proPlans.ts`, `src/hooks/useProPlanPrices.ts`,
+`src/pages/Upgrade.tsx`, `src/components/ProModal.tsx`,
+`src/components/TrialTimeline.tsx`, `src/components/paywall/`.
+
+Unit tests pin the routing with an iPad's desktop user agent, every price
+line, and the currency arithmetic against a simulated storefront. What no
+test reaches is a real iPad, a real storefront and App Store Connect.
+
+- [ ] **An iPad running the TestFlight build.** It opens as an iPhone app.
+      The paywall shows "Already purchased? Restore" and "Manage or cancel
+      in your Apple Account subscriptions"; Start opens Apple's purchase
+      sheet, never Stripe; once subscribed, Manage subscription (Settings →
+      Subscription) opens Apple's subscriptions page.
+- [ ] **A storefront not in pounds** (a US sandbox account). The offer's
+      lead line, the plan cards, the per-week figures, the "Save N%" on the
+      yearly card, the CTA, the line under it and the timeline's Day 7 are
+      all in dollars, and nothing on either beat or in ProModal shows £.
+      The prices match Apple's purchase sheet.
+- [ ] **The trial copy against Apple's sheet.** The paywall decides whether
+      to show the trial from the account's `hasUsedTrial`; Apple grants the
+      introductory offer per Apple Account. On a sandbox account that has
+      already used the intro offer, check what the sheet says against the
+      paywall's "7 days free, then …". If they disagree, the paywall needs
+      RevenueCat's intro-eligibility check (not built).
+- [ ] **App Store Connect after the first iPhone-only upload**: the build
+      lists iPhone only, and the version page asks for iPhone screenshots
+      only. Nothing has been released with iPad support, which is the only
+      time dropping it is allowed.
 
 ## Apple subscription uniqueness binding (PR #822)
 
