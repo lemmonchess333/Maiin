@@ -39,7 +39,8 @@ import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SegmentedControl from "../components/ui/SegmentedControl";
-import SplitsBarChart from "../components/analytics/SplitsBarChart";
+import SplitsTable from "../components/run/SplitsTable";
+import BestEffortsCard from "../components/run/BestEffortsCard";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
@@ -813,13 +814,14 @@ export default function RunSummary() {
         iv.workDistance && iv.workDistance >= 1000
           ? `${(iv.workDistance / 1000).toFixed(iv.workDistance % 1000 === 0 ? 0 : 1)}K`
           : iv.workDistance
-            ? `${iv.workDistance}m`
+            ? `${iv.workDistance} m`
             : iv.workDuration
               ? `${Math.round(iv.workDuration / 60)} min`
               : null;
       if (!distLabel) return null;
+      // Spaced units, as everywhere: "5 × 400 m @ 4:30 /km".
       const paceLabel = iv.workPace
-        ? ` @ ${paceMinSec(iv.workPace, unit)}${paceUnitLabel(unit)}`
+        ? ` @ ${paceMinSec(iv.workPace, unit)} ${paceUnitLabel(unit)}`
         : "";
       return {
         kind: "intervals" as const,
@@ -948,6 +950,7 @@ export default function RunSummary() {
           invalidReason: invalidReason ?? null,
           routeQuality: state.routeQuality ?? null,
           shoeId: effectiveShoeId,
+          bestEfforts,
         },
         // Loading or unread privacy settings withhold the route.
         route: runPostRoute(points, {
@@ -1129,20 +1132,27 @@ export default function RunSummary() {
       ) : (
         <>
           {/* DS3: the finish leads with the map and the distance, the way
-              the run detail does. The route map comes first. */}
+              the run detail does. The route map comes first, coloured by
+              pace when there is an average to colour it against, and its
+              key sits under it, outside the map's rounded frame. Without
+              an average the map draws a plain line and there is nothing
+              for a key to explain. */}
           {points.length > 1 && (
-            <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
-              <RunMap
-                points={points}
-                currentPoint={null}
-                interactive={true}
-                distanceMarkers={true}
-                height="h-64"
-                paceColored={true}
-                avgPaceSecPerKm={avgPaceSeconds}
-                darkMode={!!profile?.darkMode}
-              />
-              <PaceLegend />
+            <div className="mx-4 mb-4">
+              <div className="rounded-2xl overflow-hidden">
+                <RunMap
+                  points={points}
+                  currentPoint={null}
+                  interactive={true}
+                  distanceMarkers={true}
+                  markerUnit={unit}
+                  height="h-64"
+                  paceColored={avgPaceSeconds > 0}
+                  avgPaceSecPerKm={avgPaceSeconds}
+                  darkMode={!!profile?.darkMode}
+                />
+              </div>
+              {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
             </div>
           )}
 
@@ -1471,7 +1481,7 @@ export default function RunSummary() {
               Grade-adjusted pace{" "}
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {paceMinSec(gap.gapSecondsPerKm, unit)}
-              </span>
+              </span>{" "}
               {paceUnitLabel(unit)} — flat-equivalent for this climb
             </p>
           )}
@@ -1584,85 +1594,24 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Best efforts */}
+          {/* Best efforts: the quickest 1K / 5K / 10K anywhere in the
+              track. The same card a saved run shows. */}
           {bestEfforts.length > 0 && (
-            <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                Best efforts
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {bestEfforts.map((effort) => (
-                  <div
-                    key={effort.label}
-                    className="text-center p-2 rounded-lg bg-muted/50"
-                  >
-                    <p className="text-xs text-muted-foreground">
-                      {effort.label}
-                    </p>
-                    <p className="text-sm font-bold font-mono tabular-nums">
-                      {Math.floor(effort.time / 60)}:
-                      {(Math.floor(effort.time) % 60)
-                        .toString()
-                        .padStart(2, "0")}
-                    </p>
-                  </div>
-                ))}
-              </div>
+            <div className="px-4 mb-4">
+              <BestEffortsCard efforts={bestEfforts} />
             </div>
           )}
 
-          {/* Splits bar chart */}
+          {/* Splits: one table, lap, pace and climb, with a bar per lap
+              for its speed, and the only view of the laps here. A saved
+              run shows the same table. */}
           {displaySplits.length > 0 && (
             <div className="px-4 mb-4">
-              <SplitsBarChart
+              <SplitsTable
                 splits={displaySplits}
-                avgPaceSeconds={avgPaceSeconds}
-                accentColor={THEME.running}
                 lapUnit={lapUnit}
+                unit={unit}
               />
-
-              {/* Per-km split list */}
-              <div className="mt-3 space-y-1">
-                {displaySplits.map((s, i) => {
-                  const fastest = Math.min(
-                    ...displaySplits.map((sp) => sp.paceSeconds)
-                  );
-                  const slowest = Math.max(
-                    ...displaySplits.map((sp) => sp.paceSeconds)
-                  );
-                  const color =
-                    s.paceSeconds === fastest
-                      ? "text-success-strong"
-                      : s.paceSeconds === slowest
-                        ? "text-destructive-strong"
-                        : "text-muted-foreground";
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between text-xs px-1"
-                    >
-                      <span className="text-muted-foreground">
-                        {distanceUnitLabel(lapUnit)} {s.km}
-                      </span>
-                      <span
-                        className={`font-mono tabular-nums font-medium ${color}`}
-                      >
-                        {paceMinSec(s.paceSeconds, unit)}
-                        {paceUnitLabel(unit)}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="flex items-center justify-between text-xs px-1 pt-1 border-t border-border/50">
-                  <span className="text-muted-foreground font-medium">
-                    Average
-                  </span>
-                  <span className="font-mono tabular-nums font-semibold text-foreground">
-                    {paceMinSec(avgPaceSeconds, unit)}
-                    {paceUnitLabel(unit)}
-                  </span>
-                </div>
-              </div>
             </div>
           )}
 

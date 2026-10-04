@@ -24,8 +24,14 @@ import { isOutdoorGpsRun } from "../lib/runGuards";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
-import SplitsBarChart from "../components/analytics/SplitsBarChart";
+import SplitsTable from "../components/run/SplitsTable";
+import BestEffortsCard, {
+  type BestEffort,
+} from "../components/run/BestEffortsCard";
+import { KEPT_ROUTE_POINTS } from "@/lib/routeSegments";
 import ElevationProfile from "../components/analytics/ElevationProfile";
+import { Card } from "@/components/ui/Card";
+import SectionLabel from "@/components/ui/SectionLabel";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import SessionLoadState from "@/components/session/SessionLoadState";
@@ -42,9 +48,40 @@ import {
   paceUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
-import { splitsForDisplay } from "@/lib/gps";
+import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel, runTypeTitle } from "@/lib/runLabels";
+
+/**
+ * The finish screen's "How did it feel?" answer, as a saved run reads it
+ * back. The answer is against what the runner expected, so the words say
+ * so. Anything else stored there reads as no answer.
+ */
+function effortLine(relativeEffort: unknown): string | null {
+  switch (relativeEffort) {
+    case "easier":
+      return "Easier than expected";
+    case "matched":
+      return "About right";
+    case "harder":
+      return "Harder than expected";
+    default:
+      return null;
+  }
+}
+
+/** A saved best effort that can be shown: a named distance and a time. */
+function isBestEffort(value: unknown): value is BestEffort {
+  const effort = value as Partial<BestEffort> | null;
+  return (
+    typeof effort?.label === "string" &&
+    typeof effort.time === "number" &&
+    Number.isFinite(effort.time) &&
+    effort.time > 0 &&
+    typeof effort.distance === "number" &&
+    Number.isFinite(effort.distance)
+  );
+}
 
 export default function RunDetail() {
   const unit = useDistanceUnit();
@@ -76,6 +113,31 @@ export default function RunDetail() {
         : applyPrivacyZones(run?.points ?? [], privacy.zones),
     [run?.points, privacy.loading, privacy.error, privacy.zones]
   );
+
+  /* Best efforts, as the finish screen listed them: saved with the run,
+     worked out from the full trace. A run saved before they were kept
+     has them searched in its kept track, but only when that track is
+     whole. A thinned one (`KEPT_ROUTE_POINTS`) can only start and end a
+     stretch on a kept point and cuts the route's corners, so its times
+     read slow, measured on a straight route: 2 s on a 10 km run's 1K,
+     10 s on a half marathon's, 25 s on a marathon's, up to 80 s on a
+     winding 10K. A slow figure under "Best efforts" is worse than none.
+     A run saved despite invalid figures has no efforts worth naming, as
+     it had none on the finish screen. Memoised: the route replay
+     re-renders this page twenty times a second. */
+  const keptTrack = run?.points as GPSPoint[] | undefined;
+  const keptDistance = run?.distance as number | undefined;
+  const savedEfforts = run?.bestEfforts as unknown;
+  const savedInvalid = run?.isInvalid === true;
+  const bestEfforts = useMemo(() => {
+    if (savedInvalid) return [];
+    if (Array.isArray(savedEfforts)) return savedEfforts.filter(isBestEffort);
+    return Array.isArray(keptTrack) &&
+      keptTrack.length > 1 &&
+      keptTrack.length < KEPT_ROUTE_POINTS
+      ? detectBestEfforts(keptTrack, keptDistance ?? 0)
+      : [];
+  }, [keptTrack, keptDistance, savedEfforts, savedInvalid]);
 
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
@@ -161,6 +223,8 @@ export default function RunDetail() {
       })
     : null;
   const splitsEmptyReason = noSplitsReason(hasGpsTrace, run.distance, lapUnit);
+  const feltLine = effortLine(run.relativeEffort);
+  const notes = typeof run.notes === "string" ? run.notes.trim() : "";
 
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);
@@ -217,7 +281,7 @@ export default function RunDetail() {
             currentPoint={null}
             interactive={true}
             height="h-full"
-            paceColored={true}
+            paceColored={avgPace > 0}
             avgPaceSecPerKm={avgPace}
             darkMode={!!profile?.darkMode}
             replayIndex={replaying ? replayIndex : undefined}
@@ -290,8 +354,9 @@ export default function RunDetail() {
           last child INSIDE the fixed `h-72` map container, so it overflowed
           the bottom of that box and collided with the header section's
           "FREE RUN" label + Share pill at 393px (audit #3a/#3b). Only shown
-          with a pace-coloured map (points > 1). */}
-      {run.points?.length > 1 && <PaceLegend />}
+          with a pace-coloured map: a trace, and an average pace to colour
+          it against (without one the map draws a plain line). */}
+      {run.points?.length > 1 && avgPace > 0 && <PaceLegend className="px-4" />}
 
       <div className="px-4 pt-4 space-y-4">
         {/* Saved-anyway notice. Surfaces only when the run was
@@ -425,19 +490,40 @@ export default function RunDetail() {
             Grade-adjusted pace{" "}
             <span className="font-mono tabular-nums font-semibold text-foreground">
               {paceMinSec(gap.gapSecondsPerKm, unit)}
-            </span>
+            </span>{" "}
             {paceUnitLabel(unit)} — flat-equivalent for this climb
           </p>
         )}
 
-        {/* Splits chart */}
+        {/* What the runner said about it on the finish screen: how it
+            felt against what they expected, and their notes. Shown only
+            when they said something. */}
+        {(feltLine || notes) && (
+          <Card className="space-y-3">
+            {feltLine && (
+              <div>
+                <SectionLabel>How it felt</SectionLabel>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {feltLine}
+                </p>
+              </div>
+            )}
+            {notes && (
+              <div>
+                <SectionLabel>Notes</SectionLabel>
+                <p className="mt-1 whitespace-pre-line break-words text-sm text-foreground">
+                  {notes}
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* The finish screen's two cards, in its order: best efforts,
+            then one splits table. */}
+        <BestEffortsCard efforts={bestEfforts} />
         {displaySplits.length > 0 && (
-          <SplitsBarChart
-            splits={displaySplits}
-            avgPaceSeconds={avgPace}
-            accentColor={THEME.running}
-            lapUnit={lapUnit}
-          />
+          <SplitsTable splits={displaySplits} lapUnit={lapUnit} unit={unit} />
         )}
 
         {/* Elevation profile */}

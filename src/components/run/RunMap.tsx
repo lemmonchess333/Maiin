@@ -7,6 +7,8 @@ import { splitRouteSegments } from "@/lib/routeSegments";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
+import { routePaceColor } from "./routePace";
+import { lapMetresFor, type DistanceUnit } from "@/lib/distanceUnits";
 
 interface RunMapProps {
   points: GPSPoint[];
@@ -27,11 +29,15 @@ interface RunMapProps {
    */
   liveControls?: boolean;
   /**
-   * Numbered waypoints at each whole kilometre along the route (matches the
-   * km-based run stats). Append-only — new markers appear as the run passes
-   * each km. Skipped while replaying (replayIndex set). Off by default.
+   * Numbered waypoints at each whole lap along the route: each kilometre,
+   * or each mile for a runner who reads miles (`markerUnit`), so the
+   * numbers match the splits listed under the map. Append-only: new
+   * markers appear as the run passes each lap. Skipped while replaying
+   * (replayIndex set). Off by default.
    */
   distanceMarkers?: boolean;
+  /** The lap the markers count: the runner's distance unit. */
+  markerUnit?: DistanceUnit;
   /**
    * A route to follow, drawn as a faded "ghost" line beneath the live track.
    * Static for the run; populate once (e.g. re-running a past run's polyline).
@@ -56,6 +62,7 @@ export default function RunMap({
   replayIndex,
   liveControls = false,
   distanceMarkers = false,
+  markerUnit = "km",
   targetRoute,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,6 +90,8 @@ export default function RunMap({
   // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).
   // Append-only: distance only grows live, and static routes compute once.
   const kmMarkersRef = useRef<maplibregl.Marker[]>([]);
+  // The lap the markers above were placed on; a different one starts over.
+  const markerLapRef = useRef<number | null>(null);
 
   // Initialize map — once per (interactive / paceColored / darkMode), NOT per
   // GPS fix. Listing points/currentPoint as deps re-ran init on every fix,
@@ -282,13 +291,9 @@ export default function RunMap({
             timeDiff > 0 && dist > 0
               ? (timeDiff / dist) * 1000
               : avgPaceSecPerKm;
-          const ratio = segPace / avgPaceSecPerKm;
-
-          let color: string;
-          if (ratio < 0.92) color = THEME.paceFast;
-          else if (ratio < 1.03) color = THEME.paceOnTarget;
-          else if (ratio < 1.1) color = THEME.warning;
-          else color = THEME.paceSlow;
+          // The steps live with the key under the map (`routePace.ts`),
+          // so the two cannot disagree.
+          const color = routePaceColor(segPace / avgPaceSecPerKm);
 
           features.push({
             type: "Feature" as const,
@@ -408,9 +413,15 @@ export default function RunMap({
             visiblePoints[i].lon
           );
         }
-        const desired = Math.floor(total / 1000);
+        const lap = lapMetresFor(markerUnit);
+        if (markerLapRef.current !== lap) {
+          for (const marker of kmMarkersRef.current) marker.remove();
+          kmMarkersRef.current = [];
+          markerLapRef.current = lap;
+        }
+        const desired = Math.floor(total / lap);
         for (let km = kmMarkersRef.current.length + 1; km <= desired; km++) {
-          const pos = positionAtDistance(visiblePoints, km * 1000);
+          const pos = positionAtDistance(visiblePoints, km * lap);
           if (!pos) break;
           const el = document.createElement("div");
           el.style.cssText =
@@ -460,6 +471,7 @@ export default function RunMap({
     avgPaceSecPerKm,
     replayIndex,
     distanceMarkers,
+    markerUnit,
   ]);
 
   // Target route (static) — drawn independently of the live track so it shows
