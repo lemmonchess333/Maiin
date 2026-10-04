@@ -334,9 +334,20 @@ test("training advice, saved correction and the next session agree", async ({
     await expect(
       page.getByText("Target: 3×8 @ 100 kg", { exact: true })
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "100×6", exact: true })
-    ).toHaveCount(3);
+    // Previous is the same set last time, so the corrected third set reads
+    // as corrected and the two before it as they were lifted.
+    for (const [set, last] of [
+      ["set 1", "100 × 8"],
+      ["set 2", "100 × 8"],
+      ["set 3", "100 × 6"],
+    ]) {
+      await expect(
+        page.getByRole("button", {
+          name: `Last time ${last}. Use it for ${set}`,
+          exact: true,
+        })
+      ).toBeVisible();
+    }
     for (const dark of [false, true]) {
       await page.evaluate(
         (value) => document.documentElement.classList.toggle("dark", value),
