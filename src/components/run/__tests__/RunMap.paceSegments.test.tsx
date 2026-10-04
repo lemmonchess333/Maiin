@@ -95,8 +95,9 @@ it("gives the line across a pause no pace colour", () => {
   const colours = pace.features.map(
     (feature: { properties: { color: string } }) => feature.properties.color
   );
-  // Five run stretches, every one at the run's own pace; the sixth line,
-  // the one across the pause, is not among them.
+  // Five run stretches, every one at the run's own pace, so every one in
+  // the middle step; the sixth line, the one across the pause, is not
+  // among them.
   expect(colours).toHaveLength(5);
-  expect(new Set(colours)).toEqual(new Set([THEME.paceOnTarget]));
+  expect(new Set(colours)).toEqual(new Set([THEME.warning]));
 });

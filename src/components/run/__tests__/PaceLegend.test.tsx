@@ -49,12 +49,23 @@ describe("route pace colours (RunMap)", () => {
 
   it("colours a stretch by its pace against the run's average", () => {
     expect(routePaceColor(0.85)).toBe(THEME.paceFast);
-    expect(routePaceColor(0.92)).toBe(THEME.paceOnTarget);
-    expect(routePaceColor(1)).toBe(THEME.paceOnTarget);
-    expect(routePaceColor(1.03)).toBe(THEME.warning);
+    expect(routePaceColor(0.92)).toBe(THEME.warning);
+    expect(routePaceColor(1)).toBe(THEME.warning);
     expect(routePaceColor(1.09)).toBe(THEME.warning);
     expect(routePaceColor(1.1)).toBe(THEME.paceSlow);
     expect(routePaceColor(Number.NaN)).toBe(THEME.paceSlow);
+  });
+
+  it("is one scale from faster to slower, with no brand purple in it", () => {
+    /* The route's middle step was the brand purple, the lifting colour,
+       and between green and amber it read as a fourth thing rather than
+       a step. The scale is green to amber to coral. */
+    expect(colorsTheMapDraws()).toEqual([
+      THEME.paceFast,
+      THEME.warning,
+      THEME.paceSlow,
+    ]);
+    expect(colorsTheMapDraws()).not.toContain(THEME.brand);
   });
 });
 
@@ -73,8 +84,8 @@ describe("PaceLegend", () => {
     const swatches = within(screen.getByRole("img"))
       .getAllByTestId("route-pace-step")
       .map((swatch) => swatch.style.background);
-    // Four, not three: the amber step had no swatch.
+    // One swatch per step, amber included: it once had none.
     expect(swatches).toEqual(colorsTheMapDraws().map(rgb));
-    expect(swatches).toHaveLength(4);
+    expect(swatches).toHaveLength(3);
   });
 });
