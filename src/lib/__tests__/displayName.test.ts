@@ -3,7 +3,9 @@ import {
   validateDisplayName,
   DISPLAY_NAME_MIN,
   DISPLAY_NAME_MAX,
+  DISPLAY_NAME_LENGTH_MESSAGE,
 } from "../displayName";
+import { OBJECTIONABLE_NAME_MESSAGE } from "../profanityFilter";
 
 describe("validateDisplayName", () => {
   describe("invalid inputs", () => {
@@ -108,6 +110,42 @@ describe("validateDisplayName", () => {
 
     it("exports a sensible maximum", () => {
       expect(DISPLAY_NAME_MAX).toBe(30);
+    });
+  });
+
+  describe("the word filter (App Review 1.2: a display name is public)", () => {
+    it("refuses a name the filter flags, with the sentence to show", () => {
+      const v = validateDisplayName("  shit head  ");
+      expect(v).toEqual({
+        valid: false,
+        trimmed: "shit head",
+        problem: "objectionable",
+        message: OBJECTIONABLE_NAME_MESSAGE,
+      });
+    });
+
+    it("leaves names that only look tough alone", () => {
+      for (const name of ["Beast Mode", "Killer Legs", "Ripped Ron"]) {
+        expect(validateDisplayName(name).valid).toBe(true);
+      }
+    });
+
+    it("says the length when that is the problem", () => {
+      expect(validateDisplayName("T")).toMatchObject({
+        valid: false,
+        problem: "length",
+        message: DISPLAY_NAME_LENGTH_MESSAGE,
+      });
+      expect(DISPLAY_NAME_LENGTH_MESSAGE).toBe(
+        "Enter a name between 2 and 30 characters."
+      );
+    });
+
+    it("has no problem and no message for a valid name", () => {
+      expect(validateDisplayName("Tom")).toMatchObject({
+        problem: null,
+        message: null,
+      });
     });
   });
 });

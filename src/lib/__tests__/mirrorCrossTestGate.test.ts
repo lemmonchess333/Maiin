@@ -137,6 +137,11 @@ const PINNED: Record<string, string> = {
   // this file's own rule that is a cross-test, not an exemption.
   "functions/profanityFilter.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // The sentences a refused comment or name reads. The client says them when
+  // it catches the text first, the callables when they refuse it; one
+  // person, one sentence either way.
+  "functions/lib/objectionableText.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   // Admin allowlist. BOTH copies run — the server as the trust boundary on

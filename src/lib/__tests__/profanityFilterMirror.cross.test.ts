@@ -31,10 +31,14 @@ import { createRequire } from "node:module";
 import {
   containsProfanity as clientContains,
   cleanProfanity as clientClean,
+  OBJECTIONABLE_COMMENT_MESSAGE,
+  OBJECTIONABLE_NAME_MESSAGE,
 } from "@/lib/profanityFilter";
+import { validateDisplayName } from "@/lib/displayName";
 
 const require = createRequire(import.meta.url);
 const server = require("../../../functions/profanityFilter.js");
+const serverText = require("../../../functions/lib/objectionableText.js");
 
 /* Deliberately mundane. The point is not to enumerate slurs — it is to cover
    the SHAPES where two wrappers around the same library can still disagree:
@@ -115,6 +119,33 @@ describe("profanity filter — TS and JS copies agree", () => {
     const fns = require("../../../functions/package.json");
     expect(fns.dependencies["leo-profanity"]).toBe(
       root.dependencies["leo-profanity"]
+    );
+  });
+});
+
+describe("a refusal reads the same from the app and from the server", () => {
+  /* The app catches objectionable text before sending it; the callables
+     refuse the same text for anything that skips the app. Either way the
+     person should read one sentence. */
+  it("comments", () => {
+    expect(OBJECTIONABLE_COMMENT_MESSAGE).toBe(serverText.REFUSALS.comment);
+  });
+
+  it("display names", () => {
+    expect(OBJECTIONABLE_NAME_MESSAGE).toBe(serverText.REFUSALS.displayName);
+  });
+
+  it("and the two sides refuse the same names", () => {
+    // validateDisplayName (Onboarding, Settings) against the server's
+    // displayNameRefusal (completeOnboarding, configurePlan).
+    for (const name of ["Sam", "Beast mode", "sucks", "Shit head"]) {
+      const client = validateDisplayName(name);
+      const serverRefusal = serverText.displayNameRefusal(name);
+      expect(client.problem === "objectionable").toBe(serverRefusal !== null);
+    }
+    // The control: at least one of them is refused, on both sides.
+    expect(validateDisplayName("sucks").message).toBe(
+      serverText.displayNameRefusal("sucks")
     );
   });
 });
