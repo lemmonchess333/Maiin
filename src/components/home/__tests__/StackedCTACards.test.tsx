@@ -61,6 +61,7 @@ vi.mock("@/hooks/useCountUp", function () {
 });
 
 import StackedCTACards from "../StackedCTACards";
+import { todayCard, todayCardTarget } from "@/lib/firstGuide";
 import type {
   RestDayOffer,
   TodayLift,
@@ -524,4 +525,36 @@ describe("rest day — what else it can offer", function () {
     fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=0&start=1");
   });
+});
+
+/* The first-visit walk (FV1) points at the stack's first card by the
+   `data-guide-stop` it carries; `todayCard` / `todayCardTarget` in
+   firstGuide.ts name it. If the two disagree the walk's first stop points
+   at nothing and is quietly passed over, so the pair is pinned here. */
+describe("the first-visit walk finds today's card", function () {
+  const firstWorkout: RestDayOffer = {
+    kind: "first-workout",
+    workout: PUSH,
+    index: 0,
+  };
+  const days: [string, TodaySession][] = [
+    ["a lifting day", liftDay()],
+    ["a run day", runDay()],
+    ["a day with both", bothDay()],
+    ["a new lifter's rest day", restDay(firstWorkout)],
+    ["a free runner's rest day", restDay({ kind: "free-run" })],
+    ["a rest day", restDay()],
+    ["a first-meal day", restDay({ kind: "first-meal" })],
+  ];
+  for (const [label, session] of days) {
+    it(`on ${label}, the stop names the first card`, function () {
+      const { container } = renderCards(session);
+      const card = todayCard(session);
+      expect(card).not.toBeNull();
+      const first = container.querySelector("[data-guide-stop]");
+      expect(first?.getAttribute("data-guide-stop")).toBe(
+        todayCardTarget(card!)
+      );
+    });
+  }
 });

@@ -138,13 +138,6 @@ export default function Social() {
      tab) is gone: Together is the default surface and owns the
      cold-start state directly (the goal selector), so new users land
      somewhere useful without a redirect. */
-  // Soc5c: "new user" signal drives the first-launch coachmark on
-  // the Find tab (zero follows — crews retired 2026-07-20, so follow
-  // count is the whole signal). While followingCount is still
-  // resolving we treat the user as established — that way an existing
-  // user with a slow network never sees a flash of the new-user
-  // coachmark.
-  const isNewUser = followingCount === 0;
 
   // Zero follows no longer swaps the feed for a stack of prompts. The
   // solo-first layout (Soc8) was retired on 2026-10-01: a new person
@@ -333,7 +326,6 @@ export default function Social() {
               chromeHidden={false}
               blockedUsers={blockedUsers}
               blockedReady={blockedReady}
-              isNewUser={isNewUser}
               openTogether={() => {
                 setPeopleOpen(false);
                 setTab("together");

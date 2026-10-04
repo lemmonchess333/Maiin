@@ -11,8 +11,8 @@ const DISMISSED_STORAGE_PREFIX = "tropos-home-tip-dismissed";
 
 interface ContextualTipBannerProps {
   /** Stable identifier — drives the dismiss-once localStorage key.
-   *  Version the suffix (eg. `body-metrics-v1`) so a redesign can
-   *  re-surface the tip for users who already dismissed it. */
+   *  Version it (`recal-block-w4` names its seam) so a redesign or a
+   *  new moment can re-surface the tip for users who dismissed one. */
   tipKey: string;
   /** Headline copy (1-line, sentence case). */
   title: string;

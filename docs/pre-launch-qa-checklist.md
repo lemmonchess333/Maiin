@@ -71,7 +71,7 @@ written`, `applyPartnerActivity`, `hybrid_score`, `_recoveryEndDateForRace`).
       (or `uid: '<me>'`) still succeeds.
 - [ ] **Subscription `expiresAt` guard** — set `subscriptionTier: "pro"` +
       `subscriptionExpiresAt: <past ISO>` on a test user → `useSubscription()
-  .isPro` returns **false** on app open (locale-sensitive `Date.parse` of
+.isPro` returns **false** on app open (locale-sensitive `Date.parse` of
       the stored string — worth a real roundtrip).
 
 ### Multi-account data isolation (two accounts, one device)
@@ -112,7 +112,7 @@ confirmed present — you're confirming behaviour, not wiring.
 - [ ] **Partner-streak server persist** — two mutually-following accounts with
       a bond: log on the same local day as A then B → `partnerBonds/<id>`
       flips `streak 0→1`, `lastSharedDay` today, no `applyPartnerActivity:
-  error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
+error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
       `isInvalid`/`savedAnyway`/sub-threshold run does NOT update `lastActive`.
       Freeze ledger uses Monday-anchored week keys.
 - [ ] **Global hybrid challenge + `hybrid_score`** — after 00:05 UTC
@@ -141,13 +141,12 @@ confirmed present — you're confirming behaviour, not wiring.
 
 ## P2 — UX polish (device-level)
 
-- [ ] **Tooltip + Coachmark** — light + dark visibility (body + arrow) on all 3
-      wire-ups (Performance Index, Trajectory delta chip, Programme running
-      coachmark). Open a vaul drawer while a tooltip shows → drawer occludes
-      (z-50 > z-40). iOS Safari + Capacitor: rubber-band scroll doesn't drift
-      the portal. First-use coachmark on the Programme running icon dismisses
-      via all paths (anchor tap / outside tap / Escape / 6s timeout) and
-      persists across reloads.
+- [ ] **Tooltip** — light + dark visibility (body + arrow) on its wire-ups
+      (Performance Index, Training load, Calorie balance, Trajectory delta
+      chip, the "reps to spare" cue in a workout). Open a vaul drawer while a
+      tooltip shows → drawer occludes (z-50 > z-40). iOS Safari + Capacitor:
+      rubber-band scroll doesn't drift the portal. (The coach-mark half of
+      this check went with the Coachmark, FV2, 2026-10-04.)
 
 ---
 

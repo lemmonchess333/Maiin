@@ -10,7 +10,10 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import GuideHint from "@/components/guide/GuideHint";
+import { useGuideHint } from "@/hooks/useGuideHint";
+import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useUid } from "@/lib/auth";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
@@ -155,6 +158,20 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const guideAsked = guideRequest(location.state);
+  /* The food-box hint goes first on its visit (FV2): the Pro line under
+     the box waits until the hint has been closed, so the first visit shows
+     one thing at a time. */
+  const composerHint = useGuideHint("food-composer");
+  const [composerHintClosed, setComposerHintClosed] = useState(false);
+  const proLineWaits = hintDue({
+    allowed: composerHint.allowed,
+    owed: composerHint.owed,
+    requested: guideAsked === "food-composer",
+    closed: composerHintClosed,
+  });
   const FOOD_TAP_BACK_DAYS = 90;
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const minDateStr = format(
@@ -1910,6 +1927,7 @@ export default function Food() {
              when it has something to say, so the ungated tiers never
              run its hooks and never carry an empty step in the rhythm. */
           proHint={
+            !proLineWaits &&
             !scanUsage.loading &&
             !scanUsage.isUnlimited &&
             scanUsage.limit === 0 ? (
@@ -1958,6 +1976,22 @@ export default function Food() {
           scanOverrides={scanOverrides}
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
+        />
+        {/* The guide's hint on a first visit (FV1), and the step the
+            first-week card's "Log your first meal" opens. The request
+            rides in the router state and is cleared when it closes. */}
+        <GuideHint
+          id="food-composer"
+          when
+          requested={guideAsked === "food-composer"}
+          onClose={() => {
+            setComposerHintClosed(true);
+            if (guideAsked)
+              navigate(location.pathname + location.search, {
+                replace: true,
+                state: null,
+              });
+          }}
         />
       </motion.div>
       {usual && (

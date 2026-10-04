@@ -58,6 +58,10 @@ const gpsControls = {
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { uid: "recording-test", runMode: "freeform" } }),
+  // The first-run hint's seen flags, and its run count (read only while
+  // the hint is owed, which it never is here: no walk has been seen).
+  useUidForStorageKey: () => "recording-test",
+  useUid: () => "recording-test",
 }));
 vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => ({ programState: null, loading: false }),

@@ -12,7 +12,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 
@@ -33,7 +32,6 @@ test("badge seal — four tiers sealed, then the bronze one broken open", async 
 }) => {
   test.skip(!emulatorActive, "emulator capture only");
   test.setTimeout(120_000);
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("dev/badge-seal");
   await expect(

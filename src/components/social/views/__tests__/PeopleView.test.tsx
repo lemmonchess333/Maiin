@@ -42,7 +42,6 @@ vi.mock("@/components/social/FollowsYouBadge", () => ({ default: () => null }));
 vi.mock("@/components/social/PartnerReadyBadge", () => ({
   default: () => null,
 }));
-vi.mock("@/components/ui/Coachmark", () => ({ default: () => null }));
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
 
 afterEach(cleanup);
@@ -61,7 +60,6 @@ function renderPeople(blockedReady: boolean) {
         chromeHidden={false}
         blockedUsers={new Set()}
         blockedReady={blockedReady}
-        isNewUser={false}
         openTogether={vi.fn()}
       />
     </MemoryRouter>

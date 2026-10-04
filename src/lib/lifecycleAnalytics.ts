@@ -21,8 +21,10 @@
  * Currently wired: `auth_screen_viewed` (Login.tsx: the welcome screen and
  * the two forms), `signup_completed` (auth.tsx, all three providers), the
  * `onboarding_step_*` pair and `onboarding_completed` (Onboarding.tsx),
- * `onboarding_abandoned` (signing out of an unfinished setup), and
- * `email_verified` (the app seeing an email account's address confirmed).
+ * `onboarding_abandoned` (signing out of an unfinished setup),
+ * `email_verified` (the app seeing an email account's address confirmed),
+ * and the first-visit guide's `guide_*` events (Home's walk and the
+ * hints, FV1).
  * The remaining events are declared for schema stability and wired as their
  * call sites are instrumented. Paywall conversion already lives in
  * `paywallAnalytics`.
@@ -66,7 +68,14 @@ export type LifecycleEvent =
   | "completion_surfaces"
   | "return_surface_shown"
   | "return_choice"
-  | "checkin_answered";
+  | "checkin_answered"
+  /** The first-visit guide (FV1): a walk began, showed a stop, was
+   *  finished from its last stop or skipped; a hint was shown. */
+  | "guide_started"
+  | "guide_step_viewed"
+  | "guide_finished"
+  | "guide_skipped"
+  | "guide_hint_viewed";
 
 export type SignupMethod = "email" | "google" | "apple";
 
@@ -128,7 +137,8 @@ export interface LifecycleEventMetadata {
    * completion_surfaces: dialogs plus toasts shown between the session
    * ending and the user reaching the page again. Exists to catch the
    * pile-up creeping back after it was collapsed to one screen, so it is
-   * read as a regression signal rather than as a metric.
+   * read as a regression signal rather than as a metric. guide_started:
+   * how many stops the walk has.
    */
   count?: number;
   /** return_surface_shown / return_choice: which surface was shown. */
@@ -139,6 +149,16 @@ export interface LifecycleEventMetadata {
   clarity?: number;
   /** checkin_answered: 1-5, "was logging easy this week?". */
   ease?: number;
+  /**
+   * guide_*: which walk. Not `guide`: the redaction drops any key that
+   * contains "uid", and "guide" does.
+   */
+  walk?: "first-visit" | "replay" | "first-week-row";
+  /** guide_step_viewed / guide_finished / guide_skipped: the stop's id
+   *  ("today", "first-week", "food"). With `stepIndex`, its place. */
+  stop?: string;
+  /** guide_hint_viewed: which hint ("train-order", "first-set", …). */
+  hint?: string;
 }
 
 export function track(

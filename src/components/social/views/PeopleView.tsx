@@ -16,7 +16,6 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
-import Coachmark from "@/components/ui/Coachmark";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 export interface PeopleViewProps {
@@ -35,7 +34,6 @@ export interface PeopleViewProps {
    *  suggested-people fetch waits on this so a blocked user can't
    *  surface as a suggestion before the exclude set is known. */
   blockedReady: boolean;
-  isNewUser: boolean;
   /** Close the overlay and land on Together. */
   openTogether: () => void;
 }
@@ -45,7 +43,6 @@ export default function PeopleView({
   chromeHidden,
   blockedUsers,
   blockedReady,
-  isNewUser,
   openTogether,
 }: PeopleViewProps) {
   const uid = useUid();
@@ -481,48 +478,25 @@ export default function PeopleView({
                 </p>
               </div>
             </div>
-            {isNewUser ? (
-              <Coachmark
-                storageKey="social-find-invite"
-                placement="top"
-                content="Share your profile link to get started"
-                onDismiss={() =>
-                  trackSocialEvent("social_coachmark_dismissed", {
-                    coachmarkKey: "social-find-invite",
-                  })
-                }
-              >
-                <button
-                  type="button"
-                  onClick={handleShareInvite}
-                  disabled={isRestricted}
-                  aria-label={
-                    isRestricted
-                      ? "Inviting is unavailable while your account is restricted"
-                      : undefined
-                  }
-                  className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: THEME.brandStrong }}
-                >
-                  Share invite link
-                </button>
-              </Coachmark>
-            ) : (
-              <button
-                type="button"
-                onClick={handleShareInvite}
-                disabled={isRestricted}
-                aria-label={
-                  isRestricted
-                    ? "Inviting is unavailable while your account is restricted"
-                    : undefined
-                }
-                className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: THEME.brandStrong }}
-              >
-                Share invite link
-              </button>
-            )}
+            {/* A brand-new account got a coach mark here, "Share your
+                profile link to get started" (Soc5c). It drew behind this
+                overlay and saved itself as seen after six seconds, so
+                nobody ever saw it, and the card above already says it.
+                Removed with the coach-mark component (FV2). */}
+            <button
+              type="button"
+              onClick={handleShareInvite}
+              disabled={isRestricted}
+              aria-label={
+                isRestricted
+                  ? "Inviting is unavailable while your account is restricted"
+                  : undefined
+              }
+              className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: THEME.brandStrong }}
+            >
+              Share invite link
+            </button>
           </div>
         </div>
       </div>

@@ -76,6 +76,21 @@ describe("sanitizeAnalyticsParams", () => {
     });
   });
 
+  /* The first-visit guide's events (FV1) name the walk with `walk`, not
+     `guide`: "guide" contains "uid", so the key would be dropped as PII
+     and every guide event would arrive without saying which walk. */
+  it("keeps the first-visit guide's dimensions, which avoid a uid-shaped key", () => {
+    const params = {
+      walk: "first-visit",
+      stop: "today",
+      stepIndex: 0,
+      count: 3,
+      hint: "first-set",
+    };
+    expect(sanitizeAnalyticsParams(params)).toEqual(params);
+    expect(sanitizeAnalyticsParams({ guide: "first-visit" })).toEqual({});
+  });
+
   it("does not mutate the input object", () => {
     const input = { email: "a@b.com", ok: "v" };
     sanitizeAnalyticsParams(input);

@@ -25,7 +25,6 @@ import { openSignUpForm } from "./helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../e2e/helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -114,7 +113,6 @@ test.describe("water total never travels backwards mid-tap", () => {
 
   test("a burst of adds only ever increases the figure", async ({ page }) => {
     test.setTimeout(180_000);
-    await suppressCoachmarks(page);
 
     const email = `waterflash-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");

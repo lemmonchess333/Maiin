@@ -60,6 +60,14 @@ export interface UseStepsResult {
   /** "Not now" on the priming modal — persist `primingShown` without
    *  connecting, so the modal never nags twice. */
   dismissPriming: () => Promise<void>;
+  /** The account's saved answer has loaded. Until then `primingShown` and
+   *  `connected` are defaults, not the account's, so the priming prompt
+   *  must not decide anything from them (FV2: it could open and close
+   *  again for someone who had already answered). A failed read leaves it
+   *  false: the answer is still unknown, and the prompt never asks twice.
+   *  Where Health isn't available (the web) nothing loads, and it stays
+   *  false. */
+  ready: boolean;
 }
 
 export function useSteps(): UseStepsResult {
@@ -70,6 +78,9 @@ export function useSteps(): UseStepsResult {
   const uid = user?.uid ?? null;
   const [available, setAvailable] = useState(false);
   const [flags, setFlags] = useState<HealthKitFlags>(DEFAULT_FLAGS);
+  /** Whose saved flags are loaded: compared with the uid, so another
+   *  account's answer never counts as this one's. */
+  const [flagsLoadedFor, setFlagsLoadedFor] = useState<string | null>(null);
   const [steps, setSteps] = useState<number | null>(null);
   // Latest flags for the visibilitychange handler (registered once) without
   // re-subscribing on every flag change.
@@ -121,6 +132,7 @@ export function useSteps(): UseStepsResult {
       if (!avail || !uid) return;
       const ref = doc(db, "users", uid, "settings", "healthKit");
       let loaded = DEFAULT_FLAGS;
+      let answered = false;
       try {
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -129,6 +141,7 @@ export function useSteps(): UseStepsResult {
             ...(snap.data() as Partial<HealthKitFlags>),
           };
         }
+        answered = true;
       } catch (err) {
         logger.error("[steps] settings load failed", err);
       }
@@ -136,6 +149,7 @@ export function useSteps(): UseStepsResult {
       // If the user already tapped connect/dismiss during the load, don't
       // clobber their write with the hydrated (older) flags.
       if (!flagsDirtyRef.current) setFlags(loaded);
+      if (answered) setFlagsLoadedFor(uid);
       if ((flagsDirtyRef.current ? flagsRef.current : loaded).connected) {
         // Apple Health's permission belongs to this install of the app,
         // but `connected` is saved on the account. On a new phone, or
@@ -203,5 +217,6 @@ export function useSteps(): UseStepsResult {
     refresh,
     primingShown: flags.primingShown,
     dismissPriming,
+    ready: uid !== null && flagsLoadedFor === uid,
   };
 }

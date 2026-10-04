@@ -113,6 +113,9 @@ import {
 import { toast } from "../lib/toast";
 import { SPLIT_LAP_IS_METRIC, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import GuideHint from "@/components/guide/GuideHint";
+import { useGuideHint } from "@/hooks/useGuideHint";
+import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -222,6 +225,16 @@ export default function Run() {
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
   const isFreeformUser = profileRunMode === "freeform";
   const [phase, dispatch] = useReducer(runSessionReducer, initialRunPhase);
+  // The guide's first-run hint (FV1). Knowing there are no runs means
+  // reading every saved one, so the read happens only while the hint is
+  // owed: an account that has met the guide and not seen this hint.
+  const firstRunHint = useGuideHint("first-run");
+  const runHistory = useLifetimeRunStats({ enabled: firstRunHint.owed });
+  const firstRunMoment =
+    firstRunHint.owed &&
+    !runHistory.loading &&
+    !runHistory.failed &&
+    runHistory.runCount === 0;
   const [locked, setLocked] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
@@ -1219,6 +1232,12 @@ export default function Run() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
+      <GuideHint
+        id="first-run"
+        layer="session"
+        placement="top"
+        when={phase === "waiting" && firstRunMoment}
+      />
       {phase === "waiting" && (
         <>
           {/* Phase B1: delayed-mount gate for structured/race_prep

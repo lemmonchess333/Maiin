@@ -9,7 +9,6 @@ import type {
 import { localWeekKey } from "../src/lib/dateHelpers";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
 /**
  * Home's Today card has two actions (DS3): Start begins the session, and
@@ -116,7 +115,6 @@ test.describe("Home's Today card", () => {
           type: day === 1 || day === 3 ? "lift" : "rest",
         })),
       });
-      await suppressCoachmarks(page);
       await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
       await page.clock.setFixedTime(wednesday);
       await signInAsTestUser(page, {

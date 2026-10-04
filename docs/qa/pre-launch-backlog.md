@@ -6,6 +6,43 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The first-visit guide (2026-10-04)
+
+Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
+`src/pages/Home.tsx`, `src/pages/Onboarding.tsx` (Continue now lands on
+Home), the hints on Train, the workout screen, Food and the run screen.
+
+The walk's stops, the hints' rules and the row actions are pinned by unit
+tests; jsdom draws no layout, so where the card sits and how the mark
+moves need a phone.
+
+- [ ] **The walk on a new account.** Sign up, finish setup, Continue with
+      Free: Home opens and dims around the first card, and the mark lifts
+      out of the header into the card. Next: the card disappears, the
+      light moves, and the card fades in beside the next stop, never
+      mid-scroll. The third stop scrolls the Food card into view (it is
+      below the fold on every phone); Done scrolls back up and the mark
+      goes back into the header.
+- [ ] **A small phone (SE).** No card hides under the tab bar or the
+      Dynamic Island's status bar, and the Food hint turns above the
+      composer rather than lie across the tab bar.
+- [ ] **VoiceOver** reads each stop's title and words as the walk moves
+      on, and focus starts on Next and stays there.
+- [ ] **Reduce Motion:** no flight, the cards fade.
+- [ ] **The hints**, each once: Train's lift tab, the first set of the
+      first workout (it sits above the workout screen), Food's composer,
+      the run screen before a first run. Tapping the thing a hint points
+      at closes it and still does what it does.
+- [ ] **Health steps prompt** (native only): on a new account it opens
+      after the walk, not over it.
+- [ ] **The Health steps prompt doesn't flash** (native only, FV2): an
+      account that already answered it, either way, sees no "Count your
+      steps" open and close as Home loads, on a cold start and on coming
+      back to Home from another tab.
+- [ ] **Food's first visit on a free account** (FV2): the guide's
+      "Logging food" hint shows on its own; "Photo logging is part of Pro"
+      appears under the food box once it is closed.
+
 ## Run recording: pauses, each fix's own time, smoothed climb (2026-10-04)
 
 Affects: `src/lib/gps.ts` (`pausedMs`, `movingClockMs`, `segmentMetres`,
@@ -499,6 +536,8 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
 Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+
+**STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
 Wire-up history (rows below referenced surfaces that no longer exist): the Nutrition HealthScore wire-up was removed by PI2; the Programme running-icon coachmark's successor (`extras-pill-v1` in `HybridWeekRail`) was orphaned by the `2b4e07b8` navigation unification and deleted in #1882.
 
