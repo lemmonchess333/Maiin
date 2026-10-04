@@ -13,11 +13,16 @@
  *    a manifest of their own (@capacitor/preferences, @capacitor/filesystem,
  *    capacitor-live-activities ship none), for as long as they are
  *    dependencies.
+ *  - Purpose strings name every use.
+ *  - Nothing that can track is built in: Analytics without the
+ *    advertising-ID trait, Authentication without the Facebook SDK, and the
+ *    plugin's App Tracking Transparency calls patched out on every install.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import capacitorConfig from "../../../capacitor.config";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -25,6 +30,9 @@ const read = (p: string) => readFileSync(resolve(repoRoot, p), "utf8");
 
 const pkg = JSON.parse(read("package.json")) as {
   dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
+  scripts: Record<string, string>;
+  overrides: Record<string, unknown>;
 };
 
 /* ── A plist reader, enough for these files ────────────────────────── */
@@ -317,5 +325,122 @@ describe("Info.plist — purpose strings cover every use", () => {
 
   it("asks for no tracking permission: Tropos does not track", () => {
     expect(info.NSUserTrackingUsageDescription).toBeUndefined();
+  });
+});
+
+/* ── SDKs that could track ─────────────────────────────────────────── */
+
+describe("SDKs — nothing that tracks is built in", () => {
+  const spm = capacitorConfig.experimental?.ios?.spm;
+  const packageSwift = read("ios/App/CapApp-SPM/Package.swift");
+  const AUTH = "@capacitor-firebase/authentication";
+  const authDir = resolve(repoRoot, "node_modules", AUTH);
+  const authVersion = (
+    JSON.parse(readFileSync(join(authDir, "package.json"), "utf8")) as {
+      version: string;
+    }
+  ).version;
+
+  it("builds Analytics without advertising-ID support, and Authentication with Google only", () => {
+    expect(spm?.packageTraits).toEqual({
+      "@capacitor-firebase/analytics": ["AnalyticsWithoutAdIdSupport"],
+      [AUTH]: ["Google"],
+    });
+    // Traits need Swift tools 6.1; the App Check entry stays.
+    expect(spm?.swiftToolsVersion).toBe("6.1");
+    expect(spm?.packageOptions).toEqual({
+      "@capacitor-firebase/app-check": { symlink: true },
+    });
+  });
+
+  it("the committed Package.swift is the one cap sync writes from that config", () => {
+    expect(packageSwift).toMatch(/^\/\/ swift-tools-version: 6\.1\n/);
+    expect(packageSwift).toContain(
+      '.package(name: "CapacitorFirebaseAnalytics", path: "../../../node_modules/@capacitor-firebase/analytics", traits: ["AnalyticsWithoutAdIdSupport"])'
+    );
+    expect(packageSwift).toContain(
+      '.package(name: "CapacitorFirebaseAuthentication", path: "../../../node_modules/@capacitor-firebase/authentication", traits: ["Google"])'
+    );
+  });
+
+  it("uses an Authentication plugin that makes Facebook a trait (8.5.2 or later)", () => {
+    // 8.2.0 linked the Facebook SDK unconditionally.
+    const [major, minor, patch] = authVersion.split(".").map(Number);
+    expect(major).toBe(8);
+    expect(minor * 1000 + patch).toBeGreaterThanOrEqual(5002);
+    expect(pkg.dependencies[AUTH]).toBe("^8.5.2");
+    expect(read(`node_modules/${AUTH}/Package.swift`)).toMatch(
+      /condition: \.when\(traits: \["Facebook"\]\)/
+    );
+  });
+
+  it("patches the App Tracking Transparency calls out on every install", () => {
+    expect(pkg.devDependencies["patch-package"]).toBeDefined();
+    expect(pkg.scripts.postinstall).toBe("patch-package");
+    // One patch, for the installed version (patch-package names them so).
+    const patches = readdirSync(resolve(repoRoot, "patches"));
+    expect(patches).toEqual([
+      `@capacitor-firebase+authentication+${authVersion}.patch`,
+    ]);
+    // Applied: the plugin's Swift neither imports the framework nor calls
+    // it, and both plugin methods are still there, answering "denied".
+    const swiftFiles: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) walk(path);
+        else if (name.endsWith(".swift")) swiftFiles.push(path);
+      }
+    };
+    walk(join(authDir, "ios"));
+    expect(swiftFiles.length).toBeGreaterThan(10);
+    for (const file of swiftFiles) {
+      const source = readFileSync(file, "utf8");
+      expect(source).not.toMatch(/import AppTrackingTransparency/);
+      expect(source).not.toMatch(/ATTrackingManager/);
+    }
+    const plugin = readFileSync(
+      join(authDir, "ios/Plugin/FirebaseAuthenticationPlugin.swift"),
+      "utf8"
+    );
+    expect(plugin).toMatch(/name: "requestAppTrackingTransparencyPermission"/);
+    expect(plugin).toMatch(/name: "checkAppTrackingTransparencyPermission"/);
+    expect(
+      readFileSync(
+        join(authDir, "ios/Plugin/FirebaseAuthentication.swift"),
+        "utf8"
+      ).match(/CheckAppTrackingTransparencyPermissionResult\("denied"\)/g)
+    ).toHaveLength(2);
+  });
+
+  it("the app never asks for tracking permission", () => {
+    const callers: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) {
+          if (name !== "__tests__") walk(path);
+        } else if (
+          /\.tsx?$/.test(name) &&
+          /TrackingTransparency/.test(readFileSync(path, "utf8"))
+        ) {
+          callers.push(path);
+        }
+      }
+    };
+    walk(resolve(repoRoot, "src"));
+    expect(callers).toEqual([]);
+  });
+
+  it("keeps the advisory-free patch-package tree: the workspace lookup is the in-repo shim", () => {
+    // patch-package's own find-yarn-workspace-root pulls in braces, which
+    // fails CI's audit gate (scripts/npm-shims/find-yarn-workspace-root).
+    expect(pkg.overrides["find-yarn-workspace-root"]).toBe(
+      "$find-yarn-workspace-root"
+    );
+    expect(pkg.devDependencies["find-yarn-workspace-root"]).toBe(
+      "file:scripts/npm-shims/find-yarn-workspace-root"
+    );
+    expect(existsSync(resolve(repoRoot, "node_modules/braces"))).toBe(false);
   });
 });

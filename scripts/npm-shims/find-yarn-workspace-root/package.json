@@ -1,0 +1,7 @@
+{
+  "name": "find-yarn-workspace-root",
+  "version": "2.0.0",
+  "private": true,
+  "description": "In-repo stand-in for find-yarn-workspace-root under patch-package; see index.js.",
+  "main": "index.js"
+}

@@ -35,6 +35,7 @@
     "seed:experience": "tsx scripts/seed-experience-capture.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky",
+    "postinstall": "patch-package",
     "doctor": "npx react-doctor@latest",
     "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts",
     "seed:liftreturn": "tsx --tsconfig tsconfig.app.json scripts/seed-liftreturn-capture.ts",
@@ -48,7 +49,7 @@
     "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor-firebase/analytics": "^8.3.0",
     "@capacitor-firebase/app-check": "8.5.1",
-    "@capacitor-firebase/authentication": "^8.2.0",
+    "@capacitor-firebase/authentication": "^8.5.2",
     "@capacitor/app": "^8.1.0",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/cli": "^8.4.0",
@@ -109,12 +110,14 @@
     "eslint-plugin-jsx-a11y": "^6.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "find-yarn-workspace-root": "file:scripts/npm-shims/find-yarn-workspace-root",
     "firebase-admin": "^13.10.0",
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.7",
     "madge": "^8.0.0",
+    "patch-package": "^8.0.1",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
     "prettier": "^3.8.3",
@@ -130,6 +133,7 @@
     "@firebase/firestore": {
       "@grpc/grpc-js": "1.14.5"
     },
+    "find-yarn-workspace-root": "$find-yarn-workspace-root",
     "uuid": "^11.1.1"
   }
 }
