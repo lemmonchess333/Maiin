@@ -261,3 +261,61 @@ describe("privacy manifest — required-reason APIs", () => {
     }
   });
 });
+
+/* ── Info.plist purpose strings ────────────────────────────────────── */
+
+describe("Info.plist — purpose strings cover every use", () => {
+  const info = parsePlist(read("ios/App/App/Info.plist")) as Dict;
+  const purpose = (key: string) => {
+    const text = info[key];
+    expect(typeof text).toBe("string");
+    expect((text as string).length).toBeGreaterThan(40);
+    return text as string;
+  };
+
+  /** Each place a photo comes in, and the component that takes it. */
+  const PHOTO_USES: [RegExp, string][] = [
+    [/meal/, "src/components/FoodCameraModal.tsx"],
+    [/barcode/, "src/components/FoodCameraModal.tsx"],
+    [/progress photo/, "src/components/progress/ProgressPhotoDaySheet.tsx"],
+    [/profile photo/, "src/components/settings/SettingsAvatar.tsx"],
+    [/Space post/, "src/features/spaces/SpacePostComposer.tsx"],
+  ];
+
+  it("the camera string names each use, and each is a real photo input", () => {
+    // iOS offers the camera on any photo input, so each one is a camera use.
+    const camera = purpose("NSCameraUsageDescription");
+    for (const [use, component] of PHOTO_USES) {
+      expect(camera).toMatch(use);
+      expect(read(component)).toMatch(/type="file"/);
+    }
+  });
+
+  it("the photo library string names each use, the share card's photo too", () => {
+    const library = purpose("NSPhotoLibraryUsageDescription");
+    for (const [use] of PHOTO_USES) expect(library).toMatch(use);
+    expect(library).toMatch(/share card/);
+    expect(read("src/components/share/ShareCardSheet.tsx")).toMatch(
+      /type="file"/
+    );
+  });
+
+  it("asks to add to the library, for the images a person chooses to save", () => {
+    // Saving from the share sheet ("Save Image") needs this key, or iOS
+    // ends the app on that tap.
+    const add = purpose("NSPhotoLibraryAddUsageDescription");
+    expect(add).toMatch(/only when you choose/);
+    expect(add).toMatch(/share card/);
+    expect(add).toMatch(/progress photo comparison/);
+  });
+
+  it("the location string names each use of location", () => {
+    const location = purpose("NSLocationWhenInUseUsageDescription");
+    for (const use of [/runs/, /weather/, /route you plan/, /privacy zone/])
+      expect(location).toMatch(use);
+  });
+
+  it("asks for no tracking permission: Tropos does not track", () => {
+    expect(info.NSUserTrackingUsageDescription).toBeUndefined();
+  });
+});
