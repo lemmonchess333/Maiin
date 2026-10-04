@@ -203,3 +203,22 @@ describe("ServingSizeDrawer — the quantity is typeable", () => {
     expect(screen.getByText("372")).toBeInTheDocument();
   });
 });
+
+describe("ServingSizeDrawer — the Open Food Facts credit", () => {
+  it("credits Open Food Facts, whose search result it shows", () => {
+    // Food opens this sheet only for an Open Food Facts result, and the
+    // database's licence (ODbL) asks for a credit wherever it is shown.
+    render(
+      <ServingSizeDrawer
+        food={baseFood}
+        open
+        onClose={() => {}}
+        onConfirm={() => {}}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Log food" })).toBeEnabled();
+    expect(
+      screen.getByText("Food data from Open Food Facts")
+    ).toBeInTheDocument();
+  });
+});

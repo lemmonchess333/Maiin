@@ -12,7 +12,7 @@ import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { useUid } from "@/lib/auth";
-import { offProductToPortion } from "@/lib/offNutrition";
+import { OFF_CREDIT, offProductToPortion } from "@/lib/offNutrition";
 import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
@@ -1138,6 +1138,14 @@ export default function FoodAnalyzer({
                     className="rounded-full"
                   />
                 </div>
+              )}
+
+              {/* A barcode result is Open Food Facts' data, whose licence
+                  (ODbL) asks for a credit wherever it is shown. */}
+              {isBarcode && (
+                <p className="text-micro text-muted-foreground text-center">
+                  {OFF_CREDIT}
+                </p>
               )}
 
               {/* Per-item breakdown — editable for multi-item AI results,
