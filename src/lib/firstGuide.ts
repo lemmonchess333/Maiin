@@ -215,7 +215,7 @@ export const GUIDE_HINTS = {
   },
   "first-set": {
     title: "Your first set",
-    body: "Each row is a set. Check the weight and reps, then tap the circle when it’s done. Your rest timer starts on its own.",
+    body: "Each row is a set. Check the weight and reps, then tap the box when it’s done. Your rest timer starts on its own.",
   },
   "food-composer": {
     title: "Logging food",
@@ -228,9 +228,9 @@ export const GUIDE_HINTS = {
 } as const;
 
 /** The first-set hint for someone who has turned the automatic rest timer
- *  off in Settings: the circle is still how a set is done. */
+ *  off in Settings: the box is still how a set is done. */
 export const FIRST_SET_BODY_NO_AUTO_REST =
-  "Each row is a set. Check the weight and reps, then tap the circle when it’s done.";
+  "Each row is a set. Check the weight and reps, then tap the box when it’s done.";
 
 export type GuideHintId = keyof typeof GUIDE_HINTS;
 

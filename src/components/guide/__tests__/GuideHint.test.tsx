@@ -86,7 +86,7 @@ describe("GuideHint", () => {
     anchor();
     renderHint();
     const hint = await screen.findByRole("dialog", { name: "Your first set" });
-    expect(hint).toHaveTextContent("tap the circle when it’s done");
+    expect(hint).toHaveTextContent("tap the box when it’s done");
     expect(track).toHaveBeenCalledExactlyOnceWith("guide_hint_viewed", {
       hint: "first-set",
     });
@@ -169,9 +169,9 @@ describe("GuideHint", () => {
   it("uses the page's own words when it has better ones", async () => {
     metTheGuide();
     anchor();
-    renderHint({ body: "Tap the circle when it’s done." });
+    renderHint({ body: "Tap the box when it’s done." });
     expect(await screen.findByRole("dialog")).toHaveTextContent(
-      "Tap the circle when it’s done."
+      "Tap the box when it’s done."
     );
   });
 

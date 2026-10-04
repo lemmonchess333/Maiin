@@ -71,7 +71,7 @@ interface GuideHintProps {
  * every anchor here is a working control. It doesn't dim the page, and it
  * goes through the education lane, so it never shows beside another tip.
  * Any tap outside it closes it and still reaches what was tapped: tapping
- * the circle it points at both closes it and completes the set.
+ * the box it points at both closes it and completes the set.
  */
 export default function GuideHint({
   id,
