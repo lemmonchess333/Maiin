@@ -19,7 +19,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 - **Routing:** React Router v7
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)
 - **Charts:** Recharts 3
-- **Maps:** MapLibre GL 6
+- **Maps:** MapLibre GL 6, with OpenFreeMap's tiles (`src/lib/basemap.ts`; the credit must stay on every map)
 - **Animation:** Framer Motion 12
 - **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
 - **Native:** Capacitor (iOS/Android)
@@ -546,6 +546,14 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   photo and the diary cannot navigate further back, so anything older is
   unreachable. Move one and you must move the other;
   `foodPhotoStore.test.ts` fails until you do.
+- **Nothing goes to Gemini without permission.** A meal photo or a Pro
+  account's typed meal is sent only once the person has said yes, held
+  in `profile.aiAnalysisEnabled` (undefined = not asked, true = allowed,
+  false = off; `src/lib/aiConsent.ts`). The first request asks
+  (`AiConsentSheet`), the Settings switch shows on only for true, and
+  `analyzeFood` / `analyzeFoodText` refuse an explicit false
+  (`functions/lib/aiConsent.js`, pinned by `aiConsent.cross.test.ts`).
+  App Review Guideline 5.1.2(i) requires the question.
 - **Eviction acts on positive evidence only.** `useMeals` paginates, so
   "this meal is not in the loaded set" NEVER means "this meal is gone".
   Any eviction rule phrased that way deletes live photos for exactly the

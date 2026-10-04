@@ -216,3 +216,101 @@ describe("App Store listing: house voice", () => {
     expect(prose).not.toMatch(/\d(kg|km)\b/);
   });
 });
+
+describe("App Store listing: the privacy label and the privacy manifest agree", () => {
+  // The label is typed into App Store Connect from the table in the
+  // listing; the manifest ships inside the app. Apple compares the two,
+  // and so does anyone reading the Privacy Report, so they must name the
+  // same data for the same purposes.
+  const APPLE_KEY: Record<string, string> = {
+    Name: "Name",
+    "Email address": "EmailAddress",
+    Health: "Health",
+    Fitness: "Fitness",
+    "Precise location": "PreciseLocation",
+    "Coarse location": "CoarseLocation",
+    "Photos or videos": "PhotosorVideos",
+    "Other user content": "OtherUserContent",
+    "User ID": "UserID",
+    "Device ID": "DeviceID",
+    "Purchase history": "PurchaseHistory",
+    "Product interaction": "ProductInteraction",
+    "Other usage data": "OtherUsageData",
+    "Crash data": "CrashData",
+    "Performance data": "PerformanceData",
+    "Other diagnostic data": "OtherDiagnosticData",
+  };
+  const PURPOSE_KEY: Record<string, string> = {
+    "app functionality": "AppFunctionality",
+    analytics: "Analytics",
+  };
+
+  /** The listing's "Data linked to you" rows as manifest keys. */
+  function labelRows(): Map<string, string[]> {
+    const section = LISTING.split("### Data linked to you")[1].split("\n\n")[1];
+    const rows = new Map<string, string[]>();
+    for (const line of section.split("\n").slice(2)) {
+      const [, , type, purposes] = line.split("|").map((c) => c.trim());
+      const key = APPLE_KEY[type];
+      if (!key) throw new Error(`no Apple key for "${type}"`);
+      rows.set(
+        key,
+        purposes
+          .split(",")
+          .map((p) => PURPOSE_KEY[p.trim().toLowerCase()])
+          .sort()
+      );
+    }
+    return rows;
+  }
+
+  /** The manifest's NSPrivacyCollectedDataTypes entries. */
+  function manifestRows() {
+    const manifest = read("../../../ios/App/App/PrivacyInfo.xcprivacy");
+    const entries = manifest
+      .split("<key>NSPrivacyCollectedDataTypes</key>")[1]
+      // The next top-level key ends the array; the required-reason API
+      // entries after it are dicts too.
+      .split("<key>NSPrivacyAccessedAPITypes</key>")[0]
+      .split(/<dict>/)
+      .slice(1);
+    return entries.map((entry) => ({
+      key: entry.match(
+        /<key>NSPrivacyCollectedDataType<\/key>\s*<string>NSPrivacyCollectedDataType(\w+)<\/string>/
+      )?.[1],
+      linked: /<key>NSPrivacyCollectedDataTypeLinked<\/key>\s*<true\/>/.test(
+        entry
+      ),
+      tracking:
+        /<key>NSPrivacyCollectedDataTypeTracking<\/key>\s*<true\/>/.test(entry),
+      purposes: [
+        ...entry.matchAll(
+          /<string>NSPrivacyCollectedDataTypePurpose(\w+)<\/string>/g
+        ),
+      ]
+        .map((m) => m[1])
+        .sort(),
+    }));
+  }
+
+  it("declares exactly the label's data types, for the label's purposes", () => {
+    const label = labelRows();
+    const manifest = manifestRows();
+    expect(manifest.map((m) => m.key).sort()).toEqual([...label.keys()].sort());
+    for (const entry of manifest) {
+      expect(entry.purposes, entry.key).toEqual(label.get(entry.key!));
+    }
+  });
+
+  it("links every type to the account and tracks with none of them", () => {
+    // The listing says so in prose ("All the data below is linked to the
+    // person's account, and none of it is used for tracking").
+    for (const entry of manifestRows()) {
+      expect(entry.linked, entry.key).toBe(true);
+      expect(entry.tracking, entry.key).toBe(false);
+    }
+    expect(read("../../../ios/App/App/PrivacyInfo.xcprivacy")).toMatch(
+      /<key>NSPrivacyTracking<\/key>\s*<false\/>/
+    );
+  });
+});

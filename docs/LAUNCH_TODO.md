@@ -293,8 +293,8 @@ The listing is drafted in `docs/app-store/listing.md`: the text to paste,
 the privacy label, the age rating, the review notes, and what still has to
 change before the first submission.
 
-- Screenshots (6.9" iPhone required, and iPad unless the app becomes
-  iPhone-only)
+- Screenshots (6.9" iPhone required; the app is iPhone-only, so no iPad
+  set)
 - Privacy policy URL
 - Support URL
 - Category: Health & Fitness
