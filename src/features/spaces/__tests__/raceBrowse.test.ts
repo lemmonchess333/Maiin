@@ -3,14 +3,15 @@ import {
   ALL_RACE_FILTERS,
   filterRaceDefs,
   UK_RACE_FILTERS,
+  raceDistanceLabel,
 } from "../raceBrowse";
 import { upcomingResolvedRaceDefs } from "../raceEventOverrides";
 
 describe("race browsing", () => {
   const races = upcomingResolvedRaceDefs({}, "2026-09-14");
   it("keeps UK first while making every international marathon discoverable", () => {
-    expect(races).toHaveLength(42);
-    expect(filterRaceDefs(races, UK_RACE_FILTERS)).toHaveLength(27);
+    expect(races).toHaveLength(57);
+    expect(filterRaceDefs(races, UK_RACE_FILTERS)).toHaveLength(41);
     const allFull = filterRaceDefs(races, {
       ...ALL_RACE_FILTERS,
       distance: "marathon",
@@ -32,6 +33,22 @@ describe("race browsing", () => {
     expect(allFull.map((r) => r.event!.dateKey)).toEqual(
       allFull.map((r) => r.event!.dateKey).sort()
     );
+  });
+  it("finds ultras independently of marathons and displays the advertised distances", () => {
+    const ultras = filterRaceDefs(races, {
+      ...ALL_RACE_FILTERS,
+      distance: "ultra",
+    });
+    expect(ultras.map((r) => r.id)).toEqual([
+      "race-to-the-king-100k",
+      "race-to-the-stones-100k",
+      "chiltern-50",
+    ]);
+    expect(ultras.map((r) => raceDistanceLabel(r.event!))).toEqual([
+      "100 km ultra",
+      "100 km ultra",
+      "50 km ultra",
+    ]);
   });
   it("an unsupported distance/country combination is empty, with all-country recovery", () => {
     expect(filterRaceDefs(races, { country: "DE", distance: "half" })).toEqual(

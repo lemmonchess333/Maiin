@@ -20,6 +20,7 @@ const DISTANCE_CHIPS: Record<RaceEventDistance, string> = {
   "10k": "10K",
   half: "Half",
   marathon: "Marathon",
+  ultra: "Ultra",
 };
 
 /** The country chip's own short names, where the full one is long. */

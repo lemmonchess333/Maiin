@@ -7,8 +7,8 @@ race proposals.
 
 ## What ships
 
-The catalogue contains 42 races: 27 marathons, 8 half marathons, 5 10Ks and
-2 5Ks. Eight additions: Sydney, Amsterdam, Rotterdam and Copenhagen marathons;
+The catalogue contains 57 races: 27 marathons, 12 half marathons, 10 10Ks,
+5 5Ks and 3 ultras. The first expansion added Sydney, Amsterdam, Rotterdam and Copenhagen marathons;
 Oxford Half; Great Bristol Run 10K; Edinburgh Marathon Festival 5K; River Ness
 5K. Australia, the Netherlands and Denmark join the country filter.
 
@@ -24,10 +24,45 @@ Amsterdam's 18 October 2026 date is also stated in the organiser's
 [FAQ](https://www.tcsamsterdammarathon.eu/frequently-asked-questions).
 Keep imminent editions until they pass, even if a later year is announced.
 
-All 42 races have a shipped destination photograph. The 16 added photographs
+All 57 races have a shipped destination photograph. The first 16 added photographs
 and their licences, photographers, source links, hashes and processing details
 are recorded in `src/assets/editorial/sources-race-expansion-2026-10-04.json`.
 These are location photographs, not official event images or course promises.
+
+### Shorter races and ultras
+
+The next 15 additions balance the marathon-heavy catalogue:
+
+- Half marathons: Edinburgh, Bournemouth, Sheffield and Valencia.
+- 10Ks: Edinburgh Marathon Festival, Bournemouth Supersonic, City of Lincoln,
+  York and River Ness.
+- 5Ks: Bournemouth Supernova, Supernova Forth Road Bridge and Supernova Kelpies.
+- Ultras: Race to the King 100K, Race to the Stones 100K Non-Stop and Chiltern 50.
+
+Every date was checked against the organiser on 4 October 2026. Each has a
+dedicated adapter in `scripts/races/sources.ts`. The Bournemouth and Valencia
+2026 editions remain listed until they pass; they are not rolled forward early.
+Kelpies has two separate race nights, 12 and 13 March 2027, using the same
+explicit date-choice behaviour as London. The Stones adapter selects the
+100K Non-Stop package's start day, not its two-day or shorter packages.
+
+Ultras have their own filter and exact distance label (`distanceKm`). They
+remain browsable and joinable, with official preparation and entry links.
+Tropos's training engine supports 5K through marathon only: the training picker
+excludes ultras and their pages do not offer a training-plan CTA. Incoming
+remote metadata cannot change a race's bundled distance or training eligibility.
+
+Eight new licensed photos and existing destination images cover all 15 new
+race IDs. Provenance is in
+`src/assets/editorial/sources-short-races-ultras-2026-10-04.json`. The Chiltern
+image shows regional countryside at Ivinghoe Beacon, not the advertised course.
+The Forth cover depicts the road bridges, not the nearby railway bridge.
+
+The bundle allowance changes only the measured catalogue (`spaceDefs`,
+14,953 to 19,963 bytes) and editorial-reference (`spaceTypes`, 12,610 to
+15,963 bytes) chunks, plus their corresponding total. This accounts for the
+15 definitions, their photo references and the distance guard; other chunk
+allowances stay as they were.
 
 ## Runtime behaviour
 
@@ -106,7 +141,7 @@ scripts, images or inconsistent markup. Those need an occasional adapter fix or
 manually verified catalogue date. The fallback keeps races visible throughout;
 this does not promise that every organiser can be scraped forever.
 
-The source adapters cover all 42 races. Amsterdam, Houston, Seville and Paris
+The source adapters cover all 57 races. Amsterdam, Houston, Seville and Paris
 use dedicated organiser FAQ statements. Chester and New York use a fresh
 anonymous Chromium browser to read their rendered event pages. The browser
 does not solve access challenges; an inaccessible event page stays in review.

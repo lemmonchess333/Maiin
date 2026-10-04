@@ -1,0 +1,316 @@
+{
+  "description": "Destination photographs for 15 race additions. They show places and regional scenery, not official race photography or a guarantee of the course.",
+  "sources": [
+    {
+      "raceIds": [
+        "bournemouth-half",
+        "bournemouth-10k",
+        "bournemouth-5k"
+      ],
+      "assets": [
+        "space-bournemouth-half.webp",
+        "space-bournemouth-10k.webp",
+        "space-bournemouth-5k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/an-aerial-view-of-a-large-ship-in-the-water-YpTy1X7vZJo",
+      "downloadUrl": "https://images.unsplash.com/photo-1713378162797-a1a4e6f2bc25?w=2400&q=85&fm=jpg",
+      "photographer": "James McPherson",
+      "subject": "Bournemouth pier and coastline from above",
+      "locationEvidence": "Bournemouth Pier, Bournemouth, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "146ab4c54c25432ff99c6e72d72bce0630e9c7c3faa0937595cb0d69425bb066",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3200
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 103620,
+        "sha256": "9c65336c0c11b2cb0f72287a79abf191c1534072bed8f4c41a1af4fefe915dae"
+      }
+    },
+    {
+      "raceIds": [
+        "sheffield-half"
+      ],
+      "assets": [
+        "space-sheffield-half.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/cobblestone-street-with-historic-buildings-and-people-walking-A6b0-topqTs",
+      "downloadUrl": "https://images.unsplash.com/photo-1764444925549-660510cda264?w=2400&q=85&fm=jpg",
+      "photographer": "Priyank Pathak",
+      "subject": "Historic Sheffield streets",
+      "locationEvidence": "Sheffield, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "8cf2e2103c4b7512e0fbcc32ea94f439e2401918f15652e2439a30e59b6dfc99",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3622
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 107850,
+        "sha256": "9e585528b0815e5d80818ff0aab8edfd9163eda41e819a5e04c15063b0159da3"
+      }
+    },
+    {
+      "raceIds": [
+        "lincoln-10k"
+      ],
+      "assets": [
+        "space-lincoln-10k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/lincoln-cathedral-viewed-over-rooftops-under-a-clear-sky-CMXYdr9IUuU",
+      "downloadUrl": "https://images.unsplash.com/photo-1764937967462-fb6799d2ae74?w=2400&q=85&fm=jpg",
+      "photographer": "Brian Cockley",
+      "subject": "Lincoln Cathedral above the city rooftops",
+      "locationEvidence": "Lincoln, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "569c903ef6458a08daba77c9857b228a6515020f30132a151f18b5551ea653d2",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1800
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 111360,
+        "sha256": "d34fdbc4fb47304cb5b873fa7b48b7e7594f7b2aab41fae562fa4aedba091c5c"
+      }
+    },
+    {
+      "raceIds": [
+        "supernova-forth-5k"
+      ],
+      "assets": [
+        "space-supernova-forth-5k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/a-bridge-with-lights-at-night-ntO2fxkr-Yc",
+      "downloadUrl": "https://images.unsplash.com/photo-1668091583927-040f7e1b1981?w=2400&q=85&fm=jpg",
+      "photographer": "Tymek Niciak",
+      "subject": "The road bridges over the Firth of Forth at night",
+      "locationEvidence": "Queensferry Crossing and Forth Road Bridge, Scotland",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "1a700498fbce4aa822ef4a66f2a107ec7a6afd43c4cdabcfa038dc737090f058",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1800
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 82,
+        "bytes": 57712,
+        "sha256": "ad1f85883679a7ffffab2b30f8479417d068d42c80bd18cb6e9dfe42f50fff19"
+      }
+    },
+    {
+      "raceIds": [
+        "supernova-kelpies-5k"
+      ],
+      "assets": [
+        "space-supernova-kelpies-5k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/two-large-metal-horses-standing-next-to-each-other-V9IwGE1NP5g",
+      "downloadUrl": "https://images.unsplash.com/photo-1705932290481-5ad4cd4b573b?w=2400&q=85&fm=jpg",
+      "photographer": "Pix Tresa",
+      "subject": "The two Kelpies sculptures",
+      "locationEvidence": "The Kelpies, Falkirk, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "4acbc4e1be807053f68a0be87f57a4ca92481d4d8c4cdfc5f9515e27d5f11a5f",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 54,
+        "bytes": 116288,
+        "sha256": "87560c8e76deb9f74da6ce2d9e446b33381229e9ab6157ee153112d485608d2d"
+      }
+    },
+    {
+      "raceIds": [
+        "race-to-the-king-100k"
+      ],
+      "assets": [
+        "space-race-to-the-king-100k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/a-fenced-in-field-with-a-fence-and-trees-and-hills-in-the-background-ro6z38FQ98k",
+      "downloadUrl": "https://images.unsplash.com/photo-1657184313883-131fb056b61c?w=2400&q=85&fm=jpg",
+      "photographer": "Amy Stride",
+      "subject": "A path through the South Downs countryside",
+      "locationEvidence": "Kingley Vale, Chichester, South Downs, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "c8768d4fb914189f74d9d70d4e2d2580e48a191923d556eb151557686d0ffad3",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3200
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1000,
+        "height": 628,
+        "quality": 58,
+        "bytes": 119530,
+        "sha256": "4c67e1b47dcdbea102e035383066f3477b9aa712559d5da948cf8bf88dd6b704"
+      }
+    },
+    {
+      "raceIds": [
+        "race-to-the-stones-100k"
+      ],
+      "assets": [
+        "space-race-to-the-stones-100k.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/ancient-standing-stone-in-a-field-under-a-cloudy-sky-eOexuYrQkgY",
+      "downloadUrl": "https://images.unsplash.com/photo-1782925980106-c2fe8f94dedf?w=2400&q=85&fm=jpg",
+      "photographer": "Henry Tegner",
+      "subject": "An Avebury standing stone",
+      "locationEvidence": "Avebury Henge and Stone Circles, Avebury, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "d52c730eadd4fe73478bbc4ce899d46f9e8092387178a5ef441ebcf9f7ea82f8",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 108890,
+        "sha256": "45c314903adbcc4f8c37a6e8beb4e62ec1d7584aad11edbf037397881a9d7957"
+      }
+    },
+    {
+      "raceIds": [
+        "chiltern-50"
+      ],
+      "assets": [
+        "space-chiltern-50.webp"
+      ],
+      "sourceUrl": "https://unsplash.com/photos/a-dirt-road-running-through-a-lush-green-field-nz3cmUgmZrE",
+      "downloadUrl": "https://images.unsplash.com/photo-1645019517242-c3c377659fb2?w=2400&q=85&fm=jpg",
+      "photographer": "Brent Jenkins",
+      "subject": "A trail through the Chiltern Hills; regional scenery, not a depiction of the event route",
+      "locationEvidence": "Ivinghoe Beacon, Chiltern Hills, UK",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "302269ccd4cf7ae4e690bd97f898594eb349e541801f70562deb87cd72653bed",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1601
+      },
+      "processing": "Centre landscape crop, original colour, WebP compression.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 117318,
+        "sha256": "edd9255a945f147d7703a939c4ae10011236e9802121f1d7bc2fbfb1cac40179"
+      }
+    },
+    {
+      "raceIds": [
+        "edinburgh-half"
+      ],
+      "assets": [
+        "space-edinburgh-half.webp"
+      ],
+      "reusedAsset": "space-edinburgh-5k.webp",
+      "provenance": "sources-race-expansion-2026-10-04.json",
+      "processing": "Identical bytes of the existing licensed destination cover.",
+      "output": {
+        "bytes": 114276,
+        "sha256": "7a9d41ac1ce10cec5346811051a6acaea331a8a51ef18ca810c702b3b9f1defb"
+      }
+    },
+    {
+      "raceIds": [
+        "valencia-half"
+      ],
+      "assets": [
+        "space-valencia-half.webp"
+      ],
+      "reusedAsset": "space-valencia-marathon.webp",
+      "provenance": "sources-race-expansion-2026-10-04.json",
+      "processing": "Identical bytes of the existing licensed destination cover.",
+      "output": {
+        "bytes": 106040,
+        "sha256": "9be436cae43a5e5f55c12f262bf4bc2eaedf9f248393183013939589cf392e67"
+      }
+    },
+    {
+      "raceIds": [
+        "edinburgh-10k"
+      ],
+      "assets": [
+        "space-edinburgh-10k.webp"
+      ],
+      "reusedAsset": "space-edinburgh-5k.webp",
+      "provenance": "sources-race-expansion-2026-10-04.json",
+      "processing": "Identical bytes of the existing licensed destination cover.",
+      "output": {
+        "bytes": 114276,
+        "sha256": "7a9d41ac1ce10cec5346811051a6acaea331a8a51ef18ca810c702b3b9f1defb"
+      }
+    },
+    {
+      "raceIds": [
+        "york-10k"
+      ],
+      "assets": [
+        "space-york-10k.webp"
+      ],
+      "reusedAsset": "space-yorkshire-marathon.webp",
+      "provenance": "sources-marathon-expansion-2026-09-14.json",
+      "processing": "Identical bytes of the existing licensed destination cover.",
+      "output": {
+        "bytes": 111170,
+        "sha256": "77b0ec05a91e2a5047d1322ebd33eab2ede22495e7eba9856487f2f1b54af555"
+      }
+    },
+    {
+      "raceIds": [
+        "river-ness-10k"
+      ],
+      "assets": [
+        "space-river-ness-10k.webp"
+      ],
+      "reusedAsset": "space-river-ness-5k.webp",
+      "provenance": "sources-race-expansion-2026-10-04.json",
+      "processing": "Identical bytes of the existing licensed destination cover.",
+      "output": {
+        "bytes": 118502,
+        "sha256": "619ea13fab4e39cef34f6d66bc18da969e9515889445408ebc4ec7e4f8cdbbc4"
+      }
+    }
+  ]
+}

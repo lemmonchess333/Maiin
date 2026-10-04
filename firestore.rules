@@ -1070,7 +1070,22 @@ service cloud.firestore {
         'oxford-half',
         'great-bristol-10k',
         'edinburgh-5k',
-        'river-ness-5k'
+        'river-ness-5k',
+        'edinburgh-half',
+        'bournemouth-half',
+        'sheffield-half',
+        'valencia-half',
+        'edinburgh-10k',
+        'bournemouth-10k',
+        'lincoln-10k',
+        'york-10k',
+        'river-ness-10k',
+        'bournemouth-5k',
+        'supernova-forth-5k',
+        'supernova-kelpies-5k',
+        'race-to-the-king-100k',
+        'race-to-the-stones-100k',
+        'chiltern-50'
       ];
     }
 

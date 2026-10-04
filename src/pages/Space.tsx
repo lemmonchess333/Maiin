@@ -44,7 +44,12 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
-import { spaceDef, type SpaceEventInfo } from "@/features/spaces/spaceDefs";
+import {
+  spaceDef,
+  isTrainableRaceEvent,
+  type SpaceEventInfo,
+} from "@/features/spaces/spaceDefs";
+import { raceDistanceLabel } from "@/features/spaces/raceBrowse";
 import {
   raceEventDates,
   formatRaceEventDate,
@@ -81,13 +86,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   flag: Flag,
 };
 
-const DISTANCE_LABEL: Record<SpaceEventInfo["distance"], string> = {
-  "5k": "5K",
-  "10k": "10K",
-  half: "Half Marathon",
-  marathon: "Marathon",
-};
-
 const ELEVATION_LABEL: Record<
   NonNullable<SpaceEventInfo["elevation"]>,
   string
@@ -118,6 +116,7 @@ function RaceEventHeader({
   const { profile } = useAuth();
   const todayKey = localDateString();
   const past = event.dateKey < todayKey;
+  const trainable = isTrainableRaceEvent(event);
   const isYourRace = profile?.raceGoal?.eventSpaceId === spaceId;
   const dates = raceEventDates(event);
   const [chosenDay, setChosenDay] = useState("");
@@ -142,7 +141,7 @@ function RaceEventHeader({
             color: "hsl(var(--running-strong))",
           }}
         >
-          {DISTANCE_LABEL[event.distance]}
+          <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
         </span>
         {event.elevation && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">
@@ -166,7 +165,7 @@ function RaceEventHeader({
         </p>
       </div>
 
-      {!past && !isYourRace && dates.length > 1 && (
+      {trainable && !past && !isYourRace && dates.length > 1 && (
         <div className="space-y-1">
           <label htmlFor="space-race-day" className="text-sm font-medium">
             Your assigned race day
@@ -208,6 +207,7 @@ function RaceEventHeader({
           </p>
         </div>
       ) : (
+        trainable &&
         !past && (
           <Button
             variant="sport"
@@ -224,6 +224,13 @@ function RaceEventHeader({
             Train for this race
           </Button>
         )
+      )}
+
+      {!trainable && (
+        <p className="text-sm text-muted-foreground">
+          Ultra training plans aren’t available in Tropos yet. Visit the
+          organiser for event preparation and entry details.
+        </p>
       )}
 
       <a

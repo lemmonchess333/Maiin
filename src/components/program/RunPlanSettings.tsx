@@ -80,7 +80,11 @@ import {
   saveRunPlanDraft,
   clearRunPlanDraft,
 } from "@/lib/runPlanDraft";
-import { spaceDef, type SpaceDef } from "@/features/spaces/spaceDefs";
+import {
+  spaceDef,
+  isTrainableRaceEvent,
+  type SpaceDef,
+} from "@/features/spaces/spaceDefs";
 import {
   upcomingResolvedRaceDefs,
   useRaceEventOverrides,
@@ -404,7 +408,7 @@ export default function RunPlanSettings({
   }
 
   function handlePickRace(def: SpaceDef): void {
-    if (!def.event) return;
+    if (!def.event || !isTrainableRaceEvent(def.event)) return;
     setRaceDistance(def.event.distance);
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);

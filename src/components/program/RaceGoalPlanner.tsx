@@ -33,7 +33,10 @@ import {
   RACE_DISTANCE_LABELS,
   type RaceBrowseFilters,
 } from "@/features/spaces/raceBrowse";
-import type { SpaceDef } from "@/features/spaces/spaceDefs";
+import {
+  isTrainableRaceEvent,
+  type SpaceDef,
+} from "@/features/spaces/spaceDefs";
 import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
@@ -128,7 +131,7 @@ function UpcomingRacePicker({
 
       {open && (
         <div className="mt-3 space-y-2">
-          <RaceFilters value={filters} onChange={setFilters} />
+          <RaceFilters value={filters} onChange={setFilters} trainingOnly />
           {raceDays.length === 0 ? (
             <EmptyState
               compact
@@ -248,6 +251,9 @@ export default function RaceGoalPlanner({
   selectedEventSpaceId,
   onPickRace,
 }: RaceGoalPlannerProps) {
+  const trainingRaces = upcomingRaces.filter(
+    (race) => race.event && isTrainableRaceEvent(race.event)
+  );
   const showPreview =
     state.status === "healthy" ||
     state.status === "compressed" ||
@@ -256,10 +262,10 @@ export default function RaceGoalPlanner({
   return (
     <div className="mt-3 space-y-3 p-3 rounded-xl bg-card card-shadow">
       {/* Door 2 — catalogue picker (collapses when nothing upcoming) */}
-      {upcomingRaces.length > 0 && (
+      {trainingRaces.length > 0 && (
         <UpcomingRacePicker
           key={`${distance}:${selectedEventSpaceId}`}
-          races={upcomingRaces}
+          races={trainingRaces}
           distance={distance}
           selectedId={selectedEventSpaceId}
           selectedDate={targetDate}
