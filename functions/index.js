@@ -158,6 +158,14 @@ const accountDeletion = require("./accountDeletion");
 // onCommentCreated triggers below to auto-flag or auto-delete
 // objectionable content (App Store Guideline 1.2 requirement).
 const profanityFilter = require("./profanityFilter");
+// The same filter's decisions for the callables that write public text
+// (comments, display names) and the sentences a refused person reads.
+const objectionableText = require("./lib/objectionableText");
+// The same filter over Community Space posts (onSpacePostWritten).
+const spacePostModeration = require("./lib/spacePostModeration");
+// The email that tells the owner a report has come in (createReport).
+const reportAlert = require("./lib/reportAlert");
+const { sendViaResend } = require("./email/accountEmails");
 // Admin-uid allowlist for moderation callables. Trust boundary for
 // the listPendingReports / resolveReport / hideActivity surfaces.
 const adminAuth = require("./adminAuth");
@@ -248,6 +256,11 @@ const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // RESEND_API_KEY now lives in email/accountEmails.js with its callables.
 // (a deploy referencing an unprovisioned bound secret FAILS — the safety gate).
+// createReport binds it too, for the moderation alert. defineSecret registers
+// by name, so this is the same secret, already provisioned; and the functions
+// share one runtime account, which can already read it, so binding it here
+// needs no new accessor grant.
+const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Money-path audit F8: deleteMyAccount tombstones Apple billing
 // identities before sweeping their bindings; the write hash needs the
 // same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
@@ -661,6 +674,17 @@ const {
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
 
+/* A display name that trips the word filter is refused, as
+   failed-precondition so the client can show the sentence
+   (lib/objectionableText.js). The client refuses it first
+   (src/lib/displayName.ts); this is the boundary a direct call meets. */
+function assertDisplayNameAllowed(displayName) {
+  const refusal = objectionableText.displayNameRefusal(displayName);
+  if (refusal) {
+    throw new functions.https.HttpsError("failed-precondition", refusal);
+  }
+}
+
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -734,6 +758,10 @@ exports.completeOnboarding = functions
           fields: droppedOnboardingFields,
         });
       }
+
+      // The display name is public (profile, feed, spaces, leaderboards), so
+      // the word filter that covers posts and comments covers it too.
+      assertDisplayNameAllowed(profileData.displayName);
 
       // Required-field gate runs AFTER sanitise — a value that failed
       // its validator is now `undefined` here, which surfaces as
@@ -979,6 +1007,10 @@ exports.configurePlan = functions
           fields: droppedPlanFields,
         });
       }
+
+      // The sanitiser lets displayName through here as on onboarding, so a
+      // patch carrying one meets the same word filter.
+      assertDisplayNameAllowed(profileUpdates.displayName);
 
       // Configure Plan is always a v7 path — no legacy bypass. The
       // client must send a valid plan; nothing else makes sense for
@@ -5630,15 +5662,23 @@ exports.recreditMyLiftVolume = functions
 //   2. onCommentCreated — auto-delete profane comments. Comments
 //      are tiny and high-frequency; review-after-the-fact would let
 //      objectionable content stay visible until a human moderator
-//      catches it. Hard-delete is the simpler invariant.
+//      catches it. Hard-delete is the simpler invariant. (The comment
+//      callables now refuse the same text before writing it; this is
+//      the backstop for anything that got past them.)
 //
-//   3. listPendingReports — admin-only callable. Returns reports
+//   3. onSpacePostWritten — the same filter over Community Space
+//      posts, removing a post whose text trips it.
+//
+//   4. createReport — files a report and emails the owner
+//      (MODERATION_ALERT_EMAIL) that one is waiting.
+//
+//   5. listPendingReports — admin-only callable. Returns reports
 //      with `status: 'pending'` plus their target content for
 //      review.
 //
-//   4. resolveReport — admin-only callable. Marks a report as
-//      resolved + optionally hides the target activity in one
-//      atomic write.
+//   6. resolveReport — admin-only callable. Marks a report as
+//      resolved + optionally hides the reported content (any of
+//      reportTargets.HIDEABLE_TARGET_TYPES) in one atomic write.
 //
 // The admin gate is env-var driven via adminAuth.isAdminUid — a
 // proper custom-claims rollout is a separate piece of work, this
@@ -5865,6 +5905,38 @@ exports.onCommentCreated = functions
   });
 
 /**
+ * The word filter over Community Space posts — the activity pattern
+ * above, applied to a post's title, body and author name. A post whose
+ * text trips it is removed (any signed-in user can read a space post, so
+ * there is no visibility to turn off). Fires on edits too: an author may
+ * rewrite a post's title and body. The decision lives in
+ * lib/spacePostModeration.js; deleting only ever shrinks data, so no
+ * account-deletion guard is needed (the reasoning onActivityDeleted gives).
+ */
+exports.onSpacePostWritten = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("spaces/{spaceId}/posts/{postId}")
+  .onWrite(async (change, context) => {
+    const { spaceId, postId } = context.params;
+    try {
+      await spacePostModeration.removeObjectionableSpacePost({
+        firestore: admin.firestore(),
+        ref: change.after.ref,
+        before: change.before.exists ? change.before.data() : null,
+        after: change.after.exists ? change.after.data() : null,
+        logger: functions.logger,
+      });
+    } catch (err) {
+      functions.logger.error("onSpacePostWritten.error", {
+        spaceId,
+        postId,
+        message: err && err.message,
+      });
+    }
+    return null;
+  });
+
+/**
  * Admin-only: fetch pending reports for the moderation queue.
  * Joins each report with its target content so the reviewer
  * doesn't have to chase doc references. Returns a sanitised
@@ -5901,7 +5973,7 @@ function queueReason(value) {
 }
 
 exports.createReport = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -5985,6 +6057,26 @@ exports.createReport = functions
       });
     });
 
+    // Tell the owner a report is waiting. After the commit, so an alert
+    // never announces a report that failed to store. sendReportAlert never
+    // throws and gives up on a slow provider: a reporter told their report
+    // failed would file it again.
+    await reportAlert.sendReportAlert({
+      sendEmail: sendViaResend,
+      to: reportAlert.alertRecipient(),
+      queueUrl: reportAlert.moderationQueueUrl(
+        helpers.getStripeReturnBaseUrl()
+      ),
+      report: {
+        reportId: reportRef.id,
+        targetType: target.targetType,
+        category: input.category,
+        subReason: input.subReason,
+        freeformNote: input.freeformNote,
+      },
+      logger: functions.logger,
+    });
+
     return { reportId: reportRef.id };
   });
 
@@ -6048,6 +6140,12 @@ exports.listPendingReports = functions
           targetId: target ? target.targetId : null,
           targetUid: target ? target.targetUid : null,
           targetActionable: target !== null,
+          // Whether resolveReport's hideActivity can act on it (Hide
+          // content in the queue). Decided here so the page holds no list
+          // of its own.
+          targetHideable:
+            target !== null &&
+            reportTargets.HIDEABLE_TARGET_TYPES.includes(target.targetType),
           target: target ? target.preview : null,
           // Display-only diagnostics — they never select a target.
           reportedTargetType: nullableString(report.targetType),
@@ -6069,9 +6167,10 @@ exports.listPendingReports = functions
 
 /**
  * Admin-only: mark a report as resolved. Optional `hideActivity`
- * flag flips the target activity to `flagged: true,
- * visibility: 'private'` in the same call so a moderator can
- * dismiss + hide in one click.
+ * flag takes the reported content out of the app in the same call so
+ * a moderator can dismiss + hide in one click: an activity becomes
+ * `flagged: true, visibility: 'private'`; a comment (activity or space
+ * post) or a space post is deleted. See reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -6117,8 +6216,11 @@ exports.resolveReport = functions
     const firestore = admin.firestore();
     const reportRef = firestore.collection("reports").doc(reportId);
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
+    // A hidden space post's likes and comments, swept after the commit.
+    let removedSpacePostRef = null;
 
     await firestore.runTransaction(async (transaction) => {
+      removedSpacePostRef = null; // a retried attempt starts clean
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -6175,11 +6277,31 @@ exports.resolveReport = functions
         return;
       }
 
-      if (hideActivity && target.targetType !== "activity") {
+      // `hideActivity` is the wire name from when only activities could be
+      // hidden; it now means "hide the reported content", whatever kind.
+      if (
+        hideActivity &&
+        !reportTargets.HIDEABLE_TARGET_TYPES.includes(target.targetType)
+      ) {
         throw new functions.https.HttpsError(
           "invalid-argument",
-          "Only activity reports can be hidden."
+          "Only content reports can be hidden."
         );
+      }
+
+      // Activities are flagged and made private; comments and space posts
+      // are deleted (reportTargets.queueContentHide says why).
+      const hideOutcome = hideActivity
+        ? reportTargets.queueContentHide({
+            transaction,
+            target,
+            adminUid: context.auth.uid,
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            increment: admin.firestore.FieldValue.increment,
+          })
+        : null;
+      if (hideActivity && target.targetType === "space_post") {
+        removedSpacePostRef = target.targetRef;
       }
 
       transaction.update(reportRef, {
@@ -6187,19 +6309,10 @@ exports.resolveReport = functions
         resolvedBy: context.auth.uid,
         resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
         hideAppliedByAdmin: hideActivity,
+        ...(hideOutcome ? { hideOutcome } : {}),
         restrictAppliedByAdmin: restrictUser,
         targetResolution: "revalidated",
       });
-
-      if (hideActivity) {
-        transaction.update(target.targetRef, {
-          flagged: true,
-          flaggedBy: "admin",
-          flaggedByAdminUid: context.auth.uid,
-          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-          visibility: "private",
-        });
-      }
 
       if (restrictUser) {
         const restrictionRef = firestore
@@ -6218,6 +6331,21 @@ exports.resolveReport = functions
         );
       }
     });
+
+    if (removedSpacePostRef) {
+      // The post is gone; its likes and comments subcollections are not
+      // (a document delete leaves them, and recursiveDelete cannot run in a
+      // transaction). Best effort: the report is already resolved, and
+      // nothing reads a subcollection whose post no longer exists.
+      try {
+        await firestore.recursiveDelete(removedSpacePostRef);
+      } catch (err) {
+        functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
 
     return { ok: true };
   });
@@ -6498,6 +6626,17 @@ function assertCallerEmailVerified(context) {
   }
 }
 
+/* Comments are public text: the word filter refuses one before it is
+   written, as failed-precondition so the client shows the sentence
+   (lib/objectionableText.js). The name rides on every comment, so it is
+   checked too. Pure and free, so it runs ahead of every Firestore read. */
+function assertCommentTextAllowed({ text, authorName }) {
+  const refusal = objectionableText.commentRefusal({ text, authorName });
+  if (refusal) {
+    throw new functions.https.HttpsError("failed-precondition", refusal);
+  }
+}
+
 exports.addSpacePostCommentCallable = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -6520,6 +6659,9 @@ exports.addSpacePostCommentCallable = functions
         "spaceId and postId required."
       );
     }
+    // The word filter, before any read or write: this callable is the only
+    // writer of space comments, so nothing gets past it to clean up later.
+    assertCommentTextAllowed({ text, authorName });
     await accountDeletionLocks.assertCallableActorNotDeleting(
       admin.firestore(),
       context.auth.uid
@@ -6674,6 +6816,10 @@ exports.addCommentCallable = functions
         "activityId required."
       );
     }
+    // Refused here rather than written and then deleted by
+    // onCommentCreated: the comment would be visible until the trigger ran,
+    // and its notification would already have gone to the author.
+    assertCommentTextAllowed({ text, authorName });
     // R1A-Deletion: callable-actor lock — deleting users cannot
     // post new comments mid-cascade.
     await accountDeletionLocks.assertCallableActorNotDeleting(
