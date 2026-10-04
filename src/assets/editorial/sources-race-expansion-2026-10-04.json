@@ -1,0 +1,423 @@
+{
+  "description": "Licensed destination photographs; not official race photography or a guarantee of the course.",
+  "sources": [
+    {
+      "raceId": "valencia-marathon",
+      "assets": ["space-valencia-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/the-city-of-arts-and-sciences-in-valencia-5-O5f9NxD2s",
+      "downloadUrl": "https://images.unsplash.com/photo-1741118585542-7f659501d7af?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "fd239572cb716a2762d5607f76355bc9c482a67168ce64f9701d6a90b4e5c1bf",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 106040,
+        "sha256": "9be436cae43a5e5f55c12f262bf4bc2eaedf9f248393183013939589cf392e67"
+      },
+      "locationEvidence": "City of Arts and Sciences, Valencia, Spain",
+      "photographer": "Matthew Ye",
+      "subject": "The city of arts and sciences in valencia"
+    },
+    {
+      "raceId": "houston-marathon",
+      "assets": ["space-houston-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/houston-texas-skyline-is-visible-on-a-sunny-day-9fKKJowOJDM",
+      "downloadUrl": "https://images.unsplash.com/photo-1746311528667-1038fe0c8c46?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "cce4152b42dc52c6ba8feec9b4479a23bf87a06153bc1ba8b331a093c529516b",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 108810,
+        "sha256": "508e683944572c2ce8bb244fc13b41bcf1f7b5a681a2dbbfde08440cf962eedf"
+      },
+      "locationEvidence": "Houston, TX, USA",
+      "photographer": "Dennis Lamberth",
+      "subject": "Houston, texas skyline is visible on a sunny day"
+    },
+    {
+      "raceId": "seville-marathon",
+      "assets": ["space-seville-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/plaza-de-espana-square-with-historic-buildings-and-sky-XIUe1ZwIsro",
+      "downloadUrl": "https://images.unsplash.com/photo-1762625368913-a005c896556b?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "c7b452b47619d846d329f1384b6bc61ee689aed70a8cfc9ff95fd53bf6f0c445",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 82,
+        "bytes": 85706,
+        "sha256": "00e38e3d280dec49090c14039645d5f0e6b07b3bc3647da4b19ed54ace49698e"
+      },
+      "locationEvidence": "Plaza de España, Seville, Spain",
+      "photographer": "Jose Manuel Esp",
+      "subject": "The Square of Spain in Seville is part of a famous park, Maria Luisa plark. It was built in 1929 for an universal exibition. this place is very busy with tourits and with locals that go there for relax."
+    },
+    {
+      "raceId": "cambridge-half",
+      "assets": ["space-cambridge-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/stone-bridge-over-a-calm-river-with-reflections-h0kX9E6WjfQ",
+      "downloadUrl": "https://images.unsplash.com/photo-1766838407941-3ba0a7a01a4f?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "9cf4928b208f6bf6897e3a4eb406afb070e9040b81599194b926bbdb8f0bc0c5",
+      "sourceSize": {
+        "width": 2400,
+        "height": 4160
+      },
+      "processing": "Selected landscape crop, resize and WebP compression; original colour.",
+      "output": {
+        "width": 1000,
+        "height": 628,
+        "quality": 64,
+        "bytes": 115622,
+        "sha256": "a8ae716f86b263db419db6b1bf3f2f7eb7c07425a82b8a23d583b39bbcdc83e3"
+      },
+      "locationEvidence": "Clare Bridge, River Cam, Cambridge, UK",
+      "cropPixels": {
+        "left": 0,
+        "top": 900,
+        "width": 2400,
+        "height": 1506
+      },
+      "photographer": "Les Elby",
+      "subject": "Clare Bridge reflected in the River Cam, viewed from Garret Hostel Bridge on Christmas Day in Cambridge City Centre, with bare winter trees and calm water."
+    },
+    {
+      "raceId": "bath-half",
+      "assets": ["space-bath-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/pulteney-bridge-in-bath-with-shops-and-river-5RL72VxGme0",
+      "downloadUrl": "https://images.unsplash.com/photo-1759497634481-21b7416ba892?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "4ed9e55d3c2d4169b9dfc7cf9032e53484109d4fa48232c04bf5129ffa69d645",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1601
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 70,
+        "bytes": 113988,
+        "sha256": "3e302e8ce2347a0ad2196fa52ce1027f5cb8451892c6cbdeb644759d15cc5097"
+      },
+      "locationEvidence": "Pulteney Bridge, Bath, UK",
+      "photographer": "Ziyao Xiong",
+      "subject": "Pulteney bridge in bath with shops and river"
+    },
+    {
+      "raceId": "barcelona-marathon",
+      "assets": ["space-barcelona-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/panoramic-view-of-barcelona-cityscape-with-sagrada-familia-PAKlGZNVUQM",
+      "downloadUrl": "https://images.unsplash.com/photo-1776770765859-cca1ac470e8a?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "064d0941102b71fa7ba896a2c465459a391a2e128b3b3795660647f73e9a13d2",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3200
+      },
+      "processing": "Selected landscape crop, resize and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 72,
+        "bytes": 116080,
+        "sha256": "d4afba9e14a3e2673f0d7b94606c2e676587ddea462387c8d2271cf8c1111595"
+      },
+      "locationEvidence": "Sagrada Familia, Barcelona, Spain",
+      "cropPixels": {
+        "left": 0,
+        "top": 1450,
+        "width": 2400,
+        "height": 1506
+      },
+      "photographer": "Carlos Ibáñez",
+      "subject": "Panoramic view of barcelona cityscape with sagrada familia"
+    },
+    {
+      "raceId": "sydney-marathon",
+      "assets": ["space-sydney-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/sydney-harbour-opera-house-cityscape-and-boats-under-clear-sky-EqNp_gwIn3A",
+      "downloadUrl": "https://images.unsplash.com/photo-1783004851932-c6eadb070038?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "5db3df2ccde7004d6f31f9677472b2f21f4eb95b10044d15580ba39dd3f15635",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1800
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 82,
+        "bytes": 111312,
+        "sha256": "9e8ad4451313a069a1f513a41ed564f238546764630f2edbd23da00d113cb6b0"
+      },
+      "locationEvidence": "Sydney Harbour and Opera House, Australia",
+      "photographer": "Simone Muzzi",
+      "subject": "Sydney harbour, opera house, cityscape, and boats under clear sky"
+    },
+    {
+      "raceId": "amsterdam-marathon",
+      "assets": ["space-amsterdam-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/canal-in-amsterdam-with-buildings-and-boats-n3TDcELL4C8",
+      "downloadUrl": "https://images.unsplash.com/photo-1747650245388-2dfdaf57aed2?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "3f01ef0a4e18db874fd943056fb719ec9b616bad357a8ef5496ea8dce01e9639",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1100,
+        "height": 690,
+        "quality": 54,
+        "bytes": 118554,
+        "sha256": "c012b3670ffce0cdfca0fa290f8a0b9da0131b1298461c5b4d5bea267c365438"
+      },
+      "locationEvidence": "Amsterdam, Netherlands",
+      "photographer": "yaennckew",
+      "subject": "Canal in amsterdam with buildings and boats"
+    },
+    {
+      "raceId": "rotterdam-marathon",
+      "assets": ["space-rotterdam-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-large-bridge-spanning-over-a-large-body-of-water-mzrPiJ2Rnxc",
+      "downloadUrl": "https://images.unsplash.com/photo-1690360994204-3d10cc73a08d?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "6ffa14ba439009d67dd02ccdac0dff32c0237494392395cf73f86235dbc68a51",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1350
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 70,
+        "bytes": 119044,
+        "sha256": "ae7df5978a0b449ba29ea8313d23f4d14c6daa63c62ef143b809d01ed16a212d"
+      },
+      "locationEvidence": "Erasmus Bridge, Rotterdam, Netherlands",
+      "photographer": "Arnout van Nieuwkoop",
+      "subject": "Erasmus Bridge in Rotterdam captured in an image together with the skyline"
+    },
+    {
+      "raceId": "copenhagen-marathon",
+      "assets": ["space-copenhagen-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/nyhavn-copenhagen-iC2FHfd3TuM",
+      "downloadUrl": "https://images.unsplash.com/photo-1526662075745-edd1c71a4cff?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "f8726240a4373fed03a55414fae927da08a5cf4320fabab8befeddfa3c9f02f1",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1000,
+        "height": 628,
+        "quality": 66,
+        "bytes": 117260,
+        "sha256": "b44d00c51f6bccdbb61ef847eb2f235aa11fe9ec18c1913cd52d6eb1fe83b727"
+      },
+      "locationEvidence": "Nyhavn, Copenhagen, Denmark",
+      "photographer": "Nick Karvounis",
+      "subject": "Nyhavn Canal Tour Copenhagen"
+    },
+    {
+      "raceId": "oxford-half",
+      "assets": ["space-oxford-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/the-radcliffe-camera-building-is-shown-with-the-sky-kPA7X2BgqV8",
+      "downloadUrl": "https://images.unsplash.com/photo-1749225595496-06cd2c49fa2b?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "62f9001097cc46e96206d43582855e4e9f08b39e142120025f9f503754b9578d",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 82,
+        "bytes": 93694,
+        "sha256": "b512970fd93abd55928afed88bedb98499e735ce68d94353a1da53aef715a457"
+      },
+      "locationEvidence": "Radcliffe Camera, Oxford, UK",
+      "photographer": "Gadiel Lazcano",
+      "subject": "The radcliffe camera building is shown with the sky"
+    },
+    {
+      "raceId": "great-bristol-10k",
+      "assets": ["space-great-bristol-10k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/the-historic-clifton-suspension-bridge-spans-a-lush-green-gorge-VA-jwbDBhBk",
+      "downloadUrl": "https://images.unsplash.com/photo-1784471396874-489f6e058374?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "cadbf247fd958819520936e3035c767dad84cb5f6162eeb2119b725c5b4fca63",
+      "sourceSize": {
+        "width": 2400,
+        "height": 3600
+      },
+      "processing": "Selected landscape crop, resize and WebP compression; original colour.",
+      "output": {
+        "width": 1100,
+        "height": 690,
+        "quality": 64,
+        "bytes": 117168,
+        "sha256": "fc458b90c83435cf08f113b1d43d11b3f8f050633957000a109a9780ddfbfa0b"
+      },
+      "locationEvidence": "Clifton Suspension Bridge, Bristol, UK",
+      "cropPixels": {
+        "left": 0,
+        "top": 750,
+        "width": 2400,
+        "height": 1506
+      },
+      "photographer": "Alexander Kaufmann",
+      "subject": "The historic clifton suspension bridge spans a lush green gorge"
+    },
+    {
+      "raceId": "edinburgh-5k",
+      "assets": ["space-edinburgh-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-from-the-top-of-a-hill-r3kbHQKBRm0",
+      "downloadUrl": "https://images.unsplash.com/photo-1701800774163-2e6c1568b421?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "85722ed784ec5f5d2e7aabddea6794f9d270a471c1c7972948625ae76ed10f9f",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 66,
+        "bytes": 114276,
+        "sha256": "7a9d41ac1ce10cec5346811051a6acaea331a8a51ef18ca810c702b3b9f1defb"
+      },
+      "locationEvidence": "View from Holyrood Park, Edinburgh, UK",
+      "photographer": "Edoardo Bortoli",
+      "subject": "Panoramic view of Edinburgh from Holyrood Park"
+    },
+    {
+      "raceId": "river-ness-5k",
+      "assets": ["space-river-ness-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-river-with-a-boat-on-it-LFZRAohU2DI",
+      "downloadUrl": "https://images.unsplash.com/photo-1662405550936-6e0546ca169f?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "d80295ffa1a7551c8d5c8a953d3ae20ab32e47603415b05d7e940eafa86be6e6",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1000,
+        "height": 628,
+        "quality": 54,
+        "bytes": 118502,
+        "sha256": "619ea13fab4e39cef34f6d66bc18da969e9515889445408ebc4ec7e4f8cdbbc4"
+      },
+      "locationEvidence": "Ness Islands, River Ness, Inverness, UK",
+      "photographer": "Frank",
+      "subject": "View from the tip of the Ness Islands in Inverness (Scotland) to the river Ness"
+    },
+    {
+      "raceId": "brighton-half",
+      "assets": ["space-brighton-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/brighton-pier-with-the-ocean-and-beach-zWyEAiJL_Vc",
+      "downloadUrl": "https://images.unsplash.com/photo-1758896154586-f0cd71a207ee?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "574e2e97f9d6093f8a29377f6f2cd168c01fe2cec322279725d8c4ecc0eee69d",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1609
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 70,
+        "bytes": 115066,
+        "sha256": "cf68159bece63da0792eb8b29ccf49861db9e6b39adb79060262ecda928ca8ee"
+      },
+      "locationEvidence": "Brighton Palace Pier, Brighton, UK",
+      "photographer": "Lex Brogan",
+      "subject": "Brighton Palace Pier in the golden hour, capturing a serene summer evening in Brighton, UK."
+    },
+    {
+      "raceId": "tokyo-marathon",
+      "assets": ["space-tokyo-marathon.webp"],
+      "sourceUrl": "https://unsplash.com/photos/tokyo-tower-illuminated-at-dusk-with-city-skyline-IocJwyqRv3M",
+      "downloadUrl": "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=2400&q=85&fm=jpg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-04",
+      "sourceSha256": "3eb8159fffcb09364838e27887c2a921dd3d2a033e0d8c8453d63988fd02149c",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1598
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 104860,
+        "sha256": "c82e8546cdcb29b0c2d8419671261d800e5f37fd4b8d89b1561041f99ebd5da9"
+      },
+      "locationEvidence": "Tokyo Tower from Roppongi Hills, Tokyo, Japan",
+      "photographer": "Louie Martinez",
+      "subject": "The best place to take a photo of the Tokyo Tower is at the viewing deck of Mori building in Roponggi Hills"
+    }
+  ]
+}

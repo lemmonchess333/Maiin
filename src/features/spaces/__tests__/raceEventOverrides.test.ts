@@ -10,10 +10,37 @@ import {
   sanitizeRaceEventOverrides,
   resolveRaceEvent,
   upcomingResolvedRaceDefs,
+  directoryResolvedRaceDefs,
 } from "../raceEventOverrides";
 import { raceSpaceDefs, spaceDef } from "../spaceDefs";
 
 const BIG_HALF = spaceDef("the-big-half")!;
+
+it("validates both race days and removes the previous edition's choices on rollover", () => {
+  const london = spaceDef("london-marathon")!;
+  const dateKeys = ["2028-04-22", "2028-04-23"];
+  const valid = sanitizeRaceEventOverrides({
+    "london-marathon": { dateKey: dateKeys[1], dateKeys },
+  });
+  expect(resolveRaceEvent(london, valid)?.dateKeys).toEqual(dateKeys);
+  const rolled = sanitizeRaceEventOverrides({
+    "london-marathon": { dateKey: "2028-04-23" },
+  });
+  expect(resolveRaceEvent(london, rolled)?.dateKeys).toBeUndefined();
+  for (const invalid of [
+    ["2028-13-22", "2028-13-23"],
+    ["2028-04-21", "2028-04-23"],
+    [...dateKeys, "2028-04-24"],
+    [...dateKeys].reverse(),
+  ]) {
+    expect(
+      sanitizeRaceEventOverrides({
+        "london-marathon": { dateKey: "2028-04-23", dateKeys: invalid },
+      })["london-marathon"].dateKeys
+    ).toBeUndefined();
+  }
+  expect(london.event?.dateKeys).toEqual(["2027-04-24", "2027-04-25"]);
+});
 
 describe("sanitizeRaceEventOverrides", () => {
   it("keeps valid fields for known race ids", () => {
@@ -130,4 +157,17 @@ it("validates country codes and retains bundled countries for older remote paylo
       "boston-marathon": { dateKey: "2028-04-17" },
     })?.countryCode
   ).toBe("US");
+});
+
+it("keeps every recurring race discoverable, with confirmed dates before awaiting editions", () => {
+  const all = directoryResolvedRaceDefs({}, "2099-01-01");
+  expect(all).toHaveLength(raceSpaceDefs().length);
+  for (const id of ["berlin-marathon", "loch-ness-marathon", "london-10000"])
+    expect(all.some((r) => r.id === id)).toBe(true);
+  const restored = directoryResolvedRaceDefs(
+    { "berlin-marathon": { dateKey: "2099-09-26" } },
+    "2099-01-01"
+  );
+  expect(restored[0].id).toBe("berlin-marathon");
+  expect(upcomingResolvedRaceDefs({}, "2099-01-01")).toEqual([]);
 });

@@ -34,6 +34,7 @@ import {
   type RaceBrowseFilters,
 } from "@/features/spaces/raceBrowse";
 import type { SpaceDef } from "@/features/spaces/spaceDefs";
+import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
 
@@ -75,11 +76,15 @@ function UpcomingRacePicker({
   races,
   distance,
   selectedId,
+  selectedDate,
+  minDate,
   onPick,
 }: {
   races: SpaceDef[];
   distance: RaceDistance;
   selectedId: string;
+  selectedDate: string;
+  minDate: string;
   onPick: (def: SpaceDef) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -89,6 +94,11 @@ function UpcomingRacePicker({
     distance,
   }));
   const filteredRaces = filterRaceDefs(races, filters);
+  const raceDays = filteredRaces.flatMap((race) =>
+    raceEventDates(race.event!)
+      .filter((dateKey) => dateKey >= minDate)
+      .map((dateKey) => ({ race, dateKey }))
+  );
 
   return (
     <div>
@@ -119,7 +129,7 @@ function UpcomingRacePicker({
       {open && (
         <div className="mt-3 space-y-2">
           <RaceFilters value={filters} onChange={setFilters} />
-          {filteredRaces.length === 0 ? (
+          {raceDays.length === 0 ? (
             <EmptyState
               compact
               icon={Flag}
@@ -138,17 +148,30 @@ function UpcomingRacePicker({
               aria-label="Upcoming races"
               className="space-y-1"
             >
-              {filteredRaces.map((race) => {
-                const isSelected = race.id === selectedId;
+              {raceDays.map(({ race, dateKey }) => {
+                const isSelected =
+                  race.id === selectedId && dateKey === selectedDate;
                 return (
                   <button
-                    key={race.id}
+                    key={`${race.id}:${dateKey}`}
                     type="button"
                     role="option"
+                    aria-label={`${race.name} ${format(parseLocalDate(dateKey), "d MMM yyyy")} ${RACE_DISTANCE_LABELS[race.event!.distance]}`}
                     aria-selected={isSelected}
                     onClick={() => {
                       haptic();
-                      onPick(race);
+                      onPick(
+                        raceEventDates(race.event!).length === 1
+                          ? race
+                          : {
+                              ...race,
+                              event: {
+                                ...race.event!,
+                                dateKey,
+                                dateKeys: [dateKey],
+                              },
+                            }
+                      );
                       setOpen(false);
                     }}
                     className={cn(
@@ -174,10 +197,7 @@ function UpcomingRacePicker({
                     </span>
                     <span className="shrink-0 flex items-center gap-2">
                       <span className="text-caption text-muted-foreground font-mono tabular-nums">
-                        {format(
-                          parseLocalDate(race.event!.dateKey),
-                          "d MMM yyyy"
-                        )}
+                        {format(parseLocalDate(dateKey), "d MMM yyyy")}
                       </span>
                       <span
                         className="text-caption text-muted-foreground"
@@ -242,6 +262,8 @@ export default function RaceGoalPlanner({
           races={upcomingRaces}
           distance={distance}
           selectedId={selectedEventSpaceId}
+          selectedDate={targetDate}
+          minDate={minDate}
           onPick={onPickRace}
         />
       )}

@@ -43,7 +43,9 @@
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "art:cutouts": "node --import tsx scripts/art/cut-out-form-art.ts",
     "art:releases": "node --import tsx scripts/art/gen-form-art-releases.ts",
-    "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts"
+    "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts",
+    "races:refresh": "tsx scripts/refresh-race-dates.ts",
+    "races:check": "tsx scripts/check-race-dates.ts"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
