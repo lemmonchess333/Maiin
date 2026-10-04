@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "landmine-squat": placard(
+    "landmine-squat",
+    ["Quadriceps"],
+    ["Glutes", "Abs"],
+    [
+      [0, "Setup", "Hold the bar at chest; brace firmly."],
+      [0.5, "Lower", "Bend knees and hips; keep heels grounded."],
+      [1, "Depth", "Squat to parallel; keep your chest tall."],
+      [0.5, "Drive", "Push through your feet; keep elbows tucked."],
+      [0, "Stand", "Stand tall without leaning back."],
+      [0, "Reset", "Keep the bar close; brace before repeating."],
+    ]
+  ),
   "sled-push-pull": placard(
     "sled-push-pull",
     ["Quadriceps", "Glutes"],

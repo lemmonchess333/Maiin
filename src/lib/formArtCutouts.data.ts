@@ -407,6 +407,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
     sha256: "30467c90d658f42adf21b958a3a517c70119c94004c6422d0597e144fbb0bb6b",
   },
+  "landmine-squat": {
+    src: "form-art/landmine-squat.webp",
+    width: 480,
+    height: 369,
+    keyed: true,
+    source: "form-frames/landmine-squat/1.webp",
+    sourceSha256:
+      "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da",
+    sha256: "b9848234c2e5e92b2dd0d5223d5a13e5a2de06a987d0d5ce4a4f15e3406560e0",
+  },
   "lateral-raise": {
     src: "form-art/lateral-raise.webp",
     width: 224,
