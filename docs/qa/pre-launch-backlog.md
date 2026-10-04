@@ -86,6 +86,57 @@ need a phone and a deploy.
 - [ ] **Open Food Facts credit** under a barcode result, the search
       results and the portion sheet, which still fits on an SE.
 
+## User content moderation for App Review 1.2 (2026-10-04)
+
+Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,
+`src/components/social/CommentSheet.tsx`, `CommentPanels.tsx`, `ReportForm.tsx`,
+`src/features/spaces/SpaceCommentSheet.tsx`, `src/pages/AdminModeration.tsx`;
+`functions/index.js` (`createReport`, `listPendingReports`, `resolveReport`,
+the two comment callables, `completeOnboarding`, `configurePlan`, the new
+`onSpacePostWritten` trigger), `functions/lib/reportTargets.js`,
+`reportAlert.js`, `objectionableText.js`, `spacePostModeration.js`.
+Operator setup (ADMIN_UIDS, MODERATION_ALERT_EMAIL, RESEND_FROM, the
+VITE_ADMIN_UIDS secret): `docs/LAUNCH_TODO.md` §19.
+
+The callables, the trigger and the email are tested against an in-memory
+Firestore with Resend mocked at `fetch`; whether an email actually lands, and
+how the sheets feel on a phone, need the real thing.
+
+- [ ] **Report alert reaches the inbox.** After the first Deploy production
+      run carrying this work, and with `functions/.env` set and
+      `createReport` deployed as §19 says: sign in as a second account,
+      report someone's comment with a note. Within a minute an email titled
+      "New report: …" arrives at `MODERATION_ALERT_EMAIL`
+      (`support@troposfit.com` when unset), carrying the reason, what was
+      reported, the note, and an "Open the moderation queue" link that opens
+      `/admin/moderation` with the report on it. If nothing arrives, Cloud
+      Logging for `createReport` has a `createReport.alert_failed` line with
+      Resend's answer; with no `RESEND_FROM` the sender is
+      `onboarding@resend.dev`, which Resend only delivers to its own
+      account owner's address.
+- [ ] **Deployed source.** `scripts/verify-deployed-functions-source.py`
+      now reads back `createReport` and `onSpacePostWritten` (and the
+      word filter's module on both comment callables) after every
+      functions deploy. Confirm the first Deploy production run after this
+      work logs "Verified deployed source" for each.
+- [ ] **Hide content on each kind.** From the queue, hide a reported Space
+      comment, an activity comment and a Space post. Each is gone for a
+      third account, and the comment counts on the post or activity drop by
+      one.
+- [ ] **Report and Block user from a comment, on a phone.** The ⋯ on
+      someone else's comment opens its options inside the sheet; the report
+      form fits and scrolls on a small phone (SE) with Submit reachable;
+      Block user removes their comments from the list. Delete on your own
+      comment now confirms in the sheet and deletes on the first tap of
+      Delete (the old confirm dialog closed the sheet on the first tap).
+- [ ] **A Space post that trips the filter is removed.** A clean post edited
+      to objectionable text with a direct SDK write is gone from the space
+      within seconds (the app itself refuses the text first).
+- [ ] **The Terms line on sign-in and sign-up** wraps cleanly on a small
+      phone, and its two links open the Terms and the Privacy Policy while
+      signed out. `public/legal/terms.html` carries the same October 2026
+      Terms as `TermsOfService.tsx`.
+
 ## The first-visit guide (2026-10-04)
 
 Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
