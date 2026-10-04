@@ -100,8 +100,9 @@ firebase functions:secrets:set BILLING_PREVIOUS_HMAC_SECRET   # = BILLING_HMAC_S
 
 `ADMIN_UIDS` (moderation allowlist) and `MODERATION_ALERT_EMAIL` (where
 report alerts go, default `support@troposfit.com`) are **not** secrets —
-set them as plain env vars in `functions/.env`. Section 19 has the steps
-and what a deploy does with that file.
+set them as repository variables on GitHub, which the functions deploy
+writes into `functions/.env`. Section 19 has the steps and what a deploy
+does with that file.
 
 **Safety gate:** a `firebase deploy` that references a bound secret which
 hasn't been provisioned **fails** before shipping — so provision all of
@@ -580,67 +581,58 @@ Apple Guideline 1.2 territory — landed pre-launch.
 
 The filter runs unconditionally once functions deploy, but the
 `/admin/moderation` queue stays locked (fail-closed: empty allowlist →
-no admins → every callable rejects) until both `ADMIN_UIDS` (server)
-and `VITE_ADMIN_UIDS` (client) hold the same uid. The report alert needs
-`RESEND_FROM` on `createReport` to reach any inbox but the Resend
-account owner's. Step-by-step:
+no admins → every callable rejects) until `ADMIN_UIDS` holds the
+moderator's uid. The functions and the web builds both read it. The
+report alert needs `RESEND_FROM` on `createReport` to reach any inbox
+but the Resend account owner's. Step-by-step:
 
 1. **Get the moderator's Firebase Auth UID** — Firebase Console →
    Authentication → Users, copy the UID column for the operator
    account (28-character string, mixed-case alphanumeric).
 
-2. **Set the server-side variables.** These are plain env vars, not
-   secrets. `functions.config()` and `firebase functions:config:set` no
-   longer work (firebase-functions v7 removed them; the Runtime Config
-   API shut down 2025-12-31), so they go in `functions/.env`, which is
-   gitignored and stays on your machine:
+2. **Set the server-side variables on GitHub.** They are plain
+   settings, not secrets. `functions.config()` and
+   `firebase functions:config:set` no longer work (firebase-functions v7
+   removed them; the Runtime Config API shut down 2025-12-31), and the
+   functions deploy now writes `functions/.env` from repository variables
+   of the same names (`scripts/write-functions-env.mjs`), so nothing is
+   deployed from your machine. GitHub → the repo → Settings → Secrets and
+   variables → Actions → **Variables** → New repository variable, once
+   for each:
 
-   ```bash
-   # functions/.env
-   ADMIN_UIDS=THE_UID_HERE
-   # Where report alerts go. Optional: this is the default.
-   MODERATION_ALERT_EMAIL=support@troposfit.com
-   # The sender. Without it Resend sends from onboarding@resend.dev, which
-   # only delivers to the Resend account owner's own address.
-   RESEND_FROM=Tropos <no-reply@troposfit.com>
-   # Optional: the origin the alert's /admin/moderation link opens on.
-   # Unset, it is the GitHub Pages app (https://lemmonchess333.github.io/Maiin/).
-   PUBLIC_APP_BASE_URL=https://troposfit.com/
-   ```
+   | Variable                 | Value                                                                                                                                                                           |
+   | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `ADMIN_UIDS`             | the uid from step 1. Several moderators: comma-separate, `uid1,uid2`                                                                                                            |
+   | `MODERATION_ALERT_EMAIL` | where report alerts go. Optional: unset, it is `support@troposfit.com`                                                                                                          |
+   | `RESEND_FROM`            | the sender, on a domain verified in Resend, e.g. `Tropos <no-reply@troposfit.com>`. Unset, Resend sends from onboarding@resend.dev, which only reaches the Resend account owner |
+   | `PUBLIC_APP_BASE_URL`    | optional: the origin the alert's `/admin/moderation` link opens on, e.g. `https://troposfit.com/`. Unset, it is the GitHub Pages app (https://lemmonchess333.github.io/Maiin/)  |
 
-   Multiple moderators: comma-separate, e.g. `ADMIN_UIDS=uid1,uid2,uid3`.
-   Then deploy the functions that read them, from an up-to-date checkout
-   of `main`:
+   Then Actions → **Deploy production** → Run workflow. A manual run
+   always deploys the functions, and its "Write functions/.env from
+   repository variables" step names the settings it wrote.
 
-   ```bash
-   firebase deploy --only functions:listPendingReports,functions:resolveReport,functions:createReport \
-     --project adaptive-fitness-af8bb
-   ```
-
-   Requires `npm install -g firebase-tools` + `firebase login`
-   (use `--no-localhost` if running over SSH / Codespaces). How
-   firebase-tools treats plain env vars (the same rules as
-   `REVENUECAT_SANDBOX_UIDS`, `docs/iap/revenuecat-setup.md` Part C):
-   a deploy WITH a `functions/.env` replaces the deployed functions'
-   variables with the file's contents, so keep every plain variable those
-   functions need in it; a CI deploy carries no `functions/.env` and keeps
-   what each function already has, but a function a CI deploy creates for
-   the first time gets none. Confirm the values in the Google Cloud
-   console (Cloud Functions → the function → Variables).
+   How firebase-tools treats the file (`docs/iap/revenuecat-setup.md`
+   Part C): a deploy with a `functions/.env` replaces every deployed
+   function's plain variables with the file's contents. So while none of
+   these variables is set, the deploy writes no file and each function
+   keeps what it has, and from the first deploy with any of them set,
+   GitHub holds them all: a setting that was set some other way and is
+   not on GitHub is unset by that deploy, and the step's log names those.
+   Confirm the values in the Google Cloud console (Cloud Functions → the
+   function → Variables).
 
    `createReport` also binds the `RESEND_API_KEY` secret. It is already
    provisioned, and the runtime account can already read it (the password
    reset and verification emails bind it), so no new grant is needed.
 
-3. **Set the client-side allowlist** — the web builds read
-   `VITE_ADMIN_UIDS` from a GitHub Actions **secret**
-   (`deploy.yml` and `deploy-hosting.yml` pass
-   `${{ secrets.VITE_ADMIN_UIDS }}`; it only decides whether the page
-   renders, the callables re-check `ADMIN_UIDS`). GitHub → the repo →
-   Settings → Secrets and variables → Actions → New repository secret,
-   name `VITE_ADMIN_UIDS`, value exactly the uid(s) from step 2. Then
-   re-run **Deploy production** (`workflow_dispatch`) so the web builds
-   pick it up. Do not write the uid into the workflow files.
+3. **The client-side allowlist comes with it.** The web builds read
+   `VITE_ADMIN_UIDS`, and fall back to the `ADMIN_UIDS` variable from
+   step 2 (`deploy.yml` and `deploy-hosting.yml` pass
+   `${{ secrets.VITE_ADMIN_UIDS || vars.ADMIN_UIDS }}`), so the Deploy
+   production run in step 2 covers it. It only decides whether the page
+   renders; the callables re-check `ADMIN_UIDS`. A `VITE_ADMIN_UIDS`
+   secret set earlier still wins: delete it so the one variable decides
+   both. Do not write the uid into the workflow files.
 
 4. **Verify the queue** — open `/admin/moderation` on the hosted app
    (`https://troposfit.com/admin/moderation` once that origin serves the
@@ -648,13 +640,13 @@ account owner's. Step-by-step:
    while signed in as the operator account. Either "All clear. No
    pending reports." or a list of report cards = working. "Not
    authorised" = the UID didn't match somewhere (re-check step 1
-   against both values).
+   against the `ADMIN_UIDS` variable, and any `VITE_ADMIN_UIDS` secret).
 
 5. **Verify the alert** — file a test report from a second account and
    confirm the email reaches the inbox (the pre-launch backlog row
    "Report alert reaches the inbox" has the steps).
 
-Until both allowlists are set, `/admin/moderation` 403s for everyone and
+Until `ADMIN_UIDS` is set, `/admin/moderation` 403s for everyone and
 the `listPendingReports` callable rejects all calls. The filter triggers
 and refusals run regardless — they're independent of the allowlist and
 start filtering UGC the moment functions deploy.

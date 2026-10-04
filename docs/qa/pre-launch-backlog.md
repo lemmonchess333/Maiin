@@ -103,8 +103,8 @@ Firestore with Resend mocked at `fetch`; whether an email actually lands, and
 how the sheets feel on a phone, need the real thing.
 
 - [ ] **Report alert reaches the inbox.** After the first Deploy production
-      run carrying this work, and with `functions/.env` set and
-      `createReport` deployed as §19 says: sign in as a second account,
+      run carrying this work, and with the moderation variables set on
+      GitHub and deployed as §19 says: sign in as a second account,
       report someone's comment with a note. Within a minute an email titled
       "New report: …" arrives at `MODERATION_ALERT_EMAIL`
       (`support@troposfit.com` when unset), carrying the reason, what was
@@ -1158,13 +1158,13 @@ sandbox Pro to nobody. Production purchases are unaffected.
 - [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
       test event returns 200. It did on 2026-09-30.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
-      Review's demo account uid, comma-separated. It is a plain env var,
-      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
-      **App Review's demo uid must be on it before submission**, or the
-      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
-      function already has but gives a newly created function nothing, so
-      set it after the first deploy creates these two functions and confirm
-      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
+      Review's demo account uid, comma-separated. It is a plain setting,
+      set the way `ADMIN_UIDS` is: a repository variable on GitHub, which
+      the functions deploy writes into `functions/.env`, then a Deploy
+      production run. **App Review's demo uid must be on it before
+      submission**, or the reviewer's test purchase will not unlock Pro.
+      Confirm it in the Cloud console. Steps:
+      `docs/iap/revenuecat-setup.md` Part C.
 - [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The
