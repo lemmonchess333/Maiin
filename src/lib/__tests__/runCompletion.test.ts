@@ -73,6 +73,7 @@ const run = (extra: Partial<FinishedRun> = {}): FinishedRun => ({
   invalidReason: null,
   routeQuality: null,
   shoeId: "shoe-1",
+  bestEfforts: [{ distance: 5000, time: 1385, label: "5K" }],
   ...extra,
 });
 
@@ -121,6 +122,18 @@ describe("runDocument", () => {
       offPlan: false,
       scheduledRunId: null,
     });
+  });
+
+  it("keeps the finish screen's best efforts, which the thinned trace cannot find again", () => {
+    expect(runDocument(run(), FINISH).bestEfforts).toEqual([
+      { distance: 5000, time: 1385, label: "5K" },
+    ]);
+    // A run saved despite invalid figures names none, as its finish
+    // screen named none.
+    expect(
+      runDocument(run({ isInvalid: true, invalidReason: "too-fast" }), FINISH)
+        .bestEfforts
+    ).toEqual([]);
   });
 
   it("thins the trace, trims the notes and names the shoe", () => {

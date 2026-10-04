@@ -50,6 +50,7 @@ vi.mock("@/components/social/CircleShareSheet", () => ({
 }));
 
 import WorkoutDetail from "../WorkoutDetail";
+import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import {
   seedFirestore,
   resetFirestore,
@@ -135,10 +136,89 @@ describe("WorkoutDetail", () => {
     expect(screen.getByText("Barbell Bench Press")).toBeTruthy();
     // Two working sets at 60kg. The 40kg warm-up is NOT work and must not
     // appear — counting it inflates every set total on the page, the same
-    // boundary SessionCompleteScreen's SETS stat enforces.
-    expect(screen.getAllByText("8× 60 kg")).toHaveLength(2);
-    expect(screen.queryByText("10× 40 kg")).toBeNull();
+    // boundary SessionCompleteScreen's sets figure enforces.
+    expect(screen.getAllByText("60 kg × 8")).toHaveLength(2);
+    expect(screen.queryByText("40 kg × 10")).toBeNull();
     expect(screen.getByText("2 sets")).toBeTruthy();
+    // Numbered among the sets that count, as the workout screen numbered
+    // them, and named in words for a screen reader.
+    expect(screen.getByText("Set 1: 60 kg, 8 reps")).toBeTruthy();
+    expect(screen.getByText("Set 2: 60 kg, 8 reps")).toBeTruthy();
+  });
+
+  it("marks a drop set and a set to failure as the workout screen did", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [
+          {
+            ...SAVED.exercises[0],
+            sets: [
+              { setNumber: 1, reps: 8, weightKg: 80, type: "working" },
+              // Saved before set types were recorded: a working set.
+              { setNumber: 2, reps: 8, weightKg: 80 },
+              { setNumber: 3, reps: 10, weightKg: 60, type: "dropset" },
+              { setNumber: 4, reps: 6, weightKg: 45, type: "failure" },
+            ],
+          },
+        ],
+      },
+    });
+    const { container } = renderAt("w1");
+    expect(await screen.findByText("Barbell Bench Press")).toBeTruthy();
+    expect(
+      [...container.querySelectorAll("[data-set-type]")].map(
+        (chip) => `${chip.getAttribute("data-set-type")} ${chip.textContent}`
+      )
+    ).toEqual(["working 1", "working 2", "dropset D", "failure F"]);
+    expect(screen.getByText("Set 3, drop set: 60 kg, 10 reps")).toBeTruthy();
+    expect(screen.getByText("Set 4, to failure: 45 kg, 6 reps")).toBeTruthy();
+  });
+
+  it("writes a hold in seconds and a bodyweight set in reps", async () => {
+    seedFirestore({
+      "users/u1/workouts/w1": {
+        ...SAVED,
+        exercises: [
+          {
+            exerciseId: "plank",
+            exerciseName: "Plank",
+            category: "core",
+            repUnit: "seconds",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 60, weightKg: 0 }],
+          },
+          {
+            exerciseId: "pull-ups",
+            exerciseName: "Pull-Ups",
+            category: "pull",
+            caloriesBurned: 0,
+            sets: [{ setNumber: 1, reps: 1, weightKg: 0 }],
+          },
+        ],
+      },
+    });
+    renderAt("w1");
+    expect(await screen.findByText("60 s")).toBeTruthy();
+    expect(screen.getByText("Set 1: 60 seconds")).toBeTruthy();
+    expect(screen.getByText("1 rep")).toBeTruthy();
+    // No load the app can weigh, so the session's work is its reps, as on
+    // the finish screen; the hold's seconds are not reps.
+    expect(screen.getByText("rep")).toBeTruthy();
+    expect(screen.queryByText("kg lifted")).toBeNull();
+  });
+
+  it("leads with the finish screen's three figures", async () => {
+    seedFirestore({ "users/u1/workouts/w1": SAVED });
+    renderAt("w1");
+    expect(await screen.findByText("minutes")).toBeTruthy();
+    const figure = (unit: string) =>
+      screen.getByText(unit).previousElementSibling?.textContent;
+    expect(figure("minutes")).toBe("52");
+    expect(figure("sets")).toBe("2");
+    expect(figure("kg lifted")).toBe(
+      workoutTonnageKg(SAVED as never).toLocaleString("en-GB")
+    );
   });
 
   it("shows a not-found state rather than crashing on a missing workout", async () => {

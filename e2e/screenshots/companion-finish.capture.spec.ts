@@ -145,7 +145,7 @@ for (const budget of [null, 30] as const) {
       .getByRole("button", { name: "Start workout", exact: true })
       .click();
     const warmups = await page
-      .getByTitle("Set type: warmup", { exact: true })
+      .getByRole("button", { name: /^Warm-up \d+\. Change set type$/ })
       .count();
     await page
       .getByRole("button", { name: "Mark set complete", exact: true })
@@ -178,7 +178,7 @@ for (const budget of [null, 30] as const) {
       // current row and the rows still to come.
       await expect(
         page.getByRole("button", {
-          name: `Edit completed set ${warmups + 1}`,
+          name: "Edit completed set 1",
           exact: true,
         })
       ).toBeVisible();
@@ -196,12 +196,12 @@ for (const budget of [null, 30] as const) {
     }
     await page
       .getByRole("button", {
-        name: `Edit completed set ${warmups + 1}`,
+        name: "Edit completed set 1",
         exact: true,
       })
       .click();
     const correction = page.getByRole("dialog", {
-      name: `Edit set ${warmups + 1}`,
+      name: "Edit set 1",
       exact: true,
     });
     await expect(correction).toBeVisible();
@@ -225,7 +225,7 @@ for (const budget of [null, 30] as const) {
     await expect(correction).toHaveCount(0);
     await expect(
       page.getByRole("spinbutton", {
-        name: `Set ${warmups + 1} reps`,
+        name: "Set 1 reps",
         exact: true,
       })
     ).toHaveValue("6");

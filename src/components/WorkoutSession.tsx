@@ -18,7 +18,6 @@ import {
   showsRpeByDefault,
   toExperience,
 } from "@/features/program/experienceModel";
-import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
@@ -35,12 +34,14 @@ import {
   Disc,
   Timer,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import EditSetSheet from "@/components/workout/EditSetSheet";
+import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -93,8 +94,21 @@ import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import {
   clampExerciseIndex,
+  isExerciseDone,
+  isSetOutstanding,
   nextIncompleteSet,
 } from "@/features/program/sessionCursor";
+import {
+  SET_TYPE_COPY,
+  SET_TYPE_ORDER,
+  asSetType,
+  countedSets,
+  setBadge,
+  setCounts,
+  setName,
+  setOrdinal,
+  type SetType,
+} from "@/features/program/setLabels";
 import { platesPerSide } from "@/lib/plateCalculator";
 import {
   useWorkoutDraft,
@@ -132,45 +146,21 @@ interface WorkoutDay {
   completed: boolean;
 }
 
-type SetType = "working" | "warmup" | "dropset" | "failure";
+/** "Set 2" → "set 2", for the middle of a sentence. */
+const lowerFirst = (text: string) =>
+  text.charAt(0).toLowerCase() + text.slice(1);
 
-const SET_TYPE_CONFIG: Record<
-  SetType,
-  { label: string; color: string; bg: string }
-> = {
-  working: { label: "W", color: "text-foreground", bg: "" },
-  warmup: {
-    label: "W",
-    color: "text-yellow-600",
-    bg: "bg-yellow-50 dark:bg-yellow-950/30",
-  },
-  dropset: {
-    label: "D",
-    color: "text-purple-600",
-    bg: "bg-purple-50 dark:bg-purple-950/30",
-  },
-  failure: {
-    label: "F",
-    color: "text-red-600",
-    bg: "bg-red-50 dark:bg-red-950/30",
-  },
-};
-
-const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
-
-const TYPE_COLORS: Record<SetType, string> = {
-  working: "#a3a3a3",
-  warmup: "#FFA94D",
-  dropset: "#B197FC",
-  failure: "#FF6B6B",
-};
-
-const TYPE_LABELS: Record<SetType, string> = {
-  working: "Working",
-  warmup: "Warmup",
-  dropset: "Drop",
-  failure: "Failure",
-};
+/** Last session's set as the Previous column shows it. */
+function previousLabel(
+  prev: { weight: number; reps: number } | undefined,
+  timed: boolean,
+  bodyweight: boolean
+): string | null {
+  if (!prev) return null;
+  if (timed) return `${prev.reps} s`;
+  if (prev.weight > 0) return `${prev.weight} × ${prev.reps}`;
+  return bodyweight ? `BW × ${prev.reps}` : null;
+}
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
@@ -347,6 +337,12 @@ export default function WorkoutSession({
   const [previousNotes, setPreviousNotes] = useState<
     Record<number, { text: string; date: string }>
   >({});
+  /* Last session's sets per exercise, for the Previous column: the saved
+     sets are the ones that counted (warm-ups are never saved), so the
+     n-th of them is the n-th counted set today. */
+  const [previousSets, setPreviousSets] = useState<
+    Record<number, { weight: number; reps: number }[]>
+  >({});
   const notesInputRef = useRef<HTMLInputElement>(null);
   const completionPendingRef = useRef(initialDraft?.completionPending ?? false);
   /* The same flag as state, for what the screen draws (the finish screen's
@@ -354,15 +350,9 @@ export default function WorkoutSession({
   const [completionPending, setCompletionPending] = useState(
     initialDraft?.completionPending ?? false
   );
-  const [typePopover, setTypePopover] = useState<number | null>(null);
-  /* Measured from the tapped button when the popover opens. A ref filled
-     by the button's ref callback reached the popover only after the render
-     that opened it, so its first frame drew at the previous position. */
-  const [popoverPos, setPopoverPos] = useState({
-    top: 0,
-    left: 0,
-    bottom: 0,
-  });
+  /* The set whose type sheet is open: tapping a set's badge opens it, as
+     tapping the set number does in Hevy and MacroFactor. */
+  const [typeSheet, setTypeSheet] = useState<number | null>(null);
   // Exercise-rail scroller: `tabsRef` drives both the active-pill
   // scrollIntoView and the overflow-aware edge fades (atStart/atEnd) below.
   const {
@@ -379,17 +369,6 @@ export default function WorkoutSession({
         : Date.now() - initialDraft.elapsedSeconds * 1000
       : Date.now()
   );
-
-  // a11y: the set-type popover dismisses on backdrop click (mouse) — give
-  // keyboard users Escape to close it so it isn't a keyboard trap (#842).
-  useEffect(() => {
-    if (typePopover === null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setTypePopover(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [typePopover]);
 
   // Auto-scroll exercise tabs when active exercise changes
   useEffect(() => {
@@ -480,6 +459,13 @@ export default function WorkoutSession({
         );
       });
       setPreviousNotes(notes);
+      setPreviousSets(
+        Object.fromEntries(
+          day.exercises.flatMap((ex, i) =>
+            prevWeights[ex.name] ? [[i, prevWeights[ex.name]]] : []
+          )
+        )
+      );
 
       // Double-progression suggestions from the same history the prefill
       // uses (one fetch, two consumers).
@@ -503,13 +489,17 @@ export default function WorkoutSession({
           const name = ex.name;
           const prevSets = prevWeights[name];
           if (prevSets && updated[i]) {
-            updated[i] = updated[i].map((set, si) => ({
-              ...set,
-              weight:
-                set.weight ||
-                (prevSets[si]?.weight ?? prevSets[0]?.weight ?? 0),
-              reps: set.reps || (prevSets[si]?.reps ?? prevSets[0]?.reps ?? 0),
-            }));
+            // A warm-up keeps its ramp; a counted set fills from the same
+            // counted set last time, which the ramp's rows used to offset.
+            updated[i] = updated[i].map((set, si, sets) => {
+              if (set.type === "warmup") return set;
+              const prior = prevSets[setOrdinal(sets, si) - 1] ?? prevSets[0];
+              return {
+                ...set,
+                weight: set.weight || (prior?.weight ?? 0),
+                reps: set.reps || (prior?.reps ?? 0),
+              };
+            });
           }
         });
         return updated;
@@ -755,9 +745,11 @@ export default function WorkoutSession({
   }, [currentExercise]);
 
   const currentSets = setLogs[currentExIndex] ?? [];
-  const completedSetsInExercise = currentSets.filter((s) => s.completed).length;
-  const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
-  const totalSetsTotal = setLogs.flat().length;
+  // Warm-ups are optional, so the session's progress counts the sets that
+  // count, as the saved workout does.
+  const countedInSession = countedSets(setLogs.flat());
+  const totalSetsCompleted = countedInSession.filter((s) => s.completed).length;
+  const totalSetsTotal = countedInSession.length;
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -792,12 +784,26 @@ export default function WorkoutSession({
 
   const stopRest = useCallback(() => setRest(null), []);
 
-  const setSetType = (exIdx: number, setIdx: number, type: SetType) => {
-    setSetLogs((prev) => {
-      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      updated[exIdx][setIdx].type = type;
-      return updated;
-    });
+  /* A set's type can change after it is done, as in Hevy: a set logged as
+     working and meant as a warm-up is corrected here rather than by undoing
+     it. A done set has fed this session's bests, so they are worked out
+     again from the corrected sets, as an edited set's are. */
+  const changeSetType = (exIdx: number, setIdx: number, type: SetType) => {
+    const set = setLogs[exIdx]?.[setIdx];
+    if (!set || set.type === type) return;
+    if (set.completed && (completionPendingRef.current || saved)) return;
+    const next = setLogs.map((sets, ei) =>
+      sets.map((entry, si) =>
+        ei === exIdx && si === setIdx ? { ...entry, type } : entry
+      )
+    );
+    setSetLogs(next);
+    if (set.completed) {
+      refreshRecords(next);
+      dismissNewBest(`${exIdx}:${setIdx}`);
+      setLastCompleted(null);
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    }
   };
 
   const updateSetRPE = (exIdx: number, setIdx: number, rpe: number) => {
@@ -1008,7 +1014,7 @@ export default function WorkoutSession({
           : st
       )
     );
-    const isLastSet = updatedLogs[currentExIndex].every((st) => st.completed);
+    const isLastSet = isExerciseDone(updatedLogs[currentExIndex]);
     const next = nextIncompleteSet(updatedLogs, currentExIndex);
 
     if (isLastSet) {
@@ -1363,7 +1369,9 @@ export default function WorkoutSession({
       {editingSet && (
         <EditSetSheet
           set={setLogs[editingSet.exIdx][editingSet.setIdx]}
-          setNumber={editingSet.setIdx + 1}
+          setName={lowerFirst(
+            setName(setLogs[editingSet.exIdx], editingSet.setIdx)
+          )}
           timed={day.exercises[editingSet.exIdx]?.repUnit === "seconds"}
           onSave={saveSetCorrection}
           onClose={() => setEditingSet(null)}
@@ -1469,7 +1477,7 @@ export default function WorkoutSession({
         >
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
-            const done = setsForEx.every((s) => s.completed);
+            const done = isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
                The current one is ringed, a finished one carries a check,
@@ -1484,8 +1492,8 @@ export default function WorkoutSession({
                 onClick={() => {
                   haptic(10);
                   setCurrentExIndex(i);
-                  const nextIncomplete = setsForEx.findIndex(
-                    (s) => !s.completed
+                  const nextIncomplete = setsForEx.findIndex((_, si) =>
+                    isSetOutstanding(setsForEx, si)
                   );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
@@ -1508,9 +1516,11 @@ export default function WorkoutSession({
                     </span>
                   )}
                 </span>
+                {/* Two lines, not one: cut to one, "Barbell Row" and
+                    "Barbell Curl" both read "Barbell…". */}
                 <span
                   className={cn(
-                    "w-full truncate text-center text-xs",
+                    "line-clamp-2 w-full text-center text-xs leading-tight break-words",
                     active
                       ? "font-bold text-foreground"
                       : "font-medium text-muted-foreground"
@@ -1568,27 +1578,38 @@ export default function WorkoutSession({
               />
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Set{" "}
-            <span className="font-mono tabular-nums">
-              {currentSetIndex + 1}
-            </span>{" "}
-            of{" "}
-            <span className="font-mono tabular-nums">{currentSets.length}</span>{" "}
-            ·{" "}
-            <span className="font-mono tabular-nums">
-              {completedSetsInExercise}
-            </span>{" "}
-            done
-          </p>
+          {currentSets[currentSetIndex] &&
+            (() => {
+              /* Counted within its kind: "Warm-up 2 of 3" during the ramp,
+                 then "Set 1 of 3", not "Set 4 of 6". */
+              const counts = setCounts(currentSets, currentSetIndex);
+              const warm = currentSets[currentSetIndex].type === "warmup";
+              return (
+                <p className="text-sm text-muted-foreground">
+                  {warm ? "Warm-up" : "Set"}{" "}
+                  <span className="font-mono tabular-nums">
+                    {setOrdinal(currentSets, currentSetIndex)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-mono tabular-nums">{counts.total}</span>{" "}
+                  ·{" "}
+                  <span className="font-mono tabular-nums">{counts.done}</span>{" "}
+                  done
+                </p>
+              );
+            })()}
           {/* Backlog #4 — effort cue as words (operator-approved copy set).
             Reserve cue expands via Tooltip; push/deload cues are plain
             lines. Guidance lives BEFORE the set, never as a verdict after
             it (voice doc: never shame). */}
           {(() => {
             if (!currentExercise) return null;
+            const lastCounted = currentSets.reduce(
+              (last, set, i) => (set.type !== "warmup" ? i : last),
+              -1
+            );
             const cue = effortCueFor(currentExercise, {
-              isLastSet: currentSetIndex >= currentSets.length - 1,
+              isLastSet: currentSetIndex >= lastCounted,
               deloadWeek,
             });
             if (!cue) return null;
@@ -1715,34 +1736,34 @@ export default function WorkoutSession({
             </div>
           )}
 
-        {/* Set logging grid — the screen's one big thing (DS3). */}
+        {/* Set logging grid — the screen's one big thing (DS3). A row is
+            the set's badge (its number, or W, D or F, and the way into its
+            type), the same set last time, weight, reps and the tick. A
+            done set's row turns green, as the tick it carries. */}
         <Card padded={false} className="overflow-hidden">
           {(() => {
-            const prev = currentExercise?.lastPerformance;
+            const lastSets = previousSets[currentExIndex];
+            const lastPerformance = currentExercise?.lastPerformance;
             const isBWExercise = currentExercise
               ? getExerciseById(currentExercise.exerciseId)?.equipment ===
                 "Bodyweight"
               : false;
             const isTimedExercise = currentExercise?.repUnit === "seconds";
-            const prevLabel = prev
-              ? isTimedExercise
-                ? `${prev.reps}s`
-                : prev.weight > 0
-                  ? `${prev.weight}×${prev.reps}`
-                  : isBWExercise
-                    ? `BW×${prev.reps}`
-                    : "—"
-              : "—";
-            const canFillPrev =
-              prev != null && (isTimedExercise || prev.weight > 0);
+            const columns =
+              "grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)_2.75rem] items-center gap-2";
 
             return (
               <>
-                <div className="grid grid-cols-12 gap-1 px-3 pt-3 pb-1.5 text-micro font-semibold text-muted-foreground uppercase tracking-wider">
-                  <div className="col-span-1">Set</div>
-                  <div className="col-span-2">Prev</div>
-                  <div className="col-span-4 flex items-center gap-1">
-                    Weight (kg)
+                <div
+                  className={cn(
+                    columns,
+                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wider text-muted-foreground"
+                  )}
+                >
+                  <div className="text-center">Set</div>
+                  <div className="text-center">Previous</div>
+                  <div className="flex items-center justify-center">
+                    kg
                     <button
                       type="button"
                       aria-label="Plate calculator"
@@ -1750,221 +1771,197 @@ export default function WorkoutSession({
                         haptic("light");
                         setShowPlates(true);
                       }}
-                      className="p-1 -m-1 min-h-0 rounded text-muted-foreground hover:text-foreground transition-colors"
+                      className="-my-3 flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <Disc className="size-3.5" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="col-span-3">
+                  <div className="text-center">
                     {isTimedExercise ? "Seconds" : "Reps"}
                   </div>
-                  <div className="col-span-2 text-center">Done</div>
+                  <div className="sr-only">Done</div>
                 </div>
                 {currentSets.map((set, setIdx) => {
-                  const typeConfig = SET_TYPE_CONFIG[set.type];
+                  const type = asSetType(set.type);
+                  const name = setName(currentSets, setIdx);
+                  /* PREVIOUS is the same counted set last session. A warm-up
+                     has none: captioned with a working set, each ramp row
+                     invited loading the top set as the first warm-up. With
+                     no saved session yet, the programme's last figure
+                     stands in for every working row. */
+                  const prior =
+                    type === "warmup"
+                      ? undefined
+                      : lastSets
+                        ? lastSets[setOrdinal(currentSets, setIdx) - 1]
+                        : (lastPerformance ?? undefined);
+                  const priorLabel = previousLabel(
+                    prior,
+                    isTimedExercise,
+                    isBWExercise
+                  );
+                  const canFill = prior != null && priorLabel != null;
+                  const isBest = [...prResults.values()].some(
+                    (result) =>
+                      result.kind === "best" &&
+                      result.setKey === `${currentExIndex}:${setIdx}`
+                  );
                   return (
                     <div key={setIdx}>
                       <div
                         className={cn(
-                          "grid grid-cols-12 gap-1 items-center px-3 py-2 border-t border-border/30",
-                          setIdx === currentSetIndex &&
-                            !set.completed &&
-                            "bg-primary/10"
+                          columns,
+                          "border-t border-border/40 px-3 py-1.5 transition-colors",
+                          set.completed
+                            ? "bg-success/10"
+                            : setIdx === currentSetIndex && "bg-primary/10"
                         )}
                       >
-                        <div className="col-span-1 flex justify-center relative">
+                        <button
+                          type="button"
+                          aria-label={`${name}${
+                            type === "dropset" || type === "failure"
+                              ? `, ${lowerFirst(SET_TYPE_COPY[type].name)}`
+                              : ""
+                          }. Change set type`}
+                          aria-haspopup="dialog"
+                          onClick={() => {
+                            haptic(10);
+                            setTypeSheet(setIdx);
+                          }}
+                          className="mx-auto flex size-11 items-center justify-center rounded-xl transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95"
+                        >
+                          <SetTypeChip
+                            type={type}
+                            label={setBadge(currentSets, setIdx)}
+                          />
+                        </button>
+                        {priorLabel === null ? (
+                          <span
+                            className="block text-center text-small text-muted-foreground"
+                            aria-hidden="true"
+                          >
+                            —
+                          </span>
+                        ) : (
                           <button
                             type="button"
-                            onClick={(e) => {
-                              if (!set.completed) {
-                                haptic(10);
-                                const r =
-                                  e.currentTarget.getBoundingClientRect();
-                                setPopoverPos({
-                                  top: r.top,
-                                  left: r.right + 8,
-                                  bottom: r.bottom,
-                                });
-                                setTypePopover(
-                                  typePopover === setIdx ? null : setIdx
+                            aria-label={`Last time ${priorLabel}. Use it for ${lowerFirst(name)}`}
+                            onClick={() => {
+                              if (!canFill || set.completed || !prior) return;
+                              haptic(10);
+                              if (!isTimedExercise && prior.weight > 0) {
+                                updateSetLog(
+                                  currentExIndex,
+                                  setIdx,
+                                  "weight",
+                                  prior.weight
                                 );
                               }
+                              updateSetLog(
+                                currentExIndex,
+                                setIdx,
+                                "reps",
+                                prior.reps
+                              );
                             }}
-                            disabled={set.completed}
-                            className="size-7 rounded-full flex items-center justify-center text-sm font-bold font-mono tabular-nums transition-colors"
-                            style={
-                              set.type !== "working"
-                                ? {
-                                    backgroundColor: TYPE_COLORS[set.type],
-                                    color: "white",
-                                  }
-                                : undefined
-                            }
-                            title={`Set type: ${set.type}`}
+                            disabled={set.completed || !canFill}
+                            className={cn(
+                              "min-h-11 w-full truncate text-center text-small font-mono tabular-nums",
+                              canFill && !set.completed
+                                ? "text-lifting-strong active:opacity-70"
+                                : "text-muted-foreground"
+                            )}
                           >
-                            {set.type === "working"
-                              ? setIdx + 1
-                              : typeConfig.label}
+                            {priorLabel}
                           </button>
-                        </div>
-                        <div className="col-span-2">
-                          {/* PREV is a WORKING-set reference, so a warm-up row
-                              shows nothing rather than the last working set.
-                              On a 60kg squat the ramp (20 / 30 / 42.5) was
-                              each captioned "60×8" and each tappable to
-                              prefill 60 — inviting you to load your top set
-                              as your first warm-up. Device QA, 2026-08-12.
-
-                              Working rows still show ONE per-exercise figure
-                              rather than the matching set from last session.
-                              The per-set history exists (`prevWeights[name]`
-                              is an array and drives the prefill), but it
-                              cannot be aligned to a row: `onCompleteDay`
-                              receives `{ weight, reps, completed }` with no
-                              `type`, so the persisted array gives no way to
-                              tell last session's warm-ups from its working
-                              sets. Indexing into it would caption working set
-                              4 with a 20kg warm-up — a worse error than the
-                              one being fixed. Closing that needs the set type
-                              carried through the completion boundary. */}
-                          {set.type === "warmup" ? (
-                            <span
-                              className="text-small text-muted-foreground text-center block w-full"
-                              aria-hidden="true"
-                            >
-                              —
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (canFillPrev && !set.completed && prev) {
-                                  haptic(10);
-                                  updateSetLog(
-                                    currentExIndex,
-                                    setIdx,
-                                    "weight",
-                                    prev.weight
-                                  );
-                                  updateSetLog(
-                                    currentExIndex,
-                                    setIdx,
-                                    "reps",
-                                    prev.reps
-                                  );
-                                }
-                              }}
-                              disabled={set.completed || !canFillPrev}
-                              className={cn(
-                                "text-small font-mono tabular-nums text-center w-full",
-                                canFillPrev && !set.completed
-                                  ? "text-lifting-strong active:opacity-70"
-                                  : "text-muted-foreground"
-                              )}
-                            >
-                              {prevLabel}
-                            </button>
-                          )}
-                        </div>
+                        )}
                         {/* A done set's numbers stay at full strength: they
                             are the record of the set. The global rule dims
                             every disabled input to half (the trailing `!`
                             outranks it, since it sits outside the layers)
                             and iOS greys disabled text, so both are undone
                             on these two inputs. */}
-                        <div className="col-span-4">
-                          <input
-                            type="number"
-                            value={set.weight || ""}
-                            placeholder={
-                              set.weight === 0
-                                ? isBWExercise
-                                  ? "BW"
-                                  : "0"
-                                : ""
-                            }
-                            aria-label={`Set ${setIdx + 1} weight`}
-                            onChange={(e) =>
-                              updateSetLog(
-                                currentExIndex,
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={set.weight || ""}
+                          placeholder={
+                            set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""
+                          }
+                          aria-label={`${name} weight`}
+                          onChange={(e) =>
+                            updateSetLog(
+                              currentExIndex,
+                              setIdx,
+                              "weight",
+                              Number(e.target.value) || 0
+                            )
+                          }
+                          disabled={set.completed}
+                          className="min-h-11 w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                        />
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={set.reps || ""}
+                          aria-label={`${name} ${
+                            isTimedExercise ? "seconds" : "reps"
+                          }`}
+                          onChange={(e) =>
+                            updateSetLog(
+                              currentExIndex,
+                              setIdx,
+                              "reps",
+                              Number(e.target.value) || 0
+                            )
+                          }
+                          disabled={set.completed}
+                          className="min-h-11 w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                        />
+                        {set.completed ? (
+                          <button
+                            type="button"
+                            aria-label={`Edit completed ${lowerFirst(name)}`}
+                            onClick={() => {
+                              haptic();
+                              setEditingSet({
+                                exIdx: currentExIndex,
                                 setIdx,
-                                "weight",
-                                Number(e.target.value) || 0
-                              )
-                            }
-                            disabled={set.completed}
-                            className="w-full px-2 py-2 min-h-11 rounded-lg bg-muted text-foreground text-lg font-bold font-mono tabular-nums text-center placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
-                          />
-                        </div>
-                        <div className="col-span-3">
-                          <input
-                            type="number"
-                            value={set.reps || ""}
-                            aria-label={`Set ${setIdx + 1} ${
-                              isTimedExercise ? "seconds" : "reps"
-                            }`}
-                            onChange={(e) =>
-                              updateSetLog(
-                                currentExIndex,
-                                setIdx,
-                                "reps",
-                                Number(e.target.value) || 0
-                              )
-                            }
-                            disabled={set.completed}
-                            className="w-full px-2 py-2 min-h-11 rounded-lg bg-muted text-foreground text-lg font-bold font-mono tabular-nums text-center disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
-                          />
-                        </div>
-                        <div className="col-span-2 flex justify-center">
-                          {set.completed ? (
-                            <Button
-                              variant="ghost"
-                              className="min-w-11 flex-col gap-0 px-1 text-xs"
-                              aria-label={`Edit completed set ${setIdx + 1}`}
-                              onClick={() => {
-                                haptic();
-                                setEditingSet({
-                                  exIdx: currentExIndex,
-                                  setIdx,
-                                });
-                              }}
-                            >
+                              });
+                            }}
+                            className="mx-auto flex size-11 flex-col items-center justify-center gap-0.5 rounded-xl transition-transform active:scale-95"
+                          >
+                            <span className="flex size-8 items-center justify-center rounded-lg bg-success text-success-foreground">
                               <Check
-                                className="size-4 text-success-strong"
+                                className="size-4"
+                                strokeWidth={3}
                                 aria-hidden="true"
                               />
-                              <span>
-                                {[...prResults.values()].some(
-                                  (result) =>
-                                    result.kind === "best" &&
-                                    result.setKey ===
-                                      `${currentExIndex}:${setIdx}`
-                                ) && (
-                                  <span className="font-semibold text-achievement-strong">
-                                    PR
-                                  </span>
-                                )}{" "}
-                                Edit
+                            </span>
+                            {isBest && (
+                              <span className="text-caption font-semibold leading-none text-achievement-strong">
+                                PR
                               </span>
-                            </Button>
-                          ) : (
-                            <button
-                              type="button"
-                              aria-label="Mark set complete"
-                              data-guide-anchor={
-                                firstWorkout &&
-                                currentExIndex === 0 &&
-                                setIdx === currentSetIndex
-                                  ? "first-set"
-                                  : undefined
-                              }
-                              onClick={() => void completeSet(setIdx)}
-                              className="group size-11 flex items-center justify-center active:scale-90"
-                            >
-                              <span className="size-7 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors" />
-                            </button>
-                          )}
-                        </div>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label="Mark set complete"
+                            data-guide-anchor={
+                              firstWorkout &&
+                              currentExIndex === 0 &&
+                              setIdx === currentSetIndex
+                                ? "first-set"
+                                : undefined
+                            }
+                            onClick={() => void completeSet(setIdx)}
+                            className="group mx-auto flex size-11 items-center justify-center active:scale-90"
+                          >
+                            <span className="size-8 rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
+                          </button>
+                        )}
                       </div>
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
@@ -2008,14 +2005,17 @@ export default function WorkoutSession({
             );
           })()}
 
-          {/* Add-set button */}
-          <button
-            type="button"
-            onClick={() => addSet(currentExIndex)}
-            className="w-full min-h-11 py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Add set
-          </button>
+          <div className="border-t border-border/40 p-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              fullWidth
+              leftIcon={<Plus className="size-4" aria-hidden="true" />}
+              onClick={() => addSet(currentExIndex)}
+            >
+              Add set
+            </Button>
+          </div>
         </Card>
 
         {/* Today's note, under the sets (DS3): an empty field above the
@@ -2035,74 +2035,87 @@ export default function WorkoutSession({
           className="ds-input min-h-11 w-full text-sm"
         />
 
-        {/* Set type popover — portal to document.body to escape all parent constraints */}
-        {typePopover !== null &&
-          createPortal(
-            <>
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-              <div
-                className="fixed inset-0"
-                style={{ zIndex: 9990 }}
-                onClick={() => setTypePopover(null)}
-              />
-              <div
-                className="fixed bg-card rounded-2xl shadow-lg border border-border/50"
-                style={{
-                  zIndex: 9991,
-                  width: 160,
-                  left: popoverPos.left,
-                  ...(popoverPos.bottom > window.innerHeight * 0.6
-                    ? {
-                        bottom: window.innerHeight - popoverPos.top + 4,
-                      }
-                    : { top: popoverPos.top }),
-                }}
-              >
-                {SET_TYPE_ORDER.map((type) => (
+        {/* A set's type, as Hevy and MacroFactor ask it: tap the set's
+            badge and pick. Each type says what it does here, because the
+            letters alone told nobody why a W row was there. */}
+        {typeSheet !== null && currentSets[typeSheet] && (
+          <BottomSheet
+            open
+            onOpenChange={(open) => {
+              if (!open) setTypeSheet(null);
+            }}
+            title="Set type"
+            description={setName(currentSets, typeSheet)}
+            className="z-[70]"
+            overlayClassName="z-[60]"
+          >
+            <div className="space-y-1 px-2 pb-4">
+              {SET_TYPE_ORDER.map((type) => {
+                const selected =
+                  asSetType(currentSets[typeSheet].type) === type;
+                const preview = currentSets.map((entry, i) =>
+                  i === typeSheet ? { ...entry, type } : entry
+                );
+                return (
                   <button
                     type="button"
                     key={type}
+                    aria-pressed={selected}
                     onClick={() => {
-                      setSetType(currentExIndex, typePopover, type);
-                      setTypePopover(null);
+                      changeSetType(currentExIndex, typeSheet, type);
+                      setTypeSheet(null);
                       haptic(10);
                     }}
-                    className="w-full min-h-11 flex items-center gap-3 px-4 py-3 text-small font-semibold text-foreground hover:bg-muted transition-colors"
-                  >
-                    {type === "working" ? (
-                      <div className="size-6 rounded-full border-2 border-muted-foreground/30" />
-                    ) : (
-                      <div
-                        className="size-6 rounded-full flex items-center justify-center text-caption font-bold text-white"
-                        style={{ backgroundColor: TYPE_COLORS[type] }}
-                      >
-                        {TYPE_LABELS[type].charAt(0)}
-                      </div>
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-muted",
+                      // An outline, not a fill: the working set's chip is the
+                      // muted fill, and vanished into a muted row.
+                      selected &&
+                        "bg-primary/5 ring-1 ring-inset ring-primary/40"
                     )}
-                    {TYPE_LABELS[type]}
-                  </button>
-                ))}
-                {/* The inverse of "Add set", in the menu that set already
-                    has. Rendered only for a removable extra, so the normal
-                    case gains no control. */}
-                {extraSetIndex(currentExIndex) === typePopover && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      removeSet(currentExIndex, typePopover);
-                      setTypePopover(null);
-                      haptic(10);
-                    }}
-                    className="w-full min-h-11 flex items-center gap-3 px-4 py-3 text-small font-semibold text-destructive-strong border-t border-border/50 hover:bg-muted transition-colors"
                   >
-                    <Trash2 className="size-5" aria-hidden="true" />
-                    Remove set
+                    <SetTypeChip
+                      type={type}
+                      label={setBadge(preview, typeSheet)}
+                      className="mt-0.5"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-semibold text-foreground">
+                        {SET_TYPE_COPY[type].name}
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        {SET_TYPE_COPY[type].detail}
+                      </span>
+                    </span>
+                    {selected && (
+                      <Check
+                        className="mt-1.5 size-5 shrink-0 text-primary-strong"
+                        aria-hidden="true"
+                      />
+                    )}
                   </button>
-                )}
-              </div>
-            </>,
-            document.body
-          )}
+                );
+              })}
+              {/* The inverse of "Add set", in the sheet that set already
+                  has. Offered only for a removable extra, so the normal
+                  case gains no control. */}
+              {extraSetIndex(currentExIndex) === typeSheet && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    removeSet(currentExIndex, typeSheet);
+                    setTypeSheet(null);
+                    haptic(10);
+                  }}
+                  className="flex w-full min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-base font-semibold text-destructive-strong transition-colors hover:bg-muted"
+                >
+                  <Trash2 className="size-5" aria-hidden="true" />
+                  Remove set
+                </button>
+              )}
+            </div>
+          </BottomSheet>
+        )}
 
         {/* Undo last set. Deliberately NOT the warning register: `--warning`
             resolves to amber in dark and to within one RGB unit of the
@@ -2196,7 +2209,7 @@ export default function WorkoutSession({
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">
         {(() => {
-          const allSetsComplete = currentSets.every((s) => s.completed);
+          const allSetsComplete = isExerciseDone(currentSets);
           const next = nextIncompleteSet(setLogs, currentExIndex);
 
           /* DS3: the bar's three states through the Button primitive, in
@@ -2247,12 +2260,19 @@ export default function WorkoutSession({
             >
               {/* One span, so the Button's gap cannot open between the
                   words and the number. */}
-              <span>
-                Complete set{" "}
-                <span className="font-mono tabular-nums">
-                  {currentSetIndex + 1}
+              {currentSets[currentSetIndex] ? (
+                <span>
+                  Complete{" "}
+                  {currentSets[currentSetIndex].type === "warmup"
+                    ? "warm-up"
+                    : "set"}{" "}
+                  <span className="font-mono tabular-nums">
+                    {setOrdinal(currentSets, currentSetIndex)}
+                  </span>
                 </span>
-              </span>
+              ) : (
+                "Complete set"
+              )}
             </Button>
           );
         })()}

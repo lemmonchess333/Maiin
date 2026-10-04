@@ -1059,7 +1059,11 @@ export default function RunBottomSheet({
               >
                 {pace}
               </p>
-              <p style={{ ...HUD_CAPTION }}>/KM</p>
+              {/* The reader's unit, as the bar behind this dialog says it:
+                  the pace above is converted, so its label must be too. */}
+              <p style={{ ...HUD_CAPTION }}>
+                {paceUnitLabel(unit).toUpperCase()}
+              </p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest

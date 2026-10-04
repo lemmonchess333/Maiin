@@ -357,7 +357,7 @@ export function ShareCardSheet({
         )}
 
         <Button
-          variant={data.template === "run" ? "sport" : "primary"}
+          variant="primary"
           fullWidth
           loading={exporting}
           onClick={handleExport}

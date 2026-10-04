@@ -20,9 +20,10 @@ import { useWakeLock } from "../hooks/useWakeLock";
 import { useRunVisibility } from "../hooks/useRunVisibility";
 import {
   calculateSplits,
-  haversine,
+  movingClockMs,
   paceAsNumber,
   rollingPaceSeconds,
+  totalDistance,
   totalElevationGain,
   type GPSPoint,
 } from "../lib/gps";
@@ -103,14 +104,14 @@ import {
   initialRunPhase,
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
-import { distanceLabel, paceLabel } from "../lib/runLabels";
+import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
 import {
   startRunActivity,
   updateRunActivity,
   endRunActivity,
 } from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
-import { SPLIT_LAP_IS_METRIC } from "@/lib/distanceUnits";
+import { SPLIT_LAP_IS_METRIC, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
@@ -736,6 +737,20 @@ export default function Run() {
     });
     if (resumePrompt.points.length > 0) {
       gps.appendPoints(resumePrompt.points);
+      /* Nothing was recorded between the app going away and now, and the
+         timer leaves that gap out (rehydrate restarts it from the saved
+         seconds). Hold the trace from the same moment, so the line from
+         the last restored point to the first new fix is not timed as one
+         long slow stretch: from the last write for a run that was moving,
+         from its last point for one that was paused (the pause began then
+         or just after, and the snapshot does not keep when). The phase
+         effect below releases the hold once the run is moving. */
+      const last = resumePrompt.points[resumePrompt.points.length - 1];
+      gps.pause(
+        resumePrompt.phase === "active"
+          ? resumePrompt.lastWriteAt
+          : last.timestamp
+      );
     }
     // 5s suppression window: the cold-start GPS chip won't fire its
     // first fix for a few seconds, and the existing gap-banner gate
@@ -979,6 +994,25 @@ export default function Run() {
     };
   }, []);
 
+  /* The trace's clock follows the run's. While the run's clock is stopped
+     — the 3-2-1 countdown, a pause, an auto-pause — useGPS records nothing
+     and stamps the next point with the time held, so splits, best efforts
+     and the live pace count moving time only, as `duration` always has
+     (gps.ts `pausedMs`). Derived from the phase and `autoPaused`, the state
+     that stands for the timer being stopped, rather than called beside
+     each timer.pause(): a path added later cannot stop one clock and not
+     the other. */
+  const clockHeld =
+    phase === "countdown" ||
+    phase === "paused" ||
+    (phase === "active" && autoPaused);
+  const clockRunning = phase === "active" && !autoPaused;
+  const { pause: holdTrace, resume: releaseTrace } = gps;
+  useEffect(() => {
+    if (clockHeld) holdTrace();
+    else if (clockRunning) releaseTrace();
+  }, [clockHeld, clockRunning, holdTrace, releaseTrace]);
+
   useEffect(() => {
     if (phase === "active" && sessionSegments) player.start();
   }, [phase, sessionSegments, player]);
@@ -1039,7 +1073,10 @@ export default function Run() {
             .filter((a): a is number => typeof a === "number"),
           rejectedFixCount: gps.getRejectedFixCount(),
           backgroundGapMs: backgroundGapMsRef.current,
-          fixTimestamps: points.map((p) => p.timestamp),
+          /* On the moving clock: a pause records nothing, and a wait at a
+             crossing is not a gap in reception. Read on the wall clock,
+             two stops on a run would mark its route "patchy". */
+          fixTimestamps: points.map(movingClockMs),
         })
       : null;
 
@@ -1066,7 +1103,12 @@ export default function Run() {
 
   const handlePause = () => {
     haptic("medium");
-    timer.pause();
+    /* Not when auto-pause already stopped it. `timer.pause()` banks the
+       time since the last start into the run's seconds and is not
+       idempotent, so a second call banked it AGAIN: tapping Pause while
+       auto-paused at a crossing added everything since the last resume to
+       the run's duration a second time. */
+    if (timer.isRunning) timer.pause();
     if (isOutdoorGpsRun(runConfig?.activityType)) gps.stop();
     dispatch({ type: "PAUSE" });
   };
@@ -1075,6 +1117,11 @@ export default function Run() {
     haptic("medium");
     if (isOutdoorGpsRun(runConfig?.activityType)) gps.start();
     timer.resume();
+    /* Resuming by hand ends an auto-pause too. Left set, the timer would
+       run under an "Auto-paused" banner with the trace still held, until
+       the runner moved; cleared, auto-pause re-arms as normal if they are
+       still standing. */
+    setAutoPaused(false);
     dispatch({ type: "RESUME" });
   };
 
@@ -1132,12 +1179,16 @@ export default function Run() {
           {timer.formatTime(timer.elapsed)}
         </p>
         <p className="text-2xl font-mono tabular-nums text-white/30 mt-3">
-          {(
-            (requiresManualDistance(runConfig?.activityType)
+          {/* In the reader's unit, as the sheet under it reads: this said
+              "km" over a kilometre figure to a runner who reads miles. */}
+          {distanceValue(
+            requiresManualDistance(runConfig?.activityType)
               ? treadmillDistance
-              : gps.distance) / 1000
-          ).toFixed(2)}{" "}
-          km
+              : gps.distance,
+            unit,
+            2
+          )}{" "}
+          {distanceUnitLabel(unit)}
         </p>
         <div className="mt-12 flex flex-col items-center gap-2">
           <div className="size-8 rounded-full border border-white/20 flex items-center justify-center">
@@ -1558,6 +1609,7 @@ export default function Run() {
               interactive={true}
               liveControls={true}
               distanceMarkers={true}
+              markerUnit={unit}
               targetRoute={targetRoute ?? undefined}
               height="h-full"
               className="absolute inset-0"
@@ -1746,25 +1798,13 @@ export default function Run() {
           setup modal and any other waiting-state UI.
           Distance is rebuilt from the persisted point buffer here
           rather than persisted on the snapshot — keeps the storage
-          shape minimal and reuses the same haversine the GPS hook
-          uses for cumulative-distance tracking. */}
+          shape minimal and counts by the rule the GPS hook rebuilds the
+          live distance with on Resume (`totalDistance`), so the prompt
+          and the run it resumes show the same figure. */}
       {resumePrompt && (
         <RunResumePrompt
           accumulatedSeconds={resumePrompt.accumulatedSeconds}
-          distanceMeters={(() => {
-            const pts = resumePrompt.points;
-            if (pts.length < 2) return 0;
-            let d = 0;
-            for (let i = 1; i < pts.length; i++) {
-              d += haversine(
-                pts[i - 1].lat,
-                pts[i - 1].lon,
-                pts[i].lat,
-                pts[i].lon
-              );
-            }
-            return d;
-          })()}
+          distanceMeters={totalDistance(resumePrompt.points)}
           startedAt={resumePrompt.startedAt}
           onResume={handleResumeFromPrompt}
           onStartNew={handleStartNewFromPrompt}

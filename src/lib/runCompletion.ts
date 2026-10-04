@@ -13,7 +13,7 @@ import { collection, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
-import { sampleRoute } from "@/lib/routeSegments";
+import { KEPT_ROUTE_POINTS, sampleRoute } from "@/lib/routeSegments";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
@@ -53,6 +53,9 @@ export interface FinishedRun {
   /** The shoe the run's distance goes on: the one picked at the start,
    *  else the default. */
   shoeId: string | null;
+  /** The quickest 1K, 5K and 10K in the full trace, as the finish screen
+   *  lists them (`detectBestEfforts`). */
+  bestEfforts: { distance: number; time: number; label: string }[];
 }
 
 /** The run's start: its first point, or now for a run with no trace. */
@@ -74,8 +77,11 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     avgPace: run.avgPaceSeconds,
     calories: run.calories,
     elevationGain: run.elevationGain,
-    points: sampleRoute(run.points, 500),
+    points: sampleRoute(run.points, KEPT_ROUTE_POINTS),
     splits: run.splits,
+    // A run saved despite invalid figures has no efforts worth naming, as
+    // its finish screen named none.
+    bestEfforts: run.isInvalid ? [] : run.bestEfforts,
     startedAt: Timestamp.fromDate(startedAt),
     completedAt: Timestamp.fromDate(now),
     // Lift3: a run belongs to the local day it started, not the day Save
