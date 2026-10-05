@@ -62,6 +62,7 @@ import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
+import RaceSaveAction from "@/features/spaces/RaceSaveAction";
 import SpaceCommentSheet from "@/features/spaces/SpaceCommentSheet";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
 import { useRecentSessions } from "@/features/spaces/useRecentSessions";
@@ -234,6 +235,8 @@ function RaceEventHeader({
           organiser for event preparation and entry details.
         </p>
       )}
+
+      <RaceSaveAction id={spaceId} />
 
       <a
         href={event.websiteUrl}

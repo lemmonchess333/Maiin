@@ -15,6 +15,7 @@ describe("activeTabForPath", () => {
       "/history"
     );
     expect(activeTabForPath("/user/abc123")).toBe("/social");
+    expect(activeTabForPath("/races")).toBe("/social");
   });
 
   it("returns NO tab for routes outside every subtree (the bug)", () => {

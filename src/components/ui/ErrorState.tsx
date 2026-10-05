@@ -29,7 +29,7 @@
  */
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button, type ButtonSize } from "@/components/ui/Button";
 
 interface ErrorStateProps {
   title: string;
@@ -37,6 +37,7 @@ interface ErrorStateProps {
   retry?: {
     label?: string;
     onClick: () => void;
+    size?: ButtonSize;
   };
   /** Override the default AlertTriangle icon. */
   icon?: ReactNode;
@@ -71,7 +72,11 @@ export function ErrorState({
         ) : null}
       </div>
       {retry ? (
-        <Button onClick={retry.onClick} size="sm" variant="secondary">
+        <Button
+          onClick={retry.onClick}
+          size={retry.size ?? "sm"}
+          variant="secondary"
+        >
           {retry.label ?? "Try again"}
         </Button>
       ) : null}

@@ -27,7 +27,12 @@ export function activeTabForPath(pathname: string): TabPath | null {
   if (p === "/history" || p.startsWith("/history/")) return "/history";
   // Social owns the feed/people surface plus the destinations reached
   // from it: other users' profiles (/user/:uid).
-  if (p === "/social" || p.startsWith("/social/") || p.startsWith("/user/"))
+  if (
+    p === "/social" ||
+    p.startsWith("/social/") ||
+    p.startsWith("/user/") ||
+    p === "/races"
+  )
     return "/social";
 
   // Everything else has no tab home — settings/*, /upgrade, /run, /run/:id,

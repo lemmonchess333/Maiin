@@ -185,6 +185,24 @@ describe("Space page", () => {
     expect(
       screen.getByText(/Ultra training plans aren’t available/)
     ).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save race", exact: true })
+    );
+    await waitFor(() =>
+      expect(readDoc("users/viewer/settings/savedRaces")?.raceIds).toEqual([
+        "race-to-the-stones-100k",
+      ])
+    );
+    expect(
+      readDoc("spaces/race-to-the-stones-100k/members/viewer")
+    ).toBeUndefined();
+    expect(readDoc("users/viewer")).toBeUndefined();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Saved race", exact: true })
+    );
+    await waitFor(() =>
+      expect(readDoc("users/viewer/settings/savedRaces")?.raceIds).toEqual([])
+    );
   });
   it("hides the retired coach posts and puts the pinned team note above the members", async () => {
     seedFirestore({

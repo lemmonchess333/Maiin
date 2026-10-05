@@ -270,7 +270,18 @@ export default function SpacesDirectory() {
       {interest.length > 0 && <CardRow label="Spaces" entries={interest} />}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
-          <SectionHeading>Races & events</SectionHeading>
+          <SectionHeading
+            action={
+              <Link
+                className="inline-flex items-center min-h-11 text-sm font-semibold text-running-strong rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-running-strong"
+                to={`/races?country=${filters.country}&distance=${filters.distance}`}
+              >
+                See all
+              </Link>
+            }
+          >
+            Races & events
+          </SectionHeading>
           <RaceFilterChips value={filters} onChange={setFilters} />
           {races.length > 0 ? (
             <CardRow label="Race directory" entries={races} hideLabel />
