@@ -95,12 +95,15 @@ describe("ActivityCard with worst-case data", () => {
     const item = feedItem({ kudosCount: 1284 });
     item.activity!.commentCount = 2568;
     renderCard(item);
+    // textContent, not toHaveTextContent: the matcher collapses
+    // whitespace, and fr-FR groups with a narrow no-break space.
     expect(
       screen.getByRole("button", { name: `${group(1284)} props — show list` })
-    ).toHaveTextContent(group(1284));
+        .textContent
+    ).toBe(group(1284));
     expect(
-      screen.getByRole("button", { name: "View comments" })
-    ).toHaveTextContent(group(2568));
+      screen.getByRole("button", { name: "View comments" }).textContent
+    ).toBe(group(2568));
   });
 
   it("prints a PR load the way every other load is printed", () => {
