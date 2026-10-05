@@ -11,53 +11,89 @@
  * A frame is real use of the web build on the repo's demo seeds, settled:
  * no loading state, no guide, no toast.
  *
- *   - Each test signs in to a COPY of a seeded account, made for it: the
- *     profile, the collections the seeds write, and the account's follows,
- *     space memberships and challenge entries. A copy can be used the way
- *     a person would (water logged, sets ticked, a badge opened) without
- *     changing what the other capture specs see on the shared accounts,
- *     and the app builds its programme fresh, so the frame does not depend
- *     on which spec ran first.
- *   - The copy keeps the default dark theme. The seeds store light
- *     (`darkMode: false`) for their own light captures, and a profile's
- *     theme reaches more than the root class: RunDetail draws its basemap
- *     from `profile.darkMode`, so toggling `.dark` would leave a light map
- *     under a dark page.
- *   - The layout is an iPhone 16 Pro Max's: the app pads for
- *     `env(safe-area-inset-*)` (index.css `--safe-top` / `--safe-bottom`),
- *     and CDP's `Emulation.setSafeAreaInsetsOverride` gives those the
- *     phone's 62 px status bar and 34 px home indicator. The status bar
- *     itself is not drawn: that band is left as the app paints it.
- *   - Touch and a coarse pointer (`isMobile`, `hasTouch`), as on the
- *     phone. The project's desktop pointer would turn on index.css's
- *     desktop scrollbar.
- *   - Reduce Motion, so count-ups and entrances are at rest when the
- *     shutter fires.
+ * One person's app. Every frame copies the season athlete
+ * (seed-season-athlete: sixteen weeks of lifting, running, food and
+ * weigh-ins), so the set agrees with itself: Home's food card is the Food
+ * page's day, and the lift Home offers is the one Train lists and the
+ * workout frame is part-way through. Each test signs in to a COPY of that
+ * account, made for it (`openSeasonAthlete`):
+ *   - the profile, the collections the seed writes, and the account's
+ *     follows, space memberships and challenge entries. A copy can be used
+ *     the way a person would (water logged, sets ticked, a badge opened, a
+ *     race goal set) without changing what the other capture specs see;
+ *   - the history up to yesterday. Today, as the frames show it, has
+ *     breakfast and lunch logged and its training still to come;
+ *   - a lift on today (`weekWithLiftToday`), so Home has a session to
+ *     Start whatever day CI runs on;
+ *   - a follow of the seeded author whose posts fill the feed;
+ *   - the programme the app builds on the copy's first visit, calibrated
+ *     from the athlete's history (`calibrateProgramme`).
+ * The race plan's copy also sets a race goal, saved as the app's Run plan
+ * editor saves one (`setHalfMarathonGoal`).
  *
- * Which seeded account each frame copies, and why:
- *   - Home and Social: `e2e-test@tropos.test` (seed-e2e + seed-rich). It
- *     lifts every day but tomorrow, so Home always has a session to Start
- *     whatever day CI runs on, and it follows the seeded author whose
- *     posts fill the feed.
- *   - Train, the workout, Food, Analytics and the run: the season athlete
- *     (seed-season-athlete), sixteen weeks of lifting, running and food.
- *   - The race plan: `fellbehind-capture@tropos.test`, the one seed with a
- *     race goal. Its seeded programme carries a fell-behind prompt, and
- *     the copy leaves programmes behind, so the app builds the plan from
- *     the goal, as it does after setup.
+ * The copy keeps the default dark theme. The seeds store light
+ * (`darkMode: false`) for their own light captures, and a profile's theme
+ * reaches more than the root class: RunDetail draws its basemap from
+ * `profile.darkMode`, so toggling `.dark` would leave a light map under a
+ * dark page.
+ *
+ * The layout is an iPhone 16 Pro Max's: the app pads for
+ * `env(safe-area-inset-*)` (index.css `--safe-top` / `--safe-bottom`), and
+ * CDP's `Emulation.setSafeAreaInsetsOverride` gives those the phone's
+ * 62 px status bar and 34 px home indicator. The status bar itself is not
+ * drawn: that band is left as the app paints it. Touch and a coarse
+ * pointer (`isMobile`, `hasTouch`), as on the phone: the project's desktop
+ * pointer would turn on index.css's desktop scrollbar. Reduce Motion, so
+ * count-ups and entrances are at rest when the shutter fires.
  *
  * The run's map needs tiles.openfreemap.org, which CI reaches and the
  * agent sandbox does not: there the frame shows the map's own "Map tiles
  * unavailable" note over an empty map, after a capped wait.
  */
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { createRequire } from "node:module";
 import { deleteApp, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import {
+  getFirestore,
+  Timestamp,
+  type DocumentData,
+} from "firebase-admin/firestore";
 import { signInAsTestUser, TEST_USER } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
+import {
+  normalizeProgramState,
+  type ProgramExercise,
+  type ProgramState,
+} from "../../src/features/program/programTypes";
+import { migrateProgramState } from "../../src/features/program/migrations";
+import { nextUpIndex } from "../../src/features/program/nextUpCursor";
+import { applySessionProgression } from "../../src/features/program/sessionCompletion";
+import type { LoggedSet } from "../../src/features/program/workoutSetRecord";
+import { buildPlan } from "../../src/features/program/planBuilder";
+import { layoffFromRuns } from "../../src/features/program/layoffDetection";
+import { runTuningFromProfile } from "../../src/features/program/runScheduler";
+import { normalizeRunTimeLimits } from "../../src/features/program/runTimeLimits";
+import { isRunningBaseline } from "../../src/features/program/runningBaseline";
+import type { UserProfile } from "../../src/lib/auth";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "../../src/lib/dateHelpers";
+import { stripUndefined } from "../../src/lib/firestoreGuards";
+import { isNonRaceGoal } from "../../src/lib/nonRaceGoal";
+import { getNutritionPhase } from "../../src/lib/nutritionPhase";
+import {
+  getWeeklyRunTarget,
+  type DayType,
+  type ScheduleDay,
+} from "../../src/lib/scheduleUtils";
+
+const require = createRequire(import.meta.url);
 
 const FRAME = { width: 440, height: 956, scale: 3 } as const;
 /** iPhone 16 Pro Max, portrait, in CSS px: the status bar above, the home
@@ -92,7 +128,8 @@ test.use({
 
 // The seed scripts export these, but importing one runs it.
 const SEASON_ATHLETE = "season-athlete@tropos.test";
-const RACE_GOAL_ACCOUNT = "fellbehind-capture@tropos.test";
+/** Maya Chen, the author of the feed's posts (seed-rich-user.ts). */
+const FEED_AUTHOR = "rich-feed-author";
 
 let adminApp: App | undefined;
 function admin(): App {
@@ -102,7 +139,7 @@ function admin(): App {
 
 /** What the seeds write under `users/{uid}`. Copied by name, so whatever
  *  the app or another spec has since added to the shared account (its
- *  programme, streaks, water, the fell-behind prompt) stays behind. */
+ *  programme, streaks, water) stays behind. */
 const SEEDED_COLLECTIONS = [
   "public",
   "workouts",
@@ -113,15 +150,26 @@ const SEEDED_COLLECTIONS = [
   "dailyNutrition",
 ] as const;
 
+/** The seeded collections of training sessions, each dated by `date`. */
+const SESSIONS = new Set<string>(["workouts", "runs"]);
+
 interface Account {
   email: string;
   password: string;
   uid: string;
 }
 
+interface CopyOptions {
+  /** Whether to copy a seeded document. */
+  keep?: (collection: string, data: DocumentData) => boolean;
+  /** Fields the copy's profile sets over the seeded profile's. */
+  profile?: (seeded: DocumentData) => DocumentData;
+}
+
 async function copySeededAccount(
   sourceEmail: string,
-  tag: string
+  tag: string,
+  { keep = () => true, profile: patch = () => ({}) }: CopyOptions = {}
 ): Promise<Account> {
   const auth = getAuth(admin());
   const db = getFirestore(admin());
@@ -137,19 +185,20 @@ async function copySeededAccount(
   const to = db.collection("users").doc(uid);
   const profile = (await from.get()).data();
   expect(profile, `${sourceEmail} has no profile: is it seeded?`).toBeTruthy();
-  await to.set({ ...profile, uid, email, darkMode: true });
+  await to.set({ ...profile, ...patch(profile!), uid, email, darkMode: true });
 
   const writer = db.bulkWriter();
   const copies: Promise<unknown>[] = [];
   for (const name of SEEDED_COLLECTIONS) {
     const docs = (await from.collection(name).get()).docs;
     for (const doc of docs)
-      copies.push(
-        writer.set(
-          to.collection(name).doc(doc.id),
-          name === "public" ? { ...doc.data(), uid } : doc.data()
-        )
-      );
+      if (keep(name, doc.data()))
+        copies.push(
+          writer.set(
+            to.collection(name).doc(doc.id),
+            name === "public" ? { ...doc.data(), uid } : doc.data()
+          )
+        );
   }
   const follows = await db
     .collection("following")
@@ -181,6 +230,239 @@ async function copySeededAccount(
   return { email, password: TEST_USER.password, uid };
 }
 
+/**
+ * The week with a lift on today, moved as a person moves one in the
+ * week-layout editor: the same three lift days and three run days, so the
+ * programme is not rebuilt, and in day order, as every schedule the app
+ * writes is (`buildPlan` refuses any other order).
+ *
+ * Today swaps with the week's next lift day. With none left this week (the
+ * seed lifts on Monday, Wednesday and Friday, so on a Saturday or a
+ * Sunday), today takes the last lift day's place and that day becomes the
+ * rest day; a run moved off today goes to the next rest day, or, in a week
+ * without one, back to that day. On the seed's week no day already behind
+ * becomes a run day, which a race plan would fill with a run nobody did.
+ */
+function weekWithLiftToday(
+  schedule: ScheduleDay[],
+  today: Date
+): ScheduleDay[] {
+  const type = new Map(schedule.map(({ day, type }) => [day, type]));
+  const lifts = (day: number) => ["lift", "both"].includes(type.get(day)!);
+  // Monday first, as the week runs.
+  const week = [1, 2, 3, 4, 5, 6, 0];
+  const day = today.getDay();
+  const at = week.indexOf(day);
+  const was = type.get(day)!;
+  if (!lifts(day)) {
+    const next = week.slice(at + 1).find(lifts);
+    if (next !== undefined) {
+      type.set(day, type.get(next)!);
+      type.set(next, was);
+    } else {
+      const last = week.slice(0, at).reverse().find(lifts)!;
+      type.set(day, type.get(last)!);
+      type.set(last, "rest");
+      const rest = week.slice(at + 1).find((d) => type.get(d) === "rest");
+      if (was !== "rest") type.set(rest ?? last, was);
+    }
+  }
+  return [0, 1, 2, 3, 4, 5, 6].map((d) => ({ day: d, type: type.get(d)! }));
+}
+
+/** The season athlete as every frame shows them (see the header). */
+async function copySeasonAthlete(tag: string): Promise<Account> {
+  const today = new Date();
+  const account = await copySeededAccount(SEASON_ATHLETE, tag, {
+    keep: (collection, data) =>
+      !(SESSIONS.has(collection) && data.date === localDateString(today)),
+    // As the week-layout editor saves a layout (useProgrammeScheduleEditor):
+    // the days and the targets they count to.
+    profile: (seeded) => {
+      const weekSchedule = weekWithLiftToday(seeded.weekSchedule, today);
+      const count = (...types: DayType[]) =>
+        weekSchedule.filter((d) => types.includes(d.type)).length;
+      return {
+        weekSchedule,
+        weeklyWorkoutsTarget: count("lift", "both"),
+        weeklyRunsTarget: count("run", "both"),
+        weeklyRunDaysTarget: count("run", "both"),
+      };
+    },
+  });
+  // As seed-rich-user.ts writes the e2e account's follow of the same author.
+  const db = getFirestore(admin());
+  const followedAt = Timestamp.now();
+  await db
+    .collection("following")
+    .doc(account.uid)
+    .collection("users")
+    .doc(FEED_AUTHOR)
+    .set({ followedAt });
+  await db
+    .collection("followers")
+    .doc(FEED_AUTHOR)
+    .collection("users")
+    .doc(account.uid)
+    .set({ followedAt });
+  return account;
+}
+
+interface LoggedLift {
+  /** The session's day, "yyyy-MM-dd". */
+  date: string;
+  sets: LoggedSet[];
+}
+
+/** Each lift's latest session, by exercise id: the one Train's "Last:"
+ *  line reads (Program.tsx, `lastPerformanceMap`). */
+function latestSessions(workouts: DocumentData[]): Map<string, LoggedLift> {
+  const latest = new Map<string, LoggedLift>();
+  const newestFirst = [...workouts].sort((a, b) =>
+    String(b.date).localeCompare(String(a.date))
+  );
+  for (const workout of newestFirst)
+    for (const exercise of workout.exercises ?? []) {
+      const sets: DocumentData[] = exercise.sets ?? [];
+      if (latest.has(exercise.exerciseId)) continue;
+      if (!sets.some((set) => set.weightKg > 0)) continue;
+      latest.set(exercise.exerciseId, {
+        date: workout.date,
+        // A saved workout keeps the sets that were done, and only those.
+        sets: sets.map((set) => ({
+          weight: set.weightKg,
+          reps: set.reps,
+          completed: true,
+          type: set.type ?? "working",
+          ...(typeof set.rpe === "number" ? { rpe: set.rpe } : {}),
+        })),
+      });
+    }
+  return latest;
+}
+
+/** `state` after each logged lift's latest session, applied to the lift's
+ *  slots with the engine's own session step. */
+function calibrated(
+  state: ProgramState,
+  latest: Map<string, LoggedLift>
+): ProgramState {
+  let next = state;
+  state.workouts.forEach((day, dayIndex) => {
+    // The day's logged lifts, by the session each was last done in: one
+    // call per session, as the app makes one per session it saves.
+    const sessions = new Map<string, number[]>();
+    day.exercises.forEach((exercise, slot) => {
+      const date = latest.get(exercise.exerciseId)?.date;
+      if (date) sessions.set(date, [...(sessions.get(date) ?? []), slot]);
+    });
+    for (const [date, slots] of sessions) {
+      // Each slot as the engine holds a lift it has no load for.
+      const uncalibrated: ProgramExercise[] = slots.map((slot) => ({
+        ...day.exercises[slot],
+        weight: 0,
+      }));
+      next = {
+        ...next,
+        workouts: next.workouts.map((d, i) =>
+          i !== dayIndex
+            ? d
+            : {
+                ...d,
+                exercises: d.exercises.map((exercise, slot) =>
+                  slots.includes(slot)
+                    ? uncalibrated[slots.indexOf(slot)]
+                    : exercise
+                ),
+              }
+        ),
+      };
+      next = applySessionProgression(next, dayIndex, {
+        completionId: `history-${date}`,
+        date,
+        prescription: {
+          dayName: day.dayName,
+          exercises: uncalibrated,
+          progressionBaseline: uncalibrated,
+        },
+        setLogs: slots.map(
+          (slot) => latest.get(day.exercises[slot].exerciseId)!.sets
+        ),
+      });
+    }
+  });
+  return next;
+}
+
+/**
+ * The copy's programme, given the athlete's history.
+ *
+ * The app builds the copy a programme on its first visit (useProgram's
+ * loader), and a new programme starts each lift from body weight and
+ * experience (`startingLoads.ts`): the right guess for someone with no
+ * history, and this athlete has sixteen weeks of it. Bench Press read
+ * "57.5 kg" over "Last: 82.5 kg x 6". A session does not fix that from a
+ * seed: a load more than four steps over the plan is taken for a typo
+ * (`USER_LOAD_ANCHOR_STEPS`). So each lift the athlete has logged is
+ * calibrated the way the engine calibrates a lift it has no load for: the
+ * slot's load is set to 0 kg, the engine's "uncalibrated", and the lift's
+ * latest session goes through `applySessionProgression`, the step the app
+ * runs as it saves a session, where `applyProgression` takes the load
+ * lifted (`calibratedWeight`), records the session and clears the failure
+ * counts. Lifts the athlete has never logged keep their seed, as
+ * `seedStartingLoads` intends.
+ *
+ * Only exercises change. The document is read the way the loader reads it
+ * (normalised, migrated) and written whole in a transaction, as the app's
+ * own commits are, so its shape, schema version and instance ids are the
+ * app's.
+ */
+async function calibrateProgramme(uid: string): Promise<ProgramState> {
+  const db = getFirestore(admin());
+  const user = db.collection("users").doc(uid);
+  const programme = user.collection("programState").doc("current");
+  // Written once Home has asked for it, on the copy's first visit.
+  await expect
+    .poll(async () => (await programme.get()).exists, {
+      message: "the app built the copy no programme",
+      timeout: 30_000,
+    })
+    .toBe(true);
+  const profile = (await user.get()).data()!;
+  const latest = latestSessions(
+    (await user.collection("workouts").get()).docs.map((doc) => doc.data())
+  );
+  return db.runTransaction(async (transaction) => {
+    const stored = (await transaction.get(programme)).data() as ProgramState;
+    const read = migrateProgramState(
+      normalizeProgramState(stored, { primaryGoal: profile.primaryGoal }),
+      localWeekKey()
+    );
+    const next = stripUndefined({
+      ...calibrated(read, latest),
+      updatedAt: Date.now(),
+    });
+    transaction.set(programme, next);
+    return next;
+  });
+}
+
+/**
+ * The planned line ("3 sets × 6 reps · 82.5 kg") of the first loaded lift
+ * of the day Train has up next, at its calibrated load. A page paints the
+ * programme from the browser's cache before the server answers, and the
+ * cache can still hold the copy's first, uncalibrated programme, so a frame
+ * or a Start that only waits for the list can land on the old loads.
+ */
+function calibratedLead(page: Page, programme: ProgramState): Locator {
+  const lead = programme.workouts[nextUpIndex(programme)].exercises.find(
+    (exercise) => exercise.weight > 0
+  );
+  expect(lead, "the up-next day has no loaded lift").toBeTruthy();
+  const kg = String(lead!.weight).replace(".", "\\.");
+  return page.getByText(new RegExp(`· ${kg} kg$`)).first();
+}
+
 async function openAs(page: Page, account: Account) {
   const cdp = await page.context().newCDPSession(page);
   await cdp
@@ -199,6 +481,115 @@ async function openAs(page: Page, account: Account) {
     });
   });
   await signInAsTestUser(page, account);
+}
+
+/** A copy of the season athlete, signed in, and its programme, calibrated.
+ *  The page is left on the first visit's Home: go somewhere, or reload, to
+ *  see the calibrated programme. */
+async function openSeasonAthlete(
+  page: Page,
+  tag: string
+): Promise<Account & { programme: ProgramState }> {
+  const account = await copySeasonAthlete(tag);
+  await openAs(page, account);
+  return { ...account, programme: await calibrateProgramme(account.uid) };
+}
+
+/** The Sunday thirteen calendar weeks out: about twelve weeks away on any
+ *  weekday, which is room for a whole half-marathon block ("week 1 of 13")
+ *  and no compressed-plan note. */
+function halfMarathonDay(today: Date): string {
+  const monday = parseLocalDate(localWeekKey(today));
+  return localDateString(addLocalDays(monday, 12 * 7 + 6));
+}
+
+/**
+ * A half marathon, saved as the Run plan editor saves one
+ * (RunPlanSettings `handleSave`): the plan `buildPlan` builds from the
+ * profile and the programme, with the editor's defaults for everything its
+ * form leaves alone, committed by `configurePlan`'s own handler, which
+ * writes the goal with what derives from it (`runMode`, the week and its
+ * run targets, the week's runs and the race block) in one transaction. The
+ * capture rig has no Functions emulator, so the handler is called
+ * directly, as run-coaching.capture calls applyProgramCommand's.
+ *
+ * Not by tapping the form's Save: Save is live before the editor has read
+ * the programme, and a save made then carries no programme and is refused
+ * as a conflict.
+ */
+async function setHalfMarathonGoal(uid: string, today: Date): Promise<void> {
+  const db = getFirestore(admin());
+  const user = db.collection("users").doc(uid);
+  const profile = (await user.get()).data() as UserProfile;
+  const programState = (
+    await user.collection("programState").doc("current").get()
+  ).data() as ProgramState;
+  const todayKey = localDateString(today);
+  const runs = (await user.collection("runs").get()).docs.map((doc) =>
+    doc.data()
+  );
+  const plan = buildPlan({
+    primaryGoal: profile.primaryGoal ?? "general",
+    nutritionPhase: getNutritionPhase(profile),
+    experience: profile.experience ?? "beginner",
+    previousExperience: profile.experience ?? "beginner",
+    bodyweightKg: profile.weightKg,
+    sex: profile.sex,
+    liftDays: profile.weeklyWorkoutsTarget ?? 0,
+    preferredSplit:
+      !profile.preferredSplit || profile.preferredSplit === "auto"
+        ? "full_body"
+        : profile.preferredSplit,
+    runMode: "race_prep",
+    weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+    runTuning: runTuningFromProfile(profile),
+    // Read from the runs as fetchRecentLayoff reads them.
+    recentLayoff: layoffFromRuns(
+      runs.map((run) => ({
+        date: run.date,
+        distance: run.distance,
+        duration: run.duration,
+        isInvalid: run.isInvalid === true,
+        savedAnyway: run.savedAnyway === true,
+      })),
+      todayKey
+    ),
+    weekSchedule: profile.weekSchedule,
+    runFitness: profile.runFitness ?? null,
+    runTimeLimits: normalizeRunTimeLimits(profile.runTimeLimits),
+    runningBaseline: isRunningBaseline(profile.runningBaseline)
+      ? profile.runningBaseline
+      : null,
+    raceGoal: { distance: "half", targetDate: halfMarathonDay(today) },
+    equipment: profile.equipment ?? "full_gym",
+    injuries: profile.injuries ?? [],
+    currentDate: todayKey,
+    existingState: programState,
+    preserveHistory: true,
+  });
+  plan.profileUpdates.nonRaceGoal = isNonRaceGoal(profile.nonRaceGoal)
+    ? profile.nonRaceGoal
+    : null;
+  const stored = profile as unknown as Record<string, unknown>;
+  const baseProfile = Object.fromEntries(
+    Object.keys(plan.profileUpdates)
+      .filter((key) => stored[key] !== undefined)
+      .map((key) => [key, stored[key]])
+  );
+  const { configurePlan } = require("../../functions/index.js");
+  // Through JSON, as the callable carries it.
+  await configurePlan.run(
+    JSON.parse(
+      JSON.stringify({
+        baseProgramState: programState,
+        baseProfile,
+        profileUpdates: plan.profileUpdates,
+        programState: plan.programState,
+        weekSchedule: plan.weekSchedule,
+      })
+    ),
+    { auth: { uid } }
+  );
 }
 
 /** Cards that arrive with a second read (a coaching note, a badge) move
@@ -309,16 +700,13 @@ async function waitForRunMap(page: Page) {
     );
 }
 
-function dateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 test.describe("App Store screenshots", () => {
   test.skip(
     !emulatorActive,
     "needs the Firebase emulator (auth-emulator project)"
   );
-  // A copy, a sign-in and a settled page: more than the default 30 s.
+  // A copy, a sign-in, a programme and a settled page: more than the
+  // default 30 s.
   test.describe.configure({ timeout: 120_000 });
 
   test.afterAll(async () => {
@@ -327,8 +715,8 @@ test.describe("App Store screenshots", () => {
   });
 
   test("01 home: today's session and food", async ({ page }) => {
-    const account = await copySeededAccount(TEST_USER.email, "home");
-    await openAs(page, account);
+    await openSeasonAthlete(page, "home");
+    await page.reload();
 
     await expect(
       page.getByRole("button", { name: "Start workout", exact: true })
@@ -359,8 +747,7 @@ test.describe("App Store screenshots", () => {
   });
 
   test("02 train: the week and a lift day", async ({ page }) => {
-    const account = await copySeededAccount(SEASON_ATHLETE, "train");
-    await openAs(page, account);
+    const { programme } = await openSeasonAthlete(page, "train");
     await page.goto("program");
 
     await expect(
@@ -369,6 +756,9 @@ test.describe("App Store screenshots", () => {
         .getByRole("tab")
         .first()
     ).toBeVisible({ timeout: 20_000 });
+    await expect(calibratedLead(page, programme)).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(
       page.getByRole("button", { name: "Start workout", exact: true })
     ).toBeVisible();
@@ -384,14 +774,17 @@ test.describe("App Store screenshots", () => {
   });
 
   test("03 workout: a lift in progress", async ({ page }) => {
-    const account = await copySeededAccount(SEASON_ATHLETE, "workout");
-    await openAs(page, account);
+    const { programme } = await openSeasonAthlete(page, "workout");
     await page.goto("program");
     const start = page.getByRole("button", {
       name: "Start workout",
       exact: true,
     });
     await expect(start).toBeVisible({ timeout: 20_000 });
+    // The session takes its sets from the programme the page holds.
+    await expect(calibratedLead(page, programme)).toBeVisible({
+      timeout: 20_000,
+    });
     // The sets below take seconds here and a quarter of an hour in a gym.
     // Hold the page's clock as the session starts, and move it on by that
     // quarter before the shot, so the session's running time reads as one
@@ -438,8 +831,7 @@ test.describe("App Store screenshots", () => {
   });
 
   test("04 food: the ring, macros and the day's diary", async ({ page }) => {
-    const account = await copySeededAccount(SEASON_ATHLETE, "food");
-    await openAs(page, account);
+    await openSeasonAthlete(page, "food");
     await page.goto("food");
 
     // The diary once the day's meals have been read: its log or, when a
@@ -468,8 +860,7 @@ test.describe("App Store screenshots", () => {
   });
 
   test("05 analytics: the overview", async ({ page }) => {
-    const account = await copySeededAccount(SEASON_ATHLETE, "analytics");
-    await openAs(page, account);
+    await openSeasonAthlete(page, "analytics");
     await page.goto("history");
 
     await expect(
@@ -493,8 +884,8 @@ test.describe("App Store screenshots", () => {
   });
 
   test("06 race plan: the race cockpit", async ({ page }) => {
-    const account = await copySeededAccount(RACE_GOAL_ACCOUNT, "race");
-    await openAs(page, account);
+    const account = await openSeasonAthlete(page, "race");
+    await setHalfMarathonGoal(account.uid, new Date());
     await page.goto("program?tab=run");
 
     const plan = page.getByRole("region", { name: "Race plan" });
@@ -503,13 +894,14 @@ test.describe("App Store screenshots", () => {
     // The phase rail, the last of each word in the card.
     for (const phase of ["Base", "Build", "Taper", "Race"])
       await expect(plan.getByText(phase, { exact: true }).last()).toBeVisible();
+    // A whole block: no compressed-plan note under the card.
+    await expect(page.getByText(/^Compressed plan/)).toHaveCount(0);
     await settled(page);
     await shoot(page, "06-race-plan");
   });
 
   test("07 social: the feed", async ({ page }) => {
-    const account = await copySeededAccount(TEST_USER.email, "social");
-    await openAs(page, account);
+    await openSeasonAthlete(page, "social");
     await page.goto("social?tab=feed&feed=explore");
 
     await expect(page.getByText("Morning run")).toBeVisible({
@@ -521,7 +913,7 @@ test.describe("App Store screenshots", () => {
   });
 
   test("08 run: a saved run and its map", async ({ page }) => {
-    const account = await copySeededAccount(SEASON_ATHLETE, "run");
+    const account = await openSeasonAthlete(page, "run");
     // The season's longest run of the last fortnight: an 18 km long run,
     // whichever day this runs on.
     const since = new Date();
@@ -530,14 +922,13 @@ test.describe("App Store screenshots", () => {
       .collection("users")
       .doc(account.uid)
       .collection("runs")
-      .where("date", ">=", dateKey(since))
+      .where("date", ">=", localDateString(since))
       .get();
     const longest = runs.docs
       .map((doc) => ({ id: doc.id, metres: doc.get("distance") as number }))
       .sort((a, b) => b.metres - a.metres)[0];
     expect(longest, "the season seed has no recent runs").toBeTruthy();
 
-    await openAs(page, account);
     await page.goto(`run/${longest.id}`);
     await expect(
       page.getByRole("heading", {
