@@ -1,0 +1,211 @@
+{
+  "exerciseId": "smith-shoulder-press",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1072,
+  "height": 1430,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T09:38:38.381Z",
+  "reference": {
+    "path": "form-frames/smith-shoulder-press/1.webp",
+    "sha256": "3af45223db1b3e22e6879fbbc77ed7383dd3446ae4d3ca6cc7181cdb7bb1071e"
+  },
+  "cueSha256": "d5304b184d8239ab501d9e3c49d817786362cc0b61606ce585bf3fbf6baa7f6a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 bald faceless white-grey athlete, white trainers and neutral smooth pelvis. Canonical and exercise master attached to all moving-pose edits. No code moving-anatomy transformations."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed slight front three-quarter camera. Original1024x1536, common64px top padding, crop to1430px high and24px side margins:1072x1430. Fixed uprights continue beyond top edge; all athlete and moving equipment visible."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Four native configurations and final contact patches inspected. Bilateral closed grips, neutral supported head/torso, planted feet, comfortable nearly straight elbow endpoint after imagegen guide correction. No shrug or torso swing."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate each side. Original bar/plate/collar rectangles translated rigidly0,140,260,317pixels; all eight rectangles checked pixel-identical in every final frame. Fixed rack profiles and unobstructed patches stabilize rails. Native joins and grip occlusion reviewed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both sole anchors and bench-base anchor plus three widths measured invariant. Upper stationary patch boundaries feathered while contact cores remain exact source copies."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Straight vertical Smith press from collarbone region to overhead extension, then controlled return. Hands attached throughout; hooks remain clear during depicted repetition. No cable/stack mechanism claim."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple deltoids, softer lilac triceps and upper chest; stable hierarchy across outward and return phases."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words agree with Set,Initiate,Press,Extend,Lower,Return."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 manually reviewed in actual ExerciseFormFrames. Matching mid/early positions reused on return; autoplay observed Set1/6 to Press3/6."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 light mode after final contact/crop changes. Full athlete and moving equipment visible; readable cues; stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 dark mode after final contact/crop changes. No athlete or moving-equipment clipping; readable captions and stable contacts."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Supported Smith press with planted soles",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "machineBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "machineBaseWidth"],
+      "evidence": "Pixel-derived sole and tower-base contacts, exact stationary master copies. Both moving grips and arms reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/smith-shoulder-press/1.webp",
+      "sha256": "3af45223db1b3e22e6879fbbc77ed7383dd3446ae4d3ca6cc7181cdb7bb1071e",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    },
+    {
+      "path": "form-frames/smith-shoulder-press/2.webp",
+      "sha256": "09917dca5a44b6880ea6c226ca612a5623d6daead0f01e9713372e13a35100e3",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    },
+    {
+      "path": "form-frames/smith-shoulder-press/3.webp",
+      "sha256": "05254a9c1dfb7124147f09eaeb87f6308d9fab157d42404a0b4467beba10f21f",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    },
+    {
+      "path": "form-frames/smith-shoulder-press/4.webp",
+      "sha256": "c61e97de2500038c40b370f6efdad6d281ff12bb00b0968a1c18fd8760f1d2f1",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    },
+    {
+      "path": "form-frames/smith-shoulder-press/5.webp",
+      "sha256": "05254a9c1dfb7124147f09eaeb87f6308d9fab157d42404a0b4467beba10f21f",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    },
+    {
+      "path": "form-frames/smith-shoulder-press/6.webp",
+      "sha256": "09917dca5a44b6880ea6c226ca612a5623d6daead0f01e9713372e13a35100e3",
+      "anchors": {
+        "leftSole": {
+          "x": 231,
+          "y": 1343
+        },
+        "rightSole": {
+          "x": 608,
+          "y": 1382
+        },
+        "machineBase": {
+          "x": 533,
+          "y": 1286
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 164,
+        "rightShoeWidth": 122,
+        "machineBaseWidth": 104
+      }
+    }
+  ]
+}

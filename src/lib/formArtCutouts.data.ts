@@ -717,6 +717,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e",
     sha256: "4ebfc8afc5e1d59050be42933a2ed5ee152080bb418520a8c9e70cc56506a5c2",
   },
+  "smith-shoulder-press": {
+    src: "form-art/smith-shoulder-press.webp",
+    width: 360,
+    height: 480,
+    keyed: true,
+    source: "form-frames/smith-shoulder-press/1.webp",
+    sourceSha256:
+      "3af45223db1b3e22e6879fbbc77ed7383dd3446ae4d3ca6cc7181cdb7bb1071e",
+    sha256: "8dbb2d492b4ab91d3eecd85d130dbfe1f80f881013ebd0eb4e6af7596a04042f",
+  },
   "spider-db-curl": {
     src: "form-art/spider-db-curl.webp",
     width: 471,

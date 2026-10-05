@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "smith-shoulder-press": placard(
+    "smith-shoulder-press",
+    ["Deltoids"],
+    ["Triceps", "Upper Chest"],
+    [
+      [0, "Set", "Brace with the bar near your collarbone."],
+      [
+        0.3333333333333333,
+        "Initiate",
+        "Press upward with your back supported.",
+      ],
+      [0.6666666666666666, "Press", "Keep both wrists above your elbows."],
+      [1, "Extend", "Straighten your arms without shrugging."],
+      [0.6666666666666666, "Lower", "Lower the bar slowly under control."],
+      [
+        0.3333333333333333,
+        "Return",
+        "Return toward your collarbone without bouncing.",
+      ],
+    ]
+  ),
   "shoulder-press-machine": placard(
     "shoulder-press-machine",
     ["Deltoids"],
