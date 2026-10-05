@@ -22,8 +22,10 @@
  *     (`brand`) for the date and "Today", and Train's sport-tinted header
  *     zone (`accent`) with its icon tile (`leading`), because the Lift/Run
  *     switch and the page's own content already say which mode is on
- *   - the entrance stagger, which Food, Social and History each declared
- *     identically and Home inlined
+ *   - the section variants, which Food, Social and History each declared
+ *     identically and Home inlined. The page starts settled
+ *     (`initial={false}`): switching tabs is the most frequent thing in the
+ *     app, and restaggering every section on each switch only slowed it
  *   - the rhythm between page sections
  *
  * What it does NOT own, deliberately: the column and gutter. `Layout`'s
@@ -93,7 +95,7 @@ export default function PageShell({
     <motion.div
       {...rest}
       className={cn("space-y-4", className)}
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={pageStaggerContainer}
     >
