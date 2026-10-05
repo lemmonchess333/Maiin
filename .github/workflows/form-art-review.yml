@@ -10,6 +10,7 @@ on:
       - 'e2e/form-art-review.pw.ts'
       - 'playwright.form-art.config.ts'
       - 'scripts/export-form-art-review.py'
+      - 'scripts/test_export_form_art_review.py'
       - '.github/workflows/form-art-review.yml'
 
 permissions:
@@ -27,6 +28,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Test the native review exporter (offline)
+        run: python3 -m unittest discover -s scripts -p 'test_export_form_art_review.py' -v
       - name: Verify and package selected original frames
         run: python3 scripts/export-form-art-review.py --output art-review-output
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -58,6 +61,68 @@ jobs:
         if: always()
         with:
           name: form-art-playback
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Additional evidence for the current draft, not a replacement for the full
+  # suite above. No source images, assertion bounds or release gates change.
+  review-bulgarian-continuation:
+    if: github.ref == 'refs/heads/codex/continue-exercise-art-oct05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Record the tested commit, runtime and exact artwork inputs
+        run: |
+          mkdir -p test-results/bulgarian-evidence
+          {
+            git rev-parse HEAD
+            node --version
+            npm --version
+            npx playwright --version
+          } > test-results/bulgarian-evidence/runtime.txt
+          sha256sum \
+            docs/exercise-art/pilots/continuation-20261005/MANIFEST.json \
+            docs/exercise-art/pilots/continuation-20261005/bulgarian-split/provenance.json \
+            docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/*.png \
+            e2e/form-art-review.pw.ts \
+            e2e/fixtures/form-art.tsx \
+            src/components/ExerciseFormFrames.tsx \
+            playwright.form-art.config.ts \
+            > test-results/bulgarian-evidence/input-sha256.txt
+      - name: Type-check the account-free review fixture
+        run: npx tsc -p e2e/fixtures/tsconfig.form-art.json
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Run all five Bulgarian player checks without changing assertions
+        run: npx playwright test --config playwright.form-art.config.ts e2e/form-art-review.pw.ts --grep 'bulgarian-split'
+      - name: Require five passes with no skipped, failed or flaky tests
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync('test-results/form-art-results.json', 'utf8'));
+          assert.equal(report.stats.expected, 5, 'All five Bulgarian tests must pass');
+          for (const key of ['unexpected', 'skipped', 'flaky']) {
+            assert.equal(report.stats[key], 0, `Nonzero ${key} test count`);
+          }
+          assert.deepEqual(report.errors, [], 'Runner-level errors must be empty');
+          console.log(JSON.stringify(report.stats));
+          NODE
+      - name: Run the full repository verification gate
+        run: npm run verify
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: form-art-bulgarian-playback-${{ github.sha }}
           path: test-results/
           if-no-files-found: warn
           retention-days: 14
