@@ -137,6 +137,16 @@ describe("ExperienceSuggestionCard", () => {
     ).toBeInTheDocument();
   });
 
+  // Lift4: the copy says what a level change does. It keeps the exercises,
+  // and progression runs per session at every level.
+  it("says the exercises stay, and promises no other cadence", () => {
+    renderCard(stalledWeek(), { experience: "beginner" });
+    expect(
+      screen.getByText(/Your exercises stay as they are/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/week to week/i)).toBeNull();
+  });
+
   it("a dismissed signature stays dismissed", () => {
     const { container } = renderCard(stalledWeek(), {
       experience: "beginner",

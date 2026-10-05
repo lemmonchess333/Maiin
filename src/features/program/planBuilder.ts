@@ -106,15 +106,14 @@ export interface PlanBuilderInput {
   experience: "beginner" | "intermediate" | "advanced";
 
   /**
-   * The experience level the EXISTING plan was built at, when there is one.
+   * The experience level the EXISTING plan was built at, when there is one:
+   * every settings save passes it, and onboarding, which builds a first plan,
+   * does not.
    *
-   * Without it a level change is invisible to the builder: `buildLiftProgram`
-   * preserves the saved week whenever the lift-day count is unchanged, so
-   * switching Beginner ↔ Advanced in Settings produced byte-identical
-   * workouts — while the confirm modal listed "Experience: intermediate →
-   * beginner" as a change and the flow ended on a "Plan updated" toast.
-   * Measured 2026-07-28; the plan the user was told they had updated was the
-   * plan they already had.
+   * A level change is a content edit (Lift4, restoring Pgm5's rule): it
+   * never rebuilds the week or swaps an exercise. What this tells the
+   * builder is that the week is someone's own, so the experience gate leaves
+   * its exercises alone; only a plan being built is gated.
    *
    * Not persisted on ProgramState: the caller edits a profile and therefore
    * already knows the value it is replacing, and a stored copy would be a
@@ -252,8 +251,8 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
  * edit (goal / nutrition / experience / equipment / injuries with the same
  * lift-day count) preserves the user's day structure and all safe exercise
  * customisations. The engine only rebuilds from template when there is no
- * existing programme, the experience tier changes, or the lift-day count
- * changes. Explicit Reset stays destructive via a separate path
+ * existing programme or the lift-day count changes; a level change is a
+ * content edit (Lift4). Explicit Reset stays destructive via a separate path
  * (useProgram.regenerateProgram → generateProgram directly).
  *
  * Injury/equipment edits re-apply their filters in place. Only an exercise
@@ -276,15 +275,14 @@ function buildLiftProgram(input: PlanBuilderInput): {
     !!existing &&
     existing.length > 0 &&
     existing.length === expectedDayCount(input.liftDays);
-  // A level change restructures the programme — which movements are chosen
-  // and whether the week undulates — so it has to rebuild even though the
-  // skeleton is the same shape.
-  const levelChanged =
-    input.previousExperience !== undefined &&
-    toExperience(input.previousExperience) !== toExperience(input.experience);
+  // A level change is a content edit like any other (Lift4, restoring
+  // Pgm5's rule): it never rebuilds the week and never swaps an exercise.
+  // The level reaches the plan through what reads it — the lighter week's
+  // recipe and the RPE row now, the exercises a plan built later picks.
+  const preserve = sameDayCount && !!input.existingState;
 
   const base =
-    sameDayCount && !levelChanged && input.existingState
+    preserve && input.existingState
       ? // Content edit → preserve the user's structure + customizations.
         { splitType: input.existingState.splitType, workouts: existing }
       : // No existing plan, or lift-days changed → rebuild from template.
@@ -305,16 +303,25 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
   // is not enough and a sweep proved it: the PRESERVE branch above never calls
   // `generateProgram` at all, so a beginner seeded from a template — the only
-  // seed path at onboarding — was never gated once. Running it here covers
-  // both branches, and it is idempotent, so the generated path pays nothing.
-  const levelled = applyComplexityGate(
-    base.workouts,
-    toExperience(input.experience),
-    exerciseBank,
-    (ex, toId) =>
-      weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
-    exerciseDisplayName
-  );
+  // seed path at onboarding — was never gated once. It is idempotent, so the
+  // generated path pays nothing.
+  //
+  // Only for a plan being built: a generated one, or a template seeded at
+  // onboarding, the one caller with no previous level. A settings save keeps
+  // the exercises the plan has. Gated there, a level change kept as a content
+  // edit would come back later as swaps on an unrelated save (Lift4: the
+  // engine never swaps an exercise on its own).
+  const building = !preserve || input.previousExperience === undefined;
+  const levelled = building
+    ? applyComplexityGate(
+        base.workouts,
+        toExperience(input.experience),
+        exerciseBank,
+        (ex, toId) =>
+          weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
+        exerciseDisplayName
+      )
+    : base.workouts;
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
   // regeneration path (generateProgram ignores both; the preserve branch keeps

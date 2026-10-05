@@ -737,6 +737,63 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
   });
 });
 
+/* ─── Lift4 · a level change is a content edit ────────────────────
+   It rebuilt the week and dropped every customisation while the save's own
+   confirm said "keep your current workouts". The level now reaches the plan
+   only through what reads it, and a plan being built. */
+describe("buildPlan · a level change is a content edit (Lift4)", () => {
+  const ids = (plan: ReturnType<typeof buildPlan>) =>
+    plan.programState.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+  const intermediate = () =>
+    buildPlan(makeInput({ experience: "intermediate" }));
+
+  it("keeps the week's exercises, sets and reps when the level changes", () => {
+    const first = intermediate();
+    const edited = buildPlan(
+      makeInput({
+        experience: "beginner",
+        previousExperience: "intermediate",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    const shape = (plan: ReturnType<typeof buildPlan>) =>
+      plan.programState.workouts.map((d) =>
+        d.exercises.map((e) => [e.exerciseId, e.sets, e.reps])
+      );
+    expect(shape(edited)).toEqual(shape(first));
+  });
+
+  it("does not swap lifts by level on a later, unrelated save", () => {
+    const first = intermediate();
+    // The gate has something to swap: pull-ups are not a beginner's lift.
+    const seeded = buildPlan(
+      makeInput({ experience: "beginner", existingState: first.programState })
+    );
+    expect(ids(seeded)).not.toEqual(ids(first));
+    // The profile already says beginner; the save is about something else.
+    const later = buildPlan(
+      makeInput({
+        experience: "beginner",
+        previousExperience: "beginner",
+        nutritionPhase: "cut",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(ids(later)).toEqual(ids(first));
+  });
+
+  it("still gates a plan built at onboarding from a template", () => {
+    // No previous level: a first plan, which the level picks for.
+    const first = intermediate();
+    const seeded = buildPlan(
+      makeInput({ experience: "beginner", existingState: first.programState })
+    );
+    expect(ids(seeded).flat()).not.toContain("pull-ups");
+  });
+});
+
 describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", () => {
   // Week of Monday 28 September 2026.
   it("is this week for a Monday-to-Wednesday start", () => {
