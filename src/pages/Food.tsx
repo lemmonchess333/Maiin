@@ -493,8 +493,14 @@ export default function Food() {
   const todaysMeals = getMealsForDate(selectedDate);
 
   const [prevDate, setPrevDate] = useState(selectedDate);
+  /* The hero draws in when Food opens. A day switch remounts it (the
+     `key` below, which also resets its log haptic and celebration
+     guards), and from then on it arrives at the day's figures rather
+     than counting up from zero on every tap of the week strip. */
+  const [heroDrawIn, setHeroDrawIn] = useState(true);
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
+    if (heroDrawIn) setHeroDrawIn(false);
     if (targetMeal) setTargetMeal(null);
     // Clear any in-flight typed text on date change. Without this,
     // typing "2 eggs" for today, then tapping yesterday on the date
@@ -1841,8 +1847,10 @@ export default function Food() {
           <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
         </SectionErrorBoundary>
       </motion.div>
-      <motion.div variants={pageItemVariant} key={selectedDate}>
+      <motion.div variants={pageItemVariant}>
         <FoodHeroCard
+          key={selectedDate}
+          drawIn={heroDrawIn}
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
