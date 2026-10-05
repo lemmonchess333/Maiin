@@ -1182,17 +1182,27 @@ describe("WorkoutSession — warm-ups are optional", () => {
 });
 
 describe("WorkoutSession — rest timer", () => {
-  /* The fixture carries `restSeconds: 0` and a null profile, so every rest
-     falls back to the 90s default. That makes the default the thing a leak
-     would visibly overwrite. */
+  /* The exercise carries a 90s rest and the profile fixes none, so every
+     rest is 90s. That makes it the thing a leak would visibly overwrite. */
   // The time left reads as a clock (DS3): "1:30", not "90 s".
   const restLabel = () =>
     screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
 
   function startFirstRest() {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
   }
+
+  it("rests as the plan suggests when none is fixed (Lift4 (5))", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
+  });
 
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
@@ -1286,7 +1296,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("ticks both displays without re-rendering the set editor or saving drafts", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     // Let mount work settle, then observe real editor renders via its auth read.
     await act(async () => {});
@@ -1312,7 +1322,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("stops paint pulses while hidden and catches up on foreground immediately", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     await act(async () => {});
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
@@ -1341,7 +1351,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
        chime flag stayed set from the first expiry, so the second one passed
        in silence — a timer running with no alert at the end of it. */
     const { haptic } = await import("@/lib/haptic");
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
 
     // Run past the 90s target: the alert fires once.

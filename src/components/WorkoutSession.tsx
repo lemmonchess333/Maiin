@@ -57,6 +57,7 @@ import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy"
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
+import { restSecondsFor } from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   exercisesForLiftBadges,
@@ -530,16 +531,12 @@ export default function WorkoutSession({
 
   const formatElapsed = formatClock;
 
-  // Rest timer. PR E (audit P1 #13): pre-PR-E the target was
-  // hardcoded to 90s and never read profile.defaultRestSeconds —
-  // the Settings → Workout preferences slider had no effect on
-  // the actual session. Now the default is sourced from the
-  // profile with a 90s fallback for users who haven't set one.
-  const profileRestDefault =
-    typeof profile?.defaultRestSeconds === "number" &&
-    profile.defaultRestSeconds > 0
+  // Rest timer: the rest fixed in Settings → Workout preferences, or the
+  // plan's suggestion by role and reps (`restSecondsFor`, Lift4 (5)).
+  const fixedRest =
+    typeof profile?.defaultRestSeconds === "number"
       ? profile.defaultRestSeconds
-      : DEFAULT_REST_SECONDS;
+      : undefined;
   const [rest, setRest] = useState<{
     id: number;
     startedAt: number;
@@ -738,18 +735,19 @@ export default function WorkoutSession({
      Safari — the Vibrate API has never shipped there. */
 
   const startRest = useCallback(
-    (exerciseRest?: number) => {
+    (exercise: ProgramExercise | undefined) => {
       setRest({
         id: ++restSequence.current,
         startedAt: Date.now(),
-        target:
-          typeof exerciseRest === "number" && exerciseRest > 0
-            ? exerciseRest
-            : profileRestDefault,
+        target: exercise
+          ? restSecondsFor(exercise, fixedRest)
+          : fixedRest && fixedRest > 0
+            ? fixedRest
+            : DEFAULT_REST_SECONDS,
       });
       haptic(50);
     },
-    [profileRestDefault]
+    [fixedRest]
   );
 
   const stopRest = useCallback(() => setRest(null), []);
@@ -1039,12 +1037,12 @@ export default function WorkoutSession({
       } else {
         setCurrentExIndex(next.exerciseIndex);
         setCurrentSetIndex(next.setIndex);
-        if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
+        if (autoRest) startRest(day.exercises[currentExIndex]);
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
-      if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
+      if (autoRest) startRest(day.exercises[currentExIndex]);
     }
   };
 
@@ -1649,7 +1647,7 @@ export default function WorkoutSession({
               leftIcon={<Timer className="size-4" aria-hidden="true" />}
               onClick={() => {
                 haptic("light");
-                startRest(day.exercises[currentExIndex]?.restSeconds);
+                startRest(day.exercises[currentExIndex]);
               }}
             >
               Start rest timer
