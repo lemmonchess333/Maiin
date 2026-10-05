@@ -49,6 +49,34 @@ describe("rescaleForSwap — unsafe boundaries", () => {
       rescaleForSwap(120, "deadlift", "incline-db-press", "hip_dominant")
     ).toBe(0);
   });
+
+  it("carries no load into pull-ups, the vertical pull the bank leaves unfactored", () => {
+    // Read by its factor alone, each of these came out at 82.5 to 200 kg.
+    for (const from of [
+      "lat-pulldown",
+      "straight-arm-pulldown",
+      "single-arm-lat-pulldown",
+    ]) {
+      expect(rescaleForSwap(50, from, "pull-ups", "vertical_pull")).toBe(0);
+    }
+  });
+
+  it("does not read a weighted pull-up's added load as a pulldown's", () => {
+    expect(
+      rescaleForSwap(10, "pull-ups", "lat-pulldown", "vertical_pull")
+    ).toBe(0);
+  });
+
+  it("still scales between two loaded vertical pulls", () => {
+    expect(
+      rescaleForSwap(
+        50,
+        "lat-pulldown",
+        "single-arm-lat-pulldown",
+        "vertical_pull"
+      )
+    ).toBeGreaterThan(0);
+  });
 });
 
 describe("exerciseBank — structural invariants", () => {

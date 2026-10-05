@@ -1,4 +1,4 @@
-import { getExerciseById } from "@/lib/exercises";
+import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 
 import type { MovementCategory } from "./programTypes";
 import {
@@ -565,6 +565,13 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
  * Returns 0 for a bodyweight boundary, an unknown/cross-category id, or a
  * factor of 0. In each case there is no safe ratio; callers with profile
  * context may replace that uncalibrated 0 with a target-specific seed.
+ *
+ * Bodyweight is the catalogue's call, as it is for starting loads: a
+ * bodyweight lift's programme weight is ADDED load, so no ratio from a loaded
+ * lift means anything there, whatever the bank's factor says. The bank leaves
+ * the vertical-pull primary unfactored because it anchors the category's
+ * notional full pull, so the factor alone would read pull-ups as a full-weight
+ * lift and hand a lat pulldown's 50 kg on as 82.5 kg of pull-ups.
  */
 export function rescaleForSwap(
   weight: number,
@@ -584,13 +591,17 @@ export function rescaleForSwap(
   // honest uncalibrated value.
   if (!fromOption || !toOption) return 0;
 
-  const from = fromOption.loadFactor ?? 1;
-  const to = toOption.loadFactor ?? 1;
+  const from = swapFactor(fromOption);
+  const to = swapFactor(toOption);
   // A zero target factor is bodyweight. A zero source factor cannot calibrate
   // a newly loaded movement without bodyweight/profile context.
   if (from <= 0 || to <= 0) return 0;
   if (from === to) return weight;
   return Math.max(2.5, Math.round((weight * (to / from)) / 2.5) * 2.5);
+}
+
+function swapFactor(option: ExerciseOption): number {
+  return isBodyweightExerciseId(option.id) ? 0 : (option.loadFactor ?? 1);
 }
 
 /**

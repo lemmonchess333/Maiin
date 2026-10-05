@@ -901,3 +901,129 @@ describe("migrateProgramState — v3 coverage backfill", () => {
     expect(idsIn(out).filter((id) => id === "lateral-raise")).toHaveLength(1);
   });
 });
+
+/* ─── v5 one-time repair: a load a swap carried onto a bodyweight lift ─── */
+
+/**
+ * The equipment filter swapped a home-gym lat pulldown for pull-ups and the
+ * bank read the pull-up as a full-weight lift, so the slot arrived at 75 kg.
+ * The session pre-filled 75 kg and every unweighted session counted as a
+ * miss. The swap is fixed (`rescaleForSwap`); this pins the one-time repair
+ * of plans it already happened to.
+ */
+describe("migrateProgramState — v5 swapped bodyweight load repair", () => {
+  const pullUps = (
+    overrides: Record<string, unknown> = {}
+  ): Record<string, unknown> => ({
+    name: "Pull-Ups",
+    exerciseId: "pull-ups",
+    instanceId: "i-pull",
+    movementCategory: "vertical_pull",
+    sets: 3,
+    baseSets: 3,
+    reps: 14,
+    baseReps: 14,
+    repUnit: "reps",
+    weight: 75,
+    progressionType: "double",
+    lastSuccessfulWeight: 75,
+    lastAttemptedWeight: 0,
+    consecutiveFailures: 4,
+    plateauCount: 2,
+    performanceHistory: [
+      { date: "2026-09-28", weight: 0, repsCompleted: 12, repsTarget: 14 },
+    ],
+    lastPerformance: null,
+    notes: "Swapped from Lat Pulldown — not available with your equipment.",
+    ...overrides,
+  });
+
+  const v4With = (ex: Record<string, unknown>) =>
+    makeLegacyProgramState({
+      programSchemaVersion: 4,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Pull",
+          dayType: "pull",
+          completed: false,
+          exercises: [ex],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  const repaired = (ex: Record<string, unknown>) =>
+    migrateProgramState(v4With(ex), "2026-10-05").workouts[0].exercises[0];
+
+  it("takes the load off a pull-up the equipment filter swapped in", () => {
+    const ex = repaired(pullUps());
+    expect(ex.weight).toBe(0);
+    expect(ex.lastSuccessfulWeight).toBe(0);
+    expect(ex.lastAttemptedWeight).toBe(0);
+  });
+
+  it("clears the misses counted against that load", () => {
+    const ex = repaired(pullUps());
+    expect(ex.consecutiveFailures).toBe(0);
+    expect(ex.plateauCount).toBe(0);
+  });
+
+  it("clears a lighter week's stash, or the week's end would put it back", () => {
+    expect(repaired(pullUps({ preDeloadWeight: 75 })).preDeloadWeight).toBe(0);
+  });
+
+  it("repairs a swapped-in load even when sets were ticked at the pre-fill", () => {
+    // The session pre-filled 75 kg, so ticking the sets logged it.
+    const ex = repaired(
+      pullUps({
+        performanceHistory: [
+          { date: "2026-09-28", weight: 75, repsCompleted: 14, repsTarget: 14 },
+        ],
+      })
+    );
+    expect(ex.weight).toBe(0);
+  });
+
+  it("repairs a load no session ever lifted, whatever brought it", () => {
+    // A Replace leaves no note; nothing logged with added weight is enough.
+    expect(repaired(pullUps({ notes: undefined })).weight).toBe(0);
+  });
+
+  it("keeps a weighted pull-up the person set and lifted", () => {
+    const ex = repaired(
+      pullUps({
+        weight: 10,
+        notes: undefined,
+        consecutiveFailures: 1,
+        performanceHistory: [
+          { date: "2026-09-28", weight: 10, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })
+    );
+    expect(ex.weight).toBe(10);
+    expect(ex.consecutiveFailures).toBe(1);
+  });
+
+  it("leaves loaded lifts alone", () => {
+    const ex = repaired(
+      pullUps({
+        name: "Lat Pulldown",
+        exerciseId: "lat-pulldown",
+        weight: 45,
+        notes: undefined,
+        performanceHistory: [],
+      })
+    );
+    expect(ex.weight).toBe(45);
+  });
+
+  it("runs once: a load set after the repair stays", () => {
+    const current = {
+      ...v4With(pullUps({ weight: 10 })),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    expect(
+      migrateProgramState(current, "2026-10-05").workouts[0].exercises[0].weight
+    ).toBe(10);
+  });
+});

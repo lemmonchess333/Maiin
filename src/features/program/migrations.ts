@@ -54,6 +54,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+import { isBodyweightExerciseId } from "@/lib/exercises";
 
 /**
  * A MAIN lift's minimum set anchor — mirrors volumeModel's
@@ -237,6 +238,43 @@ function repairDeloadDecay(
   };
 }
 
+/**
+ * One-time repair (schema v5, Lift4): a bodyweight lift carrying a load a
+ * swap handed it.
+ *
+ * A swap into pull-ups scaled the outgoing lift's load by the bank's
+ * factors, and the pull-up's missing factor read as a full-weight lift, so
+ * a lat pulldown's 45 kg arrived as 75 kg of pull-ups. A bodyweight lift's
+ * programme weight is ADDED load: the session pre-filled 75 kg, and since a
+ * bodyweight set only counts as hit at the plan's added load, every
+ * unweighted session was a miss. `rescaleForSwap` no longer does this; this
+ * puts right the plans it already happened to.
+ *
+ * Only on positive evidence the load was not the person's: the equipment or
+ * injury filter brought the lift in (its "Swapped from" note), or no session
+ * ever logged it with added weight. A weighted pull-up someone set and
+ * lifted keeps its load. Its miss counts go too, since every miss was
+ * against a load nobody had asked for, and so does a lighter week's stash
+ * of the load, or the week's end would bring it back.
+ */
+function repairSwappedBodyweightLoad(ex: ProgramExercise): ProgramExercise {
+  if (!isBodyweightExerciseId(ex.exerciseId) || !(ex.weight > 0)) return ex;
+  const swappedIn = ex.notes?.startsWith("Swapped from") ?? false;
+  const loggedWithLoad = (ex.performanceHistory ?? []).some(
+    (record) => record.weight > 0
+  );
+  if (!swappedIn && loggedWithLoad) return ex;
+  return {
+    ...ex,
+    weight: 0,
+    lastSuccessfulWeight: 0,
+    lastAttemptedWeight: 0,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    ...(ex.preDeloadWeight !== undefined ? { preDeloadWeight: 0 } : {}),
+  };
+}
+
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
 // source of truth. The semantics here are unchanged.
@@ -390,6 +428,9 @@ export function migrateProgramState(
   // below and for the same reason: run on every load it would fight every
   // legitimate load below the last success (see `repairDeloadDecay`).
   const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
+  // One-shot for the same reason: run on every load, it would take away a
+  // load someone set on a swapped-in pull-up after the repair.
+  const repairSwappedLoads = (state.programSchemaVersion ?? 1) < 5;
   let workoutsChanged = false;
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
@@ -402,6 +443,7 @@ export function migrateProgramState(
       }
 
       next = repairDeloadDecay(next, restoreDecayedLoads);
+      if (repairSwappedLoads) next = repairSwappedBodyweightLoad(next);
 
       if (next !== exercise) {
         workoutsChanged = true;
