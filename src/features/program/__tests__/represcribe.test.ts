@@ -5,6 +5,7 @@ import {
   focusRepSummary,
   blockPrefersShorterSessions,
   blockOfferBlockedByRace,
+  represcribeSwapped,
   represcribeWorkouts,
   scaleLoadForReps,
   isProgressionHeld,
@@ -931,5 +932,86 @@ describe("blockReleaseLine — ending a block says what happens (Lift4)", () => 
       );
     }
     expect(line("strength", "hypertrophy")).not.toMatch(/full session/);
+  });
+});
+
+describe("represcribeSwapped — a swapped-in lift takes its own role's numbers (Lift4 (5))", () => {
+  const legExtension = ex({
+    name: "Leg Extension",
+    exerciseId: "leg-extension",
+    movementCategory: "knee_dominant",
+    isAccessory: true,
+    sets: 2,
+    baseSets: 2,
+    reps: 10,
+    baseReps: 10,
+    repRangeMax: 15,
+    weight: 40,
+  });
+  const bench = ex({ reps: 9, repRangeMax: 11 });
+
+  it("gives the new lift its role's reps, range and progression, at no more sets than its slot had", () => {
+    // The knee swap put a split squat (another compound) where a leg
+    // extension (an isolation) was: 8–12, not the isolation's 10–15.
+    const before = [day([bench, legExtension])];
+    const after = [
+      day([
+        bench,
+        {
+          ...legExtension,
+          exerciseId: "bulgarian-split",
+          name: "Bulgarian Split Squat",
+        },
+      ]),
+    ];
+    const [out] = represcribeSwapped(
+      before,
+      after,
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(out.exercises[1]).toMatchObject({
+      exerciseId: "bulgarian-split",
+      sets: 2,
+      baseSets: 2,
+      reps: 8,
+      baseReps: 8,
+      repRangeMax: 12,
+      progressionType: "double",
+    });
+    // Fewer reps than the slot had: the load holds (a represcribe never
+    // raises one; progression does).
+    expect(out.exercises[1].weight).toBe(40);
+  });
+
+  it("moves the load down to a swapped-in lift's higher reps", () => {
+    const split = {
+      ...legExtension,
+      exerciseId: "bulgarian-split",
+      name: "Bulgarian Split Squat",
+      reps: 8,
+      baseReps: 8,
+      repRangeMax: 12,
+    };
+    const [out] = represcribeSwapped(
+      [day([bench, split])],
+      [
+        day([
+          bench,
+          { ...split, exerciseId: "leg-extension", name: "Leg Extension" },
+        ]),
+      ],
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(out.exercises[1]).toMatchObject({ reps: 10, repRangeMax: 15 });
+    expect(out.exercises[1].weight).toBeLessThan(40);
+  });
+
+  it("leaves every slot the swap didn't touch as it was", () => {
+    const week = [day([bench, legExtension])];
+    expect(
+      represcribeSwapped(week, week, "hypertrophy", "intermediate")
+    ).toEqual(week);
   });
 });

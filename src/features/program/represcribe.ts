@@ -159,6 +159,36 @@ export function represcribeWorkouts(
 }
 
 /**
+ * A lift an equipment or injury swap brings into a plan the person already
+ * has takes its own role's numbers (Lift4 (5)): the reps, range and
+ * progression its role gives on that day, its load moved to those reps, and
+ * no more sets than its role's (the plan's time fit may have left fewer).
+ * A glute bridge in a deadlift's place climbs an isolation's range, not the
+ * deadlift's. Slots the swap left alone keep everything.
+ */
+export function represcribeSwapped(
+  before: readonly WorkoutDay[],
+  after: readonly WorkoutDay[],
+  goal: PrimaryGoal,
+  experience: Experience | undefined
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(after, goal, experience);
+  return after.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      if (before[d]?.exercises[e]?.exerciseId === ex.exerciseId) return ex;
+      if (ex.repUnit === "seconds") return ex;
+      const sets = Math.min(ex.sets, roleRepsFor(goal, ex, experience).sets);
+      return {
+        ...fresh[d].exercises[e],
+        sets,
+        ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+      };
+    }),
+  }));
+}
+
+/**
  * Whether an easing block is holding progression this week.
  *
  * Deliberately NOT implemented by flipping `programState.settings

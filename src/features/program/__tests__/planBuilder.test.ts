@@ -19,6 +19,12 @@ import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
 } from "../programTypes";
+import {
+  assignDayRoles,
+  repFloorFor,
+  undulationDeltaFor,
+} from "../programEngine";
+import { roleRepsFor } from "../roleTable";
 
 function makeInput(
   overrides: Partial<PlanBuilderInput> = {}
@@ -704,6 +710,46 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     );
     expect(edited.programState.workouts[0].exercises).toHaveLength(
       customized.workouts[0].exercises.length
+    );
+  });
+
+  it("a lift a content edit's injury swap brings in takes its own role's numbers", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const customized = JSON.parse(
+      JSON.stringify(first.programState)
+    ) as typeof first.programState;
+    // An accessory leg extension at numbers no role gives.
+    customized.workouts[1].exercises[2] = {
+      ...customized.workouts[1].exercises[2],
+      exerciseId: "leg-extension",
+      name: "Leg Extension",
+      movementCategory: "knee_dominant",
+      isAccessory: true,
+      reps: 20,
+      baseReps: 20,
+      repRangeMax: 25,
+    };
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: customized,
+        preserveHistory: true,
+      })
+    );
+    const swapped = edited.programState.workouts[1].exercises[2];
+    expect(swapped.exerciseId).not.toBe("leg-extension");
+    // Day 2 of 4 is a heavier day: its role's bottom, two under.
+    const row = roleRepsFor("hypertrophy", swapped, "intermediate");
+    const reps = Math.max(
+      repFloorFor(swapped),
+      row.bottom + undulationDeltaFor(swapped, assignDayRoles(4)[1])
+    );
+    expect(swapped.reps).toBe(reps);
+    expect(swapped.baseReps).toBe(reps);
+    // …and the slots the edit left alone are as they were.
+    expect(edited.programState.workouts[0].exercises).toEqual(
+      customized.workouts[0].exercises
     );
   });
 

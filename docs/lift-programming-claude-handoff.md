@@ -321,6 +321,18 @@ can't do safely, not only a beginner's. With a sore elbow at home a push day
 with two triceps slots still keeps one it can't do, flagged, since the
 kickback is the only safe triceps lift without a cable.
 
+STATUS 2026-10-05 (Lift4 (5) and (11), build step 4, seventh part): a new
+plan's equipment and injury swaps happen inside the generator, after the
+identity passes and the twice-a-week lifts and before the role table, so the
+lifts swapped in get their own role's numbers and the time fit prices the
+lifts the person will do (a home gym's dumbbell bench keeps the sets the
+barbell's warm-ups cost it). Every caller passes the person's limits, which
+fixes a reset, and a first plan built with none saved, that ignored both and
+gave a knee-injured person the squat back. In a plan the person already has,
+a lift a swap brings in takes its role's reps, range and progression on its
+day, its load moved down to more reps (never up), and no more sets than its
+slot had (`represcribeSwapped`).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

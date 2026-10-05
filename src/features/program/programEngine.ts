@@ -32,6 +32,10 @@ import {
   reconcileToLandmarks,
 } from "./volumeModel";
 import { fitSessionsToTime, sessionFits } from "./sessionFit";
+import {
+  applyEquipmentFilterToWorkouts,
+  applyInjuryFiltersToWorkouts,
+} from "./matchTemplate";
 import { extraPastCeiling, twiceWeeklyAdditions } from "./weeklyFrequency";
 import {
   seedStartingLoads,
@@ -1880,7 +1884,15 @@ export function generateProgram(
    * each session is cut to fit it. Every plan build passes one
    * (`sessionMinutesFor`); absent, only the 18-set ceiling applies.
    */
-  sessionMinutes?: number
+  sessionMinutes?: number,
+  /**
+   * What the person can do (Lift4 (11)): their equipment and injuries. A
+   * lift they can't do or that their injury rules out is swapped
+   * (`matchTemplate.ts`) before the role table, the seeding and the time
+   * fit, so the plan's numbers and its fit are the lifts they'll do.
+   * Absent: a full gym and no injuries.
+   */
+  limits?: { equipment?: string; injuries?: readonly string[] }
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -2117,6 +2129,25 @@ export function generateProgram(
   // other lift.
   const twiceWeekly = addTwiceWeeklyLifts(workouts, existingWorkouts);
   workouts = twiceWeekly.workouts;
+  // Lift4 (11): injuries first (safety), then equipment, whose picker is
+  // injury-aware; both keep a slot's place, so what the passes above
+  // settled, the added lifts included, stays where it is.
+  if (limits) {
+    const injuries = [...(limits.injuries ?? [])];
+    workouts = applyInjuryFiltersToWorkouts(
+      workouts,
+      injuries,
+      limits.equipment,
+      loadCtx
+    );
+    workouts = applyEquipmentFilterToWorkouts(
+      workouts,
+      limits.equipment ?? "full_gym",
+      injuries,
+      experience,
+      loadCtx
+    );
+  }
   // Lift4 (5): each lift's sets, reps and progression come from its role
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.

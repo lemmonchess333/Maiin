@@ -2983,3 +2983,41 @@ describe("every muscle on two days a week (Lift4 (5))", () => {
     });
   });
 });
+
+// Lift4 (11): a plan the generator builds outside the plan builder (a reset,
+// a first plan with none saved) keeps the person's equipment and injuries.
+describe("generateProgram with the person's limits", () => {
+  it("swaps what the injury names and the equipment can't do, before the numbers", async () => {
+    const { contraindicatedFor } = await import("../injurySubstitutions");
+    const { getExerciseById } = await import("@/lib/exercises");
+    const home = new Set(["Dumbbells", "Bodyweight", "Kettlebell"]);
+    const { workouts } = generateProgram(
+      "recomp",
+      4,
+      undefined,
+      "hypertrophy",
+      { bodyweightKg: 80, experience: "intermediate" },
+      undefined,
+      "intermediate",
+      60,
+      { equipment: "home_gym", injuries: ["knee"] }
+    );
+    for (const ex of workouts.flatMap((d) => d.exercises)) {
+      expect(
+        contraindicatedFor(ex.exerciseId, ["knee"]),
+        ex.exerciseId
+      ).toEqual([]);
+      expect(
+        home.has(getExerciseById(ex.exerciseId)?.equipment ?? "Bodyweight"),
+        ex.exerciseId
+      ).toBe(true);
+      // Every lift carries its own role's numbers, the swapped ones too.
+      if (ex.repUnit !== "seconds") {
+        const row = roleRepsFor("hypertrophy", ex, "intermediate");
+        expect(ex.progressionType, ex.exerciseId).toBe(
+          row.top === undefined ? "linear" : "double"
+        );
+      }
+    }
+  });
+});

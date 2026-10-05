@@ -48,9 +48,10 @@ function replaceExercise(
  * `buildPlan` runs this on every plan it builds, onboarding's included.
  * Structure-preserving regeneration calls it so that when a user changes their
  * injuries in Programme Settings, ONLY the now-contraindicated exercises in
- * their current workouts are swapped. The slot's sets/reps/role survive, but
+ * their current workouts are swapped. The slot keeps its place, and
  * movement-specific load and performance history are recalibrated/reset so a
- * deadlift record can never be relabelled as its substitute.
+ * deadlift record can never be relabelled as its substitute; the builder
+ * then gives the new lift its role's numbers (`represcribeSwapped`).
  *
  * Over-swap guard: an exercise is swapped only when `CONTRAINDICATED` (the
  * lifts each injury's promise names) flags it for one of the user's CURRENT
@@ -166,8 +167,9 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
  * When a user changes their equipment (e.g. full_gym → minimal while
  * travelling), structure-preserving regeneration calls this to swap any
  * exercise whose equipment the user no longer has for a same-movement-category
- * alternative that fits. The slot's sets/reps/role survive; the target load is
- * recalibrated and movement-specific history is reset. full_gym (or any
+ * alternative that fits. The slot keeps its place; the target load is
+ * recalibrated, movement-specific history is reset, and the builder gives the
+ * new lift its role's numbers (`represcribeSwapped`). full_gym (or any
  * unrecognised tier) is a no-op (everything available). An exercise whose id
  * we can't resolve in EXERCISES is left untouched. No fitting alternative is
  * kept with a warning note.

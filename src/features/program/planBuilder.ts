@@ -74,6 +74,7 @@ import {
   expectedDayCount,
 } from "./programEngine";
 import { mainRepAnchor } from "./roleTable";
+import { represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
   loadContextFrom,
@@ -276,10 +277,9 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
  * (useProgram.regenerateProgram → generateProgram directly).
  *
  * Injury/equipment edits re-apply their filters in place. Only an exercise
- * that is now unsafe or unavailable changes identity; its slot prescription
- * survives while its movement-specific load/history is safely reinitialised.
- * A remaining follow-up is goal-driven rep/volume rescheme (it needs a
- * per-exercise role anchor the stored ProgramExercise lacks).
+ * that is now unsafe or unavailable changes identity; it takes its own
+ * role's numbers (`represcribeSwapped`), and its movement-specific
+ * load/history is safely reinitialised.
  */
 function buildLiftProgram(input: PlanBuilderInput): {
   splitType: SplitType;
@@ -321,7 +321,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
           // Read-only — lifts stay split-ordered (ADR-0002).
           buildWeekSchedule(input),
           toExperience(input.experience),
-          sessionMinutesFor(input.sessionMinutes)
+          sessionMinutesFor(input.sessionMinutes),
+          { equipment: input.equipment, injuries: input.injuries }
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
@@ -365,12 +366,19 @@ function buildLiftProgram(input: PlanBuilderInput): {
     input.equipment,
     loadCtx
   );
-  const equipmentSafe = applyEquipmentFilterToWorkouts(
-    injurySafe,
-    input.equipment,
-    input.injuries,
-    toExperience(input.experience),
-    loadCtx
+  // A lift the swaps bring in takes its own role's numbers; a new plan's
+  // were swapped in the generator, before its role table.
+  const equipmentSafe = represcribeSwapped(
+    levelled,
+    applyEquipmentFilterToWorkouts(
+      injurySafe,
+      input.equipment,
+      input.injuries,
+      toExperience(input.experience),
+      loadCtx
+    ),
+    input.primaryGoal,
+    toExperience(input.experience)
   );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
