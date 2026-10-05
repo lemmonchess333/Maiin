@@ -727,6 +727,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
     sha256: "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
   },
+  "single-arm-cable-pushdown": {
+    src: "form-art/single-arm-cable-pushdown.webp",
+    width: 445,
+    height: 480,
+    keyed: true,
+    source: "form-frames/single-arm-cable-pushdown/1.webp",
+    sourceSha256:
+      "30521899255dc3eba56d47a8e96e2acdc802c17beea2758c932bf604d4971425",
+    sha256: "cbce486ef3268a30912c974ed932bb216d04c8a1a67c4b1cecb9e6ef73e2d179",
+  },
   "single-arm-lat-pulldown": {
     src: "form-art/single-arm-lat-pulldown.webp",
     width: 339,

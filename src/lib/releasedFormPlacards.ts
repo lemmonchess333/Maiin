@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "single-arm-cable-pushdown": placard(
+    "single-arm-cable-pushdown",
+    ["Triceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Pin your elbow beside your ribs."],
+      [0.6, "Press", "Push down with a straight wrist."],
+      [1, "Lockout", "Straighten your arm without moving your elbow."],
+      [1, "Hold", "Keep your shoulder and torso still."],
+      [0.6, "Return", "Return slowly, keeping the cable taut."],
+      [0, "Reset", "Bend your elbow under control."],
+    ]
+  ),
   "bayesian-cable-curl": placard(
     "bayesian-cable-curl",
     ["Biceps"],

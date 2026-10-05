@@ -467,6 +467,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 3,
   },
+  "single-arm-cable-pushdown": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 950,
+    height: 1056,
+    reference: 1,
+  },
   "single-arm-lat-pulldown": {
     folder: "2026-10-04",
     version: "anatomy-v3-2026-10-04",
