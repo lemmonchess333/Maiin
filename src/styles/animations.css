@@ -25,13 +25,29 @@
   transform: scale(0.96);
 }
 
-/* ─── SKELETON SHIMMER (LoadingSkeleton names this keyframe inline) ── */
+/* ─── SKELETON (LoadingSkeleton's `Skeleton`) ─────────────────
+   A breathing opacity and a sweep across the theme-flipped
+   `--skeleton-shimmer` gradient the component sets inline. Only when
+   motion is welcome: under Reduce Motion a skeleton is a still block at
+   full opacity. The sweep is constant motion, so it runs linear. */
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
   }
   100% {
     background-position: -200% 0;
+  }
+}
+@keyframes ds-skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ds-skeleton {
+    animation:
+      ds-skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+      shimmer 1.5s linear infinite;
   }
 }
 
