@@ -1,0 +1,113 @@
+{
+  "exerciseId": "bulgarian-split",
+  "method": "Sharp lossless WebP, effort 6; native canvas, no crop or resize",
+  "visualApproval": false,
+  "note": "This report proves export integrity; visual and player approval are recorded separately.",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "sourceManifest": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/MANIFEST.json",
+    "sha256": "bd3118a9b59f2d3ba7e5049bb5072b0f14c4faa9d845a641c209d771ffc27fab"
+  },
+  "totalBytes": 2856426,
+  "frames": [
+    {
+      "index": 1,
+      "pose": "setup",
+      "path": "../verification/release-oct05/candidate-frames/1.webp",
+      "sha256": "2456cef652c9bb32c9ec927767ef5051ac18ca53a7d4ea45cf22e79ffa41d296",
+      "bytes": 472710,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+        "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+      },
+      "decodedRgbChangedChannels": 0
+    },
+    {
+      "index": 2,
+      "pose": "shallow",
+      "path": "../verification/release-oct05/candidate-frames/2.webp",
+      "sha256": "42dc82e7339c497519cd253fc92bb6d153737a3881bda6d7c92dca9261b9a6c2",
+      "bytes": 425624,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      },
+      "decodedRgbChangedChannels": 0
+    },
+    {
+      "index": 3,
+      "pose": "deep",
+      "path": "../verification/release-oct05/candidate-frames/3.webp",
+      "sha256": "247d0811a26bd1d6f012fc0629bcd51f7062521f162875defb7d2c3de5cb9cad",
+      "bytes": 560468,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+        "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+      },
+      "decodedRgbChangedChannels": 0
+    },
+    {
+      "index": 4,
+      "pose": "bottom",
+      "path": "../verification/release-oct05/candidate-frames/4.webp",
+      "sha256": "221a80ef31a2c4daf0fa12de54cb055ad63e28e5a743a54d85b0ab6fb71a8831",
+      "bytes": 411532,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+        "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+      },
+      "decodedRgbChangedChannels": 0
+    },
+    {
+      "index": 5,
+      "pose": "deep",
+      "path": "../verification/release-oct05/candidate-frames/5.webp",
+      "sha256": "247d0811a26bd1d6f012fc0629bcd51f7062521f162875defb7d2c3de5cb9cad",
+      "bytes": 560468,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+        "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+      },
+      "decodedRgbChangedChannels": 0
+    },
+    {
+      "index": 6,
+      "pose": "shallow",
+      "path": "../verification/release-oct05/candidate-frames/6.webp",
+      "sha256": "42dc82e7339c497519cd253fc92bb6d153737a3881bda6d7c92dca9261b9a6c2",
+      "bytes": 425624,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      },
+      "decodedRgbChangedChannels": 0
+    }
+  ]
+}

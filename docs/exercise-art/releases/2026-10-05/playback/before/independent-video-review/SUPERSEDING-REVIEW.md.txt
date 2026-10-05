@@ -1,0 +1,39 @@
+# Superseding independent playback review
+
+Reviewer: movement_review. Date: 2026-10-05.
+
+**Decision: continuous playback is BLOCKED. This explicitly supersedes my prior sampled-state player pass for this CI evidence.** The prior review viewed video samples at 5 fps and therefore could miss a single 25 fps encoded frame. The native art, static player captures, and displayed pose/cue sequence remain acceptable; they do not establish transition continuity.
+
+Evidence identity:
+
+- CI run: 37361829827.
+- Published commit: 7752aeb3937ce4fd01837b297cb1c4a75a58b97e.
+- Tree: 0409fdcc9d288e280645d2190a21744bb7f49f71.
+- Dark WebM SHA-256: 3d444fdab99ece95cc4a86d5dea0ef2e3d7c9014604fe9c65184bdd4be16d1a1.
+- Light WebM SHA-256: ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790.
+- Actual encoded format: VP8, 392 x 852, 25 fps; browser viewport: 393 x 852.
+
+I independently decoded both original WebMs without resampling or interpolation using FFmpeg raw RGB24 output with `-vsync 0`. I read the original frame PTS through ffprobe. All 228 dark frames and 230 light frames were scanned, and I visually inspected native before/center/after guide crops for all six transition boundaries in each theme. The diagnostic crops retain native pixels; labels are outside the crops. Their full decoded source frames are preserved alongside them.
+
+## Confirmed empty-stage frames
+
+At each entry below, the athlete, both dumbbells and the entire bench disappear while the newly advanced caption and player controls remain visible. The immediately preceding and following encoded frames show the expected adjacent poses.
+
+| Theme | Transition | Zero-based encoded frame | Original PTS |
+|---|---|---:|---:|
+| Dark | 1 to 2 | 44 | 1.76 s |
+| Dark | 3 to 4 | 105 | 4.20 s |
+| Dark | 5 to 6 | 167 | 6.68 s |
+| Dark | 6 to 1 | 196 | 7.84 s |
+| Light | 1 to 2 | 46 | 1.84 s |
+| Light | 3 to 4 | 107 | 4.28 s |
+
+Each confirmed gap occupies one encoded frame, or 40 ms in these recordings. This is not a claim about the precise duration on a physical display. The other inspected boundaries (dark 2 to 3 and 4 to 5; light 2 to 3, 4 to 5, 5 to 6 and 6 to 1) have the adjacent expected artwork present in their inspected before/center/after frames.
+
+The independent all-frame brightness diagnostic is `transitions/independent-per-frame.json`. Its ROI is x=60..339, y=330..579; the six confirmed frames have zero pixels with any RGB channel above 80 in that artwork region. This count was used to flag candidates, not as a substitute for visual confirmation. All twelve visual boundary triples are `transitions/{dark,light}-boundary-{1..6}-native-triple.png`.
+
+The DOM transition logs and 86 passing Playwright cases do not invalidate this finding. They establish source order, loaded dimensions and computed visibility, but do not establish that artwork pixels were present in every captured/composited frame. The cause of the discrepancy is not established by this review.
+
+Do not release on this continuous-playback evidence. The next exact CI recordings must be scanned at every encoded frame over the complete reviewed cycle, with all flagged gaps and every transition boundary inspected. Five-fps sampling is insufficient. Reduced-motion evidence remains dark-only; this evidence also does not cover installed-mobile or production wiring.
+
+No repository files, tests, public approval records or commits were changed during this review.

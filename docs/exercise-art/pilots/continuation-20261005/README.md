@@ -6,6 +6,13 @@ inactive draft pending actual mobile player review.** The branch starts at
 `0180a3043b8fe2eb26c345a00c0d7404d86530ed` on `main`. The earlier
 `codex/continue-exercise-art-oct02` branch was already contained in that base.
 
+The later [continuation checkpoint](../../releases/2026-10-05/README.md) records
+the actual V2 browser finding, the player decode repair and the passing full
+repository gate. V2's automated browser tests passed, but frame-by-frame video
+inspection found brief empty stages. Repaired-player browser verification is
+still pending; the app integration is prepared and remains unapplied. The
+selection and construction records below retain their original review scope.
+
 The owner's screenshot showed a later left-facing athlete with the bench on the
 right, stopped while correcting the supporting rear-thigh highlight. The native
 screenshot candidate was not available in the recovered repository. The new

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /workspace/scratch/a307ac8d62f0/Maiin
+
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  21:36:46
+   Duration  2.21s (transform 227ms, setup 86ms, import 371ms, tests 730ms, environment 786ms)
+

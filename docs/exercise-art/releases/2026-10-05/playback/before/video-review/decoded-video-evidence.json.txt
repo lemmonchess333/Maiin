@@ -1,0 +1,3108 @@
+[
+  {
+    "theme": "dark",
+    "video": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/dark-continuous-playback.webm",
+    "codec": "vp8",
+    "encodedDimensions": [
+      392,
+      852
+    ],
+    "frameRate": "25/1",
+    "durationSeconds": 9.12,
+    "decodedFrameCount": 228,
+    "sampleFrames": [
+      {
+        "sample": 1,
+        "frameIndex": 22,
+        "ptsSeconds": 0.88,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-1-at-0.88s.png"
+      },
+      {
+        "sample": 2,
+        "frameIndex": 55,
+        "ptsSeconds": 2.2,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-2-at-2.20s.png"
+      },
+      {
+        "sample": 3,
+        "frameIndex": 86,
+        "ptsSeconds": 3.44,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-3-at-3.44s.png"
+      },
+      {
+        "sample": 4,
+        "frameIndex": 116,
+        "ptsSeconds": 4.64,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-4-at-4.64s.png"
+      },
+      {
+        "sample": 5,
+        "frameIndex": 148,
+        "ptsSeconds": 5.92,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-5-at-5.92s.png"
+      },
+      {
+        "sample": 6,
+        "frameIndex": 177,
+        "ptsSeconds": 7.08,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-6-at-7.08s.png"
+      },
+      {
+        "sample": 7,
+        "frameIndex": 212,
+        "ptsSeconds": 8.48,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/dark-cycle-sample-7-at-8.48s.png"
+      }
+    ],
+    "changePeaks": [
+      {
+        "index": 8,
+        "ptsSeconds": 0.32,
+        "artworkAdjacentFrameMeanAbsDifference": 19.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 9,
+        "ptsSeconds": 0.36,
+        "artworkAdjacentFrameMeanAbsDifference": 212.689364,
+        "brightArtworkPixels": 382
+      },
+      {
+        "index": 10,
+        "ptsSeconds": 0.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.501056,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 11,
+        "ptsSeconds": 0.44,
+        "artworkAdjacentFrameMeanAbsDifference": 40.50641,
+        "brightArtworkPixels": 16495
+      },
+      {
+        "index": 12,
+        "ptsSeconds": 0.48,
+        "artworkAdjacentFrameMeanAbsDifference": 2.614201,
+        "brightArtworkPixels": 16499
+      },
+      {
+        "index": 13,
+        "ptsSeconds": 0.52,
+        "artworkAdjacentFrameMeanAbsDifference": 47.940088,
+        "brightArtworkPixels": 5103
+      },
+      {
+        "index": 14,
+        "ptsSeconds": 0.56,
+        "artworkAdjacentFrameMeanAbsDifference": 6.416388,
+        "brightArtworkPixels": 8180
+      },
+      {
+        "index": 44,
+        "ptsSeconds": 1.76,
+        "artworkAdjacentFrameMeanAbsDifference": 15.894677,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 45,
+        "ptsSeconds": 1.8,
+        "artworkAdjacentFrameMeanAbsDifference": 14.783637,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 75,
+        "ptsSeconds": 3.0,
+        "artworkAdjacentFrameMeanAbsDifference": 8.593174,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 105,
+        "ptsSeconds": 4.2,
+        "artworkAdjacentFrameMeanAbsDifference": 15.308825,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 106,
+        "ptsSeconds": 4.24,
+        "artworkAdjacentFrameMeanAbsDifference": 14.175363,
+        "brightArtworkPixels": 7582
+      },
+      {
+        "index": 128,
+        "ptsSeconds": 5.12,
+        "artworkAdjacentFrameMeanAbsDifference": 1.628534,
+        "brightArtworkPixels": 7526
+      },
+      {
+        "index": 129,
+        "ptsSeconds": 5.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.759843,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 136,
+        "ptsSeconds": 5.44,
+        "artworkAdjacentFrameMeanAbsDifference": 5.727036,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 167,
+        "ptsSeconds": 6.68,
+        "artworkAdjacentFrameMeanAbsDifference": 15.278167,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 168,
+        "ptsSeconds": 6.72,
+        "artworkAdjacentFrameMeanAbsDifference": 14.848788,
+        "brightArtworkPixels": 7852
+      },
+      {
+        "index": 196,
+        "ptsSeconds": 7.84,
+        "artworkAdjacentFrameMeanAbsDifference": 15.402419,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 197,
+        "ptsSeconds": 7.88,
+        "artworkAdjacentFrameMeanAbsDifference": 15.319837,
+        "brightArtworkPixels": 8162
+      },
+      {
+        "index": 219,
+        "ptsSeconds": 8.76,
+        "artworkAdjacentFrameMeanAbsDifference": 1.012785,
+        "brightArtworkPixels": 8175
+      }
+    ],
+    "sampledCycleBrightPixelMinimum": 0,
+    "perFrameMetrics": [
+      {
+        "index": 0,
+        "ptsSeconds": 0.0,
+        "artworkAdjacentFrameMeanAbsDifference": null,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 1,
+        "ptsSeconds": 0.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 2,
+        "ptsSeconds": 0.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 3,
+        "ptsSeconds": 0.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 4,
+        "ptsSeconds": 0.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 5,
+        "ptsSeconds": 0.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 6,
+        "ptsSeconds": 0.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 7,
+        "ptsSeconds": 0.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 8,
+        "ptsSeconds": 0.32,
+        "artworkAdjacentFrameMeanAbsDifference": 19.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 9,
+        "ptsSeconds": 0.36,
+        "artworkAdjacentFrameMeanAbsDifference": 212.689364,
+        "brightArtworkPixels": 382
+      },
+      {
+        "index": 10,
+        "ptsSeconds": 0.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.501056,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 11,
+        "ptsSeconds": 0.44,
+        "artworkAdjacentFrameMeanAbsDifference": 40.50641,
+        "brightArtworkPixels": 16495
+      },
+      {
+        "index": 12,
+        "ptsSeconds": 0.48,
+        "artworkAdjacentFrameMeanAbsDifference": 2.614201,
+        "brightArtworkPixels": 16499
+      },
+      {
+        "index": 13,
+        "ptsSeconds": 0.52,
+        "artworkAdjacentFrameMeanAbsDifference": 47.940088,
+        "brightArtworkPixels": 5103
+      },
+      {
+        "index": 14,
+        "ptsSeconds": 0.56,
+        "artworkAdjacentFrameMeanAbsDifference": 6.416388,
+        "brightArtworkPixels": 8180
+      },
+      {
+        "index": 15,
+        "ptsSeconds": 0.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.2126,
+        "brightArtworkPixels": 8182
+      },
+      {
+        "index": 16,
+        "ptsSeconds": 0.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.233847,
+        "brightArtworkPixels": 8196
+      },
+      {
+        "index": 17,
+        "ptsSeconds": 0.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.228177,
+        "brightArtworkPixels": 8186
+      },
+      {
+        "index": 18,
+        "ptsSeconds": 0.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.141441,
+        "brightArtworkPixels": 8186
+      },
+      {
+        "index": 19,
+        "ptsSeconds": 0.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.13515,
+        "brightArtworkPixels": 8193
+      },
+      {
+        "index": 20,
+        "ptsSeconds": 0.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.041795,
+        "brightArtworkPixels": 8191
+      },
+      {
+        "index": 21,
+        "ptsSeconds": 0.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.019505,
+        "brightArtworkPixels": 8193
+      },
+      {
+        "index": 22,
+        "ptsSeconds": 0.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.019088,
+        "brightArtworkPixels": 8190
+      },
+      {
+        "index": 23,
+        "ptsSeconds": 0.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013938,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 24,
+        "ptsSeconds": 0.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.016438,
+        "brightArtworkPixels": 8193
+      },
+      {
+        "index": 25,
+        "ptsSeconds": 1.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015188,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 26,
+        "ptsSeconds": 1.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013731,
+        "brightArtworkPixels": 8190
+      },
+      {
+        "index": 27,
+        "ptsSeconds": 1.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015479,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 28,
+        "ptsSeconds": 1.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013806,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 29,
+        "ptsSeconds": 1.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014361,
+        "brightArtworkPixels": 8190
+      },
+      {
+        "index": 30,
+        "ptsSeconds": 1.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.016062,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 31,
+        "ptsSeconds": 1.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01422,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 32,
+        "ptsSeconds": 1.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013402,
+        "brightArtworkPixels": 8190
+      },
+      {
+        "index": 33,
+        "ptsSeconds": 1.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014652,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 34,
+        "ptsSeconds": 1.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 35,
+        "ptsSeconds": 1.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 36,
+        "ptsSeconds": 1.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 37,
+        "ptsSeconds": 1.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 38,
+        "ptsSeconds": 1.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 39,
+        "ptsSeconds": 1.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 40,
+        "ptsSeconds": 1.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 41,
+        "ptsSeconds": 1.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 42,
+        "ptsSeconds": 1.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8189
+      },
+      {
+        "index": 43,
+        "ptsSeconds": 1.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01359,
+        "brightArtworkPixels": 8192
+      },
+      {
+        "index": 44,
+        "ptsSeconds": 1.76,
+        "artworkAdjacentFrameMeanAbsDifference": 15.894677,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 45,
+        "ptsSeconds": 1.8,
+        "artworkAdjacentFrameMeanAbsDifference": 14.783637,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 46,
+        "ptsSeconds": 1.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.102334,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 47,
+        "ptsSeconds": 1.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.021692,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 48,
+        "ptsSeconds": 1.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017773,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 49,
+        "ptsSeconds": 1.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017475,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 50,
+        "ptsSeconds": 2.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 51,
+        "ptsSeconds": 2.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 52,
+        "ptsSeconds": 2.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 53,
+        "ptsSeconds": 2.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 54,
+        "ptsSeconds": 2.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 55,
+        "ptsSeconds": 2.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 56,
+        "ptsSeconds": 2.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 57,
+        "ptsSeconds": 2.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 58,
+        "ptsSeconds": 2.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 59,
+        "ptsSeconds": 2.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 60,
+        "ptsSeconds": 2.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 61,
+        "ptsSeconds": 2.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 62,
+        "ptsSeconds": 2.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 63,
+        "ptsSeconds": 2.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 64,
+        "ptsSeconds": 2.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 65,
+        "ptsSeconds": 2.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 66,
+        "ptsSeconds": 2.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 67,
+        "ptsSeconds": 2.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 68,
+        "ptsSeconds": 2.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 69,
+        "ptsSeconds": 2.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 70,
+        "ptsSeconds": 2.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 71,
+        "ptsSeconds": 2.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 72,
+        "ptsSeconds": 2.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 73,
+        "ptsSeconds": 2.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 74,
+        "ptsSeconds": 2.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017409,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 75,
+        "ptsSeconds": 3.0,
+        "artworkAdjacentFrameMeanAbsDifference": 8.593174,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 76,
+        "ptsSeconds": 3.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.094048,
+        "brightArtworkPixels": 7774
+      },
+      {
+        "index": 77,
+        "ptsSeconds": 3.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.016501,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 78,
+        "ptsSeconds": 3.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008797,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 79,
+        "ptsSeconds": 3.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008205,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 80,
+        "ptsSeconds": 3.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 81,
+        "ptsSeconds": 3.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 82,
+        "ptsSeconds": 3.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 83,
+        "ptsSeconds": 3.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 84,
+        "ptsSeconds": 3.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 85,
+        "ptsSeconds": 3.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 86,
+        "ptsSeconds": 3.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 87,
+        "ptsSeconds": 3.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 88,
+        "ptsSeconds": 3.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 89,
+        "ptsSeconds": 3.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 90,
+        "ptsSeconds": 3.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 91,
+        "ptsSeconds": 3.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 92,
+        "ptsSeconds": 3.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 93,
+        "ptsSeconds": 3.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 94,
+        "ptsSeconds": 3.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 95,
+        "ptsSeconds": 3.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 96,
+        "ptsSeconds": 3.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 97,
+        "ptsSeconds": 3.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 98,
+        "ptsSeconds": 3.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 99,
+        "ptsSeconds": 3.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 100,
+        "ptsSeconds": 4.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 101,
+        "ptsSeconds": 4.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 102,
+        "ptsSeconds": 4.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 103,
+        "ptsSeconds": 4.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 104,
+        "ptsSeconds": 4.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008186,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 105,
+        "ptsSeconds": 4.2,
+        "artworkAdjacentFrameMeanAbsDifference": 15.308825,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 106,
+        "ptsSeconds": 4.24,
+        "artworkAdjacentFrameMeanAbsDifference": 14.175363,
+        "brightArtworkPixels": 7582
+      },
+      {
+        "index": 107,
+        "ptsSeconds": 4.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.090633,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 108,
+        "ptsSeconds": 4.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018236,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 109,
+        "ptsSeconds": 4.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01036,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 110,
+        "ptsSeconds": 4.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009837,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 111,
+        "ptsSeconds": 4.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 112,
+        "ptsSeconds": 4.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 113,
+        "ptsSeconds": 4.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 114,
+        "ptsSeconds": 4.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 115,
+        "ptsSeconds": 4.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 116,
+        "ptsSeconds": 4.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 117,
+        "ptsSeconds": 4.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 118,
+        "ptsSeconds": 4.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 119,
+        "ptsSeconds": 4.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 120,
+        "ptsSeconds": 4.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 121,
+        "ptsSeconds": 4.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 122,
+        "ptsSeconds": 4.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 123,
+        "ptsSeconds": 4.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 124,
+        "ptsSeconds": 4.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 125,
+        "ptsSeconds": 5.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 126,
+        "ptsSeconds": 5.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 127,
+        "ptsSeconds": 5.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.009386,
+        "brightArtworkPixels": 7591
+      },
+      {
+        "index": 128,
+        "ptsSeconds": 5.12,
+        "artworkAdjacentFrameMeanAbsDifference": 1.628534,
+        "brightArtworkPixels": 7526
+      },
+      {
+        "index": 129,
+        "ptsSeconds": 5.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.759843,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 130,
+        "ptsSeconds": 5.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.066331,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 131,
+        "ptsSeconds": 5.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018293,
+        "brightArtworkPixels": 7569
+      },
+      {
+        "index": 132,
+        "ptsSeconds": 5.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 133,
+        "ptsSeconds": 5.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7569
+      },
+      {
+        "index": 134,
+        "ptsSeconds": 5.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 135,
+        "ptsSeconds": 5.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.00427,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 136,
+        "ptsSeconds": 5.44,
+        "artworkAdjacentFrameMeanAbsDifference": 5.727036,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 137,
+        "ptsSeconds": 5.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.073979,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 138,
+        "ptsSeconds": 5.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015965,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 139,
+        "ptsSeconds": 5.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 140,
+        "ptsSeconds": 5.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 141,
+        "ptsSeconds": 5.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 142,
+        "ptsSeconds": 5.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 143,
+        "ptsSeconds": 5.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 144,
+        "ptsSeconds": 5.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 145,
+        "ptsSeconds": 5.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 146,
+        "ptsSeconds": 5.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 147,
+        "ptsSeconds": 5.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 148,
+        "ptsSeconds": 5.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 149,
+        "ptsSeconds": 5.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 150,
+        "ptsSeconds": 6.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 151,
+        "ptsSeconds": 6.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 152,
+        "ptsSeconds": 6.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 153,
+        "ptsSeconds": 6.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 154,
+        "ptsSeconds": 6.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 155,
+        "ptsSeconds": 6.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002697,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 156,
+        "ptsSeconds": 6.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 157,
+        "ptsSeconds": 6.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 158,
+        "ptsSeconds": 6.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 159,
+        "ptsSeconds": 6.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 160,
+        "ptsSeconds": 6.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 161,
+        "ptsSeconds": 6.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 162,
+        "ptsSeconds": 6.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 163,
+        "ptsSeconds": 6.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 164,
+        "ptsSeconds": 6.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 165,
+        "ptsSeconds": 6.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011977,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 166,
+        "ptsSeconds": 6.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 167,
+        "ptsSeconds": 6.68,
+        "artworkAdjacentFrameMeanAbsDifference": 15.278167,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 168,
+        "ptsSeconds": 6.72,
+        "artworkAdjacentFrameMeanAbsDifference": 14.848788,
+        "brightArtworkPixels": 7852
+      },
+      {
+        "index": 169,
+        "ptsSeconds": 6.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.082243,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 170,
+        "ptsSeconds": 6.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018252,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 171,
+        "ptsSeconds": 6.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.016222,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 172,
+        "ptsSeconds": 6.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 173,
+        "ptsSeconds": 6.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 174,
+        "ptsSeconds": 6.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 175,
+        "ptsSeconds": 7.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 176,
+        "ptsSeconds": 7.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 177,
+        "ptsSeconds": 7.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005395,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 178,
+        "ptsSeconds": 7.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 179,
+        "ptsSeconds": 7.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 180,
+        "ptsSeconds": 7.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 181,
+        "ptsSeconds": 7.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 182,
+        "ptsSeconds": 7.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 183,
+        "ptsSeconds": 7.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 184,
+        "ptsSeconds": 7.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 185,
+        "ptsSeconds": 7.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7851
+      },
+      {
+        "index": 186,
+        "ptsSeconds": 7.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7848
+      },
+      {
+        "index": 187,
+        "ptsSeconds": 7.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008036,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 188,
+        "ptsSeconds": 7.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7850
+      },
+      {
+        "index": 189,
+        "ptsSeconds": 7.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 190,
+        "ptsSeconds": 7.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7850
+      },
+      {
+        "index": 191,
+        "ptsSeconds": 7.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 192,
+        "ptsSeconds": 7.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7850
+      },
+      {
+        "index": 193,
+        "ptsSeconds": 7.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 194,
+        "ptsSeconds": 7.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7850
+      },
+      {
+        "index": 195,
+        "ptsSeconds": 7.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014793,
+        "brightArtworkPixels": 7849
+      },
+      {
+        "index": 196,
+        "ptsSeconds": 7.84,
+        "artworkAdjacentFrameMeanAbsDifference": 15.402419,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 197,
+        "ptsSeconds": 7.88,
+        "artworkAdjacentFrameMeanAbsDifference": 15.319837,
+        "brightArtworkPixels": 8162
+      },
+      {
+        "index": 198,
+        "ptsSeconds": 7.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.026159,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 199,
+        "ptsSeconds": 7.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.071071,
+        "brightArtworkPixels": 8164
+      },
+      {
+        "index": 200,
+        "ptsSeconds": 8.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.022368,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 201,
+        "ptsSeconds": 8.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 202,
+        "ptsSeconds": 8.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 203,
+        "ptsSeconds": 8.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 204,
+        "ptsSeconds": 8.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 205,
+        "ptsSeconds": 8.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 206,
+        "ptsSeconds": 8.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 207,
+        "ptsSeconds": 8.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 208,
+        "ptsSeconds": 8.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013252,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 209,
+        "ptsSeconds": 8.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 210,
+        "ptsSeconds": 8.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 211,
+        "ptsSeconds": 8.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 212,
+        "ptsSeconds": 8.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 213,
+        "ptsSeconds": 8.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 214,
+        "ptsSeconds": 8.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 215,
+        "ptsSeconds": 8.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 216,
+        "ptsSeconds": 8.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 217,
+        "ptsSeconds": 8.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 218,
+        "ptsSeconds": 8.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01859,
+        "brightArtworkPixels": 8163
+      },
+      {
+        "index": 219,
+        "ptsSeconds": 8.76,
+        "artworkAdjacentFrameMeanAbsDifference": 1.012785,
+        "brightArtworkPixels": 8175
+      },
+      {
+        "index": 220,
+        "ptsSeconds": 8.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011786,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 221,
+        "ptsSeconds": 8.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 222,
+        "ptsSeconds": 8.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 223,
+        "ptsSeconds": 8.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 224,
+        "ptsSeconds": 8.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 225,
+        "ptsSeconds": 9.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 226,
+        "ptsSeconds": 9.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      },
+      {
+        "index": 227,
+        "ptsSeconds": 9.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002726,
+        "brightArtworkPixels": 8173
+      }
+    ],
+    "method": "Decoded every original WebM video frame with ffmpeg; saved unmodified RGB frames at seven fixed timestamps. Metrics describe actual encoded pixels, not a synthetic animation or source-PNG montage."
+  },
+  {
+    "theme": "light",
+    "video": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/light-continuous-playback.webm",
+    "codec": "vp8",
+    "encodedDimensions": [
+      392,
+      852
+    ],
+    "frameRate": "25/1",
+    "durationSeconds": 9.2,
+    "decodedFrameCount": 230,
+    "sampleFrames": [
+      {
+        "sample": 1,
+        "frameIndex": 22,
+        "ptsSeconds": 0.88,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-1-at-0.88s.png"
+      },
+      {
+        "sample": 2,
+        "frameIndex": 55,
+        "ptsSeconds": 2.2,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-2-at-2.20s.png"
+      },
+      {
+        "sample": 3,
+        "frameIndex": 86,
+        "ptsSeconds": 3.44,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-3-at-3.44s.png"
+      },
+      {
+        "sample": 4,
+        "frameIndex": 116,
+        "ptsSeconds": 4.64,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-4-at-4.64s.png"
+      },
+      {
+        "sample": 5,
+        "frameIndex": 148,
+        "ptsSeconds": 5.92,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-5-at-5.92s.png"
+      },
+      {
+        "sample": 6,
+        "frameIndex": 177,
+        "ptsSeconds": 7.08,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-6-at-7.08s.png"
+      },
+      {
+        "sample": 7,
+        "frameIndex": 212,
+        "ptsSeconds": 8.48,
+        "path": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/video-review/light-cycle-sample-7-at-8.48s.png"
+      }
+    ],
+    "changePeaks": [
+      {
+        "index": 8,
+        "ptsSeconds": 0.32,
+        "artworkAdjacentFrameMeanAbsDifference": 19.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 10,
+        "ptsSeconds": 0.4,
+        "artworkAdjacentFrameMeanAbsDifference": 213.149662,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 11,
+        "ptsSeconds": 0.44,
+        "artworkAdjacentFrameMeanAbsDifference": 38.637917,
+        "brightArtworkPixels": 16495
+      },
+      {
+        "index": 12,
+        "ptsSeconds": 0.48,
+        "artworkAdjacentFrameMeanAbsDifference": 3.553221,
+        "brightArtworkPixels": 16500
+      },
+      {
+        "index": 13,
+        "ptsSeconds": 0.52,
+        "artworkAdjacentFrameMeanAbsDifference": 1.894969,
+        "brightArtworkPixels": 16502
+      },
+      {
+        "index": 14,
+        "ptsSeconds": 0.56,
+        "artworkAdjacentFrameMeanAbsDifference": 16.954229,
+        "brightArtworkPixels": 16499
+      },
+      {
+        "index": 15,
+        "ptsSeconds": 0.6,
+        "artworkAdjacentFrameMeanAbsDifference": 56.538869,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 16,
+        "ptsSeconds": 0.64,
+        "artworkAdjacentFrameMeanAbsDifference": 15.763885,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 46,
+        "ptsSeconds": 1.84,
+        "artworkAdjacentFrameMeanAbsDifference": 15.883772,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 47,
+        "ptsSeconds": 1.88,
+        "artworkAdjacentFrameMeanAbsDifference": 14.782519,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 77,
+        "ptsSeconds": 3.08,
+        "artworkAdjacentFrameMeanAbsDifference": 8.592224,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 107,
+        "ptsSeconds": 4.28,
+        "artworkAdjacentFrameMeanAbsDifference": 15.307331,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 108,
+        "ptsSeconds": 4.32,
+        "artworkAdjacentFrameMeanAbsDifference": 14.17401,
+        "brightArtworkPixels": 7582
+      },
+      {
+        "index": 128,
+        "ptsSeconds": 5.12,
+        "artworkAdjacentFrameMeanAbsDifference": 1.634486,
+        "brightArtworkPixels": 7526
+      },
+      {
+        "index": 129,
+        "ptsSeconds": 5.16,
+        "artworkAdjacentFrameMeanAbsDifference": 1.081977,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 138,
+        "ptsSeconds": 5.52,
+        "artworkAdjacentFrameMeanAbsDifference": 5.732171,
+        "brightArtworkPixels": 7785
+      },
+      {
+        "index": 169,
+        "ptsSeconds": 6.76,
+        "artworkAdjacentFrameMeanAbsDifference": 8.541281,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 199,
+        "ptsSeconds": 7.96,
+        "artworkAdjacentFrameMeanAbsDifference": 5.688966,
+        "brightArtworkPixels": 8167
+      },
+      {
+        "index": 219,
+        "ptsSeconds": 8.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.72869,
+        "brightArtworkPixels": 8166
+      }
+    ],
+    "sampledCycleBrightPixelMinimum": 0,
+    "perFrameMetrics": [
+      {
+        "index": 0,
+        "ptsSeconds": 0.0,
+        "artworkAdjacentFrameMeanAbsDifference": null,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 1,
+        "ptsSeconds": 0.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 2,
+        "ptsSeconds": 0.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 3,
+        "ptsSeconds": 0.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 4,
+        "ptsSeconds": 0.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 5,
+        "ptsSeconds": 0.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 6,
+        "ptsSeconds": 0.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 7,
+        "ptsSeconds": 0.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 8,
+        "ptsSeconds": 0.32,
+        "artworkAdjacentFrameMeanAbsDifference": 19.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 9,
+        "ptsSeconds": 0.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 70000
+      },
+      {
+        "index": 10,
+        "ptsSeconds": 0.4,
+        "artworkAdjacentFrameMeanAbsDifference": 213.149662,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 11,
+        "ptsSeconds": 0.44,
+        "artworkAdjacentFrameMeanAbsDifference": 38.637917,
+        "brightArtworkPixels": 16495
+      },
+      {
+        "index": 12,
+        "ptsSeconds": 0.48,
+        "artworkAdjacentFrameMeanAbsDifference": 3.553221,
+        "brightArtworkPixels": 16500
+      },
+      {
+        "index": 13,
+        "ptsSeconds": 0.52,
+        "artworkAdjacentFrameMeanAbsDifference": 1.894969,
+        "brightArtworkPixels": 16502
+      },
+      {
+        "index": 14,
+        "ptsSeconds": 0.56,
+        "artworkAdjacentFrameMeanAbsDifference": 16.954229,
+        "brightArtworkPixels": 16499
+      },
+      {
+        "index": 15,
+        "ptsSeconds": 0.6,
+        "artworkAdjacentFrameMeanAbsDifference": 56.538869,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 16,
+        "ptsSeconds": 0.64,
+        "artworkAdjacentFrameMeanAbsDifference": 15.763885,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 17,
+        "ptsSeconds": 0.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.103534,
+        "brightArtworkPixels": 8188
+      },
+      {
+        "index": 18,
+        "ptsSeconds": 0.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.115235,
+        "brightArtworkPixels": 8190
+      },
+      {
+        "index": 19,
+        "ptsSeconds": 0.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.197538,
+        "brightArtworkPixels": 8188
+      },
+      {
+        "index": 20,
+        "ptsSeconds": 0.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.214345,
+        "brightArtworkPixels": 8180
+      },
+      {
+        "index": 21,
+        "ptsSeconds": 0.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.131974,
+        "brightArtworkPixels": 8176
+      },
+      {
+        "index": 22,
+        "ptsSeconds": 0.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.153769,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 23,
+        "ptsSeconds": 0.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.029627,
+        "brightArtworkPixels": 8182
+      },
+      {
+        "index": 24,
+        "ptsSeconds": 0.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015921,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 25,
+        "ptsSeconds": 1.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014859,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 26,
+        "ptsSeconds": 1.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 27,
+        "ptsSeconds": 1.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 28,
+        "ptsSeconds": 1.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 29,
+        "ptsSeconds": 1.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 30,
+        "ptsSeconds": 1.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 31,
+        "ptsSeconds": 1.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 32,
+        "ptsSeconds": 1.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 33,
+        "ptsSeconds": 1.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 34,
+        "ptsSeconds": 1.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 35,
+        "ptsSeconds": 1.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 36,
+        "ptsSeconds": 1.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 37,
+        "ptsSeconds": 1.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 38,
+        "ptsSeconds": 1.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 39,
+        "ptsSeconds": 1.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 40,
+        "ptsSeconds": 1.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 41,
+        "ptsSeconds": 1.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 42,
+        "ptsSeconds": 1.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 43,
+        "ptsSeconds": 1.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 44,
+        "ptsSeconds": 1.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8184
+      },
+      {
+        "index": 45,
+        "ptsSeconds": 1.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.01484,
+        "brightArtworkPixels": 8183
+      },
+      {
+        "index": 46,
+        "ptsSeconds": 1.84,
+        "artworkAdjacentFrameMeanAbsDifference": 15.883772,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 47,
+        "ptsSeconds": 1.88,
+        "artworkAdjacentFrameMeanAbsDifference": 14.782519,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 48,
+        "ptsSeconds": 1.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.098781,
+        "brightArtworkPixels": 7858
+      },
+      {
+        "index": 49,
+        "ptsSeconds": 1.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.019004,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 50,
+        "ptsSeconds": 2.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015085,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 51,
+        "ptsSeconds": 2.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014787,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 52,
+        "ptsSeconds": 2.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 53,
+        "ptsSeconds": 2.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 54,
+        "ptsSeconds": 2.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 55,
+        "ptsSeconds": 2.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 56,
+        "ptsSeconds": 2.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 57,
+        "ptsSeconds": 2.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 58,
+        "ptsSeconds": 2.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 59,
+        "ptsSeconds": 2.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 60,
+        "ptsSeconds": 2.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 61,
+        "ptsSeconds": 2.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 62,
+        "ptsSeconds": 2.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 63,
+        "ptsSeconds": 2.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 64,
+        "ptsSeconds": 2.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 65,
+        "ptsSeconds": 2.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 66,
+        "ptsSeconds": 2.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 67,
+        "ptsSeconds": 2.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 68,
+        "ptsSeconds": 2.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 69,
+        "ptsSeconds": 2.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 70,
+        "ptsSeconds": 2.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 71,
+        "ptsSeconds": 2.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 72,
+        "ptsSeconds": 2.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 73,
+        "ptsSeconds": 2.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 74,
+        "ptsSeconds": 2.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 75,
+        "ptsSeconds": 3.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7861
+      },
+      {
+        "index": 76,
+        "ptsSeconds": 3.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.014721,
+        "brightArtworkPixels": 7859
+      },
+      {
+        "index": 77,
+        "ptsSeconds": 3.08,
+        "artworkAdjacentFrameMeanAbsDifference": 8.592224,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 78,
+        "ptsSeconds": 3.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.093333,
+        "brightArtworkPixels": 7774
+      },
+      {
+        "index": 79,
+        "ptsSeconds": 3.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015147,
+        "brightArtworkPixels": 7776
+      },
+      {
+        "index": 80,
+        "ptsSeconds": 3.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.00687,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 81,
+        "ptsSeconds": 3.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005987,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 82,
+        "ptsSeconds": 3.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 83,
+        "ptsSeconds": 3.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 84,
+        "ptsSeconds": 3.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 85,
+        "ptsSeconds": 3.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 86,
+        "ptsSeconds": 3.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 87,
+        "ptsSeconds": 3.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 88,
+        "ptsSeconds": 3.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 89,
+        "ptsSeconds": 3.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 90,
+        "ptsSeconds": 3.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 91,
+        "ptsSeconds": 3.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 92,
+        "ptsSeconds": 3.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 93,
+        "ptsSeconds": 3.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 94,
+        "ptsSeconds": 3.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 95,
+        "ptsSeconds": 3.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 96,
+        "ptsSeconds": 3.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 97,
+        "ptsSeconds": 3.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 98,
+        "ptsSeconds": 3.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 99,
+        "ptsSeconds": 3.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 100,
+        "ptsSeconds": 4.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 101,
+        "ptsSeconds": 4.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 102,
+        "ptsSeconds": 4.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 103,
+        "ptsSeconds": 4.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 104,
+        "ptsSeconds": 4.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 105,
+        "ptsSeconds": 4.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 106,
+        "ptsSeconds": 4.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005479,
+        "brightArtworkPixels": 7775
+      },
+      {
+        "index": 107,
+        "ptsSeconds": 4.28,
+        "artworkAdjacentFrameMeanAbsDifference": 15.307331,
+        "brightArtworkPixels": 0
+      },
+      {
+        "index": 108,
+        "ptsSeconds": 4.32,
+        "artworkAdjacentFrameMeanAbsDifference": 14.17401,
+        "brightArtworkPixels": 7582
+      },
+      {
+        "index": 109,
+        "ptsSeconds": 4.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.089815,
+        "brightArtworkPixels": 7589
+      },
+      {
+        "index": 110,
+        "ptsSeconds": 4.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.019289,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 111,
+        "ptsSeconds": 4.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011009,
+        "brightArtworkPixels": 7589
+      },
+      {
+        "index": 112,
+        "ptsSeconds": 4.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.008972,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 113,
+        "ptsSeconds": 4.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 114,
+        "ptsSeconds": 4.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 115,
+        "ptsSeconds": 4.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 116,
+        "ptsSeconds": 4.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 117,
+        "ptsSeconds": 4.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 118,
+        "ptsSeconds": 4.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 119,
+        "ptsSeconds": 4.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 120,
+        "ptsSeconds": 4.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 121,
+        "ptsSeconds": 4.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 122,
+        "ptsSeconds": 4.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 123,
+        "ptsSeconds": 4.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 124,
+        "ptsSeconds": 4.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 125,
+        "ptsSeconds": 5.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 126,
+        "ptsSeconds": 5.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 127,
+        "ptsSeconds": 5.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.007986,
+        "brightArtworkPixels": 7590
+      },
+      {
+        "index": 128,
+        "ptsSeconds": 5.12,
+        "artworkAdjacentFrameMeanAbsDifference": 1.634486,
+        "brightArtworkPixels": 7526
+      },
+      {
+        "index": 129,
+        "ptsSeconds": 5.16,
+        "artworkAdjacentFrameMeanAbsDifference": 1.081977,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 130,
+        "ptsSeconds": 5.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.065298,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 131,
+        "ptsSeconds": 5.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018311,
+        "brightArtworkPixels": 7569
+      },
+      {
+        "index": 132,
+        "ptsSeconds": 5.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 133,
+        "ptsSeconds": 5.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7569
+      },
+      {
+        "index": 134,
+        "ptsSeconds": 5.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.013233,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 135,
+        "ptsSeconds": 5.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.004214,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 136,
+        "ptsSeconds": 5.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.017948,
+        "brightArtworkPixels": 7568
+      },
+      {
+        "index": 137,
+        "ptsSeconds": 5.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018073,
+        "brightArtworkPixels": 7570
+      },
+      {
+        "index": 138,
+        "ptsSeconds": 5.52,
+        "artworkAdjacentFrameMeanAbsDifference": 5.732171,
+        "brightArtworkPixels": 7785
+      },
+      {
+        "index": 139,
+        "ptsSeconds": 5.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.084743,
+        "brightArtworkPixels": 7780
+      },
+      {
+        "index": 140,
+        "ptsSeconds": 5.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018064,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 141,
+        "ptsSeconds": 5.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.011472,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 142,
+        "ptsSeconds": 5.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 143,
+        "ptsSeconds": 5.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 144,
+        "ptsSeconds": 5.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 145,
+        "ptsSeconds": 5.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 146,
+        "ptsSeconds": 5.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 147,
+        "ptsSeconds": 5.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 148,
+        "ptsSeconds": 5.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 149,
+        "ptsSeconds": 5.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 150,
+        "ptsSeconds": 6.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 151,
+        "ptsSeconds": 6.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 152,
+        "ptsSeconds": 6.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 153,
+        "ptsSeconds": 6.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 154,
+        "ptsSeconds": 6.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 155,
+        "ptsSeconds": 6.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 156,
+        "ptsSeconds": 6.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 157,
+        "ptsSeconds": 6.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 158,
+        "ptsSeconds": 6.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 159,
+        "ptsSeconds": 6.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 160,
+        "ptsSeconds": 6.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 161,
+        "ptsSeconds": 6.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 162,
+        "ptsSeconds": 6.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 163,
+        "ptsSeconds": 6.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 164,
+        "ptsSeconds": 6.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 165,
+        "ptsSeconds": 6.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.005555,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 166,
+        "ptsSeconds": 6.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 167,
+        "ptsSeconds": 6.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 168,
+        "ptsSeconds": 6.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010827,
+        "brightArtworkPixels": 7782
+      },
+      {
+        "index": 169,
+        "ptsSeconds": 6.76,
+        "artworkAdjacentFrameMeanAbsDifference": 8.541281,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 170,
+        "ptsSeconds": 6.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.099317,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 171,
+        "ptsSeconds": 6.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.028011,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 172,
+        "ptsSeconds": 6.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 173,
+        "ptsSeconds": 6.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 174,
+        "ptsSeconds": 6.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 175,
+        "ptsSeconds": 7.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7854
+      },
+      {
+        "index": 176,
+        "ptsSeconds": 7.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002838,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 177,
+        "ptsSeconds": 7.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 178,
+        "ptsSeconds": 7.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 179,
+        "ptsSeconds": 7.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 180,
+        "ptsSeconds": 7.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 181,
+        "ptsSeconds": 7.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 182,
+        "ptsSeconds": 7.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 183,
+        "ptsSeconds": 7.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 184,
+        "ptsSeconds": 7.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 185,
+        "ptsSeconds": 7.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 186,
+        "ptsSeconds": 7.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 187,
+        "ptsSeconds": 7.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0014,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 188,
+        "ptsSeconds": 7.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 189,
+        "ptsSeconds": 7.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 190,
+        "ptsSeconds": 7.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 191,
+        "ptsSeconds": 7.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 192,
+        "ptsSeconds": 7.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 193,
+        "ptsSeconds": 7.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 194,
+        "ptsSeconds": 7.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 195,
+        "ptsSeconds": 7.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 196,
+        "ptsSeconds": 7.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7853
+      },
+      {
+        "index": 197,
+        "ptsSeconds": 7.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.018938,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 198,
+        "ptsSeconds": 7.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.0014,
+        "brightArtworkPixels": 7855
+      },
+      {
+        "index": 199,
+        "ptsSeconds": 7.96,
+        "artworkAdjacentFrameMeanAbsDifference": 5.688966,
+        "brightArtworkPixels": 8167
+      },
+      {
+        "index": 200,
+        "ptsSeconds": 8.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.080924,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 201,
+        "ptsSeconds": 8.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.015808,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 202,
+        "ptsSeconds": 8.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.012274,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 203,
+        "ptsSeconds": 8.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 204,
+        "ptsSeconds": 8.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 205,
+        "ptsSeconds": 8.2,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 206,
+        "ptsSeconds": 8.24,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 207,
+        "ptsSeconds": 8.28,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 208,
+        "ptsSeconds": 8.32,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 209,
+        "ptsSeconds": 8.36,
+        "artworkAdjacentFrameMeanAbsDifference": 0.006936,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 210,
+        "ptsSeconds": 8.4,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 211,
+        "ptsSeconds": 8.44,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 212,
+        "ptsSeconds": 8.48,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 213,
+        "ptsSeconds": 8.52,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 214,
+        "ptsSeconds": 8.56,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 215,
+        "ptsSeconds": 8.6,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 216,
+        "ptsSeconds": 8.64,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 217,
+        "ptsSeconds": 8.68,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 218,
+        "ptsSeconds": 8.72,
+        "artworkAdjacentFrameMeanAbsDifference": 0.010996,
+        "brightArtworkPixels": 8165
+      },
+      {
+        "index": 219,
+        "ptsSeconds": 8.76,
+        "artworkAdjacentFrameMeanAbsDifference": 0.72869,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 220,
+        "ptsSeconds": 8.8,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 221,
+        "ptsSeconds": 8.84,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 222,
+        "ptsSeconds": 8.88,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 223,
+        "ptsSeconds": 8.92,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 224,
+        "ptsSeconds": 8.96,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 225,
+        "ptsSeconds": 9.0,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 226,
+        "ptsSeconds": 9.04,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 227,
+        "ptsSeconds": 9.08,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 228,
+        "ptsSeconds": 9.12,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      },
+      {
+        "index": 229,
+        "ptsSeconds": 9.16,
+        "artworkAdjacentFrameMeanAbsDifference": 0.002688,
+        "brightArtworkPixels": 8166
+      }
+    ],
+    "method": "Decoded every original WebM video frame with ffmpeg; saved unmodified RGB frames at seven fixed timestamps. Metrics describe actual encoded pixels, not a synthetic animation or source-PNG montage."
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "id": 11367749723,
+    "name": "form-art-sources",
+    "size_in_bytes": 30288812,
+    "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367749723",
+    "archive_download_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367749723/zip",
+    "expired": false,
+    "created_at": "2026-10-05T19:47:35Z",
+    "expires_at": "2026-10-19T19:47:32Z",
+    "updated_at": "2026-10-05T19:47:35Z",
+    "digest": "sha256:d3ce601abd4f089c9ba64c5c7b991368b58d14ad09d236beaae7f5d4c9b69de4",
+    "workflow_run": {
+      "id": 37364543031,
+      "repository_id": 1155848437,
+      "head_repository_id": 1155848437,
+      "head_branch": "codex/continue-exercise-art-oct05",
+      "head_sha": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d"
+    }
+  }
+]

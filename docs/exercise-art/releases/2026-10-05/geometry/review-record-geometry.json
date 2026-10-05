@@ -1,0 +1,160 @@
+{
+  "purpose": "Geometry values only; retain each delivery asset's own path/hash in a complete review record and bind lossless delivery RGB equality separately.",
+  "releaseApproved": false,
+  "geometryEvidence": {
+    "path": "geometry.json",
+    "sha256": "3ad0b703195df9632527aeacf030610a4a7ffe9f293a5d16eb4df678a0e6f40d"
+  },
+  "reference": {
+    "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+    "bytes": 904359,
+    "dimensions": [1536, 1024]
+  },
+  "frames": [
+    {
+      "slot": 1,
+      "pose": "setup",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    },
+    {
+      "slot": 2,
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 534, "y": 933 },
+        "rearLacesPad": { "x": 931, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    },
+    {
+      "slot": 3,
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "anchors": {
+        "frontToe": { "x": 389, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 676 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    },
+    {
+      "slot": 4,
+      "pose": "bottom",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    },
+    {
+      "slot": 5,
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "anchors": {
+        "frontToe": { "x": 389, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 676 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    },
+    {
+      "slot": 6,
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 534, "y": 933 },
+        "rearLacesPad": { "x": 931, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      }
+    }
+  ]
+}

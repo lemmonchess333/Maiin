@@ -1,0 +1,71 @@
+{
+  "scope": "Run37364543031 ended without a browser runner, steps or playback artifact. Its cancellation cause is unknown; public Actions incident is contextual evidence.",
+  "files": [
+    {
+      "sourcePath": "REVIEW.md",
+      "preservedPath": "REVIEW.md.txt",
+      "sha256": "1eccf886b3156870ee006708ba9de0edb860662460c2b3da5499a46ed9fd5015",
+      "bytes": 3159
+    },
+    {
+      "sourcePath": "ci-run.json",
+      "preservedPath": "ci-run.json.txt",
+      "sha256": "51d201483201d48d32733785fa8b99c619fd7b9e26be015a18c129b67eb144ef",
+      "bytes": 7444
+    },
+    {
+      "sourcePath": "github-artifacts.json",
+      "preservedPath": "github-artifacts.json.txt",
+      "sha256": "7aceee288ba980e33599e833a86396e4d507aaffbe6dc7881307414eca47221c",
+      "bytes": 791
+    },
+    {
+      "sourcePath": "github-jobs.raw.json",
+      "preservedPath": "github-jobs.raw.json.txt",
+      "sha256": "64eb76f9f9960ebf74f9e99f60c73b451374767c54150a547cb4c2f91810a240",
+      "bytes": 2950
+    },
+    {
+      "sourcePath": "github-ref.raw.json",
+      "preservedPath": "github-ref.raw.json.txt",
+      "sha256": "e8e8e69ec6907b1595c7ab94f88b78e4eeff206269fe98487fcbf51f26fc29e6",
+      "bytes": 437
+    },
+    {
+      "sourcePath": "github-run.raw.json",
+      "preservedPath": "github-run.raw.json.txt",
+      "sha256": "7cfa24f06e25a23fddb6de0943fede8bc3bb93c4e2a6a822e8fe5c13c4e1857f",
+      "bytes": 12404
+    },
+    {
+      "sourcePath": "github-same-head-runs.raw.json",
+      "preservedPath": "github-same-head-runs.raw.json.txt",
+      "sha256": "22d2fa01a2c80d0d29f1711bbe00f1c123f91c36d0af44ca01dfb49e0626b0e7",
+      "bytes": 37223
+    },
+    {
+      "sourcePath": "public-status-observation-194537.json",
+      "preservedPath": "public-status-observation-194537.json.txt",
+      "sha256": "10b5d1e1fe9f362a054315ac601e55f737c21270dfdccb27c298b716cf81a9a3",
+      "bytes": 1178
+    },
+    {
+      "sourcePath": "queue-observation-194233.json",
+      "preservedPath": "queue-observation-194233.json.txt",
+      "sha256": "7466bb4df7a19ecbc7326e7e642ad62d9ed13d11b38ed07da13ebd45a4c519d2",
+      "bytes": 16762
+    },
+    {
+      "sourcePath": "source-integrity.json",
+      "preservedPath": "source-integrity.json.txt",
+      "sha256": "3a7d6fb9e3c7f852cc498b7542939e17d9fe813eb1f2b8895b409c1054637d93",
+      "bytes": 3747
+    },
+    {
+      "sourcePath": "PACKAGE-MANIFEST.json",
+      "preservedPath": "PACKAGE-MANIFEST.json.txt",
+      "sha256": "9899dd6e14c194a2bf88b158968d0cb759b2a3a5192c301fe921fdf2474f0266",
+      "bytes": 1866
+    }
+  ]
+}

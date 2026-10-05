@@ -1,0 +1,27 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "verify",
+    "--",
+    "--",
+    "--maxWorkers=4",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify/unit-results.json"
+  ],
+  "startedAt": "2026-10-05T19:45:58.447418+00:00",
+  "endedAt": "2026-10-05T19:47:19.230413+00:00",
+  "elapsedSeconds": 80.597,
+  "exitCode": 1,
+  "commitAtStart": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "treeAtStart": "672fff87ba0d400c00a7a04516137829e22f87d4",
+  "commitAtEnd": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "trackedFileCount": 6525,
+  "changedInputs": [],
+  "log": {
+    "path": "/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify/verify.log.txt",
+    "sha256": "89805d620c342dcb644e3e2d56cf3a045c3beb957d44fe460a50248876a425c1",
+    "bytes": 947
+  },
+  "unitReport": null
+}

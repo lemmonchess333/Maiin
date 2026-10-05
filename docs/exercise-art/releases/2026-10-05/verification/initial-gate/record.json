@@ -1,0 +1,33 @@
+{
+  "status": "failed-at-lint",
+  "commit": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "tree": "672fff87ba0d400c00a7a04516137829e22f87d4",
+  "reason": "The Playwright fixture callback named use triggered react-hooks/rules-of-hooks. No later verify stage or unit test ran. Root renamed the callback to provide without changing its behavior; the complete gate still requires a later successful run.",
+  "changedTrackedInputs": [],
+  "files": [
+    {
+      "original": "verify.log.txt",
+      "preserved": "verify.log.txt",
+      "originalSha256": "89805d620c342dcb644e3e2d56cf3a045c3beb957d44fe460a50248876a425c1",
+      "originalBytes": 947,
+      "preservedSha256": "89805d620c342dcb644e3e2d56cf3a045c3beb957d44fe460a50248876a425c1",
+      "preservedBytes": 947
+    },
+    {
+      "original": "verify-result.json",
+      "preserved": "verify-result.json.txt",
+      "originalSha256": "12cff446e41a650d90224cc250bd4ae8130b3fe5b0f5dff7079f5c94f4df81d5",
+      "originalBytes": 845,
+      "preservedSha256": "12cff446e41a650d90224cc250bd4ae8130b3fe5b0f5dff7079f5c94f4df81d5",
+      "preservedBytes": 845
+    },
+    {
+      "original": "verify-start.json",
+      "preserved": "verify-start.json.gz",
+      "originalSha256": "bb60144b15a02469eb4419794205f2de0efd7fdfb44d58a73e86588e066b1b89",
+      "originalBytes": 871110,
+      "preservedSha256": "2d2731cd70c0fff14b3ae1e8b13e975f1b8418bf747bb1cc5a11f8e86187dc4b",
+      "preservedBytes": 284694
+    }
+  ]
+}

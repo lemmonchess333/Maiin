@@ -1,0 +1,82 @@
+{
+  "source": "Read-only hashes of exact local Git blobs, independently matched to fetched GitHub commit and push-run tree.",
+  "localCheckpoint": "e4b1af2c13eb97a98b49898d9006e12aef87edbd",
+  "publishedCommit": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+  "tree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "publishedTree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "workflowHeadTree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "treeMatch": true,
+  "workflowRunId": 37361829827,
+  "workflowRunUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+  "allFramesMatch": true,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true
+    }
+  ],
+  "scope": "Pinned October 5 v2 selection only; production release remains a separate decision."
+}
+

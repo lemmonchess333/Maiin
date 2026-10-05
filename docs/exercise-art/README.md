@@ -1,6 +1,20 @@
 # Exercise artwork migration
 
-## Current checkpoint — 3 October 2026
+## Current checkpoint — 5 October 2026
+
+The [Bulgarian Split Squat continuation](releases/2026-10-05/README.md) now has six
+native-reviewed frames with fixed dumbbell geometry and a repaired deep-ankle
+contour. Actual V2 video review found brief empty stages during player transitions,
+so the continuation also adds decoded-image readiness and stale-promise guards.
+The full repository gate passes: 11,817 tests passed, 370 skipped, zero failures.
+
+Repaired-player browser review is still pending during a GitHub Actions runner
+incident. The exact app-entry patch, lossless delivery hashes, review draft and
+remaining steps are preserved. The artwork remains inactive and current branch
+coverage remains **64 of 141** released guides. This checkpoint does not change
+production deployment status.
+
+## Previous checkpoint — 3 October 2026
 
 The [fifth new-conversion batch](pilots/new-conversions-05-20261003/README.md) adds Ab Wheel Rollout and Kettlebell Swing: twelve native draft frames with measured contact drift and mobile review evidence. The [fourth batch](pilots/new-conversions-04-20261003/REVIEW.md) adds Seated Calf Raise and Farmer’s Carry. All four remain outside production pending their recorded form/contact corrections.
 

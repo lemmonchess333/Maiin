@@ -1,0 +1,22 @@
+{
+  "observedAtUtc": "2026-10-05T19:45:37Z",
+  "sourceUrl": "https://www.githubstatus.com/",
+  "incidentUrl": "https://www.githubstatus.com/incidents/3q1yb5m7ltvb",
+  "sourceType": "GitHub official public service status; main page independently opened",
+  "incidentTitle": "Incident with Actions",
+  "investigationStartedAtUtc": "2026-10-05T19:11:00Z",
+  "latestObservedUpdateAtUtc": "2026-10-05T19:15:00Z",
+  "component": "Actions",
+  "componentStatus": "Degraded Performance",
+  "paraphrase": "GitHub reports that assigning hosted runners is delayed, increasing workflow start times across runner configurations; mitigation is in progress.",
+  "relationToWorkflow": {
+    "runId": 37364543031,
+    "headSha": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+    "lastApiObservationAtUtc": "2026-10-05T19:44:25Z",
+    "status": "queued",
+    "runnerAssignment": "none in 19:42:33 full jobs JSON",
+    "assessment": "Consistent with the public incident, but this relationship is an inference. The workflow API provides no incident-specific reason."
+  },
+  "actionsTaken": "Read-only status observation; no dispatch, rerun, cancellation, workflow edit, or execution-route change."
+}
+

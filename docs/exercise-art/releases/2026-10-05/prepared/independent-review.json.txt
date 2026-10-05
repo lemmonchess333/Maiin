@@ -1,0 +1,23 @@
+{
+  "reviewer": "/root/locate_codex_work/bulgarian_pose_review",
+  "scope": "Read-only logic review of the unapplied two-file proposal",
+  "patchSha256": "402bc5c50d24be5f7f65f0358f1bd75e8d4c7d133d68362e0b470f93f1520189",
+  "outcome": "No remaining finding after two narrow reduced-motion corrections",
+  "confirmed": [
+    "Exact manifest labels, cues and progress are preserved.",
+    "Zero-based reuse indices 4-to-2 and 5-to-1 are correct and previous decoded captures exist.",
+    "Bulgarian matching bytes and decoded display checks cover 3=5 and 2=6, with setup different from frame6.",
+    "All other IDs retain their existing first-equals-last assertions.",
+    "The real timed6-to-1 transition is retained, followed by a decoded post-wrap capture and frame/cue checks.",
+    "Bulgarian-only natural-dimension readiness and decode occur before the eight-second clock advance.",
+    "Bulgarian-only Pause absence is checked after the advance; existing Play absence remains.",
+    "Decoded reduced-motion and manual-frame2 captures remain scoped to Bulgarian."
+  ],
+  "remainingDependencies": [
+    "Verify actual card export width;480 is provisional.",
+    "Apply only after exact V2 player review passes and the associated delivery/approved registry preparation is ready."
+  ],
+  "reviewerRanTests": false,
+  "proposalApplied": false,
+  "releaseApproved": false
+}

@@ -1,0 +1,110 @@
+{
+  "theme": "light",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "nominalIntervalMs": 1200,
+  "expectedSources": [
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+    "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png"
+  ],
+  "sourcePins": {
+    "setup": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+    "shallow": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+    "deep": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+    "bottom": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+  },
+  "startedAtEpochMs": 1791227929353,
+  "transitions": [
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "elapsedMs": 20.699999999953434,
+      "readyAtMs": 42.59999999997672,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "elapsedMs": 1273.2999999999884,
+      "readyAtMs": 1273.2999999999884,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "elapsedMs": 2499.1999999999534,
+      "readyAtMs": 2499.1999999999534,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "elapsedMs": 3718,
+      "readyAtMs": 3718,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "elapsedMs": 4946.399999999965,
+      "readyAtMs": 4946.399999999965,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "elapsedMs": 6173.5,
+      "readyAtMs": 6173.5,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    },
+    {
+      "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "elapsedMs": 7376.299999999988,
+      "readyAtMs": 7376.299999999988,
+      "activeImageCount": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "visibility": "visible",
+      "documentVisibility": "visible"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "status": "expected-failing-baseline-reproduced",
+  "releaseApproved": false,
+  "helper": {
+    "path": "check-continuity.mjs",
+    "sha256": "66f246676035ad5baf88ee4d4ef60a2e3a7c6618a5aead531be5a970d8bbe647"
+  },
+  "profile": {
+    "path": "profile.json",
+    "sha256": "58e497f016aa70082ef7fd5640952664d72378bed5f7d3cf14ac4aa937751020"
+  },
+  "historicalEvidence": {
+    "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+    "decodedFrameMetrics": {
+      "name": "decoded-video-evidence.json",
+      "sha256": "6a938f603fd1ffa161fa98ce58c4d4c9b59f4b056ca97b012900e61bf483bfd8"
+    },
+    "nativeReview": {
+      "name": "SUPERSEDING-REVIEW.md",
+      "sha256": "09130dbe83eb928f9aac32841ea03114b8ee6f486fba53d95116b5f5087094ea"
+    }
+  },
+  "method": "Fresh all-encoded-frame decode with fixed ROI and threshold reproduces every independently confirmed blank frame at the same zero-based frame index and original PTS. The wider ROI differs explicitly from the earlier diagnostic; the identical fixed new profile is required for before/after comparison.",
+  "comparisons": [
+    {
+      "theme": "dark",
+      "videoSha256": "3d444fdab99ece95cc4a86d5dea0ef2e3d7c9014604fe9c65184bdd4be16d1a1",
+      "report": {
+        "path": "baseline/dark-continuity.json",
+        "sha256": "7804f2d201c9633a339d477b1fa0f075af1435476511513734883fb172ee0b32"
+      },
+      "allDecodedFrameCountsMatch": true,
+      "flaggedIndicesMatchIndependentPrior": [44, 105, 167, 196],
+      "flaggedPtsMatchIndependentPrior": [1.76, 4.2, 6.68, 7.84],
+      "blankBrightPixels": [0, 0, 0, 0],
+      "visibleBrightPixelRange": [7566, 8196]
+    },
+    {
+      "theme": "light",
+      "videoSha256": "ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790",
+      "report": {
+        "path": "baseline/light-continuity.json",
+        "sha256": "171b1a1514621f364798c7628073d369d709bc754fff6276eae96641b7062c66"
+      },
+      "allDecodedFrameCountsMatch": true,
+      "flaggedIndicesMatchIndependentPrior": [46, 107],
+      "flaggedPtsMatchIndependentPrior": [1.84, 4.28],
+      "blankBrightPixels": [0, 0],
+      "visibleBrightPixelRange": [7566, 8192]
+    }
+  ]
+}

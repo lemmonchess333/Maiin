@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Failing v2 baseline before player decode fix; no playback signoff",
+  "publishedCommit": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+  "tree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "runId": 37361829827,
+  "pathBase": ".",
+  "excluded": [
+    "PACKAGE-MANIFEST.json (self)",
+    "independent-video-review/dark/ (superseded 5 fps samples)",
+    "independent-video-review/light/ (superseded 5 fps samples)"
+  ],
+  "fileCount": 118,
+  "totalBytes": 9318410,
+  "files": [
+    {
+      "path": "REVIEW.md",
+      "bytes": 5396,
+      "sha256": "0f3795c2cc393d44619cd4be8cd7f5118fa4644db50f9c1bfae5f0dab6716e9e"
+    },
+    {
+      "path": "ci-run.json",
+      "bytes": 5639,
+      "sha256": "f3566da1d0448804f1dd85f195cdbfaecc16de6b366f29b1e9cf0a868bcfeaa3"
+    },
+    {
+      "path": "form-art-results.json",
+      "bytes": 104957,
+      "sha256": "14878094d77c811e8cee81dcd42035faeed85942e7fb482670a36282bad32f04"
+    },
+    {
+      "path": "github-run.raw.json",
+      "bytes": 12428,
+      "sha256": "2231089f8993e9728be210098ba6a317355c33a81fd3371a0603f8e0b88d3b5c"
+    },
+    {
+      "path": "independent-video-review/SUPERSEDING-REVIEW.md",
+      "bytes": 3429,
+      "sha256": "09130dbe83eb928f9aac32841ea03114b8ee6f486fba53d95116b5f5087094ea"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-1-native-triple.png",
+      "bytes": 75098,
+      "sha256": "19dea373ae2372caad321af7274ae25e8762dd3fa0a29007c50b23a3528843f4"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-2-native-triple.png",
+      "bytes": 88292,
+      "sha256": "753200fb132cb2adabb1971a57f29aaa2918efad255afb80d3c50457f9b5114e"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-3-native-triple.png",
+      "bytes": 75484,
+      "sha256": "ca6fbab197380fc8885103e38e5e44a58736ca99d183adf67088e8f34c20ed69"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-4-native-triple.png",
+      "bytes": 84160,
+      "sha256": "7ca9a960510dcbe70f94790aef2320873075dabba5d60c0af560252b71def013"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-5-native-triple.png",
+      "bytes": 79030,
+      "sha256": "d225c784166030572a10f8de1748fd86a7e98c11865cbaab839d8248271fd637"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-boundary-6-native-triple.png",
+      "bytes": 77532,
+      "sha256": "734ef2665b4e009358abd9dc7b9a84b126bece55c6d878ed669eb5d9d355181b"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-043-pts-1.72.png",
+      "bytes": 99409,
+      "sha256": "b9520d84126a11287c69dbe58f082cdbc2bc0b9bab9c87508987ce5e23cd8a30"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-044-pts-1.76.png",
+      "bytes": 76468,
+      "sha256": "4336ffddaf1d9df0823b9a1807d841a644f69c6bf96916cddf77d6e4fe11d536"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-045-pts-1.80.png",
+      "bytes": 99495,
+      "sha256": "06cb349303519335c1cb60367007e3b9a075f9f995b831d1d333e0cd3679f08f"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-074-pts-2.96.png",
+      "bytes": 99621,
+      "sha256": "8e1abfb222f93157ee8526796c8d32433f0c1c15b64648e614ca96d941a52000"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-075-pts-3.00.png",
+      "bytes": 101383,
+      "sha256": "798f1e19819031808de3ffdee6e4886d779d4911d490d87ab48b514f3c1f4961"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-076-pts-3.04.png",
+      "bytes": 101458,
+      "sha256": "1f6828a15d0c2d969b8c92f04ce07c746ed68ee77985f74f202e53d9bee158a9"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-104-pts-4.16.png",
+      "bytes": 101435,
+      "sha256": "85af7dbee25c3752605ef2adfc3e8aae7b2d38d6838ce1559cda9cfd83902b58"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-105-pts-4.20.png",
+      "bytes": 75914,
+      "sha256": "fc42a2ffe2d78a4e17aa80233cb03deec1983ffc3e94d660b88cf4df1a01a848"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-106-pts-4.24.png",
+      "bytes": 98723,
+      "sha256": "bcbf294399598e15508a028b16f80232bbe8c12e1ec69c37e4ef1323ec6ce8c1"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-135-pts-5.40.png",
+      "bytes": 101216,
+      "sha256": "e94f451f2ef4674826ccae0c0a842eb24094c41752d7fb4dd9bf8e7ce81564be"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-136-pts-5.44.png",
+      "bytes": 102127,
+      "sha256": "a6f976d70010632ce10f968b2576a987bc85be2c5c00f83d2150ba793316cde2"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-137-pts-5.48.png",
+      "bytes": 102180,
+      "sha256": "b136b13460a03586f5698428c5f040bf72d5f54dfa120e16be4aeda7e5668530"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-166-pts-6.64.png",
+      "bytes": 102206,
+      "sha256": "372da279a758b24e5f449d86687f565a71c1dfc8b326e3b381aa1ffce93c6e76"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-167-pts-6.68.png",
+      "bytes": 78874,
+      "sha256": "bef899ff756a4d5ca0e530016c52130c81babb516df811b12c56bb5f05bf2b9a"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-168-pts-6.72.png",
+      "bytes": 103727,
+      "sha256": "88c4d0fa5e405a269228fd2bc0cd90e04864398a3e1abac8d8c515be5751b4c7"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-195-pts-7.80.png",
+      "bytes": 103968,
+      "sha256": "6992eb10ceb569878544c21a220e0d2cb36e2f92d340381b4877154c9b8a9c05"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-196-pts-7.84.png",
+      "bytes": 76937,
+      "sha256": "596525964c882a6e1762fa9bfff119e6cd6318b961059458649ac5fa85040953"
+    },
+    {
+      "path": "independent-video-review/transitions/dark-frame-197-pts-7.88.png",
+      "bytes": 101909,
+      "sha256": "8948ada24659a0e0e7ef4e5b4c75b2d863ed504c9caf95362362fb2325b9e1df"
+    },
+    {
+      "path": "independent-video-review/transitions/independent-per-frame.json",
+      "bytes": 42995,
+      "sha256": "7dec301e2897ee3ef5b9dbd71a6ac419939f0cedf9e91114305dd8116fd8f657"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-1-native-triple.png",
+      "bytes": 76090,
+      "sha256": "81d354a5669ca80540b70ce084495737ed2b7ad3a6ab1a4e51f8d58e335c534d"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-2-native-triple.png",
+      "bytes": 89829,
+      "sha256": "4426981b2eccbf413db78515aba0dd1bfff68b7d17f19fe8d17166f49bbda438"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-3-native-triple.png",
+      "bytes": 77191,
+      "sha256": "f8c4b5c92049be14592eb4aae344353a5c0d823052e4d0d465666959a1d74292"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-4-native-triple.png",
+      "bytes": 86939,
+      "sha256": "07bed005956685d1dd41d06ce0d7a0b57e92350d12ecbdf544311ec483fb898e"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-5-native-triple.png",
+      "bytes": 90651,
+      "sha256": "c013d63e20bc500c725d8c9e344d203d4b9cdee8bc974f994b019f7868cd9d27"
+    },
+    {
+      "path": "independent-video-review/transitions/light-boundary-6-native-triple.png",
+      "bytes": 94418,
+      "sha256": "7171de4d7adcecbd369fac746a70774d9d97b9b81f16d6cbca0e903cdc3d73da"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-045-pts-1.80.png",
+      "bytes": 101731,
+      "sha256": "77e785ee35d97bbab3e4dc6377ceb95e1446868cefffc296e8a7fda9071d81b0"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-046-pts-1.84.png",
+      "bytes": 78831,
+      "sha256": "8950deb9fffa7d40c49375493a459474f07c3982144bcff79fe99d66f24d64fc"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-047-pts-1.88.png",
+      "bytes": 101831,
+      "sha256": "2b6f4dde65749fa323aa5ab5d3a44d431037b1c24282f1e8de3e3f3433c2b188"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-076-pts-3.04.png",
+      "bytes": 102099,
+      "sha256": "f769374c28a4637514a322f9132a07fd6f041c9eb89cd4f6cfb311e8fe7ad075"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-077-pts-3.08.png",
+      "bytes": 103939,
+      "sha256": "5a1c59cdbc2c5d904721361a6a0a83246f84aa2cbcd4d0ffed9eb1765898e1aa"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-078-pts-3.12.png",
+      "bytes": 103986,
+      "sha256": "2142763d45ad25c850fe50bbe192f7021cd035fe848bffae18a2ed14ae4f6959"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-106-pts-4.24.png",
+      "bytes": 103899,
+      "sha256": "695c2298a004aeda4338c68acb7a9109651ced600973ff7c5506925377238cbe"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-107-pts-4.28.png",
+      "bytes": 78298,
+      "sha256": "2a0db4af62aceb42d2f5780417adcde3bc0999d711ca682e0e82c7c28d458cce"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-108-pts-4.32.png",
+      "bytes": 101146,
+      "sha256": "56e506b39f8dbe4e5de0b2e6771493758527c1769aa6a64ad6991ecfb404b6f9"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-137-pts-5.48.png",
+      "bytes": 101207,
+      "sha256": "c1773a5c71ac09986a6d00ef7c39d346883f09d484a884cb4f9e78e43365ba1c"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-138-pts-5.52.png",
+      "bytes": 101875,
+      "sha256": "d9bd87e05b20d0e37791261770afba9c9fafdc0a1c910ae872c22d4c7dfde80f"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-139-pts-5.56.png",
+      "bytes": 102202,
+      "sha256": "5cfff4e1e26021e641e17615cdce53a9c6c9a148577965fee3457df30a9ba82d"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-168-pts-6.72.png",
+      "bytes": 102136,
+      "sha256": "2603d3432b954c931be362bd76a65e7840b1e8348bedd4af148db1f923c681d4"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-169-pts-6.76.png",
+      "bytes": 103698,
+      "sha256": "9de4f1b60b08cea2a84a67517f7264d4277d745dd01ed09d98da3f7c8a91cb34"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-170-pts-6.80.png",
+      "bytes": 103780,
+      "sha256": "ed5b3b3591b3f2bb80b5eca4592cd82770bb523ff2169d67482a41acbced4b87"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-198-pts-7.92.png",
+      "bytes": 103802,
+      "sha256": "17a5337baee6d1466d537d4f2e6097afef00dbedbc96e3c78ff1d918d88ee191"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-199-pts-7.96.png",
+      "bytes": 102003,
+      "sha256": "d1c463bd99fb9763df65e4b38589616c51efe38a0f9feb1393268b6efd0dae45"
+    },
+    {
+      "path": "independent-video-review/transitions/light-frame-200-pts-8.00.png",
+      "bytes": 102106,
+      "sha256": "a27106a7798fdb07d4df09a778c7ae1abf1c5438707546ab359366235f61f69f"
+    },
+    {
+      "path": "player-job.log.txt",
+      "bytes": 60736,
+      "sha256": "ab8e43b2f259c3080f5c5208762f3052da2a5eba7ae21340aef062ee78dc9486"
+    },
+    {
+      "path": "player-log-excerpts.txt",
+      "bytes": 1456,
+      "sha256": "c0314bd11de6faffa5946e31af958de78eba3e465fe30243edaddf3a92a16446"
+    },
+    {
+      "path": "playwright-evidence.json",
+      "bytes": 23785,
+      "sha256": "7407ec9267bb8c63f4755ac9e8ccd23f31461c65e1d09bf59502c0a307d89d59"
+    },
+    {
+      "path": "screenshots/dark-1.png",
+      "bytes": 30782,
+      "sha256": "1b60a6e409e6717886a62c1f52a6d2d5cbf3c1a27b1fc6f16798918e2a0007a2"
+    },
+    {
+      "path": "screenshots/dark-2.png",
+      "bytes": 31604,
+      "sha256": "32dd32d674744aa0a261cce3af632b6ff0e2166540f560e569cde61b7ab4f510"
+    },
+    {
+      "path": "screenshots/dark-3.png",
+      "bytes": 31313,
+      "sha256": "eb891813cfb66e0414ae195e53cf7e84485537318705ca864dfc8bf956a8a5e8"
+    },
+    {
+      "path": "screenshots/dark-4.png",
+      "bytes": 30184,
+      "sha256": "cfdc6f20142e00a4d3ee500482036824d354992389a9e9b76630d5c16615d761"
+    },
+    {
+      "path": "screenshots/dark-5.png",
+      "bytes": 30952,
+      "sha256": "c4926e86de68fb0a2930e85597a422b9839e8ae3fa1a2b5eff7af059b806a06f"
+    },
+    {
+      "path": "screenshots/dark-6.png",
+      "bytes": 31399,
+      "sha256": "98d4f4096872992eaab482bb933ca8fc8bfbe0b621a23f6985441a6a00f7bddd"
+    },
+    {
+      "path": "screenshots/dark-endpoint-first.png",
+      "bytes": 26224,
+      "sha256": "0685ad1baefebe8f5ff5093a77f060293be1f0462b948bb3bfaaf0801a76002f"
+    },
+    {
+      "path": "screenshots/dark-live-loop-6-to-1.png",
+      "bytes": 30753,
+      "sha256": "3bbd28a7482c1a36470f670bef9e764679b9a073077a106abf7eba5a7b876b0d"
+    },
+    {
+      "path": "screenshots/dark-page.png",
+      "bytes": 77562,
+      "sha256": "822d1b6932bc878b4efa03537628cf5d095a4d3f8345a1afa38f2fce5b34b752"
+    },
+    {
+      "path": "screenshots/light-1.png",
+      "bytes": 31008,
+      "sha256": "cb0aa803d5762ea97add9bae3627ca67d3d8381e1dc6b4e05d2c959ac1639563"
+    },
+    {
+      "path": "screenshots/light-2.png",
+      "bytes": 31843,
+      "sha256": "4d02a8e49caef0cb797404c37ebe17bdcafdeb841f8be6da1e1de5ee7d3a20ac"
+    },
+    {
+      "path": "screenshots/light-3.png",
+      "bytes": 31508,
+      "sha256": "78254ee4f1d2651ba81b26d1e0b4a491c82b806b720582d26aaa3ff69ed339e0"
+    },
+    {
+      "path": "screenshots/light-4.png",
+      "bytes": 30386,
+      "sha256": "028d88476d793acd992315d849afe044b11e67e204f1655caf0c86577be4a57b"
+    },
+    {
+      "path": "screenshots/light-5.png",
+      "bytes": 31150,
+      "sha256": "1650d32369ab9740bacaafcf961f4217a8855c2c18e1a75d022313d2409dcb18"
+    },
+    {
+      "path": "screenshots/light-6.png",
+      "bytes": 31599,
+      "sha256": "ae796d7ce0dca51c03edd573a2c44aa4ca46ca0cffbf7da5113fa8f3b5da8716"
+    },
+    {
+      "path": "screenshots/light-endpoint-first.png",
+      "bytes": 26224,
+      "sha256": "0685ad1baefebe8f5ff5093a77f060293be1f0462b948bb3bfaaf0801a76002f"
+    },
+    {
+      "path": "screenshots/light-live-loop-6-to-1.png",
+      "bytes": 30928,
+      "sha256": "69ad84f05f0d6cf855771f158dc05fe449ddc7c93f0dc83421dc92dc8c735898"
+    },
+    {
+      "path": "screenshots/light-page.png",
+      "bytes": 77284,
+      "sha256": "c6beb4792870ef5c0fdf4961bf14f3f32c7d2e2c7ce3385be0fcda690925dd93"
+    },
+    {
+      "path": "screenshots/reduced-motion-manual-frame-2.png",
+      "bytes": 29651,
+      "sha256": "39c77f41f0c3a365be28747907640c781d6db9b11d2b2e3611b374135fb2af63"
+    },
+    {
+      "path": "screenshots/reduced-motion-still-after-8s.png",
+      "bytes": 28581,
+      "sha256": "fd71999e0f2c22ef4aa40ab2020e854bc75e2be13c02fd7ab308bf1c63f0fbe1"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 2638,
+      "sha256": "63958b7bda6e22d744f1e035e207f10274edd01c2a623b095a163ece2be7148b"
+    },
+    {
+      "path": "transition-logs/dark-live-transition-log.json",
+      "bytes": 3503,
+      "sha256": "dbd194a8f478affa23acced654df75f96800e3ad52c81d7908bf2c319f34e973"
+    },
+    {
+      "path": "transition-logs/light-live-transition-log.json",
+      "bytes": 3454,
+      "sha256": "6bde87a437147ff5a1638117f5f7e3707837b0c634481d525c8882cc66b2e9a1"
+    },
+    {
+      "path": "video-findings.json",
+      "bytes": 14445,
+      "sha256": "74ff51f6ad1519b2a68b226c537045230364eb9e5c8439252226f5a77b7936bc"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-1-at-0.88s.png",
+      "bytes": 99320,
+      "sha256": "a06632c23198be4ae8aee539bdc244259fcd9395e0feb651ad849cdbf0b4bd94"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-2-at-2.20s.png",
+      "bytes": 99727,
+      "sha256": "447f0fc4a62b2ad3ecc78a87f3628ae93ab1c6812438edf49b78e5b4ff2eae3c"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-3-at-3.44s.png",
+      "bytes": 101435,
+      "sha256": "85af7dbee25c3752605ef2adfc3e8aae7b2d38d6838ce1559cda9cfd83902b58"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-4-at-4.64s.png",
+      "bytes": 99007,
+      "sha256": "e41475afd0cb1c8b989c6ecccf67f6acc0ec00d4cb2b6d421685edf208ec36ae"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-5-at-5.92s.png",
+      "bytes": 102206,
+      "sha256": "b975dc66bddc6e9c07dcb24616c8bec5b7b85d76b1147e3a1ab45d3ae20a94e9"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-6-at-7.08s.png",
+      "bytes": 103996,
+      "sha256": "ab08219e3487fcb01b6c24a555d2b7cd30c61194307d429e2c33032345063877"
+    },
+    {
+      "path": "video-review/dark-cycle-sample-7-at-8.48s.png",
+      "bytes": 102345,
+      "sha256": "bcb7aff0b7fdd8d7dba5cb17d47b96a13fe78f68f1bcc2b2dc2d64b95390b9b8"
+    },
+    {
+      "path": "video-review/dark-sample-2s.png",
+      "bytes": 89283,
+      "sha256": "4d8bc25a891c37af3aec0f863d350b70a1e03c054bdc0dba04ac1347110274a0"
+    },
+    {
+      "path": "video-review/decoded-video-evidence.json",
+      "bytes": 84287,
+      "sha256": "6a938f603fd1ffa161fa98ce58c4d4c9b59f4b056ca97b012900e61bf483bfd8"
+    },
+    {
+      "path": "video-review/light-cycle-sample-1-at-0.88s.png",
+      "bytes": 101961,
+      "sha256": "d55756109240702db575f841843e798ccaa505ef82eccb19ab6dd42821dd082d"
+    },
+    {
+      "path": "video-review/light-cycle-sample-2-at-2.20s.png",
+      "bytes": 102167,
+      "sha256": "5d7fe4a239cda7dd303dcbb1ab8d4973bbb7f53c7aa0044244a36e456cbf1d22"
+    },
+    {
+      "path": "video-review/light-cycle-sample-3-at-3.44s.png",
+      "bytes": 103899,
+      "sha256": "695c2298a004aeda4338c68acb7a9109651ced600973ff7c5506925377238cbe"
+    },
+    {
+      "path": "video-review/light-cycle-sample-4-at-4.64s.png",
+      "bytes": 101537,
+      "sha256": "73fda772450791686d672a80d50124cb94806c2a9e582dc1fd01abd5ff904460"
+    },
+    {
+      "path": "video-review/light-cycle-sample-5-at-5.92s.png",
+      "bytes": 102186,
+      "sha256": "254a6910912c175ebba697014e2eb02f089bcc00be38e30e60f12e4dc3b7b834"
+    },
+    {
+      "path": "video-review/light-cycle-sample-6-at-7.08s.png",
+      "bytes": 103825,
+      "sha256": "311981c80c8d0056c6a2b0b3b2010d132e9c993582d052ee3d420bfdfb842dc5"
+    },
+    {
+      "path": "video-review/light-cycle-sample-7-at-8.48s.png",
+      "bytes": 102284,
+      "sha256": "783c1cfc837c1373f26c8f5b7bf992a2206d702f4fe136dadbd8f35463a828d7"
+    },
+    {
+      "path": "video-review/light-sample-2s.png",
+      "bytes": 89908,
+      "sha256": "fd97d69d598853dd4e9dc6a9e6e04ffffb0901b072771f0fb61926c3ac0766b7"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-043-at-1.72s.png",
+      "bytes": 99409,
+      "sha256": "b9520d84126a11287c69dbe58f082cdbc2bc0b9bab9c87508987ce5e23cd8a30"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-044-at-1.76s.png",
+      "bytes": 76468,
+      "sha256": "4336ffddaf1d9df0823b9a1807d841a644f69c6bf96916cddf77d6e4fe11d536"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-045-at-1.80s.png",
+      "bytes": 99495,
+      "sha256": "06cb349303519335c1cb60367007e3b9a075f9f995b831d1d333e0cd3679f08f"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-104-at-4.16s.png",
+      "bytes": 101435,
+      "sha256": "85af7dbee25c3752605ef2adfc3e8aae7b2d38d6838ce1559cda9cfd83902b58"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-105-at-4.20s.png",
+      "bytes": 75914,
+      "sha256": "fc42a2ffe2d78a4e17aa80233cb03deec1983ffc3e94d660b88cf4df1a01a848"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-106-at-4.24s.png",
+      "bytes": 98723,
+      "sha256": "bcbf294399598e15508a028b16f80232bbe8c12e1ec69c37e4ef1323ec6ce8c1"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-166-at-6.64s.png",
+      "bytes": 102206,
+      "sha256": "372da279a758b24e5f449d86687f565a71c1dfc8b326e3b381aa1ffce93c6e76"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-167-at-6.68s.png",
+      "bytes": 78874,
+      "sha256": "bef899ff756a4d5ca0e530016c52130c81babb516df811b12c56bb5f05bf2b9a"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-168-at-6.72s.png",
+      "bytes": 103727,
+      "sha256": "88c4d0fa5e405a269228fd2bc0cd90e04864398a3e1abac8d8c515be5751b4c7"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-195-at-7.80s.png",
+      "bytes": 103968,
+      "sha256": "6992eb10ceb569878544c21a220e0d2cb36e2f92d340381b4877154c9b8a9c05"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-196-at-7.84s.png",
+      "bytes": 76937,
+      "sha256": "596525964c882a6e1762fa9bfff119e6cd6318b961059458649ac5fa85040953"
+    },
+    {
+      "path": "video-review/transition-probe/dark-frame-197-at-7.88s.png",
+      "bytes": 101909,
+      "sha256": "8948ada24659a0e0e7ef4e5b4c75b2d863ed504c9caf95362362fb2325b9e1df"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-045-at-1.80s.png",
+      "bytes": 101731,
+      "sha256": "77e785ee35d97bbab3e4dc6377ceb95e1446868cefffc296e8a7fda9071d81b0"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-046-at-1.84s.png",
+      "bytes": 78831,
+      "sha256": "8950deb9fffa7d40c49375493a459474f07c3982144bcff79fe99d66f24d64fc"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-047-at-1.88s.png",
+      "bytes": 101831,
+      "sha256": "2b6f4dde65749fa323aa5ab5d3a44d431037b1c24282f1e8de3e3f3433c2b188"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-106-at-4.24s.png",
+      "bytes": 103899,
+      "sha256": "695c2298a004aeda4338c68acb7a9109651ced600973ff7c5506925377238cbe"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-107-at-4.28s.png",
+      "bytes": 78298,
+      "sha256": "2a0db4af62aceb42d2f5780417adcde3bc0999d711ca682e0e82c7c28d458cce"
+    },
+    {
+      "path": "video-review/transition-probe/light-frame-108-at-4.32s.png",
+      "bytes": 101146,
+      "sha256": "56e506b39f8dbe4e5de0b2e6771493758527c1769aa6a64ad6991ecfb404b6f9"
+    },
+    {
+      "path": "videos/dark-continuous-playback.webm",
+      "bytes": 214310,
+      "sha256": "3d444fdab99ece95cc4a86d5dea0ef2e3d7c9014604fe9c65184bdd4be16d1a1"
+    },
+    {
+      "path": "videos/light-continuous-playback.webm",
+      "bytes": 223797,
+      "sha256": "ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790"
+    }
+  ]
+}

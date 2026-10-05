@@ -1,0 +1,67 @@
+{
+  "scope": "Run 37366511568 ended with both jobs cancelled before runner assignment or executed steps and an empty artifact list. No post-fix browser evidence or visual signoff exists; cancellation cause is not exposed.",
+  "runId": 37366511568,
+  "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+  "files": [
+    {
+      "sourcePath": "REVIEW.md",
+      "preservedPath": "REVIEW.md.txt",
+      "sha256": "5424e1e776dd51c3a090ba7b2fee8e6b8df58a923dd1283930326c2273291672",
+      "bytes": 4041
+    },
+    {
+      "sourcePath": "ci-run.json",
+      "preservedPath": "ci-run.json.txt",
+      "sha256": "c1846bd50b1353231c46b6e2aca6f6226e9012a66f20ce0f393ef91e7949c9a2",
+      "bytes": 6633
+    },
+    {
+      "sourcePath": "github-artifacts.json",
+      "preservedPath": "github-artifacts.json.txt",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "sourcePath": "github-jobs.raw.json",
+      "preservedPath": "github-jobs.raw.json.txt",
+      "sha256": "e7797de9259333be5c2c27c73307e9799958fa9d513730c7047d058e958baf7a",
+      "bytes": 1799
+    },
+    {
+      "sourcePath": "github-ref.raw.json",
+      "preservedPath": "github-ref.raw.json.txt",
+      "sha256": "e871cf0cb12b5f338ee24f7080f88b5b681fbda919c658ab05a4ef1f32354a97",
+      "bytes": 437
+    },
+    {
+      "sourcePath": "github-run.raw.json",
+      "preservedPath": "github-run.raw.json.txt",
+      "sha256": "20070df926e40c76d6470a248c3541f9db7206b4055ac47c17df5d69961577f8",
+      "bytes": 12414
+    },
+    {
+      "sourcePath": "github-same-head-runs.raw.json",
+      "preservedPath": "github-same-head-runs.raw.json.txt",
+      "sha256": "b2726f5b3b80c6ea3e496b0da44bceb31754cc1aa67768f4df5b3979b4d72f0d",
+      "bytes": 37248
+    },
+    {
+      "sourcePath": "public-status-observation-200209.json",
+      "preservedPath": "public-status-observation-200209.json.txt",
+      "sha256": "0a767e3f74378584f9b4b1994c7f1ced5298439da08c1bb7fd11c48101ddc38a",
+      "bytes": 645
+    },
+    {
+      "sourcePath": "source-integrity.json",
+      "preservedPath": "source-integrity.json.txt",
+      "sha256": "423ccf4558461e9b8d3c07128f41d4383e2cf904e18407334d590fa0b4b6eb46",
+      "bytes": 4340
+    },
+    {
+      "sourcePath": "PACKAGE-MANIFEST.json",
+      "preservedPath": "PACKAGE-MANIFEST.json.txt",
+      "sha256": "7fd7b932d6cbbfa22c6973754a4f69122c6a7ec3b11b89f5237a9012ec597a69",
+      "bytes": 1708
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "recordedAt": "2026-10-05T19:37:04.232576+00:00",
+  "scope": "Focused image decode readiness lifecycle and atomic presentation hint; no release activation.",
+  "files": [
+    {
+      "path": "src/components/ExerciseFormFrames.tsx",
+      "sha256": "ba01b4274d340e7e6aaa47700cd9f236e314fa567dbeb52b61d8f57a363018b7"
+    },
+    {
+      "path": "src/components/__tests__/ExerciseFormFrames.test.tsx",
+      "sha256": "2b36276c542477f7d8d62c1e74f551458cbcd39e311556767981db802250c182"
+    }
+  ],
+  "checks": [
+    {
+      "command": "./node_modules/.bin/vitest run src/components/__tests__/ExerciseFormFrames.test.tsx",
+      "exitCode": 0,
+      "passedFiles": 1,
+      "passedTests": 12,
+      "log": "/workspace/scratch/a307ac8d62f0/verification/player-decode-fix/focused-unit.txt"
+    },
+    {
+      "command": "./node_modules/.bin/eslint src/components/ExerciseFormFrames.tsx src/components/__tests__/ExerciseFormFrames.test.tsx --max-warnings 0",
+      "exitCode": 0,
+      "evidence": "Previously executed in tool session 95882; no stdout/stderr."
+    },
+    {
+      "command": "./node_modules/.bin/tsc --project e2e/fixtures/tsconfig.form-art.json --noEmit --incremental false",
+      "exitCode": 0,
+      "evidence": "Previously executed in tool session 9328; no stdout/stderr."
+    },
+    {
+      "command": "git diff --check -- src/components/ExerciseFormFrames.tsx src/components/__tests__/ExerciseFormFrames.test.tsx",
+      "exitCode": 0
+    }
+  ],
+  "independentReview": {
+    "reviewer": "/root/locate_codex_work/bulgarian_pose_review",
+    "result": "No blocking findings",
+    "findings": [
+      "Promise resolution and rejection guard the captured node identity and connected state.",
+      "Stable callback refs reset readiness on removal and mount.",
+      "Existing 1200/2400 ms timings and public behavior remain intact.",
+      "Regressions cover delayed decode, fresh remount readiness, rejection/retry, and stale resolve/reject."
+    ]
+  },
+  "limitations": [
+    "Unit tests do not inspect browser painting. Actual recorded video must verify that blank presentation is gone.",
+    "Manual selection retains prior immediate-switch behavior.",
+    "No full repository tests run by this sub-agent."
+  ]
+}

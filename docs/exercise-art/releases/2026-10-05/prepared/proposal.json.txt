@@ -1,0 +1,49 @@
+{
+  "status": "unapplied-proposal-player-review-pending",
+  "appliesOnlyTo": [
+    "src/lib/releasedFormPlacards.ts",
+    "e2e/form-art-release.pw.ts"
+  ],
+  "repositoryFilesWritten": false,
+  "approvalGranted": false,
+  "manifest": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/MANIFEST.json",
+    "sha256": "bd3118a9b59f2d3ba7e5049bb5072b0f14c4faa9d845a641c209d771ffc27fab"
+  },
+  "sourceFiles": [
+    {
+      "path": "src/lib/releasedFormPlacards.ts",
+      "beforeSha256": "a3b7e46d0b22725a62355f55281340c873f41b2778e85bdba64081a96a21d110",
+      "proposedSha256": "15dc9ba2d707a537425307d8c07024a10b1900ca1b92955f6ad194b8c239746c"
+    },
+    {
+      "path": "e2e/form-art-release.pw.ts",
+      "beforeSha256": "892d6b86cb98b5634d520997e38e3528de54ce173a1047c1d996eff0cf14e637",
+      "proposedSha256": "f7af0bdeecf2844ba8a7296153b6c8604058a2e5af8b3990f1e71037056b84ee"
+    }
+  ],
+  "cueSha256": "2702ce0ca3bdae249c329136587feaf0d6c0da750b08ea04de6c12faf9c66f6b",
+  "primary": [
+    "Quadriceps"
+  ],
+  "secondary": [
+    "Glutes",
+    "Hamstrings"
+  ],
+  "provisionalCardWidth": 480,
+  "requiredBeforeApply": [
+    "Exact frozen V2 player review passes.",
+    "Verify actual exported cutout width; update provisional target if needed.",
+    "Independent source/delivery hash audits remain required; reuse equality is not source approval."
+  ],
+  "checks": {
+    "typescriptDiagnostics": 0,
+    "exactManifestLabelsCuesProgress": true,
+    "patchApplyCheck": true,
+    "repositorySourceFilesUnchanged": true
+  },
+  "patch": {
+    "path": "app-integration.patch",
+    "sha256": "532351f95ef6bbd3fe2eb9a288e642f0f42ff048210968d0f98cd6f8edb8cea8"
+  }
+}

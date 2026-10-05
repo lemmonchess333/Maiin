@@ -1,0 +1,16 @@
+{
+  "previousPatchSha256": "402bc5c50d24be5f7f65f0358f1bd75e8d4c7d133d68362e0b470f93f1520189",
+  "previousProposedTestSha256": "03d81ea3a522ac0622596c21f498df32e218e7fd9a01766e349552f28a4cbb72",
+  "expectedProposedTestSha256": "f7af0bdeecf2844ba8a7296153b6c8604058a2e5af8b3990f1e71037056b84ee",
+  "expectedPlacardSha256": "15dc9ba2d707a537425307d8c07024a10b1900ca1b92955f6ad194b8c239746c",
+  "change": "Comment only: screenshots explicitly await decode; no executable statements changed.",
+  "proposalApplied": false,
+  "releaseApproved": false,
+  "patchSha256": "532351f95ef6bbd3fe2eb9a288e642f0f42ff048210968d0f98cd6f8edb8cea8",
+  "commentOnlyChangeConfirmed": true,
+  "placardUnchanged": true,
+  "baseFilesUnchanged": true,
+  "typescriptDiagnostics": 0,
+  "patchApplyCheck": true,
+  "exactManifestLabelsCuesProgress": true
+}

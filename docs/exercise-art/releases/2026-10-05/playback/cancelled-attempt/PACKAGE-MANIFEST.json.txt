@@ -1,0 +1,60 @@
+{
+  "purpose": "Cancelled first player-decode-fix CI attempt; no playback artifact or signoff",
+  "runId": 37364543031,
+  "publishedCommit": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "tree": "672fff87ba0d400c00a7a04516137829e22f87d4",
+  "fileCount": 10,
+  "totalBytes": 86095,
+  "files": [
+    {
+      "path": "REVIEW.md",
+      "bytes": 3159,
+      "sha256": "1eccf886b3156870ee006708ba9de0edb860662460c2b3da5499a46ed9fd5015"
+    },
+    {
+      "path": "ci-run.json",
+      "bytes": 7444,
+      "sha256": "51d201483201d48d32733785fa8b99c619fd7b9e26be015a18c129b67eb144ef"
+    },
+    {
+      "path": "github-artifacts.json",
+      "bytes": 791,
+      "sha256": "7aceee288ba980e33599e833a86396e4d507aaffbe6dc7881307414eca47221c"
+    },
+    {
+      "path": "github-jobs.raw.json",
+      "bytes": 2950,
+      "sha256": "64eb76f9f9960ebf74f9e99f60c73b451374767c54150a547cb4c2f91810a240"
+    },
+    {
+      "path": "github-ref.raw.json",
+      "bytes": 437,
+      "sha256": "e8e8e69ec6907b1595c7ab94f88b78e4eeff206269fe98487fcbf51f26fc29e6"
+    },
+    {
+      "path": "github-run.raw.json",
+      "bytes": 12404,
+      "sha256": "7cfa24f06e25a23fddb6de0943fede8bc3bb93c4e2a6a822e8fe5c13c4e1857f"
+    },
+    {
+      "path": "github-same-head-runs.raw.json",
+      "bytes": 37223,
+      "sha256": "22d2fa01a2c80d0d29f1711bbe00f1c123f91c36d0af44ca01dfb49e0626b0e7"
+    },
+    {
+      "path": "public-status-observation-194537.json",
+      "bytes": 1178,
+      "sha256": "10b5d1e1fe9f362a054315ac601e55f737c21270dfdccb27c298b716cf81a9a3"
+    },
+    {
+      "path": "queue-observation-194233.json",
+      "bytes": 16762,
+      "sha256": "7466bb4df7a19ecbc7326e7e642ad62d9ed13d11b38ed07da13ebd45a4c519d2"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 3747,
+      "sha256": "3a7d6fb9e3c7f852cc498b7542939e17d9fe813eb1f2b8895b409c1054637d93"
+    }
+  ]
+}

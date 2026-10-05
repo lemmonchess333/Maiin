@@ -1,0 +1,44 @@
+# V2 recorded playback review: failing baseline
+
+**The 86 CI tests pass, but continuous playback remains blocked.** Actual video pixels show six single-frame disappearances of the entire athlete, dumbbells, and bench while the new caption and controls remain visible. This baseline must not receive a playback pass signoff.
+
+## Exact evidence identity
+
+- Published commit: `7752aeb3937ce4fd01837b297cb1c4a75a58b97e`.
+- Exact source tree: `0409fdcc9d288e280645d2190a21744bb7f49f71`.
+- Form artwork review run [37361829827](https://github.com/lemmonchess333/Maiin/actions/runs/37361829827), number 197, attempt 1, push-triggered.
+- Both source and player jobs succeeded. Playwright reports 86 expected passes, zero unexpected, flaky, or skipped results, with all five Bulgarian cases passing on their first attempt.
+- Artifact 11367177702, `form-art-playback`, 27,247,860 bytes, SHA-256 `45dbeb5355be866543de5b8c06b6a9164febc0148dd3a50b2821dc31cdec883c`.
+- Exact original raw report SHA-256: `14878094d77c811e8cee81dcd42035faeed85942e7fb482670a36282bad32f04`.
+- All six exact Git PNG blobs match the pinned v2 manifest and transition-log source hashes; the remote commit and workflow tree match that checked local tree. See `source-integrity.json`.
+
+## Recorded defects
+
+| Theme | Transition | Zero-based frame | Original video PTS | Recorded span |
+|---|---|---:|---:|---:|
+| Dark | 1 to 2 | 44 | 1.76 s | 1 frame / 40 ms |
+| Dark | 3 to 4 | 105 | 4.20 s | 1 frame / 40 ms |
+| Dark | 5 to 6 | 167 | 6.68 s | 1 frame / 40 ms |
+| Dark | 6 to 1 | 196 | 7.84 s | 1 frame / 40 ms |
+| Light | 1 to 2 | 46 | 1.84 s | 1 frame / 40 ms |
+| Light | 3 to 4 | 107 | 4.28 s | 1 frame / 40 ms |
+
+All 228 dark and 230 light encoded frames were decoded at native resolution with ffmpeg, without resampling or interpolation. The fixed diagnostic ROI x=60..339, y=330..579 counted pixels whose mean RGB exceeds 80. Across the inclusive 0.88–8.48 s complete-cycle window (191 frames per theme), each confirmed empty stage has zero bright artwork pixels; all other frames have at least 7,526. This diagnostic flagged candidates; actual images were then visually inspected. The immediately adjacent frames on either side of each defect contain the expected artwork.
+
+The original WebMs are VP8, encoded at 392 x 852 and 25 fps. The test viewport is 393 x 852 CSS pixels. Each gap occupies one encoded frame; its precise duration on a physical display is not established. The original recordings, per-frame metrics, and unchanged direct decoded neighbor frames are preserved. The recorded-pixel evidence does not assign a root cause.
+
+## Evidence that still passes within its scope
+
+All 20 original saved PNGs were viewed: six poses per theme, full page per theme, first-endpoint per theme, saved post-wrap setup per theme, and dark reduced-motion still/manual-step captures. The art fits the stage, the six poses/captions are in order, the page changes theme, controls are visible, and cues wrap. Native equipment and ankle repair review remains valid; these recorded gaps are a player continuity issue.
+
+Both real-timer cases show the intended seven source states 1→2→3→4→5→6→1 without manual Next. Actual video samples confirm those displayed pose states; full-cycle continuity fails at the frames listed above. Dark intervals are 1257.4, 1230.0, 1217.4, 1232.5, 1216.0, and 1202.8 ms (7356.1 ms total). Light intervals are 1252.6, 1225.9, 1218.8, 1228.4, 1227.1, and 1202.8 ms (7355.6 ms total). Each DOM log state has one active visible image with 1536 x 1024 loaded dimensions. Those DOM checks do not prove that image pixels were present in every recorded frame.
+
+Reduced-motion evidence is dark-only and uses virtual time for the eight-second still assertion. It verifies initial stillness and manual frame stepping; it is not a real-time reduced-motion video. This is the account-free Chromium review fixture, not installed-mobile, deployed production, public asset integration, or release approval evidence.
+
+## Independent review and preservation
+
+`independent-video-review/SUPERSEDING-REVIEW.md` independently confirms the six exact blanks after decoding every original frame and visually reviewing all twelve transition boundary triples. SHA-256: `09130dbe83eb928f9aac32841ea03114b8ee6f486fba53d95116b5f5087094ea`. It explicitly supersedes the earlier sampled-state pass. The obsolete 5 fps sample folders are excluded from the recommended package inventory to avoid confusing them with full-frame verification.
+
+`PACKAGE-MANIFEST.json` inventories exact file sizes and SHA-256 hashes using paths relative to this evidence root. It includes the two unique original WebMs, all 20 original PNGs, exact full raw report, exact attached transition log bodies, source pins, run/job evidence, all-frame metrics, direct decoded defect neighbors, all boundary triples and their native source frames, this finding, and the superseding independent review. The manifest does not hash itself.
+
+When preserving this package in Git, raw JSON and log files may be renamed to `.json.txt` / `.log.txt` without changing their bytes. Keep this failing baseline separate from the player-fix evidence. Compare the next exact-head originals using the unchanged native source pins, a fixed all-frame continuity profile, and every transition including wrap. Release remains blocked until the new evidence is reviewed.

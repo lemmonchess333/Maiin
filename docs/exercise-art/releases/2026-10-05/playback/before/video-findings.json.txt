@@ -1,0 +1,335 @@
+{
+  "reviewer": "review_ci",
+  "date": "2026-10-05",
+  "decision": "blocked: recorded continuous playback contains six single-frame empty stages",
+  "supersedes": "Any overall playback pass based on sampled video states; the 86 passing test results and acceptable 20 original still captures remain valid within their scopes.",
+  "runId": 37361829827,
+  "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+  "publishedCommit": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+  "tree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "ciResult": {
+    "expected": 86,
+    "unexpected": 0,
+    "flaky": 0,
+    "skipped": 0,
+    "conclusion": "success"
+  },
+  "staticCaptureReview": {
+    "originalPngCount": 20,
+    "allPersonallyViewed": true,
+    "result": "acceptable for pinned v2 art at fixture size",
+    "observations": [
+      "Six poses and captions appear in correct order in both themes.",
+      "Both post-loop captures show setup frame 1 of 6.",
+      "Dark reduced-motion capture stays at setup after the virtual eight-second interval; manual Next shows frame 2 with no autoplay controls.",
+      "Artwork and bench fit in the stage; cues wrap and controls remain visible; the stage remains dark in both themes."
+    ]
+  },
+  "continuousRecordedPixelReview": {
+    "status": "blocked",
+    "method": "Every original encoded frame decoded to native RGB24 by ffmpeg with -vsync 0; no resampling or interpolation. Fixed ROI brightness metric flags candidates. All six flagged frames visually confirmed at original size, with visible immediate neighbors. Seven pose-state samples from each complete cycle also viewed. Independent movement_review reviewed all twelve transition boundary triples.",
+    "presenceRoi": {
+      "xStartInclusive": 60,
+      "xEndExclusive": 340,
+      "yStartInclusive": 330,
+      "yEndExclusive": 580,
+      "brightCriterion": "mean(R,G,B) > 80"
+    },
+    "adjacentDifferenceRoi": {
+      "xStartInclusive": 60,
+      "xEndExclusive": 340,
+      "yStartInclusive": 285,
+      "yEndExclusive": 665
+    },
+    "ptsOrigin": "Original video frame zero; 25 frames per second. These PTS values are not the DOM transition-log clock origin.",
+    "themes": [
+      {
+        "theme": "dark",
+        "video": "videos/dark-continuous-playback.webm",
+        "videoSha256": "3d444fdab99ece95cc4a86d5dea0ef2e3d7c9014604fe9c65184bdd4be16d1a1",
+        "decodedFrameCount": 228,
+        "encodedDimensions": [
+          392,
+          852
+        ],
+        "frameRate": "25/1",
+        "durationSeconds": 9.12,
+        "reviewedRangeSeconds": {
+          "startInclusive": 0.88,
+          "endExclusive": 8.52
+        },
+        "reviewedFrameCount": 191,
+        "visibleFrameRoiCountMinimum": 7526,
+        "visibleFrameRoiCountMaximum": 8193,
+        "sourceSequence": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          1
+        ],
+        "realTimerIntervalsMs": [
+          1257.4,
+          1230.0,
+          1217.4,
+          1232.5,
+          1216.0,
+          1202.8
+        ],
+        "totalSourceCycleMs": 7356.1,
+        "findings": [
+          {
+            "transition": "1 to 2",
+            "frameIndex": 44,
+            "ptsSeconds": 1.76,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 43,
+                "ptsSeconds": 1.72,
+                "brightArtworkPixels": 8192,
+                "path": "video-review/transition-probe/dark-frame-043-at-1.72s.png",
+                "sha256": "b9520d84126a11287c69dbe58f082cdbc2bc0b9bab9c87508987ce5e23cd8a30"
+              },
+              {
+                "frameIndex": 44,
+                "ptsSeconds": 1.76,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/dark-frame-044-at-1.76s.png",
+                "sha256": "4336ffddaf1d9df0823b9a1807d841a644f69c6bf96916cddf77d6e4fe11d536"
+              },
+              {
+                "frameIndex": 45,
+                "ptsSeconds": 1.8,
+                "brightArtworkPixels": 7858,
+                "path": "video-review/transition-probe/dark-frame-045-at-1.80s.png",
+                "sha256": "06cb349303519335c1cb60367007e3b9a075f9f995b831d1d333e0cd3679f08f"
+              }
+            ]
+          },
+          {
+            "transition": "3 to 4",
+            "frameIndex": 105,
+            "ptsSeconds": 4.2,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 104,
+                "ptsSeconds": 4.16,
+                "brightArtworkPixels": 7775,
+                "path": "video-review/transition-probe/dark-frame-104-at-4.16s.png",
+                "sha256": "85af7dbee25c3752605ef2adfc3e8aae7b2d38d6838ce1559cda9cfd83902b58"
+              },
+              {
+                "frameIndex": 105,
+                "ptsSeconds": 4.2,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/dark-frame-105-at-4.20s.png",
+                "sha256": "fc42a2ffe2d78a4e17aa80233cb03deec1983ffc3e94d660b88cf4df1a01a848"
+              },
+              {
+                "frameIndex": 106,
+                "ptsSeconds": 4.24,
+                "brightArtworkPixels": 7582,
+                "path": "video-review/transition-probe/dark-frame-106-at-4.24s.png",
+                "sha256": "bcbf294399598e15508a028b16f80232bbe8c12e1ec69c37e4ef1323ec6ce8c1"
+              }
+            ]
+          },
+          {
+            "transition": "5 to 6",
+            "frameIndex": 167,
+            "ptsSeconds": 6.68,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 166,
+                "ptsSeconds": 6.64,
+                "brightArtworkPixels": 7780,
+                "path": "video-review/transition-probe/dark-frame-166-at-6.64s.png",
+                "sha256": "372da279a758b24e5f449d86687f565a71c1dfc8b326e3b381aa1ffce93c6e76"
+              },
+              {
+                "frameIndex": 167,
+                "ptsSeconds": 6.68,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/dark-frame-167-at-6.68s.png",
+                "sha256": "bef899ff756a4d5ca0e530016c52130c81babb516df811b12c56bb5f05bf2b9a"
+              },
+              {
+                "frameIndex": 168,
+                "ptsSeconds": 6.72,
+                "brightArtworkPixels": 7852,
+                "path": "video-review/transition-probe/dark-frame-168-at-6.72s.png",
+                "sha256": "88c4d0fa5e405a269228fd2bc0cd90e04864398a3e1abac8d8c515be5751b4c7"
+              }
+            ]
+          },
+          {
+            "transition": "6 to 1",
+            "frameIndex": 196,
+            "ptsSeconds": 7.84,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 195,
+                "ptsSeconds": 7.8,
+                "brightArtworkPixels": 7849,
+                "path": "video-review/transition-probe/dark-frame-195-at-7.80s.png",
+                "sha256": "6992eb10ceb569878544c21a220e0d2cb36e2f92d340381b4877154c9b8a9c05"
+              },
+              {
+                "frameIndex": 196,
+                "ptsSeconds": 7.84,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/dark-frame-196-at-7.84s.png",
+                "sha256": "596525964c882a6e1762fa9bfff119e6cd6318b961059458649ac5fa85040953"
+              },
+              {
+                "frameIndex": 197,
+                "ptsSeconds": 7.88,
+                "brightArtworkPixels": 8162,
+                "path": "video-review/transition-probe/dark-frame-197-at-7.88s.png",
+                "sha256": "8948ada24659a0e0e7ef4e5b4c75b2d863ed504c9caf95362362fb2325b9e1df"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "theme": "light",
+        "video": "videos/light-continuous-playback.webm",
+        "videoSha256": "ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790",
+        "decodedFrameCount": 230,
+        "encodedDimensions": [
+          392,
+          852
+        ],
+        "frameRate": "25/1",
+        "durationSeconds": 9.2,
+        "reviewedRangeSeconds": {
+          "startInclusive": 0.88,
+          "endExclusive": 8.52
+        },
+        "reviewedFrameCount": 191,
+        "visibleFrameRoiCountMinimum": 7526,
+        "visibleFrameRoiCountMaximum": 8184,
+        "sourceSequence": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          1
+        ],
+        "realTimerIntervalsMs": [
+          1252.6,
+          1225.9,
+          1218.8,
+          1228.4,
+          1227.1,
+          1202.8
+        ],
+        "totalSourceCycleMs": 7355.6,
+        "findings": [
+          {
+            "transition": "1 to 2",
+            "frameIndex": 46,
+            "ptsSeconds": 1.84,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 45,
+                "ptsSeconds": 1.8,
+                "brightArtworkPixels": 8183,
+                "path": "video-review/transition-probe/light-frame-045-at-1.80s.png",
+                "sha256": "77e785ee35d97bbab3e4dc6377ceb95e1446868cefffc296e8a7fda9071d81b0"
+              },
+              {
+                "frameIndex": 46,
+                "ptsSeconds": 1.84,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/light-frame-046-at-1.84s.png",
+                "sha256": "8950deb9fffa7d40c49375493a459474f07c3982144bcff79fe99d66f24d64fc"
+              },
+              {
+                "frameIndex": 47,
+                "ptsSeconds": 1.88,
+                "brightArtworkPixels": 7858,
+                "path": "video-review/transition-probe/light-frame-047-at-1.88s.png",
+                "sha256": "2b6f4dde65749fa323aa5ab5d3a44d431037b1c24282f1e8de3e3f3433c2b188"
+              }
+            ]
+          },
+          {
+            "transition": "3 to 4",
+            "frameIndex": 107,
+            "ptsSeconds": 4.28,
+            "encodedFrames": 1,
+            "encodedDurationMs": 40,
+            "observation": "Entire athlete, both dumbbells, and bench absent while the advanced caption and controls remain visible; immediate before and after frames contain expected artwork.",
+            "visuallyConfirmed": true,
+            "neighbors": [
+              {
+                "frameIndex": 106,
+                "ptsSeconds": 4.24,
+                "brightArtworkPixels": 7775,
+                "path": "video-review/transition-probe/light-frame-106-at-4.24s.png",
+                "sha256": "695c2298a004aeda4338c68acb7a9109651ced600973ff7c5506925377238cbe"
+              },
+              {
+                "frameIndex": 107,
+                "ptsSeconds": 4.28,
+                "brightArtworkPixels": 0,
+                "path": "video-review/transition-probe/light-frame-107-at-4.28s.png",
+                "sha256": "2a0db4af62aceb42d2f5780417adcde3bc0999d711ca682e0e82c7c28d458cce"
+              },
+              {
+                "frameIndex": 108,
+                "ptsSeconds": 4.32,
+                "brightArtworkPixels": 7582,
+                "path": "video-review/transition-probe/light-frame-108-at-4.32s.png",
+                "sha256": "56e506b39f8dbe4e5de0b2e6771493758527c1769aa6a64ad6991ecfb404b6f9"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "independentReview": {
+    "path": "independent-video-review/SUPERSEDING-REVIEW.md",
+    "sha256": "09130dbe83eb928f9aac32841ea03114b8ee6f486fba53d95116b5f5087094ea",
+    "status": "blocked; sampled-state pass explicitly superseded",
+    "allFrameMetrics": "independent-video-review/transitions/independent-per-frame.json",
+    "allBoundaryTriples": "independent-video-review/transitions/{dark,light}-boundary-{1..6}-native-triple.png"
+  },
+  "scopeLimits": [
+    "Chromium review fixture at asserted 393x852 CSS pixels and device scale factor 1; original VP8 recordings encode 392x852 pixels at 25 fps.",
+    "Reduced-motion evidence is dark-only and uses Playwright virtual time; it is not an eight-second real-time reduced-motion video.",
+    "Seven recorded source states establish six real timed transitions without manual Next, including 6 to 1; DOM loaded dimensions and computed visibility do not establish every painted video frame.",
+    "Each observed gap occupies one encoded 40 ms frame; this does not determine its exact duration on a physical display.",
+    "Cause of the recorded gaps is not established by this evidence review.",
+    "No installed-mobile, deployment, production route, public asset, or release approval evidence is claimed.",
+    "Native v2 equipment and ankle findings were separately repaired/reviewed; old native findings are not reopened by this player paint issue."
+  ],
+  "requiredFollowThrough": "Keep release blocked. Review next exact player-fix head using unchanged native source pins, actual CI original videos, every encoded frame over a complete cycle, fixed continuity profile, and every transition boundary including wrap."
+}

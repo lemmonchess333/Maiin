@@ -1,0 +1,55 @@
+{
+  "purpose": "Lint-only new push: both jobs cancelled before execution; no browser evidence or signoff",
+  "runId": 37366511568,
+  "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+  "tree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "fileCount": 9,
+  "totalBytes": 67560,
+  "files": [
+    {
+      "path": "REVIEW.md",
+      "bytes": 4041,
+      "sha256": "5424e1e776dd51c3a090ba7b2fee8e6b8df58a923dd1283930326c2273291672"
+    },
+    {
+      "path": "ci-run.json",
+      "bytes": 6633,
+      "sha256": "c1846bd50b1353231c46b6e2aca6f6226e9012a66f20ce0f393ef91e7949c9a2"
+    },
+    {
+      "path": "github-artifacts.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "github-jobs.raw.json",
+      "bytes": 1799,
+      "sha256": "e7797de9259333be5c2c27c73307e9799958fa9d513730c7047d058e958baf7a"
+    },
+    {
+      "path": "github-ref.raw.json",
+      "bytes": 437,
+      "sha256": "e871cf0cb12b5f338ee24f7080f88b5b681fbda919c658ab05a4ef1f32354a97"
+    },
+    {
+      "path": "github-run.raw.json",
+      "bytes": 12414,
+      "sha256": "20070df926e40c76d6470a248c3541f9db7206b4055ac47c17df5d69961577f8"
+    },
+    {
+      "path": "github-same-head-runs.raw.json",
+      "bytes": 37248,
+      "sha256": "b2726f5b3b80c6ea3e496b0da44bceb31754cc1aa67768f4df5b3979b4d72f0d"
+    },
+    {
+      "path": "public-status-observation-200209.json",
+      "bytes": 645,
+      "sha256": "0a767e3f74378584f9b4b1994c7f1ced5298439da08c1bb7fd11c48101ddc38a"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 4340,
+      "sha256": "423ccf4558461e9b8d3c07128f41d4383e2cf904e18407334d590fa0b4b6eb46"
+    }
+  ]
+}

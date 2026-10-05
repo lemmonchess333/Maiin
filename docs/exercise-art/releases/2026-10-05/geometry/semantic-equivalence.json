@@ -1,0 +1,34 @@
+{
+  "status": "pass",
+  "releaseApproved": false,
+  "method": "Parse frozen historical and final JSON. Remove only geometry.helper.sha256 or geometryEvidence.sha256, respectively, then assert deep semantic equality of the entire remaining objects. Verify all five scratch captures remain byte-identical.",
+  "historicalCaptureHashes": {
+    "geometry.json": "847c0bbfb0c3faac41b0e19a21f36055d9e1608200121f6823d43cd0690ca437",
+    "review-record-geometry.json": "75f70ea667fb2143a287b2027a5eea5c822a0a1437d49fbcf0a3d65b401898c0",
+    "verify-geometry.mjs": "4a23cda34d713b0a84c1af6401479e3246e5d02029bc76c1413488abd8f4d2ba",
+    "README.md": "cbbc21e20e0fcc513decba74ff3606f404c043f47695f8198b622cb3d57a3ef4",
+    "independent-review.json": "011c857ec74207e9eba780f87bdcb47e16ab636a28c29d2c1c2d4e974e6ea84b"
+  },
+  "finalArtifacts": {
+    "verify-geometry.mjs": "7672a5586d39ff4925068a326cb93efd5b0ff5631ba45a0aa245feafe47feae3",
+    "geometry.json": "3ad0b703195df9632527aeacf030610a4a7ffe9f293a5d16eb4df678a0e6f40d",
+    "review-record-geometry.json": "65bcec9d6d60eb2f4ef1e6702a6f2bd9784326e880cca22165be9ff8d91ac44b",
+    "README.md": "448c306c9bdf935dbd1a4452eacb6a7a696b405cfbb0772648d7718eb8266fdc"
+  },
+  "permittedSemanticChanges": [
+    "geometry.json: helper.sha256",
+    "review-record-geometry.json: geometryEvidence.sha256"
+  ],
+  "actualHelperChange": {
+    "before": "4a23cda34d713b0a84c1af6401479e3246e5d02029bc76c1413488abd8f4d2ba",
+    "after": "7672a5586d39ff4925068a326cb93efd5b0ff5631ba45a0aa245feafe47feae3"
+  },
+  "identicalInputPins": 25,
+  "identicalSearchWindows": 48,
+  "identicalSixFrameMeasurements": true,
+  "unchangedBounds": {
+    "fixedAnchorMaxAxisDriftPixels": 1,
+    "invariantDimensionsMaxRelativeDrift": 0.01
+  },
+  "historicalScratchUntouched": true
+}

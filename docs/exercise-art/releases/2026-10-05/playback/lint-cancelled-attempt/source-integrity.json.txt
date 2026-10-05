@@ -1,0 +1,114 @@
+{
+  "source": "Read-only exact local Git blob hashes; exact local tree matched independently fetched GitHub commit and exact-head push workflow.",
+  "localCheckpoint": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+  "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+  "tree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "publishedTree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "workflowRunId": 37366511568,
+  "workflowRunUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37366511568",
+  "treeMatch": true,
+  "allFramesMatch": true,
+  "nativeSourcesUnchangedFromV2": true,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "matchesManifest": true,
+      "matchesPreFixV2": true
+    }
+  ],
+  "changedFilesFromPreFixV2": [
+    "e2e/form-art-review.pw.ts",
+    "src/components/ExerciseFormFrames.tsx",
+    "src/components/__tests__/ExerciseFormFrames.test.tsx"
+  ],
+  "unchangedEvidenceScope": "Same component/player decode fix as cancelled head, same native V2 PNGs/cues, workflow/config/fixture, and semantically equivalent Playwright tests. Expected86 total cases and five Bulgarian cases.",
+  "frozenContinuityTool": {
+    "check-continuity.mjs": {
+      "path": "/workspace/scratch/a307ac8d62f0/Maiin/docs/exercise-art/releases/2026-10-05/playback/check-continuity.mjs",
+      "sha256": "66f246676035ad5baf88ee4d4ef60a2e3a7c6618a5aead531be5a970d8bbe647",
+      "bytes": 9816,
+      "scope": "working-tree frozen review tool; not part of this player-fix commit"
+    },
+    "profile.json": {
+      "path": "/workspace/scratch/a307ac8d62f0/Maiin/docs/exercise-art/releases/2026-10-05/playback/profile.json",
+      "sha256": "58e497f016aa70082ef7fd5640952664d72378bed5f7d3cf14ac4aa937751020",
+      "bytes": 2258,
+      "scope": "working-tree frozen review tool; not part of this player-fix commit"
+    }
+  },
+  "parentPublishedCommit": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "previousCancelledRunId": 37364543031,
+  "componentSha256": "ba01b4274d340e7e6aaa47700cd9f236e314fa567dbeb52b61d8f57a363018b7",
+  "componentUnchangedFromCancelledHead": true,
+  "changedFilesFromCancelledHead": [
+    "e2e/form-art-review.pw.ts"
+  ],
+  "testChangeReview": "Only use-to-provide callback identifier rename and a load-readiness comment clarification; video logic, assertions, source pins and timing are unchanged."
+}

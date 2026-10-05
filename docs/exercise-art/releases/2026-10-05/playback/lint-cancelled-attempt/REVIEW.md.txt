@@ -1,0 +1,39 @@
+# Lint-corrected decode-fix CI: cancelled before execution
+
+**No browser playback evidence was produced, so visual approval remains pending.** The normal push-triggered Form artwork review run [37366511568](https://github.com/lemmonchess333/Maiin/actions/runs/37366511568), attempt 1, ended with workflow conclusion `failure` at 2026-10-05 20:10:26 UTC. Both jobs were cancelled while unassigned, with no executed steps. The full artifact list is empty.
+
+## Exact identity
+
+- Published head: `303aa373309c44a4b76f351fc5898f2d7c87c314`.
+- Tree: `f18238472d2e7640ec7587c47511c69c3a4cadde`, identical to local `1dd2ba9ecd7968263eedbef73b9528ba1da048b0`.
+- Parent: `6d2a79d3bb57c418695c02ee6f1835fa6e50a25d`, the earlier cancelled decode-fix attempt.
+- The independent final branch-ref lookup still points to this exact published head.
+- The component bytes and six native PNG hashes are unchanged from the decode-fix head. This commit changes only the recorder callback identifier and a clarifying comment; assertions, video logic, fixture, source pins and timing are equivalent.
+- Exact source hashes and the frozen continuity-checker/profile pins are preserved in `source-integrity.json`.
+
+## Final job evidence
+
+| Job | Job ID | Final state | Completed UTC | Runner | Executed steps |
+|---|---:|---|---|---|---:|
+| review-player | 111952897335 | cancelled | 20:10:24 | ID 0, empty name | 0 |
+| review-sources | 111952897512 | cancelled | 20:10:25 | ID 0, empty name | 0 |
+
+The run was created at 19:55:22 UTC; both jobs were created at 19:55:23 UTC. The final `started_at` fields repeat creation time even though the jobs never received a runner or executed a step, so those fields are not evidence of test execution.
+
+The artifact list is empty: no original PNG captures, WebMs, transition logs, Playwright JSON report, or source-export artifact came from this run. The supported player-job log retrieval returns 404 `BlobNotFound`. The same-head collection contains only this Form artwork review run, with no replacement/dispatch entry.
+
+## Cause and scope
+
+Available run/jobs metadata states no cancellation reason or cancelling actor, and does not state an approval or billing gate. The recorded initiating actor is `lemmonchess333`; this is not a cancellation-actor field. Check-run annotations are outside the connector’s allowed endpoints, as established during the preceding attempt.
+
+The source and player jobs have different configured execution timeouts, five and fifteen minutes respectively, yet both remained unassigned and were cancelled approximately fifteen minutes after creation. This timing does not establish a specific cause. GitHub’s official status page, independently retrieved at 20:02:09 UTC, still showed the Actions runner-assignment incident with its 19:15 UTC update. That incident is relevant context, not proof that it caused this individual cancellation. The URL/time observation is preserved separately.
+
+Root reports that full `npm run verify` passed on source-equivalent local `1dd2ba9e…` with unchanged inputs. That completed local gate remains valid and separate. This cancelled CI run provides no browser confirmation of the player decode fix and does not supersede the earlier six recorded empty-stage frames in v2 run 37361829827.
+
+## Decision and preservation
+
+Keep this attempt distinct from the preceding cancelled run and the actual failing v2 recordings. App integration and visual approval remain pending until a later exact-head run supplies original browser evidence for all-frame continuity checking and native review of all six transitions in both themes.
+
+No rerun, dispatch, cancellation, workflow edit, runner setting change, repository write, or alternate execution route was performed by this reviewer. No additional execution is initiated from this record.
+
+`PACKAGE-MANIFEST.json` pins the evidence files by relative path, bytes, and SHA-256. Raw JSON may be renamed to `.json.txt` during repository preservation without changing the bytes. The manifest does not hash itself.

@@ -1,0 +1,12 @@
+{
+  "observedAtUtc": "2026-10-05T20:02:09Z",
+  "sourceUrl": "https://www.githubstatus.com/",
+  "incidentUrl": "https://www.githubstatus.com/incidents/3q1yb5m7ltvb",
+  "incidentTitle": "Incident with Actions",
+  "investigationStartedAtUtc": "2026-10-05T19:11:00Z",
+  "latestVisibleUpdateAtUtc": "2026-10-05T19:15:00Z",
+  "paraphrase": "GitHub reported delayed assignment of hosted runners across configurations and ongoing mitigation work.",
+  "relationToRun": "Context consistent with unassigned queued jobs; not proof of a specific cancellation cause.",
+  "runId": 37366511568,
+  "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314"
+}

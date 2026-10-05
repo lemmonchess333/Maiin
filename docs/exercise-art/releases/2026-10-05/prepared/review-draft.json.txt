@@ -1,0 +1,404 @@
+{
+  "exerciseId": "bulgarian-split",
+  "version": "anatomy-v3-rigid-2026-10-05",
+  "width": 1536,
+  "height": 1024,
+  "decision": "draft",
+  "reviewer": "",
+  "reviewedAt": "",
+  "reference": {
+    "path": "form-frames/bulgarian-split/4.webp",
+    "sha256": "221a80ef31a2c4daf0fa12de54cb055ad63e28e5a743a54d85b0ab6fb71a8831",
+    "anchors": {
+      "frontToe": {
+        "x": 390,
+        "y": 938
+      },
+      "frontHeel": {
+        "x": 533,
+        "y": 934
+      },
+      "rearLacesPad": {
+        "x": 932,
+        "y": 646
+      },
+      "benchRightPadCorner": {
+        "x": 1374,
+        "y": 677
+      },
+      "benchNearLegBolt": {
+        "x": 1295,
+        "y": 884
+      },
+      "benchFarLegBolt": {
+        "x": 865,
+        "y": 705
+      },
+      "benchFarBaseCorner": {
+        "x": 810,
+        "y": 885
+      },
+      "benchNearBaseCorner": {
+        "x": 1252,
+        "y": 950
+      }
+    },
+    "invariantDimensions": {
+      "frontShoeSupportSpan": 143.05593311708535,
+      "benchFloorFootSpan": 446.7538472134292,
+      "nearEquipmentProjectionWidth": 179,
+      "farEquipmentProjectionWidth": 143,
+      "nearFrontHeadWidth": 80,
+      "farFrontHeadWidth": 73
+    }
+  },
+  "cueSha256": "2702ce0ca3bdae249c329136587feaf0d6c0da750b08ea04de6c12faf9c66f6b",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomical athlete, smooth featureless pelvis and white trainers. Original identity and scene master remain pinned; V2 changes equipment and the bounded deep ankle region only."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed left-facing side/three-quarter camera on the native 1536x1024 canvas. No full-frame crop, resize, perspective change or body transform. Near/far equipment projections are constructed once and translated by integer pixels."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All four final native poses and enlarged grip/ankle details received independent visual review. Both hands remain attached; far-thigh occlusion is coherent. The deep upper-ankle shelf is replaced by the accepted connected 204-pixel contour refinement, with the original rear shoe/contact and lower ankle preserved."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One transparent faceted/octagonal dumbbell source supplies fixed near/far projections, 179 and 143 px wide. No per-pose scale or rotation. All 18 exposed face samples across six slots match the fixed source-layer RGB exactly. Hidden equipment geometry is construction evidence; native contour and grip review independently passes the visible result."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "All 48 complete 91\u00d791 RGB anchor search windows equal their pinned previously measured originals. This preserves the original deterministic 31\u00d731 patch-search results. All eight anchors remain within 1 px per axis; maximum projected front-shoe support-span drift is 0.72058968%, below the unchanged 1% bound. Bench-floor span is invariant. Hand foreground pixels and the accepted rear-shoe support are preserved."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Native poses depict front-knee/hip flexion and extension with the front sole planted and rear instep supported on the fixed bench. Dumbbells follow the attached hands. The deepest shown pose is a controlled split squat, with no bench movement or unattached grip."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working front quadriceps retain the strongest purple; the exposed working hamstring is lighter lilac. The supporting rear thigh/hip stays neutral. Glutes are largely occluded; the key expresses the qualitative primary/secondary contribution, not measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six seven-word cues match setup, shallow descent, deeper descent, comfortable depth, upward drive and continued ascent. Their ordered label/cue hash is pinned. The progress values 0, .33, .67, 1, .67, .33 describe authored beats, not measured joint-range percentages."
+    },
+    "sequenceAndLoop": {
+      "passed": false,
+      "evidence": "Pending exact-V2 real-timer player observation of 1\u21922\u21923\u21924\u21925\u21926\u21921 in both themes."
+    },
+    "mobileLight": {
+      "passed": false,
+      "evidence": "Pending exact-V2 light-theme player captures and continuous playback review."
+    },
+    "mobileDark": {
+      "passed": false,
+      "evidence": "Pending exact-V2 dark-theme player captures, continuous playback and reduced-motion/manual-step review."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bulgarian-split/1.webp",
+      "sha256": "2456cef652c9bb32c9ec927767ef5051ac18ca53a7d4ea45cf22e79ffa41d296",
+      "anchors": {
+        "frontToe": {
+          "x": 390,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 533,
+          "y": 934
+        },
+        "rearLacesPad": {
+          "x": 932,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 677
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+        "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/2.webp",
+      "sha256": "42dc82e7339c497519cd253fc92bb6d153737a3881bda6d7c92dca9261b9a6c2",
+      "anchors": {
+        "frontToe": {
+          "x": 390,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 534,
+          "y": 933
+        },
+        "rearLacesPad": {
+          "x": 931,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 677
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/3.webp",
+      "sha256": "247d0811a26bd1d6f012fc0629bcd51f7062521f162875defb7d2c3de5cb9cad",
+      "anchors": {
+        "frontToe": {
+          "x": 389,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 533,
+          "y": 934
+        },
+        "rearLacesPad": {
+          "x": 932,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 676
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+        "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/4.webp",
+      "sha256": "221a80ef31a2c4daf0fa12de54cb055ad63e28e5a743a54d85b0ab6fb71a8831",
+      "anchors": {
+        "frontToe": {
+          "x": 390,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 533,
+          "y": 934
+        },
+        "rearLacesPad": {
+          "x": 932,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 677
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+        "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/5.webp",
+      "sha256": "247d0811a26bd1d6f012fc0629bcd51f7062521f162875defb7d2c3de5cb9cad",
+      "anchors": {
+        "frontToe": {
+          "x": 389,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 533,
+          "y": 934
+        },
+        "rearLacesPad": {
+          "x": 932,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 676
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+        "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/6.webp",
+      "sha256": "42dc82e7339c497519cd253fc92bb6d153737a3881bda6d7c92dca9261b9a6c2",
+      "anchors": {
+        "frontToe": {
+          "x": 390,
+          "y": 938
+        },
+        "frontHeel": {
+          "x": 534,
+          "y": 933
+        },
+        "rearLacesPad": {
+          "x": 931,
+          "y": 646
+        },
+        "benchRightPadCorner": {
+          "x": 1374,
+          "y": 677
+        },
+        "benchNearLegBolt": {
+          "x": 1295,
+          "y": 884
+        },
+        "benchFarLegBolt": {
+          "x": 865,
+          "y": 705
+        },
+        "benchFarBaseCorner": {
+          "x": 810,
+          "y": 885
+        },
+        "benchNearBaseCorner": {
+          "x": 1252,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      }
+    }
+  ]
+}

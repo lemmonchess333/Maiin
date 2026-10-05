@@ -1,0 +1,41 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "verify",
+    "--",
+    "--",
+    "--maxWorkers=4",
+    "--reporter=json",
+    "--outputFile=/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify-retry/unit-results.json"
+  ],
+  "startedAt": "2026-10-05T19:51:39.079978+00:00",
+  "endedAt": "2026-10-05T20:03:02.401025+00:00",
+  "elapsedSeconds": 683.144,
+  "exitCode": 0,
+  "commitAtStart": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+  "treeAtStart": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "commitAtEnd": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+  "trackedFileCount": 6525,
+  "changedInputs": [],
+  "log": {
+    "path": "/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify-retry/verify.log.txt",
+    "sha256": "2b622528301d3d5994ad7e5731b0b94358a30bfde1e8463b49c24a45b691a74a",
+    "bytes": 48152
+  },
+  "unitReport": {
+    "path": "/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify-retry/unit-results.json",
+    "sha256": "551f8211dd1580b55358978443000091cce13dadc20cc9f1f5b08bca3c430386",
+    "bytes": 4030583,
+    "success": true,
+    "totalTests": 12187,
+    "passedTests": 11817,
+    "failedTests": 0,
+    "pendingTests": 370,
+    "todoTests": 0,
+    "fileCount": 1049,
+    "fileStatuses": {
+      "passed": 1049
+    }
+  }
+}

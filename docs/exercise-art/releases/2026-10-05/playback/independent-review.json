@@ -1,0 +1,30 @@
+{
+  "status": "pass-for-checker-and-expected-failing-baseline",
+  "reviewer": "/root/rigid_equipment/geometry_review",
+  "releaseApproved": false,
+  "scope": "Read-only review of fixed encoded-content continuity; does not approve player, sequence completeness, or release.",
+  "reviewedArtifacts": {
+    "check-continuity.mjs": "66f246676035ad5baf88ee4d4ef60a2e3a7c6618a5aead531be5a970d8bbe647",
+    "profile.json": "58e497f016aa70082ef7fd5640952664d72378bed5f7d3cf14ac4aa937751020",
+    "baseline/dark-range.json": "4b4593c32a2c6937596f7aa62565660c3bc7d799165a4cc34ab31a40aa9eb4cf",
+    "baseline/light-range.json": "b2965c12d94f440a6e95c52c3275df9754f5a50d3bd663c581736157f28eac57",
+    "baseline/dark-continuity.json": "7804f2d201c9633a339d477b1fa0f075af1435476511513734883fb172ee0b32",
+    "baseline/light-continuity.json": "171b1a1514621f364798c7628073d369d709bc754fff6276eae96641b7062c66"
+  },
+  "findings": [
+    "No concrete false-pass, portability, or decoder issue found for stated scope.",
+    "Reports bind helper, profile, declared range, and exact source WebM hash.",
+    "RGB24 conversion precedes crop; no scaling or temporal resampling; raw-byte frame count equals probed count.",
+    "Strictly increasing PTS, presentation interval coverage, and per-frame interval bounds prevent silently skipping an encoded gap.",
+    "Half-open range overlap includes191frames per theme; per-frame low-content and overbright failures cannot be averaged away.",
+    "Expected failing baseline catches dark44/105/167/196 and light46/107; all have0bright pixels while normalframes7566–8196stay within3640–18200.",
+    "Every stored frame threshold classification and range inclusion independently recomputed and agrees.",
+    "Caller-declared cycle completeness, native visual review, and events between video frames remain explicit limitations."
+  ],
+  "actions": {
+    "helperExecuted": false,
+    "filesEdited": false,
+    "uiChanged": false,
+    "testsRun": false
+  }
+}

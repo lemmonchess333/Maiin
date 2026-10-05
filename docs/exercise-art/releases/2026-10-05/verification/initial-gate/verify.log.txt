@@ -1,0 +1,16 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tropos@1.2.0 verify
+> npm run lint && npm run check:form-art && npm run check:form-drafts && npm run check:cycles && npm run build && npm run check:dist-size && npm run test -- --maxWorkers=4 --reporter=json --outputFile=/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify/unit-results.json
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tropos@1.2.0 lint
+> eslint . --max-warnings 0
+
+
+/workspace/scratch/a307ac8d62f0/Maiin/e2e/form-art-review.pw.ts
+  453:13  error  React Hook "use" is called in function "contextOptions" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+
+✖ 1 problem (1 error, 0 warnings)
+

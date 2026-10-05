@@ -1,0 +1,42 @@
+{
+  "status": "prepared-unapplied",
+  "scope": "Reusable delivery and app-entry proposal. No public assets or approval are created by preserving these files.",
+  "files": [
+    {
+      "source": "proposal/app-integration.patch",
+      "preserved": "app-integration.patch",
+      "sha256": "532351f95ef6bbd3fe2eb9a288e642f0f42ff048210968d0f98cd6f8edb8cea8",
+      "bytes": 7813
+    },
+    {
+      "source": "proposal/proposal.json",
+      "preserved": "proposal.json.txt",
+      "sha256": "61b6996c967ecaeb91c1a81fca05390d6d2c2f77ef52e711d3e8021f60635808",
+      "bytes": 1670
+    },
+    {
+      "source": "proposal/independent-review.json",
+      "preserved": "independent-review.json.txt",
+      "sha256": "6ce349b12db7ce0b2d5428c9d9431327cf3534ec0300f532ee36ddb446cbfdb5",
+      "bytes": 1373
+    },
+    {
+      "source": "proposal/refresh-check.json",
+      "preserved": "refresh-check.json.txt",
+      "sha256": "b29e8fb62547dc861d5d91d20185faa3600acfbe3ccc7244b42bcba2721c001f",
+      "bytes": 828
+    },
+    {
+      "source": "proposal/review-draft.json",
+      "preserved": "review-draft.json.txt",
+      "sha256": "f8cd6b88bcf34d1d07d16d05b2ec5d86a54e8c5eaf25f6cbc1103fd12bb19c26",
+      "bytes": 12540
+    },
+    {
+      "source": "candidate-delivery.json",
+      "preserved": "candidate-delivery.json.txt",
+      "sha256": "4f34476224e9aaeac194e6fe278fc701b0febf6d228dcb12bd0f06b945a65e52",
+      "bytes": 3722
+    }
+  ]
+}

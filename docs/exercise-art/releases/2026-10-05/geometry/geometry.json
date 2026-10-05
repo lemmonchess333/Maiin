@@ -1,0 +1,2541 @@
+{
+  "schemaVersion": 1,
+  "exerciseId": "bulgarian-split",
+  "status": "selected-native-geometry-evidence-passes",
+  "releaseApproved": false,
+  "scope": "Numerical geometry evidence only; does not grant actual-player or release approval.",
+  "imagesEdited": false,
+  "historicalReportOrAlgorithmModified": false,
+  "helper": {
+    "filename": "verify-geometry.mjs",
+    "sha256": "7672a5586d39ff4925068a326cb93efd5b0ff5631ba45a0aa245feafe47feae3"
+  },
+  "decode": "sharp.removeAlpha().toColourspace('srgb').raw(); 1536x1024x3 native RGB. Selected opacity independently checked in RGBA.",
+  "sharpVersion": "0.35.4",
+  "bounds": {
+    "fixedAnchorMaxAxisDriftPixels": 1,
+    "invariantDimensionsMaxRelativeDrift": 0.01,
+    "unchanged": true
+  },
+  "anchorInterpretation": "Distinctive image-patch centres, not anatomical joints or literal physical contact locations.",
+  "transferProof": "Each 31x31 target patch at every integer translation within +/-30 pixels lies wholly in the compared 91x91 window. Exact RGB window equality, unchanged hash-pinned reference bytes and unchanged historical algorithm give identical scores at all 3721 translations, identical zero-offset early-exit behavior and identical deterministic tie-breaking. Therefore the recorded optimum transfers exactly. Baseline and selected zero/best SADs are independently recomputed. No exhaustive search is needed when every possible input byte is identical.",
+  "equipmentInterpretation": "Alpha>=128 full rigid-layer widths are construction dimensions. Near/far projections are fixed separately for perspective and reused at unit scale and zero rotation. Occluded shafts and rear heads are not claimed to be visibly measurable through hands/knee. Exposed face equality is a binding check, not a substitute for the hash-bound native contour/grip review.",
+  "reference": {
+    "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+    "bytes": 904359,
+    "dimensions": [1536, 1024]
+  },
+  "baselineRegistration": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json",
+    "sha256": "5177e3a66deed3f88775cb59afa101987a2b2d36fd13c1aca4ac56e105137bb3",
+    "bytes": 105624
+  },
+  "baselineAlgorithm": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/measure-registration.mjs",
+    "sha256": "aed96880e65bd79d9a05310cbb7700f11852b325287076e82c81218a9c5f085e",
+    "bytes": 12117
+  },
+  "inputPins": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json",
+      "sha256": "5177e3a66deed3f88775cb59afa101987a2b2d36fd13c1aca4ac56e105137bb3",
+      "bytes": 105624
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/measure-registration.mjs",
+      "sha256": "aed96880e65bd79d9a05310cbb7700f11852b325287076e82c81218a9c5f085e",
+      "bytes": 12117
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/composition.json",
+      "sha256": "565ae0de392d54e2241cc5a554eb20e2985c53a30d47cc72e2323ed8718d6575",
+      "bytes": 9149
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/combination.json",
+      "sha256": "0ef9b4b4605118db2705b5d8a0034bb14049efba8808039668c1b5141bc95bbc",
+      "bytes": 2987
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/diagnostics.json",
+      "sha256": "f3bc753d6adc61ae8cca33263f444ccf307d1d7053f1b1c9959740b143730fca",
+      "bytes": 10417
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/native-review.json",
+      "sha256": "45e9e01d49c25b602f207b5f57e26d5037d6e4a6da10f12be2285c559729d4fc",
+      "bytes": 4839
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-source.png",
+      "sha256": "57176b796fc6fecb7832d5e46cd79f469fdec72f37ae1be71d1c86848c2cc57b",
+      "bytes": 859624
+    },
+    {
+      "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "bytes": 904359
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/setup.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "bytes": 904359
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "bytes": 816295
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+      "bytes": 836482
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom.png",
+      "sha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f",
+      "bytes": 613304
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+      "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775",
+      "bytes": 17491
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+      "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9",
+      "bytes": 14675
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-opaque-interior.png",
+      "sha256": "45d1e5e8c252b7e2102c75dd6d9664510743ab00f605c4889176d359800cdc84",
+      "bytes": 881257
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532
+    }
+  ],
+  "headDimensions": {
+    "near-front": {
+      "allocatedSize": [80, 84],
+      "alphaHalfCoverageBounds": {
+        "box": [0, 0, 80, 84],
+        "pixelCount": 5818,
+        "threshold": 128
+      },
+      "constructionOnly": true
+    },
+    "near-rear": {
+      "allocatedSize": [66, 84],
+      "alphaHalfCoverageBounds": {
+        "box": [0, 0, 66, 83],
+        "pixelCount": 4786,
+        "threshold": 128
+      },
+      "constructionOnly": true
+    },
+    "far-front": {
+      "allocatedSize": [73, 80],
+      "alphaHalfCoverageBounds": {
+        "box": [0, 0, 73, 80],
+        "pixelCount": 5051,
+        "threshold": 128
+      },
+      "constructionOnly": true
+    },
+    "far-rear": {
+      "allocatedSize": [60, 80],
+      "alphaHalfCoverageBounds": {
+        "box": [0, 0, 60, 79],
+        "pixelCount": 4149,
+        "threshold": 128
+      },
+      "constructionOnly": true
+    }
+  },
+  "summary": {
+    "selectedFrames": 6,
+    "anchorsPerFrame": 8,
+    "exactSearchWindows": 48,
+    "isolatedSearchReruns": 0,
+    "totalSearchWindowChannelsCompared": 1192464,
+    "maximumAnchorAxisDriftPixels": 1,
+    "maximumSupportSpanRelativeDriftFraction": 0.007205896797599198,
+    "maximumEquipmentDimensionDriftFraction": 0,
+    "exactOpaqueEquipmentFaceChecks": 18,
+    "nonOpaqueSelectedPixels": 0
+  },
+  "strictGeometryErrors": [],
+  "frames": [
+    {
+      "slot": 1,
+      "pose": "setup",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "59f7c9db61feb8e831ba5dcfda02e26de7c871c5017246148c398acaf4cbf83d",
+          "selectedRgbSha256": "59f7c9db61feb8e831ba5dcfda02e26de7c871c5017246148c398acaf4cbf83d",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "6b72c196a94a43f320c74e4191aae4e425243eca20bf88ef376356338d1f8799",
+          "selectedRgbSha256": "6b72c196a94a43f320c74e4191aae4e425243eca20bf88ef376356338d1f8799",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "961078031486eea9a40eb860a73a2099d3ef4477c1c7b313a9d85fb79c731ff7",
+          "selectedRgbSha256": "961078031486eea9a40eb860a73a2099d3ef4477c1c7b313a9d85fb79c731ff7",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "76e7117580a272803b51bbec042bbe0edca66df266461a94ccf5a885c92b5014",
+          "selectedRgbSha256": "76e7117580a272803b51bbec042bbe0edca66df266461a94ccf5a885c92b5014",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "70a2e2de2c2a07684b5a26a51432193191059ab0956171c728521ed4fb6a6b75",
+          "selectedRgbSha256": "70a2e2de2c2a07684b5a26a51432193191059ab0956171c728521ed4fb6a6b75",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "9c38cde1628dc89f85dce20944c8a95210a2d98b79075396aeb37c5078b1a74f",
+          "selectedRgbSha256": "9c38cde1628dc89f85dce20944c8a95210a2d98b79075396aeb37c5078b1a74f",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "7bfbbb98a1c1abde05d2004598b75012200f0823b1eec60cd142c2774b6f5c8d",
+          "selectedRgbSha256": "7bfbbb98a1c1abde05d2004598b75012200f0823b1eec60cd142c2774b6f5c8d",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "611153a1fbba268925e0e7eb41cc967345325cc96f68460e762f479e1c3cdcea",
+          "selectedRgbSha256": "611153a1fbba268925e0e7eb41cc967345325cc96f68460e762f479e1c3cdcea",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 390, "y": 938 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 533, "y": 934 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 932, "y": 646 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1374, "y": 677 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 390, "y": 938 },
+            { "x": 533, "y": 934 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 143.05593311708535,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [563, 492],
+          "translation": [0, 0],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [343, 487],
+          "translation": [0, 0],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [576, 522, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [711, 525, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [355, 517, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    },
+    {
+      "slot": 2,
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+        "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 534, "y": 933 },
+        "rearLacesPad": { "x": 931, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "2432f864714ff1f96d55bf5ad2763fac58e845c567c2bdbb8843abd2bb57c3fa",
+          "selectedRgbSha256": "2432f864714ff1f96d55bf5ad2763fac58e845c567c2bdbb8843abd2bb57c3fa",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "64ccf7bd9fb7350512ff7289a0da532314bca15b6e1e79f88523279d0aed635a",
+          "selectedRgbSha256": "64ccf7bd9fb7350512ff7289a0da532314bca15b6e1e79f88523279d0aed635a",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "55e53949f721be2db5129d5a72106482c5ea3417f672d56ac2a48a80a05709cf",
+          "selectedRgbSha256": "55e53949f721be2db5129d5a72106482c5ea3417f672d56ac2a48a80a05709cf",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "a62ea42151fb5890388571e6273c4cea3f4f9e2e607df9bfff5c45e59f10eb4c",
+          "selectedRgbSha256": "a62ea42151fb5890388571e6273c4cea3f4f9e2e607df9bfff5c45e59f10eb4c",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "3782dd6d97cab0e0296fab5fdf40876b863606851bdd90982c383fce7e3e0a87",
+          "selectedRgbSha256": "3782dd6d97cab0e0296fab5fdf40876b863606851bdd90982c383fce7e3e0a87",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "62238bdb96ad8ecb64fe858308b9998ea391befd75aafc4aaefe6d70f6806ce7",
+          "selectedRgbSha256": "62238bdb96ad8ecb64fe858308b9998ea391befd75aafc4aaefe6d70f6806ce7",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "53a895d5df3747c30cff83f3928c15e4bf84360ef7b2e2d0f2f2f4e84bccb6a8",
+          "selectedRgbSha256": "53a895d5df3747c30cff83f3928c15e4bf84360ef7b2e2d0f2f2f4e84bccb6a8",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "081a4f808adb36e1de9ea25dd6e9813d9cc0de5af65a74eadedd38c0c86e52cf",
+          "selectedRgbSha256": "081a4f808adb36e1de9ea25dd6e9813d9cc0de5af65a74eadedd38c0c86e52cf",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 20818,
+            "meanAbsoluteChannelDifference": 7.22095
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 390, "y": 938 },
+            "sumAbsoluteDifference": 20818,
+            "meanAbsoluteChannelDifference": 7.22095,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 26152,
+            "meanAbsoluteChannelDifference": 9.071106
+          },
+          "bestTranslation": {
+            "dx": 1,
+            "dy": -1,
+            "centre": { "x": 534, "y": 933 },
+            "sumAbsoluteDifference": 25129,
+            "meanAbsoluteChannelDifference": 8.716268,
+            "errorImprovementFraction": 0.039117,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 51310,
+            "meanAbsoluteChannelDifference": 17.797433
+          },
+          "bestTranslation": {
+            "dx": -1,
+            "dy": 0,
+            "centre": { "x": 931, "y": 646 },
+            "sumAbsoluteDifference": 45178,
+            "meanAbsoluteChannelDifference": 15.670482,
+            "errorImprovementFraction": 0.119509,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 21479,
+            "meanAbsoluteChannelDifference": 7.450225
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1374, "y": 677 },
+            "sumAbsoluteDifference": 21479,
+            "meanAbsoluteChannelDifference": 7.450225,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 28493,
+            "meanAbsoluteChannelDifference": 9.883108
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 28493,
+            "meanAbsoluteChannelDifference": 9.883108,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 19322,
+            "meanAbsoluteChannelDifference": 6.702046
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 19322,
+            "meanAbsoluteChannelDifference": 6.702046,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 5553,
+            "meanAbsoluteChannelDifference": 1.926119
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 5553,
+            "meanAbsoluteChannelDifference": 1.926119,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 6855,
+            "meanAbsoluteChannelDifference": 2.377732
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 6855,
+            "meanAbsoluteChannelDifference": 2.377732,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 390, "y": 938 },
+            { "x": 534, "y": 933 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 144.0867794074113,
+          "relativeDriftFraction": 0.007205896797599198,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [561, 515],
+          "translation": [-2, 23],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [342, 510],
+          "translation": [-1, 23],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [574, 545, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [709, 548, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [354, 540, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    },
+    {
+      "slot": 3,
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+        "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 389, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 676 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "defb958590fbf89b46c34899c5e0eddaf54512672d5e029899ffd0608691a133",
+          "selectedRgbSha256": "defb958590fbf89b46c34899c5e0eddaf54512672d5e029899ffd0608691a133",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "d5d42fa37f5c123a48efe647ec2c8a721b321090f52ea78a43b6ec8171e29b87",
+          "selectedRgbSha256": "d5d42fa37f5c123a48efe647ec2c8a721b321090f52ea78a43b6ec8171e29b87",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "29dd5134e24adc206a8c771a5b0f3070b15fe3cfbd21c6546bd90ef26f3f7a14",
+          "selectedRgbSha256": "29dd5134e24adc206a8c771a5b0f3070b15fe3cfbd21c6546bd90ef26f3f7a14",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "b5ca27bf45c55017176edaa6a01c4c82a5041ca30f9e7ee2c67bf82340569bde",
+          "selectedRgbSha256": "b5ca27bf45c55017176edaa6a01c4c82a5041ca30f9e7ee2c67bf82340569bde",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "03e5d78ad3e380efeb14bbf9a4a41bdd854a950ed507f38c0dc4592af2e88638",
+          "selectedRgbSha256": "03e5d78ad3e380efeb14bbf9a4a41bdd854a950ed507f38c0dc4592af2e88638",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "994ad6a6eab8231a47ac95e10e7880a4b3088fe65f7df39784ab5027d2d950d3",
+          "selectedRgbSha256": "994ad6a6eab8231a47ac95e10e7880a4b3088fe65f7df39784ab5027d2d950d3",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "9fa8b97b7820f9c5e19286aa145bd4ea07391e6941887a77bfe53526fb6bdeae",
+          "selectedRgbSha256": "9fa8b97b7820f9c5e19286aa145bd4ea07391e6941887a77bfe53526fb6bdeae",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "ee715a739e9502edb915131e14a6cdf5dd1d79ab44826f654d7716ac6b89695f",
+          "selectedRgbSha256": "ee715a739e9502edb915131e14a6cdf5dd1d79ab44826f654d7716ac6b89695f",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 18511,
+            "meanAbsoluteChannelDifference": 6.420742
+          },
+          "bestTranslation": {
+            "dx": -1,
+            "dy": 0,
+            "centre": { "x": 389, "y": 938 },
+            "sumAbsoluteDifference": 16805,
+            "meanAbsoluteChannelDifference": 5.828998,
+            "errorImprovementFraction": 0.092161,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 13380,
+            "meanAbsoluteChannelDifference": 4.640999
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 533, "y": 934 },
+            "sumAbsoluteDifference": 13380,
+            "meanAbsoluteChannelDifference": 4.640999,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 932, "y": 646 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 41535,
+            "meanAbsoluteChannelDifference": 14.406868
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": -1,
+            "centre": { "x": 1374, "y": 676 },
+            "sumAbsoluteDifference": 27148,
+            "meanAbsoluteChannelDifference": 9.41658,
+            "errorImprovementFraction": 0.346383,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 33439,
+            "meanAbsoluteChannelDifference": 11.598682
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 33439,
+            "meanAbsoluteChannelDifference": 11.598682,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 18601,
+            "meanAbsoluteChannelDifference": 6.45196
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 18601,
+            "meanAbsoluteChannelDifference": 6.45196,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 6918,
+            "meanAbsoluteChannelDifference": 2.399584
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 6918,
+            "meanAbsoluteChannelDifference": 2.399584,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 5588,
+            "meanAbsoluteChannelDifference": 1.938259
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 5588,
+            "meanAbsoluteChannelDifference": 1.938259,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 389, "y": 938 },
+            { "x": 533, "y": 934 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 144.05554484295286,
+          "relativeDriftFraction": 0.006987558670840777,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [571, 592],
+          "translation": [8, 100],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [323, 565],
+          "translation": [-20, 78],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [584, 622, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [719, 625, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [335, 595, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    },
+    {
+      "slot": 4,
+      "pose": "bottom",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/bottom.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom.png",
+        "sha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 143.05593311708535,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "59f7c9db61feb8e831ba5dcfda02e26de7c871c5017246148c398acaf4cbf83d",
+          "selectedRgbSha256": "59f7c9db61feb8e831ba5dcfda02e26de7c871c5017246148c398acaf4cbf83d",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "6b72c196a94a43f320c74e4191aae4e425243eca20bf88ef376356338d1f8799",
+          "selectedRgbSha256": "6b72c196a94a43f320c74e4191aae4e425243eca20bf88ef376356338d1f8799",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "961078031486eea9a40eb860a73a2099d3ef4477c1c7b313a9d85fb79c731ff7",
+          "selectedRgbSha256": "961078031486eea9a40eb860a73a2099d3ef4477c1c7b313a9d85fb79c731ff7",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "869e9133535897fd151e0e3ad6a3c13ae075066b9f527fecb0fd3941ae848589",
+          "selectedRgbSha256": "869e9133535897fd151e0e3ad6a3c13ae075066b9f527fecb0fd3941ae848589",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "70a2e2de2c2a07684b5a26a51432193191059ab0956171c728521ed4fb6a6b75",
+          "selectedRgbSha256": "70a2e2de2c2a07684b5a26a51432193191059ab0956171c728521ed4fb6a6b75",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "121af072f797aeb1af54a5e10018610e6f83ac10cb8cf75a23cfc4af6859dbf7",
+          "selectedRgbSha256": "121af072f797aeb1af54a5e10018610e6f83ac10cb8cf75a23cfc4af6859dbf7",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "7bfbbb98a1c1abde05d2004598b75012200f0823b1eec60cd142c2774b6f5c8d",
+          "selectedRgbSha256": "7bfbbb98a1c1abde05d2004598b75012200f0823b1eec60cd142c2774b6f5c8d",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "67d41befe96fdc5d7a8e58dcc9b6f49790d17bf90499c1bb0989ed7749b42be3",
+          "selectedRgbSha256": "67d41befe96fdc5d7a8e58dcc9b6f49790d17bf90499c1bb0989ed7749b42be3",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 390, "y": 938 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 533, "y": 934 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 932, "y": 646 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1374, "y": 677 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 390, "y": 938 },
+            { "x": 533, "y": 934 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 143.05593311708535,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [575, 647],
+          "translation": [12, 155],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [292, 595],
+          "translation": [-51, 108],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [588, 677, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [723, 680, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [304, 625, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    },
+    {
+      "slot": 5,
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+        "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 389, "y": 938 },
+        "frontHeel": { "x": 533, "y": 934 },
+        "rearLacesPad": { "x": 932, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 676 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.05554484295286,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "defb958590fbf89b46c34899c5e0eddaf54512672d5e029899ffd0608691a133",
+          "selectedRgbSha256": "defb958590fbf89b46c34899c5e0eddaf54512672d5e029899ffd0608691a133",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "d5d42fa37f5c123a48efe647ec2c8a721b321090f52ea78a43b6ec8171e29b87",
+          "selectedRgbSha256": "d5d42fa37f5c123a48efe647ec2c8a721b321090f52ea78a43b6ec8171e29b87",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "29dd5134e24adc206a8c771a5b0f3070b15fe3cfbd21c6546bd90ef26f3f7a14",
+          "selectedRgbSha256": "29dd5134e24adc206a8c771a5b0f3070b15fe3cfbd21c6546bd90ef26f3f7a14",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "b5ca27bf45c55017176edaa6a01c4c82a5041ca30f9e7ee2c67bf82340569bde",
+          "selectedRgbSha256": "b5ca27bf45c55017176edaa6a01c4c82a5041ca30f9e7ee2c67bf82340569bde",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "03e5d78ad3e380efeb14bbf9a4a41bdd854a950ed507f38c0dc4592af2e88638",
+          "selectedRgbSha256": "03e5d78ad3e380efeb14bbf9a4a41bdd854a950ed507f38c0dc4592af2e88638",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "994ad6a6eab8231a47ac95e10e7880a4b3088fe65f7df39784ab5027d2d950d3",
+          "selectedRgbSha256": "994ad6a6eab8231a47ac95e10e7880a4b3088fe65f7df39784ab5027d2d950d3",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "9fa8b97b7820f9c5e19286aa145bd4ea07391e6941887a77bfe53526fb6bdeae",
+          "selectedRgbSha256": "9fa8b97b7820f9c5e19286aa145bd4ea07391e6941887a77bfe53526fb6bdeae",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "ee715a739e9502edb915131e14a6cdf5dd1d79ab44826f654d7716ac6b89695f",
+          "selectedRgbSha256": "ee715a739e9502edb915131e14a6cdf5dd1d79ab44826f654d7716ac6b89695f",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 18511,
+            "meanAbsoluteChannelDifference": 6.420742
+          },
+          "bestTranslation": {
+            "dx": -1,
+            "dy": 0,
+            "centre": { "x": 389, "y": 938 },
+            "sumAbsoluteDifference": 16805,
+            "meanAbsoluteChannelDifference": 5.828998,
+            "errorImprovementFraction": 0.092161,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 13380,
+            "meanAbsoluteChannelDifference": 4.640999
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 533, "y": 934 },
+            "sumAbsoluteDifference": 13380,
+            "meanAbsoluteChannelDifference": 4.640999,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 932, "y": 646 },
+            "sumAbsoluteDifference": 0,
+            "meanAbsoluteChannelDifference": 0,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 41535,
+            "meanAbsoluteChannelDifference": 14.406868
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": -1,
+            "centre": { "x": 1374, "y": 676 },
+            "sumAbsoluteDifference": 27148,
+            "meanAbsoluteChannelDifference": 9.41658,
+            "errorImprovementFraction": 0.346383,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 33439,
+            "meanAbsoluteChannelDifference": 11.598682
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 33439,
+            "meanAbsoluteChannelDifference": 11.598682,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 18601,
+            "meanAbsoluteChannelDifference": 6.45196
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 18601,
+            "meanAbsoluteChannelDifference": 6.45196,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 6918,
+            "meanAbsoluteChannelDifference": 2.399584
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 6918,
+            "meanAbsoluteChannelDifference": 2.399584,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 5588,
+            "meanAbsoluteChannelDifference": 1.938259
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 5588,
+            "meanAbsoluteChannelDifference": 1.938259,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 389, "y": 938 },
+            { "x": 533, "y": 934 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 144.05554484295286,
+          "relativeDriftFraction": 0.006987558670840777,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [571, 592],
+          "translation": [8, 100],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [323, 565],
+          "translation": [-20, 78],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [584, 622, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [719, 625, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [335, 595, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    },
+    {
+      "slot": 6,
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [1536, 1024],
+      "nonOpaquePixels": 0,
+      "frozenCandidate": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "baselineMeasurement": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+        "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+        "report": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json"
+      },
+      "anchors": {
+        "frontToe": { "x": 390, "y": 938 },
+        "frontHeel": { "x": 534, "y": 933 },
+        "rearLacesPad": { "x": 931, "y": 646 },
+        "benchRightPadCorner": { "x": 1374, "y": 677 },
+        "benchNearLegBolt": { "x": 1295, "y": 884 },
+        "benchFarLegBolt": { "x": 865, "y": 705 },
+        "benchFarBaseCorner": { "x": 810, "y": 885 },
+        "benchNearBaseCorner": { "x": 1252, "y": 950 }
+      },
+      "invariantDimensions": {
+        "frontShoeSupportSpan": 144.0867794074113,
+        "benchFloorFootSpan": 446.7538472134292,
+        "nearEquipmentProjectionWidth": 179,
+        "farEquipmentProjectionWidth": 143,
+        "nearFrontHeadWidth": 80,
+        "farFrontHeadWidth": 73
+      },
+      "searchWindows": {
+        "frontToe": {
+          "box": [345, 893, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "2432f864714ff1f96d55bf5ad2763fac58e845c567c2bdbb8843abd2bb57c3fa",
+          "selectedRgbSha256": "2432f864714ff1f96d55bf5ad2763fac58e845c567c2bdbb8843abd2bb57c3fa",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "frontHeel": {
+          "box": [488, 889, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "64ccf7bd9fb7350512ff7289a0da532314bca15b6e1e79f88523279d0aed635a",
+          "selectedRgbSha256": "64ccf7bd9fb7350512ff7289a0da532314bca15b6e1e79f88523279d0aed635a",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "rearLacesPad": {
+          "box": [887, 601, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "55e53949f721be2db5129d5a72106482c5ea3417f672d56ac2a48a80a05709cf",
+          "selectedRgbSha256": "55e53949f721be2db5129d5a72106482c5ea3417f672d56ac2a48a80a05709cf",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchRightPadCorner": {
+          "box": [1329, 632, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "a62ea42151fb5890388571e6273c4cea3f4f9e2e607df9bfff5c45e59f10eb4c",
+          "selectedRgbSha256": "a62ea42151fb5890388571e6273c4cea3f4f9e2e607df9bfff5c45e59f10eb4c",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearLegBolt": {
+          "box": [1250, 839, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "3782dd6d97cab0e0296fab5fdf40876b863606851bdd90982c383fce7e3e0a87",
+          "selectedRgbSha256": "3782dd6d97cab0e0296fab5fdf40876b863606851bdd90982c383fce7e3e0a87",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarLegBolt": {
+          "box": [820, 660, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "62238bdb96ad8ecb64fe858308b9998ea391befd75aafc4aaefe6d70f6806ce7",
+          "selectedRgbSha256": "62238bdb96ad8ecb64fe858308b9998ea391befd75aafc4aaefe6d70f6806ce7",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchFarBaseCorner": {
+          "box": [765, 840, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "53a895d5df3747c30cff83f3928c15e4bf84360ef7b2e2d0f2f2f4e84bccb6a8",
+          "selectedRgbSha256": "53a895d5df3747c30cff83f3928c15e4bf84360ef7b2e2d0f2f2f4e84bccb6a8",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        },
+        "benchNearBaseCorner": {
+          "box": [1207, 905, 91, 91],
+          "channelsCompared": 24843,
+          "baselineRgbSha256": "081a4f808adb36e1de9ea25dd6e9813d9cc0de5af65a74eadedd38c0c86e52cf",
+          "selectedRgbSha256": "081a4f808adb36e1de9ea25dd6e9813d9cc0de5af65a74eadedd38c0c86e52cf",
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0,
+          "transferValid": true
+        }
+      },
+      "measurements": {
+        "frontToe": {
+          "region": "Front shoe toe/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 390, "y": 938 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 20818,
+            "meanAbsoluteChannelDifference": 7.22095
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 390, "y": 938 },
+            "sumAbsoluteDifference": 20818,
+            "meanAbsoluteChannelDifference": 7.22095,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "frontHeel": {
+          "region": "Front shoe heel/sole contour",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 533, "y": 934 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 26152,
+            "meanAbsoluteChannelDifference": 9.071106
+          },
+          "bestTranslation": {
+            "dx": 1,
+            "dy": -1,
+            "centre": { "x": 534, "y": 933 },
+            "sumAbsoluteDifference": 25129,
+            "meanAbsoluteChannelDifference": 8.716268,
+            "errorImprovementFraction": 0.039117,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "rearLacesPad": {
+          "region": "Rear laces and bench-pad contact",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 932, "y": 646 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 51310,
+            "meanAbsoluteChannelDifference": 17.797433
+          },
+          "bestTranslation": {
+            "dx": -1,
+            "dy": 0,
+            "centre": { "x": 931, "y": 646 },
+            "sumAbsoluteDifference": 45178,
+            "meanAbsoluteChannelDifference": 15.670482,
+            "errorImprovementFraction": 0.119509,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 1,
+          "withinExistingOnePixelBound": true
+        },
+        "benchRightPadCorner": {
+          "region": "Exposed right bench-pad corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1374, "y": 677 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 21479,
+            "meanAbsoluteChannelDifference": 7.450225
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1374, "y": 677 },
+            "sumAbsoluteDifference": 21479,
+            "meanAbsoluteChannelDifference": 7.450225,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearLegBolt": {
+          "region": "Near bench-leg lower bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1295, "y": 884 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 28493,
+            "meanAbsoluteChannelDifference": 9.883108
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1295, "y": 884 },
+            "sumAbsoluteDifference": 28493,
+            "meanAbsoluteChannelDifference": 9.883108,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarLegBolt": {
+          "region": "Far bench-leg upper bolt",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 865, "y": 705 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 19322,
+            "meanAbsoluteChannelDifference": 6.702046
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 865, "y": 705 },
+            "sumAbsoluteDifference": 19322,
+            "meanAbsoluteChannelDifference": 6.702046,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchFarBaseCorner": {
+          "region": "Far bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 810, "y": 885 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 5553,
+            "meanAbsoluteChannelDifference": 1.926119
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 810, "y": 885 },
+            "sumAbsoluteDifference": 5553,
+            "meanAbsoluteChannelDifference": 1.926119,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        },
+        "benchNearBaseCorner": {
+          "region": "Near bench-base corner",
+          "method": "deterministic-transfer-after-full-search-window-equality",
+          "referenceCentre": { "x": 1252, "y": 950 },
+          "zeroOffset": {
+            "sumAbsoluteDifference": 6855,
+            "meanAbsoluteChannelDifference": 2.377732
+          },
+          "bestTranslation": {
+            "dx": 0,
+            "dy": 0,
+            "centre": { "x": 1252, "y": 950 },
+            "sumAbsoluteDifference": 6855,
+            "meanAbsoluteChannelDifference": 2.377732,
+            "errorImprovementFraction": 0,
+            "touchesSearchBoundary": false,
+            "exceedsExistingReleaseAnchorLimit": false
+          },
+          "maxAxisDriftPixels": 0,
+          "withinExistingOnePixelBound": true
+        }
+      },
+      "supportSpans": {
+        "frontShoeSupportSpan": {
+          "endpointPatches": ["frontToe", "frontHeel"],
+          "measuredCentres": [
+            { "x": 390, "y": 938 },
+            { "x": 534, "y": 933 }
+          ],
+          "referenceLengthPixels": 143.05593311708535,
+          "lengthPixels": 144.0867794074113,
+          "relativeDriftFraction": 0.007205896797599198,
+          "withinExistingOnePercentBound": true
+        },
+        "benchFloorFootSpan": {
+          "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+          "measuredCentres": [
+            { "x": 810, "y": 885 },
+            { "x": 1252, "y": 950 }
+          ],
+          "referenceLengthPixels": 446.7538472134292,
+          "lengthPixels": 446.7538472134292,
+          "relativeDriftFraction": 0,
+          "withinExistingOnePercentBound": true
+        }
+      },
+      "equipment": {
+        "near": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-near.png",
+            "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+          },
+          "allocation": [179, 86],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11792,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 179, 86],
+            "pixelCount": 11240,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 179,
+          "translatedOrigin": [561, 515],
+          "translation": [-2, 23],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        },
+        "far": {
+          "layer": {
+            "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/dumbbell-far.png",
+            "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+          },
+          "allocation": [143, 82],
+          "alphaNonzeroBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9809,
+            "threshold": 1
+          },
+          "alphaHalfCoverageBounds": {
+            "box": [0, 0, 143, 81],
+            "pixelCount": 9369,
+            "threshold": 128
+          },
+          "alphaHalfCoverageWidthPixels": 143,
+          "translatedOrigin": [342, 510],
+          "translation": [-1, 23],
+          "scale": 1,
+          "rotationDegrees": 0,
+          "relativeDimensionDriftFraction": 0,
+          "withinExistingOnePercentBound": true,
+          "interpretation": "Width of one fixed, alpha-bearing projection reused by integer translation; body/hand foreground may occlude part of its visible silhouette."
+        }
+      },
+      "faceChecks": [
+        {
+          "name": "near-front-face",
+          "box": [574, 545, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "near-rear-face",
+          "box": [709, 548, 17, 23],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        },
+        {
+          "name": "far-front-face",
+          "box": [354, 540, 15, 22],
+          "nonOpaqueLayerPixels": 0,
+          "changedChannels": 0,
+          "sumAbsoluteDifference": 0,
+          "maxAbsoluteChannelDifference": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-05",
+  "scope": "Lint-corrected player decode fix: normal new push, cancelled before execution; no playback signoff",
+  "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+  "localEquivalent": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+  "tree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "parentPublishedCommit": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "previousCancelledRunId": 37364543031,
+  "runId": 37366511568,
+  "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37366511568",
+  "runAttempt": 1,
+  "event": "push",
+  "status": "completed",
+  "conclusion": "failure",
+  "createdAt": "2026-10-05T19:55:22Z",
+  "finalUpdateAt": "2026-10-05T20:10:26Z",
+  "jobs": [
+    {
+      "id": 111952897335,
+      "run_id": 37366511568,
+      "workflow_name": "Form artwork review",
+      "head_branch": "codex/continue-exercise-art-oct05",
+      "run_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/runs/37366511568",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOROTY9c8AAAAaEOmlNw",
+      "head_sha": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+      "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/jobs/111952897335",
+      "html_url": "https://github.com/lemmonchess333/Maiin/actions/runs/37366511568/job/111952897335",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-05T19:55:23Z",
+      "started_at": "2026-10-05T19:55:23Z",
+      "completed_at": "2026-10-05T20:10:24Z",
+      "name": "review-player",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/lemmonchess333/Maiin/check-runs/111952897335",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 111952897512,
+      "run_id": 37366511568,
+      "workflow_name": "Form artwork review",
+      "head_branch": "codex/continue-exercise-art-oct05",
+      "run_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/runs/37366511568",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOROTY9c8AAAAaEOml6A",
+      "head_sha": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+      "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/jobs/111952897512",
+      "html_url": "https://github.com/lemmonchess333/Maiin/actions/runs/37366511568/job/111952897512",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-05T19:55:23Z",
+      "started_at": "2026-10-05T19:55:23Z",
+      "completed_at": "2026-10-05T20:10:25Z",
+      "name": "review-sources",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/lemmonchess333/Maiin/check-runs/111952897512",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    }
+  ],
+  "independentFinalBranchRef": {
+    "ref": "refs/heads/codex/continue-exercise-art-oct05",
+    "node_id": "REF_kwDOROTY9doALHJlZnMvaGVhZHMvY29kZXgvY29udGludWUtZXhlcmNpc2UtYXJ0LW9jdDA1",
+    "url": "https://api.github.com/repos/lemmonchess333/Maiin/git/refs/heads/codex/continue-exercise-art-oct05",
+    "object": {
+      "sha": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+      "type": "commit",
+      "url": "https://api.github.com/repos/lemmonchess333/Maiin/git/commits/303aa373309c44a4b76f351fc5898f2d7c87c314"
+    }
+  },
+  "branchHeadMatchesReviewedCommit": true,
+  "artifacts": [],
+  "artifactCount": 0,
+  "browserTestsExecuted": false,
+  "playerRecordingAvailable": false,
+  "playbackReviewStatus": "blocked: no new recorded playback; pre-fix v2 gap finding remains unresolved by browser evidence",
+  "cancellationReason": null,
+  "cancellingActor": null,
+  "approvalOrBillingGateStated": false,
+  "actorFieldLimit": "The initiating actor and triggering_actor do not identify the cancellation actor or cause.",
+  "jobLogRetrieval": {
+    "error": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:2ab41c20-501e-0016-2405-550a7f000000\nTime:2026-10-05T20:11:58.6020983Z</Message></Error>",
+    "error_code": "NOT_FOUND",
+    "error_data": {
+      "error_str": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:2ab41c20-501e-0016-2405-550a7f000000\nTime:2026-10-05T20:11:58.6020983Z</Message></Error>"
+    }
+  },
+  "annotationsLimit": "Check-run annotations endpoint was already confirmed outside this connector's allowed endpoints during the previous attempt; no unsupported endpoint retry was made for this attempt.",
+  "sameHeadFormArtworkRunCount": 1,
+  "workflowTimeoutMinutes": {
+    "reviewSources": 5,
+    "reviewPlayer": 15
+  },
+  "timingLimit": "Both jobs stayed unassigned and cancelled approximately15 minutes after creation despite different configured execution timeouts; this does not prove a specific timeout/cancellation cause.",
+  "publicIncidentObservation": {
+    "observedAtUtc": "2026-10-05T20:02:09Z",
+    "sourceUrl": "https://www.githubstatus.com/",
+    "incidentUrl": "https://www.githubstatus.com/incidents/3q1yb5m7ltvb",
+    "incidentTitle": "Incident with Actions",
+    "investigationStartedAtUtc": "2026-10-05T19:11:00Z",
+    "latestVisibleUpdateAtUtc": "2026-10-05T19:15:00Z",
+    "paraphrase": "GitHub reported delayed assignment of hosted runners across configurations and ongoing mitigation work.",
+    "relationToRun": "Context consistent with unassigned queued jobs; not proof of a specific cancellation cause.",
+    "runId": 37366511568,
+    "publishedCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314"
+  },
+  "separateLocalVerification": {
+    "status": "root reports passed",
+    "sourceEquivalentLocalCommit": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+    "tree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+    "evidenceDirectory": "/workspace/scratch/a307ac8d62f0/verification/decode-fix-full-verify-retry",
+    "scopeLimit": "The successful full local verification is a separate gate and does not provide browser playback evidence."
+  },
+  "actionsTaken": "Read-only source hashing, exact run/jobs/ref/collection/artifact/status/log retrieval, and evidence preservation outside repository. No rerun, dispatch, cancellation, workflow edit, runner change, or alternate execution route.",
+  "decision": "Preserve this attempt separately. Keep app integration and visual approval pending. Further execution requires root direction; do not loop retries."
+}

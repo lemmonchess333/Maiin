@@ -1,0 +1,3096 @@
+{
+  "config": {
+    "configFile": "/home/runner/work/Maiin/Maiin/playwright.form-art.config.ts",
+    "rootDir": "/home/runner/work/Maiin/Maiin/e2e",
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/lemmonchess333/Maiin/commit/7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+        "commitHash": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+        "buildHref": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827"
+      },
+      "gitCommit": {
+        "shortHash": "7752aeb",
+        "hash": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+        "subject": "Refine Bulgarian split squat artwork and record full player cycles",
+        "body": "Refine Bulgarian split squat artwork and record full player cycles\n",
+        "author": {
+          "name": "lemmonchess333",
+          "email": "neckarines12@gmail.com",
+          "time": 1791227582000
+        },
+        "committer": {
+          "name": "lemmonchess333",
+          "email": "neckarines12@gmail.com",
+          "time": 1791227582000
+        },
+        "branch": "codex/continue-exercise-art-oct05"
+      },
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/Maiin/Maiin/test-results/form-art",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/lemmonchess333/Maiin/commit/7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+            "commitHash": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+            "buildHref": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827"
+          },
+          "gitCommit": {
+            "shortHash": "7752aeb",
+            "hash": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+            "subject": "Refine Bulgarian split squat artwork and record full player cycles",
+            "body": "Refine Bulgarian split squat artwork and record full player cycles\n",
+            "author": {
+              "name": "lemmonchess333",
+              "email": "neckarines12@gmail.com",
+              "time": 1791227582000
+            },
+            "committer": {
+              "name": "lemmonchess333",
+              "email": "neckarines12@gmail.com",
+              "time": 1791227582000
+            },
+            "branch": "codex/continue-exercise-art-oct05"
+          },
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/runner/work/Maiin/Maiin/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "form-art-review.pw.ts",
+          "form-art-release.pw.ts"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/form-art-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.60.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite --host 127.0.0.1 --port 4176 --strictPort",
+      "url": "http://127.0.0.1:4176/e2e/fixtures/form-art.html",
+      "env": {
+        "HOSTING_TARGET": "firebase"
+      },
+      "reuseExistingServer": false,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "form-art-release.pw.ts",
+      "file": "form-art-release.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "released pistol-squat: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5769,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:14:44.731Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-c83cea5318ab2f69725a",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released pistol-squat: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3883,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:14:50.809Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-e3c86b49f1359638e842",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released pistol-squat: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 684,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:14:54.704Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-57c961115e2229a8e164",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released calf-raise: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4054,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:14:55.399Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-cbb74d6de8f65ed2ed0d",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released calf-raise: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3983,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:14:59.464Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-502793f4dda6099dadfb",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released calf-raise: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 800,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:03.457Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-f7bbd0210165d00cdb3e",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released standing-calf-raise: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3915,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:04.268Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-6cc78bbf20c2bc164e53",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released standing-calf-raise: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4021,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:08.195Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-636188b084d7e7ec2952",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released standing-calf-raise: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 741,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:12.230Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-492365f91e222b42b886",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released donkey-calf-raise: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3795,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:12.983Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-e69a81c7173f841ba340",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released donkey-calf-raise: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3786,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:16.789Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-c244cfe265f3bdef85f7",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released donkey-calf-raise: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 733,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:20.585Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-6d852907149f14c9facc",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released leg-raise: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3813,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:21.332Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-886aa0ce8828a66eb0d9",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released leg-raise: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3841,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:25.156Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-3f9b8e750be6cd3131ad",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released leg-raise: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 718,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:29.007Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-7b0743df6a31d8c05d72",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released plank: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3808,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:29.737Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-e8d5ee7b1b3648f2905b",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released plank: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3791,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:33.555Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-0f65bf25d0cdfacdc6db",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released plank: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 735,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:37.355Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-3a484b9a9e1800d9ce48",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released crunches: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3912,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:38.101Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-275da987ee5cff292c20",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released crunches: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3792,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:42.022Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-a50b43e719d8569248d1",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released crunches: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 687,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:45.823Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-4523dd6a7f4becf82363",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        },
+        {
+          "title": "released shrugs: delivery frames, cues and card in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3739,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:46.520Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-0cea331d6bd29d9f68eb",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released shrugs: delivery frames, cues and card in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:50.269Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-a849da0d3d61ead7bca5",
+          "file": "form-art-release.pw.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "released shrugs: reduced motion keeps delivered frames still",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 686,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:54.036Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9ddcf15f5239b87b54e4-dc663ab06bc600760b1c",
+          "file": "form-art-release.pw.ts",
+          "line": 144,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "form-art-review.pw.ts",
+      "file": "form-art-review.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "incline-db-press: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3714,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:54.767Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-fab3e03f1f5bb03a9f2c",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "incline-db-press: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3685,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:15:58.491Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-e1d1e322d1e22d67f81f",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "incline-db-press: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 840,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:02.188Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-331a9b43d0e84198896b",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "db-shoulder-press: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3828,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:03.036Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-c9c92c3a4d3d4e4fa589",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "db-shoulder-press: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3753,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:06.876Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-fef78d50beeffd0e2802",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "db-shoulder-press: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 801,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:10.640Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-aae12793ac03df0ab337",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "db-row: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3888,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:11.454Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-a27e2d87a636dbf33478",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "db-row: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3857,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:15.353Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-4fcfc5c0d1c765111393",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "db-row: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 854,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:19.221Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-df52683584ffc3d85ded",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "romanian-deadlift: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3740,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:20.086Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-8ac81809b86fe5ea435c",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "romanian-deadlift: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3655,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:23.842Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-b74e8812fa0a54aaf405",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "romanian-deadlift: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 823,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:27.520Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-0f5cb29b8e9bd8397bff",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "lat-pulldown: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3695,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:28.352Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-83ae258937353b2a12fd",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "lat-pulldown: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3862,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:32.059Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-53565f6349ff11a7db32",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "lat-pulldown: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 920,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:35.933Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-890e705f53aa30a8c84b",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "leg-raise: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4045,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:36.866Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-934bdaa58e5d1cb7de81",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "leg-raise: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3716,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:40.927Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-4d2a39f665ce196f46c8",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "leg-raise: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 796,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:44.671Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-1ab5b876202a2219022d",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "crunches: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3715,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:45.477Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-96e6b73fb7c0047b99d3",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "crunches: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3741,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:49.202Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-7a5b68944410a9d54513",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "crunches: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 838,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:52.953Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-1c48f9317e051cf0d949",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "cuban-press: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3621,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:53.802Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-b6f67350cadc18947f69",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "cuban-press: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3519,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:16:57.434Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-181c560dbad08abdc819",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "cuban-press: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 756,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:00.964Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-5005d79f34da9efd73d6",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "hip-abduction-machine: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3784,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:01.731Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-97b1ed87040ae8da3343",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "hip-abduction-machine: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3725,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:05.526Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-0145b7b57e8a04888748",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "hip-abduction-machine: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 871,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:09.260Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-909bc30857f72de131f9",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "nordic-hamstring-curl: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3681,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:10.141Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-60a893b71ae348ea28bf",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "nordic-hamstring-curl: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3673,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:13.833Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-6508bbb28ac4511b19af",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "nordic-hamstring-curl: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 856,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:17.516Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-835a67c8b38d90471eef",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "hip-adduction-machine: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3835,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:18.382Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-56e20458220e5722961a",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "hip-adduction-machine: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3738,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:22.228Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-ec2d7624c884758b0181",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "hip-adduction-machine: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 874,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:25.976Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-16eee2327b8677fb2a28",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "sissy-squat: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3715,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:26.859Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-3fb99646fca9e9d6fd9c",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "sissy-squat: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3673,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:30.583Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-ce73e033e3104a525bbc",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "sissy-squat: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 839,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:34.268Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-31ebb49386b01f4a70c5",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "glute-ham-raise: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3673,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:35.117Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-2d17605729a4d5626b3d",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "glute-ham-raise: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3627,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:38.798Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-c5d182a124c901b3b51e",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "glute-ham-raise: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 755,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:42.434Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-dde7d101539c83febd60",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "donkey-calf-raise: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3623,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:43.197Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-5b3c0cce682dfa4ccaa0",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "donkey-calf-raise: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3459,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:46.829Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-0e5cb49c671e4cbc219d",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "donkey-calf-raise: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 824,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:50.296Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-0281d836b722acab04d2",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "pistol-squat: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3707,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:51.130Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-37cc8996238600153ad9",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "pistol-squat: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3623,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:54.848Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-29b57d958119503b2939",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "pistol-squat: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 855,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:58.482Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-fba8d81ff06c2e51028e",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "seated-calf-raise: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3726,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:17:59.349Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-c94be78aaeba15d62b8e",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "seated-calf-raise: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3704,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:03.092Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-0f19c34d88cecfd60bdc",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "seated-calf-raise: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 822,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:06.815Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-8f7147447ad3bfcff6f8",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "farmers-carry: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3742,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:07.649Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-393a5f82b5aa71622985",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "farmers-carry: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3622,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:11.402Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-b9b4ab1a18e903f365c3",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "farmers-carry: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 805,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:15.034Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-cd3452c99829d2f9f6ae",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "ab-wheel: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3688,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:15.849Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-33a831e41d11c60e2a57",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "ab-wheel: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3640,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:19.547Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-b89f38c2daa0eb1733fb",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "ab-wheel: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 839,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:23.196Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-21f6537b34d4f186275c",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "kettlebell-swing: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3538,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:24.046Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-aa171000d142ce4b26ef",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "kettlebell-swing: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3539,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:27.594Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-ceebeb5aa278b23f1a93",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "kettlebell-swing: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 774,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:31.142Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-7d43a6f753145135695e",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        },
+        {
+          "title": "bulgarian-split: six frames and loop in dark",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3625,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:31.928Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-b4c93d8e6ec9146a6009",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "bulgarian-split: six frames and loop in light",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3571,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:35.564Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-25d95cbeacd0210dff96",
+          "file": "form-art-review.pw.ts",
+          "line": 198,
+          "column": 5
+        },
+        {
+          "title": "bulgarian-split: reduced motion stays still and permits stepping",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1025,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-05T19:18:39.161Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ed88a14346c2db968316-9e5b320bfb2de7fb8d3a",
+          "file": "form-art-review.pw.ts",
+          "line": 375,
+          "column": 3
+        }
+      ],
+      "suites": [
+        {
+          "title": "bulgarian-split: continuous playback evidence",
+          "file": "form-art-review.pw.ts",
+          "line": 448,
+          "column": 6,
+          "specs": [
+            {
+              "title": "real timer 1→2→3→4→5→6→1 in dark",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8450,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-05T19:18:40.195Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "dark-live-transition-log.json",
+                          "contentType": "application/json",
+                          "body": "ewogICJ0aGVtZSI6ICJkYXJrIiwKICAidmlld3BvcnQiOiB7CiAgICAid2lkdGgiOiAzOTMsCiAgICAiaGVpZ2h0IjogODUyCiAgfSwKICAibm9taW5hbEludGVydmFsTXMiOiAxMjAwLAogICJleHBlY3RlZFNvdXJjZXMiOiBbCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8xLnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8yLnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8zLnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy80LnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy81LnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy82LnBuZyIsCiAgICAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8xLnBuZyIKICBdLAogICJzb3VyY2VQaW5zIjogewogICAgInNldHVwIjogImY5M2ZjNDEzNmRhOTVmNDA3OTlmNGRhMGZiMTM4NmZjOGNiM2U5NDNhODQ2N2ZkY2Q0NmQ5MDQwMzhkODcwNTciLAogICAgInNoYWxsb3ciOiAiNDY0NmZiMDhlMWQ5NmRmMGQzZDAzZDI2NDJjNjNkNzg4NjFmMWQ3MDdlZGQ1YTMzZjA3YjM4NjYyYTExOTRiMyIsCiAgICAiZGVlcCI6ICJkMzU1MTMyNmM0OTY0YWJhY2VhMDk3OGU2MDRkMmNmN2Q4NTZhYWExYmQyNWJkZDViOTlkOTVhMjAyMzMwMDJiIiwKICAgICJib3R0b20iOiAiOWEzZGE3MjdjNzgwMTIzNDQwN2ExZDk3ODExZTU2MDNlZGZiZjljYTQzYjk2ZDZiNjUzNGQzN2VhNWI3Yzk1NCIKICB9LAogICJzdGFydGVkQXRFcG9jaE1zIjogMTc5MTIyNzkyMDc5OSwKICAidHJhbnNpdGlvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8xLnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiAyNC4yOTk5OTk5OTk5ODgzNiwKICAgICAgInJlYWR5QXRNcyI6IDQ3Ljg5OTk5OTk5OTk2NTA3NSwKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8yLnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiAxMjgxLjY5OTk5OTk5OTk1MzQsCiAgICAgICJyZWFkeUF0TXMiOiAxMjgxLjY5OTk5OTk5OTk1MzQsCiAgICAgICJhY3RpdmVJbWFnZUNvdW50IjogMSwKICAgICAgImRpbWVuc2lvbnMiOiBbCiAgICAgICAgMTUzNiwKICAgICAgICAxMDI0CiAgICAgIF0sCiAgICAgICJ2aXNpYmlsaXR5IjogInZpc2libGUiLAogICAgICAiZG9jdW1lbnRWaXNpYmlsaXR5IjogInZpc2libGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMy5wbmciLAogICAgICAiZWxhcHNlZE1zIjogMjUxMS42OTk5OTk5OTk5NTM0LAogICAgICAicmVhZHlBdE1zIjogMjUxMS42OTk5OTk5OTk5NTM0LAogICAgICAiYWN0aXZlSW1hZ2VDb3VudCI6IDEsCiAgICAgICJkaW1lbnNpb25zIjogWwogICAgICAgIDE1MzYsCiAgICAgICAgMTAyNAogICAgICBdLAogICAgICAidmlzaWJpbGl0eSI6ICJ2aXNpYmxlIiwKICAgICAgImRvY3VtZW50VmlzaWJpbGl0eSI6ICJ2aXNpYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICIvZG9jcy9leGVyY2lzZS1hcnQvcGlsb3RzL2NvbnRpbnVhdGlvbi0yMDI2MTAwNS9idWxnYXJpYW4tc3BsaXQvZnJhbWVzLzQucG5nIiwKICAgICAgImVsYXBzZWRNcyI6IDM3MjkuMDk5OTk5OTk5OTc2NywKICAgICAgInJlYWR5QXRNcyI6IDM3MjkuMDk5OTk5OTk5OTc2NywKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy81LnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiA0OTYxLjU5OTk5OTk5OTk3NywKICAgICAgInJlYWR5QXRNcyI6IDQ5NjEuNTk5OTk5OTk5OTc3LAogICAgICAiYWN0aXZlSW1hZ2VDb3VudCI6IDEsCiAgICAgICJkaW1lbnNpb25zIjogWwogICAgICAgIDE1MzYsCiAgICAgICAgMTAyNAogICAgICBdLAogICAgICAidmlzaWJpbGl0eSI6ICJ2aXNpYmxlIiwKICAgICAgImRvY3VtZW50VmlzaWJpbGl0eSI6ICJ2aXNpYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICIvZG9jcy9leGVyY2lzZS1hcnQvcGlsb3RzL2NvbnRpbnVhdGlvbi0yMDI2MTAwNS9idWxnYXJpYW4tc3BsaXQvZnJhbWVzLzYucG5nIiwKICAgICAgImVsYXBzZWRNcyI6IDYxNzcuNTk5OTk5OTk5OTc3LAogICAgICAicmVhZHlBdE1zIjogNjE3Ny41OTk5OTk5OTk5NzcsCiAgICAgICJhY3RpdmVJbWFnZUNvdW50IjogMSwKICAgICAgImRpbWVuc2lvbnMiOiBbCiAgICAgICAgMTUzNiwKICAgICAgICAxMDI0CiAgICAgIF0sCiAgICAgICJ2aXNpYmlsaXR5IjogInZpc2libGUiLAogICAgICAiZG9jdW1lbnRWaXNpYmlsaXR5IjogInZpc2libGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMS5wbmciLAogICAgICAiZWxhcHNlZE1zIjogNzM4MC4zOTk5OTk5OTk5NjUsCiAgICAgICJyZWFkeUF0TXMiOiA3MzgwLjM5OTk5OTk5OTk2NSwKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0KICBdCn0="
+                        },
+                        {
+                          "name": "continuous-playback-video",
+                          "contentType": "video/webm",
+                          "path": "/home/runner/work/Maiin/Maiin/test-results/form-art/form-art-review.pw.ts-bulg-18bac-timer-1→2→3→4→5→6→1-in-dark/attachments/continuous-playback-video-472fcb3a5553448533201bdd7e86f25e6ae94650.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ed88a14346c2db968316-66b2add5cca9d7af7abd",
+              "file": "form-art-review.pw.ts",
+              "line": 477,
+              "column": 5
+            },
+            {
+              "title": "real timer 1→2→3→4→5→6→1 in light",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8497,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-05T19:18:48.657Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "light-live-transition-log.json",
+                          "contentType": "application/json",
+                          "body": "ewogICJ0aGVtZSI6ICJsaWdodCIsCiAgInZpZXdwb3J0IjogewogICAgIndpZHRoIjogMzkzLAogICAgImhlaWdodCI6IDg1MgogIH0sCiAgIm5vbWluYWxJbnRlcnZhbE1zIjogMTIwMCwKICAiZXhwZWN0ZWRTb3VyY2VzIjogWwogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMS5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMi5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMy5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvNC5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvNS5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvNi5wbmciLAogICAgIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMS5wbmciCiAgXSwKICAic291cmNlUGlucyI6IHsKICAgICJzZXR1cCI6ICJmOTNmYzQxMzZkYTk1ZjQwNzk5ZjRkYTBmYjEzODZmYzhjYjNlOTQzYTg0NjdmZGNkNDZkOTA0MDM4ZDg3MDU3IiwKICAgICJzaGFsbG93IjogIjQ2NDZmYjA4ZTFkOTZkZjBkM2QwM2QyNjQyYzYzZDc4ODYxZjFkNzA3ZWRkNWEzM2YwN2IzODY2MmExMTk0YjMiLAogICAgImRlZXAiOiAiZDM1NTEzMjZjNDk2NGFiYWNlYTA5NzhlNjA0ZDJjZjdkODU2YWFhMWJkMjViZGQ1Yjk5ZDk1YTIwMjMzMDAyYiIsCiAgICAiYm90dG9tIjogIjlhM2RhNzI3Yzc4MDEyMzQ0MDdhMWQ5NzgxMWU1NjAzZWRmYmY5Y2E0M2I5NmQ2YjY1MzRkMzdlYTViN2M5NTQiCiAgfSwKICAic3RhcnRlZEF0RXBvY2hNcyI6IDE3OTEyMjc5MjkzNTMsCiAgInRyYW5zaXRpb25zIjogWwogICAgewogICAgICAic3JjIjogIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMS5wbmciLAogICAgICAiZWxhcHNlZE1zIjogMjAuNjk5OTk5OTk5OTUzNDM0LAogICAgICAicmVhZHlBdE1zIjogNDIuNTk5OTk5OTk5OTc2NzIsCiAgICAgICJhY3RpdmVJbWFnZUNvdW50IjogMSwKICAgICAgImRpbWVuc2lvbnMiOiBbCiAgICAgICAgMTUzNiwKICAgICAgICAxMDI0CiAgICAgIF0sCiAgICAgICJ2aXNpYmlsaXR5IjogInZpc2libGUiLAogICAgICAiZG9jdW1lbnRWaXNpYmlsaXR5IjogInZpc2libGUiCiAgICB9LAogICAgewogICAgICAic3JjIjogIi9kb2NzL2V4ZXJjaXNlLWFydC9waWxvdHMvY29udGludWF0aW9uLTIwMjYxMDA1L2J1bGdhcmlhbi1zcGxpdC9mcmFtZXMvMi5wbmciLAogICAgICAiZWxhcHNlZE1zIjogMTI3My4yOTk5OTk5OTk5ODg0LAogICAgICAicmVhZHlBdE1zIjogMTI3My4yOTk5OTk5OTk5ODg0LAogICAgICAiYWN0aXZlSW1hZ2VDb3VudCI6IDEsCiAgICAgICJkaW1lbnNpb25zIjogWwogICAgICAgIDE1MzYsCiAgICAgICAgMTAyNAogICAgICBdLAogICAgICAidmlzaWJpbGl0eSI6ICJ2aXNpYmxlIiwKICAgICAgImRvY3VtZW50VmlzaWJpbGl0eSI6ICJ2aXNpYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICIvZG9jcy9leGVyY2lzZS1hcnQvcGlsb3RzL2NvbnRpbnVhdGlvbi0yMDI2MTAwNS9idWxnYXJpYW4tc3BsaXQvZnJhbWVzLzMucG5nIiwKICAgICAgImVsYXBzZWRNcyI6IDI0OTkuMTk5OTk5OTk5OTUzNCwKICAgICAgInJlYWR5QXRNcyI6IDI0OTkuMTk5OTk5OTk5OTUzNCwKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy80LnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiAzNzE4LAogICAgICAicmVhZHlBdE1zIjogMzcxOCwKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy81LnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiA0OTQ2LjM5OTk5OTk5OTk2NSwKICAgICAgInJlYWR5QXRNcyI6IDQ5NDYuMzk5OTk5OTk5OTY1LAogICAgICAiYWN0aXZlSW1hZ2VDb3VudCI6IDEsCiAgICAgICJkaW1lbnNpb25zIjogWwogICAgICAgIDE1MzYsCiAgICAgICAgMTAyNAogICAgICBdLAogICAgICAidmlzaWJpbGl0eSI6ICJ2aXNpYmxlIiwKICAgICAgImRvY3VtZW50VmlzaWJpbGl0eSI6ICJ2aXNpYmxlIgogICAgfSwKICAgIHsKICAgICAgInNyYyI6ICIvZG9jcy9leGVyY2lzZS1hcnQvcGlsb3RzL2NvbnRpbnVhdGlvbi0yMDI2MTAwNS9idWxnYXJpYW4tc3BsaXQvZnJhbWVzLzYucG5nIiwKICAgICAgImVsYXBzZWRNcyI6IDYxNzMuNSwKICAgICAgInJlYWR5QXRNcyI6IDYxNzMuNSwKICAgICAgImFjdGl2ZUltYWdlQ291bnQiOiAxLAogICAgICAiZGltZW5zaW9ucyI6IFsKICAgICAgICAxNTM2LAogICAgICAgIDEwMjQKICAgICAgXSwKICAgICAgInZpc2liaWxpdHkiOiAidmlzaWJsZSIsCiAgICAgICJkb2N1bWVudFZpc2liaWxpdHkiOiAidmlzaWJsZSIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiL2RvY3MvZXhlcmNpc2UtYXJ0L3BpbG90cy9jb250aW51YXRpb24tMjAyNjEwMDUvYnVsZ2FyaWFuLXNwbGl0L2ZyYW1lcy8xLnBuZyIsCiAgICAgICJlbGFwc2VkTXMiOiA3Mzc2LjI5OTk5OTk5OTk4OCwKICAgICAgInJlYWR5QXRNcyI6IDczNzYuMjk5OTk5OTk5OTg4LAogICAgICAiYWN0aXZlSW1hZ2VDb3VudCI6IDEsCiAgICAgICJkaW1lbnNpb25zIjogWwogICAgICAgIDE1MzYsCiAgICAgICAgMTAyNAogICAgICBdLAogICAgICAidmlzaWJpbGl0eSI6ICJ2aXNpYmxlIiwKICAgICAgImRvY3VtZW50VmlzaWJpbGl0eSI6ICJ2aXNpYmxlIgogICAgfQogIF0KfQ=="
+                        },
+                        {
+                          "name": "continuous-playback-video",
+                          "contentType": "video/webm",
+                          "path": "/home/runner/work/Maiin/Maiin/test-results/form-art/form-art-review.pw.ts-bulg-1d625-imer-1→2→3→4→5→6→1-in-light/attachments/continuous-playback-video-6c3d7a2aba8675a30febe2d0b7d5a5f8763c174c.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ed88a14346c2db968316-408bccdd49daf2a0067d",
+              "file": "form-art-review.pw.ts",
+              "line": 477,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-05T19:14:42.387Z",
+    "duration": 255092.54,
+    "expected": 86,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "theme": "light",
+  "videoSha256": "ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790",
+  "profileSha256": "58e497f016aa70082ef7fd5640952664d72378bed5f7d3cf14ac4aa937751020",
+  "startSeconds": 0.88,
+  "endSeconds": 8.52,
+  "pageLoadExcluded": true,
+  "reason": "Complete actual-player cycle selected using the previously independently reviewed native samples at0.88,2.20,3.44,4.64,5.92,7.08,8.48s. These show setup/shallow/deep/bottom/deep/shallow/returned setup; the half-open range includes the full encoded frame at8.48s and excludes navigation/loading before0.88s. This is a caller declaration; the continuity checker does not infer poses.",
+  "evidence": {
+    "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+    "artifactId": 11367177702,
+    "decodedMetrics": {
+      "name": "decoded-video-evidence.json",
+      "sha256": "6a938f603fd1ffa161fa98ce58c4d4c9b59f4b056ca97b012900e61bf483bfd8"
+    },
+    "transitionLog": {
+      "name": "light-live-transition-log.json",
+      "sha256": "6bde87a437147ff5a1638117f5f7e3707837b0c634481d525c8882cc66b2e9a1"
+    },
+    "independentNativeReview": "independent-video-review/SUPERSEDING-REVIEW.md",
+    "scopedTest": true,
+    "observedVideoSamplesSeconds": [0.88, 2.2, 3.44, 4.64, 5.92, 7.08, 8.48]
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "scope": "Before player decode fix: v2 native art, exact published head only",
+  "retrieval": "Connected GitHub read-only workflow/run/jobs/artifact/log tools",
+  "run": {
+    "id": 37361829827,
+    "html_url": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+    "name": "Form artwork review",
+    "run_number": 197,
+    "run_attempt": 1,
+    "event": "push",
+    "head_branch": "codex/continue-exercise-art-oct05",
+    "head_sha": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+    "path": ".github/workflows/form-art-review.yml",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-05T19:13:18Z",
+    "run_started_at": "2026-10-05T19:13:18Z",
+    "updated_at": "2026-10-05T19:19:01Z",
+    "head_commit": {
+      "id": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+      "tree_id": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+      "message": "Refine Bulgarian split squat artwork and record full player cycles",
+      "timestamp": "2026-10-05T19:13:02Z",
+      "author": {
+        "name": "lemmonchess333",
+        "email": "neckarines12@gmail.com"
+      },
+      "committer": {
+        "name": "lemmonchess333",
+        "email": "neckarines12@gmail.com"
+      }
+    }
+  },
+  "jobs": [
+    {
+      "id": 111938052675,
+      "name": "review-player",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37361829827,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Type-check the account-free review fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install test browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Capture all frames and verify real player behavior",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "id": 111938052929,
+      "name": "review-sources",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37361829827,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify and package selected original frames",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11367177702,
+      "name": "form-art-playback",
+      "size_in_bytes": 27247860,
+      "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367177702",
+      "archive_download_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367177702/zip",
+      "expired": false,
+      "created_at": "2026-10-05T19:18:59Z",
+      "expires_at": "2026-10-19T19:18:57Z",
+      "updated_at": "2026-10-05T19:18:59Z",
+      "digest": "sha256:45dbeb5355be866543de5b8c06b6a9164febc0148dd3a50b2821dc31cdec883c",
+      "workflow_run": {
+        "id": 37361829827,
+        "repository_id": 1155848437,
+        "head_repository_id": 1155848437,
+        "head_branch": "codex/continue-exercise-art-oct05",
+        "head_sha": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e"
+      }
+    }
+  ],
+  "visualReviewConclusion": "blocked: six single-frame empty artwork stages found in actual recorded video despite all 86 tests passing"
+}
+

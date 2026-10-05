@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "bulgarian-mobile-stage-continuity-v1",
+  "encodedDimensions": [392, 852],
+  "roi": [20, 330, 350, 260],
+  "roiMeaning": "Native encoded-video rectangle [left,top,width,height]. Contains the athlete and bench within the stage; excludes the caption around y648 and all player controls below y678. Same rectangle in light and dark recordings.",
+  "brightPixelRule": "R + G + B >= 240 in ffmpeg-decoded RGB24 (mean channel value >=80)",
+  "brightPixelChannelSumMinimum": 240,
+  "minimumBrightFraction": 0.04,
+  "maximumBrightFraction": 0.2,
+  "maximumEncodedFrameIntervalSeconds": 0.08,
+  "minimumDeclaredReviewDurationSeconds": 7.2,
+  "gate": "Fail if any encoded frame overlapping the declared review range has bright coverage outside [0.04,0.20], or any encoded presentation interval in that range exceeds0.08s. Never average away an isolated failed frame. Decode every encoded frame with no time resampling or scaling.",
+  "calibration": {
+    "source": "Actual CI V2 light/dark continuous-playback WebMs, run37361829827, reviewed range[0.88,8.52).",
+    "roiPixels": 91000,
+    "observedBlankBrightPixels": 0,
+    "visibleAthleteBrightPixelRange": [7566, 8196],
+    "visibleAthleteBrightFractionRange": [
+      0.08314285714285714, 0.09006593406593406
+    ],
+    "lowerThresholdPixels": 3640,
+    "upperThresholdPixels": 18200,
+    "justification": "The lower threshold is below half the smallest observed visible-athlete count yet far above the observed blank value. The upper threshold is over twice the largest normal count and rejects a bright page/stage flash. Fixed values are shared before and after the player repair. A new layout or different encoded dimensions is unsupported and must fail closed, not silently move the ROI or recalibrate."
+  },
+  "limitations": [
+    "This checks encoded stage-content continuity over a caller-declared range, not pose correctness, cue timing, anatomical quality, or a completed sequence.",
+    "At25fps a recording cannot show a blank that occurs entirely between sampled frames. Passing means no failing encoded frame in the declared interval, not proof of every browser paint.",
+    "Native visual review and independent complete-cycle/timing evidence remain required."
+  ]
+}

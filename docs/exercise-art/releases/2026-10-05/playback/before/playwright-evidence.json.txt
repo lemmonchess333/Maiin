@@ -1,0 +1,660 @@
+{
+  "scope": "Exact pinned October 5 v2 checkpoint",
+  "runId": 37361829827,
+  "runAttempt": 1,
+  "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37361829827",
+  "runConclusion": "success",
+  "publishedCommit": "7752aeb3937ce4fd01837b297cb1c4a75a58b97e",
+  "localCheckpoint": "e4b1af2c13eb97a98b49898d9006e12aef87edbd",
+  "tree": "0409fdcc9d288e280645d2190a21744bb7f49f71",
+  "artifactId": 11367177702,
+  "artifactName": "form-art-playback",
+  "artifactBytes": 27247860,
+  "artifactSha256": "45dbeb5355be866543de5b8c06b6a9164febc0148dd3a50b2821dc31cdec883c",
+  "matchesGitHubArtifactDigest": true,
+  "rawReportPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/form-art-results.json",
+  "reportSha256": "14878094d77c811e8cee81dcd42035faeed85942e7fb482670a36282bad32f04",
+  "stats": {
+    "startTime": "2026-10-05T19:14:42.387Z",
+    "duration": 255092.54,
+    "expected": 86,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "bulgarianCases": [
+    {
+      "suitePath": [
+        "form-art-review.pw.ts"
+      ],
+      "title": "bulgarian-split: six frames and loop in dark",
+      "id": "ed88a14346c2db968316-b4c93d8e6ec9146a6009",
+      "file": "form-art-review.pw.ts",
+      "line": 198,
+      "status": "passed",
+      "durationMs": 3625,
+      "retry": 0,
+      "startTime": "2026-10-05T19:18:31.928Z",
+      "errors": [],
+      "attachments": []
+    },
+    {
+      "suitePath": [
+        "form-art-review.pw.ts"
+      ],
+      "title": "bulgarian-split: six frames and loop in light",
+      "id": "ed88a14346c2db968316-25d95cbeacd0210dff96",
+      "file": "form-art-review.pw.ts",
+      "line": 198,
+      "status": "passed",
+      "durationMs": 3571,
+      "retry": 0,
+      "startTime": "2026-10-05T19:18:35.564Z",
+      "errors": [],
+      "attachments": []
+    },
+    {
+      "suitePath": [
+        "form-art-review.pw.ts"
+      ],
+      "title": "bulgarian-split: reduced motion stays still and permits stepping",
+      "id": "ed88a14346c2db968316-9e5b320bfb2de7fb8d3a",
+      "file": "form-art-review.pw.ts",
+      "line": 375,
+      "status": "passed",
+      "durationMs": 1025,
+      "retry": 0,
+      "startTime": "2026-10-05T19:18:39.161Z",
+      "errors": [],
+      "attachments": []
+    },
+    {
+      "suitePath": [
+        "form-art-review.pw.ts",
+        "bulgarian-split: continuous playback evidence"
+      ],
+      "title": "real timer 1\u21922\u21923\u21924\u21925\u21926\u21921 in dark",
+      "id": "ed88a14346c2db968316-66b2add5cca9d7af7abd",
+      "file": "form-art-review.pw.ts",
+      "line": 477,
+      "status": "passed",
+      "durationMs": 8450,
+      "retry": 0,
+      "startTime": "2026-10-05T19:18:40.195Z",
+      "errors": [],
+      "attachments": [
+        {
+          "name": "dark-live-transition-log.json",
+          "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/transition-logs/dark-live-transition-log.json"
+        },
+        {
+          "name": "continuous-playback-video",
+          "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/dark-continuous-playback.webm"
+        }
+      ]
+    },
+    {
+      "suitePath": [
+        "form-art-review.pw.ts",
+        "bulgarian-split: continuous playback evidence"
+      ],
+      "title": "real timer 1\u21922\u21923\u21924\u21925\u21926\u21921 in light",
+      "id": "ed88a14346c2db968316-408bccdd49daf2a0067d",
+      "file": "form-art-review.pw.ts",
+      "line": 477,
+      "status": "passed",
+      "durationMs": 8497,
+      "retry": 0,
+      "startTime": "2026-10-05T19:18:48.657Z",
+      "errors": [],
+      "attachments": [
+        {
+          "name": "light-live-transition-log.json",
+          "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/transition-logs/light-live-transition-log.json"
+        },
+        {
+          "name": "continuous-playback-video",
+          "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/light-continuous-playback.webm"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-1.png",
+      "bytes": 30782,
+      "sha256": "1b60a6e409e6717886a62c1f52a6d2d5cbf3c1a27b1fc6f16798918e2a0007a2",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-2.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-2.png",
+      "bytes": 31604,
+      "sha256": "32dd32d674744aa0a261cce3af632b6ff0e2166540f560e569cde61b7ab4f510",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-3.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-3.png",
+      "bytes": 31313,
+      "sha256": "eb891813cfb66e0414ae195e53cf7e84485537318705ca864dfc8bf956a8a5e8",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-4.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-4.png",
+      "bytes": 30184,
+      "sha256": "cfdc6f20142e00a4d3ee500482036824d354992389a9e9b76630d5c16615d761",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-5.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-5.png",
+      "bytes": 30952,
+      "sha256": "c4926e86de68fb0a2930e85597a422b9839e8ae3fa1a2b5eff7af059b806a06f",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-6.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-6.png",
+      "bytes": 31399,
+      "sha256": "98d4f4096872992eaab482bb933ca8fc8bfbe0b621a23f6985441a6a00f7bddd",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-endpoint-first.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-endpoint-first.png",
+      "bytes": 26224,
+      "sha256": "0685ad1baefebe8f5ff5093a77f060293be1f0462b948bb3bfaaf0801a76002f",
+      "dimensions": [
+        337,
+        361
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-live-loop-6-to-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-live-loop-6-to-1.png",
+      "bytes": 30753,
+      "sha256": "3bbd28a7482c1a36470f670bef9e764679b9a073077a106abf7eba5a7b876b0d",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-page.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/dark-page.png",
+      "bytes": 77562,
+      "sha256": "822d1b6932bc878b4efa03537628cf5d095a4d3f8345a1afa38f2fce5b34b752",
+      "dimensions": [
+        393,
+        1156
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-1.png",
+      "bytes": 31008,
+      "sha256": "cb0aa803d5762ea97add9bae3627ca67d3d8381e1dc6b4e05d2c959ac1639563",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-2.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-2.png",
+      "bytes": 31843,
+      "sha256": "4d02a8e49caef0cb797404c37ebe17bdcafdeb841f8be6da1e1de5ee7d3a20ac",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-3.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-3.png",
+      "bytes": 31508,
+      "sha256": "78254ee4f1d2651ba81b26d1e0b4a491c82b806b720582d26aaa3ff69ed339e0",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-4.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-4.png",
+      "bytes": 30386,
+      "sha256": "028d88476d793acd992315d849afe044b11e67e204f1655caf0c86577be4a57b",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-5.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-5.png",
+      "bytes": 31150,
+      "sha256": "1650d32369ab9740bacaafcf961f4217a8855c2c18e1a75d022313d2409dcb18",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-6.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-6.png",
+      "bytes": 31599,
+      "sha256": "ae796d7ce0dca51c03edd573a2c44aa4ca46ca0cffbf7da5113fa8f3b5da8716",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-endpoint-first.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-endpoint-first.png",
+      "bytes": 26224,
+      "sha256": "0685ad1baefebe8f5ff5093a77f060293be1f0462b948bb3bfaaf0801a76002f",
+      "dimensions": [
+        337,
+        361
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-live-loop-6-to-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-live-loop-6-to-1.png",
+      "bytes": 30928,
+      "sha256": "69ad84f05f0d6cf855771f158dc05fe449ddc7c93f0dc83421dc92dc8c735898",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-page.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/light-page.png",
+      "bytes": 77284,
+      "sha256": "c6beb4792870ef5c0fdf4961bf14f3f32c7d2e2c7ce3385be0fcda690925dd93",
+      "dimensions": [
+        393,
+        1156
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-6a2b9--still-and-permits-stepping/reduced-motion-manual-frame-2.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/reduced-motion-manual-frame-2.png",
+      "bytes": 29651,
+      "sha256": "39c77f41f0c3a365be28747907640c781d6db9b11d2b2e3611b374135fb2af63",
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-6a2b9--still-and-permits-stepping/reduced-motion-still-after-8s.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/screenshots/reduced-motion-still-after-8s.png",
+      "bytes": 28581,
+      "sha256": "fd71999e0f2c22ef4aa40ab2020e854bc75e2be13c02fd7ab308bf1c63f0fbe1",
+      "dimensions": [
+        361,
+        464
+      ]
+    }
+  ],
+  "videos": [
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-18bac-timer-1\u21922\u21923\u21924\u21925\u21926\u21921-in-dark/attachments/continuous-playback-video-472fcb3a5553448533201bdd7e86f25e6ae94650.webm",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/dark-continuous-playback.webm",
+      "bytes": 214310,
+      "sha256": "3d444fdab99ece95cc4a86d5dea0ef2e3d7c9014604fe9c65184bdd4be16d1a1",
+      "theme": "dark",
+      "duplicateRecordingArchivePaths": [
+        "form-art/form-art-review.pw.ts-bulg-18bac-timer-1\u21922\u21923\u21924\u21925\u21926\u21921-in-dark/recording/page@bdba630fd1875e2f2f7cbba799329998.webm"
+      ]
+    },
+    {
+      "archiveOrigin": "form-art/form-art-review.pw.ts-bulg-1d625-imer-1\u21922\u21923\u21924\u21925\u21926\u21921-in-light/attachments/continuous-playback-video-6c3d7a2aba8675a30febe2d0b7d5a5f8763c174c.webm",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/videos/light-continuous-playback.webm",
+      "bytes": 223797,
+      "sha256": "ccc296b231ff2a98d3f0bb6463c5b0dd0143b689235c18618320255917784790",
+      "theme": "light",
+      "duplicateRecordingArchivePaths": [
+        "form-art/form-art-review.pw.ts-bulg-1d625-imer-1\u21922\u21923\u21924\u21925\u21926\u21921-in-light/recording/page@0c6113d12b5a215ab9e5f63499814e85.webm"
+      ]
+    }
+  ],
+  "transitionLogs": [
+    {
+      "archiveOrigin": {
+        "report": "form-art-results.json",
+        "caseId": "ed88a14346c2db968316-66b2add5cca9d7af7abd",
+        "attachment": "dark-live-transition-log.json",
+        "encoding": "base64 body"
+      },
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/transition-logs/dark-live-transition-log.json",
+      "bytes": 3503,
+      "sha256": "dbd194a8f478affa23acced654df75f96800e3ad52c81d7908bf2c319f34e973",
+      "theme": "dark",
+      "stateSequence": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        1
+      ],
+      "intervalsMs": [
+        1257.4,
+        1230.0,
+        1217.4,
+        1232.5,
+        1216.0,
+        1202.8
+      ],
+      "cycleElapsedMs": 7356.1,
+      "readyDelaysMs": [
+        23.6,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "allStatesVisibleLoadedWithOneActiveImage": true,
+      "log": {
+        "theme": "dark",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "nominalIntervalMs": 1200,
+        "expectedSources": [
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png"
+        ],
+        "sourcePins": {
+          "setup": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+          "shallow": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+          "deep": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+          "bottom": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+        },
+        "startedAtEpochMs": 1791227920799,
+        "transitions": [
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+            "elapsedMs": 24.29999999998836,
+            "readyAtMs": 47.899999999965075,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+            "elapsedMs": 1281.6999999999534,
+            "readyAtMs": 1281.6999999999534,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+            "elapsedMs": 2511.6999999999534,
+            "readyAtMs": 2511.6999999999534,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+            "elapsedMs": 3729.0999999999767,
+            "readyAtMs": 3729.0999999999767,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+            "elapsedMs": 4961.599999999977,
+            "readyAtMs": 4961.599999999977,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+            "elapsedMs": 6177.599999999977,
+            "readyAtMs": 6177.599999999977,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+            "elapsedMs": 7380.399999999965,
+            "readyAtMs": 7380.399999999965,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          }
+        ]
+      }
+    },
+    {
+      "archiveOrigin": {
+        "report": "form-art-results.json",
+        "caseId": "ed88a14346c2db968316-408bccdd49daf2a0067d",
+        "attachment": "light-live-transition-log.json",
+        "encoding": "base64 body"
+      },
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05-v2/transition-logs/light-live-transition-log.json",
+      "bytes": 3454,
+      "sha256": "6bde87a437147ff5a1638117f5f7e3707837b0c634481d525c8882cc66b2e9a1",
+      "theme": "light",
+      "stateSequence": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        1
+      ],
+      "intervalsMs": [
+        1252.6,
+        1225.9,
+        1218.8,
+        1228.4,
+        1227.1,
+        1202.8
+      ],
+      "cycleElapsedMs": 7355.6,
+      "readyDelaysMs": [
+        21.9,
+        0.0,
+        0.0,
+        0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "allStatesVisibleLoadedWithOneActiveImage": true,
+      "log": {
+        "theme": "light",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "nominalIntervalMs": 1200,
+        "expectedSources": [
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+          "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png"
+        ],
+        "sourcePins": {
+          "setup": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+          "shallow": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+          "deep": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+          "bottom": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+        },
+        "startedAtEpochMs": 1791227929353,
+        "transitions": [
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+            "elapsedMs": 20.699999999953434,
+            "readyAtMs": 42.59999999997672,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+            "elapsedMs": 1273.2999999999884,
+            "readyAtMs": 1273.2999999999884,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+            "elapsedMs": 2499.1999999999534,
+            "readyAtMs": 2499.1999999999534,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+            "elapsedMs": 3718,
+            "readyAtMs": 3718,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+            "elapsedMs": 4946.399999999965,
+            "readyAtMs": 4946.399999999965,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+            "elapsedMs": 6173.5,
+            "readyAtMs": 6173.5,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          },
+          {
+            "src": "/docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+            "elapsedMs": 7376.299999999988,
+            "readyAtMs": 7376.299999999988,
+            "activeImageCount": 1,
+            "dimensions": [
+              1536,
+              1024
+            ],
+            "visibility": "visible",
+            "documentVisibility": "visible"
+          }
+        ]
+      }
+    }
+  ],
+  "captureCoverage": {
+    "originalPngs": 20,
+    "uniqueWebMs": 2,
+    "attachedTransitionLogs": 2,
+    "reducedMotionTheme": "default dark",
+    "viewport": [
+      393,
+      852
+    ],
+    "deviceScaleFactor": 1,
+    "browser": "Chromium"
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-05",
+  "scope": "Player decode fix: cancelled first push-triggered CI attempt; no playback signoff",
+  "publishedCommit": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "localCheckpoint": "98f0436ccc42e9ecdc20cbdecd0d0d2ae468dc36",
+  "tree": "672fff87ba0d400c00a7a04516137829e22f87d4",
+  "runId": 37364543031,
+  "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37364543031",
+  "runAttempt": 1,
+  "event": "push",
+  "runStatus": "completed",
+  "runConclusion": "failure",
+  "createdAt": "2026-10-05T19:36:52Z",
+  "completedBy": "2026-10-05T19:51:55Z",
+  "playerJob": {
+    "id": 111946487752,
+    "run_id": 37364543031,
+    "workflow_name": "Form artwork review",
+    "head_branch": "codex/continue-exercise-art-oct05",
+    "run_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/runs/37364543031",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOROTY9c8AAAAaEIfXyA",
+    "head_sha": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+    "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/jobs/111946487752",
+    "html_url": "https://github.com/lemmonchess333/Maiin/actions/runs/37364543031/job/111946487752",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-05T19:36:52Z",
+    "started_at": "2026-10-05T19:36:52Z",
+    "completed_at": "2026-10-05T19:51:54Z",
+    "name": "review-player",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/lemmonchess333/Maiin/check-runs/111946487752",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  },
+  "sourceJob": {
+    "id": 111946487314,
+    "run_id": 37364543031,
+    "workflow_name": "Form artwork review",
+    "head_branch": "codex/continue-exercise-art-oct05",
+    "run_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/runs/37364543031",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOROTY9c8AAAAaEIfWEg",
+    "head_sha": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+    "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/jobs/111946487314",
+    "html_url": "https://github.com/lemmonchess333/Maiin/actions/runs/37364543031/job/111946487314",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-05T19:36:52Z",
+    "started_at": "2026-10-05T19:47:08Z",
+    "completed_at": "2026-10-05T19:47:37Z",
+    "name": "review-sources",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-05T19:47:08Z",
+        "completed_at": "2026-10-05T19:47:09Z"
+      },
+      {
+        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-05T19:47:09Z",
+        "completed_at": "2026-10-05T19:47:32Z"
+      },
+      {
+        "name": "Verify and package selected original frames",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-05T19:47:32Z",
+        "completed_at": "2026-10-05T19:47:32Z"
+      },
+      {
+        "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-05T19:47:32Z",
+        "completed_at": "2026-10-05T19:47:35Z"
+      },
+      {
+        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8,
+        "started_at": "2026-10-05T19:47:35Z",
+        "completed_at": "2026-10-05T19:47:35Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9,
+        "started_at": "2026-10-05T19:47:35Z",
+        "completed_at": "2026-10-05T19:47:35Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/lemmonchess333/Maiin/check-runs/111946487314",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000032080,
+    "runner_name": "GitHub Actions 1000032080",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  "branchRefIndependentlyFetched": "refs/heads/codex/continue-exercise-art-oct05",
+  "branchHead": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d",
+  "branchHeadUnchanged": true,
+  "artifacts": [
+    {
+      "id": 11367749723,
+      "name": "form-art-sources",
+      "size_in_bytes": 30288812,
+      "url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367749723",
+      "archive_download_url": "https://api.github.com/repos/lemmonchess333/Maiin/actions/artifacts/11367749723/zip",
+      "expired": false,
+      "created_at": "2026-10-05T19:47:35Z",
+      "expires_at": "2026-10-19T19:47:32Z",
+      "updated_at": "2026-10-05T19:47:35Z",
+      "digest": "sha256:d3ce601abd4f089c9ba64c5c7b991368b58d14ad09d236beaae7f5d4c9b69de4",
+      "workflow_run": {
+        "id": 37364543031,
+        "repository_id": 1155848437,
+        "head_repository_id": 1155848437,
+        "head_branch": "codex/continue-exercise-art-oct05",
+        "head_sha": "6d2a79d3bb57c418695c02ee6f1835fa6e50a25d"
+      }
+    }
+  ],
+  "playbackArtifactPresent": false,
+  "browserTestsExecuted": false,
+  "playbackReviewStatus": "blocked: no new browser recording; pre-fix v2 baseline still has six recorded gaps",
+  "cancellationReason": null,
+  "cancellingActor": null,
+  "approvalOrBillingGateStated": false,
+  "actorFieldLimit": "Run actor and triggering_actor identify the initiating actor, not the actor or cause of cancellation.",
+  "jobLogRetrieval": {
+    "status": "unavailable",
+    "tool": "github_fetch_workflow_job_logs",
+    "error": {
+      "error": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:81566812-801e-003a-5a03-5582fc000000\nTime:2026-10-05T19:53:17.0854695Z</Message></Error>",
+      "error_code": "NOT_FOUND",
+      "error_data": {
+        "error_str": "GitHub API error 404: ﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:81566812-801e-003a-5a03-5582fc000000\nTime:2026-10-05T19:53:17.0854695Z</Message></Error>"
+      }
+    }
+  },
+  "checkRunAnnotationsRetrieval": {
+    "status": "unavailable in allowed connector endpoints",
+    "error": {
+      "error": "HTTPError: 400: GitHub Fetch URL is not an allowed public GitHub repository or search endpoint. (Response: None)",
+      "error_code": "INVALID_ARGUMENT"
+    }
+  },
+  "workflowFacts": {
+    "playerTimeoutMinutes": 15,
+    "concurrencyCancelInProgress": true,
+    "sameHeadFormArtworkRunCount": 1,
+    "queuedSpanSeconds": 902,
+    "interpretation": "The 15-minute job timeout and public runner-assignment incident are context. Available run/jobs metadata does not establish the cause of cancellation."
+  },
+  "actionsTaken": "Read-only run/jobs/artifact/ref/collection/status/log retrieval and exact local Git source hashing. No rerun, dispatch, cancellation, workflow edit, repository write, or execution-route change.",
+  "nextStep": "A separately published lint-only checkpoint can be reviewed as a new exact push-triggered run; preserve this cancelled attempt separately."
+}

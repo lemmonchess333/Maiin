@@ -1,0 +1,27 @@
+# Player decode-fix CI attempt: cancelled before browser execution
+
+**Playback remains unverified for this head.** Form artwork review run 37364543031, attempt 1, ended with workflow conclusion `failure`; its player job was `cancelled` without an assigned runner or any executed steps. No `form-art-playback` artifact exists.
+
+## Exact identity and final state
+
+- Published commit: `6d2a79d3bb57c418695c02ee6f1835fa6e50a25d`.
+- Exact tree: `672fff87ba0d400c00a7a04516137829e22f87d4`; local source commit `98f0436ccc42e9ecdc20cbdecd0d0d2ae468dc36`.
+- Run: [37364543031](https://github.com/lemmonchess333/Maiin/actions/runs/37364543031), created 2026-10-05 19:36:52 UTC; final run update 19:51:55 UTC.
+- `review-sources` job 111946487314 succeeded, running 19:47:08–19:47:37 UTC.
+- `review-player` job 111946487752 was cancelled at 19:51:54 UTC. Its final metadata has runner ID 0, empty runner name, and no steps.
+- The complete artifact listing contains only `form-art-sources` artifact 11367749723. That exporter’s batch scope does not include Bulgarian; independent exact Git-blob hashing remains the selected-source proof.
+- An independent final branch-ref lookup still points to the exact published commit above. No new Form artwork review run appeared in the same-head run collection.
+
+## Cause and limits
+
+The run and jobs responses expose no cancellation reason or cancelling actor, and do not state an approval or billing gate. The initiating actor is recorded as `lemmonchess333`; that field does not identify who or what cancelled the job. The supported job-log tool returns 404 `BlobNotFound`. Check-run annotations are outside this connector’s allowed fetch endpoints, so no annotation was retrieved.
+
+The player job has a configured 15-minute timeout; the interval from creation to cancellation was 15 minutes 2 seconds. GitHub’s official status page separately reported delayed assignment of hosted runners during this period. Those facts are relevant context, but they do not prove the cancellation cause for this individual run. The public observation is preserved in `public-status-observation-194537.json` with its URL and UTC timestamps.
+
+All six native artwork hashes are unchanged from the reviewed v2 selection, and this player-fix commit changes only the component and its unit tests. The unchanged Playwright fixture/tests would have supplied 86 cases, including five Bulgarian cases, had the player job executed. No new Playwright pass/fail result, video, screenshot, or transition log was produced by this attempt.
+
+## Decision
+
+Keep this attempt as a distinct cancelled record. It does not supersede the earlier v2 continuous-playback failure or establish the decode fix’s visual result. A later exact push-triggered run must supply the original two-theme recordings, all-frame continuity analysis under the frozen profile, and native review of all six transitions per theme.
+
+No rerun, dispatch, cancellation, workflow edit, repository write, or alternate execution route was performed during this review. The separate local lint-only checkpoint and full-verification gate are not validated by this cancelled remote run.

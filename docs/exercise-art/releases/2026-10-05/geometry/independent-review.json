@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "reviewer": "/root/rigid_equipment/geometry_review",
+  "scope": "Renewed read-only review of the portable final numerical geometry package; evidence freeze only, no release approval.",
+  "releaseApproved": false,
+  "reviewedArtifacts": {
+    "verify-geometry.mjs": "7672a5586d39ff4925068a326cb93efd5b0ff5631ba45a0aa245feafe47feae3",
+    "geometry.json": "3ad0b703195df9632527aeacf030610a4a7ffe9f293a5d16eb4df678a0e6f40d",
+    "review-record-geometry.json": "65bcec9d6d60eb2f4ef1e6702a6f2bd9784326e880cca22165be9ff8d91ac44b",
+    "semantic-equivalence.json": "09255d8ba7ebf60dd8fd029fe52ef515210f5291f897c249462e71f84be78889",
+    "README.md": "448c306c9bdf935dbd1a4452eacb6a7a696b405cfbb0772648d7718eb8266fdc"
+  },
+  "findings": [
+    "No portability or hash-order bug found.",
+    "The helper requires an explicit repository root and resolves dependencies from that repository.",
+    "JSON formatting is awaited before writing or hashing; the review record and README cite final formatted report bytes.",
+    "The report helper hash matches the formatted installed helper.",
+    "Independent parsed comparison confirms the report differs from frozen scratch only in helper.sha256 and the geometry export only in geometryEvidence.sha256.",
+    "All five historical scratch captures remain byte-identical.",
+    "All 25 current input pins match; all six measurements, 48 exact search windows, 18 exact face checks, and unchanged 1px per-axis/1% bounds are retained.",
+    "Fixed layer and head widths remain construction dimensions, distinguished from visible silhouettes and separate visual/player/release gates.",
+    "Delivery WebP use requires the separately verified lossless decoded RGB equality binding."
+  ],
+  "reviewerActions": {
+    "filesEdited": false,
+    "geometryHelperExecuted": false,
+    "historicalHelperExecuted": false,
+    "testsRun": false
+  }
+}

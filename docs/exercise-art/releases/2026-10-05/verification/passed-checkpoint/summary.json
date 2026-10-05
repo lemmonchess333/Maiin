@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "scope": "Complete npm run verify on the player decode fix and recorder lint correction, before Bulgarian app activation.",
+  "localTestCommit": "1dd2ba9ecd7968263eedbef73b9528ba1da048b0",
+  "publishedEquivalentCommit": "303aa373309c44a4b76f351fc5898f2d7c87c314",
+  "exactTestedTree": "f18238472d2e7640ec7587c47511c69c3a4cadde",
+  "exitCode": 0,
+  "elapsedSeconds": 683.144,
+  "changedInputs": [],
+  "testResults": {
+    "passed": 11817,
+    "skipped": 370,
+    "failed": 0,
+    "filesWithExecutedTests": 1041,
+    "allSkippedFiles": 8,
+    "rawVitestFileStatuses": {
+      "passed": 1049
+    }
+  },
+  "files": [
+    {
+      "original": "verify.log.txt",
+      "preserved": "verify.log.txt",
+      "originalSha256": "2b622528301d3d5994ad7e5731b0b94358a30bfde1e8463b49c24a45b691a74a",
+      "originalBytes": 48152,
+      "preservedSha256": "2b622528301d3d5994ad7e5731b0b94358a30bfde1e8463b49c24a45b691a74a",
+      "preservedBytes": 48152
+    },
+    {
+      "original": "verify-result.json",
+      "preserved": "verify-result.json.txt",
+      "originalSha256": "6547ef88123df7b54192fb65aa1476b4d94fa03e86522962e41a2abc4b9a7771",
+      "originalBytes": 1283,
+      "preservedSha256": "6547ef88123df7b54192fb65aa1476b4d94fa03e86522962e41a2abc4b9a7771",
+      "preservedBytes": 1283
+    },
+    {
+      "original": "verify-start.json",
+      "preserved": "verify-start.json.gz",
+      "originalSha256": "5b360e154788e6782781e3981dcb9ec0c4a1f31c02f9d54186618b0e18c80cde",
+      "originalBytes": 871116,
+      "preservedSha256": "3057a6d6d73b71ea3f3a08167d133e551d1b96df128285e0c58162393c60e2d7",
+      "preservedBytes": 284699
+    },
+    {
+      "original": "unit-results.json",
+      "preserved": "unit-results.json.gz",
+      "originalSha256": "551f8211dd1580b55358978443000091cce13dadc20cc9f1f5b08bca3c430386",
+      "originalBytes": 4030583,
+      "preservedSha256": "016452a266a3a7ef54161fd442292ca9100d595dda25b1c4ed2c245427ff5281",
+      "preservedBytes": 537182
+    },
+    {
+      "original": "publication.json",
+      "preserved": "publication.json.txt",
+      "originalSha256": "d606442973c57281587bf2c6ef477f1bb3f5d74572898ae4938da1297305f6c4",
+      "originalBytes": 1659,
+      "preservedSha256": "d606442973c57281587bf2c6ef477f1bb3f5d74572898ae4938da1297305f6c4",
+      "preservedBytes": 1659
+    }
+  ],
+  "limits": [
+    "This gate does not provide browser pixel evidence or approve the unreleased Bulgarian artwork.",
+    "Raw Vitest marks all1049 fileResults passed;1041 contain executed tests and8 contain only skipped emulator-dependent tests.",
+    "Any later app activation requires its own release checks."
+  ]
+}

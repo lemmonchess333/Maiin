@@ -1,0 +1,192 @@
+--- a/src/lib/releasedFormPlacards.ts
++++ b/src/lib/releasedFormPlacards.ts
+@@ -15,6 +15,23 @@
+ });
+ 
+ export const RELEASED_FORM_PLACARDS = {
++  "bulgarian-split": placard(
++    "bulgarian-split",
++    ["Quadriceps"],
++    ["Glutes", "Hamstrings"],
++    [
++      [0, "SET UP", "Plant front foot; rest your rear instep."],
++      [0.33, "BEGIN LOWERING", "Bend your front knee; lower with control."],
++      [0.67, "LOWER FURTHER", "Keep your front heel planted while descending."],
++      [
++        1,
++        "REACH DEPTH",
++        "Reach comfortable depth without bouncing or shifting.",
++      ],
++      [0.67, "DRIVE UP", "Drive through your front foot; rise steadily."],
++      [0.33, "CONTINUE RISING", "Continue rising; keep feet and grips fixed."],
++    ]
++  ),
+   "pistol-squat": placard(
+     "pistol-squat",
+     ["Quadriceps"],
+--- a/e2e/form-art-release.pw.ts
++++ b/e2e/form-art-release.pw.ts
+@@ -5,6 +5,8 @@
+ import { getFormBeats } from "../src/lib/formGuides";
+ 
+ for (const { id, dimensions, cardWidth } of [
++  // Confirm the actual cutout width after export before applying this proposal.
++  { id: "bulgarian-split", dimensions: [1536, 1024], cardWidth: 480 },
+   { id: "pistol-squat", dimensions: [1024, 1536], cardWidth: 464 },
+   { id: "calf-raise", dimensions: [1024, 1536], cardWidth: 320 },
+   { id: "standing-calf-raise", dimensions: [1024, 1536], cardWidth: 320 },
+@@ -48,6 +50,7 @@
+       );
+       const image = guide.locator('img[aria-hidden="false"]');
+       let firstPixels: Buffer | undefined;
++      const bulgarianPosePixels = new Map<number, Buffer>();
+       for (const [index, beat] of beats.entries()) {
+         await expect(image).toHaveAttribute("src", `/${beat.image}`);
+         await expect
+@@ -73,14 +76,69 @@
+           ).toBe(true);
+           if (index === 4) expect(beat.cue).toContain("Hold for time");
+         }
+-        // The player uses decoding="async": load completion alone does not
+-        // guarantee that the browser has decoded the pixels for its next paint.
++        // Explicitly await decoded pixels before each screenshot, independently
++        // of the player's decode readiness and synchronous presentation hint.
+         await image.evaluate((node) => (node as HTMLImageElement).decode());
+         const displayed = await image.screenshot({
+           path: info.outputPath(`${theme}-pixels-${index + 1}.png`),
+         });
+         if (index === 0) firstPixels = displayed;
+-        if (index === 5) {
++        if (id === "bulgarian-split") {
++          // Matching ascent poses reuse exactly the reviewed delivered files.
++          // Source/delivery hashes are independently protected by release audits.
++          const reusedIndex = index === 4 ? 2 : index === 5 ? 1 : null;
++          if (reusedIndex !== null) {
++            expect(
++              readFileSync(`public/${beat.image}`).equals(
++                readFileSync(`public/${beats[reusedIndex].image}`)
++              )
++            ).toBe(true);
++            const original = PNG.sync.read(
++              bulgarianPosePixels.get(reusedIndex)!
++            );
++            const reused = PNG.sync.read(displayed);
++            expect([reused.width, reused.height]).toEqual([
++              original.width,
++              original.height,
++            ]);
++            expect(
++              pixelmatch(
++                original.data,
++                reused.data,
++                undefined,
++                original.width,
++                original.height,
++                { threshold: 0.02, includeAA: true }
++              )
++            ).toBe(0);
++          }
++          if (index === 5) {
++            // Frame 6 is shallow ascent; the timed 6-to-1 step completes standing.
++            expect(
++              readFileSync(`public/${beats[0].image}`).equals(
++                readFileSync(`public/${beat.image}`)
++              )
++            ).toBe(false);
++            const setup = PNG.sync.read(firstPixels!);
++            const shallow = PNG.sync.read(displayed);
++            expect([shallow.width, shallow.height]).toEqual([
++              setup.width,
++              setup.height,
++            ]);
++            expect(
++              pixelmatch(
++                setup.data,
++                shallow.data,
++                undefined,
++                setup.width,
++                setup.height,
++                { threshold: 0.02, includeAA: true }
++              )
++            ).toBeGreaterThan(0);
++          }
++          bulgarianPosePixels.set(index, displayed);
++        }
++        if (index === 5 && id !== "bulgarian-split") {
+           expect(
+             readFileSync(`public/${beats[0].image}`).equals(
+               readFileSync(`public/${beat.image}`)
+@@ -119,6 +177,17 @@
+         timeout: 5000,
+       });
+       await guide.getByRole("button", { name: "Pause", exact: true }).click();
++      if (id === "bulgarian-split") {
++        await expect(image).toHaveAttribute("src", `/${beats[0].image}`);
++        await image.evaluate((node) => (node as HTMLImageElement).decode());
++        await expect(guide.locator("p[aria-live]")).toContainText("1/6");
++        await expect(page.locator('button[aria-current="step"]')).toContainText(
++          beats[0].cue
++        );
++        await guide.screenshot({
++          path: info.outputPath(`${theme}-after-wrap.png`),
++        });
++      }
+       const card = page.getByTestId("card-artwork");
+       const thumbnail = card.getByRole("img", { name: `${id} card artwork` });
+       await expect(thumbnail).toHaveAttribute("src", `/form-art/${id}.webp`);
+@@ -143,7 +212,7 @@
+ 
+   test(`released ${id}: reduced motion keeps delivered frames still`, async ({
+     page,
+-  }) => {
++  }, info) => {
+     await page.emulateMedia({ reducedMotion: "reduce" });
+     await page.clock.install();
+     await page.goto("/e2e/fixtures/form-art.html");
+@@ -155,8 +224,30 @@
+     await expect(guide).toHaveAttribute("data-demo-still", "placard");
+     const image = guide.locator('img[aria-hidden="false"]');
+     await expect(image).toHaveAttribute("src", `/form-frames/${id}/1.webp`);
++    if (id === "bulgarian-split") {
++      await expect
++        .poll(() =>
++          image.evaluate((node) => {
++            const img = node as HTMLImageElement;
++            return img.complete ? [img.naturalWidth, img.naturalHeight] : [];
++          })
++        )
++        .toEqual(dimensions);
++      await image.evaluate((node) => (node as HTMLImageElement).decode());
++    }
+     await page.clock.fastForward(8000);
+     await expect(image).toHaveAttribute("src", `/form-frames/${id}/1.webp`);
++    if (id === "bulgarian-split") {
++      await image.evaluate((node) => (node as HTMLImageElement).decode());
++      await expect(guide.locator("p[aria-live]")).toContainText("1/6");
++      await expect(page.locator('button[aria-current="step"]')).toContainText(
++        beats[0].cue
++      );
++      await expect(
++        guide.getByRole("button", { name: "Pause", exact: true })
++      ).toHaveCount(0);
++      await guide.screenshot({ path: info.outputPath("reduced-after-8s.png") });
++    }
+     await expect(
+       guide.getByRole("button", { name: "Play", exact: true })
+     ).toHaveCount(0);
+@@ -164,5 +255,15 @@
+       .getByRole("button", { name: "Next frame", exact: true })
+       .click();
+     await expect(image).toHaveAttribute("src", `/form-frames/${id}/2.webp`);
++    if (id === "bulgarian-split") {
++      await image.evaluate((node) => (node as HTMLImageElement).decode());
++      await expect(guide.locator("p[aria-live]")).toContainText("2/6");
++      await expect(page.locator('button[aria-current="step"]')).toContainText(
++        beats[1].cue
++      );
++      await guide.screenshot({
++        path: info.outputPath("reduced-manual-frame-2.png"),
++      });
++    }
+   });
+ }
