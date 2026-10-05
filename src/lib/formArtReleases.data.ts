@@ -425,6 +425,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 4,
   },
+  "shoulder-press-machine": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 900,
+    height: 1500,
+    reference: 1,
+  },
   shrugs: {
     folder: "2026-10-03",
     version: "anatomy-v3-rigid-2026-10-03",

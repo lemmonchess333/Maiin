@@ -667,6 +667,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
     sha256: "f14c2f0a93d6e57f82ca4535c347a57479599d316229df0b716ff28ce0006c23",
   },
+  "shoulder-press-machine": {
+    src: "form-art/shoulder-press-machine.webp",
+    width: 288,
+    height: 480,
+    keyed: true,
+    source: "form-frames/shoulder-press-machine/1.webp",
+    sourceSha256:
+      "cca40a9911d691e35bf53c5cded011d4c0a697ac2b3ccb867de4a81b66e0a5a8",
+    sha256: "bc9bc8a7e3fbe7669f106bef92ea6cfe41bfaeae22b7fd202c551557b70128c7",
+  },
   shrugs: {
     src: "form-art/shrugs.webp",
     width: 200,

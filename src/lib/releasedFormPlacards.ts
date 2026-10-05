@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "shoulder-press-machine": placard(
+    "shoulder-press-machine",
+    ["Deltoids"],
+    ["Triceps"],
+    [
+      [0, "Set", "Brace with your back against the pad."],
+      [0.3333333333333333, "Initiate", "Press both handles upward together."],
+      [
+        0.6666666666666666,
+        "Press",
+        "Keep your wrists stacked over your elbows.",
+      ],
+      [1, "Extend", "Extend your arms without shrugging."],
+      [0.6666666666666666, "Lower", "Bend your elbows slowly under control."],
+      [
+        0.3333333333333333,
+        "Return",
+        "Lower toward shoulder height without bouncing.",
+      ],
+    ]
+  ),
   "cable-lateral-raise": placard(
     "cable-lateral-raise",
     ["Side Delts"],
