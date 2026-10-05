@@ -262,6 +262,18 @@ describe("the guide's words", () => {
     }
   });
 
+  // Lift4: the starting weights are an estimate, and the first set is the
+  // one place that says so, with or without the automatic rest timer.
+  it("calls the first set's weights a first guess", () => {
+    for (const body of [
+      GUIDE_HINTS["first-set"].body,
+      FIRST_SET_BODY_NO_AUTO_REST,
+    ])
+      expect(body).toContain(
+        "The weights are a first guess. Feels easy? Add weight on the next set."
+      );
+  });
+
   it("keys each hint's seen flag by the hint", () => {
     expect(hintSeenKey("first-set")).toBe("tropos-guide-hint:first-set");
   });
