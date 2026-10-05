@@ -7,7 +7,7 @@ the subject is generic — see "Licensing and provenance" below for which
 route a given file may take.
 
 The peer activity feed never uses these: feed cards render user-data
-imagery (route scenes, muscle figures) by design. See `CONTEXT.md` →
+imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 

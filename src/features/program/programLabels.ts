@@ -8,7 +8,7 @@
  * for the settings confirm modal, and ProgrammeSettings a third ("Stay
  * fit", "Running support" — lifting that supports running, a different
  * question with different words). Those are separate surfaces, not
- * duplicates to merge (CONTEXT.md naming rule).
+ * duplicates to merge (GLOSSARY.md naming rule).
  *
  * `goalLabel` is the exception, and for the reason that rule gives: what
  * hurts is inconsistency INSIDE one file. The goal labels here are read

@@ -26,3 +26,10 @@ functions/lib/
 # Existing untouched code keeps its current formatting — Prettier
 # only runs on staged files via lint-staged, so unformatted files
 # aren't auto-rewritten unless explicitly staged.
+
+# Skills copied from other repos stay byte-for-byte as upstream wrote them,
+# so an update is a plain diff (docs/agents/vendored-skills.md). This repo's
+# own skills are formatted as usual.
+.claude/skills/*/
+!.claude/skills/lock-decision/
+!.claude/skills/verifier-tropos-web/

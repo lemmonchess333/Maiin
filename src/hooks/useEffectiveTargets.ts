@@ -35,7 +35,7 @@ export type { DailyTargetsCaption };
  *
  * Single source of truth for "what is today's calorie + macro target."
  * Every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet)
- * reads from here. See CONTEXT.md → Nutrition for term definitions.
+ * reads from here. See GLOSSARY.md → Nutrition for term definitions.
  *
  * Nutr1 (expenditure-inclusive): the daily CALORIE target is FLAT —
  * `finalTarget === baseTarget`. The stored TDEE already accounts for the

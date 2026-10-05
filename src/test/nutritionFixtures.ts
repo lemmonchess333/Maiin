@@ -5,7 +5,7 @@
  * phaseNutrition, and later prompts). Each builder returns a fresh
  * `{ profile, program }` pair so tests can mutate without cross-contaminating.
  *
- * Mental model (see CONTEXT.md → Nutrition):
+ * Mental model (see GLOSSARY.md → Nutrition):
  *  - CALORIES = slow loop (flat day-to-day; profile.targetCalories).
  *  - MACROS = fast loop (driven by the PLANNED training of the day).
  * These fixtures exercise the six representative training shapes.
