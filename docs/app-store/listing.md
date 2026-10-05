@@ -67,7 +67,7 @@ Tell it your goal, the days you can train, your equipment and your experience. I
 
 Lifting
 • 2 to 6 sessions a week, split to suit your days: full body, upper and lower, or push, pull and legs.
-• Starting weights from your bodyweight and experience. Last session's numbers are filled in, and when every set reaches its reps the app suggests adding 2.5 kg.
+• Starting weights from your bodyweight and experience. Each session starts from what you lifted last time, and the plan adds weight or reps when you hit your targets.
 • Warm-up sets, a rest timer and a plate calculator.
 • Shorter versions when time is tight: 45 or 30 minutes with the main lifts kept, or an easier day, without changing the plan.
 • Exercise choices that work around a limitation in your lower back, shoulders, knees, elbows or wrists.

@@ -795,16 +795,6 @@ test.describe("App Store screenshots", () => {
       exact: true,
     });
     await expect(complete.first()).toBeVisible({ timeout: 15_000 });
-    // The first lift's progression offer ("All sets hit 6 reps at 82.5 kg
-    // last time — try 85 kg"), taken. It is built from the seeded history
-    // once that has loaded.
-    await page
-      .getByRole("button", { name: "Apply", exact: true })
-      .click({ timeout: 8_000 })
-      .catch(() =>
-        console.log("[capture] 03-workout: no progression offer to take")
-      );
-
     // The warm-ups and two working sets, each rest ended as it starts.
     const endRest = page.getByRole("button", { name: "End rest", exact: true });
     const done = page.getByRole("button", { name: /^Edit completed / });

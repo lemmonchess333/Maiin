@@ -30,7 +30,6 @@ import {
   X,
   Trophy,
   Info,
-  TrendingUp,
   Disc,
   Timer,
   Trash2,
@@ -83,10 +82,6 @@ import {
   loadLiftRecords,
   type LiftRecords,
 } from "@/lib/liftRecordsStore";
-import {
-  suggestNextLoad,
-  type ProgressionSuggestion,
-} from "@/lib/progressionSuggestion";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
@@ -403,12 +398,6 @@ export default function WorkoutSession({
   // Loaded with the PR map; persisted undo-safe from final setLogs.
   const [volumeBest, setVolumeBest] = useState<VolumeBestMap>({});
   const firedVolumePRs = useRef<Set<string>>(new Set());
-  /* Double-progression nudges per exercise index (2026-07 audit). Computed
-     alongside the prefill from the SAME previous-session data; the chip
-     only renders while the exercise is untouched this session. */
-  const [suggestions, setSuggestions] = useState<
-    Record<number, ProgressionSuggestion>
-  >({});
   const [showPlates, setShowPlates] = useState(false);
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>(
     {}
@@ -466,22 +455,6 @@ export default function WorkoutSession({
           )
         )
       );
-
-      // Double-progression suggestions from the same history the prefill
-      // uses (one fetch, two consumers).
-      const nextSuggestions: Record<number, ProgressionSuggestion> = {};
-      day.exercises.forEach((ex, i) => {
-        const prevSets = prevWeights[ex.name];
-        if (!prevSets) return;
-        const suggestion = suggestNextLoad({
-          prevSets,
-          targetReps: ex.reps,
-        });
-        if (suggestion && suggestion.kind === "increase") {
-          nextSuggestions[i] = suggestion;
-        }
-      });
-      setSuggestions(nextSuggestions);
 
       setSetLogs((prev) => {
         const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
@@ -1686,57 +1659,6 @@ export default function WorkoutSession({
             </Button>
           </div>
         )}
-
-        {/* Double-progression nudge — only while this exercise is untouched
-            this session (a mid-session flip would be noise), and only the
-            "increase" case (prefill already covers "repeat"). Apply sets
-            every set's weight in one tap. */}
-        {suggestions[currentExIndex] &&
-          !currentSets.some((st) => st.completed) && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-lifting/10">
-              <TrendingUp
-                className="size-4 shrink-0 text-lifting"
-                aria-hidden="true"
-              />
-              <p className="min-w-0 flex-1 text-xs text-foreground leading-relaxed">
-                All sets hit{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].targetReps}
-                </span>{" "}
-                reps at{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].lastWeightKg} kg
-                </span>{" "}
-                last time — try{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].weightKg} kg
-                </span>
-                .
-              </p>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  haptic("light");
-                  const target = suggestions[currentExIndex].weightKg;
-                  setSetLogs((prev) => {
-                    const updated = prev.map((sets) =>
-                      sets.map((st) => ({ ...st }))
-                    );
-                    if (updated[currentExIndex]) {
-                      updated[currentExIndex] = updated[currentExIndex].map(
-                        (st) =>
-                          st.type === "warmup" ? st : { ...st, weight: target }
-                      );
-                    }
-                    return updated;
-                  });
-                }}
-              >
-                Apply
-              </Button>
-            </div>
-          )}
 
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
