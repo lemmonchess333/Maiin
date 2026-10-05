@@ -34,6 +34,7 @@ import {
   subscribeQueuedWrites,
 } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
+import { clampFoodName } from "@/lib/mealEntry";
 
 export interface MealItem {
   name: string;
@@ -453,6 +454,9 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
         );
         tx.update(ref, {
           ...updates,
+          ...(typeof updates.foodName === "string"
+            ? { foodName: clampFoodName(updates.foodName) }
+            : {}),
           updatedAt: serverTimestamp(),
           revisionCount: currentRevision + 1,
           userEditCount: currentUserEdit + 1,

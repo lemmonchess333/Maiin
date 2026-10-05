@@ -224,9 +224,11 @@ export default function FoodRow({
             dir="auto" lets a right-to-left name truncate from its own
             end; text-left keeps it at the row's start. */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+          {/* Two lines before an ellipsis: product names often differ
+              only at the end ("…Yogurt Strawberry" / "…Blueberry"). */}
           <p
             dir="auto"
-            className="min-w-0 max-w-full text-left text-sm text-foreground truncate"
+            className="min-w-0 max-w-full text-left text-sm text-foreground line-clamp-2 break-words"
           >
             {group.foodName}
           </p>
