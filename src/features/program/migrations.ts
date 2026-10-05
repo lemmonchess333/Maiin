@@ -275,6 +275,18 @@ function repairSwappedBodyweightLoad(ex: ProgramExercise): ProgramExercise {
   };
 }
 
+/**
+ * One-time reset (schema v5, Lift4): every miss count starts again.
+ *
+ * Lift4 changed what a miss is. A count was kept from the last set alone;
+ * a miss is now a session whose sets add up to fewer reps than the target
+ * on every set, at the plan's own weight. Counts kept under the old rule
+ * are not evidence under the new one, so they reset when it ships.
+ */
+function resetMissCount(ex: ProgramExercise): ProgramExercise {
+  return ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex;
+}
+
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
 // source of truth. The semantics here are unchanged.
@@ -428,9 +440,10 @@ export function migrateProgramState(
   // below and for the same reason: run on every load it would fight every
   // legitimate load below the last success (see `repairDeloadDecay`).
   const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
-  // One-shot for the same reason: run on every load, it would take away a
-  // load someone set on a swapped-in pull-up after the repair.
-  const repairSwappedLoads = (state.programSchemaVersion ?? 1) < 5;
+  // One-shot for the same reason: run on every load, the first would take
+  // away a load someone set on a swapped-in pull-up after the repair, and the
+  // second every miss counted since.
+  const lift4OneShots = (state.programSchemaVersion ?? 1) < 5;
   let workoutsChanged = false;
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
@@ -443,7 +456,8 @@ export function migrateProgramState(
       }
 
       next = repairDeloadDecay(next, restoreDecayedLoads);
-      if (repairSwappedLoads) next = repairSwappedBodyweightLoad(next);
+      if (lift4OneShots)
+        next = resetMissCount(repairSwappedBodyweightLoad(next));
 
       if (next !== exercise) {
         workoutsChanged = true;

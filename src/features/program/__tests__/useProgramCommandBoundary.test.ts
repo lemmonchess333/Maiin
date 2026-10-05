@@ -28,6 +28,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 
 import type { ProgramState } from "../programTypes";
+import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -839,6 +840,8 @@ describe("a block with the week's own focus changes nothing", () => {
   function seedClimbingWeek(extra: Record<string, unknown> = {}) {
     seedFirestore({
       [PROGRAM]: {
+        // Current, so the loader's one-time resets leave the miss count be.
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
         weekNumber: 1,
         splitType: "upper_lower",
         goal: "recomp",

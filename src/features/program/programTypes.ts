@@ -350,8 +350,9 @@ export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v3 (2026-08-04): one-time coverage backfill for plans generated before the
 // lateral-raise and calf slots existed. Version-gated precisely so it runs
 // ONCE — a user who deletes those slots afterwards keeps them deleted.
-// v5: one-time repair of a load a swap carried onto a bodyweight lift
-// (`repairSwappedBodyweightLoad`), one-shot for the same reason.
+// v5: Lift4's one-time repairs — a load a swap carried onto a bodyweight
+// lift (`repairSwappedBodyweightLoad`), and every miss count, kept under
+// the old rule (`resetMissCount`). One-shot for the same reason.
 export const CURRENT_PROGRAM_SCHEMA_VERSION = 5 as const;
 
 /* ================================
@@ -783,7 +784,8 @@ export interface ProgramState {
    * to ScheduledRunDay. v4 is a meaning change rather than a shape
    * one: `WEEK_STARTS_ON` moved to Monday, so every stored week key
    * written under the Sunday anchor is re-anchored once on read. v5
-   * repairs, once, a load a swap carried onto a bodyweight lift.
+   * repairs, once, a load a swap carried onto a bodyweight lift, and
+   * resets the miss counts kept under the old miss rule.
    */
   programSchemaVersion?: number;
   /**

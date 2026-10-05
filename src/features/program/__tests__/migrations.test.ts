@@ -1001,7 +1001,8 @@ describe("migrateProgramState — v5 swapped bodyweight load repair", () => {
       })
     );
     expect(ex.weight).toBe(10);
-    expect(ex.consecutiveFailures).toBe(1);
+    // Its miss count resets with every other (the v5 miss-count reset).
+    expect(ex.consecutiveFailures).toBe(0);
   });
 
   it("leaves loaded lifts alone", () => {
@@ -1025,5 +1026,62 @@ describe("migrateProgramState — v5 swapped bodyweight load repair", () => {
     expect(
       migrateProgramState(current, "2026-10-05").workouts[0].exercises[0].weight
     ).toBe(10);
+  });
+});
+
+/* ─── v5 one-time reset: miss counts kept under the old rule ───────────── */
+
+describe("migrateProgramState — v5 miss-count reset", () => {
+  const counted = (consecutiveFailures: number) =>
+    makeLegacyProgramState({
+      programSchemaVersion: 4,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: false,
+          exercises: [
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              instanceId: "i-bench",
+              movementCategory: "horizontal_push",
+              sets: 3,
+              baseSets: 3,
+              reps: 8,
+              baseReps: 8,
+              repUnit: "reps",
+              weight: 60,
+              progressionType: "double",
+              lastSuccessfulWeight: 60,
+              lastAttemptedWeight: 60,
+              consecutiveFailures,
+              plateauCount: 1,
+              performanceHistory: [],
+              lastPerformance: null,
+            },
+          ],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  it("resets every miss count once, when the new miss rule ships", () => {
+    const ex = migrateProgramState(counted(2), "2026-10-05").workouts[0]
+      .exercises[0];
+    expect(ex.consecutiveFailures).toBe(0);
+    // The stall record is not a miss count.
+    expect(ex.plateauCount).toBe(1);
+  });
+
+  it("keeps a count made under the new rule", () => {
+    const current = {
+      ...counted(1),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    expect(
+      migrateProgramState(current, "2026-10-05").workouts[0].exercises[0]
+        .consecutiveFailures
+    ).toBe(1);
   });
 });
