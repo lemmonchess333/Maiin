@@ -71,7 +71,9 @@ describe("recurring lift time", () => {
       draftScopeForVariant("full")
     );
   });
-  it("holds progression for reduced working sets and keeps omitted exercise histories", () => {
+  // Lift4 (8): a trimmed exercise's sets count like any others, and one set
+  // is not enough for a step; the exercises it left out keep their state.
+  it("holds a trimmed exercise on one set and keeps omitted exercise histories", () => {
     const state = programme();
     const day = state.workouts[0];
     const ex = day.exercises[0];
@@ -94,6 +96,11 @@ describe("recurring lift time", () => {
         ],
       ],
     });
-    expect(next.workouts[0].exercises).toEqual(day.exercises);
+    const [trimmed, ...omitted] = next.workouts[0].exercises;
+    expect(trimmed).toMatchObject({ weight: ex.weight, reps: ex.reps });
+    expect(trimmed.performanceHistory).toHaveLength(
+      (ex.performanceHistory?.length ?? 0) + 1
+    );
+    expect(omitted).toEqual(day.exercises.slice(1));
   });
 });

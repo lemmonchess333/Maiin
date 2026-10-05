@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { applyProgression } from "../programEngine";
+import { applyProgression, applySessionSets } from "../programEngine";
 import type { ProgramExercise } from "../programTypes";
 import {
   isSetEligibleForProgression,
   isSetEligibleForStrengthPr,
-  progressionSetFor,
 } from "../sessionSetPolicy";
+import { readSessionSets } from "../sessionSets";
 
 describe("isSetEligibleForStrengthPr", () => {
   it("rejects warm-ups so they cannot create phantom rep PRs", () => {
@@ -75,7 +75,7 @@ describe("isSetEligibleForProgression", () => {
    `consecutiveFailures` reached 3, and the backoff cut the load 5%. Then it
    reset the counter and did it again. A lifter using drop sets was walked
    down indefinitely for training correctly. ── */
-describe("progressionSetFor → applyProgression (D3)", () => {
+describe("readSessionSets → applySessionSets (D3)", () => {
   const mkEx = (over: Partial<ProgramExercise> = {}): ProgramExercise => ({
     name: "Bench Press",
     exerciseId: "bench-press",
@@ -105,9 +105,15 @@ describe("progressionSetFor → applyProgression (D3)", () => {
     { completed: true, type: "dropset", reps: 12, weight: 60 },
   ];
 
-  it("picks the last WORKING set, not the trailing drop set", () => {
-    const chosen = progressionSetFor(sessionEndingInADropSet());
-    expect(chosen).toMatchObject({ type: "working", reps: 8, weight: 100 });
+  it("reads the WORKING sets, not the trailing drop set", () => {
+    expect(readSessionSets(sessionEndingInADropSet(), 4)).toEqual({
+      weight: 100,
+      counted: [
+        { weight: 100, reps: 8 },
+        { weight: 100, reps: 8 },
+        { weight: 100, reps: 8 },
+      ],
+    });
   });
 
   /**
@@ -126,8 +132,12 @@ describe("progressionSetFor → applyProgression (D3)", () => {
           ? [{ completed: true, type: "dropset", reps: 12, weight: 60 }]
           : []),
       ];
-      const s = progressionSetFor(sets)!;
-      ex = applyProgression(ex, s.reps, s.weight, "recomp", false);
+      ex = applySessionSets(
+        ex,
+        readSessionSets(sets, ex.sets)!,
+        "recomp",
+        false
+      );
     }
     return ex;
   };
@@ -165,18 +175,25 @@ describe("progressionSetFor → applyProgression (D3)", () => {
 
   it("skips progression when nothing eligible was completed", () => {
     expect(
-      progressionSetFor([
-        { completed: true, type: "warmup", reps: 5, weight: 40 },
-        { completed: false, type: "working", reps: 8, weight: 100 },
-      ])
+      readSessionSets(
+        [
+          { completed: true, type: "warmup", reps: 5, weight: 40 },
+          { completed: false, type: "working", reps: 8, weight: 100 },
+        ],
+        4
+      )
     ).toBeNull();
   });
 
   it("ignores an incomplete trailing set", () => {
-    const chosen = progressionSetFor([
-      { completed: true, type: "working", reps: 8, weight: 100 },
-      { completed: false, type: "working", reps: 0, weight: 100 },
-    ]);
-    expect(chosen).toMatchObject({ reps: 8 });
+    expect(
+      readSessionSets(
+        [
+          { completed: true, type: "working", reps: 8, weight: 100 },
+          { completed: false, type: "working", reps: 0, weight: 100 },
+        ],
+        4
+      )?.counted
+    ).toEqual([{ weight: 100, reps: 8 }]);
   });
 });

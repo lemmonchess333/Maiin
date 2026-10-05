@@ -57,6 +57,12 @@ import {
 } from "./overlapModel";
 import { applyComplexityGate, usesUndulation } from "./experienceModel";
 import { nextUpIndex } from "./nextUpCursor";
+import {
+  hardestEffort,
+  recordedReps,
+  sessionOutcome,
+  type SessionRead,
+} from "./sessionSets";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -2312,6 +2318,97 @@ export function applyProgression(
   }
 
   return updated;
+}
+
+/**
+ * One finished session's progression for an exercise, read from all its
+ * working sets (Lift4). `sessionSets.ts` decides which sets count and what
+ * they earned; the climb and the steps are `applyProgression`'s.
+ *
+ * - step: the climb or the load step from the weight followed, with the
+ *   weakest counted set as the reps done, so the next target is one past
+ *   what every set reached, and the hardest logged effort as the session's;
+ * - miss: `applyProgression`'s miss, at the plan's own weight;
+ * - hold: the plan follows the weight lifted and moves nothing else, and a
+ *   run of misses ends there.
+ *
+ * The session's record shows the average set at the weight followed
+ * (`recordedReps`), so a record falls under its target exactly when the
+ * session was a miss. An uncalibrated lift, or a loaded one logged with no
+ * load, goes to `applyProgression` whatever the sets earned: it calibrates
+ * the first, and keeps the second as it was.
+ */
+export function applySessionSets(
+  exercise: ProgramExercise,
+  read: SessionRead,
+  goal: Goal,
+  microloading: boolean
+): ProgramExercise {
+  const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
+  const reps = recordedReps(read);
+  const weakest = Math.min(...read.counted.map((set) => set.reps));
+  const lifted = liftedLoad(exercise.exerciseId, read.weight);
+  const byEngine =
+    (!isBodyweight && (exercise.weight === 0 || lifted === null)) ||
+    sessionOutcome(read, exercise, isBodyweight) !== "hold";
+  if (byEngine) {
+    return withRecordedReps(
+      applyProgression(
+        exercise,
+        weakest,
+        read.weight,
+        goal,
+        microloading,
+        hardestEffort(read)
+      ),
+      reps
+    );
+  }
+  return {
+    ...exercise,
+    ...(lifted === null ? {} : { weight: lifted }),
+    lastAttemptedWeight: read.weight,
+    performanceHistory: [
+      ...(exercise.performanceHistory || []),
+      {
+        date: format(new Date(), "yyyy-MM-dd"),
+        weight: read.weight,
+        repsCompleted: reps,
+        repsTarget: exercise.reps,
+      },
+    ].slice(-PERFORMANCE_HISTORY_CAP),
+    lastPerformance: {
+      sets: exercise.sets,
+      reps,
+      weight: read.weight,
+      completed: false,
+    },
+    consecutiveFailures: 0,
+  };
+}
+
+/** `applyProgression` records the reps it was given; the session's record
+ *  shows its average set instead. */
+function withRecordedReps(
+  exercise: ProgramExercise,
+  reps: number
+): ProgramExercise {
+  const history = exercise.performanceHistory ?? [];
+  return {
+    ...exercise,
+    ...(history.length
+      ? {
+          performanceHistory: history.map((record, i) =>
+            i === history.length - 1
+              ? { ...record, repsCompleted: reps }
+              : record
+          ),
+        }
+      : {}),
+    ...(exercise.lastPerformance
+      ? { lastPerformance: { ...exercise.lastPerformance, reps } }
+      : {}),
+  };
 }
 
 /* ================================

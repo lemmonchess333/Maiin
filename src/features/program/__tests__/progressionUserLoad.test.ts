@@ -482,13 +482,28 @@ describe("at the finish (applySessionProgression)", () => {
     }
   });
 
-  it("an easier session and a shortened one keep the prescription", () => {
+  // Lift4 (8): an easier session's weights are lighter by design, so it can
+  // move a weight up, never down; a shortened session's sets count like any
+  // others, and one set is not enough for a step.
+  it("an easier session can move a weight up, never down", () => {
     const state = stateWith(bench());
     const stored = state.workouts[0].exercises[0];
     expect(finish(state, three(50, 6), "easier_today")).toBe(stored);
-    expect(finish(state, [{ weight: 50, reps: 6 }], "time_budget")).toBe(
-      stored
+    expect(finish(state, three(65, 6), "easier_today")).toMatchObject({
+      weight: 65,
+      reps: stored.reps,
+    });
+  });
+
+  it("a shortened session's sets count: one set follows the weight and holds", () => {
+    const out = finish(
+      stateWith(bench()),
+      [{ weight: 50, reps: 6 }],
+      "time_budget"
     );
+    expect(out.weight).toBe(50);
+    expect(out.reps).toBe(6);
+    expect(out.consecutiveFailures).toBe(0);
   });
 });
 
@@ -508,14 +523,18 @@ describe("after the next load, a lowered plan stays lowered", () => {
     expect(reload(next).weight).toBe(50);
   });
 
-  it("a lighter third miss: the load lifted, the target back at its base", () => {
+  // Lift4 (7): a miss counts only at the weight the plan asked for. Short
+  // of the reps at a weight of the person's own choosing, the plan follows
+  // the weight and the run of misses ends.
+  it("a lighter session short of its reps: the load lifted, not a miss", () => {
     const next = finishState(
       stateWith(bench({ reps: 7, consecutiveFailures: 2 })),
       three(50, 4)
     );
     const ex = reload(next);
     expect(ex.weight).toBe(50);
-    expect(ex.reps).toBe(6);
+    expect(ex.reps).toBe(7);
+    expect(ex.consecutiveFailures).toBe(0);
   });
 
   it("a heavier session keeps its load too", () => {

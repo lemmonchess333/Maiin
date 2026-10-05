@@ -2,11 +2,11 @@ import { sameStoredValue } from "./stateTransition";
 import type { ProgramExercise, ProgramState } from "./programTypes";
 import type { LoggedSet } from "./workoutSetRecord";
 import {
-  applyProgression,
+  applySessionSets,
   liftedLoad,
   PERFORMANCE_HISTORY_CAP,
 } from "./programEngine";
-import { progressionSetFor } from "./sessionSetPolicy";
+import { readSessionSets, recordedReps } from "./sessionSets";
 import { blockWeekOf } from "./trainingBlock";
 import { isProgressionHeld } from "./represcribe";
 
@@ -71,30 +71,32 @@ export function applySessionProgression(
               );
               if (!legacy && !sameStoredValue(baseline, expected))
                 return stored;
-              const logs = (session.setLogs[inputIndex] ?? []).filter(
-                (set) => set.type !== "warmup"
+              // Lift4: every working set counts, and a set not done is just
+              // not done, so a session cut short counts like any other.
+              const read = readSessionSets(
+                session.setLogs[inputIndex] ?? [],
+                baseline.sets
               );
-              const last = progressionSetFor(
-                logs.map((set) => ({ ...set, type: set.type ?? "working" }))
-              );
-              if (
-                session.sessionVariant === "easier_today" ||
-                (session.sessionVariant === "time_budget" &&
-                  logs.length < baseline.sets) ||
-                !last ||
-                !logs.every((set) => set.completed)
-              )
-                return legacy ? baseline : stored;
+              if (!read) return legacy ? baseline : stored;
+              // An easier session's weights are lighter by design: it can
+              // move a weight up, never down, and says nothing else.
+              if (session.sessionVariant === "easier_today") {
+                const lifted = liftedLoad(baseline.exerciseId, read.weight);
+                return lifted !== null && lifted > baseline.weight
+                  ? { ...baseline, weight: lifted, lastAttemptedWeight: lifted }
+                  : legacy
+                    ? baseline
+                    : stored;
+              }
+              const reps = recordedReps(read);
 
               let next: ProgramExercise;
               if (!held && settings.autoProgression) {
-                next = applyProgression(
+                next = applySessionSets(
                   baseline,
-                  last.reps,
-                  last.weight,
+                  read,
                   state.goal,
-                  settings.microloading,
-                  last.rpe
+                  settings.microloading
                 );
                 // A late/offline save belongs to the session's original local date.
                 next.performanceHistory = next.performanceHistory?.map(
@@ -111,16 +113,16 @@ export function applySessionProgression(
                 // load is not auto-progression.
                 const lifted = held
                   ? null
-                  : liftedLoad(baseline.exerciseId, last.weight);
+                  : liftedLoad(baseline.exerciseId, read.weight);
                 next = {
                   ...baseline,
                   ...(lifted === null ? {} : { weight: lifted }),
-                  lastAttemptedWeight: last.weight,
+                  lastAttemptedWeight: read.weight,
                   lastPerformance: {
                     sets: baseline.sets,
-                    reps: last.reps,
-                    weight: last.weight,
-                    completed: last.reps >= baseline.reps,
+                    reps,
+                    weight: read.weight,
+                    completed: reps >= baseline.reps,
                   },
                   ...(held
                     ? {
@@ -128,8 +130,8 @@ export function applySessionProgression(
                           ...(baseline.performanceHistory ?? []),
                           {
                             date: session.date,
-                            weight: last.weight,
-                            repsCompleted: last.reps,
+                            weight: read.weight,
+                            repsCompleted: reps,
                             repsTarget: baseline.reps,
                           },
                         ].slice(-PERFORMANCE_HISTORY_CAP),

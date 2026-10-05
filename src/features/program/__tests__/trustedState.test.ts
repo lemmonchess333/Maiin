@@ -113,7 +113,9 @@ describe("workout commitment", () => {
     expect(readDoc(WORKOUT)?.notes).toBe("Original");
   });
 
-  it("does not progress an exercise whose last set was undone", async () => {
+  // Lift4 (8): a set left undone is a set not done. Two sets at the target
+  // earn the step; one does not.
+  it("progresses on the sets done when the last was left undone", async () => {
     await commitWorkoutCompletion(
       db,
       "u1",
@@ -121,11 +123,24 @@ describe("workout commitment", () => {
       { completedSets: 2 },
       context(plan(), [true, true, false])
     );
+    const exercise = storedPlan().workouts[0].exercises[0];
+    expect(exercise.weight).toBeGreaterThan(100);
+    expect(exercise.performanceHistory).toHaveLength(1);
+    expect(readDoc(WORKOUT)?.completedSets).toBe(2);
+  });
+
+  it("holds on a single set done", async () => {
+    await commitWorkoutCompletion(
+      db,
+      "u1",
+      "programme-final",
+      { completedSets: 1 },
+      context(plan(), [true, false, false])
+    );
     expect(storedPlan().workouts[0].exercises[0]).toMatchObject({
       weight: 100,
-      performanceHistory: [],
+      consecutiveFailures: 0,
     });
-    expect(readDoc(WORKOUT)?.completedSets).toBe(2);
   });
 
   it("uses the corrected final performance rather than the earlier successful tap", async () => {
@@ -155,9 +170,13 @@ describe("workout commitment", () => {
       "u1",
       "programme-final",
       {},
-      context(plan(), [true, true, false])
+      context(plan(), [true, false, false])
     );
-    expect(storedPlan().workouts[0].exercises[0]).toEqual(baseline);
+    // Evaluated from the baseline, not from the draft's provisional 101:
+    // one set holds at 100.
+    const exercise = storedPlan().workouts[0].exercises[0];
+    expect(exercise.weight).toBe(100);
+    expect(exercise.sessionProgression).toBeUndefined();
   });
 
   it.each(["week", "target", "day already completed"])(
