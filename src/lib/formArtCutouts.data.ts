@@ -167,6 +167,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
     sha256: "30c9c8049207090bc2c03785b89df6907b7096088c56b433eeb15de9bc563b55",
   },
+  "cable-curl": {
+    src: "form-art/cable-curl.webp",
+    width: 403,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-curl/1.webp",
+    sourceSha256:
+      "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d",
+    sha256: "0256252af7e2954b64be78a15a254368554234749830a898bfc73079cb8d6dd0",
+  },
   "cable-lateral-raise": {
     src: "form-art/cable-lateral-raise.webp",
     width: 289,

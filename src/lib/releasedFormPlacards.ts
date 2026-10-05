@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "cable-curl": placard(
+    "cable-curl",
+    ["Biceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Grip underhand; keep tension in the cable."],
+      [0.6, "Curl", "Curl upward with elbows at your sides."],
+      [1, "Top", "Bring the bar toward your shoulders."],
+      [1, "Hold", "Hold briefly without leaning or shrugging."],
+      [0.6, "Lower", "Lower slowly, keeping your elbows still."],
+      [0, "Return", "Return with the cable still taut."],
+    ]
+  ),
   "preacher-curl": placard(
     "preacher-curl",
     ["Biceps"],
