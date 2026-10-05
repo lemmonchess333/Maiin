@@ -27,7 +27,8 @@
  * already pinned by its own cross-test.
  *
  * `MAX_PRESCRIBED_REPS` is derived from `MAX_BODYWEIGHT_REPS` rather than
- * written as 20, exactly as the client derives it. The client's comment is
+ * written as 20, exactly as the client derives it, and the cross-test holds
+ * the ceiling it sets to the client's (`prescribedRepCeiling`). The client's comment is
  * the reason: "20 is not a new number — MAX_BODYWEIGHT_REPS is already the
  * point where the progression engine stops adding reps and tells the user to
  * add load." Two literals would let those drift apart silently.
@@ -52,7 +53,10 @@
  */
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
-const { MAX_BODYWEIGHT_REPS } = require("./progressionEngine");
+
+/** Mirror of programEngine.ts MAX_BODYWEIGHT_REPS: where a bodyweight lift's
+ *  climb stops and the plan asks for load. */
+const MAX_BODYWEIGHT_REPS = 20;
 
 /** Mirror of programEngine.ts GOAL_PROFILES. */
 const GOAL_PROFILES = Object.freeze({

@@ -184,8 +184,8 @@ prescription. This reverses the Lift2 lock, which read a lighter session as
 a user modification to hold under steps 2 and 4 above, and its four-step
 bound on a heavier one; do not re-derive either from this ladder. Code:
 `liftedLoad` and `applyProgression` in
-`src/features/program/programEngine.ts`, mirrored in
-`functions/lib/progressionEngine.js`.
+`src/features/program/programEngine.ts`, the only copy since Lift4 build
+step 3 retired the server's (below).
 
 ### Contemporary evidence checkpoints
 
@@ -205,7 +205,7 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
 | Volume and recovery      | volumeModel, muscleTaxonomy, overlapModel, adjustmentRule                                                        | The system uses auditable muscle accounting and recovery/overlap controls. Internal MRV-style labels are product heuristics, not a diagnosis or measured personal physiology.                                                                     |
 | Block lifecycle          | trainingBlock, represcribe, useProgram, server command reducers                                                  | An active block temporarily owns the lift prescription and is reversibly released through the command boundary.                                                                                                                                   |
 | Commands and persistence | programCommandClient, commandOutbox, useProgram, functions/index.js, functions/lib/programCommands.js            | Most interactive programme mutations now use optimistic command application, durable outbox handling, rejection rollback, and authoritative refetch.                                                                                              |
-| Session and progression  | WorkoutSession, useProgram, programEngine, functions/lib/progressionEngine.js                                    | Completion, effort, progression, history, and persistence must stay semantically aligned on client and server.                                                                                                                                    |
+| Session and progression  | WorkoutSession, useProgram, programEngine, sessionCompletion, workoutCompletion                                  | Completion, effort, progression, history, and persistence must stay semantically aligned; progression runs only in the client, inside the completion transaction.                                                                                 |
 
 ## Current remote-main behavior to preserve
 
@@ -332,15 +332,14 @@ fatigue shave.
   the current reorder-rejection fallback. A new direct snapshot write needs a
   named owner, an explicit precedence/conflict reason, and tests showing no
   hidden-field loss.
-- The server's progression copy, `functions/lib/progressionEngine.js`, runs
-  only inside the `logExercise` command, and no current client sends that
-  command: a finished session's progression runs in the client
-  (`applySessionProgression` inside `commitWorkoutCompletion`). Classified
-  for Lift4 (build step 0, 2026-10-05) as a legacy copy to retire, with the
-  command, before the progression changes of build step 3, so the client
-  engine is the only copy those changes touch. Until it goes it stays in
-  parity (`applyProgression.cross.test.ts`). ADR-0008 is amended when it
-  is removed.
+- The server's progression copy, `functions/lib/progressionEngine.js`, ran
+  only inside the `logExercise` command, which no client had sent since
+  progression moved to the finish (`applySessionProgression` inside
+  `commitWorkoutCompletion`). Classified for Lift4 at build step 0 and
+  retired at the start of build step 3 (2026-10-05): the command, that copy
+  and the easing-block hold's server copy (`progressionHold.js`) are gone
+  with their parity tests, so the client engine is the only copy the
+  progression changes touch. ADR-0008 records it.
 
 ## Status ledger
 

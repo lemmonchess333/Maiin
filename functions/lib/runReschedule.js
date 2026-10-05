@@ -22,9 +22,8 @@
  * TIMEZONE NOTE. `dateForDay` adds whole days to a plain YYYY-MM-DD week
  * anchor (the weekday offset, not the raw index — see its docstring). Both sides parse a calendar day and emit a calendar day with no
  * wall-clock instant in between, so a consistent parse (UTC here, local on
- * the client) yields the same string. Same argument as progressionHold.js,
- * and the cross-test walks every day of the week to prove it rather than
- * asserting it.
+ * the client) yields the same string, and the cross-test walks every day of
+ * the week to prove it rather than asserting it.
  *
  * TESTED-COPY RULE: pinned against `src/lib/runReschedule.ts` by
  * `src/features/program/__tests__/runReschedule.cross.test.ts`.

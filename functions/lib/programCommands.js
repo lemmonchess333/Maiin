@@ -42,17 +42,6 @@
  * `HttpsError("invalid-argument", …)` / `"failed-precondition"`.
  */
 
-// Server mirror of the client progression engine (pinned by a parity
-// cross-test). Used by the logExercise reducer.
-const {
-  applyProgression,
-  dateStampUTC,
-  liftedLoad,
-  PERFORMANCE_HISTORY_CAP,
-} = require("./progressionEngine");
-// Easing-block progression hold (pinned by a parity cross-test). The third
-// branch of the logExercise reducer.
-const { holdsProgression } = require("./progressionHold");
 // Catalog name mirror + ProgramExercise builder (both pinned by cross-tests).
 // Used by the addExercises / replaceExercise reducers to derive exercise fields
 // server-side rather than trust a client-supplied exercise object.
@@ -110,7 +99,6 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "completeWorkoutDay",
   "skipWorkoutDay",
   "setNextWorkout",
-  "logExercise",
   "removeExercise",
   "addExercises",
   "replaceExercise",
@@ -489,42 +477,6 @@ const KIND_VALIDATORS = {
   setNextWorkout(command, out) {
     assertKeys(command, "setNextWorkout", ["kind", "commandId", ...PRECONDITION_KEYS], []);
     validatePrecondition(command, out);
-  },
-
-  logExercise(command, out) {
-    assertKeys(
-      command,
-      "logExercise",
-      ["kind", "commandId", "exerciseInstanceId", "actual", ...PRECONDITION_KEYS],
-      // `today` is the user's LOCAL calendar day, which the server cannot
-      // derive (no timezone on programState). It feeds the easing-block hold
-      // only. `actualRpe` is the client's optional RPE — the progression
-      // engine already takes it; the command used to drop it, which silently
-      // progressed a session the user had flagged as maximal.
-      ["today", "actualRpe", "sessionId", "correction"]
-    );
-    validatePrecondition(command, out);
-    out.exerciseInstanceId = assertString(
-      command.exerciseInstanceId,
-      "exerciseInstanceId",
-      MAX_ID_LEN
-    );
-    out.actual = validateSetLog(command.actual, "actual");
-    if ("sessionId" in command) {
-      out.sessionId = assertString(command.sessionId, "sessionId", MAX_ID_LEN);
-    }
-    if ("correction" in command) {
-      if (command.correction !== true || !out.sessionId) {
-        invalidCommand("A correction requires its session id.");
-      }
-      out.correction = true;
-    }
-    if ("today" in command) {
-      out.today = assertLocalDate(command.today, "today");
-    }
-    if ("actualRpe" in command) {
-      out.actualRpe = assertFiniteNumber(command.actualRpe, "actualRpe", 1, 10);
-    }
   },
 
   removeExercise(command, out) {
@@ -1037,14 +989,6 @@ function makeCommandReceipt({ command, now }) {
 // applies exactly one validated command, and returns the next state — so two
 // concurrent commands, each retried against the LATEST committed state, both
 // survive instead of the last client snapshot winning.
-//
-// SCOPE OF THIS PR. Ten of the fourteen command kinds are implemented here —
-// every kind that is a pure state transform. The four GENERATION-dependent
-// kinds (`completeWorkoutDay`'s workout effect, `logExercise`'s progression
-// engine, and `addExercises`/`replaceExercise`'s catalog build) are staged
-// into the next PR, where they pair with the callable that injects admin
-// `Timestamp`, the progression engine, and the exercise catalog. Until then
-// they throw a clear staged error. The reducer is INERT: nothing calls it yet.
 //
 // DETERMINISM. `normalizeForReducer` applies only value defaults + a deep-safe
 // per-slice immutable update — it NEVER invents `instanceId`s. Per the packet,
@@ -1983,107 +1927,6 @@ function revertEaseWeekCommand(state, command) {
   return next;
 }
 
-function logExercise(state, command, now) {
-  const day = requireWorkoutDay(state, command);
-  // Older clients can replay per-set commands after the final save arrived.
-  // The saved workout now owns progression; only its revisioned correction
-  // path may replace that result.
-  if (day.completed && day.completedWorkoutId) {
-    failedPrecondition("This workout is saved. Correct it from History.");
-  }
-  const idx = day.exercises.findIndex(
-    (ex) => ex && ex.instanceId === command.exerciseInstanceId
-  );
-  if (idx === -1) {
-    failedPrecondition("That exercise is no longer in this workout.");
-  }
-  const storedExercise = day.exercises[idx];
-  if (command.correction && storedExercise.sessionProgression?.id !== command.sessionId) {
-    failedPrecondition("This session's progression can no longer be corrected. Refresh your workout.");
-  }
-  // Only a baseline recorded by this reducer is trusted. A corrected set
-  // replaces this session's result instead of counting as another workout.
-  const { sessionProgression, ...currentExercise } = storedExercise;
-  const exercise = command.sessionId && sessionProgression?.id === command.sessionId
-    ? sessionProgression.baseline
-    : currentExercise;
-  const settings = isPlainObject(state.settings)
-    ? state.settings
-    : { autoProgression: true, microloading: true };
-
-  // Mirrors useProgram.logExercise — all THREE of its branches. The held one
-  // arrived with the boundary migration: the client had it and this reducer
-  // did not, so the server would have progressed a returning lifter straight
-  // through the window designed to hold them. See lib/progressionHold.js.
-  let updatedExercise;
-  if (holdsProgression(state.trainingBlock, command.today)) {
-    // Blk2: an "easing back in" block holds LOAD, but still records the
-    // session — the sessions happened and the user should see them. This is
-    // what separates the hold from the autoProgression:false branch below,
-    // which writes no history at all.
-    const history = [
-      ...(Array.isArray(exercise.performanceHistory)
-        ? exercise.performanceHistory
-        : []),
-      {
-        // UTC stamp, as everywhere else on the server. The field is
-        // informational and not week-bucketed — progressionEngine.js makes
-        // the same call and documents it.
-        date: dateStampUTC(now),
-        weight: command.actual.weight,
-        repsCompleted: command.actual.reps,
-        repsTarget: exercise.reps,
-      },
-    ].slice(-PERFORMANCE_HISTORY_CAP);
-    updatedExercise = {
-      ...exercise,
-      lastAttemptedWeight: command.actual.weight,
-      lastPerformance: {
-        sets: exercise.sets,
-        reps: command.actual.reps,
-        weight: command.actual.weight,
-        completed: command.actual.reps >= exercise.reps,
-      },
-      performanceHistory: history,
-    };
-  } else if (settings.autoProgression) {
-    updatedExercise = applyProgression(
-      exercise,
-      command.actual.reps,
-      command.actual.weight,
-      state.goal,
-      settings.microloading,
-      command.actualRpe,
-      now
-    );
-  } else {
-    // Auto-progression off: no step, and no success or failure accounting,
-    // but the plan still carries the load lifted (`liftedLoad`) — following
-    // the person's own load is not auto-progression. Mirror of the client's
-    // sessionCompletion.applySessionProgression.
-    const lifted = liftedLoad(exercise.exerciseId, command.actual.weight);
-    updatedExercise = {
-      ...exercise,
-      ...(lifted === null ? {} : { weight: lifted }),
-      lastAttemptedWeight: command.actual.weight,
-      lastPerformance: {
-        sets: exercise.sets,
-        reps: command.actual.reps,
-        weight: command.actual.weight,
-        completed: command.actual.reps >= exercise.reps,
-      },
-    };
-  }
-
-  if (command.sessionId) {
-    updatedExercise.sessionProgression = { id: command.sessionId, baseline: exercise };
-  }
-  return mapWorkoutDay(state, command.dayIndex, (d) => ({
-    ...d,
-    exercises: d.exercises.map((ex, i) => (i === idx ? updatedExercise : ex)),
-  }));
-}
-
 // Build the exercise catalog lookup + validation for add/replace. Rejects an
 // unknown id as invalid-argument (the id comes from the catalog picker; an
 // unknown one is a malformed/forged command, not stale state).
@@ -2169,7 +2012,7 @@ function replaceExercise(state, command) {
      it. What the validator refuses is a client-supplied EXERCISE OBJECT — the
      name, the category, the identity — because those must be derived from the
      catalog server-side, and they still are. A bounded non-negative number is
-     the same shape as the weight already accepted on `logExercise` and
+     the same shape as the weight already accepted on
      `updateExercise.patch`. The failure mode if a client sends a silly value
      is a bad starting weight in that user's own programme, which the
      progression engine corrects within a session or two — the module that
@@ -2394,9 +2237,6 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "reorderExercises":
       next = reorderExercises(current, validated);
-      break;
-    case "logExercise":
-      next = logExercise(current, validated, now);
       break;
     case "addExercises":
       next = addExercises(current, validated);

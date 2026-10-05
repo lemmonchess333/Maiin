@@ -141,7 +141,7 @@ describe("applyProgression — double progression", () => {
   it("responds on the 3rd consecutive failure (not the 2nd): the target resets, the load stays", () => {
     // The person sets the load and the plan follows it, so a run of misses
     // puts the rep target back to its base and records the stall instead
-    // of cutting the weight (progressionUserLoad.test.ts has both copies).
+    // of cutting the weight (progressionUserLoad.test.ts has the rest).
     const ex = makeTestExercise({ reps: 7, consecutiveFailures: 1 });
     // 2nd failure — no response yet
     const result = applyProgression(ex, 4, 60, "recomp", false);

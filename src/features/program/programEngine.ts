@@ -289,10 +289,10 @@ const MIN_HOLD_SECONDS = 10;
 /**
  * Per-exercise `performanceHistory` ceiling.
  *
- * D2: this was `.slice(-10)` here and in the server mirror, but `.slice(-20)`
- * on `useProgram`'s block-amnesty branch — so how much history a lifter kept
- * silently depended on whether a training block happened to be holding
- * progression that week. Exported so the three sites share one number.
+ * D2: this was `.slice(-10)` here, but `.slice(-20)` on `useProgram`'s
+ * block-amnesty branch — so how much history a lifter kept silently depended
+ * on whether a training block happened to be holding progression that week.
+ * Exported so the sites share one number.
  *
  * NOT raised to cover the multi-week phenomena the lifting arc cares about
  * (interference takes ~8 weeks to appear, periodisation diverges after ~6),
@@ -2034,7 +2034,6 @@ export function generateProgram(
  *
  * `null` when there is no load to follow: a bodyweight movement, whose axis
  * is reps, or a set saved with no load (a cleared weight field saves 0).
- * Mirrored by `liftedLoad` in functions/lib/progressionEngine.js.
  */
 export function liftedLoad(
   exerciseId: string | undefined,
