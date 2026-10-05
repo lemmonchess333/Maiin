@@ -107,7 +107,7 @@ import {
   setOrdinal,
   type SetType,
 } from "@/features/program/setLabels";
-import { platesPerSide } from "@/lib/plateCalculator";
+import { platesPerSide } from "@/lib/plateMath";
 import {
   useWorkoutDraft,
   computeDraftIdentity,
@@ -705,8 +705,8 @@ export default function WorkoutSession({
   const currentExercise = day.exercises[safeExIndex];
 
   // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
-  // barbell-only (dumbbell/machine lifts don't load plates). Standard plates;
-  // micro-plate awareness via the microloading setting is a follow-up.
+  // barbell-only (dumbbell/machine lifts don't load plates). The standard set
+  // runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
   const plateLoad = useMemo(() => {
     if (!currentExercise || currentExercise.weight <= 0) return null;
     if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
@@ -2111,8 +2111,14 @@ export default function WorkoutSession({
         {/* #985 — plate breakdown per side (barbell only). */}
         {plateLoad && plateLoad.perSide.length > 0 && (
           <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
-            Per side: {plateLoad.perSide.join(" + ")}
-            {!plateLoad.exact && ` · ${plateLoad.leftover} kg short`}
+            Per side:{" "}
+            {plateLoad.perSide
+              .flatMap(({ plateKg, count }) =>
+                Array<number>(count).fill(plateKg)
+              )
+              .join(" + ")}
+            {plateLoad.remainderKg > 0 &&
+              ` · ${plateLoad.remainderKg} kg short`}
           </p>
         )}
       </div>

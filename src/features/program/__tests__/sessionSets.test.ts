@@ -138,6 +138,41 @@ describe("sessionOutcome — what the sets earned (Lift4)", () => {
     ).toBe("step");
   });
 
+  it("judges a target climbed past its range at the top of the range", () => {
+    // 3 × 18 on a 12–15 range: the next weight was too big a step, so the
+    // reps past 15 are a climb, and 17s are not a miss.
+    const stretched = {
+      weight: 10,
+      reps: 18,
+      sets: 3,
+      baseReps: 12,
+      repRangeMax: 15,
+    };
+    expect(
+      sessionOutcome(
+        read([done(10, 17), done(10, 17), done(10, 17)]),
+        stretched,
+        false
+      )
+    ).toBe("hold");
+    expect(
+      sessionOutcome(
+        read([done(10, 14), done(10, 14), done(10, 14)]),
+        stretched,
+        false
+      )
+    ).toBe("miss");
+    // A fixed target, stretched: judged at the target it was.
+    const fixed = { weight: 15, reps: 8, sets: 3, baseReps: 5 };
+    expect(
+      sessionOutcome(
+        read([done(15, 6), done(15, 6), done(15, 6)]),
+        fixed,
+        false
+      )
+    ).toBe("hold");
+  });
+
   it("steps a bodyweight lift only at the added load asked for or more", () => {
     const loaded = { weight: 10, reps: 8, sets: 3 };
     expect(sessionOutcome(read([done(0, 8), done(0, 8)]), loaded, true)).toBe(
@@ -187,7 +222,7 @@ describe("applySessionSets — the engine on a whole session", () => {
     };
   }
   const apply = (ex: ProgramExercise, sets: ReturnType<typeof done>[]) =>
-    applySessionSets(ex, read(sets, ex.sets), "recomp", false);
+    applySessionSets(ex, read(sets, ex.sets), false);
 
   it("climbs to one past the weakest set", () => {
     const out = apply(bench(), [done(60, 10), done(60, 10), done(60, 9)]);
@@ -237,6 +272,21 @@ describe("applySessionSets — the engine on a whole session", () => {
     expect(out.weight).toBe(55);
     expect(out.consecutiveFailures).toBe(0);
   });
+
+  it("starts a heavier weight's reps from the bottom again", () => {
+    // 10 reps was the target climbed at 60 kg; 65 kg starts from 8.
+    const out = apply(bench({ reps: 10 }), [
+      done(65, 9),
+      done(65, 9),
+      done(65, 8),
+    ]);
+    expect(out.weight).toBe(65);
+    expect(out.reps).toBe(8);
+    // A lighter one keeps the target: the climb is still the plan's.
+    expect(apply(bench({ reps: 10 }), [done(55, 9), done(55, 9)]).reps).toBe(
+      10
+    );
+  });
 });
 
 /* ─── Lift4 release 2: two misses lower a lift, and it climbs back ────── */
@@ -268,7 +318,6 @@ describe("the drop: two misses in a row lower a lift (Lift4 (7))", () => {
         reps.map((r) => done(weight, r)),
         ex.sets
       ),
-      "recomp",
       false
     );
 
@@ -350,9 +399,8 @@ describe("the drop: two misses in a row lower a lift (Lift4 (7))", () => {
     }
     expect(seen.slice(0, 4)).toEqual([92.5, 95, 97.5, 100]);
     expect(ex.lowered).toBeUndefined();
-    // Back at 100, the usual rules: without microloading a linear lift steps
-    // on two reps over, so 5, 5, 5 holds.
-    expect(seen[4]).toBe(100);
+    // Back at 100, the usual rules: every set at the target is a step.
+    expect(seen[4]).toBe(102.5);
   });
 
   it("climbs back on a session that is not a miss, even short of a step", () => {
@@ -391,8 +439,9 @@ describe("the drop: two misses in a row lower a lift (Lift4 (7))", () => {
       weight: 90,
       lowered: { exerciseId: "squat", from: 100, unit: "kg", target: 5 },
     });
-    const out = session(front, 90, [5, 5, 5]);
-    expect(out.weight).toBe(90); // the usual rules, not a climb to 100
+    // 6, 5, 4 is a hold: the usual rules keep 90, where a climb would step.
+    const out = session(front, 90, [6, 5, 4]);
+    expect(out.weight).toBe(90);
     expect(out.lowered).toBeUndefined();
   });
 });
@@ -419,7 +468,6 @@ describe("how far a lift comes down: 10% on its step grid, at least a step", () 
     const out = applySessionSets(
       ex,
       read([done(ex.weight, 6), done(ex.weight, 6), done(ex.weight, 6)]),
-      "recomp",
       false
     );
     return out.weight;
@@ -436,6 +484,6 @@ describe("how far a lift comes down: 10% on its step grid, at least a step", () 
   });
 
   it("comes down a whole step when 10% rounds to nothing", () => {
-    expect(lowersTo({ ...curl, weight: 5 })).toBe(3.75);
+    expect(lowersTo({ ...curl, weight: 10 })).toBe(7.5);
   });
 });

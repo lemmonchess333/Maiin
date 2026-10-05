@@ -31,7 +31,7 @@
  * codebase now states which side it is on. Volume-ramp programming (MEV → MAV
  * → MRV across a block) would add sets every week to exactly the lifter this
  * file simulates. Tropos does not, and progresses that lifter by load instead
- * — which the same simulation shows working: an accessory climbs 12 → 15.75 kg
+ * — which the same simulation shows working: an accessory climbs 12 → 15 kg
  * over fifteen weeks with its identity, history and anchor intact.
  *
  * The second is that the periodicity is a genuinely load-bearing invariant
@@ -81,7 +81,7 @@ interface WeekRow {
   main: number;
   accessory: number;
   phase: string;
-  accessories: { id: string; weight: number }[];
+  accessories: { id: string; weight: number; reps: number }[];
 }
 
 /** Six mesocycles of a lifter who trains every day and hits every target. */
@@ -113,7 +113,7 @@ function simulate(weeks: number): WeekRow[] {
       completed: true,
       exercises: d.exercises.map((e) =>
         // Exactly the prescription, at the prescribed load, no RPE flag.
-        applyProgression(e, e.reps, e.weight, "recomp", true)
+        applyProgression(e, e.reps, e.weight, true)
       ),
     }));
     state = { ...state, workouts: trained };
@@ -126,7 +126,11 @@ function simulate(weeks: number): WeekRow[] {
       accessories: state.workouts
         .flatMap((d) => d.exercises)
         .filter((e) => e.isAccessory === true)
-        .map((e) => ({ id: e.exerciseId ?? "", weight: e.weight })),
+        .map((e) => ({
+          id: e.exerciseId ?? "",
+          weight: e.weight,
+          reps: e.reps,
+        })),
     });
     // "recovered" is the most favourable read available — the one that would
     // let `add_volume` fire if anything else qualified it.
@@ -211,14 +215,21 @@ describe("why it is flat — volume is the troubleshooting lever, not the ramp",
     const later = at(18).accessories[0];
     expect(later.id).toBe(first.id); // identity intact — no rotation loss
     expect(later.weight).toBeGreaterThan(first.weight);
-    expect(later.weight / first.weight).toBeGreaterThan(1.25);
+    expect(later.weight / first.weight).toBeGreaterThanOrEqual(1.25);
 
-    // Every accessory, not just the first: none of them went backwards.
+    // Every accessory, not just the first, moved on and none went backwards:
+    // by load, or by reps where the next weight is more than about 15%
+    // heavier and waits for the person to pick it up (`loadSteps.ts`).
     for (let i = 0; i < at(3).accessories.length; i++) {
+      const before = at(3).accessories[i];
+      const after = at(18).accessories[i];
+      expect(after.weight, `${before.id} lost load`).toBeGreaterThanOrEqual(
+        before.weight
+      );
       expect(
-        at(18).accessories[i].weight,
-        `accessory ${at(3).accessories[i].id} lost load`
-      ).toBeGreaterThan(at(3).accessories[i].weight);
+        after.weight > before.weight || after.reps > before.reps,
+        `${before.id} stood still`
+      ).toBe(true);
     }
   });
 });

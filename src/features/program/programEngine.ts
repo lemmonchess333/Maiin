@@ -45,10 +45,12 @@ import {
   type RecoveryState,
 } from "./adjustmentRule";
 import {
-  usesMicroplateStep,
-  MICROPLATE_STEP,
-  PLATE_PAIR_STEP,
-} from "./movementClass";
+  automaticStepUp,
+  loadGridFor,
+  loweredLoad,
+  stretchedRepCeiling,
+  type LoadGrid,
+} from "./loadSteps";
 import {
   capRepeatedLifts,
   lowCostAlternative,
@@ -314,8 +316,6 @@ const MIN_HOLD_SECONDS = 10;
  * convenience cache on programState, not the record of truth.
  */
 export const PERFORMANCE_HISTORY_CAP = 10;
-// Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
-// see that module for why `isAccessory` was the wrong one.
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -370,15 +370,6 @@ function goalVolumeMultiplier(goal: Goal): number {
       return 1.12;
     case "recomp":
       return 1.0;
-  }
-}
-
-function goalWeightBonus(goal: Goal): number {
-  switch (goal) {
-    case "lean bulk":
-      return 1.25;
-    default:
-      return 0;
   }
 }
 
@@ -463,7 +454,7 @@ export function splitRationale(weeklyLiftDays: number): string {
  * Build a programme exercise from the PRIMARY variation pool, preserving an
  * existing row's load/history/instanceId across a regenerate.
  *
- * `isAccessory` is a VOLUME ROLE, not a movement class (movementClass.ts) —
+ * `isAccessory` is a VOLUME ROLE, not the movement's role (exerciseRole.ts) —
  * it marks the slots the volume machinery may adjust: #5's ramp, #9's
  * add/reduce arms, and `balanceWeeklyVolume`'s under-dosed-muscle top-up.
  * `buildFullBody` needs to mark supporting slots WITHOUT `makeAccessory`,
@@ -592,10 +583,7 @@ function makeAccessory(
     weight,
     // Backlog #7 (H3): isolations progress by REPS, not load — `isAccessory`
     // is exactly Helms's compound/isolation discriminator. The rep range that
-    // makes this meaningful is stamped in generateProgram's final pass. This
-    // also retires a runaway: the linear branch's `microloading` case added
-    // 1 kg per completed session with no rep requirement, which on an 8 kg
-    // lateral raise is a 12% jump every workout.
+    // makes this meaningful is stamped in generateProgram's final pass.
     progressionType: "double",
     lastSuccessfulWeight: weight,
     lastAttemptedWeight: weight,
@@ -2055,8 +2043,7 @@ export function applyProgression(
   exercise: ProgramExercise,
   actualReps: number,
   actualWeight: number,
-  goal: Goal,
-  microloading: boolean,
+  smallPlates: boolean,
   actualRpe?: number
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
@@ -2119,8 +2106,8 @@ export function applyProgression(
   // heavier or lighter and by any margin. There is no typo guard: a wrong
   // number is put right by lifting the right one next session. Success is
   // the target reps at that weight, and the steps below run from it: the
-  // range climb, the 2-rep overshoot, microloading's +1 kg, the linear step,
-  // the goal bonus and the RPE hold. Reps missed: the prescription still
+  // range climb, the step at the top of a range or on a fixed target, and
+  // the RPE hold. Reps missed: the prescription still
   // moves to the load lifted and the miss counts, and two in a row lower the
   // lift (`countMiss`). No load logged: nothing to follow, so the session is
   // recorded and the prescription and its failure count stay as they were.
@@ -2134,14 +2121,22 @@ export function applyProgression(
   const completed =
     actualReps >= exercise.reps &&
     (!isBodyweight || actualWeight >= exercise.weight);
-  // Backlog #7 (H3): load moves in proportion to the lift. The step keys on
-  // the MOVEMENT and the load being followed, not on `isAccessory` — see
-  // movementClass.ts for why that flag (a volume role) can't answer this
-  // question. The lean-bulk accelerator rides the same test: a lift too
-  // light for a full plate is too light for a bonus on top of one.
-  const microplate = usesMicroplateStep(exercise.movementCategory, anchor);
-  const loadStep = loadStepFor(exercise.movementCategory, anchor);
-  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
+  // Lift4 (6): the weight steps on its equipment's grid (`loadSteps.ts`),
+  // and a step of more than about 15% is never taken on its own: the target
+  // climbs a rep past what was done instead, as far as the next weight's
+  // equal effort, and the plan follows the heavier weight once the person
+  // picks it up (`applySessionSets`).
+  const grid = loadGridFor(exercise.exerciseId, smallPlates);
+  const stepOrStretch = () => {
+    const next = automaticStepUp(grid, anchor);
+    if (next !== null) {
+      updated.weight = next;
+      updated.reps = resetReps;
+      return;
+    }
+    const ceiling = stretchedRepCeiling(anchor, grid.above(anchor), resetReps);
+    updated.reps = Math.max(exercise.reps, Math.min(actualReps + 1, ceiling));
+  };
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
@@ -2213,8 +2208,7 @@ export function applyProgression(
         // contract as every other progression path.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = anchor + loadStep + loadBonus;
-            updated.reps = resetReps;
+            stepOrStretch();
           } else {
             // Next target: one past what was actually done (monotonic —
             // completed ⇒ actualReps >= exercise.reps), capped at the range.
@@ -2228,9 +2222,7 @@ export function applyProgression(
           // Bodyweight: progress via rep target increase (capped)
           bumpBodyweightReps();
         } else {
-          // Weighted: increase weight and reset reps to base prescription
-          updated.weight = anchor + loadStep + loadBonus;
-          updated.reps = resetReps;
+          stepOrStretch();
         }
       }
       // Otherwise: success recorded but reps still accumulating toward ceiling
@@ -2238,7 +2230,7 @@ export function applyProgression(
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(updated, exercise, anchor, isBodyweight, isTimed, loadStep);
+      countMiss(updated, exercise, anchor, isBodyweight, isTimed, grid);
     }
   } else {
     if (completed) {
@@ -2262,35 +2254,19 @@ export function applyProgression(
           // Legacy: no authored range — climb on a 2-rep overshoot (capped)
           bumpBodyweightReps();
         }
-      } else if (microloading && rpeOk) {
-        // Microloading: a COMPLETED session (target reps at the load
-        // lifted) earns +1 kg on that load; without it only a 2-rep
-        // overshoot earns the full step. That is the rep requirement.
-        updated.weight = anchor + 1;
-      } else {
-        if (actualReps >= exercise.reps + 2 && rpeOk) {
-          // No goal bonus on the linear path — pre-#7 behaviour, kept.
-          updated.weight = anchor + loadStep;
-          updated.reps = resetReps; // reset to original prescription, not drifted value
-        }
+      } else if (rpeOk) {
+        // A fixed target met on every set: the weight goes up a step.
+        stepOrStretch();
       }
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(updated, exercise, anchor, isBodyweight, isTimed, loadStep);
+      countMiss(updated, exercise, anchor, isBodyweight, isTimed, grid);
     }
   }
 
   return updated;
-}
-
-/** The load step for a lift at this weight: a pair of microplates for a
- *  light or single-joint lift, a plate pair otherwise (`movementClass.ts`). */
-function loadStepFor(category: MovementCategory, weight: number): number {
-  return usesMicroplateStep(category, weight)
-    ? MICROPLATE_STEP
-    : PLATE_PAIR_STEP;
 }
 
 /** Misses in a row that lower a lift (Lift4, owner call (1)): two, as
@@ -2300,7 +2276,8 @@ const MISSES_BEFORE_LOWERING = 2;
 /**
  * A miss at the plan's weight (Lift4 (7)). The first holds, silently: the
  * sets explain it. The second in a row lowers the lift. A loaded lift comes
- * down 10%, by at least one step (`loweredLoad`), with the rep target kept,
+ * down 10% on its grid, by at least one step (`loweredLoad`), with the rep
+ * target kept,
  * and climbs back to the weight it came from (`applySessionSets`). A
  * bodyweight lift comes down a rep, and a hold five seconds (LIFT-EV-01: a
  * rep-sized step walked a plank down one second at a time). Either way the
@@ -2313,7 +2290,7 @@ function countMiss(
   anchor: number,
   isBodyweight: boolean,
   isTimed: boolean,
-  loadStep: number
+  grid: LoadGrid
 ): void {
   updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
   if (updated.consecutiveFailures < MISSES_BEFORE_LOWERING) return;
@@ -2328,7 +2305,7 @@ function countMiss(
       target: exercise.reps,
     };
   } else {
-    updated.weight = loweredLoad(anchor, loadStep);
+    updated.weight = loweredLoad(grid, anchor);
     updated.lowered = {
       exerciseId: exercise.exerciseId,
       from: anchor,
@@ -2340,12 +2317,6 @@ function countMiss(
   updated.plateauCount = (exercise.plateauCount || 0) + 1;
 }
 
-/** 10% lighter, by at least one step, on the step's grid. */
-function loweredLoad(weight: number, step: number): number {
-  const tenth = Math.round((weight * 0.9) / step) * step;
-  return Math.max(0, Math.min(tenth, weight - step));
-}
-
 /**
  * One finished session's progression for an exercise, read from all its
  * working sets (Lift4). `sessionSets.ts` decides which sets count and what
@@ -2355,8 +2326,10 @@ function loweredLoad(weight: number, step: number): number {
  *   weakest counted set as the reps done, so the next target is one past
  *   what every set reached, and the hardest logged effort as the session's;
  * - miss: `applyProgression`'s miss, at the plan's own weight;
- * - hold: the plan follows the weight lifted and moves nothing else, and a
- *   run of misses ends there.
+ * - hold: the plan follows the weight lifted, and a run of misses ends
+ *   there. A heavier weight starts the reps from the bottom again, as the
+ *   plan's own step does: the target climbed at the lighter weight isn't
+ *   one for it.
  *
  * A lift the plan lowered climbs back first: a step a session that is not a
  * miss, to the weight it came down from (`lowered`), and then the usual
@@ -2364,16 +2337,15 @@ function loweredLoad(weight: number, step: number): number {
  * on only as that way back.
  *
  * The session's record shows the average set at the weight followed
- * (`recordedReps`), so a record falls under its target exactly when the
- * session was a miss. An uncalibrated lift, or a loaded one logged with no
+ * (`recordedReps`), so a session that met its target never records under
+ * it. An uncalibrated lift, or a loaded one logged with no
  * load, goes to `applyProgression` whatever the sets earned: it calibrates
  * the first, and keeps the second as it was.
  */
 export function applySessionSets(
   exercise: ProgramExercise,
   read: SessionRead,
-  goal: Goal,
-  microloading: boolean
+  smallPlates: boolean
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2389,8 +2361,7 @@ export function applySessionSets(
         ex,
         weakest,
         read.weight,
-        goal,
-        microloading,
+        smallPlates,
         hardestEffort(read)
       ),
       reps
@@ -2414,7 +2385,7 @@ export function applySessionSets(
     if (outcome === "miss") return progressed(climbing);
     const weight = Math.min(
       lowering.from,
-      lifted + loadStepFor(exercise.movementCategory, lifted)
+      loadGridFor(exercise.exerciseId, smallPlates).above(lifted)
     );
     return {
       ...recorded(
@@ -2429,9 +2400,11 @@ export function applySessionSets(
   }
 
   if (uncalibrated || outcome !== "hold") return progressed(base);
+  const heavier = lifted !== null && lifted > exercise.weight + 0.01;
   return {
     ...recorded(base, read, reps, false),
     ...(lifted === null ? {} : { weight: lifted }),
+    ...(heavier && base.baseReps !== undefined ? { reps: base.baseReps } : {}),
   };
 }
 

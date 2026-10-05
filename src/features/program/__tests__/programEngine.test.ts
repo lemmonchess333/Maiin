@@ -21,7 +21,6 @@ import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
-  Goal,
   ProgramExercise,
   ProgramState,
   WorkoutDay,
@@ -113,29 +112,23 @@ describe("applyProgression — double progression", () => {
   it("does NOT increase weight when reps meet target but don't hit ceiling", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
     // Hit exactly 6 reps (target) — should succeed but NOT increase weight yet
-    const result = applyProgression(ex, 6, 60, "recomp", false);
+    const result = applyProgression(ex, 6, 60, false);
     expect(result.weight).toBe(60); // stays same — accumulating reps
     expect(result.consecutiveFailures).toBe(0);
   });
 
   it("does NOT increase weight when reps exceed target by 1", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
-    const result = applyProgression(ex, 7, 60, "recomp", false);
+    const result = applyProgression(ex, 7, 60, false);
     expect(result.weight).toBe(60); // still accumulating — ceiling is reps+2=8
   });
 
   it("increases weight when reps hit ceiling (target + 2)", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
     // Hit 8 reps (6+2 = ceiling) — NOW increase weight
-    const result = applyProgression(ex, 8, 60, "recomp", false);
-    expect(result.weight).toBe(62.5); // 60 + 2.5 + 0 (recomp bonus = 0)
+    const result = applyProgression(ex, 8, 60, false);
+    expect(result.weight).toBe(62.5); // the barbell's 2.5 kg, for any goal
     expect(result.reps).toBe(6); // reset to base
-  });
-
-  it("adds goal bonus on lean bulk", () => {
-    const ex = makeTestExercise({ reps: 6, weight: 60 });
-    const result = applyProgression(ex, 8, 60, "lean bulk", false);
-    expect(result.weight).toBe(63.75); // 60 + 2.5 + 1.25
   });
 
   it("lowers on the 2nd miss in a row (not the 1st): 10% lighter, the target as it was", () => {
@@ -143,12 +136,12 @@ describe("applyProgression — double progression", () => {
     // 10% on its step grid and records the weight to climb back to
     // (sessionSets.test.ts has the climb back).
     const ex = makeTestExercise({ reps: 7 });
-    const result = applyProgression(ex, 4, 60, "recomp", false);
+    const result = applyProgression(ex, 4, 60, false);
     expect(result.consecutiveFailures).toBe(1);
     expect(result.weight).toBe(60);
     expect(result.reps).toBe(7);
 
-    const result2 = applyProgression(result, 4, 60, "recomp", false);
+    const result2 = applyProgression(result, 4, 60, false);
     expect(result2.consecutiveFailures).toBe(0);
     expect(result2.weight).toBe(55);
     expect(result2.reps).toBe(7);
@@ -174,22 +167,22 @@ describe("applyProgression — bodyweight exercises", () => {
      target is one past what was actually DONE, ceiling MAX_BODYWEIGHT_REPS. */
   it("sets the next target one past what was done", () => {
     const ex = makeBodyweightExercise({ reps: 8 });
-    const result = applyProgression(ex, 10, 0, "recomp", false);
+    const result = applyProgression(ex, 10, 0, false);
     expect(result.weight).toBe(0); // stays bodyweight
     expect(result.reps).toBe(11);
   });
 
   it("progresses on an exact-target session, not only on an overshoot", () => {
     const ex = makeBodyweightExercise({ reps: 8 });
-    expect(applyProgression(ex, 8, 0, "recomp", false).reps).toBe(9);
-    const overOne = applyProgression(ex, 9, 0, "recomp", false);
+    expect(applyProgression(ex, 8, 0, false).reps).toBe(9);
+    const overOne = applyProgression(ex, 9, 0, false);
     expect(overOne.weight).toBe(0);
     expect(overOne.reps).toBe(10);
   });
 
   it("deloads by reducing rep target on consecutive failures", () => {
     const ex = makeBodyweightExercise({ reps: 8, consecutiveFailures: 2 });
-    const result = applyProgression(ex, 5, 0, "recomp", false);
+    const result = applyProgression(ex, 5, 0, false);
     expect(result.reps).toBe(7); // reduced by 1
     expect(result.weight).toBe(0);
     expect(result.consecutiveFailures).toBe(0);
@@ -197,13 +190,13 @@ describe("applyProgression — bodyweight exercises", () => {
 
   it("enforces minimum 4 reps on deload", () => {
     const ex = makeBodyweightExercise({ reps: 4, consecutiveFailures: 2 });
-    const result = applyProgression(ex, 2, 0, "recomp", false);
+    const result = applyProgression(ex, 2, 0, false);
     expect(result.reps).toBe(4); // can't go below 4
   });
 
   it("also works for linear progression type", () => {
     const ex = makeBodyweightExercise({ progressionType: "linear", reps: 8 });
-    const result = applyProgression(ex, 10, 0, "recomp", false);
+    const result = applyProgression(ex, 10, 0, false);
     expect(result.weight).toBe(0);
     expect(result.reps).toBe(9);
   });
@@ -218,7 +211,7 @@ describe("applyProgression — uncalibrated loaded exercise", () => {
       lastSuccessfulWeight: 0,
       lastAttemptedWeight: 0,
     });
-    const out = applyProgression(exercise, exercise.reps, 35, "recomp", false);
+    const out = applyProgression(exercise, exercise.reps, 35, false);
     expect(out.weight).toBe(35);
     expect(out.lastSuccessfulWeight).toBe(35);
     expect(out.lastAttemptedWeight).toBe(35);
@@ -231,27 +224,27 @@ describe("applyProgression — RPE autoregulation", () => {
   it("HOLDS load when the completed set was at RPE ≥ 9.5 (double)", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
     // hit ceiling (8 reps) but at maximal effort → no weight increase
-    const held = applyProgression(ex, 8, 60, "recomp", false, 10);
+    const held = applyProgression(ex, 8, 60, false, 10);
     expect(held.weight).toBe(60); // held
     expect(held.consecutiveFailures).toBe(0); // still a success, not a failure
     // same set at a sub-maximal RPE → normal weight increase
-    const up = applyProgression(ex, 8, 60, "recomp", false, 8);
+    const up = applyProgression(ex, 8, 60, false, 8);
     expect(up.weight).toBe(62.5);
   });
 
-  it("HOLDS the microloading bump at RPE ≥ 9.5 (linear)", () => {
+  it("HOLDS the linear step at RPE ≥ 9.5", () => {
     const ex = makeTestExercise({
       progressionType: "linear",
       reps: 6,
       weight: 60,
     });
-    expect(applyProgression(ex, 6, 60, "recomp", true, 9.5).weight).toBe(60);
-    expect(applyProgression(ex, 6, 60, "recomp", true, 7).weight).toBe(61);
+    expect(applyProgression(ex, 6, 60, false, 9.5).weight).toBe(60);
+    expect(applyProgression(ex, 6, 60, false, 7).weight).toBe(62.5);
   });
 
   it("progresses normally when no RPE is logged (back-compat)", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
-    expect(applyProgression(ex, 8, 60, "recomp", false).weight).toBe(62.5);
+    expect(applyProgression(ex, 8, 60, false).weight).toBe(62.5);
   });
 });
 
@@ -260,7 +253,7 @@ describe("applyProgression — RPE autoregulation", () => {
 describe("applyProgression — bodyweight rep cap", () => {
   it("caps the rep target at 20 and prompts adding load", () => {
     const ex = makeBodyweightExercise({ reps: 20 });
-    const out = applyProgression(ex, 22, 0, "recomp", false);
+    const out = applyProgression(ex, 22, 0, false);
     expect(out.reps).toBe(20); // not 21 — capped
     expect(out.notes).toMatch(/add load/i);
   });
@@ -269,14 +262,14 @@ describe("applyProgression — bodyweight rep cap", () => {
     const ex = makeBodyweightExercise({ reps: 12 });
     // One past what was DONE (14), not one past the target — the range-aware
     // contract now applies to range-less bodyweight lifts too.
-    const out = applyProgression(ex, 14, 0, "recomp", false);
+    const out = applyProgression(ex, 14, 0, false);
     expect(out.reps).toBe(15);
     expect(out.notes).toBeUndefined();
   });
 
   it("honours a generated rep-range ceiling below the global cap", () => {
     const ex = makeBodyweightExercise({ reps: 15, repRangeMax: 15 });
-    const out = applyProgression(ex, 17, 0, "recomp", false);
+    const out = applyProgression(ex, 17, 0, false);
     expect(out.reps).toBe(15);
     expect(out.notes).toMatch(/15\+ reps/i);
   });
@@ -300,7 +293,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       repRangeMax: 10,
     });
     // Logged exactly the prescribed 6 — no overshoot. Pre-fix: frozen at 6.
-    const out = applyProgression(ex, 6, 0, "recomp", false, 8);
+    const out = applyProgression(ex, 6, 0, false, 8);
     expect(out.reps).toBe(7);
     expect(out.weight).toBe(0); // never invents load for a bodyweight move
   });
@@ -311,7 +304,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       baseReps: 6,
       repRangeMax: 10,
     });
-    const out = applyProgression(ex, 10, 0, "recomp", false, 8);
+    const out = applyProgression(ex, 10, 0, false, 8);
     expect(out.reps).toBe(10); // holds at the ceiling — no reset-to-base
     expect(out.weight).toBe(0);
     expect(out.notes).toMatch(/10\+ reps.*add load/i);
@@ -324,7 +317,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       baseReps: 4,
       repRangeMax: 6,
     });
-    const mid = applyProgression(ex, 4, 0, "recomp", true, 8);
+    const mid = applyProgression(ex, 4, 0, true, 8);
     expect(mid.reps).toBe(5);
     const top = applyProgression(
       makeBodyweightExercise({
@@ -335,7 +328,6 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       }),
       6,
       0,
-      "recomp",
       true,
       8
     );
@@ -349,7 +341,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       baseReps: 6,
       repRangeMax: 10,
     });
-    const out = applyProgression(ex, 6, 0, "recomp", false, 10);
+    const out = applyProgression(ex, 6, 0, false, 10);
     expect(out.reps).toBe(6); // held
     expect(out.consecutiveFailures).toBe(0); // success, not failure
   });
@@ -364,7 +356,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       repRangeMax: 60,
       repUnit: "seconds",
     });
-    const stepped = applyProgression(hold, 40, 0, "recomp", false, 8);
+    const stepped = applyProgression(hold, 40, 0, false, 8);
     expect(stepped.reps).toBe(45); // +5s, not +1
     const atTop = applyProgression(
       makeBodyweightExercise({
@@ -378,7 +370,6 @@ describe("applyProgression — bodyweight range-aware climb", () => {
       }),
       60,
       0,
-      "recomp",
       false,
       8
     );
@@ -395,7 +386,7 @@ describe("applyProgression — bodyweight range-aware climb", () => {
     const trajectory: number[] = [];
     for (let week = 1; week <= 13; week++) {
       // The compliant user logs exactly what the card prescribes.
-      ex = applyProgression(ex, ex.reps, 0, "lean bulk", true, 8);
+      ex = applyProgression(ex, ex.reps, 0, true, 8);
       trajectory.push(ex.reps);
     }
     // Climb phase: one rep per week to the top of the range…
@@ -875,7 +866,7 @@ describe("applyProgression — baseReps anchor (M7)", () => {
     // Simulate a scenario where reps have drifted to 8 but baseReps is 6
     const ex = makeTestExercise({ reps: 8, baseReps: 6, weight: 60 });
     // Hit ceiling (8+2=10) → weight increase, reps should reset to baseReps=6
-    const result = applyProgression(ex, 10, 60, "recomp", false);
+    const result = applyProgression(ex, 10, 60, false);
     expect(result.weight).toBe(62.5);
     expect(result.reps).toBe(6); // reset to baseReps, not 8
   });
@@ -887,18 +878,16 @@ describe("applyProgression — baseReps anchor (M7)", () => {
       baseReps: 12,
       weight: 30,
     });
-    // Hit ceiling (14+2=16) → weight increase. 30 kg is below the heavy
-    // threshold, so the step is a microplate (#7's corrected discriminator
-    // reaches mains too — 2.5 kg on a 30 kg lift is an 8% jump).
-    const result = applyProgression(ex, 16, 30, "recomp", false);
-    expect(result.weight).toBe(31.25);
+    // The target met on every set: a step, the barbell's 2.5 kg.
+    const result = applyProgression(ex, 14, 30, false);
+    expect(result.weight).toBe(32.5);
     expect(result.reps).toBe(12); // baseReps anchor — the subject of this test
   });
 
   it("falls back to exercise.reps when baseReps is undefined (backward compat)", () => {
     const ex = makeTestExercise({ reps: 6, weight: 60 });
     delete (ex as unknown as Record<string, unknown>).baseReps;
-    const result = applyProgression(ex, 8, 60, "recomp", false);
+    const result = applyProgression(ex, 8, 60, false);
     expect(result.weight).toBe(62.5);
     expect(result.reps).toBe(6); // falls back to exercise.reps
   });
@@ -1152,7 +1141,7 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
       workouts: withWeights,
       fatigueScore: 0,
       updatedAt: 0,
-      settings: { autoProgression: true, microloading: false },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
     } as unknown as Parameters<typeof advanceWeek>[0];
   };
@@ -1305,12 +1294,10 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     expect(mains.every((e) => e.progressionType === "linear")).toBe(true);
   });
 
-  // The load step keys on the MOVEMENT and its load, not on `isAccessory`.
-  // That flag is a volume role, and `pickAccessory` fills those slots from
-  // the non-primary pool — which for the compound categories is Romanian
-  // Deadlift, Hack Squat, Leg Press. A real 4-day programme tagged a 50 kg
-  // hack squat as an accessory and handed it 1.25 kg steps.
-  const atRangeTop = (o: Partial<ProgramExercise>, goal: Goal = "recomp") => {
+  // Lift4 (6): the step follows the equipment the lift is done on
+  // (`loadSteps.ts`), whatever its slot or movement, and a step of more than
+  // about 15% is never taken on its own.
+  const atRangeTop = (o: Partial<ProgramExercise>, smallPlates = false) => {
     const w = o.weight ?? 100;
     return applyProgression(
       makeTestExercise({
@@ -1323,24 +1310,26 @@ describe("progression scheme per exercise type (backlog #7)", () => {
       }),
       15,
       w,
-      goal,
-      false
+      smallPlates
     );
   };
 
-  it("single-joint work takes a microplate at ANY load", () => {
+  it("steps a barbell lift 2.5 kg at any load, and 1.25 kg with small plates", () => {
     const curl = atRangeTop({
+      exerciseId: "barbell-curl",
       movementCategory: "arms_biceps",
-      weight: 100,
+      weight: 30,
     });
-    expect(curl.weight).toBe(101.25);
+    expect(curl.weight).toBe(32.5);
     expect(curl.reps).toBe(12); // target resets to the bottom of the range
+    expect(atRangeTop({ weight: 100 }, true).weight).toBe(101.25);
   });
 
-  it("a heavy compound takes a full plate pair even when tagged an accessory", () => {
-    // The exact shipped defect: isAccessory said "isolation" for an RDL.
+  it("steps a lift the same whatever slot it fills", () => {
+    // #7 keyed the step on `isAccessory` and handed an RDL 1.25 kg steps.
     for (const isAccessory of [true, false]) {
       const rdl = atRangeTop({
+        exerciseId: "romanian-deadlift",
         movementCategory: "hip_dominant",
         weight: 100,
         isAccessory,
@@ -1349,47 +1338,52 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     }
   });
 
-  it("a LIGHT compound takes a microplate — 2.5 kg on 30 kg is an 8% jump", () => {
-    const lightBench = atRangeTop({
-      movementCategory: "horizontal_push",
-      weight: 30,
+  it("steps dumbbells to the next pair, which small plates don't change", () => {
+    const raise = {
+      exerciseId: "lateral-raise",
+      movementCategory: "vertical_push" as const,
+    };
+    expect(atRangeTop({ ...raise, weight: 8 }).weight).toBe(9);
+    expect(atRangeTop({ ...raise, weight: 8 }, true).weight).toBe(9);
+    expect(
+      atRangeTop({ exerciseId: "db-shoulder-press", weight: 20 }).weight
+    ).toBe(22.5);
+  });
+
+  it("climbs in reps when the next weight is more than about 15% heavier", () => {
+    // 10 kg dumbbells to 12.5 kg is 25%: the target goes a rep past the top
+    // of the range, and the plan follows the heavier pair once it is lifted.
+    const raise = atRangeTop({
+      exerciseId: "lateral-raise",
+      movementCategory: "vertical_push",
+      weight: 10,
     });
-    expect(lightBench.weight).toBe(31.25);
+    expect(raise.weight).toBe(10);
+    expect(raise.reps).toBe(16);
   });
 
-  it("separates a lateral raise from an overhead press, which no category can", () => {
-    // Both are `vertical_push` in this taxonomy (see the keyword table in
-    // exerciseMovementCategory) — the load is the only thing that tells
-    // them apart, which is why the discriminator isn't category alone.
-    expect(
-      atRangeTop({ movementCategory: "vertical_push", weight: 8 }).weight
-    ).toBe(9.25);
-    expect(
-      atRangeTop({ movementCategory: "vertical_push", weight: 60 }).weight
-    ).toBe(62.5);
+  it("climbs only as far as the next weight's equal effort, then waits", () => {
+    let raise = makeTestExercise({
+      exerciseId: "lateral-raise",
+      movementCategory: "vertical_push",
+      progressionType: "double",
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 10,
+      lastSuccessfulWeight: 10,
+    });
+    const targets: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      raise = applyProgression(raise, raise.reps, 10, false);
+      targets.push(raise.reps);
+    }
+    // 13–15 climbs the range; past it, 22 reps at 10 kg is about 12 at 12.5.
+    expect(targets).toEqual([13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 22, 22]);
+    expect(raise.weight).toBe(10);
   });
 
-  it("withholds the lean-bulk accelerator from anything on a microplate", () => {
-    // A lift too light for a full plate is too light for a bonus on top.
-    expect(
-      atRangeTop({ movementCategory: "arms_biceps", weight: 100 }, "lean bulk")
-        .weight
-    ).toBe(101.25);
-    expect(
-      atRangeTop(
-        { movementCategory: "horizontal_push", weight: 30 },
-        "lean bulk"
-      ).weight
-    ).toBe(31.25);
-    // heavy compound still gets it: 2.5 + 1.25
-    expect(
-      atRangeTop({ movementCategory: "hip_dominant", weight: 100 }, "lean bulk")
-        .weight
-    ).toBe(103.75);
-  });
-
-  it("leaves compounds byte-identical to pre-#7 behaviour", () => {
-    // isAccessory absent (legacy rows) must read as compound, not isolation.
+  it("steps a row with no slot recorded as any other", () => {
     const legacy = makeTestExercise({
       progressionType: "linear",
       reps: 6,
@@ -1397,31 +1391,9 @@ describe("progression scheme per exercise type (backlog #7)", () => {
       weight: 100,
       lastSuccessfulWeight: 100,
     });
-    expect(applyProgression(legacy, 8, 100, "recomp", false).weight).toBe(
-      102.5
-    );
+    expect(applyProgression(legacy, 6, 100, false).weight).toBe(102.5);
     const dbl = makeTestExercise({ weight: 100, lastSuccessfulWeight: 100 });
-    expect(applyProgression(dbl, 8, 100, "lean bulk", false).weight).toBe(
-      103.75
-    );
-  });
-
-  it("retires the microloading runaway for generated isolations", () => {
-    // On the linear path a completed set with microloading on added 1 kg
-    // with NO rep requirement — ~12% per session on an 8 kg lateral raise.
-    // Double progression has no such branch, so the climb is reps-first.
-    const iso = makeTestExercise({
-      isAccessory: true,
-      progressionType: "double",
-      reps: 12,
-      baseReps: 12,
-      repRangeMax: 15,
-      weight: 8,
-      lastSuccessfulWeight: 8,
-    });
-    const next = applyProgression(iso, 12, 8, "recomp", true);
-    expect(next.weight).toBe(8);
-    expect(next.reps).toBe(13);
+    expect(applyProgression(dbl, 8, 100, false).weight).toBe(102.5);
   });
 });
 
@@ -2219,7 +2191,7 @@ describe("timed holds (backlog #7 time axis)", () => {
     });
 
   it("climbs in 5-second steps, not 1-rep steps", () => {
-    const out = applyProgression(plank(), 32, 0, "recomp", false);
+    const out = applyProgression(plank(), 32, 0, false);
     expect(out.reps).toBe(35);
   });
 
@@ -2228,7 +2200,6 @@ describe("timed holds (backlog #7 time axis)", () => {
       plank({ reps: 43, baseReps: 43 }),
       45,
       0,
-      "recomp",
       false
     );
     expect(out.reps).toBe(45);
@@ -2238,14 +2209,13 @@ describe("timed holds (backlog #7 time axis)", () => {
     // The defect: a plank starts at 30, already ABOVE MAX_BODYWEIGHT_REPS, so
     // any overshoot immediately advised "Hitting 20+ reps — add load" at what
     // is an ordinary hold length.
-    const belowCeiling = applyProgression(plank(), 32, 0, "recomp", false);
+    const belowCeiling = applyProgression(plank(), 32, 0, false);
     expect(belowCeiling.notes).toBeUndefined();
 
     const atCeiling = applyProgression(
       plank({ reps: 45, baseReps: 45 }),
       47,
       0,
-      "recomp",
       false
     );
     expect(atCeiling.notes).toMatch(/add load/i);
@@ -2258,7 +2228,6 @@ describe("timed holds (backlog #7 time axis)", () => {
       plank({ reps: 60, baseReps: 60, repRangeMax: undefined }),
       65,
       0,
-      "recomp",
       false
     );
     expect(out.notes).toMatch(/add load/i);
@@ -2272,7 +2241,6 @@ describe("timed holds (backlog #7 time axis)", () => {
       plank({ consecutiveFailures: 2 }),
       20,
       0,
-      "recomp",
       false
     );
     expect(out.reps).toBe(25); // 30 − HOLD_STEP_SECONDS, not 29
@@ -2285,7 +2253,6 @@ describe("timed holds (backlog #7 time axis)", () => {
       plank({ reps: 12, baseReps: 12, consecutiveFailures: 2 }),
       5,
       0,
-      "recomp",
       false
     );
     expect(out.reps).toBe(10);
@@ -2297,9 +2264,9 @@ describe("timed holds (backlog #7 time axis)", () => {
     // cap. The step is from what was done, not from the target — see the
     // range-less double contract above.
     const pullup = makeBodyweightExercise({ reps: 8 });
-    expect(applyProgression(pullup, 10, 0, "recomp", false).reps).toBe(11);
+    expect(applyProgression(pullup, 10, 0, false).reps).toBe(11);
     const capped = makeBodyweightExercise({ reps: 20 });
-    const out = applyProgression(capped, 22, 0, "recomp", false);
+    const out = applyProgression(capped, 22, 0, false);
     expect(out.reps).toBe(20);
     expect(out.notes).toMatch(/20\+ reps/);
   });

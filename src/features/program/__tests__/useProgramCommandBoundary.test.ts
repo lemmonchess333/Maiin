@@ -174,7 +174,7 @@ function seed(withIds: boolean): void {
       },
     ],
     runDays: [],
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
   } as unknown as ProgramState;
   seedFirestore({ [PROGRAM]: state as unknown as Record<string, unknown> });
 }
@@ -732,7 +732,7 @@ describe("every migrated writer sends a command the server accepts", () => {
           startDate: "2026-03-02",
           goalBefore: "hypertrophy",
         },
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
       } as unknown as Record<string, unknown>,
     });
   }
@@ -809,7 +809,7 @@ describe("every migrated writer sends a command the server accepts", () => {
           },
         ],
         runDays: [],
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
       } as unknown as Record<string, unknown>,
     });
     const hook = renderHook(() => useProgram());
@@ -864,7 +864,7 @@ describe("a block with the week's own focus changes nothing", () => {
           },
         ],
         runDays: [],
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
         ...extra,
       } as unknown as Record<string, unknown>,
     });

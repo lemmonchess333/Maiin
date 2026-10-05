@@ -43,6 +43,7 @@ import {
 } from "./programTypes";
 import { primaryJudgementForExercise } from "./volumeModel";
 import { exerciseDisplayName } from "./variationBank";
+import { equipmentGridFor } from "./loadSteps";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
@@ -287,6 +288,32 @@ function resetMissCount(ex: ProgramExercise): ProgramExercise {
   return ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex;
 }
 
+/**
+ * One-time rounding (schema v5, Lift4 (6)): a weight off its equipment's
+ * grid goes to the nearest weight on it, the lighter on a tie. Microloading
+ * added 1 kg a session and the old light-lift step 1.25 kg, which left
+ * weights no plate set or rack makes, such as 101 kg or a 9.25 kg
+ * dumbbell. Small plates start off, so a barbell rounds to 2.5 kg. A lift
+ * whose equipment the catalogue doesn't name keeps its weight, and a weight
+ * lifted afterwards is followed as lifted.
+ */
+function roundOntoGrid(ex: ProgramExercise): ProgramExercise {
+  const grid = equipmentGridFor(ex.exerciseId, false);
+  if (!grid || !(ex.weight > 0)) return ex;
+  const weight = grid.nearest(ex.weight);
+  const preDeloadWeight =
+    ex.preDeloadWeight !== undefined && ex.preDeloadWeight > 0
+      ? grid.nearest(ex.preDeloadWeight)
+      : ex.preDeloadWeight;
+  return weight === ex.weight && preDeloadWeight === ex.preDeloadWeight
+    ? ex
+    : {
+        ...ex,
+        weight,
+        ...(preDeloadWeight !== undefined ? { preDeloadWeight } : {}),
+      };
+}
+
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
 // source of truth. The semantics here are unchanged.
@@ -441,8 +468,9 @@ export function migrateProgramState(
   // legitimate load below the last success (see `repairDeloadDecay`).
   const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
   // One-shot for the same reason: run on every load, the first would take
-  // away a load someone set on a swapped-in pull-up after the repair, and the
-  // second every miss counted since.
+  // away a load someone set on a swapped-in pull-up after the repair, the
+  // second every miss counted since, and the third an odd weight someone
+  // lifts on purpose.
   const lift4OneShots = (state.programSchemaVersion ?? 1) < 5;
   let workoutsChanged = false;
   const migratedWorkouts = state.workouts.map((day) => {
@@ -457,7 +485,7 @@ export function migrateProgramState(
 
       next = repairDeloadDecay(next, restoreDecayedLoads);
       if (lift4OneShots)
-        next = resetMissCount(repairSwappedBodyweightLoad(next));
+        next = roundOntoGrid(resetMissCount(repairSwappedBodyweightLoad(next)));
 
       if (next !== exercise) {
         workoutsChanged = true;

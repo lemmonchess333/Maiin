@@ -1581,3 +1581,28 @@ describe("wayfinding between exercises", () => {
     expect(screen.queryByText("Up next")).toBeNull();
   });
 });
+
+describe("the plate hint (Lift4 (6))", () => {
+  it("loads the plan's 2.5 kg step with a 1.25 kg plate a side", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 62.5,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 + 1.25"
+    );
+    expect(screen.queryByText(/kg short/)).toBeNull();
+  });
+
+  it("says what the plates can't make", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 61,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 · 1 kg short"
+    );
+  });
+});

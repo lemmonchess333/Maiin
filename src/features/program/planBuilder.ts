@@ -59,6 +59,7 @@ import type {
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
+  DEFAULT_PROGRAM_SETTINGS,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import {
@@ -622,10 +623,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         ? input.existingState.fatigueScore
         : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
-    settings: input.existingState?.settings ?? {
-      autoProgression: true,
-      microloading: true,
-    },
+    settings: input.existingState?.settings ?? DEFAULT_PROGRAM_SETTINGS,
     weekHistory:
       input.preserveHistory && input.existingState
         ? (input.existingState.weekHistory ?? [])

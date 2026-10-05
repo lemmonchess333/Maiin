@@ -31,18 +31,17 @@ import {
   templateExToProgEx,
 } from "@/features/program/templateConversion";
 import type {
-  Goal,
   ProgramExercise,
   ProgramState,
 } from "@/features/program/programTypes";
 
-/** One session, microloading off. */
+/** One session, without small plates. */
 function session(
   ex: ProgramExercise,
   actualReps: number,
   actualWeight: number
 ): ProgramExercise {
-  return clientApplyProgression(ex, actualReps, actualWeight, "recomp", false);
+  return clientApplyProgression(ex, actualReps, actualWeight, false);
 }
 
 /** A compliant lifter: hits the target exactly, at the prescribed load. */
@@ -196,9 +195,9 @@ describe("range-less double progression — template per-side forms", () => {
       },
       4
     );
-    // 1.25 kg steps, not 2.5 — a 20 kg lift is below HEAVY_LOAD_KG, so the
-    // microplate step applies (backlog #7's proportional load step).
-    expect(seen).toEqual(["11@20", "12@20", "10@21.25", "11@21.25"]);
+    // A lift the catalogue doesn't know steps as a stack does: 2.5 kg, which
+    // is 12.5% of 20 kg (`loadSteps.ts`).
+    expect(seen).toEqual(["11@20", "12@20", "10@22.5", "11@22.5"]);
   });
 
   it("keeps an authored range that sits inside a per-side form", () => {
@@ -296,44 +295,25 @@ describe("range-less double progression — the ceilings", () => {
     expect(session(plank(15), 17, 0).reps).toBe(20);
   });
 
-  it("leaves the LINEAR path alone, including its own separate gap", () => {
+  it("leaves the LINEAR path to its own rule: a completed session steps", () => {
     /* The fallback is scoped to `progressionType === "double"`, and this pins
-       that scope from the other side.
-     *
-     * Worth being explicit about what is being pinned, because it is NOT that
-     * the linear arm is healthy. The weighted linear arm consults
-     * `microloading`: with it ON (the default in onboarding, planBuilder,
-     * and useProgram alike) a completed session
-     * adds 1 kg, so the lift moves. With the user's own Programme-settings
-     * toggle OFF it needs the same +2 overshoot the double arm needed, and a
-     * compliant lifter is frozen exactly as this file's subjects were.
-     *
-     * That is a real second gap, deliberately left alone here: what a linear
-     * progression should do without microplates is a training-policy question
-     * (a full 2.5 kg plate pair every session is a different programme, not a
-     * bug fix), and the evidence handoff bars inferring that unilaterally.
-     * Widening this fallback to cover it would smuggle that decision in. */
+       that scope from the other side. The linear arm had a gap of its own:
+       without Microloading it needed the same +2 overshoot, so a compliant
+       lifter froze. Lift4 (6) closed it with one visible rule, a step for
+       every session with every set at the target, on the lift's own grid
+       (`loadSteps.ts`). */
     const linearEx = bodyweight({
-      exerciseId: "barbell-bench-press",
+      exerciseId: "bench-press",
       movementCategory: "horizontal_push",
       weight: 60,
       lastSuccessfulWeight: 60,
       lastAttemptedWeight: 60,
       progressionType: "linear",
     });
-    const goal: Goal = "recomp";
-    for (const microloading of [true, false]) {
-      const client = clientApplyProgression(
-        linearEx,
-        8,
-        60,
-        goal,
-        microloading
-      );
-      expect(client.reps).toBe(8);
-      // microloading on → +1 kg; off → unchanged (the pre-existing gap).
-      expect(client.weight).toBe(microloading ? 61 : 60);
-    }
+    const plain = clientApplyProgression(linearEx, 8, 60, false);
+    expect(plain.reps).toBe(8);
+    expect(plain.weight).toBe(62.5);
+    expect(clientApplyProgression(linearEx, 8, 60, true).weight).toBe(61.25);
   });
 
   it("leaves an AUTHORED range alone", () => {

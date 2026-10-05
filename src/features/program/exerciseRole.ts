@@ -8,7 +8,7 @@
  * main lift or supporting work (`isAccessory`): a Romanian deadlift or a leg
  * press in an accessory slot is another compound. The movement category
  * can't stand in for the first, since it puts the lateral raise and the
- * overhead press together (`movementClass.ts`), and the slot can't stand in
+ * overhead press together (`exerciseMovementCategory.ts`), and the slot can't stand in
  * for the second on its own, since it can't tell a raise from a deadlift.
  *
  * A row with no slot recorded (an older plan, or one added from the picker)

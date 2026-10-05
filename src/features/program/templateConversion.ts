@@ -24,6 +24,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { FitnessGoal } from "@/lib/tdee";
+import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import { goalProfileFor } from "@/features/program/programEngine";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
@@ -225,7 +226,7 @@ export function templateToProgramState(
     workouts,
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: DEFAULT_PROGRAM_SETTINGS,
     weekHistory: [],
   };
 }

@@ -377,32 +377,51 @@ describe("exercise mutation commands", () => {
 });
 
 describe("preconditionless commands", () => {
-  it("setProgramSettings requires both boolean flags, nothing else", () => {
+  it("setProgramSettings takes auto-progression and small plates, nothing else", () => {
     expect(
       assertClientProgramCommand({
         kind: "setProgramSettings",
         commandId: CMD_ID,
-        settings: { autoProgression: true, microloading: false },
+        settings: { autoProgression: true, smallPlates: true },
       })
     ).toMatchObject({
-      settings: { autoProgression: true, microloading: false },
+      settings: { autoProgression: true, smallPlates: true },
     });
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true },
+      settings: { smallPlates: true },
     });
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true, microloading: false, extra: 1 },
+      settings: { autoProgression: true, smallPlates: "yes" },
+    });
+    expectRejected({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: true, smallPlates: false, extra: 1 },
     });
     // preconditions are NOT part of this command
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true, microloading: false },
+      settings: { autoProgression: true, smallPlates: false },
       dayIndex: 1,
+    });
+  });
+
+  it("setProgramSettings still takes an older app's microloading, and drops it", () => {
+    const validated = assertClientProgramCommand({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: false, microloading: true },
+    });
+    expect(validated.settings).toEqual({ autoProgression: false });
+    expectRejected({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: false, microloading: "on" },
     });
   });
 
@@ -606,7 +625,7 @@ function baseState() {
     splitType: "upper_lower",
     fatigueScore: 0,
     updatedAt: 1000,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     workouts: [
       {
@@ -885,11 +904,31 @@ describe("preconditionless field commands", () => {
     const { state } = apply({
       kind: "setProgramSettings",
       commandId: CMD,
-      settings: { autoProgression: false, microloading: false },
+      settings: { autoProgression: false, smallPlates: true },
     });
     expect(state.settings).toEqual({
       autoProgression: false,
-      microloading: false,
+      smallPlates: true,
+    });
+  });
+
+  it("setProgramSettings from an older app keeps the small-plates answer", () => {
+    const first = apply({
+      kind: "setProgramSettings",
+      commandId: CMD,
+      settings: { autoProgression: true, smallPlates: true },
+    }).state;
+    const { state } = apply(
+      {
+        kind: "setProgramSettings",
+        commandId: `${CMD}-old`,
+        settings: { autoProgression: false, microloading: true },
+      },
+      first
+    );
+    expect(state.settings).toEqual({
+      autoProgression: false,
+      smallPlates: true,
     });
   });
 

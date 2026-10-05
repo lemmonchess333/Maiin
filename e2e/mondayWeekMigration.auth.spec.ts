@@ -112,7 +112,7 @@ test.describe("Monday migration on an existing account", () => {
           updatedAt: now.getTime(),
           liftWeekKey: "2026-09-06",
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [{ weekNumber: 2, workouts: [] }],
           runDays: runs,
           runPlan: {

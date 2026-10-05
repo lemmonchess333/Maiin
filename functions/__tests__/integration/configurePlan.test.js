@@ -60,7 +60,7 @@ function validProgramState(overrides = {}) {
     workouts: [],
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: true },
     weekHistory: [],
     runDays: [
       {
@@ -550,7 +550,7 @@ suite("configurePlan — concurrent edits", () => {
         weekSchedule: validWeekSchedule(),
         programState: {
           ...base,
-          settings: { autoProgression: false, microloading: true },
+          settings: { autoProgression: false, smallPlates: true },
         },
       },
       { auth: { uid: TEST_UID } }
@@ -558,7 +558,7 @@ suite("configurePlan — concurrent edits", () => {
     expect((await program.get()).data()).toMatchObject({
       workouts: current.workouts,
       fatigueScore: 15,
-      settings: { autoProgression: false, microloading: true },
+      settings: { autoProgression: false, smallPlates: true },
     });
     expect((await user.get()).data().displayName).toBe("Latest name");
   });

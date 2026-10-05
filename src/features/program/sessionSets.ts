@@ -88,7 +88,9 @@ export function readSessionSets(
  *   the target. The engine then climbs or steps from the weight followed.
  * - `miss`: at the weight the plan asked for, the reps add up to fewer than
  *   the target on every set done. On a 3 × 8 target, 8, 7, 6 (21 of 24) is
- *   a miss and 9, 8, 7 is not.
+ *   a miss and 9, 8, 7 is not. A target climbed past the top of its range,
+ *   because the next weight is too big a step (`loadSteps.ts`), is judged
+ *   at that top: reps past it are a climb, not a bar.
  * - `hold`: anything else. The plan follows the weight lifted and moves
  *   nothing else; a different weight from the plan's is never a miss, as
  *   the plan simply follows it.
@@ -100,11 +102,18 @@ export type SessionOutcome = "step" | "miss" | "hold";
 
 export function sessionOutcome(
   read: SessionRead,
-  prescription: { weight: number; reps: number; sets: number },
+  prescription: {
+    weight: number;
+    reps: number;
+    sets: number;
+    baseReps?: number;
+    repRangeMax?: number;
+  },
   isBodyweight: boolean
 ): SessionOutcome {
   const { counted, weight } = read;
   const target = prescription.reps;
+  const top = prescription.repRangeMax ?? prescription.baseReps ?? target;
   const needed = Math.min(2, Math.max(1, prescription.sets));
   const atPlan = sameWeight(weight, prescription.weight);
   if (
@@ -114,13 +123,13 @@ export function sessionOutcome(
   )
     return "step";
   const total = counted.reduce((sum, set) => sum + set.reps, 0);
-  if (atPlan && total < target * counted.length) return "miss";
+  if (atPlan && total < Math.min(target, top) * counted.length) return "miss";
   return "hold";
 }
 
 /** The reps a session's record shows: the average set at the weight
- *  followed, rounded down, so a record is under its target exactly when
- *  the session was a miss. */
+ *  followed, rounded down, so a session that met its target on every set
+ *  never records under it. */
 export function recordedReps(read: SessionRead): number {
   if (read.counted.length === 0) return 0;
   const total = read.counted.reduce((sum, set) => sum + set.reps, 0);

@@ -132,12 +132,7 @@ describe("readSessionSets → applySessionSets (D3)", () => {
           ? [{ completed: true, type: "dropset", reps: 12, weight: 60 }]
           : []),
       ];
-      ex = applySessionSets(
-        ex,
-        readSessionSets(sets, ex.sets)!,
-        "recomp",
-        false
-      );
+      ex = applySessionSets(ex, readSessionSets(sets, ex.sets)!, false);
     }
     return ex;
   };
@@ -166,7 +161,7 @@ describe("readSessionSets → applySessionSets (D3)", () => {
     // Either way the selection is what keeps the lifter's load.
     let ex = mkEx();
     for (let session = 0; session < 6; session++) {
-      ex = applyProgression(ex, 12, 60, "recomp", false);
+      ex = applyProgression(ex, 12, 60, false);
     }
     expect(ex.weight).toBe(62.5);
     expect(ex.reps).toBe(mkEx().reps);

@@ -1,5 +1,9 @@
 import { sameStoredValue } from "./stateTransition";
-import type { ProgramExercise, ProgramState } from "./programTypes";
+import {
+  DEFAULT_PROGRAM_SETTINGS,
+  type ProgramExercise,
+  type ProgramState,
+} from "./programTypes";
 import type { LoggedSet } from "./workoutSetRecord";
 import {
   afterLoweredLine,
@@ -39,10 +43,7 @@ export function applySessionProgression(
   dayIndex: number,
   session: SessionProgression
 ): ProgramState {
-  const settings = state.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
+  const settings = state.settings ?? DEFAULT_PROGRAM_SETTINGS;
   const held = isProgressionHeld(
     state.trainingBlock,
     state.trainingBlock ? blockWeekOf(state.trainingBlock, session.date) : null
@@ -97,12 +98,7 @@ export function applySessionProgression(
 
               let next: ProgramExercise;
               if (!held && settings.autoProgression) {
-                next = applySessionSets(
-                  start,
-                  read,
-                  state.goal,
-                  settings.microloading
-                );
+                next = applySessionSets(start, read, settings.smallPlates);
                 // A late/offline save belongs to the session's original local date.
                 next.performanceHistory = next.performanceHistory?.map(
                   (record, i, all) =>

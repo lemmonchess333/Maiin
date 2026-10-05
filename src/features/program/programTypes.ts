@@ -284,8 +284,20 @@ export interface WorkoutDay {
 
 export interface ProgramSettings {
   autoProgression: boolean;
-  microloading: boolean;
+  /**
+   * Lift4 (6): "I have small plates", so a barbell steps 1.25 kg instead of
+   * 2.5 kg (`loadSteps.ts`). Off until the person turns it on. It replaced
+   * Microloading, whose `microloading` key older documents still carry and
+   * nothing reads.
+   */
+  smallPlates: boolean;
 }
+
+/** A new plan's settings. */
+export const DEFAULT_PROGRAM_SETTINGS: ProgramSettings = {
+  autoProgression: true,
+  smallPlates: false,
+};
 
 /* ================================
    WEEK SNAPSHOT (for history)
@@ -1047,7 +1059,10 @@ export function normalizeProgramState(
   const resolvedPrimaryGoal = state.primaryGoal ?? backfill?.primaryGoal;
   return {
     ...state,
-    settings: state.settings ?? { autoProgression: true, microloading: true },
+    settings: {
+      autoProgression: state.settings?.autoProgression ?? true,
+      smallPlates: state.settings?.smallPlates === true,
+    },
     weekHistory: state.weekHistory ?? [],
     ...(resolvedPrimaryGoal !== undefined && {
       primaryGoal: resolvedPrimaryGoal,

@@ -201,6 +201,21 @@ before; a weighted hold comes down in load again, as the LIFT-EV-01
 close-out had it. Code: `countMiss` and `applySessionSets` in
 `programEngine.ts`.
 
+STATUS 2026-10-05 (Lift4 (6), build step 3, third release): steps follow the
+equipment (`loadSteps.ts`). A barbell steps 2.5 kg, or 1.25 kg with "I have
+small plates", which replaced Microloading and its 1 kg a session and starts
+off; dumbbells go to the next pair (kilos to 10 kg, then 2.5 kg), a machine or
+cable stack 2.5 kg, a kettlebell the next bell. Every set at a fixed target is
+a step; a range steps at its top, as before. The lean-bulk bonus and the
+light-lift microplate step (`movementClass.ts`) are gone. A step of more than
+about 15% is never taken on its own: the target climbs a rep a session past
+the range instead, up to the reps at which the next weight for the range's
+bottom is the same effort by Epley, and reps past the range's top never count
+toward a miss. When the person lifts a heavier weight, the plan follows it and
+the reps start from the bottom again. Off-grid weights round once (schema v5),
+and the server's settings validator takes `smallPlates` while still accepting
+an older app's `microloading`.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

@@ -18,7 +18,7 @@
  *     two pages.
  *
  * Save model (the lift editor):
- *   - The two engine toggles (auto-progression, microloading) live-save via
+ *   - The two engine toggles (auto-progression, small plates) live-save via
  *     `updateSettings` — no rebuild.
  *   - Every plan-shaping field (focus, experience, lift days, equipment,
  *     injuries) is a DRAFT. A single "Save changes" action runs `buildPlan`
@@ -101,6 +101,7 @@ import type {
   RaceDistance,
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -122,7 +123,7 @@ interface ProgrammeSettingsProps {
    *  programme loads it is null or the cached copy, and a save built on
    *  null starts from no programme and is refused as a conflict. */
   readiness: ProgramReadiness;
-  /** Live-saves the engine toggles (auto-progression / microloading). */
+  /** Live-saves the engine toggles (auto-progression / small plates). */
   updateSettings: (patch: Partial<ProgramSettings>) => Promise<unknown> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
   regenerateProgram: (
@@ -488,10 +489,7 @@ export default function ProgrammeSettings({
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const settings = programState?.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
+  const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
   // The per-field diff is the single source of truth: the recap shown in the
   // confirm modal and the dirty state both derive from it, so they can't drift.
@@ -1203,18 +1201,17 @@ export default function ProgrammeSettings({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-foreground">Microloading</p>
+              <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Add 1 kg every session you hit the target reps, instead of 2.5
-                kg only after a 2-rep overshoot.
+                Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
               </p>
             </div>
             <Toggle
-              checked={settings.microloading}
-              label="Microloading"
+              checked={settings.smallPlates}
+              label="I have small plates"
               className="ml-3"
               onChange={() =>
-                updateSettings({ microloading: !settings.microloading })
+                updateSettings({ smallPlates: !settings.smallPlates })
               }
             />
           </div>

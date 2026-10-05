@@ -141,24 +141,24 @@ describe("templateExToProgEx", () => {
     let ex = { ...templateExToProgEx(te(), "double"), weight: 60 };
 
     // Complete at the floor target → target climbs to 9, weight held.
-    ex = applyProgression(ex, 8, 60, "recomp", false);
+    ex = applyProgression(ex, 8, 60, false);
     expect(ex.reps).toBe(9);
     expect(ex.weight).toBe(60);
 
     // Overshoot to 11 → target jumps to 12 (actual + 1, capped), weight held.
-    ex = applyProgression(ex, 11, 60, "recomp", false);
+    ex = applyProgression(ex, 11, 60, false);
     expect(ex.reps).toBe(12);
     expect(ex.weight).toBe(60);
 
     // Hit the ceiling → load rises, target resets to the floor.
-    ex = applyProgression(ex, 12, 60, "recomp", false);
+    ex = applyProgression(ex, 12, 60, false);
     expect(ex.weight).toBe(62.5);
     expect(ex.reps).toBe(8);
   });
 
   it("holds the range climb at RPE >= 9.5", () => {
     let ex = { ...templateExToProgEx(te(), "double"), weight: 60 };
-    ex = applyProgression(ex, 8, 60, "recomp", false, 9.5);
+    ex = applyProgression(ex, 8, 60, false, 9.5);
     expect(ex.reps).toBe(8); // held — no climb on a near-maximal set
     expect(ex.weight).toBe(60);
   });
@@ -219,7 +219,7 @@ describe("templateToProgramState (moved out of Onboarding.tsx, 2026-09)", () => 
       weekNumber: 1,
       fatigueScore: 0,
       weekHistory: [],
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       splitType: templateSplitToSplitType(template.split),
     });
   });

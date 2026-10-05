@@ -33,7 +33,7 @@ function plan(): ProgramState {
     splitType: "ppl",
     fatigueScore: 0,
     updatedAt: 0,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     workouts: [
       {

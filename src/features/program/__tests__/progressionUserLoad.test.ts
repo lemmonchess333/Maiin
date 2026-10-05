@@ -8,7 +8,8 @@
  * Independent literals for the engine's rules:
  *   - a loaded lift's prescription moves to the weight lifted, heavier or
  *     lighter, by any margin; success is the target reps at that weight,
- *     and every step runs from it, its size keyed on that weight;
+ *     and every step runs from it on its equipment's grid, never more than
+ *     about 15% of it on its own (Lift4 (6));
  *   - reps missed still move it there and count the miss; the second miss
  *     in a row lowers a loaded lift 10% with its target as it was (Lift4
  *     (7); `sessionSets.test.ts` has the climb back), and a bodyweight one
@@ -17,8 +18,8 @@
  *     were;
  *   - at the finish (`applySessionProgression`), auto-progression off moves
  *     the prescription to the load lifted with no step and no success or
- *     failure accounting, while a held week, an easier session and a
- *     shortened one keep it;
+ *     failure accounting, a held week keeps it, and an easier session can
+ *     only raise it;
  *   - the next app load (`migrateProgramState`) keeps a plan these lowered.
  */
 import { describe, it, expect } from "vitest";
@@ -31,7 +32,6 @@ import {
 } from "@/features/program/programTypes";
 import type {
   ActiveTrainingBlock,
-  Goal,
   ProgramExercise,
   ProgramState,
 } from "@/features/program/programTypes";
@@ -61,15 +61,15 @@ function bench(overrides: Partial<ProgramExercise> = {}): ProgramExercise {
   };
 }
 
-/** One session's progression, microloading off unless asked for. */
+/** One session's progression, without small plates unless asked for. */
 function progressed(
   ex: ProgramExercise,
   reps: number,
   weight: number,
-  options: { microloading?: boolean; goal?: Goal; rpe?: number } = {}
+  options: { smallPlates?: boolean; rpe?: number } = {}
 ): ProgramExercise {
-  const { microloading = false, goal = "recomp", rpe } = options;
-  return applyProgression(ex, reps, weight, goal, microloading, rpe);
+  const { smallPlates = false, rpe } = options;
+  return applyProgression(ex, reps, weight, smallPlates, rpe);
 }
 
 describe("heavier: the plan moves to the load lifted, by any margin", () => {
@@ -177,7 +177,7 @@ describe("the second miss in a row: 10% lighter, the target as it was", () => {
       consecutiveFailures: 1,
     });
     const out = progressed(carry, 35, 24);
-    expect(out.weight).toBe(21.25); // 21.6 on the 1.25 kg grid
+    expect(out.weight).toBe(22.5); // 21.6 is nearest the 22.5 kg pair
     expect(out.reps).toBe(40);
     expect(out.lowered).toEqual({
       exerciseId: "farmers-carry",
@@ -226,27 +226,20 @@ describe("the second miss in a row: 10% lighter, the target as it was", () => {
 });
 
 describe("every step runs from the load lifted", () => {
-  it("microloading's +1 kg (linear path), heavier and lighter", () => {
+  it("small plates step a barbell 1.25 kg, heavier and lighter", () => {
     const linear = bench({ progressionType: "linear", weight: 57.5 });
-    expect(progressed(linear, 6, 82.5, { microloading: true }).weight).toBe(
-      83.5
+    expect(progressed(linear, 6, 82.5, { smallPlates: true }).weight).toBe(
+      83.75
     );
-    expect(progressed(linear, 6, 50, { microloading: true }).weight).toBe(51);
+    expect(progressed(linear, 6, 50, { smallPlates: true }).weight).toBe(51.25);
   });
 
-  it("the linear step needs the 2-rep overshoot, as before", () => {
+  it("a fixed target met on every set steps, from the load lifted", () => {
     const linear = bench({ progressionType: "linear", weight: 57.5 });
-    const overshoot = progressed(linear, 8, 82.5);
-    expect(overshoot.weight).toBe(85);
-    expect(overshoot.reps).toBe(6);
-    expect(progressed(linear, 6, 82.5).weight).toBe(82.5); // no overshoot, no step
-  });
-
-  it("the lean-bulk bonus rides on it", () => {
-    const out = progressed(bench({ weight: 57.5 }), 8, 82.5, {
-      goal: "lean bulk",
-    });
-    expect(out.weight).toBe(86.25); // 82.5 + 2.5 + 1.25
+    const met = progressed(linear, 6, 82.5);
+    expect(met.weight).toBe(85);
+    expect(met.reps).toBe(6);
+    expect(progressed(linear, 8, 82.5).weight).toBe(85); // no overshoot needed
   });
 
   it("the RPE hold keeps the plan AT the load lifted, with no step", () => {
@@ -256,19 +249,14 @@ describe("every step runs from the load lifted", () => {
     expect(progressed(bench(), 8, 50, { rpe: 10 }).weight).toBe(50);
   });
 
-  it("the step's size keys on the load lifted", () => {
-    // 30 kg planned is under HEAVY_LOAD_KG, but 82.5 kg was lifted, so the
-    // step is a 2.5 kg plate pair (was a 1.25 kg microplate: 83.75), and on
-    // lean bulk the bonus rides on it.
+  it("the 15% cap keys on the load lifted", () => {
+    // 30 kg planned and 82.5 kg lifted: 2.5 kg is 3% of what was lifted.
     expect(progressed(bench({ weight: 30 }), 8, 82.5).weight).toBe(85);
-    expect(
-      progressed(bench({ weight: 30 }), 8, 82.5, { goal: "lean bulk" }).weight
-    ).toBe(86.25);
-    // The other way: 60 kg planned, 30 kg lifted steps by a microplate, with
-    // no bonus on a lift too light for a full plate.
-    expect(progressed(bench(), 8, 30, { goal: "lean bulk" }).weight).toBe(
-      31.25
-    );
+    // 60 kg planned and 15 kg lifted: 2.5 kg is 17% of it, so the target
+    // climbs a rep past the range instead.
+    const light = progressed(bench(), 8, 15);
+    expect(light.weight).toBe(15);
+    expect(light.reps).toBe(9);
   });
 });
 
@@ -363,7 +351,7 @@ function stateWith(
     splitType: "upper_lower",
     fatigueScore: 0,
     updatedAt: 1,
-    settings: { autoProgression: true, microloading: false },
+    settings: { autoProgression: true, smallPlates: false },
     workouts: [
       { dayName: "Push", dayType: "push", completed: false, exercises: [ex] },
     ],
@@ -412,7 +400,7 @@ function reload(state: ProgramState): ProgramExercise {
 const three = (weight: number, reps: number) =>
   Array.from({ length: 3 }, () => ({ weight, reps }));
 
-const autoOff = { settings: { autoProgression: false, microloading: true } };
+const autoOff = { settings: { autoProgression: false, smallPlates: false } };
 
 /** An easing block in its first week: progression is held. */
 const heldWeek: Partial<ProgramState> = {
@@ -477,10 +465,17 @@ describe("at the finish (applySessionProgression)", () => {
     expect(finish(stateWith(dips, autoOff), three(20, 6)).weight).toBe(10);
   });
 
+  it("small plates reach the finish: a barbell steps 1.25 kg", () => {
+    const linear = bench({ progressionType: "linear" });
+    const plates = { settings: { autoProgression: true, smallPlates: true } };
+    expect(finish(stateWith(linear, plates), three(60, 6)).weight).toBe(61.25);
+    expect(finish(stateWith(linear), three(60, 6)).weight).toBe(62.5);
+  });
+
   it("a held week keeps the prescription, auto-progression on or off", () => {
     for (const settings of [
-      { autoProgression: true, microloading: false },
-      { autoProgression: false, microloading: false },
+      { autoProgression: true, smallPlates: false },
+      { autoProgression: false, smallPlates: false },
     ]) {
       const out = finish(
         stateWith(bench(), { ...heldWeek, settings }),

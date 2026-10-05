@@ -1085,3 +1085,91 @@ describe("migrateProgramState — v5 miss-count reset", () => {
     ).toBe(1);
   });
 });
+
+describe("migrateProgramState — v5 rounding onto the equipment's grid", () => {
+  const lifted = (
+    exercises: ({ exerciseId: string; weight: number } & Record<
+      string,
+      unknown
+    >)[],
+    programSchemaVersion = 4
+  ) =>
+    makeLegacyProgramState({
+      programSchemaVersion,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: false,
+          exercises: exercises.map((ex, i) => ({
+            name: ex.exerciseId,
+            instanceId: `i-${i}`,
+            movementCategory: "horizontal_push",
+            sets: 3,
+            baseSets: 3,
+            reps: 8,
+            baseReps: 8,
+            repUnit: "reps",
+            progressionType: "linear",
+            lastSuccessfulWeight: ex.weight,
+            lastAttemptedWeight: ex.weight,
+            consecutiveFailures: 0,
+            plateauCount: 0,
+            performanceHistory: [],
+            lastPerformance: null,
+            ...ex,
+          })),
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+  const weights = (state: ProgramState) =>
+    migrateProgramState(state, "2026-10-05").workouts[0].exercises.map(
+      (ex) => ex.weight
+    );
+
+  it("rounds the weights Microloading and the old light-lift step left, once", () => {
+    expect(
+      weights(
+        lifted([
+          { exerciseId: "bench-press", weight: 101 },
+          { exerciseId: "squat", weight: 102.5 },
+          { exerciseId: "lateral-raise", weight: 9.25 },
+          { exerciseId: "db-bench", weight: 11.25 },
+          { exerciseId: "lat-pulldown", weight: 46 },
+        ])
+      )
+    ).toEqual([100, 102.5, 9, 10, 45]);
+  });
+
+  it("rounds the weight a lighter week will put back, too", () => {
+    const ex = migrateProgramState(
+      lifted([{ exerciseId: "bench-press", weight: 85, preDeloadWeight: 101 }]),
+      "2026-10-05"
+    ).workouts[0].exercises[0];
+    expect(ex.preDeloadWeight).toBe(100);
+  });
+
+  it("leaves a lift whose equipment the catalogue doesn't name", () => {
+    // A weighted pull-up's load was lifted, so the swap repair keeps it.
+    const vest = [
+      { date: "2026-09-30", weight: 7, repsCompleted: 8, repsTarget: 8 },
+    ];
+    expect(
+      weights(
+        lifted([
+          { exerciseId: "my-own-lift", weight: 23 },
+          { exerciseId: "pull-ups", weight: 7, performanceHistory: vest },
+        ])
+      )
+    ).toEqual([23, 7]);
+  });
+
+  it("never rounds again: an odd weight lifted later is the person's", () => {
+    const current = lifted(
+      [{ exerciseId: "bench-press", weight: 101 }],
+      CURRENT_PROGRAM_SCHEMA_VERSION
+    );
+    expect(weights(current)).toEqual([101]);
+  });
+});

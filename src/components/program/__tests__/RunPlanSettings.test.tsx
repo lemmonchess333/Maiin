@@ -608,7 +608,7 @@ describe("RunPlanSettings", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: 1,
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
     } as unknown as ProgramState;
 

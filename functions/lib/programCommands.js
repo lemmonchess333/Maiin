@@ -721,16 +721,31 @@ const KIND_VALIDATORS = {
 
   setProgramSettings(command, out) {
     assertKeys(command, "setProgramSettings", ["kind", "commandId", "settings"], []);
-    assertKeys(command.settings, "settings", ["autoProgression", "microloading"], []);
+    // `smallPlates` replaced Microloading (Lift4 (6)). App versions from
+    // before it still send `microloading`, which is accepted and dropped:
+    // nothing reads it, and their saves keep the small-plates answer.
+    assertKeys(
+      command.settings,
+      "settings",
+      ["autoProgression"],
+      ["smallPlates", "microloading"]
+    );
+    if (command.settings.microloading !== undefined) {
+      assertBoolean(command.settings.microloading, "settings.microloading");
+    }
     out.settings = {
       autoProgression: assertBoolean(
         command.settings.autoProgression,
         "settings.autoProgression"
       ),
-      microloading: assertBoolean(
-        command.settings.microloading,
-        "settings.microloading"
-      ),
+      ...(command.settings.smallPlates !== undefined
+        ? {
+            smallPlates: assertBoolean(
+              command.settings.smallPlates,
+              "settings.smallPlates"
+            ),
+          }
+        : {}),
     };
   },
 
@@ -1093,7 +1108,7 @@ function normalizeForReducer(state) {
     ...state,
     settings: isPlainObject(state.settings)
       ? state.settings
-      : { autoProgression: true, microloading: true },
+      : { autoProgression: true, smallPlates: false },
     weekHistory: Array.isArray(state.weekHistory) ? state.weekHistory : [],
     workouts: workouts.map((day, d) => ({
       ...day,
@@ -2273,7 +2288,15 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     }
     case "setProgramSettings":
-      next = { ...current, settings: { ...validated.settings } };
+      next = {
+        ...current,
+        settings: {
+          autoProgression: validated.settings.autoProgression,
+          smallPlates:
+            validated.settings.smallPlates ??
+            current.settings.smallPlates === true,
+        },
+      };
       break;
     case "setProgramGoalMirror":
       next = { ...current, goal: validated.goal };

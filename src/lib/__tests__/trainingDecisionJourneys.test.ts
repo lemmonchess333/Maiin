@@ -44,7 +44,7 @@ function programme() {
     goal: "recomp",
     currentPhase: "base",
     splitType: "full_body",
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     fatigueScore: 0,
     weekHistory: [],
     updatedAt: 0,

@@ -61,7 +61,7 @@ test("training advice, saved correction and the next session agree", async ({
     weekNumber: 1,
     currentPhase: "base",
     liftWeekKey: localWeekKey(now),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     workouts: [
       {
         dayName: "Lower",

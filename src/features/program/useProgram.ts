@@ -49,7 +49,11 @@ import type {
 } from "./programTypes";
 import { represcribeWorkouts } from "./represcribe";
 import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
-import { normalizeProgramState, transitionStatus } from "./programTypes";
+import {
+  DEFAULT_PROGRAM_SETTINGS,
+  normalizeProgramState,
+  transitionStatus,
+} from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
@@ -745,7 +749,7 @@ export function useProgram() {
           workouts,
           fatigueScore: 0,
           updatedAt: Date.now(),
-          settings: { autoProgression: true, microloading: true },
+          settings: DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
           // PR-0b-ii: explicit schema version on initial creation so
           // PR-0b-i's shape-aware migration sees a current doc on
@@ -2191,21 +2195,17 @@ export function useProgram() {
   const updateSettings = useCallback(
     async (updates: Partial<ProgramSettings>): Promise<ProgramOutcome> => {
       if (!programState) return FAILED;
-      const current = programState.settings ?? {
-        autoProgression: true,
-        microloading: true,
-      };
+      const current = programState.settings ?? DEFAULT_PROGRAM_SETTINGS;
       const newSettings = { ...current, ...updates };
-      // P6: the reducer replaces the whole settings object, so the MERGE stays
-      // client-side and the full result is sent. Both fields are required by
-      // the validator, which is why a partial patch would be rejected.
+      // P6: the MERGE stays client-side and the full result is sent: the
+      // validator requires auto-progression, and the reducer writes both.
       return runProgramCommand(
         {
           kind: "setProgramSettings",
           commandId: generateInstanceId(),
           settings: {
             autoProgression: newSettings.autoProgression,
-            microloading: newSettings.microloading,
+            smallPlates: newSettings.smallPlates,
           },
         },
         (state) => ({ ...state, settings: newSettings }),
@@ -2312,10 +2312,7 @@ export function useProgram() {
           workouts,
           fatigueScore: base?.fatigueScore ?? 0,
           updatedAt: Date.now(),
-          settings: base?.settings ?? {
-            autoProgression: true,
-            microloading: true,
-          },
+          settings: base?.settings ?? DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
           // Blk2 / H1. `saveProgram` is a no-merge full replace and this
           // literal spreads nothing from `programState`, so an unnamed field

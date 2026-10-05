@@ -64,7 +64,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 }
 
 const programState = {
-  settings: { autoProgression: true, microloading: true },
+  settings: { autoProgression: true, smallPlates: false },
 } as ProgramState;
 
 /** Where the page sent the user. */
@@ -244,6 +244,15 @@ describe("ProgrammeSettings — rebuild path", () => {
 });
 
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
+  it("asks about small plates, off until turned on, in Microloading's place (Lift4 (6))", () => {
+    const { updateSettings } = setup();
+    expect(screen.queryByText(/microloading/i)).toBeNull();
+    const plates = screen.getByRole("switch", { name: /i have small plates/i });
+    expect(plates).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(plates);
+    expect(updateSettings).toHaveBeenCalledWith({ smallPlates: true });
+  });
+
   it("toggling auto-progression calls updateSettings, not configurePlan", () => {
     const { updateSettings } = setup();
     fireEvent.click(screen.getByRole("switch", { name: /auto progression/i }));
@@ -342,7 +351,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
     workouts: [],
     fatigueScore: 0,
     updatedAt: 1,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
   } as unknown as ProgramState;
   const LOAD_FAILED =
@@ -538,7 +547,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     lastPerformance: null,
   });
   const liftState = {
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     splitType: "upper_lower",
     weekNumber: 5,
     currentPhase: "progression",
