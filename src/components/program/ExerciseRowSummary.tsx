@@ -5,6 +5,7 @@ import { groupLastSets, type LastSet } from "@/features/program/lastSets";
 import { formatRepTarget } from "@/features/program/templateConversion";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
+import LoweredLine from "./LoweredLine";
 
 /**
  * One exercise on Train's day list: its picture, its name, the
@@ -35,6 +36,7 @@ export default function ExerciseRowSummary({
     | "repUnit"
     | "weight"
     | "notes"
+    | "lowered"
   >;
   /** Every set of the last session with this exercise that the plan reads
    *  (`lastSetsByExercise`), so a held or raised weight explains itself. */
@@ -83,6 +85,10 @@ export default function ExerciseRowSummary({
             />
           </p>
         )}
+        <LoweredLine
+          exercise={exercise}
+          className="text-xs mt-0.5 text-muted-foreground"
+        />
         {showNotes && exercise.notes && (
           <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
             <Info className="size-3 shrink-0 mt-0.5" aria-hidden="true" />

@@ -154,6 +154,9 @@ export function represcribeWorkouts(
       // `repRangeMax` of 0 would read as a ceiling below the target.
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;
+      // A lowered lift's way back is a weight for the old target, and its
+      // line names that target (Lift4); neither holds for the new one.
+      delete out.lowered;
       return out;
     }),
   }));
@@ -356,6 +359,6 @@ export function blockReleaseLine(input: {
  * Three, because `resolveAdjustment` needs two consecutive stalled weeks to
  * escalate past a volume cut, and the third covers the bodyweight residue
  * `scaleLoadForReps` cannot reach: a pull-up has no load to shed, so its
- * target walks down one rep per three misses instead.
+ * target walks down one rep per two misses instead.
  */
 export const BLOCK_AMNESTY_WEEKS = 3;

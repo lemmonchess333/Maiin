@@ -230,6 +230,37 @@ export interface ProgramExercise {
    * until their next regeneration.
    */
   isAccessory?: boolean;
+  /**
+   * Lift4 (7): the plan lowered this lift itself, after two sessions in a
+   * row under its reps at the weight it asked for (`loweringOf` reads it).
+   */
+  lowered?: LoweredBy;
+}
+
+/** What the plan lowered a lift from, and the target it was missing. */
+export interface LoweredBy {
+  /** The exercise it lowered. A swap to another leaves this behind, and
+   *  nothing reads it there (`loweringOf`). */
+  exerciseId: string;
+  /** The weight it came down from, which the lift climbs back to a step a
+   *  session; or a bodyweight lift's reps or hold, which climb back by the
+   *  usual rules. */
+  from: number;
+  unit: "kg" | "reps" | "s";
+  /** The reps, or a hold's seconds, two sessions in a row fell short of. */
+  target: number;
+  /** Set once the next session has shown the line ("Down from 100 kg: two
+   *  sessions under 5 reps"), which it shows only then. */
+  shown?: true;
+}
+
+/** The plan's own lowering of this lift, if it was this lift's. */
+export function loweringOf(
+  exercise: Pick<ProgramExercise, "exerciseId" | "lowered">
+): LoweredBy | undefined {
+  return exercise.lowered?.exerciseId === exercise.exerciseId
+    ? exercise.lowered
+    : undefined;
 }
 
 /* ================================
@@ -997,6 +1028,7 @@ export function normalizeExercise(
       ? { sessionProgression: ex.sessionProgression }
       : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
+    ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
   };
 }
 

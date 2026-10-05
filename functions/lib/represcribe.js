@@ -269,6 +269,9 @@ function represcribeWorkouts(workouts, goal, experience) {
       // `repRangeMax` of 0 would read as a ceiling below the target.
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;
+      // A lowered lift's way back is a weight for the old target, and its
+      // line names that target (Lift4); neither holds for the new one.
+      delete out.lowered;
       return out;
     }),
   }));

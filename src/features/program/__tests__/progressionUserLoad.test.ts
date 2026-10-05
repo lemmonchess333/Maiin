@@ -5,13 +5,14 @@
  * who benched 82.5 kg × 6 four sessions running saw the plan go
  * 57.5 → 57.5 → 57.5 → 54.5.
  *
- * Independent literals for what the parity matrix can only mirror:
+ * Independent literals for the engine's rules:
  *   - a loaded lift's prescription moves to the weight lifted, heavier or
  *     lighter, by any margin; success is the target reps at that weight,
  *     and every step runs from it, its size keyed on that weight;
- *   - reps missed still move it there and count the miss; the third miss in
- *     a row keeps the load and puts the rep target (a hold's duration) back
- *     to its base, while bodyweight movements still step their target down;
+ *   - reps missed still move it there and count the miss; the second miss
+ *     in a row lowers a loaded lift 10% with its target as it was (Lift4
+ *     (7); `sessionSets.test.ts` has the climb back), and a bodyweight one
+ *     a rep, or a hold five seconds;
  *   - no load logged holds; bodyweight and uncalibrated lifts are as they
  *     were;
  *   - at the finish (`applySessionProgression`), auto-progression off moves
@@ -80,18 +81,19 @@ describe("heavier: the plan moves to the load lifted, by any margin", () => {
     expect(out.lastSuccessfulWeight).toBe(82.5);
   });
 
-  it("the measured case: four sessions of 82.5 kg × 6 on a 57.5 kg seed", () => {
+  it("the measured case: three sessions of 82.5 kg × 6 on a 57.5 kg seed", () => {
     let ex = bench({ weight: 57.5 });
     const plan: number[] = [];
-    for (let session = 0; session < 4; session++) {
+    for (let session = 0; session < 3; session++) {
       ex = progressed(ex, 6, 82.5);
       plan.push(ex.weight);
     }
-    // Was 57.5 → 57.5 → 57.5 → 54.5. The first session moves the plan to
-    // 82.5 and climbs the target to 7; 6 then misses it three times, and the
-    // third miss puts the target back to 6 with the load where it was lifted.
-    expect(plan).toEqual([82.5, 82.5, 82.5, 82.5]);
-    expect(ex.reps).toBe(6);
+    // Lift2 read 57.5 → 57.5 → 57.5. The first session moves the plan to
+    // 82.5 and climbs the target to 7; 6 then misses it twice, and the
+    // second miss lowers the lift 10% with the target kept.
+    expect(plan).toEqual([82.5, 82.5, 75]);
+    expect(ex.reps).toBe(7);
+    expect(ex.lowered).toMatchObject({ from: 82.5, target: 7 });
     expect(ex.consecutiveFailures).toBe(0);
     expect(ex.plateauCount).toBe(1); // the stall is still recorded
   });
@@ -127,40 +129,42 @@ describe("lighter: the plan moves down to the load lifted", () => {
   });
 });
 
-describe("the third miss in a row: the target resets, the load stays", () => {
-  it("double path: the load lifted stays and the target goes back to its base", () => {
-    const out = progressed(bench({ reps: 7, consecutiveFailures: 2 }), 4, 50);
-    expect(out.weight).toBe(50); // no 5% cut: was 47.5
-    expect(out.reps).toBe(6);
+describe("the second miss in a row: 10% lighter, the target as it was", () => {
+  it("double path: the lift comes down 10% and records where it came from", () => {
+    const out = progressed(bench({ reps: 7, consecutiveFailures: 1 }), 4, 60);
+    expect(out.weight).toBe(55); // 54 on the 2.5 kg grid
+    expect(out.reps).toBe(7);
+    expect(out.lowered).toEqual({
+      exerciseId: "bench-press",
+      from: 60,
+      unit: "kg",
+      target: 7,
+    });
     expect(out.consecutiveFailures).toBe(0);
     expect(out.plateauCount).toBe(1);
   });
 
-  it("linear path: four sessions of 82.5 kg × 5 against 6 reps on a 57.5 kg seed", () => {
-    let ex = bench({ progressionType: "linear", weight: 57.5 });
-    const plan: number[] = [];
-    for (let session = 0; session < 4; session++) {
-      ex = progressed(ex, 5, 82.5);
-      plan.push(ex.weight);
-    }
-    // The 1 kg cut on the third miss went too: it read 82.5, 82.5, 81.5, 82.5.
-    expect(plan).toEqual([82.5, 82.5, 82.5, 82.5]);
-    expect(ex.plateauCount).toBe(1);
-  });
-
-  it("linear path: a target above its base goes back to it", () => {
+  it("linear path: the same", () => {
     const linear = bench({
       progressionType: "linear",
+      weight: 82.5,
       reps: 8,
-      consecutiveFailures: 2,
+      consecutiveFailures: 1,
     });
     const out = progressed(linear, 7, 82.5);
-    expect(out.weight).toBe(82.5);
-    expect(out.reps).toBe(6);
-    expect(out.consecutiveFailures).toBe(0);
+    expect(out.weight).toBe(75);
+    expect(out.reps).toBe(8);
+    expect(out.lowered).toMatchObject({ from: 82.5, target: 8 });
   });
 
-  it("a weighted hold keeps its load and goes back to its base duration", () => {
+  it("the first miss holds, silently", () => {
+    const out = progressed(bench({ reps: 7 }), 4, 60);
+    expect(out.weight).toBe(60);
+    expect(out.consecutiveFailures).toBe(1);
+    expect(out.lowered).toBeUndefined();
+  });
+
+  it("a weighted hold comes down in load and keeps its duration", () => {
     const carry = bench({
       name: "Farmer's Carry",
       exerciseId: "farmers-carry",
@@ -170,13 +174,18 @@ describe("the third miss in a row: the target resets, the load stays", () => {
       baseReps: 30,
       repRangeMax: 45,
       weight: 24,
-      consecutiveFailures: 2,
+      consecutiveFailures: 1,
     });
-    const same = progressed(carry, 35, 24);
-    expect(same.weight).toBe(24); // not cut, not held at a shorter time
-    expect(same.reps).toBe(30);
-    expect(same.plateauCount).toBe(1);
-    expect(progressed(carry, 35, 20).weight).toBe(20); // the load lifted
+    const out = progressed(carry, 35, 24);
+    expect(out.weight).toBe(21.25); // 21.6 on the 1.25 kg grid
+    expect(out.reps).toBe(40);
+    expect(out.lowered).toEqual({
+      exerciseId: "farmers-carry",
+      from: 24,
+      unit: "kg",
+      target: 40,
+    });
+    expect(out.plateauCount).toBe(1);
   });
 
   it("bodyweight movements still step their target down", () => {
@@ -186,7 +195,7 @@ describe("the third miss in a row: the target resets, the load stays", () => {
       movementCategory: "vertical_pull",
       reps: 8,
       weight: 0,
-      consecutiveFailures: 2,
+      consecutiveFailures: 1,
     });
     const reps = progressed(pullUps, 5, 0);
     expect(reps.reps).toBe(7); // one rep down, not back to the base of 6
@@ -200,7 +209,7 @@ describe("the third miss in a row: the target resets, the load stays", () => {
       reps: 40,
       baseReps: 30,
       weight: 0,
-      consecutiveFailures: 2,
+      consecutiveFailures: 1,
     });
     expect(progressed(plank, 20, 0).reps).toBe(35); // five seconds down, not 30
     const dips = bench({
@@ -208,7 +217,7 @@ describe("the third miss in a row: the target resets, the load stays", () => {
       movementCategory: "vertical_push",
       reps: 8,
       weight: 10,
-      consecutiveFailures: 2,
+      consecutiveFailures: 1,
     });
     const dipped = progressed(dips, 5, 10);
     expect(dipped.reps).toBe(7);
@@ -504,6 +513,62 @@ describe("at the finish (applySessionProgression)", () => {
     expect(out.weight).toBe(50);
     expect(out.reps).toBe(6);
     expect(out.consecutiveFailures).toBe(0);
+  });
+});
+
+describe("the lowered line lasts one session (Lift4 (3))", () => {
+  const lowered = bench({
+    weight: 55,
+    lowered: { exerciseId: "bench-press", from: 60, unit: "kg", target: 6 },
+  });
+
+  it("the next session's finish says it, and the climb back starts", () => {
+    const out = finish(stateWith(lowered), three(55, 6));
+    expect(out.weight).toBe(57.5);
+    expect(out.lowered).toEqual({ ...lowered.lowered, shown: true });
+  });
+
+  it("so does an easier session's, which moves nothing else", () => {
+    const out = finish(stateWith(lowered), three(45, 6), "easier_today");
+    expect(out.weight).toBe(55);
+    expect(out.lowered).toEqual({ ...lowered.lowered, shown: true });
+  });
+
+  it("a second drop writes a new line, from where it came down this time", () => {
+    const out = finish(
+      stateWith({ ...lowered, consecutiveFailures: 1 }),
+      three(55, 4)
+    );
+    expect(out.weight).toBe(50);
+    expect(out.lowered).toEqual({
+      exerciseId: "bench-press",
+      from: 55,
+      unit: "kg",
+      target: 6,
+    });
+  });
+
+  it("a bodyweight lift's record goes with the session that showed it", () => {
+    const pullUps = bench({
+      name: "Pull-Ups",
+      exerciseId: "pull-ups",
+      movementCategory: "vertical_pull",
+      weight: 0,
+      reps: 7,
+      lowered: { exerciseId: "pull-ups", from: 8, unit: "reps", target: 8 },
+    });
+    expect(finish(stateWith(pullUps), three(0, 7)).lowered).toBeUndefined();
+  });
+
+  it("stays while the lift waits to be done", () => {
+    const state = stateWith(lowered);
+    const next = applySessionProgression(state, 0, {
+      completionId: "session-1",
+      date: "2026-10-05",
+      prescription: { exercises: [], progressionBaseline: [] },
+      setLogs: [],
+    });
+    expect(next.workouts[0].exercises[0].lowered).toEqual(lowered.lowered);
   });
 });
 

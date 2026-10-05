@@ -39,6 +39,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import LoweredLine from "@/components/program/LoweredLine";
 import EditSetSheet from "@/components/workout/EditSetSheet";
 import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
@@ -2099,6 +2100,12 @@ export default function WorkoutSession({
                 ? " @ Bodyweight"
                 : ""}
           </p>
+        )}
+        {currentExercise && (
+          <LoweredLine
+            exercise={currentExercise}
+            className="text-xs text-muted-foreground text-center"
+          />
         )}
 
         {/* #985 — plate breakdown per side (barbell only). */}

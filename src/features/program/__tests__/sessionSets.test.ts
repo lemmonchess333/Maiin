@@ -238,3 +238,204 @@ describe("applySessionSets — the engine on a whole session", () => {
     expect(out.consecutiveFailures).toBe(0);
   });
 });
+
+/* ─── Lift4 release 2: two misses lower a lift, and it climbs back ────── */
+
+describe("the drop: two misses in a row lower a lift (Lift4 (7))", () => {
+  function squat(over: Partial<ProgramExercise> = {}): ProgramExercise {
+    return {
+      name: "Barbell Squat",
+      exerciseId: "squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 5,
+      baseReps: 5,
+      weight: 100,
+      progressionType: "linear",
+      lastSuccessfulWeight: 100,
+      lastAttemptedWeight: 100,
+      consecutiveFailures: 0,
+      plateauCount: 0,
+      performanceHistory: [],
+      lastPerformance: null,
+      ...over,
+    };
+  }
+  const session = (ex: ProgramExercise, weight: number, reps: number[]) =>
+    applySessionSets(
+      ex,
+      read(
+        reps.map((r) => done(weight, r)),
+        ex.sets
+      ),
+      "recomp",
+      false
+    );
+
+  it("holds the first miss, silently", () => {
+    const out = session(squat(), 100, [5, 4, 4]);
+    expect(out.weight).toBe(100);
+    expect(out.consecutiveFailures).toBe(1);
+    expect(out.lowered).toBeUndefined();
+  });
+
+  it("lowers the second miss in a row 10%, with one line, and keeps the target", () => {
+    const out = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    expect(out.weight).toBe(90);
+    expect(out.reps).toBe(5);
+    expect(out.lowered).toEqual({
+      exerciseId: "squat",
+      from: 100,
+      unit: "kg",
+      target: 5,
+    });
+    expect(out.consecutiveFailures).toBe(0);
+    expect(out.plateauCount).toBe(1);
+  });
+
+  it("does not lower after a miss and a hold", () => {
+    // 6, 5, 4 at 3 × 5 makes the 15 reps asked for: a hold, which ends the run.
+    const held = session(squat({ consecutiveFailures: 1 }), 100, [6, 5, 4]);
+    expect(held.consecutiveFailures).toBe(0);
+    expect(held.weight).toBe(100);
+  });
+
+  it("brings a bodyweight lift down a rep, and a hold five seconds", () => {
+    const pullUps = squat({
+      name: "Pull-Ups",
+      exerciseId: "pull-ups",
+      movementCategory: "vertical_pull",
+      weight: 0,
+      reps: 8,
+      baseReps: 8,
+      consecutiveFailures: 1,
+    });
+    const out = session(pullUps, 0, [7, 6, 6]);
+    expect(out.reps).toBe(7);
+    expect(out.lowered).toEqual({
+      exerciseId: "pull-ups",
+      from: 8,
+      unit: "reps",
+      target: 8,
+    });
+
+    const plank = squat({
+      name: "Plank",
+      exerciseId: "plank",
+      movementCategory: "core",
+      weight: 0,
+      reps: 45,
+      baseReps: 45,
+      repUnit: "seconds",
+      progressionType: "double",
+      consecutiveFailures: 1,
+    });
+    const held = session(plank, 0, [40, 35, 30]);
+    expect(held.reps).toBe(40);
+    expect(held.lowered).toEqual({
+      exerciseId: "plank",
+      from: 45,
+      unit: "s",
+      target: 45,
+    });
+  });
+
+  it("climbs back a step a session to where it was, then the usual rules", () => {
+    let ex = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    const seen: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      ex = session(ex, ex.weight, [5, 5, 5]);
+      seen.push(ex.weight);
+      expect(ex.reps).toBe(5);
+    }
+    expect(seen.slice(0, 4)).toEqual([92.5, 95, 97.5, 100]);
+    expect(ex.lowered).toBeUndefined();
+    // Back at 100, the usual rules: without microloading a linear lift steps
+    // on two reps over, so 5, 5, 5 holds.
+    expect(seen[4]).toBe(100);
+  });
+
+  it("climbs back on a session that is not a miss, even short of a step", () => {
+    const lowered = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    const out = session(lowered, 90, [6, 5, 4]);
+    expect(out.weight).toBe(92.5);
+    // The line was that session's: the record goes on as the way back.
+    expect(out.lowered).toMatchObject({ from: 100, shown: true });
+  });
+
+  it("counts a miss on the way back, and does not climb", () => {
+    const lowered = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    const out = session(lowered, 90, [4, 4, 4]);
+    expect(out.weight).toBe(90);
+    expect(out.consecutiveFailures).toBe(1);
+    expect(out.lowered).toMatchObject({ from: 100, shown: true });
+  });
+
+  it("drops the way back once the lift is lifted at or past it", () => {
+    const lowered = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    const out = session(lowered, 102.5, [5, 5, 5]);
+    expect(out.lowered).toBeUndefined();
+    expect(out.weight).toBeGreaterThanOrEqual(102.5);
+  });
+
+  it("never climbs past the weight it came down from", () => {
+    const lowered = session(squat({ consecutiveFailures: 1 }), 100, [5, 4, 4]);
+    const out = session(lowered, 99, [5, 5, 5]);
+    expect(out.weight).toBe(100); // not 101.5
+    expect(out.lowered).toBeUndefined();
+  });
+
+  it("never reads a record a swap left behind", () => {
+    const front = squat({
+      exerciseId: "front-squat",
+      weight: 90,
+      lowered: { exerciseId: "squat", from: 100, unit: "kg", target: 5 },
+    });
+    const out = session(front, 90, [5, 5, 5]);
+    expect(out.weight).toBe(90); // the usual rules, not a climb to 100
+    expect(out.lowered).toBeUndefined();
+  });
+});
+
+describe("how far a lift comes down: 10% on its step grid, at least a step", () => {
+  const lowersTo = (over: Partial<ProgramExercise>) => {
+    const ex: ProgramExercise = {
+      name: "Lift",
+      exerciseId: "squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 8,
+      baseReps: 8,
+      weight: 100,
+      progressionType: "linear",
+      lastSuccessfulWeight: 0,
+      lastAttemptedWeight: 0,
+      consecutiveFailures: 1,
+      plateauCount: 0,
+      performanceHistory: [],
+      lastPerformance: null,
+      ...over,
+    };
+    const out = applySessionSets(
+      ex,
+      read([done(ex.weight, 6), done(ex.weight, 6), done(ex.weight, 6)]),
+      "recomp",
+      false
+    );
+    return out.weight;
+  };
+  const curl = {
+    exerciseId: "barbell-curl",
+    movementCategory: "arms_biceps" as const,
+  };
+
+  it("rounds 10% to the lift's step", () => {
+    expect(lowersTo({ weight: 100 })).toBe(90);
+    expect(lowersTo({ weight: 60 })).toBe(55);
+    expect(lowersTo({ ...curl, weight: 20 })).toBe(17.5);
+  });
+
+  it("comes down a whole step when 10% rounds to nothing", () => {
+    expect(lowersTo({ ...curl, weight: 5 })).toBe(3.75);
+  });
+});

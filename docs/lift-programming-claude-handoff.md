@@ -187,6 +187,20 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
 `src/features/program/programEngine.ts`, the only copy since Lift4 build
 step 3 retired the server's (below).
 
+STATUS 2026-10-05 (Lift4 (7), build step 3, second release): the third-miss
+rule above is replaced. A miss counts only at the weight the plan asked for
+(`sessionOutcome` in `sessionSets.ts`), and the first holds, silently. The
+second in a row lowers a loaded lift 10% on its step grid, by at least one
+step, with the rep target kept; the lift then climbs back a step for each
+session that is not a miss, to the weight it came down from, and the usual
+rules resume there. Its next session shows one line, "Down from 100 kg: two
+sessions under 5 reps". One record on the exercise, `lowered`, carries both,
+tagged with the exercise it lowered so a swap can't take it to another.
+Bodyweight lifts come down a rep and bodyweight holds five seconds, as
+before; a weighted hold comes down in load again, as the LIFT-EV-01
+close-out had it. Code: `countMiss` and `applySessionSets` in
+`programEngine.ts`.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

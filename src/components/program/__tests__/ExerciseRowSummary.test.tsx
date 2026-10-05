@@ -51,6 +51,26 @@ describe("ExerciseThumb — each exercise's picture", () => {
 });
 
 describe("ExerciseRowSummary — one row's words", () => {
+  it("carries the line when the plan lowered the lift itself", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          weight: 90,
+          reps: 5,
+          lowered: {
+            exerciseId: "bench-press",
+            from: 100,
+            unit: "kg",
+            target: 5,
+          },
+        })}
+      />
+    );
+    expect(container).toHaveTextContent(
+      "Down from 100 kg: two sessions under 5 reps"
+    );
+  });
+
   it("states a weighted lift's prescription and last set with their loads", () => {
     const { container } = render(
       <ExerciseRowSummary

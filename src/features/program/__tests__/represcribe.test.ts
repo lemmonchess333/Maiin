@@ -236,6 +236,16 @@ describe("represcribeWorkouts — what it must not touch", () => {
     expect(out[0].exercises[0].plateauCount).toBe(0);
   });
 
+  it("drops a lowered lift's way back and its line, both about the retired target", () => {
+    const lowered = ex({
+      weight: 55,
+      lowered: { exerciseId: "bench-press", from: 60, unit: "kg", target: 8 },
+    });
+    const o = represcribeWorkouts([day([lowered])], "strength", "beginner")[0]
+      .exercises[0];
+    expect("lowered" in o).toBe(false);
+  });
+
   it("preserves day structure and does not mutate the input", () => {
     const input = [day([ex()], "Upper"), day([ex()], "Lower")];
     const snapshot = JSON.parse(JSON.stringify(input));

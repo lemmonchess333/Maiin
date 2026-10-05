@@ -105,7 +105,17 @@ function week(days: number): WorkoutDay[] {
     completed: false,
     skipped: false,
     exercises: [
-      exercise({ instanceId: `main-${i}` }),
+      // Lowered after two misses (Lift4): both copies drop the way back.
+      exercise({
+        instanceId: `main-${i}`,
+        weight: 55,
+        lowered: {
+          exerciseId: "bench-press",
+          from: 60,
+          unit: "kg",
+          target: 8,
+        },
+      }),
       exercise({
         instanceId: `acc-${i}`,
         exerciseId: "cable-fly",

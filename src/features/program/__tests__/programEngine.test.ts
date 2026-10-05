@@ -138,22 +138,26 @@ describe("applyProgression — double progression", () => {
     expect(result.weight).toBe(63.75); // 60 + 2.5 + 1.25
   });
 
-  it("responds on the 3rd consecutive failure (not the 2nd): the target resets, the load stays", () => {
-    // The person sets the load and the plan follows it, so a run of misses
-    // puts the rep target back to its base and records the stall instead
-    // of cutting the weight (progressionUserLoad.test.ts has the rest).
-    const ex = makeTestExercise({ reps: 7, consecutiveFailures: 1 });
-    // 2nd failure — no response yet
+  it("lowers on the 2nd miss in a row (not the 1st): 10% lighter, the target as it was", () => {
+    // Lift4 (7): the first miss holds, silently; the second lowers the lift
+    // 10% on its step grid and records the weight to climb back to
+    // (sessionSets.test.ts has the climb back).
+    const ex = makeTestExercise({ reps: 7 });
     const result = applyProgression(ex, 4, 60, "recomp", false);
-    expect(result.consecutiveFailures).toBe(2);
+    expect(result.consecutiveFailures).toBe(1);
     expect(result.weight).toBe(60);
     expect(result.reps).toBe(7);
 
-    // 3rd failure — NOW the target resets
     const result2 = applyProgression(result, 4, 60, "recomp", false);
     expect(result2.consecutiveFailures).toBe(0);
-    expect(result2.weight).toBe(60);
-    expect(result2.reps).toBe(6);
+    expect(result2.weight).toBe(55);
+    expect(result2.reps).toBe(7);
+    expect(result2.lowered).toEqual({
+      exerciseId: "bench-press",
+      from: 60,
+      unit: "kg",
+      target: 7,
+    });
     expect(result2.plateauCount).toBe(1);
   });
 });

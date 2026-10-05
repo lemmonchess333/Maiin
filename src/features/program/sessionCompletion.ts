@@ -2,6 +2,7 @@ import { sameStoredValue } from "./stateTransition";
 import type { ProgramExercise, ProgramState } from "./programTypes";
 import type { LoggedSet } from "./workoutSetRecord";
 import {
+  afterLoweredLine,
   applySessionSets,
   liftedLoad,
   PERFORMANCE_HISTORY_CAP,
@@ -66,6 +67,8 @@ export function applySessionProgression(
               const baseline = legacy
                 ? stored.sessionProgression!.baseline
                 : withoutSessionProgression(stored);
+              // A lowered lift's line is this session's alone (Lift4).
+              const start = afterLoweredLine(baseline);
               const expected = withoutSessionProgression(
                 session.prescription.progressionBaseline[inputIndex]
               );
@@ -82,18 +85,20 @@ export function applySessionProgression(
               // move a weight up, never down, and says nothing else.
               if (session.sessionVariant === "easier_today") {
                 const lifted = liftedLoad(baseline.exerciseId, read.weight);
-                return lifted !== null && lifted > baseline.weight
-                  ? { ...baseline, weight: lifted, lastAttemptedWeight: lifted }
-                  : legacy
-                    ? baseline
-                    : stored;
+                if (lifted !== null && lifted > baseline.weight)
+                  return {
+                    ...start,
+                    weight: lifted,
+                    lastAttemptedWeight: lifted,
+                  };
+                return legacy ? start : afterLoweredLine(stored);
               }
               const reps = recordedReps(read);
 
               let next: ProgramExercise;
               if (!held && settings.autoProgression) {
                 next = applySessionSets(
-                  baseline,
+                  start,
                   read,
                   state.goal,
                   settings.microloading
@@ -115,7 +120,7 @@ export function applySessionProgression(
                   ? null
                   : liftedLoad(baseline.exerciseId, read.weight);
                 next = {
-                  ...baseline,
+                  ...start,
                   ...(lifted === null ? {} : { weight: lifted }),
                   lastAttemptedWeight: read.weight,
                   lastPerformance: {

@@ -10,7 +10,7 @@ import type {
   WorkoutDay,
   WeeklyPrescription,
 } from "./programTypes";
-import { generateInstanceId } from "./programTypes";
+import { generateInstanceId, loweringOf } from "./programTypes";
 import {
   pickExercise,
   pickAccessory,
@@ -2121,11 +2121,9 @@ export function applyProgression(
   // the target reps at that weight, and the steps below run from it: the
   // range climb, the 2-rep overshoot, microloading's +1 kg, the linear step,
   // the goal bonus and the RPE hold. Reps missed: the prescription still
-  // moves to the load lifted and the miss counts. The person sets the load,
-  // so the plan never cuts below it: a third miss in a row puts the rep
-  // target back to its base instead. No load logged: nothing to follow, so
-  // the session is recorded and the prescription and its failure count stay
-  // as they were.
+  // moves to the load lifted and the miss counts, and two in a row lower the
+  // lift (`countMiss`). No load logged: nothing to follow, so the session is
+  // recorded and the prescription and its failure count stay as they were.
   // Bodyweight movements are untouched: they progress by reps, and success
   // still asks for any load the plan adds. No note is written — `notes` is
   // the injury-warning slot.
@@ -2142,7 +2140,7 @@ export function applyProgression(
   // question. The lean-bulk accelerator rides the same test: a lift too
   // light for a full plate is too light for a bonus on top of one.
   const microplate = usesMicroplateStep(exercise.movementCategory, anchor);
-  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
+  const loadStep = loadStepFor(exercise.movementCategory, anchor);
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
@@ -2240,26 +2238,7 @@ export function applyProgression(
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
-
-      if (updated.consecutiveFailures >= 3) {
-        if (isBodyweight) {
-          // Bodyweight deload. LIFT-EV-01: a timed hold shortens by the hold
-          // step to the hold floor — the rep-shaped `reps - 1` walked a plank
-          // down one SECOND at a time toward a 4-second floor. Rep movements
-          // keep the reduce-target rule (minimum 4).
-          updated.reps = isTimed
-            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
-            : Math.max(4, exercise.reps - 1);
-        } else {
-          // Loaded (weighted holds included): the load stays where the
-          // person put it, and the rep target, or a hold's duration, goes
-          // back to its base. `plateauCount` below still records the stall.
-          updated.reps = resetReps;
-        }
-        updated.consecutiveFailures = 0;
-        updated.plateauCount = (exercise.plateauCount || 0) + 1;
-      }
+      countMiss(updated, exercise, anchor, isBodyweight, isTimed, loadStep);
     }
   } else {
     if (completed) {
@@ -2299,25 +2278,72 @@ export function applyProgression(
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
-      if (updated.consecutiveFailures >= 3) {
-        if (isBodyweight) {
-          // LIFT-EV-01: seconds-specific decrement for timed holds (see the
-          // double-progression branch above).
-          updated.reps = isTimed
-            ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
-            : Math.max(4, exercise.reps - 1);
-        } else {
-          // As on the double path: the load stays, the target resets.
-          updated.reps = resetReps;
-        }
-        updated.consecutiveFailures = 0;
-        updated.plateauCount = (exercise.plateauCount || 0) + 1;
-      }
+      countMiss(updated, exercise, anchor, isBodyweight, isTimed, loadStep);
     }
   }
 
   return updated;
+}
+
+/** The load step for a lift at this weight: a pair of microplates for a
+ *  light or single-joint lift, a plate pair otherwise (`movementClass.ts`). */
+function loadStepFor(category: MovementCategory, weight: number): number {
+  return usesMicroplateStep(category, weight)
+    ? MICROPLATE_STEP
+    : PLATE_PAIR_STEP;
+}
+
+/** Misses in a row that lower a lift (Lift4, owner call (1)): two, as
+ *  Madcow and Helms use, since most lifts come round once or twice a week. */
+const MISSES_BEFORE_LOWERING = 2;
+
+/**
+ * A miss at the plan's weight (Lift4 (7)). The first holds, silently: the
+ * sets explain it. The second in a row lowers the lift. A loaded lift comes
+ * down 10%, by at least one step (`loweredLoad`), with the rep target kept,
+ * and climbs back to the weight it came from (`applySessionSets`). A
+ * bodyweight lift comes down a rep, and a hold five seconds (LIFT-EV-01: a
+ * rep-sized step walked a plank down one second at a time). Either way the
+ * record (`lowered`) gives the next session its one line, and
+ * `plateauCount` records the stall.
+ */
+function countMiss(
+  updated: ProgramExercise,
+  exercise: ProgramExercise,
+  anchor: number,
+  isBodyweight: boolean,
+  isTimed: boolean,
+  loadStep: number
+): void {
+  updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+  if (updated.consecutiveFailures < MISSES_BEFORE_LOWERING) return;
+  if (isBodyweight) {
+    updated.reps = isTimed
+      ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
+      : Math.max(4, exercise.reps - 1);
+    updated.lowered = {
+      exerciseId: exercise.exerciseId,
+      from: exercise.reps,
+      unit: isTimed ? "s" : "reps",
+      target: exercise.reps,
+    };
+  } else {
+    updated.weight = loweredLoad(anchor, loadStep);
+    updated.lowered = {
+      exerciseId: exercise.exerciseId,
+      from: anchor,
+      unit: "kg",
+      target: exercise.reps,
+    };
+  }
+  updated.consecutiveFailures = 0;
+  updated.plateauCount = (exercise.plateauCount || 0) + 1;
+}
+
+/** 10% lighter, by at least one step, on the step's grid. */
+function loweredLoad(weight: number, step: number): number {
+  const tenth = Math.round((weight * 0.9) / step) * step;
+  return Math.max(0, Math.min(tenth, weight - step));
 }
 
 /**
@@ -2331,6 +2357,11 @@ export function applyProgression(
  * - miss: `applyProgression`'s miss, at the plan's own weight;
  * - hold: the plan follows the weight lifted and moves nothing else, and a
  *   run of misses ends there.
+ *
+ * A lift the plan lowered climbs back first: a step a session that is not a
+ * miss, to the weight it came down from (`lowered`), and then the usual
+ * rules resume. Its line was the next session's alone, so the record goes
+ * on only as that way back.
  *
  * The session's record shows the average set at the weight followed
  * (`recordedReps`), so a record falls under its target exactly when the
@@ -2348,13 +2379,14 @@ export function applySessionSets(
   const reps = recordedReps(read);
   const weakest = Math.min(...read.counted.map((set) => set.reps));
   const lifted = liftedLoad(exercise.exerciseId, read.weight);
-  const byEngine =
-    (!isBodyweight && (exercise.weight === 0 || lifted === null)) ||
-    sessionOutcome(read, exercise, isBodyweight) !== "hold";
-  if (byEngine) {
-    return withRecordedReps(
+  const outcome = sessionOutcome(read, exercise, isBodyweight);
+  const uncalibrated =
+    !isBodyweight && (exercise.weight === 0 || lifted === null);
+
+  const progressed = (ex: ProgramExercise) =>
+    withRecordedReps(
       applyProgression(
-        exercise,
+        ex,
         weakest,
         read.weight,
         goal,
@@ -2363,10 +2395,69 @@ export function applySessionSets(
       ),
       reps
     );
+  const lowering = loweringOf(exercise);
+  const { lowered: _line, ...base } = exercise;
+
+  // Climbing back to where the plan lowered the lift from: a step a session
+  // that is not a miss, at most to that weight, and the rep target as it
+  // was. At it or past it, the usual rules take over from the weight lifted.
+  if (
+    lowering?.unit === "kg" &&
+    !uncalibrated &&
+    lifted !== null &&
+    lifted < lowering.from
+  ) {
+    const climbing = {
+      ...base,
+      lowered: { ...lowering, shown: true as const },
+    };
+    if (outcome === "miss") return progressed(climbing);
+    const weight = Math.min(
+      lowering.from,
+      lifted + loadStepFor(exercise.movementCategory, lifted)
+    );
+    return {
+      ...recorded(
+        weight < lowering.from ? climbing : base,
+        read,
+        reps,
+        outcome === "step"
+      ),
+      weight,
+      ...(outcome === "step" ? { lastSuccessfulWeight: read.weight } : {}),
+    };
   }
+
+  if (uncalibrated || outcome !== "hold") return progressed(base);
+  return {
+    ...recorded(base, read, reps, false),
+    ...(lifted === null ? {} : { weight: lifted }),
+  };
+}
+
+/**
+ * A lift once a session has shown its lowered line: the line said, and a
+ * lowered weight's way back kept. A record a swap left behind goes.
+ */
+export function afterLoweredLine(exercise: ProgramExercise): ProgramExercise {
+  if (!exercise.lowered) return exercise;
+  const lowering = loweringOf(exercise);
+  const { lowered: _line, ...rest } = exercise;
+  return lowering?.unit === "kg" && exercise.weight < lowering.from
+    ? { ...rest, lowered: { ...lowering, shown: true } }
+    : rest;
+}
+
+/** A session recorded with no step and no miss: its history line, what was
+ *  lifted, and the end of any run of misses. */
+function recorded(
+  exercise: ProgramExercise,
+  read: SessionRead,
+  reps: number,
+  completed: boolean
+): ProgramExercise {
   return {
     ...exercise,
-    ...(lifted === null ? {} : { weight: lifted }),
     lastAttemptedWeight: read.weight,
     performanceHistory: [
       ...(exercise.performanceHistory || []),
@@ -2381,7 +2472,7 @@ export function applySessionSets(
       sets: exercise.sets,
       reps,
       weight: read.weight,
-      completed: false,
+      completed,
     },
     consecutiveFailures: 0,
   };
@@ -2421,12 +2512,12 @@ function withRecordedReps(
  * trims next week's volume when this exceeds 20; previously the score it read
  * (`state.fatigueScore`) was never updated by anything, so the cut never fired.
  *
- * Signal = unresolved recent failures (`consecutiveFailures`, 0..2 — the 3rd
- * miss triggers a backoff that resets it). Acute by construction: it climbs
+ * Signal = unresolved recent failures (`consecutiveFailures`, 0 or 1: the
+ * second miss lowers the lift and resets it). Acute by construction: it climbs
  * while a lifter is grinding sets and falls once loads back off, so it can't
  * ratchet up forever the way a cumulative `plateauCount` would. Weighted so the
- * >20 cut needs a meaningful share of the program actively failing (≈2 lifts at
- * two straight misses, or ~3 at one), and clamped for safety.
+ * >20 cut needs a meaningful share of the program actively failing (three
+ * lifts with a miss standing), and clamped for safety.
  */
 export function computeFatigueScore(workouts: WorkoutDay[]): number {
   let failures = 0;
