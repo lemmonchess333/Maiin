@@ -56,6 +56,7 @@ import {
   surplusExposures,
 } from "./overlapModel";
 import { applyComplexityGate, usesUndulation } from "./experienceModel";
+import { nextUpIndex } from "./nextUpCursor";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -2781,6 +2782,22 @@ export function advanceWeek(
     // Same hazard from #9's rotation: a swapped lift can collide with
     // another exercise already in that day.
     workouts = dedupeDayExercises(workouts);
+  }
+
+  /* Lift4: the week opens with the session the last one didn't reach.
+     Lifts run in order, not by weekday (ADR-0002), so the session that was
+     up next when the week ended is still next. It moves to the front and the
+     rest follow in their order, once each, with nothing doubled up to catch
+     up. Every calendar surface puts workouts[0] on the week's first lift day,
+     so the week strip opens with it too. When nothing was left to do, or the
+     first session was still next, the order stays as it was.
+
+     Last, after every per-day transform, so they all run on the same days
+     they did before; the archive above keeps the week in the order it was
+     trained in. */
+  const upNext = nextUpIndex(state);
+  if (upNext > 0) {
+    workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
   }
 
   return {

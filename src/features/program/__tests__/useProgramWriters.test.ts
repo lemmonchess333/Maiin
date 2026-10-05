@@ -2797,6 +2797,9 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     expect(last.weekNumber).toBe(4);
     // …and the week that WAS trained is archived rather than silently dropped.
     expect(last.weekHistory?.length).toBe(1);
+    // Lift4: the session it didn't reach opens the week it comes back to.
+    // The two empty weeks after it had nothing to move.
+    expect(last.workouts.map((d) => d.dayName)).toEqual(["Lower", "Upper"]);
   });
 
   it("does nothing when the anchor is already the current week", async () => {

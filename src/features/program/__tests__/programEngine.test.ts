@@ -705,6 +705,118 @@ describe("advanceWeek", () => {
   });
 });
 
+// ── advanceWeek · the order carries over (Lift4) ─
+
+describe("advanceWeek — the week opens with the session not reached", () => {
+  /** A day whose one exercise is named after it, so a test can see that a
+   *  session kept its own work wherever it moved. */
+  function day(
+    dayName: string,
+    status: { completed?: boolean; skipped?: boolean } = {}
+  ): WorkoutDay {
+    return {
+      dayName,
+      dayType: "full_body",
+      completed: status.completed ?? false,
+      ...(status.skipped ? { skipped: true } : {}),
+      exercises: [
+        makeTestExercise({ name: `${dayName} lift`, exerciseId: dayName }),
+      ],
+    };
+  }
+
+  function week(
+    workouts: WorkoutDay[],
+    extra: Partial<ProgramState> = {}
+  ): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      fatigueScore: 0,
+      updatedAt: 0,
+      workouts,
+      ...extra,
+    };
+  }
+
+  const names = (state: ProgramState) => state.workouts.map((d) => d.dayName);
+
+  it("moves the session not reached to the front, the rest in order", () => {
+    const next = advanceWeek(
+      week([day("A", { completed: true }), day("B"), day("C")])
+    );
+    expect(names(next)).toEqual(["B", "C", "A"]);
+    // Each session keeps its own work, and the new week starts undone.
+    expect(next.workouts.map((d) => d.exercises[0].exerciseId)).toEqual([
+      "B",
+      "C",
+      "A",
+    ]);
+    expect(next.workouts.every((d) => !d.completed && !d.skipped)).toBe(true);
+  });
+
+  it("passes over a skipped session, as Train's Up next does", () => {
+    const next = advanceWeek(
+      week([
+        day("A", { completed: true }),
+        day("B", { skipped: true }),
+        day("C"),
+      ])
+    );
+    expect(names(next)).toEqual(["C", "A", "B"]);
+  });
+
+  it("opens with a session chosen with Make this next", () => {
+    const next = advanceWeek(
+      week([day("A", { completed: true }), day("B"), day("C"), day("D")], {
+        nextWorkoutOverride: 2,
+      })
+    );
+    expect(names(next)).toEqual(["C", "D", "A", "B"]);
+    // The choice named a position in last week's order, so it goes.
+    expect(next.nextWorkoutOverride).toBeUndefined();
+  });
+
+  it("keeps the order when every session was done or skipped", () => {
+    const next = advanceWeek(
+      week([
+        day("C", { completed: true }),
+        day("A", { skipped: true }),
+        day("B", { completed: true }),
+      ])
+    );
+    expect(names(next)).toEqual(["C", "A", "B"]);
+  });
+
+  it("keeps the order when the first session was still next", () => {
+    expect(names(advanceWeek(week([day("A"), day("B"), day("C")])))).toEqual([
+      "A",
+      "B",
+      "C",
+    ]);
+  });
+
+  it("archives the week in the order it was trained", () => {
+    const next = advanceWeek(
+      week([day("A", { completed: true }), day("B"), day("C")])
+    );
+    expect(next.weekHistory?.at(-1)?.workouts.map((d) => d.dayName)).toEqual([
+      "A",
+      "B",
+      "C",
+    ]);
+  });
+
+  it("does not double a missed session up to catch up", () => {
+    const next = advanceWeek(
+      week([day("A", { completed: true }), day("B"), day("C")])
+    );
+    expect(next.workouts).toHaveLength(3);
+  });
+});
+
 // ── PPL×2 Deep Copy ─────────────────────────────
 
 describe("generateProgram — PPL×2", () => {
