@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -201,6 +202,11 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
+  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  const [barbellAtHome, setBarbellAtHome] = useState(
+    draft?.barbellAtHome ?? false
+  );
+  const [smallPlates, setSmallPlates] = useState(draft?.smallPlates ?? false);
   // Until the person picks one, the draft week is a beginner's: an unknown
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
@@ -274,6 +280,8 @@ export default function Onboarding() {
       trainingActivity,
       liftDaysPreference,
       sessionMinutes,
+      barbellAtHome,
+      smallPlates,
     }),
     [
       step,
@@ -306,6 +314,8 @@ export default function Onboarding() {
       trainingActivity,
       liftDaysPreference,
       sessionMinutes,
+      barbellAtHome,
+      smallPlates,
     ]
   );
   useEffect(() => {
@@ -378,6 +388,8 @@ export default function Onboarding() {
           injuries,
           weightKg,
           sessionMinutes,
+          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
+          smallPlates,
         },
         goalPlan.fitnessGoal,
         currentDate,
@@ -401,6 +413,8 @@ export default function Onboarding() {
       injuries,
       weightKg,
       sessionMinutes,
+      barbellAtHome,
+      smallPlates,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
@@ -524,6 +538,7 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
+        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
         // #975: race_prep without a date → freeform substrate (Run9a),
@@ -1131,6 +1146,48 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              {equipmentConfirmed && (
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">What do you have?</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Optional. The plan uses what you have.
+                    </p>
+                  </div>
+                  {equipment !== "full_gym" && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-foreground">
+                          A barbell and a rack
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Squats, deadlifts and presses with the bar.
+                        </p>
+                      </div>
+                      <Toggle
+                        checked={barbellAtHome}
+                        label="A barbell and a rack"
+                        className="ml-3"
+                        onChange={() => setBarbellAtHome((v) => !v)}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-foreground">Small plates</p>
+                      <p className="text-xs text-muted-foreground">
+                        Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                      </p>
+                    </div>
+                    <Toggle
+                      checked={smallPlates}
+                      label="Small plates"
+                      className="ml-3"
+                      onChange={() => setSmallPlates((v) => !v)}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
                 {(

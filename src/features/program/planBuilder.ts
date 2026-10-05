@@ -190,6 +190,14 @@ export interface PlanBuilderInput {
 
   equipment: "full_gym" | "home_gym" | "minimal";
 
+  /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
+   *  setup's kit ("what do you have?"). */
+  barbellAtHome?: boolean;
+
+  /** Lift4 (11): "I have small plates", for a new plan's settings; a plan
+   *  the person has keeps the setting it has. */
+  smallPlates?: boolean;
+
   injuries: string[];
 
   /** REQUIRED for determinism. Local YYYY-MM-DD. Never read wall
@@ -248,6 +256,8 @@ export interface PlanBuilderOutput {
     runTimeLimits?: RunTimeLimits | null;
     /** The session length the plan was built for (Lift4 (5)). */
     liftTimeBudgetMinutes?: number;
+    /** A barbell and a rack beside the equipment tier's kit (Lift4 (11)). */
+    barbellAtHome?: boolean;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
     // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
@@ -323,7 +333,11 @@ function buildLiftProgram(input: PlanBuilderInput): {
           buildWeekSchedule(input),
           toExperience(input.experience),
           sessionMinutesFor(input.sessionMinutes),
-          { equipment: input.equipment, injuries: input.injuries }
+          {
+            equipment: input.equipment,
+            injuries: input.injuries,
+            barbellAtHome: input.barbellAtHome,
+          }
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
@@ -363,10 +377,17 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // is bank coverage, recorded in the backlog, not a filter bug.
   // A limitation lifted brings back the lifts it swapped out (Lift4 (11)).
   const injurySafe = applyInjuryFiltersToWorkouts(
-    restoreSwappedLifts(levelled, input.injuries, input.equipment, loadCtx),
+    restoreSwappedLifts(
+      levelled,
+      input.injuries,
+      input.equipment,
+      loadCtx,
+      input.barbellAtHome
+    ),
     input.injuries,
     input.equipment,
-    loadCtx
+    loadCtx,
+    input.barbellAtHome
   );
   // A lift the swaps bring in takes its own role's numbers; a new plan's
   // were swapped in the generator, before its role table.
@@ -377,7 +398,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
       input.equipment,
       input.injuries,
       toExperience(input.experience),
-      loadCtx
+      loadCtx,
+      input.barbellAtHome
     ),
     input.primaryGoal,
     toExperience(input.experience)
@@ -557,6 +579,8 @@ function buildProfileUpdates(
   };
   if (input.sessionMinutes !== undefined)
     updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
+  if (input.barbellAtHome !== undefined)
+    updates.barbellAtHome = input.barbellAtHome;
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;
   if (input.runTimeLimits !== undefined)
@@ -703,7 +727,14 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         ? input.existingState.fatigueScore
         : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
-    settings: input.existingState?.settings ?? DEFAULT_PROGRAM_SETTINGS,
+    // A new plan takes "I have small plates" from the "what do you have?"
+    // list (Lift4 (11)); a plan the person has keeps its settings.
+    settings: input.existingState?.settings ?? {
+      ...DEFAULT_PROGRAM_SETTINGS,
+      ...(input.smallPlates !== undefined
+        ? { smallPlates: input.smallPlates }
+        : {}),
+    },
     weekHistory:
       input.preserveHistory && input.existingState
         ? (input.existingState.weekHistory ?? [])

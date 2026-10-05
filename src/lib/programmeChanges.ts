@@ -34,6 +34,9 @@ export interface ProgrammeSnapshot {
   runDifficulty: string;
   /** Minutes a lift session lasts (Lift4 (5)); 75 reads "75+". */
   sessionMinutes?: number;
+  /** A barbell and a rack beside a home gym's or a minimal setup's kit
+   *  (Lift4 (11)). */
+  barbellAtHome?: boolean;
 }
 
 export interface ProgrammeChange {
@@ -227,6 +230,19 @@ export function computeProgrammeChanges(
       label: "Equipment",
       from: labelFrom(EQUIPMENT_LABELS, saved.equipment),
       to: labelFrom(EQUIPMENT_LABELS, draft.equipment),
+    });
+  }
+
+  if (
+    draft.equipment !== "full_gym" &&
+    draft.barbellAtHome !== undefined &&
+    saved.barbellAtHome !== undefined &&
+    draft.barbellAtHome !== saved.barbellAtHome
+  ) {
+    changes.push({
+      label: "A barbell and a rack",
+      from: saved.barbellAtHome ? "Yes" : "No",
+      to: draft.barbellAtHome ? "Yes" : "No",
     });
   }
 

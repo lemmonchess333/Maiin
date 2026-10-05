@@ -342,6 +342,17 @@ no longer name it and their equipment has it, unless the day holds it
 already (`restoreSwappedLifts`). It comes back with its role's numbers on
 its day and a fresh load and history, as any swap's.
 
+STATUS 2026-10-05 (Lift4 (11), build step 4, ninth part): beside the three
+equipment setups, an optional "What do you have?" list. Onboarding asks for a
+barbell and a rack (beside a home gym or a minimal setup) and small plates
+(the new plan's "I have small plates"); Lift plan settings asks for the
+barbell beside the setups, through the save, and keeps small plates in
+Advanced, where it saves at once. A barbell and a rack (`barbellAtHome` on
+the profile: rules, server sanitizer and registry) lets the swaps keep and
+pick barbell lifts at home, and a save that adds it brings the barbell lifts
+the setup swapped out back. The home gym's own copy still names only what it
+gives without one.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

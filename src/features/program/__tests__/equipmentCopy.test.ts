@@ -41,6 +41,36 @@ describe("the home-gym option", () => {
     }
   );
 
+  it("builds plans with barbell lifts too when there's a barbell and a rack (Lift4 (11))", () => {
+    const used = new Set<string>();
+    for (const liftDays of [2, 3, 4, 5, 6]) {
+      const { programState, profileUpdates } = buildPlan({
+        primaryGoal: "strength",
+        nutritionPhase: "recomp",
+        experience: "intermediate",
+        bodyweightKg: 80,
+        sex: "male",
+        liftDays,
+        preferredSplit: "auto",
+        runMode: "freeform",
+        weeklyRunDays: 0,
+        equipment: "home_gym",
+        barbellAtHome: true,
+        injuries: [],
+        currentDate: "2026-03-08",
+      } as PlanBuilderInput);
+      expect(profileUpdates.barbellAtHome).toBe(true);
+      for (const day of programState.workouts)
+        for (const ex of day.exercises)
+          used.add(getExerciseById(ex.exerciseId)?.equipment ?? "unknown");
+    }
+    expect(used.has("Barbell")).toBe(true);
+    for (const equipment of used)
+      expect(["Barbell", "Bodyweight", "Dumbbells", "Kettlebell"]).toContain(
+        equipment
+      );
+  });
+
   it("builds plans with dumbbells, bodyweight and kettlebells only", () => {
     const goals: PrimaryGoal[] = [
       "strength",

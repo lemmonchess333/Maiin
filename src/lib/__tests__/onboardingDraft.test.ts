@@ -256,6 +256,20 @@ describe("session length (Lift4 (5))", () => {
   });
 });
 
+describe("what do you have? (Lift4 (11))", () => {
+  it("round-trips the barbell and the small plates, and rejects anything but yes or no", () => {
+    const answered = makeDraft({ barbellAtHome: true, smallPlates: true });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    expect(
+      isValidDraft(
+        { ...makeDraft(), barbellAtHome: "yes" } as unknown as OnboardingDraft,
+        MAX_STEP
+      )
+    ).toBe(false);
+  });
+});
+
 describe("activity choices", () => {
   it("round-trips running-only and remembers lifting choices for switching back", () => {
     const draft = makeDraft({

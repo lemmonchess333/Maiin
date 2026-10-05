@@ -364,7 +364,7 @@ service cloud.firestore {
         // Experience auto-detection: dismissed-suggestion marker, client-only.
         'experienceSuggestionDismissed',
         'daysPerWeek',
-        'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
+        'equipment', 'barbellAtHome', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
         // D16 personal "why" — free-text motivation captured at onboarding and
         // editable in Settings. Client-written via updateProfile + set by the

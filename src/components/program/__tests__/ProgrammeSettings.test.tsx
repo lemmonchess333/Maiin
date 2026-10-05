@@ -275,6 +275,39 @@ describe("ProgrammeSettings — session length (Lift4 (5))", () => {
   });
 });
 
+describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
+  it("offers a barbell and a rack beside a home gym, and saves it with the plan", async () => {
+    setup({ equipment: "full_gym" });
+    // A full gym has barbells.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    const bar = screen.getByRole("switch", { name: "A barbell and a rack" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm's recap names it.
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A barbell and a rack")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("home_gym");
+    expect(payload.profileUpdates.barbellAtHome).toBe(true);
+  });
+
+  it("shows the answer the person gave", () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    expect(
+      screen.getByRole("switch", { name: "A barbell and a rack" })
+    ).toHaveAttribute("aria-checked", "true");
+  });
+});
+
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
   it("asks about small plates, off until turned on, in Microloading's place (Lift4 (6))", () => {
     const { updateSettings } = setup();

@@ -88,6 +88,23 @@ describe("computeProgrammeChanges", () => {
     ).toEqual([]);
   });
 
+  it("reports a barbell and a rack, beside a home gym's kit (Lift4 (11))", () => {
+    const home = { ...base, equipment: "home_gym" };
+    expect(
+      computeProgrammeChanges(
+        { ...home, barbellAtHome: false },
+        { ...home, barbellAtHome: true }
+      )
+    ).toEqual([{ label: "A barbell and a rack", from: "No", to: "Yes" }]);
+    // A full gym has barbells either way.
+    expect(
+      computeProgrammeChanges(
+        { ...base, barbellAtHome: false },
+        { ...base, barbellAtHome: true }
+      )
+    ).toEqual([]);
+  });
+
   it("reports lift-day and nutrition changes with readable labels", () => {
     const changes = computeProgrammeChanges(base, {
       ...base,

@@ -27,6 +27,8 @@ export function buildOnboardingPlan(
     | "injuries"
     | "weightKg"
     | "sessionMinutes"
+    | "barbellAtHome"
+    | "smallPlates"
   >,
   nutritionPhase: Goal,
   currentDate: string,
@@ -54,6 +56,8 @@ export function buildOnboardingPlan(
     sex: draft.gender === "female" ? "female" : "male",
     liftDays: draft.daysPerWeek,
     sessionMinutes: draft.sessionMinutes,
+    barbellAtHome: draft.barbellAtHome,
+    smallPlates: draft.smallPlates,
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,

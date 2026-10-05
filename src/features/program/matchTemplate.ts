@@ -58,9 +58,10 @@ export function restoreSwappedLifts(
   workouts: readonly WorkoutDay[],
   injuries: readonly string[],
   equipment: string,
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  barbellAtHome?: boolean
 ): WorkoutDay[] {
-  const allowed = EQUIPMENT_AVAILABILITY[equipment];
+  const allowed = ownedKit(equipment, barbellAtHome);
   const usable = (id: string) => {
     const eq = getExerciseById(id)?.equipment;
     return !allowed || eq === undefined || allowed.has(eq);
@@ -133,7 +134,9 @@ export function applyInjuryFiltersToWorkouts(
   injuries: readonly string[],
   /** Equipment tier — a PREFERENCE for the substitute, never a hard filter. */
   equipment?: string,
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  /** A barbell and a rack at home, beside the tier's kit. */
+  barbellAtHome?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -162,9 +165,7 @@ export function applyInjuryFiltersToWorkouts(
       const relevant = contraindicatedFor(ex.exerciseId, injuries);
       if (relevant.length === 0) return { ...ex };
 
-      const allowedEq = equipment
-        ? EQUIPMENT_AVAILABILITY[equipment]
-        : undefined;
+      const allowedEq = ownedKit(equipment, barbellAtHome);
       const safe = findSafeSubstitute(
         ex.exerciseId,
         relevant,
@@ -216,6 +217,20 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 };
 
 /**
+ * The kit a person trains with: their equipment tier's, and a barbell with a
+ * rack when they said they have one at home (Lift4 (11): "what do you
+ * have?"). Undefined means everything (a full gym, or an unknown tier).
+ */
+function ownedKit(
+  equipment: string | undefined,
+  barbellAtHome?: boolean
+): ReadonlySet<string> | undefined {
+  const tier = equipment ? EQUIPMENT_AVAILABILITY[equipment] : undefined;
+  if (!tier) return undefined;
+  return barbellAtHome ? new Set([...tier, "Barbell"]) : tier;
+}
+
+/**
  * Pgm5 follow-up — equipment-aware in-place re-pick for an existing programme.
  *
  * When a user changes their equipment (e.g. full_gym → minimal while
@@ -237,14 +252,16 @@ export function applyEquipmentFilterToWorkouts(
   equipment: string,
   injuries: readonly string[] = [],
   experience?: Experience,
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  /** A barbell and a rack at home, beside the tier's kit. */
+  barbellAtHome?: boolean
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
     exercises: d.exercises.map((e) => ({ ...e })),
   });
 
-  const allowed = EQUIPMENT_AVAILABILITY[equipment];
+  const allowed = ownedKit(equipment, barbellAtHome);
   if (!allowed) return workouts.map(cloneDay); // full_gym / unknown → no filter
 
   const isInjuryContra = (id: string): boolean =>

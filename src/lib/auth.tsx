@@ -470,6 +470,9 @@ export interface UserProfileOnboarding {
   experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
+  /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
+   *  setup's kit, so the plan can give barbell lifts. */
+  barbellAtHome?: boolean;
   preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];

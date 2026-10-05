@@ -25,6 +25,7 @@ import {
   undulationDeltaFor,
 } from "../programEngine";
 import { roleRepsFor } from "../roleTable";
+import { getExerciseById } from "@/lib/exercises";
 
 function makeInput(
   overrides: Partial<PlanBuilderInput> = {}
@@ -858,6 +859,52 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
       })
     ).programState;
     expect(lifts(back)).toEqual(lifts(gym));
+  });
+
+  it("a new plan takes small plates from the setup; a plan the person has keeps its settings", () => {
+    const fresh = buildPlan(makeInput({ smallPlates: true })).programState;
+    expect(fresh.settings?.smallPlates).toBe(true);
+    expect(buildPlan(makeInput()).programState.settings?.smallPlates).toBe(
+      false
+    );
+    const kept = buildPlan(
+      makeInput({
+        smallPlates: false,
+        existingState: fresh,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(kept.settings?.smallPlates).toBe(true);
+  });
+
+  it("a save that adds a barbell at home brings the barbell lifts back", () => {
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    const withBar = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        barbellAtHome: true,
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    // The barbell lifts come back; the cable and machine ones stay swapped.
+    expect(lifts(withBar).flat()).toEqual(
+      expect.arrayContaining(["squat", "bench-press"])
+    );
+    for (const ex of withBar.workouts.flatMap((d) => d.exercises)) {
+      expect(["Cable Machine", "Machine"]).not.toContain(
+        getExerciseById(ex.exerciseId)?.equipment
+      );
+    }
   });
 
   it("a content edit honours equipment in place (swaps unavailable exercises)", () => {

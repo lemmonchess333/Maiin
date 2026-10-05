@@ -155,6 +155,10 @@ export interface OnboardingDraft {
   liftDaysPreference?: Exclude<OnboardingDraft["daysPerWeek"], 0>;
   /** About how long a lift session is; the plan is built to fit it. */
   sessionMinutes?: (typeof DRAFT_SESSION_MINUTES)[number];
+  /** "What do you have?" (Lift4 (11)): a barbell and a rack beside a home
+   *  gym's or a minimal setup's kit, and small plates. */
+  barbellAtHome?: boolean;
+  smallPlates?: boolean;
 }
 
 interface DraftEnvelope {
@@ -225,7 +229,9 @@ export function isValidDraft(
     (d.liftDaysPreference === undefined ||
       oneOf([2, 3, 4, 5, 6], d.liftDaysPreference)) &&
     (d.sessionMinutes === undefined ||
-      oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes))
+      oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
+    (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
+    (d.smallPlates === undefined || typeof d.smallPlates === "boolean")
   );
 }
 

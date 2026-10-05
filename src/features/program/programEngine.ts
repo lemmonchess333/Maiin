@@ -1900,7 +1900,12 @@ export function generateProgram(
    * fit, so the plan's numbers and its fit are the lifts they'll do.
    * Absent: a full gym and no injuries.
    */
-  limits?: { equipment?: string; injuries?: readonly string[] }
+  limits?: {
+    equipment?: string;
+    injuries?: readonly string[];
+    /** A barbell and a rack beside a home gym's kit. */
+    barbellAtHome?: boolean;
+  }
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -2147,18 +2152,21 @@ export function generateProgram(
         workouts,
         injuries,
         limits.equipment ?? "full_gym",
-        loadCtx
+        loadCtx,
+        limits.barbellAtHome
       ),
       injuries,
       limits.equipment,
-      loadCtx
+      loadCtx,
+      limits.barbellAtHome
     );
     workouts = applyEquipmentFilterToWorkouts(
       workouts,
       limits.equipment ?? "full_gym",
       injuries,
       experience,
-      loadCtx
+      loadCtx,
+      limits.barbellAtHome
     );
   }
   // Lift4 (5): each lift's sets, reps and progression come from its role

@@ -455,6 +455,8 @@ export default function ProgrammeSettings({
         ? (profile.preferredSplit as SplitChoice)
         : "auto",
       equipment: (profile.equipment as Equipment) ?? "full_gym",
+      // Lift4 (11): "what do you have?" beside a home gym's kit.
+      barbellAtHome: profile.barbellAtHome === true,
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -488,6 +490,7 @@ export default function ProgrammeSettings({
     saved.sessionMinutes
   );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
+  const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -512,6 +515,7 @@ export default function ProgrammeSettings({
     sessionMinutes,
     preferredSplit: saved.preferredSplit,
     equipment,
+    barbellAtHome,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -672,6 +676,7 @@ export default function ProgrammeSettings({
             }
           : {}),
         equipment,
+        barbellAtHome,
         injuries,
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -1196,6 +1201,23 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
+          {/* Lift4 (11): "what do you have?" beside the setups. */}
+          {equipment !== "full_gym" && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A barbell and a rack</p>
+                <p className="text-xs text-muted-foreground">
+                  Squats, deadlifts and presses with the bar.
+                </p>
+              </div>
+              <Toggle
+                checked={barbellAtHome}
+                label="A barbell and a rack"
+                className="ml-3"
+                onChange={() => setBarbellAtHome((v) => !v)}
+              />
+            </div>
+          )}
         </div>
 
         <div>

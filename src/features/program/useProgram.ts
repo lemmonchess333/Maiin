@@ -716,7 +716,11 @@ export function useProgram() {
           sessionMinutesFor(profile.liftTimeBudgetMinutes),
           // Lift4 (11): the person's equipment and injuries, as a plan
           // built from settings honours them.
-          { equipment: profile.equipment, injuries: profile.injuries }
+          {
+            equipment: profile.equipment,
+            injuries: profile.injuries,
+            barbellAtHome: profile.barbellAtHome,
+          }
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -2275,7 +2279,11 @@ export function useProgram() {
           toExperience(profile.experience),
           sessionMinutesFor(profile.liftTimeBudgetMinutes),
           // Lift4 (11): a reset keeps the person's equipment and injuries.
-          { equipment: profile.equipment, injuries: profile.injuries }
+          {
+            equipment: profile.equipment,
+            injuries: profile.injuries,
+            barbellAtHome: profile.barbellAtHome,
+          }
         );
 
         // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
