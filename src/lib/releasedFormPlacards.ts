@@ -15,6 +15,35 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "cuban-press": placard(
+    "cuban-press",
+    ["Shoulders"],
+    ["Rotator Cuff", "Traps"],
+    [
+      [0, "Set", "Hold light dumbbells in front of thighs."],
+      [
+        0.3333333333333333,
+        "Row",
+        "Lead with elbows, keeping weights below them.",
+      ],
+      [
+        0.6666666666666666,
+        "Rotate",
+        "Rotate upward, keeping elbows at shoulder height.",
+      ],
+      [1, "Press", "Press overhead without arching your back."],
+      [
+        0.6666666666666666,
+        "Lower",
+        "Lower slowly until your forearms are upright.",
+      ],
+      [
+        0.3333333333333333,
+        "Reverse",
+        "Rotate down, then lower toward your thighs.",
+      ],
+    ]
+  ),
   "smith-shoulder-press": placard(
     "smith-shoulder-press",
     ["Deltoids"],

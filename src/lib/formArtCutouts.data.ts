@@ -267,6 +267,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
     sha256: "2768e5755abce242d27df458ec804023c760435cade478b8dbf175e3ea7f150f",
   },
+  "cuban-press": {
+    src: "form-art/cuban-press.webp",
+    width: 181,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cuban-press/1.webp",
+    sourceSha256:
+      "8b18ad96b233bf2435842db651cc18761263c054416d50167917528eb40da8d5",
+    sha256: "4961b7483531eb9ee3046a61db256fd58eaaefc3d7bf875be4bc981fae217927",
+  },
   "db-bench": {
     src: "form-art/db-bench.webp",
     width: 480,

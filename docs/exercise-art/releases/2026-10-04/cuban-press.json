@@ -1,0 +1,181 @@
+{
+  "exerciseId": "cuban-press",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 520,
+  "height": 1240,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T09:55:08.681Z",
+  "reference": {
+    "path": "form-frames/cuban-press/1.webp",
+    "sha256": "8b18ad96b233bf2435842db651cc18761263c054416d50167917528eb40da8d5"
+  },
+  "cueSha256": "9467e71b73c878d0cfaf55ff4c6f23bb7d385a0a3757f94eb4b9505f97824257",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Recovered canonical v3 exercise pilot preserves bald faceless white-grey athlete, neutral featureless pelvis and white trainers. New endpoint edit uses canonical identity and recovered exercise master. No code moving anatomy transforms."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed slight front three-quarter camera and original1024x1536 scale. Common crop250,230,520,1240 removes empty margins only; athlete, hands and dumbbells fully visible."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native setup,row,rotation and corrected overhead endpoint inspected. Original elongated endpoint rejected. Guided replacement retains original head/torso/leg position and natural arm proportions without back arch or shrug."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Matching small light dumbbells, unchanged plate count and closed connected grips. Native qualitative consistency reviewed across arm rotation and press. Projected orientation changes are not calibrated3D size claims."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Two planted sole anchors and two shoe widths measured identical across all six after exact stationary shoe copies. Native patch boundaries inspected with no visible seam."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Upright row with elbows leading, external rotation at shoulder height, overhead press, then reversed press/rotation/lowering. Return6to1 completes lowering to thighs; four distinct native configurations."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary deltoids strongest purple; subtle lilac upper traps. Rotator cuff participation is qualitative and internal anatomy is not falsely painted on the chest. Hierarchy stable across all poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words agree with Set,Row,Rotate,Press,Lower,Reverse and complete the catalogue sequence."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected in actual ExerciseFormFrames; Rotate and Row reused on return. Autoplay observed Set1/6 to Lower5/6."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 light mode after final crop/contact copies. Full athlete and dumbbells visible, readable cues and stable soles."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 dark mode after final crop/contact copies. No clipping or contact jump; readable captions and cues."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing Cuban press with planted soles",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth"],
+      "evidence": "Pixel-derived sole contacts and shoe widths after exact stationary copies. Both moving grips, arms and dumbbells reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/cuban-press/1.webp",
+      "sha256": "8b18ad96b233bf2435842db651cc18761263c054416d50167917528eb40da8d5",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    },
+    {
+      "path": "form-frames/cuban-press/2.webp",
+      "sha256": "31dc2e268ad5ffdfedc138456ad74789a7923b570cc3fe65e29b407ca7eb984f",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    },
+    {
+      "path": "form-frames/cuban-press/3.webp",
+      "sha256": "9dd3b87dd6c2b0974d057d6dbfbcc749a890a86bf860682dfa29c266dad35337",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    },
+    {
+      "path": "form-frames/cuban-press/4.webp",
+      "sha256": "5cf00763ecdb37a151363442aca48cfcd1a1d02f8334f51877e299bbe11892a3",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    },
+    {
+      "path": "form-frames/cuban-press/5.webp",
+      "sha256": "9dd3b87dd6c2b0974d057d6dbfbcc749a890a86bf860682dfa29c266dad35337",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    },
+    {
+      "path": "form-frames/cuban-press/6.webp",
+      "sha256": "31dc2e268ad5ffdfedc138456ad74789a7923b570cc3fe65e29b407ca7eb984f",
+      "anchors": {
+        "leftSole": {
+          "x": 139,
+          "y": 1175
+        },
+        "rightSole": {
+          "x": 306,
+          "y": 1209
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 151,
+        "rightShoeWidth": 126
+      }
+    }
+  ]
+}
