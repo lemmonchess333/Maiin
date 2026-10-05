@@ -767,6 +767,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e",
     sha256: "4ebfc8afc5e1d59050be42933a2ed5ee152080bb418520a8c9e70cc56506a5c2",
   },
+  "smith-machine-squat": {
+    src: "form-art/smith-machine-squat.webp",
+    width: 337,
+    height: 480,
+    keyed: true,
+    source: "form-frames/smith-machine-squat/1.webp",
+    sourceSha256:
+      "15677b926110ad665191c20234dfefc3c90da5d43f692056af9e93a7e35f592e",
+    sha256: "c7c5f3daeef84f2361e71b0895ce1696bfed4ecc9a1d4684c39d9490cd45bb26",
+  },
   "smith-shoulder-press": {
     src: "form-art/smith-shoulder-press.webp",
     width: 360,

@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "smith-machine-squat": placard(
+    "smith-machine-squat",
+    ["Quads"],
+    ["Glutes", "Hamstrings"],
+    [
+      [0, "Set", "Rest the bar across your upper traps."],
+      [0.6, "Lower", "Bend your knees with heels planted."],
+      [1, "Bottom", "Lower until your thighs reach parallel."],
+      [1, "Hold", "Stay braced with knees tracking your toes."],
+      [0.6, "Rise", "Drive upward through your whole foot."],
+      [0, "Stand", "Stand tall without locking your knees."],
+    ]
+  ),
   "single-arm-cable-pushdown": placard(
     "single-arm-cable-pushdown",
     ["Triceps"],
