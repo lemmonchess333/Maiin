@@ -124,6 +124,19 @@ export default defineConfig([
           message:
             "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
         },
+        // ── Reduce Motion reaches scrolling ──────────────────────────────
+        // An explicit `behavior: "smooth"` beats the stylesheet's
+        // reduced-motion scroll rule by spec, so a smooth scroll passed in
+        // code animates for someone who asked for less motion. Pass no
+        // behaviour and the stylesheet decides; "instant" is fine. This
+        // was a text scan in e2e/reducedMotionScroll.spec.ts, which runs
+        // only after a build in CI; as a lint rule it fails in seconds.
+        {
+          selector:
+            "Property:matches([key.name='behavior'], [key.value='behavior'])[value.value='smooth']",
+          message:
+            'Pass no scroll behaviour (the stylesheet picks smooth, or instant under Reduce Motion). An explicit "smooth" animates for people who turned motion off.',
+        },
       ],
     },
   },
