@@ -167,9 +167,12 @@ function ProfilePage({
           className="size-16 text-2xl"
         />
         <div className="min-w-0 flex-1">
+          {/* Two lines, then an ellipsis: the name is how a reader knows
+              whose profile this is, and one line cut a long one to
+              "Christopher Ale…" at 320px. */}
           <h1
             dir="auto"
-            className="text-left text-h2 font-extrabold leading-tight tracking-tight truncate"
+            className="text-left text-h2 font-extrabold leading-tight tracking-tight line-clamp-2 break-words"
           >
             {name}
           </h1>

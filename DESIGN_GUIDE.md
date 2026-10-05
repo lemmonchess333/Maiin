@@ -895,3 +895,4 @@ or touching a CTA button, route it through `Button` with the variant above.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
 - New-best and PR badges are gold (`--achievement`), never the food orange
+- People's names (owner, 2026-10-05, from the break-social pass). A name reads in its own direction (`dir="auto"`) but keeps to the start of its row. A profile's heading wraps to two lines before it truncates. Under 360px a post's Follow is an icon (`InlineFollow`), so the author's name and time keep the room. Display names are 2–50 characters in the app, the server's sanitizer and every rules cap on a copied name, pinned by `displayNameLimit.cross.test.ts`. The worst cases live at `/dev/break-social`

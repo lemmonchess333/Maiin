@@ -60,6 +60,9 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
  */
 
 const MAX_STRING_LENGTH = 200;
+/* The one display-name limit: the app's (src/lib/displayName.ts), the
+   rules' caps on every copied name and the fan-out's all equal this,
+   pinned by displayNameLimit.cross.test.ts. */
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_PHOTO_URL_LENGTH = 2048;
 // eslint-disable-next-line no-control-regex
@@ -495,6 +498,7 @@ function sanitizeProfileData(input) {
 }
 
 module.exports = {
+  MAX_DISPLAY_NAME_LENGTH,
   SERVER_MANAGED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,

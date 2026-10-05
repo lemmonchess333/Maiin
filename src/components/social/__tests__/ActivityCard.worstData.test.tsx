@@ -89,6 +89,9 @@ describe("ActivityCard with worst-case data", () => {
     expect(
       screen.getByText((_, el) => el?.textContent === "Line one\nLine two")
     ).toBeTruthy();
+    // The run stats carry the time; the lift stats don't repeat it.
+    expect(screen.getByText("Time")).toBeTruthy();
+    expect(screen.queryByText("min")).toBeNull();
   });
 
   it("groups props and comment counts past a thousand", () => {

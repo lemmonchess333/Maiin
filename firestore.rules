@@ -715,7 +715,10 @@ service cloud.firestore {
         // Required fields + types
         && request.resource.data.authorName is string
         && request.resource.data.authorName.size() > 0
-        && request.resource.data.authorName.size() <= 100
+        // Every copied name is capped at the one display-name limit,
+        // pinned equal to the app's and the server's by
+        // src/lib/__tests__/displayNameLimit.cross.test.ts.
+        && request.resource.data.authorName.size() <= 50
         // authorPhotoURL is loaded as <img src> by every feed viewer.
         // postActivity omits it when the author has no photo (never
         // null or ''), so present means a trusted origin or nothing.
@@ -1001,7 +1004,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1019,7 +1022,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1136,7 +1139,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1151,7 +1154,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1191,7 +1194,7 @@ service cloud.firestore {
           && request.resource.data.body.size() <= 4000
           && request.resource.data.authorName is string
           && request.resource.data.authorName.size() >= 1
-          && request.resource.data.authorName.size() <= 100
+          && request.resource.data.authorName.size() <= 50
           && (
             !('title' in request.resource.data)
             || (request.resource.data.title is string

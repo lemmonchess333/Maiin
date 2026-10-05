@@ -525,7 +525,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               </SectionLabel>
             </div>
           )}
-          {(activity.duration ?? 0) > 0 && (
+          {/* A hybrid card's run stats above already carry the time. */}
+          {!isHybrid && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
@@ -567,7 +568,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                       {feedItem.authorName}
                     </p>
                   </div>
-                  <p className="text-small text-muted-foreground">{timeAgo}</p>
+                  <p className="text-small text-muted-foreground whitespace-nowrap">
+                    {timeAgo}
+                  </p>
                 </div>
               </Link>
               {showFollow && (
@@ -618,7 +621,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     ) : (
                       <Dumbbell className="size-3.5 text-lifting" />
                     )}
-                    <p className="text-small">{timeAgo}</p>
+                    <p className="text-small whitespace-nowrap">{timeAgo}</p>
                   </div>
                 </div>
               </Link>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UserCheck, UserPlus } from "lucide-react";
 import { useFollowState } from "@/hooks/useFollowState";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
@@ -12,6 +13,10 @@ import { track as trackSocialEvent } from "@/lib/socialAnalytics";
  * flashes onto someone they already follow. Once tapped it says
  * "Following" and stays put; unfollowing lives on the profile, away from
  * a stray tap in a scrolling feed.
+ *
+ * Under 360px it is an icon. The word took a third of the author row
+ * there, and the name beside it read "Aleksan…" with its time on two
+ * lines; the name is what the row is for.
  */
 export default function InlineFollow({
   targetUid,
@@ -25,8 +30,9 @@ export default function InlineFollow({
 
   if (followedHere && following) {
     return (
-      <span className="shrink-0 px-2 text-sm font-medium text-muted-foreground">
-        Following
+      <span className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-medium text-muted-foreground">
+        <UserCheck className="size-5 min-[360px]:hidden" aria-hidden="true" />
+        <span className="sr-only min-[360px]:not-sr-only">Following</span>
       </span>
     );
   }
@@ -48,9 +54,10 @@ export default function InlineFollow({
           toast.error("Couldn't follow. Try again.");
         }
       }}
-      className="shrink-0 inline-flex min-h-[44px] items-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,transform] disabled:opacity-50"
+      className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,transform] disabled:opacity-50"
     >
-      Follow
+      <UserPlus className="size-5 min-[360px]:hidden" aria-hidden="true" />
+      <span className="hidden min-[360px]:inline">Follow</span>
     </button>
   );
 }
