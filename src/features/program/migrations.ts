@@ -192,9 +192,13 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *     `applyProgression` writes it from the weight the user ACTUALLY lifted,
  *     and `applyDeload` spreads `...ex` so it was never cut. `Math.max` means
  *     this can only ever raise a load, never lower one, and re-running is a
- *     no-op. If a user genuinely trains lighter now, their successes have
- *     already moved `lastSuccessfulWeight` down with them, so nothing is
- *     forced back up.
+ *     no-op. It runs ONCE per document, on one below schema v3: v3 shipped
+ *     with this repair, so a v3+ document has either been through it or was
+ *     built by an engine that no longer decays. Run on every load, it was a
+ *     standing floor at the last success that undid, on the next load, every
+ *     legitimate load below it: the novice deload week, the three-strike
+ *     cut, a block re-prescription's scaled load, and the plan following a
+ *     lighter load the person lifted.
  *
  *   SETS — only MAINS, and only up to the main floor. The true original set
  *     count is NOT recoverable from programState (nothing stored it before
@@ -205,13 +209,18 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *     keep whatever anchor they have. A full return to the generator's
  *     prescription needs a regenerate, which is the user's call.
  */
-function repairDeloadDecay(ex: ProgramExercise): ProgramExercise {
+function repairDeloadDecay(
+  ex: ProgramExercise,
+  restoreLoad: boolean
+): ProgramExercise {
   const anchor = ex.baseSets ?? ex.sets;
   const isMain = ex.isAccessory !== true;
   const repairedAnchor = isMain
     ? Math.max(anchor, MAIN_SET_ANCHOR_FLOOR)
     : anchor;
-  const repairedWeight = Math.max(ex.weight ?? 0, ex.lastSuccessfulWeight ?? 0);
+  const repairedWeight = restoreLoad
+    ? Math.max(ex.weight ?? 0, ex.lastSuccessfulWeight ?? 0)
+    : (ex.weight ?? 0);
 
   const anchorMoved = repairedAnchor !== anchor;
   const weightMoved = repairedWeight !== (ex.weight ?? 0);
@@ -377,6 +386,10 @@ export function migrateProgramState(
   // how we keep the returned reference === input when nothing
   // needs repair.
   const runDaysChanged = migratedRunDays.some((rd, i) => rd !== runDays[i]);
+  // The decay repair's load half is one-shot, like the coverage backfill
+  // below and for the same reason: run on every load it would fight every
+  // legitimate load below the last success (see `repairDeloadDecay`).
+  const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
   let workoutsChanged = false;
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
@@ -388,7 +401,7 @@ export function migrateProgramState(
         if (repUnit) next = { ...next, repUnit };
       }
 
-      next = repairDeloadDecay(next);
+      next = repairDeloadDecay(next, restoreDecayedLoads);
 
       if (next !== exercise) {
         workoutsChanged = true;

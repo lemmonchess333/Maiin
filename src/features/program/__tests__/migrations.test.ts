@@ -698,6 +698,40 @@ describe("migrateProgramState — deload decay repair", () => {
     expect(twice).toBe(once);
   });
 
+  /* The load half runs once per document. Schema v3 shipped with it, so a
+     v3+ document has been through it or was built by an engine that no
+     longer decays; a load below the last success there is one the plan put
+     there on purpose, and raising it on every load undid each of these. */
+  it.each([
+    [
+      "the plan following a lighter load the person lifted",
+      { weight: 50, lastAttemptedWeight: 50 },
+    ],
+    ["the three-strike cut", { weight: 57 }],
+    ["a novice deload week", { weight: 51, preDeloadWeight: 60 }],
+  ] as const)(
+    "leaves a current document's load where the plan put it: %s",
+    (_case, overrides) => {
+      const current = {
+        ...stateWith(decayedExercise({ ...overrides, sets: 3, baseSets: 3 })),
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      };
+      const out = migrateProgramState(current, "2026-08-04");
+      expect(out.workouts[0].exercises[0].weight).toBe(overrides.weight);
+    }
+  );
+
+  it("still lifts a current document's main off the 2-set floor", () => {
+    const current = {
+      ...stateWith(decayedExercise()),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    const ex = migrateProgramState(current, "2026-08-04").workouts[0]
+      .exercises[0];
+    expect(ex.baseSets).toBe(3);
+    expect(ex.weight).toBe(42.5); // the load half is the one-shot half
+  });
+
   it("does not invent a load for a bodyweight/uncalibrated slot", () => {
     const out = migrateProgramState(
       stateWith(

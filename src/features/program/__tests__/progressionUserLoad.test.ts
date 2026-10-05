@@ -16,7 +16,8 @@
  *   - at the finish (`applySessionProgression`), auto-progression off moves
  *     the prescription to the load lifted with no step and no success or
  *     failure accounting, while a held week, an easier session and a
- *     shortened one keep it.
+ *     shortened one keep it;
+ *   - the next app load (`migrateProgramState`) keeps a plan these lowered.
  * Both engine copies are driven on every `applyProgression` case, so a rule
  * that lands in one and not the other fails here, not in production.
  */
@@ -24,6 +25,11 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import { applyProgression, liftedLoad } from "@/features/program/programEngine";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
+import { migrateProgramState } from "@/features/program/migrations";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  normalizeProgramState,
+} from "@/features/program/programTypes";
 import type {
   ActiveTrainingBlock,
   Goal,
@@ -300,11 +306,11 @@ function stateWith(
   } as ProgramState;
 }
 
-function finish(
+function finishState(
   state: ProgramState,
   sets: Array<Pick<LoggedSet, "weight" | "reps">>,
   sessionVariant?: "easier_today" | "time_budget"
-): ProgramExercise {
+): ProgramState {
   const ex = state.workouts[0].exercises[0];
   return applySessionProgression(state, 0, {
     completionId: "session-1",
@@ -314,7 +320,28 @@ function finish(
       sets.map((set) => ({ ...set, completed: true, type: "working" })),
     ],
     ...(sessionVariant ? { sessionVariant } : {}),
-  }).workouts[0].exercises[0];
+  });
+}
+
+function finish(
+  state: ProgramState,
+  sets: Array<Pick<LoggedSet, "weight" | "reps">>,
+  sessionVariant?: "easier_today" | "time_budget"
+): ProgramExercise {
+  return finishState(state, sets, sessionVariant).workouts[0].exercises[0];
+}
+
+/** The next app load, read as useProgram's loader reads the stored
+ *  programme. A live document is at the current schema version. */
+function reload(state: ProgramState): ProgramExercise {
+  const stored = {
+    ...state,
+    programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+  };
+  return migrateProgramState(
+    normalizeProgramState(stored, { primaryGoal: "hypertrophy" }),
+    "2026-10-05"
+  ).workouts[0].exercises[0];
 }
 
 const three = (weight: number, reps: number) =>
@@ -406,5 +433,39 @@ describe("at the finish (applySessionProgression)", () => {
     expect(finish(state, [{ weight: 50, reps: 6 }], "time_budget")).toBe(
       stored
     );
+  });
+});
+
+/* ─── The next load: what the person sees next session ─────────────────────
+   Each case leaves the plan below the last success (60 kg). The loader's
+   decay repair raised a load to `lastSuccessfulWeight` on every load, so all
+   three were undone the next time the app opened while every test above
+   stayed green. It now runs once per document (migrations.ts). */
+describe("after the next load, a lowered plan stays lowered", () => {
+  it("a lighter session with the reps missed", () => {
+    const next = finishState(stateWith(bench()), three(50, 4));
+    expect(reload(next).weight).toBe(50);
+  });
+
+  it("auto-progression off, lighter", () => {
+    const next = finishState(stateWith(bench(), autoOff), three(50, 6));
+    expect(reload(next).weight).toBe(50);
+  });
+
+  it("the third miss's cut", () => {
+    const next = finishState(
+      stateWith(bench({ consecutiveFailures: 2 })),
+      three(60, 4)
+    );
+    expect(next.workouts[0].exercises[0].weight).toBe(57);
+    expect(reload(next).weight).toBe(57);
+  });
+
+  it("a heavier session keeps its load too", () => {
+    const next = finishState(
+      stateWith(bench({ weight: 57.5 })),
+      three(82.5, 6)
+    );
+    expect(reload(next).weight).toBe(82.5);
   });
 });
