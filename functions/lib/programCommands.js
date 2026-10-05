@@ -1672,9 +1672,10 @@ function overrideRunDay(state, command) {
 // PROGRAM-DELOAD-01 — user-invoked deload week (apply / revert).
 //
 // applyDeloadWeek eases the WHOLE active week via the mirrored transform
-// (−1 set floor 2, weight ×0.85 → nearest 2.5 kg), sets currentPhase
-// "deload" and clears acute fatigue — exactly what the automatic week-4
-// path (client advanceWeek) does. Semantic idempotency: a week already in
+// (`deloadEngine.js`: one set fewer, floor 2; a beginner's weight ×0.85,
+// everyone else's target two reps lower at the same weight), sets
+// currentPhase "deload" and clears acute fatigue — exactly what the
+// automatic week-4 path (client advanceWeek) does. Semantic idempotency: a week already in
 // "deload" phase rejects, so a second Apply (new commandId) can never
 // compound to ×0.85². The pre-deload state is stashed in
 // `deloadSnapshot` for the undo path.

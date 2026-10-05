@@ -61,12 +61,11 @@ import type {
  * progression engine. `applyProgression` scores a session complete only
  * when `actualReps >= exercise.reps`, so raising a main from 5 to 12 at
  * unchanged load fails every session → `consecutiveFailures >= 3` →
- * `plateauCount++`. Once two lifts are plateaued, `applyAdjustment`'s
- * `reorganize` arm sits OUTSIDE its `isAccessory` guard and calls
- * `swapExerciseIdentity` on MAINS, which zeroes their history. That is
- * precisely the failure Blk1 predicted, and a represcribe plateaus every
- * main at once — the fastest possible route to it. Moving the load with
- * the target keeps the session completable on day one.
+ * `plateauCount++`, and a represcribe does it to every main at once. A
+ * stalled main is one the plan swaps for a variation when it is next
+ * rebuilt (`applyExperienceAwarePlateauPicks`), which zeroes its history:
+ * the failure Blk1 predicted. Moving the load with the target keeps the
+ * session completable on day one.
  *
  * Epley rather than a flat multiplier because the error compounds over the
  * range the five focus profiles actually span: 5→12 needs ×0.83, not the
@@ -275,9 +274,9 @@ export function blockConsequence(input: {
       (pace === "full" ? "." : `, ${trimmed}.`);
     // The load only moves when the rep target goes UP — `scaleLoadForReps`
     // holds the weight for a move to FEWER reps, deliberately, because
-    // climbing is the progression engine's job. Base mainReps are strength
-    // 5, hypertrophy/general/running 8, fat_loss 12, so of the twenty
-    // ordered focus pairs only SEVEN raise the target. The old copy claimed
+    // climbing is the progression engine's job. Base mainReps are running
+    // 4, strength 5 and 8 for the other three, so of the twenty ordered
+    // focus pairs only SEVEN raise the target. The old copy claimed
     // "the weights come down a little" for all of them — including
     // Build muscle → Get stronger, the first two entries in the picker and
     // the likeliest change anyone makes.

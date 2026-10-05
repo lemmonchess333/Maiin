@@ -37,8 +37,9 @@ export type { Experience };
 export interface StartingLoadContext {
   bodyweightKg: number;
   experience: Experience;
-  /** Lowers the estimate for female lifters (relative strength differs most on
-   *  upper-body pressing); anything non-female is treated as the male/default. */
+  /** Lowers the estimate for female lifters, by the same factor for every
+   *  movement (`sexFactor`); anything non-female is treated as the
+   *  male/default. */
   sex?: string;
 }
 
