@@ -35,6 +35,7 @@ import { fitSessionsToTime, sessionFits } from "./sessionFit";
 import {
   applyEquipmentFilterToWorkouts,
   applyInjuryFiltersToWorkouts,
+  restoreSwappedLifts,
 } from "./matchTemplate";
 import { extraPastCeiling, twiceWeeklyAdditions } from "./weeklyFrequency";
 import {
@@ -579,6 +580,9 @@ function makeExercise(
     lastPerformance:
       existing && !identityChanged ? existing.lastPerformance : null,
     isAccessory,
+    ...(existing && !identityChanged && existing.swappedFrom
+      ? { swappedFrom: existing.swappedFrom }
+      : {}),
   };
 }
 
@@ -1726,6 +1730,10 @@ function carriedState(prev: ProgramExercise): Partial<ProgramExercise> {
     ...(prev.rotationAnchor !== undefined
       ? { rotationAnchor: prev.rotationAnchor }
       : {}),
+    // …and a swapped lift keeps its way back (Lift4 (11)).
+    ...(prev.swappedFrom !== undefined
+      ? { swappedFrom: prev.swappedFrom }
+      : {}),
   };
 }
 
@@ -2135,7 +2143,12 @@ export function generateProgram(
   if (limits) {
     const injuries = [...(limits.injuries ?? [])];
     workouts = applyInjuryFiltersToWorkouts(
-      workouts,
+      restoreSwappedLifts(
+        workouts,
+        injuries,
+        limits.equipment ?? "full_gym",
+        loadCtx
+      ),
       injuries,
       limits.equipment,
       loadCtx

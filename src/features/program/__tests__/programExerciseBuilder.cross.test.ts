@@ -63,6 +63,8 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
           shown: true,
         },
       },
+      // Lift4 (11): the lift a swap replaced, for the way back.
+      { swappedFrom: { exerciseId: "squat" } },
     ];
 
     let compared = 0;

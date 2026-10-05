@@ -70,6 +70,7 @@ function buildProgramExercise(ex) {
     lastPerformance: ex.lastPerformance ?? null,
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
+    ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
   };
 }
 

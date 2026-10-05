@@ -333,6 +333,15 @@ a lift a swap brings in takes its role's reps, range and progression on its
 day, its load moved down to more reps (never up), and no more sets than its
 slot had (`represcribeSwapped`).
 
+STATUS 2026-10-05 (Lift4 (11), build step 4, eighth part): removing a
+limitation brings the original lifts back as part of saving. Each equipment
+or injury swap records the lift it replaced (`swappedFrom` on the exercise,
+the first one through a second swap, carried by both exercise builders and
+through a regenerate), and a save puts it back once the person's injuries
+no longer name it and their equipment has it, unless the day holds it
+already (`restoreSwappedLifts`). It comes back with its role's numbers on
+its day and a fresh load and history, as any swap's.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

@@ -86,6 +86,7 @@ import { exerciseBank, exerciseDisplayName } from "./variationBank";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
+  restoreSwappedLifts,
 } from "./matchTemplate";
 import {
   generateRacePlanV2,
@@ -360,8 +361,9 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // either made things worse (a beginner keeping equipment they don't own) or
   // changed nothing (no simple alternative exists in the bank). What remains
   // is bank coverage, recorded in the backlog, not a filter bug.
+  // A limitation lifted brings back the lifts it swapped out (Lift4 (11)).
   const injurySafe = applyInjuryFiltersToWorkouts(
-    levelled,
+    restoreSwappedLifts(levelled, input.injuries, input.equipment, loadCtx),
     input.injuries,
     input.equipment,
     loadCtx

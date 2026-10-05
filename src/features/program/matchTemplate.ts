@@ -39,7 +39,61 @@ function replaceExercise(
     performanceHistory: [],
     lastPerformance: null,
     notes,
+    // The way back (Lift4 (11)): the lift the plan had before any swap,
+    // kept through a second one.
+    swappedFrom: ex.swappedFrom ?? { exerciseId: ex.exerciseId },
   };
+}
+
+/**
+ * Removing a limitation brings the original lifts back as part of saving
+ * (Lift4 (11)). A lift a swap put in place of another (`swappedFrom`) goes
+ * back to it once the person's injuries no longer name the original and
+ * their equipment has it, unless the day holds it already. Its load is
+ * recalibrated and its history starts again, as any swap's; the builder then
+ * gives it its role's numbers. Runs before the filters, which swap anything
+ * still ruled out.
+ */
+export function restoreSwappedLifts(
+  workouts: readonly WorkoutDay[],
+  injuries: readonly string[],
+  equipment: string,
+  loadCtx?: StartingLoadContext
+): WorkoutDay[] {
+  const allowed = EQUIPMENT_AVAILABILITY[equipment];
+  const usable = (id: string) => {
+    const eq = getExerciseById(id)?.equipment;
+    return !allowed || eq === undefined || allowed.has(eq);
+  };
+  return workouts.map((day) => {
+    const ids = new Set(day.exercises.map((e) => e.exerciseId));
+    return {
+      ...day,
+      exercises: day.exercises.map((ex) => {
+        const back = ex.swappedFrom?.exerciseId;
+        if (
+          !back ||
+          ids.has(back) ||
+          contraindicatedFor(back, injuries).length > 0 ||
+          !usable(back)
+        ) {
+          return ex;
+        }
+        ids.delete(ex.exerciseId);
+        ids.add(back);
+        const restored = replaceExercise(
+          ex,
+          back,
+          exerciseDisplayName(back),
+          loadCtx,
+          ""
+        );
+        delete restored.swappedFrom;
+        delete restored.notes;
+        return restored;
+      }),
+    };
+  });
 }
 
 /**
@@ -60,9 +114,9 @@ function replaceExercise(
  * keep the exercise with a warning note.
  *
  * Idempotent (re-running with the same injuries is a no-op); healthy users /
- * "none" → unchanged clone. Removing an injury does NOT restore a previously
- * swapped exercise (no pre-swap id is stored) — safe + acceptable; un-swap is
- * a future enhancement.
+ * "none" → unchanged clone. Removing an injury brings the swapped lift back
+ * on the next save (`restoreSwappedLifts`, which reads the `swappedFrom`
+ * each swap records).
  */
 /**
  * NOT experience-gated, deliberately (2026-07-28). Its sibling

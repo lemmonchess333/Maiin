@@ -234,6 +234,12 @@ export interface ProgramExercise {
    * row under its reps at the weight it asked for (`loweringOf` reads it).
    */
   lowered?: LoweredBy;
+  /**
+   * Lift4 (11): the lift an equipment or injury swap put this one in place
+   * of, so a save that lifts the limitation brings it back
+   * (`restoreSwappedLifts`).
+   */
+  swappedFrom?: { exerciseId: string };
 }
 
 /** What the plan lowered a lift from, and the target it was missing. */
@@ -1047,6 +1053,7 @@ export function normalizeExercise(
       : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
+    ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
   };
 }
 

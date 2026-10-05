@@ -753,6 +753,113 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     );
   });
 
+  // Lift4 (11): removing a limitation brings the original lifts back as part
+  // of saving.
+  const lifts = (state: {
+    workouts: { exercises: { exerciseId: string }[] }[];
+  }) => state.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+
+  it("a save that lifts an injury brings back the lifts it swapped out", () => {
+    const healthy = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const knee = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: healthy,
+        preserveHistory: true,
+      })
+    ).programState;
+    const swapped = knee.workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.swappedFrom);
+    expect(swapped.map((e) => e.swappedFrom!.exerciseId)).toContain("squat");
+    // While the knee is still there, a save keeps the swaps.
+    const again = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: knee,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(again)).toEqual(lifts(knee));
+    // Lifted: the plan's own lifts come back, with nothing marking a swap.
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: [],
+        existingState: knee,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(healthy));
+    for (const ex of back.workouts.flatMap((d) => d.exercises)) {
+      expect(ex.swappedFrom, ex.exerciseId).toBeUndefined();
+    }
+    // …at their role's numbers on their day.
+    expect(
+      back.workouts.map((d) => d.exercises.map((e) => `${e.sets}×${e.reps}`))
+    ).toEqual(
+      healthy.workouts.map((d) => d.exercises.map((e) => `${e.sets}×${e.reps}`))
+    );
+  });
+
+  it("a save with the equipment back brings back the lifts it swapped out", () => {
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(home)).not.toEqual(lifts(gym));
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "full_gym",
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(gym));
+  });
+
+  it("goes back to the plan's own lift through a second swap", () => {
+    // A home gym makes the barbell curl a dumbbell curl; a sore elbow then
+    // makes that a hammer curl. Both lifted, the barbell curl comes back,
+    // not the dumbbell curl in between.
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    expect(lifts(gym).flat()).toContain("barbell-curl");
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    const elbow = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        injuries: ["elbow"],
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(elbow).flat()).not.toContain("db-curl");
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        existingState: elbow,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(gym));
+  });
+
   it("a content edit honours equipment in place (swaps unavailable exercises)", () => {
     const first = buildPlan(makeInput({ liftDays: 4 }));
     // Force a Barbell exercise into a slot, then downgrade equipment to home_gym.
