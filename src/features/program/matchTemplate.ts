@@ -1,8 +1,10 @@
-import type { ProgramTemplate } from "./templates";
-import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { getExerciseById } from "@/lib/exercises";
-import { findSafeSubstitute } from "./injurySubstitutions";
+import {
+  CONTRAINDICATED,
+  contraindicatedFor,
+  findSafeSubstitute,
+} from "./injurySubstitutions";
 import { offerableTo, toExperience, type Experience } from "./experienceModel";
 import {
   exerciseBank,
@@ -41,34 +43,6 @@ function replaceExercise(
 }
 
 /**
- * Build the index of which exercise IDs are contraindicated for which
- * injuries, derived from the template data itself. Used by the
- * alternatives-validation pass so we never swap a user OUT of a
- * contraindicated exercise INTO another one that's also
- * contraindicated for them — the Barbell Squat → Leg Press trap for
- * `knee` users.
- */
-export function buildContraIndex(
-  templates: readonly ProgramTemplate[]
-): Map<string, Set<string>> {
-  const index = new Map<string, Set<string>>();
-  for (const t of templates) {
-    for (const week of t.weeks) {
-      for (const day of week.days) {
-        for (const ex of day.exercises) {
-          if (ex.contraindicated && ex.contraindicated.length > 0) {
-            if (!index.has(ex.exerciseId)) index.set(ex.exerciseId, new Set());
-            const set = index.get(ex.exerciseId)!;
-            for (const c of ex.contraindicated) set.add(c);
-          }
-        }
-      }
-    }
-  }
-  return index;
-}
-
-/**
  * Pgm5 follow-up — injury-aware in-place re-swap for an EXISTING programme.
  *
  * `buildPlan` runs this on every plan it builds, onboarding's included.
@@ -78,11 +52,11 @@ export function buildContraIndex(
  * movement-specific load and performance history are recalibrated/reset so a
  * deadlift record can never be relabelled as its substitute.
  *
- * Over-swap guard: an exercise is swapped only when the contra index (built
- * from the template library, keyed by exerciseId) flags it for one of the
- * user's CURRENT injuries. A safe exercise that merely *has* a substitution
- * entry (e.g. a squat for a shoulder-only user) is left untouched. No safe
- * substitute → keep the exercise with a warning note.
+ * Over-swap guard: an exercise is swapped only when `CONTRAINDICATED` (the
+ * lifts each injury's promise names) flags it for one of the user's CURRENT
+ * injuries. A safe exercise that merely *has* a substitution entry (e.g. a
+ * squat for a shoulder-only user) is left untouched. No safe substitute →
+ * keep the exercise with a warning note.
  *
  * Idempotent (re-running with the same injuries is a no-op); healthy users /
  * "none" → unchanged clone. Removing an injury does NOT restore a previously
@@ -114,21 +88,23 @@ export function applyInjuryFiltersToWorkouts(
     return workouts.map(cloneDay);
   }
 
-  const contraIndex = buildContraIndex(PROGRAM_TEMPLATES);
+  // A substitute must be safe for every injury the person has, not only the
+  // ones its original is named for, or the next save swaps it again.
+  const unsafe = Object.keys(CONTRAINDICATED).filter(
+    (id) => contraindicatedFor(id, injuries).length > 0
+  );
 
   return workouts.map((day) => {
     // Seed the day's used-ids with every exercise that is NOT being swapped,
     // so a swap can't land on one already present on the day.
     const usedIds = new Set<string>();
     for (const ex of day.exercises) {
-      const contras = contraIndex.get(ex.exerciseId);
-      const swapping = !!contras && injuries.some((i) => contras.has(i));
-      if (!swapping) usedIds.add(ex.exerciseId);
+      if (contraindicatedFor(ex.exerciseId, injuries).length === 0)
+        usedIds.add(ex.exerciseId);
     }
 
     const exercises: ProgramExercise[] = day.exercises.map((ex) => {
-      const contras = contraIndex.get(ex.exerciseId);
-      const relevant = contras ? injuries.filter((i) => contras.has(i)) : [];
+      const relevant = contraindicatedFor(ex.exerciseId, injuries);
       if (relevant.length === 0) return { ...ex };
 
       const allowedEq = equipment
@@ -137,7 +113,7 @@ export function applyInjuryFiltersToWorkouts(
       const safe = findSafeSubstitute(
         ex.exerciseId,
         relevant,
-        usedIds,
+        new Set([...usedIds, ...unsafe]),
         allowedEq
           ? (id) => {
               const eq = getExerciseById(id)?.equipment;
@@ -215,14 +191,8 @@ export function applyEquipmentFilterToWorkouts(
   const allowed = EQUIPMENT_AVAILABILITY[equipment];
   if (!allowed) return workouts.map(cloneDay); // full_gym / unknown → no filter
 
-  const relevantInjuries = injuries.filter((i) => i !== "none");
-  const contraIndex = relevantInjuries.length
-    ? buildContraIndex(PROGRAM_TEMPLATES)
-    : null;
-  const isInjuryContra = (id: string): boolean => {
-    const c = contraIndex?.get(id);
-    return !!c && relevantInjuries.some((i) => c.has(i));
-  };
+  const isInjuryContra = (id: string): boolean =>
+    contraindicatedFor(id, injuries).length > 0;
   // Unknown id (custom exercise) → can't assess equipment, leave it be.
   const isAvailable = (id: string): boolean => {
     const eq = getExerciseById(id)?.equipment;
@@ -293,22 +263,27 @@ export function applyEquipmentFilterToWorkouts(
       let pick =
         options.find((o) => eligible(o) && offerableTo(experience, o)) ??
         undefined;
-      // Beginner vertical-pull coverage floor: at home/minimal every
-      // offerable option is a cable (pulldowns), so nothing survives the
-      // equipment check and the ungated fallback below would restore the
+      // Vertical-pull coverage floor: at home/minimal every pull a beginner
+      // may be offered is a cable (pulldowns), and every pull an elbow
+      // injury leaves is one too, so nothing survives the equipment check;
+      // for a beginner the ungated fallback below would restore the
       // pull-up. The honest coaching answer at that tier is the inverted
       // row — bodyweight, difficulty scaled by foot position, THE reference
-      // novice pull regression. It is a horizontal_pull by category (which
-      // is why it cannot live in the vertical_pull pool), so it re-points
-      // here the same way the pinned calf fallback does, and the slot's
-      // category follows the movement honestly.
-      if (
-        !pick &&
+      // novice pull regression, and a neutral-grip pull that spares the
+      // elbow. It is a horizontal_pull by category (which is why it cannot
+      // live in the vertical_pull pool), so it re-points here the same way
+      // the pinned calf fallback does, and the slot's category follows the
+      // movement honestly.
+      const invertedRowFits =
         ex.movementCategory === "vertical_pull" &&
-        toExperience(experience) === "beginner" &&
         isAvailable("inverted-row") &&
         !usedIds.has("inverted-row") &&
-        !isInjuryContra("inverted-row")
+        !isInjuryContra("inverted-row");
+      if (
+        invertedRowFits &&
+        (toExperience(experience) === "beginner"
+          ? !pick
+          : !pick && !options.some(eligible))
       ) {
         usedIds.delete(ex.exerciseId);
         usedIds.add("inverted-row");

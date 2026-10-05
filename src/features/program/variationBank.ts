@@ -453,6 +453,14 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       primary: false,
       role: "size",
     },
+    {
+      // A second neutral-grip dumbbell curl, so a home gym with a sore
+      // elbow has two curls that spare it.
+      id: "cross-body-hammer-curl",
+      loadFactor: 0.4,
+      primary: false,
+      role: "size",
+    },
   ],
   arms_triceps: [
     { id: "rope-tricep-pushdown", primary: true },
@@ -473,6 +481,14 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "tricep-dips",
       complexity: "technical",
       loadFactor: 0,
+      primary: false,
+      role: "size",
+    },
+    {
+      // A dumbbell triceps lift that spares the shoulder, elbow and wrist
+      // dips load, so a home gym with a shoulder injury still has one.
+      id: "tricep-kickback",
+      loadFactor: 0.3,
       primary: false,
       role: "size",
     },

@@ -411,9 +411,10 @@ export function isScheduledRaceRunDay(rd: {
 /* The LIFTING template library that used to live here — `WorkoutTemplate`,
  * `TemplateExercise`, `WORKOUT_TEMPLATES` and its five helpers — was deleted
  * 2026-07-25. It had ZERO production consumers: programme generation runs on
- * `src/features/program/templates.ts`, which defines its own
- * `TemplateExercise` (the name collision is the tell — two independent
- * libraries, one of which won). Only its own tests referenced it.
+ * the procedural generator (`src/features/program/programEngine.ts`), and
+ * the other template library, since retired too, defined its own
+ * `TemplateExercise` (the name collision is the tell). Only its own tests
+ * referenced it.
  *
  * This module is now the RUN template surface, which is live: RUN_TEMPLATES
  * has 42 production references. */

@@ -10,8 +10,8 @@ import { dayFocusLabel, liftDayLine, liftDayTitle } from "../liftDayLabel";
  * on the category rule it replaces — "Full Body" three times is a
  * correct mapping and a useless cell.
  *
- * The rotations below are the real ones, lifted from
- * `src/features/program/templates.ts`.
+ * The rotations below are the real ones, the generator's day names
+ * (`src/features/program/programEngine.ts`).
  */
 const FULL_BODY_3 = [
   "Full Body — Squat Focus",

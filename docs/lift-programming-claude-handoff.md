@@ -303,6 +303,24 @@ step 4's retirements, holds Lose fat plans to that for now. Measured on Build
 muscle for intermediate and advanced lifters: every muscle on two days at 75
 minutes on 2 to 6 days, and at 60 minutes on 4 to 6.
 
+STATUS 2026-10-05 (Lift4 (11), build step 4, sixth part): every lift the
+injury promises name is covered. The swaps read `CONTRAINDICATED`
+(`injurySubstitutions.ts`), which lists, from each option's words, the lifts
+it promises to change, the generator's included; the hand-written templates'
+annotations were the index before, and missed the back squat, front squat and
+standing press for a lower back, the hack and front squats for a knee, the
+Arnold press, barbell bench and dips for a shoulder, and the dips, dumbbell
+curl, skull crusher and overhead extension for an elbow. The templates are
+deleted with it. A substitute must be safe for every injury the person has,
+not only its original's, and none is offered for an injury it is itself
+named for, so the next save swaps nothing more. Home gyms gained safe options
+(the incline dumbbell press and push-ups for overhead pressing, inverted and
+dumbbell rows for pull-ups, a second hammer curl, the kickback, the glute
+bridge), and the inverted row now stands in for any vertical pull a home gym
+can't do safely, not only a beginner's. With a sore elbow at home a push day
+with two triceps slots still keeps one it can't do, flagged, since the
+kickback is the only safe triceps lift without a cable.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
