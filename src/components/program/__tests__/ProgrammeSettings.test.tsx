@@ -629,6 +629,27 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     expect(payload.programState.workouts).toEqual(liftState.workouts);
   });
 
+  it("offers the choice when the level changes too, and re-aims at the new level", async () => {
+    // A level change keeps the plan (Lift4 (12)), so the focus would go
+    // nowhere without the choice.
+    const { represcribeWorkouts } =
+      await import("@/features/program/represcribe");
+    setup({}, "lift", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /^advanced/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /save and update sessions/i })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      programState: { workouts: unknown };
+    };
+    expect(payload.programState.workouts).toEqual(
+      represcribeWorkouts(liftState.workouts, "strength", "advanced")
+    );
+  });
+
   it("no choice when lift days change too — the rebuild arm owns that", () => {
     setup({}, "lift", liftState);
     fireEvent.click(screen.getByText("Get stronger"));

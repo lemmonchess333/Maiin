@@ -10,10 +10,10 @@
  * adaptive engine". It was right about the risk and inverted about the
  * mechanism. The shipped alternative — writing `primaryGoal` and letting
  * `buildPlan` sort it out — is measurably a no-op: the preserve branch
- * gates on `sameDayCount && !levelChanged` and never looks at the goal, so
+ * gates on the day count and never looks at the goal, so
  * a hypertrophy→strength change moves 0 of 18 slots and a strength user
  * keeps deadlifting at 10-14 reps. The only path that DOES reach a builder
- * (`regenerateProgram`, a lift-days or experience change) resets
+ * (`regenerateProgram`, or a lift-days change) resets
  * `weekNumber`, `weekHistory` and `currentPhase`, and drops per-exercise
  * history wherever the positional carry misses. Cosmetic or destructive,
  * with nothing in between.

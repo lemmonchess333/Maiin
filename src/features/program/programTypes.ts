@@ -185,10 +185,9 @@ export interface ProgramExercise {
   repUnit?: RepUnit;
   /**
    * Per-exercise rest between sets in seconds, carried from
-   * TemplateExercise.restSeconds. WorkoutSession prefers this over
-   * profile.defaultRestSeconds; a mid-session manual target change by the
-   * user wins over both. Absent on generated programs (they have no
-   * authored rest yet).
+   * TemplateExercise.restSeconds. It stands in for the plan's suggestion by
+   * role and reps (`restTime.ts`); a rest the person fixes in Workout
+   * preferences wins over both. Absent on generated programmes.
    */
   restSeconds?: number;
   weight: number;

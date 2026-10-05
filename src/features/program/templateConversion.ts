@@ -149,8 +149,8 @@ export function templateExToProgEx(
     // goal profile. Templates already author accessory ranges ("12-15"), so
     // the range-aware branch has something to climb from day one.
     progressionType: isAccessory ? "double" : mainProgression,
-    // Per-exercise rest authored in the template; WorkoutSession prefers it
-    // over profile.defaultRestSeconds unless the user overrides mid-session.
+    // Per-exercise rest authored in the template: the plan's suggestion for
+    // this lift (`restTime.ts`), unless the person fixes a rest.
     restSeconds: te.restSeconds,
     isAccessory,
     lastSuccessfulWeight: 0,
@@ -206,7 +206,7 @@ export function templateToProgramState(
   // P1 (training-book backlog): the conversion itself lives in
   // features/program/templateConversion.ts so the boundary is unit-tested.
   // Main lifts take the template goal's progression scheme; accessories
-  // stay "linear" for parity with the generated-program path.
+  // climb reps first (`templateExToProgEx`).
   const mainProgression = templateProgressionFor(template.goal);
   const workouts: WorkoutDay[] = week1.days
     .filter((d) => d.type === "lift")

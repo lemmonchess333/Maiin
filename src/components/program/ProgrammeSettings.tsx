@@ -520,12 +520,12 @@ export default function ProgrammeSettings({
   // workouts verbatim, so only the label moved. The confirm dialog now offers
   // a visible keep-or-represcribe choice (reusing the training-block
   // transform). The choice only exists when the preserve branch would run:
-  // a day-count or experience change already forces a rebuild, and an active
-  // block owns the focus.
+  // a day-count change rebuilds, and an active block owns the focus. A level
+  // change never rebuilds (Lift4 (12)), so a focus changed with one still
+  // needs the choice, and the new level re-aims the sessions.
   const focusChangedSameFrequency =
     primaryGoal !== saved.primaryGoal &&
     !liftDaysChanged &&
-    experience === saved.experience &&
     !activeBlockFocus &&
     (programState?.workouts?.length ?? 0) > 0;
 
