@@ -71,6 +71,33 @@ describe("ExerciseRowSummary — one row's words", () => {
     );
   });
 
+  it("states a climbing lift's range, and a fixed lift's target (Lift4 (3))", () => {
+    const { container, rerender } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          reps: 10,
+          baseReps: 8,
+          repRangeMax: 12,
+          progressionType: "double",
+          weight: 60,
+        })}
+      />
+    );
+    expect(container).toHaveTextContent("3 sets × 8–12 reps · 60 kg");
+    rerender(
+      <ExerciseRowSummary
+        exercise={exercise({
+          reps: 5,
+          baseReps: 5,
+          repRangeMax: 7,
+          progressionType: "linear",
+          weight: 100,
+        })}
+      />
+    );
+    expect(container).toHaveTextContent("3 sets × 5 reps · 100 kg");
+  });
+
   it("states a weighted lift's prescription and last set with their loads", () => {
     const { container } = render(
       <ExerciseRowSummary

@@ -216,6 +216,17 @@ the reps start from the bottom again. Off-grid weights round once (schema v5),
 and the server's settings validator takes `smallPlates` while still accepting
 an older app's `microloading`.
 
+STATUS 2026-10-05 (Lift4 (3) and (7), build step 3, fourth release): ranges
+are shown. A lift that climbs reps before it adds weight reads as its range
+("3 sets × 8–12 reps", "30–45s"), on Train, in the session and in
+onboarding's preview; a fixed target reads alone ("3 sets × 5 reps"), even
+where generation stamped a range on it, and a target that has climbed past
+its range shows how far ("12–18"). `prescribedRepRange` in `programEngine.ts`
+is the one reading. A climbing lift's miss is judged at the bottom of its
+range, so reps it has climbed, inside the range or past it, are never a bar.
+Which lifts climb a range and which hold a fixed target for a new plan is
+step 4's generator.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

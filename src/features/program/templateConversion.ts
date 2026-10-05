@@ -25,7 +25,10 @@ import type {
 } from "@/features/program/programTypes";
 import type { FitnessGoal } from "@/lib/tdee";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
-import { goalProfileFor } from "@/features/program/programEngine";
+import {
+  goalProfileFor,
+  prescribedRepRange,
+} from "@/features/program/programEngine";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
 /**
@@ -165,19 +168,17 @@ export function templateExToProgEx(
 }
 
 /**
- * The prescription target as the user should read it (backlog #7's time
- * axis). A timed hold shows seconds and its authored range — a plank was
- * rendering as a bare "30", indistinguishable from thirty repetitions.
- * Reps keep their existing bare-number display, so nothing changes for the
- * overwhelming majority of exercises.
+ * The prescription target as the user should read it: the range a lift
+ * climbs through (`prescribedRepRange`), or its fixed target, and a timed
+ * hold in seconds, since a plank was rendering as a bare "30",
+ * indistinguishable from thirty repetitions (backlog #7's time axis).
  */
 export function formatRepTarget(
-  ex: Pick<ProgramExercise, "reps" | "repRangeMax" | "repUnit">
+  ex: Parameters<typeof prescribedRepRange>[0]
 ): string {
-  if (ex.repUnit !== "seconds") return String(ex.reps);
-  return ex.repRangeMax && ex.repRangeMax > ex.reps
-    ? `${ex.reps}-${ex.repRangeMax}s`
-    : `${ex.reps}s`;
+  const { bottom, top } = prescribedRepRange(ex);
+  const reps = top > bottom ? `${bottom}–${top}` : String(ex.reps);
+  return ex.repUnit === "seconds" ? `${reps}s` : reps;
 }
 
 /** The template's split vocabulary is wider than the programme's; bro_split

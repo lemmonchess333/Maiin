@@ -87,10 +87,10 @@ export function readSessionSets(
  * - `step`: at least two sets done (one, on a one-set plan), every one at
  *   the target. The engine then climbs or steps from the weight followed.
  * - `miss`: at the weight the plan asked for, the reps add up to fewer than
- *   the target on every set done. On a 3 × 8 target, 8, 7, 6 (21 of 24) is
- *   a miss and 9, 8, 7 is not. A target climbed past the top of its range,
- *   because the next weight is too big a step (`loadSteps.ts`), is judged
- *   at that top: reps past it are a climb, not a bar.
+ *   the target on every set done, or, for a lift that climbs a range, than
+ *   the range's bottom: reps it has climbed are not a bar. On a 3 × 8
+ *   target, 8, 7, 6 (21 of 24) is a miss and 9, 8, 7 is not; at 10 of an
+ *   8–12 range, 9, 9, 9 is not either.
  * - `hold`: anything else. The plan follows the weight lifted and moves
  *   nothing else; a different weight from the plan's is never a miss, as
  *   the plan simply follows it.
@@ -107,13 +107,12 @@ export function sessionOutcome(
     reps: number;
     sets: number;
     baseReps?: number;
-    repRangeMax?: number;
   },
   isBodyweight: boolean
 ): SessionOutcome {
   const { counted, weight } = read;
   const target = prescription.reps;
-  const top = prescription.repRangeMax ?? prescription.baseReps ?? target;
+  const bottom = Math.min(target, prescription.baseReps ?? target);
   const needed = Math.min(2, Math.max(1, prescription.sets));
   const atPlan = sameWeight(weight, prescription.weight);
   if (
@@ -123,7 +122,7 @@ export function sessionOutcome(
   )
     return "step";
   const total = counted.reduce((sum, set) => sum + set.reps, 0);
-  if (atPlan && total < Math.min(target, top) * counted.length) return "miss";
+  if (atPlan && total < bottom * counted.length) return "miss";
   return "hold";
 }
 

@@ -7,10 +7,11 @@
  * indices themselves are untouched (the split indexer keys on them).
  */
 import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import WeekPreview from "../WeekPreview";
 import { WEEK_STARTS_ON } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import type { ProgramExercise } from "@/features/program/programTypes";
 
 afterEach(cleanup);
 
@@ -42,5 +43,48 @@ describe("WeekPreview — day order", () => {
     expect(
       screen.getByRole("button", { name: "Mon: lift" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("WeekPreview — a session's lifts", () => {
+  it("shows a climbing lift's range and a fixed lift's target (Lift4 (3))", () => {
+    const lift = (o: Partial<ProgramExercise>) =>
+      ({ sets: 3, weight: 0, ...o }) as ProgramExercise;
+    render(
+      <WeekPreview
+        schedule={schedule}
+        workouts={[
+          {
+            dayName: "Full body",
+            dayType: "full_body",
+            completed: false,
+            exercises: [
+              lift({
+                name: "Bench Press",
+                exerciseId: "bench-press",
+                reps: 8,
+                baseReps: 8,
+                repRangeMax: 12,
+                progressionType: "double",
+              }),
+              lift({
+                name: "Squat",
+                exerciseId: "squat",
+                reps: 5,
+                baseReps: 5,
+                progressionType: "linear",
+              }),
+            ],
+          },
+        ]}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Mon: lift" }));
+    expect(screen.getByText("Bench Press").parentElement).toHaveTextContent(
+      "3 × 8–12 reps"
+    );
+    expect(screen.getByText("Squat").parentElement).toHaveTextContent(
+      "3 × 5 reps"
+    );
   });
 });

@@ -138,16 +138,29 @@ describe("sessionOutcome — what the sets earned (Lift4)", () => {
     ).toBe("step");
   });
 
-  it("judges a target climbed past its range at the top of the range", () => {
+  it("judges a climbing lift at the bottom of its range", () => {
+    // At 10 of an 8–12 range, 9s have not missed anything: the climb holds.
+    const climbing = { weight: 60, reps: 10, sets: 3, baseReps: 8 };
+    expect(
+      sessionOutcome(
+        read([done(60, 9), done(60, 9), done(60, 9)]),
+        climbing,
+        false
+      )
+    ).toBe("hold");
+    expect(
+      sessionOutcome(
+        read([done(60, 7), done(60, 7), done(60, 7)]),
+        climbing,
+        false
+      )
+    ).toBe("miss");
+  });
+
+  it("judges a target climbed past its range at the range's bottom too", () => {
     // 3 × 18 on a 12–15 range: the next weight was too big a step, so the
-    // reps past 15 are a climb, and 17s are not a miss.
-    const stretched = {
-      weight: 10,
-      reps: 18,
-      sets: 3,
-      baseReps: 12,
-      repRangeMax: 15,
-    };
+    // reps past 15 are a climb, and 17s, or 14s, are not a miss.
+    const stretched = { weight: 10, reps: 18, sets: 3, baseReps: 12 };
     expect(
       sessionOutcome(
         read([done(10, 17), done(10, 17), done(10, 17)]),
@@ -158,6 +171,13 @@ describe("sessionOutcome — what the sets earned (Lift4)", () => {
     expect(
       sessionOutcome(
         read([done(10, 14), done(10, 14), done(10, 14)]),
+        stretched,
+        false
+      )
+    ).toBe("hold");
+    expect(
+      sessionOutcome(
+        read([done(10, 11), done(10, 11), done(10, 11)]),
         stretched,
         false
       )

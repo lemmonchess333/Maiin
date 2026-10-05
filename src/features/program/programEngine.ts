@@ -285,6 +285,35 @@ function impliedDoubleRangeMax(
   return ceiling > resetReps ? ceiling : undefined;
 }
 
+/**
+ * The reps a lift is set, as the person reads them (Lift4 (3)): a range for
+ * a lift that climbs reps before it adds weight ("8–12"), the target alone
+ * for a fixed one ("5"). The range runs from the bottom the reps return to
+ * after a step to the top that earns one, or past it where the next weight
+ * is too big a step and the target has climbed on (`loadSteps.ts`).
+ */
+export function prescribedRepRange(
+  ex: Pick<
+    ProgramExercise,
+    "exerciseId" | "reps" | "baseReps" | "repRangeMax" | "repUnit"
+  > & { progressionType?: ProgramExercise["progressionType"] }
+): { bottom: number; top: number } {
+  const base = ex.baseReps ?? ex.reps;
+  const top =
+    ex.progressionType === "double"
+      ? (ex.repRangeMax ??
+        impliedDoubleRangeMax(
+          base,
+          isBodyweightExerciseId(ex.exerciseId),
+          ex.repUnit === "seconds"
+        ))
+      : undefined;
+  return {
+    bottom: Math.min(base, ex.reps),
+    top: Math.max(ex.reps, top ?? ex.reps),
+  };
+}
+
 /** Timed holds climb in 5-second steps (N2's time axis). */
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */

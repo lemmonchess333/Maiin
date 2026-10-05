@@ -1582,6 +1582,23 @@ describe("wayfinding between exercises", () => {
   });
 });
 
+describe("the session's target (Lift4 (3))", () => {
+  it("names a climbing lift's range", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 10,
+      baseReps: 8,
+      repRangeMax: 12,
+      progressionType: "double",
+      weight: 60,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8–12 @ 60 kg"
+    );
+  });
+});
+
 describe("the plate hint (Lift4 (6))", () => {
   it("loads the plan's 2.5 kg step with a 1.25 kg plate a side", () => {
     openSession(writer(), vi.fn(), {
