@@ -204,10 +204,9 @@ describe("saved lifting work, correction, and the next prescription", () => {
         const executed = input.prescription.exercises.find(
           (ex) => ex.instanceId === baseline.instanceId
         );
-        const held =
-          !executed ||
-          variant === "easier_today" ||
-          (variant === "time_budget" && executed.sets < baseline.sets);
+        // Sets cut short count like any others (Lift4 (8)); an easier
+        // session can't move a weight down, so its correction holds.
+        const held = !executed || variant === "easier_today";
         const next = corrected.workouts[0].exercises[i];
         expect(next.instanceId).toBe(baseline.instanceId);
         if (held) {
@@ -233,38 +232,36 @@ describe("saved lifting work, correction, and the next prescription", () => {
       ).toMatchObject({ reps: 6, plannedReps: 8 });
     }
   );
-  it("three incomplete sessions do not masquerade as three failed full prescriptions", async () => {
+  it("judges a session cut short on the sets done, never on the rows left", async () => {
     const baseline = storedPlan().workouts[0].exercises;
-    for (let i = 0; i < 3; i++) {
-      const state = storedPlan();
-      const input = session(state, `partial-${i}`);
-      input.setLogs = input.setLogs.map((logs) =>
-        logs.map((log, j) => ({ ...log, reps: 6, completed: j < 2 }))
-      );
-      await finish(state, input);
-      expect(storedPlan().workouts[0].exercises).toEqual(baseline);
-      const saved = readDoc(path(input.completionId)) as unknown as Workout;
-      expect(saved.exercises[0].plannedSetCount).toBe(8);
-      expect(saved.exercises[0].sets).toHaveLength(2);
-      await correctSavedWorkout(
-        db,
-        "u1",
-        input.completionId,
-        0,
-        `correct-${i}`,
-        editsFor(input.completionId, 8)
-      );
-      expect(storedPlan().workouts[0].exercises).toEqual(baseline);
-      const current = storedPlan();
-      await commitProgramTransition(db, "u1", current, {
-        ...current,
-        workouts: current.workouts.map((day) => ({
-          ...day,
-          completed: false,
-          completedWorkoutId: undefined,
-        })),
-      });
-    }
+    const state = storedPlan();
+    const input = session(state, "partial");
+    input.setLogs = input.setLogs.map((logs) =>
+      logs.map((log, j) => ({ ...log, completed: j < 2 }))
+    );
+    await finish(state, input);
+    // Two of eight sets, both at the target: a step, not six missed rows.
+    storedPlan().workouts[0].exercises.forEach((ex, i) => {
+      expect(ex.weight).toBeGreaterThan(baseline[i].weight);
+      expect(ex.consecutiveFailures).toBe(0);
+    });
+    const saved = readDoc(path(input.completionId)) as unknown as Workout;
+    expect(saved.exercises[0].plannedSetCount).toBe(8);
+    expect(saved.exercises[0].sets).toHaveLength(2);
+    // The same two sets corrected to 6 reps are a miss at the plan's weight.
+    await correctSavedWorkout(
+      db,
+      "u1",
+      input.completionId,
+      0,
+      "correct",
+      editsFor(input.completionId, 6)
+    );
+    storedPlan().workouts[0].exercises.forEach((ex, i) => {
+      expect(ex.weight).toBe(baseline[i].weight);
+      expect(ex.consecutiveFailures).toBe(1);
+      expect(ex.lastPerformance).toMatchObject({ reps: 6, completed: false });
+    });
   });
   it("keeps warm-ups and drop sets out of progression and retains an RPE hold after correction", async () => {
     const state = storedPlan();
