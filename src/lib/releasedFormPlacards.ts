@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "cable-lateral-raise": placard(
+    "cable-lateral-raise",
+    ["Side Delts"],
+    ["Traps"],
+    [
+      [0, "Tension", "Stand tall with the cable taut."],
+      [
+        0.3333333333333333,
+        "Initiate",
+        "Raise your arm without bending your elbow.",
+      ],
+      [0.6666666666666666, "Raise", "Keep your torso still as you lift."],
+      [1, "Shoulder height", "Stop at shoulder height without shrugging."],
+      [
+        0.6666666666666666,
+        "Lower",
+        "Lower slowly with your elbow angle fixed.",
+      ],
+      [0.3333333333333333, "Control", "Maintain tension as your arm returns."],
+    ]
+  ),
   "single-arm-lat-pulldown": placard(
     "single-arm-lat-pulldown",
     ["Lats"],

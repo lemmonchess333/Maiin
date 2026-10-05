@@ -103,6 +103,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "cable-lateral-raise": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 900,
+    height: 1060,
+    reference: 1,
+  },
   "cable-woodchopper": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

@@ -167,6 +167,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
     sha256: "30c9c8049207090bc2c03785b89df6907b7096088c56b433eeb15de9bc563b55",
   },
+  "cable-lateral-raise": {
+    src: "form-art/cable-lateral-raise.webp",
+    width: 289,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-lateral-raise/1.webp",
+    sourceSha256:
+      "0f05f5b9eec002dad72ba96e0f53df638d73021facbeb3d51d97f4b0479898c9",
+    sha256: "8811851f825458efda7242a193058380b2e81b242443ac5b9ce5e35254404362",
+  },
   "cable-woodchopper": {
     src: "form-art/cable-woodchopper.webp",
     width: 480,
