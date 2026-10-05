@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "bayesian-cable-curl": placard(
+    "bayesian-cable-curl",
+    ["Biceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Stagger your stance; face away from pulley."],
+      [0.6, "Curl", "Curl with your elbow behind your torso."],
+      [1, "Top", "Bring your hand toward your shoulder."],
+      [1, "Hold", "Hold briefly without leaning or shrugging."],
+      [0.6, "Lower", "Lower slowly, keeping your upper arm still."],
+      [0, "Return", "Return with the cable still taut."],
+    ]
+  ),
   "cable-curl": placard(
     "cable-curl",
     ["Biceps"],

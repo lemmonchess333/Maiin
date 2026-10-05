@@ -87,6 +87,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "80c9779b804c9a3ccb4b3c7d14232dd37860eacbd4f92fc92aae2929e94c018d",
     sha256: "be6e0cd3cb342a739e6af7d5091eb228c2bb7508be127047c6369754bc38c34b",
   },
+  "bayesian-cable-curl": {
+    src: "form-art/bayesian-cable-curl.webp",
+    width: 459,
+    height: 480,
+    keyed: true,
+    source: "form-frames/bayesian-cable-curl/1.webp",
+    sourceSha256:
+      "4a48ad2a7e7609980f5bea77055b64e98f13a337c9e7b1b4d630ed24354a18e4",
+    sha256: "7a939215510b8562676d382a6020b85c246434792194cb006cdf524e9f5f8d72",
+  },
   "bench-dips": {
     src: "form-art/bench-dips.webp",
     width: 480,
