@@ -83,6 +83,16 @@
 .bottom-nav-icon {
   transition: transform var(--ds-transition-fast);
 }
+/* The tab labels stay 12px whatever the text size, as iOS's own tab bar
+   does: five labels share the phone's width, so "Analytics" growing with
+   larger text left its cell. Everything else in the app scales with the
+   root font size (systemTextSize.ts); this is the one deliberate fixed
+   size. */
+.bottom-nav-label {
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .bottom-nav-link:active .bottom-nav-icon {
   transform: scale(0.97);
 }

@@ -78,10 +78,10 @@ describe("FoodComposerCard — the camera button beside the field", () => {
     // rows={1}, the field is 50px and the button hangs 6px below it.
     // jsdom has no layout; companion-food.capture.spec.ts measures the
     // two boxes in a browser.
-    expect(scans[0]).toHaveClass("size-14");
+    expect(scans[0]).toHaveClass("size-[56px]");
     expect(
       screen.getByRole("textbox", { name: "What did you eat" })
-    ).toHaveClass("block", "h-14");
+    ).toHaveClass("block", "min-h-[56px]");
     // The food orange (the nutrition variant) — the owner call recorded
     // in CLAUDE.md's Button mapping — not the brand purple.
     expect(scans[0]).toHaveClass("bg-nutrition-fill");
@@ -187,7 +187,7 @@ describe("FoodComposerCard — visible manual entry", () => {
        button now; the capture spec that clicks by name still finds it. */
     renderComposer();
     const pencil = screen.getByRole("button", { name: "Enter manually" });
-    expect(pencil).toHaveClass("size-11", "absolute", "left-0");
+    expect(pencil).toHaveClass("size-[44px]", "absolute", "left-0");
     expect(
       screen.getAllByRole("button", { name: "Enter manually" })
     ).toHaveLength(1);

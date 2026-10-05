@@ -150,7 +150,7 @@ export default function BottomNavigation({
                     </div>
                     <span
                       className={cn(
-                        "relative z-10 max-w-full text-xs",
+                        "bottom-nav-label relative z-10 max-w-full",
                         isActive ? "font-semibold" : "font-medium"
                       )}
                     >

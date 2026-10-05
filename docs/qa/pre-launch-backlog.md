@@ -185,9 +185,14 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
       further.
 - [ ] **Back to the default** restores the designed size, and a smaller
       setting does not shrink the app below it.
-- [ ] **Home at large text.** The feed card and food diary were built
-      for it; Home, Train and History were not measured. Note anything
-      that breaks there.
+- [ ] **The main screens at large text.** Home, Train, History, Food
+      and Settings were measured in a browser at 1.35× and 2× text
+      (393, 375 and 320 px wide) and fixed to wrap, stack or drop a
+      decorative icon rather than overlap. On the phone, at the largest
+      standard size and at the largest accessibility size, scroll each
+      and note anything cut off or overlapping. Known and accepted: the
+      day names under Train's week end in "…", and at 2× on a 320px
+      phone (iPhone SE, 1st generation) some rows still crowd.
 
 ## The first-visit guide (2026-10-04)
 

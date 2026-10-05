@@ -1764,56 +1764,62 @@ export default function History() {
                       also dropped from 700 to font-medium: at 700 beside
                       an 800 figure it was the weight-mixing DESIGN_GUIDE
                       bars, and `text-sm font-medium` is what the Home
-                      weight tile already uses for exactly this role. */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <Card size="compact" className="text-center">
-                      <Footprints className="size-4 mx-auto mb-1.5 text-running" />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {/* In the reader's unit: it read "km" to everyone. */}
-                        {abbreviateK(
-                          distanceIn(lifetimeTotals.runKm * 1000, unit)
-                        )}
-                        <span className="text-xs font-medium ml-0.5">
-                          {distanceUnitLabel(unit)}
-                        </span>
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        {lifetimeTotals.runCount}{" "}
-                        {lifetimeTotals.runCount === 1 ? "run" : "runs"}
-                      </p>
-                    </Card>
-                    <Card size="compact" className="text-center">
-                      <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {formatVolume(lifetimeTotals.liftVolume).value}
-                        {formatVolume(lifetimeTotals.liftVolume).unit && (
-                          <span className="text-xs font-medium ml-0.5">
-                            {formatVolume(lifetimeTotals.liftVolume).unit}
+                      weight tile already uses for exactly this role.
+                      Three across while 17em allows (a 320px phone at the
+                      designed size), stacked below: at larger text
+                      "115.2k kg" was wider than a third. */}
+                  <div className="@container">
+                    <div className="grid grid-cols-1 @min-[17em]:grid-cols-3 gap-2">
+                      <Card size="compact" className="text-center">
+                        <Footprints className="size-4 mx-auto mb-1.5 text-running" />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {/* In the reader's unit: it read "km" to everyone. */}
+                          {abbreviateK(
+                            distanceIn(lifetimeTotals.runKm * 1000, unit)
+                          )}{" "}
+                          <span className="text-xs font-medium">
+                            {distanceUnitLabel(unit)}
                           </span>
-                        )}
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        {lifetimeTotals.liftCount}{" "}
-                        {lifetimeTotals.liftCount === 1
-                          ? "session"
-                          : "sessions"}
-                      </p>
-                    </Card>
-                    <Card size="compact" className="text-center">
-                      <UtensilsCrossed
-                        className="size-4 mx-auto mb-1.5"
-                        style={{ color: THEME.semantic.nutrition }}
-                      />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {lifetimeTotals.daysLogged.toLocaleString()}
-                        <span className="text-xs font-medium ml-0.5">
-                          {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
-                        </span>
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        logged
-                      </p>
-                    </Card>
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          {lifetimeTotals.runCount}{" "}
+                          {lifetimeTotals.runCount === 1 ? "run" : "runs"}
+                        </p>
+                      </Card>
+                      <Card size="compact" className="text-center">
+                        <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {formatVolume(lifetimeTotals.liftVolume).value}
+                          {formatVolume(lifetimeTotals.liftVolume).unit && " "}
+                          {formatVolume(lifetimeTotals.liftVolume).unit && (
+                            <span className="text-xs font-medium">
+                              {formatVolume(lifetimeTotals.liftVolume).unit}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          {lifetimeTotals.liftCount}{" "}
+                          {lifetimeTotals.liftCount === 1
+                            ? "session"
+                            : "sessions"}
+                        </p>
+                      </Card>
+                      <Card size="compact" className="text-center">
+                        <UtensilsCrossed
+                          className="size-4 mx-auto mb-1.5"
+                          style={{ color: THEME.semantic.nutrition }}
+                        />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {lifetimeTotals.daysLogged.toLocaleString()}{" "}
+                          <span className="text-xs font-medium">
+                            {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
+                          </span>
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          logged
+                        </p>
+                      </Card>
+                    </div>
                   </div>
                 </section>
               )}

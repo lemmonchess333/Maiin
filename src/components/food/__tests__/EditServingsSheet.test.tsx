@@ -704,7 +704,10 @@ describe("EditServingsSheet", function () {
   it("lays the four meal slots out on one row, like the composer's", function () {
     renderSheet();
     const slots = screen.getByRole("radiogroup", { name: "Meal slot" });
-    expect(slots).toHaveClass("grid", "min-[360px]:grid-cols-4");
+    expect(slots).toHaveClass("grid", "@min-[17em]:grid-cols-4");
+    // The width it measures is its wrapper's, in em, so larger text
+    // moves it to two by two as a narrower phone does.
+    expect(slots.parentElement).toHaveClass("@container");
   });
   it("keeps Cancel and Save pinned under a scrolling form", function () {
     /* The sheet is capped at 85% of the screen. On an SE, or on any

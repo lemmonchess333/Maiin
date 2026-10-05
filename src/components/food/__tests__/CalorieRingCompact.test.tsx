@@ -34,15 +34,15 @@ describe("CalorieRing — compact size", () => {
 
   it("keeps the Food page's ring as the default", () => {
     const hero = draw();
-    expect(hero.ring).toContain("size-40");
+    expect(hero.ring).toContain("w-40");
     expect(hero.number).toContain("text-4xl");
     expect(hero.label).toContain("text-xs");
   });
 
   it("draws Home's ring smaller, with the label still at 12px", () => {
     const compact = draw("compact");
-    expect(compact.ring).toContain("size-26");
-    expect(compact.ring).not.toContain("size-40");
+    expect(compact.ring).toContain("w-26");
+    expect(compact.ring).not.toContain("w-40");
     expect(compact.number).toContain("text-2xl");
     expect(compact.label).toContain("text-xs");
   });

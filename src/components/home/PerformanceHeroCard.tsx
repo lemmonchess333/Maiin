@@ -43,8 +43,11 @@ interface PerformanceHeroCardProps {
 
 const RING = 52;
 const STROKE = 6;
+// Wraps once the words cannot keep 7em beside the ring (larger text on
+// the phone): the words and the chevron go under the ring, rather than
+// "Performance" running past the card.
 const ROW =
-  "flex items-center gap-4 rounded-xl -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  "flex flex-wrap items-center gap-4 rounded-xl -mx-1 px-1 py-1 motion-safe:active:scale-[0.99] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 function trackTap() {
   haptic();
@@ -95,7 +98,7 @@ export default function PerformanceHeroCard({
             —
           </span>
         </ProgressRing>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[min(100%,7em)] flex-1">
           <p className="text-base font-bold text-foreground">
             {copy ? copy.headline : "Performance"}
           </p>
@@ -155,8 +158,10 @@ export default function PerformanceHeroCard({
           {piDisplay}
         </motion.span>
       </ProgressRing>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+      <div className="min-w-[min(100%,7em)] flex-1">
+        {/* Wraps: at larger text the chip moved under the title rather
+            than off the right edge of the screen. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <p className="text-base font-bold text-foreground">Performance</p>
           {/* Delta chip — hidden when low-confidence (sparse data makes
               week-over-week noise dominate the signal). */}

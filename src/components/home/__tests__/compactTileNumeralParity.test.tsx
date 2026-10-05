@@ -220,6 +220,7 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(add, "the plus is the tile's one control").toBeTruthy();
     expect(water.querySelector('button[aria-label^="Remove"]')).toBeNull();
     // In the label row (top-3 aligns it with the icon tile), not row 3.
-    expect(add).toHaveClass("absolute", "top-3", "right-3");
+    // Under 9em of tile (larger text) it moves to the tile's empty foot.
+    expect(add).toHaveClass("absolute", "@min-[9em]:top-3", "right-3");
   });
 });

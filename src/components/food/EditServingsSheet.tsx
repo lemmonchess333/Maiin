@@ -384,7 +384,7 @@ function EditServingsSheet({
             slots, where snapping all docs to one slot via this picker IS the
             intended outcome but the section label here would be
             misleading. */}
-        <div className="space-y-2">
+        <div className="@container space-y-2">
           <SectionLabel className="text-center">Meal slot</SectionLabel>
           <SegmentedControl
             emphasis="solid"

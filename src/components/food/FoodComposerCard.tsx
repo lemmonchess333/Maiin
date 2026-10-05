@@ -167,18 +167,20 @@ function FoodComposerCard({
 
           It HEADS the field: pick the meal, then say what. No caption —
           four meal names above an input are self-describing. */}
-      <SegmentedControl
-        emphasis="solid"
-        tone="nutrition"
-        ariaLabel="Add to meal"
-        className={cn("mb-2", MEAL_PICKER_LAYOUT)}
-        options={MEAL_ORDER.map((mealKey) => ({
-          value: mealKey,
-          label: MEAL_LABELS[mealKey],
-        }))}
-        value={targetMeal}
-        onChange={onTargetMeal}
-      />
+      <div className="@container mb-2">
+        <SegmentedControl
+          emphasis="solid"
+          tone="nutrition"
+          ariaLabel="Add to meal"
+          className={MEAL_PICKER_LAYOUT}
+          options={MEAL_ORDER.map((mealKey) => ({
+            value: mealKey,
+            label: MEAL_LABELS[mealKey],
+          }))}
+          value={targetMeal}
+          onChange={onTargetMeal}
+        />
+      </div>
       <div className="relative">
         {/* The field and the Scan button share a row; the dropdown sits
             below both at the row's full width, outside the flex row so
@@ -198,7 +200,7 @@ function FoodComposerCard({
               }}
               aria-label="Enter manually"
               className={cn(
-                "absolute left-0 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-all",
+                "absolute left-0 top-1/2 -translate-y-1/2 size-[44px] inline-flex items-center justify-center rounded-lg active:scale-90 transition-all",
                 inputFocused ? "" : "text-muted-foreground"
               )}
               style={
@@ -240,10 +242,14 @@ function FoodComposerCard({
               aria-label="What did you eat"
               rows={1}
               maxLength={500}
-              /* h-14: the camera button's height, so the two read as one
-                 row. Left to rows={1}, the field sizes itself to one
-                 20px line plus padding, 50px, and the 56px button hangs
-                 6px below it. py-[17px] centres that one line in the
+              /* min-h-[56px]: the camera button's height, so the two read
+                 as one row. Left to rows={1}, the field sizes itself to
+                 one 20px line plus padding, 50px, and the 56px button
+                 hangs 6px below it. A floor, not a height, so a line of
+                 larger text on the phone still fits; the camera and the
+                 pencil stay in px, as iOS keeps a control's size when
+                 the text grows, which leaves the field the width its
+                 placeholder needs ("Searc / h or" at double size). py-[17px] centres that one line in the
                  56px box (1 + 17 + 20 + 17 + 1), level with the pencil
                  and the send button, which centre on the row. `block`,
                  because an inline textarea sits on a text baseline and
@@ -256,7 +262,7 @@ function FoodComposerCard({
                  camera button the field is narrower, and an empty field
                  needs that width for its placeholder. */
               className={cn(
-                "block h-14 w-full pl-11 py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
+                "block min-h-[56px] w-full pl-[44px] py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
                 nlInput.trim() ? "pr-11" : "pr-3"
               )}
               style={{
@@ -318,7 +324,7 @@ function FoodComposerCard({
               haptic();
               scanOverrides.onClick(e.currentTarget.getBoundingClientRect());
             }}
-            className="size-14 self-center"
+            className="size-[56px] self-center"
           />
         </div>
         {showSuggestions && (

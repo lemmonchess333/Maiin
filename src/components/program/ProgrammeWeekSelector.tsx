@@ -235,9 +235,12 @@ export default function ProgrammeWeekSelector({
                 strip's height changed with the week's shape and a lone
                 "12K" under one day hung off a row nothing else occupied.
                 Home's indicator row has had a fixed height for the same
-                reason. */}
+                reason. It ends in "…" when it does not fit (at larger text
+                on the phone): clamped by line, a single word was cut off
+                bare ("Deadlif"), and wrapped it broke mid-word. The full
+                name is in the tab's label and on the session card. */}
             <span
-              className="text-caption font-semibold text-center line-clamp-1 leading-tight max-w-full mt-1 block min-h-4"
+              className="text-caption font-semibold text-center truncate leading-tight max-w-full mt-1 block min-h-4"
               style={{ color: labelColor }}
             >
               {cell.bottomLabel}
