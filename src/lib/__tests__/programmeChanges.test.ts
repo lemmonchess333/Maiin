@@ -26,6 +26,22 @@ describe("programmePreservationNote (D5 — Pgm5 made visible)", () => {
     expect(note).toMatch(/Week 3, your history, and logged sessions are kept/);
   });
 
+  it("says the sets are refitted when the session length changes (Lift4 (5))", () => {
+    const note = programmePreservationNote({
+      liftDaysChanged: false,
+      weekNumber: 2,
+      sessionMinutesTo: 45,
+    });
+    expect(note).toMatch(/sets are refitted to sessions of about 45 minutes/);
+    expect(note).toMatch(/keep your current workouts/);
+    expect(
+      programmePreservationNote({
+        liftDaysChanged: false,
+        sessionMinutesTo: 75,
+      })
+    ).toMatch(/about 75 minutes or more/);
+  });
+
   it("falls back to 'Your current week' when weekNumber is missing/zero", () => {
     expect(programmePreservationNote({ liftDaysChanged: false })).toMatch(
       /Your current week/
@@ -55,6 +71,21 @@ const base: ProgrammeSnapshot = {
 describe("computeProgrammeChanges", () => {
   it("returns [] when nothing changed (drives the dirty=false state)", () => {
     expect(computeProgrammeChanges(base, { ...base })).toEqual([]);
+  });
+
+  it("reports a session length change, the longest as 75+", () => {
+    expect(
+      computeProgrammeChanges(
+        { ...base, sessionMinutes: 60 },
+        { ...base, sessionMinutes: 75 }
+      )
+    ).toEqual([{ label: "Session length", from: "60 min", to: "75+ min" }]);
+    expect(
+      computeProgrammeChanges(
+        { ...base, sessionMinutes: 45 },
+        { ...base, sessionMinutes: 45 }
+      )
+    ).toEqual([]);
   });
 
   it("reports lift-day and nutrition changes with readable labels", () => {

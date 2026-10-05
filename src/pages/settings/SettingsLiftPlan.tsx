@@ -1,4 +1,3 @@
-import LiftTimeBudgetSettings from "@/components/program/LiftTimeBudgetSettings";
 import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 /**
  * SettingsLiftPlan — the dedicated lift-plan editing screen (Section-Split,
@@ -31,6 +30,7 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import ProgrammeSettings from "@/components/program/ProgrammeSettings";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import type { PrimaryGoal } from "@/features/program/programTypes";
+import { sessionMinutesFor } from "@/features/program/sessionFit";
 
 /**
  * Blk1 (5): the block-creation hand-off arrives as route state. Validate
@@ -117,21 +117,20 @@ export default function SettingsLiftPlan() {
               : undefined
           }
         />
-        <LiftTimeBudgetSettings
-          key={profile.uid}
-          profile={profile}
-          workouts={programState?.workouts ?? []}
-          updateProfile={updateProfile}
-        />
         {/* Last, and collapsed: it rates what the fields above prescribe,
             so it reads as the result of this form rather than another
             setting. The goal comes from programState, which is what a
-            running block owns and what balanceWeeklyVolume targets —
+            running block owns and what the plan was built for —
             the profile copy would rate a block's week against the
             PRE-block band. */}
         <WeeklyVolumeCard
           workouts={programState?.workouts ?? []}
           primaryGoal={programState?.primaryGoal ?? profile.primaryGoal}
+          experience={profile.experience}
+          sessionMinutes={
+            programState?.sessionMinutes ??
+            sessionMinutesFor(profile.liftTimeBudgetMinutes)
+          }
         />
       </SettingsSection>
 

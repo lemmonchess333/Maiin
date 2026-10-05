@@ -244,6 +244,27 @@ describe("the review in the person's own units", () => {
   });
 });
 
+describe("session length (Lift4 (5))", () => {
+  it("asks how long a session is on the days step and builds the plan to fit", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit lift sessions" }));
+    const lengths = screen.getByRole("radiogroup", {
+      name: "Minutes per lift session",
+    });
+    expect(
+      within(lengths).getByRole("radio", { name: "60 min" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(lengths).getByRole("radio", { name: "30 min" }));
+    const built = builder.mock.calls.at(-1)!;
+    expect(built[0].sessionMinutes).toBe(30);
+    expect(builder.mock.results.at(-1)!.value.programState.sessionMinutes).toBe(
+      30
+    );
+  });
+});
+
 describe("activity-relevant setup", () => {
   it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();

@@ -26,6 +26,7 @@ export function buildOnboardingPlan(
     | "raceTargetDate"
     | "injuries"
     | "weightKg"
+    | "sessionMinutes"
   >,
   nutritionPhase: Goal,
   currentDate: string,
@@ -52,6 +53,7 @@ export function buildOnboardingPlan(
     bodyweightKg: draft.weightKg,
     sex: draft.gender === "female" ? "female" : "male",
     liftDays: draft.daysPerWeek,
+    sessionMinutes: draft.sessionMinutes,
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,

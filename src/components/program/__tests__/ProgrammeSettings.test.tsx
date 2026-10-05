@@ -243,6 +243,38 @@ describe("ProgrammeSettings — rebuild path", () => {
   });
 });
 
+describe("ProgrammeSettings — session length (Lift4 (5))", () => {
+  it("edits the session length beside the lift days, and saves it with the plan", async () => {
+    setup({ liftTimeBudgetMinutes: 60 });
+    const lengths = screen.getByRole("radiogroup", {
+      name: "Minutes per lift session",
+    });
+    expect(
+      within(lengths).getByRole("radio", { name: "60 min" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(lengths).getByRole("radio", { name: "45 min" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm says what a re-fit does before it happens.
+    expect(
+      screen.getByText(/sets are refitted to sessions of about 45 minutes/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.liftTimeBudgetMinutes).toBe(45);
+  });
+
+  it("reads an older 90-minute answer as 75+", () => {
+    setup({ liftTimeBudgetMinutes: 90 });
+    expect(screen.getByRole("radio", { name: "75+ min" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+});
+
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
   it("asks about small plates, off until turned on, in Microloading's place (Lift4 (6))", () => {
     const { updateSettings } = setup();

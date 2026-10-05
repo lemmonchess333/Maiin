@@ -65,6 +65,15 @@ export function sessionMinutesFor(answer: unknown): number {
   return isLiftTimeBudget(answer) ? answer : DEFAULT_SESSION_MINUTES;
 }
 
+/** The days step's option for a stored answer: the longest offered that
+ *  is no longer than it, so an older 90 or 120 reads "75+". */
+export function sessionLengthOption(
+  answer: unknown
+): (typeof SESSION_MINUTES_OPTIONS)[number] {
+  const minutes = sessionMinutesFor(answer);
+  return [...SESSION_MINUTES_OPTIONS].reverse().find((n) => n <= minutes) ?? 30;
+}
+
 /** Whether a session fits its time, and the 18-set ceiling past which the
  *  last lifts are done tired rather than well. */
 export function sessionFits(

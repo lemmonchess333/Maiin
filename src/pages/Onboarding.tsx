@@ -30,6 +30,7 @@ import {
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
   DRAFT_AGE_RANGES,
+  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
@@ -193,6 +194,10 @@ export default function Onboarding() {
     Exclude<OnboardingDraft["daysPerWeek"], 0>
   >(draft?.liftDaysPreference ?? (draft?.daysPerWeek || 4));
   const daysPerWeek = hasLifting ? liftDaysPreference : 0;
+  // Lift4 (5): asked with the days, and the plan is built to fit it.
+  const [sessionMinutes, setSessionMinutes] = useState<
+    NonNullable<OnboardingDraft["sessionMinutes"]>
+  >(draft?.sessionMinutes ?? 60);
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
@@ -266,6 +271,7 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
     }),
     [
       step,
@@ -297,6 +303,7 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
     ]
   );
   useEffect(() => {
@@ -368,6 +375,7 @@ export default function Onboarding() {
           raceTargetDate,
           injuries,
           weightKg,
+          sessionMinutes,
         },
         goalPlan.fitnessGoal,
         currentDate,
@@ -390,6 +398,7 @@ export default function Onboarding() {
       raceTargetDate,
       injuries,
       weightKg,
+      sessionMinutes,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
@@ -881,9 +890,27 @@ export default function Onboarding() {
                   className="py-2"
                 />
               )}
+              {hasLifting && (
+                <SegmentedControl<
+                  NonNullable<OnboardingDraft["sessionMinutes"]>
+                >
+                  ariaLabel="Minutes per lift session"
+                  value={sessionMinutes}
+                  options={DRAFT_SESSION_MINUTES.map((n) => ({
+                    value: n,
+                    label: (
+                      <span className="font-mono tabular-nums">
+                        {n === 75 ? "75+" : n} min
+                      </span>
+                    ),
+                  }))}
+                  onChange={setSessionMinutes}
+                  tone="lifting"
+                />
+              )}
               <p className="text-sm text-muted-foreground">
                 {hasLifting
-                  ? "Choose lift sessions per week. The draft below updates with your plan."
+                  ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
                   : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
               </p>
               {hasLifting && (

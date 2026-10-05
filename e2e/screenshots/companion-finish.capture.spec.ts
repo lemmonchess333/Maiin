@@ -72,19 +72,22 @@ for (const budget of [null, 30] as const) {
       await expect(
         page.getByRole("button", { name: "Start workout", exact: true })
       ).toBeVisible();
+      // Lift4 (5): the plan is built for the session length, which Lift
+      // plan edits beside the lift days.
       await page.goto("settings/lift-plan");
-      const liftingTime = page.getByRole("region", {
-        name: "Usual lifting time",
+      const sessionLength = page.getByRole("radiogroup", {
+        name: "Minutes per lift session",
       });
-      await expect(liftingTime.getByRole("combobox")).toHaveValue("30");
-      await expect(liftingTime.getByText(/ · about /).first()).toBeVisible();
+      await expect(
+        sessionLength.getByRole("radio", { name: "30 min" })
+      ).toHaveAttribute("aria-checked", "true");
       for (const dark of [false, true]) {
         await page.evaluate(
           (value) => document.documentElement.classList.toggle("dark", value),
           dark
         );
-        await liftingTime.screenshot({
-          path: `screenshots/usual-lifting-time-${dark ? "dark" : "light"}.png`,
+        await sessionLength.locator("..").screenshot({
+          path: `screenshots/session-length-${dark ? "dark" : "light"}.png`,
           animations: "disabled",
         });
       }

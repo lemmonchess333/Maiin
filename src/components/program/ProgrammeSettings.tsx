@@ -84,7 +84,12 @@ import {
   computeProgrammeChanges,
   RACE_DISTANCE_LABELS,
   programmePreservationNote,
+  sessionLengthLabel,
 } from "@/lib/programmeChanges";
+import {
+  SESSION_MINUTES_OPTIONS,
+  sessionLengthOption,
+} from "@/features/program/sessionFit";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
@@ -441,6 +446,8 @@ export default function ProgrammeSettings({
       nutritionPhase: getNutritionPhase(profile),
       experience: (profile.experience as Experience) ?? "intermediate",
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
+      // Lift4 (5): how long a session is; the plan is fitted to it.
+      sessionMinutes: sessionLengthOption(profile.liftTimeBudgetMinutes),
       preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
         profile.preferredSplit ?? ""
       )
@@ -476,6 +483,9 @@ export default function ProgrammeSettings({
   const nutritionPhase: Goal = saved.nutritionPhase;
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
+  const [sessionMinutes, setSessionMinutes] = useState<number>(
+    saved.sessionMinutes
+  );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
@@ -498,6 +508,7 @@ export default function ProgrammeSettings({
     nutritionPhase,
     experience,
     liftDays,
+    sessionMinutes,
     preferredSplit: saved.preferredSplit,
     equipment,
     injuries,
@@ -515,6 +526,7 @@ export default function ProgrammeSettings({
   // lift-days change re-derives the skeleton. The confirm copy must name the
   // customization reset for a day-count change, and reassure otherwise.
   const liftDaysChanged = liftDays !== saved.liftDays;
+  const sessionMinutesChanged = sessionMinutes !== saved.sessionMinutes;
   // LIFT-EV-06 (owner decision 2026-08-09): a permanent goal change at the
   // SAME frequency used to be silent — buildPlan's preserve branch keeps the
   // workouts verbatim, so only the label moved. The confirm dialog now offers
@@ -625,6 +637,10 @@ export default function ProgrammeSettings({
         bodyweightKg: profile.weightKg,
         sex: profile.sex,
         liftDays,
+        // Lift4 (5): a new plan is fitted to the session length; a changed
+        // one re-fits the plan the person has, sets only.
+        sessionMinutes,
+        previousSessionMinutes: saved.sessionMinutes,
         // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
         // value (inert in generation, keeps profileUpdates consistent).
         preferredSplit:
@@ -813,10 +829,13 @@ export default function ProgrammeSettings({
                   {confirmReset
                     ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
                     : focusChangedSameFrequency
-                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          ...(sessionMinutesChanged
+                            ? { sessionMinutesTo: sessionMinutes }
+                            : {}),
                         })}
                 </p>
               </div>
@@ -1055,6 +1074,26 @@ export default function ProgrammeSettings({
             value={liftDays}
             onChange={setLiftDays}
           />
+        </div>
+
+        <div>
+          <GroupHeading>Session length</GroupHeading>
+          <SegmentedControl
+            ariaLabel="Minutes per lift session"
+            options={SESSION_MINUTES_OPTIONS.map((n) => ({
+              value: n,
+              label: (
+                <span className="font-mono tabular-nums">
+                  {sessionLengthLabel(n)}
+                </span>
+              ),
+            }))}
+            value={sessionMinutes}
+            onChange={setSessionMinutes}
+          />
+          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+            Your sessions are built to fit this, warm-ups and rests included.
+          </p>
         </div>
 
         {/* Pgm5 (Q1): split is a derived DISPLAY — the coach sets it from your

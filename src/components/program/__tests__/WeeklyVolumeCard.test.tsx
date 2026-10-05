@@ -42,10 +42,12 @@ function ex(
   } as unknown as ProgramExercise;
 }
 
-/** A week with real pressing/pulling/squatting and NO raise or calf slot —
- *  the shape of every plan generated before those slots existed. */
+/** A four-day week with real pressing/pulling/squatting and NO raise or
+ *  calf slot — the shape of every plan generated before those slots existed.
+ *  A plan built today for four days has both, so the card holds this one to
+ *  them (`weeklyVolumeTargets`: the target is what the days and time fit). */
 function weekWithoutRaisesOrCalves(): WorkoutDay[] {
-  return [
+  const halves = [
     {
       dayName: "Upper",
       dayType: "upper",
@@ -67,11 +69,16 @@ function weekWithoutRaisesOrCalves(): WorkoutDay[] {
       ],
     },
   ] as WorkoutDay[];
+  return [...halves, ...halves];
 }
 
 function renderExpanded(workouts: WorkoutDay[]) {
   const out = render(
-    <WeeklyVolumeCard workouts={workouts} primaryGoal="hypertrophy" />
+    <WeeklyVolumeCard
+      workouts={workouts}
+      primaryGoal="hypertrophy"
+      sessionMinutes={75}
+    />
   );
   // Collapsed by default — the table is behind the summary toggle.
   fireEvent.click(screen.getByRole("button", { expanded: false }));
@@ -79,6 +86,21 @@ function renderExpanded(workouts: WorkoutDay[]) {
 }
 
 describe("WeeklyVolumeCard — untrained muscles are stated, not hidden", () => {
+  it("holds a muscle to what the days and time fit, not past it", () => {
+    // Half an hour twice a week holds no calf raise; the card doesn't ask
+    // for one (Lift4 (5)).
+    render(
+      <WeeklyVolumeCard
+        workouts={weekWithoutRaisesOrCalves().slice(0, 2)}
+        primaryGoal="hypertrophy"
+        sessionMinutes={30}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { expanded: false }));
+    expect(screen.queryByText("Calves")).toBeNull();
+    expect(screen.getByText(/targets for your days and time/)).toBeVisible();
+  });
+
   it("shows a zero row for a muscle with no work at all", () => {
     renderExpanded(weekWithoutRaisesOrCalves());
     // Both groups are absent from the tally entirely; pre-fix neither row

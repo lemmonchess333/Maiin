@@ -263,6 +263,14 @@ the length it was fitted to (`programState.sessionMinutes`, on the server's
 allow-list), and Start trims only a plan from before this. The question on
 the days step and the settings control come next.
 
+STATUS 2026-10-05 (Lift4 (5), build step 4, third part): onboarding's days
+step asks about how long a session is (30, 45, 60 or 75+ minutes) beside the
+lift days, and Lift plan settings edits it in the same place; the separate
+"Usual time for lifting" section retired. The Weekly volume card judges each
+muscle against what the days and time can fit (`weeklyVolumeTargets`: the
+floor, or what a fresh plan for the same days, focus, level and length gives
+the muscle, where that is less), with a beginner's lower ceiling.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
