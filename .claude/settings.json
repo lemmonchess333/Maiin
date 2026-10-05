@@ -50,6 +50,17 @@
             "statusMessage": "graphify graph check"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-worktree-overwrite.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for a whole-tree git overwrite"
+          }
+        ]
       }
     ]
   }
