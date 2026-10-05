@@ -148,13 +148,14 @@ const ROLE_TABLE = Object.freeze({
   },
 });
 
-/** Mirror of experienceModel.ts toExperience. */
+/** Mirror of experienceModel.ts toExperience: an unknown level is a
+ *  beginner's (Lift4 (5)). */
 function toExperience(value) {
   return value === "beginner" ||
     value === "advanced" ||
     value === "intermediate"
     ? value
-    : "intermediate";
+    : "beginner";
 }
 
 /** Mirror of exerciseRole.ts exerciseRole. */

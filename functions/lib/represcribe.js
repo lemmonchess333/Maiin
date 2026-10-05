@@ -187,9 +187,7 @@ function repRangeMaxFor(ex, reps, span) {
 
 /** Mirror of experienceModel.ts usesUndulation. */
 function usesUndulation(experience) {
-  return (experience === undefined || experience === null
-    ? "intermediate"
-    : experience) !== "beginner";
+  return toExperience(experience) !== "beginner";
 }
 
 /** Mirror of represcribe.ts scaleLoadForReps (Epley-shaped load rescale). */

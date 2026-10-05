@@ -178,7 +178,12 @@ describe("pickExercise — plateau rotation", () => {
     /* Exclude the technique picks; the next-best role wins, still
        deterministically. */
     const bank = exerciseBank.horizontal_push; // no technique entries at all
-    const picked = pickExercise("horizontal_push", 3, "bench-press").id;
+    const picked = pickExercise(
+      "horizontal_push",
+      3,
+      "bench-press",
+      "intermediate"
+    ).id;
     const role = bank.find((o) => o.id === picked)?.role;
     expect(role).toBe("weak_point");
   });

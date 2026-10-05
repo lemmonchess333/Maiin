@@ -359,14 +359,18 @@ describe("generator audit — a template plan survives its first regenerate", ()
 
   it("still keeps the loads it legitimately can", () => {
     // The guard must not be satisfied by dropping every load. Slot alignment
-    // puts each saved lift at the index its own movement is built at.
+    // puts each saved lift at the index its own movement is built at. An
+    // intermediate's, so the level gate re-points nothing (a beginner's
+    // front squat and incline bench would become simpler lifts).
     const saved = templatePlan();
     const { workouts } = generateProgram(
       "recomp",
       3,
       saved,
       "general",
-      undefined
+      undefined,
+      undefined,
+      "intermediate"
     );
     const carried = workouts
       .flatMap((d) => d.exercises)

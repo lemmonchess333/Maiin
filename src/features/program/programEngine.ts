@@ -485,6 +485,15 @@ export function splitRationale(weeklyLiftDays: number): string {
 ================================ */
 
 /**
+ * The level the builders pick at. Every plan is built from the intermediate
+ * tier's standard lifts, then `applyComplexityGate` re-points what a beginner
+ * can't be offered; an advanced lifter's specialised variations come in at a
+ * stall (`pickExercise`'s rotation), never at a build. Named here because a
+ * pick without a level is a beginner's (`toExperience`).
+ */
+const BUILDER_TIER: Experience = "intermediate";
+
+/**
  * Build a programme exercise from the PRIMARY variation pool, preserving an
  * existing row's load/history/instanceId across a regenerate.
  *
@@ -524,15 +533,19 @@ function makeExercise(
           (option) => option.id === existing.exerciseId
         )
       : undefined;
-  // Keep a valid, non-stalled carried variation stable. `makeExercise` does
-  // not receive the user's experience, so asking `pickExercise` to validate
-  // it here applies the default intermediate gate and silently turns an
-  // advanced specialist lift back into the primary on the next regeneration.
-  // The experience-aware post-pass below owns downgrades and will still
-  // replace this row if the user's level no longer permits it.
+  // Keep a valid, non-stalled carried variation stable. The builders pick at
+  // the intermediate tier, so asking `pickExercise` to validate it here would
+  // silently turn an advanced specialist lift back into the primary on the
+  // next regeneration. The experience-aware post-pass below owns downgrades
+  // and will still replace this row if the user's level no longer permits it.
   const ex =
     currentOption ??
-    pickExercise(category, existing?.plateauCount ?? 0, existing?.exerciseId);
+    pickExercise(
+      category,
+      existing?.plateauCount ?? 0,
+      existing?.exerciseId,
+      BUILDER_TIER
+    );
   const identityChanged =
     existing !== undefined && existing.exerciseId !== ex.id;
   const w = identityChanged
@@ -605,7 +618,7 @@ function makeAccessory(
   weight: number,
   excludeId?: string
 ): ProgramExercise {
-  const ex = pickAccessory(category, excludeId);
+  const ex = pickAccessory(category, excludeId, BUILDER_TIER);
   return {
     name: ex.name,
     exerciseId: ex.id,
@@ -1809,8 +1822,9 @@ export function generateProgram(
    * Deliberately its OWN parameter rather than read off `loadCtx.experience`,
    * even though the context carries it: `loadCtx` is undefined whenever the
    * bodyweight is unknown, so reading it there would silently hand a beginner
-   * the intermediate programme for an unrelated reason. Absent → intermediate,
-   * which is the behaviour every caller had before this existed.
+   * the intermediate programme for an unrelated reason. Absent → a
+   * beginner's, as an unknown level is everywhere (Lift4 (5)); every plan
+   * build passes the person's (`toExperience`).
    */
   experience?: Experience,
   /**
@@ -2055,16 +2069,15 @@ export function generateProgram(
   workouts = applyRoleTable(workouts, primaryGoal, experience);
   workouts = applyDayRoles(workouts, experience);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
-  // (no-op without a load context, or for lifts with logged history). After
-  // every pass that settles who is where, so it calibrates whatever the caps
-  // above re-pointed, and before the time fit, which prices each lift's
-  // warm-up from its load.
-  if (loadCtx)
-    workouts = seedStartingLoads(
-      workouts,
-      loadCtx,
-      mainRepAnchor(primaryGoal, experience)
-    );
+  // (lifts with logged history keep theirs; with no bodyweight, the plan
+  // starts from the bar). After every pass that settles who is where, so it
+  // calibrates whatever the caps above re-pointed, and before the time fit,
+  // which prices each lift's warm-up from its load.
+  workouts = seedStartingLoads(
+    workouts,
+    loadCtx,
+    mainRepAnchor(primaryGoal, experience)
+  );
   // Lift4 (5): time decides the volume. Each session is cut to the minutes
   // the person has (`sessionFit.ts`), then the week is balanced inside them.
   const minutes = sessionMinutes ?? Number.POSITIVE_INFINITY;

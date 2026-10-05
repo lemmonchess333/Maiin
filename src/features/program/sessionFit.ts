@@ -3,7 +3,8 @@
  *
  * Session length is asked on the days step (30, 45, 60 or 75+ minutes) and
  * each session is built to fit it, priced with the app's own estimator
- * (`estimateSessionMinutes`) at the rests the plan suggests. With proper
+ * (`estimateSessionMinutes`) at the rests the plan suggests, and with each
+ * loaded lift's warm-up as it will be once the lift is established. With proper
  * rests 30 minutes holds about six working sets, so a plan built for 30
  * minutes rests less (`suggestedRestSeconds`). Time decides the volume: the
  * role table's sets (`roleTable.ts`) are where a session starts, and what
@@ -40,6 +41,10 @@ import { exerciseRole } from "./exerciseRole";
 import { isLiftTimeBudget } from "./liftTimeBudget";
 import { roleRepsFor } from "./roleTable";
 import {
+  startingWeightForExercise,
+  type StartingLoadContext,
+} from "./startingLoads";
+import {
   MAX_SETS_PER_SESSION,
   primaryJudgementForExercise,
 } from "./volumeModel";
@@ -74,6 +79,47 @@ export function sessionLengthOption(
   return [...SESSION_MINUTES_OPTIONS].reverse().find((n) => n <= minutes) ?? 30;
 }
 
+/**
+ * Who a lift's warm-up is priced for: an 80 kg intermediate, whose starting
+ * loads stand for a lift once it is established. A lift started at the bar
+ * has no warm-up on day one and three or four sets of one a few weeks later,
+ * and the plan has to fit those weeks too, so each loaded lift is priced at
+ * the heavier of its load and that estimate (`warmupRamp` saturates: a
+ * barbell squat's ramp is four sets at 60 kg and at 160).
+ */
+const ESTABLISHED: StartingLoadContext = {
+  bodyweightKg: 80,
+  experience: "intermediate",
+};
+
+/** A session's seconds as the plan prices it. */
+function plannedSeconds(
+  exercises: readonly ProgramExercise[],
+  minutes: number
+): number {
+  return estimateSessionSeconds(
+    exercises.map((ex) =>
+      ex.weight > 0
+        ? {
+            ...ex,
+            weight: Math.max(
+              ex.weight,
+              startingWeightForExercise(
+                ex.exerciseId,
+                ex.movementCategory,
+                ESTABLISHED,
+                ex.isAccessory === true,
+                undefined,
+                ex.repUnit
+              )
+            ),
+          }
+        : ex
+    ),
+    { sessionMinutes: minutes }
+  );
+}
+
 /** Whether a session fits its time, and the 18-set ceiling past which the
  *  last lifts are done tired rather than well. */
 export function sessionFits(
@@ -83,8 +129,7 @@ export function sessionFits(
   const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
   return (
     sets <= MAX_SETS_PER_SESSION &&
-    estimateSessionSeconds(exercises, { sessionMinutes: minutes }) <=
-      minutes * 60
+    plannedSeconds(exercises, minutes) <= minutes * 60
   );
 }
 
@@ -127,8 +172,7 @@ function fitDay(
       ...exercises.slice(0, i),
       ...exercises.slice(i + 1),
     ];
-    const seconds = (list: ProgramExercise[]) =>
-      estimateSessionSeconds(list, { sessionMinutes: minutes });
+    const seconds = (list: ProgramExercise[]) => plannedSeconds(list, minutes);
     const candidates = exercises
       .map((_, i) => i)
       .filter(

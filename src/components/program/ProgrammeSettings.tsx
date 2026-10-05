@@ -70,6 +70,7 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
   represcribeWorkouts,
@@ -444,7 +445,7 @@ export default function ProgrammeSettings({
     () => ({
       primaryGoal: (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
       nutritionPhase: getNutritionPhase(profile),
-      experience: (profile.experience as Experience) ?? "intermediate",
+      experience: toExperience(profile.experience),
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
       // Lift4 (5): how long a session is; the plan is fitted to it.
       sessionMinutes: sessionLengthOption(profile.liftTimeBudgetMinutes),

@@ -201,8 +201,10 @@ export default function Onboarding() {
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
+  // Until the person picks one, the draft week is a beginner's: an unknown
+  // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
-    draft?.experience ?? "intermediate"
+    draft?.experience ?? "beginner"
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]

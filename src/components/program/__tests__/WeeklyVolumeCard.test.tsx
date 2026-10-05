@@ -87,12 +87,13 @@ function renderExpanded(workouts: WorkoutDay[]) {
 
 describe("WeeklyVolumeCard — untrained muscles are stated, not hidden", () => {
   it("holds a muscle to what the days and time fit, not past it", () => {
-    // Half an hour twice a week holds no calf raise; the card doesn't ask
-    // for one (Lift4 (5)).
+    // Half an hour twice a week holds no calf raise for an intermediate; the
+    // card doesn't ask for one (Lift4 (5)).
     render(
       <WeeklyVolumeCard
         workouts={weekWithoutRaisesOrCalves().slice(0, 2)}
         primaryGoal="hypertrophy"
+        experience="intermediate"
         sessionMinutes={30}
       />
     );

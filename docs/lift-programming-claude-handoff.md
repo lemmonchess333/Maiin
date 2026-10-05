@@ -271,6 +271,20 @@ muscle against what the days and time can fit (`weeklyVolumeTargets`: the
 floor, or what a fresh plan for the same days, focus, level and length gives
 the muscle, where that is less), with a beginner's lower ceiling.
 
+STATUS 2026-10-05 (Lift4 (5), build step 4, fourth part): an unknown level is
+a beginner's everywhere: `toExperience` and its server copies, an omitted
+level in `generateProgram`, a stored value outside the three, and the level
+onboarding shows before one is picked. The builders still pick at the
+intermediate tier (`BUILDER_TIER`) and the complexity gate re-points what a
+beginner can't be offered, so a known level's plan is unchanged. With no
+bodyweight a new plan starts from the bar: a barbell lift at 20 kg and any
+other loaded lift at the estimate for a 60 kg beginner, not the builders'
+fixed loads; a plan the person already has keeps the loads it shows. The time
+fit prices each loaded lift's warm-up at the heavier of its load and an 80 kg
+intermediate's estimate for it, so a plan started at the bar still fits once
+its lifts carry a full ramp, and the volume card's reference plan prices the
+same as the person's.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

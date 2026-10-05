@@ -35,8 +35,9 @@
  * codebase now states which side it is on. Volume-ramp programming (MEV → MAV
  * → MRV across a block) would add sets every week to exactly the lifter this
  * file simulates. Tropos does not, and progresses that lifter by load instead
- * — which the same simulation shows working: an accessory climbs 12 → 13.75 kg
- * over fifteen weeks with its identity, history and anchor intact (its
+ * — which the same simulation shows working: an accessory climbs 20 → 22.5 kg
+ * over fifteen weeks with its identity, history and anchor intact (a barbell
+ * curl from the empty bar, since the simulated plan has no bodyweight; its
  * isolation range is five reps wide and its steps 1.25 kg, with the small
  * plates the simulation turns on).
  *
@@ -221,7 +222,7 @@ describe("why it is flat — volume is the troubleshooting lever, not the ramp",
     const later = at(18).accessories[0];
     expect(later.id).toBe(first.id); // identity intact — no rotation loss
     expect(later.weight).toBeGreaterThan(first.weight);
-    expect(later.weight / first.weight).toBeGreaterThanOrEqual(1.14);
+    expect(later.weight / first.weight).toBeGreaterThanOrEqual(1.12);
 
     // Every accessory, not just the first, moved on and none went backwards:
     // by load, or by reps where the next weight is more than about 15%

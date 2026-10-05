@@ -65,9 +65,11 @@ describe("allowsComplexity", () => {
     expect(allowsComplexity("advanced", "advanced")).toBe(true);
   });
 
-  it("treats an untagged movement as simple, and an unknown level as intermediate", () => {
+  it("treats an untagged movement as simple, and an unknown level as a beginner's", () => {
     expect(allowsComplexity("beginner", undefined)).toBe(true);
-    expect(allowsComplexity(undefined, "technical")).toBe(true);
+    // Lift4 (5): an unknown level is a beginner's, everywhere.
+    expect(allowsComplexity(undefined, "simple")).toBe(true);
+    expect(allowsComplexity(undefined, "technical")).toBe(false);
     expect(allowsComplexity(undefined, "advanced")).toBe(false);
   });
 });
@@ -77,7 +79,7 @@ describe("usesUndulation / showsRpeByDefault / toExperience", () => {
     expect(usesUndulation("beginner")).toBe(false);
     expect(usesUndulation("intermediate")).toBe(true);
     expect(usesUndulation("advanced")).toBe(true);
-    expect(usesUndulation(undefined)).toBe(true); // pre-existing behaviour
+    expect(usesUndulation(undefined)).toBe(false); // an unknown level is a beginner's
   });
 
   it("RPE is earned complexity", () => {
@@ -86,10 +88,11 @@ describe("usesUndulation / showsRpeByDefault / toExperience", () => {
     expect(showsRpeByDefault("advanced")).toBe(true);
   });
 
-  it("coerces legacy and unknown values to intermediate", () => {
+  it("coerces legacy and unknown values to beginner (Lift4 (5))", () => {
     expect(toExperience("beginner")).toBe("beginner");
-    expect(toExperience("novice")).toBe("intermediate");
-    expect(toExperience(undefined)).toBe("intermediate");
+    expect(toExperience("intermediate")).toBe("intermediate");
+    expect(toExperience("novice")).toBe("beginner");
+    expect(toExperience(undefined)).toBe("beginner");
   });
 
   it("never throws on an out-of-vocabulary value", () => {
@@ -103,7 +106,7 @@ describe("usesUndulation / showsRpeByDefault / toExperience", () => {
       expect(() =>
         allowsComplexity(bad as Experience, "technical")
       ).not.toThrow();
-      // …and falls back to the intermediate tier, not to "allow everything".
+      // …and falls back to the beginner tier, not to "allow everything".
       expect(allowsComplexity(bad as Experience, "advanced")).toBe(false);
     }
   });

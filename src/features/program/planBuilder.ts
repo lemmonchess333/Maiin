@@ -397,20 +397,21 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // historically arrived at 0 kg and therefore never passed through
   // generateProgram's cold-start seeding. Run the idempotent seeder across
   // the final shape so both generated and preserved plans are calibrated.
-  const workouts = loadCtx
-    ? seedStartingLoads(
-        fitted,
-        loadCtx,
-        // Must carry the SAME rep anchor generateProgram used, or this pass
-        // silently undoes it: this seeder runs last and is the one that
-        // decides the final weight for every buildPlan path, including the
-        // preserve branch that never reaches generateProgram at all. Omitting
-        // it here made a `running` plan render 4-6 reps at the unchanged
-        // 8-rep weight — the exact "tested copy vs running copy" shape, with
-        // both copies in the same feature directory.
-        mainRepAnchor(input.primaryGoal, toExperience(input.experience))
-      )
-    : fitted;
+  // With no bodyweight, a lift with no load starts from the bar (Lift4 (5));
+  // the loads a plan already shows stay.
+  const workouts = seedStartingLoads(
+    fitted,
+    loadCtx,
+    // Must carry the SAME rep anchor generateProgram used, or this pass
+    // silently undoes it: this seeder runs last and is the one that
+    // decides the final weight for every buildPlan path, including the
+    // preserve branch that never reaches generateProgram at all. Omitting
+    // it here made a `running` plan render 4-6 reps at the unchanged
+    // 8-rep weight — the exact "tested copy vs running copy" shape, with
+    // both copies in the same feature directory.
+    mainRepAnchor(input.primaryGoal, toExperience(input.experience)),
+    { unloadedOnly: !loadCtx }
+  );
   return {
     splitType: base.splitType,
     workouts,

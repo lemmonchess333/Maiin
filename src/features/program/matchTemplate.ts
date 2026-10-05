@@ -305,7 +305,7 @@ export function applyEquipmentFilterToWorkouts(
       if (
         !pick &&
         ex.movementCategory === "vertical_pull" &&
-        toExperience(experience ?? "intermediate") === "beginner" &&
+        toExperience(experience) === "beginner" &&
         isAvailable("inverted-row") &&
         !usedIds.has("inverted-row") &&
         !isInjuryContra("inverted-row")
