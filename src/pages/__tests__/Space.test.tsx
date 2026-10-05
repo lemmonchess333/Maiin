@@ -186,7 +186,7 @@ describe("Space page", () => {
       screen.getByText(/Ultra training plans aren’t available/)
     ).toBeInTheDocument();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Save race", exact: true })
+      await screen.findByRole("button", { name: "Save race" })
     );
     await waitFor(() =>
       expect(readDoc("users/viewer/settings/savedRaces")?.raceIds).toEqual([
@@ -198,7 +198,7 @@ describe("Space page", () => {
     ).toBeUndefined();
     expect(readDoc("users/viewer")).toBeUndefined();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Saved race", exact: true })
+      await screen.findByRole("button", { name: "Saved race" })
     );
     await waitFor(() =>
       expect(readDoc("users/viewer/settings/savedRaces")?.raceIds).toEqual([])
