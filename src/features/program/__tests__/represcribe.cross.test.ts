@@ -124,6 +124,16 @@ function week(days: number): WorkoutDay[] {
         baseReps: 12,
         weight: 20,
       }),
+      // A side-delt isolation: Build muscle's 12–20 row (`roleTable.ts`).
+      exercise({
+        instanceId: `raise-${i}`,
+        exerciseId: "lateral-raise",
+        movementCategory: "vertical_push",
+        isAccessory: true,
+        reps: 12,
+        baseReps: 12,
+        weight: 8,
+      }),
       // Bodyweight: a LOWER ceiling (15), the branch a single fixture misses.
       exercise({
         instanceId: `bw-${i}`,

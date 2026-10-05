@@ -18,10 +18,15 @@
  *
  *   GOAL_PROFILES, goalProfileFor, prescribedRepCeiling, assignDayRoles,
  *   repDeltaForRole, repFloorFor, repRangeMaxFor  → programEngine.ts
- *   usesUndulation, toExperience                  → experienceModel.ts
+ *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
  *   BLOCK_AMNESTY_WEEKS                           → represcribe.ts
  *   makeBlockId                                   → trainingBlock.ts
+ *
+ * The reps themselves come from the role table (Lift4 (5)), whose server
+ * copy is `roleTable.js` with its own cross-test; `toExperience` lives there
+ * and is re-exported here for the command reducer. `GOAL_PROFILES` stays
+ * for its goal list (`PRIMARY_GOALS`).
  *
  * `isBodyweightExerciseId` is NOT re-mirrored — it already exists here and is
  * already pinned by its own cross-test.
@@ -53,6 +58,7 @@
  */
 
 const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
+const { roleRepsFor, toExperience } = require("./roleTable");
 
 /** Mirror of programEngine.ts MAX_BODYWEIGHT_REPS: where a bodyweight lift's
  *  climb stops and the plan asks for load. */
@@ -186,15 +192,6 @@ function usesUndulation(experience) {
     : experience) !== "beginner";
 }
 
-/** Mirror of experienceModel.ts toExperience. */
-function toExperience(value) {
-  return value === "beginner" ||
-    value === "advanced" ||
-    value === "intermediate"
-    ? value
-    : "intermediate";
-}
-
 /** Mirror of represcribe.ts scaleLoadForReps (Epley-shaped load rescale). */
 function scaleLoadForReps(weight, fromReps, toReps) {
   if (!Number.isFinite(weight) || weight <= 0) return 0;
@@ -218,12 +215,6 @@ function makeBlockId(startDate, createdAt) {
  */
 function represcribeWorkouts(workouts, goal, experience) {
   const list = Array.isArray(workouts) ? workouts : [];
-  const profile = goalProfileFor(goal);
-  const mainSpan = Math.max(0, profile.mainRepsMax - profile.mainReps);
-  const accessorySpan = Math.max(
-    0,
-    profile.accessoryRepsMax - profile.accessoryReps
-  );
   // Undulation is applied per DAY INDEX, so the roles have to be computed
   // over the whole week before any slot is touched.
   const roles = assignDayRoles(list.length);
@@ -232,22 +223,21 @@ function represcribeWorkouts(workouts, goal, experience) {
   return list.map((day, dayIndex) => ({
     ...day,
     exercises: (Array.isArray(day.exercises) ? day.exercises : []).map((ex) => {
-      // A 30-45s plank is not a 12-rep set, and no goal profile authors a
+      // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. The honest handling is to leave them entirely alone.
       if (ex.repUnit === "seconds") return { ...ex };
 
-      // `undefined` falls to MAIN, matching generateProgram's own convention
-      // for legacy and unflagged slots.
-      const isAccessory = ex.isAccessory === true;
-      const tierReps = isAccessory ? profile.accessoryReps : profile.mainReps;
-      const span = isAccessory ? accessorySpan : mainSpan;
+      // An unflagged slot's compound counts as a MAIN, matching
+      // generateProgram's own convention for legacy slots.
+      const row = roleRepsFor(goal, ex, experience);
+      const span = row.top === undefined ? 0 : row.top - row.bottom;
       // Per-exercise, not per-day: the pump +2 exempts hip-dominant mains
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
       const reps = Math.min(
         prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), tierReps + delta)
+        Math.max(repFloorFor(ex), row.bottom + delta)
       );
       const rangeMax = repRangeMaxFor(ex, reps, span);
 
@@ -258,14 +248,15 @@ function represcribeWorkouts(workouts, goal, experience) {
         // after a load step, so leaving it on the old focus's number would
         // walk the user back to the retired prescription one step later.
         baseReps: reps,
-        progressionType: isAccessory ? "double" : profile.mainProgression,
+        // A range climbs; a fixed target steps whenever every set reaches it.
+        progressionType: row.top === undefined ? "linear" : "double",
         weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps),
         // Failure counters accumulated against a rep target that no longer
         // exists are not evidence of anything.
         consecutiveFailures: 0,
         plateauCount: 0,
       };
-      // Omitted rather than zeroed when the profile authors no span — a
+      // Omitted rather than zeroed when the table authors no span — a
       // `repRangeMax` of 0 would read as a ceiling below the target.
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;

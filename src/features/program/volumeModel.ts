@@ -35,6 +35,7 @@ import {
   type CanonicalMuscle,
   type FineMuscle,
 } from "./muscleTaxonomy";
+import { exerciseRole } from "./exerciseRole";
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
 // The taxonomy moved to `muscleTaxonomy.ts` in 13a so the fine layer and the
@@ -868,6 +869,40 @@ const MAX_SETS_PER_SESSION = 18;
 
 function sessionSets(day: WorkoutDay): number {
   return day.exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+}
+
+/**
+ * Fit every session inside the length budget (Lift4 (5)). The role table
+ * gives each lift its sets, and a full-body day of six lifts with four-set
+ * strength mains comes to 20. Cuts one set at a time from the accessories,
+ * isolations before other compounds, the largest first and then from the end
+ * of the day, down to two sets each. Main lifts keep theirs: they carry the
+ * progression.
+ */
+export function fitSessionsToBudget(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => {
+    const exercises = day.exercises.map((e) => ({ ...e }));
+    const fitted = { ...day, exercises };
+    const isolation = (e: ProgramExercise) =>
+      Number(exerciseRole(e) === "isolation");
+    while (sessionSets(fitted) > MAX_SETS_PER_SESSION) {
+      const cut = exercises
+        .map((ex, i) => ({ ex, i }))
+        .filter(
+          ({ ex }) =>
+            ex.isAccessory === true && ex.sets > RECONCILE_ACCESSORY_FLOOR
+        )
+        .sort(
+          (a, b) =>
+            isolation(b.ex) - isolation(a.ex) ||
+            b.ex.sets - a.ex.sets ||
+            b.i - a.i
+        )[0];
+      if (!cut) break; // every accessory at two: the mains are the session
+      cut.ex.sets -= 1;
+    }
+    return fitted;
+  });
 }
 
 /** The day this exercise sits in, or null if it isn't in the week. */

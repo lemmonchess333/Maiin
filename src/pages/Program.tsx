@@ -1619,6 +1619,7 @@ function ProgramInner() {
                           uid={profile.uid}
                           block={programState.trainingBlock}
                           currentFocus={programState.primaryGoal ?? "general"}
+                          experience={profile?.experience}
                           liftDaysPerWeek={programState.workouts.length}
                           mainCompoundIds={blockAnchorIds}
                           trainingWhy={profile?.trainingWhy?.trim() ?? ""}

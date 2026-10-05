@@ -813,7 +813,7 @@ export default function ProgrammeSettings({
                   {confirmReset
                     ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
                     : focusChangedSameFrequency
-                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,

@@ -227,6 +227,24 @@ range, so reps it has climbed, inside the range or past it, are never a bar.
 Which lifts climb a range and which hold a fixed target for a new plan is
 step 4's generator.
 
+STATUS 2026-10-05 (Lift4 (5), build step 4, first part): a new plan's sets,
+reps and progression come from each lift's role (`roleTable.ts`): main lifts,
+other compounds and isolations, by goal, with a beginner column (fixed main
+lifts on three sets, two sets of everything else) and four sets on a strength
+main lift from intermediate up. A range climbs; a fixed target steps. The
+heavier and lighter days stay for intermediates as they were, two reps either
+side of the table, so a Build muscle main lift runs 4–8 on a heavier day and
+8–12 on a lighter one. A session the table takes past 18 working sets sheds
+accessory sets, isolations first, down to two (`fitSessionsToBudget`).
+Starting loads are estimated for the main lifts' bottom (`mainRepAnchor`). A
+block re-prescribes from the same table on the server (`roleTable.js`, pinned
+by `roleTable.cross.test.ts`), and its copy reads the lifter's level. Get
+stronger and Support my running share every target, as do Build muscle and
+Lose fat, so a block between them changes nothing and says so. A lift an
+equipment or injury swap brings in still keeps its slot's numbers; giving it
+its own role's numbers, and fitting the plan to the session length, are the
+next parts of step 4.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
@@ -275,6 +293,8 @@ step 4's generator.
   intermediate and advanced plans, automatic day roles can shift final
   rep targets by plus or minus two; treat the bands as anchors, not every
   final row's exact output.
+  STATUS 2026-10-05: a new plan's bands are the Lift4 role table's now; see
+  the build step 4 STATUS under the conservative response ladder.
 - Beginner, intermediate, and advanced tiers gate complexity and coaching
   autonomy. Advanced work may use more appropriate variants and RPE; that does
   not mean an indiscriminate volume increase.

@@ -208,6 +208,10 @@ const PINNED: Record<string, string> = {
   // a block actually writes.
   "functions/lib/represcribe.js":
     "src/features/program/__tests__/represcribe.cross.test.ts",
+  // Lift4 (5) — the role table a block's re-prescription reads its sets and
+  // reps from, with the catalogue's isolation and 12–20 id lists.
+  "functions/lib/roleTable.js":
+    "src/features/program/__tests__/roleTable.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

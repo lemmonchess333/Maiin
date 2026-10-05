@@ -36,13 +36,13 @@
 
 import {
   assignDayRoles,
-  goalProfileFor,
   prescribedRepCeiling,
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
+import { roleReps, roleRepsFor } from "./roleTable";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
   ActiveTrainingBlock,
@@ -91,8 +91,10 @@ export function scaleLoadForReps(
 /**
  * Re-derive a week's prescription for `goal`, preserving everything else.
  *
- * `experience` drives undulation exactly as generation does — a beginner
- * gets the flat goal base, everyone else gets the heavy/pump shift. Passing
+ * Each lift's reps come from its role in the table generation uses
+ * (`roleTable.ts`, Lift4 (5)). `experience` reads the table's beginner
+ * column and drives undulation exactly as generation does — a beginner
+ * gets the flat table, everyone else gets the heavy/pump shift. Passing
  * the wrong one here would silently flatten the week.
  */
 export function represcribeWorkouts(
@@ -100,12 +102,6 @@ export function represcribeWorkouts(
   goal: PrimaryGoal,
   experience: Experience | undefined
 ): WorkoutDay[] {
-  const profile = goalProfileFor(goal);
-  const mainSpan = Math.max(0, profile.mainRepsMax - profile.mainReps);
-  const accessorySpan = Math.max(
-    0,
-    profile.accessoryRepsMax - profile.accessoryReps
-  );
   // Undulation is applied per DAY INDEX, so the roles have to be computed
   // over the whole week before any slot is touched.
   const roles = assignDayRoles(workouts.length);
@@ -114,25 +110,24 @@ export function represcribeWorkouts(
   return workouts.map((day, dayIndex) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
-      // A 30-45s plank is not a 12-rep set, and no goal profile authors a
+      // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. `prescribedRepCeiling` already returns Infinity for
       // these; the honest handling is to leave them entirely alone.
       if (ex.repUnit === "seconds") return { ...ex };
 
-      // `undefined` falls to MAIN, matching `generateProgram`'s own
-      // convention for legacy and unflagged slots. Treating it as an
-      // accessory instead would make the whole transform a silent no-op on
-      // any plan authored before `isAccessory` was persisted.
-      const isAccessory = ex.isAccessory === true;
-      const tierReps = isAccessory ? profile.accessoryReps : profile.mainReps;
-      const span = isAccessory ? accessorySpan : mainSpan;
+      // An unflagged slot's compound counts as a MAIN (`exerciseRole`),
+      // matching `generateProgram`'s own convention for legacy slots.
+      // Treating it as an accessory instead would make the whole transform a
+      // silent no-op on any plan authored before `isAccessory` was persisted.
+      const row = roleRepsFor(goal, ex, experience);
+      const span = row.top === undefined ? 0 : row.top - row.bottom;
       // Per-exercise, not per-day: the pump +2 exempts hip-dominant mains
       // (high-rep heavy hinge — see undulationDeltaFor).
       const delta = undulates ? undulationDeltaFor(ex, roles[dayIndex]) : 0;
 
       const reps = Math.min(
         prescribedRepCeiling(ex),
-        Math.max(repFloorFor(ex), tierReps + delta)
+        Math.max(repFloorFor(ex), row.bottom + delta)
       );
       const rangeMax = repRangeMaxFor(ex, reps, span);
 
@@ -143,14 +138,15 @@ export function represcribeWorkouts(
         // after a load step, so leaving it on the old focus's number would
         // walk the user back to the retired prescription one step later.
         baseReps: reps,
-        progressionType: isAccessory ? "double" : profile.mainProgression,
+        // A range climbs; a fixed target steps whenever every set reaches it.
+        progressionType: row.top === undefined ? "linear" : "double",
         weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps),
         // Failure counters accumulated against a rep target that no longer
         // exists are not evidence of anything.
         consecutiveFailures: 0,
         plateauCount: 0,
       };
-      // Omitted rather than zeroed when the profile authors no span — a
+      // Omitted rather than zeroed when the table authors no span — a
       // `repRangeMax` of 0 would read as a ceiling below the target.
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;
@@ -236,12 +232,54 @@ export function blockPrefersShorterSessions(
 /** Weeks an "easing back in" block holds load before resuming progression. */
 export const EASING_HOLD_WEEKS = 2;
 
-/** "5-7" — the main-lift rep range a focus prescribes. */
-export function focusRepSummary(goal: PrimaryGoal): string {
-  const p = goalProfileFor(goal);
-  return p.mainRepsMax > p.mainReps
-    ? `${p.mainReps}-${p.mainRepsMax}`
-    : `${p.mainReps}`;
+/** "6–10", or "5" for a fixed target: the main lifts' reps a focus
+ *  prescribes at a level (`roleTable.ts`). */
+export function focusRepSummary(
+  goal: PrimaryGoal,
+  experience: Experience | undefined
+): string {
+  const r = roleReps(goal, "main", experience, false);
+  return r.top === undefined ? `${r.bottom}` : `${r.bottom}–${r.top}`;
+}
+
+/** The table's rows a block can move: each role, and Build muscle's
+ *  12–20 isolations. */
+const TABLE_ROWS = [
+  ["main", false],
+  ["compound", false],
+  ["isolation", false],
+  ["isolation", true],
+] as const;
+
+/**
+ * Whether moving from one focus to another raises any lift's rep target:
+ * a main lift's, another compound's or an isolation's. That is when
+ * `scaleLoadForReps` brings its weight down; a move to fewer reps holds it.
+ */
+function targetsRise(
+  from: PrimaryGoal,
+  to: PrimaryGoal,
+  experience: Experience | undefined
+): boolean {
+  return TABLE_ROWS.some(
+    ([role, highRep]) =>
+      roleReps(to, role, experience, highRep).bottom >
+      roleReps(from, role, experience, highRep).bottom
+  );
+}
+
+/** Whether two focuses prescribe any lift differently. Get stronger and
+ *  Support my running share every row of the table. */
+function targetsChange(
+  from: PrimaryGoal,
+  to: PrimaryGoal,
+  experience: Experience | undefined
+): boolean {
+  return TABLE_ROWS.some(([role, highRep]) => {
+    const a = roleReps(from, role, experience, highRep);
+    const b = roleReps(to, role, experience, highRep);
+    return a.bottom !== b.bottom || a.top !== b.top;
+  });
 }
 
 /**
@@ -265,26 +303,31 @@ export function blockConsequence(input: {
   pace: BlockPace;
   durationWeeks: number;
   focusLabel: (goal: PrimaryGoal) => string;
+  /** The lifter's level: the table's beginner column differs. */
+  experience: Experience | undefined;
 }): string {
-  const { focus, currentFocus, pace, durationWeeks, focusLabel } = input;
+  const { focus, currentFocus, pace, durationWeeks, focusLabel, experience } =
+    input;
   const weeks = `${durationWeeks} weeks`;
   const trimmed = "starting from the short session";
   const hold = "Your weights hold steady for the first two weeks.";
 
   if (focus !== currentFocus) {
+    // Get stronger and Support my running share every target, so a block
+    // between them re-aims nothing, and the copy must not claim it does.
+    const changes = targetsChange(currentFocus, focus, experience);
     const lead =
-      `Your main lifts move to sets of ${focusRepSummary(focus)} for ${weeks}` +
+      `Your main lifts ${changes ? "move to" : "stay at"} sets of ` +
+      `${focusRepSummary(focus, experience)} for ${weeks}` +
       (pace === "full" ? "." : `, ${trimmed}.`);
-    // The load only moves when the rep target goes UP — `scaleLoadForReps`
+    // The load only moves when a rep target goes UP — `scaleLoadForReps`
     // holds the weight for a move to FEWER reps, deliberately, because
-    // climbing is the progression engine's job. Base mainReps are running
-    // 4, strength 5 and 8 for the other three, so of the twenty ordered
-    // focus pairs only SEVEN raise the target. The old copy claimed
-    // "the weights come down a little" for all of them — including
+    // climbing is the progression engine's job. The old copy claimed
+    // "the weights come down a little" for every change — including
     // Build muscle → Get stronger, the first two entries in the picker and
-    // the likeliest change anyone makes.
-    const loadDrops =
-      goalProfileFor(focus).mainReps > goalProfileFor(currentFocus).mainReps;
+    // the likeliest change anyone makes, which lowers every target.
+    const loadDrops = targetsRise(currentFocus, focus, experience);
+    const aiming = changes ? " — only what you're aiming for changes." : ".";
     const tail =
       pace === "easing"
         ? ` ${hold}`
@@ -296,13 +339,11 @@ export function blockConsequence(input: {
           ? loadDrops
             ? " The weights come down a little to match the new target," +
               " then climb again."
-            : " Your weights stay where they are — only what you're aiming" +
-              " for changes."
+            : ` Your weights stay where they are${aiming}`
           : loadDrops
             ? " Same exercises, same days — the weights come down a little to" +
               " match the new target, then climb again."
-            : " Same exercises, same days, same weights — only what you're" +
-              " aiming for changes.";
+            : ` Same exercises, same days, same weights${aiming}`;
     return lead + tail;
   }
 
@@ -334,17 +375,20 @@ export function blockConsequence(input: {
 export function blockReleaseLine(input: {
   block: Pick<ActiveTrainingBlock, "focus" | "goalBefore" | "pace" | "owned">;
   focusLabel: (goal: PrimaryGoal) => string;
+  /** The lifter's level: the table's beginner column differs. */
+  experience: Experience | undefined;
 }): string {
-  const { block, focusLabel } = input;
+  const { block, focusLabel, experience } = input;
   const fullFirst =
     block.pace === "full" ? "" : " Start offers the full session first again.";
-  if (!block.owned || block.goalBefore === block.focus) {
+  if (
+    !block.owned ||
+    !targetsChange(block.focus, block.goalBefore, experience)
+  ) {
     return `Your sessions stay as they are.${fullFirst}`;
   }
-  const lead = `Your main lifts go back to sets of ${focusRepSummary(block.goalBefore)} (${focusLabel(block.goalBefore)})`;
-  const loadDrops =
-    goalProfileFor(block.goalBefore).mainReps >
-    goalProfileFor(block.focus).mainReps;
+  const lead = `Your main lifts go back to sets of ${focusRepSummary(block.goalBefore, experience)} (${focusLabel(block.goalBefore)})`;
+  const loadDrops = targetsRise(block.focus, block.goalBefore, experience);
   return (
     (loadDrops
       ? `${lead}. The weights come down a little to match, then climb again.`

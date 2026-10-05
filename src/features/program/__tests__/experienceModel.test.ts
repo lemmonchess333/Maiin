@@ -25,8 +25,8 @@ import type { Experience } from "../experienceModel";
  * advanced lifter received the same exercises, split, sets and reps — only the
  * seeded starting weight differed.
  *
- * These pin what a level now changes, and — just as importantly — what it
- * does NOT: volume.
+ * These pin what a level now changes. Volume was the one thing it did not,
+ * until Lift4 (5) gave a beginner two sets of everything but the main lifts.
  */
 
 const CTX = (experience: "beginner" | "intermediate" | "advanced") => ({
@@ -205,11 +205,12 @@ describe("experience in generateProgram", () => {
     expect(new Set(inter).size).toBeGreaterThan(1);
   });
 
-  it("changes WHICH movements, not HOW MUCH work", () => {
-    // The operator asked for a simpler programme, not a smaller one — and
-    // cutting a novice's volume would be a different intervention than the
-    // one requested. The structure is identical; set totals drift only
-    // because the volume balancer budgets against different exercises.
+  it("changes WHICH movements, and never adds work", () => {
+    // The structure is identical: same days, same slots. The work is not,
+    // any more: Lift4 (5) gives a beginner's main lifts three sets and
+    // everything else two (`roleTable.ts`), reversing the operator's
+    // "simpler, not smaller". The volume passes can still top up a muscle
+    // under its floor, so the week is never bigger than an intermediate's.
     for (const days of [3, 4, 6]) {
       const b = week(days, "beginner");
       const i = week(days, "intermediate");
@@ -218,8 +219,16 @@ describe("experience in generateProgram", () => {
         b.map((d) => d.exercises.length),
         `${days}d: slots per day`
       ).toEqual(i.map((d) => d.exercises.length));
-      const drift = Math.abs(totalSets(b) - totalSets(i)) / totalSets(i);
-      expect(drift, `${days}d: weekly set drift`).toBeLessThan(0.1);
+      expect(totalSets(b), `${days}d: weekly sets`).toBeLessThanOrEqual(
+        totalSets(i)
+      );
+      for (const day of b) {
+        for (const ex of day.exercises.filter((e) => e.isAccessory !== true)) {
+          expect(ex.sets, `${days}d ${ex.exerciseId}`).toBe(
+            getExerciseById(ex.exerciseId)?.mechanic === "isolation" ? 2 : 3
+          );
+        }
+      }
     }
   });
 

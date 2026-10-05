@@ -68,11 +68,8 @@ import {
   parseLocalDate,
   weekPosition,
 } from "@/lib/dateHelpers";
-import {
-  generateProgram,
-  expectedDayCount,
-  goalProfileFor,
-} from "./programEngine";
+import { generateProgram, expectedDayCount } from "./programEngine";
+import { mainRepAnchor } from "./roleTable";
 import {
   loadContextFrom,
   seedStartingLoads,
@@ -364,7 +361,7 @@ function buildLiftProgram(input: PlanBuilderInput): {
         // it here made a `running` plan render 4-6 reps at the unchanged
         // 8-rep weight — the exact "tested copy vs running copy" shape, with
         // both copies in the same feature directory.
-        goalProfileFor(input.primaryGoal).mainReps
+        mainRepAnchor(input.primaryGoal, toExperience(input.experience))
       )
     : equipmentSafe;
   return { splitType: base.splitType, workouts };

@@ -171,12 +171,12 @@ describe("TrainingBlockCard (Blk2) — the create moment", () => {
   it("states the exact prescription change BEFORE the write", async () => {
     // GsPb1's "never a silent programme rewrite", upheld. The user is told
     // what changes while they can still decline it.
-    renderCard({ currentFocus: "hypertrophy" });
+    renderCard({ currentFocus: "hypertrophy", experience: "intermediate" });
     fireEvent.click(screen.getByText("Start a training block"));
     fireEvent.click(await screen.findByText("Get stronger"));
     await waitFor(() =>
       expect(
-        screen.getByText(/main lifts move to sets of 5-7 for 8 weeks/i)
+        screen.getByText(/main lifts move to sets of 5 for 8 weeks/i)
       ).toBeInTheDocument()
     );
     expect(onStart).not.toHaveBeenCalled();

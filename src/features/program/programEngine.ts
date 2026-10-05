@@ -29,6 +29,7 @@ import {
 import {
   balanceWeeklyVolume,
   balancePushPull,
+  fitSessionsToBudget,
   judgementLandmark,
   reconcileToLandmarks,
 } from "./volumeModel";
@@ -58,6 +59,7 @@ import {
   surplusExposures,
 } from "./overlapModel";
 import { applyComplexityGate, usesUndulation } from "./experienceModel";
+import { mainRepAnchor, roleRepsFor } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import {
   hardestEffort,
@@ -1583,6 +1585,32 @@ function applyDayRoles(
 }
 
 /**
+ * Lift4 (5): every lift's sets, reps and progression from its role
+ * (`roleTable.ts`). A range climbs ("double"); a fixed target steps whenever
+ * every set reaches it ("linear"). Timed holds keep their seconds.
+ */
+function applyRoleTable(
+  workouts: WorkoutDay[],
+  goal: PrimaryGoal | undefined,
+  experience: Experience | undefined
+): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      if (ex.repUnit === "seconds") return ex;
+      const row = roleRepsFor(goal, ex, experience);
+      return {
+        ...ex,
+        sets: row.sets,
+        reps: row.bottom,
+        baseReps: row.bottom,
+        progressionType: row.top === undefined ? "linear" : "double",
+      };
+    }),
+  }));
+}
+
+/**
  * Carry a user's accessories through a regenerate (backlog #17).
  *
  * `makeAccessory` takes no `existing` — unlike `makeExercise` — so it re-rolls
@@ -1741,8 +1769,10 @@ export function generateProgram(
    */
   weekSchedule?: ReadonlyArray<{ day: number; type: string }>,
   /**
-   * The lifter's level (`experienceModel.ts`). Gates movement COMPLEXITY and
-   * whether the week undulates — never volume.
+   * The lifter's level (`experienceModel.ts`). Gates movement COMPLEXITY,
+   * whether the week undulates, and the role table's beginner column
+   * (`roleTable.ts`): a beginner's main lifts take a fixed target and
+   * everything else two sets.
    *
    * Deliberately its OWN parameter rather than read off `loadCtx.experience`,
    * even though the context carries it: `loadCtx` is undefined whenever the
@@ -1964,8 +1994,6 @@ export function generateProgram(
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly
   // like an originally-built one rather than escaping both.
   workouts = applyOverlapCaps(workouts, experience, loadCtx);
-  // Backlog #3: day roles — see applyDayRoles above.
-  workouts = applyDayRoles(workouts, experience);
   // Experience gate: no movement above the lifter's level. Runs with the
   // other identity-only post-passes, and BEFORE the repeat cap so the cap
   // counts the exercises the user will actually receive.
@@ -1983,6 +2011,12 @@ export function generateProgram(
   workouts = capRepeatedLifts(workouts, experience, (ex, to) =>
     swapExerciseIdentity(ex, to, loadCtx)
   );
+  // Lift4 (5): each lift's sets, reps and progression come from its role
+  // (`roleTable.ts`), once the identity passes have settled who is where;
+  // then backlog #3's day roles shift the reps, see applyDayRoles above.
+  workouts = applyRoleTable(workouts, primaryGoal, experience);
+  workouts = applyDayRoles(workouts, experience);
+  workouts = fitSessionsToBudget(workouts);
   // ADR-0010's staged condition, landed with the SECONDARY_SET_WEIGHT 1:1
   // flip. The volume passes run reconcile → balance → reconcile:
   //   1. shrink what the builders over-authored (the ceilings' authority);
@@ -2012,7 +2046,11 @@ export function generateProgram(
   // (no-op without a load context, or for lifts with logged history). Runs
   // last so it also calibrates whatever the caps above re-pointed.
   if (loadCtx)
-    workouts = seedStartingLoads(workouts, loadCtx, profile.mainReps);
+    workouts = seedStartingLoads(
+      workouts,
+      loadCtx,
+      mainRepAnchor(primaryGoal, experience)
+    );
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
@@ -2021,17 +2059,14 @@ export function generateProgram(
   // have shifted them. Carrying a fixed ceiling through applyDayRoles would
   // hand a heavy day (reps 8 → 6) the untouched 12-rep ceiling, turning a
   // 4-rep climb into a 6-rep one. Deriving from the span keeps the range
-  // width constant across every role.
-  const mainSpan = Math.max(0, profile.mainRepsMax - profile.mainReps);
-  const accessorySpan = Math.max(
-    0,
-    profile.accessoryRepsMax - profile.accessoryReps
-  );
+  // width constant across every role. A fixed target has none.
   workouts = workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
-      const span = ex.isAccessory === true ? accessorySpan : mainSpan;
       const out: ProgramExercise = { ...ex, baseSets: ex.sets };
+      if (ex.repUnit === "seconds") return out;
+      const row = roleRepsFor(primaryGoal, ex, experience);
+      const span = row.top === undefined ? 0 : row.top - row.bottom;
       // The ceiling is clamped at both ends inside `repRangeMaxFor` —
       // otherwise a target clamped to 15 still advertises a 20-rep top end
       // and the double progression climbs straight back through it.

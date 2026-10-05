@@ -8,10 +8,13 @@
  * to be the more useful statement:
  *
  *   week   total  main  accessory   currentPhase
- *      5      60    31         29   progression
- *      6      71    31         40   progression
- *      7      84    31         53   progression
- *      8      52    23         29   deload
+ *      5      55    24         31   progression
+ *      6      68    24         44   progression
+ *      7      79    24         55   progression
+ *      8      47    16         31   deload
+ *
+ * (Measured again 2026-10-05, when the role table (Lift4 (5)) gave every
+ * main lift three sets; the shape is unchanged.)
  *
  * …and then those same four numbers again, unchanged, through week 24. A
  * lifter who trains every session and hits every target has EXACTLY the set
@@ -31,8 +34,10 @@
  * codebase now states which side it is on. Volume-ramp programming (MEV → MAV
  * → MRV across a block) would add sets every week to exactly the lifter this
  * file simulates. Tropos does not, and progresses that lifter by load instead
- * — which the same simulation shows working: an accessory climbs 12 → 15 kg
- * over fifteen weeks with its identity, history and anchor intact.
+ * — which the same simulation shows working: an accessory climbs 12 → 13.75 kg
+ * over fifteen weeks with its identity, history and anchor intact (its
+ * isolation range is five reps wide and its steps 1.25 kg, with the small
+ * plates the simulation turns on).
  *
  * The second is that the periodicity is a genuinely load-bearing invariant
  * that no single-pass test can hold. It is produced by four passes composed in
@@ -149,7 +154,7 @@ describe("weekly set volume over six mesocycles", () => {
        yet — every cycle after it starts from the anchor. */
     const cycle = (start: number) =>
       [0, 1, 2, 3].map((i) => at(start + i).total);
-    expect(cycle(5)).toEqual([60, 71, 84, 52]);
+    expect(cycle(5)).toEqual([55, 68, 79, 47]);
     for (const start of [9, 13, 17, 21]) {
       expect(cycle(start), `mesocycle starting at week ${start}`).toEqual(
         cycle(5)
@@ -159,11 +164,11 @@ describe("weekly set volume over six mesocycles", () => {
 
   it("mains hold their set count in every trained week", () => {
     const nonDeload = ROWS.filter((r) => r.phase !== "deload");
-    expect(new Set(nonDeload.map((r) => r.main))).toEqual(new Set([31]));
+    expect(new Set(nonDeload.map((r) => r.main))).toEqual(new Set([24]));
     // The deload is the only thing that moves them, and it moves them back.
     expect(
       new Set(ROWS.filter((r) => r.phase === "deload").map((r) => r.main))
-    ).toEqual(new Set([23]));
+    ).toEqual(new Set([16]));
   });
 
   it("leaves no residue in the anchor — week 24 equals week 4", () => {
@@ -215,7 +220,7 @@ describe("why it is flat — volume is the troubleshooting lever, not the ramp",
     const later = at(18).accessories[0];
     expect(later.id).toBe(first.id); // identity intact — no rotation loss
     expect(later.weight).toBeGreaterThan(first.weight);
-    expect(later.weight / first.weight).toBeGreaterThanOrEqual(1.25);
+    expect(later.weight / first.weight).toBeGreaterThanOrEqual(1.14);
 
     // Every accessory, not just the first, moved on and none went backwards:
     // by load, or by reps where the next weight is more than about 15%
