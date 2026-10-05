@@ -304,6 +304,19 @@ describe("liftIndexForDayOfWeek", () => {
     expect(liftIndexForDayOfWeek(schedule, liftDays[2])).toBe(2);
   });
 
+  it("counts from Monday, so a Sunday lift is the week's last session", () => {
+    // The generated week for 4 lift and 3 run days lifts on Sunday, Monday,
+    // Thursday and Friday. Monday opens it, as Train does.
+    const schedule = generateSchedule(4, 3);
+    expect(schedule.filter((d) => d.type === "lift").map((d) => d.day)).toEqual(
+      [0, 1, 4, 5]
+    );
+    expect(liftIndexForDayOfWeek(schedule, 1)).toBe(0);
+    expect(liftIndexForDayOfWeek(schedule, 4)).toBe(1);
+    expect(liftIndexForDayOfWeek(schedule, 5)).toBe(2);
+    expect(liftIndexForDayOfWeek(schedule, 0)).toBe(3);
+  });
+
   it("returns -1 for a rest day", () => {
     const schedule = generateSchedule(3, 2);
     const restDay = schedule.find((d) => d.type === "rest");

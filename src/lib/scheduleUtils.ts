@@ -3,6 +3,7 @@
  * day: 0=Sun, 1=Mon ... 6=Sat (matches JS Date.getDay())
  */
 
+import { weekPosition } from "@/lib/dateHelpers";
 import { THEME } from "@/lib/theme";
 
 export type DayType = "lift" | "run" | "both" | "rest";
@@ -210,11 +211,16 @@ function assembleSlots(
 
 /**
  * Map a day-of-week (0=Sun … 6=Sat) to its position in the lift
- * programme's `workouts[]` array. The workouts array is ordered by
- * lift exposure: workouts[0] is the first lift/both day in the
- * week, workouts[1] is the second, etc. This helper counts how
- * many lift+both slots precede `dayIndex` (inclusive) in the
- * (sorted by `day`) weekSchedule to find that position.
+ * programme's `workouts[]` array: the week's first lift (or Both) day
+ * takes workouts[0], the second workouts[1], and so on.
+ *
+ * "First" is in the week's own order (`weekPosition`), so a Sunday lift
+ * is the week's last session, not its first. That is the order Train runs
+ * the sessions in, the order the plan builder spaces them for
+ * (`overlapModel.ts`), and where the session last week didn't reach opens
+ * the new one (`advanceWeek`). Counted from `getDay()`, a Sunday lifter's
+ * calendar would show each lift day the session after the one Train starts
+ * there.
  *
  * Returns -1 when:
  *   - the schedule is missing or wrong-length
@@ -224,18 +230,17 @@ function assembleSlots(
  * Callers responsible for bounds-checking against `workouts.length`
  * (legacy plans where schedule drifted from workouts).
  *
- * Used by:
- *   - Programme Today tab (P1-2) — find today's workout to read
- *     completion state
- *   - Programme Week tab overflow menu (P1-3) — dispatch
- *     skipWorkoutDay against the right lift index
+ * Used by `trainingResolver`, which every calendar surface reads its lifts
+ * through, and by the onboarding week preview.
  */
 export function liftIndexForDayOfWeek(
   schedule: ScheduleDay[] | undefined | null,
   dayOfWeek: number
 ): number {
   if (!schedule || schedule.length !== 7) return -1;
-  const sorted = [...schedule].sort((a, b) => a.day - b.day);
+  const sorted = [...schedule].sort(
+    (a, b) => weekPosition(a.day) - weekPosition(b.day)
+  );
   let counter = 0;
   for (const d of sorted) {
     if (d.type === "lift" || d.type === "both") {
