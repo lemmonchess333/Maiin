@@ -1279,10 +1279,9 @@ const homeDumbbellUL: ProgramTemplate = {
 // deadlift) sit at 8-12, matching `GOAL_PROFILES.fat_loss`. They read 12-15
 // (deadlift 10-12) until 2026-08-03, which was a THIRD copy of the fat-loss
 // rep prescription — after `programEngine.GOAL_PROFILES` and its mirror in
-// `functions/lib/represcribe.js` — and the one a 4-day full-gym user actually
-// receives, because `templateConversion.parseTemplateReps` stamps the
-// template's own strings and `buildPlan`'s preserve branch never rebuilds
-// them. Changing the profile table alone left that user on the old numbers
+// `functions/lib/represcribe.js` — and the one a 4-day full-gym user received
+// while templates started plans, because the template's own strings were
+// stamped as written and `buildPlan`'s preserve branch never rebuilds them. Changing the profile table alone left that user on the old numbers
 // permanently, with nothing comparing the two.
 //
 // The reasoning is the profile row's: a deficit is when strength is at risk,
@@ -1388,6 +1387,10 @@ const fatLossCircuit: ProgramTemplate = {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EXPORT ALL TEMPLATES
+//
+// No new plan starts from these (Lift4 (5)): every plan comes from the
+// generator. Plans they started keep their sessions, and the injury filter
+// still reads their contraindications (`buildContraIndex`).
 // ═══════════════════════════════════════════════════════════════════════════
 export const PROGRAM_TEMPLATES: ProgramTemplate[] = [
   fullBodyBeginner,

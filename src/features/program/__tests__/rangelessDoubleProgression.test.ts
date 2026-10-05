@@ -10,8 +10,8 @@
  *      and a lateral raise as `progressionType: "double"` with no range — it
  *      ran against every stored document on 2026-08-04, so the affected
  *      exercises are in real users' plans right now;
- *   2. `templateExToProgEx`, which leaves per-side forms ("10/leg") range-less
- *      — 15 of the 245 authored template exercises;
+ *   2. plans the hand-written templates started, whose per-side forms
+ *      ("10/leg") carry no range — 15 of their 245 exercises;
  *   3. any document generated before backlog #7 stamped ranges at all.
  *
  * All three fell to the legacy arm, which fires only when the lifter
@@ -26,10 +26,6 @@ import { describe, it, expect } from "vitest";
 
 import { applyProgression as clientApplyProgression } from "@/features/program/programEngine";
 import { migrateProgramState } from "@/features/program/migrations";
-import {
-  parseTemplateReps,
-  templateExToProgEx,
-} from "@/features/program/templateConversion";
 import type {
   ProgramExercise,
   ProgramState,
@@ -172,20 +168,17 @@ describe("range-less double progression — the v3 coverage backfill", () => {
 
 describe("range-less double progression — template per-side forms", () => {
   it("progresses a per-side accessory", () => {
-    const lunge = templateExToProgEx(
-      {
-        name: "Walking Lunge",
-        exerciseId: "walking-lunge",
-        sets: 3,
-        reps: "10/leg",
-        restSeconds: 60,
-        isAccessory: true,
-      },
-      "double"
-    );
-    expect(lunge.progressionType).toBe("double");
-    expect(lunge.repRangeMax).toBeUndefined();
-
+    // "10/leg" as a template plan stored it: a double with no range.
+    const lunge = bodyweight({
+      name: "Walking Lunge",
+      exerciseId: "walking-lunge",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 10,
+      baseReps: 10,
+      restSeconds: 60,
+      isAccessory: true,
+    });
     const { seen } = compliantSessions(
       {
         ...lunge,
@@ -198,24 +191,6 @@ describe("range-less double progression — template per-side forms", () => {
     // A lift the catalogue doesn't know steps as a stack does: 2.5 kg, which
     // is 12.5% of 20 kg (`loadSteps.ts`).
     expect(seen).toEqual(["11@20", "12@20", "10@22.5", "11@22.5"]);
-  });
-
-  it("keeps an authored range that sits inside a per-side form", () => {
-    /* "8-10/leg" fell past the numeric-range branch (the `/leg` suffix breaks
-       its anchor) and came out as a bare 8 with no ceiling — the author wrote
-       a range and the conversion deleted it. Two template exercises use this
-       form. */
-    expect(parseTemplateReps("8-10/leg")).toEqual({ reps: 8, repRangeMax: 10 });
-    expect(parseTemplateReps("12-15/side")).toEqual({
-      reps: 12,
-      repRangeMax: 15,
-    });
-    // Plain per-side forms still carry no range, and a descending pair is
-    // still treated as a single number rather than an inverted range.
-    expect(parseTemplateReps("10/leg")).toEqual({ reps: 10 });
-    expect(parseTemplateReps("10-10/leg")).toEqual({ reps: 10 });
-    // The unit simplification is unchanged: per-side reps stay plain reps.
-    expect(parseTemplateReps("8-10/leg").repUnit).toBeUndefined();
   });
 });
 

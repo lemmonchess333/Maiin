@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { Info } from "lucide-react";
 import { getExerciseById } from "@/lib/exercises";
 import { groupLastSets, type LastSet } from "@/features/program/lastSets";
-import { formatRepTarget } from "@/features/program/templateConversion";
+import { formatRepTarget } from "@/features/program/repTarget";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
 import LoweredLine from "./LoweredLine";

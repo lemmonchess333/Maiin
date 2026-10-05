@@ -52,7 +52,7 @@ import {
   buildInitialSetLogs,
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
-import { formatRepTarget } from "@/features/program/templateConversion";
+import { formatRepTarget } from "@/features/program/repTarget";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";

@@ -12,7 +12,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { formatRepTarget } from "@/features/program/templateConversion";
+import { formatRepTarget } from "@/features/program/repTarget";
 import { parseLocalDate, weekPosition } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 
