@@ -120,6 +120,7 @@ import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
+import { lastSetsByExercise } from "@/features/program/lastSets";
 
 /**
  * IMPORTANT:
@@ -263,40 +264,12 @@ function ProgramInner() {
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
-  // Per-exercise best working set from last session containing that exercise
-  const lastPerformanceMap = useMemo(() => {
-    const map = new Map<string, { weight: number; reps: number }>();
-    if (!recentWorkouts.length) return map;
-
-    // workouts are sorted by date desc — first occurrence of an exercise is the most recent
-    for (const workout of recentWorkouts) {
-      for (const wex of workout.exercises) {
-        if (map.has(wex.exerciseId) || !wex.sets.length) continue;
-
-        const maxWeight = Math.max(...wex.sets.map((s) => s.weightKg));
-
-        if (maxWeight > 0) {
-          // Filter out warm-up sets (< 50% of heaviest)
-          const workingSets = wex.sets.filter(
-            (s) => s.weightKg >= maxWeight * 0.5
-          );
-          // Best set: heaviest weight, then highest reps
-          const best = workingSets.reduce((a, b) =>
-            b.weightKg > a.weightKg ||
-            (b.weightKg === a.weightKg && b.reps > a.reps)
-              ? b
-              : a
-          );
-          map.set(wex.exerciseId, { weight: best.weightKg, reps: best.reps });
-        } else {
-          // Bodyweight: take highest reps
-          const best = wex.sets.reduce((a, b) => (b.reps > a.reps ? b : a));
-          map.set(wex.exerciseId, { weight: 0, reps: best.reps });
-        }
-      }
-    }
-    return map;
-  }, [recentWorkouts]);
+  // Every counted set from the last session with each exercise, for the
+  // rows' "Last:" line (`lastSetsByExercise`).
+  const lastSetsMap = useMemo(
+    () => lastSetsByExercise(recentWorkouts),
+    [recentWorkouts]
+  );
 
   // Core navigation state. The selected training day is mirrored into the URL
   // (?day=N) so opening an exercise detail and pressing back RESTORES the day
@@ -1424,7 +1397,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastPerf={lastPerformanceMap.get(
+                                        lastSets={lastSetsMap.get(
                                           ex.exerciseId
                                         )}
                                         thumbSize="sm"
@@ -1488,7 +1461,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastPerf={lastPerformanceMap.get(
+                                        lastSets={lastSetsMap.get(
                                           ex.exerciseId
                                         )}
                                         showNotes

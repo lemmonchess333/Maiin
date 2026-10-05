@@ -1,5 +1,7 @@
+import { Fragment } from "react";
 import { Info } from "lucide-react";
 import { getExerciseById } from "@/lib/exercises";
+import { groupLastSets, type LastSet } from "@/features/program/lastSets";
 import { formatRepTarget } from "@/features/program/templateConversion";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
@@ -19,7 +21,7 @@ import ExerciseThumb from "./ExerciseThumb";
  */
 export default function ExerciseRowSummary({
   exercise,
-  lastPerf,
+  lastSets,
   showNotes = false,
   thumbSize = "md",
 }: {
@@ -34,8 +36,9 @@ export default function ExerciseRowSummary({
     | "weight"
     | "notes"
   >;
-  /** The best working set from the last session with this exercise. */
-  lastPerf?: { weight: number; reps: number };
+  /** Every set of the last session with this exercise that the plan reads
+   *  (`lastSetsByExercise`), so a held or raised weight explains itself. */
+  lastSets?: readonly LastSet[];
   /** The day's note on the exercise, under the rest. The reorder rows
    *  leave it out to stay one height while they are dragged. */
   showNotes?: boolean;
@@ -70,32 +73,14 @@ export default function ExerciseRowSummary({
             </>
           ) : null}
         </p>
-        {lastPerf && (
+        {lastSets && lastSets.length > 0 && (
           <p className="text-xs mt-0.5 text-muted-foreground">
             Last:{" "}
-            {exercise.repUnit === "seconds" ? (
-              <>
-                <span className="font-mono tabular-nums">{lastPerf.reps}</span>s
-              </>
-            ) : isBW ? (
-              <>
-                BW ×{" "}
-                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
-              </>
-            ) : lastPerf.weight > 0 ? (
-              <>
-                <span className="font-mono tabular-nums">
-                  {lastPerf.weight}
-                </span>{" "}
-                kg ×{" "}
-                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
-              </>
-            ) : (
-              <>
-                — ×{" "}
-                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
-              </>
-            )}
+            <LastSetsLine
+              sets={lastSets}
+              timed={exercise.repUnit === "seconds"}
+              bodyweight={isBW}
+            />
           </p>
         )}
         {showNotes && exercise.notes && (
@@ -107,4 +92,54 @@ export default function ExerciseRowSummary({
       </div>
     </div>
   );
+}
+
+/** "60 kg × 12, 12, 10"; "100 kg × 5 · 90 kg × 5, 5" where the weight
+ *  changed; "BW × 12, 10" for a bodyweight lift; "45s, 40s" for a hold. */
+function LastSetsLine({
+  sets,
+  timed,
+  bodyweight,
+}: {
+  sets: readonly LastSet[];
+  timed: boolean;
+  bodyweight: boolean;
+}) {
+  const reps = sets.map((set) => set.reps);
+  if (timed) return <Numbers values={reps} unit="s" />;
+  if (bodyweight)
+    return (
+      <>
+        BW × <Numbers values={reps} />
+      </>
+    );
+  return groupLastSets(sets).map((group, index) => (
+    <Fragment key={index}>
+      {index > 0 ? " · " : null}
+      {group.weightKg > 0 ? (
+        <>
+          <span className="font-mono tabular-nums">{group.weightKg}</span> kg
+        </>
+      ) : (
+        "—"
+      )}{" "}
+      × <Numbers values={group.reps} />
+    </Fragment>
+  ));
+}
+
+function Numbers({
+  values,
+  unit = "",
+}: {
+  values: readonly number[];
+  unit?: string;
+}) {
+  return values.map((value, index) => (
+    <Fragment key={index}>
+      {index > 0 ? ", " : null}
+      <span className="font-mono tabular-nums">{value}</span>
+      {unit}
+    </Fragment>
+  ));
 }

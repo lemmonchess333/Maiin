@@ -55,7 +55,7 @@ describe("ExerciseRowSummary — one row's words", () => {
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise()}
-        lastPerf={{ weight: 77.5, reps: 8 }}
+        lastSets={[{ weightKg: 77.5, reps: 8 }]}
       />
     );
     expect(screen.getByText("Bench Press")).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe("ExerciseRowSummary — one row's words", () => {
           reps: 13,
           weight: 35,
         })}
-        lastPerf={{ weight: 35, reps: 12 }}
+        lastSets={[{ weightKg: 35, reps: 12 }]}
       />
     );
     expect(container).toHaveTextContent("3 sets × 13 reps");
@@ -86,7 +86,7 @@ describe("ExerciseRowSummary — one row's words", () => {
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise({ reps: 30, repUnit: "seconds", weight: 0 })}
-        lastPerf={{ weight: 0, reps: 30 }}
+        lastSets={[{ weightKg: 0, reps: 30 }]}
       />
     );
     expect(container).toHaveTextContent("3 sets × 30s");
@@ -108,6 +108,82 @@ describe("ExerciseRowSummary — one row's words", () => {
       />
     );
     expect(container).toHaveTextContent("Pause at the chest");
+  });
+
+  it("lists every set of the last session, not just the best", () => {
+    // A weight held after 12, 12, 10 explains itself only if the 10 shows.
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({ reps: 10, repRangeMax: 12, weight: 60 })}
+        lastSets={[
+          { weightKg: 60, reps: 12 },
+          { weightKg: 60, reps: 12 },
+          { weightKg: 60, reps: 10 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 60 kg × 12, 12, 10");
+  });
+
+  it("names each weight where the sets changed weight", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise()}
+        lastSets={[
+          { weightKg: 100, reps: 5 },
+          { weightKg: 90, reps: 5 },
+          { weightKg: 90, reps: 5 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 100 kg × 5 · 90 kg × 5, 5");
+  });
+
+  it("lists a bodyweight lift's and a hold's sets too", () => {
+    const { container, rerender } = render(
+      <ExerciseRowSummary
+        exercise={exercise({ exerciseId: "pull-ups", name: "Pull-Ups" })}
+        lastSets={[
+          { weightKg: 0, reps: 10 },
+          { weightKg: 0, reps: 8 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: BW × 10, 8");
+    rerender(
+      <ExerciseRowSummary
+        exercise={exercise({ reps: 30, repUnit: "seconds", weight: 0 })}
+        lastSets={[
+          { weightKg: 0, reps: 30 },
+          { weightKg: 0, reps: 25 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: 30s, 25s");
+  });
+
+  it("keeps every number in the numeral face", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise()}
+        lastSets={[
+          { weightKg: 60, reps: 12 },
+          { weightKg: 60, reps: 10 },
+        ]}
+      />
+    );
+    const line = [...container.querySelectorAll("p")].find((p) =>
+      p.textContent?.startsWith("Last:")
+    )!;
+    const numbers = [...line.querySelectorAll("span")].map((span) => [
+      span.textContent,
+      span.className,
+    ]);
+    expect(numbers).toEqual([
+      ["60", "font-mono tabular-nums"],
+      ["12", "font-mono tabular-nums"],
+      ["10", "font-mono tabular-nums"],
+    ]);
   });
 
   it("leaves the last line out when there is no last session", () => {
