@@ -81,6 +81,23 @@ function dateStampUTC(now) {
 }
 
 /**
+ * The load a session moves a lift's prescription to before any step: the
+ * weight actually lifted, however far from the prescription (the owner's
+ * rule, reversing Lift2). `null` for a bodyweight movement, or a set saved
+ * with no load. Mirror of `liftedLoad` in programEngine.ts.
+ *
+ * @param {string | undefined} exerciseId
+ * @param {number} actualWeight
+ * @returns {number | null}
+ */
+function liftedLoad(exerciseId, actualWeight) {
+  if (isBodyweightExerciseId(exerciseId)) return null;
+  return Number.isFinite(actualWeight) && actualWeight > 0
+    ? actualWeight
+    : null;
+}
+
+/**
  * @param {object} exercise - a ProgramExercise
  * @param {number} actualReps
  * @param {number} actualWeight
@@ -90,9 +107,6 @@ function dateStampUTC(now) {
  * @param {number} [now] - ms timestamp for the history date stamp
  * @returns {object} next ProgramExercise
  */
-/** Lift2 mirror of programEngine.ts USER_LOAD_ANCHOR_STEPS. */
-const USER_LOAD_ANCHOR_STEPS = 4;
-
 function applyProgression(
   exercise,
   actualReps,
@@ -125,9 +139,6 @@ function applyProgression(
     },
   };
 
-  const completed =
-    actualReps >= exercise.reps && actualWeight >= exercise.weight;
-
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const isUncalibrated = !isBodyweight && exercise.weight === 0;
   if (isUncalibrated) {
@@ -154,17 +165,18 @@ function applyProgression(
   );
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
-  // Lift2 mirror — lighter + reps hit HOLDS (no failure, no cut); heavier +
-  // reps hit re-anchors within USER_LOAD_ANCHOR_STEPS. See programEngine.ts.
-  if (!isBodyweight && actualReps >= exercise.reps && actualWeight < exercise.weight) {
-    return { ...updated, lastSuccessfulWeight: actualWeight };
-  }
-  const anchor =
-    !isBodyweight &&
-    actualWeight > exercise.weight &&
-    actualWeight <= exercise.weight + USER_LOAD_ANCHOR_STEPS * loadStep
-      ? actualWeight
-      : exercise.weight;
+  // The plan follows the load lifted — mirror; see programEngine.ts. A
+  // loaded lift's prescription moves to the weight lifted, by any margin;
+  // success is the target reps at it, every step runs from it, and the
+  // three-strike cut comes off it. No load logged: record and hold.
+  // Bodyweight movements are untouched.
+  const lifted = liftedLoad(exercise.exerciseId, actualWeight);
+  if (!isBodyweight && lifted === null) return updated;
+  const anchor = lifted === null ? exercise.weight : lifted;
+  updated.weight = anchor;
+  const completed =
+    actualReps >= exercise.reps &&
+    (!isBodyweight || actualWeight >= exercise.weight);
   // Backlog #7's time axis (N2) — mirror; see programEngine.ts for why the
   // rep cap is meaningless for a hold that starts above it.
   const isTimed = exercise.repUnit === "seconds";
@@ -193,7 +205,6 @@ function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       // Authored ceiling, or the one the legacy arm below already implies.
       // Mirror of the client branch — without the fallback a range-less
       // double never progresses for a lifter who hits the prescription.
@@ -248,7 +259,8 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
+          // Off the load lifted — mirror of the client.
+          updated.weight = Math.round(anchor * 0.95 * 2) / 2;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -256,7 +268,6 @@ function applyProgression(
     }
   } else {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       if (isBodyweight) {
         const rangeMax = exercise.repRangeMax;
         if (rangeMax != null && rangeMax > resetReps) {
@@ -295,7 +306,7 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.max(0, exercise.weight - 1);
+          updated.weight = Math.max(0, anchor - 1);
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -308,7 +319,7 @@ function applyProgression(
 
 module.exports = {
   applyProgression,
-  USER_LOAD_ANCHOR_STEPS,
+  liftedLoad,
   dateStampUTC,
   goalWeightBonus,
   PERFORMANCE_HISTORY_CAP,

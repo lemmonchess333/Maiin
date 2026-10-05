@@ -1188,7 +1188,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Auto progression</p>
               <p className="text-xs text-muted-foreground">
-                Bumps next session's weight when you complete every set cleanly
+                Raises the weight or reps when you hit the target reps. Off,
+                your next session keeps the weight you lifted.
               </p>
             </div>
             <Toggle
@@ -1204,8 +1205,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Microloading</p>
               <p className="text-xs text-muted-foreground">
-                Add 1 kg every session you complete at the prescribed load,
-                instead of 2.5 kg only after a 2-rep overshoot
+                Add 1 kg every session you hit the target reps, instead of 2.5
+                kg only after a 2-rep overshoot.
               </p>
             </div>
             <Toggle

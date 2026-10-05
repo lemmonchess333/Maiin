@@ -2024,10 +2024,26 @@ export function generateProgram(
    EXERCISE-SPECIFIC PROGRESSION
 ================================ */
 
-/** Lift2: how far above the prescription a lifted weight may re-anchor
- *  progression — four load steps (10 kg on a plate-pair lift, 5 kg on a
- *  microplate one). A plate jump, not a fat-finger. */
-export const USER_LOAD_ANCHOR_STEPS = 4;
+/**
+ * The load a session moves a lift's prescription to before any step: the
+ * weight actually lifted, however far above or below the prescription it
+ * was. The owner's rule, which reverses Lift2 (plan file): the plan adjusts
+ * to what was lifted, so a seed that is too light or too heavy is put right
+ * by the first session rather than typed over in every session after it.
+ *
+ * `null` when there is no load to follow: a bodyweight movement, whose axis
+ * is reps, or a set saved with no load (a cleared weight field saves 0).
+ * Mirrored by `liftedLoad` in functions/lib/progressionEngine.js.
+ */
+export function liftedLoad(
+  exerciseId: string | undefined,
+  actualWeight: number
+): number | null {
+  if (isBodyweightExerciseId(exerciseId)) return null;
+  return Number.isFinite(actualWeight) && actualWeight > 0
+    ? actualWeight
+    : null;
+}
 
 export function applyProgression(
   exercise: ProgramExercise,
@@ -2059,9 +2075,6 @@ export function applyProgression(
       completed: actualReps >= exercise.reps,
     },
   };
-
-  const completed =
-    actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
   // Use the static EXERCISES.equipment field to identify true
   // bodyweight movements (Pull-Ups, Dips, etc.). The previous
@@ -2106,30 +2119,27 @@ export function applyProgression(
   );
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
-  // Lift2 — the weight the user CHOSE is a modification, not a verdict.
-  //   Lighter + reps hit → HOLD: no failure counted, no cut, prescription
-  //     kept, `lastSuccessfulWeight` records the load used. The success
-  //     predicate scored this as a MISS, so a deliberately lighter session
-  //     walked toward the three-strike 5% cut with nothing saying so.
-  //   Heavier + reps hit → the anchor moves to what was lifted, bounded to
-  //     four load steps over the prescription (a plate jump, not a
-  //     fat-finger: a 200 kg typo on a 50 kg lift keeps the prescription).
-  //     The step logic below runs from the anchor, so a completed heavier
-  //     session moves the prescription to at least what was lifted (Pgm5).
-  // No note is written — `notes` is the injury-warning slot.
-  if (
-    !isBodyweight &&
+  // The plan follows the load lifted (see `liftedLoad`).
+  // A loaded lift's prescription moves to the weight actually lifted,
+  // heavier or lighter and by any margin. There is no typo guard: a wrong
+  // number is put right by lifting the right one next session. Success is
+  // the target reps at that weight, and the steps below run from it: the
+  // range climb, the 2-rep overshoot, microloading's +1 kg, the linear step,
+  // the goal bonus and the RPE hold. The step's size still keys on the
+  // prescription's load. Reps missed: the prescription still moves to the
+  // load lifted, the miss counts, and the three-strike cut comes off that
+  // load. No load logged: nothing to follow, so the session is recorded and
+  // the prescription and its failure count stay as they were.
+  // Bodyweight movements are untouched: they progress by reps, and success
+  // still asks for any load the plan adds. No note is written — `notes` is
+  // the injury-warning slot.
+  const lifted = liftedLoad(exercise.exerciseId, actualWeight);
+  if (!isBodyweight && lifted === null) return updated;
+  const anchor = lifted ?? exercise.weight;
+  updated.weight = anchor;
+  const completed =
     actualReps >= exercise.reps &&
-    actualWeight < exercise.weight
-  ) {
-    return { ...updated, lastSuccessfulWeight: actualWeight };
-  }
-  const anchor =
-    !isBodyweight &&
-    actualWeight > exercise.weight &&
-    actualWeight <= exercise.weight + USER_LOAD_ANCHOR_STEPS * loadStep
-      ? actualWeight
-      : exercise.weight;
+    (!isBodyweight || actualWeight >= exercise.weight);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
@@ -2160,7 +2170,6 @@ export function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       // Authored ceiling, or the one the legacy arm below already implies —
       // see `impliedDoubleRangeMax`. Without the fallback a range-less double
       // never progresses at all for a lifter who hits the prescription.
@@ -2241,8 +2250,8 @@ export function applyProgression(
         } else {
           // Weighted (incl. weighted holds): cut the LOAD, hold the duration —
           // for a timed hold the load is the adjustable axis (LIFT-EV-01,
-          // deliberate).
-          updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
+          // deliberate). The cut comes off the load lifted.
+          updated.weight = Math.round(anchor * 0.95 * 2) / 2;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -2250,7 +2259,6 @@ export function applyProgression(
     }
   } else {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       if (isBodyweight) {
         const rangeMax = exercise.repRangeMax;
         if (rangeMax != null && rangeMax > resetReps) {
@@ -2272,9 +2280,9 @@ export function applyProgression(
           bumpBodyweightReps();
         }
       } else if (microloading && rpeOk) {
-        // Microloading: a COMPLETED session (target reps at the prescribed
-        // load) earns +1 kg; without it only a 2-rep overshoot earns the
-        // full step. That is the rep requirement — Lift2 keeps it.
+        // Microloading: a COMPLETED session (target reps at the load
+        // lifted) earns +1 kg on that load; without it only a 2-rep
+        // overshoot earns the full step. That is the rep requirement.
         updated.weight = anchor + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
@@ -2296,7 +2304,8 @@ export function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.max(0, exercise.weight - 1);
+          // Off the load lifted, as on the double path.
+          updated.weight = Math.max(0, anchor - 1);
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;

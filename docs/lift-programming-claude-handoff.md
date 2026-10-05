@@ -167,6 +167,20 @@ decision order:
 This is a product decision hierarchy, not a diagnostic or individualized
 physiology model.
 
+STATUS 2026-10-05 (owner decision): a load the person logs is the plan's
+load. A loaded lift's next prescription starts from the weight actually
+lifted, heavier or lighter and by any margin; success is the target reps at
+that weight, the progression steps run from it, and a miss still counts,
+with the three-strike cut taken off it. With auto-progression off the plan
+still takes the load lifted, without a step. Held weeks, the easier and
+shortened session variants, bodyweight movements and a set saved with no
+load keep the prescription. This reverses the Lift2 lock, which read a
+lighter session as a user modification to hold under steps 2 and 4 above,
+and its four-step bound on a heavier one; do not re-derive either from this
+ladder. Code: `liftedLoad` and `applyProgression` in
+`src/features/program/programEngine.ts`, mirrored in
+`functions/lib/progressionEngine.js`.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

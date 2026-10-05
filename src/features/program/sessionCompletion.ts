@@ -1,7 +1,11 @@
 import { sameStoredValue } from "./stateTransition";
 import type { ProgramExercise, ProgramState } from "./programTypes";
 import type { LoggedSet } from "./workoutSetRecord";
-import { applyProgression, PERFORMANCE_HISTORY_CAP } from "./programEngine";
+import {
+  applyProgression,
+  liftedLoad,
+  PERFORMANCE_HISTORY_CAP,
+} from "./programEngine";
 import { progressionSetFor } from "./sessionSetPolicy";
 import { blockWeekOf } from "./trainingBlock";
 import { isProgressionHeld } from "./represcribe";
@@ -100,8 +104,17 @@ export function applySessionProgression(
                       : record
                 );
               } else {
+                // A held week keeps the prescription and records the
+                // session. With auto-progression off there is no step and no
+                // success or failure accounting, but the plan still carries
+                // the load lifted (`liftedLoad`): following the person's own
+                // load is not auto-progression.
+                const lifted = held
+                  ? null
+                  : liftedLoad(baseline.exerciseId, last.weight);
                 next = {
                   ...baseline,
+                  ...(lifted === null ? {} : { weight: lifted }),
                   lastAttemptedWeight: last.weight,
                   lastPerformance: {
                     sets: baseline.sets,

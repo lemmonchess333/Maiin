@@ -401,16 +401,17 @@ function calibrated(
  * loader), and a new programme starts each lift from body weight and
  * experience (`startingLoads.ts`): the right guess for someone with no
  * history, and this athlete has sixteen weeks of it. Bench Press read
- * "57.5 kg" over "Last: 82.5 kg x 6". A session does not fix that from a
- * seed: a load more than four steps over the plan is taken for a typo
- * (`USER_LOAD_ANCHOR_STEPS`). So each lift the athlete has logged is
- * calibrated the way the engine calibrates a lift it has no load for: the
- * slot's load is set to 0 kg, the engine's "uncalibrated", and the lift's
- * latest session goes through `applySessionProgression`, the step the app
- * runs as it saves a session, where `applyProgression` takes the load
- * lifted (`calibratedWeight`), records the session and clears the failure
- * counts. Lifts the athlete has never logged keep their seed, as
- * `seedStartingLoads` intends.
+ * "57.5 kg" over "Last: 82.5 kg x 6". The athlete's next session would
+ * move the plan to the load lifted, however far from the seed, but the
+ * frames come before any session, and a session saved the ordinary way
+ * would also add a step or count a miss. So each lift the athlete has
+ * logged is calibrated the way the engine calibrates a lift it has no load
+ * for: the slot's load is set to 0 kg, the engine's "uncalibrated", and
+ * the lift's latest session goes through `applySessionProgression`, the
+ * step the app runs as it saves a session, where `applyProgression` takes
+ * the load lifted (`calibratedWeight`) with no step on top, records the
+ * session and clears the failure counts. Lifts the athlete has never
+ * logged keep their seed, as `seedStartingLoads` intends.
  *
  * Only exercises change. The document is read the way the loader reads it
  * (normalised, migrated) and written whole in a transaction, as the app's
