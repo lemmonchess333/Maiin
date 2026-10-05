@@ -37,6 +37,20 @@ listed.
 - **Older copies kept:** caveman and zoom-out are the May 2026 copy
   (`5d84a020`). Upstream removed both in v1.0.
 
+## emilkowalski/skills
+
+- **Skills:** animate, animate-expo, animation-vocabulary, apple-design,
+  ask-sonner, break-ui, emil-design-eng, find-animation-opportunities,
+  improve-animations, mobile-native, pick-ui-library, prototype (here
+  `prototype-emil`), review-animations, write-swift
+- **Source:** [emilkowalski/skills](https://github.com/emilkowalski/skills),
+  installed 2026-10-05 with `npx skills@latest add emilkowalski/skills
+--agent claude-code --copy`. `skills-lock.json` records each skill's
+  source and hash.
+- **Local changes:** his `prototype` is renamed `prototype-emil` (folder and
+  `name:`), because Matt's `prototype` already holds that name. Its entry is
+  left out of `skills-lock.json`, so the CLI won't write it back over Matt's.
+
 ## graphify
 
 - **Source:** [`graphifyy` on PyPI](https://pypi.org/project/graphifyy/)
@@ -86,6 +100,11 @@ listed.
 - **react-doctor:** `npm pack react-doctor@latest`, then copy
   `package/dist/skills/react-doctor/`. `npm run doctor` already runs the
   latest CLI, so only the skill text can fall behind.
+- **emilkowalski/skills:** `npx skills@latest update -p -y`, then copy
+  upstream's `prototype` over `prototype-emil` by hand and set its `name:`
+  again. Check `git status` afterwards: the CLI installs any skill it finds
+  under its own name, so a new upstream skill that shares a name with one
+  here will overwrite it.
 - **graphify:** updating means re-running its installer, which rewrites the
   hooks in `.claude/settings.json` and the CLAUDE.md graphify section. Diff
   both before committing, and re-apply the `SKILL.md` change above.
