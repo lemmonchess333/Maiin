@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  arrayRemove,
-  arrayUnion,
-  doc,
-  onSnapshot,
-  setDoc,
-} from "firebase/firestore";
+import { arrayRemove, arrayUnion, doc, onSnapshot } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { toast } from "@/lib/toast";
 import { useUid } from "@/lib/auth";
 import { db } from "@/lib/firebase";
@@ -108,7 +103,7 @@ export function useSavedRaces() {
     active.pending.add(id);
     setPending({ session, ids: new Set(active.pending) });
     try {
-      await setDoc(
+      await setDocGuarded(
         doc(db, "users", uid, "settings", "savedRaces"),
         { raceIds: removing ? arrayRemove(id) : arrayUnion(id) },
         { merge: true }
