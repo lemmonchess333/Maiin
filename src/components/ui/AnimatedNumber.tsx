@@ -10,13 +10,17 @@ interface Props {
   duration?: number;
   /** Easing curve. Default [0.32, 0.72, 0, 1]. */
   ease?: [number, number, number, number];
+  /** Count up from zero when it first appears (the default). False
+   *  starts at `value`, for a number replacing one already on screen. */
+  fromZero?: boolean;
 }
 
 const DEFAULT_EASE: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 /**
- * A number that counts to its value: from zero when it first appears,
- * then from wherever it was when the value changes.
+ * A number that counts to its value: from zero when it first appears
+ * (unless `fromZero` is false), then from wherever it was when the
+ * value changes.
  *
  * Under Reduce Motion it is plain text from the first paint. A motion
  * value only reaches the screen a frame after it is set, so the counter
@@ -29,9 +33,10 @@ export function AnimatedNumber({
   format,
   duration = 1.2,
   ease = DEFAULT_EASE,
+  fromZero = true,
 }: Props) {
   const reduce = useReducedMotion();
-  const count = useMotionValue(0);
+  const count = useMotionValue(fromZero ? 0 : value);
   const formatted = (v: number) =>
     format ? format(v) : Math.round(v).toLocaleString();
   const display = useTransform(count, formatted);

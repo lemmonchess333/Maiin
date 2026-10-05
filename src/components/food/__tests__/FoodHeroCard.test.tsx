@@ -19,6 +19,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import FoodHeroCard from "../FoodHeroCard";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { targetCalories: 2000 } }),
@@ -303,5 +304,47 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
     expect(screen.getByRole("status")).toHaveTextContent(
       /essential fat alone exceeds/
     );
+  });
+});
+
+describe("FoodHeroCard — drawIn", () => {
+  /* Food remounts the hero per day so a day switch fires no log haptic
+     or celebration. drawIn={false} makes that remount arrive at the
+     day's figures rather than counting every number up from zero.
+     Protein in the left view: 150 − 50 = 100g left.
+
+     The mode store keeps its last value in memory, and an earlier test
+     can leave it at "eaten". Then the first render reads the logged
+     figure, the store re-reads storage on subscribe, and the tile
+     animates from 50 to 100. Setting the store as well as storage keeps
+     the first render on the left view, whatever ran before. */
+  function renderHeroDrawIn(drawIn?: boolean) {
+    window.localStorage.setItem(MODE_STORAGE_KEY, "left");
+    setCalorieRingMode("left");
+    return render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={false}
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+          drawIn={drawIn}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("false paints the macro figure on the first frame", () => {
+    const { container } = renderHeroDrawIn(false);
+    expect(
+      container.querySelector('[data-macro="protein"]')!.textContent
+    ).toMatch(/100g/);
+  });
+
+  it("the default still counts up from zero", () => {
+    const { container } = renderHeroDrawIn();
+    expect(
+      container.querySelector('[data-macro="protein"]')!.textContent
+    ).not.toMatch(/100g/);
   });
 });

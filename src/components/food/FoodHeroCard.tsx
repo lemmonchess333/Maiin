@@ -49,6 +49,10 @@ interface FoodHeroCardProps {
    *  the hero correctly — the affordance is omitted when no handler
    *  is supplied. */
   onTapDrillDown?: () => void;
+  /** Draw the ring and tiles in from zero on mount (the default).
+   *  Food passes false once the person has switched day: the card is
+   *  remounted per day, and a remount is a browse, not a log. */
+  drawIn?: boolean;
   /** Task-first Food entry: full nutrition stays one tap away in Details. */
 }
 
@@ -68,6 +72,7 @@ export default function FoodHeroCard({
   dailyTargets,
   dailyTotals,
   onTapDrillDown,
+  drawIn = true,
 }: FoodHeroCardProps) {
   /* Targets-set detection. When a user hasn't customised
      `profile.targetCalories`, useDailyTargets falls back to a
@@ -332,6 +337,7 @@ export default function FoodHeroCard({
               trajectoryLabel={trajectoryLabel}
               glowing={celebrating}
               ringDurationMs={LOG_MOMENT_MS}
+              drawIn={drawIn}
             />
 
             {/* Food6 a2: the drill-down, at the bottom right. "Details" and
@@ -415,6 +421,7 @@ export default function FoodHeroCard({
             onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
+            drawIn={drawIn}
           />
         </Card>
         <Card size="compact" className="min-w-0 flex">
@@ -429,6 +436,7 @@ export default function FoodHeroCard({
             onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
+            drawIn={drawIn}
           />
         </Card>
         <Card size="compact" className="min-w-0 flex">
@@ -443,6 +451,7 @@ export default function FoodHeroCard({
             onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
+            drawIn={drawIn}
           />
         </Card>
       </div>
