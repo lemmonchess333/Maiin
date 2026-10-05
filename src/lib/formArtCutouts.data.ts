@@ -667,6 +667,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
     sha256: "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
   },
+  "single-arm-lat-pulldown": {
+    src: "form-art/single-arm-lat-pulldown.webp",
+    width: 339,
+    height: 480,
+    keyed: true,
+    source: "form-frames/single-arm-lat-pulldown/1.webp",
+    sourceSha256:
+      "d4efe89d65991bc136941a9de73182f239c5590724df055b54987bef12905f56",
+    sha256: "3534ebf9751a0052a608daec6d5344f9d13262ac66a12688f6fc0b4241613409",
+  },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
     width: 480,

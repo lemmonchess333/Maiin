@@ -1,0 +1,703 @@
+{
+  "generator": "Built-in imagegen; authorized fixed contacts, rigid equipment and cable construction",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "initialMaster": "49761130-e340-4759-b5d3-e301983944c3",
+    "supportedMaster": "a01bd544-2357-412d-8357-e7e2f1076910",
+    "early": "865a828f-2257-44d5-b55e-4479f362047d",
+    "middle": "4a3a33de-46f8-49fa-951c-adac84b98f10",
+    "contracted": "90561e06-1af1-4bf8-941b-91310f18fcf6",
+    "emptyMachine": "73502aec-e0e1-4e13-bda7-8ff851e78ca9"
+  },
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "3233709f559f449368af144a5493e8bd0947471f4459c043a1d69d2d9b83bde3"
+    },
+    {
+      "file": "originals/2-early-candidate.png",
+      "sha256": "8fdcbf5ae8aba12bf948bf12b272c8ce2229e6364f57da308efc497488f37d44"
+    },
+    {
+      "file": "originals/3-mid-candidate.png",
+      "sha256": "259677d3b0160776304dddbbbd4dceb99e398c191b64d18dd4b90e49f606f85f"
+    },
+    {
+      "file": "originals/4-peak-candidate.png",
+      "sha256": "4e225043f590793436db468f9096b688bee61628b10307daf87d475cd1723408"
+    },
+    {
+      "file": "originals/machine-empty.png",
+      "sha256": "ebb9071ec55d6f4902f8868248ba1e758efa77f88bbff3b644a319a5c00d6619"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "de0b3123beb4eff13c7a8f7d4ae80bf84efb1cb753eca4b214bec97c43ca0602"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "a2cfe02477fe125621c0521c12db736cd153f36c4c4f1bd4e247cbd9ab848f19"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "2e7c9aceb6ecbdd3fc3dbffb2cbeb9ae00f572f48bf663c9ddb60996afb8b426"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "75109698b422e604030129d74a69919fa4165b37d51bb45bf53d096ad590ea5e"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "2e7c9aceb6ecbdd3fc3dbffb2cbeb9ae00f572f48bf663c9ddb60996afb8b426"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "a2cfe02477fe125621c0521c12db736cd153f36c4c4f1bd4e247cbd9ab848f19"
+    }
+  ],
+  "framing": {
+    "width": 1024,
+    "height": 1536,
+    "sequence": [1, 2, 3, 4, 3, 2],
+    "stationaryContactRegions": [
+      {
+        "left": 391,
+        "top": 1146,
+        "width": 140,
+        "height": 88
+      },
+      {
+        "left": 535,
+        "top": 1188,
+        "width": 165,
+        "height": 90
+      },
+      {
+        "left": 90,
+        "top": 1240,
+        "width": 195,
+        "height": 110
+      },
+      {
+        "left": 290,
+        "top": 1190,
+        "width": 145,
+        "height": 90
+      }
+    ],
+    "fixedPulleyRegion": {
+      "left": 626,
+      "top": 115,
+      "width": 49,
+      "height": 65
+    },
+    "method": "No anatomy transforms. Exact stationary shoe and bench-foot copies; exact fixed machine from generated empty machine template; rigid original plate packet; tangent cable construction."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      },
+      "stationaryStackPixelsSha256": "68988b24d5339780564ae6a2b16bf9f7753f1a16ecdb0e439e73e5ee2b7c071a"
+    }
+  ],
+  "mechanics": {
+    "method": "Independent final-pixel search for exact original packet interior; nine luminance-centroid cable checks per image; conservation of both tangent lengths and changing wrap arcs. Pulley circles and carabiner endpoints are manually selected visible landmarks; tolerances are image-space, not a calibrated real-world machine.",
+    "results": [
+      {
+        "frame": 1,
+        "measuredPacketRise": 0,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.501415541091319,
+        "cableLengthResidual": 0,
+        "samples": [
+          {
+            "y": 149,
+            "expectedX": 614.8633658222947,
+            "observedX": 614.5078328981723,
+            "error": -0.3555329241223717
+          },
+          {
+            "y": 153,
+            "expectedX": 612.0192357439809,
+            "observedX": 611.7714617169373,
+            "error": -0.24777402704353335
+          },
+          {
+            "y": 157,
+            "expectedX": 609.1751056656672,
+            "observedX": 608.8863636363636,
+            "error": -0.28874202930353476
+          },
+          {
+            "y": 161,
+            "expectedX": 606.3309755873534,
+            "observedX": 605.992099322799,
+            "error": -0.3388762645543011
+          },
+          {
+            "y": 165,
+            "expectedX": 603.4868455090395,
+            "observedX": 603.0895691609977,
+            "error": -0.397276348041828
+          },
+          {
+            "y": 169,
+            "expectedX": 600.6427154307257,
+            "observedX": 600.1995412844037,
+            "error": -0.4431741463220078
+          },
+          {
+            "y": 173,
+            "expectedX": 597.798585352412,
+            "observedX": 597.2971698113207,
+            "error": -0.501415541091319
+          },
+          {
+            "y": 177,
+            "expectedX": 594.9544552740982,
+            "observedX": 594.724586288416,
+            "error": -0.22986898568217384
+          },
+          {
+            "y": 181,
+            "expectedX": 592.1103251957844,
+            "observedX": 591.835632183908,
+            "error": -0.27469301187636574
+          }
+        ]
+      },
+      {
+        "frame": 2,
+        "measuredPacketRise": 102,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.3256498265221808,
+        "cableLengthResidual": -0.38207093454400365,
+        "samples": [
+          {
+            "y": 184,
+            "expectedX": 600.0518755210526,
+            "observedX": 599.819512195122,
+            "error": -0.23236332593057796
+          },
+          {
+            "y": 194,
+            "expectedX": 594.7526720385964,
+            "observedX": 594.4973404255319,
+            "error": -0.2553316130645271
+          },
+          {
+            "y": 204,
+            "expectedX": 589.4534685561403,
+            "observedX": 589.1634382566587,
+            "error": -0.2900302994816002
+          },
+          {
+            "y": 214,
+            "expectedX": 584.1542650736842,
+            "observedX": 583.8970944309928,
+            "error": -0.25717064269144885
+          },
+          {
+            "y": 224,
+            "expectedX": 578.855061591228,
+            "observedX": 578.5294117647059,
+            "error": -0.3256498265221808
+          },
+          {
+            "y": 233,
+            "expectedX": 574.0857784570176,
+            "observedX": 573.8446601941747,
+            "error": -0.24111826284286053
+          },
+          {
+            "y": 243,
+            "expectedX": 568.7865749745614,
+            "observedX": 568.5106951871658,
+            "error": -0.27587978739563823
+          },
+          {
+            "y": 253,
+            "expectedX": 563.4873714921052,
+            "observedX": 563.195652173913,
+            "error": -0.29171931819223573
+          },
+          {
+            "y": 263,
+            "expectedX": 558.1881680096491,
+            "observedX": 557.9323671497584,
+            "error": -0.2558008598906554
+          }
+        ]
+      },
+      {
+        "frame": 3,
+        "measuredPacketRise": 293,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.29083878810968145,
+        "cableLengthResidual": -0.2752748927820221,
+        "samples": [
+          {
+            "y": 255,
+            "expectedX": 588.5589218210602,
+            "observedX": 588.4617486338798,
+            "error": -0.09717318718037404
+          },
+          {
+            "y": 277,
+            "expectedX": 581.5620494652231,
+            "observedX": 581.4617486338798,
+            "error": -0.1003008313433611
+          },
+          {
+            "y": 298,
+            "expectedX": 574.8832167619242,
+            "observedX": 574.5955056179776,
+            "error": -0.2877111439466944
+          },
+          {
+            "y": 320,
+            "expectedX": 567.8863444060872,
+            "observedX": 567.5955056179776,
+            "error": -0.29083878810968145
+          },
+          {
+            "y": 341,
+            "expectedX": 561.2075117027883,
+            "observedX": 561.0442708333334,
+            "error": -0.16324086945496674
+          },
+          {
+            "y": 363,
+            "expectedX": 554.2106393469513,
+            "observedX": 554.0430809399478,
+            "error": -0.16755840700352564
+          },
+          {
+            "y": 385,
+            "expectedX": 547.2137669911143,
+            "observedX": 547.0480519480519,
+            "error": -0.1657150430623915
+          },
+          {
+            "y": 406,
+            "expectedX": 540.5349342878153,
+            "observedX": 540.4534246575342,
+            "error": -0.08150963028106162
+          },
+          {
+            "y": 428,
+            "expectedX": 533.5380619319783,
+            "observedX": 533.4535519125683,
+            "error": -0.08451001941000413
+          }
+        ]
+      },
+      {
+        "frame": 4,
+        "measuredPacketRise": 395,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.21304232097975273,
+        "cableLengthResidual": 0.19384482725365615,
+        "samples": [
+          {
+            "y": 291,
+            "expectedX": 581.7177035856528,
+            "observedX": 581.532967032967,
+            "error": -0.18473655268576294
+          },
+          {
+            "y": 319,
+            "expectedX": 573.6346149635897,
+            "observedX": 573.4972752043597,
+            "error": -0.13733975923003072
+          },
+          {
+            "y": 347,
+            "expectedX": 565.5515263415267,
+            "observedX": 565.4615384615385,
+            "error": -0.08998787998825719
+          },
+          {
+            "y": 374,
+            "expectedX": 557.757119455966,
+            "observedX": 557.5440771349862,
+            "error": -0.21304232097975273
+          },
+          {
+            "y": 402,
+            "expectedX": 549.6740308339029,
+            "observedX": 549.5136239782016,
+            "error": -0.1604068557012397
+          },
+          {
+            "y": 430,
+            "expectedX": 541.5909422118399,
+            "observedX": 541.4782016348773,
+            "error": -0.11274057696255113
+          },
+          {
+            "y": 458,
+            "expectedX": 533.5078535897768,
+            "observedX": 533.4447513812155,
+            "error": -0.063102208561304
+          },
+          {
+            "y": 486,
+            "expectedX": 525.4247649677138,
+            "observedX": 525.4039548022599,
+            "error": -0.020810165453895024
+          },
+          {
+            "y": 514,
+            "expectedX": 517.3416763456507,
+            "observedX": 517.3608695652174,
+            "error": 0.019193219566659536
+          }
+        ]
+      },
+      {
+        "frame": 5,
+        "measuredPacketRise": 293,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.29083878810968145,
+        "cableLengthResidual": -0.2752748927820221,
+        "samples": [
+          {
+            "y": 255,
+            "expectedX": 588.5589218210602,
+            "observedX": 588.4617486338798,
+            "error": -0.09717318718037404
+          },
+          {
+            "y": 277,
+            "expectedX": 581.5620494652231,
+            "observedX": 581.4617486338798,
+            "error": -0.1003008313433611
+          },
+          {
+            "y": 298,
+            "expectedX": 574.8832167619242,
+            "observedX": 574.5955056179776,
+            "error": -0.2877111439466944
+          },
+          {
+            "y": 320,
+            "expectedX": 567.8863444060872,
+            "observedX": 567.5955056179776,
+            "error": -0.29083878810968145
+          },
+          {
+            "y": 341,
+            "expectedX": 561.2075117027883,
+            "observedX": 561.0442708333334,
+            "error": -0.16324086945496674
+          },
+          {
+            "y": 363,
+            "expectedX": 554.2106393469513,
+            "observedX": 554.0430809399478,
+            "error": -0.16755840700352564
+          },
+          {
+            "y": 385,
+            "expectedX": 547.2137669911143,
+            "observedX": 547.0480519480519,
+            "error": -0.1657150430623915
+          },
+          {
+            "y": 406,
+            "expectedX": 540.5349342878153,
+            "observedX": 540.4534246575342,
+            "error": -0.08150963028106162
+          },
+          {
+            "y": 428,
+            "expectedX": 533.5380619319783,
+            "observedX": 533.4535519125683,
+            "error": -0.08451001941000413
+          }
+        ]
+      },
+      {
+        "frame": 6,
+        "measuredPacketRise": 102,
+        "rigidPacketInteriorExact": true,
+        "maxCableCentreError": 0.3256498265221808,
+        "cableLengthResidual": -0.38207093454400365,
+        "samples": [
+          {
+            "y": 184,
+            "expectedX": 600.0518755210526,
+            "observedX": 599.819512195122,
+            "error": -0.23236332593057796
+          },
+          {
+            "y": 194,
+            "expectedX": 594.7526720385964,
+            "observedX": 594.4973404255319,
+            "error": -0.2553316130645271
+          },
+          {
+            "y": 204,
+            "expectedX": 589.4534685561403,
+            "observedX": 589.1634382566587,
+            "error": -0.2900302994816002
+          },
+          {
+            "y": 214,
+            "expectedX": 584.1542650736842,
+            "observedX": 583.8970944309928,
+            "error": -0.25717064269144885
+          },
+          {
+            "y": 224,
+            "expectedX": 578.855061591228,
+            "observedX": 578.5294117647059,
+            "error": -0.3256498265221808
+          },
+          {
+            "y": 233,
+            "expectedX": 574.0857784570176,
+            "observedX": 573.8446601941747,
+            "error": -0.24111826284286053
+          },
+          {
+            "y": 243,
+            "expectedX": 568.7865749745614,
+            "observedX": 568.5106951871658,
+            "error": -0.27587978739563823
+          },
+          {
+            "y": 253,
+            "expectedX": 563.4873714921052,
+            "observedX": 563.195652173913,
+            "error": -0.29171931819223573
+          },
+          {
+            "y": 263,
+            "expectedX": 558.1881680096491,
+            "observedX": 557.9323671497584,
+            "error": -0.2558008598906554
+          }
+        ]
+      }
+    ]
+  },
+  "masterFraming": {
+    "method": "Uniform whole-scene resize to width922, centred black padding, no local anatomy edits.",
+    "masterGeneration": "49761130-e340-4759-b5d3-e301983944c3",
+    "supportCorrectionGeneration": "a01bd544-2357-412d-8357-e7e2f1076910",
+    "selectedPlateCount": 5,
+    "stationaryPlateCount": 12
+  },
+  "losslessPixelsVerified": true,
+  "validation": {
+    "focusedTestsPassed": 254,
+    "fullSuite": {
+      "differences": [],
+      "currentRecords": 54,
+      "baselineRecords": 54,
+      "currentSummary": [
+        " Test Files  43 failed | 954 passed | 8 skipped (1005)",
+        "      Tests  48 failed | 11198 passed | 367 skipped (11613)",
+        "   Duration  887.50s (transform 39.56s, setup 215.08s, import 693.09s, tests 360.69s, environment 1012.30s)"
+      ],
+      "baselineSummary": [
+        " Test Files  43 failed | 954 passed | 8 skipped (1005)",
+        "      Tests  48 failed | 11196 passed | 367 skipped (11611)",
+        "   Duration  1168.25s (transform 48.71s, setup 329.38s, import 902.57s, tests 384.42s, environment 1312.20s)"
+      ]
+    },
+    "reproduction": {
+      "frames": [
+        {
+          "frame": 1,
+          "match": true
+        },
+        {
+          "frame": 2,
+          "match": true
+        },
+        {
+          "frame": 3,
+          "match": true
+        },
+        {
+          "frame": 4,
+          "match": true
+        },
+        {
+          "frame": 5,
+          "match": true
+        },
+        {
+          "frame": 6,
+          "match": true
+        }
+      ],
+      "measurementsMatch": true,
+      "mechanicsMatch": true
+    },
+    "finalMobileSpotCheck": "Start and contracted frames after pulley cleanup,390x844,light and dark"
+  }
+}

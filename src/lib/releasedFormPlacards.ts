@@ -15,6 +15,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "single-arm-lat-pulldown": placard(
+    "single-arm-lat-pulldown",
+    ["Lats"],
+    ["Biceps", "Rear Delts"],
+    [
+      [0, "Stretch", "Reach overhead without twisting your torso."],
+      [
+        0.3333333333333333,
+        "Initiate",
+        "Pull your elbow down toward your side.",
+      ],
+      [0.6666666666666666, "Pull", "Keep your wrist above your elbow."],
+      [1, "Contract", "Bring your elbow down beside your waist."],
+      [0.6666666666666666, "Return", "Let your arm rise under control."],
+      [0.3333333333333333, "Extend", "Continue upward toward a full stretch."],
+    ]
+  ),
   "chin-ups": placard(
     "chin-ups",
     ["Lats"],

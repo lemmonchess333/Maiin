@@ -425,6 +425,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 3,
   },
+  "single-arm-lat-pulldown": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1024,
+    height: 1536,
+    reference: 1,
+  },
   "sled-push-pull": {
     folder: "2026-10-04",
     version: "anatomy-v3-2026-10-04",
