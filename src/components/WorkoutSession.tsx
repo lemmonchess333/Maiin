@@ -45,6 +45,8 @@ import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import { lastSetsByExercise } from "@/features/program/lastSets";
+import { startingSetRows } from "@/features/program/setStartValues";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -308,6 +310,9 @@ export default function WorkoutSession({
   const [currentSetIndex, setCurrentSetIndex] = useState(
     resumeCursor?.setIndex ?? 0
   );
+  // Set once each row has its start (`startingSetRows`); a resumed draft's
+  // rows already have theirs.
+  const rowsStarted = useRef(!!initialDraft?.setLogs);
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -414,8 +419,6 @@ export default function WorkoutSession({
       // has not synced yet: it is the last session even offline.
       const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
 
-      const prevWeights: Record<string, { weight: number; reps: number }[]> =
-        {};
       const notes: Record<number, { text: string; date: string }> = {};
 
       recent.forEach((data) => {
@@ -432,51 +435,44 @@ export default function WorkoutSession({
             ?.notes?.trim();
           if (text) notes[index] = { text, date: data.date };
         });
-        (data.exercises || []).forEach(
-          (ex: {
-            exerciseName: string;
-            sets?: { weightKg?: number; reps?: number }[];
-          }) => {
-            const name = ex.exerciseName;
-            if (!prevWeights[name] && ex.sets?.length && ex.sets.length > 0) {
-              prevWeights[name] = ex.sets.map((s) => ({
-                weight: s.weightKg || 0,
-                reps: s.reps || 0,
-              }));
-            }
-          }
-        );
       });
       setPreviousNotes(notes);
+      // Last time's counted sets, as Train's "Last:" line lists them: the
+      // Previous column and where each row starts both read these.
+      const lastSets = new Map(
+        [
+          ...lastSetsByExercise(
+            recent.filter(
+              (data) => data.completionId !== completionIdRef.current
+            )
+          ),
+        ].map(([id, sets]) => [
+          id,
+          sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps })),
+        ])
+      );
       setPreviousSets(
         Object.fromEntries(
-          day.exercises.flatMap((ex, i) =>
-            prevWeights[ex.name] ? [[i, prevWeights[ex.name]]] : []
-          )
+          day.exercises.flatMap((ex, i) => {
+            const sets = lastSets.get(ex.exerciseId);
+            return sets ? [[i, sets]] : [];
+          })
         )
       );
 
-      setSetLogs((prev) => {
-        const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-        day.exercises.forEach((ex, i) => {
-          const name = ex.name;
-          const prevSets = prevWeights[name];
-          if (prevSets && updated[i]) {
-            // A warm-up keeps its ramp; a counted set fills from the same
-            // counted set last time, which the ramp's rows used to offset.
-            updated[i] = updated[i].map((set, si, sets) => {
-              if (set.type === "warmup") return set;
-              const prior = prevSets[setOrdinal(sets, si) - 1] ?? prevSets[0];
-              return {
-                ...set,
-                weight: set.weight || (prior?.weight ?? 0),
-                reps: set.reps || (prior?.reps ?? 0),
-              };
-            });
-          }
-        });
-        return updated;
-      });
+      // Each row starts from what that set did last time (Lift4,
+      // `startingSetRows`), once per session: a resumed draft's rows, and
+      // anything typed since, hold what the person put there.
+      if (!rowsStarted.current) {
+        rowsStarted.current = true;
+        setSetLogs((prev) =>
+          prev.map((rows, i) => {
+            const ex = day.exercises[i];
+            if (!ex || rows.some((set) => set.completed)) return rows;
+            return startingSetRows(rows, ex, lastSets.get(ex.exerciseId));
+          })
+        );
+      }
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
