@@ -93,7 +93,7 @@ export default function PageShell({
     <motion.div
       {...rest}
       className={cn("space-y-4", className)}
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={pageStaggerContainer}
     >

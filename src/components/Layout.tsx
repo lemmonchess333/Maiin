@@ -129,22 +129,6 @@ export default function Layout() {
   const { onTouchStart: onSwipeStart, onTouchEnd: onSwipeEnd } =
     useSwipeNavigation(tabRoutes, location.pathname);
 
-  // Directional page transition: slide toward the new tab's side. Derived
-  // from the tab-index delta so a TAP on the nav slides the same way a swipe
-  // does. Uses React's "adjust state during render" pattern to remember the
-  // previous tab index — computing slideDir synchronously so the keyed
-  // motion.div below mounts with the correct entry offset (an effect would
-  // land one render too late). Sub-page nav (idx -1) just fades (slideDir 0).
-  const activeIdx = tabRoutes.indexOf(location.pathname);
-  const [prevIdx, setPrevIdx] = useState(activeIdx);
-  const [slideDir, setSlideDir] = useState<-1 | 0 | 1>(0);
-  if (prevIdx !== activeIdx) {
-    setSlideDir(
-      activeIdx !== -1 && prevIdx !== -1 ? (activeIdx > prevIdx ? 1 : -1) : 0
-    );
-    setPrevIdx(activeIdx);
-  }
-
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
     const fixDrift = () => {
@@ -286,12 +270,12 @@ export default function Layout() {
       >
         <motion.div
           key={location.pathname}
-          initial={
-            prefersReducedMotion ? false : { opacity: 0, x: slideDir * 24 }
-          }
-          animate={{ opacity: 1, x: 0 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={
-            prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.15, ease: [0.23, 1, 0.32, 1] }
           }
         >
           <Suspense
