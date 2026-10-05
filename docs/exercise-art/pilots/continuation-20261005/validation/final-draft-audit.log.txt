@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> tropos@1.2.0 check:form-drafts
+> node --import tsx scripts/audit-form-drafts.ts
+
+{
+  "draftSets": 30,
+  "selectedFrames": 180,
+  "uniquePoses": 107,
+  "nativeBytes": 177181764,
+  "releaseApproved": false,
+  "errors": []
+}

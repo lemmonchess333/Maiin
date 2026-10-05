@@ -1,0 +1,91 @@
+{
+  "exerciseId": "bulgarian-split",
+  "status": "draft-reviewed-with-findings",
+  "catalogueSource": "src/lib/exercises.ts",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "intendedMaster": "docs/exercise-art/masters/bulgarian-split/1.png",
+  "recoveryContext": "The owner's 5 October screenshot shows a later left-facing setup with bench on the right, stopped during rear-thigh-highlight correction. That native candidate was not present in any recovered branch. Recreate its composition from the screenshot; do not claim recovery of its original pixels.",
+  "equipment": "Two identical modest hex dumbbells; one fixed flat bench; front trainer flat on floor; rear instep laces-down on bench.",
+  "camera": "Fixed left-facing side/three-quarter view, black landscape canvas, full body, both dumbbell grips visible.",
+  "muscleHierarchy": {
+    "primary": "Working front-leg quadriceps in the strongest purple.",
+    "secondary": "Working front-leg glute and hamstrings in lighter lilac where anatomically visible.",
+    "stabilisers": "Core only a subtle pale tint if useful; supporting rear thigh remains neutral light grey.",
+    "meaning": "Qualitative roles, not a measured activation heat map. Keep the hierarchy unchanged through the repetition."
+  },
+  "fixedAnchors": [
+    "Bench silhouette and both bench floor contacts",
+    "Front shoe heel and toe floor contacts",
+    "Rear shoe laces/instep contact on bench"
+  ],
+  "rigidInvariants": [
+    "Athlete proportions",
+    "Camera and native canvas",
+    "Dumbbell head size and handle length",
+    "Hand attachment and neutral grips",
+    "Bench length, height and perspective"
+  ],
+  "beats": [
+    {
+      "frame": 1,
+      "pose": "setup",
+      "name": "SET UP",
+      "cue": "Plant front foot; rest your rear instep.",
+      "state": "Tall braced torso, soft front knee, arms hanging with dumbbells."
+    },
+    {
+      "frame": 2,
+      "pose": "shallow-descent",
+      "name": "BEGIN LOWERING",
+      "cue": "Bend your front knee; lower with control.",
+      "state": "Pelvis approximately one third from setup toward bottom; knee tracks over front foot; supports fixed."
+    },
+    {
+      "frame": 3,
+      "pose": "deep-descent",
+      "name": "LOWER FURTHER",
+      "cue": "Keep your front heel planted while descending.",
+      "state": "Pelvis approximately two thirds from setup toward bottom; torso braced; supports fixed."
+    },
+    {
+      "frame": 4,
+      "pose": "bottom",
+      "name": "REACH DEPTH",
+      "cue": "Reach comfortable depth without bouncing or shifting.",
+      "state": "Front thigh approaches horizontal; back knee lowers toward floor; neither foot shifts."
+    },
+    {
+      "frame": 5,
+      "pose": "deep-descent",
+      "name": "DRIVE UP",
+      "cue": "Drive through your front foot; rise steadily.",
+      "state": "Return through the same two-thirds-depth configuration with both grips intact."
+    },
+    {
+      "frame": 6,
+      "pose": "shallow-descent",
+      "name": "CONTINUE RISING",
+      "cue": "Continue rising; keep feet and grips fixed.",
+      "state": "Return through the one-third-depth configuration; the 6-to-1 transition completes standing before the next repetition."
+    }
+  ],
+  "reuse": { "5": 3, "6": 2 },
+  "reuseReason": "The same joint configurations on controlled ascent use identical native pose pixels with distinct app-rendered cues. Four unique depths and the 6-to-1 last-third ascent avoid the old oversized initial descent step.",
+  "reviewRequired": [
+    "Inspect the setup before generating adjacent poses",
+    "Inspect native anatomy, correct working-leg highlights, rear instep support and both grips",
+    "Measure fixed support patches against native master; preserve the existing 1px release bound",
+    "Inspect all six ordered frames and the 6-to-1 loop in the actual player in both mobile themes",
+    "Bind selected source, delivery and cue hashes; retain rejected candidates and findings"
+  ],
+  "reviewOutcome": {
+    "scope": "One bounded continuation of the interrupted Bulgarian split-squat candidate.",
+    "selectedApproach": "Retain generated body and original clean equipment contours; restore fixed supports with documented local compositing. Rigid-equipment trials remain separate because their outer contours failed native review.",
+    "remainingFindings": [
+      "Original dumbbell projections vary across poses and do not support a sub-percent equipment-invariance pass.",
+      "Actual mobile light/dark playback and reduced-motion review are pending because compatible Chromium could not be provisioned in this environment."
+    ],
+    "progressMeaning": "Authored beat positions; approximate thirds are a movement plan, not measured percentages of joint range."
+  },
+  "releaseStatus": "Not approved; retain the inactive draft and all failure evidence outside public until remaining native equipment and actual mobile review requirements pass."
+}

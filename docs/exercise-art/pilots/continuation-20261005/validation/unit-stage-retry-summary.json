@@ -1,0 +1,52 @@
+{
+  "recordedAt": "2026-10-05T17:57:43.193902+00:00",
+  "status": "completed-successfully-by-exit-code",
+  "command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "--maxWorkers=2",
+    "--reporter=verbose"
+  ],
+  "startedUtc": "2026-10-05T17:34:35.786632+00:00",
+  "endedUtc": "2026-10-05T17:52:48.213573+00:00",
+  "elapsedSeconds": 1092.43,
+  "exitCode": 0,
+  "changedTestedInputs": [],
+  "authoritativeFinalVitestSummaryRetained": false,
+  "testFilesPassed": null,
+  "testsPassed": null,
+  "testsSkipped": null,
+  "countLimitation": "The retained log is partial and has no final Vitest summary. Success is supported by the actual wrapper exit code; final counts are unavailable and are not copied from the baseline.",
+  "originalCombinedCommand": {
+    "status": "interrupted-with-unknown-exit",
+    "exitCode": null,
+    "record": "final-verify-interruption.json"
+  },
+  "earlierPassedStages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size"
+  ],
+  "rawCaptures": [
+    {
+      "path": "unit-stage-retry-result.json.txt",
+      "originalPath": "/workspace/scratch/a307ac8d62f0/verification/unit-stage-retry-result.json",
+      "bytes": 2512,
+      "sha256": "4ff86218d121fb1454630dbed7ba28ffeda290706154aba121154580057a3020"
+    },
+    {
+      "path": "unit-stage-retry.log.txt",
+      "originalPath": "/workspace/scratch/a307ac8d62f0/verification/unit-stage-retry.log",
+      "bytes": 354638,
+      "sha256": "53820225dbbcc7275d3a3e1a706834824a13503dab187ff59f69a8d12d5c63fc"
+    }
+  ],
+  "readableResult": "unit-stage-retry-result.json",
+  "releaseApproved": false,
+  "mobilePlayerTests": "not-run-browser-provisioning-blocked"
+}

@@ -1,0 +1,913 @@
+{
+  "exercise_id": "bulgarian-split",
+  "status": "diagnostic-not-release-approval",
+  "release_approved": false,
+  "scope": "Near dumbbell = dumbbell in the athlete's right-image hand; near head = its left-image/closest head.",
+  "method": {
+    "coordinates": "Native 1536x1024 pixels; source images are not resized.",
+    "annotation": "Manual visible-contour chords with preserved endpoint RGB samples; inclusive endpoints.",
+    "uncertainty": "Approximately +/-1 px per boundary, hence +/-2 px per span. This is a review estimate, not a calibrated confidence interval.",
+    "limits": [
+      "Chords are explicit projected image spans, not anatomical or real-world equipment dimensions.",
+      "The selected vertical chord is not claimed to be the entire head's mathematical bounding box.",
+      "Foreshortening, orientation and contour re-rendering can change projected head spans without uniform load scaling.",
+      "The full handles are hidden by hands; no full handle-length invariant is measurable from these images alone.",
+      "The far-side dumbbell's inner head is occluded by the working thigh; its complete dimensions are unverified.",
+      "These measurements do not support a sub-percent invariant pass. Two bench dimensions must not replace equipment verification."
+    ]
+  },
+  "measurements": [
+    {
+      "file": "setup.png",
+      "near_head_roi": [570, 490, 648, 582],
+      "horizontal": {
+        "y": 536,
+        "x_start": 575,
+        "x_end": 641
+      },
+      "vertical": {
+        "x": 604,
+        "y_start": 499,
+        "y_end": 574
+      },
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 67,
+      "horizontal_endpoint_uncertainty_range_px": [65, 69],
+      "vertical_native_span_px": 76,
+      "vertical_endpoint_uncertainty_range_px": [74, 78],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 572,
+            "rgb": [217, 216, 216]
+          },
+          {
+            "coordinate": 573,
+            "rgb": [228, 228, 228]
+          },
+          {
+            "coordinate": 574,
+            "rgb": [248, 247, 248]
+          },
+          {
+            "coordinate": 575,
+            "rgb": [141, 142, 144]
+          },
+          {
+            "coordinate": 576,
+            "rgb": [5, 4, 5]
+          },
+          {
+            "coordinate": 577,
+            "rgb": [74, 72, 74]
+          },
+          {
+            "coordinate": 578,
+            "rgb": [64, 64, 65]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 638,
+            "rgb": [39, 39, 40]
+          },
+          {
+            "coordinate": 639,
+            "rgb": [50, 51, 50]
+          },
+          {
+            "coordinate": 640,
+            "rgb": [10, 9, 9]
+          },
+          {
+            "coordinate": 641,
+            "rgb": [103, 101, 101]
+          },
+          {
+            "coordinate": 642,
+            "rgb": [192, 192, 192]
+          },
+          {
+            "coordinate": 643,
+            "rgb": [175, 174, 174]
+          },
+          {
+            "coordinate": 644,
+            "rgb": [207, 206, 207]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 496,
+            "rgb": [210, 208, 208]
+          },
+          {
+            "coordinate": 497,
+            "rgb": [203, 201, 203]
+          },
+          {
+            "coordinate": 498,
+            "rgb": [210, 209, 209]
+          },
+          {
+            "coordinate": 499,
+            "rgb": [53, 54, 55]
+          },
+          {
+            "coordinate": 500,
+            "rgb": [27, 27, 28]
+          },
+          {
+            "coordinate": 501,
+            "rgb": [193, 192, 191]
+          },
+          {
+            "coordinate": 502,
+            "rgb": [112, 111, 111]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 571,
+            "rgb": [41, 42, 42]
+          },
+          {
+            "coordinate": 572,
+            "rgb": [48, 48, 48]
+          },
+          {
+            "coordinate": 573,
+            "rgb": [14, 13, 13]
+          },
+          {
+            "coordinate": 574,
+            "rgb": [53, 51, 51]
+          },
+          {
+            "coordinate": 575,
+            "rgb": [198, 197, 196]
+          },
+          {
+            "coordinate": 576,
+            "rgb": [190, 189, 188]
+          },
+          {
+            "coordinate": 577,
+            "rgb": [190, 188, 188]
+          }
+        ]
+      }
+    },
+    {
+      "file": "shallow.png",
+      "near_head_roi": [568, 514, 647, 606],
+      "horizontal": {
+        "y": 559,
+        "x_start": 573,
+        "x_end": 641
+      },
+      "vertical": {
+        "x": 602,
+        "y_start": 522,
+        "y_end": 597
+      },
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 69,
+      "horizontal_endpoint_uncertainty_range_px": [67, 71],
+      "vertical_native_span_px": 76,
+      "vertical_endpoint_uncertainty_range_px": [74, 78],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 570,
+            "rgb": [243, 242, 243]
+          },
+          {
+            "coordinate": 571,
+            "rgb": [244, 243, 244]
+          },
+          {
+            "coordinate": 572,
+            "rgb": [253, 252, 252]
+          },
+          {
+            "coordinate": 573,
+            "rgb": [72, 73, 72]
+          },
+          {
+            "coordinate": 574,
+            "rgb": [26, 26, 27]
+          },
+          {
+            "coordinate": 575,
+            "rgb": [72, 71, 72]
+          },
+          {
+            "coordinate": 576,
+            "rgb": [59, 59, 58]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 638,
+            "rgb": [40, 41, 40]
+          },
+          {
+            "coordinate": 639,
+            "rgb": [45, 46, 44]
+          },
+          {
+            "coordinate": 640,
+            "rgb": [7, 7, 8]
+          },
+          {
+            "coordinate": 641,
+            "rgb": [154, 153, 154]
+          },
+          {
+            "coordinate": 642,
+            "rgb": [201, 202, 202]
+          },
+          {
+            "coordinate": 643,
+            "rgb": [200, 200, 201]
+          },
+          {
+            "coordinate": 644,
+            "rgb": [228, 227, 227]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 519,
+            "rgb": [238, 236, 236]
+          },
+          {
+            "coordinate": 520,
+            "rgb": [234, 234, 235]
+          },
+          {
+            "coordinate": 521,
+            "rgb": [250, 251, 251]
+          },
+          {
+            "coordinate": 522,
+            "rgb": [80, 81, 82]
+          },
+          {
+            "coordinate": 523,
+            "rgb": [39, 39, 39]
+          },
+          {
+            "coordinate": 524,
+            "rgb": [183, 182, 181]
+          },
+          {
+            "coordinate": 525,
+            "rgb": [98, 99, 98]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 594,
+            "rgb": [43, 42, 42]
+          },
+          {
+            "coordinate": 595,
+            "rgb": [50, 49, 49]
+          },
+          {
+            "coordinate": 596,
+            "rgb": [27, 28, 27]
+          },
+          {
+            "coordinate": 597,
+            "rgb": [36, 36, 36]
+          },
+          {
+            "coordinate": 598,
+            "rgb": [193, 193, 191]
+          },
+          {
+            "coordinate": 599,
+            "rgb": [202, 201, 202]
+          },
+          {
+            "coordinate": 600,
+            "rgb": [203, 203, 203]
+          }
+        ]
+      }
+    },
+    {
+      "file": "deep-grip-repair.png",
+      "near_head_roi": [578, 590, 656, 684],
+      "horizontal": {
+        "y": 635,
+        "x_start": 583,
+        "x_end": 649
+      },
+      "vertical": {
+        "x": 606,
+        "y_start": 599,
+        "y_end": 673
+      },
+      "sha256": "5c084a014496a630b1c540f693bf58b3241854cf36f33863e6374651aaa37a3d",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 67,
+      "horizontal_endpoint_uncertainty_range_px": [65, 69],
+      "vertical_native_span_px": 75,
+      "vertical_endpoint_uncertainty_range_px": [73, 77],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 580,
+            "rgb": [247, 248, 247]
+          },
+          {
+            "coordinate": 581,
+            "rgb": [252, 253, 252]
+          },
+          {
+            "coordinate": 582,
+            "rgb": [214, 216, 215]
+          },
+          {
+            "coordinate": 583,
+            "rgb": [6, 7, 9]
+          },
+          {
+            "coordinate": 584,
+            "rgb": [57, 57, 58]
+          },
+          {
+            "coordinate": 585,
+            "rgb": [71, 70, 70]
+          },
+          {
+            "coordinate": 586,
+            "rgb": [66, 66, 66]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 646,
+            "rgb": [41, 41, 41]
+          },
+          {
+            "coordinate": 647,
+            "rgb": [46, 46, 47]
+          },
+          {
+            "coordinate": 648,
+            "rgb": [12, 11, 10]
+          },
+          {
+            "coordinate": 649,
+            "rgb": [62, 61, 62]
+          },
+          {
+            "coordinate": 650,
+            "rgb": [188, 190, 189]
+          },
+          {
+            "coordinate": 651,
+            "rgb": [188, 188, 188]
+          },
+          {
+            "coordinate": 652,
+            "rgb": [225, 224, 224]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 596,
+            "rgb": [238, 237, 237]
+          },
+          {
+            "coordinate": 597,
+            "rgb": [234, 233, 232]
+          },
+          {
+            "coordinate": 598,
+            "rgb": [249, 248, 248]
+          },
+          {
+            "coordinate": 599,
+            "rgb": [100, 100, 99]
+          },
+          {
+            "coordinate": 600,
+            "rgb": [38, 35, 33]
+          },
+          {
+            "coordinate": 601,
+            "rgb": [180, 179, 177]
+          },
+          {
+            "coordinate": 602,
+            "rgb": [122, 123, 123]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 670,
+            "rgb": [50, 50, 49]
+          },
+          {
+            "coordinate": 671,
+            "rgb": [55, 54, 54]
+          },
+          {
+            "coordinate": 672,
+            "rgb": [42, 42, 42]
+          },
+          {
+            "coordinate": 673,
+            "rgb": [28, 28, 29]
+          },
+          {
+            "coordinate": 674,
+            "rgb": [194, 194, 193]
+          },
+          {
+            "coordinate": 675,
+            "rgb": [203, 202, 203]
+          },
+          {
+            "coordinate": 676,
+            "rgb": [203, 203, 204]
+          }
+        ]
+      }
+    },
+    {
+      "file": "bottom.png",
+      "near_head_roi": [578, 645, 662, 743],
+      "horizontal": {
+        "y": 692,
+        "x_start": 583,
+        "x_end": 655
+      },
+      "vertical": {
+        "x": 610,
+        "y_start": 654,
+        "y_end": 731
+      },
+      "sha256": "e2a7a41b2c30e2214ce3e7ab5164b5f02daa59d0494746efe66a4c06152653bb",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 73,
+      "horizontal_endpoint_uncertainty_range_px": [71, 75],
+      "vertical_native_span_px": 78,
+      "vertical_endpoint_uncertainty_range_px": [76, 80],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 580,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 581,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 582,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 583,
+            "rgb": [15, 14, 14]
+          },
+          {
+            "coordinate": 584,
+            "rgb": [66, 67, 65]
+          },
+          {
+            "coordinate": 585,
+            "rgb": [58, 58, 57]
+          },
+          {
+            "coordinate": 586,
+            "rgb": [58, 57, 57]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 652,
+            "rgb": [33, 33, 33]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [39, 40, 39]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [8, 10, 8]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [156, 155, 155]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [195, 196, 195]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [195, 194, 193]
+          },
+          {
+            "coordinate": 658,
+            "rgb": [231, 231, 231]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 651,
+            "rgb": [242, 241, 241]
+          },
+          {
+            "coordinate": 652,
+            "rgb": [236, 236, 236]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [250, 249, 249]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [156, 158, 157]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [169, 169, 163]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [115, 114, 113]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 728,
+            "rgb": [41, 41, 40]
+          },
+          {
+            "coordinate": 729,
+            "rgb": [41, 41, 40]
+          },
+          {
+            "coordinate": 730,
+            "rgb": [44, 44, 43]
+          },
+          {
+            "coordinate": 731,
+            "rgb": [43, 42, 41]
+          },
+          {
+            "coordinate": 732,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 733,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 734,
+            "rgb": [1, 1, 1]
+          }
+        ]
+      }
+    },
+    {
+      "file": "bottom-join-repair.png",
+      "near_head_roi": [578, 645, 662, 743],
+      "horizontal": {
+        "y": 692,
+        "x_start": 583,
+        "x_end": 655
+      },
+      "vertical": {
+        "x": 610,
+        "y_start": 654,
+        "y_end": 731
+      },
+      "sha256": "9fa275180ef8f7e12bfcb52be12173828b3e423d210524f4b6d0e16a8d90abba",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 73,
+      "horizontal_endpoint_uncertainty_range_px": [71, 75],
+      "vertical_native_span_px": 78,
+      "vertical_endpoint_uncertainty_range_px": [76, 80],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 580,
+            "rgb": [1, 2, 1]
+          },
+          {
+            "coordinate": 581,
+            "rgb": [2, 2, 2]
+          },
+          {
+            "coordinate": 582,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 583,
+            "rgb": [5, 4, 4]
+          },
+          {
+            "coordinate": 584,
+            "rgb": [60, 60, 59]
+          },
+          {
+            "coordinate": 585,
+            "rgb": [57, 57, 58]
+          },
+          {
+            "coordinate": 586,
+            "rgb": [57, 57, 57]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 652,
+            "rgb": [25, 26, 25]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [34, 35, 34]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [3, 4, 2]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [102, 100, 101]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [193, 193, 193]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [180, 178, 177]
+          },
+          {
+            "coordinate": 658,
+            "rgb": [221, 221, 219]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 651,
+            "rgb": [240, 239, 239]
+          },
+          {
+            "coordinate": 652,
+            "rgb": [235, 234, 234]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [249, 248, 249]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [52, 51, 52]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [51, 50, 48]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [163, 164, 161]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [90, 89, 88]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 728,
+            "rgb": [42, 41, 41]
+          },
+          {
+            "coordinate": 729,
+            "rgb": [42, 41, 40]
+          },
+          {
+            "coordinate": 730,
+            "rgb": [49, 49, 48]
+          },
+          {
+            "coordinate": 731,
+            "rgb": [31, 31, 31]
+          },
+          {
+            "coordinate": 732,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 733,
+            "rgb": [1, 2, 2]
+          },
+          {
+            "coordinate": 734,
+            "rgb": [1, 1, 1]
+          }
+        ]
+      }
+    },
+    {
+      "file": "bottom-secondary-repair.png",
+      "near_head_roi": [578, 645, 662, 743],
+      "horizontal": {
+        "y": 692,
+        "x_start": 583,
+        "x_end": 655
+      },
+      "vertical": {
+        "x": 610,
+        "y_start": 654,
+        "y_end": 731
+      },
+      "sha256": "5d95ba9a1ed62bc535ae14472eb42a964cf621c4713d713371c0b647f2f48ad1",
+      "canvas": [1536, 1024],
+      "horizontal_native_span_px": 73,
+      "horizontal_endpoint_uncertainty_range_px": [71, 75],
+      "vertical_native_span_px": 78,
+      "vertical_endpoint_uncertainty_range_px": [76, 80],
+      "endpoint_rgb_evidence": {
+        "left": [
+          {
+            "coordinate": 580,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 581,
+            "rgb": [1, 1, 1]
+          },
+          {
+            "coordinate": 582,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 583,
+            "rgb": [17, 16, 17]
+          },
+          {
+            "coordinate": 584,
+            "rgb": [63, 63, 62]
+          },
+          {
+            "coordinate": 585,
+            "rgb": [56, 55, 55]
+          },
+          {
+            "coordinate": 586,
+            "rgb": [56, 56, 56]
+          }
+        ],
+        "right": [
+          {
+            "coordinate": 652,
+            "rgb": [36, 36, 35]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [35, 35, 34]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [23, 25, 23]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [184, 184, 185]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [190, 190, 190]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [204, 204, 203]
+          },
+          {
+            "coordinate": 658,
+            "rgb": [238, 238, 237]
+          }
+        ],
+        "top": [
+          {
+            "coordinate": 651,
+            "rgb": [243, 243, 241]
+          },
+          {
+            "coordinate": 652,
+            "rgb": [237, 237, 236]
+          },
+          {
+            "coordinate": 653,
+            "rgb": [255, 255, 255]
+          },
+          {
+            "coordinate": 654,
+            "rgb": [71, 72, 73]
+          },
+          {
+            "coordinate": 655,
+            "rgb": [45, 45, 43]
+          },
+          {
+            "coordinate": 656,
+            "rgb": [177, 178, 176]
+          },
+          {
+            "coordinate": 657,
+            "rgb": [96, 95, 96]
+          }
+        ],
+        "bottom": [
+          {
+            "coordinate": 728,
+            "rgb": [42, 41, 41]
+          },
+          {
+            "coordinate": 729,
+            "rgb": [42, 42, 40]
+          },
+          {
+            "coordinate": 730,
+            "rgb": [49, 48, 48]
+          },
+          {
+            "coordinate": 731,
+            "rgb": [26, 25, 25]
+          },
+          {
+            "coordinate": 732,
+            "rgb": [0, 0, 0]
+          },
+          {
+            "coordinate": 733,
+            "rgb": [2, 1, 1]
+          },
+          {
+            "coordinate": 734,
+            "rgb": [1, 1, 1]
+          }
+        ]
+      }
+    }
+  ],
+  "native_visual_review": {
+    "deep_grip_repair": "Far forearm, wrist, fingers and handle are now continuously connected and visible beside the working thigh. Near grip remains attached.",
+    "other_grips": "Setup, shallow and bottom show attached near and far grips; partial equipment occlusion remains physically plausible.",
+    "head_shape": "The closest head appears wider in bottom, while the other head of the same dumbbell appears narrower. Uniform load growth is not established, but unchanged rigid geometry is also not established.",
+    "highlights": "Working front quads remain strongest purple; rear supporting thigh stays neutral. The secondary repair adds lilac to the exposed underside of the working front thigh.",
+    "next_step": "Investigate a bounded rigid-equipment repair with body and hands preserved, then remeasure and inspect the actual resulting sources. No release approval follows from this diagnostic."
+  },
+  "colour_edit_comparison": {
+    "actual_parent": "bottom.png",
+    "actual_parent_sha256": "e2a7a41b2c30e2214ce3e7ab5164b5f02daa59d0494746efe66a4c06152653bb",
+    "edited_source": "bottom-secondary-repair.png",
+    "edited_source_sha256": "5d95ba9a1ed62bc535ae14472eb42a964cf621c4713d713371c0b647f2f48ad1",
+    "roi_differences": {
+      "near_dumbbell": {
+        "roi": [575, 644, 745, 742],
+        "rgb_channel_count": 49980,
+        "changed_rgb_channels": 40545,
+        "mean_absolute_channel_delta_0_to_255": 4.951340536214486,
+        "maximum_absolute_channel_delta_0_to_255": 118,
+        "channels_with_absolute_delta_above_16": 2961
+      },
+      "far_grip": {
+        "roi": [292, 556, 418, 671],
+        "rgb_channel_count": 43470,
+        "changed_rgb_channels": 27030,
+        "mean_absolute_channel_delta_0_to_255": 4.494087876696573,
+        "maximum_absolute_channel_delta_0_to_255": 168,
+        "channels_with_absolute_delta_above_16": 2803
+      },
+      "head": {
+        "roi": [465, 176, 587, 316],
+        "rgb_channel_count": 51240,
+        "changed_rgb_channels": 29039,
+        "mean_absolute_channel_delta_0_to_255": 3.252751756440281,
+        "maximum_absolute_channel_delta_0_to_255": 150,
+        "channels_with_absolute_delta_above_16": 2349
+      }
+    },
+    "interpretation": "The colour edit re-renders pixels outside its intended colour area. Pixel deltas do not by themselves establish a scaling defect. Compare it with bottom.png, its actual edit parent, not the separate bottom-join-repair.png candidate. Importing only the colour patch can preserve the chosen original body/equipment pixels."
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "exerciseId": "bulgarian-split",
+  "tool": "image_gen",
+  "selectionStatus": "frozen-native-draft-with-findings",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "plan": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/plan.json",
+    "sha256": "b7eb6803579736b484ef467864bb529e05dc7547dfb009473683d72a994dd2f1"
+  },
+  "recoveryContext": "The owner's 5 October screenshot shows a later left-facing setup with bench on the right, stopped during rear-thigh-highlight correction. That native candidate was not present in any recovered branch. Recreate its composition from the screenshot; do not claim recovery of its original pixels.",
+  "nativeSources": [
+    {
+      "pose": "setup",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/setup.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "bytes": 904359,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "bytes": 816295,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+      "bytes": 836482,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "pose": "bottom",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/bottom-contact-colour.png",
+      "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+      "bytes": 675875,
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "frameSelection": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/setup.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "bytes": 904359,
+      "cueSha256": "06ce412c233ac4854900f88c7c8d426754f580860f87c13f46a3c3e076cc35f3",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "bytes": 816295,
+      "cueSha256": "bdaa72f2c828b79209806e6ecb59f809fcedc89a8a4cbbb56c7eaf1620bc706a",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+      "bytes": 836482,
+      "cueSha256": "227ec174e48662dadb647e0b6f4b74a0fd66ec32c44bce89f9d5331f857e0e47",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/bottom-contact-colour.png",
+      "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+      "bytes": 675875,
+      "cueSha256": "7638a935d0ccd22b77a0da1481c5b5cd6c7ed1ed220bb63da784d3541a9e7fd6",
+      "reusedFrom": null
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+      "bytes": 836482,
+      "cueSha256": "59ff03f990aa37ef2dd2f56a1a5c702f015654497fc1a90d1c9f9e45b2b00d05",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "bytes": 816295,
+      "cueSha256": "7100cda3e5c36fddb46fa6e603c237ff6b068b787115b260969874113352f054",
+      "reusedFrom": 2
+    }
+  ],
+  "processing": "Each selected native PNG is copied unchanged into separate 1536x1024 frame files using setup, shallow, deep, bottom, deep, shallow. Setup and shallow are unmodified generated source PNGs. Deep uses the repaired-grip body with the frozen master rear shoe/contact and a bounded 0–7px vertical calf bridge described in composite/deep-composition.json. Bottom uses the fixed-contact composite, including its documented bounded ankle bridge, then imports only the 2,374-pixel generated lilac mask described in rigid-equipment/colour-only-composition.json. No whole-frame crop, resize, camera transform or rigid-equipment trial is applied to the selected sequence. Slots 5 and 6 reuse slots 3 and 2 with distinct ascent cues; standing completes on the actual 6-to-1 transition.",
+  "reviewFindings": [
+    "Frozen native draft uses setup, shallow descent, deep descent and bottom, then reuses the deep and shallow poses on ascent. The actual 6-to-1 transition completes standing; all four selected sources retain their original clean equipment outlines.",
+    "The original generated dumbbell projections vary across poses and do not establish a sub-percent equipment-invariance pass. Rigid-equipment trials were rejected for jagged/cutout outer contours and remain separate from the selected six-frame draft.",
+    "Documented local compositing preserves the full master rear shoe/contact and keeps the selected deep calf-to-ankle bridge connected, with no gap or doubled outline. A short angular shelf remains on the upper contour around x848–861, y599–604 (approximately ±3px): it is clearest at 3x enlargement and discernible natively when examined. This residual contour finding remains explicit; fixed support pixels do not establish anatomical or release approval.",
+    "The working front quadriceps retain the strongest purple and the rear thigh remains neutral. The bottom imports only the documented 2,374-pixel secondary lilac patch; its equipment and all pixels outside that patch match the selected contact source.",
+    "The 0, 0.33, 0.67, 1, 0.67, 0.33 progress values are authored beat positions, not measured percentages of joint range. Approximate thirds remain a movement plan rather than a claim of evenly measured depth.",
+    "Actual mobile playback in light and dark themes and reduced-motion/manual stepping remain unverified: compatible Chromium could not be provisioned. Native previews, structural audits and test discovery do not replace this evidence. This draft is not approved or active in production."
+  ],
+  "finalMobileEvidenceStatus": "blocked-browser-unavailable; three actual player checks not run",
+  "releaseApproved": false,
+  "selectedAt": "2026-10-05T17:16:57.279251+00:00",
+  "master": {
+    "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+  },
+  "cueSha256": "2702ce0ca3bdae249c329136587feaf0d6c0da750b08ea04de6c12faf9c66f6b",
+  "cueHashEncoding": "SHA-256 of UTF-8 JSON.stringify of the six ordered {label, cue} objects; labels omit the rendered slot suffix.",
+  "sourceProcessingRecords": [
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-composition.json",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/composition.json",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/colour-only-composition.json"
+  ],
+  "reviewEvidencePaths": [
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/equipment-review/report.json",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/README.md",
+    "docs/exercise-art/pilots/continuation-20261005/validation/browser-blocker.md",
+    "docs/exercise-art/pilots/continuation-20261005/validation/final-summary.json"
+  ],
+  "productionAssetsChanged": false
+}

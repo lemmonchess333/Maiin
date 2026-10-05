@@ -1,0 +1,25 @@
+{
+  "releaseApproved": false,
+  "fullTarget": {
+    "path": "bottom-edge-edit-target.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "ee9bbd06a29d6c39298855f8350ea80d4b80cf7c1c253463b691424b00f51bdf"
+  },
+  "context": {
+    "path": "bottom-edge-context-native.png",
+    "nativeExtract": [510, 515, 330, 280],
+    "resized": false,
+    "sha256": "4f0df9d45ac42af029f5cc8b0e2bde7bb487f908cda5eadc3d11eb4e53258b5a"
+  },
+  "allowedRepairRegions": [
+    [579, 647, 78, 92],
+    [687, 710, 66, 34]
+  ],
+  "strictlyProtect": [
+    "frozen equipment import mask",
+    "original hand foreground mask",
+    "bench and shoes",
+    "all pixels outside the declared local repair regions"
+  ]
+}

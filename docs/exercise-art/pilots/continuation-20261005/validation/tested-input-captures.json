@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-05T17:49:13.499361+00:00",
+  "status": "Exact tested inputs captured; unit retry exited 0 with unchanged inputs. Final test-count summary was not retained.",
+  "referenceSnapshot": "unit-stage-retry-start.json.txt",
+  "semanticHashEncoding": "SHA-256 of UTF-8 JSON with object keys sorted recursively, no insignificant whitespace, and array order/string/numeric/boolean/null values retained.",
+  "captures": [
+    {
+      "sourcePath": "docs/exercise-art/pilots/continuation-20261005/MANIFEST.json",
+      "rawCapturePath": "tested-manifest.json.txt",
+      "bytes": 5912,
+      "sha256": "794df1597b9a43f79a699da3ab3d9069ca8b2be038f2da4b3444b498615e7c64",
+      "jsonSemanticSha256": "5441537c83ed55bfad6cb23836ce05319c499a8202a1b8c42673a70dba298dd5"
+    },
+    {
+      "sourcePath": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/provenance.json",
+      "rawCapturePath": "tested-provenance.json.txt",
+      "bytes": 8727,
+      "sha256": "59f0d95f682cbd2ec295285b578a4c8da27d39cf5e5b1ce752b4e9b7fa222fdb",
+      "jsonSemanticSha256": "a1575ccbca436d0ee037de9af436e2e543cb9eb649917704cc057f861448199b"
+    },
+    {
+      "sourcePath": "/workspace/scratch/a307ac8d62f0/verification/final-verify-start.json",
+      "rawCapturePath": "final-verify-start.json.txt",
+      "readableView": "final-verify-start.json",
+      "bytes": 2110,
+      "sha256": "11237df541e4caec1fdc9d81c715d87c4322e41eae9cc6f99f91f57985e606eb"
+    },
+    {
+      "sourcePath": "/workspace/scratch/a307ac8d62f0/verification/unit-stage-retry-start.json",
+      "rawCapturePath": "unit-stage-retry-start.json.txt",
+      "readableView": "unit-stage-retry-start.json",
+      "bytes": 2770,
+      "sha256": "f33e4e2d59d0445cd39dca413d0f8af965894f90d3887d2102238be6538b67ef"
+    }
+  ],
+  "formattingRule": "Keep raw .txt captures unchanged. Readable JSON/Markdown views may be formatted. Verify native/code/plan/cue byte hashes and JSON semantic equivalence after formatting."
+}

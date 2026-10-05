@@ -1,0 +1,19 @@
+[
+  {
+    "catalogue": 152,
+    "inScope": 141,
+    "existingSets": 6,
+    "newlyApproved": 55,
+    "ownerReleasedWithFindings": 3,
+    "releasedBytes": 193614926,
+    "errors": []
+  },
+  {
+    "draftSets": 30,
+    "selectedFrames": 180,
+    "uniquePoses": 107,
+    "nativeBytes": 177181764,
+    "releaseApproved": false,
+    "errors": []
+  }
+]

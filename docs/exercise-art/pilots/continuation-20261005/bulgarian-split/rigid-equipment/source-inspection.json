@@ -1,0 +1,67 @@
+{
+  "releaseApproved": false,
+  "nativeCanvas": [1536, 1024],
+  "diagnosticDisplayScale": 3,
+  "sources": [
+    {
+      "name": "setup",
+      "file": "setup.png",
+      "near": [560, 470, 190, 130],
+      "far": [335, 470, 135, 115],
+      "path": "../sources/setup.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "name": "shallow",
+      "file": "shallow.png",
+      "near": [558, 493, 190, 130],
+      "far": [330, 490, 135, 115],
+      "path": "../sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "name": "deep",
+      "file": "deep-grip-repair.png",
+      "near": [567, 570, 190, 130],
+      "far": [312, 550, 135, 115],
+      "path": "../sources/deep-grip-repair.png",
+      "sha256": "5c084a014496a630b1c540f693bf58b3241854cf36f33863e6374651aaa37a3d",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "name": "bottom",
+      "file": "bottom.png",
+      "near": [565, 625, 200, 135],
+      "far": [282, 580, 135, 115],
+      "path": "../sources/bottom.png",
+      "sha256": "e2a7a41b2c30e2214ce3e7ab5164b5f02daa59d0494746efe66a4c06152653bb",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "name": "bottom-secondary",
+      "file": "bottom-secondary-repair.png",
+      "near": [565, 625, 200, 135],
+      "far": [282, 580, 135, 115],
+      "path": "../sources/bottom-secondary-repair.png",
+      "sha256": "5d95ba9a1ed62bc535ae14472eb42a964cf621c4713d713371c0b647f2f48ad1",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "name": "bottom-join",
+      "file": "bottom-join-repair.png",
+      "near": [565, 625, 200, 135],
+      "far": [282, 580, 135, 115],
+      "path": "../sources/bottom-join-repair.png",
+      "sha256": "9fa275180ef8f7e12bfcb52be12173828b3e423d210524f4b6d0e16a8d90abba",
+      "width": 1536,
+      "height": 1024
+    }
+  ]
+}

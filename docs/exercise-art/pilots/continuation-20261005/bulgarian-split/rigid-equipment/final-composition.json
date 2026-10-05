@@ -1,0 +1,96 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "rejected-rigid-contours-not-selected",
+  "selectionDecision": "Root selected bottom-contact-colour.png with original equipment because the rigid alternatives introduce unacceptable outer contours. No generated bridge pixels are used.",
+  "nativeCanvas": [1536, 1024],
+  "tint": {
+    "source": {
+      "path": "../sources/bottom-secondary-repair.png",
+      "sha256": "5d95ba9a1ed62bc535ae14472eb42a964cf621c4713d713371c0b647f2f48ad1"
+    },
+    "parent": {
+      "path": "../sources/bottom.png",
+      "sha256": "e2a7a41b2c30e2214ce3e7ab5164b5f02daa59d0494746efe66a4c06152653bb"
+    },
+    "region": [444, 622, 138, 42],
+    "mask": "masks/bottom-tint-import.png",
+    "method": "Native generated lilac RGB inside already-visible neutral hamstring anatomy, two-pixel dark-boundary guard, 4–6px outer feather. No anatomy is created with code."
+  },
+  "bridge": null,
+  "protect": {
+    "gear": "masks/bottom-imported.png",
+    "hands": "masks/bottom-foreground.png",
+    "supports": "../composite/protected-support-mask.png"
+  },
+  "results": [
+    {
+      "name": "setup",
+      "source": {
+        "path": "trials/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+      },
+      "output": {
+        "path": "poses/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+      },
+      "tintPixels": 0,
+      "bridgePixels": 0,
+      "outsideAllowedChannelDifferences": 0,
+      "protectedGearChannelDifferences": 0,
+      "protectedHandChannelDifferences": 0,
+      "protectedSupportChannelDifferences": 0
+    },
+    {
+      "name": "shallow",
+      "source": {
+        "path": "trials/shallow.png",
+        "sha256": "f25ca3cc1b94f605b4391bf3e6eefbbb24cf3a720e43b3d3df4924328ae2b6ee"
+      },
+      "output": {
+        "path": "poses/shallow.png",
+        "sha256": "f25ca3cc1b94f605b4391bf3e6eefbbb24cf3a720e43b3d3df4924328ae2b6ee"
+      },
+      "tintPixels": 0,
+      "bridgePixels": 0,
+      "outsideAllowedChannelDifferences": 0,
+      "protectedGearChannelDifferences": 0,
+      "protectedHandChannelDifferences": 0,
+      "protectedSupportChannelDifferences": 0
+    },
+    {
+      "name": "deep",
+      "source": {
+        "path": "trials/deep.png",
+        "sha256": "25b320dae212a98006d82d903385711b2ff5e509bb7271ff3d2313212a9a3b5b"
+      },
+      "output": {
+        "path": "poses/deep.png",
+        "sha256": "25b320dae212a98006d82d903385711b2ff5e509bb7271ff3d2313212a9a3b5b"
+      },
+      "tintPixels": 0,
+      "bridgePixels": 0,
+      "outsideAllowedChannelDifferences": 0,
+      "protectedGearChannelDifferences": 0,
+      "protectedHandChannelDifferences": 0,
+      "protectedSupportChannelDifferences": 0
+    },
+    {
+      "name": "bottom",
+      "source": {
+        "path": "trials/bottom.png",
+        "sha256": "a5cfd9631c2e8711bce292a7c19332fa6bba463f3be832e42f2482544fe41e65"
+      },
+      "output": {
+        "path": "poses/bottom.png",
+        "sha256": "bf11b79f9241377bbdcf1ed53bfc5e9d239774e343acdffb5b9390bb41d266ef"
+      },
+      "tintPixels": 2374,
+      "bridgePixels": 0,
+      "outsideAllowedChannelDifferences": 0,
+      "protectedGearChannelDifferences": 0,
+      "protectedHandChannelDifferences": 0,
+      "protectedSupportChannelDifferences": 0
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "checkedAt": "2026-10-05T17:58:28.429069+00:00",
+  "status": "passed",
+  "jsonFilesWithUnchangedParsedValues": 39,
+  "formatOnlyTestedJson": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/MANIFEST.json",
+      "testedSha256": "794df1597b9a43f79a699da3ab3d9069ca8b2be038f2da4b3444b498615e7c64",
+      "formattedSha256": "366f57741edc41dcf230083d7496d786daa6a6815947d760adbe7e9f76ae100b",
+      "jsonSemanticSha256": "5441537c83ed55bfad6cb23836ce05319c499a8202a1b8c42673a70dba298dd5",
+      "parsedValuesUnchanged": true
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/provenance.json",
+      "testedSha256": "59f0d95f682cbd2ec295285b578a4c8da27d39cf5e5b1ce752b4e9b7fa222fdb",
+      "formattedSha256": "c002096e40c46e16c8072fac82abbf18607a7263047168086066b35982252697",
+      "jsonSemanticSha256": "a1575ccbca436d0ee037de9af436e2e543cb9eb649917704cc057f861448199b",
+      "parsedValuesUnchanged": true
+    }
+  ],
+  "byteUnchangedTestedInputs": [
+    {
+      "path": "package.json",
+      "sha256": "e44a98803741224e0417638a787768ca6ad6007842f152b738bb26cf99f0ff01"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "a7a7d176c8d4118610b2f3ef09f4e1ddc0b1cb734f0a09a07a37a5587e1db7a8"
+    },
+    {
+      "path": "scripts/audit-form-drafts.ts",
+      "sha256": "d9370064cc5f99dea218546603c3651df8dac9d7cd7aae3b4df2106ac713b034"
+    },
+    {
+      "path": "e2e/fixtures/form-art.tsx",
+      "sha256": "ecea16339ce4d0856e6df0e040042fe2e32dca540132600f60ccbcc066b3f2db"
+    },
+    {
+      "path": "e2e/form-art-review.pw.ts",
+      "sha256": "5f46997605032eb030305010f8940d04f2fcac32a15796f9dbd84aa04aabfbd6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/plan.json",
+      "sha256": "b7eb6803579736b484ef467864bb529e05dc7547dfb009473683d72a994dd2f1"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+    },
+    {
+      "path": "vitest.config.ts",
+      "sha256": "056135544778a83de7af4a58bb9a05fc67a1be3620c19d79bbbb6f26edd80b8a"
+    },
+    {
+      "path": "scripts/run-unit-tests.mjs",
+      "sha256": "5c57df104a4f2da55cb7384847ec7660b00aac84d0a9f940ab80b29903cde76c"
+    },
+    {
+      "path": "scripts/deny-unit-network.cjs",
+      "sha256": "eeb905df6d711e84068cc7efa99c7faed011e1206cd4908b76b0e2a9dafd7a6c"
+    }
+  ],
+  "rawCaptureFilesVerified": [
+    "baseline-summary.json.txt",
+    "baseline-metadata.json",
+    "npm-ci-result.json",
+    "baseline-verify-start.json",
+    "baseline-verify-result.json",
+    "baseline-verify-start-status.txt",
+    "baseline-verify-end-status.txt",
+    "baseline-verify-end-tracked-diff.txt",
+    "browser-blocker.md.txt",
+    "playwright-environment.log.txt",
+    "playwright-environment-result.json",
+    "playwright-install-chromium.log.txt",
+    "playwright-install-chromium-result.json",
+    "playwright-install-headless-shell.log.txt",
+    "playwright-install-headless-shell-result.json",
+    "browser-fallback-apt-update.log.txt",
+    "browser-fallback-apt-update-result.json",
+    "tested-manifest.json.txt",
+    "tested-provenance.json.txt",
+    "final-verify-start.json.txt",
+    "unit-stage-retry-start.json.txt",
+    "unit-stage-retry-result.json.txt",
+    "unit-stage-retry.log.txt"
+  ],
+  "selectedNativeSourceHashesVerified": true,
+  "masterMatchesSetup": true,
+  "cueValuesUnchanged": true,
+  "additionalTestRunRequiredForFormatting": false,
+  "releaseApproved": false,
+  "scope": "Presentation normalization only. The successful unit result remains bound to its exact raw inputs, with semantic equivalence recorded for the two reformatted JSON files."
+}

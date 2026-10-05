@@ -1,0 +1,44 @@
+{
+  "releaseApproved": false,
+  "status": "selected-non-rigid-draft-with-equipment-variation-finding",
+  "method": "Copy the final fixed-contact bottom source, then import only the already reviewed 2374-pixel generated lilac mask. No rigid equipment layer, old-gear clearing, edge matte or anatomy bridge is used. Every pixel outside the tint mask is identical to the contact source.",
+  "nativeCanvas": [1536, 1024],
+  "sources": {
+    "contact": {
+      "path": "../composite/bottom.png",
+      "sha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f"
+    },
+    "colour": {
+      "path": "../sources/bottom-secondary-repair.png",
+      "sha256": "5d95ba9a1ed62bc535ae14472eb42a964cf621c4713d713371c0b647f2f48ad1"
+    }
+  },
+  "mask": {
+    "path": "masks/bottom-tint-import.png",
+    "sha256": "9fa9588c1267719d0a5a4bbe21e2a54365c8bf2c6066a126a3a1605525549051",
+    "region": [444, 622, 138, 42],
+    "derivation": "See finalize.mjs: neutral original hamstring anatomy + generated lilac, two-pixel dark-boundary guard, bounded 4–6px outer feather."
+  },
+  "output": {
+    "path": "bottom-contact-colour.png",
+    "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb"
+  },
+  "preservation": {
+    "importedPixels": 2374,
+    "changedPixels": 2374,
+    "outsideMaskChangedChannels": 0,
+    "protectedSupportPixels": 261183,
+    "protectedSupportChangedChannels": 0,
+    "gearBoxes": {
+      "near": [582, 650, 171, 94],
+      "far": [296, 596, 116, 86]
+    },
+    "nearGearChangedChannels": 0,
+    "farGearChangedChannels": 0
+  },
+  "rejectedAlternative": "Rigid poses under poses/ and trials/ have exact interior patches but unacceptable outer contours. They are not selected for the main six-frame draft.",
+  "remainingFindings": [
+    "Original generated dumbbell-head dimensions vary across the four native poses; the equipment invariance gate is not passed.",
+    "Actual mobile light/dark playback is unavailable in this environment; there is no release approval."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npx",
+    "eslint",
+    "scripts/audit-form-drafts.ts",
+    "e2e/fixtures/form-art.tsx",
+    "e2e/form-art-review.pw.ts",
+    "--max-warnings",
+    "0"
+  ],
+  "started_utc": "2026-10-05T17:18:19.337465+00:00",
+  "ended_utc": "2026-10-05T17:18:23.869700+00:00",
+  "elapsed_seconds": 4.53,
+  "exit_code": 0
+}

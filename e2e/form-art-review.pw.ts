@@ -86,7 +86,18 @@ const newConversions05: typeof import("../docs/exercise-art/pilots/new-conversio
       "utf8"
     )
   );
+const octoberFifth: typeof import("../docs/exercise-art/pilots/continuation-20261005/MANIFEST.json") =
+  JSON.parse(
+    readFileSync(
+      new URL(
+        "../docs/exercise-art/pilots/continuation-20261005/MANIFEST.json",
+        import.meta.url
+      ),
+      "utf8"
+    )
+  );
 const targets = new Set([
+  "bulgarian-split",
   "ab-wheel",
   "kettlebell-swing",
   "seated-calf-raise",
@@ -117,11 +128,19 @@ const sets = [
   ...newConversions03.completeDraftSets,
   ...newConversions04.completeDraftSets,
   ...newConversions05.completeDraftSets,
+  ...octoberFifth.completeDraftSets,
 ].filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
+const bulgarianSourcePins = {
+  setup: "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+  shallow: "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+  deep: "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+  bottom: "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+};
 const endpointHashes: Record<string, string> = {
+  "bulgarian-split": bulgarianSourcePins.setup,
   "ab-wheel":
     "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
   "kettlebell-swing":
@@ -253,7 +272,27 @@ for (const set of sets) {
           );
           expect(frame.progress).toBe(0.33);
         }
-        if (index === 5 && set.exerciseId !== "cuban-press") {
+        if (set.exerciseId === "bulgarian-split") {
+          if (index === 0) expect(frame.progress).toBe(0);
+          if (index === 1 || index === 5) {
+            // The last third of the ascent finishes on the real 6→1 loop.
+            expect(frame.sha256).toBe(bulgarianSourcePins.shallow);
+            expect(frame.progress).toBe(0.33);
+          }
+          if (index === 2 || index === 4) {
+            expect(frame.sha256).toBe(bulgarianSourcePins.deep);
+            expect(frame.progress).toBe(0.67);
+          }
+          if (index === 3) {
+            expect(frame.sha256).toBe(bulgarianSourcePins.bottom);
+            expect(frame.progress).toBe(1);
+          }
+        }
+        if (
+          index === 5 &&
+          set.exerciseId !== "cuban-press" &&
+          set.exerciseId !== "bulgarian-split"
+        ) {
           expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
           expect(frame.progress).toBe(0);
           expect(startPixels).toBeDefined();

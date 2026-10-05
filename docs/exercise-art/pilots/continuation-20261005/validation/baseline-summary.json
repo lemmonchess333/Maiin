@@ -1,0 +1,103 @@
+{
+  "commit": "0180a3043b8fe2eb26c345a00c0d7404d86530ed",
+  "branch": "codex/continue-exercise-art-oct05",
+  "node": "v24.19.0",
+  "npm": "11.9.0",
+  "node_requirement": ">=22.22.1",
+  "nvmrc": "22",
+  "timezone_environment": "Europe/Amsterdam",
+  "local_timezone": ["CET", "CEST"],
+  "install": {
+    "command": "npm ci",
+    "exit_code": 0,
+    "elapsed_seconds": 50.5,
+    "ended_utc": "2026-10-05T16:09:30.315667+00:00"
+  },
+  "verification": {
+    "command": "npm run verify",
+    "exit_code": 0,
+    "elapsed_seconds": 577.57,
+    "ended_utc": "2026-10-05T16:19:54.960812+00:00"
+  },
+  "gates": {
+    "lint": {
+      "status": "passed",
+      "command": "npm run lint"
+    },
+    "form_art": {
+      "status": "passed",
+      "command": "npm run check:form-art",
+      "catalogue": 152,
+      "in_scope": 141,
+      "existing_sets": 6,
+      "newly_approved": 55,
+      "owner_released_with_findings": 3,
+      "released_bytes": 193614926,
+      "errors": []
+    },
+    "form_drafts": {
+      "status": "passed",
+      "command": "npm run check:form-drafts",
+      "draft_sets": 29,
+      "selected_frames": 174,
+      "unique_poses": 103,
+      "native_bytes": 172295976,
+      "errors": []
+    },
+    "cycles": {
+      "status": "passed",
+      "command": "npm run check:cycles",
+      "files": 1970,
+      "cycles": 0,
+      "resolver_warnings": 6
+    },
+    "build": {
+      "status": "passed",
+      "command": "npm run build",
+      "vite_seconds": 26.59,
+      "modules_transformed": 4463,
+      "stamped_build": "0180a3043b8f"
+    },
+    "dist_size": {
+      "status": "passed",
+      "command": "npm run check:dist-size",
+      "chunks": 350,
+      "total_kb": 5939.5,
+      "budget_baseline_kb": 5937.7
+    },
+    "unit_tests": {
+      "status": "passed",
+      "command": "npm run test",
+      "vitest_version": "4.1.11",
+      "files_passed": 1041,
+      "files_skipped": 8,
+      "files_total": 1049,
+      "tests_passed": 11812,
+      "tests_skipped": 370,
+      "tests_total": 12182,
+      "failures": 0,
+      "duration_seconds": 385.01
+    }
+  },
+  "nonfatal_notices": [
+    "npm unknown environment config http-proxy",
+    "Madge resolver warnings: 6",
+    "Vite init.js script without type=module cannot be bundled",
+    "jsdom unimplemented scrollTo, HTMLMediaElement.play and HTMLCanvasElement.getContext methods"
+  ],
+  "tracked_files_modified_by_verification_agent": [],
+  "verify_started_with_tracked_tree_unchanged": true,
+  "untracked_at_start": ["docs/exercise-art/pilots/continuation-20261005/"],
+  "tracked_diff_at_final_snapshot": [],
+  "logs": {
+    "npm-ci.log": "/workspace/scratch/a307ac8d62f0/verification/npm-ci.log",
+    "baseline-verify.log": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify.log",
+    "baseline-metadata.json": "/workspace/scratch/a307ac8d62f0/verification/baseline-metadata.json",
+    "npm-ci-result.json": "/workspace/scratch/a307ac8d62f0/verification/npm-ci-result.json",
+    "baseline-verify-start.json": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify-start.json",
+    "baseline-verify-result.json": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify-result.json",
+    "baseline-verify-start-status.txt": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify-start-status.txt",
+    "baseline-verify-end-status.txt": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify-end-status.txt",
+    "baseline-verify-end-tracked-diff.txt": "/workspace/scratch/a307ac8d62f0/verification/baseline-verify-end-tracked-diff.txt"
+  }
+}

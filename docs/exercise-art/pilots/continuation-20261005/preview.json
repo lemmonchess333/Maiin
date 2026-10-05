@@ -1,0 +1,42 @@
+{
+  "kind": "standalone sequence preview",
+  "releaseApproved": false,
+  "actualPlayerEvidence": false,
+  "description": "Six selected PNGs shown in order at 1.2 seconds per frame, then looped 6-to-1. This downscaled GIF is not mobile light/dark, reduced-motion, loading or app-player evidence. Native selected PNGs remain unchanged.",
+  "dimensions": [768, 512],
+  "frameDurationMs": 1200,
+  "file": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split-preview.gif",
+  "sha256": "dbd422359a964ca02d8e3b497160a192736e0d7af971876eb8782e5b24340976",
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb"
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+    }
+  ]
+}

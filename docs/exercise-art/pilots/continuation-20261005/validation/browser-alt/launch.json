@@ -1,0 +1,20 @@
+{
+  "package": "@sparticuz/chromium",
+  "packageVersion": "148.0.0",
+  "playwrightVersion": "1.60.0",
+  "nodeVersion": "v24.19.0",
+  "platform": "linux",
+  "arch": "x64",
+  "args": [],
+  "launchMethod": "Normal package executablePath extraction; Playwright defaults plus alternate executablePath only.",
+  "recommendedPackageArgsUsed": false,
+  "note": "The package recommended args include disabling web security; those args are not applied. The intended blank launch uses Playwright defaults with only the executable changed; extraction failed before any launch was attempted.",
+  "originalConfigSha256": "b1fc4ac790ed9a5c1ae07e5c8903fce6127da53eddac219477e1629c219e4ab9",
+  "testSha256": "5f46997605032eb030305010f8940d04f2fcac32a15796f9dbd84aa04aabfbd6",
+  "status": "blank-launch-failed-stop",
+  "error": "Error: EINVAL: invalid argument, chown '/workspace/scratch/a307ac8d62f0/verification/browser-alt/tmp/fonts'",
+  "postAttemptIntegrity": {
+    "configUnchanged": true,
+    "reviewTestUnchanged": true
+  }
+}

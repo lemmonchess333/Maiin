@@ -1,0 +1,155 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "interior-checks-only-rigid-contours-rejected",
+  "method": "Exact integer-translated RGB comparisons of three visible equipment interiors. These checks establish shared observed texture and absence of scaling inside the declared patches. They do not certify the outer visible extent, the hidden rear head, or grip anatomy.",
+  "sourceMaster": {
+    "path": "../sources/setup.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+  },
+  "nativeCanvas": [1536, 1024],
+  "measurements": [
+    {
+      "pose": "setup",
+      "patch": "near-front-face",
+      "referenceBox": [585, 527, 18, 22],
+      "translatedBox": [585, 527, 18, 22],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "setup",
+      "patch": "near-rear-face",
+      "referenceBox": [704, 521, 20, 24],
+      "translatedBox": [704, 521, 20, 24],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "setup",
+      "patch": "far-front-face",
+      "referenceBox": [356, 515, 17, 25],
+      "translatedBox": [356, 515, 17, 25],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "near-front-face",
+      "referenceBox": [585, 527, 18, 22],
+      "translatedBox": [583, 550, 18, 22],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "near-rear-face",
+      "referenceBox": [704, 521, 20, 24],
+      "translatedBox": [702, 544, 20, 24],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "far-front-face",
+      "referenceBox": [356, 515, 17, 25],
+      "translatedBox": [355, 538, 17, 25],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "near-front-face",
+      "referenceBox": [585, 527, 18, 22],
+      "translatedBox": [593, 627, 18, 22],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "near-rear-face",
+      "referenceBox": [704, 521, 20, 24],
+      "translatedBox": [712, 621, 20, 24],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "far-front-face",
+      "referenceBox": [356, 515, 17, 25],
+      "translatedBox": [336, 593, 17, 25],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "near-front-face",
+      "referenceBox": [585, 527, 18, 22],
+      "translatedBox": [599, 682, 18, 22],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "near-rear-face",
+      "referenceBox": [704, 521, 20, 24],
+      "translatedBox": [718, 676, 20, 24],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "far-front-face",
+      "referenceBox": [356, 515, 17, 25],
+      "translatedBox": [305, 623, 17, 25],
+      "changedChannels": 0,
+      "maxChannelDifference": 0
+    }
+  ],
+  "fixedSupportPreservation": {
+    "pixels": 261183,
+    "changedChannels": 0
+  },
+  "geometry": {
+    "perFrameScaling": false,
+    "perFrameRotation": false,
+    "transforms": [
+      {
+        "pose": "setup",
+        "integerTranslations": {
+          "near": [0, 0],
+          "far": [0, 0]
+        }
+      },
+      {
+        "pose": "shallow",
+        "integerTranslations": {
+          "near": [-2, 23],
+          "far": [-1, 23]
+        }
+      },
+      {
+        "pose": "deep",
+        "integerTranslations": {
+          "near": [8, 100],
+          "far": [-20, 78]
+        }
+      },
+      {
+        "pose": "bottom",
+        "integerTranslations": {
+          "near": [14, 155],
+          "far": [-51, 108]
+        }
+      }
+    ],
+    "outerBoundaryUncertaintyPixelsPerEdge": 1
+  },
+  "limitations": [
+    "The initial original-image scanline chords in ../equipment-review/report.json were 67/69/67/73px horizontally. They were image-space chords, not calibrated physical widths.",
+    "A one-pixel uncertainty at each outer boundary is already greater than 1% for these approximately 67px objects. Visual chord measurements alone cannot certify a 1% gate.",
+    "Shared translated source layers support exact geometric invariance of those layers, but any uncleared old rim outside the mask would still enlarge the displayed object. Native contour review is required.",
+    "Original hands and knee remain foreground. Fully hidden shaft/head geometry is not directly observed or assigned a measured width.",
+    "Both attempted localized generated repairs changed pose/scale. The rigid variants are rejected, and the selected bottom-contact-colour.png keeps the original equipment and its measured variation."
+  ]
+}

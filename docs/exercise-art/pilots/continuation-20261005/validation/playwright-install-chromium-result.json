@@ -1,0 +1,7 @@
+{
+  "command": "npx playwright install chromium",
+  "started_utc": "2026-10-05T16:52:00.091732+00:00",
+  "ended_utc": "2026-10-05T16:53:11.283275+00:00",
+  "elapsed_seconds": 71.19,
+  "exit_code": 1
+}

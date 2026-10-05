@@ -1,0 +1,37 @@
+{
+  "command": "npm run verify",
+  "started_utc": "2026-10-05T17:18:54.750283+00:00",
+  "status": "interrupted-with-unknown-exit",
+  "exit_code": null,
+  "exit_code_meaning": "No wrapper completion result was recovered. Do not report the combined command as passed or failed.",
+  "lost_session_id": 48622,
+  "recovery_errors": [
+    "exec-server transport disconnected; failed to resume exec-server session: recovery timed out after 25s",
+    "Unknown process id 48622"
+  ],
+  "last_log_write_utc": "2026-10-05T17:23:56.300515+00:00",
+  "last_log_bytes": 47814,
+  "completion_result_present": false,
+  "liveness_observation": "final-run-liveness.json",
+  "completed_stages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size"
+  ],
+  "unfinished_stage": "npm run test started; no authoritative unit totals or completion from the interrupted run.",
+  "retry_command": [
+    "npm",
+    "run",
+    "test",
+    "--",
+    "--maxWorkers=2",
+    "--reporter=verbose"
+  ],
+  "retry_outcome": "Separate unit-stage retry exited 0 with unchanged inputs; see unit-stage-retry-summary.json. The original combined-command exit remains unknown.",
+  "frozen_input_snapshot": "final-verify-start.json.txt",
+  "partial_log": "final-verify.log.txt",
+  "original_scratch_log": "/workspace/scratch/a307ac8d62f0/verification/final-verify.log"
+}

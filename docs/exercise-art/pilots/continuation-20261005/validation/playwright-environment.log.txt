@@ -1,0 +1,16 @@
+{
+  "playwrightVersion": "1.60.0",
+  "expectedChromiumExecutable": "/root/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome",
+  "executableExists": false,
+  "PLAYWRIGHT_BROWSERS_PATH": null,
+  "PW_CHROMIUM": null
+}
+browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝

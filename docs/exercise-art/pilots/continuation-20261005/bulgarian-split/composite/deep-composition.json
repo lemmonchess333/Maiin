@@ -1,0 +1,95 @@
+{
+  "exerciseId": "bulgarian-split",
+  "pose": "deep",
+  "method": "Native fixed master rear shoe/contact and the deep source's own calf bridge. Only the bounded calf bridge aligns vertically by 0–7px. A diagonal blend follows the differing upper/lower contour meeting points; original body and equipment elsewhere are preserved. No bottom anatomy is used.",
+  "inputs": {
+    "master": {
+      "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+    },
+    "moving": {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/deep-grip-repair.png",
+      "sha256": "5c084a014496a630b1c540f693bf58b3241854cf36f33863e6374651aaa37a3d"
+    }
+  },
+  "width": 1536,
+  "height": 1024,
+  "bridgeRegion": [834, 578, 26, 106],
+  "supportRegion": [848, 530, 172, 142],
+  "topContourProtection": [848, 578, 12, 24],
+  "topContourRationale": "The aligned deep calf and master upper outline meet around x848,y600. Retaining the master background and upper 2px of contour here suppresses the donor's small protruding point while leaving the actual shoe and deep body elsewhere unchanged.",
+  "fullyFixedFromX": 860,
+  "diagonalJoin": {
+    "fixedStartX": "848 + 6*smoothstep(clamp((y-600)/36,0,1))",
+    "blendWidthPixels": 6,
+    "fullyFixedFromXRange": [854, 860],
+    "reason": "The upper calf approaches the master sooner than its lower contour; a vertical join left a visible lower step."
+  },
+  "anatomyGuard": {
+    "region": [824, 568, 40, 128],
+    "minimumChannel": 140,
+    "maximumChannelSpread": 40,
+    "dilationPixels": 3
+  },
+  "shift": {
+    "minimumDy": -7,
+    "maximumDy": 0,
+    "rampStartX": 834,
+    "fullyShiftedFromX": 848,
+    "dx": 0
+  },
+  "fixedLayer": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-fixed-layer-mask.png",
+    "sha256": "cc2571331b3879e52d49a94e643b7fd32f32e855d165f7c702bc5ea416d8d1b9",
+    "meaning": "0=moving/bridge, 255=frozen master, intermediate values use the recorded 8-bit alpha blend"
+  },
+  "bridgeLayer": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-bridge-mask.png",
+    "sha256": "1934f88f951839dcde08956d9e6210832be36d7272fc88cb0d81aa147b5dbac2"
+  },
+  "output": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+    "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+  },
+  "preservation": {
+    "fixedPixels": 23384,
+    "untouchedMovingPixels": 1547763,
+    "joinPixels": 1717,
+    "fixedChannelDifferences": 0,
+    "untouchedMovingChannelDifferences": 0,
+    "outsideDeclaredRegionsChannelDifferences": 0
+  },
+  "reviewStatus": "contact-candidate-with-residual-upper-contour-finding",
+  "rejectedTrial": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-before-diagonal-join.png",
+    "sha256": "c6fde8063239070f0d1d2abb449f2ba748c555243e7649ec0f5415a87ccaf4d7",
+    "finding": "A vertical 5px blend with 4px upward bridge alignment retained a visible lower ankle step."
+  },
+  "previousTopContourCandidate": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-before-top-contour-refinement.png",
+    "sha256": "006e0cb55994a31b1eb3cc90a302c58a8c54d7e89e2b58aa6090382abf6f865f",
+    "finding": "Diagonal blend removed the lower step but retained a small upper-contour protrusion near x850,y600."
+  },
+  "releaseApproved": false,
+  "limitations": [
+    "The raw deep shoe differs in its full outline; the laces patch translation alone does not describe that redraw.",
+    "Exact fixed pixels do not establish a continuous anatomical join, stable gear, correct highlighting or acceptable playback."
+  ],
+  "qa": {
+    "crop": { "left": 810, "top": 550, "width": 210, "height": 145 },
+    "scale": 3,
+    "order": ["frozen master", "deep grip source", "candidate"],
+    "productionPixelsResized": false
+  },
+  "nativeVisualReview": {
+    "verifiedOutputSha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+    "fullImageInspected": true,
+    "enlargedJoinInspected": true,
+    "calfContinuity": "One connected calf/ankle shape, with no open gap, doubled outline or detached bridge.",
+    "shoePreservation": "Visually retains master heel, collar, tongue, laces, toe, sole and bench contact; displaced generated upper outline is gone.",
+    "residualFinding": "Short angular shelf on upper calf-to-ankle contour, clearest at 3x and discernible natively when looking at the junction. Lower contour remains continuous.",
+    "approximateResidualBounds": [848, 599, 13, 5],
+    "coordinateUncertaintyPixels": 3,
+    "fullSequenceApproved": false
+  }
+}

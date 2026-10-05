@@ -1,0 +1,17 @@
+{
+  "exit_code": 100,
+  "timed_out": false,
+  "command": [
+    "apt-get",
+    "update",
+    "-o",
+    "Acquire::Retries=0",
+    "-o",
+    "Acquire::http::Timeout=10",
+    "-o",
+    "Acquire::https::Timeout=10"
+  ],
+  "started_utc": "2026-10-05T17:03:32.385107+00:00",
+  "ended_utc": "2026-10-05T17:03:32.502287+00:00",
+  "elapsed_seconds": 0.12
+}

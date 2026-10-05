@@ -1,0 +1,17 @@
+{
+  "command": [
+    "npx",
+    "playwright",
+    "test",
+    "--config",
+    "playwright.form-art.config.ts",
+    "e2e/form-art-review.pw.ts",
+    "--grep",
+    "bulgarian-split:",
+    "--list"
+  ],
+  "started_utc": "2026-10-05T17:18:19.353065+00:00",
+  "ended_utc": "2026-10-05T17:18:22.731270+00:00",
+  "elapsed_seconds": 3.38,
+  "exit_code": 0
+}

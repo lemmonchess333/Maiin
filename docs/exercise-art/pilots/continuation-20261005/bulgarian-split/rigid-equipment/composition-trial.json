@@ -1,0 +1,196 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "rejected-rigid-contours-not-selected",
+  "method": "Fixed master equipment pixels, integer translations only. Original generated hand and far-knee foreground masks are preserved. No global scaling or camera change. A fixed one-pixel white edge matte is normalized to alpha before translation.",
+  "nativeCanvas": [1536, 1024],
+  "sourcePolygons": {
+    "near": [
+      [
+        [590, 498],
+        [623, 498],
+        [632, 506],
+        [643, 522],
+        [643, 550],
+        [633, 569],
+        [622, 576],
+        [592, 576],
+        [583, 568],
+        [574, 552],
+        [574, 521],
+        [581, 508]
+      ],
+      [
+        [683, 498],
+        [721, 498],
+        [734, 519],
+        [735, 545],
+        [728, 562],
+        [715, 570],
+        [699, 568],
+        [685, 555],
+        [680, 542],
+        [681, 512]
+      ],
+      [
+        [635, 521],
+        [693, 521],
+        [694, 542],
+        [636, 542]
+      ]
+    ],
+    "far": [
+      [
+        [349, 490],
+        [417, 490],
+        [417, 566],
+        [349, 566]
+      ],
+      [
+        [436, 491],
+        [465, 491],
+        [471, 510],
+        [457, 549],
+        [430, 552],
+        [429, 517]
+      ],
+      [
+        [407, 513],
+        [450, 513],
+        [450, 539],
+        [407, 539]
+      ]
+    ]
+  },
+  "oldHeadRois": {
+    "setup": {
+      "near": [
+        [574, 498, 70, 80],
+        [679, 498, 59, 73]
+      ],
+      "far": [
+        [348, 490, 70, 76],
+        [429, 489, 43, 63]
+      ]
+    },
+    "shallow": {
+      "near": [
+        [572, 521, 71, 78],
+        [677, 520, 58, 72]
+      ],
+      "far": [
+        [347, 512, 72, 77],
+        [428, 512, 37, 57]
+      ]
+    },
+    "deep": {
+      "near": [
+        [582, 598, 69, 77],
+        [688, 597, 57, 74]
+      ],
+      "far": [
+        [328, 567, 70, 75],
+        [411, 568, 36, 70]
+      ]
+    },
+    "bottom": {
+      "near": [
+        [582, 653, 75, 80],
+        [688, 653, 56, 75]
+      ],
+      "far": [
+        [298, 598, 68, 77],
+        [378, 598, 40, 66]
+      ]
+    }
+  },
+  "results": [
+    {
+      "name": "setup",
+      "input": {
+        "path": "../sources/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+      },
+      "shifts": {
+        "near": [0, 0],
+        "far": [0, 0]
+      },
+      "output": {
+        "path": "trials/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+      },
+      "editedPixels": 0,
+      "outsideChanged": 0,
+      "protectedChanged": 0,
+      "releaseApproved": false
+    },
+    {
+      "name": "shallow",
+      "input": {
+        "path": "../sources/shallow.png",
+        "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+      },
+      "shifts": {
+        "near": [-2, 23],
+        "far": [-1, 23]
+      },
+      "output": {
+        "path": "trials/shallow.png",
+        "sha256": "f25ca3cc1b94f605b4391bf3e6eefbbb24cf3a720e43b3d3df4924328ae2b6ee"
+      },
+      "editedPixels": 13792,
+      "outsideChanged": 0,
+      "protectedChanged": 0,
+      "releaseApproved": false
+    },
+    {
+      "name": "deep",
+      "input": {
+        "path": "../sources/deep-grip-repair.png",
+        "sha256": "5c084a014496a630b1c540f693bf58b3241854cf36f33863e6374651aaa37a3d"
+      },
+      "shifts": {
+        "near": [8, 100],
+        "far": [-20, 78]
+      },
+      "output": {
+        "path": "trials/deep.png",
+        "sha256": "25b320dae212a98006d82d903385711b2ff5e509bb7271ff3d2313212a9a3b5b"
+      },
+      "editedPixels": 13858,
+      "outsideChanged": 0,
+      "protectedChanged": 0,
+      "releaseApproved": false
+    },
+    {
+      "name": "bottom",
+      "input": {
+        "path": "../composite/bottom.png",
+        "sha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f"
+      },
+      "shifts": {
+        "near": [14, 155],
+        "far": [-51, 108]
+      },
+      "output": {
+        "path": "trials/bottom.png",
+        "sha256": "a5cfd9631c2e8711bce292a7c19332fa6bba463f3be832e42f2482544fe41e65"
+      },
+      "editedPixels": 14191,
+      "outsideChanged": 0,
+      "protectedChanged": 0,
+      "releaseApproved": false
+    }
+  ],
+  "nativeFindings": [
+    "Both grips remain visibly attached; no extra equipment or detached hand was introduced.",
+    "Shallow/deep near-head edges are harder and more jagged than setup.",
+    "Bottom shows a stepped upper-left near-head boundary, a residual line below its front head, and a flat black cutout beneath its rear head.",
+    "Narrowing background clearing does not remove the remaining contour defect. The original equipment is selected in bottom-contact-colour.png instead."
+  ],
+  "limitations": [
+    "Visible master equipment is sufficient to preserve its observed faces, not recover hidden shaft or rear-head geometry.",
+    "Interior RGB equality does not certify equipment silhouettes or anatomy at the cleared edge.",
+    "Two image-generated local repair attempts changed pose/scale and were rejected without importing their pixels."
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "capturedAt": "2026-10-05T17:06:47.236249+00:00",
+  "scope": "Immutable raw baseline/browser captures. Readable views may be formatted; original byte hashes refer to raw .txt captures where stated. Final selected-artwork checks are recorded separately.",
+  "credentialPatternScan": "No credential patterns found in the copied evidence.",
+  "omitted": "Full repetitive baseline npm-ci/verify logs remain at the original capture paths; their summaries and result records are preserved here.",
+  "files": [
+    {
+      "path": "baseline-summary.json.txt",
+      "bytes": 3561,
+      "sha256": "251c1c121a78c94970db6fd94aca61c47e56566c18cbeef288b57da71568031f",
+      "originalCaptureName": "baseline-summary.json",
+      "readableView": "baseline-summary.json"
+    },
+    {
+      "path": "baseline-metadata.json",
+      "bytes": 710,
+      "sha256": "5bc64ecda9e12ebaab862e019b0c778fa8a576cfeab988bd9b79271b971ccad0"
+    },
+    {
+      "path": "npm-ci-result.json",
+      "bytes": 122,
+      "sha256": "94b65c8b7ffcb4a5a5c93eaa44ac4537c8aba2f9f8ac7b04c14eb6f3a9840982"
+    },
+    {
+      "path": "baseline-verify-start.json",
+      "bytes": 247,
+      "sha256": "4c95da6e8755e09211a699573de3c5a397c563cb8d505aac9cb39fef57dd638a"
+    },
+    {
+      "path": "baseline-verify-result.json",
+      "bytes": 132,
+      "sha256": "3a4ef1bf99e2e1a14c50c01985bf0d9b35385712890b3229303bb0c0c304eec3"
+    },
+    {
+      "path": "baseline-verify-start-status.txt",
+      "bytes": 88,
+      "sha256": "ab11f5ff701eaa5c927c14dcfd4f58451e0e58fa6337ada5e1d597b8f29e172d"
+    },
+    {
+      "path": "baseline-verify-end-status.txt",
+      "bytes": 134,
+      "sha256": "e746b24df8afbe2b60a4bc1324b04b272e380f08540a046ae75a7be16659e79c"
+    },
+    {
+      "path": "baseline-verify-end-tracked-diff.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "browser-blocker.md.txt",
+      "bytes": 7028,
+      "sha256": "e27927ee7f0e292322f5bd0d5b603620be31b28501b1ac381b0a0b6fb31f77db",
+      "originalCaptureName": "browser-blocker.md",
+      "readableView": "browser-blocker.md"
+    },
+    {
+      "path": "playwright-environment.log.txt",
+      "bytes": 1154,
+      "sha256": "12aae05f90cef245afdb97703d46fc4dfd598272e3534f2e432d9ed16403f109",
+      "originalCaptureName": "playwright-environment.log"
+    },
+    {
+      "path": "playwright-environment-result.json",
+      "bytes": 222,
+      "sha256": "183fa90ba8ffcecd8bf610fd8d49b7a3b39c5c688f572594feeb71eb06514205"
+    },
+    {
+      "path": "playwright-install-chromium.log.txt",
+      "bytes": 4952,
+      "sha256": "ba3ae5abbc70cf7c62f5993b8ad2dffd0a7ba1f0155fa3b3e2371af0b3261ff1",
+      "originalCaptureName": "playwright-install-chromium.log"
+    },
+    {
+      "path": "playwright-install-chromium-result.json",
+      "bytes": 201,
+      "sha256": "225216120579a0db1f3fa6721032443a5a84f8c71632e8ae67494f30f3a5723f"
+    },
+    {
+      "path": "playwright-install-headless-shell.log.txt",
+      "bytes": 5135,
+      "sha256": "82ac054e3c193ed2a8219cea04a327d82dfb1093f23df08577acff399b6c4aed",
+      "originalCaptureName": "playwright-install-headless-shell.log"
+    },
+    {
+      "path": "playwright-install-headless-shell-result.json",
+      "bytes": 214,
+      "sha256": "978b647dcb21d12a2959fc3b1b00084abdb480161c37696d617c297699cc0cc4"
+    },
+    {
+      "path": "browser-fallback-apt-update.log.txt",
+      "bytes": 1021,
+      "sha256": "1c5b6b1c143c1ee03b82d05413fad9ea7c3daaa2c7fe89a2faf1aaf1574ea8fb",
+      "originalCaptureName": "browser-fallback-apt-update.log"
+    },
+    {
+      "path": "browser-fallback-apt-update-result.json",
+      "bytes": 347,
+      "sha256": "c4b7435f7ab73196c8fd3075dd229a054fde41184c300f3e2f9d54f1ae7d3070"
+    }
+  ],
+  "logPackaging": "Raw .log captures are named .log.txt so ordinary git add preserves them despite the repository *.log ignore rule. Bytes and hashes are unchanged."
+}

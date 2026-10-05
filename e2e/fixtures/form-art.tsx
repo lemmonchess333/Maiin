@@ -19,6 +19,7 @@ import newConversions02 from "../../docs/exercise-art/pilots/new-conversions-02-
 import newConversions03 from "../../docs/exercise-art/pilots/new-conversions-03-20261003/MANIFEST.json";
 import newConversions04 from "../../docs/exercise-art/pilots/new-conversions-04-20261003/MANIFEST.json";
 import newConversions05 from "../../docs/exercise-art/pilots/new-conversions-05-20261003/MANIFEST.json";
+import octoberFifth from "../../docs/exercise-art/pilots/continuation-20261005/MANIFEST.json";
 
 const batchDrafts = Object.fromEntries(
   [
@@ -31,6 +32,7 @@ const batchDrafts = Object.fromEntries(
     ...newConversions03.completeDraftSets,
     ...newConversions04.completeDraftSets,
     ...newConversions05.completeDraftSets,
+    ...octoberFifth.completeDraftSets,
   ].map((set) => [
     `${set.exerciseId} (draft)`,
     {

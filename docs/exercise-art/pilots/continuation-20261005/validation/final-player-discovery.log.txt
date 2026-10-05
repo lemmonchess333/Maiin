@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+Listing tests:
+  form-art-review.pw.ts:198:5 › bulgarian-split: six frames and loop in dark
+  form-art-review.pw.ts:198:5 › bulgarian-split: six frames and loop in light
+  form-art-review.pw.ts:369:3 › bulgarian-split: reduced motion stays still and permits stepping
+Total: 3 tests in 1 file

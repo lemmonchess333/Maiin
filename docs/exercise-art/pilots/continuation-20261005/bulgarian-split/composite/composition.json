@@ -1,0 +1,183 @@
+{
+  "method": "Native RGB fixed-contact composition with localized generated ankle bridges. Only the generated front-ankle layer receives a documented 0–8px tapered horizontal translation using linear horizontal sampling. No whole-pose, camera or support transform. Fixed and untouched moving regions are checked channel-by-channel.",
+  "authorizationSource": "docs/exercise-art/pilots/shrugs-composite-20261003/README.md records the user-authorized fixed-contact compositing workflow; this continuation preserves source pixels and review controls.",
+  "reference": {
+    "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+  },
+  "movingSource": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/bottom-repair-multiregion.png",
+    "sha256": "e2a7a41b2c30e2214ce3e7ab5164b5f02daa59d0494746efe66a4c06152653bb"
+  },
+  "localizedAnatomySource": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/bottom-join-repair.png",
+    "sha256": "9fa275180ef8f7e12bfcb52be12173828b3e423d210524f4b6d0e16a8d90abba"
+  },
+  "width": 1536,
+  "height": 1024,
+  "fixedBenchRectangles": [
+    [809, 640, 591, 91],
+    [760, 690, 665, 295]
+  ],
+  "frontSupport": {
+    "region": [320, 820, 260, 180],
+    "joinStartY": 820,
+    "fullyFixedFromY": 850
+  },
+  "rearSupport": {
+    "region": [832, 530, 180, 137],
+    "joinStartX": 832,
+    "fullyFixedFromX": 848
+  },
+  "calfOcclusionGuard": {
+    "roi": [720, 590, 190, 200],
+    "seed": [795, 685],
+    "minimumRgbChannel": 140,
+    "maximumChannelSpread": 30,
+    "eightConnected": true,
+    "dilationPixels": 3,
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/moving-calf-guard.png",
+    "sha256": "37de8d3d0cd2ecf1b2bd8eedd7c6f0e542d4555e14ff9e0bc32d2621542e56d1",
+    "note": "Preserves the original moving calf and its 3px contour guard where it occludes the left bench edge. Isolated bench bolts are not in the connected component."
+  },
+  "exactLayerMask": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/fixed-layer-mask.png",
+    "sha256": "579fd5c0904d32fa71440f14e71f1f59e141db461dcf112c4b25dd619d36ddc6",
+    "meaning": "0=original moving RGB, 255=frozen master RGB; intermediate integers are the exact alpha used in round((moving*(255-alpha)+fixed*alpha)/255)."
+  },
+  "localizedRepairImport": {
+    "frontRegion": [426, 768, 125, 120],
+    "frontRamp": { "fullFromY": 788, "taperStartsY": 882, "zeroFromY": 888 },
+    "rearRegion": [828, 578, 38, 99],
+    "rearRamp": { "fullFromX": 833, "taperStartsX": 860, "zeroFromX": 866 },
+    "frontShoeUpperEdge": [
+      [320, 1024],
+      [369, 953],
+      [372, 927],
+      [386, 917],
+      [407, 904],
+      [429, 889],
+      [450, 880],
+      [460, 873],
+      [466, 859],
+      [471, 855],
+      [479, 853],
+      [485, 855],
+      [490, 860],
+      [492, 874],
+      [497, 878],
+      [505, 882],
+      [513, 884],
+      [519, 883],
+      [523, 879],
+      [526, 873],
+      [528, 862],
+      [533, 860],
+      [538, 863],
+      [542, 873],
+      [547, 902],
+      [551, 938],
+      [580, 1024]
+    ],
+    "frontTranslation": {
+      "maximumDx": 8,
+      "rampStartY": 778,
+      "fullFromY": 840,
+      "dy": 0
+    },
+    "frozenCollarSurroundings": [537, 848, 20, 48],
+    "finalLineworkRefinement": {
+      "ankleBackgroundClearance": [476, 852, 6, 5],
+      "fixedTongueEdgeProtection": [488, 860, 13, 20],
+      "explanation": "The 6x5 clearance replaces only old ankle/background above the frozen tongue crest with the existing +8px aligned generated anatomy. The 13x20 protection retains the actual frozen tongue boundary and adjacent pixels, suppressing the donor's parallel contour. No new image generation or body redraw.",
+      "changedPixels": 182,
+      "differencesOutsideDeclaredRefinements": 0,
+      "previousOutput": {
+        "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom-before-prong-review.png",
+        "sha256": "be44d181e77addc57575ed6f516dff7371b97b00b655ebf678f28b50184913dc"
+      }
+    },
+    "regionRationale": "Front expands the prompted box by 4px left, 2px above and 7px below to include antialiasing and join within the ankle opening; frozen shoe protection excludes its tongue and collar. Rear is narrowed to x828–866 where original/repair contours agree, avoiding the generator's reshaped calf at x780 and lower knee.",
+    "repairImportMask": {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/repair-import-mask.png",
+      "sha256": "6749baf63007dde0e10cc1735a65c6bf3c8e85d5dad46035a6440ed0639f4bd0"
+    },
+    "protectedSupportMask": {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/protected-support-mask.png",
+      "sha256": "56fd230dcf682d61c22dd8014c684b23cd543f0e015e6f34227431ed106b5646"
+    },
+    "operation": "First build the fixed/moving preliminary image. Then blend only the declared repair mask against it; generated front-ankle RGB is sampled at x-8*smooth((y-778)/62), y with linear interpolation between adjacent horizontal pixels. Protected support pixels and collar surroundings always equal the frozen master. All other pixels remain the preliminary image exactly."
+  },
+  "previousRejectedOutput": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom-before-join.png",
+    "sha256": "c1ab2ee5961e47667d93ecf44a148b13a013b933dfa17949f5c5fcce26c82290"
+  },
+  "rejectedUntranslatedRepair": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom-join-untranslated.png",
+    "sha256": "8baa8c60c51bf2b4cd5aa46443088ff77f5035d6245111f7a529f0b7ff3d0f65",
+    "finding": "Protected unshifted import retains a duplicated tongue edge because generation moved the front collar left of the frozen shoe."
+  },
+  "output": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/bottom.png",
+    "sha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f"
+  },
+  "preservation": {
+    "fixedPixels": 275675,
+    "movingPixels": 1277178,
+    "joinPixels": 20011,
+    "fixedChannelDifferences": 0,
+    "movingChannelDifferences": 0,
+    "protectedSupportPixels": 261183,
+    "protectedSupportChannelDifferences": 0,
+    "outsideRepairChannelDifferences": 0,
+    "outsideDeclaredRepairPixels": 1554102,
+    "outsideDeclaredRepairChannelDifferences": 0
+  },
+  "reviewStatus": "contact-candidate-awaiting-full-movement-review",
+  "releaseApproved": false,
+  "nativeVisualReview": {
+    "fullCanvasInspected": true,
+    "enlargedJoinCropsInspected": true,
+    "independentReview": {
+      "verifiedOutputSha256": "97ede66ab06894d36c2712222aba62a997c0b0a63c82e7b09903eef1956ec32f",
+      "localVerdict": "continuity-and-targeted-tongue-corrections-pass",
+      "resolvedPriorFrontLineEndsApproximate": [
+        [479, 855],
+        [493, 872]
+      ],
+      "coordinateUncertaintyPixels": 4,
+      "finding": "Both targeted dark artifacts are resolved in the native frame and updated ankle crop. The upper copied black fragment is gone; the lower tongue edge is continuous without the second donor contour. A faint pale shading transition remains immediately behind the tongue enlarged, but does not read as an open seam or detached bridge at native size. Rear join is clean. This does not approve movement, overall artwork, color or equipment."
+    },
+    "frontAnkle": {
+      "outcome": "continuous-join-in-local-native-review",
+      "problemBounds": [444, 812, 85, 40],
+      "suggestedGenerationContext": [420, 770, 140, 125],
+      "finding": "The generated front-ankle bridge, bounded 0–8px local horizontal alignment and frozen collar-surroundings mask remove the earlier cut silhouette and duplicated shoe edge. The front shoe stays exactly on the frozen support layer. This is local join review only; full technique, proportions and playback remain unapproved."
+    },
+    "rearAnkle": {
+      "outcome": "continuous-join-in-local-native-review",
+      "problemBounds": [832, 595, 16, 20],
+      "suggestedGenerationContext": [795, 565, 107, 110],
+      "finding": "The narrow x828–866 generated bridge removes the former step while retaining the original calf to its left and the frozen ankle/shoe to its right. The larger generated calf/knee redraw is not imported. Full movement and equipment review remain separate."
+    },
+    "requiredNextStep": "Review the completed movement with the selected deep, highlighting and equipment candidates. This pinned contact candidate does not approve later body/equipment changes or release artwork. Rebuild and recheck evidence if any selected source or composition changes."
+  },
+  "limitations": [
+    "Only the documented generated ankle regions are imported. The original body and dumbbells remain the pinned multiregion source; separate later color or rigid-equipment edits are not included.",
+    "Exact support pixels do not establish a clean anatomical join, correct proportions, technique, grips or a smooth six-frame loop."
+  ],
+  "qa": {
+    "crops": {
+      "front-ankle": { "left": 340, "top": 790, "width": 240, "height": 180 },
+      "rear-ankle": { "left": 795, "top": 530, "width": 215, "height": 165 }
+    },
+    "displayScale": 2,
+    "order": [
+      "frozen master",
+      "previous rejected composite",
+      "generated repair",
+      "localized import candidate"
+    ],
+    "candidatePixelsResized": false
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "command": ["npm", "run", "check:form-drafts"],
+  "started_utc": "2026-10-05T17:18:19.318092+00:00",
+  "ended_utc": "2026-10-05T17:18:22.080102+00:00",
+  "elapsed_seconds": 2.76,
+  "exit_code": 0
+}

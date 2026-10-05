@@ -1,0 +1,148 @@
+{
+  "scope": "Read-only recursive descendants by host PPID from npm22180, with no argument/environment collection.",
+  "root_host_pid": 22180,
+  "sample_seconds": 5.0,
+  "first": {
+    "observed_utc": "2026-10-05T17:41:20.498030+00:00",
+    "processes": {
+      "22180": {
+        "pid": 22180,
+        "ppid": 22179,
+        "name": "npm run test --",
+        "state": "S",
+        "elapsed_seconds": 404.7,
+        "cpu_ticks": 33,
+        "rss_bytes": 53125120
+      },
+      "22193": {
+        "pid": 22193,
+        "ppid": 22180,
+        "name": "sh",
+        "state": "S",
+        "elapsed_seconds": 404.4,
+        "cpu_ticks": 0,
+        "rss_bytes": 655360
+      },
+      "22194": {
+        "pid": 22194,
+        "ppid": 22193,
+        "name": "MainThread",
+        "state": "S",
+        "elapsed_seconds": 404.4,
+        "cpu_ticks": 12,
+        "rss_bytes": 38662144
+      },
+      "22202": {
+        "pid": 22202,
+        "ppid": 22194,
+        "name": "MainThread",
+        "state": "S",
+        "elapsed_seconds": 404.3,
+        "cpu_ticks": 2557,
+        "rss_bytes": 377544704
+      },
+      "22210": {
+        "pid": 22210,
+        "ppid": 22202,
+        "name": "esbuild",
+        "state": "S",
+        "elapsed_seconds": 403.9,
+        "cpu_ticks": 987,
+        "rss_bytes": 19701760
+      },
+      "24254": {
+        "pid": 24254,
+        "ppid": 22202,
+        "name": "MainThread",
+        "state": "R",
+        "elapsed_seconds": 0.6,
+        "cpu_ticks": 73,
+        "rss_bytes": 78372864
+      },
+      "24262": {
+        "pid": 24262,
+        "ppid": 22202,
+        "name": "MainThread",
+        "state": "R",
+        "elapsed_seconds": 0.4,
+        "cpu_ticks": 40,
+        "rss_bytes": 56901632
+      }
+    }
+  },
+  "second": {
+    "observed_utc": "2026-10-05T17:41:25.501416+00:00",
+    "processes": {
+      "22180": {
+        "pid": 22180,
+        "ppid": 22179,
+        "name": "npm run test --",
+        "state": "S",
+        "elapsed_seconds": 409.7,
+        "cpu_ticks": 33,
+        "rss_bytes": 53125120,
+        "cpu_percent_during_sample": 0.0
+      },
+      "22193": {
+        "pid": 22193,
+        "ppid": 22180,
+        "name": "sh",
+        "state": "S",
+        "elapsed_seconds": 409.4,
+        "cpu_ticks": 0,
+        "rss_bytes": 655360,
+        "cpu_percent_during_sample": 0.0
+      },
+      "22194": {
+        "pid": 22194,
+        "ppid": 22193,
+        "name": "MainThread",
+        "state": "S",
+        "elapsed_seconds": 409.4,
+        "cpu_ticks": 12,
+        "rss_bytes": 38662144,
+        "cpu_percent_during_sample": 0.0
+      },
+      "22202": {
+        "pid": 22202,
+        "ppid": 22194,
+        "name": "MainThread",
+        "state": "S",
+        "elapsed_seconds": 409.3,
+        "cpu_ticks": 2592,
+        "rss_bytes": 377360384,
+        "cpu_percent_during_sample": 7.0
+      },
+      "22210": {
+        "pid": 22210,
+        "ppid": 22202,
+        "name": "esbuild",
+        "state": "S",
+        "elapsed_seconds": 408.9,
+        "cpu_ticks": 990,
+        "rss_bytes": 19963904,
+        "cpu_percent_during_sample": 0.6
+      },
+      "24284": {
+        "pid": 24284,
+        "ppid": 22202,
+        "name": "MainThread",
+        "state": "R",
+        "elapsed_seconds": 1.8,
+        "cpu_ticks": 205,
+        "rss_bytes": 163049472
+      },
+      "24290": {
+        "pid": 24290,
+        "ppid": 22202,
+        "name": "MainThread",
+        "state": "R",
+        "elapsed_seconds": 1.7,
+        "cpu_ticks": 187,
+        "rss_bytes": 159391744
+      }
+    }
+  },
+  "log_bytes": 354638,
+  "log_modified_utc": "2026-10-05T17:37:18.026165+00:00"
+}

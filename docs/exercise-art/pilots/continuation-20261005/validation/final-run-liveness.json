@@ -1,0 +1,169 @@
+{
+  "observed_utc": "2026-10-05T17:31:04.437506+00:00",
+  "scope": "Read-only host /proc table. Process IDs are host IDs, while current_probe_pid is a sandbox namespace ID; they cannot be equated. No environment or complete arguments collected.",
+  "current_probe_pid": 5,
+  "visible_processes": [
+    {
+      "pid": 1,
+      "ppid": 0,
+      "name": "supervisord",
+      "state": "S",
+      "elapsed_seconds": 6749.9,
+      "command_markers": ["python"]
+    },
+    {
+      "pid": 3,
+      "ppid": 1,
+      "name": "rsync",
+      "state": "S",
+      "elapsed_seconds": 6748.4,
+      "command_markers": []
+    },
+    {
+      "pid": 4,
+      "ppid": 1,
+      "name": "sync_share.sh",
+      "state": "S",
+      "elapsed_seconds": 6748.4,
+      "command_markers": []
+    },
+    {
+      "pid": 5,
+      "ppid": 1,
+      "name": "sync_share.sh",
+      "state": "S",
+      "elapsed_seconds": 6748.4,
+      "command_markers": []
+    },
+    {
+      "pid": 6,
+      "ppid": 1,
+      "name": "caas-prefix-tra",
+      "state": "S",
+      "elapsed_seconds": 6748.4,
+      "command_markers": []
+    },
+    {
+      "pid": 7,
+      "ppid": 1,
+      "name": "sites-preview",
+      "state": "S",
+      "elapsed_seconds": 6748.4,
+      "command_markers": []
+    },
+    {
+      "pid": 93,
+      "ppid": 4,
+      "name": "inotifywait",
+      "state": "S",
+      "elapsed_seconds": 5413.6,
+      "command_markers": []
+    },
+    {
+      "pid": 139,
+      "ppid": 1,
+      "name": "codex",
+      "state": "S",
+      "elapsed_seconds": 5410.7,
+      "command_markers": []
+    },
+    {
+      "pid": 217,
+      "ppid": 1,
+      "name": "codex",
+      "state": "S",
+      "elapsed_seconds": 5368.8,
+      "command_markers": []
+    },
+    {
+      "pid": 21990,
+      "ppid": 5,
+      "name": "inotifywait",
+      "state": "S",
+      "elapsed_seconds": 182.4,
+      "command_markers": []
+    },
+    {
+      "pid": 22003,
+      "ppid": 217,
+      "name": "bwrap",
+      "state": "S",
+      "elapsed_seconds": 0.3,
+      "command_markers": [
+        "npm",
+        "verify",
+        "vitest",
+        "run-unit-tests.mjs",
+        "python"
+      ]
+    },
+    {
+      "pid": 22004,
+      "ppid": 22003,
+      "name": "codex-linux-san",
+      "state": "S",
+      "elapsed_seconds": 0.2,
+      "command_markers": [
+        "npm",
+        "verify",
+        "vitest",
+        "run-unit-tests.mjs",
+        "python"
+      ]
+    },
+    {
+      "pid": 22005,
+      "ppid": 22003,
+      "name": "codex-linux-san",
+      "state": "S",
+      "elapsed_seconds": 0.2,
+      "command_markers": [
+        "npm",
+        "verify",
+        "vitest",
+        "run-unit-tests.mjs",
+        "python"
+      ]
+    },
+    {
+      "pid": 22010,
+      "ppid": 22003,
+      "name": "codex",
+      "state": "S",
+      "elapsed_seconds": 0.2,
+      "command_markers": [
+        "npm",
+        "verify",
+        "vitest",
+        "run-unit-tests.mjs",
+        "python"
+      ]
+    },
+    {
+      "pid": 22011,
+      "ppid": 22010,
+      "name": "bash",
+      "state": "S",
+      "elapsed_seconds": 0.2,
+      "command_markers": [
+        "npm",
+        "verify",
+        "vitest",
+        "run-unit-tests.mjs",
+        "python"
+      ]
+    },
+    {
+      "pid": 22014,
+      "ppid": 22011,
+      "name": "python",
+      "state": "R",
+      "elapsed_seconds": 0.1,
+      "command_markers": ["python"]
+    }
+  ],
+  "verify_result_present": false,
+  "verify_log_bytes": 47814,
+  "verify_log_modified_utc": "2026-10-05T17:23:56.300515+00:00",
+  "interpretation": "No npm, Node/Vitest, or older Python verification wrapper is visible. The 0.1-second Python row and short-lived command-marker matches belong to this inspection and its sandbox wrappers. Long-running supervisord is unrelated."
+}
