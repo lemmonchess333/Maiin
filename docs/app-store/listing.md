@@ -381,8 +381,16 @@ These are yours; none of them can be done from the code.
    is 1.0, and `deploy-ios.yml` stamps builds with `package.json`'s
    version, 1.2.0. Rename the App Store version to 1.2.0, or set
    `package.json` to 1.0.0 before the build you submit.
-5. **Screenshots from the iPhone build**, 6.9-inch, once it shows Steps
-   ([issue 2543](https://github.com/lemmonchess333/Maiin/issues/2543)).
+5. **Screenshots, as the last pass**, 6.9-inch, once the app is
+   finished and not before. The frames taken so far (App Screenshots
+   run 207) are drafts of an app that is still changing. Take them from
+   the iPhone build, or push the final code to `claude/screenshot-app`
+   and the capture spec (`e2e/screenshots/app-store.capture.spec.ts`)
+   takes all eight onto the `app-screenshots` branch. Check then that the
+   Steps tile shows steps, not a prompt to connect
+   ([issue 2543](https://github.com/lemmonchess333/Maiin/issues/2543)),
+   and that the run fell on a weekday: on a Saturday or Sunday, Home's
+   week card counts three of three lifts done while offering today's.
    The app is iPhone-only, so no iPad set is needed. Apple runs iPhone
    apps on an iPad too, and buying there now goes through the App Store
    as it does on an iPhone.

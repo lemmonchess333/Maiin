@@ -295,7 +295,8 @@ the privacy label, the age rating, the review notes, and what still has to
 change before the first submission.
 
 - Screenshots (6.9" iPhone required; the app is iPhone-only, so no iPad
-  set)
+  set), taken as the last pass once the app is finished
+  (`docs/app-store/listing.md`, "Before submitting", item 5)
 - Privacy policy URL
 - Support URL
 - Category: Health & Fitness
