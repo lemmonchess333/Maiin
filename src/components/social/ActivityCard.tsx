@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { formatClock } from "@/utils/formatters";
+import { formatClock, formatLoadKg } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
@@ -262,6 +262,50 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     </div>
   );
 
+  /* The words on the post: its title, the summary older posts carry in
+     its place, and the author's caption. One block for the standard and
+     the hybrid card, so a caption written on a hybrid session is not
+     dropped. Each wraps rather than clips: a title or caption is typed
+     by a person, and one long word (a German compound, a pasted link)
+     has nowhere to go at 320px otherwise. `dir="auto"` lets an Arabic or
+     Hebrew title read from its own side. */
+  const renderPostText = () => (
+    <>
+      {activityTitle && (
+        <p
+          dir="auto"
+          className="text-sm font-bold text-foreground mb-2 break-words"
+        >
+          {activityTitle}
+        </p>
+      )}
+
+      {/* Summary line (fallback for old activities without title) */}
+      {!activityTitle && feedItem.summary && (
+        <p
+          dir="auto"
+          className="text-small text-muted-foreground mb-3 break-words"
+        >
+          {feedItem.summary}
+        </p>
+      )}
+
+      {/* Author caption — optional note attached at share time
+          via ShareComposerSheet. Sits between the title and the
+          stats so it reads as the author's voice on the activity,
+          separate from the auto-generated stat blocks below. */}
+      {typeof activity?.caption === "string" &&
+        activity.caption.trim().length > 0 && (
+          <p
+            dir="auto"
+            className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
+          >
+            {activity.caption}
+          </p>
+        )}
+    </>
+  );
+
   // Render run content (route hero + stats)
   const renderRunContent = (mapHeight = "h-28") => (
     <>
@@ -272,8 +316,11 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
            no route preview to host the distance overlay, and `flex
            gap-5` gave them no way to wrap — on a 375px screen the fourth
            went off the card. The grid wraps the overflow metric onto a
-           second line and keeps the columns aligned between the two. */
-        <div className="grid grid-cols-3 gap-x-3 gap-y-3 p-4 pb-0">
+           second line and keeps the columns aligned between the two.
+           Each column is at least as wide as its figure, so a long
+           time ("12:34:56" at 320px) never draws over the elevation
+           beside it; a short figure still takes a third. */
+        <div className="grid grid-cols-[repeat(3,minmax(max-content,1fr))] gap-x-3 gap-y-3 p-4 pb-0">
           {!showDistanceOverlay && (
             /* Distance is the primary metric of a run, and it already
                renders that way at text-2xl/800 in the route-hero overlay
@@ -513,7 +560,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
+                    <p
+                      dir="auto"
+                      className="text-left text-sm font-semibold truncate text-foreground"
+                    >
                       {feedItem.authorName}
                     </p>
                   </div>
@@ -528,11 +578,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               )}
               {renderMenuButton()}
             </div>
-            {activityTitle && (
-              <p className="text-sm font-bold text-foreground mb-2">
-                {activityTitle}
-              </p>
-            )}
+            {renderPostText()}
             <div className="mb-3">{renderWorkoutContent()}</div>
           </div>
         </>
@@ -559,7 +605,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
+                    <p
+                      dir="auto"
+                      className="text-left text-sm font-semibold truncate text-foreground"
+                    >
                       {feedItem.authorName}
                     </p>
                   </div>
@@ -582,30 +631,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               {renderMenuButton()}
             </div>
 
-            {/* Activity title */}
-            {activityTitle && (
-              <p className="text-sm font-bold text-foreground mb-2">
-                {activityTitle}
-              </p>
-            )}
-
-            {/* Summary line (fallback for old activities without title) */}
-            {!activityTitle && feedItem.summary && (
-              <p className="text-small text-muted-foreground mb-3">
-                {feedItem.summary}
-              </p>
-            )}
-
-            {/* Author caption — optional note attached at share time
-                via ShareComposerSheet. Sits between the title and the
-                stats so it reads as the author's voice on the activity,
-                separate from the auto-generated stat blocks below. */}
-            {typeof activity?.caption === "string" &&
-              activity.caption.trim().length > 0 && (
-                <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap mb-3">
-                  {activity.caption}
-                </p>
-              )}
+            {renderPostText()}
 
             {/* Run stats — km lives on the hero overlay when the route
                 scene rendered */}
@@ -613,7 +639,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               /* Same three-column grid as the standard card's run row —
                  the hybrid card carries the identical four metrics and
                  had the identical unconstrained flex row. */
-              <div className="grid grid-cols-3 gap-x-3 gap-y-3 mb-3">
+              <div className="grid grid-cols-[repeat(3,minmax(max-content,1fr))] gap-x-3 gap-y-3 mb-3">
                 {!showDistanceOverlay && (
                   <div className="min-w-0">
                     <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
@@ -682,11 +708,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         {(feedItem.prHit || activity?.prHit) && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
             <Trophy className="size-4 text-achievement shrink-0" />
-            <p className="text-xs font-medium text-achievement-strong">
+            <p className="min-w-0 break-words text-xs font-medium text-achievement-strong">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? `${feedItem.prWeight || activity?.prWeight} kg`
+                ? formatLoadKg(
+                    (feedItem.prWeight || activity?.prWeight) as number
+                  )
                 : ""}
             </p>
           </div>
@@ -708,7 +736,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             {/* Text on the -strong step — brand is 3.87:1 as 12px text on
                 the light card; the Target icon keeps the identity. */}
             <p
-              className="text-xs font-medium"
+              className="min-w-0 break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}
             >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
@@ -756,10 +784,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               <button
                 type="button"
                 onClick={handleShowKudosList}
-                aria-label={`${kudosCount} props — show list`}
+                aria-label={`${kudosCount.toLocaleString()} props — show list`}
                 className="p-3 -m-3 text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
               >
-                {kudosCount}
+                {kudosCount.toLocaleString()}
               </button>
             )}
           </div>
@@ -772,7 +800,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             <MessageCircle className="size-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium font-mono tabular-nums">
-                {activity!.commentCount}
+                {(activity?.commentCount ?? 0).toLocaleString()}
               </span>
             )}
           </button>
@@ -819,7 +847,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     displayName={u.userName}
                     size="sm"
                   />
-                  <span className="text-xs font-medium text-foreground">
+                  <span
+                    dir="auto"
+                    className="min-w-0 truncate text-left text-xs font-medium text-foreground"
+                  >
                     {u.userName}
                   </span>
                 </div>

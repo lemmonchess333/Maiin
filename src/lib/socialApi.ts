@@ -6,6 +6,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  getCountFromServer,
   query,
   orderBy,
   limit,
@@ -64,14 +65,20 @@ export async function isFollowing(
   return snap.exists();
 }
 
+/* Counted on the server: a profile with 1,284 followers is one
+   aggregation read, not 1,284 documents downloaded to show a number. */
 export async function getFollowerCount(uid: string): Promise<number> {
-  const snap = await getDocs(collection(db, "followers", uid, "users"));
-  return snap.size;
+  const snap = await getCountFromServer(
+    collection(db, "followers", uid, "users")
+  );
+  return snap.data().count;
 }
 
 export async function getFollowingCount(uid: string): Promise<number> {
-  const snap = await getDocs(collection(db, "following", uid, "users"));
-  return snap.size;
+  const snap = await getCountFromServer(
+    collection(db, "following", uid, "users")
+  );
+  return snap.data().count;
 }
 
 /**

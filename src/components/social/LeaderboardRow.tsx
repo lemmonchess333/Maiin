@@ -39,7 +39,7 @@ export default function LeaderboardRow({
       }`}
     >
       <span
-        className="w-6 text-sm font-bold font-mono tabular-nums text-center shrink-0"
+        className="min-w-6 text-sm font-bold font-mono tabular-nums text-center shrink-0"
         style={{ color: rank <= 3 ? RANK_COLORS[rank - 1] : undefined }}
       >
         {rank}
@@ -63,8 +63,13 @@ export default function LeaderboardRow({
           `auto`, so without it a long name refuses to shrink below its
           content and pushes the score — the thing the row exists to
           rank — off the right edge. `truncate` alone cannot fix that,
-          because the overflow happens at the flex layout step. */}
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          because the overflow happens at the flex layout step.
+          dir="auto" lets a right-to-left name truncate from its own end;
+          text-left keeps a short one at the row's start, by its avatar. */}
+      <span
+        dir="auto"
+        className="min-w-0 flex-1 truncate text-left text-sm font-medium"
+      >
         {isSelf ? "You" : name}
       </span>
       {/* The score is what the row is scanned for, so it steps up a size
