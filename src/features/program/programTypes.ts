@@ -146,12 +146,11 @@ export interface ProgramExercise {
    */
   repRangeMax?: number;
   /**
-   * Steady-state set-count anchor (backlog #5, volume ramp). Stamped at
-   * generation (after volume balancing) and lazily on first advance for
-   * legacy docs. advanceWeek derives each week's sets FROM this anchor —
-   * which is also the fix for the compounding auto-deload decay (the
-   * sets−1 / ×0.85 cut was applied to live state and never restored, so
-   * every mesocycle permanently shrank the programme). Any future UI
+   * The lift's set count, the anchor each week starts from
+   * (`resetToBaseSets`). Stamped at generation (after the time fit) and
+   * lazily on first advance for legacy docs. Deriving each week's sets from
+   * it is what keeps a lighter week's cut from compounding into the next
+   * cycle. Any future UI
    * that edits an exercise's set count MUST update baseSets too, or the
    * next weekly advance will revert the edit. Optional + defaulting
    * readers → no schema bump.
@@ -717,13 +716,9 @@ export interface ActiveTrainingBlock {
    */
   goalBefore: PrimaryGoal;
   /**
-   * Weeks of plateau-RESPONSE amnesty remaining, decremented by
-   * `advanceWeek`. Set when the focus changed or the pace is easing, both
-   * of which make early misses expected rather than informative.
-   *
-   * A counter rather than a date so it expires monotonically with no sweep,
-   * no clock and no review step — including for a user who abandons the
-   * block and never opens the app again.
+   * Weeks the programme-level response to a stall was held back after a
+   * block began. The block command still sets it, but nothing reads it: the
+   * response it held back, the adjustment rule, is retired (Lift4 (13)).
    */
   amnestyWeeksLeft: number;
   /**
@@ -751,6 +746,11 @@ export interface ProgramState {
   weekNumber: number;
   splitType: SplitType;
   workouts: WorkoutDay[];
+  /**
+   * The score the retired fatigue shave read (Lift4 (13)). Nothing computes
+   * it now: new plans seed 0, and stored plans and the server's deload
+   * snapshot carry it.
+   */
   fatigueScore: number;
   updatedAt: number;
   settings?: ProgramSettings;
@@ -809,12 +809,9 @@ export interface ProgramState {
    */
   sessionMinutes?: number;
   /**
-   * Backlog #9 (Helms H5): how many times the adjustment rule has already
-   * cut volume for the CURRENT stall without it clearing. Reset to 0 the
-   * moment the programme is no longer plateaued. Its only job is the
-   * flowchart's second-order branch — if a light week didn't fix it, the
-   * problem isn't fatigue, so escalate to reorganising rather than cutting
-   * again. Optional with a defaulting reader → no schema bump.
+   * How many times the retired adjustment rule cut volume for a stall
+   * (Lift4 (13)). Nothing writes or reads it now; stored plans still carry
+   * it, and the server's allow-list admits it.
    */
   plateauResponses?: number;
   /**
@@ -902,7 +899,7 @@ export interface ProgramState {
    * advance (14b) — halved sets and reps at held load, per RP Ch3 P202.
    *
    * Persisted for one reason: the cut restores itself in full via
-   * `applyWeeklyVolumeShape`, so a muscle sitting at its ceiling would show
+   * `resetToBaseSets`, so a muscle sitting at its ceiling would show
    * the MRV signal again immediately and oscillate half → full → half. This is
    * the refractory list that stops that — a muscle here is re-entering and is
    * not eligible for another recovery session this week. `advanceWeek` clears

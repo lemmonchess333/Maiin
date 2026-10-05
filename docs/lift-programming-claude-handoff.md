@@ -353,6 +353,23 @@ pick barbell lifts at home, and a save that adds it brings the barbell lifts
 the setup swapped out back. The home gym's own copy still names only what it
 gives without one.
 
+STATUS 2026-10-05 (Lift4 (13), build step 4, tenth part): the weekly
+rollover no longer changes a plan's sets by itself. Retired: the accessory
+set wave (an accessory ran one set below, at and one above its anchor across
+the cycle; every week now starts from the anchor, the weekly reset that
+stays), the adjustment rule (two or more stalled lifts added accessory sets
+for a recovered lifter, cut them for a strained one, and the second time
+swapped the stalled accessories; `adjustmentRule.ts` is deleted, and with it
+the rollover's read of the performance document and the block's amnesty,
+which only held that rule back), and the fatigue shave (every lift's sets
+×0.9 once three lifts had a miss standing, which at two to five sets changed
+nothing). Misses are the lowering rule's (build step 3); lighter weeks stay
+on the calendar until step 5. A lifter who hits every target now holds 66
+sets a week through the cycle, 44 in its lighter week, where the wave ran
+52, 66 and 80 (`volumeProgressionOverTime.test.ts`). `fatigueScore`,
+`plateauResponses` and the block's `amnestyWeeksLeft` stay on stored plans,
+which the server's allow-list admits; nothing reads them.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

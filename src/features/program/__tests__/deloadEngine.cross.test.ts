@@ -209,7 +209,7 @@ describe("applyDeloadWeek command → week rollover (D4)", () => {
   });
 
   it("restores the novice load on the next week rollover", () => {
-    const rolled = advanceWeek(deload("beginner"), "beginner", "unknown");
+    const rolled = advanceWeek(deload("beginner"), "beginner");
     const ex = rolled.workouts[0].exercises[0];
     expect(ex.weight).toBe(100);
     expect(ex.preDeloadWeight).toBeUndefined();
@@ -220,7 +220,7 @@ describe("applyDeloadWeek command → week rollover (D4)", () => {
     expect(after.workouts[0].exercises[0].reps).toBe(6); // 8 − 2
     expect(after.workouts[0].exercises[0].preDeloadReps).toBe(8);
 
-    const rolled = advanceWeek(after, "intermediate", "unknown");
+    const rolled = advanceWeek(after, "intermediate");
     const ex = rolled.workouts[0].exercises[0];
     expect(ex.reps).toBe(8);
     expect(ex.weight).toBe(100); // the post-novice recipe never cut it
@@ -232,7 +232,7 @@ describe("applyDeloadWeek command → week rollover (D4)", () => {
     // number rather than being walked back to the stash.
     const after = deload("beginner");
     after.workouts[0].exercises[0].weight = 105;
-    const rolled = advanceWeek(after, "beginner", "unknown");
+    const rolled = advanceWeek(after, "beginner");
     expect(rolled.workouts[0].exercises[0].weight).toBe(105);
   });
 });

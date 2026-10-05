@@ -184,7 +184,7 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *
  * `fa19724a` fixed the engine forward-only. Worse, its lazy anchor
  * (`ex.baseSets ?? ex.sets`) then CAPTURED the already-decayed value as the
- * permanent anchor, so `applyWeeklyVolumeShape` now re-pins the shrunken
+ * permanent anchor, so `resetToBaseSets` re-pins the shrunken
  * number every week. Without this pass the damage is not merely unrepaired,
  * it is cemented.
  *

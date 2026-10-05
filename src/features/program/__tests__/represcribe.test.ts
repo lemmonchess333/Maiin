@@ -359,29 +359,15 @@ describe("isProgressionHeld", () => {
   });
 });
 
-describe("advanceWeek — block amnesty", () => {
-  // The other judge-caught failure. A represcribe plateaus every main at
-  // once; resolveAdjustment escalates to `reorganize`, which used to call
-  // swapExerciseIdentity on MAINS and zero their history. That was Blk1's
-  // objection arriving through the back door, and amnesty was built as the
-  // workaround for it.
-  //
-  // D7 fixed the root cause: the reorganise arm now sits INSIDE the
-  // isAccessory guard, so a main is never swapped by the engine at all.
-  // Amnesty is still load-bearing — it holds the whole programme-level
-  // response, accessories included — but the observable had to move. These
-  // tests used to read "did the adjustment run?" off a main-lift identity
-  // swap, which is now permanently false and would have made every
-  // not-shielded assertion pass for the wrong reason. They read it off the
-  // accessory's set count instead, which is what `reorganize` actually does.
+describe("advanceWeek — a block's first weeks", () => {
+  // A block that changes the focus moves every rep target at once, so its
+  // first weeks can read as a programme-wide stall. Nothing at the rollover
+  // responds to one (Lift4 (13)): every lift keeps its identity, history and
+  // sets, with a block or without, and the misses stay recorded for the
+  // lowering rule.
   const stalledState = (trainingBlock?: ActiveTrainingBlock): ProgramState => ({
     goal: "recomp",
     currentPhase: "progression",
-    // Rolls into week 2 — position 2 of the mesocycle, where
-    // `applyWeeklyVolumeShape` holds accessories at `baseSets`. Positions 1
-    // and 3 shave and ramp respectively, which would confound the accessory
-    // set count that these tests read the adjustment off. Week 4 would
-    // deload and skip `applyAdjustment` entirely.
     weekNumber: 1,
     splitType: "upper_lower",
     workouts: [
@@ -403,7 +389,6 @@ describe("advanceWeek — block amnesty", () => {
     fatigueScore: 0,
     updatedAt: 0,
     primaryGoal: "strength",
-    plateauResponses: 1,
     ...(trainingBlock ? { trainingBlock } : {}),
   });
 
@@ -423,90 +408,35 @@ describe("advanceWeek — block amnesty", () => {
     schemaVersion: 1,
   };
 
-  it("keeps every main's identity and history while amnesty is live", () => {
-    const before = stalledState(activeBlock);
-    const after = advanceWeek(before, "intermediate", "strained");
-    const ids = after.workouts[0].exercises
-      .filter((e) => e.isAccessory !== true)
-      .map((e) => e.exerciseId);
-    expect(ids).toEqual(["bench-press", "barbell-row", "squat"]);
-  });
-
-  it("decrements amnesty monotonically so it expires unattended", () => {
-    let state = stalledState(activeBlock);
-    const seen: number[] = [];
-    for (let i = 0; i < 4; i++) {
-      state = advanceWeek(state, "intermediate", "strained");
-      seen.push(state.trainingBlock?.amnestyWeeksLeft ?? -1);
+  it("keeps every lift, its history and its sets, with a block or without", () => {
+    for (const block of [activeBlock, undefined]) {
+      const before = stalledState(block);
+      before.workouts[0].exercises[0].performanceHistory = [
+        { date: "2026-07-01", weight: 60, repsCompleted: 8, repsTarget: 8 },
+      ];
+      const after = advanceWeek(before, "intermediate");
+      const exs = after.workouts[0].exercises;
+      expect(exs.map((e) => e.exerciseId)).toEqual([
+        "bench-press",
+        "barbell-row",
+        "squat",
+        "dumbbell-curl",
+      ]);
+      expect(exs.map((e) => e.sets)).toEqual(
+        before.workouts[0].exercises.map((e) => e.sets)
+      );
+      expect(exs[0].performanceHistory).toHaveLength(1);
+      expect(exs[0].instanceId).toBe(
+        before.workouts[0].exercises[0].instanceId
+      );
     }
-    expect(seen).toEqual([2, 1, 0, 0]);
   });
 
-  it("leaves plateauCount accumulating truthfully — only the response is held", () => {
-    const after = advanceWeek(
-      stalledState(activeBlock),
-      "intermediate",
-      "strained"
-    );
+  it("leaves plateauCount accumulating truthfully", () => {
+    const after = advanceWeek(stalledState(activeBlock), "intermediate");
     expect(
       after.workouts[0].exercises.every((e) => (e.plateauCount ?? 0) > 0)
     ).toBe(true);
-  });
-
-  /** The accessory is the only slot `applyAdjustment` may touch, so its set
-   *  count is the honest observable for "the adjustment ran". */
-  const accessorySets = (s: ProgramState) =>
-    s.workouts[0].exercises.find((e) => e.isAccessory === true)?.sets;
-
-  it("holds the accessory response too while amnesty is live", () => {
-    const after = advanceWeek(
-      stalledState(activeBlock),
-      "intermediate",
-      "strained"
-    );
-    expect(accessorySets(after)).toBe(4);
-  });
-
-  it("does not shield a plan with no block", () => {
-    const after = advanceWeek(stalledState(), "intermediate", "strained");
-    expect(accessorySets(after)).toBeLessThan(4);
-  });
-
-  it("stops shielding once amnesty runs out", () => {
-    const spent = { ...activeBlock, amnestyWeeksLeft: 0 };
-    const after = advanceWeek(stalledState(spent), "intermediate", "strained");
-    expect(accessorySets(after)).toBeLessThan(4);
-  });
-
-  /* ─── D7 · the engine never swaps a MAIN ───────────────────────
-     The regression pin for moving the reorganise arm inside the
-     isAccessory guard. Amnesty is OFF here, the mains are deeply
-     stalled, and `resolveAdjustment` has escalated to `reorganize`
-     — the exact state that used to re-pick every main lift and
-     zero its history via swapExerciseIdentity. Mains must keep
-     both their identity and their history; the accessory in the
-     same day proves the adjustment genuinely ran. ── */
-  it("never swaps a main lift or erases its history, even with no amnesty", () => {
-    const before = stalledState();
-    before.workouts[0].exercises[0].performanceHistory = [
-      { date: "2026-07-01", weight: 60, repsCompleted: 8, repsTarget: 8 },
-    ];
-    const after = advanceWeek(before, "intermediate", "strained");
-    const mains = after.workouts[0].exercises.filter(
-      (e) => e.isAccessory !== true
-    );
-
-    expect(mains.map((e) => e.exerciseId)).toEqual([
-      "bench-press",
-      "barbell-row",
-      "squat",
-    ]);
-    expect(mains[0].performanceHistory).toHaveLength(1);
-    expect(mains[0].instanceId).toBe(
-      before.workouts[0].exercises[0].instanceId
-    );
-    // …and this is not vacuous: the adjustment did fire this week.
-    expect(accessorySets(after)).toBeLessThan(4);
   });
 });
 

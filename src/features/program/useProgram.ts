@@ -72,8 +72,6 @@ import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { sessionMinutesFor } from "./sessionFit";
-import { recoveryStateFrom } from "./adjustmentRule";
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
@@ -468,13 +466,6 @@ function finishOutstanding(uid: string | undefined): boolean {
 
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
-  // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
-  // read — the rule is only consulted on a week advance, so this is the
-  // cheapest way to have the answer in hand when that happens. Resolves to
-  // "unknown" (⇒ hold) with no doc, a legacy doc, or too little baseline
-  // depth for the engine's own deload judgement to mean anything.
-  const { currentWeek: perfWeek } = usePerformanceWeeks(1);
-  const recovery = recoveryStateFrom(perfWeek?.signals);
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   /**
    * Run15 — how long the runner has been away, resolved once per session and
@@ -1234,7 +1225,7 @@ export function useProgram() {
         !!rolling.liftWeekKey && rolling.liftWeekKey >= nextLiftWeekKey;
       const advanced = liftsAhead
         ? { ...rolling }
-        : advanceWeek(rolling, profile.experience, recovery, nextLiftWeekKey);
+        : advanceWeek(rolling, profile.experience, nextLiftWeekKey);
 
       // Advance run side: one week step from the current runDay week key.
       const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
@@ -1274,7 +1265,6 @@ export function useProgram() {
     programState,
     profile,
     saveProgram,
-    recovery,
     layoffRead,
     recentLayoff,
     user,
@@ -1355,7 +1345,7 @@ export function useProgram() {
       const current = rolling.liftWeekKey;
       if (!current || current >= todayKey) break;
       const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
-      rolling = advanceWeek(rolling, profile.experience, recovery, nextKey);
+      rolling = advanceWeek(rolling, profile.experience, nextKey);
       iterations++;
     }
 
@@ -1375,7 +1365,6 @@ export function useProgram() {
     programState,
     profile,
     saveProgram,
-    recovery,
     mirrorReady,
     user,
     queuedWrites,
@@ -1643,7 +1632,6 @@ export function useProgram() {
       const advanced = advanceWeek(
         base,
         profile?.experience,
-        recovery,
         localWeekKey(addLocalDays(new Date(), 7))
       );
 
@@ -1676,7 +1664,7 @@ export function useProgram() {
     } else {
       toast.success(`Week ${saved.weekNumber} started`);
     }
-  }, [programState, profile, saveProgram, recovery, recentLayoff]);
+  }, [programState, profile, saveProgram, recentLayoff]);
 
   // P0-6: Mark a run day as completed.
   //

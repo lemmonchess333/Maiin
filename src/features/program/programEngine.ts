@@ -44,13 +44,6 @@ import {
   type StartingLoadContext,
 } from "./startingLoads";
 import {
-  countPlateauedExercises,
-  resolveAdjustment,
-  PROGRAMME_PLATEAU_MIN,
-  type AdjustmentAction,
-  type RecoveryState,
-} from "./adjustmentRule";
-import {
   automaticStepUp,
   loadGridFor,
   loweredLoad,
@@ -462,10 +455,9 @@ const BUILDER_TIER: Experience = "intermediate";
  * Build a programme exercise from the PRIMARY variation pool, preserving an
  * existing row's load/history/instanceId across a regenerate.
  *
- * `isAccessory` is a VOLUME ROLE, not the movement's role (exerciseRole.ts) —
- * it marks the slots the volume machinery may adjust: #5's ramp, #9's
- * add/reduce arms, and `balanceWeeklyVolume`'s under-dosed-muscle top-up.
- * `buildFullBody` needs to mark supporting slots WITHOUT `makeAccessory`,
+ * `isAccessory` marks a supporting slot rather than one of the session's
+ * main lifts: the role table reads it (`exerciseRole.ts`), and the time fit
+ * and the volume balance cut supporting slots first. `buildFullBody` needs to mark supporting slots WITHOUT `makeAccessory`,
  * which re-picks from the non-primary pool and can't carry `existing` —
  * using it there would rewrite users' exercises and wipe their logged loads
  * on every regenerate. Hence the parameter (backlog #15).
@@ -2657,43 +2649,6 @@ function withRecordedReps(
 ================================ */
 
 /**
- * Acute training-fatigue score for the week just trained, derived from the
- * per-exercise failure state the logger already tracks (D-LIFT-8). `applyFatigue`
- * trims next week's volume when this exceeds 20; previously the score it read
- * (`state.fatigueScore`) was never updated by anything, so the cut never fired.
- *
- * Signal = unresolved recent failures (`consecutiveFailures`, 0 or 1: the
- * second miss lowers the lift and resets it). Acute by construction: it climbs
- * while a lifter is grinding sets and falls once loads back off, so it can't
- * ratchet up forever the way a cumulative `plateauCount` would. Weighted so the
- * >20 cut needs a meaningful share of the program actively failing (three
- * lifts with a miss standing), and clamped for safety.
- */
-export function computeFatigueScore(workouts: WorkoutDay[]): number {
-  let failures = 0;
-  for (const day of workouts) {
-    for (const ex of day.exercises) {
-      failures += Math.max(0, ex.consecutiveFailures ?? 0);
-    }
-  }
-  return Math.min(100, failures * 8);
-}
-
-export function applyFatigue(
-  workouts: WorkoutDay[],
-  fatigueScore: number
-): WorkoutDay[] {
-  if (fatigueScore <= 20) return workouts;
-  return workouts.map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => ({
-      ...ex,
-      sets: Math.max(2, Math.round(ex.sets * 0.9)),
-    })),
-  }));
-}
-
-/**
  * Deload rep floor for the post-novice recipe — a 5-rep strength main drops
  * to 3, not to 1. Shared with the CF mirror.
  */
@@ -2753,9 +2708,6 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
   return workouts.every((day) => day.completed || day.skipped);
 }
 
-/** Accessory ramp ceiling — mirrors volumeModel's ACCESSORY_SET_CAP. */
-const ACCESSORY_RAMP_CAP = 5;
-
 /**
  * Entering an automatic deload week: re-anchor sets to baseSets and stash
  * each loaded exercise's weight and rep target so meso exit can restore
@@ -2782,145 +2734,28 @@ function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
 }
 
 /**
- * Backlog #5 (training-book backlog; M2/N1): the volume ramp. Non-deload
- * weeks derive sets from the baseSets anchor — accessories run
- * base−1 / base / base+1 across the meso (start below target, build,
- * then deload), mains hold at base. Also restores pre-deload loads on
- * meso exit (max() keeps anything the user progressed DURING the deload
- * week). Anchor-derived recompute makes the weekly shape idempotent:
- * applyFatigue's shave lasts exactly one week. Presentation policy:
- * INVISIBLE — the prescription simply differs week to week.
+ * Each week starts from the plan's own sets: every lift is set back to its
+ * `baseSets` anchor (stamped here on a plan that predates it), so a lighter
+ * week's cut lasts that week and nothing compounds. Leaving a lighter week
+ * also restores the weight and reps it stashed; `max()` keeps anything the
+ * person progressed during it.
  */
-function applyWeeklyVolumeShape(
-  workouts: WorkoutDay[],
-  week: number
-): WorkoutDay[] {
-  const weekInMeso = ((week - 1) % 4) + 1; // 1..3 here; week 4 deloads
+function resetToBaseSets(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
       const base = ex.baseSets ?? ex.sets;
-      const out: ProgramExercise = { ...ex, baseSets: base };
+      const out: ProgramExercise = { ...ex, baseSets: base, sets: base };
       if (typeof ex.preDeloadWeight === "number") {
         out.weight = Math.max(out.weight, ex.preDeloadWeight);
         delete out.preDeloadWeight;
       }
-      // Backlog #8: same max()-wins restore for the rep target, which the
-      // post-novice deload recipe cuts. Without it the cut would decay the
-      // prescription every mesocycle — the exact hazard #5 fixed for sets
-      // and load, reintroduced through a third field.
+      // The same max()-wins restore for the rep target, which the
+      // post-novice deload recipe cuts; without it the cut would decay the
+      // prescription every cycle.
       if (typeof ex.preDeloadReps === "number") {
         out.reps = Math.max(out.reps, ex.preDeloadReps);
         delete out.preDeloadReps;
-      }
-      if (ex.isAccessory === true) {
-        // Week-1 dip floors at the shared 2-set accessory floor, not 1 —
-        // every sibling pass (reconciler, deload cut, fatigue shave,
-        // ACCESSORY_ANCHOR_FLOOR) holds 2 as the minimum meaningful
-        // prescription, and the 2026-08-03 8-week simulation showed this
-        // one pass emitting 1-set curl slots at each meso restart. The
-        // inner min() keeps the rule non-growing for any degenerate
-        // sub-floor base from the wild.
-        out.sets =
-          weekInMeso === 1
-            ? Math.max(Math.min(base, ACCESSORY_ANCHOR_FLOOR), base - 1)
-            : weekInMeso === 3
-              ? Math.min(ACCESSORY_RAMP_CAP, base + 1)
-              : base;
-      } else {
-        out.sets = base;
-      }
-      return out;
-    }),
-  }));
-}
-
-/** Floor for the steady-state accessory anchor — a lift never drops below this. */
-const ACCESSORY_ANCHOR_FLOOR = 2;
-
-/**
- * Backlog #9 (training-book backlog; H5): apply the adjustment the rule
- * chose. Split across the two volume registers #5 established, which is
- * what makes each action last the right length of time:
- *
- * - `add_volume` / `reorganize` move the ANCHOR (`baseSets`), so the change
- *   survives `applyWeeklyVolumeShape`'s idempotent recompute — these are
- *   verdicts about the programme.
- * - `reduce_volume` moves only `sets`, so it lasts exactly one week and is
- *   then recomputed away, same as `applyFatigue`'s shave — it's a light
- *   week, not a new baseline.
- *
- * Mains are never touched. They are the progression anchor, and every
- * source in the review puts the adjustable volume in accessory work.
- * `reorganize` also rotates the stalled lifts to a fresh variation and
- * clears their plateau counter — Helms's "or the volume organised
- * differently", and the reset is what lets the rule tell a NEW stall from
- * the one it already responded to.
- */
-function applyAdjustment(
-  workouts: WorkoutDay[],
-  action: AdjustmentAction,
-  /** Level gate — `reorganize` re-picks a variation, so it needs the same
-   *  constraint the generator applies (2026-07-28 sweep). */
-  experience?: Experience
-): WorkoutDay[] {
-  if (action === "hold") return workouts;
-  return workouts.map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => {
-      const out: ProgramExercise = { ...ex };
-      const base = ex.baseSets ?? ex.sets;
-      // Every lever below is ACCESSORY-ONLY, including the reorganise swap.
-      // Mains are the progression anchor — the same reason `add_volume` and
-      // `reduce_volume` have always been scoped this way.
-      //
-      // The swap used to sit OUTSIDE this guard, so a stalled MAIN could be
-      // re-picked and run through `swapExerciseIdentity`, which zeroes
-      // `performanceHistory`, `lastPerformance`, `consecutiveFailures` and
-      // `plateauCount`. That is an unrecoverable response to a stall: a coach
-      // does not answer a plateau by deleting the lift's training log, and the
-      // user cannot undo it. `represcribe.ts` already documented this as a
-      // live hazard and worked around it (Epley rescaling + a 3-week amnesty)
-      // rather than fixing it here.
-      //
-      // Ordered by REVERSIBILITY, an exercise swap is a costlier intervention
-      // than a deload even though it is a smaller-looking change: a deload's
-      // error cost is near zero (Schoenfeld p.200 — a 3-week break mid-
-      // programme did not interfere with adaptations; RP Ch3 P213 — deloading
-      // early is less detrimental than deloading late), whereas a swap's error
-      // cost is a destroyed history. So the cheap intervention is the one the
-      // engine is allowed to apply unattended, and the expensive one is not.
-      //
-      // A stalled MAIN is not left unhandled: `applyProgression` puts its rep
-      // target back to the base every third failure (the load stays where
-      // the person put it), the mesocycle deload still reaches it, and a
-      // user who genuinely wants a different main lift can swap it
-      // themselves. What is removed is the engine silently doing it.
-      if (ex.isAccessory === true) {
-        if (action === "add_volume") {
-          out.baseSets = Math.min(ACCESSORY_RAMP_CAP, base + 1);
-          out.sets = Math.min(ACCESSORY_RAMP_CAP, out.sets + 1);
-        } else if (action === "reduce_volume") {
-          out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
-        } else {
-          out.baseSets = Math.max(ACCESSORY_ANCHOR_FLOOR, base - 1);
-          out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
-        }
-
-        if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
-          const swap = pickExercise(
-            ex.movementCategory,
-            Math.max(3, ex.plateauCount ?? 0),
-            ex.exerciseId,
-            experience
-          );
-          // Only clear the stall once the reorganisation actually changed the
-          // movement. Previously counts 1–2 made `pickExercise` return the same
-          // id and we still erased the evidence of the unresolved plateau.
-          if (swap.id !== ex.exerciseId) {
-            return swapExerciseIdentity(out, swap, undefined, ex);
-          }
-        }
       }
       return out;
     }),
@@ -2930,7 +2765,6 @@ function applyAdjustment(
 export function advanceWeek(
   state: ProgramState,
   experience?: Experience,
-  recovery: RecoveryState = "unknown",
   /**
    * D1: local week key the rolled-into week belongs to. Stamped onto
    * `liftWeekKey` so the calendar rollover has an anchor to compare against
@@ -2947,26 +2781,18 @@ export function advanceWeek(
   /* Did the week being rolled OUT of actually happen?
      `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks where
      they are in the TRAINING BLOCK. Those are different things, and conflating
-     them is what put a returning lifter on the hardest week of the mesocycle.
-     See the block comment on `weekWasTrained` below for the measurement. */
+     them would count weeks nobody trained toward the next lighter week. */
   const weekWasTrained = state.workouts.some((day) => day.completed);
 
   /* Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
      continues via modulo, but the number stays meaningful for UI display.
 
-     An untrained week HOLDS the number. A mesocycle accumulates training, so a
-     week with no session accumulated nothing and did not move the user through
-     the block. Measured before the change: a lifter on week 3 who disappears
-     for 12 weeks came back at week 15 → `weekInMeso` 3 → accessories at
-     base+1 (4,4,3,4 against a base of 3,3,2,3). Their first session back was
-     the TOP of the volume ramp, which is exactly backwards for someone
-     returning from a layoff — and it is the same root confusion as the
-     untrained-deload bug, just pointing the other way.
-
-     Holding it means a returning user resumes at the position they left, with
-     the volume shape they left, which is what "resume your programme" should
-     mean. The calendar anchor still advances every iteration, so the rollover
-     loop still terminates and nobody is stuck re-rolling the same week. */
+     An untrained week HOLDS the number. A cycle accumulates training, so a
+     week with no session accumulated nothing and did not move the person
+     through it: the lighter week comes every 4th TRAINED week (Lift4 (9)),
+     and a returning lifter resumes at the position they left. The calendar
+     anchor still advances every iteration, so the rollover loop still
+     terminates and nobody is stuck re-rolling the same week. */
   const nextWeek = !weekWasTrained
     ? state.weekNumber
     : state.weekNumber >= 52
@@ -2997,37 +2823,6 @@ export function advanceWeek(
     completed: false,
     skipped: false,
   }));
-
-  // Acute fatigue from the week just trained (D-LIFT-8) — computed from the
-  // logged per-exercise failure state rather than the formerly-dead persisted
-  // scalar.
-  const fatigue = computeFatigueScore(state.workouts);
-  // Backlog #9 (H5): the joint plateau × recovery rule. Evaluated from the
-  // week just TRAINED (state.workouts), before the weekly reshape rewrites
-  // sets, so it reads the stall the user actually just hit.
-  const plateauedExercises = countPlateauedExercises(state.workouts);
-  // Blk2 amnesty. A block that changed the focus, or that the user set to
-  // "easing back in", makes early misses EXPECTED rather than informative:
-  // the rep targets just moved, or the user is deliberately under-reaching
-  // while they find their feet. Without this, a represcribe can plateau
-  // every main at once and `resolveAdjustment` escalates to `reorganize`,
-  // whose arm calls `swapExerciseIdentity` on mains and zeroes their
-  // history — the exact "fights the adaptive engine" failure Blk1 named.
-  //
-  // Only the programme-level RESPONSE is held. `plateauCount` keeps
-  // accumulating truthfully on each lift, so nothing is being hidden; the
-  // engine simply doesn't act on it for the first few weeks. The counter
-  // self-decrements below, so amnesty expires with no sweep, no clock and
-  // no review step — including for a user who abandons the block.
-  const amnestyWeeksLeft = state.trainingBlock?.amnestyWeeksLeft ?? 0;
-  const action =
-    amnestyWeeksLeft > 0
-      ? "hold"
-      : resolveAdjustment({
-          plateauedExercises,
-          recovery,
-          priorReductions: state.plateauResponses ?? 0,
-        });
 
   /* 14b — the evidence-triggered tier, read from the week just TRAINED.
      The calendar deload (`week % 4 === 0`) is a starting point, not a
@@ -3070,41 +2865,25 @@ export function advanceWeek(
      deloading early beats deloading late) everywhere that bias is meaningful.
 
      Note this withholds the RECIPE only. The rollover itself is untouched:
-     the calendar anchor still advances and the normal weekly reshape still
-     runs, so nobody gets stuck. (`weekWasTrained` is computed at the top of
+     the calendar anchor still advances and the weekly reset still runs, so
+     nobody gets stuck. (`weekWasTrained` is computed at the top of
      this function, where it also decides whether the week number and the
      history archive move.) */
   const applyDeloadThisWeek =
     (prescription.deload || escalateWholeBody) && weekWasTrained;
 
   if (applyDeloadThisWeek) {
-    // A deload week IS the light week — don't stack an adjustment on top of
-    // it. The rule's bookkeeping below still runs, so a stall that spans a
-    // deload is remembered rather than silently forgiven.
-    //
     // The escalated case takes the SAME path deliberately: `prepareForDeload`
     // is what anchors sets and stashes load/reps so the cut cannot compound
     // across cycles, which is the D4 hazard this arc already paid for once.
     workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
-    workouts = applyWeeklyVolumeShape(workouts, nextWeek);
-    // Only apply fatigue on non-deload weeks to avoid double volume reduction
-    workouts = applyFatigue(workouts, fatigue);
-    workouts = applyAdjustment(workouts, action, experience);
-    // Muscle-local recovery sessions land LAST, on the shaped week — halve
-    // what the lifter would otherwise have done, not what they did before the
-    // shape ran. Zatsiorsky p.81: fatigue is specific, so the muscles that are
-    // fine keep their full week.
+    workouts = resetToBaseSets(workouts);
+    // Muscle-local recovery sessions land last, on the reset week — halve
+    // what the lifter would otherwise have done. Zatsiorsky p.81: fatigue is
+    // specific, so the muscles that are fine keep their full week.
     workouts = applyRecoverySession(workouts, recoveryMuscles);
   }
-
-  // Reset the memory once the stall itself clears; otherwise carry it, and
-  // count a reduction so a SECOND stall escalates to `reorganize` instead of
-  // cutting again. (Helms: if it recurs, the answer isn't another deload.)
-  const plateauResponses =
-    plateauedExercises < PROGRAMME_PLATEAU_MIN
-      ? 0
-      : (state.plateauResponses ?? 0) + (action === "reduce_volume" ? 1 : 0);
 
   // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
   // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
@@ -3115,10 +2894,6 @@ export function advanceWeek(
     workouts = dedupeDayExercises(
       rotateUntrainedAccessories(workouts, experience)
     );
-  } else if (action === "reorganize") {
-    // Same hazard from #9's rotation: a swapped lift can collide with
-    // another exercise already in that day.
-    workouts = dedupeDayExercises(workouts);
   }
 
   /* Lift4: the week opens with the session the last one didn't reach.
@@ -3149,19 +2924,6 @@ export function advanceWeek(
     currentPhase: applyDeloadThisWeek ? "deload" : "progression",
     workouts,
     weekHistory: history,
-    // A deload clears accumulated acute fatigue; otherwise persist the computed
-    // value so the field is meaningful + observable (no longer dead).
-    fatigueScore: applyDeloadThisWeek ? 0 : fatigue,
-    plateauResponses,
-    // Blk2: monotone, so amnesty runs out on its own.
-    ...(state.trainingBlock
-      ? {
-          trainingBlock: {
-            ...state.trainingBlock,
-            amnestyWeeksLeft: Math.max(0, amnestyWeeksLeft - 1),
-          },
-        }
-      : {}),
     ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
     // The refractory list for next week. Written even when empty so a muscle
     // that finishes re-entering is released rather than held forever, and

@@ -3,11 +3,9 @@ import {
   applyProgression,
   applyDeload,
   advanceWeek,
-  computeFatigueScore,
   generateProgram,
   expectedDayCount,
   goalProfileFor,
-  applyFatigue,
   dedupeDayExercises,
   rotateUntrainedAccessories,
   splitRationale,
@@ -19,7 +17,6 @@ import { normalizeExercise } from "../programTypes";
 import { roleRepsFor } from "../roleTable";
 import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
-import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
   ProgramExercise,
   ProgramState,
@@ -555,56 +552,6 @@ describe("applyDeload", () => {
   });
 });
 
-// ── computeFatigueScore (D-LIFT-8) ──────────────
-
-describe("computeFatigueScore", () => {
-  const day = (exs: ProgramExercise[]): WorkoutDay => ({
-    dayName: "D",
-    dayType: "upper",
-    completed: true,
-    exercises: exs,
-  });
-
-  it("is 0 when nothing is failing", () => {
-    expect(
-      computeFatigueScore([day([makeTestExercise({ consecutiveFailures: 0 })])])
-    ).toBe(0);
-  });
-
-  it("scales with unresolved recent failures (×8)", () => {
-    expect(
-      computeFatigueScore([
-        day([
-          makeTestExercise({ consecutiveFailures: 2 }),
-          makeTestExercise({ consecutiveFailures: 1 }),
-        ]),
-      ])
-    ).toBe(24); // (2+1)*8
-  });
-
-  it("needs a meaningful share failing to clear the >20 cut threshold", () => {
-    // one lift at two misses = 16 → below 20 (no cut); two lifts = 32 → trips
-    expect(
-      computeFatigueScore([day([makeTestExercise({ consecutiveFailures: 2 })])])
-    ).toBeLessThanOrEqual(20);
-    expect(
-      computeFatigueScore([
-        day([
-          makeTestExercise({ consecutiveFailures: 2 }),
-          makeTestExercise({ consecutiveFailures: 2 }),
-        ]),
-      ])
-    ).toBeGreaterThan(20);
-  });
-
-  it("clamps to 100 (can't ratchet unbounded)", () => {
-    const exs = Array.from({ length: 30 }, () =>
-      makeTestExercise({ consecutiveFailures: 2 })
-    );
-    expect(computeFatigueScore([day(exs)])).toBe(100);
-  });
-});
-
 // ── advanceWeek ─────────────────────────────────
 
 describe("advanceWeek", () => {
@@ -625,66 +572,42 @@ describe("advanceWeek", () => {
     ],
   };
 
-  it("does not apply fatigue on deload weeks (H5)", () => {
-    // Week 4 (4%4=0) is deload
-    const state = { ...baseProgramState, weekNumber: 3, fatigueScore: 50 };
+  it("a deload week cuts once, from the plan's own numbers", () => {
+    // Week 4 (4%4=0) is a deload; a level-less plan takes the beginner's
+    // recipe: one set fewer and 85% of the weight.
+    const state = { ...baseProgramState, weekNumber: 3 };
     const result = advanceWeek(state);
     expect(result.weekNumber).toBe(4);
     expect(result.currentPhase).toBe("deload");
-    // Deload: sets=4-1=3, weight=80*0.85=68→round(68/2.5)*2.5=67.5
     const ex = result.workouts[0].exercises[0];
     expect(ex.sets).toBe(3);
     expect(ex.weight).toBe(67.5);
-    // Fatigue would further reduce sets to round(3*0.9)=3, but since it's deload,
-    // fatigue should NOT have been applied. We verify sets is exactly 3 (deload only).
   });
 
-  it("applies COMPUTED fatigue on non-deload weeks (D-LIFT-8)", () => {
-    // Week 2 (2%4=2) is NOT deload. fatigueScore is now DERIVED from the week's
-    // per-exercise consecutiveFailures, not the persisted scalar. Three lifts at
-    // 2 straight misses → 6×8 = 48 (>20) → next week's volume trims.
+  it("a week of misses leaves next week's sets alone (Lift4 (13))", () => {
+    // The fatigue shave is retired: misses are the lowering rule's
+    // business, lift by lift, and the stored score is no longer computed.
     const state: ProgramState = {
       ...baseProgramState,
       weekNumber: 1,
-      fatigueScore: 0, // persisted value is ignored now
+      fatigueScore: 7,
       workouts: [
         {
           dayName: "Upper A",
           dayType: "upper",
           completed: true,
           exercises: [
-            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
-            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
-            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
+            makeTestExercise({ sets: 6, consecutiveFailures: 1 }),
+            makeTestExercise({ sets: 6, consecutiveFailures: 1 }),
+            makeTestExercise({ sets: 6, consecutiveFailures: 1 }),
           ],
         },
       ],
     };
     const result = advanceWeek(state);
-    expect(result.weekNumber).toBe(2);
     expect(result.currentPhase).toBe("progression");
-    expect(result.fatigueScore).toBe(48);
-    // Fatigue cut: Math.round(6*0.9)=5 — visible reduction.
-    expect(result.workouts[0].exercises[0].sets).toBe(5);
-  });
-
-  it("does NOT cut volume when there are no recent failures (stale scalar ignored)", () => {
-    const state: ProgramState = {
-      ...baseProgramState,
-      weekNumber: 1,
-      fatigueScore: 99, // stale persisted value must NOT trigger a cut
-      workouts: [
-        {
-          dayName: "Upper A",
-          dayType: "upper",
-          completed: true,
-          exercises: [makeTestExercise({ sets: 6, consecutiveFailures: 0 })],
-        },
-      ],
-    };
-    const result = advanceWeek(state);
-    expect(result.fatigueScore).toBe(0);
-    expect(result.workouts[0].exercises[0].sets).toBe(6); // untouched
+    expect(result.workouts[0].exercises.map((e) => e.sets)).toEqual([6, 6, 6]);
+    expect(result.fatigueScore).toBe(7);
   });
 
   it("caps week number at 52 and recycles to 1 (L2)", () => {
@@ -991,33 +914,6 @@ describe("goalProfileFor", () => {
   });
 });
 
-// ── applyFatigue ─────────────────────────────
-describe("applyFatigue", () => {
-  const day = (sets: number): WorkoutDay => ({
-    dayName: "Push",
-    dayType: "lift",
-    completed: false,
-    exercises: [makeTestExercise({ sets })],
-  });
-
-  it("leaves workouts untouched at or below the 20 fatigue threshold", () => {
-    const input = [day(10)];
-    expect(applyFatigue(input, 20)).toBe(input); // same ref — early return
-  });
-
-  it("trims sets ~10% (floored at 2) above the threshold", () => {
-    const [d] = applyFatigue([day(10)], 50);
-    expect(d.exercises[0].sets).toBe(9); // round(10 * 0.9)
-  });
-
-  it("never drops a lift below 2 working sets", () => {
-    const [d] = applyFatigue([day(2)], 90);
-    expect(d.exercises[0].sets).toBe(2);
-  });
-});
-
-// ── Split rationale (D-LIFT-7) ──────────────────
-
 describe("splitRationale", () => {
   it("returns a non-empty 'why' for every day count 0..7", () => {
     for (let d = 0; d <= 7; d++) {
@@ -1178,12 +1074,10 @@ describe("day roles (backlog #3)", () => {
   });
 });
 
-// Backlog #5 (volume ramp) + the auto-deload decay fix. Before this,
-// advanceWeek applied applyDeload's sets−1 / ×0.85 to LIVE state with no
-// restore on meso exit — every mesocycle permanently shrank the programme
-// (the manual deload command guards exactly this with its undo snapshot;
-// the automatic weekly path had no guard).
-describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
+// Each week starts from the plan's own sets, and a deload's cut is undone
+// when it ends, so no cycle shrinks the programme for good (the manual
+// deload command guards the same hazard with its undo snapshot).
+describe("the weekly reset to base sets (deload-decay fix)", () => {
   const makeState = () => {
     const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
     // Calibrate every lift so the deload weight cut/restore is observable.
@@ -1219,21 +1113,17 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
     );
   });
 
-  it("ramps accessories base−1 / base / base+1 across the meso, mains hold", () => {
+  it("holds every lift at its sets week to week; a deload cuts from them", () => {
+    // Lift4 (13): the accessory set wave is retired, and the week's reset
+    // to base sets is what stays.
     let st = makeState();
     const base = st.workouts.map((d) => d.exercises.map((e) => e.sets));
-    st = advanceWeek(trained(st)); // week 2 (mid)
-    st.workouts.forEach((d, di) =>
-      d.exercises.forEach((ex, ei) => expect(ex.sets).toBe(base[di][ei]))
-    );
-    st = advanceWeek(trained(st)); // week 3 (top)
-    st.workouts.forEach((d, di) =>
-      d.exercises.forEach((ex, ei) => {
-        const b = base[di][ei];
-        expect(ex.sets).toBe(ex.isAccessory === true ? Math.min(5, b + 1) : b);
-      })
-    );
-    st = advanceWeek(trained(st)); // week 4 — deload cuts from the ANCHOR, not week 3
+    for (const week of [2, 3]) {
+      st = advanceWeek(trained(st));
+      expect(st.weekNumber).toBe(week);
+      expect(setsGrid(st)).toEqual(base);
+    }
+    st = advanceWeek(trained(st)); // week 4 — deload cuts from the anchor
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         expect(ex.sets).toBe(Math.max(2, base[di][ei] - 1));
@@ -1241,16 +1131,10 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
         expect(ex.preDeloadWeight).toBe(50);
       })
     );
-    st = advanceWeek(trained(st)); // week 5 — meso restart
-    st.workouts.forEach((d, di) =>
-      d.exercises.forEach((ex, ei) => {
-        const b = base[di][ei];
-        // The week-1 dip shares the 2-set accessory floor with every other
-        // volume pass — pre-fix this pinned Math.max(1, …) and the 8-week
-        // simulation showed 1-set curl slots at each meso restart.
-        expect(ex.sets).toBe(
-          ex.isAccessory === true ? Math.max(Math.min(b, 2), b - 1) : b
-        );
+    st = advanceWeek(trained(st)); // week 5 — the cycle restarts
+    expect(setsGrid(st)).toEqual(base);
+    st.workouts.forEach((d) =>
+      d.exercises.forEach((ex) => {
         expect(ex.weight).toBe(50); // load restored, cut not permanent
         expect("preDeloadWeight" in ex).toBe(false);
       })
@@ -1572,34 +1456,22 @@ describe("deload by training age (backlog #8)", () => {
   });
 });
 
-// Backlog #9 — the joint rule wired into advanceWeek. The rule itself is
-// pinned in adjustmentRule.test.ts; these pin the APPLICATION: which volume
-// register each action moves, and therefore how long it lasts.
-describe("adjustment rule application (backlog #9)", () => {
-  const stall = (st: ProgramState, n: number): ProgramState => {
-    // Mark the first n accessories as plateaued.
-    let left = n;
-    return {
-      ...st,
-      workouts: st.workouts.map((d) => ({
-        ...d,
-        exercises: d.exercises.map((ex) => {
-          if (left > 0 && ex.isAccessory === true) {
-            left -= 1;
-            return { ...ex, plateauCount: 2 };
-          }
-          return ex;
-        }),
+// A stalled week changes nothing by itself (Lift4 (13)): the adjustment rule
+// that added, cut or reorganised accessory volume is retired, and a lift that
+// misses is lowered by the progression rule instead.
+describe("advanceWeek — stalls and absences", () => {
+  const stall = (st: ProgramState): ProgramState => ({
+    ...st,
+    workouts: st.workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        plateauCount: 2,
+        consecutiveFailures: 1,
       })),
-    };
-  };
+    })),
+  });
 
-  // 4 days → upper/lower, which is a split that BUILDS accessories.
-  // buildFullBody (1- and 3-day targets) authors none at all, so the
-  // accessory-scoped volume registers — #5's ramp, #7's isolation
-  // progression, and #9's volume arms — are all no-ops there. Asserted
-  // below rather than assumed, so a builder change can't make these tests
-  // pass vacuously.
   const makeState = (week = 1): ProgramState => {
     const { workouts } = generateProgram("recomp", 4, undefined, "hypertrophy");
     return {
@@ -1613,197 +1485,32 @@ describe("adjustment rule application (backlog #9)", () => {
     };
   };
 
-  it("the fixture actually has accessories to adjust", () => {
-    const accs = makeState()
-      .workouts.flatMap((d) => d.exercises)
-      .filter((e) => e.isAccessory === true);
-    expect(accs.length).toBeGreaterThanOrEqual(PROGRAMME_PLATEAU_MIN);
-  });
-
-  const anchors = (s: ProgramState) =>
-    s.workouts.map((d) =>
-      d.exercises.filter((e) => e.isAccessory === true).map((e) => e.baseSets)
-    );
-
   /** Prescribed sets across the whole week — what a deload visibly cuts. */
   const setsOf = (s: ProgramState) =>
     s.workouts.map((d) => d.exercises.map((e) => e.sets));
+  const idsOf = (s: ProgramState) =>
+    s.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
 
-  it("holds — and touches nothing — when recovery is unknown", () => {
-    const st = stall(makeState(), 4);
-    const out = advanceWeek(st, "beginner"); // recovery defaults to unknown
-    expect(anchors(out)).toEqual(anchors(st));
-    expect(out.plateauResponses).toBe(0);
+  it("keeps every lift, its sets and its anchor through a stalled week", () => {
+    for (const experience of ["beginner", "intermediate"] as const) {
+      const st = stall(makeState());
+      const out = advanceWeek(trained(st), experience);
+      expect(idsOf(out)).toEqual(idsOf(st));
+      expect(setsOf(out)).toEqual(setsOf(st));
+      expect(
+        out.workouts.map((d) => d.exercises.map((e) => e.baseSets))
+      ).toEqual(st.workouts.map((d) => d.exercises.map((e) => e.baseSets)));
+    }
   });
 
-  it("plateaued + recovered raises the ANCHOR, so the volume persists", () => {
-    const st = stall(makeState(), 4);
-    const before = anchors(st);
-    const out = advanceWeek(st, "beginner", "recovered");
-    out.workouts.forEach((d, di) => {
-      const accs = d.exercises.filter((e) => e.isAccessory === true);
-      accs.forEach((ex, ei) => {
-        expect(ex.baseSets).toBe(Math.min(5, (before[di][ei] ?? 0) + 1));
-      });
-    });
-    // add_volume is not a "response" — nothing was cut, so nothing to escalate
-    expect(out.plateauResponses).toBe(0);
-  });
-
-  it("plateaued + strained cuts THIS WEEK only — the anchor is untouched", () => {
-    const st = stall(makeState(), 4);
-    const before = anchors(st);
-    const out = advanceWeek(st, "beginner", "strained");
-    expect(anchors(out)).toEqual(before); // anchor held
-    out.workouts.forEach((d) =>
-      d.exercises
-        .filter((e) => e.isAccessory === true)
-        .forEach((ex) => expect(ex.sets).toBeLessThanOrEqual(ex.baseSets ?? 0))
-    );
-    expect(out.plateauResponses).toBe(1);
-  });
-
-  it("the strained cut is a STRICT set decrease in a plain training week", () => {
-    // The assertion above (`sets <= baseSets`) is satisfied even if
-    // reduce_volume were a no-op: week 2's ramp puts accessories exactly AT
-    // base. This pins the cut itself — the landing week (2) is not a deload
-    // and not a ramp-down, so any set below base can only have come from
-    // applyAdjustment's reduce_volume arm.
-    const st = stall(makeState(), 4);
-    const out = advanceWeek(trained(st), "beginner", "strained");
-    expect(out.weekNumber).toBe(2);
-    expect(out.currentPhase).not.toBe("deload");
-    let cuttable = 0;
-    out.workouts.forEach((d) =>
-      d.exercises
-        .filter((e) => e.isAccessory === true)
-        .forEach((ex) => {
-          const base = ex.baseSets ?? 0;
-          if (base > 2) {
-            // above ACCESSORY_ANCHOR_FLOOR — the cut must actually land
-            cuttable += 1;
-            expect(ex.sets).toBe(base - 1);
-          } else {
-            expect(ex.sets).toBe(base); // floored — never cut below 2
-          }
-        })
-    );
-    // Anti-vacuous guard: the fixture must contain accessories the cut can
-    // reach, or the strict assertions above never execute.
-    expect(cuttable).toBeGreaterThan(0);
-    // Mains are the progression anchor — never touched by the volume arms.
-    out.workouts.forEach((d) =>
-      d.exercises
-        .filter((e) => e.isAccessory !== true)
-        .forEach((ex) => expect(ex.sets).toBe(ex.baseSets ?? ex.sets))
-    );
-  });
-
-  it("a SECOND strained stall reorganizes instead of cutting again", () => {
-    let st = stall(makeState(), 4);
-    st = advanceWeek(st, "beginner", "strained"); // cut #1
-    expect(st.plateauResponses).toBe(1);
-    const beforeAnchors = anchors(st);
-    st = stall(st, 4); // still stalled
-    const beforeIds = st.workouts.flatMap((d) =>
-      d.exercises.map((ex) => ex.exerciseId)
-    );
-    const out = advanceWeek(st, "beginner", "strained");
-    // anchor DROPS now (less total volume), and the counter stops climbing
-    out.workouts.forEach((d, di) => {
-      const accs = d.exercises.filter((e) => e.isAccessory === true);
-      accs.forEach((ex, ei) => {
-        expect(ex.baseSets).toBeLessThanOrEqual(beforeAnchors[di][ei] ?? 0);
-      });
-    });
-    const afterIds = out.workouts.flatMap((d) =>
-      d.exercises.map((ex) => ex.exerciseId)
-    );
-    expect(afterIds.some((id, i) => id !== beforeIds[i])).toBe(true);
-    expect(out.plateauResponses).toBe(1);
-  });
-
-  it("reorganize clears the stall counters so a NEW stall is distinguishable", () => {
-    let st = stall(makeState(), 4);
-    st = advanceWeek(st, "beginner", "strained");
-    st = stall(st, 4);
-    const out = advanceWeek(st, "beginner", "strained"); // reorganize
-    const stillPlateaued = out.workouts
-      .flatMap((d) => d.exercises)
-      .filter((e) => (e.plateauCount ?? 0) > 0);
-    expect(stillPlateaued).toHaveLength(0);
-  });
-
-  it("forgets the response once the stall clears", () => {
-    let st = stall(makeState(), 4);
-    st = advanceWeek(st, "beginner", "strained");
-    expect(st.plateauResponses).toBe(1);
-    // Cutting volume does NOT itself clear the stall — plateauCount is reset
-    // by the progression engine when the lift actually succeeds again. Do
-    // that here, which is the only thing that should wipe the memory.
-    st = {
-      ...st,
-      workouts: st.workouts.map((d) => ({
-        ...d,
-        exercises: d.exercises.map((ex) => ({ ...ex, plateauCount: 0 })),
-      })),
-    };
-    st = advanceWeek(st, "beginner", "strained");
-    expect(st.plateauResponses).toBe(0);
-  });
-
-  it("a cut does not fake-clear the stall it was responding to", () => {
-    // If reduce_volume wiped plateauCount, the next advance would read
-    // "recovered from the stall" and the escalation branch could never fire.
-    const st = advanceWeek(
-      trained(stall(makeState(), 4)),
-      "beginner",
-      "strained"
-    );
-    const stillPlateaued = st.workouts
-      .flatMap((d) => d.exercises)
-      .filter((e) => (e.plateauCount ?? 0) > 0);
-    expect(stillPlateaued.length).toBeGreaterThanOrEqual(PROGRAMME_PLATEAU_MIN);
-  });
-
-  it("never adjusts on a deload week — the deload IS the light week", () => {
-    const st = stall(makeState(3), 4); // advancing lands on week 4
-    const before = anchors(st);
-    const out = advanceWeek(trained(st), "beginner", "recovered");
-    expect(out.currentPhase).toBe("deload");
-    expect(anchors(out)).toEqual(before); // no add_volume stacked on it
-  });
-
-  /**
-   * A deload dissipates ACCUMULATED fatigue, so a week with no completed
-   * session has nothing to dissipate. This ran unguarded until 2026-08-04:
-   * `advanceWeek` branched on the calendar prescription alone, so an
-   * untrained week 3→4 produced a deload byte-identical to a fully-trained
-   * one. The calendar rollover fires unattended on app open and catches up
-   * as many as 12 weeks, so someone back from a month away was rolled
-   * through several deloads of a plan they had never touched — handed a
-   * REDUCED week at the moment they most needed their plan intact.
-   *
-   * The pair is the point: same fixture, same week boundary, only the
-   * completion flag differs. Asserting the untrained case alone would pass
-   * against an engine that had stopped deloading altogether.
-   */
   describe("a deload needs a week that was actually trained", () => {
-    /**
-     * `makeState(3)` builds a FRESH plan and labels it week 3, so its stored
-     * sets are week-1 shaped. The first rollover legitimately applies week
-     * 3's own ramp — that is the volume shape doing its job, not a deload.
-     * Settling once separates the two, so these tests probe the deload
-     * rather than the fixture being out of shape for its own week number.
-     */
-    const settled = () =>
-      advanceWeek(makeState(3), "intermediate", "recovered");
+    const settled = () => makeState(3);
 
     it("withholds the deload when no session was completed", () => {
       const st = settled();
       const before = setsOf(st);
 
-      const out = advanceWeek(st, "intermediate", "recovered");
+      const out = advanceWeek(st, "intermediate");
 
       // Not labelled a deload — the phase drives the UI and WorkoutSession's
       // deload mode, so a "deload" over an uncut plan would be the app
@@ -1817,9 +1524,9 @@ describe("adjustment rule application (backlog #9)", () => {
       // The counterfactual, not the raw fixture: the SAME state rolled at the
       // SAME boundary with nothing completed. Only the flag differs, so the
       // difference below can only be the deload.
-      const untrained = setsOf(advanceWeek(st, "intermediate", "recovered"));
+      const untrained = setsOf(advanceWeek(st, "intermediate"));
 
-      const out = advanceWeek(trained(st), "intermediate", "recovered");
+      const out = advanceWeek(trained(st), "intermediate");
 
       expect(out.currentPhase).toBe("deload");
       expect(setsOf(out)).not.toEqual(untrained);
@@ -1837,18 +1544,13 @@ describe("adjustment rule application (backlog #9)", () => {
         ),
       };
 
-      expect(
-        advanceWeek(partial, "intermediate", "recovered").currentPhase
-      ).toBe("deload");
+      expect(advanceWeek(partial, "intermediate").currentPhase).toBe("deload");
     });
 
     it("holds the block position across an absence, and resumes from it", () => {
       // `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks
-      // where they are in the BLOCK. Conflating them put a returning lifter on
-      // the hardest week of the mesocycle: measured pre-fix, a week-3 lifter
-      // gone 12 weeks came back at week 15 → weekInMeso 3 → accessories at
-      // base+1 (4,4,3,4 against a base of 3,3,2,3). First session back, top of
-      // the ramp.
+      // where they are in the BLOCK, and only trained weeks move it, so the
+      // lighter week stays every 4th trained week.
       //
       // ADR-0002 already settled the principle for the discipline — lifts are
       // split-ordered, not calendar-pinned, and force-calendar was rejected
@@ -1878,33 +1580,6 @@ describe("adjustment rule application (backlog #9)", () => {
       expect(afterOneRealWeek).toBe(1);
       expect(st.weekHistory?.length).toBe(1);
     });
-  });
-
-  it("leaves mains alone under every action", () => {
-    for (const recovery of ["recovered", "strained"] as const) {
-      const st = stall(makeState(), 4);
-      const mainAnchors = (s: ProgramState) =>
-        s.workouts.map((d) =>
-          d.exercises
-            .filter((e) => e.isAccessory !== true)
-            .map((e) => e.baseSets)
-        );
-      const before = mainAnchors(st);
-      expect(mainAnchors(advanceWeek(st, "beginner", recovery))).toEqual(
-        before
-      );
-    }
-  });
-
-  it("never produces a duplicate exercise within a day after reorganizing", () => {
-    let st = stall(makeState(), 6);
-    st = advanceWeek(st, "beginner", "strained");
-    st = stall(st, 6);
-    const out = advanceWeek(st, "beginner", "strained"); // reorganize rotates
-    for (const d of out.workouts) {
-      const ids = d.exercises.map((e) => e.exerciseId);
-      expect(new Set(ids).size).toBe(ids.length);
-    }
   });
 });
 
@@ -1973,28 +1648,6 @@ describe("full-body accessory slots (backlog #15)", () => {
         expect(ex.performanceHistory).toHaveLength(1);
       })
     );
-  });
-
-  it("unlocks the volume ramp for 3-day users (#5 reached nothing before)", () => {
-    const workouts = fullBody(3);
-    let st: ProgramState = {
-      goal: "recomp",
-      currentPhase: "progression",
-      weekNumber: 1,
-      splitType: "full_body",
-      workouts,
-      fatigueScore: 0,
-      updatedAt: 0,
-    };
-    const accSets = (s: ProgramState) =>
-      s.workouts.flatMap((d) =>
-        d.exercises.filter((e) => e.isAccessory === true).map((e) => e.sets)
-      );
-    st = advanceWeek(trained(st)); // week 2 — base
-    const w2 = accSets(st);
-    st = advanceWeek(trained(st)); // week 3 — base + 1
-    const w3 = accSets(st);
-    expect(w3.some((s, i) => s > w2[i])).toBe(true);
   });
 
   it("1-day full-body users get accessories too", () => {

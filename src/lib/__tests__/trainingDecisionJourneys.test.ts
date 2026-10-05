@@ -317,7 +317,7 @@ describe("saved lifting work, correction, and the next prescription", () => {
       db,
       "u1",
       corrected,
-      advanceWeek(corrected, "intermediate", "unknown", "2026-09-14")
+      advanceWeek(corrected, "intermediate", "2026-09-14")
     );
     const next = storedPlan();
     expect(next.weekNumber).toBe(2);

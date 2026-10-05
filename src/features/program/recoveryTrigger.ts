@@ -64,10 +64,10 @@
  *
  * ── Re-entry, and what is deliberately NOT built here ────────────────────
  *
- * The set cut restores itself: `applyWeeklyVolumeShape` re-derives sets from
+ * The set cut restores itself: `resetToBaseSets` re-derives sets from
  * `baseSets` every non-deload week, and restores reps from `preDeloadReps`
  * with a max()-wins rule. So a recovery session stashes reps the same way the
- * deload does and lasts exactly one week, the way `applyFatigue`'s shave does.
+ * deload does and lasts exactly one week.
  * No new restore machinery, and no chance of the cut compounding — which is
  * the D4 hazard this arc already paid for once.
  *
@@ -241,7 +241,7 @@ export function applyRecoverySession(
       return {
         ...ex,
         // Anchor + stash exactly as `prepareForDeload` does, so
-        // `applyWeeklyVolumeShape` restores both next week through the path
+        // `resetToBaseSets` restores both next week through the path
         // that already exists. Without the reps stash the halving would decay
         // the prescription every time a recovery session fires — the same
         // compounding hazard backlog #5 fixed for sets and #8 for reps.
@@ -262,7 +262,7 @@ export function applyRecoverySession(
  *
  * Restores the undiminished prescription for exercises in `muscles`:
  * `sets ← baseSets`, `reps ← preDeloadReps`, and drops the `preDeloadReps`
- * stash so next week's `applyWeeklyVolumeShape` restore has nothing left to
+ * stash so next week's `resetToBaseSets` restore has nothing left to
  * re-apply. Only exercises actually carrying the stash are touched — an
  * exercise the reduction never reached is returned by reference.
  *
