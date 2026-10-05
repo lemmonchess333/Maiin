@@ -79,7 +79,6 @@ vi.mock("@/lib/toast", () => ({
 vi.mock("@/components/workout/PlateCalculatorSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/components/workout/StallModal", () => ({ default: () => null }));
 vi.mock("@/lib/restTimerNotification", () => ({
   restNotificationDelaySeconds: () => 0,
   scheduleRestEndNotification: vi.fn(),
