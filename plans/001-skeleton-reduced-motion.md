@@ -1,6 +1,6 @@
 # 001 — Stop staggered skeletons going blank, worst under Reduce Motion
 
-- **Status**: IN PR (#2577)
+- **Status**: DONE (#2577)
 - **Commit**: 1ad7dd6a
 - **Severity**: HIGH
 - **Category**: Accessibility (Reduce Motion)

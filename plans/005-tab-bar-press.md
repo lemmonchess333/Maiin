@@ -1,6 +1,6 @@
 # 005 — Tab bar press: the house 0.97 tap, without the bounce, grow and hop
 
-- **Status**: IN PR (#2580)
+- **Status**: DONE (#2580)
 - **Commit**: 1ad7dd6a
 - **Severity**: HIGH
 - **Category**: Physicality / purpose & frequency
