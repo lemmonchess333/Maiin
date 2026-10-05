@@ -707,7 +707,7 @@ describe("migrateProgramState — deload decay repair", () => {
       "the plan following a lighter load the person lifted",
       { weight: 50, lastAttemptedWeight: 50 },
     ],
-    ["the three-strike cut", { weight: 57 }],
+    ["a block re-prescription's scaled load", { weight: 52.5 }],
     ["a novice deload week", { weight: 51, preDeloadWeight: 60 }],
   ] as const)(
     "leaves a current document's load where the plan put it: %s",

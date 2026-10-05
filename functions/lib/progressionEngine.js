@@ -7,9 +7,9 @@
  * The programme command reducer runs `logExercise` server-side, which must
  * produce the IDENTICAL next prescription the client engine produces for the
  * same input (double/linear progression, bodyweight rep-bumps, RPE hold,
- * failure deloads, plateau counting). programEngine.ts is Vite/TS and can't be
- * required from CommonJS Cloud Functions, so this is a hand-maintained TS↔JS
- * equality mirror.
+ * the response to repeated misses, plateau counting). programEngine.ts is
+ * Vite/TS and can't be required from CommonJS Cloud Functions, so this is a
+ * hand-maintained TS↔JS equality mirror.
  *
  * MUST return identical output to the client applyProgression for identical
  * input (excluding the informational performanceHistory[].date stamp, which is
@@ -158,18 +158,11 @@ function applyProgression(
   const resetReps = exercise.baseReps ?? exercise.reps;
 
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
-  // Backlog #7 (H3) — proportional load step, keyed on movement + load.
-  const microplate = usesMicroplateStep(
-    exercise.movementCategory,
-    exercise.weight
-  );
-  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
-  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // The plan follows the load lifted — mirror; see programEngine.ts. A
   // loaded lift's prescription moves to the weight lifted, by any margin;
-  // success is the target reps at it, every step runs from it, and the
-  // three-strike cut comes off it. No load logged: record and hold.
-  // Bodyweight movements are untouched.
+  // success is the target reps at it and every step runs from it. A miss
+  // counts, and the third in a row resets the rep target, never the load.
+  // No load logged: record and hold. Bodyweight movements are untouched.
   const lifted = liftedLoad(exercise.exerciseId, actualWeight);
   if (!isBodyweight && lifted === null) return updated;
   const anchor = lifted === null ? exercise.weight : lifted;
@@ -177,6 +170,11 @@ function applyProgression(
   const completed =
     actualReps >= exercise.reps &&
     (!isBodyweight || actualWeight >= exercise.weight);
+  // Backlog #7 (H3) — proportional load step, keyed on the movement and the
+  // load being followed.
+  const microplate = usesMicroplateStep(exercise.movementCategory, anchor);
+  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
+  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // Backlog #7's time axis (N2) — mirror; see programEngine.ts for why the
   // rep cap is meaningless for a hold that starts above it.
   const isTimed = exercise.repUnit === "seconds";
@@ -259,8 +257,10 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          // Off the load lifted — mirror of the client.
-          updated.weight = Math.round(anchor * 0.95 * 2) / 2;
+          // Loaded (weighted holds included): the load stays, the rep
+          // target or hold duration goes back to its base — mirror of the
+          // client.
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -306,7 +306,7 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.max(0, anchor - 1);
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;

@@ -138,17 +138,22 @@ describe("applyProgression — double progression", () => {
     expect(result.weight).toBe(63.75); // 60 + 2.5 + 1.25
   });
 
-  it("requires 3 consecutive failures before deload (not 2)", () => {
-    const ex = makeTestExercise({ consecutiveFailures: 1 });
-    // 2nd failure — should NOT deload yet
+  it("responds on the 3rd consecutive failure (not the 2nd): the target resets, the load stays", () => {
+    // The person sets the load and the plan follows it, so a run of misses
+    // puts the rep target back to its base and records the stall instead
+    // of cutting the weight (progressionUserLoad.test.ts has both copies).
+    const ex = makeTestExercise({ reps: 7, consecutiveFailures: 1 });
+    // 2nd failure — no response yet
     const result = applyProgression(ex, 4, 60, "recomp", false);
     expect(result.consecutiveFailures).toBe(2);
-    expect(result.weight).toBe(60); // no deload
+    expect(result.weight).toBe(60);
+    expect(result.reps).toBe(7);
 
-    // 3rd failure — NOW deload
+    // 3rd failure — NOW the target resets
     const result2 = applyProgression(result, 4, 60, "recomp", false);
     expect(result2.consecutiveFailures).toBe(0);
-    expect(result2.weight).toBeLessThan(60);
+    expect(result2.weight).toBe(60);
+    expect(result2.reps).toBe(6);
     expect(result2.plateauCount).toBe(1);
   });
 });

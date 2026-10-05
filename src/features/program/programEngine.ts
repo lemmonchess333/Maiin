@@ -2108,28 +2108,18 @@ export function applyProgression(
   // means the load is already at the edge — HOLD this cycle rather than add
   // load/reps, even on a completed set. No RPE logged → progress as before.
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
-  // Backlog #7 (H3): load moves in proportion to the lift. The step keys on
-  // the MOVEMENT and its load, not on `isAccessory` — see movementClass.ts
-  // for why that flag (a volume role) can't answer this question. The
-  // lean-bulk accelerator rides the same test: a lift too light for a full
-  // plate is too light for a bonus on top of one.
-  const microplate = usesMicroplateStep(
-    exercise.movementCategory,
-    exercise.weight
-  );
-  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
-  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // The plan follows the load lifted (see `liftedLoad`).
   // A loaded lift's prescription moves to the weight actually lifted,
   // heavier or lighter and by any margin. There is no typo guard: a wrong
   // number is put right by lifting the right one next session. Success is
   // the target reps at that weight, and the steps below run from it: the
   // range climb, the 2-rep overshoot, microloading's +1 kg, the linear step,
-  // the goal bonus and the RPE hold. The step's size still keys on the
-  // prescription's load. Reps missed: the prescription still moves to the
-  // load lifted, the miss counts, and the three-strike cut comes off that
-  // load. No load logged: nothing to follow, so the session is recorded and
-  // the prescription and its failure count stay as they were.
+  // the goal bonus and the RPE hold. Reps missed: the prescription still
+  // moves to the load lifted and the miss counts. The person sets the load,
+  // so the plan never cuts below it: a third miss in a row puts the rep
+  // target back to its base instead. No load logged: nothing to follow, so
+  // the session is recorded and the prescription and its failure count stay
+  // as they were.
   // Bodyweight movements are untouched: they progress by reps, and success
   // still asks for any load the plan adds. No note is written — `notes` is
   // the injury-warning slot.
@@ -2140,6 +2130,14 @@ export function applyProgression(
   const completed =
     actualReps >= exercise.reps &&
     (!isBodyweight || actualWeight >= exercise.weight);
+  // Backlog #7 (H3): load moves in proportion to the lift. The step keys on
+  // the MOVEMENT and the load being followed, not on `isAccessory` — see
+  // movementClass.ts for why that flag (a volume role) can't answer this
+  // question. The lean-bulk accelerator rides the same test: a lift too
+  // light for a full plate is too light for a bonus on top of one.
+  const microplate = usesMicroplateStep(exercise.movementCategory, anchor);
+  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
+  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
@@ -2248,10 +2246,10 @@ export function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          // Weighted (incl. weighted holds): cut the LOAD, hold the duration —
-          // for a timed hold the load is the adjustable axis (LIFT-EV-01,
-          // deliberate). The cut comes off the load lifted.
-          updated.weight = Math.round(anchor * 0.95 * 2) / 2;
+          // Loaded (weighted holds included): the load stays where the
+          // person put it, and the rep target, or a hold's duration, goes
+          // back to its base. `plateauCount` below still records the stall.
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -2304,8 +2302,8 @@ export function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          // Off the load lifted, as on the double path.
-          updated.weight = Math.max(0, anchor - 1);
+          // As on the double path: the load stays, the target resets.
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -2555,10 +2553,11 @@ function applyAdjustment(
       // cost is a destroyed history. So the cheap intervention is the one the
       // engine is allowed to apply unattended, and the expensive one is not.
       //
-      // A stalled MAIN is not left unhandled: `applyProgression`'s backoff
-      // still cuts its load 5% every third failure, the mesocycle deload still
-      // reaches it, and a user who genuinely wants a different main lift can
-      // swap it themselves. What is removed is the engine silently doing it.
+      // A stalled MAIN is not left unhandled: `applyProgression` puts its rep
+      // target back to the base every third failure (the load stays where
+      // the person put it), the mesocycle deload still reaches it, and a
+      // user who genuinely wants a different main lift can swap it
+      // themselves. What is removed is the engine silently doing it.
       if (ex.isAccessory === true) {
         if (action === "add_volume") {
           out.baseSets = Math.min(ACCESSORY_RAMP_CAP, base + 1);

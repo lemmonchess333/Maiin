@@ -230,8 +230,8 @@ describe("beginner → intermediate (linear progress exhausted)", () => {
   it("misses WITHOUT a reset are still not exhaustion — reset must be tried first", () => {
     // Grinding and missing, but no back-off ever happened: Rippetoe's
     // protocol says reset ~10% and rebuild BEFORE concluding the phase is
-    // over. The engine's own backoff will produce the dip; until it does,
-    // this is a plateau being worked, not a graduation.
+    // over. A calendar deload or a lighter session will produce the dip;
+    // until one does, this is a plateau being worked, not a graduation.
     const missesNoReset = STALL_WITH_RESET.map((r) => ({
       ...r,
       weight: 60, // flatten the dip away

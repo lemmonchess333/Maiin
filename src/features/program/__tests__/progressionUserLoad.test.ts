@@ -8,9 +8,10 @@
  * Independent literals for what the parity matrix can only mirror:
  *   - a loaded lift's prescription moves to the weight lifted, heavier or
  *     lighter, by any margin; success is the target reps at that weight,
- *     and every step runs from it;
- *   - reps missed still move it there, count the miss, and the three-strike
- *     cut comes off the load lifted;
+ *     and every step runs from it, its size keyed on that weight;
+ *   - reps missed still move it there and count the miss; the third miss in
+ *     a row keeps the load and puts the rep target (a hold's duration) back
+ *     to its base, while bodyweight movements still step their target down;
  *   - no load logged holds; bodyweight and uncalibrated lifts are as they
  *     were;
  *   - at the finish (`applySessionProgression`), auto-progression off moves
@@ -102,10 +103,13 @@ describe("heavier: the plan moves to the load lifted, by any margin", () => {
       ex = both(ex, 6, 82.5);
       plan.push(ex.weight);
     }
-    // Was 57.5 → 57.5 → 57.5 → 54.5. The fourth is the double
-    // progression's own cut (the target climbed to 7 and 6 missed it three
-    // times), now taken off 82.5 rather than off the seed.
-    expect(plan).toEqual([82.5, 82.5, 82.5, 78.5]);
+    // Was 57.5 → 57.5 → 57.5 → 54.5. The first session moves the plan to
+    // 82.5 and climbs the target to 7; 6 then misses it three times, and the
+    // third miss puts the target back to 6 with the load where it was lifted.
+    expect(plan).toEqual([82.5, 82.5, 82.5, 82.5]);
+    expect(ex.reps).toBe(6);
+    expect(ex.consecutiveFailures).toBe(0);
+    expect(ex.plateauCount).toBe(1); // the stall is still recorded
   });
 
   it("a 200 kg entry on a 50 kg lift is taken as lifted — no typo guard", () => {
@@ -137,18 +141,94 @@ describe("lighter: the plan moves down to the load lifted", () => {
     expect(out.consecutiveFailures).toBe(1);
     expect(out.lastSuccessfulWeight).toBe(60); // the last success stands
   });
+});
 
-  it("the third miss cuts from the load lifted, on both paths", () => {
-    const double = both(bench({ consecutiveFailures: 2 }), 4, 50);
-    expect(double.weight).toBe(47.5); // 50 × 0.95, not 60 × 0.95
-    expect(double.consecutiveFailures).toBe(0);
-    expect(double.plateauCount).toBe(1);
-    const linear = both(
-      bench({ progressionType: "linear", consecutiveFailures: 2 }),
-      4,
-      50
-    );
-    expect(linear.weight).toBe(49); // 50 - 1, not 60 - 1
+describe("the third miss in a row: the target resets, the load stays", () => {
+  it("double path: the load lifted stays and the target goes back to its base", () => {
+    const out = both(bench({ reps: 7, consecutiveFailures: 2 }), 4, 50);
+    expect(out.weight).toBe(50); // no 5% cut: was 47.5
+    expect(out.reps).toBe(6);
+    expect(out.consecutiveFailures).toBe(0);
+    expect(out.plateauCount).toBe(1);
+  });
+
+  it("linear path: four sessions of 82.5 kg × 5 against 6 reps on a 57.5 kg seed", () => {
+    let ex = bench({ progressionType: "linear", weight: 57.5 });
+    const plan: number[] = [];
+    for (let session = 0; session < 4; session++) {
+      ex = both(ex, 5, 82.5);
+      plan.push(ex.weight);
+    }
+    // The 1 kg cut on the third miss went too: it read 82.5, 82.5, 81.5, 82.5.
+    expect(plan).toEqual([82.5, 82.5, 82.5, 82.5]);
+    expect(ex.plateauCount).toBe(1);
+  });
+
+  it("linear path: a target above its base goes back to it", () => {
+    const linear = bench({
+      progressionType: "linear",
+      reps: 8,
+      consecutiveFailures: 2,
+    });
+    const out = both(linear, 7, 82.5);
+    expect(out.weight).toBe(82.5);
+    expect(out.reps).toBe(6);
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("a weighted hold keeps its load and goes back to its base duration", () => {
+    const carry = bench({
+      name: "Farmer's Carry",
+      exerciseId: "farmers-carry",
+      movementCategory: "core",
+      repUnit: "seconds",
+      reps: 40,
+      baseReps: 30,
+      repRangeMax: 45,
+      weight: 24,
+      consecutiveFailures: 2,
+    });
+    const same = both(carry, 35, 24);
+    expect(same.weight).toBe(24); // not cut, not held at a shorter time
+    expect(same.reps).toBe(30);
+    expect(same.plateauCount).toBe(1);
+    expect(both(carry, 35, 20).weight).toBe(20); // the load lifted
+  });
+
+  it("bodyweight movements still step their target down", () => {
+    const pullUps = bench({
+      name: "Pull-Ups",
+      exerciseId: "pull-ups",
+      movementCategory: "vertical_pull",
+      reps: 8,
+      weight: 0,
+      consecutiveFailures: 2,
+    });
+    const reps = both(pullUps, 5, 0);
+    expect(reps.reps).toBe(7); // one rep down, not back to the base of 6
+    expect(reps.weight).toBe(0);
+    expect(reps.plateauCount).toBe(1);
+    const plank = bench({
+      name: "Plank",
+      exerciseId: "plank",
+      movementCategory: "core",
+      repUnit: "seconds",
+      reps: 40,
+      baseReps: 30,
+      weight: 0,
+      consecutiveFailures: 2,
+    });
+    expect(both(plank, 20, 0).reps).toBe(35); // five seconds down, not 30
+    const dips = bench({
+      exerciseId: "weighted-chest-dip",
+      movementCategory: "vertical_push",
+      reps: 8,
+      weight: 10,
+      consecutiveFailures: 2,
+    });
+    const dipped = both(dips, 5, 10);
+    expect(dipped.reps).toBe(7);
+    expect(dipped.weight).toBe(10);
   });
 });
 
@@ -179,11 +259,17 @@ describe("every step runs from the load lifted", () => {
     expect(both(bench(), 8, 50, { rpe: 10 }).weight).toBe(50);
   });
 
-  it("the step's size still keys on the prescription's load", () => {
-    // 30 kg is under HEAVY_LOAD_KG, so the step is a 1.25 kg microplate
-    // even though 82.5 kg was lifted; from then on the plan is 83.75 kg and
-    // steps as a plate-pair lift. Deliberate: only the base moved.
-    expect(both(bench({ weight: 30 }), 8, 82.5).weight).toBe(83.75);
+  it("the step's size keys on the load lifted", () => {
+    // 30 kg planned is under HEAVY_LOAD_KG, but 82.5 kg was lifted, so the
+    // step is a 2.5 kg plate pair (was a 1.25 kg microplate: 83.75), and on
+    // lean bulk the bonus rides on it.
+    expect(both(bench({ weight: 30 }), 8, 82.5).weight).toBe(85);
+    expect(
+      both(bench({ weight: 30 }), 8, 82.5, { goal: "lean bulk" }).weight
+    ).toBe(86.25);
+    // The other way: 60 kg planned, 30 kg lifted steps by a microplate, with
+    // no bonus on a lift too light for a full plate.
+    expect(both(bench(), 8, 30, { goal: "lean bulk" }).weight).toBe(31.25);
   });
 });
 
@@ -452,13 +538,14 @@ describe("after the next load, a lowered plan stays lowered", () => {
     expect(reload(next).weight).toBe(50);
   });
 
-  it("the third miss's cut", () => {
+  it("a lighter third miss: the load lifted, the target back at its base", () => {
     const next = finishState(
-      stateWith(bench({ consecutiveFailures: 2 })),
-      three(60, 4)
+      stateWith(bench({ reps: 7, consecutiveFailures: 2 })),
+      three(50, 4)
     );
-    expect(next.workouts[0].exercises[0].weight).toBe(57);
-    expect(reload(next).weight).toBe(57);
+    const ex = reload(next);
+    expect(ex.weight).toBe(50);
+    expect(ex.reps).toBe(6);
   });
 
   it("a heavier session keeps its load too", () => {

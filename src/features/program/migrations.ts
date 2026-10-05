@@ -196,9 +196,9 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *     with this repair, so a v3+ document has either been through it or was
  *     built by an engine that no longer decays. Run on every load, it was a
  *     standing floor at the last success that undid, on the next load, every
- *     legitimate load below it: the novice deload week, the three-strike
- *     cut, a block re-prescription's scaled load, and the plan following a
- *     lighter load the person lifted.
+ *     legitimate load below it: the novice deload week, a block
+ *     re-prescription's scaled load, and the plan following a lighter load
+ *     the person lifted.
  *
  *   SETS — only MAINS, and only up to the main floor. The true original set
  *     count is NOT recoverable from programState (nothing stored it before
