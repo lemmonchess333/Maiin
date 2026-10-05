@@ -16,8 +16,6 @@ import {
   pickAccessory,
   exerciseBank,
   exerciseDisplayName,
-  CATALOGUE_PINNED_ACCESSORY_IDS,
-  rescaleForSwap,
 } from "./variationBank";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
@@ -445,9 +443,9 @@ export function splitRationale(weeklyLiftDays: number): string {
 /**
  * The level the builders pick at. Every plan is built from the intermediate
  * tier's standard lifts, then `applyComplexityGate` re-points what a beginner
- * can't be offered; an advanced lifter's specialised variations come in at a
- * stall (`pickExercise`'s rotation), never at a build. Named here because a
- * pick without a level is a beginner's (`toExperience`).
+ * can't be offered; an advanced lifter's specialised variations come in only
+ * when they pick one. Named here because a pick without a level is a
+ * beginner's (`toExperience`).
  */
 const BUILDER_TIER: Experience = "intermediate";
 
@@ -484,25 +482,17 @@ function makeExercise(
 ): ProgramExercise {
   const existing =
     existingAtSlot?.movementCategory === category ? existingAtSlot : undefined;
-  const currentOption =
-    existing && (existing.plateauCount ?? 0) < 3
-      ? (exerciseBank[category] ?? []).find(
-          (option) => option.id === existing.exerciseId
-        )
-      : undefined;
-  // Keep a valid, non-stalled carried variation stable. The builders pick at
-  // the intermediate tier, so asking `pickExercise` to validate it here would
-  // silently turn an advanced specialist lift back into the primary on the
-  // next regeneration. The experience-aware post-pass below owns downgrades
-  // and will still replace this row if the user's level no longer permits it.
-  const ex =
-    currentOption ??
-    pickExercise(
-      category,
-      existing?.plateauCount ?? 0,
-      existing?.exerciseId,
-      BUILDER_TIER
-    );
+  const currentOption = existing
+    ? (exerciseBank[category] ?? []).find(
+        (option) => option.id === existing.exerciseId
+      )
+    : undefined;
+  // Keep a carried variation, stalled or not: the engine never swaps a lift
+  // on its own (Lift4 (2)). The builders pick at the intermediate tier, so
+  // asking `pickExercise` to validate it here would silently turn an
+  // advanced specialist lift back into the primary on the next
+  // regeneration; the complexity gate owns downgrades.
+  const ex = currentOption ?? pickExercise(category, undefined, BUILDER_TIER);
   const identityChanged =
     existing !== undefined && existing.exerciseId !== ex.id;
   const w = identityChanged
@@ -560,14 +550,6 @@ function swapExerciseIdentity(
     plateauCount: 0,
     performanceHistory: [],
     lastPerformance: null,
-    // A one-shot swap IS a calibration (properly rescaled above), so the
-    // rotation anchor moves with it — future rotations scale from this
-    // identity/weight pair, not from whatever preceded the swap.
-    ...(calibrated.weight > 0
-      ? {
-          rotationAnchor: { exerciseId: to.id, weight: calibrated.weight },
-        }
-      : {}),
   };
 }
 
@@ -1320,104 +1302,11 @@ export function expectedDayCount(weeklyTarget: number): number {
 
 /**
  * D-LIFT-12: within each day, ensure no exercise id appears twice. A duplicate
- * (a main that rotated onto a variation an accessory also picked) is re-pointed
+ * (a main carried on a variation an accessory also picked) is re-pointed
  * to the first unused variation in the same movement category. Deterministic;
  * leaves the duplicate as-is only if the category has no free alternative.
  * Pure — returns a new array.
  */
-/**
- * D-LIFT-4: rotate UNTRAINED accessories (no logged history) to a different
- * variation in the same movement category — periodic novelty without disturbing
- * the user's actual training. Mains and any accessory with logged history are
- * left untouched. Keeps the slot's `instanceId` (same row, new movement) so the
- * reorderable list doesn't churn. Pure.
- */
-export function rotateUntrainedAccessories(
-  workouts: WorkoutDay[],
-  /**
-   * The lifter's level. Without it the mesocycle rotation was a second escape
-   * route around the complexity gate (2026-07-28 sweep): at weeks 5, 9, … a
-   * beginner's untrained accessories were re-picked from the FULL bank, so a
-   * plan that started correctly gated drifted above their level four weeks in.
-   */
-  experience?: Experience
-): WorkoutDay[] {
-  return workouts.map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => {
-      if (!ex.isAccessory) return ex; // mains never rotate
-      if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
-      // Catalogue-pinned slots (direct calf work) have no pool to rotate
-      // within — their category pool is squat-pattern lifts, and rotating
-      // into it deletes the programme's only calf coverage.
-      if (CATALOGUE_PINNED_ACCESSORY_IDS.has(ex.exerciseId)) return ex;
-      const next = pickAccessory(
-        ex.movementCategory,
-        ex.exerciseId,
-        experience
-      );
-      if (next.id === ex.exerciseId) return ex; // no alternative available
-      // Load: scale from the ROTATION ANCHOR when the slot carries one AND
-      // its lineage is intact — the current weight is exactly what the
-      // anchor implies for the current identity. Anchored scaling is what
-      // naive rescaling could never be: every rotation computes from the
-      // same fixed pair, so repeated rotation cannot compound (the measured
-      // 50 → 30 → 12.5 decay came from scaling each rotation against the
-      // PREVIOUS rotation's already-scaled output).
-      //
-      // The lineage check is what keeps a USER'S number safe: a manually
-      // edited weight on an untrained slot diverges from the anchor, and
-      // snapping it back to an anchor-derived value would silently discard
-      // the user's calibration. Diverged (and legacy no-anchor) slots keep
-      // the old deliberate carry-the-weight behaviour — a mis-scaled load
-      // beats a discarded one, and the next seedStartingLoads on a
-      // regenerate re-derives everything. Guarded by "never compounds
-      // across mesocycles" and "ramps accessories …" in
-      // programEngine.test.ts, plus the anchored-rotation block that pins
-      // the new path.
-      const anchor = ex.rotationAnchor;
-      const impliedCurrent = anchor
-        ? anchor.exerciseId === ex.exerciseId
-          ? anchor.weight
-          : rescaleForSwap(
-              anchor.weight,
-              anchor.exerciseId,
-              ex.exerciseId,
-              ex.movementCategory
-            )
-        : 0;
-      const lineageIntact =
-        anchor !== undefined &&
-        impliedCurrent > 0 &&
-        impliedCurrent === (ex.weight ?? 0);
-      const anchored =
-        anchor !== undefined && lineageIntact
-          ? rescaleForSwap(
-              anchor.weight,
-              anchor.exerciseId,
-              next.id,
-              ex.movementCategory
-            )
-          : 0;
-      return {
-        ...ex,
-        exerciseId: next.id,
-        name: next.name,
-        ...(anchored > 0
-          ? {
-              weight: anchored,
-              lastSuccessfulWeight: anchored,
-              lastAttemptedWeight: anchored,
-            }
-          : {}),
-        lastPerformance: null,
-        consecutiveFailures: 0,
-        plateauCount: 0,
-      };
-    }),
-  }));
-}
-
 export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => {
     const seen = new Set<string>();
@@ -1634,11 +1523,6 @@ export function balanceWeekVolume(
  * volume machinery just computed, so a genuine prescription change still
  * lands. Guarded on category equality, so a slot that legitimately changed
  * movement (see `applyOverlapCaps`) is left alone.
- *
- * This also puts Tropos properly on the side of N5's "stability within a
- * block, novelty between blocks": `rotateUntrainedAccessories` still refreshes
- * untrained accessories at each mesocycle boundary, which is the intended
- * novelty — it just no longer happens by accident on every settings change.
  */
 function carryExistingAccessories(
   workouts: WorkoutDay[],
@@ -1677,11 +1561,7 @@ function carriedState(prev: ProgramExercise): Partial<ProgramExercise> {
     plateauCount: prev.plateauCount,
     performanceHistory: prev.performanceHistory,
     lastPerformance: prev.lastPerformance,
-    // The anchor travels with the load lineage it describes.
-    ...(prev.rotationAnchor !== undefined
-      ? { rotationAnchor: prev.rotationAnchor }
-      : {}),
-    // …and a swapped lift keeps its way back (Lift4 (11)).
+    // A swapped lift keeps its way back (Lift4 (11)).
     ...(prev.swappedFrom !== undefined
       ? { swappedFrom: prev.swappedFrom }
       : {}),
@@ -1771,41 +1651,6 @@ function applyOverlapCaps(
     day.exercises[exIndex] = swapExerciseIdentity(old, swap, loadCtx);
   }
   return out;
-}
-
-/**
- * The builders predate the experience argument and their `makeExercise` call
- * cannot see it. Re-resolve only carried, stalled main slots here so the real
- * generation lifecycle reaches the same specialist choice as the pure picker.
- */
-function applyExperienceAwarePlateauPicks(
-  workouts: WorkoutDay[],
-  existing: WorkoutDay[] | undefined,
-  experience: Experience | undefined,
-  loadCtx: StartingLoadContext | undefined
-): WorkoutDay[] {
-  if (!existing) return workouts;
-  return workouts.map((day, dayIndex) => ({
-    ...day,
-    exercises: day.exercises.map((ex, exIndex) => {
-      if (ex.isAccessory === true) return ex;
-      const previous = existing[dayIndex]?.exercises[exIndex];
-      if (
-        !previous ||
-        previous.movementCategory !== ex.movementCategory ||
-        (previous.plateauCount ?? 0) < 3
-      ) {
-        return ex;
-      }
-      const pick = pickExercise(
-        ex.movementCategory,
-        previous.plateauCount ?? 0,
-        previous.exerciseId,
-        experience
-      );
-      return swapExerciseIdentity(ex, pick, loadCtx, previous);
-    }),
-  }));
 }
 
 export function generateProgram(
@@ -2038,15 +1883,9 @@ export function generateProgram(
     buildSplit(undefined)
   );
   let workouts = buildSplit(existingForBuild);
-  workouts = applyExperienceAwarePlateauPicks(
-    workouts,
-    existingForBuild,
-    experience,
-    loadCtx
-  );
 
-  // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
-  // rotated to a variation an accessory then matched). Re-picks the duplicate
+  // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main
+  // carried on a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
   // Backlog #10 (M6 adjacency): order the week so back-to-back days aren't the
   // two that hammer the same lower back. Safe to apply on EVERY generation
@@ -2883,17 +2722,6 @@ export function advanceWeek(
     // what the lifter would otherwise have done. Zatsiorsky p.81: fatigue is
     // specific, so the muscles that are fine keep their full week.
     workouts = applyRecoverySession(workouts, recoveryMuscles);
-  }
-
-  // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
-  // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
-  // joint health. Trained accessories (logged history) and all mains stay put —
-  // mains are the progression anchor, and a lift the user actually trains is
-  // theirs to keep. Re-deduped so a rotation can't collide within a day.
-  if (nextWeek % 4 === 1) {
-    workouts = dedupeDayExercises(
-      rotateUntrainedAccessories(workouts, experience)
-    );
   }
 
   /* Lift4: the week opens with the session the last one didn't reach.

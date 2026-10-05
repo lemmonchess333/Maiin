@@ -26,7 +26,6 @@
 import { describe, it, expect } from "vitest";
 
 import { buildPlan } from "../planBuilder";
-import { generateProgram, rotateUntrainedAccessories } from "../programEngine";
 import { weeklyVolumeByMuscle, volumeLandmark } from "../volumeModel";
 import { getExerciseById } from "@/lib/exercises";
 import type { PrimaryGoal, WorkoutDay } from "../programTypes";
@@ -121,15 +120,5 @@ describe("generated plans carry direct calf work", () => {
         }
       }
     }
-  });
-
-  it("mesocycle rotation leaves the calf slot alone (it has no pool to rotate in)", () => {
-    const { workouts } = generateProgram("recomp", 6, undefined, "hypertrophy");
-    const before = calfSlots(workouts).map((s) => s.exerciseId);
-    expect(before.length).toBeGreaterThanOrEqual(2); // both leg days
-    // Untrained accessories rotate at every meso restart — the calf slots
-    // qualify as untrained, and their category pool is squat-pattern lifts.
-    const rotated = rotateUntrainedAccessories(workouts, "intermediate");
-    expect(calfSlots(rotated).map((s) => s.exerciseId)).toEqual(before);
   });
 });

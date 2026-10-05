@@ -370,6 +370,20 @@ sets a week through the cycle, 44 in its lighter week, where the wave ran
 `plateauResponses` and the block's `amnestyWeeksLeft` stay on stored plans,
 which the server's allow-list admits; nothing reads them.
 
+STATUS 2026-10-05 (Lift4 (2) and (13), build step 4, eleventh part): the
+engine never swaps a lift on its own. Retired: the untrained-accessory
+rotation (at each new cycle, an accessory with no logged sets moved to
+another variation; it also re-ran on every untrained rollover into such a
+week) and the plateau swaps at rebuild (a lift stalled three times was
+re-picked when the plan was next built, `makeExercise` for accessories and
+`applyExperienceAwarePlateauPicks` for mains, zeroing its history).
+`pickExercise` keeps the current lift when the level allows it and otherwise
+gives the primary; the variation roles that ranked a stall's replacement
+(technique, weak point, size) and the rotation's load anchor
+(`rotationAnchor`) go with them. Advanced variations come in when the person
+picks one; the rules sheet (step 6) says a variation often gets a stuck lift
+moving.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

@@ -471,10 +471,9 @@ describe("the complexity gate survives composition", () => {
     ).toEqual([]);
   });
 
-  it("holds across a mesocycle boundary — week 5 rotation stays in level", () => {
-    // advanceWeek rotates UNTRAINED accessories at weeks 5, 9, … Before the
-    // fix it re-picked from the full bank, so a beginner's plan drifted above
-    // their level four weeks after it was built.
+  it("holds across a cycle boundary", () => {
+    // Nothing at the rollover re-picks an exercise (Lift4 (2)), so a
+    // beginner's plan stays in level through week 5.
     const plan = buildPlan(planInput() as Parameters<typeof buildPlan>[0]);
     let state = { ...plan.programState, weekNumber: 4 };
     for (let i = 0; i < 3; i += 1) {
@@ -644,38 +643,13 @@ describe("a limited-equipment user gets a plan they can perform", () => {
 });
 
 /**
- * WHEN does an advanced lifter actually get the advanced movements?
- *
- * The question was left open as "a design decision" and then answered by
- * re-reading the code: the arc had already decided it. `pickExercise`'s
- * plateau branch exists precisely to swap a STALLED lift for a variation with
- * a job (Green assigns each variant one; Jenkins calls them "tools in the
- * arsenal"). That is the moment a specialised tool is warranted.
- *
- * The advanced entries were unreachable only because ties inside a role broke
- * on BANK ORDER — arbitrary, and they were appended last, so they lost every
- * tie by construction. Ties now break toward the more specialised tool for a
- * lifter whose level admits it.
+ * When does an advanced lifter get the advanced movements? When they pick
+ * one. The engine never swaps a lift on its own (Lift4 (2)): a stalled lift
+ * keeps its exercise, its load and its history through a rebuild, and the
+ * rules sheet says a variation often gets a stuck lift moving.
  */
-describe("advanced movements surface when a lift stalls", () => {
-  it("a stalled advanced lifter gets the specialised tool; others do not", () => {
-    expect(
-      pickExercise("horizontal_pull", 3, "barbell-row", "advanced").id
-    ).toBe("pendlay-row");
-    expect(
-      pickExercise("horizontal_push", 3, "bench-press", "advanced").id
-    ).toBe("barbell-floor-press");
-
-    // An intermediate gets the same JOB, one tier down — not the advanced tool.
-    expect(
-      pickExercise("horizontal_pull", 3, "barbell-row", "intermediate").id
-    ).toBe("chest-supported-db-row");
-    expect(
-      pickExercise("horizontal_push", 3, "bench-press", "intermediate").id
-    ).toBe("close-grip-bench");
-  });
-
-  it("wires the specialist choice through a real programme regeneration", () => {
+describe("a stalled lift keeps its exercise", () => {
+  it("through a real programme regeneration", () => {
     const first = generateProgram(
       "recomp",
       4,
@@ -717,62 +691,29 @@ describe("advanced movements surface when a lift stalls", () => {
       undefined,
       "advanced"
     ).workouts;
-    const specialist = regenerated
+    const rows = regenerated
       .flatMap((day) => day.exercises)
-      .find((ex) => ex.exerciseId === "pendlay-row");
-    expect(specialist).toBeDefined();
-    expect(specialist?.plateauCount).toBe(0);
-    expect(specialist?.performanceHistory).toEqual([]);
-
-    const stable = generateProgram(
-      "recomp",
-      4,
-      regenerated,
-      "hypertrophy",
-      CTX("advanced"),
-      undefined,
-      "advanced"
-    ).workouts;
+      .filter((ex) => ex.exerciseId === "barbell-row");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.plateauCount).toBe(3);
+      expect(row.performanceHistory).toHaveLength(1);
+      expect(row.weight).toBe(100);
+    }
     expect(
-      stable
+      regenerated
         .flatMap((day) => day.exercises)
         .some((ex) => ex.exerciseId === "pendlay-row")
-    ).toBe(true);
-  });
-
-  it("does not fire below the plateau threshold, at any level", () => {
-    // Stability within a block (N5) — a lift that is still progressing keeps
-    // its exercise. The advanced tier changes what a STALL escalates to, not
-    // what a working programme contains.
-    for (const lvl of ["intermediate", "advanced"] as const) {
-      expect(pickExercise("horizontal_pull", 0, "barbell-row", lvl).id).toBe(
-        "barbell-row"
-      );
-      expect(pickExercise("horizontal_push", 2, "bench-press", lvl).id).toBe(
-        "bench-press"
-      );
-    }
-  });
-
-  it("leaves the stalled DEADLIFT on a position fix, not a lockout fix", () => {
-    // `rack-pull` is the third advanced entry and stays unreachable here, on
-    // purpose. It is a `weak_point` (lockout) tool, and the rotation ranks
-    // `technique` first because — in this file's own words — "a stall is more
-    // often a position problem than a missing sticking-point". Sumo and
-    // trap-bar teach position. Promoting a lockout fix over a position fix
-    // needs the user to say WHERE the lift fails, which no UI asks yet.
-    expect(pickExercise("hip_dominant", 3, "deadlift", "advanced").id).toBe(
-      "sumo-deadlift"
-    );
+    ).toBe(false);
   });
 
   it("never reaches an advanced movement for a beginner", () => {
     for (const [cat, cur] of [
-      ["horizontal_pull", "barbell-row"],
-      ["horizontal_push", "bench-press"],
-      ["hip_dominant", "deadlift"],
+      ["horizontal_pull", "pendlay-row"],
+      ["horizontal_push", "barbell-floor-press"],
+      ["hip_dominant", "sumo-deadlift"],
     ] as const) {
-      const got = pickExercise(cat, 5, cur, "beginner");
+      const got = pickExercise(cat, cur, "beginner");
       const opt = exerciseBank[cat].find((o) => o.id === got.id);
       expect(opt?.complexity ?? "simple", `${cat}`).toBe("simple");
     }

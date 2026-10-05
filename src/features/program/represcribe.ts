@@ -61,11 +61,9 @@ import type {
  * progression engine. `applyProgression` scores a session complete only
  * when `actualReps >= exercise.reps`, so raising a main from 5 to 12 at
  * unchanged load fails every session → `consecutiveFailures >= 3` →
- * `plateauCount++`, and a represcribe does it to every main at once. A
- * stalled main is one the plan swaps for a variation when it is next
- * rebuilt (`applyExperienceAwarePlateauPicks`), which zeroes its history:
- * the failure Blk1 predicted. Moving the load with the target keeps the
- * session completable on day one.
+ * `plateauCount++`, and a represcribe does it to every main at once, then
+ * lowers them all. Moving the load with the target keeps the session
+ * completable on day one.
  *
  * Epley rather than a flat multiplier because the error compounds over the
  * range the five focus profiles actually span: 5→12 needs ×0.83, not the
