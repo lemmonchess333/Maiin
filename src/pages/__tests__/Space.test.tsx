@@ -162,6 +162,30 @@ it("requires London's assigned day and sends that day to the training editor", a
 });
 
 describe("Space page", () => {
+  it("shows an ultra's distance and organiser without offering a marathon training plan", async () => {
+    render(
+      <MemoryRouter initialEntries={["/space/race-to-the-stones-100k"]}>
+        <Routes>
+          <Route path="/space/:spaceId" element={<Space />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(await screen.findByText(/km ultra/)).toHaveTextContent(
+      "100 km ultra"
+    );
+    expect(
+      screen.getByRole("link", { name: "Visit official website" })
+    ).toHaveAttribute(
+      "href",
+      "https://www.thresholdtrailseries.com/race-to-the-stones/"
+    );
+    expect(
+      screen.queryByRole("button", { name: "Train for this race" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Ultra training plans aren’t available/)
+    ).toBeInTheDocument();
+  });
   it("hides the retired coach posts and puts the pinned team note above the members", async () => {
     seedFirestore({
       [MEMBER_DOC]: { uid: "viewer", joinedAt: at(new Date(2026, 8, 1)) },

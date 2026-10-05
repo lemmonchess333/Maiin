@@ -4,6 +4,60 @@ import type { DateSource } from "./date-parser";
 // Dedicated date elements inspected on 2026-10-04. No whole-page date scraping:
 // news, entry deadlines and other distances frequently appear on these pages.
 const selectors: Record<string, Partial<DateSource>> = {
+  "edinburgh-half": { selector: "title", identity: "Edinburgh Half Marathon" },
+  "bournemouth-half": {
+    selector: "title",
+    identity: "Bournemouth Half Marathon",
+  },
+  "sheffield-half": {
+    selector: ".start-date",
+    identity: "Sheffield Half Marathon",
+  },
+  "valencia-half": {
+    selector: "header .datetorun",
+    identity: "Valencia.*Half|Half.*Valencia",
+  },
+  "edinburgh-10k": { selector: "title", identity: "EMF 10k" },
+  "bournemouth-10k": {
+    selector: "title",
+    identity: "Bournemouth Supersonic 10K",
+  },
+  "lincoln-10k": { selector: ".start-date", identity: "City of Lincoln 10K" },
+  "york-10k": { selector: ".start-date", identity: "York 10K" },
+  "river-ness-10k": {
+    selector: ".event-stat__label",
+    identity: "River Ness 10K",
+  },
+  "bournemouth-5k": { selector: "title", identity: "Bournemouth Supernova 5K" },
+  "supernova-forth-5k": {
+    selector: "title",
+    identity: "Supernova Forth Road Bridge",
+  },
+  "supernova-kelpies-5k": {
+    url: "https://www.supernovarun.com/",
+    selector: "title",
+    identity: "Supernova Run",
+    pattern:
+      "\\d{1,2}(?:st|nd|rd|th)?/\\d{1,2}(?:st|nd|rd|th)? [A-Za-z]+ 20\\d{2}",
+    multipleRaceDays: true,
+  },
+  "race-to-the-king-100k": {
+    selector: "li",
+    identity: "Race to the King",
+    pattern: "^Date:.*",
+  },
+  "race-to-the-stones-100k": {
+    selector: ".card-body:has(h3.card-title)",
+    identity: "Race to the Stones",
+    pattern:
+      "^100K NON-STOP\\s*[A-Za-z]+ \\d{1,2}(?:st|nd|rd|th)? [A-Za-z]+ 20\\d{2}\\b",
+  },
+  "chiltern-50": {
+    selector: "h2.elementor-heading-title",
+    identity: "Chiltern 50",
+    identitySelector: "h2.elementor-heading-title:has(> br):has(> sup)",
+    pattern: "^[A-Za-z]+ \\d{1,2} [A-Za-z]+ 20\\d{2}$",
+  },
   "chester-marathon": { render: true, selector: "main h1 + div span" },
   "amsterdam-marathon": {
     url: "https://www.tcsamsterdammarathon.eu/frequently-asked-questions",

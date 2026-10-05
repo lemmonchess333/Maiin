@@ -159,6 +159,22 @@ it("validates country codes and retains bundled countries for older remote paylo
   ).toBe("US");
 });
 
+it("keeps an ultra's distance when remote date metadata includes a different distance", () => {
+  const def = spaceDef("chiltern-50")!;
+  const overrides = sanitizeRaceEventOverrides({
+    "chiltern-50": {
+      dateKey: "2099-09-26",
+      distance: "marathon",
+      distanceKm: 42.195,
+    },
+  });
+  expect(resolveRaceEvent(def, overrides)).toMatchObject({
+    dateKey: "2099-09-26",
+    distance: "ultra",
+    distanceKm: 50,
+  });
+});
+
 it("keeps every recurring race discoverable, with confirmed dates before awaiting editions", () => {
   const all = directoryResolvedRaceDefs({}, "2099-01-01");
   expect(all).toHaveLength(raceSpaceDefs().length);

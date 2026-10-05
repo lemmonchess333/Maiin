@@ -32,8 +32,9 @@ export type RaceCountryCode = keyof typeof RACE_COUNTRIES;
 
 export type SpaceKind = "interest" | "race" | "location";
 
-/** Engine-recognised race distances (matches RaceGoalPlanner). */
-export type RaceEventDistance = "5k" | "10k" | "half" | "marathon";
+/** The directory also covers ultras; the training engine ends at marathon. */
+export type TrainingRaceDistance = "5k" | "10k" | "half" | "marathon";
+export type RaceEventDistance = TrainingRaceDistance | "ultra";
 
 /**
  * Event metadata for kind === "race" spaces (Races & Events plan,
@@ -59,6 +60,8 @@ export interface SpaceEventInfo {
    * training must use the participant's chosen day, never the whole range. */
   dateKeys?: string[];
   distance: RaceEventDistance;
+  /** Exact organiser distance for an ultra, in kilometres. */
+  distanceKm?: number;
   city: string;
   /** ISO country code for browsing; UK nations share GB. */
   countryCode: RaceCountryCode;
@@ -87,6 +90,12 @@ export interface SpaceDef {
   icon: string;
   /** Present on every kind === "race" def; never on interest defs. */
   event?: SpaceEventInfo;
+}
+
+export function isTrainableRaceEvent(
+  event: SpaceEventInfo
+): event is SpaceEventInfo & { distance: TrainingRaceDistance } {
+  return event.distance !== "ultra";
 }
 
 export const SPACE_DEFS: SpaceDef[] = [
@@ -849,6 +858,253 @@ export const SPACE_DEFS: SpaceDef[] = [
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl:
         "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-5k",
+    },
+  },
+  {
+    id: "edinburgh-half",
+    name: "Edinburgh Half Marathon",
+    tagline: "A half marathon from Edinburgh to the East Lothian coast.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-30",
+      distance: "half",
+      city: "Edinburgh",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.edinburghmarathon.com/halfmarathon",
+    },
+  },
+  {
+    id: "bournemouth-half",
+    name: "Bournemouth Half Marathon",
+    tagline: "Coastal miles along Bournemouth’s seafront and piers.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-11",
+      distance: "half",
+      city: "Bournemouth",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runbournemouth.com/halfmarathon",
+    },
+  },
+  {
+    id: "sheffield-half",
+    name: "Sheffield Half Marathon",
+    tagline: "A city start with a climb towards the Peak District.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-04",
+      distance: "half",
+      city: "Sheffield",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl:
+        "https://www.runforall.com/events/half-marathon/sheffield-half-marathon/",
+    },
+  },
+  {
+    id: "valencia-half",
+    name: "Valencia Half Marathon",
+    tagline: "A Mediterranean city setting for 21.1 kilometres.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-25",
+      distance: "half",
+      city: "Valencia",
+      countryCode: "ES",
+      countryFlag: "🇪🇸",
+      websiteUrl:
+        "https://www.valenciaciudaddelrunning.com/en/half/half-marathon/",
+    },
+  },
+  {
+    id: "edinburgh-10k",
+    name: "Edinburgh Marathon Festival 10K",
+    tagline: "Ten kilometres through Edinburgh’s Holyrood Park.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-29",
+      distance: "10k",
+      city: "Edinburgh",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.edinburghmarathon.com/10k",
+    },
+  },
+  {
+    id: "bournemouth-10k",
+    name: "Bournemouth Supersonic 10K",
+    tagline: "A seaside 10K with Bournemouth’s piers in view.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-11",
+      distance: "10k",
+      city: "Bournemouth",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runbournemouth.com/supersonic10k",
+    },
+  },
+  {
+    id: "lincoln-10k",
+    name: "City of Lincoln 10K",
+    tagline: "A city 10K with a finish beside Lincoln Cathedral.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-04",
+      distance: "10k",
+      city: "Lincoln",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runforall.com/events/10k/city-of-lincoln-10k/",
+    },
+  },
+  {
+    id: "york-10k",
+    name: "York 10K",
+    tagline: "Ten kilometres through York’s historic streets.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-08-01",
+      distance: "10k",
+      city: "York",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runforall.com/events/10k/york-10k/",
+    },
+  },
+  {
+    id: "river-ness-10k",
+    name: "River Ness 10K",
+    tagline: "A Highland city 10K finishing beside the River Ness.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-09-26",
+      distance: "10k",
+      city: "Inverness",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl:
+        "https://caledoniangroupevents.co.uk/loch-ness-marathon/event/river-ness-10k",
+    },
+  },
+  {
+    id: "bournemouth-5k",
+    name: "Bournemouth Supernova 5K",
+    tagline: "An evening 5K along the illuminated seafront.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-10",
+      distance: "5k",
+      city: "Bournemouth",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runbournemouth.com/supernova5k",
+    },
+  },
+  {
+    id: "supernova-forth-5k",
+    name: "Supernova Forth Road Bridge 5K",
+    tagline: "An evening run across the Firth of Forth.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-11-07",
+      distance: "5k",
+      city: "South Queensferry",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.supernovarun.com/forthroadbridge",
+    },
+  },
+  {
+    id: "supernova-kelpies-5k",
+    name: "Supernova Kelpies 5K",
+    tagline: "Choose a night to run beside the illuminated Kelpies.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-03-13",
+      dateKeys: ["2027-03-12", "2027-03-13"],
+      distance: "5k",
+      city: "Falkirk",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.supernovarun.com/",
+    },
+  },
+  {
+    id: "race-to-the-king-100k",
+    name: "Race to the King 100K",
+    tagline: "A continuous 100 km journey through the South Downs.",
+    kind: "race",
+    accent: "running",
+    icon: "mountain",
+    event: {
+      dateKey: "2027-06-19",
+      distance: "ultra",
+      distanceKm: 100,
+      city: "West Dean, South Downs",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.thresholdtrailseries.com/race-to-the-king/",
+    },
+  },
+  {
+    id: "race-to-the-stones-100k",
+    name: "Race to the Stones 100K",
+    tagline: "Follow the Ridgeway to Avebury in the non-stop 100 km event.",
+    kind: "race",
+    accent: "running",
+    icon: "mountain",
+    event: {
+      dateKey: "2027-07-10",
+      distance: "ultra",
+      distanceKm: 100,
+      city: "Lewknor to Avebury",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.thresholdtrailseries.com/race-to-the-stones/",
+    },
+  },
+  {
+    id: "chiltern-50",
+    name: "Chiltern 50 Ultra Challenge",
+    tagline: "A 50 km loop through the Chilterns’ wooded hills.",
+    kind: "race",
+    accent: "running",
+    icon: "mountain",
+    event: {
+      dateKey: "2027-09-25",
+      distance: "ultra",
+      distanceKm: 50,
+      city: "Henley-on-Thames",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.ultrachallenge.com/chiltern-50/",
     },
   },
 ];

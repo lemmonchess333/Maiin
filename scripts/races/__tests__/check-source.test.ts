@@ -7,6 +7,21 @@ import { DATE_SOURCES } from "../sources";
 // outside the reviewed field deliberately differ from the actual race day.
 const fixtures: Array<[string, string, string[]]> = [
   [
+    "supernova-kelpies-5k",
+    "<title>Supernova Run - 7th November 2026, 12th/13th March 2027</title>",
+    ["2027-03-12", "2027-03-13"],
+  ],
+  [
+    "race-to-the-stones-100k",
+    '<title>Race to the Stones 2027</title><li>Date: 10-11th July 2027</li><div class="card-body"><h3 class="card-title">100K NON-STOP</h3><p>Saturday 10th July 2027</p></div><div class="card-body"><h3 class="card-title">50K DAY TWO</h3><p>Sunday 11th July 2027</p></div>',
+    ["2027-07-10"],
+  ],
+  [
+    "chiltern-50",
+    '<title>Ultra Challenge</title><h2 class="elementor-heading-title">Chiltern 50<br>Ultra Challenge<sup>®</sup></h2><h2 class="elementor-heading-title">Sat 25 SEPT 2027</h2><p class="elementor-image-box-description">Sat 10 October 2026</p>',
+    ["2027-09-25"],
+  ],
+  [
     "chester-marathon",
     "<title>Chester Marathon</title><main><h1>Chester Marathon</h1><div><span>11 October 2026</span></div></main>",
     ["2026-10-11"],
