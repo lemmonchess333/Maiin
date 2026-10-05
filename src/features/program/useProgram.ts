@@ -18,10 +18,20 @@ import {
   applySessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { captureError } from "@/lib/errorReporting";
 import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
-import { workoutCompletionDayIdentity } from "@/lib/offlineQueue";
+import {
+  hasPendingProgrammeCompletion,
+  queuedWritesVersion,
+  subscribeQueuedWrites,
+  workoutCompletionDayIdentity,
+} from "@/lib/offlineQueue";
+import {
+  isLiftSessionOpen,
+  liftSessionVersion,
+  subscribeLiftSession,
+} from "./openLiftSession";
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
@@ -444,6 +454,12 @@ function declineWithReason(base: string, reason: string): ProgramOutcome {
 
 /** See `readiness` on the hook's return. */
 export type ProgramReadiness = "pending" | "ready" | "failed";
+
+/** A finish the week rollover must wait for: a programme session open on
+ *  this device, or a finished one still waiting to sync. */
+function finishOutstanding(uid: string | undefined): boolean {
+  return isLiftSessionOpen() || (!!uid && hasPendingProgrammeCompletion(uid));
+}
 
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
@@ -1092,6 +1108,22 @@ export function useProgram() {
   // Latency trade-off: recovery hero pops in 3-10s vs <1s pre-L5
   // (next Cloud Function invocation); acceptable per the PR-L scope.
 
+  // Both rollovers below wait while a finished session is still on its way
+  // to the server, or one is open on this device: a finish lands only on the
+  // week it was started in (`commitWorkoutCompletion`), so rolling first
+  // drops its progression and leaves its day undone. They re-run when the
+  // queue or the open session changes.
+  const queuedWrites = useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
+  const openSessions = useSyncExternalStore(
+    subscribeLiftSession,
+    liftSessionVersion,
+    liftSessionVersion
+  );
+
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
   // runDays were generated for, automatically rotate forward to
@@ -1153,6 +1185,7 @@ export function useProgram() {
     // the layoffRead dep. Same pattern as the lift rollover's
     // wait-for-migration early-return.
     if (user && layoffRead.uid !== user.uid) return;
+    if (finishOutstanding(user?.uid)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1233,6 +1266,8 @@ export function useProgram() {
     recentLayoff,
     user,
     mirrorReady,
+    queuedWrites,
+    openSessions,
   ]);
 
   /**
@@ -1284,6 +1319,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
+    if (finishOutstanding(user?.uid)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1327,7 +1363,16 @@ export function useProgram() {
       .catch((err) => {
         logger.warn("[auto-rollover:lift] save failed", err);
       });
-  }, [programState, profile, saveProgram, recovery, mirrorReady]);
+  }, [
+    programState,
+    profile,
+    saveProgram,
+    recovery,
+    mirrorReady,
+    user,
+    queuedWrites,
+    openSessions,
+  ]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.

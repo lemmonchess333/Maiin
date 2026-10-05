@@ -2835,6 +2835,237 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
   });
 });
 
+/* ─── Lift4 · the week waits for a finish ───────────────────────────────
+   A finish lands only on the week it was started in: `commitWorkoutCompletion`
+   checks the week number and the day before it ticks the day and applies the
+   session's progression. The rollover used to run regardless, so a session
+   finished offline on Sunday and synced on Monday saved its workout while its
+   day stayed undone in the archived week and its progression was dropped.
+   A session left open across the change of week lost the same way. ── */
+describe("the week rollover waits for a finish (Lift4)", () => {
+  const lastWeek = () =>
+    localWeekKey(addLocalDays(parseLocalDate(localWeekKey()), -7));
+
+  const lifterProfile = (): MockProfile => ({
+    uid: "test-user-1",
+    weekSchedule: generateSchedule(2, 0),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 2,
+    weeklyRunDaysTarget: 0,
+    primaryGoal: "hypertrophy",
+  });
+
+  /** Last week's plan: Upper done, Lower still to do. Lower carries an
+   *  exercise with an instance id, so a finish can name the day. */
+  function lastWeeksPlan(): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: lastWeek(),
+      workouts: [
+        { dayName: "Upper", dayType: "push", completed: true, exercises: [] },
+        {
+          dayName: "Lower",
+          dayType: "legs",
+          completed: false,
+          exercises: [
+            {
+              instanceId: "lower-squat",
+              exerciseId: "barbell-squat",
+              name: "Barbell Squat",
+              sets: 3,
+              reps: 5,
+              weight: 100,
+              progressionType: "linear",
+            },
+          ],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  const rolled = () =>
+    setDocCalls().some(
+      (w) => (w.data as ProgramState)?.liftWeekKey === localWeekKey()
+    );
+
+  it("rolls only after a finish queued offline has landed on its own week", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    const plan = lastWeeksPlan();
+    seedProgram(plan);
+    const {
+      flushQueue,
+      hasPendingProgrammeCompletion,
+      queueWorkoutCompletion,
+    } = await import("@/lib/offlineQueue");
+    const { workoutCompletionDayIdentity } =
+      await import("@/lib/workoutCompletion");
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      // Sunday's Lower session, finished with no connection.
+      void queueWorkoutCompletion(
+        {} as Parameters<typeof queueWorkoutCompletion>[0],
+        "test-user-1",
+        "programme-sunday",
+        { date: lastWeek(), completionId: "sunday", exercises: [] },
+        {
+          weekNumber: 3,
+          dayIndex: 1,
+          dayIdentity: workoutCompletionDayIdentity(plan.workouts[1])!,
+        }
+      );
+      expect(hasPendingProgrammeCompletion("test-user-1")).toBe(true);
+
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      // Loaded, a week stale, and still last week's: the finish is waiting.
+      expect(result.current.programState?.liftWeekKey).toBe(lastWeek());
+      expect(rolled()).toBe(false);
+
+      online.mockReturnValue(true);
+      await act(async () => {
+        await flushQueue({} as Parameters<typeof flushQueue>[0], "test-user-1");
+      });
+
+      await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+      const last = setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+      // The archived week is the one the session belonged to, with its day
+      // ticked by the finish rather than left undone.
+      const archived = last.weekHistory?.[last.weekHistory.length - 1];
+      expect(archived?.weekNumber).toBe(3);
+      expect(archived?.workouts[1]).toMatchObject({
+        completed: true,
+        completedWorkoutId: "programme-sunday",
+      });
+      expect(
+        readDoc("users/test-user-1/workouts/programme-sunday")
+      ).toBeTruthy();
+    } finally {
+      online.mockRestore();
+    }
+  });
+
+  it("rolls only once an open session closes", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    try {
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      expect(result.current.programState?.liftWeekKey).toBe(lastWeek());
+      expect(rolled()).toBe(false);
+
+      act(() => close());
+      await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+    } finally {
+      close();
+    }
+  });
+
+  it("does not wait on a finish whose sync failed", async () => {
+    // A failed entry waits on the person's retry. The week must not freeze
+    // behind it, the defect D1 fixed.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    localStorage.setItem(
+      "tropos_offline_queue",
+      JSON.stringify([
+        {
+          id: "failed-finish",
+          uid: "test-user-1",
+          collectionPath: "users/test-user-1/workouts",
+          docId: "programme-failed",
+          data: {},
+          timestamp: Date.now(),
+          durable: true,
+          workoutCompletion: {
+            programme: { weekNumber: 3, dayIndex: 1, dayIdentity: "x" },
+          },
+          failed: true,
+        },
+      ])
+    );
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
+  it("holds the race-plan rollover the same way", async () => {
+    const stale = lastWeek();
+    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    resetFirestore();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "stale_runday",
+          dayIndex: 1,
+          date: stale,
+          weekKey: stale,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+      },
+    } as ProgramState);
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    const runWeekRolled = () =>
+      setDocCalls().some(
+        (w) =>
+          (w.data as ProgramState)?.runDays?.[0]?.weekKey === localWeekKey()
+      );
+    try {
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      expect(result.current.programState?.runDays?.[0]?.weekKey).toBe(stale);
+      expect(runWeekRolled()).toBe(false);
+
+      act(() => close());
+      await waitFor(() => expect(runWeekRolled()).toBe(true), {
+        timeout: 2000,
+      });
+    } finally {
+      close();
+    }
+  });
+});
+
 /* ─── D2 · the per-set evidence reaches Firestore ───────────────────────
    The unit tests above prove the projection is correct in isolation. This
    proves the whole write path carries it, which is the thing that was broken:

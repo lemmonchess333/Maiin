@@ -119,6 +119,7 @@ import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
+import { openLiftSession } from "@/features/program/openLiftSession";
 
 /**
  * IMPORTANT:
@@ -336,6 +337,10 @@ function ProgramInner() {
   const [showOverflow, setShowOverflow] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
+  // The week rollover waits while a session is open, so its finish lands on
+  // the week it started in (`openLiftSession`).
+  const sessionOpen = sessionDayIndex !== null;
+  useEffect(() => (sessionOpen ? openLiftSession() : undefined), [sessionOpen]);
   // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
   // The chooser only opens when a budget would actually change the day
   // (expressChoices > 1); otherwise Start workout stays one tap.
