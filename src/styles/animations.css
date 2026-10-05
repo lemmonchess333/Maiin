@@ -35,22 +35,6 @@
   }
 }
 
-/* ─── TAB BAR ICON BOUNCE ───────────────────────────────────── */
-@keyframes ds-tab-bounce {
-  0% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-3px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-.ds-tab-active-icon {
-  animation: ds-tab-bounce 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
 /* ─── REDUCED MOTION ──────────────────────────────────────────
    The three lines below are the widely-copied reset, and the
    widely-copied reset omits the fourth. `scroll-behavior` is not an

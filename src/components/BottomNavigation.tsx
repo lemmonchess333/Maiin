@@ -129,49 +129,10 @@ export default function BottomNavigation({
                           }}
                         />
                       ))}
-                    <motion.div
-                      className="relative z-10"
-                      /* `tabIndex={-1}` is load-bearing, not tidying.
-                         framer-motion's press gesture writes
-                         `target.tabIndex = 0` onto any element carrying
-                         `whileTap` that is not natively focusable and has
-                         no tabindex of its own (motion-dom's
-                         `isElementKeyboardAccessible`). This div is
-                         decoration inside the `<a>` that IS the control,
-                         so without the opt-out every tab in the bar put a
-                         second stop in the order announcing nothing —
-                         five of them, on every authenticated screen. */
-                      tabIndex={-1}
-                      whileTap={
-                        prefersReducedMotion ? undefined : { scale: 0.85 }
-                      }
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 17,
-                      }}
-                    >
-                      <motion.div
-                        initial={false}
-                        animate={{
-                          scale: !prefersReducedMotion && isActive ? 1.06 : 1,
-                        }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 500,
-                          damping: 30,
-                        }}
-                      >
-                        {/* DS3's own tab icons: an outline, and a
-                            filled form drawn for the open tab. */}
-                        <Icon
-                          active={isActive}
-                          className={cn(
-                            "size-[22px]",
-                            isActive && "ds-tab-active-icon"
-                          )}
-                        />
-                      </motion.div>
+                    <div className="bottom-nav-icon relative z-10">
+                      {/* DS3's own tab icons: an outline, and a
+                          filled form drawn for the open tab. */}
+                      <Icon active={isActive} className="size-[22px]" />
                       {/* Notification badge */}
                       {/* Unread Social activity is "new", not an error —
                           use the brand token, NOT bg-destructive (reserved
@@ -186,7 +147,7 @@ export default function BottomNavigation({
                           className="absolute -top-1 -right-1 size-2 rounded-full bg-primary"
                         />
                       )}
-                    </motion.div>
+                    </div>
                     <span
                       className={cn(
                         "relative z-10 max-w-full text-xs",
