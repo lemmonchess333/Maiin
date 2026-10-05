@@ -60,6 +60,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
@@ -94,6 +95,7 @@ import type {
   ProgramState,
   RaceDistance,
 } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 import {
   runTuningFromProfile,
   type RunVolumePreset,
@@ -142,6 +144,13 @@ interface RunPlanSettingsProps {
   /** Current programme state — threaded so buildPlan can preserve the
    *  lift prescription (`preserveHistory: true`) through a run-only save. */
   programState: ProgramState | null;
+  /** `useProgram().readiness`: whether `programState` is the server's
+   *  copy yet. The save is built on it and committed against it, so none
+   *  is built before "ready". While the programme loads it is null or the
+   *  cached copy, and a save made on null was refused as a conflict ("Your
+   *  programme changed") having first built a plan from nothing. Null once
+   *  ready is real: there is no programme, and the save creates one. */
+  readiness: ProgramReadiness;
   /** Re-hydrate the authoritative profile after the configurePlan batch
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
@@ -171,6 +180,7 @@ export default function RunPlanSettings({
   recentLayoff = "none",
   profile,
   programState,
+  readiness,
   refreshProfile,
   onOpenFullSettings,
 }: RunPlanSettingsProps) {
@@ -420,6 +430,9 @@ export default function RunPlanSettings({
     if (
       saving ||
       !dirty ||
+      // Not before the programme has loaded: see `readiness`. The button
+      // waits too; this holds for any other way in.
+      readiness !== "ready" ||
       raceDateInvalid ||
       raceTimeInvalid ||
       baselineInvalid ||
@@ -562,9 +575,16 @@ export default function RunPlanSettings({
      button therefore stays operable while invalid, reads as unavailable
      (`aria-disabled` + the muted treatment), and spends the tap moving
      the user to the field that needs fixing. `disabled` proper is kept
-     for the states with nothing to reveal: not dirty, or mid-save. */
+     for the states with nothing to reveal: not dirty, mid-save, or the
+     programme not loaded (`readiness`). Loading, the button takes the
+     primitive's loading state; failed, one line above it says so. An
+     invalid field outranks both, since its tap sends nothing and the
+     field needs fixing either way. */
   const invalid =
     raceDateInvalid || raceTimeInvalid || baselineInvalid || goalInvalid;
+  const programReady = readiness === "ready";
+  const loadFailed = readiness === "failed" && !saving;
+  const waitingForProgramme = !invalid && !saving && readiness === "pending";
   function revealInvalidField(): void {
     // Date first: it sits higher on the page and is the required one.
     const target = raceDateInvalid
@@ -879,20 +899,34 @@ export default function RunPlanSettings({
           className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
-          <button
-            type="button"
+          {loadFailed && (
+            <p
+              id="run-plan-load-failed"
+              className="mb-2 text-center text-xs text-muted-foreground"
+            >
+              Couldn't load your programme. Reopen this page to try again.
+            </p>
+          )}
+          <Button
+            variant="sport"
+            fullWidth
             onClick={invalid ? revealInvalidField : handleSave}
-            disabled={!dirty || saving}
+            disabled={!dirty || saving || (!invalid && !programReady)}
+            loading={waitingForProgramme}
+            // The spinner replaces the label, so the label stays the name.
+            aria-label={waitingForProgramme ? saveLabel : undefined}
             aria-disabled={invalid || undefined}
+            aria-describedby={loadFailed ? "run-plan-load-failed" : undefined}
             className={cn(
-              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || invalid || saving
-                ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-running-fill text-white"
+              // The bar's own shape and muted treatment, kept from before
+              // the primitive.
+              "rounded-2xl py-3.5 font-bold disabled:opacity-60",
+              (!dirty || invalid || saving || !programReady) &&
+                "bg-muted text-muted-foreground opacity-60"
             )}
           >
             {saveLabel}
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -512,10 +512,6 @@ function halfMarathonDay(today: Date): string {
  * run targets, the week's runs and the race block) in one transaction. The
  * capture rig has no Functions emulator, so the handler is called
  * directly, as run-coaching.capture calls applyProgramCommand's.
- *
- * Not by tapping the form's Save: Save is live before the editor has read
- * the programme, and a save made then carries no programme and is refused
- * as a conflict.
  */
 async function setHalfMarathonGoal(uid: string, today: Date): Promise<void> {
   const db = getFirestore(admin());
