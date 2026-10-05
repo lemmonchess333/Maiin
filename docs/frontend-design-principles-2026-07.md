@@ -162,7 +162,7 @@ problem — the _contents_ and the _missing primary action_ are.**
   glanceable bar and violate the pattern every leader follows.
 - **The lever is slot allocation.** Tropos spends one of five prime slots on **Social**,
   which is 100% cold-start at launch and locked as **P2 "don't jump the queue"**
-  (`competitive-analysis-running-2026.md §6`; `CONTEXT.md`). NRC — the closest single-sport
+  (`competitive-analysis-running-2026.md §6`; `GLOSSARY.md`). NRC — the closest single-sport
   analog — deliberately parks its social tab as secondary. That's the weakest slot and the
   first candidate to demote (§E-2, a product call).
 - **The lever is the primary action.** Tropos is the only three-domain app in the
@@ -475,4 +475,4 @@ demoting Social's nav slot (§E-2), renaming Analytics→Progress (§E-3).
   `competitive-analysis*.md` / `design-principles.md` + established knowledge.
 - **Builds on, does not re-derive:** `docs/design-principles.md`, `docs/competitive-analysis.md`,
   `docs/competitive-analysis-running-2026.md`, `docs/cold-start-payoff-audit.md`,
-  `docs/social-activation.md`, `CONTEXT.md`, `DESIGN_GUIDE.md`.
+  `docs/social-activation.md`, `GLOSSARY.md`, `DESIGN_GUIDE.md`.

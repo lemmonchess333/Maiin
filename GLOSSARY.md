@@ -1,6 +1,8 @@
-# Tropos — Domain Context
+# Tropos — Glossary
 
-Domain vocabulary as it solidifies, plus the reference-app patterns we've researched. Skills like `improve-codebase-architecture`, `diagnosing-bugs`, `tdd`, and `grill-with-docs` read this (they call it `GLOSSARY.md`) to use the project's actual terms and to inform decisions with what dominant apps already do.
+Domain vocabulary as it solidifies, plus the reference-app patterns we've researched. Skills like `improve-codebase-architecture`, `diagnosing-bugs`, `tdd`, and `grill-with-docs` read this to use the project's actual terms and to inform decisions with what dominant apps already do.
+
+This file was `CONTEXT.md` until 2026-10-04, when it took the name Matt Pocock’s skills use. Plan-file rows and ADRs written before then cite it as `CONTEXT.md`, and are left as written; the sections they name are all here.
 
 Update when a /grill-me session crystallises new vocabulary, when we adopt or reject a reference-app pattern with explicit reasoning, or when a competitor changes a relevant behaviour.
 

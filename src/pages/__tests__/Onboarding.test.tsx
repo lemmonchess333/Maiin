@@ -508,7 +508,7 @@ describe("a race needs a date", () => {
 /* One flow, one vocabulary. The goal cards offered "Build muscle" and the
    review screen read the same choice back as "Hypertrophy focus" — two
    spellings of one value inside a single file, which is the case
-   CONTEXT.md's naming rule says is the one that actually hurts. The
+   GLOSSARY.md's naming rule says is the one that actually hurts. The
    settings confirm modal and ProgrammeSettings keep their own registers
    on purpose; those are other surfaces. */
 describe("the goal is named the same way throughout", () => {

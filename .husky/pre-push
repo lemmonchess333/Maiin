@@ -1,0 +1,22 @@
+# Refuse to recreate a branch that GitHub deleted. A branch that was pushed
+# before (it tracks a branch of the same name) and is now missing there was
+# almost always deleted after its PR merged, so pushing it would bring back
+# stale work. Start again from main instead:
+#   git fetch origin main && git checkout -B <branch> origin/main
+# Set ALLOW_PUSH_TO_DELETED=1 to push anyway.
+[ "${ALLOW_PUSH_TO_DELETED:-}" = "1" ] && exit 0
+zero=0000000000000000000000000000000000000000
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$remote_sha" = "$zero" ] || continue
+  case "$local_ref" in refs/heads/*) ;; *) continue ;; esac
+  branch=${local_ref#refs/heads/}
+  tracked=$(git config --get "branch.$branch.merge" 2>/dev/null) || continue
+  if [ "$tracked" = "$remote_ref" ]; then
+    echo "pre-push: ${remote_ref#refs/heads/} no longer exists on $1. It was pushed before, so it was deleted there, usually because its PR merged." >&2
+    echo "pre-push: start again from main: git fetch origin main && git checkout -B $branch origin/main" >&2
+    echo "pre-push: or push anyway with ALLOW_PUSH_TO_DELETED=1." >&2
+    status=1
+  fi
+done
+exit $status
