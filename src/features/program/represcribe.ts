@@ -189,22 +189,6 @@ export function represcribeSwapped(
 }
 
 /**
- * Whether an easing block is holding progression this week.
- *
- * Deliberately NOT implemented by flipping `programState.settings
- * .autoProgression`: that is a switch the user owns in Lift plan settings,
- * and a block must not silently move someone's setting. Block-scoped and
- * self-expiring — week 3 resumes normal progression with nothing to clear.
- */
-export function isProgressionHeld(
-  block: ActiveTrainingBlock | undefined,
-  blockWeek: number | null
-): boolean {
-  if (!block || block.pace !== "easing") return false;
-  return blockWeek !== null && blockWeek <= EASING_HOLD_WEEKS;
-}
-
-/**
  * Whether a lift block should be offered right now, given the run plan.
  *
  * Refused inside a race taper or race week: a "Get stronger" block raises
@@ -258,9 +242,6 @@ export function blockPrefersShorterSessions(
 ): boolean {
   return !!block && block.pace !== "full";
 }
-
-/** Weeks an "easing back in" block holds load before resuming progression. */
-export const EASING_HOLD_WEEKS = 2;
 
 /** "6–10", or "5" for a fixed target: the main lifts' reps a focus
  *  prescribes at a level (`roleTable.ts`). */

@@ -5,15 +5,14 @@ import {
   advanceWeek,
   computeFatigueScore,
   generateProgram,
-  generateWeekPrescription,
   expectedDayCount,
   goalProfileFor,
   applyFatigue,
   dedupeDayExercises,
   rotateUntrainedAccessories,
   splitRationale,
-  isCycleEndWeek,
 } from "../programEngine";
+import { generateWeekPrescription, isCycleEndWeek } from "../weekPrescription";
 import { exerciseBank, rescaleForSwap } from "../variationBank";
 import { seedStartingLoads } from "../startingLoads";
 import { normalizeExercise } from "../programTypes";

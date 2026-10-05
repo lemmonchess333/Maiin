@@ -12,8 +12,7 @@ import {
   PERFORMANCE_HISTORY_CAP,
 } from "./programEngine";
 import { readSessionSets, recordedReps } from "./sessionSets";
-import { blockWeekOf } from "./trainingBlock";
-import { isProgressionHeld } from "./represcribe";
+import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
 
 /** The session owns these facts even if the plan changes while it is open. */
 export interface SessionPrescription {

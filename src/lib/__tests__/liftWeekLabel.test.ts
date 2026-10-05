@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { liftWeekLabel } from "../liftWeekLabel";
-import { generateWeekPrescription } from "@/features/program/programEngine";
+import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import { FOCUS_ORDER, focusLabel } from "@/features/program/trainingBlock";
 import type { ActiveTrainingBlock } from "@/features/program/programTypes";
 

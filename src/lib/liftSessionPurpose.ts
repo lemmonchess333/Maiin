@@ -32,17 +32,17 @@
  *  - The hold is `isProgressionHeld`, called exactly as session completion
  *    calls it, so the sentence appears in the weeks progression is held.
  */
-import { generateWeekPrescription } from "@/features/program/programEngine";
+import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import type {
   PrimaryGoal,
   ProgramState,
   WorkoutDay,
 } from "@/features/program/programTypes";
 import {
+  blockWeekOf,
   EASING_HOLD_WEEKS,
   isProgressionHeld,
-} from "@/features/program/represcribe";
-import { blockWeekOf } from "@/features/program/trainingBlock";
+} from "@/features/program/trainingBlock";
 
 export type LiftPurposeProgramme = Partial<
   Pick<

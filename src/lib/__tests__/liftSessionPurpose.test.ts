@@ -15,12 +15,10 @@ import {
   liftSessionPurpose,
   type LiftPurposeProgramme,
 } from "../liftSessionPurpose";
-import {
-  generateWeekPrescription,
-  goalProfileFor,
-} from "@/features/program/programEngine";
+import { goalProfileFor } from "@/features/program/programEngine";
+import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import { volumeLandmark } from "@/features/program/volumeModel";
-import { EASING_HOLD_WEEKS } from "@/features/program/represcribe";
+import { EASING_HOLD_WEEKS } from "@/features/program/trainingBlock";
 import { buildPlan } from "@/features/program/planBuilder";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
 import type {

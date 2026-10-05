@@ -8,9 +8,9 @@ import type {
   ProgramState,
   SplitType,
   WorkoutDay,
-  WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId, loweringOf } from "./programTypes";
+import { generateWeekPrescription } from "./weekPrescription";
 import {
   pickExercise,
   pickAccessory,
@@ -356,47 +356,6 @@ const MIN_HOLD_SECONDS = 10;
  * convenience cache on programState, not the record of truth.
  */
 export const PERFORMANCE_HISTORY_CAP = 10;
-
-/* ================================
-   WEEKLY PRESCRIPTION
-================================ */
-
-/**
- * The mesocycle position of a week. Every 4th week is a deload.
- *
- * This used to also return `intensityMultiplier` (`1 + (week % 4) * 0.025`,
- * i.e. an advertised 2.5%/week intensity ramp) and `volumeModifier`. Both were
- * written here and read NOWHERE — not in `src/`, not in `functions/`, not by
- * `advanceWeek`, which branches only on `.deload`. The ramp did not exist as
- * behaviour, so the whole "periodization" was already this one boolean; the
- * two fields only made it look like more.
- *
- * Deleted rather than wired, because wiring them would change every user's
- * prescription and none of the sources support that particular shape:
- * Schoenfeld p.193 (systematic review of 12 studies — no clear benefit to
- * periodizing for HYPERTROPHY; it is established for strength), p.194 (linear
- * and undulating equivalent across a meta-analysis plus 8 primary studies),
- * Helms p.79 ("asking 'which type of periodization is the best?' is the wrong
- * question"). A mod-4 intensity ramp is not a finding, it is a decoration.
- *
- * Safe to delete outright: `WeeklyPrescription` is computed on demand at each
- * call site and never persisted — `advanceWeek` stores only the derived
- * `currentPhase` string — so there is no stored document carrying these
- * fields and no sanitiser allow-list to update.
- */
-export function generateWeekPrescription(week: number): WeeklyPrescription {
-  return { week, deload: week % 4 === 0 };
-}
-
-/**
- * A mesocycle ends on its deload week — completing that week means the user
- * finished a full 4-week programme cycle (drives the `programme_complete`
- * badge). Derives the answer from `generateWeekPrescription` so it can never
- * drift from the periodization schedule itself (don't re-hardcode `% 4`).
- */
-export function isCycleEndWeek(week: number): boolean {
-  return week > 0 && generateWeekPrescription(week).deload;
-}
 
 /* ================================
    GOAL ADJUSTMENTS

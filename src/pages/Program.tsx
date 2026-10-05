@@ -83,7 +83,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
-import { splitLabel, isCycleEndWeek } from "@/features/program/programEngine";
+import { splitLabel } from "@/features/program/programEngine";
+import { isCycleEndWeek } from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";

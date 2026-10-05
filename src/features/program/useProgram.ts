@@ -66,8 +66,8 @@ import {
   generateProgram,
   advanceWeek,
   shouldAdvanceWeek,
-  generateWeekPrescription,
 } from "./programEngine";
+import { generateWeekPrescription } from "./weekPrescription";
 import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";

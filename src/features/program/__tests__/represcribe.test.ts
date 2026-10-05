@@ -8,11 +8,10 @@ import {
   represcribeSwapped,
   represcribeWorkouts,
   scaleLoadForReps,
-  isProgressionHeld,
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
 import { generateProgram, advanceWeek } from "../programEngine";
-import { FOCUS_ORDER } from "../trainingBlock";
+import { FOCUS_ORDER, isProgressionHeld } from "../trainingBlock";
 import type {
   ActiveTrainingBlock,
   Experience,

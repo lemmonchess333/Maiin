@@ -22,8 +22,7 @@ describe("training block calendar dates across timezones", () => {
           "--input-type=module",
           "-e",
           `
-        import { blockEndDate, blockWeekOf, isBlockFinished } from "./src/features/program/trainingBlock.ts";
-        import { isProgressionHeld } from "./src/features/program/represcribe.ts";
+        import { blockEndDate, blockWeekOf, isBlockFinished, isProgressionHeld } from "./src/features/program/trainingBlock.ts";
         const results = ${JSON.stringify(cases)}.map(([startDate, week2, week3, last, end]) => {
           const block = { startDate, durationWeeks: 4, pace: "easing" };
           const dates = [startDate, week2, week3, last, end];
