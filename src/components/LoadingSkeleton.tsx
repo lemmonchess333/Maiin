@@ -14,7 +14,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
       aria-label="Loading"
       aria-live="polite"
       className={cn(
-        "motion-safe:animate-pulse rounded-lg bg-muted dark:bg-muted/60",
+        "ds-skeleton rounded-lg bg-muted dark:bg-muted/60",
         className
       )}
       style={{
@@ -27,11 +27,13 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
         backgroundImage:
           "linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%)",
         backgroundSize: "200% 100%",
-        animation:
-          "pulse 2s ease-in-out infinite, shimmer 1.5s ease-in-out infinite",
+        /* The stagger offsets each block's place in the pulse (the
+           `.ds-skeleton` animation in animations.css), so a column breathes
+           in sequence. It never hides a block. Blocks used to start at
+           opacity 0 and fill `forwards` into a keyframe with no end state,
+           which left every staggered block invisible under Reduce Motion:
+           a blank Home and feed while loading. */
         animationDelay: stagger != null ? `${stagger * 80}ms` : undefined,
-        opacity: stagger != null ? 0 : undefined,
-        animationFillMode: stagger != null ? "forwards" : undefined,
       }}
     />
   );
@@ -112,15 +114,12 @@ export function HomeSkeleton() {
 /*
  * Route-shaped page-load skeletons (the app-root Suspense fallback).
  *
- * These use `Bar`, NOT the staggered `Skeleton` above, for two reasons:
- *   1. The staggered variant starts each block at opacity 0 and fades it
- *      in — on a chunk-load fallback that reads as a near-blank card for
- *      the first few hundred ms.
- *   2. `Skeleton` fills with `bg-muted`, which is ~the same colour as the
- *      grouped page background — so a block placed directly on the page
- *      (a title, a pill row) is invisible. `Bar` fills with a translucent
- *      `foreground` tint that contrasts on BOTH the page background and
- *      the white card surface, and uses Tailwind's built-in `motion-safe:animate-pulse`.
+ * These use `Bar`, NOT `Skeleton` above: `Skeleton` fills with
+ * `bg-muted`, which is ~the same colour as the grouped page background —
+ * so a block placed directly on the page (a title, a pill row) is
+ * invisible. `Bar` fills with a translucent `foreground` tint that
+ * contrasts on BOTH the page background and the white card surface, and
+ * uses Tailwind's built-in `motion-safe:animate-pulse`.
  */
 function Bar({ className }: { className?: string }) {
   return (
