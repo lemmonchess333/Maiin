@@ -1083,6 +1083,57 @@ describe("training block start/release (Blk2)", () => {
     expect(state.workouts).toEqual(seeded.workouts);
   });
 
+  // ── the same focus changes nothing (Lift4) ───────────────────────────
+  // A week mid-climb: reps above where the focus would set them, and misses
+  // counted. Re-deriving would put the reps back and clear the counts.
+  function climbingStrengthWeek() {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    seeded.workouts[0].exercises[0] = {
+      ...seeded.workouts[0].exercises[0],
+      reps: 7,
+      baseReps: 5,
+      consecutiveFailures: 1,
+      plateauCount: 1,
+    };
+    return seeded;
+  }
+
+  it("a block with the week's own focus leaves the week as it is", () => {
+    const seeded = climbingStrengthWeek();
+    const { state } = apply(START, seeded, {
+      experience: "advanced",
+      primaryGoal: "strength",
+    });
+    expect(state.trainingBlock.focus).toBe("strength");
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("another block of the same focus after one ends keeps the week too", () => {
+    // "Another 8 weeks of this": the block ends keeping its focus, then the
+    // same block starts, so the week's focus is the block's while the
+    // standing focus is still the one before it.
+    const seeded = climbingStrengthWeek();
+    const { state } = apply(START, seeded, {
+      experience: "advanced",
+      primaryGoal: "hypertrophy",
+    });
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("ending a block that hands back its own focus leaves the week too", () => {
+    const seeded = climbingStrengthWeek();
+    seeded.trainingBlock = {
+      id: "blk",
+      owned: true,
+      focus: "strength",
+      goalBefore: "strength",
+    };
+    const { state } = apply(RELEASE, seeded, { experience: "advanced" });
+    expect("trainingBlock" in state).toBe(false);
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
   it("release rejects when there is no block", () => {
     expectHttps(() => apply(RELEASE, baseState()), "failed-precondition");
   });

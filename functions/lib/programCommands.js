@@ -1540,11 +1540,19 @@ function startTrainingBlock(state, profile, command, now) {
   return {
     ...state,
     primaryGoal: command.focus,
-    workouts: represcribeWorkouts(
-      workouts,
-      command.focus,
-      toExperience(profile && profile.experience)
-    ),
+    // A block with the focus the week is already prescribed for changes
+    // nothing (Lift4), as its consequence line says. Re-deriving would put
+    // every climbing rep target back to its base and clear the miss counts
+    // for no change of focus. The focus read here is the one Train passes
+    // the block card as `currentFocus`, so the line and the week agree.
+    workouts:
+      command.focus === (state.primaryGoal || "general")
+        ? workouts
+        : represcribeWorkouts(
+            workouts,
+            command.focus,
+            toExperience(profile && profile.experience)
+          ),
     trainingBlock: block,
   };
 }
@@ -1572,14 +1580,16 @@ function releaseTrainingBlock(state, profile, command) {
     primaryGoal: block.goalBefore,
     // A legacy block adopted at deploy never represcribed anything, so
     // releasing it must not retroactively rewrite a prescription it never
-    // owned.
-    workouts: block.owned
-      ? represcribeWorkouts(
-          workouts,
-          block.goalBefore,
-          toExperience(profile && profile.experience)
-        )
-      : workouts,
+    // owned. Nor does a block whose focus was the one it hands back to: as
+    // at the start, the same focus changes nothing.
+    workouts:
+      block.owned && block.goalBefore !== (state.primaryGoal || block.focus)
+        ? represcribeWorkouts(
+            workouts,
+            block.goalBefore,
+            toExperience(profile && profile.experience)
+          )
+        : workouts,
   };
 }
 

@@ -319,6 +319,38 @@ export function blockConsequence(input: {
 }
 
 /**
+ * What ending a block does, said before it happens, as `blockConsequence`
+ * says what starting one does (Lift4: "ending one says plainly what
+ * happens").
+ *
+ * The release hands the week back to the focus held before the block: that
+ * focus's rep targets, from the weights lifted now, eased where the target
+ * goes up (`scaleLoadForReps`). The weights are never wound back to where
+ * they stood before the block. A block that hands back its own focus, or
+ * one that never owned the prescription, changes nothing about the week.
+ */
+export function blockReleaseLine(input: {
+  block: Pick<ActiveTrainingBlock, "focus" | "goalBefore" | "pace" | "owned">;
+  focusLabel: (goal: PrimaryGoal) => string;
+}): string {
+  const { block, focusLabel } = input;
+  const fullFirst =
+    block.pace === "full" ? "" : " Start offers the full session first again.";
+  if (!block.owned || block.goalBefore === block.focus) {
+    return `Your sessions stay as they are.${fullFirst}`;
+  }
+  const lead = `Your main lifts go back to sets of ${focusRepSummary(block.goalBefore)} (${focusLabel(block.goalBefore)})`;
+  const loadDrops =
+    goalProfileFor(block.goalBefore).mainReps >
+    goalProfileFor(block.focus).mainReps;
+  return (
+    (loadDrops
+      ? `${lead}. The weights come down a little to match, then climb again.`
+      : `${lead}, at the weights you lift now.`) + fullFirst
+  );
+}
+
+/**
  * Weeks of plateau-RESPONSE amnesty a block opens with when it changes the
  * focus or eases the pace.
  *

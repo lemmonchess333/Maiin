@@ -3167,15 +3167,19 @@ export function useProgram() {
         // Optimistic: the same transform, from the same shared rule. The
         // block object itself is left to the refetch — its id embeds the
         // server's `now`, and inventing a local one would show a value that
-        // is about to be replaced.
+        // is about to be replaced. A block with the focus the week already
+        // has changes nothing (Lift4), as in the reducer.
         (state) => ({
           ...state,
           primaryGoal: input.focus,
-          workouts: represcribeWorkouts(
-            state.workouts,
-            input.focus,
-            toExperience(profile?.experience)
-          ),
+          workouts:
+            input.focus === (state.primaryGoal ?? "general")
+              ? state.workouts
+              : represcribeWorkouts(
+                  state.workouts,
+                  input.focus,
+                  toExperience(profile?.experience)
+                ),
         }),
         "Couldn't start that block."
       );
@@ -3203,18 +3207,21 @@ export function useProgram() {
       // Applying the same transform with `goalBefore` IS the inverse, which
       // is why there is no snapshot to restore. A legacy un-owned block
       // never represcribed anything, so releasing it must not retroactively
-      // rewrite a prescription it never owned.
+      // rewrite a prescription it never owned, and a block that hands back
+      // the focus it had changes nothing.
       (state) => {
         const next = {
           ...state,
           primaryGoal: block.goalBefore,
-          workouts: block.owned
-            ? represcribeWorkouts(
-                state.workouts,
-                block.goalBefore,
-                toExperience(profile?.experience)
-              )
-            : state.workouts,
+          workouts:
+            block.owned &&
+            block.goalBefore !== (state.primaryGoal ?? block.focus)
+              ? represcribeWorkouts(
+                  state.workouts,
+                  block.goalBefore,
+                  toExperience(profile?.experience)
+                )
+              : state.workouts,
         };
         delete next.trainingBlock;
         return next;

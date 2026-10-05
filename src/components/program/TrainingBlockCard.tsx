@@ -54,6 +54,7 @@ import {
 } from "@/features/program/trainingBlock";
 import {
   blockConsequence,
+  blockReleaseLine,
   focusRepSummary,
 } from "@/features/program/represcribe";
 import { useTrainingBlock } from "@/features/program/useTrainingBlock";
@@ -304,6 +305,13 @@ export default function TrainingBlockCard({
     haptic("light");
     return true;
   };
+
+  // What ending the block does, said before it happens and confirmed after.
+  const releaseLine = block ? blockReleaseLine({ block, focusLabel }) : "";
+  const releasedToast =
+    block && block.owned && block.goalBefore !== block.focus
+      ? `Block closed. Back to ${focusLabel(block.goalBefore)}.`
+      : "Block closed.";
 
   const week = block ? blockWeekOf(block, today) : null;
   const finished = block ? isBlockFinished(block, today) : false;
@@ -778,9 +786,7 @@ export default function TrainingBlockCard({
                       })
                     ) {
                       setShowReview(false);
-                      toast.success(
-                        "Block closed. Your programme's back to how it was."
-                      );
+                      toast.success(releasedToast);
                     }
                   })();
                 }}
@@ -788,7 +794,7 @@ export default function TrainingBlockCard({
                 Back to your rolling programme
               </Button>
               <p className="mt-1 text-center text-xs text-muted-foreground">
-                Your lifts return to how they were prescribed before the block.
+                {releaseLine}
               </p>
             </div>
           </div>
@@ -799,7 +805,7 @@ export default function TrainingBlockCard({
         open={confirmEnd === "end"}
         onCancel={() => setConfirmEnd(null)}
         title="End this block early?"
-        description="Your lifts go back to how they were prescribed before the block. Everything you logged stays."
+        description={`${releaseLine} Everything you logged stays.`}
         confirmLabel="End block"
         onConfirm={() => {
           void (async () => {
@@ -808,9 +814,7 @@ export default function TrainingBlockCard({
             ) {
               setConfirmEnd(null);
               setShowDetail(false);
-              toast.success(
-                "Block closed. Your programme's back to how it was."
-              );
+              toast.success(releasedToast);
             }
           })();
         }}

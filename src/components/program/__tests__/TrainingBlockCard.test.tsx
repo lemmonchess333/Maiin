@@ -15,6 +15,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { toast } from "sonner";
 import type { ActiveTrainingBlock } from "@/features/program/programTypes";
 
 const navigateMock = vi.fn();
@@ -298,6 +299,28 @@ describe("TrainingBlockCard (Blk2) — the active block", () => {
       focus: "strength",
       goalBefore: "hypertrophy",
     });
+  });
+
+  // Lift4: ending one says plainly what happens. It said the lifts went back
+  // to how they were before the block, and the release keeps the weights
+  // lifted now.
+  it("says what ending early does, before and after", async () => {
+    const success = vi.spyOn(toast, "success").mockImplementation(() => "");
+    renderCard({ block: activeBlock() });
+    fireEvent.click(screen.getByText(/Get stronger/));
+    fireEvent.click(await screen.findByText("End block early"));
+    const said = await screen.findByText(/Everything you logged stays/);
+    expect(said.textContent).toMatch(/\(Build muscle\)/);
+    expect(said.textContent).not.toMatch(/before the block/);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "End block", hidden: true })
+    );
+    await waitFor(() =>
+      expect(success.mock.calls.map(([text]) => text)).toContain(
+        "Block closed. Back to Build muscle."
+      )
+    );
+    success.mockRestore();
   });
 });
 

@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   blockConsequence,
+  blockReleaseLine,
+  focusRepSummary,
   blockPrefersShorterSessions,
   blockOfferBlockedByRace,
   represcribeWorkouts,
@@ -742,5 +744,87 @@ describe("blockConsequence — L2, the lead and tail must not contradict", () =>
       focusLabel: label,
     });
     expect(s).toMatch(/same exercises, same days/i);
+  });
+});
+
+describe("blockReleaseLine — ending a block says what happens (Lift4)", () => {
+  const label = (g: PrimaryGoal) =>
+    ({
+      hypertrophy: "Build muscle",
+      strength: "Get stronger",
+      fat_loss: "Lose fat",
+      general: "Stay fit",
+      running: "Running support",
+    })[g];
+  const line = (
+    focus: PrimaryGoal,
+    goalBefore: PrimaryGoal,
+    over: Partial<Pick<ActiveTrainingBlock, "pace" | "owned">> = {}
+  ) =>
+    blockReleaseLine({
+      block: { focus, goalBefore, pace: "full", owned: true, ...over },
+      focusLabel: label,
+    });
+  const orderedPairs = FOCUS_ORDER.flatMap((focus) =>
+    FOCUS_ORDER.filter((before) => before !== focus).map(
+      (before) => [focus, before] as [PrimaryGoal, PrimaryGoal]
+    )
+  );
+
+  it("names the rep range it goes back to, and whose it is", () => {
+    expect(line("strength", "hypertrophy")).toContain(
+      `sets of ${focusRepSummary("hypertrophy")} (Build muscle)`
+    );
+  });
+
+  // It said the lifts went back to how they were prescribed before the
+  // block. The release keeps the weights lifted now; nothing winds back.
+  it("never says the week goes back to how it was", () => {
+    for (const [focus, before] of orderedPairs)
+      expect(line(focus, before), `${focus} -> ${before}`).not.toMatch(
+        /before the block|how it was|how they were/i
+      );
+  });
+
+  it("agrees with what the release does to the weight, on every pair", () => {
+    for (const [focus, before] of orderedPairs) {
+      const moved =
+        scaleLoadForReps(
+          100,
+          goalProfileFor(focus).mainReps,
+          goalProfileFor(before).mainReps
+        ) < 100;
+      const said = line(focus, before);
+      expect(/come down a little/i.test(said), `${focus} -> ${before}`).toBe(
+        moved
+      );
+      expect(/weights you lift now/i.test(said), `${focus} -> ${before}`).toBe(
+        !moved
+      );
+    }
+  });
+
+  it("says the sessions stay when the block hands back its own focus", () => {
+    expect(line("strength", "strength")).toBe(
+      "Your sessions stay as they are."
+    );
+  });
+
+  it("says the sessions stay for a block that never owned them", () => {
+    expect(line("strength", "hypertrophy", { owned: false })).toBe(
+      "Your sessions stay as they are."
+    );
+  });
+
+  it("tells a lighter or easing block the full session comes first again", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      expect(line("strength", "hypertrophy", { pace })).toMatch(
+        /full session first again/
+      );
+      expect(line("strength", "strength", { pace })).toMatch(
+        /full session first again/
+      );
+    }
+    expect(line("strength", "hypertrophy")).not.toMatch(/full session/);
   });
 });
