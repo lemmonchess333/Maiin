@@ -9,11 +9,11 @@ Claude to "build plan 003") and review the diff against the plan's
 
 | #   | Plan                                                                           | Severity | Category              | Status |
 | --- | ------------------------------------------------------------------------------ | -------- | --------------------- | ------ |
-| 001 | [Stop staggered skeletons going blank](001-skeleton-reduced-motion.md)         | HIGH     | Accessibility         | TODO   |
-| 002 | [Let framer own the buttons it animates](002-button-transition-motion-driven.md) | HIGH     | Performance           | TODO   |
-| 003 | [Tab switches: a 150ms fade, no slide or stagger](003-tab-switch-entrance.md)  | HIGH     | Purpose & frequency   | TODO   |
-| 004 | [Food's day switch shows the figures, no redraw](004-food-day-switch.md)       | HIGH     | Purpose & frequency   | TODO   |
-| 005 | [Tab bar press: the house 0.97, no bounce](005-tab-bar-press.md)               | HIGH     | Physicality           | TODO   |
+| 001 | [Stop staggered skeletons going blank](001-skeleton-reduced-motion.md)         | HIGH     | Accessibility         | IN PR (#2577) |
+| 002 | [Let framer own the buttons it animates](002-button-transition-motion-driven.md) | HIGH     | Performance           | IN PR (#2578) |
+| 003 | [Tab switches: a 150ms fade, no slide or stagger](003-tab-switch-entrance.md)  | HIGH     | Purpose & frequency   | IN PR (#2579) |
+| 004 | [Food's day switch shows the figures, no redraw](004-food-day-switch.md)       | HIGH     | Purpose & frequency   | IN PR (#2581) |
+| 005 | [Tab bar press: the house 0.97, no bounce](005-tab-bar-press.md)               | HIGH     | Physicality           | IN PR (#2580) |
 
 ## Order
 

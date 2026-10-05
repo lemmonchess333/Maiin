@@ -1,6 +1,6 @@
 # 003 — Make switching tabs nearly instant: a 150ms fade, no slide, no restagger
 
-- **Status**: TODO
+- **Status**: IN PR (#2579)
 - **Commit**: 1ad7dd6a
 - **Severity**: HIGH
 - **Category**: Purpose & frequency

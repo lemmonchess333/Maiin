@@ -1,6 +1,6 @@
 # 004 — Food's day switch: show the day's figures, don't redraw them from zero
 
-- **Status**: TODO
+- **Status**: IN PR (#2581)
 - **Commit**: 1ad7dd6a
 - **Severity**: HIGH
 - **Category**: Purpose & frequency

@@ -1,6 +1,6 @@
 # 002 — Let framer own the motion of the buttons it animates
 
-- **Status**: TODO
+- **Status**: IN PR (#2578)
 - **Commit**: 1ad7dd6a
 - **Severity**: HIGH
 - **Category**: Performance / interruptibility
