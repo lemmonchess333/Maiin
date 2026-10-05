@@ -287,6 +287,36 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
   existing workouts. Do not mistake the temporary block re-prescription path
   for a decision to silently rebuild every saved programme.
 
+### Lighter-week precedence (Lift4, 2026-10-05)
+
+The precedence table asked for above, for the system the owner locked as
+Lift4 (plan file row Lift4). Its code lands in build step 5; until then the
+current owners run as this document describes. It lists every way the plan
+gets lighter, which wins when two meet, where the person's copy comes from,
+and what can be undone. Completed sessions are never changed: a lightening
+applies only to sessions not yet done.
+
+| Owner, in precedence order                                                                                                                  | What it changes                                                                                                                                                    | When it meets another                                                                                                                          | Copy                                                            | Undo                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Race weeks: the last two weeks before a race, race week, and the week after                                                                 | Half the working sets at the same weights; race week is one short session at least three days before the race, nothing heavy for the legs; the week after is light | Wins over every other week-level lightening. The calendar lighter week doesn't run inside it, and its count restarts after the race            | The run plan's own phase name on the week                       | None; a heavier weight lifted still moves the plan up               |
+| Coming back after a break ("Ease back in" in the Welcome back sheet)                                                                        | Loads 10% lower after 3–8 weeks away, 20% after longer, one set fewer in the first week; then each lift climbs back a step a session to where it was               | Yields to race weeks. Replaces a calendar lighter week due in its first two weeks: the break was the rest                                      | The Welcome back sheet, where the person chose it               | "Keep my old weights" in the sheet; the plan follows what is lifted |
+| A lighter week the person takes ("Take a lighter week")                                                                                     | Half the working sets at the same weights for the rest of that week                                                                                                | Yields to the two above. Counts as the calendar lighter week and restarts its count                                                            | "Lighter week" on the week                                      | Within the week                                                     |
+| The calendar lighter week: intermediates and up on 3+ lift days, every 4th trained week; with a race plan, on the run plan's step-back week | Half the working sets at the same weights                                                                                                                          | Yields to all of the above. Never two lighter weeks in a row outside a race period                                                             | "Lighter week" on the week; the week before, "Why this session" | None; a heavier weight lifted still moves the plan up               |
+| Race build leg trim, agreed at race setup                                                                                                   | Leg sets down by a third through the build, at the same weights                                                                                                    | Inside any lighter week the lighter-week recipe applies to the base sets instead, so the two never stack                                       | "Race build" on the week                                        | The race-setup answer, changeable in the run plan settings          |
+| A lift's drop after two misses in a row                                                                                                     | That lift 10% lighter, by at least one step, then back up a step a session                                                                                         | A miss doesn't count inside a lighter week, race weeks or an Easier today session; miss counts reset after any lighter week and after a return | One line on that lift's next session                            | Type the old weight; the plan follows                               |
+| Easier today, one session                                                                                                                   | One set fewer and loads × 0.85 for that session                                                                                                                    | Can run inside any of the above. Never moves the plan down                                                                                     | The session's own label                                         | Not needed: one session                                             |
+| Block pace (Lighter, Easing back in)                                                                                                        | The short session offered first; easing holds progression for the block's first two weeks                                                                          | Runs alongside; a lighter week inside a block applies as normal                                                                                | The block's consequence line                                    | End the block                                                       |
+
+One week-level lightening runs at a time, in the order above, and never two
+in a row outside a race period. The numbers to restore are saved once, by
+the first lightening, and a later one never overwrites them (today a second
+deload in a row overwrites the first one's stash, so the prescription from
+before them is never restored). A lift's drop is per lift and starts only
+once a week-level lightening has ended. Lift4 (13) retires four reduction
+owners outright, so none appears here: the muscle-local recovery reduction
+("Eased this week"), the whole-body escalation, the adjustment rule and the
+fatigue shave.
+
 ### Command and mutation boundary
 
 - The canonical program-command transport is a bare command object. The server
@@ -302,6 +332,15 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
   the current reorder-rejection fallback. A new direct snapshot write needs a
   named owner, an explicit precedence/conflict reason, and tests showing no
   hidden-field loss.
+- The server's progression copy, `functions/lib/progressionEngine.js`, runs
+  only inside the `logExercise` command, and no current client sends that
+  command: a finished session's progression runs in the client
+  (`applySessionProgression` inside `commitWorkoutCompletion`). Classified
+  for Lift4 (build step 0, 2026-10-05) as a legacy copy to retire, with the
+  command, before the progression changes of build step 3, so the client
+  engine is the only copy those changes touch. Until it goes it stays in
+  parity (`applyProgression.cross.test.ts`). ADR-0008 is amended when it
+  is removed.
 
 ## Status ledger
 
