@@ -207,6 +207,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e",
     sha256: "beb4222028105ad646fe4da80eecc0f6facb25de5071fdfd03d106cc092f2e4b",
   },
+  "chin-ups": {
+    src: "form-art/chin-ups.webp",
+    width: 475,
+    height: 480,
+    keyed: true,
+    source: "form-frames/chin-ups/1.webp",
+    sourceSha256:
+      "d3c763a25808cf0c13f4512ba828c143f01c1745c15cae4c367b2404ecf153b7",
+    sha256: "1f50239978ff79798f4293326f714ec5f2d4d9a9a951566bf84fd93db68e818e",
+  },
   "clean-and-press": {
     src: "form-art/clean-and-press.webp",
     width: 480,

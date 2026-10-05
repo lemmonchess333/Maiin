@@ -1,0 +1,218 @@
+{
+  "generator": "Historical built-in imagegen; authorized stationary equipment copies and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "historicalSource": "docs/exercise-art/pilots/parallel-ten/chin-ups",
+  "generationIds": null,
+  "generationIdNote": "Original pilot retains prompts and hashes but no generation IDs; none invented.",
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "originals": [
+    {
+      "file": "originals/1-recovered.png",
+      "sha256": "201e36465f881e01e5c460837f9a533d678ed01e8847ac07bdef6f177721b78c"
+    },
+    {
+      "file": "originals/2-recovered.png",
+      "sha256": "6ceb8daf91862e6c0f67db60f35d694f096646eb61c0462ef9973266794bf23c"
+    },
+    {
+      "file": "originals/3-recovered.png",
+      "sha256": "37ac35f436e7e6696ff4c8745451c39e58c640500aa0bf0501c235add58d882a"
+    },
+    {
+      "file": "originals/4-recovered.png",
+      "sha256": "6daff6417eea11ab5e4bfbe8da82e35b1241a72678d992c1ba7ff3aa464d4e70"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "0d3c61a54233189f763273c6c4525f52c8ba6cd38448edf4678311c60a5bf8bb"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "81bb3b1b23275a71a4e43c0103be685c405a585bac8f3575e862e10d7857ca00"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "82b5ca9063d555a94a9e55bc437a4e94a243cb10a7a82ca0b50ed86fa47cde62"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "7e80ceec794d56a2725fc10e24eb1e257df0e558a843579157b587f578a1c231"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "82b5ca9063d555a94a9e55bc437a4e94a243cb10a7a82ca0b50ed86fa47cde62"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "81bb3b1b23275a71a4e43c0103be685c405a585bac8f3575e862e10d7857ca00"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 95,
+      "top": 25,
+      "width": 1070,
+      "height": 1180
+    },
+    "regions": [
+      {
+        "left": 100,
+        "top": 150,
+        "width": 110,
+        "height": 150
+      },
+      {
+        "left": 1040,
+        "top": 150,
+        "width": 110,
+        "height": 150
+      }
+    ],
+    "evidence": [
+      {
+        "frame": 1,
+        "pose": 1,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 2,
+        "pose": 2,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 3,
+        "pose": 3,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 4,
+        "pose": 4,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 5,
+        "pose": 3,
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 6,
+        "pose": 2,
+        "outsideVisiblePixels": 0
+      }
+    ],
+    "method": "Identical crop of four generated poses; exact master-copy end support rectangles only, far outside athlete and grips. No scaling or anatomy transformation."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    }
+  ],
+  "losslessPixelsVerified": true
+}

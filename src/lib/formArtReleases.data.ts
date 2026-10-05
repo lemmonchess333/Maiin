@@ -131,6 +131,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 980,
     reference: 1,
   },
+  "chin-ups": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1070,
+    height: 1180,
+    reference: 1,
+  },
   "clean-and-press": {
     folder: "2026-10-02",
     version: "anatomy-v3-2026-10-02",

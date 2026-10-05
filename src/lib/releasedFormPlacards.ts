@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "chin-ups": placard(
+    "chin-ups",
+    ["Lats"],
+    ["Biceps", "Core"],
+    [
+      [0, "Hang", "Hang tall with an underhand grip."],
+      [0.3333333333333333, "Initiate", "Keep shoulders down as you rise."],
+      [0.6666666666666666, "Pull", "Pull your elbows toward your ribs."],
+      [1, "Clear", "Bring your chin above the bar."],
+      [0.6666666666666666, "Lower", "Lower slowly without swinging."],
+      [0.3333333333333333, "Extend", "Continue down toward a full hang."],
+    ]
+  ),
   "chest-supported-db-row": placard(
     "chest-supported-db-row",
     ["Mid Back"],
