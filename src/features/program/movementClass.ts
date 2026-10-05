@@ -12,8 +12,9 @@
  * `movementCategory` doesn't settle it either: the taxonomy puts Lateral
  * Raise and Overhead Press both in `vertical_push` (see
  * exerciseMovementCategory's keyword table), so no category test can tell
- * an 8 kg isolation from a 50 kg press. `effortCue` hit the same wall and
- * limited itself to the two provably single-joint categories.
+ * an 8 kg isolation from a 50 kg press. (The catalogue now records which
+ * exercises are isolations, `mechanic`, and `exerciseRole` reads it; the
+ * load step stays on the rule below.)
  *
  * So the discriminator is a UNION, and the second half is the load itself —
  * which is what Helms's argument was actually about ("2.5 kg is ~1.5% of a
@@ -45,7 +46,7 @@ export const SINGLE_JOINT_CATEGORIES: ReadonlySet<MovementCategory> = new Set([
   "arms_triceps",
 ] as MovementCategory[]);
 
-export function isSingleJoint(category: MovementCategory): boolean {
+function isSingleJoint(category: MovementCategory): boolean {
   return SINGLE_JOINT_CATEGORIES.has(category);
 }
 
