@@ -290,6 +290,12 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   patterns ("MMM d") are the same bug in disguise — both are banned by
   `src/utils/__tests__/dateTreatment.test.ts`. Chart-axis "22/8" numerals are
   their own compact register and exempt.
+- **Times:** 24-hour "HH:mm" ("07:10", "13:13") via `formatTimeOfDay` in
+  `src/utils/formatters.ts`. A clock pattern written at the site (date-fns
+  "h:mm a", even "HH:mm"), an Intl time (`toLocaleTimeString`, an `hour`
+  option) and AM/PM in copy are banned by
+  `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
+  "5:18 /km") are not times of day.
 - **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
   (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
   the `${x}kg` template form). Two named exceptions: grams on the food
@@ -935,8 +941,8 @@ an hour:
   The tell is that every changed pixel sits inside the map's y-band.
 - A frame moving by **0.1-0.7%** is usually antialiasing, not a change.
 - **`badges-grid` resizes ±10px with the capture's WALL CLOCK.** The
-  seeded user earns "Early Bird" only when the run executes before 7am
-  (the badge is "log before 7am for 5 days"), so a pre-7am-UTC capture
+  seeded user earns "Early Bird" only when the run executes before 07:00
+  (the badge is "Log before 07:00 for 5 days"), so a pre-07:00-UTC capture
   shows it earned (1-line date footer) and a later one shows it locked
   (2-line description) — the row grows ~10px and the whole page shifts.
   Diagnosed 2026-08-22 by cropping the insertion boundary (y≈900): the

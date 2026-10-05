@@ -8,6 +8,7 @@ import {
   formatDayMonthYear,
   formatClock,
   formatLoadKg,
+  formatTimeOfDay,
   keepTogether,
 } from "../formatters";
 
@@ -121,6 +122,30 @@ describe("formatDayMonth / formatDayMonthYear", () => {
   it("both variants agree on the day+month prefix", () => {
     const d = new Date("2026-12-31T12:00:00");
     expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
+  });
+});
+
+describe("formatTimeOfDay (the one clock time of day, 24-hour)", () => {
+  /* Local-time constructors, read back in local time: the same on every
+     runner's zone and locale (CI runs Kiritimati, Midway, Auckland, de-DE
+     and fr-FR). No date here sits on a DST change. */
+  const at = (h: number, m: number, s = 0) => new Date(2026, 0, 15, h, m, s);
+
+  it("reads 24-hour with the hour zero-padded", () => {
+    expect(formatTimeOfDay(at(7, 10))).toBe("07:10");
+    expect(formatTimeOfDay(at(13, 13))).toBe("13:13");
+    expect(formatTimeOfDay(at(19, 42))).toBe("19:42");
+  });
+
+  it("runs from 00:00 to 23:59", () => {
+    expect(formatTimeOfDay(at(0, 0))).toBe("00:00");
+    expect(formatTimeOfDay(at(0, 5))).toBe("00:05");
+    expect(formatTimeOfDay(at(12, 0))).toBe("12:00");
+    expect(formatTimeOfDay(at(23, 59))).toBe("23:59");
+  });
+
+  it("drops the seconds rather than rounding them up", () => {
+    expect(formatTimeOfDay(at(13, 13, 59))).toBe("13:13");
   });
 });
 

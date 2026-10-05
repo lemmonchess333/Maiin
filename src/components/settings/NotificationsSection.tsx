@@ -139,9 +139,10 @@ export default function NotificationsSection({
     }
   };
 
-  // Display helper: turn a pending notification's scheduleAt ISO into
-  // a friendly relative-time label ("Tomorrow at 8:00 AM", "In 12
-  // minutes", etc.). Kept simple — we don't need date-fns for this.
+  // Display helper: how long until a pending notification fires, from
+  // its scheduleAt ISO ("in 12 mins", "in 3 hrs", "in 2 days"); null
+  // when that is missing, unreadable or already past. A relative label,
+  // never a clock time.
   const formatNextFire = (iso: string | null): string | null => {
     if (!iso) return null;
     const at = new Date(iso);

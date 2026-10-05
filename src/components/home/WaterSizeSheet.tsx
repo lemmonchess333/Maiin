@@ -1,5 +1,4 @@
 import { useId, useState } from "react";
-import { format } from "date-fns";
 import { ChevronDown, Droplets, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
@@ -15,6 +14,7 @@ import {
   formatWaterVolume,
 } from "@/lib/waterUnits";
 import type { WaterDrink } from "@/lib/waterActions";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 export default function WaterSizeSheet({
   open,
@@ -209,13 +209,13 @@ export default function WaterSizeSheet({
                   </span>
                   {drink.at !== undefined && (
                     <span className="text-micro font-mono tabular-nums text-muted-foreground">
-                      {format(new Date(drink.at), "HH:mm")}
+                      {formatTimeOfDay(new Date(drink.at))}
                     </span>
                   )}
                   <IconButton
                     aria-label={`Remove ${formatWaterVolume(drink.ml)}${
                       drink.at !== undefined
-                        ? ` logged at ${format(new Date(drink.at), "HH:mm")}`
+                        ? ` logged at ${formatTimeOfDay(new Date(drink.at))}`
                         : ""
                     }`}
                     onClick={() => removeDrink(drink.id)}
