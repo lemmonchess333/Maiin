@@ -226,7 +226,7 @@ export default function FoodTimeline({
                     <>
                       {" · "}
                       <span className="font-mono tabular-nums">
-                        {format(new Date(group.latestMs), "h:mm a")}
+                        {format(new Date(group.latestMs), "HH:mm")}
                       </span>
                     </>
                   )}

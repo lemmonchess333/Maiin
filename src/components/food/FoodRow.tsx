@@ -74,6 +74,36 @@ const OPEN_OFFSET = -96;
 const OPEN_THRESHOLD = -52;
 const FULL_SWIPE_THRESHOLD = -200;
 
+/** Units that never take a plural: "120 g", not "120 gs". */
+const UNPLURALISED_UNITS = new Set([
+  "g",
+  "kg",
+  "mg",
+  "ml",
+  "l",
+  "oz",
+  "lb",
+  "lbs",
+  "tbsp",
+  "tsp",
+  "kcal",
+  "cal",
+  "fl",
+]);
+
+/** The plural of a unit's first word, leaving what follows it alone:
+ *  "bar (60 g)" becomes "bars (60 g)", not "bar (60 g)s". */
+function pluraliseUnit(unit: string): string {
+  const match = unit.match(/^([A-Za-zÀ-ÿ]+)(.*)$/);
+  if (!match) return unit;
+  const [, word, rest] = match;
+  const lower = word.toLowerCase();
+  if (UNPLURALISED_UNITS.has(lower) || /s$/i.test(word)) return unit;
+  if (/(x|z|ch|sh)$/i.test(word)) return `${word}es${rest}`;
+  if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies${rest}`;
+  return `${word}s${rest}`;
+}
+
 /**
  * Quantity label formatter (change #5).
  *
@@ -82,8 +112,9 @@ const FULL_SWIPE_THRESHOLD = -200;
  *   - Every item in the group must have the SAME portionSize string
  *   - Missing, fractional, or word-quantity portions fall back to `×N`
  *
- * When parse succeeds: `${qty * count} ${unit}` with naive English plural
- * (append "s" to the unit when count > 1 and unit doesn't already end in "s").
+ * When parse succeeds: `${qty * count} ${unit}`, the total rounded to two
+ * places (0.1 × 3 is 0.30000000000000004 in floating point) and the
+ * unit's first word made plural when the total is more than one.
  */
 function formatQuantityLabel(group: FoodRowGroup): string {
   const count = group.count;
@@ -103,18 +134,8 @@ function formatQuantityLabel(group: FoodRowGroup): string {
   const unit = match[2];
   if (!Number.isFinite(qty) || qty <= 0) return fallback;
 
-  const totalQty = qty * count;
-  // Strip trailing zero on whole totals: "2.0 cup" -> "2 cups"
-  const qtyStr = Number.isInteger(totalQty)
-    ? String(totalQty)
-    : String(totalQty);
-
-  const pluralUnit =
-    totalQty > 1 && !unit.endsWith("s") && !unit.endsWith("S")
-      ? `${unit}s`
-      : unit;
-
-  return `${qtyStr} ${pluralUnit}`;
+  const totalQty = Math.round(qty * count * 100) / 100;
+  return `${totalQty} ${totalQty > 1 ? pluraliseUnit(unit) : unit}`;
 }
 
 export default function FoodRow({
@@ -197,10 +218,22 @@ export default function FoodRow({
   const rowBody = (
     <>
       <div className="flex-1 min-w-0 mr-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <p className="text-sm text-foreground truncate">{group.foodName}</p>
+        {/* flex-wrap: the name is what the row is for, so when it and
+            the pills cannot share a line the pills move under it,
+            rather than the name being cut to "Protei…" beside them.
+            dir="auto" lets a right-to-left name truncate from its own
+            end; text-left keeps it at the row's start. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+          {/* Two lines before an ellipsis: product names often differ
+              only at the end ("…Yogurt Strawberry" / "…Blueberry"). */}
+          <p
+            dir="auto"
+            className="min-w-0 max-w-full text-left text-sm text-foreground line-clamp-2 break-words"
+          >
+            {group.foodName}
+          </p>
           {group.count > 1 && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
+            <span className="max-w-full truncate text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
               {quantityLabel}
             </span>
           )}
@@ -216,7 +249,9 @@ export default function FoodRow({
           )}
         </div>
         {subLabel && (
-          <p className="text-caption text-muted-foreground truncate mt-0.5">
+          /* Wraps rather than truncates: it is short, and cutting it
+             at large text sizes cut the time ("Dinner · 8:15 …"). */
+          <p className="text-caption text-muted-foreground break-words mt-0.5">
             {subLabel}
           </p>
         )}

@@ -192,6 +192,13 @@ const BreakSocialLab =
     ? lazyRetry(() => import("@/pages/dev/BreakSocialLab"))
     : null;
 
+// Dev-only break-food lab: the food diary with worst-case data behind a
+// toggle. Same build-time stripping.
+const BreakFoodLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BreakFoodLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) shipped a single brand-purple
 // glow behind every signed-in page as <AmbientGlow>. DS3 (2026-09-27)
 // retired it: the page is a plain canvas and colour belongs to content.
@@ -867,6 +874,16 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <BreakSocialLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {BreakFoodLab && (
+                      <Route
+                        path="/dev/break-food"
+                        element={
+                          <RouteErrorBoundary>
+                            <BreakFoodLab />
                           </RouteErrorBoundary>
                         }
                       />
