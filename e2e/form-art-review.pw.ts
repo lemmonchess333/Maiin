@@ -449,8 +449,8 @@ test.describe("bulgarian-split: continuous playback evidence", () => {
   // `video` is worker-scoped in Playwright. This public context option keeps
   // recording scoped to these tests while retaining all configured options.
   test.use({
-    contextOptions: async ({ contextOptions }, use, info) => {
-      await use({
+    contextOptions: async ({ contextOptions }, provide, info) => {
+      await provide({
         ...contextOptions,
         recordVideo: {
           dir: info.outputPath("recording"),
@@ -549,8 +549,8 @@ test.describe("bulgarian-split: continuous playback evidence", () => {
             };
             recording.transitions.push(entry);
           }
-          // A newly mounted first img can precede its load event. Retain its
-          // activation timestamp and separately record when pixels are ready.
+          // A newly mounted first img can precede its load event. Record load
+          // readiness separately; encoded video establishes painted continuity.
           if (image?.complete && image.naturalWidth > 0) {
             entry.readyAtMs ??= elapsedMs;
             entry.dimensions = [image.naturalWidth, image.naturalHeight];
