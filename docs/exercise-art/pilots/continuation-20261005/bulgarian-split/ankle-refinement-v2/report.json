@@ -1,0 +1,404 @@
+{
+  "status": "independently-reviewed-local-candidate-not-selected",
+  "releaseApproved": false,
+  "source": {
+    "checkpoint": "8191b80d770fe8c614fb7c9b4441e71f0c9a39fa",
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+    "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+  },
+  "output": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/ankle-refinement-v2/deep.png",
+    "sha256": "70daa4b66c316751ccf68c48582d75d1cd84b87bb113053a44197e4ee73753e4"
+  },
+  "nativeCanvas": [1536, 1024],
+  "method": "Selected baseline's existing upper-contour pixels sampled with a per-column vertical displacement into a bounded, inward-feathered layer. No whole-frame or equipment transform. No generated or borrowed anatomy.",
+  "region": [845, 596, 20, 12],
+  "contourThreshold": 100,
+  "contourEndpoints": {
+    "left": [844, 602.7948717948718],
+    "right": [865, 597.1551724137931]
+  },
+  "columnDisplacements": [
+    {
+      "x": 845,
+      "originalEdge": 601.6290322580645,
+      "targetEdge": 602.5263146814872,
+      "dy": 0.8972824234226664
+    },
+    {
+      "x": 846,
+      "originalEdge": 600.4477611940298,
+      "targetEdge": 602.2577575681024,
+      "dy": 1.8099963740726253
+    },
+    {
+      "x": 847,
+      "originalEdge": 599.4093567251462,
+      "targetEdge": 601.9892004547178,
+      "dy": 2.5798437295716212
+    },
+    {
+      "x": 848,
+      "originalEdge": 598.9074074074074,
+      "targetEdge": 601.720643341333,
+      "dy": 2.8132359339256254
+    },
+    {
+      "x": 849,
+      "originalEdge": 598.8828828828829,
+      "targetEdge": 601.4520862279484,
+      "dy": 2.569203345065489
+    },
+    {
+      "x": 850,
+      "originalEdge": 598.8376068376068,
+      "targetEdge": 601.1835291145636,
+      "dy": 2.3459222769567987
+    },
+    {
+      "x": 851,
+      "originalEdge": 598.7777777777778,
+      "targetEdge": 600.914972001179,
+      "dy": 2.1371942234011385
+    },
+    {
+      "x": 852,
+      "originalEdge": 598.7153284671533,
+      "targetEdge": 600.6464148877942,
+      "dy": 1.931086420640895
+    },
+    {
+      "x": 853,
+      "originalEdge": 598.6510067114094,
+      "targetEdge": 600.3778577744096,
+      "dy": 1.7268510630001401
+    },
+    {
+      "x": 854,
+      "originalEdge": 598.5748502994012,
+      "targetEdge": 600.1093006610248,
+      "dy": 1.5344503616236125
+    },
+    {
+      "x": 855,
+      "originalEdge": 598.516129032258,
+      "targetEdge": 599.8407435476402,
+      "dy": 1.324614515382109
+    },
+    {
+      "x": 856,
+      "originalEdge": 598.450495049505,
+      "targetEdge": 599.5721864342554,
+      "dy": 1.1216913847504202
+    },
+    {
+      "x": 857,
+      "originalEdge": 598.3853658536585,
+      "targetEdge": 599.3036293208708,
+      "dy": 0.9182634672122276
+    },
+    {
+      "x": 858,
+      "originalEdge": 598.2914572864322,
+      "targetEdge": 599.035072207486,
+      "dy": 0.7436149210537906
+    },
+    {
+      "x": 859,
+      "originalEdge": 598.1923076923077,
+      "targetEdge": 598.7665150941014,
+      "dy": 0.5742074017936147
+    },
+    {
+      "x": 860,
+      "originalEdge": 598.0569620253165,
+      "targetEdge": 598.4979579807166,
+      "dy": 0.44099595540012615
+    },
+    {
+      "x": 861,
+      "originalEdge": 597.8403361344538,
+      "targetEdge": 598.229400867332,
+      "dy": 0.38906473287818244
+    },
+    {
+      "x": 862,
+      "originalEdge": 597.6451612903226,
+      "targetEdge": 597.9608437539472,
+      "dy": 0.3156824636246256
+    },
+    {
+      "x": 863,
+      "originalEdge": 597.5051546391752,
+      "targetEdge": 597.6922866405625,
+      "dy": 0.1871320013873401
+    },
+    {
+      "x": 864,
+      "originalEdge": 597.3432835820895,
+      "targetEdge": 597.4237295271778,
+      "dy": 0.08044594508828595
+    }
+  ],
+  "inwardBlend": { "fullThroughRow": 603, "zeroAtRow": 608 },
+  "changedPixels": 204,
+  "changedChannels": 572,
+  "changedBoundsInclusive": [845, 596, 864, 607],
+  "absoluteChannelDifference": 19682,
+  "maximumChannelDifference": 245,
+  "outsideRegionChannelDifferences": 0,
+  "protectedRegions": {
+    "rearShoeAndContact": [865, 548, 138, 128],
+    "lowerRearCalfAndAnkle": [815, 608, 50, 94],
+    "frontShoeAndFloorContact": [365, 844, 195, 120],
+    "bench": [770, 640, 645, 323],
+    "bothHandsAndEquipment": [320, 548, 426, 138]
+  },
+  "protectedRegionChannelDifferences": {
+    "rearShoeAndContact": 0,
+    "lowerRearCalfAndAnkle": 0,
+    "frontShoeAndFloorContact": 0,
+    "bench": 0,
+    "bothHandsAndEquipment": 0
+  },
+  "registrationPreservation": {
+    "source": {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/registration.json",
+      "sha256": "5177e3a66deed3f88775cb59afa101987a2b2d36fd13c1aca4ac56e105137bb3"
+    },
+    "method": "Each complete 91x91 baseline search window is compared channel-by-channel. Exact equality preserves every possible 31x31 +/-30px translation error, its tie-break and the resulting measured centres; no search was rerun or result silently reinterpreted.",
+    "existingReleaseAnchorLimitPixels": 1,
+    "existingReleaseDimensionDriftLimitFraction": 0.01,
+    "patchSearchWindowPreservation": {
+      "frontToe": {
+        "searchWindow": [345, 893, 91, 91],
+        "channelDifferences": 0
+      },
+      "frontHeel": {
+        "searchWindow": [488, 889, 91, 91],
+        "channelDifferences": 0
+      },
+      "rearLacesPad": {
+        "searchWindow": [887, 601, 91, 91],
+        "channelDifferences": 0
+      },
+      "benchRightPadCorner": {
+        "searchWindow": [1329, 632, 91, 91],
+        "channelDifferences": 0
+      },
+      "benchNearLegBolt": {
+        "searchWindow": [1250, 839, 91, 91],
+        "channelDifferences": 0
+      },
+      "benchFarLegBolt": {
+        "searchWindow": [820, 660, 91, 91],
+        "channelDifferences": 0
+      },
+      "benchFarBaseCorner": {
+        "searchWindow": [765, 840, 91, 91],
+        "channelDifferences": 0
+      },
+      "benchNearBaseCorner": {
+        "searchWindow": [1207, 905, 91, 91],
+        "channelDifferences": 0
+      }
+    },
+    "unchangedBaselinePatches": {
+      "frontToe": {
+        "region": "Front shoe toe/sole contour",
+        "referenceCentre": { "x": 390, "y": 938 },
+        "referenceBox": [375, 923, 31, 31],
+        "referenceChannelStandardDeviation": 92.040338,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 18511,
+          "meanAbsoluteChannelDifference": 6.420742
+        },
+        "bestTranslation": {
+          "dx": -1,
+          "dy": 0,
+          "centre": { "x": 389, "y": 938 },
+          "sumAbsoluteDifference": 16805,
+          "meanAbsoluteChannelDifference": 5.828998,
+          "errorImprovementFraction": 0.092161,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "frontHeel": {
+        "region": "Front shoe heel/sole contour",
+        "referenceCentre": { "x": 533, "y": 934 },
+        "referenceBox": [518, 919, 31, 31],
+        "referenceChannelStandardDeviation": 116.307422,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 13380,
+          "meanAbsoluteChannelDifference": 4.640999
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 533, "y": 934 },
+          "sumAbsoluteDifference": 13380,
+          "meanAbsoluteChannelDifference": 4.640999,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "rearLacesPad": {
+        "region": "Rear laces and bench-pad contact",
+        "referenceCentre": { "x": 932, "y": 646 },
+        "referenceBox": [917, 631, 31, 31],
+        "referenceChannelStandardDeviation": 83.376043,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 0,
+          "meanAbsoluteChannelDifference": 0
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 932, "y": 646 },
+          "sumAbsoluteDifference": 0,
+          "meanAbsoluteChannelDifference": 0,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "benchRightPadCorner": {
+        "region": "Exposed right bench-pad corner",
+        "referenceCentre": { "x": 1374, "y": 677 },
+        "referenceBox": [1359, 662, 31, 31],
+        "referenceChannelStandardDeviation": 36.040035,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 41535,
+          "meanAbsoluteChannelDifference": 14.406868
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": -1,
+          "centre": { "x": 1374, "y": 676 },
+          "sumAbsoluteDifference": 27148,
+          "meanAbsoluteChannelDifference": 9.41658,
+          "errorImprovementFraction": 0.346383,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "benchNearLegBolt": {
+        "region": "Near bench-leg lower bolt",
+        "referenceCentre": { "x": 1295, "y": 884 },
+        "referenceBox": [1280, 869, 31, 31],
+        "referenceChannelStandardDeviation": 49.350174,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 33439,
+          "meanAbsoluteChannelDifference": 11.598682
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 1295, "y": 884 },
+          "sumAbsoluteDifference": 33439,
+          "meanAbsoluteChannelDifference": 11.598682,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "benchFarLegBolt": {
+        "region": "Far bench-leg upper bolt",
+        "referenceCentre": { "x": 865, "y": 705 },
+        "referenceBox": [850, 690, 31, 31],
+        "referenceChannelStandardDeviation": 33.858267,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 18601,
+          "meanAbsoluteChannelDifference": 6.45196
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 865, "y": 705 },
+          "sumAbsoluteDifference": 18601,
+          "meanAbsoluteChannelDifference": 6.45196,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "benchFarBaseCorner": {
+        "region": "Far bench-base corner",
+        "referenceCentre": { "x": 810, "y": 885 },
+        "referenceBox": [795, 870, 31, 31],
+        "referenceChannelStandardDeviation": 19.944898,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 6918,
+          "meanAbsoluteChannelDifference": 2.399584
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 810, "y": 885 },
+          "sumAbsoluteDifference": 6918,
+          "meanAbsoluteChannelDifference": 2.399584,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      },
+      "benchNearBaseCorner": {
+        "region": "Near bench-base corner",
+        "referenceCentre": { "x": 1252, "y": 950 },
+        "referenceBox": [1237, 935, 31, 31],
+        "referenceChannelStandardDeviation": 21.631359,
+        "zeroOffset": {
+          "sumAbsoluteDifference": 5588,
+          "meanAbsoluteChannelDifference": 1.938259
+        },
+        "bestTranslation": {
+          "dx": 0,
+          "dy": 0,
+          "centre": { "x": 1252, "y": 950 },
+          "sumAbsoluteDifference": 5588,
+          "meanAbsoluteChannelDifference": 1.938259,
+          "errorImprovementFraction": 0,
+          "touchesSearchBoundary": false,
+          "exceedsExistingReleaseAnchorLimit": false
+        }
+      }
+    },
+    "unchangedProjectedSupportSpans": {
+      "frontShoeSupportSpan": {
+        "endpointPatches": ["frontToe", "frontHeel"],
+        "measuredCentres": [
+          { "x": 389, "y": 938 },
+          { "x": 533, "y": 934 }
+        ],
+        "referenceLengthPixels": 143.055933,
+        "candidateLengthPixels": 144.055545,
+        "lengthChangePixels": 0.999612,
+        "relativeDriftFraction": 0.006988,
+        "exceedsExistingDimensionDriftLimit": false
+      },
+      "benchFloorFootSpan": {
+        "endpointPatches": ["benchFarBaseCorner", "benchNearBaseCorner"],
+        "measuredCentres": [
+          { "x": 810, "y": 885 },
+          { "x": 1252, "y": 950 }
+        ],
+        "referenceLengthPixels": 446.753847,
+        "candidateLengthPixels": 446.753847,
+        "lengthChangePixels": 0,
+        "relativeDriftFraction": 0,
+        "exceedsExistingDimensionDriftLimit": false
+      }
+    }
+  },
+  "unchangedPixels": 1572660,
+  "independentReview": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/ankle-refinement-v2/independent-review.json",
+    "sha256": "7ef61a905e3d7f3f72e44f06d913cef97b77dfaf765a190a71a026c30a9e714a",
+    "localContourAccepted": true,
+    "wholeSequenceApproved": false,
+    "releaseApproved": false
+  },
+  "visualReview": "Independent native/3x review preferred this exact candidate for the local contour improvement, with a connected graded outline and no visible new gap, doubled edge or lower-ankle cut. The natural directional bend remains. No equipment, sequence or release approval is implied."
+}

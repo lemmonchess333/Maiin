@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-05",
+  "reviewer": "/root/movement_review",
+  "scope": "Local deep-pose upper rear-calf/ankle contour refinement only",
+  "candidateSha256": "70daa4b66c316751ccf68c48582d75d1cd84b87bb113053a44197e4ee73753e4",
+  "reviewedViews": [
+    "deep.png at native resolution",
+    "qa/candidate-native.png",
+    "qa/baseline-candidate-3x.png, baseline left and candidate right"
+  ],
+  "decision": "Prefer this candidate for the local ankle repair",
+  "findings": [
+    "The abrupt horizontal shelf is reduced to a continuous graded upper contour.",
+    "A natural directional bend remains; no new open gap, doubled outline, detached edge or lower-ankle cut is visible.",
+    "Independently confirmed 204 changed pixels in exclusive bounds [845,596,865,608].",
+    "All eight support patches equal selected frame 3.",
+    "Entire rear-shoe/contact rectangle [865,548,1003,676] in exclusive coordinates remains exact."
+  ],
+  "localContourAccepted": true,
+  "wholeSequenceApproved": false,
+  "equipmentApproved": false,
+  "releaseApproved": false,
+  "source": "Independent agent message to /root/locate_codex_work after native and enlarged visual inspection; acceptance applies only to this exact candidate hash."
+}

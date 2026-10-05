@@ -1,0 +1,80 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "combined-native-review-passes-player-and-release-gates-pending",
+  "nativeReviewEvidence": "native-review.json",
+  "nativeCanvas": [1536, 1024],
+  "sources": {
+    "baseline": {
+      "path": "../composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+    },
+    "gear": {
+      "path": "poses/deep.png",
+      "sha256": "358e71e6cd84ddfba32213219bf68bf8f4c4a62a46a6b7882370cf2767c0bd67"
+    },
+    "ankle": {
+      "path": "../ankle-refinement-v2/deep.png",
+      "sha256": "70daa4b66c316751ccf68c48582d75d1cd84b87bb113053a44197e4ee73753e4"
+    }
+  },
+  "roi": [845, 596, 20, 12],
+  "method": "Compare each reviewed repair to the same frozen selected deep source. Assert their changed pixels are disjoint, then copy only the 204 changed ankle pixels into the reviewed gear frame. No resizing, warping, blending or broad source replacement.",
+  "preservation": {
+    "ankleChangedPixels": 204,
+    "ankleChangedChannels": 572,
+    "gearChangedPixels": 15625,
+    "overlappingChangedPixels": 0,
+    "ankleOutsideRoiChangedChannels": 0,
+    "gearInsideRoiChangedChannels": 0,
+    "outsideAnkleChangedChannels": 0,
+    "gearChangedAfterCombinationChannels": 0,
+    "ankleSourceMismatchChannels": 0
+  },
+  "results": [
+    {
+      "name": "setup",
+      "path": "final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "gearSource": {
+        "path": "poses/setup.png",
+        "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+      },
+      "ankleSource": null
+    },
+    {
+      "name": "shallow",
+      "path": "final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "gearSource": {
+        "path": "poses/shallow.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      },
+      "ankleSource": null
+    },
+    {
+      "name": "deep",
+      "path": "final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "gearSource": {
+        "path": "poses/deep.png",
+        "sha256": "358e71e6cd84ddfba32213219bf68bf8f4c4a62a46a6b7882370cf2767c0bd67"
+      },
+      "ankleSource": {
+        "path": "../ankle-refinement-v2/deep.png",
+        "sha256": "70daa4b66c316751ccf68c48582d75d1cd84b87bb113053a44197e4ee73753e4"
+      }
+    },
+    {
+      "name": "bottom",
+      "path": "final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "gearSource": {
+        "path": "poses/bottom.png",
+        "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+      },
+      "ankleSource": null
+    }
+  ],
+  "remainingReview": "Independent native review passed for these exact final hashes. Actual-player evidence and whole-release gates remain separate; no release approval is granted here."
+}

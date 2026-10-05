@@ -1,0 +1,296 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "native-reviewed-candidate-player-and-release-gates-pending",
+  "nativeReviewEvidence": "native-review.json",
+  "baselineCommit": "8191b80d770fe8c614fb7c9b4441e71f0c9a39fa",
+  "nativeCanvas": [1536, 1024],
+  "equipment": {
+    "path": "dumbbell-source.png",
+    "sha256": "57176b796fc6fecb7832d5e46cd79f469fdec72f37ae1be71d1c86848c2cc57b"
+  },
+  "sourceParts": {
+    "front": {
+      "left": 114,
+      "top": 162,
+      "width": 596,
+      "height": 625
+    },
+    "rear": {
+      "left": 1031,
+      "top": 170,
+      "width": 539,
+      "height": 614
+    },
+    "shaft": {
+      "left": 699,
+      "top": 386,
+      "width": 490,
+      "height": 203
+    }
+  },
+  "alphaNormalization": {
+    "rule": "Alpha > 240 becomes 255 once before fixed projection creation; antialiased edge alpha is retained",
+    "normalizedInteriorAlphaPixels": 650593
+  },
+  "projections": [
+    {
+      "name": "near",
+      "origin": [563, 492],
+      "width": 179,
+      "height": 86,
+      "parts": {
+        "front": {
+          "size": [80, 84],
+          "at": [0, 2]
+        },
+        "rear": {
+          "size": [66, 84],
+          "at": [113, 0]
+        },
+        "shaft": {
+          "size": [52, 25],
+          "at": [72, 32]
+        }
+      },
+      "sha256": "eb3240b929e8f4dca31f37db1f1e7943ba72649cb100584f768f235a97c77775"
+    },
+    {
+      "name": "far",
+      "origin": [343, 487],
+      "width": 143,
+      "height": 82,
+      "parts": {
+        "front": {
+          "size": [73, 80],
+          "at": [0, 1]
+        },
+        "rear": {
+          "size": [60, 80],
+          "at": [83, 0]
+        },
+        "shaft": {
+          "size": [48, 23],
+          "at": [65, 30]
+        }
+      },
+      "sha256": "fdef1aa94aac135af0f65c064c131c606e51a2f867880dde6d25167bd4c8c4d9"
+    }
+  ],
+  "method": "One transparent imagegen asset assembled once into fixed near/far camera projections. The fixed layers move by integer translation only across poses; source body and camera never move. Original hands and far knee remain foreground. There is no clearing, background fill, warped anatomy, global resize or per-frame equipment resize.",
+  "priorFailureRegions": [
+    [594, 651, 12, 18],
+    [605, 729, 25, 6],
+    [687, 710, 66, 34]
+  ],
+  "unchangedReviewBounds": {
+    "fixedAnchorMaxAxisDriftPixels": 1,
+    "invariantDimensionsMaxRelativeDrift": 0.01
+  },
+  "results": [
+    {
+      "name": "setup",
+      "source": {
+        "path": "../sources/setup.png",
+        "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+      },
+      "output": {
+        "path": "poses/setup.png",
+        "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+      },
+      "shifts": {
+        "near": [0, 0],
+        "far": [0, 0]
+      },
+      "hands": {
+        "near": [632, 478, 57, 83],
+        "far": [404, 476, 43, 77]
+      },
+      "nearHandLowerEdge": null,
+      "farBodyBox": [432, 483, 72, 93],
+      "masks": {
+        "foreground": {
+          "path": "masks/setup-foreground.png",
+          "sha256": "b9519bbac2972599fe2ad74d50c6c5fe92a6c92cb5ed881079fba0b651554e11"
+        },
+        "edit": {
+          "path": "masks/setup-edit.png",
+          "sha256": "a56dc87069ea05af09bb11722ad560ac28f1af37b03dd3c8b989197db510d7c9"
+        },
+        "equipment": {
+          "path": "masks/setup-equipment.png",
+          "sha256": "bcbbcc65d074449f43c9e38ee89d1846eb42ff2fbe67df62d95940701be08e78"
+        }
+      },
+      "qaBoxes": {
+        "near": [548, 477, 220, 122],
+        "far": [327, 469, 190, 122]
+      },
+      "preservation": {
+        "changedPixels": 15900,
+        "editedPixels": 16426,
+        "outsideEquipmentChangedChannels": 0,
+        "foregroundChangedChannels": 0,
+        "bodyAboveEquipmentChangedChannels": 0
+      },
+      "releaseApproved": false
+    },
+    {
+      "name": "shallow",
+      "source": {
+        "path": "../sources/shallow.png",
+        "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec"
+      },
+      "output": {
+        "path": "poses/shallow.png",
+        "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+      },
+      "shifts": {
+        "near": [-2, 23],
+        "far": [-1, 23]
+      },
+      "hands": {
+        "near": [630, 501, 57, 83],
+        "far": [402, 498, 43, 77]
+      },
+      "nearHandLowerEdge": null,
+      "farBodyBox": [431, 506, 72, 93],
+      "masks": {
+        "foreground": {
+          "path": "masks/shallow-foreground.png",
+          "sha256": "b0a006821d3f95bf7d7b042227e32db6130d76bdb612a8b0771a537dc1cabf2f"
+        },
+        "edit": {
+          "path": "masks/shallow-edit.png",
+          "sha256": "3cd7be4bd4145c6edf5f2c459b685335cd8e97e5723292f75ef2044023dfd2bd"
+        },
+        "equipment": {
+          "path": "masks/shallow-equipment.png",
+          "sha256": "69cda866f278431e15b89b86ba6dbc69a2678bde55377bce666382a3b7fd2ab0"
+        }
+      },
+      "qaBoxes": {
+        "near": [546, 500, 220, 122],
+        "far": [326, 492, 190, 122]
+      },
+      "preservation": {
+        "changedPixels": 15418,
+        "editedPixels": 15941,
+        "outsideEquipmentChangedChannels": 0,
+        "foregroundChangedChannels": 0,
+        "bodyAboveEquipmentChangedChannels": 0
+      },
+      "releaseApproved": false
+    },
+    {
+      "name": "deep",
+      "source": {
+        "path": "../composite/deep.png",
+        "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2"
+      },
+      "output": {
+        "path": "poses/deep.png",
+        "sha256": "358e71e6cd84ddfba32213219bf68bf8f4c4a62a46a6b7882370cf2767c0bd67"
+      },
+      "shifts": {
+        "near": [8, 100],
+        "far": [-20, 78]
+      },
+      "hands": {
+        "near": [640, 580, 58, 84],
+        "far": [389, 553, 47, 77]
+      },
+      "nearHandLowerEdge": [
+        [639, 655],
+        [648, 657],
+        [655, 658],
+        [662, 657],
+        [668, 655],
+        [674, 655],
+        [680, 653],
+        [684, 651],
+        [688, 645],
+        [698, 637]
+      ],
+      "farBodyBox": [412, 561, 72, 93],
+      "masks": {
+        "foreground": {
+          "path": "masks/deep-foreground.png",
+          "sha256": "11f3fb52fc016bb214269c59474abc3225b2ddb506d0b7860890f3656522d168"
+        },
+        "edit": {
+          "path": "masks/deep-edit.png",
+          "sha256": "cda4e50321e29334f465bf2320cac729534ffa81b4e599c4441505021f11b6e5"
+        },
+        "equipment": {
+          "path": "masks/deep-equipment.png",
+          "sha256": "d6393f4e2a7816240e855e68b854d96a9c7843fcb4633e307131f51554db77e3"
+        }
+      },
+      "qaBoxes": {
+        "near": [556, 577, 220, 122],
+        "far": [307, 547, 190, 122]
+      },
+      "preservation": {
+        "changedPixels": 15625,
+        "editedPixels": 16044,
+        "outsideEquipmentChangedChannels": 0,
+        "foregroundChangedChannels": 0,
+        "bodyAboveEquipmentChangedChannels": 0
+      },
+      "releaseApproved": false
+    },
+    {
+      "name": "bottom",
+      "source": {
+        "path": "../rigid-equipment/bottom-contact-colour.png",
+        "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb"
+      },
+      "output": {
+        "path": "poses/bottom.png",
+        "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+      },
+      "shifts": {
+        "near": [12, 155],
+        "far": [-51, 108]
+      },
+      "hands": {
+        "near": [645, 632, 61, 86],
+        "far": [357, 582, 48, 80]
+      },
+      "nearHandLowerEdge": null,
+      "farBodyBox": [381, 591, 72, 93],
+      "masks": {
+        "foreground": {
+          "path": "masks/bottom-foreground.png",
+          "sha256": "4613f38fccd8a130f08ccb261baa544b800a627c52658f5c8c1be53bed9993ba"
+        },
+        "edit": {
+          "path": "masks/bottom-edit.png",
+          "sha256": "ca2824a3761f3add01d88c233969416f9290b27e494e18a2cf09afe5311592d2"
+        },
+        "equipment": {
+          "path": "masks/bottom-equipment.png",
+          "sha256": "b445564f3714c33d3ade2237dfc138122e564c91303aa1b30f651eadc32209e3"
+        }
+      },
+      "qaBoxes": {
+        "near": [560, 632, 220, 122],
+        "far": [276, 577, 190, 122]
+      },
+      "preservation": {
+        "changedPixels": 15541,
+        "editedPixels": 16033,
+        "outsideEquipmentChangedChannels": 0,
+        "foregroundChangedChannels": 0,
+        "bodyAboveEquipmentChangedChannels": 0
+      },
+      "releaseApproved": false
+    }
+  ],
+  "limitations": [
+    "Layer invariance does not automatically establish clean foreground grips or complete coverage of the previous drawn gear; independent native review is recorded separately.",
+    "The new projection deliberately covers a slightly larger silhouette than the largest original head, to avoid exposing occluded anatomy. Setup candidate equipment changes within its own gear region; frozen source and master remain unchanged.",
+    "Camera-specific projections are established once from the asset; dimensions of hidden equipment are construction evidence, not directly observed anatomy."
+  ]
+}

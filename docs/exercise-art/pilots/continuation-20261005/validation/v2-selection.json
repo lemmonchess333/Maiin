@@ -1,0 +1,192 @@
+{
+  "exerciseId": "bulgarian-split",
+  "status": "native-reviewed-v2-awaiting-player-review",
+  "selectedAt": "2026-10-05T18:55:10Z",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "nativeReviewStatus": "passed-for-pinned-v2-sources",
+  "playerReviewStatus": "pending",
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "nativeDimensions": [1536, 1024],
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "originalMaster": {
+    "path": "docs/exercise-art/masters/bulgarian-split/1.png",
+    "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702"
+  },
+  "selectedSetup": {
+    "pose": "setup",
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+    "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+    "bytes": 771504,
+    "dimensions": [1536, 1024]
+  },
+  "masterRelationship": "Original canonical identity and frozen scene master remain unchanged. The V2 selected setup replaces gear only within declared regions; the scene master remains the source identity and support reference.",
+  "nativeSources": [
+    {
+      "pose": "setup",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "bottom",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901,
+      "dimensions": [1536, 1024]
+    }
+  ],
+  "frameSelection": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+      "bytes": 771504,
+      "cueSha256": "06ce412c233ac4854900f88c7c8d426754f580860f87c13f46a3c3e076cc35f3",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "cueSha256": "bdaa72f2c828b79209806e6ecb59f809fcedc89a8a4cbbb56c7eaf1620bc706a",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "cueSha256": "227ec174e48662dadb647e0b6f4b74a0fd66ec32c44bce89f9d5331f857e0e47",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+      "bytes": 671901,
+      "cueSha256": "7638a935d0ccd22b77a0da1481c5b5cd6c7ed1ed220bb63da784d3541a9e7fd6",
+      "reusedFrom": null
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "bytes": 917284,
+      "cueSha256": "59ff03f990aa37ef2dd2f56a1a5c702f015654497fc1a90d1c9f9e45b2b00d05",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png",
+      "source": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+      "bytes": 700532,
+      "cueSha256": "7100cda3e5c36fddb46fa6e603c237ff6b068b787115b260969874113352f054",
+      "reusedFrom": 2
+    }
+  ],
+  "selectedFrameBytes": 4679037,
+  "cueSha256": "2702ce0ca3bdae249c329136587feaf0d6c0da750b08ea04de6c12faf9c66f6b",
+  "planSha256": "b99f6285f8727078ed51e49fb6e3e3a63f36f34947ac8787cfb65843023ca316",
+  "manifestSha256": "bd3118a9b59f2d3ba7e5049bb5072b0f14c4faa9d845a641c209d771ffc27fab",
+  "provenanceSha256": "c311509521e1eaf0aa36fdbedda5de1cb799b12160d6e271c21574db7f37bbf2",
+  "evidence": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/composition.json",
+      "sha256": "565ae0de392d54e2241cc5a554eb20e2985c53a30d47cc72e2323ed8718d6575"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/combination.json",
+      "sha256": "0ef9b4b4605118db2705b5d8a0034bb14049efba8808039668c1b5141bc95bbc"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/diagnostics.json",
+      "sha256": "f3bc753d6adc61ae8cca33263f444ccf307d1d7053f1b1c9959740b143730fca"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/generation.json",
+      "sha256": "1ac3a1f2fd322ebba4803d8139baffe19ec587b6b208d9457b1562dc52762cc2"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/native-review.json",
+      "sha256": "45e9e01d49c25b602f207b5f57e26d5037d6e4a6da10f12be2285c559729d4fc"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/ankle-refinement-v2/report.json",
+      "sha256": "139d3ed91063a99d110b23684d230f60f0244873f0733e47798269c93e7629c0"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/ankle-refinement-v2/independent-review.json",
+      "sha256": "7ef61a905e3d7f3f72e44f06d913cef97b77dfaf765a190a71a026c30a9e714a"
+    }
+  ],
+  "supersededSelection": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/validation/final-selection.json",
+    "sha256": "aa06eac74eece44984eb770d23aaa6efbb337e3974d690384b23053f2bacfd53"
+  },
+  "historicalNativeSources": [
+    {
+      "pose": "setup",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/setup.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "bytes": 904359,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "shallow",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/sources/shallow.png",
+      "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+      "bytes": 816295,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "deep",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep.png",
+      "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+      "bytes": 836482,
+      "dimensions": [1536, 1024]
+    },
+    {
+      "pose": "bottom",
+      "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/bottom-contact-colour.png",
+      "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+      "bytes": 675875,
+      "dimensions": [1536, 1024]
+    }
+  ],
+  "reviewFindings": [
+    "V2 native review passes the four exact selected source hashes, including the final deep image combining disjoint gear and ankle changes. The six slots remain setup, shallow, deep, bottom, deep, shallow; standing completes on the actual 6-to-1 transition.",
+    "One transparent faceted/octagonal dumbbell source supplies fixed near/far projections reused by integer translation without per-pose scaling or rotation. Original hand/body foreground preserves readable grips and anatomical occlusion. Construction and native contour review jointly supersede the original equipment-redraw finding and rejected V1 cutout trial.",
+    "The final deep pose incorporates the reviewed 204-pixel upper-ankle refinement at x845–864,y596–607. A connected graded contour replaces the old angular shelf; a natural directional bend remains. Rear shoe/contact, lower ankle and gear are preserved by disjoint construction.",
+    "The original canonical identity and frozen scene master remain unchanged. Selected setup differs from that master only in the declared gear edit regions, with hands/body/support pixels preserved; it is a composite-selected pose rather than a replacement master.",
+    "Working front quadriceps retain the strongest purple, visible working hamstring remains lighter lilac, and the supporting rear thigh/hip remains neutral. The earlier contact repairs and 2,374-pixel bottom colour import are retained beneath V2 equipment.",
+    "Progress values 0,0.33,0.67,1,0.67,0.33 are authored beat positions, not measured joint-range percentages. Actual mobile light/dark playback, reduced motion and manual stepping remain pending for these final hashes. Native approval, registration and the standalone GIF do not establish player or production approval."
+  ],
+  "imageProcessing": "copyFileSync only; verified exact source/delivery SHA-256 equality",
+  "helper": "docs/exercise-art/pilots/continuation-20261005/validation/select-v2.mjs"
+}

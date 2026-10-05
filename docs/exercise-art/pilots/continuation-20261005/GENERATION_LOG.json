@@ -99,6 +99,56 @@
       "source": "bulgarian-split/sources/equipment-edge-context-rejected-pose.png",
       "tool": "built-in image_gen",
       "status": "rejected: local retouch request changed torso height, pose and weight positions despite frozen target plus native context; not suitable for direct import"
+    },
+    {
+      "id": "v2-native-reviewed-inactive-selection",
+      "stage": "Select reviewed V2 rigid equipment and deep ankle refinement into inactive draft",
+      "tool": "image_gen source plus documented Node/sharp native-layer compositing; byte-copy selection",
+      "source": "bulgarian-split/rigid-equipment-v2/final/{setup,shallow,deep,bottom}.png",
+      "generationRecord": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/generation.json",
+      "processingRecords": [
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/deep-composition.json",
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/composite/composition.json",
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment/colour-only-composition.json",
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/composition.json",
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/combination.json",
+        "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/ankle-refinement-v2/report.json"
+      ],
+      "selectedSources": [
+        {
+          "pose": "setup",
+          "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+          "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+          "bytes": 771504,
+          "dimensions": [1536, 1024]
+        },
+        {
+          "pose": "shallow",
+          "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/shallow.png",
+          "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+          "bytes": 700532,
+          "dimensions": [1536, 1024]
+        },
+        {
+          "pose": "deep",
+          "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/deep.png",
+          "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+          "bytes": 917284,
+          "dimensions": [1536, 1024]
+        },
+        {
+          "pose": "bottom",
+          "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/bottom.png",
+          "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+          "bytes": 671901,
+          "dimensions": [1536, 1024]
+        }
+      ],
+      "sequence": [1, 2, 3, 4, 3, 2],
+      "nativeReview": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/native-review.json",
+      "status": "native review passed; actual player review pending; selected inactive draft only",
+      "releaseApproved": false,
+      "priorEvents": "Earlier prompt text, source identities and rejected-attempt statuses are retained unchanged as historical records."
     }
   ]
 }

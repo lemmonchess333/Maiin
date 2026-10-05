@@ -1,0 +1,137 @@
+{
+  "scope": "Published checkpoint f6bfffc3ef55de5efe403edad20eb93e9547c1a1; excludes V2 repairs.",
+  "files": [
+    {
+      "source": "ci-run.json",
+      "path": "ci-run.json.txt",
+      "sha256": "91f84a508dee7605325c195642a989fcf561f8eca44c57657511b12d6c24d07f",
+      "bytes": 4701
+    },
+    {
+      "source": "source-integrity.json",
+      "path": "source-integrity.json.txt",
+      "sha256": "f16707b014589606a44068614a27bbc884f0c012d28d1527a2b75aa207818e4a",
+      "bytes": 2641
+    },
+    {
+      "source": "playwright-evidence.json",
+      "path": "playwright-evidence.json.txt",
+      "sha256": "6a91340bb92ae30e5ad9351f72f820c319c6ee5c3caad7732d781e6b48761a88",
+      "bytes": 10653
+    },
+    {
+      "source": "review-observations.json",
+      "path": "review-observations.json.txt",
+      "sha256": "1ac18eceff2166eee9a25aa22c806764fbcb95324eaa1fe18467ab63a6d49f76",
+      "bytes": 2596
+    },
+    {
+      "source": "player-log-excerpts.txt",
+      "path": "player-log-excerpts.txt",
+      "sha256": "b702229c1c6c209c0e561179b4604b8c198bcb4e8630b92eff84aaac660c352e",
+      "bytes": 1102
+    },
+    {
+      "source": "screenshots/dark-1.png",
+      "path": "screenshots/dark-1.png",
+      "sha256": "de47a0eb539d2acb41754477cbadf730917e1cba1dbc6c4839c2dd34fa86ed4f",
+      "bytes": 30904
+    },
+    {
+      "source": "screenshots/dark-2.png",
+      "path": "screenshots/dark-2.png",
+      "sha256": "0e11a1767a2702e441786fbc7e8552209071bab639bdcc6e62e691b31cb38f6f",
+      "bytes": 31591
+    },
+    {
+      "source": "screenshots/dark-3.png",
+      "path": "screenshots/dark-3.png",
+      "sha256": "8ea6d1f55f3a02c148f2ae37c7b735898565391d872acea465194cff6190557b",
+      "bytes": 31396
+    },
+    {
+      "source": "screenshots/dark-4.png",
+      "path": "screenshots/dark-4.png",
+      "sha256": "fb98f46f0cd26cdfafdd8568f1f6c1d1c3cba139cfad9697f8596b67703a0c08",
+      "bytes": 30249
+    },
+    {
+      "source": "screenshots/dark-5.png",
+      "path": "screenshots/dark-5.png",
+      "sha256": "beb91d9fc9fed90d002e90a7f8bcd964ab08349d14133793a9b9f900b464a890",
+      "bytes": 31037
+    },
+    {
+      "source": "screenshots/dark-6.png",
+      "path": "screenshots/dark-6.png",
+      "sha256": "3a5c1f9882678973e3ead33e517a4416c6e5cd686d1d1f875cfb745fbe64db59",
+      "bytes": 31502
+    },
+    {
+      "source": "screenshots/dark-endpoint-first.png",
+      "path": "screenshots/dark-endpoint-first.png",
+      "sha256": "93aab2fe9ed7cf9f6a59bc6777ccd286389f9d676490a4c840692297d12d6bc3",
+      "bytes": 26346
+    },
+    {
+      "source": "screenshots/dark-page.png",
+      "path": "screenshots/dark-page.png",
+      "sha256": "9545ba95bba0765d2e3a7b3d26738c0a4b67b4bf011957e632b8d13088b35d1b",
+      "bytes": 77694
+    },
+    {
+      "source": "screenshots/light-1.png",
+      "path": "screenshots/light-1.png",
+      "sha256": "2ad4324790bc9a86718e77bcd1081a94d8f80fa85d964d5bb49b9c06453e5405",
+      "bytes": 31133
+    },
+    {
+      "source": "screenshots/light-2.png",
+      "path": "screenshots/light-2.png",
+      "sha256": "c6fd14daa7a412305ddad27ca5b321f86f4e31c5dedad55fb49f0418f61b6d80",
+      "bytes": 31942
+    },
+    {
+      "source": "screenshots/light-3.png",
+      "path": "screenshots/light-3.png",
+      "sha256": "71f61a8c5fd245c9ff45c1252b109b1054e0b9a22d746cc0010bd4f67df933c7",
+      "bytes": 31595
+    },
+    {
+      "source": "screenshots/light-4.png",
+      "path": "screenshots/light-4.png",
+      "sha256": "250d7c99ac6447f3d8d5caba91a41030ba2d3e07a20081e23305ad53759e4f64",
+      "bytes": 30454
+    },
+    {
+      "source": "screenshots/light-5.png",
+      "path": "screenshots/light-5.png",
+      "sha256": "c4f9b3877554db852b35f03b0fd1dd26005d218a58ef1993eae5c1ddd4c569f6",
+      "bytes": 31233
+    },
+    {
+      "source": "screenshots/light-6.png",
+      "path": "screenshots/light-6.png",
+      "sha256": "cf88487c30bd2315c586bbfea33bd7d0ce3f27cacfb83b28313f1fb837da26b6",
+      "bytes": 31701
+    },
+    {
+      "source": "screenshots/light-endpoint-first.png",
+      "path": "screenshots/light-endpoint-first.png",
+      "sha256": "93aab2fe9ed7cf9f6a59bc6777ccd286389f9d676490a4c840692297d12d6bc3",
+      "bytes": 26346
+    },
+    {
+      "source": "screenshots/light-page.png",
+      "path": "screenshots/light-page.png",
+      "sha256": "c82b3602314ebead865e4c4d2b63cef9f9e95a28814996e25dbe2f86ed14e1c8",
+      "bytes": 77399
+    },
+    {
+      "source": "form-art-results.json",
+      "path": "form-art-results.json.txt",
+      "sha256": "0aec58e1679c6bc58fad4148a27b4d4f48ae21d3e3f45ca5648b5057a9e8f81d",
+      "bytes": 91745
+    }
+  ]
+}

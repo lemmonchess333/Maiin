@@ -8,14 +8,14 @@
     {
       "exerciseId": "bulgarian-split",
       "status": "draft-awaiting-review",
-      "selectionStatus": "frozen-native-draft-with-findings",
+      "selectionStatus": "native-reviewed-v2-awaiting-player-review",
       "camera": "Fixed left-facing side/three-quarter view, black landscape canvas, full body, both dumbbell grips visible.",
       "anchors": [
         "Bench silhouette and both bench floor contacts",
         "Front shoe heel and toe floor contacts",
         "Rear shoe laces/instep contact on bench"
       ],
-      "equipment": "Two identical modest hex dumbbells; one fixed flat bench; front trainer flat on floor; rear instep laces-down on bench.",
+      "equipment": "Two identical modest faceted/octagonal dumbbells from fixed reusable near/far projections; one fixed flat bench; front trainer flat on floor; rear instep laces-down on bench.",
       "muscles": {
         "primary": ["Working front-leg quadriceps, strongest purple"],
         "secondary": [
@@ -26,12 +26,12 @@
         ]
       },
       "reviewFindings": [
-        "Frozen native draft uses setup, shallow descent, deep descent and bottom, then reuses the deep and shallow poses on ascent. The actual 6-to-1 transition completes standing; all four selected sources retain their original clean equipment outlines.",
-        "The original generated dumbbell projections vary across poses and do not establish a sub-percent equipment-invariance pass. Rigid-equipment trials were rejected for jagged/cutout outer contours and remain separate from the selected six-frame draft.",
-        "Documented local compositing preserves the full master rear shoe/contact and keeps the selected deep calf-to-ankle bridge connected, with no gap or doubled outline. A short angular shelf remains on the upper contour around x848–861, y599–604 (approximately ±3px): it is clearest at 3x enlargement and discernible natively when examined. This residual contour finding remains explicit; fixed support pixels do not establish anatomical or release approval.",
-        "The working front quadriceps retain the strongest purple and the rear thigh remains neutral. The bottom imports only the documented 2,374-pixel secondary lilac patch; its equipment and all pixels outside that patch match the selected contact source.",
-        "The 0, 0.33, 0.67, 1, 0.67, 0.33 progress values are authored beat positions, not measured percentages of joint range. Approximate thirds remain a movement plan rather than a claim of evenly measured depth.",
-        "Actual mobile playback in light and dark themes and reduced-motion/manual stepping remain unverified: compatible Chromium could not be provisioned. Native previews, structural audits and test discovery do not replace this evidence. This draft is not approved or active in production."
+        "V2 native review passes the four exact selected source hashes, including the final deep image combining disjoint gear and ankle changes. The six slots remain setup, shallow, deep, bottom, deep, shallow; standing completes on the actual 6-to-1 transition.",
+        "One transparent faceted/octagonal dumbbell source supplies fixed near/far projections reused by integer translation without per-pose scaling or rotation. Original hand/body foreground preserves readable grips and anatomical occlusion. Construction and native contour review jointly supersede the original equipment-redraw finding and rejected V1 cutout trial.",
+        "The final deep pose incorporates the reviewed 204-pixel upper-ankle refinement at x845–864,y596–607. A connected graded contour replaces the old angular shelf; a natural directional bend remains. Rear shoe/contact, lower ankle and gear are preserved by disjoint construction.",
+        "The original canonical identity and frozen scene master remain unchanged. Selected setup differs from that master only in the declared gear edit regions, with hands/body/support pixels preserved; it is a composite-selected pose rather than a replacement master.",
+        "Working front quadriceps retain the strongest purple, visible working hamstring remains lighter lilac, and the supporting rear thigh/hip remains neutral. The earlier contact repairs and 2,374-pixel bottom colour import are retained beneath V2 equipment.",
+        "Progress values 0,0.33,0.67,1,0.67,0.33 are authored beat positions, not measured joint-range percentages. Actual mobile light/dark playback, reduced motion and manual stepping remain pending for these final hashes. Native approval, registration and the standalone GIF do not establish player or production approval."
       ],
       "frames": [
         {
@@ -41,8 +41,8 @@
           "cue": "Plant front foot; rest your rear instep.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 904359,
-          "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+          "bytes": 771504,
+          "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
           "reusedFrom": null
         },
         {
@@ -52,8 +52,8 @@
           "cue": "Bend your front knee; lower with control.",
           "progress": 0.33,
           "dimensions": [1536, 1024],
-          "bytes": 816295,
-          "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+          "bytes": 700532,
+          "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
           "reusedFrom": null
         },
         {
@@ -63,8 +63,8 @@
           "cue": "Keep your front heel planted while descending.",
           "progress": 0.67,
           "dimensions": [1536, 1024],
-          "bytes": 836482,
-          "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+          "bytes": 917284,
+          "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
           "reusedFrom": null
         },
         {
@@ -74,8 +74,8 @@
           "cue": "Reach comfortable depth without bouncing or shifting.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 675875,
-          "sha256": "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+          "bytes": 671901,
+          "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
           "reusedFrom": null
         },
         {
@@ -85,8 +85,8 @@
           "cue": "Drive through your front foot; rise steadily.",
           "progress": 0.67,
           "dimensions": [1536, 1024],
-          "bytes": 836482,
-          "sha256": "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
+          "bytes": 917284,
+          "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
           "reusedFrom": 3
         },
         {
@@ -96,11 +96,14 @@
           "cue": "Continue rising; keep feet and grips fixed.",
           "progress": 0.33,
           "dimensions": [1536, 1024],
-          "bytes": 816295,
-          "sha256": "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
+          "bytes": 700532,
+          "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
           "reusedFrom": 2
         }
-      ]
+      ],
+      "nativeReviewStatus": "passed-for-pinned-v2-sources",
+      "playerReviewStatus": "pending",
+      "supersededSelection": "docs/exercise-art/pilots/continuation-20261005/validation/final-selection.json"
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "status": "inactive-v2-selection-integrity-checks-pass",
+  "releaseApproved": false,
+  "playerReviewed": false,
+  "fullRepositoryTestsRun": false,
+  "selectedHashes": {
+    "docs/exercise-art/pilots/continuation-20261005/MANIFEST.json": "bd3118a9b59f2d3ba7e5049bb5072b0f14c4faa9d845a641c209d771ffc27fab",
+    "docs/exercise-art/pilots/continuation-20261005/GENERATION_LOG.json": "b9aa02a00141850593a5e51ba9cb5dd4ea00e790f9dd14bd100a61d82a7d7d59",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/plan.json": "b99f6285f8727078ed51e49fb6e3e3a63f36f34947ac8787cfb65843023ca316",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/provenance.json": "c311509521e1eaf0aa36fdbedda5de1cb799b12160d6e271c21574db7f37bbf2",
+    "docs/exercise-art/pilots/continuation-20261005/validation/v2-selection.json": "5665ba020394a365ffe93966fbcfd54471c944c0122d26fc0439065f6a3ccbe7",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/1.png": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/2.png": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/3.png": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/4.png": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/5.png": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+    "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/frames/6.png": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+  },
+  "preview": {
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split-preview.gif",
+    "sha256": "e10fca167edbc9c221bbd03506d67c85abce8f10ea385e34fd6764d4f8121a93",
+    "probe": {
+      "width": 768,
+      "height": 512,
+      "duration": "7.200000",
+      "nb_read_frames": "6"
+    }
+  },
+  "checks": {
+    "selectionRebuildReproducesExactHashes": true,
+    "allOriginalGenerationEventsUnchanged": true,
+    "priorSelectionNativeSourcesUnchanged": true,
+    "originalSourcesMasterIdentityAndOldCompositorEvidenceUnchanged": true,
+    "previewBoundToCurrentSelectedFrames": true
+  },
+  "draftAudit": {
+    "command": "npm run check:form-drafts",
+    "exitCode": 0,
+    "draftSets": 30,
+    "selectedFrames": 180,
+    "uniquePoses": 107,
+    "nativeBytes": 176975013,
+    "releaseApproved": false,
+    "errors": []
+  },
+  "formatting": {
+    "command": "prettier --check on the nine edited current metadata/helper files",
+    "passed": true
+  },
+  "limitations": [
+    "Draft audit is structural integrity only.",
+    "Actual player approval remains pending for final V2 hashes.",
+    "Historical full verification and blocked player records were not replaced."
+  ]
+}

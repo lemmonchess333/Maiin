@@ -134,10 +134,10 @@ if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
 const bulgarianSourcePins = {
-  setup: "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
-  shallow: "a1bb1762a10f5d01af746f79d14b9b169a71e3205d83e3538e0dd1eff59785ec",
-  deep: "eb30ff85c3adbe6b603fbafee826f48d125ec92e100651bf725e8ee1979e7fa2",
-  bottom: "3a8aea075b87199b21dc4fe46b0a55f0e5506dbf8b674a492ba87dc757ea09fb",
+  setup: "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+  shallow: "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3",
+  deep: "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+  bottom: "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
 };
 const endpointHashes: Record<string, string> = {
   "bulgarian-split": bulgarianSourcePins.setup,
@@ -348,6 +348,12 @@ for (const set of sets) {
       });
       await guide.getByRole("button", { name: "Pause", exact: true }).click();
       await expect(guide.locator("p[aria-live]")).toContainText("1/6");
+      if (set.exerciseId === "bulgarian-split") {
+        await image.evaluate((node) => (node as HTMLImageElement).decode());
+        await guide.screenshot({
+          path: info.outputPath(`${theme}-live-loop-6-to-1.png`),
+        });
+      }
       await guide
         .getByRole("button", { name: "Previous frame", exact: true })
         .click();
@@ -368,7 +374,7 @@ for (const set of sets) {
 
   test(`${set.exerciseId}: reduced motion stays still and permits stepping`, async ({
     page,
-  }) => {
+  }, info) => {
     await localOnly(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.clock.install();
@@ -396,6 +402,12 @@ for (const set of sets) {
     await expect(
       guide.getByRole("button", { name: "Pause", exact: true })
     ).toHaveCount(0);
+    if (set.exerciseId === "bulgarian-split") {
+      await image.evaluate((node) => (node as HTMLImageElement).decode());
+      await guide.screenshot({
+        path: info.outputPath("reduced-motion-still-after-8s.png"),
+      });
+    }
     await guide
       .getByRole("button", { name: "Next frame", exact: true })
       .click();
@@ -403,5 +415,248 @@ for (const set of sets) {
     await expect(page.locator('button[aria-current="step"]')).toContainText(
       set.frames[1].cue
     );
+    if (set.exerciseId === "bulgarian-split") {
+      await image.evaluate((node) => (node as HTMLImageElement).decode());
+      await guide.screenshot({
+        path: info.outputPath("reduced-motion-manual-frame-2.png"),
+      });
+    }
   });
 }
+
+type PlaybackTransition = {
+  src: string;
+  elapsedMs: number;
+  readyAtMs: number | null;
+  activeImageCount: number;
+  dimensions: number[];
+  visibility: string;
+  documentVisibility: DocumentVisibilityState;
+};
+type PlaybackRecording = {
+  startedAtEpochMs: number;
+  transitions: PlaybackTransition[];
+  finished: boolean;
+  stop: () => void;
+};
+declare global {
+  interface Window {
+    __bulgarianPlayback?: PlaybackRecording;
+  }
+}
+
+test.describe("bulgarian-split: continuous playback evidence", () => {
+  // `video` is worker-scoped in Playwright. This public context option keeps
+  // recording scoped to these tests while retaining all configured options.
+  test.use({
+    contextOptions: async ({ contextOptions }, use, info) => {
+      await use({
+        ...contextOptions,
+        recordVideo: {
+          dir: info.outputPath("recording"),
+          size: { width: 393, height: 852 },
+        },
+      });
+    },
+  });
+  test.afterEach(async ({ context, page }, info) => {
+    const video = page.video();
+    await context.close();
+    expect(video).not.toBeNull();
+    await info.attach("continuous-playback-video", {
+      path: await video!.path(),
+      contentType: "video/webm",
+    });
+  });
+  const set = sets.find(
+    (candidate) => candidate.exerciseId === "bulgarian-split"
+  );
+  if (!set) throw new Error("Missing Bulgarian continuous playback target");
+
+  for (const theme of ["dark", "light"] as const) {
+    test(`real timer 1→2→3→4→5→6→1 in ${theme}`, async ({ page }, info) => {
+      await localOnly(page);
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      expect(page.viewportSize()).toEqual({ width: 393, height: 852 });
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto("/e2e/fixtures/form-art.html");
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+      const main = page.locator("main");
+      const darkBackground = await main.evaluate(
+        (node) => getComputedStyle(node).backgroundColor
+      );
+      if (theme === "light") {
+        await page
+          .getByRole("button", { name: "Light theme", exact: true })
+          .click();
+        await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+        await expect
+          .poll(() =>
+            main.evaluate((node) => getComputedStyle(node).backgroundColor)
+          )
+          .not.toBe(darkBackground);
+      }
+      const expectedSources = [...set.frames, set.frames[0]].map(
+        (frame) => `/${frame.path}`
+      );
+      expect(set.frames.map((frame) => frame.sha256)).toEqual([
+        bulgarianSourcePins.setup,
+        bulgarianSourcePins.shallow,
+        bulgarianSourcePins.deep,
+        bulgarianSourcePins.bottom,
+        bulgarianSourcePins.deep,
+        bulgarianSourcePins.shallow,
+      ]);
+
+      // Install before selection so the first frame is observed on mount.
+      // Activation changes aria-hidden on a preloaded img, not necessarily src.
+      await page.evaluate(() => {
+        const startedAt = performance.now();
+        const recording: PlaybackRecording = {
+          startedAtEpochMs: Date.now(),
+          transitions: [],
+          finished: false,
+          stop: () => {},
+        };
+        const sample = () => {
+          const guide = document.querySelector(
+            'section[aria-label="bulgarian-split form guide"]'
+          );
+          if (!guide) return;
+          const active = guide.querySelectorAll<HTMLImageElement>(
+            'img[aria-hidden="false"]'
+          );
+          const image = active[0];
+          const src =
+            active.length === 1
+              ? (image.getAttribute("src") ?? "missing-src")
+              : `invalid-active-image-count:${active.length}`;
+          const elapsedMs = performance.now() - startedAt;
+          let entry = recording.transitions.at(-1);
+          if (!entry || entry.src !== src) {
+            entry = {
+              src,
+              elapsedMs,
+              readyAtMs: null,
+              activeImageCount: active.length,
+              dimensions: [],
+              visibility: image
+                ? getComputedStyle(image).visibility
+                : "missing",
+              documentVisibility: document.visibilityState,
+            };
+            recording.transitions.push(entry);
+          }
+          // A newly mounted first img can precede its load event. Retain its
+          // activation timestamp and separately record when pixels are ready.
+          if (image?.complete && image.naturalWidth > 0) {
+            entry.readyAtMs ??= elapsedMs;
+            entry.dimensions = [image.naturalWidth, image.naturalHeight];
+          }
+          if (recording.transitions.length >= 7 && entry.readyAtMs !== null) {
+            recording.finished = true;
+            recording.stop();
+          }
+        };
+        const observer = new MutationObserver(sample);
+        recording.stop = () => {
+          observer.disconnect();
+          document.removeEventListener("load", sample, true);
+        };
+        window.__bulgarianPlayback = recording;
+        observer.observe(document.documentElement, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ["src", "aria-hidden", "style"],
+        });
+        document.addEventListener("load", sample, true);
+      });
+
+      const guide = page.getByRole("region", {
+        name: "bulgarian-split form guide",
+        exact: true,
+      });
+      let observed = {
+        startedAtEpochMs: 0,
+        transitions: [] as PlaybackTransition[],
+      };
+      try {
+        await page
+          .getByRole("combobox", { name: "Exercise" })
+          .selectOption("bulgarian-split (draft)");
+        await expect(
+          guide.getByRole("button", { name: "Slower playback", exact: true })
+        ).toHaveAttribute("aria-pressed", "false");
+        // No fake clock, Next clicks or screenshots during the recorded cycle.
+        await page.waitForFunction(
+          () => {
+            const recording = window.__bulgarianPlayback;
+            if (!recording)
+              throw new Error("Bulgarian playback recorder is not installed");
+            return recording.finished;
+          },
+          null,
+          { timeout: 12_000 }
+        );
+        await guide.getByRole("button", { name: "Pause", exact: true }).click();
+        await expect(guide.locator("p[aria-live]")).toContainText("1/6");
+      } finally {
+        observed = await page.evaluate(() => {
+          const recording = window.__bulgarianPlayback;
+          if (!recording)
+            throw new Error("Bulgarian playback recorder is not installed");
+          recording.stop();
+          return {
+            startedAtEpochMs: recording.startedAtEpochMs,
+            transitions: recording.transitions,
+          };
+        });
+        await info.attach(`${theme}-live-transition-log.json`, {
+          body: JSON.stringify(
+            {
+              theme,
+              viewport: page.viewportSize(),
+              nominalIntervalMs: 1200,
+              expectedSources,
+              sourcePins: bulgarianSourcePins,
+              ...observed,
+            },
+            null,
+            2
+          ),
+          contentType: "application/json",
+        });
+      }
+      expect(observed.transitions.map((entry) => entry.src)).toEqual(
+        expectedSources
+      );
+      for (const [index, entry] of observed.transitions.entries()) {
+        expect(entry.activeImageCount).toBe(1);
+        expect(entry.readyAtMs).not.toBeNull();
+        expect(entry.dimensions).toEqual(set.frames[index % 6].dimensions);
+        expect(entry.visibility).toBe("visible");
+        expect(entry.documentVisibility).toBe("visible");
+        if (index > 0) {
+          expect(
+            entry.elapsedMs - observed.transitions[index - 1].elapsedMs
+          ).toBeGreaterThanOrEqual(1_100);
+        }
+      }
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > window.innerWidth
+        )
+      ).toBe(false);
+      for (const control of await guide.getByRole("button").all()) {
+        const box = await control.boundingBox();
+        expect(box).not.toBeNull();
+        expect(box!.width).toBeGreaterThanOrEqual(44);
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+      }
+      expect(errors).toEqual([]);
+    });
+  }
+});

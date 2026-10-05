@@ -1,0 +1,162 @@
+{
+  "run": {
+    "id": 37358103038,
+    "name": "Form artwork review",
+    "path": ".github/workflows/form-art-review.yml",
+    "runNumber": 196,
+    "runAttempt": 1,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "headBranch": "codex/continue-exercise-art-oct05",
+    "headSha": "f6bfffc3ef55de5efe403edad20eb93e9547c1a1",
+    "tree": "58475bdf538e977db2be3942903a7f4a92424343",
+    "createdAt": "2026-10-05T18:43:31Z",
+    "updatedAt": "2026-10-05T18:54:02Z",
+    "url": "https://github.com/lemmonchess333/Maiin/actions/runs/37358103038"
+  },
+  "jobs": [
+    {
+      "id": 111925558346,
+      "name": "review-sources",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37358103038,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify and package selected original frames",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    },
+    {
+      "id": 111925558668,
+      "name": "review-player",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 37358103038,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Type-check the account-free review fixture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install test browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Capture all frames and verify real player behavior",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11365947398,
+      "name": "form-art-playback",
+      "bytes": 26530202,
+      "digest": "sha256:eeb344931ac73b00d54b6898c7a2d0b467619fdd35a50d06d55f927a61858195",
+      "expired": false,
+      "createdAt": "2026-10-05T18:53:55Z",
+      "expiresAt": "2026-10-19T18:53:53Z",
+      "workflowRun": {
+        "id": 37358103038,
+        "repository_id": 1155848437,
+        "head_repository_id": 1155848437,
+        "head_branch": "codex/continue-exercise-art-oct05",
+        "head_sha": "f6bfffc3ef55de5efe403edad20eb93e9547c1a1"
+      }
+    }
+  ],
+  "authority": "Read-only GitHub workflow metadata and job log retrieved after completion; no dispatch or rerun."
+}
+

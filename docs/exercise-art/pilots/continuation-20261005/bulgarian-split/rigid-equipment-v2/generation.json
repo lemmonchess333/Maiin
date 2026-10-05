@@ -1,0 +1,46 @@
+{
+  "releaseApproved": false,
+  "recordedAt": "2026-10-05T18:54:43Z",
+  "tool": "image_gen.imagegen",
+  "mode": "built-in transparent asset generation with style/projection references",
+  "callCount": 1,
+  "transparentBackground": true,
+  "prompt": {
+    "path": "equipment-asset-prompt.txt",
+    "sha256": "f6ae1b59e78cbf103fbdc63964603755b526813b353659a1f2a052c771b4cb8c"
+  },
+  "references": [
+    {
+      "path": "../../../../identity/athlete-anatomy-v3.png",
+      "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "role": "Canonical illustration style"
+    },
+    {
+      "path": "../../../../masters/bulgarian-split/1.png",
+      "sha256": "0ddf3560366a6d9790c051a2e514cdc6d0785229dfa3ee0476151209b8676702",
+      "role": "Frozen exercise camera/material reference"
+    },
+    {
+      "path": "equipment-style-context-native.png",
+      "sha256": "28307a4cc7a09e440040d6a163602766a54c4e0794c627cde96f88062f2b9231",
+      "role": "Native nearest-dumbbell crop, extracted at [570,490,175,96] without resizing"
+    }
+  ],
+  "rawOutput": {
+    "path": "dumbbell-source.png",
+    "sha256": "57176b796fc6fecb7832d5e46cd79f469fdec72f37ae1be71d1c86848c2cc57b",
+    "originalGeneratedFilename": "exec-0a8fe120-e024-4439-8f46-cd595357e7a4.png",
+    "nativeCanvas": [1693, 929],
+    "hasAlpha": true
+  },
+  "processing": "The complete raw output is preserved. Opaque interior alpha above 240 is normalized to 255 once; real edge alpha is retained. Source head/shaft regions are assembled once into two camera projections, then only integer-translated. No generated body image, anatomical reconstruction, whole-frame resize or per-pose equipment resize is used.",
+  "workflowAuthority": [
+    "docs/exercise-art/COMPOSITE_REPAIR_REVIEW.md",
+    "docs/exercise-art/pilots/shrugs-rigid-20261003/README.md"
+  ],
+  "baseline": {
+    "localRecoveredCommit": "8191b80d770fe8c614fb7c9b4441e71f0c9a39fa",
+    "publishedEquivalentCommit": "f6bfffc3ef55de5efe403edad20eb93e9547c1a1",
+    "identicalTree": "58475bdf538e977db2be3942903a7f4a92424343"
+  }
+}

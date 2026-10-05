@@ -1,0 +1,306 @@
+{
+  "scope": "Frozen October 5 checkpoint; later v2 artwork is not covered.",
+  "runId": 37358103038,
+  "runAttempt": 1,
+  "runConclusion": "success",
+  "runUrl": "https://github.com/lemmonchess333/Maiin/actions/runs/37358103038",
+  "publishedCommit": "f6bfffc3ef55de5efe403edad20eb93e9547c1a1",
+  "tree": "58475bdf538e977db2be3942903a7f4a92424343",
+  "artifactId": 11365947398,
+  "artifactName": "form-art-playback",
+  "artifactBytes": 26530202,
+  "artifactSha256": "eeb344931ac73b00d54b6898c7a2d0b467619fdd35a50d06d55f927a61858195",
+  "matchesGitHubArtifactDigest": true,
+  "reportArchivePath": "form-art-results.json",
+  "reportSha256": "0aec58e1679c6bc58fad4148a27b4d4f48ae21d3e3f45ca5648b5057a9e8f81d",
+  "stats": {
+    "startTime": "2026-10-05T18:49:55.111Z",
+    "duration": 237913.184,
+    "expected": 84,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "bulgarianCases": [
+    {
+      "title": "bulgarian-split: six frames and loop in dark",
+      "ok": true,
+      "tags": [],
+      "tests": [
+        {
+          "timeout": 45000,
+          "annotations": [],
+          "expectedStatus": "passed",
+          "projectId": "",
+          "projectName": "",
+          "results": [
+            {
+              "workerIndex": 0,
+              "parallelIndex": 0,
+              "status": "passed",
+              "duration": 3608,
+              "errors": [],
+              "stdout": [],
+              "stderr": [],
+              "retry": 0,
+              "startTime": "2026-10-05T18:53:44.687Z",
+              "annotations": [],
+              "attachments": []
+            }
+          ],
+          "status": "expected"
+        }
+      ],
+      "id": "ed88a14346c2db968316-b4c93d8e6ec9146a6009",
+      "file": "form-art-review.pw.ts",
+      "line": 198,
+      "column": 5
+    },
+    {
+      "title": "bulgarian-split: six frames and loop in light",
+      "ok": true,
+      "tags": [],
+      "tests": [
+        {
+          "timeout": 45000,
+          "annotations": [],
+          "expectedStatus": "passed",
+          "projectId": "",
+          "projectName": "",
+          "results": [
+            {
+              "workerIndex": 0,
+              "parallelIndex": 0,
+              "status": "passed",
+              "duration": 3555,
+              "errors": [],
+              "stdout": [],
+              "stderr": [],
+              "retry": 0,
+              "startTime": "2026-10-05T18:53:48.307Z",
+              "annotations": [],
+              "attachments": []
+            }
+          ],
+          "status": "expected"
+        }
+      ],
+      "id": "ed88a14346c2db968316-25d95cbeacd0210dff96",
+      "file": "form-art-review.pw.ts",
+      "line": 198,
+      "column": 5
+    },
+    {
+      "title": "bulgarian-split: reduced motion stays still and permits stepping",
+      "ok": true,
+      "tags": [],
+      "tests": [
+        {
+          "timeout": 45000,
+          "annotations": [],
+          "expectedStatus": "passed",
+          "projectId": "",
+          "projectName": "",
+          "results": [
+            {
+              "workerIndex": 0,
+              "parallelIndex": 0,
+              "status": "passed",
+              "duration": 839,
+              "errors": [],
+              "stdout": [],
+              "stderr": [],
+              "retry": 0,
+              "startTime": "2026-10-05T18:53:51.872Z",
+              "annotations": [],
+              "attachments": []
+            }
+          ],
+          "status": "expected"
+        }
+      ],
+      "id": "ed88a14346c2db968316-9e5b320bfb2de7fb8d3a",
+      "file": "form-art-review.pw.ts",
+      "line": 369,
+      "column": 3
+    }
+  ],
+  "screenshots": [
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-1.png",
+      "sha256": "de47a0eb539d2acb41754477cbadf730917e1cba1dbc6c4839c2dd34fa86ed4f",
+      "bytes": 30904,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-2.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-2.png",
+      "sha256": "0e11a1767a2702e441786fbc7e8552209071bab639bdcc6e62e691b31cb38f6f",
+      "bytes": 31591,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-3.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-3.png",
+      "sha256": "8ea6d1f55f3a02c148f2ae37c7b735898565391d872acea465194cff6190557b",
+      "bytes": 31396,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-4.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-4.png",
+      "sha256": "fb98f46f0cd26cdfafdd8568f1f6c1d1c3cba139cfad9697f8596b67703a0c08",
+      "bytes": 30249,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-5.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-5.png",
+      "sha256": "beb91d9fc9fed90d002e90a7f8bcd964ab08349d14133793a9b9f900b464a890",
+      "bytes": 31037,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-6.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-6.png",
+      "sha256": "3a5c1f9882678973e3ead33e517a4416c6e5cd686d1d1f875cfb745fbe64db59",
+      "bytes": 31502,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-endpoint-first.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-endpoint-first.png",
+      "sha256": "93aab2fe9ed7cf9f6a59bc6777ccd286389f9d676490a4c840692297d12d6bc3",
+      "bytes": 26346,
+      "dimensions": [
+        337,
+        361
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-a936c-six-frames-and-loop-in-dark/dark-page.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/dark-page.png",
+      "sha256": "9545ba95bba0765d2e3a7b3d26738c0a4b67b4bf011957e632b8d13088b35d1b",
+      "bytes": 77694,
+      "dimensions": [
+        393,
+        1156
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-1.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-1.png",
+      "sha256": "2ad4324790bc9a86718e77bcd1081a94d8f80fa85d964d5bb49b9c06453e5405",
+      "bytes": 31133,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-2.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-2.png",
+      "sha256": "c6fd14daa7a412305ddad27ca5b321f86f4e31c5dedad55fb49f0418f61b6d80",
+      "bytes": 31942,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-3.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-3.png",
+      "sha256": "71f61a8c5fd245c9ff45c1252b109b1054e0b9a22d746cc0010bd4f67df933c7",
+      "bytes": 31595,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-4.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-4.png",
+      "sha256": "250d7c99ac6447f3d8d5caba91a41030ba2d3e07a20081e23305ad53759e4f64",
+      "bytes": 30454,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-5.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-5.png",
+      "sha256": "c4f9b3877554db852b35f03b0fd1dd26005d218a58ef1993eae5c1ddd4c569f6",
+      "bytes": 31233,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-6.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-6.png",
+      "sha256": "cf88487c30bd2315c586bbfea33bd7d0ce3f27cacfb83b28313f1fb837da26b6",
+      "bytes": 31701,
+      "dimensions": [
+        361,
+        464
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-endpoint-first.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-endpoint-first.png",
+      "sha256": "93aab2fe9ed7cf9f6a59bc6777ccd286389f9d676490a4c840692297d12d6bc3",
+      "bytes": 26346,
+      "dimensions": [
+        337,
+        361
+      ]
+    },
+    {
+      "archivePath": "form-art/form-art-review.pw.ts-bulg-dcfd7-ix-frames-and-loop-in-light/light-page.png",
+      "localPath": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots/light-page.png",
+      "sha256": "c82b3602314ebead865e4c4d2b63cef9f9e95a28814996e25dbe2f86ed14e1c8",
+      "bytes": 77399,
+      "dimensions": [
+        393,
+        1156
+      ]
+    }
+  ],
+  "captureCoverage": {
+    "darkGuideFrames": 6,
+    "lightGuideFrames": 6,
+    "fullPages": 2,
+    "firstEndpointImages": 2,
+    "video": false,
+    "reducedMotionScreenshots": 0,
+    "liveLoopBoundaryScreenshots": 0
+  },
+  "limitations": [
+    "Chromium account-free fixture at 393 by 852 CSS pixels and deviceScaleFactor 1, not an installed mobile OS app.",
+    "The real timer crosses 6 to 1 in the passing normal-motion tests; no continuous video or screenshot of that live boundary was recorded.",
+    "Reduced-motion assertion evidence covers default dark theme, an 8-second clock advance at frame 1 and manual Next to frame 2. No success screenshot was saved.",
+    "Bulgarian source-byte integrity is established separately in source-integrity.json, not by the review-sources job.",
+    "A successful workflow is not visual, anatomical or production-release approval."
+  ]
+}

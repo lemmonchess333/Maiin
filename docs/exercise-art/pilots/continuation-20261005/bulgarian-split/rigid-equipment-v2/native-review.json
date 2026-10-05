@@ -1,0 +1,93 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "independent-native-visual-review-passes-for-listed-hashes",
+  "reviewer": "/root/movement_review",
+  "recordScope": "Native full-size images and enlarged equipment/ankle crops. Findings supplied by the independent reviewer in collaboration messages, then recorded here. This record does not claim actual player playback or whole-release approval.",
+  "outputs": [
+    {
+      "name": "setup",
+      "path": "final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+    },
+    {
+      "name": "shallow",
+      "path": "final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+    },
+    {
+      "name": "deep",
+      "path": "final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+    },
+    {
+      "name": "bottom",
+      "path": "final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+    }
+  ],
+  "assetReview": {
+    "path": "dumbbell-source.png",
+    "sha256": "57176b796fc6fecb7832d5e46cd79f469fdec72f37ae1be71d1c86848c2cc57b",
+    "outcome": "pass",
+    "finding": "One complete, clean faceted dumbbell with a straight handle and no attached anatomy. Fit and foreground occlusion were evaluated separately."
+  },
+  "pilot": {
+    "path": "poses/bottom.png",
+    "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954",
+    "outcome": "native-pass",
+    "findings": [
+      "Both hands remain naturally wrapped around the shafts.",
+      "The previous upper-left near-head strip, lower residual rim and rear-head cutout are absent.",
+      "The partially exposed far rear head reads as the same weight continuing behind the knee, without a floating object, white fringe or rectangular cutout."
+    ]
+  },
+  "boundedMaskRefinement": {
+    "before": {
+      "path": "trials/deep-before-fingertip-mask.png",
+      "sha256": "7621a48ed20f6df5d7d9a1e1c5e312d74e98cf33d341997ea0ad784023b59951"
+    },
+    "finding": "The rectangular near-hand guard included a small white thigh wedge beneath the fingertips and restored it over the enlarged rear head.",
+    "change": "Traced the existing native fingertip lower contour, excluding only the thigh below it from the foreground mask. This changes layer ownership; no finger or body pixels are synthesized or transformed.",
+    "coordinateEvidence": {
+      "path": "qa/deep-hand-native-coordinate-review.png",
+      "sha256": "ebad946920d37e42a6841da4ffce1ea527b06de23169279565198e8ff7125786"
+    },
+    "correctedGearPose": {
+      "path": "poses/deep.png",
+      "sha256": "358e71e6cd84ddfba32213219bf68bf8f4c4a62a46a6b7882370cf2767c0bd67"
+    },
+    "outcome": "native-pass: wedge removed, original fingertip curves continuous around the shaft, far hand remains readable"
+  },
+  "fourPoseFindings": [
+    "Equipment shape and scene scale read consistently across all four images.",
+    "Both visible grips remain attached, without extra equipment or detached hands.",
+    "Near-head contours remain clean; no old strip, residual rim or background cutout recurs.",
+    "The far weight disappears behind the front thigh/knee with consistent foreground ownership.",
+    "Original face, torso, limbs, primary/secondary muscle colours, shoes and bench outside the equipment regions are preserved; exact preservation is also checked separately."
+  ],
+  "finalDeepCombination": {
+    "output": {
+      "name": "deep",
+      "path": "final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b",
+      "gearSource": {
+        "path": "poses/deep.png",
+        "sha256": "358e71e6cd84ddfba32213219bf68bf8f4c4a62a46a6b7882370cf2767c0bd67"
+      },
+      "ankleSource": {
+        "path": "../ankle-refinement-v2/deep.png",
+        "sha256": "70daa4b66c316751ccf68c48582d75d1cd84b87bb113053a44197e4ee73753e4"
+      }
+    },
+    "outcome": "native-pass",
+    "finding": "Clean reviewed gear/grips and the accepted graded ankle contour remain present, without a gap or doubled outline.",
+    "independentPixelCheck": "Only 204 pixels differ from reviewed gear deep, all inside [845,596,20,12]; that region equals the accepted ankle source exactly. The other three final files equal their reviewed gear poses byte-for-byte."
+  },
+  "actualPlayerReviewedByThisRecord": false,
+  "approvalLimits": [
+    "Native review does not substitute timed/mobile light/dark or reduced-motion player evidence.",
+    "Layer dimensions and opaque interior comparisons do not establish calibrated real-world load dimensions; hidden equipment is supported by the common rigid layer construction.",
+    "Release status remains false; the owner/root integration workflow controls any later selection or release."
+  ]
+}

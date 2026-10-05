@@ -1,0 +1,40 @@
+{
+  "scope": "Visual inspection of the exact published frozen checkpoint, not v2 artwork.",
+  "inspected": [
+    "dark-1.png",
+    "dark-2.png",
+    "dark-3.png",
+    "dark-4.png",
+    "dark-5.png",
+    "dark-6.png",
+    "light-1.png",
+    "light-2.png",
+    "light-3.png",
+    "light-4.png",
+    "light-5.png",
+    "light-6.png",
+    "dark-page.png",
+    "light-page.png"
+  ],
+  "screenshotDirectory": "/workspace/scratch/a307ac8d62f0/verification/ci-oct05/screenshots",
+  "observed": [
+    "All six guide captions and all four distinct pose images render in order in both themes: setup, shallow, deep, bottom, deep, shallow.",
+    "The athlete and bench remain fully inside the artwork stage in all twelve guide captures. No missing-image or loading placeholder is visible.",
+    "Dark and light full pages have visibly different surrounding surfaces, selectors and controls. The artwork stage stays dark in both.",
+    "The heading, selector, theme toggle, controls, disclosure and six numbered cues fit the captured width. Longer cues wrap without obvious clipping or overlap.",
+    "Frame 6 is visibly lower than the setup pose in frame 1, consistent with the remaining ascent across 6 to 1; stills alone do not show that transition happening.",
+    "Primary front-leg purple emphasis and neutral rear thigh remain visible at this viewport.",
+    "Both full pages identify Bulgarian split as an unreleased draft; the recorded-findings disclosure is collapsed."
+  ],
+  "limitations": [
+    "Full-page captures extend beyond the 852px viewport and show a scrollable page, not every cue visible simultaneously.",
+    "Captions are small and muted; bench and dumbbells are comparatively low contrast on the dark stage. These observations are not a contrast-compliance audit.",
+    "Dumbbell projection differences and the recorded rear-ankle contour finding remain open; small browser captures do not establish anatomical or equipment-invariance approval.",
+    "There is no video, reduced-motion success screenshot, or saved screenshot of the actual live 6-to-1 boundary in this checkpoint.",
+    "Successful reduced-motion assertions cover the default dark fixture only, not a dark/light reduced-motion matrix.",
+    "The evidence covers the real player component in a mobile-sized Chromium fixture, not production-release wiring, deployment or a physical mobile device."
+  ],
+  "independentPeerReview": "Second agent independently inspected both full pages, dark frames 1 and 6, and light frame 4; it agreed on layout/theme findings and evidence limits.",
+  "visualReleaseApproved": false
+}
+

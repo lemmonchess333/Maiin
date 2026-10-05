@@ -1,0 +1,11 @@
+2026-10-05T18:49:53.9913538Z ##[group]Run npx playwright test --config playwright.form-art.config.ts
+2026-10-05T18:49:53.9914463Z [36;1mnpx playwright test --config playwright.form-art.config.ts[0m
+2026-10-05T18:49:56.5540069Z Running 84 tests using 1 worker
+2026-10-05T18:53:48.3074915Z   ✓  82 e2e/form-art-review.pw.ts:198:5 › bulgarian-split: six frames and loop in dark (3.6s)
+2026-10-05T18:53:51.8726641Z   ✓  83 e2e/form-art-review.pw.ts:198:5 › bulgarian-split: six frames and loop in light (3.6s)
+2026-10-05T18:53:52.7210438Z   ✓  84 e2e/form-art-review.pw.ts:369:3 › bulgarian-split: reduced motion stays still and permits stepping (839ms)
+2026-10-05T18:53:53.0258119Z   84 passed (4.0m)
+2026-10-05T18:53:55.6028477Z SHA256 digest of uploaded artifact zip is eeb344931ac73b00d54b6898c7a2d0b467619fdd35a50d06d55f927a61858195
+2026-10-05T18:53:55.8784623Z Artifact form-art-playback.zip successfully finalized. Artifact ID 11365947398
+2026-10-05T18:53:55.8785548Z Artifact form-art-playback has been successfully uploaded! Final size is 26530202 bytes. Artifact ID is 11365947398
+

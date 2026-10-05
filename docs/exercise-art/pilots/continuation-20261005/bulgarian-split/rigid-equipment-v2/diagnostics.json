@@ -1,0 +1,416 @@
+{
+  "releaseApproved": false,
+  "selected": false,
+  "status": "local-construction-and-preservation-checks-pass",
+  "bounds": {
+    "fixedAnchorMaxAxisDriftPixels": 1,
+    "invariantDimensionsMaxRelativeDrift": 0.01,
+    "unchangedFromBaseline": true
+  },
+  "sourceOutputs": [
+    {
+      "name": "setup",
+      "path": "final/setup.png",
+      "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057"
+    },
+    {
+      "name": "shallow",
+      "path": "final/shallow.png",
+      "sha256": "4646fb08e1d96df0d3d03d2642c63d78861f1d707edd5a33f07b38662a1194b3"
+    },
+    {
+      "name": "deep",
+      "path": "final/deep.png",
+      "sha256": "d3551326c4964abacea0978e604d2cf7d856aaa1bd25bdd5b99d95a20233002b"
+    },
+    {
+      "name": "bottom",
+      "path": "final/bottom.png",
+      "sha256": "9a3da727c7801234407a1d97811e5603edfbf9ca43b96d6b6534d37ea5b7c954"
+    }
+  ],
+  "faceChecks": [
+    {
+      "pose": "setup",
+      "patch": "near-front-face",
+      "box": [576, 522, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "setup",
+      "patch": "near-rear-face",
+      "box": [711, 525, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "setup",
+      "patch": "far-front-face",
+      "box": [355, 517, 15, 22],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "near-front-face",
+      "box": [574, 545, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "near-rear-face",
+      "box": [709, 548, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "shallow",
+      "patch": "far-front-face",
+      "box": [354, 540, 15, 22],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "near-front-face",
+      "box": [584, 622, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "near-rear-face",
+      "box": [719, 625, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "deep",
+      "patch": "far-front-face",
+      "box": [335, 595, 15, 22],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "near-front-face",
+      "box": [588, 677, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "near-rear-face",
+      "box": [723, 680, 17, 23],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    },
+    {
+      "pose": "bottom",
+      "patch": "far-front-face",
+      "box": [304, 625, 15, 22],
+      "changedChannels": 0,
+      "nonOpaqueLayerPixels": 0
+    }
+  ],
+  "supportChecks": [
+    {
+      "pose": "setup",
+      "anchor": "frontToe",
+      "centre": [390, 938],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "frontHeel",
+      "centre": [533, 934],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "rearLacesPad",
+      "centre": [932, 646],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "benchRightPadCorner",
+      "centre": [1374, 677],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "benchNearLegBolt",
+      "centre": [1295, 884],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "benchFarLegBolt",
+      "centre": [865, 705],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "benchFarBaseCorner",
+      "centre": [810, 885],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "setup",
+      "anchor": "benchNearBaseCorner",
+      "centre": [1252, 950],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "frontToe",
+      "centre": [390, 938],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "frontHeel",
+      "centre": [533, 934],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "rearLacesPad",
+      "centre": [932, 646],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "benchRightPadCorner",
+      "centre": [1374, 677],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "benchNearLegBolt",
+      "centre": [1295, 884],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "benchFarLegBolt",
+      "centre": [865, 705],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "benchFarBaseCorner",
+      "centre": [810, 885],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "anchor": "benchNearBaseCorner",
+      "centre": [1252, 950],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "frontToe",
+      "centre": [390, 938],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "frontHeel",
+      "centre": [533, 934],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "rearLacesPad",
+      "centre": [932, 646],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "benchRightPadCorner",
+      "centre": [1374, 677],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "benchNearLegBolt",
+      "centre": [1295, 884],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "benchFarLegBolt",
+      "centre": [865, 705],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "benchFarBaseCorner",
+      "centre": [810, 885],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "anchor": "benchNearBaseCorner",
+      "centre": [1252, 950],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "frontToe",
+      "centre": [390, 938],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "frontHeel",
+      "centre": [533, 934],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "rearLacesPad",
+      "centre": [932, 646],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "benchRightPadCorner",
+      "centre": [1374, 677],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "benchNearLegBolt",
+      "centre": [1295, 884],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "benchFarLegBolt",
+      "centre": [865, 705],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "benchFarBaseCorner",
+      "centre": [810, 885],
+      "size": [31, 31],
+      "changedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "anchor": "benchNearBaseCorner",
+      "centre": [1252, 950],
+      "size": [31, 31],
+      "changedChannels": 0
+    }
+  ],
+  "preservation": [
+    {
+      "pose": "setup",
+      "outsideAllowedChangedChannels": 0,
+      "foregroundChangedChannels": 0
+    },
+    {
+      "pose": "shallow",
+      "outsideAllowedChangedChannels": 0,
+      "foregroundChangedChannels": 0
+    },
+    {
+      "pose": "deep",
+      "outsideAllowedChangedChannels": 0,
+      "foregroundChangedChannels": 0
+    },
+    {
+      "pose": "bottom",
+      "outsideAllowedChangedChannels": 0,
+      "foregroundChangedChannels": 0
+    }
+  ],
+  "invariantLayerGeometry": {
+    "near-front": {
+      "fixedAllocatedSize": [80, 84],
+      "alphaHalfCoverageBounds": [0, 0, 80, 84],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    },
+    "near-rear": {
+      "fixedAllocatedSize": [66, 84],
+      "alphaHalfCoverageBounds": [0, 0, 66, 83],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    },
+    "near-shaft": {
+      "fixedAllocatedSize": [52, 25],
+      "alphaHalfCoverageBounds": [0, 0, 52, 25],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    },
+    "far-front": {
+      "fixedAllocatedSize": [73, 80],
+      "alphaHalfCoverageBounds": [0, 0, 73, 80],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    },
+    "far-rear": {
+      "fixedAllocatedSize": [60, 80],
+      "alphaHalfCoverageBounds": [0, 0, 60, 79],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    },
+    "far-shaft": {
+      "fixedAllocatedSize": [48, 23],
+      "alphaHalfCoverageBounds": [0, 0, 48, 23],
+      "perPoseScale": 1,
+      "perPoseRotationDegrees": 0,
+      "relativeDimensionDrift": 0
+    }
+  },
+  "method": "Final native RGB is compared to the fixed transparent layer at integer-translated exposed face patches. All32 anchor patches are compared to each exact frozen selected source. Every other pixel outside declared gear edits and the accepted204-pixel ankle refinement must match that source. Invariant geometry is the alpha-bearing equipment layer assembled once and reused without per-pose scaling or rotation.",
+  "limitations": [
+    "Exact interior samples and fixed layer geometry are accompanied by independent native contour and grip review. They do not by themselves approve a scene or certify real-world load dimensions.",
+    "Original hand/knee foreground can hide different portions of the same rigid layer; hidden shaft/rear-head dimensions are construction evidence rather than a visible measurement through anatomy.",
+    "This does not run or substitute actual mobile light/dark/reduced-motion player verification."
+  ]
+}

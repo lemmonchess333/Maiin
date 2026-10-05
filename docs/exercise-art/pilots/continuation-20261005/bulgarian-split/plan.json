@@ -1,11 +1,11 @@
 {
   "exerciseId": "bulgarian-split",
-  "status": "draft-reviewed-with-findings",
+  "status": "native-reviewed-draft-awaiting-player-review",
   "catalogueSource": "src/lib/exercises.ts",
   "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
   "intendedMaster": "docs/exercise-art/masters/bulgarian-split/1.png",
   "recoveryContext": "The owner's 5 October screenshot shows a later left-facing setup with bench on the right, stopped during rear-thigh-highlight correction. That native candidate was not present in any recovered branch. Recreate its composition from the screenshot; do not claim recovery of its original pixels.",
-  "equipment": "Two identical modest hex dumbbells; one fixed flat bench; front trainer flat on floor; rear instep laces-down on bench.",
+  "equipment": "Two identical modest faceted/octagonal dumbbells from fixed reusable near/far projections; one fixed flat bench; front trainer flat on floor; rear instep laces-down on bench.",
   "camera": "Fixed left-facing side/three-quarter view, black landscape canvas, full body, both dumbbell grips visible.",
   "muscleHierarchy": {
     "primary": "Working front-leg quadriceps in the strongest purple.",
@@ -80,12 +80,22 @@
   ],
   "reviewOutcome": {
     "scope": "One bounded continuation of the interrupted Bulgarian split-squat candidate.",
-    "selectedApproach": "Retain generated body and original clean equipment contours; restore fixed supports with documented local compositing. Rigid-equipment trials remain separate because their outer contours failed native review.",
+    "selectedApproach": "Preserve reviewed body/support/colour construction, add fixed reusable faceted/octagonal near/far dumbbell projections with original hand/body foreground, and combine the independently reviewed local deep-ankle contour refinement.",
+    "nativeReviewStatus": "passed-for-pinned-v2-sources",
+    "nativeReviewEvidence": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/native-review.json",
     "remainingFindings": [
-      "Original dumbbell projections vary across poses and do not support a sub-percent equipment-invariance pass.",
-      "Actual mobile light/dark playback and reduced-motion review are pending because compatible Chromium could not be provisioned in this environment."
+      "Actual mobile light/dark playback, reduced motion and manual stepping remain pending for the final V2 selection; this is an inactive draft."
     ],
+    "supersededNativeFindings": "Original gear redraw and the deep upper-ankle shelf are superseded by the exact reviewed V2 candidates. Earlier failed generations/composites, measurements and player attempts remain historical evidence.",
     "progressMeaning": "Authored beat positions; approximate thirds are a movement plan, not measured percentages of joint range."
   },
-  "releaseStatus": "Not approved; retain the inactive draft and all failure evidence outside public until remaining native equipment and actual mobile review requirements pass."
+  "releaseStatus": "Inactive draft. Native V2 review passes, but actual player approval and final release decision remain pending; releaseApproved is false and no public/runtime assets are changed.",
+  "selectedSetup": {
+    "pose": "setup",
+    "path": "docs/exercise-art/pilots/continuation-20261005/bulgarian-split/rigid-equipment-v2/final/setup.png",
+    "sha256": "f93fc4136da95f40799f4da0fb1386fc8cb3e943a8467fdcd46d904038d87057",
+    "bytes": 771504,
+    "dimensions": [1536, 1024]
+  },
+  "masterRelationship": "Original canonical identity and frozen scene master remain unchanged. The V2 selected setup replaces gear only within declared regions; the scene master remains the source identity and support reference."
 }
