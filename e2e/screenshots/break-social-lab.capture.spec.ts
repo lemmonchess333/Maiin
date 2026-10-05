@@ -4,13 +4,14 @@
  * (src/pages/dev/breakSocialFixtures.ts): long and right-to-left names,
  * a caption carrying a link, counts past a thousand, four-digit ranks.
  *
- * Each frame at ordinary text size is also measured, and two things may
- * not happen at the narrowest phone or at 393px: an element spilling
- * past its card or the screen, and text wider than its own box (a figure
- * drawn over the one beside it, a long word cut off at the card's edge).
- * Text that ends in an ellipsis is truncating on purpose and is not
- * counted. Double text size is filmed but not measured: how far the app
- * goes at 200% is an open design call, not a regression to pin.
+ * Each frame is also measured, at ordinary and at double text size, and
+ * two things may not happen at the narrowest phone or at 393px: an
+ * element spilling past its card or the screen, and text wider than its
+ * own box (a figure drawn over the one beside it, a long word cut off at
+ * the card's edge). Text that ends in an ellipsis is truncating on
+ * purpose and is not counted. Double text stands in for a large-text
+ * setting: a browser's text zoom, or a WebView that follows the system
+ * font size.
  */
 import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
@@ -96,11 +97,13 @@ for (const width of [320, 393]) {
       }
       found.push(...(await breaks(page)).map((s) => `${data}: ${s}`));
 
+      // Double text size: text grows, and boxes sized in px do not.
       await page.evaluate(() => {
         document.documentElement.style.fontSize = "200%";
       });
       await page.waitForTimeout(300);
       await shoot(page, `break-social-${data}-${width}-text200`);
+      found.push(...(await breaks(page)).map((s) => `${data} 200%: ${s}`));
       await page.evaluate(() => {
         document.documentElement.style.fontSize = "";
         document.documentElement.classList.remove("dark");

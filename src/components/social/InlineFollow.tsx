@@ -14,9 +14,11 @@ import { track as trackSocialEvent } from "@/lib/socialAnalytics";
  * "Following" and stays put; unfollowing lives on the profile, away from
  * a stray tap in a scrolling feed.
  *
- * Under 360px it is an icon. The word took a third of the author row
- * there, and the name beside it read "Aleksan…" with its time on two
- * lines; the name is what the row is for.
+ * On a card narrower than 20.5em (a phone under 360px at normal text
+ * size, or most phones at large text) it is an icon. The word took a
+ * third of the author row there, and the name beside it read "Aleksan…"
+ * with its time on two lines; the name is what the row is for. The
+ * width is the card's: ActivityCard is the query container.
  */
 export default function InlineFollow({
   targetUid,
@@ -31,8 +33,8 @@ export default function InlineFollow({
   if (followedHere && following) {
     return (
       <span className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-medium text-muted-foreground">
-        <UserCheck className="size-5 min-[360px]:hidden" aria-hidden="true" />
-        <span className="sr-only min-[360px]:not-sr-only">Following</span>
+        <UserCheck className="size-5 @min-[20.5em]:hidden" aria-hidden="true" />
+        <span className="sr-only @min-[20.5em]:not-sr-only">Following</span>
       </span>
     );
   }
@@ -56,8 +58,8 @@ export default function InlineFollow({
       }}
       className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,transform] disabled:opacity-50"
     >
-      <UserPlus className="size-5 min-[360px]:hidden" aria-hidden="true" />
-      <span className="hidden min-[360px]:inline">Follow</span>
+      <UserPlus className="size-5 @min-[20.5em]:hidden" aria-hidden="true" />
+      <span className="hidden @min-[20.5em]:inline">Follow</span>
     </button>
   );
 }
