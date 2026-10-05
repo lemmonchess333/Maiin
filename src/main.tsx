@@ -14,6 +14,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { registerServiceWorker } from "./lib/register-sw";
 import { initErrorMonitoring } from "./lib/errorReporting";
+import { startSystemChromeSync } from "./lib/systemChrome";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -23,6 +24,9 @@ createRoot(document.getElementById("root")!).render(
 
 // Register service worker for offline support
 registerServiceWorker();
+
+// The status bar's text and the browser bar's colour follow the theme.
+startSystemChromeSync();
 
 // Attach window.error and unhandledrejection listeners. captureError is
 // already called at known failure sites throughout the app; this catches
