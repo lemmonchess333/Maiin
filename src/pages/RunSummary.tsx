@@ -45,6 +45,7 @@ import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import { Button } from "@/components/ui/Button";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { fetchSavedRuns } from "../lib/savedRuns";
@@ -1505,7 +1506,11 @@ export default function RunSummary() {
                   value: paceMinSec(avgPaceSeconds, unit),
                   unit: paceUnitLabel(unit),
                 },
-                { label: "Calories", value: `${calories}`, unit: "kcal" },
+                {
+                  label: "Calories",
+                  value: formatCalories(calories),
+                  unit: CALORIE_UNIT,
+                },
                 {
                   label: "Elevation gain",
                   value: elevationLabel(elevationGain, unit, false),

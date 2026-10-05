@@ -9,6 +9,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface FoodEntry {
   name: string;
@@ -184,7 +185,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                 label: "Calories",
                 value: calories,
                 set: setCalories,
-                unit: "kcal",
+                unit: CALORIE_UNIT,
               },
               { label: "Protein", value: protein, set: setProtein, unit: "g" },
               { label: "Carbs", value: carbs, set: setCarbs, unit: "g" },
