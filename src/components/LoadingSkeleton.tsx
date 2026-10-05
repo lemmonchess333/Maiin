@@ -29,10 +29,10 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
         backgroundSize: "200% 100%",
         /* The stagger offsets each block's place in the pulse (the
            `.ds-skeleton` animation in animations.css), so a column breathes
-           in sequence. It never hides a block. Blocks used to start at
-           opacity 0 and fill `forwards` into a keyframe with no end state,
-           which left every staggered block invisible under Reduce Motion:
-           a blank Home and feed while loading. */
+           in sequence. It must never hide a block: an opacity of 0 here,
+           filled `forwards` into a keyframe with no end state, leaves every
+           staggered block invisible under Reduce Motion, a blank Home and
+           feed while loading (skeletonReducedMotion.test.tsx). */
         animationDelay: stagger != null ? `${stagger * 80}ms` : undefined,
       }}
     />
