@@ -318,6 +318,7 @@ export default function FoodRow({
           Tapping the exposed strip deletes.
         */}
         <motion.button
+          data-motion-driven
           type="button"
           onClick={onDelete}
           aria-label={`Delete ${group.foodName}`}
@@ -340,6 +341,7 @@ export default function FoodRow({
         {/* Draggable row content on top. Tapping it opens the edit sheet
             (or closes the row when already swiped open). */}
         <motion.div
+          data-motion-driven
           drag="x"
           dragDirectionLock
           dragConstraints={{ left: OPEN_OFFSET, right: 0 }}

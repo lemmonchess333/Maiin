@@ -21,6 +21,7 @@ export default function FirstMealCard({
 }) {
   return (
     <motion.button
+      data-motion-driven
       whileTap={{ scale: 0.97 }}
       onClick={function () {
         haptic();

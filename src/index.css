@@ -607,6 +607,19 @@ button,
     opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Framer drives transform and opacity on these itself, a new value every
+   frame. A CSS transition on the same properties re-eases each value from
+   wherever the element is, so the element trails its own animation: 5.6px
+   of a 100px move after two frames, measured in Chromium. Colour fades
+   stay. Mark every motion element that is a button `data-motion-driven`;
+   motionDrivenButtons.test.ts holds them to it. */
+button[data-motion-driven],
+[role="button"][data-motion-driven] {
+  transition:
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ─── INPUT & FORM FIELD POLISH ──────────────────────────────
    These rules style "plain" inputs across the app — anything that
    isn't using the `.ds-input` primitive. `.ds-input` is excluded

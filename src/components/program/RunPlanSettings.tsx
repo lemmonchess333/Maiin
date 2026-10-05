@@ -613,6 +613,7 @@ export default function RunPlanSettings({
             const selected = runMode === opt.id;
             return (
               <motion.button
+                data-motion-driven
                 key={opt.id}
                 type="button"
                 role="radio"
