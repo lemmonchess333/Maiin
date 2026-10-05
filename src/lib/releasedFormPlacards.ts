@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "db-rdl": placard(
+    "db-rdl",
+    ["Hamstrings"],
+    ["Glutes", "Lower Back", "Traps"],
+    [
+      [0, "Set", "Stand tall with softly bent knees."],
+      [0.6, "Hinge", "Push your hips back with straight arms."],
+      [1, "Stretch", "Lower the dumbbells close to your shins."],
+      [1, "Hold", "Keep your back straight and heels planted."],
+      [0.6, "Rise", "Drive your hips forward to rise."],
+      [0, "Stand", "Stand tall without leaning back."],
+    ]
+  ),
   "smith-machine-squat": placard(
     "smith-machine-squat",
     ["Quads"],
