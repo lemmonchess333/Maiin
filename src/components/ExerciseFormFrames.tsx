@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +31,18 @@ export default function ExerciseFormFrames({
   const [playing, setPlaying] = useState(autoPlay);
   const [slow, setSlow] = useState(false);
   const [loaded, setLoaded] = useState<Record<number, boolean>>({});
+  const images = useRef<(HTMLImageElement | null)[]>([]);
+  const imageRefs = useMemo(
+    () =>
+      Array.from({ length: 6 }, (_, i) => (image: HTMLImageElement | null) => {
+        images.current[i] = image;
+        // Readiness belongs to this mounted node, not an earlier visit to i.
+        setLoaded((previous) =>
+          previous[i] ? { ...previous, [i]: false } : previous
+        );
+      }),
+    []
+  );
   const [failed, setFailed] = useState<number | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [visible, setVisible] = useState(() => !document.hidden);
@@ -92,11 +104,14 @@ export default function ExerciseFormFrames({
           {mounted.map((i) => (
             <img
               key={`${beats[i].image}-${attempt}`}
+              ref={imageRefs[i]}
               src={frameUrl(beats[i].image!)}
               alt={i === index ? `${name}, ${beats[i].label}` : ""}
               aria-hidden={i !== index}
               draggable={false}
-              decoding="async"
+              // Decode before scheduling; sync also requests atomic painting
+              // if the browser evicts decoded data during the frame's dwell.
+              decoding="sync"
               // The frames are drawn on black. Lighten merges that black
               // into the stage so no darker box sits behind the figure.
               className="absolute inset-0 size-full object-contain mix-blend-lighten"
@@ -104,12 +119,23 @@ export default function ExerciseFormFrames({
                 visibility:
                   i === index && failed !== index ? "visible" : "hidden",
               }}
-              onLoad={() =>
-                setLoaded((previous) =>
-                  previous[i] ? previous : { ...previous, [i]: true }
-                )
-              }
-              onError={() => fail(i)}
+              onLoad={async (event) => {
+                const image = event.currentTarget;
+                const current = () =>
+                  image.isConnected && images.current[i] === image;
+                try {
+                  await image.decode();
+                  if (current())
+                    setLoaded((previous) =>
+                      previous[i] ? previous : { ...previous, [i]: true }
+                    );
+                } catch {
+                  if (current()) fail(i);
+                }
+              }}
+              onError={(event) => {
+                if (images.current[i] === event.currentTarget) fail(i);
+              }}
             />
           ))}
           {!loaded[index] && failed === null && (
