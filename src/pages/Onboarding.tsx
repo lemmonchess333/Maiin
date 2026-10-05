@@ -1074,7 +1074,7 @@ export default function Onboarding() {
                     {
                       id: "home_gym",
                       label: "Home gym",
-                      desc: "Barbell and dumbbell setup.",
+                      desc: "Dumbbells, a bench and a pull-up bar.",
                       art: "db-bench",
                     },
                     {
