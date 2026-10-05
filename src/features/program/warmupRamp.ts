@@ -52,17 +52,25 @@ const RAMP_STEPS: ReadonlyArray<{ pct: number; reps: number }> = [
   { pct: 0.7, reps: 3 },
 ];
 
+/**
+ * Lift4 (5): working sets of 6 reps or fewer get one more step, 85% × 2, so
+ * the first heavy set is not the first heavy weight of the day.
+ */
+const NEAR_WORKING_STEP = { pct: 0.85, reps: 2 };
+const NEAR_WORKING_MAX_REPS = 6;
+
 const roundToIncrement = (kg: number, increment: number) =>
   Math.round(kg / increment) * increment;
 
 /**
- * The ramp for one lift, from its working weight. Empty when there is
- * nothing sensible to ramp: bodyweight and uncalibrated lifts (weight 0),
- * and anything at or below the bar.
+ * The ramp for one lift, from its working weight, and its working reps when
+ * they are known. Empty when there is nothing sensible to ramp: bodyweight
+ * and uncalibrated lifts (weight 0), and anything at or below the bar.
  */
 export function warmupRamp(
   workingWeight: number,
-  equipment = "Barbell"
+  equipment = "Barbell",
+  workingReps?: number
 ): WarmupSet[] {
   if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
   if (equipment === "Bodyweight") return [];
@@ -74,7 +82,13 @@ export function warmupRamp(
   if (isBarbell && workingWeight >= BAR_SET_MIN_WORKING_KG) {
     out.push({ weight: BAR_KG, reps: 10 });
   }
-  for (const { pct, reps } of RAMP_STEPS) {
+  const heavy =
+    workingReps !== undefined &&
+    workingReps > 0 &&
+    workingReps <= NEAR_WORKING_MAX_REPS;
+  for (const { pct, reps } of heavy
+    ? [...RAMP_STEPS, NEAR_WORKING_STEP]
+    : RAMP_STEPS) {
     // Barbell work stays on the existing 2.5 kg plate grid. Dumbbells,
     // machines and cables use the same conservative grid, but crucially have
     // no imaginary 20 kg bar floor.
@@ -114,13 +128,15 @@ export function buildInitialSetLogs(
   const ramps = warmupTargets(exercises);
   return exercises.map((ex, i) => [
     ...(ramps[i]
-      ? warmupRamp(ex.weight, getExerciseById(ex.exerciseId)?.equipment).map(
-          (set) => ({
-            ...set,
-            completed: false,
-            type: "warmup" as const,
-          })
-        )
+      ? warmupRamp(
+          ex.weight,
+          getExerciseById(ex.exerciseId)?.equipment,
+          ex.repUnit === "seconds" ? undefined : ex.reps
+        ).map((set) => ({
+          ...set,
+          completed: false,
+          type: "warmup" as const,
+        }))
       : []),
     ...Array.from({ length: ex.sets }, () => ({
       reps: ex.reps,
