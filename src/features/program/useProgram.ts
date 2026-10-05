@@ -1245,18 +1245,16 @@ export function useProgram() {
       `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
     );
 
+    // Said nothing on purpose (Lift4: silent by default). Train's week row
+    // names the week, and a count of the calendar weeks caught up is not the
+    // programme's: a week with no training holds the week number.
+    //
     // saveProgram sets state only after its awaited write, never
     // synchronously: the rule counts any call that reaches a setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling)
-      .then(() => {
-        toast.success(
-          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
-        );
-      })
-      .catch((err) => {
-        logger.warn("[auto-rollover] save failed", err);
-      });
+    saveProgram(rolling).catch((err) => {
+      logger.warn("[auto-rollover] save failed", err);
+    });
   }, [
     programState,
     profile,
@@ -1352,17 +1350,12 @@ export function useProgram() {
       `[auto-rollover:lift] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
     );
 
-    // As the run rollover above: saveProgram sets state after its await.
+    // As the run rollover above: silent, and saveProgram sets state after
+    // its await.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling)
-      .then(() => {
-        toast.success(
-          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
-        );
-      })
-      .catch((err) => {
-        logger.warn("[auto-rollover:lift] save failed", err);
-      });
+    saveProgram(rolling).catch((err) => {
+      logger.warn("[auto-rollover:lift] save failed", err);
+    });
   }, [
     programState,
     profile,

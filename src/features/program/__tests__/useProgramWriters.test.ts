@@ -2769,6 +2769,7 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     mockProfile = lifterProfile();
     resetFirestore();
     seedProgram(frozenLifter(staleKey()));
+    vi.mocked(toast.success).mockClear();
 
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -2800,6 +2801,11 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     // Lift4: the session it didn't reach opens the week it comes back to.
     // The two empty weeks after it had nothing to move.
     expect(last.workouts.map((d) => d.dayName)).toEqual(["Lower", "Upper"]);
+    // …and the change of week says nothing. It said "Week advanced — 3
+    // weeks" here while the plan moved one. Settled past the save's own
+    // continuation, which is where it spoke.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("does nothing when the anchor is already the current week", async () => {
