@@ -637,6 +637,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
     sha256: "7e2474605d406042b52a190190a523df21055d2fa07a5d0df491b7ab2315f8ae",
   },
+  "preacher-curl": {
+    src: "form-art/preacher-curl.webp",
+    width: 381,
+    height: 480,
+    keyed: true,
+    source: "form-frames/preacher-curl/1.webp",
+    sourceSha256:
+      "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21",
+    sha256: "4b6ef2c7fbc68f2f2ce175cc68b8971a5ba4f2a1e58c87bc5b9c979daf709166",
+  },
   "push-ups": {
     src: "form-art/push-ups.webp",
     width: 480,

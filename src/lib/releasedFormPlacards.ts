@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "preacher-curl": placard(
+    "preacher-curl",
+    ["Biceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Support upper arms; keep your elbows soft."],
+      [0.6, "Curl", "Curl upward with upper arms against pad."],
+      [1, "Top", "Bring bar toward shoulders without shrugging."],
+      [1, "Hold", "Hold briefly with wrists straight."],
+      [0.6, "Lower", "Lower slowly, keeping upper arms supported."],
+      [0, "Return", "Stop just short of locking your elbows."],
+    ]
+  ),
   "cuban-press": placard(
     "cuban-press",
     ["Shoulders"],

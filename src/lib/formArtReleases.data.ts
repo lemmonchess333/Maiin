@@ -411,6 +411,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 3,
   },
+  "preacher-curl": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1120,
+    height: 1360,
+    reference: 1,
+  },
   "push-ups": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",
