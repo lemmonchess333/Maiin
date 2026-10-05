@@ -209,19 +209,22 @@ describe("experience in generateProgram", () => {
   });
 
   it("changes WHICH movements, and never adds work", () => {
-    // The structure is identical: same days, same slots. The work is not,
-    // any more: Lift4 (5) gives a beginner's main lifts three sets and
-    // everything else two (`roleTable.ts`), reversing the operator's
-    // "simpler, not smaller". The volume passes can still top up a muscle
-    // under its floor, so the week is never bigger than an intermediate's.
+    // The structure is the same: same days, and the same slots, but for a
+    // lift added to work a muscle on two days a week, which a beginner's
+    // lower ceilings can leave out (`weeklyFrequency.ts`). The work is not:
+    // Lift4 (5) gives a beginner's main lifts three sets and everything else
+    // two (`roleTable.ts`), reversing the operator's "simpler, not
+    // smaller", so the week is never bigger than an intermediate's.
     for (const days of [3, 4, 6]) {
       const b = week(days, "beginner");
       const i = week(days, "intermediate");
       expect(b.length, `${days}d: day count`).toBe(i.length);
-      expect(
-        b.map((d) => d.exercises.length),
-        `${days}d: slots per day`
-      ).toEqual(i.map((d) => d.exercises.length));
+      b.forEach((day, d) =>
+        expect(
+          day.exercises.length,
+          `${days}d: day ${d} slots`
+        ).toBeLessThanOrEqual(i[d].exercises.length)
+      );
       expect(totalSets(b), `${days}d: weekly sets`).toBeLessThanOrEqual(
         totalSets(i)
       );

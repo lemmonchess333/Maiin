@@ -622,7 +622,7 @@ function judgementCreditsFor(
 /** The judgement group an exercise's sets count 1.0 toward (balancer and
  *  reconciler targeting), or null when unattributable (cardio/whole-body). */
 export function primaryJudgementForExercise(
-  ex: ProgramExercise
+  ex: Pick<ProgramExercise, "exerciseId" | "movementCategory">
 ): JudgementMuscle | null {
   const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
   if (!dbEx) {

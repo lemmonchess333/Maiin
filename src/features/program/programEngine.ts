@@ -32,6 +32,7 @@ import {
   reconcileToLandmarks,
 } from "./volumeModel";
 import { fitSessionsToTime, sessionFits } from "./sessionFit";
+import { extraPastCeiling, twiceWeeklyAdditions } from "./weeklyFrequency";
 import {
   seedStartingLoads,
   weightAfterExerciseSwap,
@@ -1697,25 +1698,72 @@ function carryExistingAccessories(
       ) {
         return ex;
       }
-      return {
-        ...ex,
-        exerciseId: prev.exerciseId,
-        name: prev.name,
-        instanceId: prev.instanceId,
-        weight: prev.weight,
-        lastSuccessfulWeight: prev.lastSuccessfulWeight,
-        lastAttemptedWeight: prev.lastAttemptedWeight,
-        consecutiveFailures: prev.consecutiveFailures,
-        plateauCount: prev.plateauCount,
-        performanceHistory: prev.performanceHistory,
-        lastPerformance: prev.lastPerformance,
-        // The anchor travels with the load lineage it describes.
-        ...(prev.rotationAnchor !== undefined
-          ? { rotationAnchor: prev.rotationAnchor }
-          : {}),
-      };
+      return { ...ex, ...carriedState(prev) };
     }),
   }));
+}
+
+/** What a regenerate carries of an accessory the plan already had: its
+ *  identity and what has been logged against it. Sets and reps are the new
+ *  build's. */
+function carriedState(prev: ProgramExercise): Partial<ProgramExercise> {
+  return {
+    exerciseId: prev.exerciseId,
+    name: prev.name,
+    instanceId: prev.instanceId,
+    weight: prev.weight,
+    lastSuccessfulWeight: prev.lastSuccessfulWeight,
+    lastAttemptedWeight: prev.lastAttemptedWeight,
+    consecutiveFailures: prev.consecutiveFailures,
+    plateauCount: prev.plateauCount,
+    performanceHistory: prev.performanceHistory,
+    lastPerformance: prev.lastPerformance,
+    // The anchor travels with the load lineage it describes.
+    ...(prev.rotationAnchor !== undefined
+      ? { rotationAnchor: prev.rotationAnchor }
+      : {}),
+  };
+}
+
+/**
+ * Add the lifts that work every muscle on two days a week
+ * (`twiceWeeklyAdditions`), each at the end of its day, and say which they
+ * are: the time fit lets them go before the builders' own lifts. A
+ * regenerate keeps one the plan already had, with its load and history: the
+ * same lift on the day of the same name first, then anywhere in the old
+ * week, never one the new week already holds.
+ */
+function addTwiceWeeklyLifts(
+  workouts: WorkoutDay[],
+  existing?: WorkoutDay[]
+): { workouts: WorkoutDay[]; extras: Set<string> } {
+  const extras = new Set<string>();
+  const additions = twiceWeeklyAdditions(workouts);
+  if (additions.length === 0) return { workouts, extras };
+  const held = new Set(
+    workouts.flatMap((d) => d.exercises.map((e) => e.instanceId))
+  );
+  const carried = new Set<ProgramExercise>();
+  const days = workouts.map((d) => ({ ...d, exercises: [...d.exercises] }));
+  for (const { day, exerciseId } of additions) {
+    const sameName = existing?.filter((d) => d.dayName === days[day].dayName);
+    const prev = [...(sameName ?? []), ...(existing ?? [])]
+      .flatMap((d) => d.exercises)
+      .find(
+        (e) =>
+          e.exerciseId === exerciseId &&
+          !carried.has(e) &&
+          (e.instanceId === undefined || !held.has(e.instanceId))
+      );
+    // Sets, reps and load are placeholders: the role table and the seeding
+    // below give the lift its own.
+    const fresh = makeNamedAccessory(exerciseId, 3, 12, 0);
+    const lift = prev ? { ...fresh, ...carriedState(prev) } : fresh;
+    if (prev) carried.add(prev);
+    if (lift.instanceId) extras.add(lift.instanceId);
+    days[day].exercises.push(lift);
+  }
+  return { workouts: days, extras };
 }
 
 /**
@@ -2063,6 +2111,12 @@ export function generateProgram(
   workouts = capRepeatedLifts(workouts, experience, (ex, to) =>
     swapExerciseIdentity(ex, to, loadCtx)
   );
+  // Lift4 (5): every muscle worked on two days a week. After the identity
+  // passes, so it counts the lifts the person gets, and before the role
+  // table, the seeding and the time fit, which treat what it adds like any
+  // other lift.
+  const twiceWeekly = addTwiceWeeklyLifts(workouts, existingWorkouts);
+  workouts = twiceWeekly.workouts;
   // Lift4 (5): each lift's sets, reps and progression come from its role
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
@@ -2081,8 +2135,24 @@ export function generateProgram(
   // Lift4 (5): time decides the volume. Each session is cut to the minutes
   // the person has (`sessionFit.ts`), then the week is balanced inside them.
   const minutes = sessionMinutes ?? Number.POSITIVE_INFINITY;
-  workouts = fitSessionsToTime(workouts, minutes);
-  workouts = balanceWeekVolume(workouts, primaryGoal, experience, minutes);
+  let fitted = fitSessionsToTime(workouts, minutes, twiceWeekly.extras);
+  // A lift added for the two days a week that leaves a muscle over its
+  // ceiling once the week is balanced goes, and the week is balanced again
+  // without it, so nothing is trimmed to make room for a lift that isn't
+  // there.
+  for (;;) {
+    workouts = balanceWeekVolume(fitted, primaryGoal, experience, minutes);
+    const past = extraPastCeiling(
+      workouts,
+      twiceWeekly.extras,
+      (m) => judgementLandmark(primaryGoal, m, toExperience(experience)).high
+    );
+    if (past === undefined) break;
+    fitted = fitted.map((d) => ({
+      ...d,
+      exercises: d.exercises.filter((ex) => ex.instanceId !== past),
+    }));
+  }
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.

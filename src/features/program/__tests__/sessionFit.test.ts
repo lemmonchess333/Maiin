@@ -169,6 +169,82 @@ describe("fitSessionsToTime — a new plan, built to fit (Lift4 (5))", () => {
   });
 });
 
+describe("fitSessionsToTime — every muscle on two days, and the lifts added for it", () => {
+  const withoutCalves = (): WorkoutDay => ({
+    ...fullBody(),
+    dayName: "No calves",
+    exercises: fullBody().exercises.filter(
+      (e) => e.exerciseId !== "standing-calf-raise"
+    ),
+  });
+
+  it("drops a lift whose muscles keep two days before a muscle's second day", () => {
+    // Abs on three days, calves on two: the crunch can go and the calves
+    // still have two days; the calf raise can't.
+    const [day] = fitSessionsToTime(
+      [fullBody(), fullBody(), withoutCalves()],
+      60
+    );
+    const ids = day.exercises.map((e) => e.exerciseId);
+    expect(ids).toContain("standing-calf-raise");
+    expect(ids).not.toContain("cable-crunch");
+  });
+
+  it("lets an added lift go before the plan's own, and gives back the sets it took", () => {
+    // In 68 minutes the day's own six lifts fit with their isolations at two
+    // sets. Neither added lift fits however the sets are cut, so both go,
+    // and the day is fitted again without them: the compounds keep the
+    // third sets that were cut to make room.
+    const extras = new Set(["leg", "raise"]);
+    const day: WorkoutDay = {
+      ...fullBody(),
+      exercises: [
+        ...fullBody().exercises,
+        ex("leg-press", 3, {
+          instanceId: "leg",
+          movementCategory: "knee_dominant",
+          isAccessory: true,
+          weight: 120,
+        }),
+        ex("lateral-raise", 3, {
+          instanceId: "raise",
+          movementCategory: "vertical_push",
+          isAccessory: true,
+          weight: 10,
+        }),
+      ],
+    };
+    const [fitted] = fitSessionsToTime([day, fullBody()], 68, extras);
+    expect(shape(fitted)).toBe(
+      "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 2, standing-calf-raise 2"
+    );
+    expect(shape(fitted)).toBe(
+      shape(fitSessionsToTime([fullBody(), fullBody()], 68)[0])
+    );
+  });
+
+  it("never counts an added lift as a muscle's direct work", () => {
+    // Day B's crunch was added; day A's is the plan's own, and its last in
+    // the day. Squeezed, day A keeps its crunch: B's could go later.
+    const ownLast: WorkoutDay = {
+      ...fullBody(),
+      exercises: [
+        ...fullBody().exercises.filter((e) => e.exerciseId !== "cable-crunch"),
+        fullBody().exercises.find((e) => e.exerciseId === "cable-crunch")!,
+      ],
+    };
+    const b: WorkoutDay = {
+      ...withoutCalves(),
+      dayName: "B",
+      exercises: withoutCalves().exercises.map((e) =>
+        e.exerciseId === "cable-crunch" ? { ...e, instanceId: "added" } : e
+      ),
+    };
+    const [a] = fitSessionsToTime([ownLast, b], 60, new Set(["added"]));
+    expect(a.exercises.map((e) => e.exerciseId)).toContain("cable-crunch");
+  });
+});
+
 describe("refitSessionsToTime — a plan the person has", () => {
   it("moves sets only: nothing is dropped, and a longer session gives them back", () => {
     const week = [fullBody()];

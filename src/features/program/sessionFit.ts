@@ -4,9 +4,9 @@
  * Session length is asked on the days step (30, 45, 60 or 75+ minutes) and
  * each session is built to fit it, priced with the app's own estimator
  * (`estimateSessionMinutes`) at the rests the plan suggests, and with each
- * loaded lift's warm-up as it will be once the lift is established. With proper
- * rests 30 minutes holds about six working sets, so a plan built for 30
- * minutes rests less (`suggestedRestSeconds`). Time decides the volume: the
+ * loaded lift's warm-up as it will be once the lift is established. With
+ * proper rests 30 minutes holds about six working sets, so a plan built for
+ * 30 minutes rests less (`suggestedRestSeconds`). Time decides the volume: the
  * role table's sets (`roleTable.ts`) are where a session starts, and what
  * doesn't fit is cut, one set or one exercise at a time, re-priced after
  * each cut, in this order:
@@ -14,20 +14,26 @@
  *   1. isolations' sets, down to two each, the largest first and then from
  *      the end of the day;
  *   2. other compounds' sets, down to two, the same way;
- *   3. isolations dropped, one at a time, while the muscle each works
- *      directly (its primary muscle) still gets direct work elsewhere in
- *      the week;
+ *   3. isolations dropped, one at a time: first those whose muscles are
+ *      still worked on two days a week (`weeklyFrequency.ts`), then the
+ *      lifts added for the two days, then those whose muscles still get
+ *      some direct work (their primary muscle's) in the week;
  *   4. main lifts' sets, down to two, the day's first main lift last;
- *   5. other compounds dropped, on the same condition as 3;
+ *   5. other compounds dropped, on 3's first and last conditions;
  *   6. isolations, then other compounds, dropped, a muscle's last included.
  *
  * Time wins in the end, as the plan promised; a muscle's last direct lift is
  * only kept while something else can give way, so a plan keeps its one calf
- * slot while it can. Credit from other lifts doesn't count as direct work,
- * or a squat's credit to the calves would let every calf raise go. A drop
- * takes the latest lift in the day whose going makes the session fit, or,
- * when none would on its own, the one that frees the most time, so a short
- * session never loses a cheap lift and then the dear one as well.
+ * slot while it can. A small muscle's second day gives way before a main
+ * lift's sets do, so a short session never trades its main lifts for a
+ * second day of lateral raises; a lift whose muscles are worked on two other
+ * days goes before one that is a muscle's second. Credit from other lifts
+ * counts toward the two days, as the volume model counts it, but not as
+ * direct work, or a leg curl's credit to the calves would let every calf
+ * raise go. A drop takes the latest lift in the day whose going makes the
+ * session fit, or, when none would on its own, the one that frees the most
+ * time, so a short session never loses a cheap lift and then the dear one
+ * as well.
  *
  * A main lift is never dropped and keeps at least two sets. A day that still
  * runs over keeps what is left; the estimate on its card says so. Sets are
@@ -48,6 +54,7 @@ import {
   MAX_SETS_PER_SESSION,
   primaryJudgementForExercise,
 } from "./volumeModel";
+import { daysPerMuscle, WEEKLY_FREQUENCY } from "./weeklyFrequency";
 import type {
   Experience,
   PrimaryGoal,
@@ -142,16 +149,29 @@ function kindOf(ex: ProgramExercise): Kind {
   return exerciseRole(ex) === "isolation" ? "isolation" : "compound";
 }
 
+/** What a drop must leave the week: each muscle's days (`weeklyFrequency`),
+ *  its direct work, or nothing; or, for "extra", the lift must be one added
+ *  for the two days. */
+type Keeps = "frequency" | "extra" | "coverage" | "nothing";
+
+/** Whether a drop leaves the week what `rule` asks: `dropped` is the lift,
+ *  `without` the day after it. */
+type WeekGuard = (
+  dropped: ProgramExercise,
+  without: ProgramExercise[],
+  rule: Keeps
+) => boolean;
+
 /**
- * Cut one day to its time. `keepsCoverage` says whether the day, without a
- * lift, still gives every muscle the week works directly some direct work;
- * a re-fit of a plan the person already has passes none, so their lifts and
- * history stay and only sets move.
+ * Cut one day to its time. `guard` says whether the day, without a lift,
+ * still keeps what a drop at that step must; a re-fit of a plan the person
+ * already has passes none, so their lifts and history stay and only sets
+ * move.
  */
 function fitDay(
   day: WorkoutDay,
   minutes: number,
-  keepsCoverage?: (without: ProgramExercise[]) => boolean
+  guard?: WeekGuard
 ): WorkoutDay {
   let exercises = day.exercises.map((e) => ({ ...e }));
   const fits = () => sessionFits(exercises, minutes);
@@ -167,7 +187,7 @@ function fitDay(
     pick.ex.sets -= 1;
     return true;
   };
-  const dropOne = (kind: Kind, keepLast: boolean): boolean => {
+  const dropOne = (kind: Kind, keeps: Keeps): boolean => {
     const without = (i: number) => [
       ...exercises.slice(0, i),
       ...exercises.slice(i + 1),
@@ -177,8 +197,8 @@ function fitDay(
       .map((_, i) => i)
       .filter(
         (i) =>
-          kindOf(exercises[i]) === kind &&
-          (!keepLast || keepsCoverage!(without(i)))
+          (keeps === "extra" || kindOf(exercises[i]) === kind) &&
+          guard!(exercises[i], without(i), keeps)
       );
     if (candidates.length === 0) return false;
     const fitting = candidates.filter((i) => sessionFits(without(i), minutes));
@@ -192,17 +212,23 @@ function fitDay(
     return true;
   };
 
-  const drops = keepsCoverage !== undefined;
   const steps: Array<() => boolean> = [
     () => cutSet("isolation"),
     () => cutSet("compound"),
-    ...(drops ? [() => dropOne("isolation", true)] : []),
-    () => cutSet("main"),
-    ...(drops
+    ...(guard
       ? [
-          () => dropOne("compound", true),
-          () => dropOne("isolation", false),
-          () => dropOne("compound", false),
+          () => dropOne("isolation", "frequency"),
+          () => dropOne("isolation", "extra"),
+          () => dropOne("isolation", "coverage"),
+        ]
+      : []),
+    () => cutSet("main"),
+    ...(guard
+      ? [
+          () => dropOne("compound", "frequency"),
+          () => dropOne("compound", "coverage"),
+          () => dropOne("isolation", "nothing"),
+          () => dropOne("compound", "nothing"),
         ]
       : []),
   ];
@@ -215,31 +241,73 @@ function fitDay(
   return { ...day, exercises };
 }
 
-/** The muscles a week works directly: each lift's primary muscle. */
-function trainedMuscles(days: readonly WorkoutDay[]): Set<string> {
+/** The muscles a week works directly: each lift's primary muscle, the
+ *  lifts added for the two days a week (`extras`) aside. */
+function trainedMuscles(
+  days: readonly WorkoutDay[],
+  extras: ReadonlySet<string>
+): Set<string> {
   return new Set(
     days
       .flatMap((d) => d.exercises)
+      .filter((ex) => !ex.instanceId || !extras.has(ex.instanceId))
       .map((ex) => primaryJudgementForExercise(ex))
       .filter((m): m is NonNullable<typeof m> => m !== null)
   );
 }
 
-/** Fit a new plan's sessions to `minutes`, dropping lifts where sets alone
- *  can't make the time, never a muscle's last. */
+/**
+ * Fit a new plan's sessions to `minutes`, dropping lifts where sets alone
+ * can't make the time: first those whose muscles keep their two days a
+ * week, then the lifts added for the two days (`extras`, from
+ * `weeklyFrequency.ts`), then those whose muscles keep some direct work,
+ * then any. An added lift is never what keeps a muscle's direct work, so a
+ * day can't drop its own ab work for one added to a day that has yet to fit.
+ */
 export function fitSessionsToTime(
   workouts: WorkoutDay[],
-  minutes: number
+  minutes: number,
+  extras: ReadonlySet<string> = new Set()
 ): WorkoutDay[] {
   const days = [...workouts];
-  days.forEach((day, i) => {
-    const trained = trainedMuscles(days);
-    days[i] = fitDay(day, minutes, (without) => {
-      const after = trainedMuscles(
-        days.map((d, j) => (j === i ? { ...d, exercises: without } : d))
+  const isExtra = (ex: ProgramExercise) =>
+    ex.instanceId !== undefined && extras.has(ex.instanceId);
+  const fitOne = (i: number): WorkoutDay => {
+    const trained = trainedMuscles(days, extras);
+    const frequency = daysPerMuscle(days);
+    return fitDay(days[i], minutes, (dropped, without, keeps) => {
+      if (keeps === "nothing") return true;
+      if (keeps === "extra") return isExtra(dropped);
+      const week = days.map((d, j) =>
+        j === i ? { ...d, exercises: without } : d
       );
-      return [...trained].every((m) => after.has(m));
+      const after = trainedMuscles(week, extras);
+      if (![...trained].every((m) => after.has(m))) return false;
+      if (keeps === "coverage") return true;
+      const afterDays = daysPerMuscle(week);
+      return [...frequency].every(
+        ([m, n]) => (afterDays.get(m) ?? 0) >= Math.min(n, WEEKLY_FREQUENCY)
+      );
     });
+  };
+  days.forEach((_, i) => {
+    // A day that loses an added lift is fitted again without it, so no set
+    // stays cut to make room for a lift that went anyway.
+    for (;;) {
+      const fitted = fitOne(i);
+      const left = new Set(fitted.exercises.map((ex) => ex.instanceId));
+      const gone = days[i].exercises.filter(
+        (ex) => isExtra(ex) && !left.has(ex.instanceId)
+      );
+      if (gone.length === 0) {
+        days[i] = fitted;
+        break;
+      }
+      days[i] = {
+        ...days[i],
+        exercises: days[i].exercises.filter((ex) => !gone.includes(ex)),
+      };
+    }
   });
   return days;
 }

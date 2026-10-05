@@ -2071,11 +2071,12 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       )
         .workouts.flatMap((d) => d.exercises)
         .reduce((s, e) => s + e.sets, 0);
-    // 51 working sets for the 3-day recomp hypertrophy build (the role
-    // table's three a lift, then the volume passes) — a stored literal, so
-    // a cap that started adding or dropping sets moves this number.
+    // 54 working sets for the 3-day recomp hypertrophy build (the role
+    // table's three a lift, the lateral raises that work the side delts on
+    // two days, then the 18-set session ceiling) — a stored literal, so a
+    // cap that started adding or dropping sets moves this number.
     // (Comparing the call to itself pinned nothing.)
-    expect(totalSets(3)).toBe(51);
+    expect(totalSets(3)).toBe(54);
     const { workouts } = generateProgram(
       "recomp",
       3,
@@ -2085,10 +2086,9 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       undefined,
       "intermediate"
     );
-    // Days A and C carry the named calf slot on top of the five built ones.
-    workouts.forEach((d, i) =>
-      expect(d.exercises).toHaveLength(i === 1 ? 5 : 6)
-    );
+    // Days A and C carry the named calf slot on top of the five built ones,
+    // and days A and B a lateral raise (`weeklyFrequency.ts`).
+    expect(workouts.map((d) => d.exercises.length)).toEqual([7, 6, 6]);
   });
 
   it("the replacement obeys its day role (it used to escape it)", () => {
@@ -2795,11 +2795,17 @@ describe("coach-read audit pins (2026-08-03)", () => {
   it("a 2-day week is full-body: every trained muscle is touched on BOTH days", async () => {
     const { weeklyVolumeByJudgementMuscle } = await import("../volumeModel");
     for (const goal of GOALS) {
+      // An intermediate's: a beginner's lower ceilings can stop the second
+      // lateral raise, since it counts toward the upper back as well
+      // (`weeklyFrequency.ts`).
       const { splitType, workouts } = generateProgram(
         "recomp",
         2,
         undefined,
-        goal
+        goal,
+        undefined,
+        undefined,
+        "intermediate"
       );
       expect(splitType).toBe("full_body");
       expect(workouts).toHaveLength(2);
@@ -2865,9 +2871,11 @@ describe("coach-read audit pins (2026-08-03)", () => {
   // Calves are the one judgement group nothing credits secondarily, so the
   // generic big-muscle floor (12 at hypertrophy) flagged every real 8-10
   // set calf prescription sub-MEV. The band is RP's calf table, not a
-  // discount — and a 2-day week must still clear its maintenance floor.
-  it("calf landmark is direct-work priced and 2-day clears maintenance", async () => {
-    const { judgementLandmark, weeklyVolumeByJudgementMuscle } =
+  // discount. A 2-day week works them directly on both days; how many sets
+  // is the time's and the 18-set session ceiling's to decide (Lift4 (5):
+  // the bands are a ceiling now, not a floor the plan chases).
+  it("calf landmark is direct-work priced and a 2-day week works them twice", async () => {
+    const { judgementLandmark, primaryJudgementForExercise } =
       await import("../volumeModel");
     expect(judgementLandmark("hypertrophy", "Calves")).toEqual({
       mv: 6,
@@ -2883,9 +2891,95 @@ describe("coach-read audit pins (2026-08-03)", () => {
       undefined,
       "intermediate"
     );
-    const calves = weeklyVolumeByJudgementMuscle(workouts).find(
-      (r) => (r.muscle as string) === "Calves"
+    for (const day of workouts) {
+      expect(
+        day.exercises.some((e) => primaryJudgementForExercise(e) === "Calves"),
+        day.dayName
+      ).toBe(true);
+    }
+  });
+});
+
+// Lift4 (5): every muscle at least twice a week on two or more days, as far
+// as the time and the ceilings allow (`weeklyFrequency.ts`).
+describe("every muscle on two days a week (Lift4 (5))", () => {
+  const plan = (
+    days: number,
+    minutes: number,
+    experience: "intermediate" | "advanced",
+    existing?: WorkoutDay[]
+  ) =>
+    generateProgram(
+      "recomp",
+      days,
+      existing,
+      "hypertrophy",
+      { bodyweightKg: 80, experience },
+      undefined,
+      experience,
+      minutes
+    ).workouts;
+
+  it("works every muscle twice in a Build muscle week with the time for it", async () => {
+    const { daysPerMuscle } = await import("../weeklyFrequency");
+    const { JUDGEMENT_MUSCLE_ORDER } = await import("../volumeModel");
+    const cases: Array<[number, number]> = [
+      [2, 75],
+      [3, 75],
+      [4, 75],
+      [5, 75],
+      [6, 75],
+      [4, 60],
+      [5, 60],
+      [6, 60],
+    ];
+    for (const experience of ["intermediate", "advanced"] as const) {
+      for (const [days, minutes] of cases) {
+        const counts = daysPerMuscle(plan(days, minutes, experience));
+        for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
+          expect(
+            counts.get(muscle) ?? 0,
+            `${experience} ${days}d/${minutes}m: ${muscle}`
+          ).toBeGreaterThanOrEqual(2);
+        }
+      }
+    }
+  });
+
+  it("keeps an added lift's load and history across a regenerate", () => {
+    const first = plan(3, 75, "intermediate");
+    const raises = first
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.exerciseId === "lateral-raise");
+    expect(raises.length).toBeGreaterThanOrEqual(2);
+    const trained = first.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) =>
+        e.exerciseId === "lateral-raise"
+          ? {
+              ...e,
+              weight: 14,
+              performanceHistory: [
+                {
+                  date: "2026-09-01",
+                  weight: 14,
+                  repsCompleted: 15,
+                  repsTarget: 12,
+                },
+              ],
+            }
+          : e
+      ),
+    }));
+    const again = plan(3, 75, "intermediate", trained)
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.exerciseId === "lateral-raise");
+    expect(again.map((e) => e.instanceId).sort()).toEqual(
+      raises.map((e) => e.instanceId).sort()
     );
-    expect(calves?.sets ?? 0).toBeGreaterThanOrEqual(6);
+    again.forEach((e) => {
+      expect(e.weight).toBe(14);
+      expect(e.performanceHistory).toHaveLength(1);
+    });
   });
 });

@@ -285,6 +285,24 @@ intermediate's estimate for it, so a plan started at the bar still fits once
 its lifts carry a full ramp, and the volume card's reference plan prices the
 same as the person's.
 
+STATUS 2026-10-05 (Lift4 (5), build step 4, fifth part): every muscle twice a
+week on a plan of two or more days, as far as the time and the ceilings
+allow. A muscle is worked on a day when a lift counts sets toward it, as the
+volume model counts them (ADR-0010), so the compounds give every big muscle
+its two days; the side delts, calves and abs, which nothing else reaches, get
+a lift on each day short of one (`weeklyFrequency.ts`), the week's own where
+it has one. Those added lifts are extras to the time fit: they go after the
+lifts whose muscles keep two days and before the plan's own, they never count
+as a muscle's direct work, and a day that loses one is fitted again without
+it, so no set stays cut for it. A main lift never gives a set for one. The
+table is a ceiling: an added lift that leaves a muscle over its ceiling once
+the week is balanced goes (a lateral raise counts toward the upper back too,
+so a week whose rows fill that ceiling keeps the side delts on one day), and
+the fat-loss band's lower ceiling, which goes with its volume multiplier in
+step 4's retirements, holds Lose fat plans to that for now. Measured on Build
+muscle for intermediate and advanced lifters: every muscle on two days at 75
+minutes on 2 to 6 days, and at 60 minutes on 4 to 6.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
