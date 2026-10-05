@@ -4,7 +4,9 @@
  *
  * Rules (applied to trimmed input):
  *   - Minimum 2 characters.
- *   - Maximum 30 characters.
+ *   - Maximum 50 characters: the same number the server keeps
+ *     (functions/profileSanitizer.js) and the rules cap a copied name at
+ *     (firestore.rules), pinned by displayNameLimit.cross.test.ts.
  *   - Must have at least one non-whitespace character (enforced by the
  *     minimum-2-after-trim rule).
  *   - Nothing the word filter flags. A display name is public (profile,
@@ -25,7 +27,7 @@ import {
 } from "@/lib/profanityFilter";
 
 export const DISPLAY_NAME_MIN = 2;
-export const DISPLAY_NAME_MAX = 30;
+export const DISPLAY_NAME_MAX = 50;
 
 export const DISPLAY_NAME_LENGTH_MESSAGE = `Enter a name between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters.`;
 
