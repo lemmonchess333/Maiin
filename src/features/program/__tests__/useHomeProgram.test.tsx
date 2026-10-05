@@ -81,6 +81,7 @@ function Harness() {
           ? `Week ${model.programState.weekNumber}`
           : "Loading"}
       </p>
+      <p data-testid="loading">{String(model.loading)}</p>
       <button
         onClick={() =>
           void model.skipRunDay("run").catch((e: Error) => setError(e.message))
@@ -161,6 +162,28 @@ describe("Home defers the programme controller", () => {
     render(<Harness />);
     await flushSnapshots();
     expect(h.controllerMounts).toBe(0);
+  });
+  /* The cache already knows the document is missing (an earlier session
+     read it from the server, then closed before the programme was built),
+     so the first snapshot is the cached one and the hook rightly waits.
+     The server's answer changes nothing but `fromCache`, and Firestore
+     delivers a change to metadata alone only to a listener that asked
+     for it: without `includeMetadataChanges`, Home's session card stayed
+     a grey placeholder on every launch until Train built the programme. */
+  it("leaves loading when the server confirms a missing programme the cache already knew", async () => {
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+    expect(h.controllerMounts).toBe(0);
+
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId("loading")).toHaveTextContent("false")
+    );
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
   });
   it("loads maintenance when a real stored week is stale", async () => {
     emit({ ...(h.state as ProgramState), liftWeekKey: "2020-01-06" });

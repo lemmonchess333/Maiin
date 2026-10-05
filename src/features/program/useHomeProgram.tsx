@@ -123,6 +123,12 @@ export function useHomeProgram() {
     let active = true;
     const stop = onSnapshot(
       doc(db, "users", uid, "programState", "current"),
+      // The wait below needs the server's answer, and when the cache
+      // already knows the document is missing that answer changes only
+      // `fromCache`: Firestore delivers it to this listener only because
+      // it asks for metadata changes. Without this, Home stayed on its
+      // placeholder for good.
+      { includeMetadataChanges: true },
       (value) => {
         if (!active) return;
         // An empty cache is not proof that a new programme needs generating.

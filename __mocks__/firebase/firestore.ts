@@ -167,6 +167,9 @@ export function onSnapshot(
   // Match the SDK overload used by metadata-sensitive privacy listeners.
   const withOptions =
     a != null && typeof a === "object" && "includeMetadataChanges" in a;
+  const includeMetadataChanges =
+    withOptions &&
+    (a as { includeMetadataChanges?: boolean }).includeMetadataChanges === true;
   if (withOptions) {
     a = b;
     b = c;
@@ -182,6 +185,7 @@ export function onSnapshot(
 
   return firestoreFake.addListener({
     ref,
+    includeMetadataChanges,
     fire: () => {
       try {
         firestoreFake.failIfArmed("onSnapshot", ref.path);
