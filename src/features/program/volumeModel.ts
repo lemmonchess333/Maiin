@@ -35,7 +35,6 @@ import {
   type CanonicalMuscle,
   type FineMuscle,
 } from "./muscleTaxonomy";
-import { exerciseRole } from "./exerciseRole";
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
 // The taxonomy moved to `muscleTaxonomy.ts` in 13a so the fine layer and the
@@ -72,12 +71,16 @@ export function toCanonical(name: string | undefined): CanonicalMuscle | null {
 
 /** The canonical PRIMARY muscle an exercise trains (DB primary, else movement
  *  category for custom lifts), or null when unattributable (cardio/whole-body). */
-export function primaryCanonicalForExercise(
-  ex: ProgramExercise
-): CanonicalMuscle | null {
+export function primaryCanonicalForExercise(ex: {
+  exerciseId: string;
+  movementCategory?: string;
+}): CanonicalMuscle | null {
   const dbEx = getExerciseById(ex.exerciseId);
   if (dbEx) return toCanonical(dbEx.muscleGroup);
-  return fineToCanonical(CATEGORY_TO_FINE[ex.movementCategory] ?? null);
+  const fine = ex.movementCategory
+    ? CATEGORY_TO_FINE[ex.movementCategory]
+    : undefined;
+  return fineToCanonical(fine ?? null);
 }
 
 /**
@@ -716,25 +719,42 @@ const JUDGEMENT_HYPERTROPHY_BANDS: Partial<
 
 export function judgementLandmark(
   primaryGoal: string | undefined,
-  muscle: JudgementMuscle
+  muscle: JudgementMuscle,
+  /** The lifter's level: a beginner's bands are the lower tier. */
+  experience?: string
 ): VolumeLandmark {
-  const generic = volumeLandmark(primaryGoal);
-  const anchor = JUDGEMENT_HYPERTROPHY_BANDS[muscle];
-  if (!anchor) return generic; // the kept groups (Chest, Triceps, Biceps, Quads, Hamstrings)
-  const hyp = volumeLandmark("hypertrophy");
   const scale = (n: number, num: number, den: number) =>
     n === 0 ? 0 : Math.max(1, Math.round((n * num) / den));
-  return {
+  const tier = (band: VolumeLandmark): VolumeLandmark =>
+    experience === "beginner"
+      ? {
+          mv: scale(band.mv, BEGINNER_TIER.num, BEGINNER_TIER.den),
+          low: scale(band.low, BEGINNER_TIER.num, BEGINNER_TIER.den),
+          high: scale(band.high, BEGINNER_TIER.num, BEGINNER_TIER.den),
+        }
+      : band;
+  const generic = volumeLandmark(primaryGoal);
+  const anchor = JUDGEMENT_HYPERTROPHY_BANDS[muscle];
+  if (!anchor) return tier(generic); // the kept groups (Chest, Triceps, Biceps, Quads, Hamstrings)
+  const hyp = volumeLandmark("hypertrophy");
+  return tier({
     mv: scale(anchor.mv, generic.mv, hyp.mv),
     low: scale(anchor.low, generic.low, hyp.low),
     high: scale(anchor.high, generic.high, hyp.high),
-  };
+  });
 }
+
+/**
+ * The weekly bands come in two tiers (Lift4 (5)): a beginner's are two
+ * thirds of everyone else's. A beginner grows on less, and the grill's
+ * weekly figures by level (8 sets against 12 for Build muscle, 8 against 10
+ * for Get stronger) put the beginner near two thirds of the intermediate.
+ * Time decides a plan's volume; these are only its ceiling.
+ */
+const BEGINNER_TIER = { num: 2, den: 3 };
 
 /** Don't push any single accessory beyond this many sets. */
 const ACCESSORY_SET_CAP = 5;
-/** Safety bound on auto-added sets per muscle per week. */
-const MAX_ADDED_SETS_PER_MUSCLE = 6;
 
 /**
  * Floors the landmark reconciler may cut a slot down to. Accessories share
@@ -846,7 +866,9 @@ export function reconcileToLandmarks(
 }
 
 /**
- * Working sets one session may contain before the balancers stop adding to it.
+ * Working sets one session may hold. The time fit (`sessionFit.ts`) cuts to
+ * it as well as to the session's minutes, and the push/pull balancer adds
+ * nothing past it.
  *
  * At roughly 2.5–3 minutes per working set including rest, 18 sets is an hour
  * of work plus warm-up — the session length both Helms and Meadows treat as
@@ -861,48 +883,11 @@ export function reconcileToLandmarks(
  * time, and a 3-day full-body week went 42 → 54 weekly sets, 14 → 20 in a
  * single session. The volume balancing is CORRECT — it had simply never run
  * for full-body users before — but it needs the bound it was always missing.
- *
- * The builders are not policed by this. A session the builders author over
- * budget stays as authored; the balancers just don't add to it.
  */
-const MAX_SETS_PER_SESSION = 18;
+export const MAX_SETS_PER_SESSION = 18;
 
 function sessionSets(day: WorkoutDay): number {
   return day.exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
-}
-
-/**
- * Fit every session inside the length budget (Lift4 (5)). The role table
- * gives each lift its sets, and a full-body day of six lifts with four-set
- * strength mains comes to 20. Cuts one set at a time from the accessories,
- * isolations before other compounds, the largest first and then from the end
- * of the day, down to two sets each. Main lifts keep theirs: they carry the
- * progression.
- */
-export function fitSessionsToBudget(workouts: WorkoutDay[]): WorkoutDay[] {
-  return workouts.map((day) => {
-    const exercises = day.exercises.map((e) => ({ ...e }));
-    const fitted = { ...day, exercises };
-    const isolation = (e: ProgramExercise) =>
-      Number(exerciseRole(e) === "isolation");
-    while (sessionSets(fitted) > MAX_SETS_PER_SESSION) {
-      const cut = exercises
-        .map((ex, i) => ({ ex, i }))
-        .filter(
-          ({ ex }) =>
-            ex.isAccessory === true && ex.sets > RECONCILE_ACCESSORY_FLOOR
-        )
-        .sort(
-          (a, b) =>
-            isolation(b.ex) - isolation(a.ex) ||
-            b.ex.sets - a.ex.sets ||
-            b.i - a.i
-        )[0];
-      if (!cut) break; // every accessory at two: the mains are the session
-      cut.ex.sets -= 1;
-    }
-    return fitted;
-  });
 }
 
 /** The day this exercise sits in, or null if it isn't in the week. */
@@ -913,14 +898,24 @@ function dayOf(
   return days.find((d) => d.exercises.includes(exercise)) ?? null;
 }
 
-/** Would growing this exercise take its session past the length budget? */
+/** Whether a session fits: its time and the set ceiling (`sessionFits` in
+ *  `sessionFit.ts`), or the set ceiling alone for a caller with no time. */
+type SessionFits = (exercises: ProgramExercise[]) => boolean;
+const withinSetCeiling: SessionFits = (exercises) =>
+  sessionSets({ exercises } as WorkoutDay) <= MAX_SETS_PER_SESSION;
+
+/** Would growing this exercise take its session past what fits? */
 function overshootsSession(
   days: WorkoutDay[],
-  exercise: ProgramExercise
+  exercise: ProgramExercise,
+  fits: SessionFits
 ): boolean {
   const day = dayOf(days, exercise);
   if (!day) return false;
-  return sessionSets(day) + 1 > MAX_SETS_PER_SESSION;
+  exercise.sets += 1;
+  const over = !fits(day.exercises);
+  exercise.sets -= 1;
+  return over;
 }
 
 /**
@@ -957,71 +952,6 @@ function overshootsCeiling(
       v.sets > resolveLandmark(landmarkFor, v.muscle).high &&
       v.sets > (before.get(v.muscle) ?? 0)
   );
-}
-
-/**
- * Make the volume model active (D-LIFT-1) — nudge UNDER-dosed muscles up toward
- * the landmark low (MEV) by adding sets to their existing ACCESSORIES. Pure;
- * returns a new workouts array (inputs untouched).
- *
- * Deliberately conservative + add-only:
- *   - mains are never touched (they're the progression anchor);
- *   - only accessories whose PRIMARY muscle is under-dosed gain sets;
- *   - each accessory is capped (`ACCESSORY_SET_CAP`) and total adds per muscle
- *     are bounded (`MAX_ADDED_SETS_PER_MUSCLE`);
- *   - over-MRV trimming is intentionally NOT done here — auto-generated programs
- *     rarely exceed MRV and trimming wanted work is the riskier direction;
- *   - a muscle with no accessory to grow is left as-is (adding a brand-new
- *     exercise is out of scope for "gate accessory volume").
- *
- * Legacy programs whose exercises predate the `isAccessory` flag have no
- * eligible accessories and pass through unchanged (balanced on next regen).
- */
-export function balanceWeeklyVolume(
-  workouts: WorkoutDay[],
-  landmarkFor: LandmarkFor
-): WorkoutDay[] {
-  const days = workouts.map((d) => ({
-    ...d,
-    exercises: d.exercises.map((e) => ({ ...e })),
-  }));
-
-  const volumeOf = (muscle: JudgementMuscle): number =>
-    weeklyVolumeByJudgementMuscle(days).find((v) => v.muscle === muscle)
-      ?.sets ?? 0;
-
-  for (const muscle of JUDGEMENT_MUSCLE_ORDER) {
-    const low = resolveLandmark(landmarkFor, muscle).low;
-    if (volumeOf(muscle) >= low) continue;
-
-    // Accessories (on non-skipped days) whose primary is this muscle.
-    const candidates = days
-      .filter((d) => !d.skipped)
-      .flatMap((d) => d.exercises)
-      .filter(
-        (e) => e.isAccessory && primaryJudgementForExercise(e) === muscle
-      );
-    if (candidates.length === 0) continue;
-
-    let added = 0;
-    while (volumeOf(muscle) < low && added < MAX_ADDED_SETS_PER_MUSCLE) {
-      // Grow the lowest-set addable accessory first (keeps volume even), and
-      // skip any whose growth would tip a different muscle over its ceiling.
-      const target = candidates
-        .filter((e) => e.sets < ACCESSORY_SET_CAP)
-        .sort((a, b) => a.sets - b.sets)
-        .find(
-          (e) =>
-            !overshootsCeiling(days, e, landmarkFor) &&
-            !overshootsSession(days, e)
-        );
-      if (!target) break; // all capped, or every add overshoots elsewhere
-      target.sets += 1;
-      added += 1;
-    }
-  }
-
-  return days;
 }
 
 // Movement categories grouped by push vs pull (knee/hip/core are neither).
@@ -1065,14 +995,16 @@ function categorySetTotals(workouts: WorkoutDay[]): {
  * Push/pull balance (D-LIFT-3) — keep weekly PULL volume at least equal to PUSH.
  * Pull-dominant programming protects the shoulders (the most-cited balance
  * principle) and the procedural builders skew slightly push-heavy. When push >
- * pull, grow PULL accessories until pull ≥ push. Pure; conservative + add-only,
- * same rails as the volume balancer (accessories only, mains untouched, each
- * capped, total bounded). Uses movement category (not muscle) so it's immune to
- * the front/rear-delt lumping. Add-only — never trims push.
+ * pull, grow PULL accessories until pull ≥ push. Pure; conservative + add-only
+ * (accessories only, mains untouched, each capped, total bounded), and only
+ * inside what a session fits (`fits`: its time and the set ceiling, Lift4
+ * (5)). Uses movement category (not muscle) so it's immune to the
+ * front/rear-delt lumping. Add-only — never trims push.
  */
 export function balancePushPull(
   workouts: WorkoutDay[],
-  landmark?: LandmarkFor
+  landmark?: LandmarkFor,
+  fits: SessionFits = withinSetCeiling
 ): WorkoutDay[] {
   const days = workouts.map((d) => ({
     ...d,
@@ -1095,7 +1027,7 @@ export function balancePushPull(
       .find(
         (e) =>
           (!landmark || !overshootsCeiling(days, e, landmark)) &&
-          !overshootsSession(days, e)
+          !overshootsSession(days, e, fits)
       );
     if (!target) break; // all capped, or every add overshoots a ceiling
     target.sets += 1;

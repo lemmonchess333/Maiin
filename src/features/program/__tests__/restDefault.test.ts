@@ -31,14 +31,18 @@ describe("rest between sets", () => {
 
   it("and the session then rests as the plan suggests", () => {
     const bench = { exerciseId: "bench-press", reps: 5 };
-    expect(restSecondsFor(bench, undefined)).toBe(180);
-    expect(restSecondsFor(bench, 0)).toBe(180);
-    expect(restSecondsFor(bench, 120)).toBe(120); // a fixed rest is fixed
+    expect(restSecondsFor(bench, {})).toBe(180);
+    expect(restSecondsFor(bench, { fixedRest: 0 })).toBe(180);
+    // a fixed rest is fixed, even in a plan built for 30 minutes
+    expect(restSecondsFor(bench, { fixedRest: 120 })).toBe(120);
+    expect(restSecondsFor(bench, { fixedRest: 120, sessionMinutes: 30 })).toBe(
+      120
+    );
   });
 
   it("the session asks the rule, not a number of its own", () => {
     expect(read("src/components/WorkoutSession.tsx")).toMatch(
-      /restSecondsFor\(exercise, fixedRest\)/
+      /restSecondsFor\(exercise, \{ fixedRest, sessionMinutes \}\)/
     );
   });
 });

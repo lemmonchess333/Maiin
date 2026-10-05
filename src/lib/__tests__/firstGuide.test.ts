@@ -25,6 +25,7 @@ const workout = {
 const sessions: Record<TodayCard, TodaySession> = {
   lift: {
     type: "lift",
+    restContext: {},
     lift: {
       workout,
       index: 0,
@@ -37,30 +38,35 @@ const sessions: Record<TodayCard, TodaySession> = {
   },
   run: {
     type: "run",
+    restContext: {},
     lift: null,
     run: { runDay: null, completed: false, isFirst: true },
     rest: null,
   },
   "first-workout": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "first-workout", workout, index: 0 },
   },
   "free-run": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "free-run" },
   },
   "first-meal": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "first-meal" },
   },
   rest: {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "rest", tomorrow: null },

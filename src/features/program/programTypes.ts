@@ -796,6 +796,13 @@ export interface ProgramState {
    */
   primaryGoal?: PrimaryGoal;
   /**
+   * The session length, in minutes, the plan's sets were fitted to (Lift4
+   * (5)): 30, 45, 60 or 75 for "75+". A plan built for 30 minutes also rests
+   * less (`suggestedRestSeconds`). Absent on a plan built before plans were
+   * fitted to time; for those, Start still trims to the person's usual time.
+   */
+  sessionMinutes?: number;
+  /**
    * Backlog #9 (Helms H5): how many times the adjustment rule has already
    * cut volume for the CURRENT stall without it clearing. Reset to 0 the
    * moment the programme is no longer plateaued. Its only job is the

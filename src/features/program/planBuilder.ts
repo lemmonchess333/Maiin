@@ -68,8 +68,13 @@ import {
   parseLocalDate,
   weekPosition,
 } from "@/lib/dateHelpers";
-import { generateProgram, expectedDayCount } from "./programEngine";
+import {
+  balanceWeekVolume,
+  generateProgram,
+  expectedDayCount,
+} from "./programEngine";
 import { mainRepAnchor } from "./roleTable";
+import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
   loadContextFrom,
   seedStartingLoads,
@@ -118,6 +123,21 @@ export interface PlanBuilderInput {
    * second source of truth for something the profile already owns.
    */
   previousExperience?: string;
+
+  /**
+   * How long a session the person has, in minutes
+   * (`profile.liftTimeBudgetMinutes`, asked on the days step; Lift4 (5)). A
+   * new plan's sessions are fitted to it (`sessionFit.ts`), an hour when it
+   * was never answered.
+   */
+  sessionMinutes?: number;
+  /**
+   * The session length as the settings form found it. When a save changes
+   * it, the plan the person has is re-fitted to the new one: sets only, so
+   * their lifts and history stay (`refitSessionsToTime`). Onboarding, which
+   * builds a first plan, does not pass it.
+   */
+  previousSessionMinutes?: number;
 
   /** Bodyweight (kg) + sex — seed bodyweight-relative cold-start starting loads
    *  (D-LIFT-5). Optional: when absent the engine keeps its hardcoded defaults. */
@@ -224,6 +244,8 @@ export interface PlanBuilderOutput {
     nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
     runningBaseline?: RunningBaseline | null;
     runTimeLimits?: RunTimeLimits | null;
+    /** The session length the plan was built for (Lift4 (5)). */
+    liftTimeBudgetMinutes?: number;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
     // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
@@ -262,6 +284,9 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
 function buildLiftProgram(input: PlanBuilderInput): {
   splitType: SplitType;
   workouts: WorkoutDay[];
+  /** The session length the workouts are fitted to; absent for a plan
+   *  kept as it was, built before plans were fitted to time. */
+  sessionMinutes?: number;
 } {
   const existing = input.existingState?.workouts;
   const loadCtx = loadContextFrom({
@@ -295,7 +320,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
           // programme is ordered against the week the user will actually get.
           // Read-only — lifts stay split-ordered (ADR-0002).
           buildWeekSchedule(input),
-          toExperience(input.experience)
+          toExperience(input.experience),
+          sessionMinutesFor(input.sessionMinutes)
         );
 
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
@@ -346,13 +372,34 @@ function buildLiftProgram(input: PlanBuilderInput): {
     toExperience(input.experience),
     loadCtx
   );
+  // Lift4 (5): a settings save that changes the session length re-fits the
+  // plan the person has, sets only. Anything else keeps the plan's sets as
+  // they are, and the length it was fitted to.
+  const refit =
+    preserve &&
+    input.sessionMinutes !== undefined &&
+    input.previousSessionMinutes !== undefined &&
+    input.sessionMinutes !== input.previousSessionMinutes;
+  const fitted = refit
+    ? refitWeek(
+        equipmentSafe,
+        input.primaryGoal,
+        toExperience(input.experience),
+        sessionMinutesFor(input.sessionMinutes)
+      )
+    : equipmentSafe;
+  const sessionMinutes = !preserve
+    ? sessionMinutesFor(input.sessionMinutes)
+    : refit
+      ? sessionMinutesFor(input.sessionMinutes)
+      : input.existingState?.sessionMinutes;
   // Template-seeded onboarding takes the preserve branch above. Those rows
   // historically arrived at 0 kg and therefore never passed through
   // generateProgram's cold-start seeding. Run the idempotent seeder across
   // the final shape so both generated and preserved plans are calibrated.
   const workouts = loadCtx
     ? seedStartingLoads(
-        equipmentSafe,
+        fitted,
         loadCtx,
         // Must carry the SAME rep anchor generateProgram used, or this pass
         // silently undoes it: this seeder runs last and is the one that
@@ -363,8 +410,31 @@ function buildLiftProgram(input: PlanBuilderInput): {
         // both copies in the same feature directory.
         mainRepAnchor(input.primaryGoal, toExperience(input.experience))
       )
-    : equipmentSafe;
-  return { splitType: base.splitType, workouts };
+    : fitted;
+  return {
+    splitType: base.splitType,
+    workouts,
+    ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
+  };
+}
+
+/** A re-fitted week, balanced as a new plan's is, with its volume anchor
+ *  (`baseSets`) moved to the sets it now has. */
+function refitWeek(
+  workouts: WorkoutDay[],
+  goal: PrimaryGoal,
+  experience: ReturnType<typeof toExperience>,
+  minutes: number
+): WorkoutDay[] {
+  return balanceWeekVolume(
+    refitSessionsToTime(workouts, goal, experience, minutes),
+    goal,
+    experience,
+    minutes
+  ).map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),
+  }));
 }
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
@@ -474,6 +544,8 @@ function buildProfileUpdates(
     preferredSplit: input.preferredSplit,
     program: { goal: input.nutritionPhase },
   };
+  if (input.sessionMinutes !== undefined)
+    updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;
   if (input.runTimeLimits !== undefined)
@@ -579,7 +651,7 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
 
 export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
   const weekSchedule = buildWeekSchedule(input);
-  const { splitType, workouts } = buildLiftProgram(input);
+  const { splitType, workouts, sessionMinutes } = buildLiftProgram(input);
   const { runDays, runPlan } = buildRunPlan(input, weekSchedule);
   const profileUpdates = buildProfileUpdates(input, weekSchedule);
 
@@ -633,6 +705,8 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     // ProgramState is constructed, so making the pair un-driftable here
     // means no future caller can reintroduce the drift by forgetting.
     primaryGoal: carriedBlock ? carriedBlock.focus : input.primaryGoal,
+    // Lift4 (5): named for the same reason as the block above.
+    ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
     // D1: the lift-week calendar anchor. Same no-merge reasoning as the block
     // above — unnamed here means deleted on every settings save, which would

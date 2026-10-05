@@ -34,6 +34,8 @@
  */
 
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
+import { restSecondsFor, type RestContext } from "./restTime";
+import { warmupSetCounts } from "./warmupRamp";
 
 /** The time-budgeted express variants this module builds. */
 export type ExpressVariant = "express45" | "express30";
@@ -97,53 +99,69 @@ export interface ExpressPlan {
 }
 
 /**
- * Time a session will actually take, in minutes.
+ * Time a session will actually take, in minutes: the app's own estimator,
+ * which the plan is also built to fit (Lift4 (5)).
  *
- * The previous model was `totalWorkingSets × 2.5` and nothing else. It
- * omitted three real costs, which is why the operator reported sessions
- * estimated at ~20 minutes running an hour or more:
+ * Working sets alone undercount it badly, which is why sessions estimated at
+ * ~20 minutes used to run an hour or more. Three more costs are real:
  *
- *   - WARM-UP SETS. `warmupRamp` generates 1-3 ramp sets for every loaded
- *     exercise and the logger shows them as "W" rows, so the user performs
- *     them — but the estimate counted none of them.
- *   - REST. 2.5 min/set is a blend that only holds at one rest length. A
- *     lift prescribing `restSeconds: 180` costs nearly twice a lift resting
- *     60s, and the model could not tell them apart.
+ *   - WARM-UP SETS. The session puts a ramp before the first loaded lift
+ *     for each body part (`warmupSetCounts`, the same rows
+ *     `buildInitialSetLogs` adds), and the lifter performs them.
+ *   - REST. The rest the session's timer actually runs (`restSecondsFor`):
+ *     the person's fixed rest, or the plan's by role and reps, shorter in a
+ *     plan built for 30 minutes. A 3-minute rest costs nearly twice a
+ *     75-second one.
  *   - SETUP. Walking to the rack, loading plates, adjusting a machine.
  *     Small per exercise, but it is per EXERCISE, so a 6-lift day pays it
  *     six times.
- *
- * Constants come from what the app itself prescribes, not from invented
- * numbers: the logger's own rest default and rest options, and the ramp
- * `warmupRamp` actually emits.
  */
 
 /** Executing one working set — the reps themselves, plus racking. */
 const WORK_SECONDS_PER_SET = 45;
-/** Rest when the exercise prescribes none — the logger's own default. */
-const DEFAULT_REST_SECONDS = 90;
 /** A warm-up set is light and briefly rested; it is not free. */
 const WARMUP_SECONDS_PER_SET = 60;
 /** Getting to the equipment and setting it up, once per exercise. */
 const SETUP_SECONDS_PER_EXERCISE = 90;
 
+/** What pricing a session reads of each exercise. */
+export type PricedExercise = Pick<ProgramExercise, "sets"> &
+  Partial<
+    Pick<
+      ProgramExercise,
+      | "exerciseId"
+      | "reps"
+      | "weight"
+      | "restSeconds"
+      | "isAccessory"
+      | "repUnit"
+      | "movementCategory"
+    >
+  >;
+
 export function estimateSessionMinutes(
-  exercises: ReadonlyArray<
-    Pick<ProgramExercise, "sets"> &
-      Partial<Pick<ProgramExercise, "restSeconds" | "weight" | "exerciseId">>
-  >
+  exercises: ReadonlyArray<PricedExercise>,
+  rest: RestContext = {}
 ): number {
-  const seconds = exercises.reduce((total, ex) => {
-    const rest = ex.restSeconds ?? DEFAULT_REST_SECONDS;
-    const working = ex.sets * (WORK_SECONDS_PER_SET + rest);
-    // Loaded lifts ramp; bodyweight and uncalibrated ones do not (the same
-    // condition `warmupRamp` itself applies). Counted as a flat 2 rather
-    // than by calling warmupRamp, so this stays a pure function of the
-    // prescription and does not need the catalogue.
-    const warmup = (ex.weight ?? 0) > 0 ? 2 * WARMUP_SECONDS_PER_SET : 0;
+  return Math.round(estimateSessionSeconds(exercises, rest) / 60);
+}
+
+/** The same estimate in seconds, unrounded: what a plan is fitted against
+ *  (`sessionFit.ts`), so a 30½-minute day doesn't read as 30. */
+export function estimateSessionSeconds(
+  exercises: ReadonlyArray<PricedExercise>,
+  rest: RestContext = {}
+): number {
+  const warmups = warmupSetCounts(exercises);
+  return exercises.reduce((total, ex, i) => {
+    const restSeconds = restSecondsFor(
+      { ...ex, exerciseId: ex.exerciseId ?? "", reps: ex.reps ?? 8 },
+      rest
+    );
+    const working = ex.sets * (WORK_SECONDS_PER_SET + restSeconds);
+    const warmup = warmups[i] * WARMUP_SECONDS_PER_SET;
     return total + SETUP_SECONDS_PER_EXERCISE + warmup + working;
   }, 0);
-  return Math.round(seconds / 60);
 }
 
 function isAccessoryExercise(ex: ProgramExercise): boolean {
@@ -157,7 +175,9 @@ function isAccessoryExercise(ex: ProgramExercise): boolean {
  */
 export function buildExpressSession(
   day: WorkoutDay,
-  variant: "full" | ExpressVariant
+  variant: "full" | ExpressVariant,
+  /** Prices the label's estimate; the trim itself counts sets. */
+  rest: RestContext = {}
 ): ExpressPlan {
   // Fresh objects throughout — the caller feeds this straight into the
   // live session, which must never alias the stored programme state.
@@ -167,7 +187,10 @@ export function buildExpressSession(
   const finish = (): ExpressPlan => ({
     variant,
     exercises: items.map((it) => it.ex),
-    estimatedMinutes: estimateSessionMinutes(items.map((it) => it.ex)),
+    estimatedMinutes: estimateSessionMinutes(
+      items.map((it) => it.ex),
+      rest
+    ),
     trim,
   });
 

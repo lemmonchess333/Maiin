@@ -56,6 +56,7 @@ import {
   estimateSessionMinutes,
   type SessionVariant,
 } from "@/features/program/expressSession";
+import type { RestContext } from "@/features/program/restTime";
 import {
   buildEasierSession,
   pickLighterDay,
@@ -604,8 +605,8 @@ function ProgramInner() {
   }, [selectedDayIndex]);
 
   // Home's Today card links here with `?day=N&start=1` (DS3): Start on Home
-  // begins the session. Begin it the way this page's own Start does (the
-  // usual session time when one is set), once, then drop `start` from the
+  // begins the session. Begin it the way this page's own Start does, once,
+  // then drop `start` from the
   // URL so a refresh or a back navigation lands on the day instead of
   // starting it again. A finished or skipped day just opens. N is the day
   // Home showed, which can differ from this page's rotation cursor
@@ -625,9 +626,13 @@ function ProgramInner() {
     if (viewingHistoryIndex !== null || urlDay === null) return;
     const day = programState.workouts[urlDay];
     if (!day || day.completed || day.skipped) return;
-    const budget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-      ? profile!.liftTimeBudgetMinutes!
-      : null;
+    // A plan built to fit the person's time (Lift4 (5)) starts in full; one
+    // built before that still trims to their usual time at Start.
+    const budget =
+      programState.sessionMinutes === undefined &&
+      isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+        ? profile!.liftTimeBudgetMinutes!
+        : null;
     /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
        to the deep link, consumed above so it cannot repeat */
     setSessionBudgetMinutes(budget ?? 60);
@@ -731,20 +736,30 @@ function ProgramInner() {
     })
   );
 
-  // Session metadata
-  const usualBudget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-    ? profile.liftTimeBudgetMinutes
-    : null;
+  // Session metadata. Every estimate here prices the rests the session's
+  // timer will run (`restSecondsFor`): the person's fixed rest, or the
+  // plan's, shorter in a plan built for 30 minutes.
+  const restContext: RestContext = {
+    fixedRest: profile?.defaultRestSeconds,
+    sessionMinutes: programState.sessionMinutes,
+  };
+  // The trim at Start retires with plans built to fit the time (Lift4 (5)):
+  // only a plan from before then still trims to the person's usual time.
+  const usualBudget =
+    programState.sessionMinutes === undefined &&
+    isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+      ? profile.liftTimeBudgetMinutes
+      : null;
   const usualPlan =
     selectedWorkout && usualBudget !== null
-      ? buildTimeBudgetSession(selectedWorkout, usualBudget)
+      ? buildTimeBudgetSession(selectedWorkout, usualBudget, restContext)
       : null;
   // Was an inline copy of the old sets x 2.5 formula. A second copy of a
   // shared rule is the drift this repo keeps paying for — and it would now
   // disagree with the chooser sheet on the same screen.
   const estimatedMinutes =
     usualPlan?.estimatedMinutes ??
-    estimateSessionMinutes(selectedWorkout?.exercises ?? []);
+    estimateSessionMinutes(selectedWorkout?.exercises ?? [], restContext);
 
   /* The session card's words and picture (DS3). "Pull — Lat Focus" set
      whole as a title broke at the dash on a phone, so the category joins
@@ -1350,7 +1365,7 @@ function ProgramInner() {
                             <p className="text-sm font-semibold text-foreground">
                               Go easier today ·{" "}
                               {summarizeEasier(
-                                buildEasierSession(selectedWorkout)
+                                buildEasierSession(selectedWorkout, restContext)
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -1781,6 +1796,7 @@ function ProgramInner() {
       {/* Pre-session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01) */}
       <ExpressSessionSheet
         timeBudgetMinutes={usualBudget}
+        rest={restContext}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1790,7 +1806,11 @@ function ProgramInner() {
         easierRecommendation={easierRecommendation}
         lighterDay={
           expressChooserDay !== null
-            ? pickLighterDay(programState.workouts, expressChooserDay)
+            ? pickLighterDay(
+                programState.workouts,
+                expressChooserDay,
+                restContext
+              )
             : null
         }
         blockPrefersShorter={blockPrefersShorterSessions(
@@ -1833,13 +1853,18 @@ function ProgramInner() {
             sessionVariant === "full"
               ? null
               : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay)
+                ? buildEasierSession(storedDay, restContext)
                 : sessionVariant === "time_budget"
-                  ? buildTimeBudgetSession(storedDay, sessionBudgetMinutes)
-                  : buildExpressSession(storedDay, sessionVariant);
+                  ? buildTimeBudgetSession(
+                      storedDay,
+                      sessionBudgetMinutes,
+                      restContext
+                    )
+                  : buildExpressSession(storedDay, sessionVariant, restContext);
           return (
             <WorkoutSession
               deloadWeek={programState.currentPhase === "deload"}
+              sessionMinutes={programState.sessionMinutes}
               day={
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }

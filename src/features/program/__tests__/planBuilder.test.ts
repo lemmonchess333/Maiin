@@ -794,6 +794,82 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
   });
 });
 
+/* ─── Lift4 (5) · plans fit the session length ──────────────────── */
+describe("buildPlan · sessions fit the time the person has (Lift4 (5))", () => {
+  const sets = (plan: ReturnType<typeof buildPlan>) =>
+    plan.programState.workouts.map((d) => d.exercises.map((e) => e.sets));
+  const total = (plan: ReturnType<typeof buildPlan>) =>
+    sets(plan)
+      .flat()
+      .reduce((n, s) => n + s, 0);
+
+  it("fits a new plan to the answer, an hour when there is none", () => {
+    const half = buildPlan(makeInput({ sessionMinutes: 30 }));
+    const unanswered = buildPlan(makeInput());
+    expect(half.programState.sessionMinutes).toBe(30);
+    expect(unanswered.programState.sessionMinutes).toBe(60);
+    expect(total(half)).toBeLessThan(total(unanswered));
+    // The answer is kept with the plan it shaped.
+    expect(half.profileUpdates.liftTimeBudgetMinutes).toBe(30);
+    expect("liftTimeBudgetMinutes" in unanswered.profileUpdates).toBe(false);
+  });
+
+  it("re-fits the plan's sets, never its lifts, when a save changes the length", () => {
+    const first = buildPlan(makeInput({ sessionMinutes: 75 }));
+    const edited = buildPlan(
+      makeInput({
+        sessionMinutes: 30,
+        previousSessionMinutes: 75,
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    const ids = (plan: ReturnType<typeof buildPlan>) =>
+      plan.programState.workouts.map((d) =>
+        d.exercises.map((e) => e.exerciseId)
+      );
+    expect(ids(edited)).toEqual(ids(first));
+    expect(total(edited)).toBeLessThan(total(first));
+    expect(edited.programState.sessionMinutes).toBe(30);
+    // …and back again gives the sets back.
+    const back = buildPlan(
+      makeInput({
+        sessionMinutes: 75,
+        previousSessionMinutes: 30,
+        existingState: edited.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(sets(back)).toEqual(sets(first));
+  });
+
+  it("keeps the sets, and the length the plan was fitted to, on any other save", () => {
+    const first = buildPlan(makeInput({ sessionMinutes: 45 }));
+    const later = buildPlan(
+      makeInput({
+        sessionMinutes: 45,
+        previousSessionMinutes: 45,
+        nutritionPhase: "cut",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(sets(later)).toEqual(sets(first));
+    expect(later.programState.sessionMinutes).toBe(45);
+    // A plan from before plans were fitted stays unfitted until asked.
+    const { sessionMinutes: _drop, ...legacy } = first.programState;
+    const kept = buildPlan(
+      makeInput({
+        sessionMinutes: 60,
+        previousSessionMinutes: 60,
+        existingState: legacy,
+        preserveHistory: true,
+      })
+    );
+    expect(kept.programState.sessionMinutes).toBeUndefined();
+  });
+});
+
 describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", () => {
   // Week of Monday 28 September 2026.
   it("is this week for a Monday-to-Wednesday start", () => {

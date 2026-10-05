@@ -37,6 +37,7 @@
 
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 import { estimateSessionMinutes, type ExpressPlan } from "./expressSession";
+import type { RestContext } from "./restTime";
 import { primaryCanonicalForExercise } from "./volumeModel";
 import type { MuscleRecoveryEntry } from "@/lib/muscleRecovery";
 
@@ -71,7 +72,11 @@ export interface EasierPlan extends Omit<ExpressPlan, "trim"> {
  * deterministic; the input day is never mutated — the caller feeds the
  * clone into the live session exactly like an Express plan.
  */
-export function buildEasierSession(day: WorkoutDay): EasierPlan {
+export function buildEasierSession(
+  day: WorkoutDay,
+  /** Prices the estimate as the session's timer will rest. */
+  rest: RestContext = {}
+): EasierPlan {
   const adjustments: EasierAdjustments = { setsReduced: 0, loadsReduced: 0 };
   const exercises: ProgramExercise[] = day.exercises.map((ex) => {
     const floor =
@@ -87,7 +92,7 @@ export function buildEasierSession(day: WorkoutDay): EasierPlan {
   return {
     variant: "easier_today",
     exercises,
-    estimatedMinutes: estimateSessionMinutes(exercises),
+    estimatedMinutes: estimateSessionMinutes(exercises, rest),
     adjustments,
   };
 }
@@ -221,16 +226,17 @@ export interface LighterDaySwap {
  */
 export function pickLighterDay(
   days: readonly WorkoutDay[],
-  todayIndex: number
+  todayIndex: number,
+  rest: RestContext = {}
 ): LighterDaySwap | null {
   const today = days[todayIndex];
   if (!today) return null;
-  const todayMinutes = estimateSessionMinutes(today.exercises);
+  const todayMinutes = estimateSessionMinutes(today.exercises, rest);
   let best: LighterDaySwap | null = null;
   days.forEach((day, index) => {
     if (index === todayIndex || day.completed) return;
     if (!day.exercises || day.exercises.length === 0) return;
-    const minutes = estimateSessionMinutes(day.exercises);
+    const minutes = estimateSessionMinutes(day.exercises, rest);
     // "Meaningfully lighter": at least 15% fewer estimated minutes.
     // Marginal differences would make the option noise, not relief.
     if (minutes >= todayMinutes * 0.85) return;

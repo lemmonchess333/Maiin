@@ -50,11 +50,13 @@ function day(exercises: ProgramExercise[]): WorkoutDay {
   return { dayName: "Push", dayType: "push", exercises, completed: false };
 }
 
-/** 2 compounds (4 sets) + 3 accessories (3 sets each) = 17 sets.
- *  Under the rest-aware model (2026-08-04) that is ~56 min, not the ~43 the
- *  old `sets × 2.5` blend reported: 5 exercises × (90s setup + 2×60s warm-up)
- *  + 17 × (45s work + 90s rest). The old number omitted warm-ups and setup
- *  entirely, which is why estimates read ~20 min for hour-long sessions. */
+/** 2 compounds (4 sets) + 3 accessories (3 sets each) = 17 sets, ~61 min:
+ *  5 × 90s setup, a 3-set ramp before the first lift (one body part: every
+ *  fixture lift is a horizontal push), and each set's 45s of work plus the
+ *  rest its role takes — 150s for a main lift of 8 reps, 120s for another
+ *  compound (`restTime.ts`). `sets × 2.5` reported ~43 and omitted warm-ups
+ *  and setup entirely, which is why estimates read ~20 min for hour-long
+ *  sessions. */
 function typicalPushDay(): WorkoutDay {
   return day([
     ex("Bench Press", 4, false),
@@ -67,8 +69,19 @@ function typicalPushDay(): WorkoutDay {
 
 describe("estimateSessionMinutes", () => {
   it("counts warm-ups, rest and per-exercise setup — not just working sets", () => {
-    // 5 × 90s setup + 5 × 2 × 60s warm-up + 17 × (45s + 90s) = 3345s = 56 min.
-    expect(estimateSessionMinutes(typicalPushDay().exercises)).toBe(56);
+    // 5 × 90s setup + 3 × 60s warm-up + 8 × (45s + 150s)
+    //   + 9 × (45s + 120s) = 3675s ≈ 61 min.
+    expect(estimateSessionMinutes(typicalPushDay().exercises)).toBe(61);
+  });
+
+  it("prices the rest the session's timer runs", () => {
+    const d = typicalPushDay().exercises;
+    // A fixed 60s rest: 450 + 180 + 17 × 105 = 2415s ≈ 40 min.
+    expect(estimateSessionMinutes(d, { fixedRest: 60 })).toBe(40);
+    // A plan built for 30 minutes rests less: 90s mains and compounds.
+    expect(estimateSessionMinutes(d, { sessionMinutes: 30 })).toBeLessThan(
+      estimateSessionMinutes(d)
+    );
   });
 
   it("honours a per-exercise rest prescription", () => {
@@ -84,8 +97,9 @@ describe("estimateSessionMinutes", () => {
 
   it("charges no warm-up ramp to a bodyweight/uncalibrated lift", () => {
     // Mirrors warmupRamp's own condition — it returns [] for weight <= 0.
-    const loaded = estimateSessionMinutes([{ sets: 3, weight: 60 }]);
-    const bodyweight = estimateSessionMinutes([{ sets: 3, weight: 0 }]);
+    const lift = { sets: 3, movementCategory: "horizontal_push" } as const;
+    const loaded = estimateSessionMinutes([{ ...lift, weight: 60 }]);
+    const bodyweight = estimateSessionMinutes([{ ...lift, weight: 0 }]);
     expect(loaded).toBeGreaterThan(bodyweight);
   });
 });
@@ -98,7 +112,7 @@ describe("buildExpressSession — full", () => {
     expect(plan.exercises.map((e) => e.sets)).toEqual([4, 4, 3, 3, 3]);
     expect(plan.trim.droppedExercises).toEqual([]);
     expect(plan.trim.reducedSets).toEqual([]);
-    expect(plan.estimatedMinutes).toBe(56);
+    expect(plan.estimatedMinutes).toBe(61);
   });
 });
 
@@ -157,11 +171,10 @@ describe("buildExpressSession — trimming policy", () => {
   });
 
   it("reduces accessory sets (floor 2) before touching compounds", () => {
-    // The TRIM POLICY is what this test is about, and it is unchanged by
-    // the 2026-08-04 rest-aware estimate: drop the last accessory whole,
-    // then reduce the remaining accessory 5→4, compounds untouched. Only
-    // the absolute minute figure moved (30 → 38) because warm-ups, rest
-    // and per-exercise setup are now counted.
+    // The TRIM POLICY is what this test is about, and it counts sets: drop
+    // the last accessory whole, then reduce the remaining accessory 5→4,
+    // compounds untouched. The minutes are the estimator's, which counts
+    // warm-ups, the rest each role takes and per-exercise setup.
     const d = day([
       ex("Bench Press", 4, false),
       ex("Overhead Press", 4, false),
@@ -174,7 +187,7 @@ describe("buildExpressSession — trimming policy", () => {
       { name: "Cable Fly", from: 5, to: 4 },
     ]);
     expect(plan.exercises.map((e) => e.sets)).toEqual([4, 4, 4]);
-    expect(plan.estimatedMinutes).toBe(38);
+    expect(plan.estimatedMinutes).toBe(45);
     for (const e of plan.exercises.filter((e) => e.isAccessory)) {
       expect(e.sets).toBeGreaterThanOrEqual(ACCESSORY_MIN_SETS);
     }
@@ -184,7 +197,7 @@ describe("buildExpressSession — trimming policy", () => {
     // Floors bind: anchor keeps 5 sets, the other five drop to the
     // compound floor of 3 = 20 working sets. The point of the test is that
     // the plan SURFACES the real estimate rather than pretending to fit —
-    // which matters more now the estimate is honest (66 min, not 50).
+    // which matters more now the estimate is honest (77 min, not 50).
     const d = day([
       ex("A", 5, false),
       ex("B", 5, false),
@@ -196,7 +209,7 @@ describe("buildExpressSession — trimming policy", () => {
     const plan = buildExpressSession(d, "express30");
     expect(plan.exercises).toHaveLength(6);
     expect(plan.exercises[0].sets).toBe(5);
-    expect(plan.estimatedMinutes).toBe(66);
+    expect(plan.estimatedMinutes).toBe(77);
     expect(plan.estimatedMinutes).toBeGreaterThan(30);
   });
 

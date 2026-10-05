@@ -27,12 +27,11 @@ import {
   recoveryTargets,
 } from "./recoveryTrigger";
 import {
-  balanceWeeklyVolume,
   balancePushPull,
-  fitSessionsToBudget,
   judgementLandmark,
   reconcileToLandmarks,
 } from "./volumeModel";
+import { fitSessionsToTime, sessionFits } from "./sessionFit";
 import {
   seedStartingLoads,
   weightAfterExerciseSwap,
@@ -58,7 +57,11 @@ import {
   orderForAdjacency,
   surplusExposures,
 } from "./overlapModel";
-import { applyComplexityGate, usesUndulation } from "./experienceModel";
+import {
+  applyComplexityGate,
+  toExperience,
+  usesUndulation,
+} from "./experienceModel";
 import { mainRepAnchor, roleRepsFor } from "./roleTable";
 import { nextUpIndex } from "./nextUpCursor";
 import {
@@ -1611,6 +1614,35 @@ function applyRoleTable(
 }
 
 /**
+ * The week's volume passes, once its sessions fit their time (Lift4 (5)).
+ * The weekly bands are only a ceiling, in two tiers (a beginner's, everyone
+ * else's). ADR-0010's staged condition, landed with the SECONDARY_SET_WEIGHT
+ * 1:1 flip, runs reconcile → balance → reconcile:
+ *   1. shrink what the builders over-authored (the ceilings' authority);
+ *   2. D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance),
+ *      adding only inside what each session fits;
+ *   3. a second reconcile polices anything the adds re-inflated (at 1:1 an
+ *      add credits every secondary too).
+ * Shared by a new plan and a plan re-fitted to a new session length, so the
+ * two come out alike.
+ */
+export function balanceWeekVolume(
+  workouts: WorkoutDay[],
+  goal: PrimaryGoal | undefined,
+  experience: Experience | undefined,
+  minutes: number
+): WorkoutDay[] {
+  const ceiling = (m: Parameters<typeof judgementLandmark>[1]) =>
+    judgementLandmark(goal, m, toExperience(experience));
+  const balanced = balancePushPull(
+    reconcileToLandmarks(workouts, ceiling),
+    ceiling,
+    (exercises) => sessionFits(exercises, minutes)
+  );
+  return reconcileToLandmarks(balanced, ceiling);
+}
+
+/**
  * Carry a user's accessories through a regenerate (backlog #17).
  *
  * `makeAccessory` takes no `existing` — unlike `makeExercise` — so it re-rolls
@@ -1780,7 +1812,13 @@ export function generateProgram(
    * the intermediate programme for an unrelated reason. Absent → intermediate,
    * which is the behaviour every caller had before this existed.
    */
-  experience?: Experience
+  experience?: Experience,
+  /**
+   * The session length the plan is built for (Lift4 (5), `sessionFit.ts`):
+   * each session is cut to fit it. Every plan build passes one
+   * (`sessionMinutesFor`); absent, only the 18-set ceiling applies.
+   */
+  sessionMinutes?: number
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -2016,41 +2054,22 @@ export function generateProgram(
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
   workouts = applyRoleTable(workouts, primaryGoal, experience);
   workouts = applyDayRoles(workouts, experience);
-  workouts = fitSessionsToBudget(workouts);
-  // ADR-0010's staged condition, landed with the SECONDARY_SET_WEIGHT 1:1
-  // flip. The volume passes run reconcile → balance → reconcile:
-  //   1. shrink what the builders over-authored (the ceilings' authority);
-  //   2. the add-only balancers top up under-floor muscles — including the
-  //      secondary credit the first pass's cuts drained — inside the freed
-  //      session budget;
-  //   3. a second reconcile polices anything the adds re-inflated (at 1:1 an
-  //      add credits every secondary too). Measured 2026-08-03: running the
-  //      reconciler only before the balancers left re-inflation standing,
-  //      only after left 44 under-floor readings the balancer never saw.
-  workouts = reconcileToLandmarks(workouts, (m) =>
-    judgementLandmark(primaryGoal, m)
-  );
-  // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
-  // landmark by growing their accessories (add-only, mains untouched).
-  workouts = balanceWeeklyVolume(workouts, (m) =>
-    judgementLandmark(primaryGoal, m)
-  );
-  // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
-  workouts = balancePushPull(workouts, (m) =>
-    judgementLandmark(primaryGoal, m)
-  );
-  workouts = reconcileToLandmarks(workouts, (m) =>
-    judgementLandmark(primaryGoal, m)
-  );
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
-  // (no-op without a load context, or for lifts with logged history). Runs
-  // last so it also calibrates whatever the caps above re-pointed.
+  // (no-op without a load context, or for lifts with logged history). After
+  // every pass that settles who is where, so it calibrates whatever the caps
+  // above re-pointed, and before the time fit, which prices each lift's
+  // warm-up from its load.
   if (loadCtx)
     workouts = seedStartingLoads(
       workouts,
       loadCtx,
       mainRepAnchor(primaryGoal, experience)
     );
+  // Lift4 (5): time decides the volume. Each session is cut to the minutes
+  // the person has (`sessionFit.ts`), then the week is balanced inside them.
+  const minutes = sessionMinutes ?? Number.POSITIVE_INFINITY;
+  workouts = fitSessionsToTime(workouts, minutes);
+  workouts = balanceWeekVolume(workouts, primaryGoal, experience, minutes);
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.

@@ -71,6 +71,7 @@ import {
 import { revertRecoverySession } from "./recoveryTrigger";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
+import { sessionMinutesFor } from "./sessionFit";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
@@ -711,7 +712,8 @@ export function useProgram() {
           // the two that load the same lower back. Read-only — this does not
           // date-pin lifts (ADR-0002).
           profile.weekSchedule,
-          toExperience(profile.experience)
+          toExperience(profile.experience),
+          sessionMinutesFor(profile.liftTimeBudgetMinutes)
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -743,6 +745,8 @@ export function useProgram() {
           ...(profile.primaryGoal !== undefined && {
             primaryGoal: profile.primaryGoal,
           }),
+          // Lift4 (5): the session length the workouts were fitted to.
+          sessionMinutes: sessionMinutesFor(profile.liftTimeBudgetMinutes),
           currentPhase: "base",
           weekNumber: 1,
           splitType,
@@ -2265,7 +2269,8 @@ export function useProgram() {
           primaryGoal,
           loadContextFrom(profile),
           overrides?.weekSchedule ?? profile.weekSchedule,
-          toExperience(profile.experience)
+          toExperience(profile.experience),
+          sessionMinutesFor(profile.liftTimeBudgetMinutes)
         );
 
         // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
@@ -2306,6 +2311,8 @@ export function useProgram() {
           // Goal change / Refresh, even for a hypertrophy or strength
           // user.
           ...(primaryGoal !== undefined && { primaryGoal }),
+          // Lift4 (5): the session length the workouts were fitted to.
+          sessionMinutes: sessionMinutesFor(profile.liftTimeBudgetMinutes),
           currentPhase: "base",
           weekNumber: 1,
           splitType,

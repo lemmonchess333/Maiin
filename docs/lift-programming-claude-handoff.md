@@ -245,6 +245,24 @@ equipment or injury swap brings in still keeps its slot's numbers; giving it
 its own role's numbers, and fitting the plan to the session length, are the
 next parts of step 4.
 
+STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
+session length. A new plan's sessions are cut to the minutes the person has
+(`sessionFit.ts`; an hour when the question was never answered), priced with
+the app's own estimator, which now counts the warm-up sets the session puts
+before each body part's first loaded lift and the rest its timer runs: the
+person's fixed rest, or the plan's by role and reps. A plan built for 30
+minutes rests less. What doesn't fit goes in this order: isolations' sets to
+two, other compounds' sets to two, isolations, main lifts' sets to two, other
+compounds. A muscle's last direct lift in the week stays while anything else
+can give way, and a main lift is never dropped. The weekly bands are only a
+ceiling now, in two tiers (a beginner's are two thirds of everyone else's):
+the floor-chasing top-up (`balanceWeeklyVolume`) retired, and the push/pull
+balancer adds only inside what a session fits. A settings save that changes
+the session length re-fits the plan's sets and nothing else. The plan records
+the length it was fitted to (`programState.sessionMinutes`, on the server's
+allow-list), and Start trims only a plan from before this. The question on
+the days step and the settings control come next.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

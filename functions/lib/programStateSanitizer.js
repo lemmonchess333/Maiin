@@ -43,6 +43,9 @@ const PROGRAM_STATE_KEYS = new Set([
   "manualCompletions",
   "pendingFellBehindPrompt",
   "primaryGoal",
+  // Lift4 (5): the session length the plan was fitted to. Listed before
+  // the client writes it, for the reason trainingBlock's entry gives.
+  "sessionMinutes",
   // Backlog #9 (Helms H5): the adjustment rule's second-order memory.
   // `advanceWeek` emits it UNCONDITIONALLY (programEngine.ts, in the return
   // literal), so every user who has ever rolled a week carries it — and

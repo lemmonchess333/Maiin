@@ -210,18 +210,53 @@ export function toCompletionSetLogs<
  * category) would warm up a horizontal AND a vertical press for the same
  * shoulders. Unattributable lifts (cardio/whole-body) never ramp.
  */
-export function warmupTargets(exercises: ProgramExercise[]): boolean[] {
+export function warmupTargets(
+  exercises: ReadonlyArray<WarmupInput>
+): boolean[] {
   const seen = new Set<string>();
   return exercises.map((ex) => {
     if (
-      warmupRamp(ex.weight, getExerciseById(ex.exerciseId)?.equipment)
-        .length === 0
+      warmupRamp(
+        ex.weight ?? 0,
+        getExerciseById(ex.exerciseId ?? "")?.equipment
+      ).length === 0
     ) {
       return false;
     }
-    const muscle = primaryCanonicalForExercise(ex);
+    const muscle = primaryCanonicalForExercise({
+      exerciseId: ex.exerciseId ?? "",
+      movementCategory: ex.movementCategory,
+    });
     if (!muscle || seen.has(muscle)) return false;
     seen.add(muscle);
     return true;
   });
+}
+
+/** What the ramp reads of an exercise. */
+type WarmupInput = Partial<
+  Pick<
+    ProgramExercise,
+    "exerciseId" | "weight" | "reps" | "repUnit" | "movementCategory"
+  >
+>;
+
+/**
+ * How many warm-up sets each exercise gets in a session: the rows
+ * `buildInitialSetLogs` puts before its working sets, which the session's
+ * time estimate has to count.
+ */
+export function warmupSetCounts(
+  exercises: ReadonlyArray<WarmupInput>
+): number[] {
+  const ramps = warmupTargets(exercises);
+  return exercises.map((ex, i) =>
+    ramps[i]
+      ? warmupRamp(
+          ex.weight ?? 0,
+          getExerciseById(ex.exerciseId ?? "")?.equipment,
+          ex.repUnit === "seconds" ? undefined : ex.reps
+        ).length
+      : 0
+  );
 }

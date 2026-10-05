@@ -8,13 +8,14 @@
  * to be the more useful statement:
  *
  *   week   total  main  accessory   currentPhase
- *      5      55    24         31   progression
- *      6      68    24         44   progression
- *      7      79    24         55   progression
- *      8      47    16         31   deload
+ *      5      52    24         28   progression
+ *      6      65    24         41   progression
+ *      7      77    24         53   progression
+ *      8      44    16         28   deload
  *
  * (Measured again 2026-10-05, when the role table (Lift4 (5)) gave every
- * main lift three sets; the shape is unchanged.)
+ * main lift three sets and the floor-chasing top-up retired; the shape is
+ * unchanged.)
  *
  * …and then those same four numbers again, unchanged, through week 24. A
  * lifter who trains every session and hits every target has EXACTLY the set
@@ -154,7 +155,7 @@ describe("weekly set volume over six mesocycles", () => {
        yet — every cycle after it starts from the anchor. */
     const cycle = (start: number) =>
       [0, 1, 2, 3].map((i) => at(start + i).total);
-    expect(cycle(5)).toEqual([55, 68, 79, 47]);
+    expect(cycle(5)).toEqual([52, 65, 77, 44]);
     for (const start of [9, 13, 17, 21]) {
       expect(cycle(start), `mesocycle starting at week ${start}`).toEqual(
         cycle(5)

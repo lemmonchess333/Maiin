@@ -195,6 +195,9 @@ interface Props {
   /** Backlog #4: true during a step-back (deload) week — the effort cue
    *  under the set counter switches to the step-back line. */
   deloadWeek?: boolean;
+  /** The session length the plan is built for
+   *  (`programState.sessionMinutes`): a 30-minute plan rests less. */
+  sessionMinutes?: number;
   progressionBaseline?: ProgramExercise[];
   programmeContext?: ProgrammeCompletionContext;
   /** Saves the session (`completeLift`) and hands back its receipt. */
@@ -217,6 +220,7 @@ export default function WorkoutSession({
   draftEpoch,
   sessionVariant,
   deloadWeek = false,
+  sessionMinutes,
   progressionBaseline,
   programmeContext,
   onCompleteDay,
@@ -532,7 +536,8 @@ export default function WorkoutSession({
   const formatElapsed = formatClock;
 
   // Rest timer: the rest fixed in Settings → Workout preferences, or the
-  // plan's suggestion by role and reps (`restSecondsFor`, Lift4 (5)).
+  // plan's suggestion by role and reps, shorter in a plan built for 30
+  // minutes (`restSecondsFor`, Lift4 (5)).
   const fixedRest =
     typeof profile?.defaultRestSeconds === "number"
       ? profile.defaultRestSeconds
@@ -740,14 +745,14 @@ export default function WorkoutSession({
         id: ++restSequence.current,
         startedAt: Date.now(),
         target: exercise
-          ? restSecondsFor(exercise, fixedRest)
+          ? restSecondsFor(exercise, { fixedRest, sessionMinutes })
           : fixedRest && fixedRest > 0
             ? fixedRest
             : DEFAULT_REST_SECONDS,
       });
       haptic(50);
     },
-    [fixedRest]
+    [fixedRest, sessionMinutes]
   );
 
   const stopRest = useCallback(() => setRest(null), []);

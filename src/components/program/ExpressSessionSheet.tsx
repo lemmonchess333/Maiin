@@ -46,9 +46,12 @@ import {
   type LighterDaySwap,
 } from "@/features/program/easierToday";
 import type { WorkoutDay } from "@/features/program/programTypes";
+import type { RestContext } from "@/features/program/restTime";
 
 interface ExpressSessionSheetProps {
   timeBudgetMinutes?: number | null;
+  /** How the session's timer will rest, so each estimate prices it. */
+  rest?: RestContext;
   open: boolean;
   day: WorkoutDay | null;
   /** Pure recommendation computed by the caller from existing signals
@@ -84,6 +87,7 @@ export default function ExpressSessionSheet({
   onSwapToDay,
   blockPrefersShorter = false,
   timeBudgetMinutes,
+  rest = {},
 }: ExpressSessionSheetProps) {
   if (!day) return null;
 
@@ -96,12 +100,12 @@ export default function ExpressSessionSheet({
     if (variant === "full") {
       return {
         id: "full",
-        label: `Full session · ~${estimateSessionMinutes(day.exercises)} min`,
+        label: `Full session · ~${estimateSessionMinutes(day.exercises, rest)} min`,
         variant: promote ? "secondary" : "primary",
         onSelect: async () => onStart("full"),
       };
     }
-    const plan = buildExpressSession(day, variant);
+    const plan = buildExpressSession(day, variant, rest);
     const minutes = variant === "express45" ? 45 : 30;
     const promoted = promote && variant === "express30";
     return {
@@ -116,7 +120,7 @@ export default function ExpressSessionSheet({
   });
 
   if (isLiftTimeBudget(timeBudgetMinutes)) {
-    const usual = buildTimeBudgetSession(day, timeBudgetMinutes);
+    const usual = buildTimeBudgetSession(day, timeBudgetMinutes, rest);
     choices.forEach((choice) => {
       choice.variant = "secondary";
     });
@@ -130,7 +134,7 @@ export default function ExpressSessionSheet({
   }
 
   // Always offered (PROGRAM-ADAPT-01) — same exercises, reduced.
-  const easierPlan = buildEasierSession(day);
+  const easierPlan = buildEasierSession(day, rest);
   choices.push({
     id: "easier_today",
     label: `Easier today · ${summarizeEasier(easierPlan)}`,
