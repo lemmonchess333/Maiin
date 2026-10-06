@@ -550,10 +550,13 @@ export default function RunBottomSheet({
                 </p>
               </div>
 
-              {/* Distance + Pace */}
-              <div className="flex gap-12 items-end">
+              {/* Distance + Pace. The figures are px, so the gap is too:
+                  3rem doubled at large text and left pace a column one
+                  character wide on a 320pt screen. */}
+              <div className="flex gap-[48px] items-end">
                 <div className="text-center">
                   <p
+                    className="whitespace-nowrap"
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
@@ -577,6 +580,7 @@ export default function RunBottomSheet({
                 </div>
                 <div className="text-center">
                   <p
+                    className="whitespace-nowrap"
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
@@ -759,7 +763,7 @@ export default function RunBottomSheet({
                 is the correct posture for an active-run surface
                 where the user is moving and eyes are off-screen. */}
             {!isPaused ? (
-              <div className="flex items-center justify-center gap-10 flex-shrink-0">
+              <div className="flex items-center justify-center gap-[40px] flex-shrink-0">
                 {/* Lock */}
                 <RunControlButton
                   aria-label="Lock screen"
@@ -828,7 +832,7 @@ export default function RunBottomSheet({
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-12 flex-shrink-0">
+              <div className="flex items-center justify-center gap-[48px] flex-shrink-0">
                 <RunControlButton
                   aria-label="Stop run"
                   label="STOP"

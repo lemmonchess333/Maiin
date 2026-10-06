@@ -228,6 +228,15 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
       and note anything cut off or overlapping. Known and accepted: the
       day names under Train's week, and segmented-control labels at 2× on
       a 320px screen (Display Zoom on an SE or mini), end in "…".
+- [ ] **A workout and a run at large text** (2026-10-06). The lift
+      screen, the run screen before and during a run, Train's exercise
+      menu and Food's manual entry were measured the same way. At the
+      largest accessibility size, log a set and run for a minute. The set
+      table drops its "Previous" column under the set's figures ("Last
+      80 × 8"); the done tick, set badge and run controls stay their
+      designed size; a missing map says "Map unavailable" at the top
+      right. Known and accepted: at 2× on a 320px screen the "kg" and
+      "Reps" column headers run a little past their columns.
 - [ ] **Sign-up, setup and Pro at large text** (2026-10-06). The welcome
       screen, sign-in, sign-up, every setup step and the Pro offer and
       plans were measured the same way, down to 320px at 2×. With Larger
