@@ -1051,10 +1051,12 @@ export default function WorkoutSession({
       //
       // D3: this used to pass `set` unconditionally, so a lifter who finished
       // an exercise with a drop set or a back-off set logged
-      // `actualWeight < exercise.weight`, which `applyProgression` scores as a
-      // failure — every single session. Three sessions of that and the backoff
-      // cut the load 5%, indefinitely. The volume-PR check twenty lines above
-      // was already type-aware; the progression call was not.
+      // `actualWeight < exercise.weight`, which `applyProgression` then scored
+      // as a failure — every single session. Three sessions of that and the
+      // backoff cut the load 5%, indefinitely (now that the plan follows the
+      // load lifted, it would drop to the drop set's load instead). The
+      // volume-PR check twenty lines above was already type-aware; the
+      // progression call was not.
       //
       // Falling back to the last eligible WORKING set is the right answer
       // rather than skipping: the drop set is bonus volume after the top-end
@@ -1351,7 +1353,7 @@ export default function WorkoutSession({
   const anySetDone = setLogs.some((sets) => sets.some((set) => set.completed));
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)] safe-area-pb">
       <GuideHint
         id="first-set"
         layer="session"

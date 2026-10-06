@@ -9,8 +9,8 @@
  * excluded the auto-generated warm-up ramp, and SETS did not.
  *
  * This file exists because the screen had no test at all, which is how the
- * inconsistency survived — the same reason `stallDetection` and the weekly
- * volume card were untested when their bugs shipped.
+ * inconsistency survived — the same reason the old plateau detector and the
+ * weekly volume card were untested when their bugs shipped.
  */
 import { describe, it, expect, vi } from "vitest";
 import {

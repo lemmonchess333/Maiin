@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
 import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 
 /**
  * Run-Split contract, rebuilt for RUN-EV-02 (owner decision, P0): the
@@ -98,27 +106,52 @@ const baseProfile = {
   program: { goal: "recomp" },
 } as unknown as UserProfile;
 
-function renderPage(profile: UserProfile, path = "/settings/run-plan") {
+/** What `useProgram` hands the page. By default the programme has loaded
+ *  and there is none: `null` once "ready" is an account with no programme
+ *  document, which the save creates. */
+type Programme = {
+  readiness?: ProgramReadiness;
+  programState?: ProgramState | null;
+};
+
+function renderPage(
+  profile: UserProfile,
+  path = "/settings/run-plan",
+  programme: Programme = {}
+) {
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
   const onOpenFullSettings = vi.fn();
-  const { unmount } = render(
+  const page = ({ readiness = "ready", programState = null }: Programme) => (
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
         profile={profile}
-        programState={null}
+        programState={programState}
+        readiness={readiness}
         refreshProfile={refreshProfile}
         onOpenFullSettings={onOpenFullSettings}
       />
     </MemoryRouter>
   );
-  return { refreshProfile, onOpenFullSettings, unmount };
+  const { unmount, rerender } = render(page(programme));
+  return {
+    refreshProfile,
+    onOpenFullSettings,
+    unmount,
+    /** The programme arrives, as `useProgram` re-renders the page with it. */
+    load: (next: Programme) => rerender(page(next)),
+  };
 }
 
 type ConfigurePayload = {
+  baseProgramState?: unknown;
   profileUpdates: Record<string, unknown> & {
     raceGoal?: Record<string, unknown> | null;
   };
-  programState: { runDays?: { date: string }[]; runPlan?: unknown };
+  programState: {
+    runDays?: { date: string }[];
+    runPlan?: unknown;
+    weekNumber?: number;
+  };
   weekSchedule: { day: number; type: string }[];
 };
 
@@ -557,6 +590,105 @@ describe("RunPlanSettings", () => {
     expect(save).not.toHaveAttribute("aria-disabled");
     fireEvent.click(save);
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+  });
+
+  describe("Save waits for the programme it is built on", () => {
+    /* `useProgram` paints before the server has answered: `programState`
+       is null (or the cached copy) and `readiness` is "pending". Save was
+       live then, so a tap built a plan from no programme at all and sent
+       `baseProgramState: null`, which the server refuses as a conflict
+       whenever a programme exists ("Your programme changed. Reopen
+       settings…"). A capture spec that tapped Save as the page opened
+       found it. */
+    const LOADED = {
+      goal: "recomp",
+      currentPhase: "build",
+      weekNumber: 5,
+      splitType: "upper_lower",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: 1,
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+    } as unknown as ProgramState;
+
+    function setWeeklyGoal() {
+      fireEvent.change(
+        screen.getByRole("combobox", { name: "Weekly running goal" }),
+        { target: { value: "minutes" } }
+      );
+      fireEvent.change(screen.getByLabelText("Minutes per week"), {
+        target: { value: "120" },
+      });
+    }
+
+    it("a tap while it loads sends nothing; the same tap once it has loaded saves on it", async () => {
+      const page = renderPage(
+        { ...baseProfile, uid: "slow-programme" },
+        "/settings/run-plan",
+        { readiness: "pending" }
+      );
+      setWeeklyGoal();
+
+      // The anchor: the Save under test is on screen, named, and loading.
+      const waiting = screen.getByRole("button", { name: "Save run plan" });
+      expect(waiting).toHaveAttribute("aria-busy", "true");
+      expect(waiting).toBeDisabled();
+      fireEvent.click(waiting);
+      // Whatever the tap started has had its chance to land.
+      await act(async () => {});
+      expect(configureSpy).not.toHaveBeenCalled();
+
+      page.load({ readiness: "ready", programState: LOADED });
+      const save = screen.getByRole("button", { name: "Save run plan" });
+      expect(save).not.toHaveAttribute("aria-busy");
+      fireEvent.click(save);
+      await waitFor(() => expect(configureSpy).toHaveBeenCalled());
+      // One save, built on the programme that loaded and committed against
+      // it: its week carries over, where a plan from nothing starts at 1.
+      const payload = sentPayload();
+      expect(payload.baseProgramState).toEqual(LOADED);
+      expect(payload.programState.weekNumber).toBe(5);
+    });
+
+    it("a failed load says so in one line, and Save sends nothing", async () => {
+      renderPage(
+        { ...baseProfile, uid: "failed-programme" },
+        "/settings/run-plan",
+        { readiness: "failed" }
+      );
+      setWeeklyGoal();
+
+      const line = screen.getByText(
+        "Couldn't load your programme. Reopen this page to try again."
+      );
+      const save = screen.getByRole("button", { name: "Save run plan" });
+      expect(save).toHaveAccessibleDescription(line.textContent ?? "");
+      expect(save).toBeDisabled();
+      fireEvent.click(save);
+      await act(async () => {});
+      expect(configureSpy).not.toHaveBeenCalled();
+    });
+
+    it("an invalid field still points the way while it loads", () => {
+      /* The tap that reveals the field sends nothing, so it needs no
+         programme. Its label and focus move are the behaviour the long
+         comment above `invalid` keeps. */
+      renderPage(baseProfile, "/settings/run-plan", { readiness: "pending" });
+      fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+      fireEvent.change(screen.getByLabelText(/Target date/i), {
+        target: { value: RACE_TARGET_DATE },
+      });
+      const time = screen.getByLabelText(/Goal time \(optional\)/i);
+      fireEvent.change(time, { target: { value: "abc" } });
+
+      const fix = screen.getByRole("button", { name: /Fix goal time/i });
+      expect(fix).toHaveAttribute("aria-disabled", "true");
+      expect(fix).not.toHaveAttribute("aria-busy");
+      fireEvent.click(fix);
+      expect(document.activeElement).toBe(time);
+      expect(configureSpy).not.toHaveBeenCalled();
+    });
   });
 
   it("an unfinished race edit survives leaving the page", async () => {

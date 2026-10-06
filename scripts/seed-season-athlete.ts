@@ -44,7 +44,12 @@ import {
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { computePerformanceIndex } from "../src/lib/performanceEngine";
 import { localDateString } from "../src/lib/dateHelpers";
-import { calculateSplits, totalDistance, type GPSPoint } from "../src/lib/gps";
+import {
+  calculateSplits,
+  totalDistance,
+  totalElevationGain,
+  type GPSPoint,
+} from "../src/lib/gps";
 import { vdotFromRace } from "../src/lib/runPaces";
 import { inferMovementCategory } from "../src/lib/exerciseMovementCategory";
 import type {
@@ -439,13 +444,11 @@ function buildRuns(): SeededRun[] {
     );
     const avgPace = Math.round(duration / (metres / 1000));
     const completedAt = new Date(points[points.length - 1].timestamp + 60_000);
-    const elevationGain = Math.round(
-      points.reduce((gain, p, i) => {
-        if (i === 0) return 0;
-        const d = (p.altitude ?? 0) - (points[i - 1].altitude ?? 0);
-        return gain + (d > 2 ? d : 0);
-      }, 0)
-    );
+    // The climb the app saves for a run it recorded (Run.tsx), measured on
+    // the whole trace. Counting only rises of over 2 m between points read
+    // 0 m for nearly every run: points are 25 m apart, and the trace rarely
+    // rises 2 m in 25 m.
+    const elevationGain = totalElevationGain(points);
     const id = `season-r-${keyOf(start)}`;
     out.push({
       id,
@@ -799,14 +802,18 @@ async function main() {
       weeklyRunDaysTarget: 3,
       weeklyRunsTarget: 3,
       weeklyMealsTarget: 21,
+      // In day order, Sunday first, as the app writes a week. `buildPlan`
+      // refuses any other order and keeps a stored week whose counts are
+      // unchanged, so saving a race goal in the Run plan editor failed
+      // while this list started on Monday.
       weekSchedule: [
+        { day: 0, type: "rest" },
         { day: 1, type: "lift" },
         { day: 2, type: "run" },
         { day: 3, type: "lift" },
         { day: 4, type: "run" },
         { day: 5, type: "lift" },
         { day: 6, type: "run" },
-        { day: 0, type: "rest" },
       ],
       weekScheduleVersion: 1,
       runMode: "freeform",

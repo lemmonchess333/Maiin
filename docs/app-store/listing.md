@@ -372,7 +372,8 @@ These are yours; none of them can be done from the code.
    (agreements, banking and tax, both products with their trials,
    RevenueCat set up). Then a sandbox purchase on a phone.
 2. **The demo account's uid goes in `REVENUECAT_SANDBOX_UIDS`**, which
-   isn't set yet (`docs/qa/pre-launch-backlog.md`).
+   isn't set yet: a repository variable on GitHub, with your own uid,
+   then a Deploy production run (`docs/iap/revenuecat-setup.md` Part C).
 3. **troposfit.com must serve `/terms`, `/privacy` and `/support`** with
    no sign-in, or the listing uses the firebaseapp.com addresses above
    (`docs/public-legal-pages.md`).
@@ -380,17 +381,25 @@ These are yours; none of them can be done from the code.
    is 1.0, and `deploy-ios.yml` stamps builds with `package.json`'s
    version, 1.2.0. Rename the App Store version to 1.2.0, or set
    `package.json` to 1.0.0 before the build you submit.
-5. **Screenshots from the iPhone build**, 6.9-inch, once it shows Steps
-   ([issue 2543](https://github.com/lemmonchess333/Maiin/issues/2543)).
+5. **Screenshots, as the last pass**, 6.9-inch, once the app is
+   finished and not before. The frames taken so far (App Screenshots
+   run 207) are drafts of an app that is still changing. Take them from
+   the iPhone build, or push the final code to `claude/screenshot-app`
+   and the capture spec (`e2e/screenshots/app-store.capture.spec.ts`)
+   takes all eight onto the `app-screenshots` branch. Check then that the
+   Steps tile shows steps, not a prompt to connect
+   ([issue 2543](https://github.com/lemmonchess333/Maiin/issues/2543)),
+   and that the run fell on a weekday: on a Saturday or Sunday, Home's
+   week card counts three of three lifts done while offering today's.
    The app is iPhone-only, so no iPad set is needed. Apple runs iPhone
    apps on an iPad too, and buying there now goes through the App Store
    as it does on an iPhone.
 6. **Moderation and email settings** (`docs/LAUNCH_TODO.md`, section 19):
    `ADMIN_UIDS`, `MODERATION_ALERT_EMAIL`, `RESEND_FROM` and
-   `PUBLIC_APP_BASE_URL` in `functions/.env`, and the `VITE_ADMIN_UIDS`
-   secret, then a deploy. Until `RESEND_FROM` is on a verified domain,
-   password resets and report alerts reach nobody but the Resend
-   account's owner.
+   `PUBLIC_APP_BASE_URL` as repository variables on GitHub, then a
+   Deploy production run. `ADMIN_UIDS` opens the moderation page in the
+   web builds too. Until `RESEND_FROM` is on a verified domain, password
+   resets and report alerts reach nobody but the Resend account's owner.
 7. **Reports reviewed within 24 hours.** The Terms and the review notes
    now promise it; the report email is how you find out.
 8. **Mapbox's terms.** The route planner shows Mapbox's road routes on

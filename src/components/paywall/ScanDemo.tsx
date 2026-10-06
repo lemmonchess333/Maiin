@@ -33,6 +33,7 @@ import {
   TrainTabIcon,
 } from "@/components/icons/TabIcons";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { formatTimeOfDay } from "@/utils/formatters";
 import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
 
 /**
@@ -85,6 +86,14 @@ const AFTER = {
   carbs: DAY.before.carbs + SCAN_DEMO_RESULT.carbs,
   fat: DAY.before.fat + SCAN_DEMO_RESULT.fat,
 };
+
+/** A time on that day, printed as the diary prints one ("19:42"). */
+function dayTime(hours: number, minutes: number): string {
+  return formatTimeOfDay(new Date(2026, 0, 15, hours, minutes));
+}
+/** The moment the demo shows: the phone's clock, and when the scanned
+ *  meal is logged. */
+const NOW = dayTime(19, 42);
 
 /* ── Geometry, in the phone's own pixels ─────────────────────────────── */
 
@@ -241,7 +250,7 @@ function StatusBar({ className }: { className?: string }) {
       style={{ fontFamily: SYSTEM_FONT }}
     >
       <span className="flex w-[130px] justify-center text-base font-semibold tracking-tight">
-        7:42
+        {NOW}
       </span>
       <span className="flex w-[130px] items-center justify-center gap-[5px]">
         <SignalGlyph />
@@ -897,16 +906,19 @@ function CalorieCard({ calories }: { calories: number }) {
 
 function LogRow({
   name,
-  meta,
+  meal,
+  time,
   calories,
   photo,
 }: {
   name: string;
-  meta: string;
+  meal: string;
+  time: string;
   calories: number;
   photo?: boolean;
 }) {
-  // FoodRow's photo row: the photo over the name, when and calories.
+  // FoodRow's photo row: the photo over the name, when and calories,
+  // the caption drawn as FoodTimeline draws it.
   return (
     <div className="py-2.5">
       {photo && (
@@ -920,7 +932,9 @@ function LogRow({
         <div className="mr-2 min-w-0 flex-1">
           <p className="truncate text-sm text-foreground">{name}</p>
           <p className="mt-0.5 truncate text-caption text-muted-foreground">
-            {meta}
+            {meal}
+            {" · "}
+            <span className="font-mono tabular-nums">{time}</span>
           </p>
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">
@@ -1093,7 +1107,8 @@ function FoodScreen({ live }: { live: boolean }) {
               <LogRow
                 photo
                 name={r.title}
-                meta={`${r.meal} · 7:42 PM`}
+                meal={r.meal}
+                time={NOW}
                 calories={r.calories}
               />
             </motion.div>
@@ -1101,14 +1116,16 @@ function FoodScreen({ live }: { live: boolean }) {
           <div className="border-t border-border/40">
             <LogRow
               name="Greek yogurt"
-              meta="Snacks · 4:24 PM"
+              meal="Snacks"
+              time={dayTime(16, 24)}
               calories={180}
             />
           </div>
           <div className="border-t border-border/40">
             <LogRow
               name="Chicken & rice"
-              meta="Lunch · 1:17 PM"
+              meal="Lunch"
+              time={dayTime(13, 17)}
               calories={650}
             />
           </div>

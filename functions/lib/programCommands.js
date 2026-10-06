@@ -47,6 +47,7 @@
 const {
   applyProgression,
   dateStampUTC,
+  liftedLoad,
   PERFORMANCE_HISTORY_CAP,
 } = require("./progressionEngine");
 // Easing-block progression hold (pinned by a parity cross-test). The third
@@ -2045,8 +2046,14 @@ function logExercise(state, command, now) {
       now
     );
   } else {
+    // Auto-progression off: no step, and no success or failure accounting,
+    // but the plan still carries the load lifted (`liftedLoad`) — following
+    // the person's own load is not auto-progression. Mirror of the client's
+    // sessionCompletion.applySessionProgression.
+    const lifted = liftedLoad(exercise.exerciseId, command.actual.weight);
     updatedExercise = {
       ...exercise,
+      ...(lifted === null ? {} : { weight: lifted }),
       lastAttemptedWeight: command.actual.weight,
       lastPerformance: {
         sets: exercise.sets,

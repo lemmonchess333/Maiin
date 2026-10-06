@@ -84,8 +84,8 @@ an hour:
   The tell is that every changed pixel sits inside the map's y-band.
 - A frame moving by **0.1-0.7%** is usually antialiasing, not a change.
 - **`badges-grid` resizes ±10px with the capture's WALL CLOCK.** The
-  seeded user earns "Early Bird" only when the run executes before 7am
-  (the badge is "log before 7am for 5 days"), so a pre-7am-UTC capture
+  seeded user earns "Early Bird" only when the run executes before 07:00
+  (the badge is "Log before 07:00 for 5 days"), so a pre-07:00-UTC capture
   shows it earned (1-line date footer) and a later one shows it locked
   (2-line description) — the row grows ~10px and the whole page shifts.
   Diagnosed 2026-08-22 by cropping the insertion boundary (y≈900): the

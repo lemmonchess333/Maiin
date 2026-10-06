@@ -16,6 +16,7 @@
  *     race date
  *   - `tropos_stall_{exerciseName}` — exercise names are global, so A's
  *     3-week stall cooldown suppressed B's stall prompt for the same lift
+ *     (the stall prompt itself has since been removed)
  *   - `home-day-tap-seen` — the sibling of a hint already fixed on the same
  *     page
  *   - the Food celebration date
@@ -35,7 +36,6 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stallCooldownKey } from "@/features/program/stallDetection";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -114,9 +114,7 @@ function resolveConst(src: string, name: string): string | null {
 
 /** Does this key expression show a uid? */
 function looksScoped(key: string): boolean {
-  if (/uid/i.test(key)) return true;
-  if (/\bstallCooldownKey\(/.test(key)) return true;
-  return false;
+  return /uid/i.test(key);
 }
 
 function stripComments(src: string): string {
@@ -231,18 +229,6 @@ describe("localStorage keys are uid-scoped", () => {
     // And the shapes it must still reject.
     expect(looksScoped('"tropos.dismiss.setRaceGoal"')).toBe(false);
     expect(looksScoped("`tropos_stall_${exercise.name}`")).toBe(false);
-  });
-
-  it("the helper `looksScoped` trusts really does scope", () => {
-    /* `looksScoped` waves through any `stallCooldownKey(...)` call, because
-       the key is built in another file. That trust is only sound if the
-       helper scopes — and a mutation run proved the gap was real: reverting
-       the helper to its unscoped form left every call site reading as clean.
-       So assert the helper's OUTPUT here, where the bypass is granted. */
-    expect(stallCooldownKey("u1", "Bench Press")).toContain("u1");
-    expect(stallCooldownKey("u1", "Bench Press")).not.toBe(
-      stallCooldownKey("u2", "Bench Press")
-    );
   });
 
   it("no unscoped key holds per-account state", () => {

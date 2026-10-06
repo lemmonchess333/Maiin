@@ -73,7 +73,9 @@ jobs:
           # until now, so the queue 403'd for everyone including the owner.
           # Public by design (client-side route gate); listPendingReports
           # re-checks ADMIN_UIDS server-side, so this is UX, not a boundary.
-          VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS }}
+          # The ADMIN_UIDS repository variable the functions deploy reads
+          # serves here too, so one setting opens the page and the queue.
+          VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS || vars.ADMIN_UIDS }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |
