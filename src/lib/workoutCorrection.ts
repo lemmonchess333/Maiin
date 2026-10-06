@@ -14,8 +14,7 @@ import { sameStoredValue } from "@/features/program/stateTransition";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState } from "@/features/program/programTypes";
 import {
-  workoutCompletionDayIdentity,
-  restoreSessionProgression,
+  sessionStillInPlan,
   storeSessionProgression,
 } from "./workoutCompletion";
 
@@ -131,105 +130,78 @@ export async function correctSavedWorkout(
     const saved = stored.programmeCompletion;
     const program = saved ? await transaction.get(programRef) : null;
     assertOwner();
-    if (
-      saved?.context.progression &&
-      program?.exists() &&
-      !sameStoredValue(stored.exercises, next.exercises)
-    ) {
-      const state = program.data() as ProgramState;
+    const state = program?.exists() ? (program.data() as ProgramState) : null;
+    const current =
+      saved && state && !sameStoredValue(stored.exercises, next.exercises)
+        ? sessionStillInPlan(state, saved, id)
+        : null;
+    if (saved && state && current) {
       const context = saved.context;
-      const original = restoreSessionProgression(saved.context.progression);
-      const day = state.workouts[context.dayIndex];
-      if (
-        sameStoredValue(saved.policy, {
-          goal: state.goal,
-          settings: state.settings,
-          trainingBlock: state.trainingBlock,
-        }) &&
-        state.weekNumber === context.weekNumber &&
-        state.trainingBlock?.id === context.trainingBlockId &&
-        workoutCompletionDayIdentity(day) === context.dayIdentity &&
-        day.completedWorkoutId === id
-      ) {
-        const eligible = new Set(
-          saved.committedExercises
-            .filter((ex) =>
-              sameStoredValue(
-                ex,
-                day.exercises.find(
-                  (current) => current.instanceId === ex.instanceId
-                )
-              )
-            )
-            .map((ex) => ex.instanceId)
-        );
-        const progression = {
-          ...original,
-          setLogs: original.setLogs.map((logs, index) => {
-            let cursor = 0;
-            const actual = next.exercises[index].sets.filter(
-              (set) => set.type !== "warmup"
-            );
-            return logs.map((log) => {
-              if (!log.completed || log.type === "warmup") return log;
-              const set = actual[cursor++];
-              return set
-                ? { ...log, weight: set.weightKg, reps: set.reps }
-                : log;
-            });
-          }),
-        };
-        const replay = {
-          ...state,
-          workouts: state.workouts.map((row, i) =>
-            i !== context.dayIndex
-              ? row
-              : {
-                  ...row,
-                  exercises: row.exercises.map((ex) =>
-                    eligible.has(ex.instanceId)
-                      ? progression.prescription.progressionBaseline.find(
-                          (base) => base.instanceId === ex.instanceId
-                        )!
-                      : ex
-                  ),
-                }
-          ),
-        };
-        const evaluated = applySessionProgression(
-          replay,
-          context.dayIndex,
-          progression
-        );
-        const revised = {
-          ...evaluated,
-          workouts: evaluated.workouts.map((row, i) =>
-            i !== context.dayIndex
-              ? row
-              : {
-                  ...row,
-                  exercises: row.exercises.map((ex, j) =>
-                    eligible.has(ex.instanceId) ? ex : day.exercises[j]
-                  ),
-                }
-          ),
-        };
-        if (eligible.size)
-          transaction.set(
-            programRef,
-            stripUndefined({ ...revised, updatedAt: Date.now() })
+      const { day, original, eligible } = current;
+      const progression = {
+        ...original,
+        setLogs: original.setLogs.map((logs, index) => {
+          let cursor = 0;
+          const actual = next.exercises[index].sets.filter(
+            (set) => set.type !== "warmup"
           );
-        next.programmeCompletion = {
-          ...saved,
-          context: {
-            ...context,
-            progression: storeSessionProgression(progression),
-          },
-          committedExercises: revised.workouts[
-            context.dayIndex
-          ].exercises.filter((ex) => eligible.has(ex.instanceId)),
-        };
-      }
+          return logs.map((log) => {
+            if (!log.completed || log.type === "warmup") return log;
+            const set = actual[cursor++];
+            return set ? { ...log, weight: set.weightKg, reps: set.reps } : log;
+          });
+        }),
+      };
+      const replay = {
+        ...state,
+        workouts: state.workouts.map((row, i) =>
+          i !== context.dayIndex
+            ? row
+            : {
+                ...row,
+                exercises: row.exercises.map((ex) =>
+                  eligible.has(ex.instanceId)
+                    ? progression.prescription.progressionBaseline.find(
+                        (base) => base.instanceId === ex.instanceId
+                      )!
+                    : ex
+                ),
+              }
+        ),
+      };
+      const evaluated = applySessionProgression(
+        replay,
+        context.dayIndex,
+        progression
+      );
+      const revised = {
+        ...evaluated,
+        workouts: evaluated.workouts.map((row, i) =>
+          i !== context.dayIndex
+            ? row
+            : {
+                ...row,
+                exercises: row.exercises.map((ex, j) =>
+                  eligible.has(ex.instanceId) ? ex : day.exercises[j]
+                ),
+              }
+        ),
+      };
+      if (eligible.size)
+        transaction.set(
+          programRef,
+          stripUndefined({ ...revised, updatedAt: Date.now() })
+        );
+      next.programmeCompletion = {
+        ...saved,
+        context: {
+          ...context,
+          progression: storeSessionProgression(progression),
+        },
+        committedExercises: revised.workouts[context.dayIndex].exercises.filter(
+          (ex) => eligible.has(ex.instanceId)
+        ),
+      };
     }
     const totalVolume = workoutTonnageKg(next);
     transaction.set(
