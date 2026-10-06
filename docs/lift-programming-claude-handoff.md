@@ -538,6 +538,19 @@ trimmed ones. The week's label stays the run plan's "Build", as every race
 week's is (Lift4 (3)); a session whose leg lifts lost sets says why in "Why
 this session".
 
+STATUS 2026-10-06 (Lift4 (10), build step 5, tenth part): heavy legs the
+day before a long run or a key session stay the person's choice. Nothing
+moves: a session with leg lifts whose next day holds a long run, a tempo
+run, an interval session or a race (`isDemandingScheduledRun`, which reads
+a swapped run's own type and passes over a skipped one) says so once in "Why
+this session" ("Your long run is the next day, and heavy leg work can leave
+your legs tired for it."), on Train, Home's day card and the day sheet.
+Race week has its own line. Runners without a race keep the rules after a
+hard run: "Easier today" and a leg miss counting half. With this, Lift4 (10)
+supersedes RP2, which was never built, and reverses the lifting v8
+evaluation's STATUS of 2026-08-02c that kept running out of the lift plan
+(noted there).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

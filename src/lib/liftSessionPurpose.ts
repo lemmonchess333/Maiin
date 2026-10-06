@@ -42,7 +42,13 @@ import {
 } from "@/features/program/weekPrescription";
 import { isRunStepBackWeek } from "@/features/program/runPlanTiming";
 import { loadsTheLegs } from "@/features/program/easierToday";
-import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { isDemandingScheduledRun } from "@/lib/runSpacing";
+import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type {
   Experience,
@@ -66,6 +72,7 @@ export type LiftPurposeProgramme = Partial<
     | "workouts"
     | "runPlan"
     | "raceWeek"
+    | "runDays"
   >
 >;
 
@@ -110,9 +117,41 @@ export const RACE_WEEK =
 export const RACE_AFTER =
   "This is a lighter week after your race, with half the sets at the same weights, while you recover.";
 
+/** Lift4 (10): a leg session the day before a long run or a key session. */
+export const legsBefore = (run: string) =>
+  `Your ${run} is the next day, and heavy leg work can leave your legs tired for it.`;
+
 /* Lift4 (10): a build week's leg trim, on a yes at race setup. */
 export const RACE_BUILD_LEGS =
   "Your leg lifts have a third fewer sets at the same weights while your runs build, as you chose for your race.";
+
+/** The run the day after a session, when it is a long run or a key
+ *  session (`isDemandingScheduledRun`), named as the note below names it.
+ *  The plan leaves a leg session before one where it is: the person
+ *  decides (Lift4 (10)). */
+function demandingRunNextDay(
+  programme: LiftPurposeProgramme,
+  date: string
+): string | null {
+  const day = parseLocalDate(date);
+  if (Number.isNaN(day.getTime())) return null;
+  const next = localDateString(addLocalDays(day, 1));
+  const run = programme.runDays?.find(
+    (rd) => rd.date === next && isDemandingScheduledRun(rd)
+  );
+  if (!run) return null;
+  if (isScheduledRaceRunDay(run)) return "race";
+  const type =
+    RUN_TEMPLATES.find((template) => template.id === run.userOverride)?.type ??
+    run.type;
+  return type === "long"
+    ? "long run"
+    : type === "tempo"
+      ? "tempo run"
+      : type === "intervals"
+        ? "interval session"
+        : "hard run";
+}
 
 /** Whether the race build's trim took sets off one of the day's leg lifts
  *  (a lift of two sets keeps them). */
@@ -235,6 +274,16 @@ export function liftSessionPurpose(
       const ahead = lighterWeeksAhead(programme, week);
       if (ahead) sentences.push(ahead);
     }
+  }
+  // Heavy legs the day before a long run or a key session stay the
+  // person's choice: said once, here, and nothing moves (Lift4 (10)). Not in
+  // race week, which has nothing heavy for the legs.
+  if (
+    programme.raceWeek !== "race" &&
+    (day.exercises ?? []).some(loadsTheLegs)
+  ) {
+    const run = demandingRunNextDay(programme, date);
+    if (run) sentences.push(legsBefore(run));
   }
   if (held) sentences.push(HOLD);
   return sentences.length > 0 ? sentences.join(" ") : null;
