@@ -2627,6 +2627,23 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     expectHttps(() => apply(applyCmd(), state), "failed-precondition");
   });
 
+  it("rejects one straight after a trained lighter week (Lift4 (9))", () => {
+    // Never two in a row: the client's rollover marks the archived week
+    // (`advanceWeek`), and this side reads the mark as the client does.
+    const after = baseState();
+    after.weekHistory = [{ weekNumber: 4, workouts: [], lighter: true }];
+    expectHttps(() => apply(applyCmd(), after), "failed-precondition");
+    // A full week in between, or no history at all, leaves it open.
+    after.weekHistory = [
+      { weekNumber: 3, workouts: [], lighter: true },
+      { weekNumber: 4, workouts: [] },
+    ];
+    expect(apply(applyCmd(), after).state.currentPhase).toBe("deload");
+    const fresh = baseState();
+    delete fresh.weekHistory;
+    expect(apply(applyCmd(), fresh).state.currentPhase).toBe("deload");
+  });
+
   it("rejects a stale week cursor", () => {
     expectHttps(
       () => apply(applyCmd({ expectedWeekNumber: 4 })),

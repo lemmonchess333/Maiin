@@ -1,4 +1,8 @@
-import type { Experience, WeeklyPrescription } from "./programTypes";
+import type {
+  Experience,
+  ProgramState,
+  WeeklyPrescription,
+} from "./programTypes";
 
 /**
  * Where a week sits in the training cycle, apart from the generator
@@ -44,5 +48,21 @@ export function lighterWeeksScheduled(
   return (
     (experience === "intermediate" || experience === "advanced") &&
     liftDays >= 3
+  );
+}
+
+/**
+ * Whether the person can take a lighter week now (Lift4 (9)): one at a
+ * time, so not while this week is one, and never two in a row, so not
+ * when the week last trained was one. Lighter weeks count trained weeks,
+ * as the calendar's do, so a week with no session in between changes
+ * nothing. The server's command checks the same (`applyDeloadWeekCommand`).
+ */
+export function lighterWeekAllowed(
+  state: Pick<ProgramState, "currentPhase" | "weekHistory">
+): boolean {
+  return (
+    state.currentPhase !== "deload" &&
+    state.weekHistory?.at(-1)?.lighter !== true
   );
 }

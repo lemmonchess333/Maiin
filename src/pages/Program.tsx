@@ -64,6 +64,7 @@ import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   CalendarRange,
   Dumbbell,
+  Feather,
   Settings2,
   CalendarDays,
   Footprints,
@@ -80,7 +81,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
 import { splitLabel } from "@/features/program/programEngine";
-import { isCycleEndWeek } from "@/features/program/weekPrescription";
+import {
+  isCycleEndWeek,
+  lighterWeekAllowed,
+} from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
@@ -111,7 +115,10 @@ import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectio
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
-import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
+import {
+  loadFromRunning,
+  shouldSuggestDeload,
+} from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
@@ -196,11 +203,11 @@ function ProgramInner() {
     const ok = await applyDeloadWeek();
     if (!ok) {
       toast.error(
-        "Couldn't apply the deload. Check your connection and try again."
+        "Couldn't take a lighter week. Check your connection and try again."
       );
       return false;
     }
-    toast.success("Deload applied — this week's loads are eased", {
+    toast.success("A lighter week: half the sets, at the same weights", {
       duration: 8000,
       action: {
         label: "Undo",
@@ -210,9 +217,9 @@ function ProgramInner() {
               trackProgrammeEvent("programme_deload_banner_action", {
                 action: "undo",
               });
-              toast.success("Deload undone — this week is back to plan");
+              toast.success("Back to the full plan this week");
             } else {
-              toast.error("Couldn't undo the deload.");
+              toast.error("Couldn't undo the lighter week.");
             }
           });
         },
@@ -840,7 +847,7 @@ function ProgramInner() {
    *
    * The Performance Index can recommend a deload for a runner who is
    * already tapering into a race, and the banner had no guard: it offered
-   * "Apply deload week" on top of a taper that is itself a planned load
+   * a lighter week on top of a taper that is itself a planned load
    * cut. The lock's words are "taper IS the deload; no double-deload".
    *
    * The decision lives in `shouldSuggestDeload` rather than inline here,
@@ -850,6 +857,7 @@ function ProgramInner() {
    */
   const showDeloadSuggest = shouldSuggestDeload({
     deloadRecommended: resolveDeloadRecommended(perfWeek),
+    loadFromRunning: loadFromRunning(perfWeek),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
@@ -1052,7 +1060,8 @@ function ProgramInner() {
                         ? undefined
                         : programState.trainingBlock,
                     },
-                    localDateString()
+                    localDateString(),
+                    profile?.experience
                   ) ?? undefined
                 }
                 onPrevWeek={goBack}
@@ -1840,7 +1849,8 @@ function ProgramInner() {
               planContext={liftCompletionContext(
                 programState,
                 sessionDayIndex,
-                localDateString()
+                localDateString(),
+                profile?.experience
               )}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
@@ -1995,6 +2005,33 @@ function ProgramInner() {
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           Drag to change today&apos;s order
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                {/* A lighter week whenever the person wants one (Lift4 (9)):
+                    half the sets this week, at the same weights, one at a
+                    time and never two in a row. */}
+                {activeTab === "lift" &&
+                  !isViewingHistory &&
+                  (programState?.workouts?.length ?? 0) > 0 &&
+                  lighterWeekAllowed(programState) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOverflow(false);
+                        void handleApplyDeload();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                      style={{ minHeight: 44 }}
+                    >
+                      <Feather className="size-5 text-muted-foreground" />
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-foreground">
+                          Take a lighter week
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Half the sets this week, at the same weights
                         </span>
                       </span>
                     </button>

@@ -86,7 +86,7 @@ describe("effortCueFor (backlog #4 — effort cues as words)", () => {
       const cue = effortCueFor(exercise, { isLastSet: true, deloadWeek: true });
       expect(cue?.kind).toBe("deload");
       expect(cue?.text).toBe(
-        "Step-back week — keep everything comfortably easy."
+        "Lighter week — keep everything comfortably easy."
       );
     }
   });

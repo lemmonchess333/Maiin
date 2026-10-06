@@ -327,7 +327,7 @@ describe("saved lifting work, correction, and the next prescription", () => {
       lastPerformance: { weight: 100, reps: 6 },
       consecutiveFailures: 1,
     });
-    expect(liftWeekLabel(next, "2026-09-14")).toContain("Week 2 of 4");
+    expect(liftWeekLabel(next, "2026-09-14")).toMatch(/^Week 2\b/);
     await correctSavedWorkout(
       db,
       "u1",

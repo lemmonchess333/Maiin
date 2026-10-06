@@ -2520,7 +2520,13 @@ export function advanceWeek(
   const history = weekWasTrained
     ? [
         ...(state.weekHistory ?? []),
-        { weekNumber: state.weekNumber, workouts: state.workouts },
+        {
+          weekNumber: state.weekNumber,
+          workouts: state.workouts,
+          ...(state.currentPhase === "deload"
+            ? { lighter: true as const }
+            : {}),
+        },
       ].slice(-8)
     : (state.weekHistory ?? []);
 

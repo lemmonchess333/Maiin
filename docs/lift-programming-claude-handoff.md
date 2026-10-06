@@ -430,6 +430,22 @@ and `undoRecoveryReduction`. A lighter week now comes only on the calendar
 (above) or when the person takes one. Train's advice is the lighter-week
 suggestion, then "Go easier today".
 
+STATUS 2026-10-06 (Lift4 (4) and (9), build step 5, third part): "Take a
+lighter week" is in Train's More options, whenever the person wants one:
+one at a time and never two in a row, counted in trained weeks, as the
+calendar's are (the rollover marks a trained lighter week in `weekHistory`;
+`lighterWeekAllowed`, and the server's `applyDeloadWeek` refuses the same).
+The suggestion card, now "Consider a lighter week", shows only when the
+week's load came from running (`loadFromRunning`), its running half left
+for the running grill; a lifting week gets no early offer. The plan says
+"lighter week" wherever it names one: Train's week label ("Week 3 of 4 ·
+Lighter week"), the banner, its toasts, the effort cue and Food's day
+label. A plan the calendar gives no lighter weeks (a beginner's, an unknown
+level's, one or two lift days) counts its weeks without a cycle ("Week 7 ·
+Build muscle"), on Train and on the finish screen. The Performance Index
+keeps its "Deload" band and insight copy, which describe the measured
+load, not the plan's week.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

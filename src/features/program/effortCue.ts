@@ -52,7 +52,7 @@ export function effortCueFor(
   if (opts.deloadWeek) {
     return {
       kind: "deload",
-      text: "Step-back week — keep everything comfortably easy.",
+      text: "Lighter week — keep everything comfortably easy.",
     };
   }
   if (exercise.movementCategory === "core") return null;

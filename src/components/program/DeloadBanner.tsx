@@ -177,7 +177,7 @@ export default function DeloadBanner({
             }}
             role="region"
             aria-label={
-              deloadActive ? "Deload week active" : "Deload week recommended"
+              deloadActive ? "Lighter week" : "Lighter week suggested"
             }
           >
             {/* The flame gives its room to the words under 14em of banner
@@ -206,21 +206,19 @@ export default function DeloadBanner({
                       : "hsl(var(--warning-strong))",
                   }}
                 >
-                  {deloadActive
-                    ? "Deload week active"
-                    : "Consider a deload week"}
+                  {deloadActive ? "Lighter week" : "Consider a lighter week"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                   {deloadActive
                     ? `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`
-                    : "Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger."}
+                    : "Your running load has been high, with signs of reduced recovery. A lighter week can help you come back stronger."}
                 </p>
               </div>
               {!deloadActive && (
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  aria-label="Dismiss deload banner"
+                  aria-label="Dismiss the lighter week suggestion"
                   className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
                 >
                   <X className="size-4" aria-hidden="true" />
@@ -235,7 +233,7 @@ export default function DeloadBanner({
                   loading={applying}
                   onClick={() => void handleApply()}
                 >
-                  Apply deload week
+                  Take a lighter week
                 </Button>
               </div>
             )}

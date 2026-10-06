@@ -9,7 +9,11 @@ import {
   dedupeDayExercises,
   splitRationale,
 } from "../programEngine";
-import { generateWeekPrescription, isCycleEndWeek } from "../weekPrescription";
+import {
+  generateWeekPrescription,
+  isCycleEndWeek,
+  lighterWeekAllowed,
+} from "../weekPrescription";
 import { exerciseBank } from "../variationBank";
 import { roleRepsFor } from "../roleTable";
 import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
@@ -1342,6 +1346,30 @@ describe("lighter weeks (Lift4 (9))", () => {
     );
     expect(out.weekNumber).toBe(4);
     expect(out.currentPhase).toBe("progression");
+  });
+
+  it("records a trained lighter week, so the next can't be one too", () => {
+    const lighter = advanceWeek(
+      trained(atWeek3(3, { currentPhase: "deload" })),
+      "intermediate"
+    );
+    expect(lighter.weekHistory?.at(-1)).toMatchObject({
+      weekNumber: 3,
+      lighter: true,
+    });
+    expect(lighterWeekAllowed(lighter)).toBe(false);
+    // A full week is archived without the mark, and the one after it can
+    // be a lighter week again.
+    const full = advanceWeek(trained(lighter), "intermediate");
+    expect(full.weekHistory?.at(-1)).not.toHaveProperty("lighter");
+    expect(lighterWeekAllowed(full)).toBe(true);
+  });
+
+  it("is taken one at a time", () => {
+    expect(lighterWeekAllowed(atWeek3(3))).toBe(true);
+    expect(lighterWeekAllowed(atWeek3(3, { currentPhase: "deload" }))).toBe(
+      false
+    );
   });
 
   it("starts the miss counts again once it's over", () => {

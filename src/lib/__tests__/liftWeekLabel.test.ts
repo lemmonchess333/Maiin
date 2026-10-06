@@ -2,13 +2,20 @@ import { describe, expect, it } from "vitest";
 import { liftWeekLabel } from "../liftWeekLabel";
 import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import { FOCUS_ORDER, focusLabel } from "@/features/program/trainingBlock";
-import type { ActiveTrainingBlock } from "@/features/program/programTypes";
+import type {
+  ActiveTrainingBlock,
+  WorkoutDay,
+} from "@/features/program/programTypes";
 
 const today = "2026-09-06";
+/** Three lift days: with an intermediate's level, a plan the calendar
+ *  gives lighter weeks, so it counts a cycle of four. */
+const threeDays = [{}, {}, {}] as WorkoutDay[];
 const state = {
   weekNumber: 2,
   currentPhase: "progression",
   primaryGoal: "strength" as const,
+  workouts: threeDays,
 };
 const block: ActiveTrainingBlock = {
   id: "test",
@@ -49,10 +56,11 @@ describe("the lift week label derives from programme facts", () => {
           weekNumber,
           currentPhase: deload ? "deload" : "progression",
         },
-        today
+        today,
+        "intermediate"
       );
       expect(label).toBe(
-        `Week ${((weekNumber - 1) % 4) + 1} of 4 · ${deload ? "Deload" : "Get stronger"}`
+        `Week ${((weekNumber - 1) % 4) + 1} of 4 · ${deload ? "Lighter week" : "Get stronger"}`
       );
     }
   );
@@ -62,15 +70,36 @@ describe("the lift week label derives from programme facts", () => {
      offered "Build muscle" for what the row called "Hypertrophy". */
   for (const focus of FOCUS_ORDER) {
     it(`names the ${focus} focus as Settings and a block do`, () => {
-      expect(liftWeekLabel({ ...state, primaryGoal: focus }, today)).toBe(
-        `Week 2 of 4 · ${focusLabel(focus)}`
-      );
+      expect(
+        liftWeekLabel({ ...state, primaryGoal: focus }, today, "intermediate")
+      ).toBe(`Week 2 of 4 · ${focusLabel(focus)}`);
     });
   }
   it("names a programme with no stored focus as the general one", () => {
     expect(
       liftWeekLabel({ weekNumber: 1, currentPhase: "progression" }, today)
-    ).toBe(`Week 1 of 4 · ${focusLabel("general")}`);
+    ).toBe(`Week 1 · ${focusLabel("general")}`);
+  });
+  /* Lift4 (9): a cycle of four is counted only where the calendar gives
+     lighter weeks. Without them the counter would point at a week that
+     never comes. */
+  it.each([
+    ["a beginner", "beginner" as const, threeDays],
+    ["an unknown level", undefined, threeDays],
+    ["a two-day plan", "advanced" as const, threeDays.slice(0, 2)],
+  ])("counts the weeks without a cycle for %s", (_who, level, workouts) => {
+    expect(
+      liftWeekLabel({ ...state, weekNumber: 7, workouts }, today, level)
+    ).toBe("Week 7 · Get stronger");
+  });
+  it("names a lighter week the person took, with or without a cycle", () => {
+    const lighter = { ...state, weekNumber: 6, currentPhase: "deload" };
+    expect(liftWeekLabel(lighter, today, "intermediate")).toBe(
+      "Week 2 of 4 · Lighter week"
+    );
+    expect(liftWeekLabel(lighter, today, "beginner")).toBe(
+      "Week 6 · Lighter week"
+    );
   });
   for (const focus of FOCUS_ORDER) {
     it(`names a ${focus} block's week and focus`, () => {

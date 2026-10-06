@@ -300,6 +300,8 @@ export const DEFAULT_PROGRAM_SETTINGS: ProgramSettings = {
 export interface WeekSnapshot {
   weekNumber: number;
   workouts: WorkoutDay[];
+  /** A lighter week, so the next can't be one too (Lift4 (9)). */
+  lighter?: true;
 }
 
 /**

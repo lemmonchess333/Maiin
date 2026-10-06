@@ -1691,6 +1691,14 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   if (state.currentPhase === "deload") {
     failedPrecondition("This week is already a deload week.");
   }
+  // Never two in a row (Lift4 (9)): the week last trained, as the client's
+  // rollover archived it, says whether it was a lighter one (client
+  // `lighterWeekAllowed`).
+  const history = Array.isArray(state.weekHistory) ? state.weekHistory : [];
+  const last = history[history.length - 1];
+  if (isPlainObject(last) && last.lighter === true) {
+    failedPrecondition("The last week you trained was a lighter week.");
+  }
   return {
     ...state,
     deloadSnapshot: {

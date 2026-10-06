@@ -50,13 +50,21 @@ describe("DeloadBanner", () => {
 
   it("does not render when visible is false (deloadRecommended off)", () => {
     render(<DeloadBanner visible={false} weekKey="w14" />);
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   it("renders the locked copy when visible and not dismissed", () => {
     render(<DeloadBanner visible weekKey="w14" />);
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Dismiss deload banner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    ).toBeInTheDocument();
+  });
+
+  it("speaks for running, the one load it is shown for (Lift4 (9))", () => {
+    render(<DeloadBanner visible weekKey="w14" />);
+    expect(screen.getByText(/Your running load has been high/i)).toBeTruthy();
+    expect(screen.queryByText(/deload/i)).toBeNull();
   });
 
   it("fires programme_deload_banner_viewed exactly once on first visible render", () => {
@@ -69,7 +77,9 @@ describe("DeloadBanner", () => {
 
   it("fires programme_deload_banner_action with action='dismissed' on dismiss tap", () => {
     render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     const dismissed = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -80,20 +90,24 @@ describe("DeloadBanner", () => {
 
   it("persists dismissal in localStorage per-week and stays hidden on re-mount", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     render(<DeloadBanner visible weekKey="w14" />);
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   it("reopens on a new weekKey even if the prior week was dismissed", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     render(<DeloadBanner visible weekKey="w15" />);
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
   });
 
   it("takes its dismissal from the page when the page owns it", () => {
@@ -108,14 +122,16 @@ describe("DeloadBanner", () => {
         onDismiss={onDismiss}
       />
     );
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     expect(onDismiss).toHaveBeenCalledTimes(1);
     // Still up: the page has not said so yet.
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
     rerender(
       <DeloadBanner visible weekKey="w14" dismissed onDismiss={onDismiss} />
     );
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   // PROGRAM-DELOAD-01 — the Apply CTA v1 reserved.
@@ -123,7 +139,7 @@ describe("DeloadBanner", () => {
   it("shows the Apply CTA only when onApply is provided", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
     expect(
-      screen.queryByRole("button", { name: /Apply deload week/i })
+      screen.queryByRole("button", { name: /Take a lighter week/i })
     ).toBeNull();
     unmount();
 
@@ -135,7 +151,7 @@ describe("DeloadBanner", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: /Apply deload week/i })
+      screen.getByRole("button", { name: /Take a lighter week/i })
     ).toBeInTheDocument();
   });
 
@@ -144,8 +160,10 @@ describe("DeloadBanner", () => {
     const onApply = vi.fn(() => Promise.resolve(resolveWith));
     render(<DeloadBanner visible weekKey="w14" onApply={onApply} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Apply deload week/i }));
-    await screen.findByRole("button", { name: /Apply deload week/i });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Take a lighter week/i })
+    );
+    await screen.findByRole("button", { name: /Take a lighter week/i });
     let applied = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -157,8 +175,10 @@ describe("DeloadBanner", () => {
     // A failed apply must NOT fire the telemetry.
     mocks.logger.log.mockClear();
     resolveWith = false;
-    fireEvent.click(screen.getByRole("button", { name: /Apply deload week/i }));
-    await screen.findByRole("button", { name: /Apply deload week/i });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Take a lighter week/i })
+    );
+    await screen.findByRole("button", { name: /Take a lighter week/i });
     applied = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -170,7 +190,9 @@ describe("DeloadBanner", () => {
   it("deloadActive renders the calm active state: no Apply, no Dismiss, overrides dismissal", () => {
     // Dismiss the recommendation first…
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     // …then an applied deload still shows the active confirmation.
@@ -182,11 +204,13 @@ describe("DeloadBanner", () => {
         onApply={() => Promise.resolve(true)}
       />
     );
-    expect(screen.getByText(/Deload week active/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Lighter week$/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Apply deload week/i })
+      screen.queryByRole("button", { name: /Take a lighter week/i })
     ).toBeNull();
-    expect(screen.queryByLabelText(/Dismiss deload banner/i)).toBeNull();
+    expect(
+      screen.queryByLabelText(/Dismiss the lighter week suggestion/i)
+    ).toBeNull();
   });
 
   it("active copy describes the one recipe: half the sets, same weights", () => {
@@ -207,7 +231,7 @@ describe("DeloadBanner", () => {
      * banner, not the tier-split copy LIFT-EV-03 wrote for them.
      */
     render(<DeloadBanner visible={false} weekKey="w4" deloadActive />);
-    expect(screen.getByText(/deload week active/i)).toBeTruthy();
+    expect(screen.getByText(/^Lighter week$/)).toBeTruthy();
   });
 });
 
