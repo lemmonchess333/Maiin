@@ -865,22 +865,36 @@ describe("DayPeekCard — why this lift", () => {
     );
   }
 
-  it("discloses the planned lift's reason, closed until asked for", () => {
+  /** Opens "Why this session": the rules sheet, the reasons first
+   *  (Lift4 (3)). */
+  async function openWhy() {
+    fireEvent.click(screen.getByRole("button", { name: "Why this session" }));
+    return screen.findByRole(
+      "dialog",
+      { name: "Why this session" },
+      { timeout: 5000 }
+    );
+  }
+
+  it("gives the planned lift's reason on a tap, with the plan's rules", async () => {
     renderDay(liftProgramme());
     expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
-    const why = screen.getByText("Why this session").closest("details")!;
-    expect(why).not.toHaveAttribute("open");
+    // Closed until asked for.
+    expect(screen.queryByText(/built for muscle growth/)).toBeNull();
+    const why = await openWhy();
     expect(why).toHaveTextContent(
       "This session is built for muscle growth: higher reps, and more weekly sets for each muscle."
     );
     expect(why).toHaveTextContent(
       "Your plan builds for three weeks, then a lighter week follows."
     );
+    expect(why).toHaveTextContent("How your plan works");
+    expect(why).toHaveTextContent("Stuck on a lift?");
   });
 
-  it("names a lighter week as one, and nothing else", () => {
+  it("names a lighter week as one, and nothing else", async () => {
     renderDay(liftProgramme({ weekNumber: 4, currentPhase: "deload" }));
-    const why = screen.getByText("Why this session").closest("details")!;
+    const why = await openWhy();
     expect(why).toHaveTextContent(
       "This is a lighter week, with half the sets at the same weights, so the fatigue of recent weeks can clear."
     );

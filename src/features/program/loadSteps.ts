@@ -28,7 +28,16 @@ export interface LoadGrid {
 }
 
 /** The largest step the plan takes on its own, as a share of the weight. */
-const AUTOMATIC_STEP_SHARE = 0.15;
+export const AUTOMATIC_STEP_SHARE = 0.15;
+
+/** A barbell's step, and with "I have small plates" (Lift4 (6)). */
+export const BARBELL_STEP_KG = 2.5;
+export const SMALL_PLATES_STEP_KG = 1.25;
+
+/** Misses in a row that lower a lift, and how much lighter they make it
+ *  (Lift4 (7)). */
+export const MISSES_BEFORE_LOWERING = 2;
+export const LOWERED_SHARE = 0.1;
 const EPSILON = 1e-6;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
@@ -82,8 +91,8 @@ const range = (from: number, to: number, step: number) =>
 
 const DUMBBELLS = ladder([...range(1, 10, 1), ...range(12.5, 50, 2.5)]);
 const KETTLEBELLS = ladder([...range(4, 32, 2), ...range(36, 48, 4)]);
-const PLATES = uniform(2.5);
-const SMALL_PLATES = uniform(1.25);
+const PLATES = uniform(BARBELL_STEP_KG);
+const SMALL_PLATES = uniform(SMALL_PLATES_STEP_KG);
 const STACK = uniform(2.5);
 
 /** The grid of a lift whose equipment the catalogue names, or null. */
@@ -148,5 +157,5 @@ export function lighterBy(
 
 /** 10% lighter on the grid, by at least one step. */
 export function loweredLoad(grid: LoadGrid, weight: number): number {
-  return lighterBy(grid, weight, 0.1);
+  return lighterBy(grid, weight, LOWERED_SHARE);
 }

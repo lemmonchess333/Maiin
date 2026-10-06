@@ -30,6 +30,7 @@ import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWe
 import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import LiftRulesInfo from "@/components/program/LiftRulesInfo";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -1080,6 +1081,13 @@ function ProgramInner() {
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
                 canGoNext={canGoForward}
+                info={
+                  <LiftRulesInfo
+                    purpose={null}
+                    programme={programState}
+                    experience={profile?.experience}
+                  />
+                }
               />
             </div>
           </TrackProgrammeSectionView>

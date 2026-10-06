@@ -28,11 +28,16 @@ import { classifyLayoff, type LayoffClass } from "./layoffDetection";
 
 /** Days away from which the Welcome back sheet is offered: two weeks
  *  (Lift4 (11)). A week away is a missed week, not a break. */
-const WELCOME_BACK_DAYS = 14;
+export const WELCOME_BACK_DAYS = 14;
 
 /** Days away past which easing back takes 20% off the loads, not 10%:
  *  eight weeks (Lift4 (11)). */
-const LONG_BREAK_DAYS = 56;
+export const LONG_BREAK_DAYS = 56;
+
+/** What "Ease back in" takes off the loads: 10%, or 20% after a long
+ *  break (Lift4 (11)). */
+export const EASE_BACK_SHARE = 0.1;
+export const LONG_BREAK_EASE_BACK_SHARE = 0.2;
 
 /** A logged session, as far as this module is concerned. */
 export interface DatedWorkout {
@@ -107,7 +112,7 @@ export function assessLiftReturn(
       dismissKey: null,
       welcomeBack: false,
       easeBackFirst: false,
-      easeBackShare: 0.1,
+      easeBackShare: EASE_BACK_SHARE,
     };
   }
 
@@ -124,6 +129,7 @@ export function assessLiftReturn(
     dismissKey: latest,
     welcomeBack: daysAway >= WELCOME_BACK_DAYS,
     easeBackFirst: layoff === "detrained",
-    easeBackShare: daysAway > LONG_BREAK_DAYS ? 0.2 : 0.1,
+    easeBackShare:
+      daysAway > LONG_BREAK_DAYS ? LONG_BREAK_EASE_BACK_SHARE : EASE_BACK_SHARE,
   };
 }

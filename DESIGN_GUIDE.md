@@ -599,6 +599,8 @@ inventing._
 
 **Lift reasons (owner choice, 2026-10-03):** A lift day's details carry the same closed disclosure, “Why this session”: under the session card on Train's lift tab (on a day still to train this week), in the day sheet's lift block, and under the planned lift in Home's day details. One control draws both (`PurposeDisclosure`). The words come from `liftSessionPurpose.ts`, which states only what the plan stores — the training focus, a lighter week, the last full week before one, and weights holding in an easing block's first weeks — and says nothing without a programme. Home's Today cards stay free of reasons.
 
+**The rules sheet (owner lock Lift4 (3), 2026-10-05):** "Why this session" keeps its place on all three surfaces, but opens one sheet rather than a disclosure: the session's reasons first, then "How your plan works", the plan's rules for this person (`liftRules.ts`, its numbers read from the engine's constants), ending on "Stuck on a lift? A variation often gets it moving." Train also has an ⓘ beside the week label that opens the same rules on any day. The sheet loads when first opened (`LiftRulesSheet`). "Why this run" stays a disclosure.
+
 **Daily logging refinement (user direction, 2026-09-09):** The Food calorie
 summary may use a subtle, static halo made from existing theme tokens to
 restore depth after the photo removal. Keep the ring and its contrast intact;

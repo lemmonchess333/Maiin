@@ -73,6 +73,7 @@ export type LiftPurposeProgramme = Partial<
     | "runPlan"
     | "raceWeek"
     | "runDays"
+    | "settings"
   >
 >;
 

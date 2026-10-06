@@ -561,6 +561,23 @@ own numbers (`resetToBaseSets`) and applies the week's lightening again
 legs halved once, or the set fewer. A save in a lighter week taken in a
 build week leaves its leg lifts as the lighter week set them.
 
+STATUS 2026-10-06 (Lift4 (3) and (7), build step 6): the rules live on one
+sheet, merged with "Why this session". The control keeps its name and its
+three places (Train's lift tab, the day sheet, Home's day details) and
+opens the sheet: the session's reasons first, then "How your plan works",
+the rules that apply to the person (`liftRules.ts`): adding weight, how big
+a step is, the weight lifted, missed reps, lighter weeks (who gets them, or
+that their plan schedules none, and that anyone can take one), the race
+weeks with a race plan, coming back after a break, swaps and skips, and the
+owner's "Stuck on a lift? A variation often gets it moving." Every number
+in it is read from the engine's constants (`AUTOMATIC_STEP_SHARE`,
+`BARBELL_STEP_KG`, `LOWERED_SHARE`, `MISSES_BEFORE_LOWERING`,
+`LIGHTER_WEEK_EVERY`, the return's days and shares), so a rule changed in
+the code changes on the sheet. Train also has an ⓘ beside the week label
+that opens the rules on any day. The sheet loads when first opened, so a
+day card on Home carries none of the engine. With this, the build order's
+six steps have all landed.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

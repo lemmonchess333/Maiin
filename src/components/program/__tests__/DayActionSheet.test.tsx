@@ -1055,7 +1055,7 @@ describe("DayActionSheet — lift section", () => {
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
 
-  it("gives the lift its reason behind 'Why this session', closed", () => {
+  it("gives the lift its reason behind 'Why this session', with the plan's rules", async () => {
     const { profile, programState, callbacks } = setup();
     programState.weekNumber = 3;
     programState.currentPhase = "progression";
@@ -1080,14 +1080,23 @@ describe("DayActionSheet — lift section", () => {
       />
     );
     const lift = screen.getByRole("region", { name: "Lift actions" });
-    const why = within(lift).getByText("Why this session").closest("details")!;
-    expect(why).not.toHaveAttribute("open");
+    // Closed until asked for.
+    expect(screen.queryByText(/built for strength/)).toBeNull();
+    fireEvent.click(
+      within(lift).getByRole("button", { name: "Why this session" })
+    );
+    const why = await screen.findByRole(
+      "dialog",
+      { name: "Why this session" },
+      { timeout: 5000 }
+    );
     expect(why).toHaveTextContent(
       "This session is built for strength: heavier main lifts for lower reps."
     );
     expect(why).toHaveTextContent(
       "This is the last full week before a lighter one, planned for next week."
     );
+    expect(why).toHaveTextContent("How your plan works");
   });
 
   it("offers no reason it cannot place in the programme", () => {

@@ -47,6 +47,7 @@ import {
   lighterBy,
   loadGridFor,
   loweredLoad,
+  MISSES_BEFORE_LOWERING,
   stretchedRepCeiling,
   type LoadGrid,
 } from "./loadSteps";
@@ -2240,7 +2241,6 @@ export function applyProgression(
 
 /** Misses in a row that lower a lift (Lift4, owner call (1)): two, as
  *  Madcow and Helms use, since most lifts come round once or twice a week. */
-const MISSES_BEFORE_LOWERING = 2;
 
 /**
  * A miss at the plan's weight (Lift4 (7)). The first holds, silently: the

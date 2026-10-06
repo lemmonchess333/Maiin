@@ -27,8 +27,11 @@ import { getPhaseForWeek, isRunStepBackWeek } from "./runPlanTiming";
  * `advanceWeek` keeps only the `currentPhase` it derives.
  */
 export function generateWeekPrescription(week: number): WeeklyPrescription {
-  return { week, deload: week % 4 === 0 };
+  return { week, deload: week % LIGHTER_WEEK_EVERY === 0 };
 }
+
+/** The calendar's lighter week comes every 4th trained week (Lift4 (9)). */
+export const LIGHTER_WEEK_EVERY = 4;
 
 /**
  * A cycle ends on its lighter week: finishing that week finishes a 4-week
