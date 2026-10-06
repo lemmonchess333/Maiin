@@ -73,7 +73,10 @@ export default function MacroDistribution({
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
       <SectionLabel className="mb-3">Macro distribution</SectionLabel>
-      <div className="flex items-center gap-4">
+      {/* The legend goes under the ring when the two no longer fit side
+          by side (larger text): the ring is 6rem, and at double size it
+          left the legend too narrow for "29% · 125g". */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
         {/* Donut is decorative re: VoiceOver — the legend below it
             already announces the same percentages + grams as text.
             aria-hidden on the chart container prevents the screen
@@ -161,11 +164,11 @@ export default function MacroDistribution({
             </p>
           </div>
         </div>
-        <div className="flex-1 space-y-1.5">
+        <div className="min-w-[min(100%,10em)] flex-1 space-y-1.5">
           {data.map((d) => (
             <div
               key={d.name}
-              className="flex items-center justify-between gap-2 text-xs"
+              className="flex flex-wrap items-center justify-between gap-x-2 text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
