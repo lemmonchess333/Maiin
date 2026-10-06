@@ -2249,7 +2249,10 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
 
 describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () => {
   function seedRaceDay() {
-    const targetDate = "2027-01-01";
+    // From the clock, not a literal: "2027-01-01" went into the past under
+    // unit-future's +90 days on 2026-10-06, the load dropped the past race
+    // day, and the guard under test was never reached.
+    const targetDate = raceDateThreeWeeksOut();
     mockProfile = raceProfile(targetDate);
     seedProgram({
       goal: "recomp",
@@ -2267,8 +2270,8 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
         {
           id: "race_day_1",
           dayIndex: 3,
-          date: "2027-01-01",
-          weekKey: "2026-12-27",
+          date: targetDate,
+          weekKey: localWeekKey(parseLocalDate(targetDate)),
           templateId: "10k_race",
           type: "race",
           status: "planned",
