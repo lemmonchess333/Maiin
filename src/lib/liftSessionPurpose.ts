@@ -41,6 +41,8 @@ import {
   type RaceBlockWeek,
 } from "@/features/program/weekPrescription";
 import { isRunStepBackWeek } from "@/features/program/runPlanTiming";
+import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type {
   Experience,
   PrimaryGoal,
@@ -62,6 +64,7 @@ export type LiftPurposeProgramme = Partial<
     | "trainingBlock"
     | "workouts"
     | "runPlan"
+    | "raceWeek"
   >
 >;
 
@@ -94,6 +97,26 @@ function buildWeeks(): number {
 
 export const LIGHTER_WEEK =
   "This is a lighter week, with half the sets at the same weights, so the fatigue of recent weeks can clear.";
+
+/* Lift4 (10): the race's final weeks, each a lighter week for its own
+   reason. */
+export const RACE_TAPER =
+  "This is a lighter week before your race, with half the sets at the same weights, so you start it fresh.";
+
+export const RACE_WEEK =
+  "This is race week: one short session, with nothing heavy for your legs.";
+
+export const RACE_AFTER =
+  "This is a lighter week after your race, with half the sets at the same weights, while you recover.";
+
+/** Race week's last day to lift: three days before the race. */
+function raceWeekCutoff(targetDate: string | undefined): string | null {
+  if (!targetDate) return null;
+  const race = parseLocalDate(targetDate);
+  return Number.isNaN(race.getTime())
+    ? null
+    : formatWeekdayDayMonth(addLocalDays(race, -3));
+}
 
 export const LAST_FULL_WEEK =
   "This is the last full week before a lighter one, planned for next week.";
@@ -162,7 +185,24 @@ export function liftSessionPurpose(
   const sentences: string[] = [];
 
   if (programme.currentPhase === "deload") {
-    sentences.push(LIGHTER_WEEK);
+    const raceWeek = programme.raceWeek;
+    if (raceWeek === "race") {
+      sentences.push(RACE_WEEK);
+      const cutoff = raceWeekCutoff(programme.runPlan?.raceGoal?.targetDate);
+      sentences.push(
+        cutoff
+          ? `Lift by ${cutoff}, three days before the race.`
+          : "Lift at least three days before the race."
+      );
+    } else {
+      sentences.push(
+        raceWeek === "taper"
+          ? RACE_TAPER
+          : raceWeek === "after"
+            ? RACE_AFTER
+            : LIGHTER_WEEK
+      );
+    }
   } else {
     if (!day.isCustom) {
       const focus =

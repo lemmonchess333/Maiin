@@ -13,8 +13,10 @@ import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
   lighterWeeksScheduled,
+  raceLiftWeek,
   type RaceBlockWeek,
 } from "./weekPrescription";
+import { loadsTheLegs } from "./easierToday";
 import {
   pickExercise,
   pickAccessory,
@@ -2518,8 +2520,8 @@ export function advanceWeek(
   /**
    * Where the run plan stands in the week rolled into, when a race plan
    * runs (`raceBlockWeek` of the next week's run plan): its step-back weeks
-   * are then the lighter weeks (Lift4 (9)). Absent, they come every 4th
-   * trained week.
+   * are then the lighter weeks (Lift4 (9)), and its final weeks the race's
+   * (Lift4 (10)). Absent, lighter weeks come every 4th trained week.
    */
   nextRaceWeek?: RaceBlockWeek | null
 ): ProgramState {
@@ -2538,11 +2540,16 @@ export function advanceWeek(
      and a returning lifter resumes at the position they left. The calendar
      anchor still advances every iteration, so the rollover loop still
      terminates and nobody is stuck re-rolling the same week. */
-  const nextWeek = !weekWasTrained
+  const heldOrNext = !weekWasTrained
     ? state.weekNumber
     : state.weekNumber >= 52
       ? 1
       : state.weekNumber + 1;
+  /* Lift4 (10): the race's final weeks (`raceLiftWeek`). The week after
+     the race ends a cycle, so the calendar's count starts again after it. */
+  const raceWeek = raceLiftWeek(nextRaceWeek, state.raceWeek);
+  const nextWeek =
+    raceWeek === "after" ? Math.ceil(heldOrNext / 4) * 4 : heldOrNext;
 
   /* Archive only weeks that happened. `weekHistory` is capped at 8, so
      archiving absent weeks would let a 12-week catch-up evict every real
@@ -2615,17 +2622,23 @@ export function advanceWeek(
   const easingLeft = state.easingBack
     ? state.easingBack.weeksLeft - (weekWasTrained ? 1 : 0)
     : 0;
+  /* The race's final weeks are lighter for everyone with a race plan,
+     whatever the level or the week before, and win over every other
+     lightening (the precedence table in the lifting handoff). */
   const applyDeloadThisWeek =
-    weekWasTrained &&
-    state.currentPhase !== "deload" &&
-    easingLeft <= 0 &&
-    calendarLighterWeek(nextWeek, nextRaceWeek ?? null) &&
-    lighterWeeksScheduled(experience, state.workouts.length);
+    raceWeek !== null ||
+    (weekWasTrained &&
+      state.currentPhase !== "deload" &&
+      easingLeft <= 0 &&
+      calendarLighterWeek(nextWeek, nextRaceWeek ?? null) &&
+      lighterWeeksScheduled(experience, state.workouts.length));
 
   workouts = applyDeloadThisWeek
-    ? applyDeload(workouts)
+    ? applyDeload(resetToBaseSets(workouts))
     : resetToBaseSets(workouts);
-  if (easingLeft >= EASING_BACK_WEEKS) workouts = oneSetFewer(workouts);
+  if (raceWeek === null && easingLeft >= EASING_BACK_WEEKS) {
+    workouts = oneSetFewer(workouts);
+  }
 
   /* Lift4: the week opens with the session the last one didn't reach.
      Lifts run in order, not by weekday (ADR-0002), so the session that was
@@ -2642,14 +2655,23 @@ export function advanceWeek(
   if (upNext > 0) {
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
   }
+  if (raceWeek === "race") {
+    workouts = raceWeekSession(workouts, state.settings?.smallPlates === true);
+  }
 
   // The retired per-muscle recovery session's list (Lift4 (13)): nothing
   // reads it, so a stored one goes with this week. The return's weeks go
   // once they are done.
-  const { recoveringMuscles: _retired, easingBack: _easing, ...kept } = state;
+  const {
+    recoveringMuscles: _retired,
+    easingBack: _easing,
+    raceWeek: _lastRaceWeek,
+    ...kept
+  } = state;
   return {
     ...kept,
     ...(easingLeft > 0 ? { easingBack: { weeksLeft: easingLeft } } : {}),
+    ...(raceWeek ? { raceWeek } : {}),
     weekNumber: nextWeek,
     // Both of these key off the RESOLVED flag, not the raw prescription.
     // Keying the phase off `prescription.deload` would label a week "deload"
@@ -2679,6 +2701,41 @@ function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
 }
 
 /**
+ * Race week's lifting (Lift4 (10)): one short session, the week's first,
+ * with nothing heavy for the legs; the other days are skipped. Its sets are
+ * already halved (`applyDeload`), and each leg lift comes down to half its
+ * weight on its own steps, stashed so the next week gets it back
+ * (`resetToBaseSets`).
+ */
+function raceWeekSession(
+  workouts: WorkoutDay[],
+  smallPlates: boolean
+): WorkoutDay[] {
+  return workouts.map((day, index) =>
+    index > 0
+      ? { ...day, skipped: true }
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!loadsTheLegs(ex) || !(ex.weight > 0)) return ex;
+            const light = lighterBy(
+              loadGridFor(ex.exerciseId, smallPlates),
+              ex.weight,
+              0.5
+            );
+            return light > 0
+              ? {
+                  ...ex,
+                  preDeloadWeight: Math.max(ex.weight, ex.preDeloadWeight ?? 0),
+                  weight: light,
+                }
+              : ex;
+          }),
+        }
+  );
+}
+
+/**
  * "Ease back in" on the Welcome back sheet (Lift4 (11)), on the person's
  * yes. Every loaded lift comes down `share` (10%, or 20% after a long
  * break; `liftLayoff.ts`) on its own steps, by at least one, and climbs
@@ -2688,13 +2745,18 @@ function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
  * climbs back by the usual rules; a lift with no weight yet keeps it. This
  * week has one set fewer on every lift, the miss counts start again, and
  * the return's two weeks begin (`easingBack`, which `advanceWeek` counts
- * down).
+ * down). A lighter week already has fewer sets and wins (the precedence
+ * table in the lifting handoff), so in one the sets stay as they are.
  */
 export function easeBackIn(state: ProgramState, share: number): ProgramState {
   const smallPlates = state.settings?.smallPlates === true;
+  const workouts =
+    state.currentPhase === "deload"
+      ? state.workouts
+      : oneSetFewer(state.workouts);
   return {
     ...state,
-    workouts: oneSetFewer(state.workouts).map((day) => ({
+    workouts: workouts.map((day) => ({
       ...day,
       exercises: day.exercises.map((ex) =>
         easedBack({ ...ex, consecutiveFailures: 0 }, share, smallPlates)
@@ -2718,13 +2780,28 @@ function easedBack(
     return { ...ex, reps: Math.max(floor, ex.reps - cut) };
   }
   if (!(ex.weight > 0)) return ex;
-  const weight = lighterBy(
-    loadGridFor(ex.exerciseId, smallPlates),
-    ex.weight,
-    share
-  );
-  if (!(weight > 0)) return ex;
+  const grid = loadGridFor(ex.exerciseId, smallPlates);
   const climbing = loweringOf(ex);
+  // Race week's legs are lighter for the week already, with the weight
+  // they go back to stashed: that weight comes down instead.
+  const stash = ex.preDeloadWeight;
+  if (typeof stash === "number" && stash > ex.weight) {
+    const back = lighterBy(grid, stash, share);
+    if (!(back > 0)) return ex;
+    return {
+      ...ex,
+      preDeloadWeight: Math.max(back, ex.weight),
+      lowered: {
+        exerciseId: ex.exerciseId,
+        from: Math.max(stash, climbing?.unit === "kg" ? climbing.from : stash),
+        unit: "kg",
+        target: ex.reps,
+        shown: true,
+      },
+    };
+  }
+  const weight = lighterBy(grid, ex.weight, share);
+  if (!(weight > 0)) return ex;
   return {
     ...ex,
     weight,

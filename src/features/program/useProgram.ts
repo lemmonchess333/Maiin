@@ -461,6 +461,18 @@ function declineWithReason(base: string, reason: string): ProgramOutcome {
   return declined(reason);
 }
 
+/** What "next week" says when it opens a lighter week, naming which of a
+ *  race's final weeks it is (Lift4 (10)). */
+function lighterWeekStarted(raceWeek: ProgramState["raceWeek"]): string {
+  if (raceWeek === "race")
+    return "Race week: one short session, with nothing heavy for your legs";
+  if (raceWeek === "taper")
+    return "A lighter week before your race: half the sets, at the same weights";
+  if (raceWeek === "after")
+    return "A lighter week after your race: half the sets, at the same weights";
+  return "A lighter week: half the sets, at the same weights";
+}
+
 /** See `readiness` on the hook's return. */
 export type ProgramReadiness = "pending" | "ready" | "failed";
 
@@ -1677,7 +1689,7 @@ export function useProgram() {
     if (!saved) return;
 
     if (saved.currentPhase === "deload") {
-      toast.info("A lighter week: half the sets, at the same weights");
+      toast.info(lighterWeekStarted(saved.raceWeek));
     } else {
       toast.success(`Week ${saved.weekNumber} started`);
     }

@@ -97,6 +97,10 @@ const PROGRAM_STATE_KEYS = new Set([
   // Unlisted, every command on a plan that carries it would be refused for
   // the dropped key, the lighter week's guard below among them.
   "easingBack",
+  // Lift4 (10): which of a race's final weeks this is, written by the
+  // client's rollover. Unlisted, a command on a plan in one would be
+  // refused for the dropped key.
+  "raceWeek",
   // P6 soft delete: the single-slot stash the `restoreExercise` undo reads.
   // Unlisted, `removeExercise` would write a key the sanitiser drops — and
   // `applyProgramCommand` REJECTS on any dropped key, so every removal would

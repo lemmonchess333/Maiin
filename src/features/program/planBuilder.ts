@@ -762,6 +762,11 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     ...(input.preserveHistory && input.existingState?.easingBack
       ? { easingBack: input.existingState.easingBack }
       : {}),
+    // Lift4 (10): and one in a race's final weeks keeps which it is, as it
+    // keeps the week's phase.
+    ...(input.preserveHistory && input.existingState?.raceWeek
+      ? { raceWeek: input.existingState.raceWeek }
+      : {}),
     ...(input.preserveHistory &&
     input.raceGoal &&
     continuingRacePlan(input.existingState?.runPlan, input.raceGoal) &&

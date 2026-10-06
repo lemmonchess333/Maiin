@@ -36,6 +36,9 @@ interface DeloadBannerProps {
    * deload the athlete is in, instead of one sentence covering both.
    */
   runsEased?: number;
+  /** Lift4 (10): which of a race's final weeks this lighter week is
+   *  (`programState.raceWeek`), so the confirmation says so. */
+  raceWeek?: "taper" | "race" | "after";
   /** PROGRAM-DELOAD-01: applies the deload to the active week (the
    *  server `applyDeloadWeek` command). Resolves true on success —
    *  the banner fires the reserved `action: 'applied'` telemetry;
@@ -84,6 +87,7 @@ export default function DeloadBanner({
   weekKey,
   deloadActive = false,
   runsEased,
+  raceWeek,
   onApply,
   dismissed: dismissedProp,
   onDismiss,
@@ -97,6 +101,27 @@ export default function DeloadBanner({
     runsEased && runsEased > 0
       ? ` ${runsEased === 1 ? "One run is" : `${runsEased} runs are`} a step shorter too.`
       : "";
+  /* The race's final weeks say what each is for (Lift4 (10)). */
+  const active =
+    raceWeek === "taper"
+      ? {
+          title: "Taper",
+          body: "Half the sets this week, at the same weights, so you reach the race fresh.",
+        }
+      : raceWeek === "race"
+        ? {
+            title: "Race week",
+            body: "One short session this week, with nothing heavy for your legs, at least three days before the race.",
+          }
+        : raceWeek === "after"
+          ? {
+              title: "Recovery",
+              body: "Half the sets this week, at the same weights, while you recover from the race. The full plan is back next week.",
+            }
+          : {
+              title: "Lighter week",
+              body: `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`,
+            };
   const prefersReducedMotion = useReducedMotion();
   // viewedFiredRef ensures the viewed event fires at most once per
   // mount-visible cycle. If the week changes or the flag re-trips
@@ -176,9 +201,7 @@ export default function DeloadBanner({
               background: (deloadActive ? THEME.success : THEME.warning) + "14",
             }}
             role="region"
-            aria-label={
-              deloadActive ? "Lighter week" : "Lighter week suggested"
-            }
+            aria-label={deloadActive ? active.title : "Lighter week suggested"}
           >
             {/* The flame gives its room to the words under 14em of banner
                 (larger text on the phone), where "Consider" no longer
@@ -206,11 +229,11 @@ export default function DeloadBanner({
                       : "hsl(var(--warning-strong))",
                   }}
                 >
-                  {deloadActive ? "Lighter week" : "Consider a lighter week"}
+                  {deloadActive ? active.title : "Consider a lighter week"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                   {deloadActive
-                    ? `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`
+                    ? active.body
                     : "Your running load has been high, with signs of reduced recovery. A lighter week can help you come back stronger."}
                 </p>
               </div>

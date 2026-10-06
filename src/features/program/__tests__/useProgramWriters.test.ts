@@ -1330,6 +1330,51 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     expect(lastWrite.runPlan?.phase).toBe("recovery");
   });
 
+  it("Lift4 (10) — advanceToNextWeek into race week makes it race week, and says so", async () => {
+    const targetDate = raceDateThreeWeeksOut();
+    mockProfile = raceProfile(targetDate);
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "ppl",
+      workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      // The week before race week: the advance carries the plan on a week.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 2,
+        totalWeeks: 4,
+      },
+    } as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+    vi.mocked(toast.info).mockClear();
+
+    await act(async () => {
+      await result.current.advanceToNextWeek();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.runPlan?.currentWeek).toBe(3);
+    expect(lastWrite.raceWeek).toBe("race");
+    expect(lastWrite.currentPhase).toBe("deload");
+    expect(vi.mocked(toast.info).mock.calls.map(([text]) => text)).toEqual([
+      "Race week: one short session, with nothing heavy for your legs",
+    ]);
+  });
+
   it("RUN-H1 — advanceToNextWeek mid-recovery keeps the phase + emits a recovery week (not a race regen)", async () => {
     // A week rolling over while recovery is still active must NOT regenerate a
     // race plan — that path drops phase/recoveryEndDate via makeRunPlanRecord

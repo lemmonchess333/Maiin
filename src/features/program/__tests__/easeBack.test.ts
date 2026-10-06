@@ -134,6 +134,28 @@ describe("easeBackIn — what the plan comes down to", () => {
     expect(out.easingBack).toEqual({ weeksLeft: 2 });
   });
 
+  it("leaves a lighter week's sets as they are: the lighter week wins", () => {
+    const lighter = state({
+      currentPhase: "deload",
+      workouts: [
+        day([
+          ex({ sets: 2, baseSets: 4 }),
+          ex({
+            name: "Back Squat",
+            exerciseId: "back-squat",
+            instanceId: "squat",
+            movementCategory: "knee_dominant",
+            sets: 2,
+            baseSets: 4,
+          }),
+        ]),
+      ],
+    });
+    const out = easeBackIn(lighter, 0.1);
+    expect(out.workouts[0].exercises.map((lift) => lift.sets)).toEqual([2, 2]);
+    expect(out.workouts[0].exercises[0].weight).toBe(90);
+  });
+
   it("keeps climbing to the weight a drop came from, when there was one", () => {
     const dropped = state({
       workouts: [

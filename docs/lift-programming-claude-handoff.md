@@ -500,6 +500,27 @@ that loads the legs (`loadsTheLegs`) in such a session counts half, so it
 takes two of them to count as one miss; a correction replays the same
 count. Everything else about misses is unchanged.
 
+STATUS 2026-10-06 (Lift4 (10), build step 5, eighth part): with a race
+plan, the race's final weeks are lighter for every level, whether or not
+the week before was trained (`raceLiftWeek`, kept on the plan as
+`raceWeek`). The last two weeks before the race, whatever the run plan's
+taper, and the week after it have half the sets at the same weights. Race
+week keeps the week's first session, its sets halved and each leg lift at
+half its weight (stashed, so the week after gives it back), and skips the
+others. They win over a calendar lighter week and over the weeks back
+after a break without stacking on either, and the calendar's count starts
+again after them: the week after the race takes the next multiple of 4.
+The week after comes from the lifting's own mark that the week left was
+race week, because logging the race moves the run plan into its recovery
+at once. Train names them in the run plan's words ("Week 15 of 16 ·
+Taper", "Race", then "Recovery"; a 5K or 10K's last build week reads
+"Lighter week"), the banner and "Why this session" say what each is for,
+and race week's names the day to lift by, three days before the race. That
+day is copy, not a rule: nothing stops a later session. Known limit: the
+week strip shows race week's skipped days as planned until each day comes,
+as it does any skipped session (the future-day rule in
+`trainingResolver.ts`).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

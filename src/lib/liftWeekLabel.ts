@@ -15,6 +15,7 @@ type ProgrammeContext = Partial<
     | "trainingBlock"
     | "workouts"
     | "runPlan"
+    | "raceWeek"
   >
 > & {
   /** A week from the history, named by its own number: where it sat in a
@@ -52,11 +53,12 @@ export function liftWeekCounter(
 
 /**
  * Train's week label for a lifting plan: the counter (above, or a training
- * block's "Week 2 of 8"), then what the week is. A lighter week reads as
- * one; with a race plan a week takes the run plan's phase name (Base,
- * Build, Taper, Race; Lift4 (3)); otherwise the focus, in Settings' names
- * (`focusLabel`), so one setting has one name on Train whether or not a
- * block runs. Block dates never replace the engine's week counter.
+ * block's "Week 2 of 8"), then what the week is. With a race plan a week
+ * takes the run plan's phase name (Base, Build, Taper, Race; Lift4 (3)),
+ * the week after the race is "Recovery", and a lighter week outside the
+ * taper and race week reads as one; otherwise the focus, in Settings'
+ * names (`focusLabel`), so one setting has one name on Train whether or
+ * not a block runs. Block dates never replace the engine's week counter.
  */
 export function liftWeekLabel(
   state: ProgrammeContext | null | undefined,
@@ -74,10 +76,14 @@ export function liftWeekLabel(
   const counter = liftWeekCounter(state, experience);
   if (counter === null) return null;
   const race = state.archived ? null : raceBlockWeek(state.runPlan);
-  const what = lighter
-    ? "Lighter week"
-    : race
-      ? getRacePhaseLabel(race.weekIndex, race.totalWeeks, race.distance)
-      : focusLabel(state.primaryGoal ?? "general");
+  const phase = race
+    ? getRacePhaseLabel(race.weekIndex, race.totalWeeks, race.distance)
+    : null;
+  const what =
+    !state.archived && state.raceWeek === "after"
+      ? "Recovery"
+      : lighter && phase !== "Taper" && phase !== "Race"
+        ? "Lighter week"
+        : (phase ?? focusLabel(state.primaryGoal ?? "general"));
   return `${counter} · ${what}`;
 }

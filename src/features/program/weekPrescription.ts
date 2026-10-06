@@ -124,6 +124,34 @@ export function raceBlockWeek(
 }
 
 /**
+ * The race's final weeks for the lifting (Lift4 (10)): the last two weeks
+ * before the race (`taper`, lighter whatever the run plan's taper length),
+ * race week (`race`, one short session with nothing heavy for the legs),
+ * and the week after (`after`, light). Together they replace the calendar
+ * lighter week, and its count starts again after them.
+ */
+export type RaceLiftWeek = "taper" | "race" | "after";
+
+/**
+ * Which of the race's final weeks the week rolled into is, if any: from
+ * where the run plan stands in it (`raceBlockWeek`), and which one the week
+ * left was. The week after the race comes from the second, because logging
+ * the race puts the run plan into its recovery, which has no block week, as
+ * soon as the race is saved.
+ */
+export function raceLiftWeek(
+  next: RaceBlockWeek | null | undefined,
+  weekLeft: RaceLiftWeek | undefined
+): RaceLiftWeek | null {
+  if (next) {
+    const toRace = next.totalWeeks - 1 - next.weekIndex;
+    if (toRace === 0) return "race";
+    if (toRace <= 2) return "taper";
+  }
+  return weekLeft === "race" ? "after" : null;
+}
+
+/**
  * Whether the calendar makes a week a lighter one, before the rules on who
  * gets them and one at a time (Lift4 (9)): with a race plan, the run plan's
  * step-back weeks, so the lifting eases off when the running does; otherwise

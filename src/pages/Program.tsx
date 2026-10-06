@@ -1051,6 +1051,7 @@ function ProgramInner() {
               // The run half of the deload, named in the copy. Derived from
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
+              raceWeek={programState.raceWeek}
               onApply={handleApplyDeload}
             />
           </TrackProgrammeSectionView>

@@ -5,8 +5,9 @@
  * Offered from two weeks away (`assessLiftReturn`). It asks one thing: ease
  * back in, or keep the old weights. Easing back is the only plan change
  * here, and it happens on the person's yes: the loads come down 10%, or 20%
- * after more than eight weeks away, this week has one set fewer, and each
- * lift climbs back a step a session to where it was (`easeBackIn`). From
+ * after more than eight weeks away, this week has one set fewer (unless it
+ * is a lighter week, which has fewer already), and each lift climbs back a
+ * step a session to where it was (`easeBackIn`). From
  * three weeks away it is the choice put first; under that, keeping the
  * weights is. Either way the sheet says what will happen before it does.
  *

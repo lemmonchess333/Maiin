@@ -297,3 +297,67 @@ describe("DeloadBanner — the active copy names the run half", () => {
     expect(screen.queryByText(/step shorter/i)).toBeNull();
   });
 });
+
+/** The race's final weeks say what each is for (Lift4 (10)), in the words
+ *  Train's week label uses. */
+describe("DeloadBanner — the race's final weeks", () => {
+  it("names the taper", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w40"
+        deloadActive
+        raceWeek="taper"
+      />
+    );
+    expect(screen.getByRole("region", { name: "Taper" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Half the sets this week, at the same weights, so you reach the race fresh."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("names race week and when to lift in it", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w41"
+        deloadActive
+        raceWeek="race"
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Race week" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "One short session this week, with nothing heavy for your legs, at least three days before the race."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Half the sets/)).toBeNull();
+  });
+
+  it("names the week after", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w42"
+        deloadActive
+        raceWeek="after"
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Recovery" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/while you recover from the race/)
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the suggestion as it is", () => {
+    render(<DeloadBanner visible weekKey="w43" raceWeek="taper" />);
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
+    expect(screen.queryByText(/race/i)).toBeNull();
+  });
+});
