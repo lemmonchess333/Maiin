@@ -278,7 +278,7 @@ Location
 Location is used only while a run is being recorded, to draw the route and work out distance and pace. Recording continues while the screen is locked, which is why the app asks for Always access when a run starts. Treadmill and manual runs work without location. Users can hide the start and end of the routes they share and set private zones.
 
 Moderation
-Signing up or signing in means agreeing to the Terms (the line under those buttons says so), and the Terms allow no objectionable content or abusive users. Posts, comments and display names pass a word filter, and users can report posts, comments and people. Each report emails us and goes to a review queue, and we act within 24 hours by removing the content or restricting the account.
+Signing up or signing in means agreeing to the Terms (the line under those buttons says so), and the Terms allow no objectionable content or abusive users. Posts, comments and display names pass a word filter, and users can report posts, comments and people. Each report emails us and goes to a review queue, and we act within 24 hours by removing the content and, where needed, disabling the account.
 
 Health
 Tropos is not a medical device and gives no medical advice. Calorie targets are estimates from standard formulas, and can be changed in Settings > Nutrition.

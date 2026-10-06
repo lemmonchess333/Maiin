@@ -6,6 +6,49 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The trial reminder (Sub1, 2026-10-06)
+
+Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
+`trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
+phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
+"Remind me before the trial ends", Home's strip for a trial's last two
+days, Settings → Subscription. The email goes at 10:00 local, two days
+before the last moment to cancel (a day before the trial ends).
+
+Unit tests cover the timing in every zone, the record and the email's
+words; these need the operator, a device, or a real trial.
+
+- [ ] **The sender.** troposfit.com verified in Resend and `RESEND_FROM`
+      set (the LAUNCH_TODO §19 item; until then every email reaches only
+      the Resend account's owner).
+- [ ] **Apple's relay.** troposfit.com and Resend's `send.troposfit.com`
+      registered under Certificates, Identifiers & Profiles → Services →
+      Sign in with Apple for Email Communication. Then, from the sign-in
+      screen, ask for a password reset for an account that signed in with
+      Apple and Hide My Email: the email must arrive in that iCloud inbox.
+      Same sender as the reminder; a bounce there is a bounce here.
+      Passing this unlocks the paywall's reminder step (Sub1, the PR after
+      this one).
+- [ ] **The Upgrade page on the iOS app.** After a sandbox trial purchase
+      (TestFlight, a uid on `REVENUECAT_SANDBOX_UIDS`), the Pro card shows
+      "Free trial until …", the price line with the last moment to cancel,
+      and "Remind me before the trial ends"; tapping it brings the system
+      prompt once, and Diagnostics lists the pending reminder (id 3003).
+      Sandbox trials last minutes, so check the screens, not the date.
+- [ ] **The first real reminder.** The first App Store trial after launch:
+      the email arrives at 10:00 local on day 4 with the price, the dates
+      and the cancel link right, and the console shows
+      `subscriptionTrial.reminderEmailedAt` on that profile. The
+      `trialReminderSweep` log line counts it as `emailed`.
+- [ ] **Who the "trader" is.** Before the UK rules start in January 2027,
+      someone qualified confirms whether Tropos counts as the trader for
+      App Store subscriptions sold through Apple as commissionaire. The
+      build assumes it does.
+- [ ] **App Review notes.** If the notes are already in App Store Connect,
+      paste the corrected moderation sentence from
+      `docs/app-store/listing.md` ("…removing the content and, where
+      needed, disabling the account").
+
 ## The lifting system, Lift4 (2026-10-06, #2593)
 
 Affects: progression, the plan generator, lighter weeks and races

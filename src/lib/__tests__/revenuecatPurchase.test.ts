@@ -46,9 +46,18 @@ beforeEach(() => {
 });
 
 describe("rcPurchase", () => {
-  it("purchases the matching package and reports the active pro entitlement", async () => {
+  it("purchases the matching package and reports the active pro entitlement, with the price Apple showed", async () => {
     mockPurchases.getOfferings.mockResolvedValue(
-      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "£3.99",
+            price: 3.99,
+            currencyCode: "GBP",
+          },
+        },
+      ])
     );
     mockPurchases.purchasePackage.mockResolvedValue({
       customerInfo: proActiveInfo,
@@ -56,7 +65,12 @@ describe("rcPurchase", () => {
     const { rcPurchase } = await loadModule();
 
     const outcome = await rcPurchase(PID);
-    expect(outcome).toEqual({ success: true, isProActive: true });
+    // The price goes to the server for the trial reminder's email.
+    expect(outcome).toEqual({
+      success: true,
+      isProActive: true,
+      price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
+    });
     expect(mockPurchases.purchasePackage).toHaveBeenCalledWith({
       aPackage: expect.objectContaining({
         product: expect.objectContaining({ identifier: PID }),

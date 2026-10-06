@@ -1,12 +1,22 @@
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type SubscriptionTrial } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { scheduleNotification, cancelNotification } from "@/lib/notifications";
+import { trialPhoneReminder } from "@/lib/subscriptionTrial";
 import { logger } from "@/lib/logger";
 
 /**
- * Trial-ending reminder — one local notification, two days before the
- * onboarding trial lapses.
+ * Trial-ending reminder — one local notification before a trial ends.
+ *
+ * Two trials, one notification id:
+ *
+ *  - The store trial a purchase is in (`subscriptionTrial`, Sub1 STATUS
+ *    2026-10-06), which becomes a paid subscription unless it is
+ *    cancelled. Its notification goes at the instant the server chose for
+ *    the reminder email (`reminderAt`), so the two agree; the words come
+ *    from `trialPhoneReminder`. The email is the reminder of record; this
+ *    is the extra for people who allow notifications.
+ *  - The legacy onboarding free week, below, which ends without a charge.
  *
  * The 7-day Pro trial granted at onboarding (`trialExpiresAt`) ends
  * quietly: the Home strip counts it down and the trial-ended prompt
@@ -18,10 +28,7 @@ import { logger } from "@/lib/logger";
  * Which trial: the app-granted one — and, since the onboarding grant
  * was removed (Sub1a pin 3 as written), a LEGACY one: this fires only
  * for profiles that still carry a live `trialExpiresAt` from before.
- * The trial new accounts get is the billed checkout trial
- * (`hasUsedTrial`, Stripe `trialing` / the App Store intro offer),
- * whose end the client cannot see yet; when the server records it on
- * the profile, this hook is the place to read it from.
+ * The store trial above takes the id when both are somehow present.
  *
  * Fires at 10:00 local on the calendar day two days before the expiry's
  * local day. Local methods throughout — the expiry is a UTC instant, and
@@ -65,6 +72,9 @@ export function useTrialReminderInternal(): void {
   const { profile, loading } = useAuth();
   const { isInTrial } = useSubscription();
   const trialExpiresAt = profile?.trialExpiresAt ?? null;
+  // The record as a string: a fresh profile object with the same trial
+  // must not reschedule, and a changed one (a cancel) must.
+  const storeTrial = JSON.stringify(profile?.subscriptionTrial ?? null);
   const chain = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
@@ -75,11 +85,21 @@ export function useTrialReminderInternal(): void {
         logger.warn("[TrialReminder] cancel failed", err);
       });
       if (cancelled) return;
-      const fireAt = trialReminderFireAt({
-        isInTrial,
-        trialExpiresAt,
-        now: new Date(),
-      });
+      const now = new Date();
+      const billed = trialPhoneReminder(
+        JSON.parse(storeTrial) as SubscriptionTrial | null,
+        now
+      );
+      if (billed) {
+        await scheduleNotification({
+          id: TRIAL_NOTIFICATION_ID,
+          title: billed.title,
+          body: billed.body,
+          scheduleAt: billed.fireAt,
+        });
+        return;
+      }
+      const fireAt = trialReminderFireAt({ isInTrial, trialExpiresAt, now });
       if (!fireAt) return;
       await scheduleNotification({
         id: TRIAL_NOTIFICATION_ID,
@@ -92,5 +112,5 @@ export function useTrialReminderInternal(): void {
     return () => {
       cancelled = true;
     };
-  }, [loading, isInTrial, trialExpiresAt]);
+  }, [loading, isInTrial, trialExpiresAt, storeTrial]);
 }
