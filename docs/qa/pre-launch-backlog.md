@@ -172,6 +172,22 @@ how the sheets feel on a phone, need the real thing.
       signed out. `public/legal/terms.html` carries the same October 2026
       Terms as `TermsOfService.tsx`.
 
+## iOS 15.4 is the minimum (2026-10-06)
+
+Affects: `ios/App/App.xcodeproj/project.pbxproj` (every
+`IPHONEOS_DEPLOYMENT_TARGET`), pinned by `iosDeploymentTarget.test.ts`,
+whose header has the reason: Safari before 15.4 drops the stylesheet's
+`@layer` blocks and the app opens unstyled.
+
+- [ ] **App Store Connect shows iOS 15.4.** After the next TestFlight
+      upload, the build's minimum OS version reads 15.4, and the App
+      Store listing's compatibility line says "Requires iOS 15.4 or
+      later".
+- [ ] **An iOS 15 phone, if one is to hand** (iPhone 6s, 7 or first SE
+      on 15.8): the app installs and opens styled. Container queries
+      start at iOS 16, so it shows each screen's designed layout at every
+      text size, which is expected.
+
 ## Phone platform layer: taps, field zoom, status bar (2026-10-05)
 
 Affects: `src/index.css` (tap flash, control touch rules, the 16px
@@ -237,6 +253,14 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
       designed size; a missing map says "Map unavailable" at the top
       right. Known and accepted: at 2× on a 320px screen the "kg" and
       "Reps" column headers run a little past their columns.
+- [ ] **Sign-up, setup and Pro at large text** (2026-10-06). The welcome
+      screen, sign-in, sign-up, every setup step and the Pro offer and
+      plans were measured the same way, down to 320px at 2×. With Larger
+      Text at its largest, make a new account: the answer cards drop their
+      pictures rather than cutting a word, Continue goes above Back when
+      the two don't fit side by side, and each plan's price stays whole.
+      Headings now grow by as much as body text rather than in proportion,
+      so check that page titles still read as titles at every size.
 
 ## The first-visit guide (2026-10-04)
 

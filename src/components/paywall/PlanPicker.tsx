@@ -49,7 +49,9 @@ export default function PlanPicker({
             disabled={disabled}
             onClick={() => onSelect(plan.id)}
             className={cn(
-              "relative w-full flex items-center justify-between p-4 rounded-2xl border transition-colors text-left",
+              // The price drops under the plan's name when the two no longer
+              // fit (larger text) rather than leaving the screen. Never cut.
+              "relative w-full flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4 rounded-2xl border transition-colors text-left",
               "min-h-[64px]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:opacity-60 disabled:cursor-not-allowed",
@@ -92,7 +94,7 @@ export default function PlanPicker({
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="ml-auto text-right">
               <p className="text-base font-bold text-foreground font-mono tabular-nums">
                 {plan.price}
                 <span className="text-xs font-medium text-muted-foreground">

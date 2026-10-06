@@ -46,11 +46,18 @@
   --ds-error: hsl(var(--destructive));
   --ds-error-bg: hsl(var(--destructive-bg));
 
-  /* Typography — 1.25 modular scale from 1rem (16px) body base */
-  --ds-text-display: 3rem; /* 48px — hero stats */
-  --ds-text-h1: 1.953rem; /* ~31px — page titles */
-  --ds-text-h2: 1.563rem; /* 25px — section headers */
-  --ds-text-h3: 1.25rem; /* 20px — card titles */
+  /* Typography — 1.25 modular scale from 1rem (16px) body base.
+     The headings are 1rem plus a fixed step, so at larger text on the
+     phone (systemTextSize.ts scales 1rem) they grow by as much as body
+     text does, not in proportion: at double text a page title is 47px,
+     not 62px. iOS grows its titles the same way under Dynamic Type, and
+     a title that grew in proportion left single words like "Welcome"
+     wider than a 320pt screen. At the designed size every value is the
+     one it always was. */
+  --ds-text-display: calc(1rem + 32px); /* 48px — hero stats */
+  --ds-text-h1: calc(1rem + 15.25px); /* ~31px — page titles */
+  --ds-text-h2: calc(1rem + 9px); /* 25px — section headers */
+  --ds-text-h3: calc(1rem + 4px); /* 20px — card titles */
   --ds-text-body: 1rem; /* 16px — body text (accessibility baseline) */
   --ds-text-small: 0.875rem; /* 14px — secondary text */
   --ds-text-micro: 0.75rem; /* 12px — labels, captions */

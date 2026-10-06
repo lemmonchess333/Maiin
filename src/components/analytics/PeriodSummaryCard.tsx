@@ -328,7 +328,8 @@ export default function PeriodSummaryCard({
             })}
           </svg>
           <div
-            className="mt-1 grid text-xs text-muted-foreground"
+            className="mt-1 grid @max-[11em]:hidden text-xs text-muted-foreground"
+            data-testid="axis-labels"
             style={{
               gridTemplateColumns: `repeat(${bins.length}, minmax(0, 1fr))`,
             }}
@@ -337,18 +338,15 @@ export default function PeriodSummaryCard({
             {bins.map((b, i) => {
               const fromEnd = bins.length - 1 - i;
               const shown = fromEnd % every === 0;
-              const end = i === firstLabelled || fromEnd === 0;
               return (
                 <span
                   key={b.key}
                   /* Wraps within its bar's slot ("14 / Sept") rather
                      than running into the next label, as the dates did
-                     at larger text. Under 11em of card only the two
-                     ends keep theirs: even wrapped, "Sept" was wider
-                     than a bar's slot at double size. */
+                     at larger text. Under 11em of card the row below
+                     takes over. */
                   className={cn(
                     "min-w-0 text-center leading-tight",
-                    !end && "@max-[11em]:invisible",
                     b.current && "font-semibold text-foreground",
                     // The last label may be wider than its bar's slot.
                     i === bins.length - 1 && every > 1 && "text-right"
@@ -360,6 +358,28 @@ export default function PeriodSummaryCard({
                 </span>
               );
             })}
+          </div>
+          {/* Under 11em of card only the two ends are named, at the
+              chart's edges: even wrapped, "Sept" was wider than a bar's
+              slot at double size. Wide-first. */}
+          <div
+            className="mt-1 hidden @max-[11em]:flex justify-between gap-2 text-xs leading-tight text-muted-foreground"
+            data-testid="axis-ends"
+            aria-hidden="true"
+          >
+            {[firstLabelled, bins.length - 1]
+              .filter((i, n, all) => all.indexOf(i) === n)
+              .map((i) => (
+                <span
+                  key={bins[i].key}
+                  className={cn(
+                    i === bins.length - 1 && "text-right",
+                    bins[i].current && "font-semibold text-foreground"
+                  )}
+                >
+                  {summaryAxisLabel(bins[i], granularity, i === firstLabelled)}
+                </span>
+              ))}
           </div>
           <div
             className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"

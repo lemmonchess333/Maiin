@@ -92,9 +92,11 @@ export function EmptyState({
         transition: { duration: 0.3, delay: 0.45 },
       };
 
+  // Side padding in px, as iOS keeps its margins: in rem, double text
+  // inside a card left a 320pt phone 128px for "Weight trend".
   return (
     <div
-      className={`text-center px-6 ${compact ? "py-6 space-y-2.5" : "py-10 space-y-4"} ${className ?? ""}`}
+      className={`text-center px-[24px] ${compact ? "py-6 space-y-2.5" : "py-10 space-y-4"} ${className ?? ""}`}
       role="status"
     >
       <div className="relative mx-auto" style={{ width: size, height: size }}>

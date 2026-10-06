@@ -227,10 +227,14 @@ export default function Login() {
               </p>
             </div>
           </div>
-          <ul className="space-y-2" aria-label="What Tropos plans">
+          {/* Each row's picture gives way under 9em (double text on a
+              narrow phone), leaving the words the row. Wide-first. */}
+          <ul className="@container space-y-2" aria-label="What Tropos plans">
             <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
-              <div>
+              <span className="shrink-0 @max-[9em]:hidden">
+                <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
+              </span>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Lifting</p>
                 <p className="text-xs text-muted-foreground">
                   Sessions for your days, gym and experience
@@ -238,10 +242,10 @@ export default function Login() {
               </div>
             </li>
             <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-              <span className="text-running-strong">
+              <span className="shrink-0 text-running-strong @max-[9em]:hidden">
                 <ChoiceArt art={{ kind: "route", distance: 3 }} />
               </span>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Running</p>
                 <p className="text-xs text-muted-foreground">
                   Run when you like, or train for a race
@@ -251,11 +255,11 @@ export default function Login() {
             <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
               <span
                 aria-hidden="true"
-                className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong"
+                className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong @max-[9em]:hidden"
               >
                 <FoodTabIcon active={false} className="size-7" />
               </span>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Food</p>
                 <p className="text-xs text-muted-foreground">
                   A calorie target worked out from your numbers

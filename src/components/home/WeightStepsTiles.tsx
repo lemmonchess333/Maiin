@@ -231,8 +231,10 @@ export default function WeightStepsTiles({
           {pending ? (
             <Skeleton className="h-3 w-20 mt-1.5" />
           ) : (
+            /* "From profile" ran 2px out of the tile at double text on a
+               320pt phone: a word wider than the tile hyphenates. */
             <p
-              className="text-micro mt-1"
+              className="text-micro mt-1 break-words hyphens-auto"
               style={{ color: "hsl(var(--muted-foreground))" }}
             >
               {lastWeightDate}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import TrainingWeeksCard from "../TrainingWeeksCard";
 import { haptic } from "@/lib/haptic";
 import type { SummaryBin } from "@/lib/periodSummary";
@@ -272,9 +272,14 @@ describe("months from last year", () => {
         bin(`${y}-01-01`, { runs: 3, distanceM: 20_000 }, true),
       ],
     });
-    expect(screen.getByText(`Nov ${y - 1}`)).toBeInTheDocument();
-    expect(screen.getByText("Dec")).toBeInTheDocument();
+    const labels = within(screen.getByTestId("axis-labels"));
+    expect(labels.getByText(`Nov ${y - 1}`)).toBeInTheDocument();
+    expect(labels.getByText("Dec")).toBeInTheDocument();
     expect(screen.queryByText(`Dec ${y - 1}`)).toBeNull();
+    // The narrow card's row names the same first month, year and all.
+    expect(
+      within(screen.getByTestId("axis-ends")).getByText(`Nov ${y - 1}`)
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", {
         name: new RegExp(`^Dec ${y - 1}: 20\\.0 km, 3 runs$`),
