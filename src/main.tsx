@@ -15,6 +15,7 @@ import App from "./App.tsx";
 import { registerServiceWorker } from "./lib/register-sw";
 import { initErrorMonitoring } from "./lib/errorReporting";
 import { startSystemChromeSync } from "./lib/systemChrome";
+import { startSystemTextSizeSync } from "./lib/systemTextSize";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -27,6 +28,9 @@ registerServiceWorker();
 
 // The status bar's text and the browser bar's colour follow the theme.
 startSystemChromeSync();
+
+// On iPhone, the text follows the phone's text size (Dynamic Type).
+startSystemTextSizeSync();
 
 // Attach window.error and unhandledrejection listeners. captureError is
 // already called at known failure sites throughout the app; this catches

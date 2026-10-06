@@ -128,12 +128,14 @@ export default function PerformanceOverviewCard({
     <section aria-label="Performance" className="space-y-2">
       <SectionHeading action={details}>Performance</SectionHeading>
       <Card className="space-y-3">
-        <div className="flex items-start gap-3">
+        {/* The words keep at least 9em and go under the score when they
+            cannot, rather than one word to a line at larger text. */}
+        <div className="flex flex-wrap items-start gap-3">
           <p className="text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
             <span className="sr-only">Performance Index </span>
             {pi}
           </p>
-          <div className="min-w-0 flex-1 space-y-1 pt-0.5">
+          <div className="min-w-[min(100%,9em)] flex-1 space-y-1 pt-0.5">
             {showDelta && (
               <span
                 className={

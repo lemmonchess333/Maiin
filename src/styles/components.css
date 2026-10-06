@@ -30,7 +30,10 @@
 .bottom-nav-frame {
   /* Leave the safe area outside the material. Empty gutters must not
      intercept a page gesture or obscure the home indicator. */
-  padding: 0 var(--page-x) calc(var(--safe-bottom) + var(--tab-bar-gap));
+  /* 16px, not --page-x (1rem): the bar keeps its size at larger text,
+     like its labels, and a rem gutter took the room "Analytics" needed
+     on a 320px screen at double size. */
+  padding: 0 16px calc(var(--safe-bottom) + var(--tab-bar-gap));
   pointer-events: none;
 }
 
@@ -83,6 +86,16 @@
 .bottom-nav-icon {
   transition: transform var(--ds-transition-fast);
 }
+/* The tab labels stay 12px whatever the text size, as iOS's own tab bar
+   does: five labels share the phone's width, so "Analytics" growing with
+   larger text left its cell. Everything else in the app scales with the
+   root font size (systemTextSize.ts); this is the one deliberate fixed
+   size. */
+.bottom-nav-label {
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .bottom-nav-link:active .bottom-nav-icon {
   transform: scale(0.97);
 }

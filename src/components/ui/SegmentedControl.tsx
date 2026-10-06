@@ -183,7 +183,11 @@ function SegmentedControl<T extends string | number>({
               emphasis === "solid"
                 ? "rounded-full border px-4"
                 : layout === "fill"
-                  ? "flex-1"
+                  ? // Equal parts end a label in "…" when it no longer
+                    // fits, as iOS's own segmented control does, rather
+                    // than pushing the row off the screen at larger text
+                    // ("Analytics PRs Badges" on a 320px phone).
+                    "flex-1 min-w-0 truncate"
                   : "px-4",
               emphasis === "solid"
                 ? selected

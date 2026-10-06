@@ -742,8 +742,8 @@ function ProgramInner() {
       key: String(i),
       center: String(i + 1),
       // The day's FOCUS ("Squat", "Chest", "Shoulder"), not its split
-      // category. The chip is `line-clamp-1` so the full "Push — Chest
-      // Focus" cannot go here, and the category is the wrong half to
+      // category. The chip is one `truncate`d line, so the full "Push —
+      // Chest Focus" cannot go here, and the category is the wrong half to
       // keep: it is already the page header's subtitle, and it REPEATS —
       // a Full Body rotation labels all three days "Full Body", and a
       // Push/Pull/Legs x2 week labels days 1 and 4 both "Push". The
