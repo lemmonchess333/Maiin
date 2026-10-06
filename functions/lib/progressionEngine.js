@@ -7,9 +7,9 @@
  * The programme command reducer runs `logExercise` server-side, which must
  * produce the IDENTICAL next prescription the client engine produces for the
  * same input (double/linear progression, bodyweight rep-bumps, RPE hold,
- * failure deloads, plateau counting). programEngine.ts is Vite/TS and can't be
- * required from CommonJS Cloud Functions, so this is a hand-maintained TS↔JS
- * equality mirror.
+ * the response to repeated misses, plateau counting). programEngine.ts is
+ * Vite/TS and can't be required from CommonJS Cloud Functions, so this is a
+ * hand-maintained TS↔JS equality mirror.
  *
  * MUST return identical output to the client applyProgression for identical
  * input (excluding the informational performanceHistory[].date stamp, which is
@@ -81,6 +81,23 @@ function dateStampUTC(now) {
 }
 
 /**
+ * The load a session moves a lift's prescription to before any step: the
+ * weight actually lifted, however far from the prescription (the owner's
+ * rule, reversing Lift2). `null` for a bodyweight movement, or a set saved
+ * with no load. Mirror of `liftedLoad` in programEngine.ts.
+ *
+ * @param {string | undefined} exerciseId
+ * @param {number} actualWeight
+ * @returns {number | null}
+ */
+function liftedLoad(exerciseId, actualWeight) {
+  if (isBodyweightExerciseId(exerciseId)) return null;
+  return Number.isFinite(actualWeight) && actualWeight > 0
+    ? actualWeight
+    : null;
+}
+
+/**
  * @param {object} exercise - a ProgramExercise
  * @param {number} actualReps
  * @param {number} actualWeight
@@ -90,9 +107,6 @@ function dateStampUTC(now) {
  * @param {number} [now] - ms timestamp for the history date stamp
  * @returns {object} next ProgramExercise
  */
-/** Lift2 mirror of programEngine.ts USER_LOAD_ANCHOR_STEPS. */
-const USER_LOAD_ANCHOR_STEPS = 4;
-
 function applyProgression(
   exercise,
   actualReps,
@@ -125,9 +139,6 @@ function applyProgression(
     },
   };
 
-  const completed =
-    actualReps >= exercise.reps && actualWeight >= exercise.weight;
-
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const isUncalibrated = !isBodyweight && exercise.weight === 0;
   if (isUncalibrated) {
@@ -147,24 +158,23 @@ function applyProgression(
   const resetReps = exercise.baseReps ?? exercise.reps;
 
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
-  // Backlog #7 (H3) — proportional load step, keyed on movement + load.
-  const microplate = usesMicroplateStep(
-    exercise.movementCategory,
-    exercise.weight
-  );
+  // The plan follows the load lifted — mirror; see programEngine.ts. A
+  // loaded lift's prescription moves to the weight lifted, by any margin;
+  // success is the target reps at it and every step runs from it. A miss
+  // counts, and the third in a row resets the rep target, never the load.
+  // No load logged: record and hold. Bodyweight movements are untouched.
+  const lifted = liftedLoad(exercise.exerciseId, actualWeight);
+  if (!isBodyweight && lifted === null) return updated;
+  const anchor = lifted === null ? exercise.weight : lifted;
+  updated.weight = anchor;
+  const completed =
+    actualReps >= exercise.reps &&
+    (!isBodyweight || actualWeight >= exercise.weight);
+  // Backlog #7 (H3) — proportional load step, keyed on the movement and the
+  // load being followed.
+  const microplate = usesMicroplateStep(exercise.movementCategory, anchor);
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
-  // Lift2 mirror — lighter + reps hit HOLDS (no failure, no cut); heavier +
-  // reps hit re-anchors within USER_LOAD_ANCHOR_STEPS. See programEngine.ts.
-  if (!isBodyweight && actualReps >= exercise.reps && actualWeight < exercise.weight) {
-    return { ...updated, lastSuccessfulWeight: actualWeight };
-  }
-  const anchor =
-    !isBodyweight &&
-    actualWeight > exercise.weight &&
-    actualWeight <= exercise.weight + USER_LOAD_ANCHOR_STEPS * loadStep
-      ? actualWeight
-      : exercise.weight;
   // Backlog #7's time axis (N2) — mirror; see programEngine.ts for why the
   // rep cap is meaningless for a hold that starts above it.
   const isTimed = exercise.repUnit === "seconds";
@@ -193,7 +203,6 @@ function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       // Authored ceiling, or the one the legacy arm below already implies.
       // Mirror of the client branch — without the fallback a range-less
       // double never progresses for a lifter who hits the prescription.
@@ -248,7 +257,10 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
+          // Loaded (weighted holds included): the load stays, the rep
+          // target or hold duration goes back to its base — mirror of the
+          // client.
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -256,7 +268,6 @@ function applyProgression(
     }
   } else {
     if (completed) {
-      if (anchor > exercise.weight) updated.weight = anchor;
       if (isBodyweight) {
         const rangeMax = exercise.repRangeMax;
         if (rangeMax != null && rangeMax > resetReps) {
@@ -295,7 +306,7 @@ function applyProgression(
             ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
             : Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.max(0, exercise.weight - 1);
+          updated.reps = resetReps;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -308,7 +319,7 @@ function applyProgression(
 
 module.exports = {
   applyProgression,
-  USER_LOAD_ANCHOR_STEPS,
+  liftedLoad,
   dateStampUTC,
   goalWeightBonus,
   PERFORMANCE_HISTORY_CAP,

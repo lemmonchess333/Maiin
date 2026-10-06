@@ -53,9 +53,15 @@ describe("LeaderboardRow layout contract", () => {
   it("lets a long athlete name shrink and ellipse rather than push the score out", () => {
     renderRow();
     const name = screen.getByText(LONG_NAME);
-    expect(name).toHaveClass("min-w-0");
+    // An explicit floor, not the flex default of `auto`: the name can
+    // shrink, but not below 3em, and past that the score wraps under it.
+    expect(name).toHaveClass("min-w-[min(3em,100%)]");
     expect(name).toHaveClass("flex-1");
     expect(name).toHaveClass("truncate");
+    expect(name.parentElement).toHaveClass("flex-wrap");
+    expect(screen.getByText(groupText(12480)).closest("span")).toHaveClass(
+      "ml-auto"
+    );
   });
 
   it("holds the score whole — it never shrinks and never wraps", () => {

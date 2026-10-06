@@ -41,14 +41,14 @@ import {
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { validateDisplayName } from "@/lib/displayName";
+import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 
@@ -742,7 +742,7 @@ export default function Onboarding() {
       ? "No running selected"
       : effectiveRunMode === "freeform"
         ? "Free running · no scheduled runs"
-        : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week · ${raceTargetDate}`;
+        : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`;
   return (
     <div
       className="h-dvh flex flex-col bg-background text-foreground px-4 max-w-lg mx-auto"
@@ -1505,9 +1505,12 @@ export default function Onboarding() {
                     .map((row) => (
                       <div
                         key={row.label}
-                        className="flex items-center gap-3 py-3"
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3"
                       >
-                        <div className="flex-1 min-w-0">
+                        {/* Edit drops under the answer when the two no
+                            longer fit (larger text), rather than leaving a
+                            word like "Intermediate" too little room. */}
+                        <div className="flex-1 min-w-[min(100%,9em)]">
                           <p className="text-sm text-muted-foreground">
                             {row.label}
                           </p>
@@ -1515,6 +1518,7 @@ export default function Onboarding() {
                         </div>
                         <Button
                           variant="ghost"
+                          className="ml-auto"
                           onClick={() => edit(row.target)}
                           aria-label={`Edit ${row.label.toLowerCase()}`}
                         >
@@ -1535,7 +1539,7 @@ export default function Onboarding() {
                   id="onboarding-name"
                   className="ds-input w-full min-h-11"
                   value={displayName}
-                  maxLength={30}
+                  maxLength={DISPLAY_NAME_MAX}
                   aria-invalid={!displayNameValidation.valid}
                   onChange={(event) => setDisplayName(event.target.value)}
                 />
@@ -1566,8 +1570,12 @@ export default function Onboarding() {
           </p>
         )}
       </div>
-      <footer className="shrink-0 border-t border-border pt-4 space-y-2">
-        <div className="flex gap-3">
+      {/* Under 15em of footer (larger text on the phone) Back and the main
+          button no longer fit side by side, and "Continue" is one word that
+          cannot wrap: the main button goes on top, Back under it, each the
+          full width. Wide-first. */}
+      <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+        <div className="flex gap-3 @max-[15em]:flex-col-reverse">
           {step !== 0 && (
             <Button
               variant="secondary"

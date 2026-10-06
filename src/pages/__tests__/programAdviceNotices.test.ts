@@ -51,4 +51,21 @@ describe("Train's advice waits its turn", () => {
       /suppressed=\{liftAdvice === "recovery" \|\| liftAdvice === "deload"\}/
     );
   });
+
+  /* Owner, 2026-10-05: no row per lift that has held ("Seated Leg Curl has
+     held at 47.5 kg for 3 sessions", opening a calorie offer). With twenty
+     exercises it could name twenty. The engine still holds and rotates
+     lifts, without a notice. */
+  it("names no lift that has held its load or reps", () => {
+    // The positive half: this reads the day view, where the row sat between
+    // today's one offer and the exercise rows. If the comment stripping or a
+    // move of the day view took that span out of `code`, these fail first.
+    const offer = code.indexOf("Go easier today");
+    expect(offer).toBeGreaterThan(-1);
+    expect(code.indexOf("<ExerciseRowSummary", offer)).toBeGreaterThan(offer);
+    // And nothing on the page brings the row or its modal back.
+    expect(code).not.toMatch(
+      /has held|Review recent lifting progress|Plateau detected|StallReview|StallModal|detectStall|tropos_stall_/
+    );
+  });
 });

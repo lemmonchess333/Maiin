@@ -73,7 +73,10 @@ export default function MacroDistribution({
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
       <SectionLabel className="mb-3">Macro distribution</SectionLabel>
-      <div className="flex items-center gap-4">
+      {/* The legend goes under the ring when the two no longer fit side
+          by side (larger text): the ring is 6rem, and at double size it
+          left the legend too narrow for "29% · 125g". */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
         {/* Donut is decorative re: VoiceOver — the legend below it
             already announces the same percentages + grams as text.
             aria-hidden on the chart container prevents the screen
@@ -82,7 +85,14 @@ export default function MacroDistribution({
             Recharts injects (default tabIndex=0) doesn't leave a
             tab-stop inside an aria-hidden subtree — that's the
             axe-core aria-hidden-focus violation. */}
-        <div className="size-24 shrink-0 relative" aria-hidden="true">
+        {/* The ring is a drawing, fixed at 96px like the chart inside it,
+            so its hole is 56px at any text size. Past 4em of box (above
+            1.35x text) the figure no longer fits the hole and is left to
+            the Avg calories card above, which shows the same number. */}
+        <div
+          className="@container size-[96px] shrink-0 relative"
+          aria-hidden="true"
+        >
           <ResponsiveContainer width="100%" height={96}>
             {/* `accessibilityLayer={false}`, and the `rootTabIndex` below
                 is no longer what does the work. Recharts 3 defaults
@@ -142,7 +152,7 @@ export default function MacroDistribution({
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex @max-[4em]:hidden flex-col items-center justify-center pointer-events-none">
             {/* The hole held the word "avg" — a label for a figure that
                 was not there, the average of nothing in particular. It
                 holds the figure now.
@@ -161,11 +171,11 @@ export default function MacroDistribution({
             </p>
           </div>
         </div>
-        <div className="flex-1 space-y-1.5">
+        <div className="min-w-[min(100%,10em)] flex-1 space-y-1.5">
           {data.map((d) => (
             <div
               key={d.name}
-              className="flex items-center justify-between gap-2 text-xs"
+              className="flex flex-wrap items-center justify-between gap-x-2 text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span

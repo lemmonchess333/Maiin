@@ -39,7 +39,7 @@ export function SettingsGroup({
           {title}
         </SectionHeading>
       )}
-      <ul className="rounded-xl bg-card overflow-hidden divide-y divide-border/40">
+      <ul className="@container rounded-xl bg-card overflow-hidden divide-y divide-border/40">
         {children}
       </ul>
       {footer && <p className="px-1 text-xs text-muted-foreground">{footer}</p>}
@@ -82,8 +82,11 @@ export function SettingsRow({
   const showChevron = chevron ?? (!!onClick && !trailing && !destructive);
   const body = (
     <>
+      {/* The icon gives its room to the label once the row is under 14em
+          (larger text on the phone): beside it "Programme" and
+          "Subscription" broke mid-word. */}
       {Icon && !destructive && (
-        <span className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+        <span className="size-8 rounded-lg bg-muted flex @max-[14em]:hidden items-center justify-center shrink-0">
           <Icon
             className={cn("size-4 text-muted-foreground", iconClassName)}
             aria-hidden="true"
@@ -91,9 +94,12 @@ export function SettingsRow({
         </span>
       )}
       <span className="flex-1 min-w-0">
+        {/* Hyphenates a word wider than the room left (only "Subscription"
+            beside its plan, on a 320px phone at larger text) rather than
+            running under the value. */}
         <span
           className={cn(
-            "block text-sm font-medium",
+            "block text-sm font-medium break-words hyphens-auto",
             destructive ? "text-destructive-strong" : "text-foreground"
           )}
         >
@@ -104,8 +110,9 @@ export function SettingsRow({
             className={cn(
               "block text-xs text-muted-foreground",
               // A row with a control beside it wraps rather than clipping
-              // its line; a navigation row keeps to one.
-              !trailing && "truncate"
+              // its line; a navigation row keeps to two, which at the
+              // designed size is one.
+              !trailing && "line-clamp-2"
             )}
           >
             {description}
@@ -113,7 +120,12 @@ export function SettingsRow({
         )}
       </span>
       {value !== undefined && (
-        <span className="shrink-0 text-sm text-muted-foreground">{value}</span>
+        /* Shrinks to its longest word and wraps, rather than taking the
+           label's room: at larger text "Trial · 12 days left" left
+           "Subscription" wider than what remained. */
+        <span className="min-w-min text-right text-sm text-muted-foreground">
+          {value}
+        </span>
       )}
       {trailing}
       {showChevron && (

@@ -249,6 +249,12 @@ the count can only fall.
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
 
+Sizes are at the designed text size. The iPhone app follows the phone's
+text size (`systemTextSize.ts`, 1× to 2×): body and small text grow in
+proportion, while the four heading steps grow by the same amount as body
+text, as iOS titles do under Dynamic Type (`tokens.css`). At double text
+a page title is 47px, not 62px.
+
 **Onboarding question role (approved first release, 7 September 2026):**
 The question heading uses the existing `text-h1` token with `font-extrabold`,
 tight leading and natural wrapping. Standard route titles keep their existing
@@ -895,3 +901,4 @@ or touching a CTA button, route it through `Button` with the variant above.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
 - New-best and PR badges are gold (`--achievement`), never the food orange
+- People's names (owner, 2026-10-05, from the break-social pass). A name reads in its own direction (`dir="auto"`) but keeps to the start of its row. A profile's heading wraps to two lines before it truncates. On a card narrower than 20.5em (under 360px at normal text size) a post's Follow is an icon (`InlineFollow`), so the author's name and time keep the room. At large text sizes the feed card, exercise rows and leaderboard rows wrap rather than clip: the card is a query container measured in em, its stats go from three columns to two to one, and the capture spec measures every dataset at 200% text. Display names are 2–50 characters in the app, the server's sanitizer and every rules cap on a copied name, pinned by `displayNameLimit.cross.test.ts`. The worst cases live at `/dev/break-social`

@@ -187,66 +187,71 @@ export default function PeriodSummaryCard({
       {/* The figures are the chart's switch. Their backgrounds reach into
           the card's padding, so the numbers still start on the title's
           edge. */}
-      <div
-        role="radiogroup"
-        aria-label="Show on the chart"
-        className="-mx-2 grid grid-cols-3 gap-1"
-      >
-        {figures.map((f, i) => {
-          const selected = i === selectedIndex;
-          return (
-            <button
-              key={f.metric}
-              ref={(el) => {
-                optionRefs.current[i] = el;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => choose(i)}
-              onKeyDown={(event) => onKeyDown(event, i)}
-              className={cn(
-                "min-w-0 rounded-xl px-2 py-2 text-left",
-                "active:scale-[0.97] motion-safe:transition-[background-color,transform]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                selected && "bg-muted"
-              )}
-            >
-              <span className="block text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
-                {f.value}
-              </span>
-              <span className="block text-sm text-muted-foreground truncate">
-                {f.unit}
-              </span>
-              {f.change && comparedWith && (
-                <span
-                  className={cn(
-                    "block text-xs font-semibold",
-                    f.change.direction === "up"
-                      ? "text-success-strong"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <span aria-hidden="true">
-                    {f.change.direction === "up" ? "↑" : "↓"}{" "}
-                    <span className="font-mono tabular-nums">
-                      {f.change.text}
+      {/* Three across while 17em of card allows (a 320px phone at the
+          designed size), one per row below that: at larger text "52.8k"
+          was wider than a third of the card. */}
+      <div className="@container -mx-2">
+        <div
+          role="radiogroup"
+          aria-label="Show on the chart"
+          className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-1"
+        >
+          {figures.map((f, i) => {
+            const selected = i === selectedIndex;
+            return (
+              <button
+                key={f.metric}
+                ref={(el) => {
+                  optionRefs.current[i] = el;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => choose(i)}
+                onKeyDown={(event) => onKeyDown(event, i)}
+                className={cn(
+                  "min-w-0 rounded-xl px-2 py-2 text-left",
+                  "active:scale-[0.97] motion-safe:transition-[background-color,transform]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  selected && "bg-muted"
+                )}
+              >
+                <span className="block text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+                  {f.value}
+                </span>
+                <span className="block text-sm text-muted-foreground truncate">
+                  {f.unit}
+                </span>
+                {f.change && comparedWith && (
+                  <span
+                    className={cn(
+                      "block text-xs font-semibold",
+                      f.change.direction === "up"
+                        ? "text-success-strong"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <span aria-hidden="true">
+                      {f.change.direction === "up" ? "↑" : "↓"}{" "}
+                      <span className="font-mono tabular-nums">
+                        {f.change.text}
+                      </span>
+                    </span>
+                    <span className="sr-only">
+                      {f.change.direction === "up" ? "Up" : "Down"}{" "}
+                      {f.change.text} on {comparedWith}
                     </span>
                   </span>
-                  <span className="sr-only">
-                    {f.change.direction === "up" ? "Up" : "Down"}{" "}
-                    {f.change.text} on {comparedWith}
-                  </span>
-                </span>
-              )}
-            </button>
-          );
-        })}
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {bins.length > 0 && (
-        <div>
+        <div className="@container">
           <svg
             viewBox={`0 0 ${CHART_W} ${CHART_H}`}
             width="100%"
@@ -323,8 +328,11 @@ export default function PeriodSummaryCard({
             })}
           </svg>
           <div
-            className="mt-1 grid text-xs text-muted-foreground"
-            style={{ gridTemplateColumns: `repeat(${bins.length}, 1fr)` }}
+            className="mt-1 grid @max-[11em]:hidden text-xs text-muted-foreground"
+            data-testid="axis-labels"
+            style={{
+              gridTemplateColumns: `repeat(${bins.length}, minmax(0, 1fr))`,
+            }}
             aria-hidden="true"
           >
             {bins.map((b, i) => {
@@ -333,8 +341,12 @@ export default function PeriodSummaryCard({
               return (
                 <span
                   key={b.key}
+                  /* Wraps within its bar's slot ("14 / Sept") rather
+                     than running into the next label, as the dates did
+                     at larger text. Under 11em of card the row below
+                     takes over. */
                   className={cn(
-                    "whitespace-nowrap text-center",
+                    "min-w-0 text-center leading-tight",
                     b.current && "font-semibold text-foreground",
                     // The last label may be wider than its bar's slot.
                     i === bins.length - 1 && every > 1 && "text-right"
@@ -346,6 +358,28 @@ export default function PeriodSummaryCard({
                 </span>
               );
             })}
+          </div>
+          {/* Under 11em of card only the two ends are named, at the
+              chart's edges: even wrapped, "Sept" was wider than a bar's
+              slot at double size. Wide-first. */}
+          <div
+            className="mt-1 hidden @max-[11em]:flex justify-between gap-2 text-xs leading-tight text-muted-foreground"
+            data-testid="axis-ends"
+            aria-hidden="true"
+          >
+            {[firstLabelled, bins.length - 1]
+              .filter((i, n, all) => all.indexOf(i) === n)
+              .map((i) => (
+                <span
+                  key={bins[i].key}
+                  className={cn(
+                    i === bins.length - 1 && "text-right",
+                    bins[i].current && "font-semibold text-foreground"
+                  )}
+                >
+                  {summaryAxisLabel(bins[i], granularity, i === firstLabelled)}
+                </span>
+              ))}
           </div>
           <div
             className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"

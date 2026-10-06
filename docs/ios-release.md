@@ -33,49 +33,75 @@ TestFlight, on one of GitHub's macOS runners (`macos-26`; free for a public
 repo). It is **manual-trigger only** (`workflow_dispatch`) so it never fires
 unexpectedly on a push — you run it from the **Actions** tab when you want a
 new TestFlight build, then install the build with Apple's TestFlight app.
-Nothing in this route needs a Mac: every file below comes from Apple's or
-Firebase's website, and the one step a Mac would normally do (the
-certificate request) is done with openssl in a Codespace.
+Nothing in this route needs a Mac: every value below comes from Apple's or
+Firebase's website.
 
 > ⚠️ The workflow has **never completed a run.** Treat the first run as a
 > bring-up. Before archiving it checks every secret, the profile and the
 > certificate, so a wrong file fails in the first minutes with a message
 > naming it.
 
+#### Signing: the API key, or your own certificate
+
+A build for TestFlight is signed with an Apple Distribution certificate and
+an App Store provisioning profile. The workflow gets them one of two ways:
+
+- **From the API key (the default).** With none of the three
+  `IOS_DIST_CERT_*` / `IOS_PROVISIONING_PROFILE_BASE64` secrets set, each run
+  makes a private key on the runner, asks App Store Connect's API for a
+  certificate and a profile for it (`scripts/ios/asc-signing.mjs`), and
+  signs with those. The key never leaves the runner, so each run makes a new
+  certificate and revokes the one the run before made: Apple Developer →
+  Certificates shows one Apple Distribution certificate from these runs,
+  and Profiles one profile named `Tropos CI <serial>`. Revoking an old one
+  does not affect builds already uploaded, which Apple signs itself. This
+  needs the API key to have the **Admin** role.
+- **Your own certificate.** Set all three secrets and the run signs with
+  them instead: the openssl steps under "Your own certificate" below. The
+  API key then only uploads, which the **App Manager** role allows.
+
+Either way the run checks the certificate and the profile against the team,
+the bundle id and the app's entitlements before it archives.
+
 #### First: the App ID's capabilities
 
 A provisioning profile carries the capabilities its App ID had when the
 profile was made, and the archive refuses an app whose entitlements
-(`ios/App/App/App.entitlements`) the profile lacks. So before making the
-profile, open Apple Developer → Identifiers → `com.tropos.app` and turn on:
+(`ios/App/App/App.entitlements`) the profile lacks. So before the first
+run, open Apple Developer → Identifiers → `com.tropos.app` and turn on:
 
 - **App Attest**: the native App Check provider.
 - **HealthKit**: steps, through `capacitor-health`.
 - **Sign in with Apple**: native Apple sign-in. On since 2026-07.
 
-Turning a capability on later means making the profile again.
+Turning a capability on later means making the profile again. A run that
+signs from the API key makes a new profile each time, so for that, run the
+workflow again.
 
-#### One-time secrets (Settings → Secrets and variables → Actions)
+#### Secrets (Settings → Secrets and variables → Actions)
 
-| Secret                                 | What it is                                                                  | Where it comes from                                                                                                                  |
-| -------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `APPLE_TEAM_ID`                        | 10-character Apple Developer Team ID                                        | Apple Developer → Membership details                                                                                                 |
-| `IOS_DIST_CERT_P12_BASE64`             | the Apple Distribution certificate and its private key, as a `.p12`, base64 | the Codespace commands below                                                                                                         |
-| `IOS_DIST_CERT_PASSWORD`               | the password on that `.p12`                                                 | made by the same commands                                                                                                            |
-| `IOS_PROVISIONING_PROFILE_BASE64`      | App Store Connect distribution profile for `com.tropos.app`, base64         | Apple Developer → Profiles → + → **App Store Connect** → `com.tropos.app` → the certificate above → download                         |
-| `ASC_API_KEY_ID`                       | App Store Connect API key ID                                                | App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → generate one with the **App Manager** role |
-| `ASC_API_ISSUER_ID`                    | the Issuer ID shown on the same page                                        | same page                                                                                                                            |
-| `ASC_API_KEY_P8_BASE64`                | the key's `.p8` file, base64 (Apple lets you download it once)              | same page                                                                                                                            |
-| `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | the iOS app's `GoogleService-Info.plist`, base64                            | Firebase Console → Project settings → Your apps → **iOS app** → download                                                             |
+| Secret                                 | What it is                                                                             | Where it comes from                                                                                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `APPLE_TEAM_ID`                        | 10-character Apple Developer Team ID                                                   | Apple Developer → Membership details                                                                                                                                   |
+| `ASC_API_KEY_ID`                       | App Store Connect API key ID                                                           | App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → generate one with the **Admin** role (App Manager with your own certificate) |
+| `ASC_API_ISSUER_ID`                    | the Issuer ID shown on the same page                                                   | same page                                                                                                                                                              |
+| `ASC_API_KEY_P8_BASE64`                | the key's `.p8` file (Apple lets you download it once)                                 | same page. Paste the file's text as it is, or its base64                                                                                                               |
+| `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | the iOS app's `GoogleService-Info.plist`                                               | Firebase Console → Project settings → Your apps → **iOS app** → download. Paste the file's text as it is, or its base64                                                |
+| `IOS_DIST_CERT_P12_BASE64`             | optional: your Apple Distribution certificate and its private key, as a `.p12`, base64 | the openssl steps below. Leave unset to sign from the API key                                                                                                          |
+| `IOS_DIST_CERT_PASSWORD`               | optional: the password on that `.p12`                                                  | made by the same steps                                                                                                                                                 |
+| `IOS_PROVISIONING_PROFILE_BASE64`      | optional: App Store Connect distribution profile for `com.tropos.app`, base64          | Apple Developer → Profiles → + → **App Store Connect** → `com.tropos.app` → the certificate above → download                                                           |
 
-The signing keychain's password is generated inside the job, so it has no
-secret. Values are trimmed of surrounding whitespace, so a secret pasted
-with a trailing newline still works.
+The three optional ones go together: all three, or none. The signing
+keychain's password is generated inside the job, so it has no secret.
+Values are trimmed of surrounding whitespace, so a secret pasted with a
+trailing newline still works. To paste a file's text, open it in any text
+editor (the `.p8` starts with `-----BEGIN PRIVATE KEY-----`, the plist with
+`<?xml`), select all and copy.
 
-#### The certificate without a Mac
+#### Your own certificate (optional) without a Mac
 
-On a Mac, Keychain Access makes the certificate request. In a Codespace,
-openssl does the same job:
+Skip this when signing from the API key. On a Mac, Keychain Access makes
+the certificate request. In a Codespace, openssl does the same job:
 
 1. In the Codespace terminal:
 
@@ -105,16 +131,17 @@ openssl does the same job:
 
    The `-keypbe`, `-certpbe` and `-macalg` options pick the older `.p12`
    encryption that macOS's `security` tool imports. OpenSSL 3's default can
-   fail there with "MAC verification failed".
+   fail there with "MAC verification failed". The run that signs from the
+   API key makes its `.p12` the same way.
 
 5. Open each `.txt` file, select all, copy, and paste it into the secret
    of the same name.
 
-The profile, the API key and the Firebase plist go the same way: download
-the file, drag it into `ios-signing`, run `base64 -w0 <file> > <SECRET>.txt`,
-and paste. When every secret is set, delete the folder with
-`rm -rf /workspaces/Maiin/ios-signing`. If the private key is ever lost,
-revoke the certificate on Apple's site and make a new one.
+The profile goes the same way: download the file, drag it into
+`ios-signing`, run `base64 -w0 <file> > <SECRET>.txt`, and paste. When every
+secret is set, delete the folder with `rm -rf /workspaces/Maiin/ios-signing`.
+If the private key is ever lost, revoke the certificate on Apple's site and
+make a new one.
 
 `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` is not signing material, but it is
 the one secret without which the build is useless: every
@@ -143,14 +170,19 @@ the comment on the build step, and the activation order in
 
 #### First-run checklist
 
-1. Turn on the App ID's capabilities, then add all the secrets above.
+1. Turn on the App ID's capabilities, then add the five secrets above (and
+   the three optional ones only if you sign with your own certificate).
 2. Make sure App Store Connect → Apps has an app for `com.tropos.app`. The
    upload has nowhere to go without one.
 3. Actions tab → **Deploy iOS to TestFlight** → Run workflow.
-4. The run checks the secrets, then the profile (team, bundle id, App
-   Store type, expiry, the app's entitlements) and the certificate (a valid
-   Apple Distribution identity that the profile was made for), before
-   archiving. Its error names the piece to fix.
+4. The run checks the secrets, makes the certificate and profile from the
+   API key unless you gave your own, then checks the profile (team, bundle
+   id, App Store type, expiry, the app's entitlements) and the certificate
+   (a valid Apple Distribution identity that the profile was made for),
+   before archiving. Its error names the piece to fix: an API key without
+   the Admin role, an App ID that is missing or lacks a capability, or an
+   account already holding as many distribution certificates as Apple
+   allows.
 5. Signing: the project as committed signs automatically, which cannot
    work on a runner with no Apple account, so the workflow switches the App
    target alone to manual signing with the imported profile. It does this

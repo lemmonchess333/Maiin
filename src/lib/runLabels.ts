@@ -252,7 +252,10 @@ export function elevationLabel(
      that bare metres were fixed but deliberately not ratcheted, because
      `/\dm\b/` cannot tell a climb from a duration or an id. So this one
      is held by the convention test beside it instead. */
-  return withUnit ? `${v} ${elevationUnitLabel(unit)}` : `${v}`;
+  /* Grouped like every other count: a mountain marathon climbs 2,845 m,
+     and "2845" is one glance slower to read. */
+  const n = v.toLocaleString();
+  return withUnit ? `${n} ${elevationUnitLabel(unit)}` : n;
 }
 
 /**

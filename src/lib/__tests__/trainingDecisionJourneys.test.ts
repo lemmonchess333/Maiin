@@ -27,7 +27,6 @@ import {
 } from "../workoutCompletion";
 import { correctSavedWorkout, type WorkoutEdits } from "../workoutCorrection";
 import { liftWeekLabel } from "../liftWeekLabel";
-import { detectStall } from "@/features/program/stallDetection";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -236,7 +235,6 @@ describe("saved lifting work, correction, and the next prescription", () => {
   );
   it("three incomplete sessions do not masquerade as three failed full prescriptions", async () => {
     const baseline = storedPlan().workouts[0].exercises;
-    const history: Workout[] = [];
     for (let i = 0; i < 3; i++) {
       const state = storedPlan();
       const input = session(state, `partial-${i}`);
@@ -248,8 +246,6 @@ describe("saved lifting work, correction, and the next prescription", () => {
       const saved = readDoc(path(input.completionId)) as unknown as Workout;
       expect(saved.exercises[0].plannedSetCount).toBe(8);
       expect(saved.exercises[0].sets).toHaveLength(2);
-      history.unshift(saved);
-      expect(detectStall(baseline[0], history)).toBeNull();
       await correctSavedWorkout(
         db,
         "u1",

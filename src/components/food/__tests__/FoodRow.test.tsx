@@ -170,6 +170,32 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
     expect(screen.getByText("3 bowls")).toBeInTheDocument();
   });
 
+  it.each([
+    // 0.1 × 3 is 0.30000000000000004 in floating point.
+    ["0.1 cup", 3, "0.3 cup"],
+    // Unit abbreviations take no plural.
+    ["40 g", 3, "120 g"],
+    ["250 ml", 2, "500 ml"],
+    // The plural goes on the unit's word, not after its bracket.
+    ["1 bar (60 g)", 2, "2 bars (60 g)"],
+    ["1 peach", 2, "2 peaches"],
+    ["1 handful", 12, "12 handfuls"],
+  ])("labels %s logged %i times as %s", function (portionSize, count, label) {
+    render(
+      <FoodRow
+        group={{
+          ...baseGroup,
+          items: Array.from({ length: count }, () => ({ portionSize })),
+          count,
+        }}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+      />
+    );
+    expect(screen.getByText(label)).toBeInTheDocument();
+  });
+
   it("falls back to ×N label when portion sizes differ across items", function () {
     const grouped: FoodRowGroup = {
       ...baseGroup,

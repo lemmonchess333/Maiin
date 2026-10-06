@@ -4,7 +4,6 @@ import {
 } from "@/features/program/liftTimeBudget";
 import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
-import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -742,8 +741,8 @@ function ProgramInner() {
       key: String(i),
       center: String(i + 1),
       // The day's FOCUS ("Squat", "Chest", "Shoulder"), not its split
-      // category. The chip is `line-clamp-1` so the full "Push — Chest
-      // Focus" cannot go here, and the category is the wrong half to
+      // category. The chip is one `truncate`d line, so the full "Push —
+      // Chest Focus" cannot go here, and the category is the wrong half to
       // keep: it is already the page header's subtitle, and it REPEATS —
       // a Full Body rotation labels all three days "Full Body", and a
       // Push/Pull/Legs x2 week labels days 1 and 4 both "Push". The
@@ -1381,13 +1380,6 @@ function ProgramInner() {
                             </p>
                           </button>
                         )}
-
-                      {sessionDayIndex === null && (
-                        <ProgramStallReview
-                          key={`${programState.weekNumber}:${idx}`}
-                          exercises={selectedWorkout.exercises}
-                        />
-                      )}
 
                       {/* The day's exercises, on screen rather than behind a tap.
                           The list IS the page: a card that states the session

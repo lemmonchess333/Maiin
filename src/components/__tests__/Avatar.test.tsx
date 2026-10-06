@@ -47,6 +47,17 @@ describe("Avatar fallback letter", () => {
     expect(screen.getByText("S")).toBeTruthy();
   });
 
+  it("takes a whole emoji as the initial, not half of one", () => {
+    // `charAt(0)` of "🦊 Fox" is a lone surrogate, drawn as "�".
+    const { container } = render(<Avatar displayName="🦊 Fox" />);
+    expect(container.textContent).toBe("🦊");
+  });
+
+  it("takes a flag whole, not its first regional letter", () => {
+    const { container } = render(<Avatar displayName="🇵🇱 Ola" />);
+    expect(container.textContent).toBe("🇵🇱");
+  });
+
   it("renders an image when photoURL is provided (no initial in DOM)", () => {
     render(
       <Avatar

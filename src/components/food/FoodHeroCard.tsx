@@ -407,53 +407,57 @@ export default function FoodHeroCard({
         columns equal by construction, and `min-w-0` on each cell lets a
         long number shrink inside its own tile instead of pushing the
         row wider. gap-2 matches the compact-grid rule in the design
-        system and the Analytics period summary's figures. */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="protein"
-            Icon={Beef}
-            consumed={dailyTotals.protein}
-            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-            label="Protein"
-            color={THEME.macros.protein}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-            drawIn={drawIn}
-          />
-        </Card>
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="carbs"
-            Icon={Wheat}
-            consumed={dailyTotals.carbs}
-            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-            label="Carbs"
-            color={THEME.macros.carbs}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-            drawIn={drawIn}
-          />
-        </Card>
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="fat"
-            Icon={Avocado}
-            consumed={dailyTotals.fat}
-            target={dailyTargets.fat}
-            label="Fat"
-            color={THEME.macros.fat}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-            drawIn={drawIn}
-          />
-        </Card>
+        system and the Analytics period summary's figures. Under 10em
+        (double text on a 320px phone) they stack: three across, "101g"
+        ran into its neighbours. */}
+      <div className="@container mt-4">
+        <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="protein"
+              Icon={Beef}
+              consumed={dailyTotals.protein}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
+              label="Protein"
+              color={THEME.macros.protein}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="carbs"
+              Icon={Wheat}
+              consumed={dailyTotals.carbs}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
+              label="Carbs"
+              color={THEME.macros.carbs}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="fat"
+              Icon={Avocado}
+              consumed={dailyTotals.fat}
+              target={dailyTargets.fat}
+              label="Fat"
+              color={THEME.macros.fat}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+        </div>
       </div>
 
       {/* Wave3 G — the training-aware day annotation (the free→premium

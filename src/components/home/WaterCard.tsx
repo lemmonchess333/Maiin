@@ -30,9 +30,10 @@ const UNDO_WINDOW_MS = 4000;
  */
 function spokenVolume(ml: number): string {
   const label = formatWaterVolume(ml);
-  return label.endsWith(" L")
-    ? `${label.slice(0, -2)} litres`
-    : `${label.slice(0, -3)} millilitres`;
+  const litres = label.endsWith(" L");
+  const amount = litres ? label.slice(0, -2) : label.slice(0, -3);
+  const unit = litres ? "litre" : "millilitre";
+  return `${amount} ${amount === "1" ? unit : `${unit}s`}`;
 }
 
 /**
@@ -246,7 +247,7 @@ export default function WaterCard({
   if (compact) {
     return (
       <div
-        className="relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
+        className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
         style={{ boxShadow: iconBoxShadow }}
       >
         <motion.div
@@ -293,7 +294,7 @@ export default function WaterCard({
           onClick={quickAdd}
           aria-label={`Add ${servingMl} ml`}
           size="sm"
-          className="absolute top-3 right-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
+          className="absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
           icon={<Plus className="size-4" />}
         />
         <div className="relative z-10 flex flex-col flex-1">
@@ -310,7 +311,7 @@ export default function WaterCard({
             aria-label={`${reading} Add water — choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <div className="flex items-center gap-2 mb-1.5 pr-10">
+            <div className="flex items-center gap-2 mb-1.5 pr-10 @max-[9em]:pr-0">
               {/* `bg-teal/10` / `text-teal`, not the raw
                   rgba(82,163,189,0.10) + inline hsl() this carried.
                   Those were theme-blind literals — the exact leak the
@@ -318,7 +319,10 @@ export default function WaterCard({
                   where the peer tile uses THEME.iconBg. (The unit span's
                   inline hsl(var(--muted-foreground)) below STAYS: that
                   is the documented JS-context form, not a literal.) */}
-              <div className="size-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-teal/10">
+              {/* Gives its room to the label under 9em of tile, as the
+                  weight tile's does, and the plus moves to the tile's
+                  empty foot: at larger text it covered "Water". */}
+              <div className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0 bg-teal/10">
                 <Droplets className="size-3.5 text-teal" aria-hidden="true" />
               </div>
               {/* SectionLabel, not a hand-rolled label: the weight tile

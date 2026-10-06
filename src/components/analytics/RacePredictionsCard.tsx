@@ -87,19 +87,23 @@ export default function RacePredictionsCard() {
         <h3 className="text-sm font-bold text-foreground">Race predictions</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {ROWS.map(({ key, label, km }) => (
-          <div key={key} className="rounded-xl bg-muted p-3">
-            <SectionLabel>{label}</SectionLabel>
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
-              {finishTimeLabel(times[key])}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono tabular-nums">
-              {paceMinSec(Math.round(times[key] / km), unit)}{" "}
-              {paceUnitLabel(unit)}
-            </p>
-          </div>
-        ))}
+      {/* Two across while 13em of card allows, one per row below that:
+          at larger text "4:16:09" no longer fit half the card. */}
+      <div className="@container">
+        <div className="grid grid-cols-2 @max-[13em]:grid-cols-1 gap-2">
+          {ROWS.map(({ key, label, km }) => (
+            <div key={key} className="rounded-xl bg-muted p-3">
+              <SectionLabel>{label}</SectionLabel>
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
+                {finishTimeLabel(times[key])}
+              </p>
+              <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                {paceMinSec(Math.round(times[key] / km), unit)}{" "}
+                {paceUnitLabel(unit)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground mt-3">

@@ -111,8 +111,11 @@ export default function TodayEnergy({
   ];
 
   return (
-    <section aria-label="Today's food" className={cardClasses()}>
-      <div className="flex items-center justify-between gap-3">
+    <section
+      aria-label="Today's food"
+      className={cardClasses({ className: "@container" })}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-foreground">Food</h2>
         {/* The one way into the food log: nutrition-tinted, a full 44px
             target. The orange is the -strong step, not the identity: the
@@ -133,8 +136,10 @@ export default function TodayEnergy({
       {/* The ring and the three macros in one row. The macros sit on the
           card with no box of their own: the card is already the box.
           While the day's meals are arriving they wait as placeholders of
-          the same size, so the card does not grow when the meals land. */}
-      <div className="mt-3 flex items-center gap-2.5">
+          the same size, so the card does not grow when the meals land.
+          Under 12em of card (larger text on the phone) the macros go
+          under the ring instead: beside it they ran into each other. */}
+      <div className="mt-3 flex items-center gap-2.5 @max-[12em]:flex-col">
         {caloriesPending ? (
           <span
             role="status"
@@ -153,7 +158,7 @@ export default function TodayEnergy({
             trajectoryLabel={null}
           />
         )}
-        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5">
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">
           {macros.map((m) => (
             <div key={m.key} className="flex min-w-0 px-0.5 py-1">
               {caloriesPending ? (

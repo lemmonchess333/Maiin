@@ -68,7 +68,10 @@ export default function StatCard({
           sparkline overflows the ~152px content area. Stacking the
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
-      <div className="flex items-baseline gap-1 min-w-0">
+      {/* At larger text the unit wraps under the figure rather than
+          squeezing it: "1,790 kcal/day" was wider than the card at double
+          size, and a figure is never cut. */}
+      <div className="flex flex-wrap items-baseline gap-x-1 min-w-0">
         <span
           className={
             valueKind === "text"

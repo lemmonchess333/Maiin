@@ -63,6 +63,7 @@ export default function SettingsLiftPlan() {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const {
     programState,
+    readiness,
     updateSettings,
     regenerateProgram,
     refreshRunSchedule,
@@ -103,6 +104,7 @@ export default function SettingsLiftPlan() {
           variant="lift"
           profile={profile}
           programState={programState}
+          readiness={readiness}
           recentLayoff={recentLayoff}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}

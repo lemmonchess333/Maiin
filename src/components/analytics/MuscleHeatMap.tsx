@@ -184,12 +184,15 @@ export default function MuscleHeatMap({
 
   if (variant === "compact") {
     return (
-      <div className="flex items-center gap-4">
+      /* The figures are a fixed 124px; the list beside them keeps at
+         least 9em and moves under them when it cannot, rather than
+         cutting "Chest" to "C" at large text. */
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex shrink-0 gap-1">
           {renderView("anterior", 60)}
           {renderView("posterior", 60)}
         </div>
-        <ul className="min-w-0 flex-1 space-y-2">
+        <ul className="min-w-[min(100%,9em)] flex-1 space-y-2">
           {trainedGroups.slice(0, 4).map(([group, sets]) => (
             <li
               key={group}

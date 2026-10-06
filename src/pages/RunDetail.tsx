@@ -51,6 +51,7 @@ import RunStatGrid from "@/components/run/RunStatGrid";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel, runTypeTitle } from "@/lib/runLabels";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 /**
  * The finish screen's "How did it feel?" answer, as a saved run reads it
@@ -467,8 +468,8 @@ export default function RunDetail() {
             },
             {
               label: "Calories",
-              value: `${run.calories ?? 0}`,
-              unit: "kcal",
+              value: formatCalories(run.calories ?? 0),
+              unit: CALORIE_UNIT,
             },
           ]}
         />

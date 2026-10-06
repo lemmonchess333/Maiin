@@ -16,6 +16,7 @@
  * behaviour, which is a shape this repo has been caught by before.
  */
 import { describe, it, expect } from "vitest";
+import { group } from "@/test/localeGrouping";
 import {
   paceLabel,
   durationLabel,
@@ -198,6 +199,11 @@ describe("elevationLabel", () => {
   it("rounds AFTER converting, so metres stay the stored whole number", () => {
     expect(elevationLabel(120.4, "km")).toBe("120 m");
     expect(elevationLabel(1, "mi")).toBe("3 ft");
+  });
+
+  it("groups a climb past a thousand like every other count", () => {
+    expect(elevationLabel(2845, "km")).toBe(`${group(2845)} m`);
+    expect(elevationLabel(2845, "km", false)).toBe(group(2845));
   });
 
   it("renders a flat run as zero, not a placeholder", () => {

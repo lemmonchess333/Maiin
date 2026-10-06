@@ -114,7 +114,7 @@ export default function WeightStepsTiles({
     <>
       <div className="flex items-center gap-2 mb-1.5">
         <div
-          className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
           style={{ backgroundColor: THEME.iconBg }}
         >
           {/* The weight tile's colour: steps are a reading like weight,
@@ -170,8 +170,9 @@ export default function WeightStepsTiles({
        half-width cell would cramp both. h-full lets the weight tile
        stretch to match the water tile beside it. DS3: both tiles sit on
        the card surface, like the water tile, rather than the darker
-       muted tile. */
-    <div className="grid grid-cols-1 gap-2 h-full">
+       muted tile. Under 9em of tile (larger text on the phone) the
+       icons give their room to the labels, which ran off the tile. */
+    <div className="@container grid grid-cols-1 gap-2 h-full">
       <button
         type="button"
         onClick={function () {
@@ -184,7 +185,7 @@ export default function WeightStepsTiles({
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
-            className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
             style={{ backgroundColor: THEME.iconBg }}
           >
             <Scale
@@ -230,8 +231,10 @@ export default function WeightStepsTiles({
           {pending ? (
             <Skeleton className="h-3 w-20 mt-1.5" />
           ) : (
+            /* "From profile" ran 2px out of the tile at double text on a
+               320pt phone: a word wider than the tile hyphenates. */
             <p
-              className="text-micro mt-1"
+              className="text-micro mt-1 break-words hyphens-auto"
               style={{ color: "hsl(var(--muted-foreground))" }}
             >
               {lastWeightDate}

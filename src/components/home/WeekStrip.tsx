@@ -233,7 +233,11 @@ export default function WeekStrip({
     startKey,
   ]);
   return (
-    <div className="flex items-center justify-between">
+    /* Seven equal columns, each circle as wide as its column allows up
+       to 2.5rem. Fixed 44px buttons and rem-sized circles needed more
+       than a 320px phone has once the text is larger, and pushed
+       Sunday off the screen. The 44px height stays the tap target. */
+    <div className="grid grid-cols-7 items-center justify-items-center">
       {days.map(function (day) {
         /* Every circle is the same size, deliberately: a larger today
            breaks the row's baselines on the one day a user looks at
@@ -274,7 +278,7 @@ export default function WeekStrip({
               (day.hasActivity ? " (food logged)" : "") +
               (day.isToday ? " (today)" : "")
             }
-            className="flex flex-col items-center gap-1.5 active:scale-[0.95] transition-transform min-w-[44px] min-h-[44px] justify-center"
+            className="flex flex-col items-center gap-1.5 active:scale-[0.95] transition-transform w-full min-w-0 min-h-[44px] justify-center"
           >
             {/* One letter, not two. The row is a fixed frame — the strip
                 is always the calendar week — so position disambiguates the
@@ -293,7 +297,7 @@ export default function WeekStrip({
               data-state={day.state}
               data-today={day.isToday || undefined}
               className={cn(
-                "size-10 rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-colors",
+                "w-full max-w-10 aspect-square rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-colors",
                 STATE_CLASSES[day.state],
                 day.isToday && "border-2 border-primary border-solid",
                 day.isSelected &&

@@ -40,6 +40,15 @@ window, explicit review action and existing adjustment policy. A known shorter
 or incomplete occurrence breaks that sequence; do not skip backwards to revive
 an older plateau. No new nutrition recommendation is added.
 
+**2026-10-05: removed.** On the owner's call, Train no longer shows this
+review or its calorie offer. It named any lift that had held its load or reps
+for three sessions, so a programme of twenty exercises could raise twenty of
+them. `detectStall`, `ProgramStallReview` and `StallModal` were deleted with
+their checks, including the browser journey's plateau steps. The measurements
+below were taken before the removal. The progression engine's own holds,
+failure counts and exercise rotation were not part of this removal; they
+adjust the plan without a notice.
+
 ## Owners, preview and rollback
 
 Run/workout documents own performed facts. `useRunningStats` owns run evidence

@@ -41,6 +41,7 @@ import {
   type Firestore,
 } from "firebase/firestore";
 import { CAPTION_MAX } from "./src/lib/activityPost";
+import { DISPLAY_NAME_MAX } from "./src/lib/displayName";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -2050,6 +2051,22 @@ suite(
         setDoc(
           doc(ownerDb, "activities", "bad-blank-name"),
           makeValidActivity({ authorName: "" })
+        )
+      );
+    });
+
+    it("authorName at the display-name limit — accepted; one past — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "name-at-limit"),
+          makeValidActivity({ authorName: "a".repeat(DISPLAY_NAME_MAX) })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "name-past-limit"),
+          makeValidActivity({ authorName: "a".repeat(DISPLAY_NAME_MAX + 1) })
         )
       );
     });

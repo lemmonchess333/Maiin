@@ -832,6 +832,11 @@ export function useProgram() {
     const ref = doc(db, "users", uid, "programState", PROGRAM_DOC);
     const unsubscribe = onSnapshot(
       ref,
+      // A write it skipped as pending (another tab's, say) is confirmed by
+      // a change to metadata alone, which Firestore delivers only to a
+      // listener that asks for metadata changes; without it the mirror
+      // kept the state from before that write until the next one.
+      { includeMetadataChanges: true },
       (snap) => {
         if (auth.currentUser?.uid !== uid) return;
         if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;
@@ -2195,6 +2200,15 @@ export function useProgram() {
       }
     ) => {
       if (!profile) return;
+      // Null before the server has answered means the programme has not
+      // loaded, not that there is none. Rebuilt from nothing then, the
+      // plan was committed against no document while one exists, and
+      // refused as a conflict: the weekly-layout sheet's restructure
+      // reached it from Settings while the programme loaded. Refused here
+      // as `refreshRunSchedule` refuses. Once `mirrorReady`, null does
+      // mean there is none, and the rebuild below creates it.
+      if (!programState && !mirrorReady)
+        throw new Error("Wait for your programme to load, then try again.");
 
       const goal = (goalOverride ??
         programState?.goal ??
@@ -2313,7 +2327,7 @@ export function useProgram() {
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram, recentLayoff]
+    [profile, programState, mirrorReady, saveProgram, recentLayoff]
   );
 
   // Refresh run schedule without resetting program (called when

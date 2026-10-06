@@ -43,8 +43,15 @@ export default function ExerciseRowSummary({
 }) {
   const isBW = getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      <ExerciseThumb exerciseId={exercise.exerciseId} size={thumbSize} />
+    /* The drawing gives its room to the name once the row is under 10em
+       (larger text on the phone), where beside it the name read "P…"
+       and the sets ran one word to a line. */
+    <div className="@container flex min-w-0 flex-1 items-center gap-3">
+      <ExerciseThumb
+        exerciseId={exercise.exerciseId}
+        size={thumbSize}
+        className="@max-[10em]:hidden"
+      />
       <div className="min-w-0 flex-1">
         <p className="text-base font-semibold text-foreground truncate">
           {exercise.name}

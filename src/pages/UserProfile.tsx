@@ -167,7 +167,13 @@ function ProfilePage({
           className="size-16 text-2xl"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-h2 font-extrabold leading-tight tracking-tight truncate">
+          {/* Two lines, then an ellipsis: the name is how a reader knows
+              whose profile this is, and one line cut a long one to
+              "Christopher Ale…" at 320px. */}
+          <h1
+            dir="auto"
+            className="text-left text-h2 font-extrabold leading-tight tracking-tight line-clamp-2 break-words"
+          >
             {name}
           </h1>
           {followers === null || followingCount === null ? (
@@ -175,12 +181,12 @@ function ProfilePage({
           ) : (
             <p className="mt-1 text-small text-muted-foreground">
               <span className="font-mono tabular-nums font-semibold text-foreground">
-                {followers}
+                {followers.toLocaleString()}
               </span>{" "}
               {plural(followers, "follower", "followers")}
               <span aria-hidden="true"> · </span>
               <span className="font-mono tabular-nums font-semibold text-foreground">
-                {followingCount}
+                {followingCount.toLocaleString()}
               </span>{" "}
               following
             </p>

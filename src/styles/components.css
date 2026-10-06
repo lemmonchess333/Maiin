@@ -30,7 +30,10 @@
 .bottom-nav-frame {
   /* Leave the safe area outside the material. Empty gutters must not
      intercept a page gesture or obscure the home indicator. */
-  padding: 0 var(--page-x) calc(var(--safe-bottom) + var(--tab-bar-gap));
+  /* 16px, not --page-x (1rem): the bar keeps its size at larger text,
+     like its labels, and a rem gutter took the room "Analytics" needed
+     on a 320px screen at double size. */
+  padding: 0 16px calc(var(--safe-bottom) + var(--tab-bar-gap));
   pointer-events: none;
 }
 
@@ -83,6 +86,16 @@
 .bottom-nav-icon {
   transition: transform var(--ds-transition-fast);
 }
+/* The tab labels stay 12px whatever the text size, as iOS's own tab bar
+   does: five labels share the phone's width, so "Analytics" growing with
+   larger text left its cell. Everything else in the app scales with the
+   root font size (systemTextSize.ts); this is the one deliberate fixed
+   size. */
+.bottom-nav-label {
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .bottom-nav-link:active .bottom-nav-icon {
   transform: scale(0.97);
 }
@@ -291,7 +304,9 @@ select.ds-input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--safe-top) + 1rem) 1rem calc(var(--safe-bottom) + 1rem);
+  /* Side margins in px, as iOS keeps its layout margins at every text
+     size: in rem, double text spent 64px of a 320pt screen on them. */
+  padding: calc(var(--safe-top) + 1rem) 16px calc(var(--safe-bottom) + 1rem);
 }
 
 .dark .ds-auth-shell {
@@ -322,7 +337,9 @@ select.ds-input:focus {
 .ds-auth-card {
   width: 100%;
   max-width: 24rem;
-  padding: clamp(1.25rem, 5vw, 1.75rem);
+  /* px for the same reason as the shell's margins: the designed 20–28px
+     at every text size. */
+  padding: clamp(20px, 5vw, 28px);
   border-radius: 1.75rem;
   background: hsl(var(--card) / 0.92);
   border: 1px solid hsl(var(--border) / 0.72);

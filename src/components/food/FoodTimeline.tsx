@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useMemo, useRef } from "react";
 import { UtensilsCrossed } from "lucide-react";
-import { format } from "date-fns";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
 import EmptyState from "@/components/ui/EmptyState";
 import { MEAL_LABELS } from "./mealConstants";
@@ -11,12 +10,13 @@ import { THEME } from "@/lib/theme";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 /**
  * The Food diary feed — a single chronological timeline (newest first),
  * Cal-AI-style. Replaces the four fixed slot sections (FoodMealSection /
  * Food6d): the slot is now row METADATA — auto-derived by `mealSlotFor`,
- * shown in each row's caption ("Breakfast · 8:12 AM") and editable
+ * shown in each row's caption ("Breakfast · 08:12") and editable
  * through the row's edit sheet (the existing move-slot path with its
  * "Moved X to Y" toast). Slot targeting for NEW logs lives on in the
  * composer pills; this surface is purely the record of the day.
@@ -226,7 +226,7 @@ export default function FoodTimeline({
                     <>
                       {" · "}
                       <span className="font-mono tabular-nums">
-                        {format(new Date(group.latestMs), "h:mm a")}
+                        {formatTimeOfDay(new Date(group.latestMs))}
                       </span>
                     </>
                   )}

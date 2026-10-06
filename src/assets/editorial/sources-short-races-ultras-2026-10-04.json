@@ -2,11 +2,7 @@
   "description": "Destination photographs for 15 race additions. They show places and regional scenery, not official race photography or a guarantee of the course.",
   "sources": [
     {
-      "raceIds": [
-        "bournemouth-half",
-        "bournemouth-10k",
-        "bournemouth-5k"
-      ],
+      "raceIds": ["bournemouth-half", "bournemouth-10k", "bournemouth-5k"],
       "assets": [
         "space-bournemouth-half.webp",
         "space-bournemouth-10k.webp",
@@ -35,12 +31,8 @@
       }
     },
     {
-      "raceIds": [
-        "sheffield-half"
-      ],
-      "assets": [
-        "space-sheffield-half.webp"
-      ],
+      "raceIds": ["sheffield-half"],
+      "assets": ["space-sheffield-half.webp"],
       "sourceUrl": "https://unsplash.com/photos/cobblestone-street-with-historic-buildings-and-people-walking-A6b0-topqTs",
       "downloadUrl": "https://images.unsplash.com/photo-1764444925549-660510cda264?w=2400&q=85&fm=jpg",
       "photographer": "Priyank Pathak",
@@ -64,12 +56,8 @@
       }
     },
     {
-      "raceIds": [
-        "lincoln-10k"
-      ],
-      "assets": [
-        "space-lincoln-10k.webp"
-      ],
+      "raceIds": ["lincoln-10k"],
+      "assets": ["space-lincoln-10k.webp"],
       "sourceUrl": "https://unsplash.com/photos/lincoln-cathedral-viewed-over-rooftops-under-a-clear-sky-CMXYdr9IUuU",
       "downloadUrl": "https://images.unsplash.com/photo-1764937967462-fb6799d2ae74?w=2400&q=85&fm=jpg",
       "photographer": "Brian Cockley",
@@ -93,12 +81,8 @@
       }
     },
     {
-      "raceIds": [
-        "supernova-forth-5k"
-      ],
-      "assets": [
-        "space-supernova-forth-5k.webp"
-      ],
+      "raceIds": ["supernova-forth-5k"],
+      "assets": ["space-supernova-forth-5k.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-bridge-with-lights-at-night-ntO2fxkr-Yc",
       "downloadUrl": "https://images.unsplash.com/photo-1668091583927-040f7e1b1981?w=2400&q=85&fm=jpg",
       "photographer": "Tymek Niciak",
@@ -122,12 +106,8 @@
       }
     },
     {
-      "raceIds": [
-        "supernova-kelpies-5k"
-      ],
-      "assets": [
-        "space-supernova-kelpies-5k.webp"
-      ],
+      "raceIds": ["supernova-kelpies-5k"],
+      "assets": ["space-supernova-kelpies-5k.webp"],
       "sourceUrl": "https://unsplash.com/photos/two-large-metal-horses-standing-next-to-each-other-V9IwGE1NP5g",
       "downloadUrl": "https://images.unsplash.com/photo-1705932290481-5ad4cd4b573b?w=2400&q=85&fm=jpg",
       "photographer": "Pix Tresa",
@@ -151,12 +131,8 @@
       }
     },
     {
-      "raceIds": [
-        "race-to-the-king-100k"
-      ],
-      "assets": [
-        "space-race-to-the-king-100k.webp"
-      ],
+      "raceIds": ["race-to-the-king-100k"],
+      "assets": ["space-race-to-the-king-100k.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-fenced-in-field-with-a-fence-and-trees-and-hills-in-the-background-ro6z38FQ98k",
       "downloadUrl": "https://images.unsplash.com/photo-1657184313883-131fb056b61c?w=2400&q=85&fm=jpg",
       "photographer": "Amy Stride",
@@ -180,12 +156,8 @@
       }
     },
     {
-      "raceIds": [
-        "race-to-the-stones-100k"
-      ],
-      "assets": [
-        "space-race-to-the-stones-100k.webp"
-      ],
+      "raceIds": ["race-to-the-stones-100k"],
+      "assets": ["space-race-to-the-stones-100k.webp"],
       "sourceUrl": "https://unsplash.com/photos/ancient-standing-stone-in-a-field-under-a-cloudy-sky-eOexuYrQkgY",
       "downloadUrl": "https://images.unsplash.com/photo-1782925980106-c2fe8f94dedf?w=2400&q=85&fm=jpg",
       "photographer": "Henry Tegner",
@@ -209,12 +181,8 @@
       }
     },
     {
-      "raceIds": [
-        "chiltern-50"
-      ],
-      "assets": [
-        "space-chiltern-50.webp"
-      ],
+      "raceIds": ["chiltern-50"],
+      "assets": ["space-chiltern-50.webp"],
       "sourceUrl": "https://unsplash.com/photos/a-dirt-road-running-through-a-lush-green-field-nz3cmUgmZrE",
       "downloadUrl": "https://images.unsplash.com/photo-1645019517242-c3c377659fb2?w=2400&q=85&fm=jpg",
       "photographer": "Brent Jenkins",
@@ -238,12 +206,8 @@
       }
     },
     {
-      "raceIds": [
-        "edinburgh-half"
-      ],
-      "assets": [
-        "space-edinburgh-half.webp"
-      ],
+      "raceIds": ["edinburgh-half"],
+      "assets": ["space-edinburgh-half.webp"],
       "reusedAsset": "space-edinburgh-5k.webp",
       "provenance": "sources-race-expansion-2026-10-04.json",
       "processing": "Identical bytes of the existing licensed destination cover.",
@@ -253,12 +217,8 @@
       }
     },
     {
-      "raceIds": [
-        "valencia-half"
-      ],
-      "assets": [
-        "space-valencia-half.webp"
-      ],
+      "raceIds": ["valencia-half"],
+      "assets": ["space-valencia-half.webp"],
       "reusedAsset": "space-valencia-marathon.webp",
       "provenance": "sources-race-expansion-2026-10-04.json",
       "processing": "Identical bytes of the existing licensed destination cover.",
@@ -268,12 +228,8 @@
       }
     },
     {
-      "raceIds": [
-        "edinburgh-10k"
-      ],
-      "assets": [
-        "space-edinburgh-10k.webp"
-      ],
+      "raceIds": ["edinburgh-10k"],
+      "assets": ["space-edinburgh-10k.webp"],
       "reusedAsset": "space-edinburgh-5k.webp",
       "provenance": "sources-race-expansion-2026-10-04.json",
       "processing": "Identical bytes of the existing licensed destination cover.",
@@ -283,12 +239,8 @@
       }
     },
     {
-      "raceIds": [
-        "york-10k"
-      ],
-      "assets": [
-        "space-york-10k.webp"
-      ],
+      "raceIds": ["york-10k"],
+      "assets": ["space-york-10k.webp"],
       "reusedAsset": "space-yorkshire-marathon.webp",
       "provenance": "sources-marathon-expansion-2026-09-14.json",
       "processing": "Identical bytes of the existing licensed destination cover.",
@@ -298,12 +250,8 @@
       }
     },
     {
-      "raceIds": [
-        "river-ness-10k"
-      ],
-      "assets": [
-        "space-river-ness-10k.webp"
-      ],
+      "raceIds": ["river-ness-10k"],
+      "assets": ["space-river-ness-10k.webp"],
       "reusedAsset": "space-river-ness-5k.webp",
       "provenance": "sources-race-expansion-2026-10-04.json",
       "processing": "Identical bytes of the existing licensed destination cover.",

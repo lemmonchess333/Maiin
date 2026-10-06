@@ -6,6 +6,41 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
+
+Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
+`deploy-functions.yml` and `scripts/write-functions-env.mjs`, and the
+full-screen layers (`WorkoutSession`, `SessionCompleteScreen`, Social's
+people search, `FoodCameraModal`).
+
+Unit tests pin the API client, the settings file and the padding; these
+need Apple, the Cloud console or a phone.
+
+- [ ] **The first TestFlight run signs from the API key.** With only the
+      five secrets `docs/ios-release.md` asks for, Deploy iOS to
+      TestFlight makes a certificate and a profile named
+      `Tropos CI <serial>`, passes the import step's checks, archives and
+      uploads. A second run deletes the first run's profile and revokes
+      its certificate (Apple Developer → Certificates shows one Apple
+      Distribution certificate from these runs), and the first build
+      stays installable in TestFlight.
+- [ ] **Function settings from GitHub.** After setting `ADMIN_UIDS` and
+      the rest as repository variables and running Deploy production,
+      the "Write functions/.env from repository variables" step names
+      them, and the Cloud console shows them on `listPendingReports`,
+      `createReport` and the two RevenueCat functions. `/admin/moderation`
+      opens for that uid on the web build with no `VITE_ADMIN_UIDS`
+      secret.
+- [ ] **The status bar on a phone.** On the first TestFlight build, the
+      workout session, its finish screen, Social's people search, the
+      food camera, the run screen (setup, countdown and the live map's
+      controls), the run summary and the Privacy Policy, Terms and
+      Support pages keep their first row clear of the clock and the
+      Dynamic Island, with no doubled gap above it. The shell sets
+      `ios.contentInset: "automatic"`, so whether its web view reports a
+      top inset is unverified; pages and these screens pad by the same
+      `--safe-top`, so a gap on one is a gap on all.
+
 ## Privacy and consent for App Review (2026-10-04)
 
 Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
@@ -103,8 +138,8 @@ Firestore with Resend mocked at `fetch`; whether an email actually lands, and
 how the sheets feel on a phone, need the real thing.
 
 - [ ] **Report alert reaches the inbox.** After the first Deploy production
-      run carrying this work, and with `functions/.env` set and
-      `createReport` deployed as §19 says: sign in as a second account,
+      run carrying this work, and with the moderation variables set on
+      GitHub and deployed as §19 says: sign in as a second account,
       report someone's comment with a note. Within a minute an email titled
       "New report: …" arrives at `MODERATION_ALERT_EMAIL`
       (`support@troposfit.com` when unset), carrying the reason, what was
@@ -136,6 +171,96 @@ how the sheets feel on a phone, need the real thing.
       phone, and its two links open the Terms and the Privacy Policy while
       signed out. `public/legal/terms.html` carries the same October 2026
       Terms as `TermsOfService.tsx`.
+
+## iOS 15.4 is the minimum (2026-10-06)
+
+Affects: `ios/App/App.xcodeproj/project.pbxproj` (every
+`IPHONEOS_DEPLOYMENT_TARGET`), pinned by `iosDeploymentTarget.test.ts`,
+whose header has the reason: Safari before 15.4 drops the stylesheet's
+`@layer` blocks and the app opens unstyled.
+
+- [ ] **App Store Connect shows iOS 15.4.** After the next TestFlight
+      upload, the build's minimum OS version reads 15.4, and the App
+      Store listing's compatibility line says "Requires iOS 15.4 or
+      later".
+- [ ] **An iOS 15 phone, if one is to hand** (iPhone 6s, 7 or first SE
+      on 15.8): the app installs and opens styled. Container queries
+      start at iOS 16, so it shows each screen's designed layout at every
+      text size, which is expected.
+
+## Phone platform layer: taps, field zoom, status bar (2026-10-05)
+
+Affects: `src/index.css` (tap flash, control touch rules, the 16px
+field floor), `src/lib/systemChrome.ts` (status bar and browser bar
+follow the theme), `src/main.tsx`.
+
+`mobileNative.test.ts` and `systemChrome.test.ts` pin the rules, and the
+built CSS was measured in Chromium with a touch screen emulated (14px
+fields compute 16px, 18px fields keep 18px, FoodRow keeps `pan-y`).
+Emulation reproduces none of the behaviours themselves, so these need
+the iPhone app.
+
+- [ ] **No zoom into a field.** Tap Train → add exercise → the search
+      field, a Settings → Profile field, and a comment box. The page
+      stays at its size; nothing drifts after the keyboard closes.
+- [ ] **No grey flash on tap** on a food row, a Home card and a
+      settings row.
+- [ ] **Long-press a tab** in the tab bar: no link preview and no
+      selected label. Long-press a post's text: it still selects.
+- [ ] **Status bar in light theme.** Settings → Units & appearance →
+      light: the clock and battery turn dark and stay readable. Back to
+      dark: they turn light. Force-quit and reopen in light: the
+      launch splash is dark with light text, and the text turns dark as
+      the light page appears.
+- [ ] **Swipe a food row** to delete: still horizontal, the page does
+      not scroll with it.
+
+## Text follows the phone's text size on iPhone (2026-10-05)
+
+Affects: `src/lib/systemTextSize.ts` (reads `@capacitor/text-zoom`'s
+`getPreferred()` and scales the root font size, held between 1× and
+2×), `src/main.tsx`, `ios/App/CapApp-SPM/Package.swift` (the plugin,
+added by `npx cap update ios`).
+
+`systemTextSize.test.ts` pins the scaling and the limits, and the feed
+and food diary capture specs measure both at double text. Nothing in a
+browser reads Dynamic Type, so the reading itself needs the iPhone app.
+
+- [ ] **Larger text reaches the app.** Settings → Display & Brightness
+      → Text Size, drag to the largest standard size, return to Tropos:
+      the text is about a third larger, and Home, the feed and Food
+      still read with nothing cut off or overlapping.
+- [ ] **An accessibility size stops at double.** Settings →
+      Accessibility → Display & Text Size → Larger Text, turn it on and
+      drag to the largest: the app grows to twice its size and no
+      further.
+- [ ] **Back to the default** restores the designed size, and a smaller
+      setting does not shrink the app below it.
+- [ ] **The main screens at large text.** Home, Train, History, Food
+      and Settings were measured in a browser at 1.35× and 2× text
+      (393, 375 and 320 px wide) and fixed to wrap, stack or drop a
+      decorative icon rather than overlap. On the phone, at the largest
+      standard size and at the largest accessibility size, scroll each
+      and note anything cut off or overlapping. Known and accepted: the
+      day names under Train's week, and segmented-control labels at 2× on
+      a 320px screen (Display Zoom on an SE or mini), end in "…".
+- [ ] **A workout and a run at large text** (2026-10-06). The lift
+      screen, the run screen before and during a run, Train's exercise
+      menu and Food's manual entry were measured the same way. At the
+      largest accessibility size, log a set and run for a minute. The set
+      table drops its "Previous" column under the set's figures ("Last
+      80 × 8"); the done tick, set badge and run controls stay their
+      designed size; a missing map says "Map unavailable" at the top
+      right. Known and accepted: at 2× on a 320px screen the "kg" and
+      "Reps" column headers run a little past their columns.
+- [ ] **Sign-up, setup and Pro at large text** (2026-10-06). The welcome
+      screen, sign-in, sign-up, every setup step and the Pro offer and
+      plans were measured the same way, down to 320px at 2×. With Larger
+      Text at its largest, make a new account: the answer cards drop their
+      pictures rather than cutting a word, Continue goes above Back when
+      the two don't fit side by side, and each plan's price stays whole.
+      Headings now grow by as much as body text rather than in proportion,
+      so check that page titles still read as titles at every size.
 
 ## The first-visit guide (2026-10-04)
 
@@ -1158,13 +1283,13 @@ sandbox Pro to nobody. Production purchases are unaffected.
 - [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
       test event returns 200. It did on 2026-09-30.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
-      Review's demo account uid, comma-separated. It is a plain env var,
-      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
-      **App Review's demo uid must be on it before submission**, or the
-      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
-      function already has but gives a newly created function nothing, so
-      set it after the first deploy creates these two functions and confirm
-      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
+      Review's demo account uid, comma-separated. It is a plain setting,
+      set the way `ADMIN_UIDS` is: a repository variable on GitHub, which
+      the functions deploy writes into `functions/.env`, then a Deploy
+      production run. **App Review's demo uid must be on it before
+      submission**, or the reviewer's test purchase will not unlock Pro.
+      Confirm it in the Cloud console. Steps:
+      `docs/iap/revenuecat-setup.md` Part C.
 - [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The
