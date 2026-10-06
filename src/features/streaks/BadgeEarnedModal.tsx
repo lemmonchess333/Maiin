@@ -305,6 +305,7 @@ export function BadgeEarnedContent({
               light builds behind the cracks, then it shatters into shards. */}
           {!revealed ? (
             <motion.button
+              data-motion-driven
               ref={sealBtnRef}
               type="button"
               onClick={tapSeal}
@@ -510,6 +511,7 @@ export function BadgeEarnedContent({
         <AnimatePresence>
           {revealed && (
             <motion.button
+              data-motion-driven
               key="done"
               type="button"
               initial={{ opacity: 0 }}

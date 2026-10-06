@@ -14,6 +14,7 @@ import {
   type MealKey,
 } from "./mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { FOOD_NAME_MAX } from "@/lib/mealEntry";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -360,6 +361,7 @@ function EditServingsSheet({
             type="text"
             value={pickedName}
             onChange={(e) => setPickedName(e.target.value)}
+            maxLength={FOOD_NAME_MAX}
             disabled={saving}
             aria-label="Edit name"
             placeholder="Name"

@@ -456,7 +456,7 @@ describe("createNotification", () => {
     );
   });
 
-  it("caps string field lengths (fromName 100, message 200, activityId 64)", async () => {
+  it("caps string field lengths (fromName 50, message 200, activityId 64)", async () => {
     const { createNotification } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub();
 
@@ -474,7 +474,7 @@ describe("createNotification", () => {
     });
 
     const data = firestore._writes[0].data;
-    expect(data.fromName.length).toBe(100);
+    expect(data.fromName.length).toBe(50);
     expect(data.activityId.length).toBe(64);
     expect(data.message.length).toBe(200);
   });

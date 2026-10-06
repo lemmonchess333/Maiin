@@ -75,6 +75,18 @@
   outline-offset: 1px;
 }
 
+/* Tab press: the house tap feedback (DESIGN_GUIDE §8) on the icon, from
+   anywhere in the cell. It was a loose spring to 0.85 plus a grow and a
+   hop on the open tab: on the most-pressed control in the app that read
+   as a toy, and the filled icon and the pill already say which tab is
+   open. The pill (layoutId) is not scaled, so its glide measures true. */
+.bottom-nav-icon {
+  transition: transform var(--ds-transition-fast);
+}
+.bottom-nav-link:active .bottom-nav-icon {
+  transform: scale(0.97);
+}
+
 /* No backdrop-filter (older WebViews) → opaque bar, never an unreadable
    translucent wash. Both selectors so the dark override is covered too. */
 @supports not (

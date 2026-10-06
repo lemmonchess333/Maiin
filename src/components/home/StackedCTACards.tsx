@@ -47,7 +47,7 @@ export default function StackedCTACards({
   return (
     <motion.div
       className="space-y-3"
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={stagger}
     >

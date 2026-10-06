@@ -274,6 +274,7 @@ export default function ExercisePicker({
               <AnimatePresence>
                 {searchQuery && (
                   <motion.button
+                    data-motion-driven
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: "auto" }}
                     exit={{ opacity: 0, width: 0 }}

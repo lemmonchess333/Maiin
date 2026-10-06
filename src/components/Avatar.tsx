@@ -52,6 +52,21 @@ interface AvatarProps {
  * never used photoURL at all. This component is the one source of
  * truth so the upload-photo path surfaces everywhere consistently.
  */
+/* The first character a reader sees, not the first UTF-16 unit:
+   `charAt(0)` of "🦊 Fox" is half of the fox, drawn as "�", and of a
+   flag or a skin-toned emoji it is a fragment. */
+function firstGrapheme(s: string | null | undefined): string {
+  const t = s?.trim();
+  if (!t) return "";
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    const segments = new Intl.Segmenter(undefined, {
+      granularity: "grapheme",
+    }).segment(t);
+    return segments[Symbol.iterator]().next().value?.segment ?? "";
+  }
+  return Array.from(t)[0] ?? "";
+}
+
 export default function Avatar({
   photoURL,
   displayName,
@@ -69,8 +84,8 @@ export default function Avatar({
      real initial in the fallback circle. Falls through to the
      displayName-first-letter, then '?' if both are empty. */
   const initial = (
-    fallbackInitial?.trim().charAt(0) ||
-    displayName?.trim().charAt(0) ||
+    firstGrapheme(fallbackInitial) ||
+    firstGrapheme(displayName) ||
     "?"
   ).toUpperCase();
   const sizeCls = SIZE_CLASSES[size];

@@ -141,3 +141,21 @@ describe("AnimatedNumber — custom formatter", () => {
     });
   });
 });
+
+describe("AnimatedNumber — fromZero", () => {
+  /* Food's hero remounts per day. A remount that counted from zero
+     made browsing a week six racing counters per tap. Asserted
+     straight after render, with motion on (the setup's matchMedia
+     default): the first paint is the figure, not 0. */
+  it("false paints the figure on the first frame", () => {
+    const { container } = render(
+      <AnimatedNumber value={640} fromZero={false} />
+    );
+    expect(container.querySelector("span")?.textContent).toBe("640");
+  });
+
+  it("the default still starts at zero", () => {
+    const { container } = render(<AnimatedNumber value={640} />);
+    expect(container.querySelector("span")?.textContent).toBe("0");
+  });
+});

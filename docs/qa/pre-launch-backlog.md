@@ -172,6 +172,33 @@ how the sheets feel on a phone, need the real thing.
       signed out. `public/legal/terms.html` carries the same October 2026
       Terms as `TermsOfService.tsx`.
 
+## Phone platform layer: taps, field zoom, status bar (2026-10-05)
+
+Affects: `src/index.css` (tap flash, control touch rules, the 16px
+field floor), `src/lib/systemChrome.ts` (status bar and browser bar
+follow the theme), `src/main.tsx`.
+
+`mobileNative.test.ts` and `systemChrome.test.ts` pin the rules, and the
+built CSS was measured in Chromium with a touch screen emulated (14px
+fields compute 16px, 18px fields keep 18px, FoodRow keeps `pan-y`).
+Emulation reproduces none of the behaviours themselves, so these need
+the iPhone app.
+
+- [ ] **No zoom into a field.** Tap Train → add exercise → the search
+      field, a Settings → Profile field, and a comment box. The page
+      stays at its size; nothing drifts after the keyboard closes.
+- [ ] **No grey flash on tap** on a food row, a Home card and a
+      settings row.
+- [ ] **Long-press a tab** in the tab bar: no link preview and no
+      selected label. Long-press a post's text: it still selects.
+- [ ] **Status bar in light theme.** Settings → Units & appearance →
+      light: the clock and battery turn dark and stay readable. Back to
+      dark: they turn light. Force-quit and reopen in light: the
+      launch splash is dark with light text, and the text turns dark as
+      the light page appears.
+- [ ] **Swipe a food row** to delete: still horizontal, the page does
+      not scroll with it.
+
 ## The first-visit guide (2026-10-04)
 
 Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,

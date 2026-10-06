@@ -271,7 +271,7 @@ describe("ProfileInfoSection — weight and height in the chosen units", () => {
 });
 
 /* The name is public and this field writes the profile directly, so it
-   meets Onboarding's rules here: 2 to 30 characters, and nothing the word
+   meets Onboarding's rules here: 2 to 50 characters, and nothing the word
    filter flags (App Review 1.2). The name lives in the page's state, so
    the field is rendered with a real one. */
 describe("ProfileInfoSection — the display name", () => {

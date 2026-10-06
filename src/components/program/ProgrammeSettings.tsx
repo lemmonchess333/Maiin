@@ -203,6 +203,7 @@ function SettingsOptionCard({
 }: SettingsOptionCardProps) {
   return (
     <motion.button
+      data-motion-driven
       type="button"
       onClick={onSelect}
       disabled={disabled}

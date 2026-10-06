@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { formatClock } from "@/utils/formatters";
+import { formatClock, formatLoadKg } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
@@ -56,6 +56,10 @@ import { elevationLabel } from "@/lib/runLabels";
 const formatDur = formatClock;
 
 const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
+
+/* Written out whole, so Tailwind sees every class it has to build. */
+const RUN_STAT_COLUMNS =
+  "grid-cols-[minmax(max-content,1fr)] @min-[14.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @min-[17.5em]:grid-cols-[repeat(3,minmax(max-content,1fr))]";
 const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 interface ActivityCardProps {
@@ -262,6 +266,50 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     </div>
   );
 
+  /* The words on the post: its title, the summary older posts carry in
+     its place, and the author's caption. One block for the standard and
+     the hybrid card, so a caption written on a hybrid session is not
+     dropped. Each wraps rather than clips: a title or caption is typed
+     by a person, and one long word (a German compound, a pasted link)
+     has nowhere to go at 320px otherwise. `dir="auto"` lets an Arabic or
+     Hebrew title read from its own side. */
+  const renderPostText = () => (
+    <>
+      {activityTitle && (
+        <p
+          dir="auto"
+          className="text-sm font-bold text-foreground mb-2 break-words"
+        >
+          {activityTitle}
+        </p>
+      )}
+
+      {/* Summary line (fallback for old activities without title) */}
+      {!activityTitle && feedItem.summary && (
+        <p
+          dir="auto"
+          className="text-small text-muted-foreground mb-3 break-words"
+        >
+          {feedItem.summary}
+        </p>
+      )}
+
+      {/* Author caption — optional note attached at share time
+          via ShareComposerSheet. Sits between the title and the
+          stats so it reads as the author's voice on the activity,
+          separate from the auto-generated stat blocks below. */}
+      {typeof activity?.caption === "string" &&
+        activity.caption.trim().length > 0 && (
+          <p
+            dir="auto"
+            className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap break-words mb-3"
+          >
+            {activity.caption}
+          </p>
+        )}
+    </>
+  );
+
   // Render run content (route hero + stats)
   const renderRunContent = (mapHeight = "h-28") => (
     <>
@@ -272,8 +320,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
            no route preview to host the distance overlay, and `flex
            gap-5` gave them no way to wrap — on a 375px screen the fourth
            went off the card. The grid wraps the overflow metric onto a
-           second line and keeps the columns aligned between the two. */
-        <div className="grid grid-cols-3 gap-x-3 gap-y-3 p-4 pb-0">
+           second line and keeps the columns aligned between the two.
+           Each column is at least as wide as its figure, so a long
+           time ("12:34:56" at 320px) never draws over the elevation
+           beside it; a short figure still takes a third. Three
+           columns need about 17.5em of card, two about 14.5em; under
+           that, as at large text sizes, the figures stack. */
+        <div className={`grid ${RUN_STAT_COLUMNS} gap-x-3 gap-y-3 p-4 pb-0`}>
           {!showDistanceOverlay && (
             /* Distance is the primary metric of a run, and it already
                renders that way at text-2xl/800 in the route-hero overlay
@@ -369,21 +422,24 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                  "3 x 8 60kg" was free to break mid-token once the name
                  beside it grew. The name owns the flexible half, the
                  summary owns a fixed one. */
-              const summaryClass = `text-sm font-mono tabular-nums shrink-0 whitespace-nowrap ${
+              const summaryClass = `ml-auto text-sm font-mono tabular-nums shrink-0 whitespace-nowrap ${
                 isBodyweight ? "text-muted-foreground" : "text-muted-foreground"
               }`;
               if (!canCompare) {
                 return (
                   <div
                     key={i}
-                    className="flex items-center justify-between gap-2"
+                    className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5"
                   >
-                    {/* min-w-0 with flex-1: `truncate` alone cannot
-                        shrink a flex child whose default min-width is
-                        `auto`, so a long exercise name pushed its
-                        set/rep summary out of the card instead of
-                        ellipsing. */}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                    {/* An explicit min-width with flex-1: `truncate`
+                        alone cannot shrink a flex child whose default
+                        min-width is `auto`, so a long exercise name
+                        pushed its set/rep summary out of the card
+                        instead of ellipsing. 6em rather than 0: when
+                        the name and the summary cannot share the row
+                        (large text), the summary wraps under the name
+                        instead of cutting it to one letter. */}
+                    <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                       {ex.name}
                     </span>
                     <span className={summaryClass}>{displaySummary}</span>
@@ -403,9 +459,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     })
                   }
                   aria-label={`Compare your ${ex.name}`}
-                  className="w-full flex items-center justify-between gap-2 text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
+                  className="w-full flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-left -mx-1 px-1 py-0.5 rounded-md hover:bg-muted/40 transition-colors"
                 >
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                  <span className="min-w-[min(6em,100%)] flex-1 truncate text-sm font-medium text-foreground">
                     {ex.name}
                   </span>
                   <span className={summaryClass}>{displaySummary}</span>
@@ -442,8 +498,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             exercises, PRs and duration can all be present at once, and a
             volume like "12,480" is wide enough that four flex cells left
             the card at 375px. Two columns give every cell a predictable
-            half-width and wrap the rest onto a second line. */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            half-width and wrap the rest onto a second line, and stack
+            to one column when the card is too narrow in em for two. */}
+        <div className="grid grid-cols-[minmax(max-content,1fr)] @min-[14.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] gap-x-4 gap-y-3">
           {!showVolumeOverlay && (activity.totalVolume ?? 0) > 0 && (
             /* Volume is the primary metric of a lift, and renders at
                text-2xl/800 in the muscle-hero overlay already — this
@@ -478,7 +535,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               </SectionLabel>
             </div>
           )}
-          {(activity.duration ?? 0) > 0 && (
+          {/* A hybrid card's run stats above already carry the time. */}
+          {!isHybrid && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
@@ -491,7 +549,11 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     );
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden card-shadow">
+    /* A query container: the rows inside lay themselves out by the
+       card's width in em, so they follow the text size as well as the
+       screen. At double text a 393px phone's card is 11em wide, and rows
+       sized for 22em squeezed the author's name to nothing. */
+    <div className="@container bg-card rounded-2xl overflow-hidden card-shadow">
       {/* Hybrid card: map on top (shorter), then divider, then workout content */}
       {isHybrid ? (
         <>
@@ -499,10 +561,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           <div className="border-b border-border/30 mx-4" />
           <div className="p-4 pb-0">
             {/* Author row */}
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
               <Link
                 to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-0"
+                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
               >
                 <Avatar
                   photoURL={feedItem.authorPhotoURL}
@@ -513,26 +575,21 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
+                    <p
+                      dir="auto"
+                      className="text-left text-sm font-semibold truncate text-foreground"
+                    >
                       {feedItem.authorName}
                     </p>
                   </div>
-                  <p className="text-small text-muted-foreground">{timeAgo}</p>
+                  <p className="text-small text-muted-foreground @min-[14em]:whitespace-nowrap">
+                    {timeAgo}
+                  </p>
                 </div>
               </Link>
-              {showFollow && (
-                <InlineFollow
-                  targetUid={feedItem.authorId}
-                  targetName={feedItem.authorName}
-                />
-              )}
-              {renderMenuButton()}
+              {renderAuthorActions()}
             </div>
-            {activityTitle && (
-              <p className="text-sm font-bold text-foreground mb-2">
-                {activityTitle}
-              </p>
-            )}
+            {renderPostText()}
             <div className="mb-3">{renderWorkoutContent()}</div>
           </div>
         </>
@@ -545,10 +602,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
 
           <div className="p-4">
             {/* Author row */}
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
               <Link
                 to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-0"
+                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
               >
                 <Avatar
                   photoURL={feedItem.authorPhotoURL}
@@ -559,7 +616,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
+                    <p
+                      dir="auto"
+                      className="text-left text-sm font-semibold truncate text-foreground"
+                    >
                       {feedItem.authorName}
                     </p>
                   </div>
@@ -569,43 +629,16 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     ) : (
                       <Dumbbell className="size-3.5 text-lifting" />
                     )}
-                    <p className="text-small">{timeAgo}</p>
+                    <p className="text-small @min-[14em]:whitespace-nowrap">
+                      {timeAgo}
+                    </p>
                   </div>
                 </div>
               </Link>
-              {showFollow && (
-                <InlineFollow
-                  targetUid={feedItem.authorId}
-                  targetName={feedItem.authorName}
-                />
-              )}
-              {renderMenuButton()}
+              {renderAuthorActions()}
             </div>
 
-            {/* Activity title */}
-            {activityTitle && (
-              <p className="text-sm font-bold text-foreground mb-2">
-                {activityTitle}
-              </p>
-            )}
-
-            {/* Summary line (fallback for old activities without title) */}
-            {!activityTitle && feedItem.summary && (
-              <p className="text-small text-muted-foreground mb-3">
-                {feedItem.summary}
-              </p>
-            )}
-
-            {/* Author caption — optional note attached at share time
-                via ShareComposerSheet. Sits between the title and the
-                stats so it reads as the author's voice on the activity,
-                separate from the auto-generated stat blocks below. */}
-            {typeof activity?.caption === "string" &&
-              activity.caption.trim().length > 0 && (
-                <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap mb-3">
-                  {activity.caption}
-                </p>
-              )}
+            {renderPostText()}
 
             {/* Run stats — km lives on the hero overlay when the route
                 scene rendered */}
@@ -613,7 +646,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               /* Same three-column grid as the standard card's run row —
                  the hybrid card carries the identical four metrics and
                  had the identical unconstrained flex row. */
-              <div className="grid grid-cols-3 gap-x-3 gap-y-3 mb-3">
+              <div className={`grid ${RUN_STAT_COLUMNS} gap-x-3 gap-y-3 mb-3`}>
                 {!showDistanceOverlay && (
                   <div className="min-w-0">
                     <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
@@ -682,11 +715,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         {(feedItem.prHit || activity?.prHit) && (
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
             <Trophy className="size-4 text-achievement shrink-0" />
-            <p className="text-xs font-medium text-achievement-strong">
+            <p className="min-w-0 break-words text-xs font-medium text-achievement-strong">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? `${feedItem.prWeight || activity?.prWeight} kg`
+                ? formatLoadKg(
+                    (feedItem.prWeight || activity?.prWeight) as number
+                  )
                 : ""}
             </p>
           </div>
@@ -708,7 +743,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             {/* Text on the -strong step — brand is 3.87:1 as 12px text on
                 the light card; the Target icon keeps the identity. */}
             <p
-              className="text-xs font-medium"
+              className="min-w-0 break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}
             >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
@@ -719,7 +754,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         {/* Actions — social bar. Divider sits at /20 (subtle hairline)
             so the action row reads as a continuation of the card
             rather than a hard split. */}
-        <div className="flex items-center gap-5 pt-2.5 border-t border-border/20">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2.5 border-t border-border/20">
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -756,10 +791,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               <button
                 type="button"
                 onClick={handleShowKudosList}
-                aria-label={`${kudosCount} props — show list`}
+                aria-label={`${kudosCount.toLocaleString()} props — show list`}
                 className="p-3 -m-3 text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
               >
-                {kudosCount}
+                {kudosCount.toLocaleString()}
               </button>
             )}
           </div>
@@ -772,7 +807,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             <MessageCircle className="size-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium font-mono tabular-nums">
-                {activity!.commentCount}
+                {(activity?.commentCount ?? 0).toLocaleString()}
               </span>
             )}
           </button>
@@ -819,7 +854,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     displayName={u.userName}
                     size="sm"
                   />
-                  <span className="text-xs font-medium text-foreground">
+                  <span
+                    dir="auto"
+                    className="min-w-0 truncate text-left text-xs font-medium text-foreground"
+                  >
                     {u.userName}
                   </span>
                 </div>
@@ -913,6 +951,25 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       />
     </div>
   );
+
+  /* Follow and the menu, kept together. The name beside them keeps at
+     least 8em; when the row cannot also hold these, they take a line of
+     their own at its end rather than squeezing the name out. */
+  function renderAuthorActions() {
+    const menu = renderMenuButton();
+    if (!showFollow && !menu) return null;
+    return (
+      <div className="ml-auto flex shrink-0 items-center gap-3">
+        {showFollow && (
+          <InlineFollow
+            targetUid={feedItem.authorId}
+            targetName={feedItem.authorName}
+          />
+        )}
+        {menu}
+      </div>
+    );
+  }
 
   function renderMenuButton() {
     if (!user || activity?.authorId === user.uid) return null;

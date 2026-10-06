@@ -48,7 +48,7 @@ import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { validateDisplayName } from "@/lib/displayName";
+import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 
@@ -1535,7 +1535,7 @@ export default function Onboarding() {
                   id="onboarding-name"
                   className="ds-input w-full min-h-11"
                   value={displayName}
-                  maxLength={30}
+                  maxLength={DISPLAY_NAME_MAX}
                   aria-invalid={!displayNameValidation.valid}
                   onChange={(event) => setDisplayName(event.target.value)}
                 />
