@@ -159,14 +159,15 @@ test("training advice, saved correction and the next session agree", async ({
     const run = root.collection("runs").doc("midnight-run");
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
-    await run.set({
+    const hardRun = {
       date: localDateString(yesterday),
       completedAt: Timestamp.fromDate(midnight),
       distance: 5000,
       duration: 1800,
       activityType: "tempo",
       avgPace: 360,
-    });
+    };
+    await run.set(hardRun);
     await expect(advice).toContainText("hard run yesterday", {
       timeout: 20_000,
     });
@@ -189,8 +190,13 @@ test("training advice, saved correction and the next session agree", async ({
     await expect(advice).toBeVisible();
     await run.delete();
     await expect(advice).toHaveCount(0);
-    const partial = root.collection("workouts").doc("skipped-lift");
-    await partial.set({
+    // A lift logged yesterday is no reason to go easier (Lift4 (3)): the
+    // advice speaks for a hard run alone, and the calendar's "still
+    // recovering" guess is retired. With yesterday's squats logged, a hard
+    // run beside them brings the run's reason only, and taking the run
+    // away clears the advice while the squats are still there.
+    const yesterdaysLift = root.collection("workouts").doc("yesterday-lift");
+    await yesterdaysLift.set({
       date: localDateString(yesterday),
       createdAt: Timestamp.now(),
       exercises: [
@@ -199,24 +205,20 @@ test("training advice, saved correction and the next session agree", async ({
           exerciseName: "Barbell Squat",
           category: "knee_dominant",
           plannedSetCount: 3,
-          sets: [],
+          sets: [{ type: "working", reps: 8, weightKg: 100 }],
         },
       ],
       durationMinutes: 0,
       totalCalories: 0,
     });
+    await run.set(hardRun);
+    await expect(advice).toContainText(
+      "hard run yesterday, and this session loads the same legs"
+    );
+    await expect(advice).not.toContainText(/quads|recovering/i);
+    await run.delete();
     await expect(advice).toHaveCount(0);
-    await partial.update({
-      exercises: [
-        {
-          exerciseId: "squat",
-          sets: [{ type: "working", reps: 8, weightKg: 100 }],
-        },
-      ],
-    });
-    await expect(advice).toContainText("Quads");
-    await partial.delete();
-    await expect(advice).toHaveCount(0);
+    await yesterdaysLift.delete();
     expect((await current.get()).data()!.workouts).toEqual(state.workouts);
 
     await start.click();
@@ -265,10 +267,12 @@ test("training advice, saved correction and the next session agree", async ({
     await expect(sheet).toHaveCount(0);
     await expect.poll(async () => (await saved.get()).data()?.revision).toBe(1);
     const corrected = (await current.get()).data()!;
+    // Every working set counts (Lift4 (7)): 8, 8 and 6 against 3×8 at the
+    // plan's weight is a miss, and the record is the average set, 7.
     expect(corrected.workouts[0].exercises[0]).toMatchObject({
       weight: 100,
       consecutiveFailures: 1,
-      lastPerformance: { reps: 6, weight: 100 },
+      lastPerformance: { reps: 7, weight: 100 },
     });
     expect(corrected.workouts[0].exercises[0].performanceHistory).toHaveLength(
       1
