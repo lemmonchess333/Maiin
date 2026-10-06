@@ -299,8 +299,19 @@ for (const budget of [null, 30] as const) {
     );
     expect(saved.ok()).toBe(true);
     const { fields } = await saved.json();
-    expect(fields.sessionVariant?.stringValue).toBe(
-      budget === null ? undefined : "time_budget"
-    );
+    // Lift4 (5): a new plan is built for the session length and records
+    // it, so Start runs the plan's own session in full at any length; only
+    // a plan from before that still trims to the usual time.
+    expect(fields.sessionVariant?.stringValue).toBeUndefined();
+    if (budget !== null) {
+      const programme = await request.get(
+        `${DOCS}/users/${uid}/programState/current`,
+        { headers }
+      );
+      expect(programme.ok()).toBe(true);
+      expect((await programme.json()).fields.sessionMinutes?.integerValue).toBe(
+        String(budget)
+      );
+    }
   });
 }
