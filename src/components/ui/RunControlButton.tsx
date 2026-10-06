@@ -77,8 +77,10 @@ const BASE_BUTTON = [
 ].join(" ");
 
 const SIZE_CLASSES: Record<RunControlSize, string> = {
-  // sm = 56px (3.5rem). Lock + tray toggles + spacer placeholders.
-  sm: "size-14",
+  // sm = 56px. Lock + tray toggles + spacer placeholders. In px, as lg
+  // is: a control keeps its size when the phone's text grows, and at
+  // double text a rem size pushed LOCK and HOLD off the screen.
+  sm: "size-[56px]",
   // lg = 76px. Pause / resume / stop — the dominant action.
   lg: "size-[76px]",
 };
