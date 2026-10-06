@@ -1530,7 +1530,7 @@ export default function History() {
               <section
                 id="analytics-nutrition"
                 aria-label="Food analytics"
-                className="space-y-2"
+                className="@container space-y-2"
               >
                 {/* Its sport-coded peers on this page are section
                     headings coloured by a `-strong` utility. This one once
@@ -1624,10 +1624,13 @@ export default function History() {
                         />
                       </SectionErrorBoundary>
                     )}
+                    {/* The stat pairs go one per row under 17.5em of page
+                        (larger text): at 1.35× on a 393pt phone "1,790" was
+                        already wider than half of it. Wide-first. */}
                     {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
                   showSparklines / showDelta in `nutritionFigures`). */}
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
                       <StatCard
                         label="Avg calories"
                         value={nutrition.avgCalories.toLocaleString()}
@@ -1677,7 +1680,7 @@ export default function History() {
                         accentColor={THEME.macros.protein}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
                       <StatCard
                         label="Carbs"
                         value={nutrition.avgCarbs.toString()}

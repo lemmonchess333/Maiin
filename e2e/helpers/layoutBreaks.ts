@@ -9,20 +9,26 @@ import type { Page } from "@playwright/test";
  * counted.
  *
  * `scope` selects the elements to measure (descendants included);
- * `card` is the selector of the box an element must stay inside.
+ * `card` is the selector of the box an element must stay inside;
+ * `ignore`, if given, skips any element inside a match: a row that
+ * scrolls sideways on purpose, decoration hidden from assistive tech.
  */
 export async function layoutBreaks(
   page: Page,
   scope: string,
-  card: string
+  card: string,
+  ignore?: string
 ): Promise<string[]> {
   return page.evaluate(
-    ({ scope, card }) => {
+    ({ scope, card, ignore }) => {
       const out: string[] = [];
       const vw = document.documentElement.clientWidth;
       for (const el of Array.from(document.querySelectorAll(scope))) {
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) continue;
+        if (ignore && el.closest(ignore)) continue;
+        // Laid out but not drawn: it cannot visibly break.
+        if (getComputedStyle(el).visibility === "hidden") continue;
         const label = `${el.tagName.toLowerCase()} "${(el.textContent ?? "")
           .trim()
           .slice(0, 40)}"`;
@@ -51,6 +57,6 @@ export async function layoutBreaks(
       }
       return out;
     },
-    { scope, card }
+    { scope, card, ignore }
   );
 }

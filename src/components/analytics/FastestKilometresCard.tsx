@@ -63,12 +63,15 @@ export default function FastestKilometresCard({
             <li key={km}>
               <Link
                 to={`/run/${shown.runId}`}
-                className="flex min-h-[56px] items-center gap-3 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
+                className="flex min-h-[56px] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
               >
                 <span className="w-12 shrink-0 text-sm font-bold text-running-strong">
                   {km} km
                 </span>
-                <div className="min-w-0 flex-1">
+                {/* The fastest-ever column drops under the row when the
+                    two no longer fit (larger text), rather than squeezing
+                    this one. */}
+                <div className="min-w-[min(100%,7em)] flex-1">
                   {inRange ? (
                     <>
                       <p className="flex items-center gap-2">
@@ -91,7 +94,7 @@ export default function FastestKilometresCard({
                     </p>
                   )}
                 </div>
-                <div className="shrink-0 text-right">
+                <div className="ml-auto shrink-0 text-right">
                   {isBestEver && !isNew ? (
                     <p className="text-xs text-muted-foreground">
                       Your fastest ever
