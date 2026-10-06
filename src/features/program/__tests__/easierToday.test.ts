@@ -5,9 +5,8 @@
  *   - execution CLONE: identity + order preserved, nothing dropped,
  *     input day never mutated, deterministic
  *   - every exercise loses one set (primary floor 2, accessory floor 1)
- *   - non-zero loads follow the EXISTING deload policy (×0.85, nearest
- *     2.5 kg) — pinned equal to programEngine.applyDeload so the two
- *     can never drift; zero (bodyweight/uncalibrated) stays zero
+ *   - non-zero loads come down to 85%, to the nearest 2.5 kg; zero
+ *     (bodyweight/uncalibrated) stays zero
  *   - recommendation: only a hard run yesterday before a session that
  *     loads the same legs (Lift4 (3)), ONE factual reason, no readiness
  *     percentage
@@ -24,7 +23,6 @@ import {
   EASIER_ACCESSORY_MIN_SETS,
   pickLighterDay,
 } from "../easierToday";
-import { applyDeload } from "../programEngine";
 import type {
   MovementCategory,
   ProgramExercise,
@@ -121,14 +119,10 @@ describe("buildEasierSession", () => {
     expect(plan.exercises[1].weight).toBe(0);
   });
 
-  it("deloadWeight is pinned EQUAL to programEngine.applyDeload's weight rule", () => {
-    // The one rule, two call sites — this pin is what stops drift.
-    for (const w of [0, 12.5, 20, 42.5, 60, 77.5, 80, 102.5, 140]) {
-      const engineDay = applyDeload([
-        day([ex("Probe", 5, w, { isAccessory: false })]),
-      ])[0];
-      expect(deloadWeight(w)).toBe(engineDay.exercises[0].weight);
-    }
+  it("deloadWeight takes 85% to the nearest 2.5 kg and leaves 0 alone", () => {
+    expect([0, 60, 80, 100, 140].map(deloadWeight)).toEqual([
+      0, 50, 67.5, 85, 120,
+    ]);
   });
 
   it("summarizes factually", () => {

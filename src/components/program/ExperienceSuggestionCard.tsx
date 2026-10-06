@@ -123,15 +123,16 @@ function copyFor(suggestion: ExperienceSuggestion): {
     return {
       title: "Ready for intermediate programming?",
       // What a level change does (Lift4): it keeps the exercises, and the
-      // level reaches the plan through the lighter week's recipe and the
+      // level reaches the plan through whether lighter weeks come and the
       // next plan built. Progression runs per session at every level, so
       // nothing here may promise another cadence.
       body:
         "These lifts have stalled through real missed reps AND a load " +
         "reset — the classic end of session-to-session progress, not just " +
         "a week that needed to be easy. Your exercises stay as they are: " +
-        "intermediate changes how a lighter week eases off, and what a " +
-        "plan built later can include.",
+        "intermediate brings a lighter week every fourth week when you " +
+        "lift three or more days, and changes what a plan built later can " +
+        "include.",
       basis:
         "Based only on your logged sessions: a reset and honest misses are " +
         "already in this window, and you're not in a cut. Advanced is " +
@@ -143,7 +144,7 @@ function copyFor(suggestion: ExperienceSuggestion): {
     title: "You could progress faster",
     body:
       "You're still adding weight nearly every session. Your exercises " +
-      "stay as they are: beginner changes how a lighter week eases off, " +
+      "stay as they are: beginner has no lighter weeks on the calendar, " +
       "and keeps a plan built later to simpler lifts with one target " +
       "each. Switch back the moment progress slows.",
     basis:

@@ -1,5 +1,5 @@
 import PurposeDisclosure from "@/components/ui/PurposeDisclosure";
-import type { WorkoutDay } from "@/features/program/programTypes";
+import type { Experience, WorkoutDay } from "@/features/program/programTypes";
 import {
   liftSessionPurpose,
   type LiftPurposeProgramme,
@@ -15,16 +15,19 @@ export default function LiftPurpose({
   programme,
   day,
   date,
+  experience,
   className,
 }: {
   programme: LiftPurposeProgramme | null | undefined;
   day: Pick<WorkoutDay, "isCustom"> | null | undefined;
   /** The day's local YYYY-MM-DD, or today where the surface has no date. */
   date: string;
+  /** The person's level (`profile.experience`). */
+  experience?: Experience;
   /** Applied to a wrapper, which exists only when there is a reason. */
   className?: string;
 }) {
-  const purpose = liftSessionPurpose(programme, day, date);
+  const purpose = liftSessionPurpose(programme, day, date, experience);
   if (!purpose) return null;
   const disclosure = (
     <PurposeDisclosure label="Why this session">{purpose}</PurposeDisclosure>

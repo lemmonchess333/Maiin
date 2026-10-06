@@ -466,6 +466,7 @@ export default function DayPeekCard({
                   programme={programState}
                   day={resolved.lift.workout}
                   date={dateKey}
+                  experience={profile?.experience}
                   className="pl-5"
                 />
               )}

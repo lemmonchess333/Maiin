@@ -1,4 +1,4 @@
-import type { WeeklyPrescription } from "./programTypes";
+import type { Experience, WeeklyPrescription } from "./programTypes";
 
 /**
  * Where a week sits in the training cycle, apart from the generator
@@ -29,4 +29,20 @@ export function generateWeekPrescription(week: number): WeeklyPrescription {
  */
 export function isCycleEndWeek(week: number): boolean {
   return week > 0 && generateWeekPrescription(week).deload;
+}
+
+/**
+ * Whether the calendar gives this plan lighter weeks (Lift4 (9)): an
+ * intermediate or advanced lifter on three or more lift days. A beginner,
+ * an unknown level (a beginner's) and a plan of one or two days get none;
+ * anyone can still take one from Train.
+ */
+export function lighterWeeksScheduled(
+  experience: Experience | undefined,
+  liftDays: number
+): boolean {
+  return (
+    (experience === "intermediate" || experience === "advanced") &&
+    liftDays >= 3
+  );
 }

@@ -499,6 +499,18 @@ describe("at the finish (applySessionProgression)", () => {
     });
   });
 
+  it("a lighter week's session can move a weight up, never down", () => {
+    // Lift4 (8): a lighter week is easy by design; a session in it is no
+    // miss, and only a heavier weight moves the plan.
+    const state = stateWith(bench(), { currentPhase: "deload" });
+    const stored = state.workouts[0].exercises[0];
+    expect(finish(state, three(50, 3))).toBe(stored);
+    expect(finish(state, three(65, 6))).toMatchObject({
+      weight: 65,
+      reps: stored.reps,
+    });
+  });
+
   it("a shortened session's sets count: one set follows the weight and holds", () => {
     const out = finish(
       stateWith(bench()),

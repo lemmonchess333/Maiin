@@ -189,44 +189,13 @@ describe("DeloadBanner", () => {
     expect(screen.queryByLabelText(/Dismiss deload banner/i)).toBeNull();
   });
 
-  /* Active copy must describe the recipe the deload actually applied
-     (backlog #8 tier split, mirrored client + server): beginner/unknown
-     cuts a set AND load; intermediate/advanced cuts a set and targets at
-     HELD load. The old fixed "lighter weights" sentence was false for
-     every post-novice user (evidence-handoff LIFT-EV-03). Both matrices
-     assert the WRONG tier's sentence absent, not just the right one
-     present — the copy must never say two contradictory things. */
-  it.each(["beginner", undefined] as const)(
-    "active copy for %s promises lighter weights (the novice recipe cuts load)",
-    (experience) => {
-      render(
-        <DeloadBanner
-          visible
-          weekKey="w20"
-          deloadActive
-          experience={experience}
-        />
-      );
-      expect(screen.getByText(/lighter weights/i)).toBeInTheDocument();
-      expect(screen.queryByText(/at the same weights/i)).toBeNull();
-    }
-  );
-
-  it.each(["intermediate", "advanced"] as const)(
-    "active copy for %s says same weights, lower volume (the post-novice recipe holds load)",
-    (experience) => {
-      render(
-        <DeloadBanner
-          visible
-          weekKey="w21"
-          deloadActive
-          experience={experience}
-        />
-      );
-      expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
-      expect(screen.queryByText(/lighter weights/i)).toBeNull();
-    }
-  );
+  it("active copy describes the one recipe: half the sets, same weights", () => {
+    render(<DeloadBanner visible weekKey="w20" deloadActive />);
+    expect(
+      screen.getByText(/Half the sets this week, at the same weights/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/lighter weights/i)).toBeNull();
+  });
 
   it("an ACTIVE deload confirms even when nothing recommends one", () => {
     /**
@@ -261,15 +230,7 @@ describe("DeloadBanner", () => {
  */
 describe("DeloadBanner — the active copy names the run half", () => {
   it("adds the run clause when the deload stepped runs down", () => {
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w30"
-        deloadActive
-        runsEased={3}
-        experience="intermediate"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w30" deloadActive runsEased={3} />);
     expect(
       screen.getByText(/3 runs are a step shorter too/i)
     ).toBeInTheDocument();
@@ -278,15 +239,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   });
 
   it("says ONE run, singular", () => {
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w31"
-        deloadActive
-        runsEased={1}
-        experience="beginner"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w31" deloadActive runsEased={1} />);
     expect(
       screen.getByText(/One run is a step shorter too/i)
     ).toBeInTheDocument();
@@ -295,15 +248,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   it("stays silent for a lift-only deload", () => {
     /* The automatic week-4 path. Mentioning runs here would be the
        mirror-image lie of the one this fixes. */
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w32"
-        deloadActive
-        runsEased={0}
-        experience="intermediate"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w32" deloadActive runsEased={0} />);
     expect(screen.queryByText(/step shorter/i)).toBeNull();
     expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
   });
@@ -311,9 +256,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   it("stays silent when the count is not supplied at all", () => {
     // Every other DeloadBanner call site omits the prop; none of them
     // should start claiming a run change.
-    render(
-      <DeloadBanner visible weekKey="w33" deloadActive experience="advanced" />
-    );
+    render(<DeloadBanner visible weekKey="w33" deloadActive />);
     expect(screen.queryByText(/step shorter/i)).toBeNull();
   });
 
@@ -324,7 +267,6 @@ describe("DeloadBanner — the active copy names the run half", () => {
         visible
         weekKey="w34"
         runsEased={3}
-        experience="intermediate"
         onApply={async () => true}
       />
     );

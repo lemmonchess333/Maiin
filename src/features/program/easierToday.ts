@@ -19,10 +19,9 @@
  *      (`isAccessory !== true` — the undefined-legacy rule matches
  *      expressSession: ambiguity protects) and
  *      {@link EASIER_ACCESSORY_MIN_SETS} for accessories.
- *   3. Non-zero suggested loads follow the EXISTING deload policy
- *      (programEngine.applyDeload's weight rule): ×0.85, rounded to the
- *      nearest 2.5 kg. Bodyweight/uncalibrated zero loads stay 0 — the
- *      set reduction is the whole signal.
+ *   3. Non-zero suggested loads come down to 85%, rounded to the nearest
+ *      2.5 kg ({@link deloadWeight}). Bodyweight/uncalibrated zero loads
+ *      stay 0 — the set reduction is the whole signal.
  *   4. Recommendation ({@link easierTodayRecommendation}) is pure and
  *      deterministic, and fires for one reason only: a hard run
  *      yesterday before a session that loads the same legs (Lift4 (3)).
@@ -46,9 +45,9 @@ export const EASIER_PRIMARY_MIN_SETS = 2;
 export const EASIER_ACCESSORY_MIN_SETS = 1;
 
 /**
- * The existing deload weight rule — MIRRORS programEngine.applyDeload
- * (×0.85, nearest 2.5 kg plate; zero stays zero). Pinned equal to
- * applyDeload by easierToday.test.ts so the two can't drift.
+ * An easier session's weight: 85%, to the nearest 2.5 kg plate; zero stays
+ * zero. A lighter week keeps its weights (`applyDeload`), so this is the
+ * easier session's alone.
  */
 export function deloadWeight(weight: number): number {
   return weight === 0 ? 0 : Math.round((weight * 0.85) / 2.5) * 2.5;

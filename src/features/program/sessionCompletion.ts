@@ -81,9 +81,13 @@ export function applySessionProgression(
                 baseline.sets
               );
               if (!read) return legacy ? baseline : stored;
-              // An easier session's weights are lighter by design: it can
-              // move a weight up, never down, and says nothing else.
-              if (session.sessionVariant === "easier_today") {
+              // An easier session's weights are lighter by design, and a
+              // lighter week's sessions are easy by design: either can move
+              // a weight up, never down, and says nothing else (Lift4 (8)).
+              if (
+                session.sessionVariant === "easier_today" ||
+                state.currentPhase === "deload"
+              ) {
                 const lifted = liftedLoad(baseline.exerciseId, read.weight);
                 if (lifted !== null && lifted > baseline.weight)
                   return {

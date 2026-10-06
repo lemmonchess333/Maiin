@@ -311,8 +311,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
     existing.length === expectedDayCount(input.liftDays);
   // A level change is a content edit like any other (Lift4, restoring
   // Pgm5's rule): it never rebuilds the week and never swaps an exercise.
-  // The level reaches the plan through what reads it — the lighter week's
-  // recipe and the RPE row now, the exercises a plan built later picks.
+  // The level reaches the plan through what reads it — whether lighter
+  // weeks come and the RPE row now, the exercises a plan built later picks.
   const preserve = sameDayCount && !!input.existingState;
 
   const base =

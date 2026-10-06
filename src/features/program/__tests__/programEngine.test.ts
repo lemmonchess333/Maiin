@@ -13,7 +13,6 @@ import { generateWeekPrescription, isCycleEndWeek } from "../weekPrescription";
 import { exerciseBank } from "../variationBank";
 import { roleRepsFor } from "../roleTable";
 import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
-import { deloadWeight } from "../easierToday";
 import type {
   ProgramExercise,
   ProgramState,
@@ -474,51 +473,6 @@ describe("advanceWeek — a new cycle keeps every lift", () => {
 
 // ── Deload ──────────────────────────────────────
 
-describe("applyDeload", () => {
-  it("rounds weight to 2.5kg increments", () => {
-    const workouts: WorkoutDay[] = [
-      {
-        dayName: "Push",
-        dayType: "push",
-        completed: false,
-        exercises: [makeTestExercise({ weight: 100, sets: 4 })],
-      },
-    ];
-    const result = applyDeload(workouts);
-    // 100 * 0.85 = 85 → round(85/2.5)*2.5 = 85 (exact)
-    expect(result[0].exercises[0].weight).toBe(85);
-    expect(result[0].exercises[0].sets).toBe(3); // 4-1=3
-  });
-
-  it("rounds non-exact values to nearest 2.5kg", () => {
-    const workouts: WorkoutDay[] = [
-      {
-        dayName: "Push",
-        dayType: "push",
-        completed: false,
-        exercises: [makeTestExercise({ weight: 60, sets: 3 })],
-      },
-    ];
-    const result = applyDeload(workouts);
-    // 60 * 0.85 = 51 → round(51/2.5)*2.5 = round(20.4)*2.5 = 20*2.5 = 50
-    expect(result[0].exercises[0].weight).toBe(50);
-  });
-
-  it("does not change bodyweight exercise weight", () => {
-    const workouts: WorkoutDay[] = [
-      {
-        dayName: "Pull",
-        dayType: "pull",
-        completed: false,
-        exercises: [makeBodyweightExercise({ sets: 4 })],
-      },
-    ];
-    const result = applyDeload(workouts);
-    expect(result[0].exercises[0].weight).toBe(0);
-    expect(result[0].exercises[0].sets).toBe(3); // still reduces sets
-  });
-});
-
 // ── advanceWeek ─────────────────────────────────
 
 describe("advanceWeek", () => {
@@ -539,16 +493,20 @@ describe("advanceWeek", () => {
     ],
   };
 
-  it("a deload week cuts once, from the plan's own numbers", () => {
-    // Week 4 (4%4=0) is a deload; a level-less plan takes the beginner's
-    // recipe: one set fewer and 85% of the weight.
-    const state = { ...baseProgramState, weekNumber: 3 };
-    const result = advanceWeek(state);
+  it("a lighter week halves the sets once, from the plan's own numbers", () => {
+    // Week 4 (4%4=0) is a lighter week for an intermediate on three days.
+    const [day] = baseProgramState.workouts;
+    const state = {
+      ...baseProgramState,
+      weekNumber: 3,
+      workouts: [day, { ...day, dayName: "B" }, { ...day, dayName: "C" }],
+    };
+    const result = advanceWeek(state, "intermediate");
     expect(result.weekNumber).toBe(4);
     expect(result.currentPhase).toBe("deload");
     const ex = result.workouts[0].exercises[0];
-    expect(ex.sets).toBe(3);
-    expect(ex.weight).toBe(67.5);
+    expect(ex.sets).toBe(2);
+    expect(ex.weight).toBe(80);
   });
 
   it("a week of misses leaves next week's sets alone (Lift4 (13))", () => {
@@ -1078,22 +1036,15 @@ describe("the weekly reset to base sets (deload-decay fix)", () => {
       expect(st.weekNumber).toBe(week);
       expect(setsGrid(st)).toEqual(base);
     }
-    st = advanceWeek(trained(st)); // week 4 — deload cuts from the anchor
+    st = advanceWeek(trained(st), "intermediate"); // week 4 — a lighter week
     st.workouts.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
-        expect(ex.sets).toBe(Math.max(2, base[di][ei] - 1));
-        expect(ex.weight).toBe(deloadWeight(50)); // pinned to the shared rule
-        expect(ex.preDeloadWeight).toBe(50);
+        expect(ex.sets).toBe(Math.ceil(base[di][ei] / 2));
+        expect(ex.weight).toBe(50); // the same weights
       })
     );
-    st = advanceWeek(trained(st)); // week 5 — the cycle restarts
+    st = advanceWeek(trained(st), "intermediate"); // week 5 — sets back
     expect(setsGrid(st)).toEqual(base);
-    st.workouts.forEach((d) =>
-      d.exercises.forEach((ex) => {
-        expect(ex.weight).toBe(50); // load restored, cut not permanent
-        expect("preDeloadWeight" in ex).toBe(false);
-      })
-    );
   });
 
   it("never compounds across mesocycles", () => {
@@ -1319,7 +1270,7 @@ describe("progression scheme per exercise type (backlog #7)", () => {
 // Backlog #8 — the deload recipe follows TRAINING AGE (H4 resolving M4).
 // Tropos's sets−1 + load−15% is Helms's novice answer; it was applied to
 // everyone. Post-novice gets ~half the volume at the SAME load instead.
-describe("deload by training age (backlog #8)", () => {
+describe("lighter weeks (Lift4 (9))", () => {
   const week = (): WorkoutDay[] => [
     {
       dayName: "Push",
@@ -1328,84 +1279,84 @@ describe("deload by training age (backlog #8)", () => {
       skipped: false,
       exercises: [
         makeTestExercise({ sets: 3, reps: 10, weight: 100 }),
-        makeTestExercise({ sets: 3, reps: 5, weight: 140 }),
+        makeTestExercise({ sets: 4, reps: 5, weight: 140 }),
         makeTestExercise({ sets: 2, reps: 12, weight: 0 }), // bodyweight
       ],
     },
   ];
 
-  it("beginners keep the pre-#8 recipe exactly (sets-1, load x0.85)", () => {
-    for (const exp of [undefined, "beginner" as const]) {
-      const out = applyDeload(week(), exp)[0].exercises;
-      expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
-      expect(out.map((e) => e.weight)).toEqual([85, 120, 0]);
-      expect(out.map((e) => e.reps)).toEqual([10, 5, 12]); // reps untouched
-    }
+  it("halves the working sets, rounded up, at the same weights and reps", () => {
+    const out = applyDeload(week())[0].exercises;
+    expect(out.map((e) => e.sets)).toEqual([2, 2, 1]);
+    expect(out.map((e) => e.weight)).toEqual([100, 140, 0]);
+    expect(out.map((e) => e.reps)).toEqual([10, 5, 12]);
   });
 
-  it("intermediates halve volume at held load (Helms 3x10x200 -> 2x8x200)", () => {
-    const out = applyDeload(week(), "intermediate")[0].exercises;
-    expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
-    expect(out.map((e) => e.reps)).toEqual([8, 3, 10]); // -2, floored at 3
-    expect(out.map((e) => e.weight)).toEqual([100, 140, 0]); // load untouched
+  it("halves the plan's own sets, so it never compounds", () => {
+    const [day] = week();
+    const cut = [
+      {
+        ...day,
+        exercises: [{ ...day.exercises[0], sets: 2, baseSets: 4 }],
+      },
+    ];
+    const [ex] = applyDeload(cut)[0].exercises;
+    expect(ex.sets).toBe(2);
+    expect(ex.baseSets).toBe(4);
   });
 
-  it("advanced reads the same as intermediate", () => {
-    expect(applyDeload(week(), "advanced")).toEqual(
-      applyDeload(week(), "intermediate")
-    );
-  });
-
-  it("restores the cut reps on meso exit — no decay across mesocycles", () => {
-    // Symmetric with #5's sets/load restore. Without preDeloadReps the
-    // post-novice cut would compound: 10 -> 8 -> 6 -> 4 every four weeks.
-    const { workouts } = generateProgram(3, undefined, "hypertrophy");
-    let st: ProgramState = {
+  const atWeek3 = (days: number, over: Partial<ProgramState> = {}) => {
+    const { workouts } = generateProgram(days, undefined, "hypertrophy");
+    return {
       goal: "recomp",
       currentPhase: "progression",
-      weekNumber: 1,
+      weekNumber: 3,
       splitType: "full_body",
       workouts,
       fatigueScore: 0,
       updatedAt: 0,
-    };
-    const repsGrid = (s: ProgramState) =>
-      s.workouts.map((d) => d.exercises.map((e) => e.reps));
-    const start = repsGrid(st);
+      ...over,
+    } as ProgramState;
+  };
 
-    for (let meso = 0; meso < 2; meso += 1) {
-      st = advanceWeek(trained(st), "intermediate"); // w2
-      st = advanceWeek(trained(st), "intermediate"); // w3
-      st = advanceWeek(trained(st), "intermediate"); // w4 — deload, reps cut
-      st.workouts.forEach((d, di) =>
-        d.exercises.forEach((ex, ei) => {
-          expect(ex.reps).toBe(Math.max(3, start[di][ei] - 2));
-        })
+  it("comes on the calendar for intermediates and up on three or more days", () => {
+    for (const experience of ["intermediate", "advanced"] as const) {
+      expect(advanceWeek(trained(atWeek3(3)), experience).currentPhase).toBe(
+        "deload"
       );
-      st = advanceWeek(trained(st), "intermediate"); // meso exit — reps restored
-      expect(repsGrid(st)).toEqual(start);
     }
+    // None for a beginner, an unknown level or a plan of two days.
+    expect(advanceWeek(trained(atWeek3(3)), "beginner").currentPhase).toBe(
+      "progression"
+    );
+    expect(advanceWeek(trained(atWeek3(3))).currentPhase).toBe("progression");
+    expect(advanceWeek(trained(atWeek3(2)), "intermediate").currentPhase).toBe(
+      "progression"
+    );
   });
 
-  it("restores reps even if the user switches experience mid-mesocycle", () => {
-    // The stash is unconditional, so a user who deloads as an intermediate
-    // and advances as a beginner still gets their rep target back.
-    const { workouts } = generateProgram(2, undefined, "hypertrophy");
-    let st: ProgramState = {
-      goal: "recomp",
-      currentPhase: "progression",
-      weekNumber: 3,
-      splitType: "upper_lower",
-      workouts,
-      fatigueScore: 0,
-      updatedAt: 0,
-    };
-    const before = st.workouts.map((d) => d.exercises.map((e) => e.reps));
-    st = advanceWeek(st, "intermediate"); // week 4 deload — reps cut
-    st = advanceWeek(st, "beginner"); // week 5 — restore must still fire
-    expect(st.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
-      before
+  it("never comes straight after another, a manual one included", () => {
+    const out = advanceWeek(
+      trained(atWeek3(3, { currentPhase: "deload" })),
+      "intermediate"
     );
+    expect(out.weekNumber).toBe(4);
+    expect(out.currentPhase).toBe("progression");
+  });
+
+  it("starts the miss counts again once it's over", () => {
+    const st = atWeek3(3, { currentPhase: "deload", weekNumber: 4 });
+    const missed = {
+      ...st,
+      workouts: st.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.map((ex) => ({ ...ex, consecutiveFailures: 1 })),
+      })),
+    };
+    const out = advanceWeek(trained(missed), "intermediate");
+    expect(
+      out.workouts.flatMap((d) => d.exercises.map((e) => e.consecutiveFailures))
+    ).toEqual(out.workouts.flatMap((d) => d.exercises.map(() => 0)));
   });
 });
 

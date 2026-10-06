@@ -36,13 +36,6 @@ interface DeloadBannerProps {
    * deload the athlete is in, instead of one sentence covering both.
    */
   runsEased?: number;
-  /** Training age, straight from `profile.experience`. Drives the
-   *  ACTIVE-state copy so it describes the recipe the deload actually
-   *  applied (backlog #8's tier split — see deloadEngine): beginner or
-   *  unknown cuts a set AND load; intermediate/advanced cuts a set and
-   *  reps AT THE SAME LOAD. The old fixed "lighter weights" sentence
-   *  was false for every post-novice user (evidence-handoff LIFT-EV-03). */
-  experience?: "beginner" | "intermediate" | "advanced";
   /** PROGRAM-DELOAD-01: applies the deload to the active week (the
    *  server `applyDeloadWeek` command). Resolves true on success —
    *  the banner fires the reserved `action: 'applied'` telemetry;
@@ -66,12 +59,10 @@ interface DeloadBannerProps {
  *
  * PROGRAM-DELOAD-01 delivers the Apply CTA that v1 reserved: `onApply`
  * routes through the server `applyDeloadWeek` programme command, which
- * applies the SAME tier-split recipe as the automatic week-4 path
- * (deloadEngine mirror of programEngine.applyDeload — beginner/unknown:
- * −1 set + weight ×0.85; intermediate/advanced: −1 set and lower
- * targets at held load). While the week is already deloaded
- * (`deloadActive`) the banner renders a calm confirmation instead of
- * the CTA, worded for the recipe the user's tier actually received.
+ * applies the SAME recipe as the calendar's lighter week (deloadEngine
+ * mirror of programEngine.applyDeload: half the sets at the same
+ * weights). While the week is already a lighter one (`deloadActive`) the
+ * banner renders a calm confirmation instead of the CTA.
  *
  * Telemetry per Pgm3 lock:
  *   - programme_deload_banner_viewed: fires once per session when
@@ -93,16 +84,10 @@ export default function DeloadBanner({
   weekKey,
   deloadActive = false,
   runsEased,
-  experience,
   onApply,
   dismissed: dismissedProp,
   onDismiss,
 }: DeloadBannerProps) {
-  // Mirrors the recipe branch in programEngine.applyDeload /
-  // functions/lib/deloadEngine.js exactly: only these two tiers hold
-  // load; beginner AND unknown fall back to the novice cut.
-  const deloadHoldsLoad =
-    experience === "intermediate" || experience === "advanced";
   const own = useDismissOnce(deloadDismissKey(weekKey));
   const dismissed = dismissedProp ?? own.dismissed;
   const dismiss = onDismiss ?? own.dismiss;
@@ -227,11 +212,7 @@ export default function DeloadBanner({
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                   {deloadActive
-                    ? `${
-                        deloadHoldsLoad
-                          ? "This week's volume is eased — one set fewer and slightly lower targets, at the same weights."
-                          : "This week's loads are eased — lighter weights, one set fewer."
-                      }${runsEasedClause} Push again next week.`
+                    ? `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`
                     : "Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger."}
                 </p>
               </div>

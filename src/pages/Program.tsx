@@ -1046,7 +1046,6 @@ function ProgramInner() {
               // The run half of the deload, named in the copy. Derived from
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
-              experience={profile?.experience}
               onApply={handleApplyDeload}
             />
           </TrackProgrammeSectionView>
@@ -1336,6 +1335,7 @@ function ProgramInner() {
                           programme={programState}
                           day={selectedWorkout}
                           date={localDateString()}
+                          experience={profile?.experience}
                           className="px-3"
                         />
                       )}

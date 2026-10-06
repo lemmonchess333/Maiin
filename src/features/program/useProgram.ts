@@ -1657,9 +1657,8 @@ export function useProgram() {
     });
     if (!saved) return;
 
-    const rx = generateWeekPrescription(saved.weekNumber);
-    if (rx.deload) {
-      toast.info("Deload week — reduce intensity and recover");
+    if (saved.currentPhase === "deload") {
+      toast.info("A lighter week: half the sets, at the same weights");
     } else {
       toast.success(`Week ${saved.weekNumber} started`);
     }

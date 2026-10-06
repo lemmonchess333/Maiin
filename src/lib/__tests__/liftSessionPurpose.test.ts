@@ -51,8 +51,17 @@ function block(
   };
 }
 
+/** A three-day plan: with an intermediate's level, the calendar brings
+ *  it lighter weeks (`lighterWeeksScheduled`). */
+const THREE_DAYS = [{}, {}, {}] as LiftPurposeProgramme["workouts"];
+
 function purpose(programme: LiftPurposeProgramme, date = TODAY) {
-  return liftSessionPurpose(programme, DAY, date);
+  return liftSessionPurpose(
+    { workouts: THREE_DAYS, ...programme },
+    DAY,
+    date,
+    "intermediate"
+  );
 }
 
 describe("liftSessionPurpose", () => {
@@ -104,6 +113,25 @@ describe("liftSessionPurpose", () => {
     }
   });
 
+  it("says nothing of a cycle when the calendar brings no lighter weeks", () => {
+    // A beginner, an unknown level, or a plan of two days (Lift4 (9)).
+    const programme = { weekNumber: 3, primaryGoal: "strength" as const };
+    for (const [experience, workouts] of [
+      ["beginner", THREE_DAYS],
+      [undefined, THREE_DAYS],
+      ["intermediate", [{}, {}]],
+    ] as const) {
+      expect(
+        liftSessionPurpose(
+          { ...programme, workouts } as LiftPurposeProgramme,
+          DAY,
+          TODAY,
+          experience
+        )
+      ).toBe(FOCUS_PURPOSE.strength);
+    }
+  });
+
   it("describes a lighter week only when the lighter recipe was applied", () => {
     /* The calendar's fourth week, after a week with no training in it, is
        an ordinary week: advanceWeek withheld the recipe and left the phase
@@ -130,26 +158,34 @@ describe("liftSessionPurpose", () => {
     const custom = { isCustom: true };
     expect(
       liftSessionPurpose(
-        { weekNumber: 1, primaryGoal: "strength" },
+        { weekNumber: 1, primaryGoal: "strength", workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
       )
     ).toBe(CYCLE);
-    expect(liftSessionPurpose({ weekNumber: 3 }, custom, TODAY)).toBe(
-      LAST_FULL_WEEK
-    );
     expect(
       liftSessionPurpose(
-        { weekNumber: 4, currentPhase: "progression" },
+        { weekNumber: 3, workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
+      )
+    ).toBe(LAST_FULL_WEEK);
+    expect(
+      liftSessionPurpose(
+        { weekNumber: 4, currentPhase: "progression", workouts: THREE_DAYS },
+        custom,
+        TODAY,
+        "intermediate"
       )
     ).toBeNull();
     expect(
       liftSessionPurpose(
-        { weekNumber: 4, currentPhase: "deload" },
+        { weekNumber: 4, currentPhase: "deload", workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
       )
     ).toBe(LIGHTER_WEEK);
   });

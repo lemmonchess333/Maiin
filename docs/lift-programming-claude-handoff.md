@@ -405,6 +405,22 @@ automatic whole-body lighter week and the per-muscle "Eased this week" cut
 share one trigger (`recoveryTrigger.ts`) and retire with step 5's lighter
 weeks.
 
+STATUS 2026-10-05 (Lift4 (7), (8) and (9), build step 5, first part): one
+lighter-week recipe for everyone, half the working sets, rounded up, at the
+same weights and reps, from the plan's own sets (`applyDeload`, and the
+server's `deloadEngine.js` for "Apply" on Train, pinned together). The
+calendar's lighter week, every 4th trained week as before, now comes only
+to intermediate and advanced lifters on three or more lift days
+(`lighterWeeksScheduled`, `weekPrescription.ts`), never straight after
+another (a manual one included), and a lighter week's sessions can raise a
+weight but never lower it. Miss counts start again once a lighter week is
+over. The by-level recipes (a beginner's one set fewer at 85% of the
+weight; everyone else's one set fewer two reps lower) and the stashes that
+undid them are gone; old stashes still restore. "Why this session" names
+the cycle only when lighter weeks come, and the level suggestion's copy
+says what a level changes. Easier today keeps its own 85%
+(`deloadWeight`).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

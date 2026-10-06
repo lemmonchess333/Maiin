@@ -1060,12 +1060,19 @@ describe("DayActionSheet — lift section", () => {
     programState.weekNumber = 3;
     programState.currentPhase = "progression";
     programState.primaryGoal = "strength";
+    // Three days and an intermediate's level: a lighter week comes next.
+    const [first] = programState.workouts;
+    programState.workouts = [
+      first,
+      { ...first, dayName: "B" },
+      { ...first, dayName: "C" },
+    ];
     render(
       <DayActionSheet
         open={true}
         onClose={() => {}}
         dateKey={todayKey()}
-        profile={profile}
+        profile={{ ...profile!, experience: "intermediate" }}
         programState={programState}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}

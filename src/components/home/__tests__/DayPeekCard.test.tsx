@@ -834,14 +834,14 @@ describe("DayPeekCard — why this lift", () => {
       weekNumber: 1,
       currentPhase: "progression",
       primaryGoal: "hypertrophy",
-      workouts: [
-        {
-          dayName: "Pull — Lat Focus",
-          dayType: "pull",
-          exercises: [],
-          completed: false,
-        },
-      ],
+      // Three days and an intermediate's level: the calendar brings this
+      // plan lighter weeks, so the cycle has a line to say.
+      workouts: ["Pull — Lat Focus", "Push", "Legs"].map((dayName) => ({
+        dayName,
+        dayType: "pull",
+        exercises: [],
+        completed: false,
+      })),
       ...overrides,
     } as ProgramState;
   }
@@ -854,7 +854,7 @@ describe("DayPeekCard — why this lift", () => {
       <DayPeekCard
         todayKey={localDateString()}
         dateKey={dayOfThisWeek(2)}
-        profile={makeProfile(LIFT_WEEK)}
+        profile={{ ...makeProfile(LIFT_WEEK), experience: "intermediate" }}
         programState={programState}
         claimMap={emptyClaimMap}
         extras={emptyExtras}
@@ -882,7 +882,7 @@ describe("DayPeekCard — why this lift", () => {
     renderDay(liftProgramme({ weekNumber: 4, currentPhase: "deload" }));
     const why = screen.getByText("Why this session").closest("details")!;
     expect(why).toHaveTextContent(
-      "This is a lighter week, with fewer sets and easier targets, so the fatigue of recent weeks can clear."
+      "This is a lighter week, with half the sets at the same weights, so the fatigue of recent weeks can clear."
     );
     expect(why).not.toHaveTextContent(/built for/);
   });

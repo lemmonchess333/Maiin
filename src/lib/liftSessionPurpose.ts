@@ -32,8 +32,12 @@
  *  - The hold is `isProgressionHeld`, called exactly as session completion
  *    calls it, so the sentence appears in the weeks progression is held.
  */
-import { generateWeekPrescription } from "@/features/program/weekPrescription";
+import {
+  generateWeekPrescription,
+  lighterWeeksScheduled,
+} from "@/features/program/weekPrescription";
 import type {
+  Experience,
   PrimaryGoal,
   ProgramState,
   WorkoutDay,
@@ -47,7 +51,7 @@ import {
 export type LiftPurposeProgramme = Partial<
   Pick<
     ProgramState,
-    "weekNumber" | "currentPhase" | "primaryGoal" | "trainingBlock"
+    "weekNumber" | "currentPhase" | "primaryGoal" | "trainingBlock" | "workouts"
   >
 >;
 
@@ -79,7 +83,7 @@ function buildWeeks(): number {
 }
 
 export const LIGHTER_WEEK =
-  "This is a lighter week, with fewer sets and easier targets, so the fatigue of recent weeks can clear.";
+  "This is a lighter week, with half the sets at the same weights, so the fatigue of recent weeks can clear.";
 
 export const LAST_FULL_WEEK =
   "This is the last full week before a lighter one, planned for next week.";
@@ -91,11 +95,15 @@ export const HOLD = `Your weights hold for the first ${count(EASING_HOLD_WEEKS)}
 /**
  * @param date the day's local YYYY-MM-DD — the date the session falls on
  *   where the surface has one, today on Train's split-ordered lift tab.
+ * @param experience the person's level, which with the plan's day count
+ *   decides whether the calendar brings lighter weeks at all
+ *   (`lighterWeeksScheduled`).
  */
 export function liftSessionPurpose(
   programme: LiftPurposeProgramme | null | undefined,
   day: Pick<WorkoutDay, "isCustom"> | null | undefined,
-  date: string
+  date: string,
+  experience?: Experience
 ): string | null {
   const week = programme?.weekNumber;
   if (!programme || !day || week === undefined) return null;
@@ -116,10 +124,12 @@ export function liftSessionPurpose(
           : programme.primaryGoal) ?? "general";
       sentences.push(FOCUS_PURPOSE[focus] ?? FOCUS_PURPOSE.general);
     }
-    if (generateWeekPrescription(week + 1).deload) {
-      sentences.push(LAST_FULL_WEEK);
-    } else if (!generateWeekPrescription(week).deload) {
-      sentences.push(CYCLE);
+    if (lighterWeeksScheduled(experience, programme.workouts?.length ?? 0)) {
+      if (generateWeekPrescription(week + 1).deload) {
+        sentences.push(LAST_FULL_WEEK);
+      } else if (!generateWeekPrescription(week).deload) {
+        sentences.push(CYCLE);
+      }
     }
   }
   if (held) sentences.push(HOLD);

@@ -9,7 +9,10 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import { generateInstanceId, loweringOf } from "./programTypes";
-import { generateWeekPrescription } from "./weekPrescription";
+import {
+  generateWeekPrescription,
+  lighterWeeksScheduled,
+} from "./weekPrescription";
 import {
   pickExercise,
   pickAccessory,
@@ -2427,88 +2430,24 @@ function withRecordedReps(
 ================================ */
 
 /**
- * Deload rep floor for the post-novice recipe — a 5-rep strength main drops
- * to 3, not to 1. Shared with the CF mirror.
+ * A lighter week (Lift4 (9)): one recipe for everyone, half the working
+ * sets, rounded up, at the same weights and reps. It halves the plan's own
+ * sets (`baseSets`, stamped here on a plan that predates it), so it can't
+ * compound, and the next week's reset puts them back. A lighter week's
+ * sessions can move a weight up, never down (`applySessionProgression`).
  */
-const DELOAD_REPS_FLOOR = 3;
-
-/**
- * Backlog #8 (training-book backlog; H4 resolving M4): the deload recipe is
- * chosen by TRAINING AGE. Tropos's sets−1 + load−15% is Helms's *novice*
- * answer, and it was being applied to everyone.
- *
- * - Beginner (and any caller that doesn't know): unchanged — one set fewer
- *   (floor 2) and working weight ×0.85 on the 2.5 kg grid. Cutting load is
- *   what a novice needs, because a novice's stall is usually the load.
- * - Intermediate / advanced: roughly half the volume at the SAME load —
- *   one set fewer and two reps off the target (floor 3), weight untouched
- *   (Helms's worked example: 3×10×200 → 2×8×200). Past the novice phase
- *   the fatigue comes from accumulated volume, not from the top-end load,
- *   and dropping the bar weight costs the skill exposure that keeps a
- *   heavy lift sharp.
- *
- * Presentation policy: INVISIBLE — the step-back week simply looks different.
- * The one visible surface is #4's step-back cue, which is recipe-agnostic.
- */
-export function applyDeload(
-  workouts: WorkoutDay[],
-  experience?: Experience
-): WorkoutDay[] {
-  const holdLoad = experience === "intermediate" || experience === "advanced";
+export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
-      const sets = Math.max(2, ex.sets - 1);
-      if (holdLoad) {
-        return {
-          ...ex,
-          sets,
-          reps:
-            ex.repUnit === "seconds"
-              ? Math.max(MIN_HOLD_SECONDS, ex.reps - HOLD_STEP_SECONDS)
-              : Math.max(DELOAD_REPS_FLOOR, ex.reps - 2),
-        };
-      }
-      return {
-        ...ex,
-        sets,
-        // 0 weight (bodyweight or uncalibrated): no weight to deload
-        // — leave at 0. Sets reduction above is the deload signal.
-        // Weighted: round to 2.5kg increments (standard plate size).
-        weight:
-          ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
-      };
+      const base = ex.baseSets ?? ex.sets;
+      return { ...ex, baseSets: base, sets: Math.max(1, Math.ceil(base / 2)) };
     }),
   }));
 }
 
 export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
   return workouts.every((day) => day.completed || day.skipped);
-}
-
-/**
- * Entering an automatic deload week: re-anchor sets to baseSets and stash
- * each loaded exercise's weight and rep target so meso exit can restore
- * them. applyDeload then cuts from the ANCHORED values, so its cut can
- * never compound across mesocycles (the manual deload command guards the
- * same hazard with its undo snapshot — the auto path had no guard at all).
- *
- * Both stashes are unconditional w.r.t. the deload recipe (backlog #8):
- * only the post-novice recipe cuts reps and only the novice recipe cuts
- * load, but a user who changes experience level mid-mesocycle must still
- * get back whichever one was cut.
- */
-function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
-  return workouts.map((day) => ({
-    ...day,
-    exercises: day.exercises.map((ex) => {
-      const base = ex.baseSets ?? ex.sets;
-      const out: ProgramExercise = { ...ex, baseSets: base, sets: base };
-      if (out.weight > 0) out.preDeloadWeight = out.weight;
-      out.preDeloadReps = out.reps;
-      return out;
-    }),
-  }));
 }
 
 /**
@@ -2601,6 +2540,16 @@ export function advanceWeek(
     completed: false,
     skipped: false,
   }));
+  // Miss counts start again after a lighter week (Lift4 (7)): a miss from
+  // before it says nothing about the lifter coming out of it.
+  if (state.currentPhase === "deload") {
+    workouts = workouts.map((day) => ({
+      ...day,
+      exercises: day.exercises.map((ex) =>
+        ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex
+      ),
+    }));
+  }
 
   /* 14b — the evidence-triggered tier, read from the week just TRAINED.
      The calendar deload (`week % 4 === 0`) is a starting point, not a
@@ -2647,14 +2596,18 @@ export function advanceWeek(
      nobody gets stuck. (`weekWasTrained` is computed at the top of
      this function, where it also decides whether the week number and the
      history archive move.) */
+  /* Lift4 (9): the calendar's lighter week is for intermediates and up on
+     three or more lift days (`lighterWeeksScheduled`), and lighter weeks
+     come one at a time: never straight after one, a manual one included. */
   const applyDeloadThisWeek =
-    (prescription.deload || escalateWholeBody) && weekWasTrained;
+    weekWasTrained &&
+    state.currentPhase !== "deload" &&
+    ((prescription.deload &&
+      lighterWeeksScheduled(experience, state.workouts.length)) ||
+      escalateWholeBody);
 
   if (applyDeloadThisWeek) {
-    // The escalated case takes the SAME path deliberately: `prepareForDeload`
-    // is what anchors sets and stashes load/reps so the cut cannot compound
-    // across cycles, which is the D4 hazard this arc already paid for once.
-    workouts = applyDeload(prepareForDeload(workouts), experience);
+    workouts = applyDeload(workouts);
   } else {
     workouts = resetToBaseSets(workouts);
     // Muscle-local recovery sessions land last, on the reset week — halve

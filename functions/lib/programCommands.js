@@ -77,7 +77,6 @@ const {
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
   applyDeloadToWorkouts,
-  prepareForDeloadWorkouts,
 } = require("./deloadEngine");
 
 /* Extracted to lib/timedExerciseIds.js. It was a private four-id set here
@@ -1631,13 +1630,12 @@ function overrideRunDay(state, command) {
 // PROGRAM-DELOAD-01 — user-invoked deload week (apply / revert).
 //
 // applyDeloadWeek eases the WHOLE active week via the mirrored transform
-// (`deloadEngine.js`: one set fewer, floor 2; a beginner's weight ×0.85,
-// everyone else's target two reps lower at the same weight), sets
-// currentPhase "deload" and clears acute fatigue — exactly what the
-// automatic week-4 path (client advanceWeek) does. Semantic idempotency: a week already in
-// "deload" phase rejects, so a second Apply (new commandId) can never
-// compound to ×0.85². The pre-deload state is stashed in
-// `deloadSnapshot` for the undo path.
+// (`deloadEngine.js`: half the working sets, rounded up, at the same
+// weights and reps), sets currentPhase "deload" and clears acute fatigue —
+// exactly what the automatic lighter week (client advanceWeek) does.
+// Semantic idempotency: a week already in "deload" phase rejects, so a
+// second Apply (new commandId) can never halve the sets twice. The
+// pre-deload state is stashed in `deloadSnapshot` for the undo path.
 //
 // revertDeloadWeek restores the stash — valid only while the week cursor
 // still matches the snapshot's, so a stale snapshot from a previous week
@@ -1713,19 +1711,9 @@ function applyDeloadWeekCommand(state, profile, command, now) {
       appliedAt: now,
     },
     runDays: applyDeloadRunSwaps(state, command.runSwaps),
-    // Backlog #8: the recipe follows training age. An absent/unknown
-    // experience falls back to the novice recipe — the pre-#8 behaviour.
-    //
-    // `prepareForDeloadWorkouts` FIRST, exactly as the client's automatic
-    // week-4 path does (`applyDeload(prepareForDeload(workouts))`). Without
-    // it this command cut load/reps with nothing to restore from, so meso
-    // exit never undid the cut and the user stayed permanently lighter. The
-    // deloadSnapshot below does not cover that: its weekNumber guard makes it
-    // inert once the week rolls, which is precisely when the restore is due.
-    workouts: applyDeloadToWorkouts(
-      prepareForDeloadWorkouts(state.workouts),
-      profile && profile.experience
-    ),
+    // One recipe for everyone (Lift4 (9)), from the plan's own sets, so
+    // the next week's reset restores it whatever the snapshot's state.
+    workouts: applyDeloadToWorkouts(state.workouts),
     currentPhase: "deload",
     fatigueScore: 0,
   };
