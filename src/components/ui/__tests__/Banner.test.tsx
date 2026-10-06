@@ -139,7 +139,7 @@ describe("Banner — dismiss affordance", () => {
       const el = screen.getByRole(variant === "warning" ? "alert" : "status");
       expect(el.className).toMatch(/\brounded-xl\b/);
       expect(el.className).toMatch(/\bp-3\b/);
-      expect(el.className).toMatch(/\bgap-3\b/);
+      expect(el.className).toMatch(/\bgap-x-3\b/);
       unmount();
     }
   });
