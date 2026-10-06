@@ -544,7 +544,11 @@ describe("DS ratchets — surface-level drift", () => {
 
   it("Banner's base geometry is the compact-card pairing (positive pin)", () => {
     const src = readFileSync(resolve(repoRoot, BANNER_PRIMITIVE), "utf8");
-    expect(src).toMatch(/"relative flex gap-3 rounded-xl p-3 text-xs"/);
+    // A grid since the large-text pass: the action can take the whole
+    // banner when the icon gives way. Same gap, padding and radius.
+    expect(src).toMatch(
+      /"@container relative grid gap-x-3 rounded-xl p-3 text-xs"/
+    );
   });
 
   /* Stack rhythm. Three steps: space-y-2 within a group, space-y-3 for a

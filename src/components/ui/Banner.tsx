@@ -133,7 +133,16 @@ export function Banner({
     <div
       role={style.role}
       className={cn(
-        "relative flex gap-3 rounded-xl p-3 text-xs",
+        // The icon, the text and the close button share a row, with the
+        // action under the text. Under 16em of banner (the largest text on
+        // a small phone) the icon gives way and the action takes the
+        // banner's whole width: beside the icon and the close button,
+        // "I've verified" and "Open programme" ran off the screen.
+        // Wide-first, so iOS 15 keeps the designed layout.
+        "@container relative grid gap-x-3 rounded-xl p-3 text-xs",
+        onDismiss
+          ? "grid-cols-[auto_minmax(0,1fr)_auto]"
+          : "grid-cols-[auto_minmax(0,1fr)]",
         // Border at higher alpha so the surface reads as a contained
         // element on white. The token path carries its own border via
         // surfaceClass (border-running/19); the inline path keeps the
@@ -151,20 +160,27 @@ export function Banner({
     >
       <span
         aria-hidden="true"
-        className={cn("flex-shrink-0 mt-0.5", style.accentClass)}
+        className={cn(
+          "col-start-1 row-start-1 mt-0.5 @max-[16em]:hidden",
+          style.accentClass
+        )}
         style={style.accent ? { color: style.accent } : undefined}
       >
         {icon ?? <IconComponent className="size-4" />}
       </span>
-      <div className="flex-1 min-w-0 space-y-0.5">
+      <div className="col-start-2 row-start-1 min-w-0 space-y-0.5 @max-[16em]:col-start-1 @max-[16em]:col-end-3">
         {title ? (
           <p className="font-semibold text-foreground">{title}</p>
         ) : null}
         {description ? (
           <div className="text-muted-foreground">{description}</div>
         ) : null}
-        {action ? <div className="pt-1">{action}</div> : null}
       </div>
+      {action ? (
+        <div className="col-start-2 row-start-2 min-w-0 mt-0.5 pt-1 @max-[16em]:col-span-full">
+          {action}
+        </div>
+      ) : null}
       {onDismiss ? (
         <button
           type="button"
@@ -172,7 +188,7 @@ export function Banner({
           aria-label={dismissLabel ?? "Dismiss"}
           // Visual stays a quiet 24px glyph; the pseudo-element extends the
           // hit area to the 44px floor without growing the banner.
-          className="flex-shrink-0 -m-1 p-1 relative before:absolute before:-inset-2.5 before:content-[''] rounded-md text-muted-foreground hover:text-foreground active:scale-95"
+          className="col-start-3 row-start-1 row-end-3 -m-1 p-1 relative before:absolute before:-inset-2.5 before:content-[''] rounded-md text-muted-foreground hover:text-foreground active:scale-95 @max-[16em]:row-end-2 @max-[16em]:self-start"
         >
           <X className="size-4" />
         </button>
