@@ -13,6 +13,7 @@ import {
 } from "./programEngine";
 import { readSessionSets, recordedReps } from "./sessionSets";
 import { keptSwap, type SessionSwap } from "./sessionSwap";
+import { loadsTheLegs } from "./easierToday";
 import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
 
 /** The session owns these facts even if the plan changes while it is open. */
@@ -31,6 +32,9 @@ export interface SessionProgression {
   prescription: SessionPrescription;
   setLogs: LoggedSet[][];
   sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
+  /** Lift4 (14): a long or hard run fell in the 24 hours before the
+   *  session, so a leg miss counts half (Lift4 (7)). */
+  afterHardRun?: boolean;
 }
 
 export function withoutSessionProgression(
@@ -116,7 +120,14 @@ export function applySessionProgression(
 
               let next: ProgramExercise;
               if (!held && settings.autoProgression) {
-                next = applySessionSets(start, read, settings.smallPlates);
+                // A leg miss within a day after a long or hard run counts
+                // half (Lift4 (7)): the run explains some of it.
+                next = applySessionSets(
+                  start,
+                  read,
+                  settings.smallPlates,
+                  session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1
+                );
                 // A late/offline save belongs to the session's original local date.
                 next.performanceHistory = next.performanceHistory?.map(
                   (record, i, all) =>

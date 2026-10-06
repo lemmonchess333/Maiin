@@ -142,6 +142,10 @@ export interface CompletedSessionData {
    *  Home's "today" burn all read `date`). Older drafts omit it → finish
    *  time, the pre-Lift3 behaviour. */
   startedAt?: number;
+  /** Lift4 (14): a long or hard run finished in the 24 hours before the
+   *  session started (`useHardRunBefore`). Recorded on the workout, and a
+   *  leg miss counts half (Lift4 (7)). */
+  afterHardRun?: boolean;
 }
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { clampPlanWeek, type RaceTiming } from "./runPlanTiming";
@@ -1455,6 +1459,7 @@ export function useProgram() {
                     prescription: sessionData.prescription,
                     setLogs: sessionData.setLogs,
                     sessionVariant: sessionData.sessionVariant,
+                    ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
                   },
                 }
               : {}),
@@ -1502,6 +1507,7 @@ export function useProgram() {
         notes: `${sessionData.prescription?.dayName ?? day.dayName} — Programme Week ${sessionData.programmeContext?.weekNumber ?? programState.weekNumber}`,
         extra: {
           sessionVariant: sessionData.sessionVariant,
+          ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
           // D2: session-level provenance for any per-set RPE. Helms p139
           // keeps novices on %1RM rather than RPE for their first month,
           // and p73 claims accuracy only for lifters who are advanced AND

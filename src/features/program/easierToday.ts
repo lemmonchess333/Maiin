@@ -141,15 +141,21 @@ export function easierTodayRecommendation(
 
 // ── Signal derivation helpers (pure — Program.tsx supplies the data) ──
 
-/** A day "loads the lower body" when any exercise is knee- or
- *  hip-dominant. (The saved-doc `/leg|lower/` category test elsewhere
- *  never matched these values — key off movementCategory directly.) */
-export function isLowerBodyDay(day: Pick<WorkoutDay, "exercises">): boolean {
-  return day.exercises.some(
-    (ex) =>
-      ex.movementCategory === "knee_dominant" ||
-      ex.movementCategory === "hip_dominant"
+/** Whether a lift loads the legs: knee- or hip-dominant. (The saved-doc
+ *  `/leg|lower/` category test elsewhere never matched these values — key
+ *  off movementCategory directly.) */
+export function loadsTheLegs(
+  ex: Pick<ProgramExercise, "movementCategory">
+): boolean {
+  return (
+    ex.movementCategory === "knee_dominant" ||
+    ex.movementCategory === "hip_dominant"
   );
+}
+
+/** A day "loads the lower body" when any of its lifts does. */
+export function isLowerBodyDay(day: Pick<WorkoutDay, "exercises">): boolean {
+  return day.exercises.some(loadsTheLegs);
 }
 
 /* ================================

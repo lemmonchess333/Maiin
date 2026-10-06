@@ -492,6 +492,14 @@ lift stays as it was, since the swap's sets say nothing about it
 carries no `swappedFrom`. Deleting the session puts the planned lift
 back, and a correction replays the swap.
 
+STATUS 2026-10-06 (Lift4 (7) and (14), build step 5, seventh part): each
+saved session records whether a long or hard run (`isHardRun`) finished
+in the 24 hours before it started (`afterHardRun` on the workout and its
+stored progression, from `useHardRunBefore` on Train). A miss on a lift
+that loads the legs (`loadsTheLegs`) in such a session counts half, so it
+takes two of them to count as one miss; a correction replays the same
+count. Everything else about misses is unchanged.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

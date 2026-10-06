@@ -1991,7 +1991,10 @@ export function applyProgression(
   actualReps: number,
   actualWeight: number,
   smallPlates: boolean,
-  actualRpe?: number
+  actualRpe?: number,
+  /** How much a miss here counts: half for a leg lift within a day after a
+   *  long or hard run (Lift4 (7)), one otherwise. */
+  missCounts = 1
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
   const record = {
@@ -2177,7 +2180,15 @@ export function applyProgression(
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(updated, exercise, anchor, isBodyweight, isTimed, grid);
+      countMiss(
+        updated,
+        exercise,
+        anchor,
+        isBodyweight,
+        isTimed,
+        grid,
+        missCounts
+      );
     }
   } else {
     if (completed) {
@@ -2209,7 +2220,15 @@ export function applyProgression(
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(updated, exercise, anchor, isBodyweight, isTimed, grid);
+      countMiss(
+        updated,
+        exercise,
+        anchor,
+        isBodyweight,
+        isTimed,
+        grid,
+        missCounts
+      );
     }
   }
 
@@ -2237,9 +2256,11 @@ function countMiss(
   anchor: number,
   isBodyweight: boolean,
   isTimed: boolean,
-  grid: LoadGrid
+  grid: LoadGrid,
+  missCounts: number
 ): void {
-  updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+  updated.consecutiveFailures =
+    (exercise.consecutiveFailures || 0) + missCounts;
   if (updated.consecutiveFailures < MISSES_BEFORE_LOWERING) return;
   if (isBodyweight) {
     updated.reps = isTimed
@@ -2292,7 +2313,9 @@ function countMiss(
 export function applySessionSets(
   exercise: ProgramExercise,
   read: SessionRead,
-  smallPlates: boolean
+  smallPlates: boolean,
+  /** How much a miss counts (`applyProgression`). */
+  missCounts = 1
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2309,7 +2332,8 @@ export function applySessionSets(
         weakest,
         read.weight,
         smallPlates,
-        hardestEffort(read)
+        hardestEffort(read),
+        missCounts
       ),
       reps
     );

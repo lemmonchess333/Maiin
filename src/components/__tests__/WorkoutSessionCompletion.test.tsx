@@ -113,10 +113,12 @@ const writer = (queued?: Promise<"synced" | "failed">) =>
 function openSession(
   onCompleteDay = writer(),
   onClose = vi.fn(),
-  exercise: Partial<ProgramExercise> = {}
+  exercise: Partial<ProgramExercise> = {},
+  extra: Partial<ComponentProps<typeof WorkoutSession>> = {}
 ) {
   render(
     <WorkoutSession
+      {...extra}
       day={{
         dayName: "Test lift",
         dayType: "upper",
@@ -885,6 +887,39 @@ describe("completed-set corrections", () => {
       )
     ).toEqual([8, 8, 6]);
     expect(screen.queryByRole("button", { name: "Edit workout" })).toBeNull();
+  });
+});
+
+describe("WorkoutSession — the record of a hard run before it (Lift4 (14))", () => {
+  async function finished(hardRunBefore?: (startedAt: number) => boolean) {
+    const complete = writer();
+    openSession(complete, vi.fn(), {}, hardRunBefore ? { hardRunBefore } : {});
+    for (let i = 0; i < 3; i++)
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    return complete.mock.calls[0][1];
+  }
+
+  it("carries a long or hard run in the day before the start to the save", async () => {
+    const asked: number[] = [];
+    const data = await finished((startedAt) => {
+      asked.push(startedAt);
+      return true;
+    });
+    expect(data.afterHardRun).toBe(true);
+    // Asked about the session's own start.
+    expect(asked[0]).toBe(data.startedAt);
+  });
+
+  it("records nothing without one", async () => {
+    expect((await finished(() => false)).afterHardRun).toBeUndefined();
+    cleanup();
+    expect((await finished()).afterHardRun).toBeUndefined();
   });
 });
 

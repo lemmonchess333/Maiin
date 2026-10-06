@@ -241,6 +241,9 @@ interface Props {
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
   firstWorkout?: boolean;
+  /** Whether a long or hard run finished in the 24 hours before a start
+   *  (`useHardRunBefore`); the finish records it. Train passes it. */
+  hardRunBefore?: (startedAt: number) => boolean;
 }
 
 export default function WorkoutSession({
@@ -257,6 +260,7 @@ export default function WorkoutSession({
   onCompleteDay,
   onClose,
   firstWorkout = false,
+  hardRunBefore,
 }: Props) {
   const { user, profile } = useAuth();
   const [initialDay] = useState(incomingDay);
@@ -1340,6 +1344,7 @@ export default function WorkoutSession({
         startedAt: originalStartedAt,
         prescription: finishing,
         programmeContext: sessionProgrammeContext,
+        ...(hardRunBefore?.(originalStartedAt) ? { afterHardRun: true } : {}),
         // These were written to the resume draft and dropped on Finish, so
         // they survived closing a session and were lost by completing one.
         // The draft is deleted the moment the workout commits, so Finish was

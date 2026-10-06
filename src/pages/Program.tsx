@@ -59,7 +59,10 @@ import {
   summarizeEasier,
 } from "@/features/program/easierToday";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
+import {
+  useEasierTodayRecommendation,
+  useHardRunBefore,
+} from "@/features/program/useEasierTodayRecommendation";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   CalendarRange,
@@ -573,6 +576,7 @@ function ProgramInner() {
     return nextUpIndex(programState);
   }, [programState, viewingHistoryIndex]);
 
+  const hardRunBefore = useHardRunBefore();
   const easierRecommendation = useEasierTodayRecommendation(
     programState?.workouts[expressChooserDay ?? todayIndex]
   );
@@ -1847,6 +1851,7 @@ function ProgramInner() {
                   : buildExpressSession(storedDay, sessionVariant, restContext);
           return (
             <WorkoutSession
+              hardRunBefore={hardRunBefore}
               deloadWeek={programState.currentPhase === "deload"}
               sessionMinutes={programState.sessionMinutes}
               day={
