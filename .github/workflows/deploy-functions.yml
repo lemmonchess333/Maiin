@@ -63,6 +63,28 @@ jobs:
       - name: Install function dependencies
         run: npm ci --prefix functions
 
+      # The functions' plain settings (moderators, the alert inbox, the email
+      # sender, the sandbox purchase list…) come from repository variables of
+      # the same names: Settings → Secrets and variables → Actions → Variables.
+      # A deploy with a functions/.env replaces every function's plain
+      # variables with the file's contents, so the script writes none while
+      # no variable is set, and once one is, GitHub holds them all. Its list
+      # is every plain variable functions/ reads (write-functions-env.test.ts).
+      - name: Write functions/.env from repository variables
+        env:
+          ADMIN_UIDS: ${{ vars.ADMIN_UIDS }}
+          MODERATION_ALERT_EMAIL: ${{ vars.MODERATION_ALERT_EMAIL }}
+          RESEND_FROM: ${{ vars.RESEND_FROM }}
+          PUBLIC_APP_BASE_URL: ${{ vars.PUBLIC_APP_BASE_URL }}
+          REVENUECAT_SANDBOX_UIDS: ${{ vars.REVENUECAT_SANDBOX_UIDS }}
+          ALLOW_SANDBOX_IAP: ${{ vars.ALLOW_SANDBOX_IAP }}
+          TROPOS_DEPLOY_ENV: ${{ vars.TROPOS_DEPLOY_ENV }}
+          STRIPE_PRICE_ID_MONTHLY: ${{ vars.STRIPE_PRICE_ID_MONTHLY }}
+          STRIPE_PRICE_ID_YEARLY: ${{ vars.STRIPE_PRICE_ID_YEARLY }}
+          STRIPE_PRICE_ID_LIFETIME: ${{ vars.STRIPE_PRICE_ID_LIFETIME }}
+          STRIPE_RETURN_URL_ORIGINS: ${{ vars.STRIPE_RETURN_URL_ORIGINS }}
+        run: node scripts/write-functions-env.mjs
+
       # Inject the commit SHA + timestamp into functions/index.js
       # right before deploy. firebase-tools deduplicates uploads
       # against the deployed bundle hash; if no .js files changed in

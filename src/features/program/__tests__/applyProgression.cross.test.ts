@@ -64,7 +64,7 @@ function strip(e: ProgramExercise): ProgramExercise {
 describe("applyProgression CF ↔ client parity", () => {
   // The matrix is a full cross product and has grown an axis per backlog item
   // (repRangeMax, isAccessory, movementCategory + weight, repUnit) — it now
-  // runs ~124k comparisons and needs more than the 5s default. Raising the
+  // runs ~207k comparisons and needs more than the 5s default. Raising the
   // bound rather than thinning the axes is deliberate: breadth IS this test's
   // job, and every axis was added because a rule started reading that field.
   it(
@@ -79,7 +79,10 @@ describe("applyProgression CF ↔ client parity", () => {
       const failures = [0, 2];
       const goals: Goal[] = ["lean bulk", "cut"];
       const actualRepsSet = [6, 8, 10, 12]; // 12 = range ceiling for the repRangeMax cases
-      const actualWeightSet = [95, 100, 105];
+      // The plan follows the load lifted (2026-10-05): 0 is a set saved with
+      // no load (a hold), 20 is lighter than every prescription here, and
+      // 95-105 straddle 100 and sit far above 30.
+      const actualWeightSet = [0, 20, 95, 100, 105];
       const micros = [true, false];
       const rpes: Array<number | undefined> = [undefined, 8, 9.5];
       // P1 range-aware double progression: undefined = legacy behaviour,

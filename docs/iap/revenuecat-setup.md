@@ -164,37 +164,36 @@ unaffected.
 reviewer buys in the sandbox. Without their uid on the list the purchase
 succeeds and Pro never unlocks, which reads to them as a broken purchase.
 
-It is a plain env var, not a secret, set the way `ADMIN_UIDS` is
-(`functions/adminAuth.js`). Find each uid in Firebase Console →
-Authentication → Users, then add the line to `functions/.env` (gitignored,
-so it stays on your machine) and deploy the two functions from an up-to-date
-checkout of `main`:
+It is a plain setting, not a secret, set the way `ADMIN_UIDS` is
+(`functions/adminAuth.js`): as a repository variable that the functions
+deploy writes into `functions/.env` (`scripts/write-functions-env.mjs`).
+Find each uid in Firebase Console → Authentication → Users, then GitHub →
+the repo → Settings → Secrets and variables → Actions → **Variables** →
+New repository variable:
 
-```bash
-# functions/.env
-REVENUECAT_SANDBOX_UIDS=<your uid>,<App Review demo uid>
+```text
+REVENUECAT_SANDBOX_UIDS = <your uid>,<App Review demo uid>
 ```
 
-```bash
-firebase deploy --only functions:revenueCatWebhook,functions:syncRevenueCatEntitlement \
-  --project adaptive-fitness-af8bb
-```
+and run Actions → **Deploy production** → Run workflow, which always
+deploys the functions. Both functions read it, so both get it with every
+other function. Two things about how firebase-tools treats plain env vars
+(read from its deploy code, `inferDetailsFromExisting` in firebase-tools
+15.30.2):
 
-Both functions read it, so both need it. Two things about how firebase-tools
-treats plain env vars (read from its deploy code, `inferDetailsFromExisting`
-in firebase-tools 15.30.2):
-
-- **CI deploys carry no `functions/.env`.** A deploy without one keeps the
-  variables each function already has, so the list survives later CI
-  deploys. A function that a CI deploy creates for the first time gets none,
-  so set the list after the first deploy that creates these two functions.
+- **A deploy without a `functions/.env` keeps the variables each function
+  already has.** The deploy writes the file only once at least one of the
+  settings `write-functions-env.mjs` lists is set as a repository
+  variable. A function a deploy creates for the first time, with no file,
+  gets none.
 - **A deploy with a `functions/.env` replaces the deployed functions'
-  variables with the file's contents.** Keep every plain variable those
-  functions need in the file.
+  variables with the file's contents.** So once any of those settings is
+  on GitHub, all of them belong there: one set some other way is unset by
+  the next deploy, and the step's log names the settings it left out.
 
-Adding or removing a uid means deploying the two functions again. Confirm
-the value in the Google Cloud console (Cloud Functions → the function →
-Variables) before relying on it.
+Adding or removing a uid means editing the variable and running Deploy
+production again. Confirm the value in the Google Cloud console (Cloud
+Functions → the function → Variables) before relying on it.
 
 ---
 

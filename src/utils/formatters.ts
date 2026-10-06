@@ -84,6 +84,20 @@ export function formatWeekdayDayMonth(d: Date): string {
 }
 
 /**
+ * "07:10", "13:13" — a clock time of day: 24-hour, the hour zero-padded,
+ * in the device's time zone. The app's one time format, as day-first is
+ * its one date order. Built from the hours and minutes, not by Intl,
+ * whose time follows a locale's convention, so the same moment would
+ * read two ways on two phones. Not for an elapsed time ("23:41"): that
+ * is formatClock. timeTreatment.test.ts keeps this the only one.
+ */
+export function formatTimeOfDay(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+/**
  * The spaces in a short phrase made non-breaking, so a line that wraps
  * keeps "180 g", "30 Aug" or "target 2,350" whole. A lone "g" under
  * "target 180" reads as a second, unexplained figure.

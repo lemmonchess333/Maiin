@@ -44,7 +44,7 @@ interface FoodRowProps {
   onEdit?: () => void;
   /**
    * Optional metadata caption under the food name (the timeline uses
-   * it for "Breakfast · 8:12 AM"). Pure presentation — the swipe/tap
+   * it for "Breakfast · 08:12"). Pure presentation — the swipe/tap
    * machinery is untouched, the row just grows a second line.
    */
   subLabel?: ReactNode;

@@ -93,7 +93,7 @@ function liftRunDaySets(
   return { liftDays, runDays };
 }
 
-/** "Log before 7am for 5 days" — cumulative (no "in a row"), so distinct days. */
+/** "Log before 07:00 for 5 days" — cumulative (no "in a row"), so distinct days. */
 export const EARLY_BIRD_DAYS = 5;
 /** "Earn 15 badges" — the completionist capstone. */
 export const ULTIMATE_ATHLETE_COUNT = 15;

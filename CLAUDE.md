@@ -292,6 +292,12 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   patterns ("MMM d") are the same bug in disguise — both are banned by
   `src/utils/__tests__/dateTreatment.test.ts`. Chart-axis "22/8" numerals are
   their own compact register and exempt.
+- **Times:** 24-hour "HH:mm" ("07:10", "13:13") via `formatTimeOfDay` in
+  `src/utils/formatters.ts`. A clock pattern written at the site (date-fns
+  "h:mm a", even "HH:mm"), an Intl time (`toLocaleTimeString`, an `hour`
+  option) and AM/PM in copy are banned by
+  `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
+  "5:18 /km") are not times of day.
 - **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
   (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
   the `${x}kg` template form). Two named exceptions: grams on the food
@@ -378,13 +384,13 @@ already made for this repo.
 
 ## CI/CD
 
-- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*`, `scripts/verify_*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
+- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*`, `scripts/verify_*`, `scripts/write-functions-env.mjs` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
 - **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 row in `docs/qa/pre-launch-backlog.md` has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
 - **deploy.yml:** Builds and deploys to GitHub Pages.
 - **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
-- **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold.
+- **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold. Without the `IOS_DIST_CERT_*` secrets it makes each run's certificate and profile from the App Store Connect API key (`scripts/ios/asc-signing.mjs`, revoking the previous run's), so the owner needs no Mac (`docs/ios-release.md`).
 - **Firebase project:** `adaptive-fitness-af8bb`
 
 ### Cloud Functions deploys and account deletion

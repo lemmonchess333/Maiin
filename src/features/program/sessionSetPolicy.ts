@@ -20,11 +20,10 @@ export function isSetEligibleForStrengthPr(
  * questions differ on both axes:
  *
  *   - a **drop set** is a legitimate PR candidate on its own reduced load,
- *     but it must never drive progression. `applyProgression` scores
- *     `completed = actualReps >= reps && actualWeight >= weight`, so a
- *     deliberately lighter final set reads as a MISS every session →
- *     `consecutiveFailures` climbs → a 5% load cut every third session,
- *     forever. Textbook technique, punished as failure.
+ *     but it must never drive progression. `applyProgression` moves the
+ *     plan to the load lifted, so a deliberately lighter final set would
+ *     drop the prescription to the drop set's load every session. Textbook
+ *     technique, punished.
  *   - a **timed hold** is excluded from rep-max PR buckets but progresses
  *     perfectly well — the engine has a dedicated +5s axis for it — so
  *     `repUnit` is a PR concern and has no business here.

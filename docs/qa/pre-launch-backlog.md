@@ -6,6 +6,41 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
+
+Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
+`deploy-functions.yml` and `scripts/write-functions-env.mjs`, and the
+full-screen layers (`WorkoutSession`, `SessionCompleteScreen`, Social's
+people search, `FoodCameraModal`).
+
+Unit tests pin the API client, the settings file and the padding; these
+need Apple, the Cloud console or a phone.
+
+- [ ] **The first TestFlight run signs from the API key.** With only the
+      five secrets `docs/ios-release.md` asks for, Deploy iOS to
+      TestFlight makes a certificate and a profile named
+      `Tropos CI <serial>`, passes the import step's checks, archives and
+      uploads. A second run deletes the first run's profile and revokes
+      its certificate (Apple Developer → Certificates shows one Apple
+      Distribution certificate from these runs), and the first build
+      stays installable in TestFlight.
+- [ ] **Function settings from GitHub.** After setting `ADMIN_UIDS` and
+      the rest as repository variables and running Deploy production,
+      the "Write functions/.env from repository variables" step names
+      them, and the Cloud console shows them on `listPendingReports`,
+      `createReport` and the two RevenueCat functions. `/admin/moderation`
+      opens for that uid on the web build with no `VITE_ADMIN_UIDS`
+      secret.
+- [ ] **The status bar on a phone.** On the first TestFlight build, the
+      workout session, its finish screen, Social's people search, the
+      food camera, the run screen (setup, countdown and the live map's
+      controls), the run summary and the Privacy Policy, Terms and
+      Support pages keep their first row clear of the clock and the
+      Dynamic Island, with no doubled gap above it. The shell sets
+      `ios.contentInset: "automatic"`, so whether its web view reports a
+      top inset is unverified; pages and these screens pad by the same
+      `--safe-top`, so a gap on one is a gap on all.
+
 ## Privacy and consent for App Review (2026-10-04)
 
 Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
@@ -103,8 +138,8 @@ Firestore with Resend mocked at `fetch`; whether an email actually lands, and
 how the sheets feel on a phone, need the real thing.
 
 - [ ] **Report alert reaches the inbox.** After the first Deploy production
-      run carrying this work, and with `functions/.env` set and
-      `createReport` deployed as §19 says: sign in as a second account,
+      run carrying this work, and with the moderation variables set on
+      GitHub and deployed as §19 says: sign in as a second account,
       report someone's comment with a note. Within a minute an email titled
       "New report: …" arrives at `MODERATION_ALERT_EMAIL`
       (`support@troposfit.com` when unset), carrying the reason, what was
@@ -1224,13 +1259,13 @@ sandbox Pro to nobody. Production purchases are unaffected.
 - [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
       test event returns 200. It did on 2026-09-30.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
-      Review's demo account uid, comma-separated. It is a plain env var,
-      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
-      **App Review's demo uid must be on it before submission**, or the
-      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
-      function already has but gives a newly created function nothing, so
-      set it after the first deploy creates these two functions and confirm
-      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
+      Review's demo account uid, comma-separated. It is a plain setting,
+      set the way `ADMIN_UIDS` is: a repository variable on GitHub, which
+      the functions deploy writes into `functions/.env`, then a Deploy
+      production run. **App Review's demo uid must be on it before
+      submission**, or the reviewer's test purchase will not unlock Pro.
+      Confirm it in the Cloud console. Steps:
+      `docs/iap/revenuecat-setup.md` Part C.
 - [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The

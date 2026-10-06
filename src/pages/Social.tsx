@@ -310,7 +310,7 @@ export default function Social() {
           close/reopen, same as the old tab switches); the overlay
           chrome only exists while open. */}
       {peopleOpen && (
-        <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto pt-[var(--safe-top)]">
           <div className="max-w-lg mx-auto px-4 pt-3 pb-8 space-y-4">
             <div className="flex items-center gap-2">
               <IconButton

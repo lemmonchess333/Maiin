@@ -4,7 +4,6 @@ import {
 } from "@/features/program/liftTimeBudget";
 import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
-import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -1381,13 +1380,6 @@ function ProgramInner() {
                             </p>
                           </button>
                         )}
-
-                      {sessionDayIndex === null && (
-                        <ProgramStallReview
-                          key={`${programState.weekNumber}:${idx}`}
-                          exercises={selectedWorkout.exercises}
-                        />
-                      )}
 
                       {/* The day's exercises, on screen rather than behind a tap.
                           The list IS the page: a card that states the session

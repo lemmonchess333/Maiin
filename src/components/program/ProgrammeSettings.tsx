@@ -35,7 +35,7 @@
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
  * ScheduleLayoutSheet — both views link to it.
  */
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -100,6 +100,7 @@ import type {
   Equipment,
   RaceDistance,
 } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -115,6 +116,12 @@ interface ProgrammeSettingsProps {
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   profile: UserProfile;
   programState: ProgramState | null;
+  /** `useProgram().readiness`: whether `programState` is the server's copy
+   *  yet. Save changes builds the new plan on it and commits against it,
+   *  and Reset rebuilds from it, so neither runs before "ready". While the
+   *  programme loads it is null or the cached copy, and a save built on
+   *  null starts from no programme and is refused as a conflict. */
+  readiness: ProgramReadiness;
   /** Live-saves the engine toggles (auto-progression / microloading). */
   updateSettings: (patch: Partial<ProgramSettings>) => Promise<unknown> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
@@ -414,6 +421,7 @@ export default function ProgrammeSettings({
   recentLayoff = "none",
   profile,
   programState,
+  readiness,
   updateSettings,
   regenerateProgram,
   refreshProfile,
@@ -424,6 +432,7 @@ export default function ProgrammeSettings({
   activeBlockFocus,
 }: ProgrammeSettingsProps) {
   const navigate = useNavigate();
+  const loadFailedId = useId();
   // ── Persisted values (also the dirty-check baseline) ──────────────
   const saved = useMemo(
     () => ({
@@ -585,7 +594,9 @@ export default function ProgrammeSettings({
    * re-offers the choice in the opposite direction, so no snapshot is kept.
    */
   async function applyRebuild(represcribe = false) {
-    if (saving) return;
+    // Not before the programme has loaded (`readiness`); the buttons wait
+    // too, and this holds for any other way in.
+    if (saving || readiness !== "ready") return;
     setConfirmRebuild(false);
     setSaving(true);
     try {
@@ -732,9 +743,35 @@ export default function ProgrammeSettings({
   }
 
   async function applyReset() {
+    // As applyRebuild: a reset made while the programme loads was built
+    // from no programme at all.
+    if (readiness !== "ready") return;
     setConfirmReset(false);
     await regenerateProgram();
     toast.success("Programme reset");
+  }
+
+  /* The commit buttons (Save changes, and the dialog's Save and Reset) wait
+     for the programme: the primitive's loading state while it loads, the
+     label staying the name under the spinner; unavailable if the load
+     failed, with one line saying so. Cancel never waits. */
+  const programReady = readiness === "ready";
+  const waitingForProgramme = readiness === "pending";
+  const loadFailed = readiness === "failed";
+  const loadFailedLine = (id: string, className: string) =>
+    loadFailed ? (
+      <p id={id} className={cn("text-xs text-muted-foreground", className)}>
+        Couldn't load your programme. Reopen this page to try again.
+      </p>
+    ) : null;
+  const dialogLoadFailedId = `${loadFailedId}-dialog`;
+  function commitWaits(label: string) {
+    return {
+      disabled: !programReady,
+      loading: waitingForProgramme,
+      "aria-label": waitingForProgramme ? label : undefined,
+      "aria-describedby": loadFailed ? dialogLoadFailedId : undefined,
+    };
   }
 
   /* ── Confirmation modal (rebuild on Lift plan, reset on the overview) ── */
@@ -813,16 +850,22 @@ export default function ProgrammeSettings({
                 </ul>
               </div>
             )}
+            {loadFailedLine(dialogLoadFailedId, "leading-relaxed")}
             {!confirmReset && focusChangedSameFrequency ? (
               /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
                  saves — neither outcome is the silent default. */
               <div className="space-y-2 pt-1">
-                <Button fullWidth onClick={() => void applyRebuild(true)}>
+                <Button
+                  fullWidth
+                  {...commitWaits("Save and update sessions")}
+                  onClick={() => void applyRebuild(true)}
+                >
                   Save and update sessions
                 </Button>
                 <Button
                   variant="secondary"
                   fullWidth
+                  {...commitWaits("Save, keep current sessions")}
                   onClick={() => void applyRebuild(false)}
                 >
                   Save, keep current sessions
@@ -853,6 +896,7 @@ export default function ProgrammeSettings({
                 <Button
                   variant={confirmReset ? "destructive" : "primary"}
                   className="flex-1"
+                  {...commitWaits(confirmReset ? "Reset" : "Save")}
                   onClick={
                     confirmReset ? applyReset : () => void applyRebuild(false)
                   }
@@ -1145,7 +1189,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Auto progression</p>
               <p className="text-xs text-muted-foreground">
-                Bumps next session's weight when you complete every set cleanly
+                Raises the weight or reps when you hit the target reps. Off,
+                your next session keeps the weight you lifted.
               </p>
             </div>
             <Toggle
@@ -1161,8 +1206,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Microloading</p>
               <p className="text-xs text-muted-foreground">
-                Add 1 kg every session you complete at the prescribed load,
-                instead of 2.5 kg only after a 2-rep overshoot
+                Add 1 kg every session you hit the target reps, instead of 2.5
+                kg only after a 2-rep overshoot.
               </p>
             </div>
             <Toggle
@@ -1187,19 +1232,26 @@ export default function ProgrammeSettings({
             count={changes.length}
             className="mb-2 text-center"
           />
-          <button
-            type="button"
+          {!saving && loadFailedLine(loadFailedId, "mb-2 text-center")}
+          <Button
+            fullWidth
             onClick={() => setConfirmRebuild(true)}
-            disabled={!dirty || saving}
+            disabled={!dirty || saving || !programReady}
+            loading={!saving && waitingForProgramme}
+            aria-label={
+              !saving && waitingForProgramme ? "Save changes" : undefined
+            }
+            aria-describedby={!saving && loadFailed ? loadFailedId : undefined}
             className={cn(
-              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || saving
-                ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-primary-strong text-primary-foreground"
+              // The bar's own shape and muted treatment, kept from before
+              // the primitive.
+              "rounded-2xl py-3.5 font-bold disabled:opacity-60",
+              (!dirty || saving || !programReady) &&
+                "bg-muted text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}
-          </button>
+          </Button>
         </div>
       )}
 

@@ -1186,7 +1186,10 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
   it("retains the same-week occupancy guard for undated legacy rows", () => {
     const s = weekState();
     delete s.runDays[1].date;
-    expectHttps(() => apply(move(4), s, { weekSchedule: SCHEDULE }), "failed-precondition");
+    expectHttps(
+      () => apply(move(4), s, { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
   });
 
   it("is a no-op when the run is already on that day", () => {
@@ -2370,7 +2373,9 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     current.workouts[0].completed = true;
     current.workouts[0].completedWorkoutId = "programme-session-1";
     const before = structuredClone(current);
-    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow("Correct it from History");
+    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow(
+      "Correct it from History"
+    );
     expect(current).toEqual(before);
   });
 
@@ -2520,6 +2525,57 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
       weight: 100,
       completed: true,
     });
+  });
+
+  // Owner, 2026-10-05: the plan follows the load lifted, and following the
+  // person's own load is not auto-progression. Same literals as the client's
+  // applySessionProgression cases in progressionUserLoad.test.ts.
+  it("autoProgression off: the plan takes the load lifted, with no step and no miss counted", () => {
+    const s = baseState();
+    s.settings = { autoProgression: false, microloading: true };
+    s.workouts[0].exercises[0].consecutiveFailures = 1;
+    const row = (actual) =>
+      apply(
+        logCmd({ actual: { ...actual, completed: true } }),
+        s
+      ).state.workouts[0].exercises.find((e) => e.instanceId === "inst-a");
+
+    const lighterMissed = row({ weight: 90, reps: 4 });
+    expect(lighterMissed.weight).toBe(90);
+    expect(lighterMissed.consecutiveFailures).toBe(1); // no failure accounting
+    expect(lighterMissed.performanceHistory).toBeUndefined(); // no history, as before
+
+    // A 4-rep overshoot would step the load with auto-progression on.
+    expect(row({ weight: 130, reps: 12 }).weight).toBe(130);
+    // No load logged: nothing to follow.
+    expect(row({ weight: 0, reps: 8 }).weight).toBe(100);
+  });
+
+  it("autoProgression off does not follow a bodyweight movement's load", () => {
+    const s = baseState();
+    s.settings = { autoProgression: false, microloading: true };
+    Object.assign(s.workouts[0].exercises[0], {
+      exerciseId: "weighted-chest-dip",
+      weight: 10,
+    });
+    const { state } = apply(
+      logCmd({ actual: { weight: 20, reps: 8, completed: true } }),
+      s
+    );
+    expect(state.workouts[0].exercises[0].weight).toBe(10);
+  });
+
+  it("an easing-block hold keeps the load even with autoProgression off", () => {
+    const s = easingState();
+    s.settings = { autoProgression: false, microloading: true };
+    const { state } = apply(
+      logCmd({
+        today: "2026-03-09",
+        actual: { weight: 90, reps: 8, completed: true },
+      }),
+      s
+    );
+    expect(state.workouts[0].exercises[0].weight).toBe(100);
   });
 
   it("only the target exercise changes; the other is untouched", () => {

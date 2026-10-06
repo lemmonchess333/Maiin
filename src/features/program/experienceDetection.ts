@@ -111,12 +111,13 @@ export const MIN_AGREEING_LIFTS = 2;
 export const MIN_FAILED_SESSIONS = 2;
 /**
  * A load dip of at least this fraction inside the window reads as a RESET
- * (the engine's 5% backoff, a calendar deload's 15% cut, or a manual
- * back-off). Rippetoe's novice-exhaustion protocol requires the stall to
- * SURVIVE resets: back off ~10%, rebuild, and only conclude the phase is
- * over after 2–3 such cycles fail to set new highs. A stall with no reset
- * in evidence is indistinguishable from "needs a deload" — the suggestion
- * must not fire on it.
+ * (a calendar deload's 15% cut, or a lighter load the person chose, which
+ * the plan follows; the engine's own response to three misses resets the
+ * rep target, not the load). Rippetoe's novice-exhaustion protocol requires
+ * the stall to SURVIVE resets: back off ~10%, rebuild, and only conclude the
+ * phase is over after 2–3 such cycles fail to set new highs. A stall with no
+ * reset in evidence is indistinguishable from "needs a deload" — the
+ * suggestion must not fire on it.
  */
 export const RESET_DIP_FRACTION = 0.04;
 /**

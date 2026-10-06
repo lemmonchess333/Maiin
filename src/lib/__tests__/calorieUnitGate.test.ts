@@ -26,6 +26,12 @@
  * ("4 cal/g protein"), or a validation threshold quoted in prose
  * ("5000 cal absolute"). Comments are stripped first, so a docstring can
  * still quote a past rendering.
+ *
+ * It also matches the unit handed to a component on its own, `unit:
+ * "kcal"`, which the first shape cannot see: the figure and its unit are
+ * two props. The run screens' stat grids wrote it that way and printed
+ * "1152 kcal" with no grouping, where the food surfaces group a figure for
+ * the reader's locale (`formatCalories`).
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
@@ -51,6 +57,8 @@ function stripComments(src: string): string {
 
 /** A value, then the unit as its own word. */
 const INLINE_UNIT = /(\}|\d)\s*(\{"\s"\})?\s*k?cal\b/;
+/** The unit as a component's prop or a field's, on its own. */
+const UNIT_PROP = /\bunit\s*[:=]\s*\{?\s*["'`]k?cal["'`]/;
 
 interface Hit {
   site: string;
@@ -66,7 +74,7 @@ function scan(): Hit[] {
     if (rel === "src/utils/formatNutrition.ts") continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
     src.split("\n").forEach((line, i) => {
-      if (INLINE_UNIT.test(line))
+      if (INLINE_UNIT.test(line) || UNIT_PROP.test(line))
         out.push({ site: `${rel}:${i + 1}`, line: line.trim() });
     });
   }
@@ -91,6 +99,13 @@ describe("the calorie unit comes from CALORIE_UNIT", () => {
     expect(INLINE_UNIT.test("calories: 540,")).toBe(false);
     expect(INLINE_UNIT.test("width: calc(100% - 4px)")).toBe(false);
     expect(INLINE_UNIT.test("aria-label={`Per-serving ${label}`}")).toBe(false);
+    // The unit as a prop, beside its figure rather than after it.
+    expect(
+      UNIT_PROP.test('{ label: "Calories", value: v, unit: "kcal" }')
+    ).toBe(true);
+    expect(UNIT_PROP.test('<Stat unit="cal" />')).toBe(true);
+    expect(UNIT_PROP.test("unit: CALORIE_UNIT,")).toBe(false);
+    expect(UNIT_PROP.test('unit: "kg",')).toBe(false);
   });
 
   it("no surface writes the calorie unit by hand", () => {
