@@ -196,12 +196,12 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
 - [ ] **A workout and a run at large text** (2026-10-06). The lift
       screen, the run screen before and during a run, Train's exercise
       menu and Food's manual entry were measured the same way. At the
-      largest accessibility size, log a set and run for a minute: - the set table drops its "Previous" column under the set's
-      figures ("Last 80 × 8"), and the done tick, set badge and run
-      controls stay their designed size; - a missing map says "Map unavailable" at the top right.
-
-      Known and accepted: at 2× on a 320px screen the "kg" and "Reps"
-      column headers run a little past their columns.
+      largest accessibility size, log a set and run for a minute. The set
+      table drops its "Previous" column under the set's figures ("Last
+      80 × 8"); the done tick, set badge and run controls stay their
+      designed size; a missing map says "Map unavailable" at the top
+      right. Known and accepted: at 2× on a 320px screen the "kg" and
+      "Reps" column headers run a little past their columns.
 
 ## The first-visit guide (2026-10-04)
 
