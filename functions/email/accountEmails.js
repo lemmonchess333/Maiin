@@ -29,8 +29,9 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 /** Deliver one email via the Resend REST API (global fetch, no SDK
  *  dependency). `from` is a plain env var so the sender can move from Resend's
  *  test domain (onboarding@resend.dev — sends only to the Resend account
- *  owner) to a verified domain at launch without a code change. */
-async function sendViaResend({ to, subject, html }) {
+ *  owner) to a verified domain at launch without a code change. `text`, the
+ *  plain-text part, is optional; the trial reminder sends one. */
+async function sendViaResend({ to, subject, html, text }) {
   const from = process.env.RESEND_FROM || "Tropos <onboarding@resend.dev>";
   const resp = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -38,7 +39,13 @@ async function sendViaResend({ to, subject, html }) {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({
+      from,
+      to,
+      subject,
+      html,
+      ...(text ? { text } : {}),
+    }),
   });
   if (!resp.ok) {
     const body = await resp.text().catch(() => "");

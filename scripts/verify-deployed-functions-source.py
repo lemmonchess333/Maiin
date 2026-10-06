@@ -68,6 +68,12 @@ def verify():
         "onWorkoutCreated": training_paths,
         "onWorkoutUpdated": training_paths,
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
+        # The reminder before a free trial is charged, and the sync it reads.
+        "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",
+                               "lib/trialReminderEmail.js", "revenueCat.js",
+                               "lib/revenueCatEntitlement.js", "email/accountEmails.js"],
+        "syncRevenueCatEntitlement": ["index.js", "revenueCat.js", "lib/revenueCatEntitlement.js",
+                                      "lib/trialReminder.js"],
     }
     for name, paths in targets.items():
         endpoint = (
