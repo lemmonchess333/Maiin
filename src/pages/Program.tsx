@@ -679,6 +679,10 @@ function ProgramInner() {
     displayWorkouts.length > 0 &&
     displayWorkouts.every((d) => d.completed || d.skipped);
   const history = programState.weekHistory ?? [];
+  // A week from the history reads as a lighter week by its own mark, not by
+  // this week's phase.
+  const viewedWeekLighter =
+    isViewingHistory && history[viewingHistoryIndex]?.lighter === true;
 
   // Clamp selectedDayIndex
   const idx =
@@ -1053,13 +1057,16 @@ function ProgramInner() {
                 weekNumber={displayWeekNumber}
                 label={
                   liftWeekLabel(
-                    {
-                      ...programState,
-                      weekNumber: displayWeekNumber,
-                      trainingBlock: isViewingHistory
-                        ? undefined
-                        : programState.trainingBlock,
-                    },
+                    isViewingHistory
+                      ? {
+                          weekNumber: displayWeekNumber,
+                          primaryGoal: programState.primaryGoal,
+                          currentPhase: viewedWeekLighter
+                            ? "deload"
+                            : "progression",
+                          archived: true,
+                        }
+                      : programState,
                     localDateString(),
                     profile?.experience
                   ) ?? undefined

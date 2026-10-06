@@ -67,7 +67,7 @@ import {
   advanceWeek,
   shouldAdvanceWeek,
 } from "./programEngine";
-import { generateWeekPrescription } from "./weekPrescription";
+import { generateWeekPrescription, raceBlockWeek } from "./weekPrescription";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { sessionMinutesFor } from "./sessionFit";
@@ -364,17 +364,19 @@ function regenerateRacePlan({
 
 /**
  * The run side of moving the programme into the next week, shared by the
- * Monday rollover and "Start next week". `advanced` is the programme with
- * its lift side already moved on; `next` is the week moved into.
+ * Monday rollover and "Start next week". `current` is the programme in the
+ * week being left, of which only the run plan is read; `next` is the week
+ * moved into. Worked out before the lift side moves on, which reads the
+ * result to place a race plan's lighter weeks.
  */
 function nextRunWeek(
-  advanced: ProgramState,
+  current: ProgramState,
   next: { weekStart: string; date: string },
   profile: UserProfile,
   recentLayoff: LayoffClass
 ): Pick<ProgramState, "runDays" | "runPlan"> {
   const weekSchedule = profile.weekSchedule ?? [];
-  const runPlan = advanced.runPlan;
+  const runPlan = current.runPlan;
   // Asked about NEXT week's date, not today: the question is whether the
   // week being rolled into is still inside the recovery window.
   if (runPlan && isInRecoveryOn(runPlan, next.date)) {
@@ -1221,14 +1223,13 @@ export function useProgram() {
       // side still; the runs, which are date-pinned (ADR-0002), roll on.
       const liftsAhead =
         !!rolling.liftWeekKey && rolling.liftWeekKey >= nextLiftWeekKey;
-      const advanced = liftsAhead
-        ? { ...rolling }
-        : advanceWeek(rolling, profile.experience, nextLiftWeekKey);
 
       // Advance run side: one week step from the current runDay week key.
+      // First, so the lift side knows whether the week rolled into is the
+      // run plan's step-back week, where a race plan puts the lighter week.
       const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
       const runs = nextRunWeek(
-        advanced,
+        rolling,
         {
           weekStart: localWeekKey(nextRunDate),
           date: localDateString(nextRunDate),
@@ -1236,6 +1237,14 @@ export function useProgram() {
         profile,
         recentLayoff
       );
+      const advanced = liftsAhead
+        ? { ...rolling }
+        : advanceWeek(
+            rolling,
+            profile.experience,
+            nextLiftWeekKey,
+            raceBlockWeek(runs.runPlan)
+          );
       advanced.runDays = runs.runDays;
       advanced.runPlan = runs.runPlan;
 
@@ -1627,28 +1636,32 @@ export function useProgram() {
     // advanced the week — declines rather than advancing a second time.
     const saved = await saveProgram((base) => {
       if (!shouldAdvanceWeek(base.workouts)) return null;
-      const advanced = advanceWeek(
-        base,
-        profile?.experience,
-        localWeekKey(addLocalDays(new Date(), 7))
-      );
-
       // Refresh run days for new week. PR-0b-ii: V2 writers + next-
       // week date vantage so the saved runDays carry next-week
       // dates / weekKey. `currentWeek` increments to track week-
       // since-plan-start; `totalWeeks` preserved from prev so the
-      // race-strip "Week N of M" display stays consistent.
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        const nextRunDate = addLocalDays(new Date(), 7);
-        const runs = nextRunWeek(
-          advanced,
-          {
-            weekStart: localWeekKey(nextRunDate),
-            date: localDateString(nextRunDate),
-          },
-          profile,
-          recentLayoff
-        );
+      // race-strip "Week N of M" display stays consistent. First, so the
+      // lift side knows whether next week is the run plan's step-back week.
+      const nextRunDate = addLocalDays(new Date(), 7);
+      const runs =
+        profile?.runMode && profile.runMode !== "freeform"
+          ? nextRunWeek(
+              base,
+              {
+                weekStart: localWeekKey(nextRunDate),
+                date: localDateString(nextRunDate),
+              },
+              profile,
+              recentLayoff
+            )
+          : null;
+      const advanced = advanceWeek(
+        base,
+        profile?.experience,
+        localWeekKey(addLocalDays(new Date(), 7)),
+        raceBlockWeek(runs?.runPlan)
+      );
+      if (runs) {
         advanced.runDays = runs.runDays;
         advanced.runPlan = runs.runPlan;
       }

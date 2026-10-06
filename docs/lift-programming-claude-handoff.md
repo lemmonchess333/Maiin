@@ -446,6 +446,20 @@ Build muscle"), on Train and on the finish screen. The Performance Index
 keeps its "Deload" band and insight copy, which describe the measured
 load, not the plan's week.
 
+STATUS 2026-10-06 (Lift4 (3) and (9), build step 5, fourth part): with a
+race plan the calendar's lighter week falls on the run plan's step-back
+week (`isRunStepBackWeek` in `runPlanTiming.ts`, which the scheduler's ramp
+now reads for its cutbacks too, so the two can't part), rather than every
+4th trained lift week; who gets lighter weeks and one at a time are
+unchanged. The rollover works out the run week first and hands
+`advanceWeek` where the race block lands (`raceBlockWeek`). Train's week
+row and the finish screen count a race plan's weeks in the race block and
+name them by the run plan's phases ("Week 7 of 16 · Build", "Week 14 of 16
+· Taper"), at every level; "Why this session" names the week before a
+step-back as the last full one. A week from the history is named by its
+own number and its own lighter mark. The race's final weeks, the week
+after it and the leg-session rules follow in the running link (step 5d).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

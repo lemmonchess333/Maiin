@@ -26,7 +26,9 @@
  *    `applyDeloadThisWeek`, or the applyDeloadWeek command). It replaces
  *    the focus sentence: "heavier main lifts" over a lighter week would
  *    say two things at once.
- *  - The week before a lighter one comes from `generateWeekPrescription`.
+ *  - The week before a lighter one comes from `generateWeekPrescription`,
+ *    or with a race plan from the run plan's step-back weeks
+ *    (`isRunStepBackWeek`), where advanceWeek puts the lighter week then.
  *    advanceWeek withholds the lighter recipe after a week with no training
  *    in it, so the lighter week is "planned", never promised.
  *  - The hold is `isProgressionHeld`, called exactly as session completion
@@ -35,7 +37,10 @@
 import {
   generateWeekPrescription,
   lighterWeeksScheduled,
+  raceBlockWeek,
+  type RaceBlockWeek,
 } from "@/features/program/weekPrescription";
+import { isRunStepBackWeek } from "@/features/program/runPlanTiming";
 import type {
   Experience,
   PrimaryGoal,
@@ -51,7 +56,12 @@ import {
 export type LiftPurposeProgramme = Partial<
   Pick<
     ProgramState,
-    "weekNumber" | "currentPhase" | "primaryGoal" | "trainingBlock" | "workouts"
+    | "weekNumber"
+    | "currentPhase"
+    | "primaryGoal"
+    | "trainingBlock"
+    | "workouts"
+    | "runPlan"
   >
 >;
 
@@ -90,6 +100,43 @@ export const LAST_FULL_WEEK =
 
 export const CYCLE = `Your plan builds for ${count(buildWeeks())} weeks, then a lighter week follows.`;
 
+export const RACE_CYCLE =
+  "Your lighter weeks fall on your run plan's easier weeks.";
+
+/** Whether a later week of the race block is one of the run plan's
+ *  step-back weeks. */
+function stepBackAhead(race: RaceBlockWeek): boolean {
+  for (let w = race.weekIndex + 1; w < race.totalWeeks; w++) {
+    if (isRunStepBackWeek(w, race.totalWeeks, race.distance)) return true;
+  }
+  return false;
+}
+
+/** What a full week says of the lighter weeks to come: that the next week
+ *  is one, or how they come, or nothing on the week the calendar marks as
+ *  one that came full. */
+function lighterWeeksAhead(
+  programme: LiftPurposeProgramme,
+  week: number
+): string | null {
+  const race = raceBlockWeek(programme.runPlan);
+  if (race) {
+    const { weekIndex, totalWeeks, distance } = race;
+    if (
+      weekIndex + 1 < totalWeeks &&
+      isRunStepBackWeek(weekIndex + 1, totalWeeks, distance)
+    ) {
+      return LAST_FULL_WEEK;
+    }
+    return stepBackAhead(race) &&
+      !isRunStepBackWeek(weekIndex, totalWeeks, distance)
+      ? RACE_CYCLE
+      : null;
+  }
+  if (generateWeekPrescription(week + 1).deload) return LAST_FULL_WEEK;
+  return generateWeekPrescription(week).deload ? null : CYCLE;
+}
+
 export const HOLD = `Your weights hold for the first ${count(EASING_HOLD_WEEKS)} weeks of the block while you ease back in.`;
 
 /**
@@ -125,11 +172,8 @@ export function liftSessionPurpose(
       sentences.push(FOCUS_PURPOSE[focus] ?? FOCUS_PURPOSE.general);
     }
     if (lighterWeeksScheduled(experience, programme.workouts?.length ?? 0)) {
-      if (generateWeekPrescription(week + 1).deload) {
-        sentences.push(LAST_FULL_WEEK);
-      } else if (!generateWeekPrescription(week).deload) {
-        sentences.push(CYCLE);
-      }
+      const ahead = lighterWeeksAhead(programme, week);
+      if (ahead) sentences.push(ahead);
     }
   }
   if (held) sentences.push(HOLD);

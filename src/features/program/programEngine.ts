@@ -10,8 +10,9 @@ import type {
 } from "./programTypes";
 import { generateInstanceId, loweringOf } from "./programTypes";
 import {
-  generateWeekPrescription,
+  calendarLighterWeek,
   lighterWeeksScheduled,
+  type RaceBlockWeek,
 } from "./weekPrescription";
 import {
   pickExercise,
@@ -2487,7 +2488,14 @@ export function advanceWeek(
    * degenerate behaviour (a caller that does not know the date must not
    * pretend the week moved).
    */
-  nextWeekKey?: string
+  nextWeekKey?: string,
+  /**
+   * Where the run plan stands in the week rolled into, when a race plan
+   * runs (`raceBlockWeek` of the next week's run plan): its step-back weeks
+   * are then the lighter weeks (Lift4 (9)). Absent, they come every 4th
+   * trained week.
+   */
+  nextRaceWeek?: RaceBlockWeek | null
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
      `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks where
@@ -2509,7 +2517,6 @@ export function advanceWeek(
     : state.weekNumber >= 52
       ? 1
       : state.weekNumber + 1;
-  const prescription = generateWeekPrescription(nextWeek);
 
   /* Archive only weeks that happened. `weekHistory` is capped at 8, so
      archiving absent weeks would let a 12-week catch-up evict every real
@@ -2571,12 +2578,14 @@ export function advanceWeek(
      this function, where it also decides whether the week number and the
      history archive move.) */
   /* Lift4 (9): the calendar's lighter week is for intermediates and up on
-     three or more lift days (`lighterWeeksScheduled`), and lighter weeks
-     come one at a time: never straight after one, a manual one included. */
+     three or more lift days (`lighterWeeksScheduled`), falls on the run
+     plan's step-back week with a race plan (`calendarLighterWeek`), and
+     lighter weeks come one at a time: never straight after one, a manual
+     one included. */
   const applyDeloadThisWeek =
     weekWasTrained &&
     state.currentPhase !== "deload" &&
-    prescription.deload &&
+    calendarLighterWeek(nextWeek, nextRaceWeek ?? null) &&
     lighterWeeksScheduled(experience, state.workouts.length);
 
   workouts = applyDeloadThisWeek

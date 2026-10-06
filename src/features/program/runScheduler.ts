@@ -35,6 +35,8 @@ export type { RunPlan, ScheduledRunDay };
 import {
   getPhaseForWeek,
   getRaceFloorWeeks,
+  isRampStepBack,
+  lastRampWeekOf,
   RACE_CONFIGS,
   raceCalendarWeeks,
   TAPER_WEEKS_BY_DISTANCE,
@@ -372,9 +374,8 @@ const QUALITY_PEAK_BY_DISTANCE: Record<
   marathon: { tempoWorkMinutes: 40, intervalReps: 6 },
 };
 
-/** Every 4th week is a cutback — the long run steps back rather than up. */
-const CUTBACK_EVERY = 4;
-/** How much a cutback week takes off the ramped distance. */
+/** How much a cutback week takes off the ramped distance. Which weeks are
+ *  cutbacks is `isRampStepBack`'s: every 4th, never the peak. */
 const CUTBACK_FRACTION = 0.75;
 
 /**
@@ -426,14 +427,12 @@ function rampShape(input: {
   totalWeeks: number;
   taperWeeks: number;
 }): { progress: number; isCutback: boolean } | null {
-  const lastRampWeek = Math.max(0, input.totalWeeks - 1 - input.taperWeeks - 1);
+  const lastRampWeek = lastRampWeekOf(input.totalWeeks, input.taperWeeks);
   if (lastRampWeek === 0) return null;
   const clamped = Math.min(Math.max(0, input.weekIndex), lastRampWeek);
   return {
     progress: clamped / lastRampWeek,
-    isCutback:
-      (input.weekIndex + 1) % CUTBACK_EVERY === 0 &&
-      input.weekIndex !== lastRampWeek,
+    isCutback: isRampStepBack(input.weekIndex, lastRampWeek),
   };
 }
 

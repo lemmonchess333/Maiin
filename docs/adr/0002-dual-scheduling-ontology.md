@@ -110,3 +110,17 @@ Consequences:
   rollover waits while a session is open or a finish is queued
   (`useProgram`).
 - `weekHistory` archives each week in the order it was trained.
+
+## Update 2026-10-06 — a race plan's lighter weeks (Lift4)
+
+The dual ontology is unchanged. One thing on the lift side now reads the run
+side's calendar: with a race plan, the lifting's lighter week falls on the
+run plan's step-back week (`isRunStepBackWeek`, the same weeks the ramp's
+cutbacks fall on, every 4th week of the base and build), not on every 4th
+trained lift week. So the rollover works out the run side's next week first
+(`nextRunWeek`) and hands the lift side where the race block lands
+(`raceBlockWeek`, read by `advanceWeek`). The lift week number still counts
+trained weeks, and nothing else about the order moves; without a race plan,
+and in the recovery after one, the lighter week comes every 4th trained week
+again. Train counts a race plan's weeks in the race block and names them by
+its phases (Base, Build, Taper, Race).

@@ -4,6 +4,7 @@ import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import { FOCUS_ORDER, focusLabel } from "@/features/program/trainingBlock";
 import type {
   ActiveTrainingBlock,
+  RunPlan,
   WorkoutDay,
 } from "@/features/program/programTypes";
 
@@ -91,6 +92,84 @@ describe("the lift week label derives from programme facts", () => {
     expect(
       liftWeekLabel({ ...state, weekNumber: 7, workouts }, today, level)
     ).toBe("Week 7 · Get stronger");
+  });
+  /* Lift4 (3) and (9): with a race plan the lighter weeks follow the run
+     plan, so the week is counted in the race block and named by its phase,
+     in the run plan's own words, whatever the level. */
+  describe("with a race plan", () => {
+    const race = (currentWeek: number, over = {}) => ({
+      ...state,
+      weekNumber: 5,
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "half", targetDate: "2026-12-20" },
+        currentWeek,
+        totalWeeks: 16,
+      } as RunPlan,
+      ...over,
+    });
+    it.each([
+      [0, "Week 1 of 16 · Base"],
+      [6, "Week 7 of 16 · Build"],
+      [13, "Week 14 of 16 · Taper"],
+      [15, "Week 16 of 16 · Race"],
+    ])("week %s reads %s", (currentWeek, label) => {
+      for (const level of ["intermediate", "beginner"] as const) {
+        expect(liftWeekLabel(race(currentWeek), today, level)).toBe(label);
+      }
+    });
+    it("names a lighter week as one", () => {
+      expect(
+        liftWeekLabel(
+          race(7, { currentPhase: "deload" }),
+          today,
+          "intermediate"
+        )
+      ).toBe("Week 8 of 16 · Lighter week");
+    });
+    it("goes back to the plan's own counter in the recovery after it", () => {
+      const after = race(15);
+      after.runPlan = { ...after.runPlan, phase: "recovery" };
+      expect(liftWeekLabel(after, today, "intermediate")).toBe(
+        "Week 1 of 4 · Get stronger"
+      );
+    });
+  });
+  it("names a week from the history by its own number and mark", () => {
+    // Where it sat in a cycle, a block or a race block isn't kept.
+    expect(
+      liftWeekLabel(
+        {
+          weekNumber: 8,
+          currentPhase: "deload",
+          primaryGoal: "strength",
+          archived: true,
+        },
+        today,
+        "intermediate"
+      )
+    ).toBe("Week 8 · Lighter week");
+    expect(
+      liftWeekLabel(
+        {
+          ...state,
+          weekNumber: 6,
+          trainingBlock: block,
+          archived: true,
+        },
+        today,
+        "intermediate"
+      )
+    ).toBe("Week 6 · Get stronger");
+  });
+  it("names a lighter week in a training block", () => {
+    expect(
+      liftWeekLabel(
+        { ...state, trainingBlock: block, currentPhase: "deload" },
+        today,
+        "intermediate"
+      )
+    ).toBe("Week 2 of 8 · Lighter week");
   });
   it("names a lighter week the person took, with or without a cycle", () => {
     const lighter = { ...state, weekNumber: 6, currentPhase: "deload" };

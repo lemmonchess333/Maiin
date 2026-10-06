@@ -38,6 +38,24 @@ describe("liftCompletionContext", () => {
     );
   });
 
+  it("counts the race block's weeks while a race plan runs", () => {
+    // Lift4 (9): the lighter weeks follow the run plan then, at any level.
+    const racing = state(week, {
+      weekNumber: 6,
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "half", targetDate: "2026-12-20" },
+        currentWeek: 6,
+        totalWeeks: 16,
+      },
+    });
+    for (const level of ["intermediate", "beginner"] as const) {
+      expect(
+        liftCompletionContext(racing, 0, "2026-09-27", level).progress
+      ).toBe("Week 7 of 16 · 1 of 3 planned lifts complete");
+    }
+  });
+
   it("counts a cycle only where the calendar gives lighter weeks", () => {
     // Lift4 (9): a beginner, an unknown level and a two-day plan get no
     // lighter week on the calendar, so no cycle of four to count.

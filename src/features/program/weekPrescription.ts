@@ -1,8 +1,12 @@
-import type {
-  Experience,
-  ProgramState,
-  WeeklyPrescription,
+import {
+  VALID_RACE_DISTANCE,
+  type Experience,
+  type ProgramState,
+  type RaceDistance,
+  type RunPlan,
+  type WeeklyPrescription,
 } from "./programTypes";
+import { isRunStepBackWeek } from "./runPlanTiming";
 
 /**
  * Where a week sits in the training cycle, apart from the generator
@@ -65,4 +69,55 @@ export function lighterWeekAllowed(
     state.currentPhase !== "deload" &&
     state.weekHistory?.at(-1)?.lighter !== true
   );
+}
+
+/** A week of a race block: where the run plan stands in it. */
+export interface RaceBlockWeek {
+  /** 0-based, as the run plan counts (`runPlan.currentWeek`). */
+  weekIndex: number;
+  totalWeeks: number;
+  distance: RaceDistance;
+}
+
+/**
+ * The week of the race block a plan's lighter weeks follow (Lift4 (9)): the
+ * run plan's current week, while a race plan with its weeks counted runs.
+ * Null without one, and in the recovery after the race, which has no block
+ * left to follow.
+ */
+export function raceBlockWeek(
+  runPlan: RunPlan | null | undefined
+): RaceBlockWeek | null {
+  if (!runPlan || runPlan.mode !== "race_prep") return null;
+  if (runPlan.phase === "recovery") return null;
+  const distance = VALID_RACE_DISTANCE.find(
+    (d) => d === runPlan.raceGoal?.distance
+  );
+  const { currentWeek, totalWeeks } = runPlan;
+  if (
+    !distance ||
+    typeof currentWeek !== "number" ||
+    typeof totalWeeks !== "number" ||
+    !Number.isInteger(currentWeek) ||
+    currentWeek < 0 ||
+    currentWeek >= totalWeeks
+  ) {
+    return null;
+  }
+  return { weekIndex: currentWeek, totalWeeks, distance };
+}
+
+/**
+ * Whether the calendar makes a week a lighter one, before the rules on who
+ * gets them and one at a time (Lift4 (9)): with a race plan, the run plan's
+ * step-back weeks, so the lifting eases off when the running does; otherwise
+ * every 4th trained week.
+ */
+export function calendarLighterWeek(
+  weekNumber: number,
+  race: RaceBlockWeek | null
+): boolean {
+  return race
+    ? isRunStepBackWeek(race.weekIndex, race.totalWeeks, race.distance)
+    : generateWeekPrescription(weekNumber).deload;
 }

@@ -67,6 +67,41 @@ export function getPhaseForWeek(
   return "build";
 }
 
+/** Every 4th week of a race block's ramp steps back: the long run and the
+ *  easy runs ease off before the next climb (`runScheduler`'s ramp). */
+export const STEP_BACK_EVERY = 4;
+
+/** The ramp's last week, its peak: the week before the taper. 0 when the
+ *  block has no room to ramp. */
+export function lastRampWeekOf(totalWeeks: number, taperWeeks: number): number {
+  return Math.max(0, totalWeeks - 1 - taperWeeks - 1);
+}
+
+/** Whether a week of the ramp steps back: every 4th, never the peak. */
+export function isRampStepBack(
+  weekIndex: number,
+  lastRampWeek: number
+): boolean {
+  return (weekIndex + 1) % STEP_BACK_EVERY === 0 && weekIndex !== lastRampWeek;
+}
+
+/**
+ * Whether the run plan steps back in this week of its block: a step-back
+ * week of the base or the build. The taper and race week cut the load their
+ * own way, and a block with no room to ramp has no step-back weeks. The
+ * lifting's lighter weeks fall on these with a race plan (Lift4 (9)).
+ */
+export function isRunStepBackWeek(
+  weekIndex: number,
+  totalWeeks: number,
+  distance: "5k" | "10k" | "half" | "marathon"
+): boolean {
+  const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
+  if (phase !== "base" && phase !== "build") return false;
+  const last = lastRampWeekOf(totalWeeks, TAPER_WEEKS_BY_DISTANCE[distance]);
+  return last > 0 && isRampStepBack(weekIndex, last);
+}
+
 /** Run9 phase-3 (Slice B) — the taper-safe FLOOR, in weeks, per distance.
  *
  *  Floor = taperWeeks + 1 (locked 2026-05-29). Below this there isn't even
