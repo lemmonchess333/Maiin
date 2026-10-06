@@ -99,7 +99,7 @@ export default function PerformanceHeroCard({
           </span>
         </ProgressRing>
         <div className="min-w-[min(100%,7em)] flex-1">
-          <p className="text-base font-bold text-foreground">
+          <p className="text-base font-bold text-foreground break-words hyphens-auto">
             {copy ? copy.headline : "Performance"}
           </p>
           {copy ? (
@@ -160,9 +160,12 @@ export default function PerformanceHeroCard({
       </ProgressRing>
       <div className="min-w-[min(100%,7em)] flex-1">
         {/* Wraps: at larger text the chip moved under the title rather
-            than off the right edge of the screen. */}
+            than off the right edge of the screen. At 2x on a 320px phone
+            the word itself is wider than the column, so it breaks too. */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="text-base font-bold text-foreground">Performance</p>
+          <p className="min-w-0 text-base font-bold text-foreground break-words hyphens-auto">
+            Performance
+          </p>
           {/* Delta chip — hidden when low-confidence (sparse data makes
               week-over-week noise dominate the signal). */}
           {showDelta && (

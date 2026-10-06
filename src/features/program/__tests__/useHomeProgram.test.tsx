@@ -170,7 +170,7 @@ describe("Home defers the programme controller", () => {
      delivers a change to metadata alone only to a listener that asked
      for it: without `includeMetadataChanges`, Home's session card stayed
      a grey placeholder on every launch until Train built the programme. */
-  it("leaves loading when the server confirms a missing programme the cache already knew", async () => {
+  it("builds the programme when the server confirms one the cache already knew was missing", async () => {
     emit(null, true);
     render(<Harness />);
     await flushSnapshots();
@@ -180,10 +180,57 @@ describe("Home defers the programme controller", () => {
     setSnapshotMetadata("users/alice/programState/current", {
       fromCache: false,
     });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+  });
+  /* Drawn from no programme, a lifting day read "Today is a lifting day,
+     but no workout is linked" for the second the build took. */
+  it("stays loading until the built programme arrives", async () => {
+    h.readiness = "pending";
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+
+    act(() =>
+      h.publish!({
+        loading: false,
+        readiness: "ready",
+        programState: h.state,
+        skipRunDay: h.skip,
+      })
+    );
+    await flushSnapshots();
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+
+    emit(h.state as ProgramState);
+    await waitFor(() => expect(screen.getByText("Week 3")).toBeInTheDocument());
+    expect(screen.getByTestId("loading")).toHaveTextContent("false");
+  });
+  it("stops loading when the programme cannot be built", async () => {
+    h.readiness = "pending";
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+
+    act(() =>
+      h.publish!({
+        loading: false,
+        readiness: "failed",
+        programState: null,
+        skipRunDay: h.skip,
+      })
+    );
     await waitFor(() =>
       expect(screen.getByTestId("loading")).toHaveTextContent("false")
     );
-    await waitFor(() => expect(h.controllerMounts).toBe(1));
   });
   it("loads maintenance when a real stored week is stale", async () => {
     emit({ ...(h.state as ProgramState), liftWeekKey: "2020-01-06" });

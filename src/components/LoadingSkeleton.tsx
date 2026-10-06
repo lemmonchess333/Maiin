@@ -14,7 +14,9 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
       aria-label="Loading"
       aria-live="polite"
       className={cn(
-        "ds-skeleton rounded-lg bg-muted dark:bg-muted/60",
+        // Never wider than its box: a placeholder's width is in rem, so at
+        // 2x text a `w-40` bar (320px) ran off a 320px phone's screen.
+        "ds-skeleton max-w-full rounded-lg bg-muted dark:bg-muted/60",
         className
       )}
       style={{
