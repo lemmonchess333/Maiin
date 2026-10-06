@@ -605,14 +605,15 @@ export default function RunMap({
         // active-run map it lines up with the existing centred GPS pills.
         // Under 20rem of map (larger text on the phone) the reserve leaves
         // a word no room, and lower down the live run's sheet covers the
-        // map. So the pill says only "Map unavailable", on one line, in 12px
-        // with px padding like the map's own credit, at the top right: clear
-        // of the top-left back button and GPS chip at any text size, and no
-        // consumer puts a control top right. The chip beside it is the GPS status the long
-        // copy points to. Wide-first. In rem, not em: MapLibre sets this
-        // element's font to 12px, and a container query's em is the
-        // container's own, so 20em never matched.
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[12px] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        // map. So the pill says only "Map unavailable", on one line, at the
+        // map's own size (1em: MapLibre sets this element to 12px, and its
+        // credit uses the same) with px padding, at the top right: clear of
+        // the top-left back button and GPS chip at any text size, and no
+        // consumer puts a control top right. The chip beside it is the GPS
+        // status the long copy points to. Wide-first. The query is in rem,
+        // not em: a container query's em is the container's own 12px, so
+        // 20em never matched.
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
           <span className="@max-[20rem]:hidden">
             Map tiles unavailable. Check your connection. GPS status is shown
             separately.
