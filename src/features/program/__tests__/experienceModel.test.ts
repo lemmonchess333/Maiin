@@ -39,7 +39,6 @@ const week = (
   experience: "beginner" | "intermediate" | "advanced"
 ) =>
   generateProgram(
-    "recomp",
     days,
     undefined,
     "hypertrophy",
@@ -651,7 +650,6 @@ describe("a limited-equipment user gets a plan they can perform", () => {
 describe("a stalled lift keeps its exercise", () => {
   it("through a real programme regeneration", () => {
     const first = generateProgram(
-      "recomp",
       4,
       undefined,
       "hypertrophy",
@@ -683,7 +681,6 @@ describe("a stalled lift keeps its exercise", () => {
     expect(found).toBe(true);
 
     const regenerated = generateProgram(
-      "recomp",
       4,
       stalled,
       "hypertrophy",

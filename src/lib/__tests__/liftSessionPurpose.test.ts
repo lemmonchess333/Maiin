@@ -217,10 +217,12 @@ describe("the words match the engine", () => {
     expect(goalProfileFor("hypertrophy").mainReps).toBeGreaterThan(
       goalProfileFor("strength").mainReps
     );
-    for (const goal of ["strength", "fat_loss", "general", "running"]) {
+    for (const goal of ["strength", "general", "running"]) {
       expect(muscle.low, goal).toBeGreaterThan(volumeLandmark(goal).low);
       expect(muscle.high, goal).toBeGreaterThan(volumeLandmark(goal).high);
     }
+    // Losing fat trains as building muscle (Lift4 (4)).
+    expect(volumeLandmark("fat_loss")).toEqual(muscle);
   });
 
   it("gives running support heavy main lifts and fewer sets", () => {

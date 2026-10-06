@@ -27,7 +27,6 @@ export function weeklyVolumeTargets(input: {
   sessionMinutes: number | undefined;
 }): Map<JudgementMuscle, VolumeLandmark> {
   const reference = generateProgram(
-    "recomp",
     input.days,
     undefined,
     input.goal,

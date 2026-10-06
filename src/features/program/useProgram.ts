@@ -694,7 +694,6 @@ export function useProgram() {
         // what the user asked for. Pre-W1a this call dropped primaryGoal
         // entirely and hypertrophy-rep defaults leaked into every goal.
         const { splitType, workouts } = generateProgram(
-          goal,
           weeklyTarget,
           undefined,
           profile.primaryGoal,
@@ -2258,7 +2257,6 @@ export function useProgram() {
       const build = (base: ProgramState | null): ProgramState => {
         const primaryGoal = base?.primaryGoal ?? profile.primaryGoal;
         const { splitType, workouts } = generateProgram(
-          goal,
           weeklyTarget,
           base?.workouts,
           primaryGoal,

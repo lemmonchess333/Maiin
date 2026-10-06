@@ -70,7 +70,6 @@ interface WeekRow {
 /** Six mesocycles of a lifter who trains every day and hits every target. */
 function simulate(weeks: number): WeekRow[] {
   const { workouts, splitType } = generateProgram(
-    "recomp",
     4,
     undefined,
     "hypertrophy",

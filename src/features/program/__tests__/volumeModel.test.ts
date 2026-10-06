@@ -504,7 +504,7 @@ describe("generateProgram honours the ceilings (reconciler wiring)", () => {
     // means the pass isn't wired in.
     for (const goal of ["hypertrophy", "strength"] as const) {
       for (const days of [4, 5, 6]) {
-        const { workouts } = generateProgram("recomp", days, undefined, goal);
+        const { workouts } = generateProgram(days, undefined, goal);
         for (const mv of weeklyVolumeByJudgementMuscle(workouts)) {
           const lm2 = judgementLandmark(goal, mv.muscle);
           if (mv.sets <= lm2.high) continue;

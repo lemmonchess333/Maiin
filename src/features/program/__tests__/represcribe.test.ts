@@ -279,7 +279,6 @@ describe("represcribeWorkouts — invertibility", () => {
   // This is why a block stores one scalar and not a per-slot snapshot.
   it("re-applying with a second focus equals going there directly", () => {
     const start = generateProgram(
-      "recomp",
       4,
       undefined,
       "hypertrophy",
@@ -305,8 +304,7 @@ describe("represcribeWorkouts — invertibility", () => {
 
   it("a round trip restores the rep prescription it started from", () => {
     const start = represcribeWorkouts(
-      generateProgram("recomp", 4, undefined, "hypertrophy", undefined)
-        .workouts,
+      generateProgram(4, undefined, "hypertrophy", undefined).workouts,
       "hypertrophy",
       "intermediate"
     );

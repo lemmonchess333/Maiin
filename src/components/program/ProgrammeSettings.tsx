@@ -277,9 +277,9 @@ const FOCUS_OPTIONS: {
   {
     id: "fat_loss",
     label: "Lose fat",
-    // The engine gives this focus the general reps, not high-rep
-    // "conditioning" work: the lifting keeps strength while the calorie
-    // deficit does the fat loss (GOAL_PROFILES.fat_loss).
+    // The engine builds this focus as Build muscle (`roleTable.ts`), not
+    // high-rep "conditioning" work: the lifting keeps strength and muscle
+    // while the calorie deficit does the fat loss (Lift4 (4)).
     desc: "Keeps your strength and muscle as you lose fat",
     icon: <Flame size={18} style={{ color: THEME.brand }} />,
   },

@@ -485,8 +485,10 @@ export interface VolumeLandmark {
 
 /**
  * Goal-driven weekly set landmarks per muscle (simplified RP MV–MEV–MAV bands).
- * `primaryGoal` is the training intent. Hypertrophy carries the highest target;
- * strength is lower-volume/higher-intensity; fat-loss/running lean lower.
+ * `primaryGoal` is the training intent. Hypertrophy carries the highest target,
+ * and Lose fat trains as Build muscle (Lift4 (4)): the cut is in the
+ * nutrition targets. Strength is lower-volume/higher-intensity; running
+ * leans lower.
  *
  * ── Where the MV numbers come from ───────────────────────────────────────
  *
@@ -510,10 +512,10 @@ export function volumeLandmark(
 ): VolumeLandmark {
   switch (primaryGoal) {
     case "hypertrophy":
+    case "fat_loss":
       return { mv: 5, low: 12, high: 20 };
     case "strength":
       return { mv: 4, low: 8, high: 14 };
-    case "fat_loss":
     case "running":
       return { mv: 3, low: 6, high: 14 };
     case "general":

@@ -384,6 +384,16 @@ gives the primary; the variation roles that ranked a stall's replacement
 picks one; the rules sheet (step 6) says a variation often gets a stuck lift
 moving.
 
+STATUS 2026-10-05 (Lift4 (4) and (13), build step 4, twelfth part): a cut
+or a bulk no longer changes the lifting. Retired: the nutrition nudges on
+the builders' sets (×0.9 on a cut, ×1.12 on a lean bulk), which the role
+table had already overwritten everywhere but the week's ordering, and with
+them the generator's nutrition-goal argument. Lose fat's weekly bands are
+Build muscle's (6 to 14 became 12 to 20), so a Lose fat plan is now the same
+plan as Build muscle's at every day count and setup in the golden sweep, and
+the Weekly volume card judges it the same way; the cut is in the nutrition
+targets. The goal profiles the server mirrors are unchanged.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

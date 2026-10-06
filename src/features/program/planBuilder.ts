@@ -321,7 +321,6 @@ function buildLiftProgram(input: PlanBuilderInput): {
         { splitType: input.existingState.splitType, workouts: existing }
       : // No existing plan, or lift-days changed → rebuild from template.
         generateProgram(
-          input.nutritionPhase,
           input.liftDays,
           existing,
           input.primaryGoal,

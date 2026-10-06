@@ -1,6 +1,5 @@
 import type {
   Experience,
-  Goal,
   GoalProfile,
   MovementCategory,
   PrimaryGoal,
@@ -118,9 +117,8 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
    *     Strength is load-specific, and a cut is exactly when you are trying
    *     not to lose it.
    *   - Roth et al. 2023 (Scand J Med Sci Sports): resistance-training VOLUME
-   *     does not influence lean-mass preservation during energy restriction.
-   *     Which is why the volume half of this is deliberately untouched — see
-   *     `goalVolumeMultiplier` below.
+   *     does not influence lean-mass preservation during energy restriction,
+   *     which is why a cut leaves the lifting's volume alone (Lift4 (4)).
    *
    * So: same mains as `general` (8-12), and the accessories come with them.
    * Nothing here is a fat-loss-specific stimulus, because there is no such
@@ -347,21 +345,6 @@ const MIN_HOLD_SECONDS = 10;
  * convenience cache on programState, not the record of truth.
  */
 export const PERFORMANCE_HISTORY_CAP = 10;
-
-/* ================================
-   GOAL ADJUSTMENTS
-================================ */
-
-function goalVolumeMultiplier(goal: Goal): number {
-  switch (goal) {
-    case "cut":
-      return 0.9;
-    case "lean bulk":
-      return 1.12;
-    case "recomp":
-      return 1.0;
-  }
-}
 
 /* ================================
    SPLIT SELECTION
@@ -634,26 +617,12 @@ function makeNamedAccessory(
    SPLIT TEMPLATES
 ================================ */
 
-/**
- * Builder-local volume multiplier — combines lifting-goal stimulus
- * (profile.volumeMultiplier: cut keeps volume steady, running-supportive
- * lifters drop 15%) with nutrition-phase modulation (cut -10%, lean bulk
- * +12%). Both are legitimate independent axes; they compound.
- */
-function combinedVolumeMultiplier(
-  profile: GoalProfile,
-  nutritionGoal: Goal
-): number {
-  return profile.volumeMultiplier * goalVolumeMultiplier(nutritionGoal);
-}
-
 function buildFullBody(
   profile: GoalProfile,
-  nutritionGoal: Goal,
   count: number,
   existing?: WorkoutDay[]
 ): WorkoutDay[] {
-  const vm = combinedVolumeMultiplier(profile, nutritionGoal);
+  const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
     existing?.[dayIdx]?.exercises[exIdx];
@@ -849,10 +818,9 @@ function buildFullBody(
 
 function buildUpperLower(
   profile: GoalProfile,
-  nutritionGoal: Goal,
   existing?: WorkoutDay[]
 ): WorkoutDay[] {
-  const vm = combinedVolumeMultiplier(profile, nutritionGoal);
+  const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
     existing?.[dayIdx]?.exercises[exIdx];
@@ -1031,12 +999,8 @@ function buildUpperLower(
   ];
 }
 
-function buildPPL(
-  profile: GoalProfile,
-  nutritionGoal: Goal,
-  existing?: WorkoutDay[]
-): WorkoutDay[] {
-  const vm = combinedVolumeMultiplier(profile, nutritionGoal);
+function buildPPL(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay[] {
+  const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
     existing?.[dayIdx]?.exercises[exIdx];
@@ -1223,12 +1187,8 @@ function buildPPL(
 /** Legs B — flipped emphasis from Legs A.
  *  Legs A leads with squat (knee), Legs B leads with deadlift (hip).
  *  Accessories also swap order for different training stimulus. */
-function buildLegsB(
-  profile: GoalProfile,
-  nutritionGoal: Goal,
-  existing?: WorkoutDay[]
-): WorkoutDay {
-  const vm = combinedVolumeMultiplier(profile, nutritionGoal);
+function buildLegsB(profile: GoalProfile, existing?: WorkoutDay[]): WorkoutDay {
+  const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   // Use index 5 for existing exercises (Legs B is the 6th workout day)
   const findExisting = (exIdx: number) => existing?.[5]?.exercises[exIdx];
@@ -1654,7 +1614,6 @@ function applyOverlapCaps(
 }
 
 export function generateProgram(
-  nutritionGoal: Goal,
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
   primaryGoal?: PrimaryGoal,
@@ -1725,22 +1684,14 @@ export function generateProgram(
         // `chooseSplit` now returns "full_body" for 3-day targets too
         // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
         const fbDays = Math.min(weeklyTarget, 3);
-        workouts = buildFullBody(
-          profile,
-          nutritionGoal,
-          fbDays,
-          existingWorkouts
-        );
+        workouts = buildFullBody(profile, fbDays, existingWorkouts);
         break;
       }
       case "ppl":
-        workouts = buildPPL(profile, nutritionGoal, existingWorkouts).slice(
-          0,
-          3
-        );
+        workouts = buildPPL(profile, existingWorkouts).slice(0, 3);
         break;
       case "upper_lower": {
-        const ul = buildUpperLower(profile, nutritionGoal, existingWorkouts);
+        const ul = buildUpperLower(profile, existingWorkouts);
         // 2-day uses first upper + first lower only
         workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
         break;
@@ -1753,37 +1704,25 @@ export function generateProgram(
         // Push/Pull days; found 2026-07-28 once the carry test used
         // distinct per-lift weights instead of stamping 61 everywhere.
         workouts = [
-          ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
-          ...buildUpperLower(
-            profile,
-            nutritionGoal,
-            existingWorkouts?.slice(3)
-          ).slice(0, 2),
+          ...buildPPL(profile, existingWorkouts).slice(0, 3),
+          ...buildUpperLower(profile, existingWorkouts?.slice(3)).slice(0, 2),
         ];
         break;
       case "ppl_x2": {
-        const ppl = buildPPL(profile, nutritionGoal, existingWorkouts);
-        workouts = [
-          ...ppl,
-          buildLegsB(profile, nutritionGoal, existingWorkouts),
-        ];
+        const ppl = buildPPL(profile, existingWorkouts);
+        workouts = [...ppl, buildLegsB(profile, existingWorkouts)];
         break;
       }
       case "ppl_x2_fb": {
         // Retained for backward-compat — `chooseSplit` no longer returns
         // this (capped at 6 days) but existing programState rows on disk
         // may still pass through here on regeneration.
-        const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
+        const ppl7 = buildPPL(profile, existingWorkouts);
         // Same offset rule as `ppl_ul` — this day sits at week position 6.
-        const fb = buildFullBody(
-          profile,
-          nutritionGoal,
-          1,
-          existingWorkouts?.slice(6)
-        );
+        const fb = buildFullBody(profile, 1, existingWorkouts?.slice(6));
         workouts = [
           ...ppl7,
-          buildLegsB(profile, nutritionGoal, existingWorkouts),
+          buildLegsB(profile, existingWorkouts),
           {
             ...fb[0],
             dayName: "Full Body (Recovery)",
@@ -1794,7 +1733,7 @@ export function generateProgram(
         break;
       }
       default:
-        workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
+        workouts = buildUpperLower(profile, existingWorkouts);
     }
     return workouts;
   };

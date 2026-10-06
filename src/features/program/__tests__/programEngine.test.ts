@@ -707,7 +707,7 @@ describe("advanceWeek — the week opens with the session not reached", () => {
 describe("generateProgram — PPL×2", () => {
   it("Legs B has independent exercise objects from Legs A (H2)", () => {
     // Day names were renamed in W1a from "Legs"/"Legs B" to emphasis labels.
-    const { workouts } = generateProgram("recomp", 6);
+    const { workouts } = generateProgram(6);
     const legsA = workouts.find((d) => d.dayName === "Legs — Squat Focus");
     const legsB = workouts.find((d) => d.dayName === "Legs — Deadlift Focus");
     expect(legsA).toBeDefined();
@@ -783,7 +783,7 @@ describe("applyProgression — baseReps anchor (M7)", () => {
   });
 
   it("generated exercises have baseReps set", () => {
-    const { workouts } = generateProgram("recomp", 3);
+    const { workouts } = generateProgram(3);
     for (const day of workouts) {
       for (const ex of day.exercises) {
         expect(ex.baseReps).toBeDefined();
@@ -801,7 +801,7 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
   const LEGS_B = "Legs — Deadlift Focus";
 
   it("Legs B leads with hip-dominant, Legs A leads with knee-dominant", () => {
-    const { workouts } = generateProgram("recomp", 6);
+    const { workouts } = generateProgram(6);
     const legsA = workouts.find((d) => d.dayName === LEGS_A);
     const legsB = workouts.find((d) => d.dayName === LEGS_B);
     expect(legsA).toBeDefined();
@@ -813,7 +813,7 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
   });
 
   it("Legs B has different exercise order from Legs A", () => {
-    const { workouts } = generateProgram("recomp", 6);
+    const { workouts } = generateProgram(6);
     const legsA = workouts.find((d) => d.dayName === LEGS_A)!;
     const legsB = workouts.find((d) => d.dayName === LEGS_B)!;
     const categoriesA = legsA.exercises.map((e) => e.movementCategory);
@@ -830,7 +830,7 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
     // A user requesting 7 lift days gets the 6-day ppl_x2 split and the
     // scheduler fills the 7th weekday as active rest. The differentiated
     // Legs B is still emitted as the 6th workout.
-    const { workouts } = generateProgram("recomp", 7);
+    const { workouts } = generateProgram(7);
     expect(workouts).toHaveLength(6);
     const legsB = workouts.find((d) => d.dayName === LEGS_B);
     expect(legsB).toBeDefined();
@@ -845,19 +845,14 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
 describe("expectedDayCount · parity with generateProgram", () => {
   for (let n = 1; n <= 7; n++) {
     it(`equals generated workout count for ${n} lift days`, () => {
-      const { workouts } = generateProgram(
-        "recomp",
-        n,
-        undefined,
-        "hypertrophy"
-      );
+      const { workouts } = generateProgram(n, undefined, "hypertrophy");
       expect(workouts).toHaveLength(expectedDayCount(n));
     });
   }
 
   it("is 0 for a non-positive target (matches empty workouts)", () => {
     expect(expectedDayCount(0)).toBe(0);
-    const { workouts } = generateProgram("recomp", 0, undefined, "hypertrophy");
+    const { workouts } = generateProgram(0, undefined, "hypertrophy");
     expect(workouts).toHaveLength(0);
   });
 });
@@ -918,7 +913,6 @@ describe("day roles (backlog #3)", () => {
 
   it("single-day weeks stay at the table's numbers", () => {
     const one = generateProgram(
-      "recomp",
       1,
       undefined,
       "hypertrophy",
@@ -931,7 +925,6 @@ describe("day roles (backlog #3)", () => {
 
   it("3-day full-body week undulates: day A heavy (-2) vs its moderate twin", () => {
     const one = generateProgram(
-      "recomp",
       1,
       undefined,
       "hypertrophy",
@@ -940,7 +933,6 @@ describe("day roles (backlog #3)", () => {
       "intermediate"
     );
     const three = generateProgram(
-      "recomp",
       3,
       undefined,
       "hypertrophy",
@@ -970,7 +962,6 @@ describe("day roles (backlog #3)", () => {
 
   it("strength mains floor at 3 on heavy days", () => {
     const two = generateProgram(
-      "recomp",
       2,
       undefined,
       "strength",
@@ -988,7 +979,6 @@ describe("day roles (backlog #3)", () => {
     // 6-day week: days 3-5 carry the pump role. Day 3 (Pull — Row Focus)
     // has a non-hinge main, which takes the +2.
     const six = generateProgram(
-      "recomp",
       6,
       undefined,
       "hypertrophy",
@@ -1004,7 +994,6 @@ describe("day roles (backlog #3)", () => {
     // main is the deadlift. Pre-exemption it was prescribed at base+2 — the
     // 4×10 heavy hinge the corpus warns against. It must open at base.
     const three = generateProgram(
-      "recomp",
       3,
       undefined,
       "hypertrophy",
@@ -1022,7 +1011,6 @@ describe("day roles (backlog #3)", () => {
     // floor), so the exemption is surgical, not a dead pump day. The 6-day
     // week's Legs — Deadlift day pins the same pair in one session.
     const legsB = generateProgram(
-      "recomp",
       6,
       undefined,
       "hypertrophy",
@@ -1046,7 +1034,7 @@ describe("day roles (backlog #3)", () => {
 // deload command guards the same hazard with its undo snapshot).
 describe("the weekly reset to base sets (deload-decay fix)", () => {
   const makeState = () => {
-    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const { workouts } = generateProgram(3, undefined, "hypertrophy");
     // Calibrate every lift so the deload weight cut/restore is observable.
     const withWeights = workouts.map((d) => ({
       ...d,
@@ -1074,7 +1062,7 @@ describe("the weekly reset to base sets (deload-decay fix)", () => {
     st.workouts.map((d) => d.exercises.map((e) => e.sets));
 
   it("generateProgram stamps baseSets on every exercise", () => {
-    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const { workouts } = generateProgram(3, undefined, "hypertrophy");
     workouts.forEach((d) =>
       d.exercises.forEach((ex) => expect(ex.baseSets).toBe(ex.sets))
     );
@@ -1170,7 +1158,6 @@ describe("progression scheme per exercise type (backlog #7)", () => {
 
   it("stamps a rep range on every generated exercise", () => {
     const { workouts } = generateProgram(
-      "recomp",
       4,
       undefined,
       "hypertrophy",
@@ -1190,7 +1177,6 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     // heavy day gets a shifted ceiling too. A fixed ceiling would have
     // turned a 6-10 main into 4-10 on heavy days — a 6-rep climb.
     const { workouts } = generateProgram(
-      "recomp",
       3,
       undefined,
       "hypertrophy",
@@ -1219,7 +1205,7 @@ describe("progression scheme per exercise type (backlog #7)", () => {
   it("puts isolations on double progression and mains on the goal's scheme", () => {
     // strength profile is mainProgression "linear" — the accessories must
     // NOT inherit it. That inheritance was the whole defect (H3).
-    const { workouts } = generateProgram("recomp", 4, undefined, "strength");
+    const { workouts } = generateProgram(4, undefined, "strength");
     const acc = allEx(workouts).filter((e) => e.isAccessory === true);
     const mains = allEx(workouts).filter((e) => e.isAccessory !== true);
     expect(acc.length).toBeGreaterThan(0);
@@ -1373,7 +1359,7 @@ describe("deload by training age (backlog #8)", () => {
   it("restores the cut reps on meso exit — no decay across mesocycles", () => {
     // Symmetric with #5's sets/load restore. Without preDeloadReps the
     // post-novice cut would compound: 10 -> 8 -> 6 -> 4 every four weeks.
-    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const { workouts } = generateProgram(3, undefined, "hypertrophy");
     let st: ProgramState = {
       goal: "recomp",
       currentPhase: "progression",
@@ -1404,7 +1390,7 @@ describe("deload by training age (backlog #8)", () => {
   it("restores reps even if the user switches experience mid-mesocycle", () => {
     // The stash is unconditional, so a user who deloads as an intermediate
     // and advances as a beginner still gets their rep target back.
-    const { workouts } = generateProgram("recomp", 2, undefined, "hypertrophy");
+    const { workouts } = generateProgram(2, undefined, "hypertrophy");
     let st: ProgramState = {
       goal: "recomp",
       currentPhase: "progression",
@@ -1440,7 +1426,7 @@ describe("advanceWeek — stalls and absences", () => {
   });
 
   const makeState = (week = 1): ProgramState => {
-    const { workouts } = generateProgram("recomp", 4, undefined, "hypertrophy");
+    const { workouts } = generateProgram(4, undefined, "hypertrophy");
     return {
       goal: "recomp",
       currentPhase: "progression",
@@ -1556,7 +1542,7 @@ describe("advanceWeek — stalls and absences", () => {
 // it to the user, so this was a courted segment, not an edge case.
 describe("full-body accessory slots (backlog #15)", () => {
   const fullBody = (days: number) =>
-    generateProgram("recomp", days, undefined, "hypertrophy").workouts;
+    generateProgram(days, undefined, "hypertrophy").workouts;
 
   it("marks the supporting slots as accessories", () => {
     const accs = fullBody(3)
@@ -1606,7 +1592,7 @@ describe("full-body accessory slots (backlog #15)", () => {
         ],
       })),
     }));
-    const again = generateProgram("recomp", 3, trained, "hypertrophy").workouts;
+    const again = generateProgram(3, trained, "hypertrophy").workouts;
     again.forEach((d, di) =>
       d.exercises.forEach((ex, ei) => {
         const before = trained[di].exercises[ei];
@@ -1648,12 +1634,7 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
 
   it("no split exceeds the caps", () => {
     for (const days of [1, 2, 3, 4, 5, 6]) {
-      const { workouts } = generateProgram(
-        "recomp",
-        days,
-        undefined,
-        "hypertrophy"
-      );
+      const { workouts } = generateProgram(days, undefined, "hypertrophy");
       const perDay = hingeSlots(workouts);
       expect(
         Math.max(0, ...perDay),
@@ -1669,7 +1650,7 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
   it("3-day full body no longer prescribes the hinge three times a week", () => {
     // Helms's own counter-example, and pre-#10 exactly what a default
     // 3-day user got — twice alongside a squat in the same session.
-    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const { workouts } = generateProgram(3, undefined, "hypertrophy");
     expect(hingeSlots(workouts).filter((n) => n > 0)).toHaveLength(2);
     // and the heavy day (day A) is the one that lost it
     expect(hingeSlots(workouts)[0]).toBe(0);
@@ -1680,7 +1661,6 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     // movement changes. Total weekly sets must be untouched by the cap.
     const totalSets = (n: number) =>
       generateProgram(
-        "recomp",
         n,
         undefined,
         "hypertrophy",
@@ -1697,7 +1677,6 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     // (Comparing the call to itself pinned nothing.)
     expect(totalSets(3)).toBe(54);
     const { workouts } = generateProgram(
-      "recomp",
       3,
       undefined,
       "hypertrophy",
@@ -1715,7 +1694,6 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     // slot is shifted like an originally-built one. Running it after left
     // day A's replacement at the unshifted goal base.
     const three = generateProgram(
-      "recomp",
       3,
       undefined,
       "hypertrophy",
@@ -1745,12 +1723,7 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
     // position as a hinge (inheriting the replacement's logged load onto a
     // deadlift) and then re-points it to a brand-new exercise — wiping the
     // user's history every single regenerate.
-    const first = generateProgram(
-      "recomp",
-      3,
-      undefined,
-      "hypertrophy"
-    ).workouts;
+    const first = generateProgram(3, undefined, "hypertrophy").workouts;
     const trained = first.map((d) => ({
       ...d,
       exercises: d.exercises.map((e) => ({
@@ -1761,7 +1734,7 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
         ],
       })),
     }));
-    const again = generateProgram("recomp", 3, trained, "hypertrophy").workouts;
+    const again = generateProgram(3, trained, "hypertrophy").workouts;
 
     // The re-pointed slot is day A's — it must be the SAME exercise, with
     // the same instance and logged load, not a fresh one.
@@ -1775,16 +1748,11 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
   });
 
   it("the re-pointed slot is stable across repeated regenerates", () => {
-    let workouts = generateProgram(
-      "recomp",
-      3,
-      undefined,
-      "hypertrophy"
-    ).workouts;
+    let workouts = generateProgram(3, undefined, "hypertrophy").workouts;
     const idsOf = (w: WorkoutDay[]) => w[0].exercises.map((e) => e.exerciseId);
     const first = idsOf(workouts);
     for (let i = 0; i < 3; i += 1) {
-      workouts = generateProgram("recomp", 3, workouts, "hypertrophy").workouts;
+      workouts = generateProgram(3, workouts, "hypertrophy").workouts;
       expect(idsOf(workouts)).toEqual(first);
     }
   });
@@ -1813,14 +1781,9 @@ describe("accessory identity across a regenerate (backlog #17)", () => {
     // 4 days → upper/lower, which is a split that uses makeAccessory. This
     // exact fixture regressed on main: a 55 kg Bulgarian Split Squat with
     // history became a 40 kg Hack Squat with none.
-    const first = generateProgram(
-      "recomp",
-      4,
-      undefined,
-      "hypertrophy"
-    ).workouts;
+    const first = generateProgram(4, undefined, "hypertrophy").workouts;
     const trained = trainAll(first);
-    const again = generateProgram("recomp", 4, trained, "hypertrophy").workouts;
+    const again = generateProgram(4, trained, "hypertrophy").workouts;
 
     trained.forEach((d, di) =>
       d.exercises.forEach((before, ei) => {
@@ -1835,11 +1798,11 @@ describe("accessory identity across a regenerate (backlog #17)", () => {
 
   it("holds across repeated regenerates, not just the first", () => {
     let workouts = trainAll(
-      generateProgram("recomp", 6, undefined, "hypertrophy").workouts
+      generateProgram(6, undefined, "hypertrophy").workouts
     );
     const ids = workouts.map((d) => d.exercises.map((e) => e.exerciseId));
     for (let i = 0; i < 3; i += 1) {
-      workouts = generateProgram("recomp", 6, workouts, "hypertrophy").workouts;
+      workouts = generateProgram(6, workouts, "hypertrophy").workouts;
       expect(workouts.map((d) => d.exercises.map((e) => e.exerciseId))).toEqual(
         ids
       );
@@ -1850,14 +1813,9 @@ describe("accessory identity across a regenerate (backlog #17)", () => {
     // The carry must not freeze sets/reps, or a real goal change would be
     // silently ignored.
     const strength = trainAll(
-      generateProgram("recomp", 4, undefined, "strength").workouts
+      generateProgram(4, undefined, "strength").workouts
     );
-    const swapped = generateProgram(
-      "recomp",
-      4,
-      strength,
-      "hypertrophy"
-    ).workouts;
+    const swapped = generateProgram(4, strength, "hypertrophy").workouts;
     const repsOf = (w: WorkoutDay[]) =>
       w.flatMap((d) => d.exercises.map((e) => e.reps));
     expect(repsOf(swapped)).not.toEqual(repsOf(strength));
@@ -1866,21 +1824,11 @@ describe("accessory identity across a regenerate (backlog #17)", () => {
   it("does not carry across a slot that legitimately changed movement", () => {
     // applyOverlapCaps re-points slots; the carry is category-guarded so it
     // can't drag a deadlift's log onto the replacement.
-    const first = generateProgram(
-      "recomp",
-      3,
-      undefined,
-      "hypertrophy"
-    ).workouts;
+    const first = generateProgram(3, undefined, "hypertrophy").workouts;
     first.forEach((d) =>
       d.exercises.forEach((e) => expect(e.movementCategory).toBeDefined())
     );
-    const again = generateProgram(
-      "recomp",
-      3,
-      trainAll(first),
-      "hypertrophy"
-    ).workouts;
+    const again = generateProgram(3, trainAll(first), "hypertrophy").workouts;
     again.forEach((d, di) =>
       d.exercises.forEach((e, ei) =>
         expect(e.movementCategory).toBe(
@@ -2020,8 +1968,7 @@ describe("adjacency ordering (backlog #10, M6)", () => {
     schedule?: ReadonlyArray<{ day: number; type: string }>,
     existing?: WorkoutDay[]
   ) =>
-    generateProgram("recomp", n, existing, "hypertrophy", undefined, schedule)
-      .workouts;
+    generateProgram(n, existing, "hypertrophy", undefined, schedule).workouts;
 
   it("changes nothing for a spread-out week", () => {
     // Mon/Wed/Fri — no two sessions are back-to-back, so there is nothing
@@ -2157,12 +2104,7 @@ describe("adjacency ordering (backlog #10, M6)", () => {
 // they make a swap visible.
 describe("regenerate preserves every logged load (all splits)", () => {
   it.each([1, 2, 3, 4, 5, 6])("%i-day split", (days) => {
-    const first = generateProgram(
-      "recomp",
-      days,
-      undefined,
-      "hypertrophy"
-    ).workouts;
+    const first = generateProgram(days, undefined, "hypertrophy").workouts;
     // A unique load per LIFT, so a mis-carry names its own source.
     const loadFor = new Map<string, number>();
     first
@@ -2183,12 +2125,7 @@ describe("regenerate preserves every logged load (all splits)", () => {
         };
       }),
     }));
-    const again = generateProgram(
-      "recomp",
-      days,
-      trained,
-      "hypertrophy"
-    ).workouts;
+    const again = generateProgram(days, trained, "hypertrophy").workouts;
 
     const sourceOf = (w: number) =>
       [...loadFor.entries()].find(([, v]) => v === w)?.[0] ?? "unknown";
@@ -2221,7 +2158,7 @@ describe("no lift is prescribed more than twice a week", () => {
   const GOALS = ["hypertrophy", "strength", "fat_loss", "general"] as const;
   it.each(GOALS)("%s, every split", (goal) => {
     for (const days of [1, 2, 3, 4, 5, 6]) {
-      const { workouts } = generateProgram("recomp", days, undefined, goal);
+      const { workouts } = generateProgram(days, undefined, goal);
       const counts = new Map<string, number>();
       for (const ex of workouts.flatMap((d) => d.exercises)) {
         counts.set(ex.name, (counts.get(ex.name) ?? 0) + 1);
@@ -2235,12 +2172,7 @@ describe("no lift is prescribed more than twice a week", () => {
     // The end-to-end guarantee: the repeat cap must not undo what
     // dedupeDayExercises did earlier in the pipeline.
     for (const days of [1, 2, 3, 4, 5, 6]) {
-      const { workouts } = generateProgram(
-        "recomp",
-        days,
-        undefined,
-        "hypertrophy"
-      );
+      const { workouts } = generateProgram(days, undefined, "hypertrophy");
       workouts.forEach((d) => {
         const ids = d.exercises.map((e) => e.exerciseId);
         expect(new Set(ids).size, `${days}-day / ${d.dayName}`).toBe(
@@ -2253,7 +2185,7 @@ describe("no lift is prescribed more than twice a week", () => {
   it("still trains the muscle at the split's promised frequency", () => {
     // The cap must change WHICH variation fills a slot, never how often the
     // muscle is trained — that frequency is what splitRationale promises.
-    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const { workouts } = generateProgram(3, undefined, "hypertrophy");
     const kneeDays = workouts.filter((d) =>
       d.exercises.some((e) => e.movementCategory === "knee_dominant")
     );
@@ -2287,7 +2219,6 @@ describe("coach-read audit pins (2026-08-03)", () => {
       // lateral raise, since it counts toward the upper back as well
       // (`weeklyFrequency.ts`).
       const { splitType, workouts } = generateProgram(
-        "recomp",
         2,
         undefined,
         goal,
@@ -2330,7 +2261,7 @@ describe("coach-read audit pins (2026-08-03)", () => {
     const { weeklyVolumeByJudgementMuscle } = await import("../volumeModel");
     for (const goal of GOALS) {
       for (const days of [4, 5, 6]) {
-        const { workouts } = generateProgram("recomp", days, undefined, goal);
+        const { workouts } = generateProgram(days, undefined, goal);
         const raises = workouts
           .flatMap((d) => d.exercises)
           .filter((e) => e.exerciseId === "lateral-raise");
@@ -2371,7 +2302,6 @@ describe("coach-read audit pins (2026-08-03)", () => {
       high: 20,
     });
     const { workouts } = generateProgram(
-      "recomp",
       2,
       undefined,
       "hypertrophy",
@@ -2398,7 +2328,6 @@ describe("every muscle on two days a week (Lift4 (5))", () => {
     existing?: WorkoutDay[]
   ) =>
     generateProgram(
-      "recomp",
       days,
       existing,
       "hypertrophy",
@@ -2480,7 +2409,6 @@ describe("generateProgram with the person's limits", () => {
     const { getExerciseById } = await import("@/lib/exercises");
     const home = new Set(["Dumbbells", "Bodyweight", "Kettlebell"]);
     const { workouts } = generateProgram(
-      "recomp",
       4,
       undefined,
       "hypertrophy",

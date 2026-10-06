@@ -50,8 +50,8 @@ export type Goal = "cut" | "lean bulk" | "recomp";
 
 /**
  * Lifting goal from onboarding — orthogonal to the `Goal` type above.
- * `Goal` describes the nutrition phase (cut / lean bulk / recomp) and is
- * already used in the engine to scale volume. `PrimaryGoal` describes the
+ * `Goal` describes the nutrition phase (cut / lean bulk / recomp), which the
+ * lifting doesn't read (Lift4 (4)). `PrimaryGoal` describes the
  * training stimulus the user wants — strength vs hypertrophy vs fat loss
  * vs general vs running-supportive.
  *
