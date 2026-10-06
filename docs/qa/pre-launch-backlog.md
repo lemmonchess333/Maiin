@@ -237,6 +237,14 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
       designed size; a missing map says "Map unavailable" at the top
       right. Known and accepted: at 2× on a 320px screen the "kg" and
       "Reps" column headers run a little past their columns.
+- [ ] **Sign-up, setup and Pro at large text** (2026-10-06). The welcome
+      screen, sign-in, sign-up, every setup step and the Pro offer and
+      plans were measured the same way, down to 320px at 2×. With Larger
+      Text at its largest, make a new account: the answer cards drop their
+      pictures rather than cutting a word, Continue goes above Back when
+      the two don't fit side by side, and each plan's price stays whole.
+      Headings now grow by as much as body text rather than in proportion,
+      so check that page titles still read as titles at every size.
 
 ## The first-visit guide (2026-10-04)
 
