@@ -18,7 +18,7 @@
  * Pure + total: never throws. Absent program / absent lift workouts is a
  * valid zero state (RUN_ONLY, FREE_RUN, pre-onboarding) → liftPhase "none".
  */
-import { generateWeekPrescription } from "@/features/program/programEngine";
+import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import type {
   ProgramState,
   WorkoutDay,

@@ -63,6 +63,7 @@ import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
   getRaceGoalPlannerState,
@@ -206,6 +207,8 @@ export default function RunPlanSettings({
       nonRaceGoal: isNonRaceGoal(profile.nonRaceGoal)
         ? profile.nonRaceGoal
         : null,
+      // Lift4 (10): never asked reads as no.
+      raceLegTrim: profile.raceLegTrim === true,
     }),
     [profile]
   );
@@ -283,6 +286,11 @@ export default function RunPlanSettings({
       ? storedDraft.nonRaceGoal
       : saved.nonRaceGoal
   );
+  const [raceLegTrim, setRaceLegTrim] = useState<boolean>(
+    storedDraft?.raceLegTrim ?? saved.raceLegTrim
+  );
+  /* The leg trim is a lifting question: asked only of someone who lifts. */
+  const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
   const baselineInvalid =
     runMode === "race_prep" &&
     runningBaseline !== null &&
@@ -354,6 +362,7 @@ export default function RunPlanSettings({
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty ||
+        (lifts && raceLegTrim !== saved.raceLegTrim) ||
         runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
         runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
 
@@ -376,6 +385,7 @@ export default function RunPlanSettings({
         runTimeLimits,
         runningBaseline,
         nonRaceGoal,
+        raceLegTrim,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -395,6 +405,7 @@ export default function RunPlanSettings({
     runTimeLimits,
     runningBaseline,
     nonRaceGoal,
+    raceLegTrim,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -484,6 +495,7 @@ export default function RunPlanSettings({
           : {}),
         equipment: profile.equipment ?? "full_gym",
         injuries: profile.injuries ?? [],
+        ...(runMode === "race_prep" && lifts ? { raceLegTrim } : {}),
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
         preserveHistory: true,
@@ -864,6 +876,28 @@ export default function RunPlanSettings({
               ariaLabel="Plan intensity"
             />
           </div>
+          {/* Lift4 (10): the race-setup answer on the leg trim, changeable
+              here for as long as the race runs. */}
+          {lifts && (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Lighten leg sessions while your runs build
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  A third fewer sets on leg lifts, at the same weights, from
+                  your plan&apos;s build weeks until the two lighter weeks
+                  before your race.
+                </p>
+              </div>
+              <Toggle
+                checked={raceLegTrim}
+                label="Lighten leg sessions while your runs build"
+                className="ml-3"
+                onChange={() => setRaceLegTrim((v) => !v)}
+              />
+            </div>
+          )}
         </div>
       )}
 

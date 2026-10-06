@@ -25,6 +25,7 @@ const workout = {
 const sessions: Record<TodayCard, TodaySession> = {
   lift: {
     type: "lift",
+    restContext: {},
     lift: {
       workout,
       index: 0,
@@ -37,30 +38,35 @@ const sessions: Record<TodayCard, TodaySession> = {
   },
   run: {
     type: "run",
+    restContext: {},
     lift: null,
     run: { runDay: null, completed: false, isFirst: true },
     rest: null,
   },
   "first-workout": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "first-workout", workout, index: 0 },
   },
   "free-run": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "free-run" },
   },
   "first-meal": {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "first-meal" },
   },
   rest: {
     type: "rest",
+    restContext: {},
     lift: null,
     run: null,
     rest: { kind: "rest", tomorrow: null },
@@ -260,6 +266,18 @@ describe("the guide's words", () => {
       expect(`${title} ${body}`).not.toMatch(/!/);
       expect(`${title} ${body}`).not.toMatch(/\bI(’|')?(m|ll)?\b/);
     }
+  });
+
+  // Lift4: the starting weights are an estimate, and the first set is the
+  // one place that says so, with or without the automatic rest timer.
+  it("calls the first set's weights a first guess", () => {
+    for (const body of [
+      GUIDE_HINTS["first-set"].body,
+      FIRST_SET_BODY_NO_AUTO_REST,
+    ])
+      expect(body).toContain(
+        "The weights are a first guess. Feels easy? Add weight on the next set."
+      );
   });
 
   it("keys each hint's seen flag by the hint", () => {

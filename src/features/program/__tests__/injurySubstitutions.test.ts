@@ -22,7 +22,12 @@
  *      block a swap.
  */
 import { describe, it, expect } from "vitest";
-import { findSafeSubstitute } from "../injurySubstitutions";
+import {
+  CONTRAINDICATED,
+  INJURY_SUBSTITUTIONS,
+  contraindicatedFor,
+  findSafeSubstitute,
+} from "../injurySubstitutions";
 
 describe("findSafeSubstitute — happy path", () => {
   it("returns the first safe substitute for a single injury", () => {
@@ -77,6 +82,7 @@ describe("findSafeSubstitute — excludeIds", () => {
       "rack-pull",
       "hip-thrust",
       "glute-ham-raise",
+      "glute-bridge",
     ]);
     const result = findSafeSubstitute("deadlift", ["lower_back"], excluded);
     expect(result).toBeNull();
@@ -120,5 +126,38 @@ describe("findSafeSubstitute — deterministic ordering", () => {
     const b = findSafeSubstitute("barbell-row", ["lower_back"]);
     expect(a?.id).toBe(b?.id);
     expect(a?.id).toBe("chest-supported-db-row");
+  });
+});
+
+describe("CONTRAINDICATED — the lifts each injury's promise names (Lift4 (11))", () => {
+  it("gives every named lift a substitute for each injury it is named for", () => {
+    const missing: string[] = [];
+    for (const [id, injuries] of Object.entries(CONTRAINDICATED)) {
+      for (const injury of injuries) {
+        if (!findSafeSubstitute(id, [injury]))
+          missing.push(`${id} / ${injury}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("never offers a substitute for an injury it is itself named for", () => {
+    // Or the next save would swap it again: the old table offered the seated
+    // dumbbell press for a shoulder its own entry flagged.
+    const loops: string[] = [];
+    for (const [id, candidates] of Object.entries(INJURY_SUBSTITUTIONS)) {
+      for (const c of candidates) {
+        for (const injury of contraindicatedFor(c.id, c.safeFor)) {
+          loops.push(`${id} → ${c.id} (${injury})`);
+        }
+      }
+    }
+    expect(loops).toEqual([]);
+  });
+
+  it("reads only the injuries asked about", () => {
+    expect(contraindicatedFor("squat", ["knee", "shoulder"])).toEqual(["knee"]);
+    expect(contraindicatedFor("squat", ["none"])).toEqual([]);
+    expect(contraindicatedFor("lateral-raise", ["shoulder"])).toEqual([]);
   });
 });

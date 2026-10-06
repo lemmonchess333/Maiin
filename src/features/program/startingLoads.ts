@@ -15,6 +15,7 @@
  */
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+import { BAR_KG } from "./warmupRamp";
 
 import type {
   Experience,
@@ -37,8 +38,9 @@ export type { Experience };
 export interface StartingLoadContext {
   bodyweightKg: number;
   experience: Experience;
-  /** Lowers the estimate for female lifters (relative strength differs most on
-   *  upper-body pressing); anything non-female is treated as the male/default. */
+  /** Lowers the estimate for female lifters, by the same factor for every
+   *  movement (`sexFactor`); anything non-female is treated as the
+   *  male/default. */
   sex?: string;
 }
 
@@ -298,6 +300,13 @@ export function weightAfterExerciseSwap(
   return { weight, movementCategory: targetCategory };
 }
 
+/** Who a plan with no bodyweight is estimated for: the light end of adults,
+ *  at the beginner's multiples, so the first guess errs light. */
+const FIRST_GUESS: StartingLoadContext = {
+  bodyweightKg: 60,
+  experience: "beginner",
+};
+
 /**
  * Seed cold-start starting weights on a generated week. Reweights every lift
  * that has NEVER been trained (`performanceHistory` empty) and resolves to a
@@ -324,16 +333,24 @@ export function weightAfterExerciseSwap(
  * EXERCISE (`startingWeightForExercise`) rather than per category — that is
  * what stops a leg curl being seeded like a deadlift.
  *
- * Back-compat: callers without a context don't invoke this, so existing
- * behaviour (hardcoded weights) is unchanged where no profile data exists.
+ * Without a context (no bodyweight) the plan starts from the bar, and the
+ * builders' hardcoded weights never reach anyone (Lift4 (5)).
  */
 export function seedStartingLoads(
   workouts: WorkoutDay[],
-  ctx: StartingLoadContext,
+  /** The person's size and level. Without a bodyweight there is nothing to
+   *  scale from, so the plan starts from the bar (Lift4 (5)): a barbell lift
+   *  at the empty bar, and anything else at a light first guess, the
+   *  estimate for a 60 kg beginner, rather than the builders' fixed loads.
+   *  The first-set hint says the weights are a first guess either way. */
+  ctx: StartingLoadContext | undefined,
   /** The goal profile's MAIN rep target, so the seed reflects the intensity
    *  the programme prescribes. Omitted → the historical ~8-rep anchor, i.e.
    *  byte-identical to the rep-blind behaviour. */
-  repAnchor?: number
+  repAnchor?: number,
+  /** Seed only lifts at 0 kg: a plan the person already has keeps the loads
+   *  it shows, and only a lift with none gets a first guess. */
+  { unloadedOnly = false }: { unloadedOnly?: boolean } = {}
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
@@ -356,43 +373,46 @@ export function seedStartingLoads(
           (ex.performanceHistory ?? []).some((r) => (r.weight ?? 0) > 0);
         if (carriedLoad) return ex; // genuinely calibrated — never touch it
       }
-      const seed = startingWeightForExercise(
-        ex.exerciseId,
-        ex.movementCategory,
-        ctx,
-        ex.isAccessory === true,
-        // One anchor for the whole PROGRAMME — not `ex.reps`, and not a
-        // per-slot main/accessory split.
-        //
-        // Two things force this. Seeding runs after `applyDayRoles`, so
-        // `ex.reps` is the undulated per-DAY target (heavy -2, pump +2) with
-        // `baseReps` overwritten to match; and some builders prescribe
-        // accessory reps on slots they do not flag `isAccessory`, so
-        // `bench-press` is a main on one hypertrophy/3d day and an accessory
-        // on another. Either input gives the same lift two different loads in
-        // one week, which `generatorAudit`'s "prescribes ONE load per lift
-        // across the week" catches — rightly, since a lifter has one working
-        // weight per lift and the rep target is what makes a day hard or easy.
-        //
-        // The mains carry the goal's intensity claim (and are what the
-        // running-economy evidence is about), so they set the anchor and
-        // accessories inherit it. That over-loads a high-rep accessory
-        // slightly on a low-rep goal — ~12% at a 4-rep anchor — which the
-        // table's deliberate conservatism absorbs, and which the progression
-        // engine corrects within a session or two either way.
-        repAnchor,
-        ex.repUnit
-      );
+      if (unloadedOnly && (ex.weight ?? 0) > 0) return ex;
+      const fromTheBar =
+        !ctx &&
+        !BODYWEIGHT_IDS.has(ex.exerciseId) &&
+        getExerciseById(ex.exerciseId)?.equipment === "Barbell";
+      const seed = fromTheBar
+        ? BAR_KG
+        : startingWeightForExercise(
+            ex.exerciseId,
+            ex.movementCategory,
+            ctx ?? FIRST_GUESS,
+            ex.isAccessory === true,
+            // One anchor for the whole PROGRAMME — not `ex.reps`, and not a
+            // per-slot main/accessory split.
+            //
+            // Two things force this. Seeding runs after `applyDayRoles`, so
+            // `ex.reps` is the undulated per-DAY target (heavy -2, pump +2) with
+            // `baseReps` overwritten to match; and some builders prescribe
+            // accessory reps on slots they do not flag `isAccessory`, so
+            // `bench-press` is a main on one hypertrophy/3d day and an accessory
+            // on another. Either input gives the same lift two different loads in
+            // one week, which `generatorAudit`'s "prescribes ONE load per lift
+            // across the week" catches — rightly, since a lifter has one working
+            // weight per lift and the rep target is what makes a day hard or easy.
+            //
+            // The mains carry the goal's intensity claim (and are what the
+            // running-economy evidence is about), so they set the anchor and
+            // accessories inherit it. That over-loads a high-rep accessory
+            // slightly on a low-rep goal — ~12% at a 4-rep anchor — which the
+            // table's deliberate conservatism absorbs, and which the progression
+            // engine corrects within a session or two either way.
+            repAnchor,
+            ex.repUnit
+          );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
       return {
         ...ex,
         weight: seed,
         lastSuccessfulWeight: seed,
         lastAttemptedWeight: seed,
-        // The rotation anchor: meso rotation scales future variations of
-        // this slot from THIS calibration, never from a prior rotation's
-        // output — the fix for the documented compounding decay.
-        rotationAnchor: { exerciseId: ex.exerciseId, weight: seed },
       };
     }),
   }));

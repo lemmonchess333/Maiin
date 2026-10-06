@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -30,6 +31,7 @@ import {
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
   DRAFT_AGE_RANGES,
+  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
@@ -45,6 +47,7 @@ import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import SessionLengthLabel from "@/components/program/SessionLengthLabel";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -193,11 +196,27 @@ export default function Onboarding() {
     Exclude<OnboardingDraft["daysPerWeek"], 0>
   >(draft?.liftDaysPreference ?? (draft?.daysPerWeek || 4));
   const daysPerWeek = hasLifting ? liftDaysPreference : 0;
+  // Lift4 (5): asked with the days, and the plan is built to fit it.
+  const [sessionMinutes, setSessionMinutes] = useState<
+    NonNullable<OnboardingDraft["sessionMinutes"]>
+  >(draft?.sessionMinutes ?? 60);
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
+  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  const [barbellAtHome, setBarbellAtHome] = useState(
+    draft?.barbellAtHome ?? false
+  );
+  const [smallPlates, setSmallPlates] = useState(draft?.smallPlates ?? false);
+  // Lift4 (10): asked with a race. Unanswered, the plan takes yes for
+  // Support my running and no otherwise (`buildOnboardingPlan`).
+  const [raceLegTrim, setRaceLegTrim] = useState<boolean | undefined>(
+    draft?.raceLegTrim
+  );
+  // Until the person picks one, the draft week is a beginner's: an unknown
+  // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
-    draft?.experience ?? "intermediate"
+    draft?.experience ?? "beginner"
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -266,6 +285,10 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
     }),
     [
       step,
@@ -297,6 +320,10 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
     ]
   );
   useEffect(() => {
@@ -368,6 +395,10 @@ export default function Onboarding() {
           raceTargetDate,
           injuries,
           weightKg,
+          sessionMinutes,
+          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
+          smallPlates,
+          raceLegTrim,
         },
         goalPlan.fitnessGoal,
         currentDate,
@@ -390,6 +421,10 @@ export default function Onboarding() {
       raceTargetDate,
       injuries,
       weightKg,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
@@ -513,6 +548,7 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
+        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
         // #975: race_prep without a date → freeform substrate (Run9a),
@@ -881,9 +917,24 @@ export default function Onboarding() {
                   className="py-2"
                 />
               )}
+              {hasLifting && (
+                <SegmentedControl<
+                  NonNullable<OnboardingDraft["sessionMinutes"]>
+                >
+                  ariaLabel="Minutes per lift session"
+                  value={sessionMinutes}
+                  options={DRAFT_SESSION_MINUTES.map((n) => ({
+                    value: n,
+                    label: <SessionLengthLabel minutes={n} />,
+                  }))}
+                  onChange={setSessionMinutes}
+                  tone="lifting"
+                  className="@container"
+                />
+              )}
               <p className="text-sm text-muted-foreground">
                 {hasLifting
-                  ? "Choose lift sessions per week. The draft below updates with your plan."
+                  ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
                   : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
               </p>
               {hasLifting && (
@@ -1044,6 +1095,30 @@ export default function Onboarding() {
                           Some days include a lift and a run.
                         </p>
                       )}
+                      {hasLifting && (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-foreground">
+                              Lighten leg sessions while your runs build
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              A third fewer sets on leg lifts, at the same
+                              weights, from your plan's build weeks until the
+                              two lighter weeks before your race.
+                            </p>
+                          </div>
+                          <Toggle
+                            checked={raceLegTrim ?? primaryGoal === "running"}
+                            label="Lighten leg sessions while your runs build"
+                            className="ml-3"
+                            onChange={() =>
+                              setRaceLegTrim(
+                                !(raceLegTrim ?? primaryGoal === "running")
+                              )
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1074,7 +1149,7 @@ export default function Onboarding() {
                     {
                       id: "home_gym",
                       label: "Home gym",
-                      desc: "Barbell and dumbbell setup.",
+                      desc: "Dumbbells, a bench and a pull-up bar.",
                       art: "db-bench",
                     },
                     {
@@ -1102,6 +1177,48 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              {equipmentConfirmed && (
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">What do you have?</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Optional. The plan uses what you have.
+                    </p>
+                  </div>
+                  {equipment !== "full_gym" && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-foreground">
+                          A barbell and a rack
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Squats, deadlifts and presses with the bar.
+                        </p>
+                      </div>
+                      <Toggle
+                        checked={barbellAtHome}
+                        label="A barbell and a rack"
+                        className="ml-3"
+                        onChange={() => setBarbellAtHome((v) => !v)}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-foreground">Small plates</p>
+                      <p className="text-xs text-muted-foreground">
+                        Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                      </p>
+                    </div>
+                    <Toggle
+                      checked={smallPlates}
+                      label="Small plates"
+                      className="ml-3"
+                      onChange={() => setSmallPlates((v) => !v)}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
                 {(

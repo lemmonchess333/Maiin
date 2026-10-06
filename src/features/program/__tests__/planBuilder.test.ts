@@ -18,7 +18,21 @@ import {
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
+  type ProgramState,
 } from "../programTypes";
+import {
+  advanceWeek,
+  applyDeload,
+  assignDayRoles,
+  easeBackIn,
+  raceLegSets,
+  repFloorFor,
+  undulationDeltaFor,
+} from "../programEngine";
+import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
+import { loadsTheLegs } from "../easierToday";
+import { roleRepsFor } from "../roleTable";
+import { getExerciseById } from "@/lib/exercises";
 
 function makeInput(
   overrides: Partial<PlanBuilderInput> = {}
@@ -521,6 +535,25 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     schemaVersion: 1 as const,
   };
 
+  it("carries the weeks back after a break through a content edit", () => {
+    // Lift4 (11): or a calendar lighter week could follow the break.
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const existingState = {
+      ...first.programState,
+      easingBack: { weeksLeft: 1 },
+    };
+    expect(
+      buildPlan(
+        makeInput({ liftDays: 4, existingState, preserveHistory: true })
+      ).programState.easingBack
+    ).toEqual({ weeksLeft: 1 });
+    expect(
+      buildPlan(
+        makeInput({ liftDays: 4, existingState, preserveHistory: false })
+      ).programState.easingBack
+    ).toBeUndefined();
+  });
+
   it("carries an active training block through a content edit", () => {
     const first = buildPlan(makeInput({ liftDays: 4 }));
     const edited = buildPlan(
@@ -707,6 +740,199 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     );
   });
 
+  it("a lift a content edit's injury swap brings in takes its own role's numbers", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const customized = JSON.parse(
+      JSON.stringify(first.programState)
+    ) as typeof first.programState;
+    // An accessory leg extension at numbers no role gives.
+    customized.workouts[1].exercises[2] = {
+      ...customized.workouts[1].exercises[2],
+      exerciseId: "leg-extension",
+      name: "Leg Extension",
+      movementCategory: "knee_dominant",
+      isAccessory: true,
+      reps: 20,
+      baseReps: 20,
+      repRangeMax: 25,
+    };
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: customized,
+        preserveHistory: true,
+      })
+    );
+    const swapped = edited.programState.workouts[1].exercises[2];
+    expect(swapped.exerciseId).not.toBe("leg-extension");
+    // Day 2 of 4 is a heavier day: its role's bottom, two under.
+    const row = roleRepsFor("hypertrophy", swapped, "intermediate");
+    const reps = Math.max(
+      repFloorFor(swapped),
+      row.bottom + undulationDeltaFor(swapped, assignDayRoles(4)[1])
+    );
+    expect(swapped.reps).toBe(reps);
+    expect(swapped.baseReps).toBe(reps);
+    // …and the slots the edit left alone are as they were.
+    expect(edited.programState.workouts[0].exercises).toEqual(
+      customized.workouts[0].exercises
+    );
+  });
+
+  // Lift4 (11): removing a limitation brings the original lifts back as part
+  // of saving.
+  const lifts = (state: {
+    workouts: { exercises: { exerciseId: string }[] }[];
+  }) => state.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+
+  it("a save that lifts an injury brings back the lifts it swapped out", () => {
+    const healthy = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const knee = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: healthy,
+        preserveHistory: true,
+      })
+    ).programState;
+    const swapped = knee.workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.swappedFrom);
+    expect(swapped.map((e) => e.swappedFrom!.exerciseId)).toContain("squat");
+    // While the knee is still there, a save keeps the swaps.
+    const again = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: knee,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(again)).toEqual(lifts(knee));
+    // Lifted: the plan's own lifts come back, with nothing marking a swap.
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: [],
+        existingState: knee,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(healthy));
+    for (const ex of back.workouts.flatMap((d) => d.exercises)) {
+      expect(ex.swappedFrom, ex.exerciseId).toBeUndefined();
+    }
+    // …at their role's numbers on their day.
+    expect(
+      back.workouts.map((d) => d.exercises.map((e) => `${e.sets}×${e.reps}`))
+    ).toEqual(
+      healthy.workouts.map((d) => d.exercises.map((e) => `${e.sets}×${e.reps}`))
+    );
+  });
+
+  it("a save with the equipment back brings back the lifts it swapped out", () => {
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(home)).not.toEqual(lifts(gym));
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "full_gym",
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(gym));
+  });
+
+  it("goes back to the plan's own lift through a second swap", () => {
+    // A home gym makes the barbell curl a dumbbell curl; a sore elbow then
+    // makes that a hammer curl. Both lifted, the barbell curl comes back,
+    // not the dumbbell curl in between.
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    expect(lifts(gym).flat()).toContain("barbell-curl");
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    const elbow = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        injuries: ["elbow"],
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(elbow).flat()).not.toContain("db-curl");
+    const back = buildPlan(
+      makeInput({
+        liftDays: 4,
+        existingState: elbow,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(lifts(back)).toEqual(lifts(gym));
+  });
+
+  it("a new plan takes small plates from the setup; a plan the person has keeps its settings", () => {
+    const fresh = buildPlan(makeInput({ smallPlates: true })).programState;
+    expect(fresh.settings?.smallPlates).toBe(true);
+    expect(buildPlan(makeInput()).programState.settings?.smallPlates).toBe(
+      false
+    );
+    const kept = buildPlan(
+      makeInput({
+        smallPlates: false,
+        existingState: fresh,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(kept.settings?.smallPlates).toBe(true);
+  });
+
+  it("a save that adds a barbell at home brings the barbell lifts back", () => {
+    const gym = buildPlan(makeInput({ liftDays: 4 })).programState;
+    const home = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: gym,
+        preserveHistory: true,
+      })
+    ).programState;
+    const withBar = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        barbellAtHome: true,
+        existingState: home,
+        preserveHistory: true,
+      })
+    ).programState;
+    // The barbell lifts come back; the cable and machine ones stay swapped.
+    expect(lifts(withBar).flat()).toEqual(
+      expect.arrayContaining(["squat", "bench-press"])
+    );
+    for (const ex of withBar.workouts.flatMap((d) => d.exercises)) {
+      expect(["Cable Machine", "Machine"]).not.toContain(
+        getExerciseById(ex.exerciseId)?.equipment
+      );
+    }
+  });
+
   it("a content edit honours equipment in place (swaps unavailable exercises)", () => {
     const first = buildPlan(makeInput({ liftDays: 4 }));
     // Force a Barbell exercise into a slot, then downgrade equipment to home_gym.
@@ -737,6 +963,139 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
   });
 });
 
+/* ─── Lift4 · a level change is a content edit ────────────────────
+   It rebuilt the week and dropped every customisation while the save's own
+   confirm said "keep your current workouts". The level now reaches the plan
+   only through what reads it, and a plan being built. */
+describe("buildPlan · a level change is a content edit (Lift4)", () => {
+  const ids = (plan: ReturnType<typeof buildPlan>) =>
+    plan.programState.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+  const intermediate = () =>
+    buildPlan(makeInput({ experience: "intermediate" }));
+
+  it("keeps the week's exercises, sets and reps when the level changes", () => {
+    const first = intermediate();
+    const edited = buildPlan(
+      makeInput({
+        experience: "beginner",
+        previousExperience: "intermediate",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    const shape = (plan: ReturnType<typeof buildPlan>) =>
+      plan.programState.workouts.map((d) =>
+        d.exercises.map((e) => [e.exerciseId, e.sets, e.reps])
+      );
+    expect(shape(edited)).toEqual(shape(first));
+  });
+
+  it("does not swap lifts by level on a later, unrelated save", () => {
+    const first = intermediate();
+    // The gate has something to swap: pull-ups are not a beginner's lift.
+    const seeded = buildPlan(
+      makeInput({ experience: "beginner", existingState: first.programState })
+    );
+    expect(ids(seeded)).not.toEqual(ids(first));
+    // The profile already says beginner; the save is about something else.
+    const later = buildPlan(
+      makeInput({
+        experience: "beginner",
+        previousExperience: "beginner",
+        nutritionPhase: "cut",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(ids(later)).toEqual(ids(first));
+  });
+
+  it("still gates a plan built at onboarding from a template", () => {
+    // No previous level: a first plan, which the level picks for.
+    const first = intermediate();
+    const seeded = buildPlan(
+      makeInput({ experience: "beginner", existingState: first.programState })
+    );
+    expect(ids(seeded).flat()).not.toContain("pull-ups");
+  });
+});
+
+/* ─── Lift4 (5) · plans fit the session length ──────────────────── */
+describe("buildPlan · sessions fit the time the person has (Lift4 (5))", () => {
+  const sets = (plan: ReturnType<typeof buildPlan>) =>
+    plan.programState.workouts.map((d) => d.exercises.map((e) => e.sets));
+  const total = (plan: ReturnType<typeof buildPlan>) =>
+    sets(plan)
+      .flat()
+      .reduce((n, s) => n + s, 0);
+
+  it("fits a new plan to the answer, an hour when there is none", () => {
+    const half = buildPlan(makeInput({ sessionMinutes: 30 }));
+    const unanswered = buildPlan(makeInput());
+    expect(half.programState.sessionMinutes).toBe(30);
+    expect(unanswered.programState.sessionMinutes).toBe(60);
+    expect(total(half)).toBeLessThan(total(unanswered));
+    // The answer is kept with the plan it shaped.
+    expect(half.profileUpdates.liftTimeBudgetMinutes).toBe(30);
+    expect("liftTimeBudgetMinutes" in unanswered.profileUpdates).toBe(false);
+  });
+
+  it("re-fits the plan's sets, never its lifts, when a save changes the length", () => {
+    const first = buildPlan(makeInput({ sessionMinutes: 75 }));
+    const edited = buildPlan(
+      makeInput({
+        sessionMinutes: 30,
+        previousSessionMinutes: 75,
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    const ids = (plan: ReturnType<typeof buildPlan>) =>
+      plan.programState.workouts.map((d) =>
+        d.exercises.map((e) => e.exerciseId)
+      );
+    expect(ids(edited)).toEqual(ids(first));
+    expect(total(edited)).toBeLessThan(total(first));
+    expect(edited.programState.sessionMinutes).toBe(30);
+    // …and back again gives the sets back.
+    const back = buildPlan(
+      makeInput({
+        sessionMinutes: 75,
+        previousSessionMinutes: 30,
+        existingState: edited.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(sets(back)).toEqual(sets(first));
+  });
+
+  it("keeps the sets, and the length the plan was fitted to, on any other save", () => {
+    const first = buildPlan(makeInput({ sessionMinutes: 45 }));
+    const later = buildPlan(
+      makeInput({
+        sessionMinutes: 45,
+        previousSessionMinutes: 45,
+        nutritionPhase: "cut",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(sets(later)).toEqual(sets(first));
+    expect(later.programState.sessionMinutes).toBe(45);
+    // A plan from before plans were fitted stays unfitted until asked.
+    const { sessionMinutes: _drop, ...legacy } = first.programState;
+    const kept = buildPlan(
+      makeInput({
+        sessionMinutes: 60,
+        previousSessionMinutes: 60,
+        existingState: legacy,
+        preserveHistory: true,
+      })
+    );
+    expect(kept.programState.sessionMinutes).toBeUndefined();
+  });
+});
+
 describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", () => {
   // Week of Monday 28 September 2026.
   it("is this week for a Monday-to-Wednesday start", () => {
@@ -761,5 +1120,245 @@ describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", ()
     expect(save("2026-10-05")).toBe("2026-10-05");
     expect(save("2026-09-28")).toBe("2026-09-28");
     expect(save("2026-09-21")).toBe("2026-09-28");
+  });
+});
+
+/* ─── Lift4 (10): the race build's leg trim on save ─────────────────── */
+
+describe("buildPlan · the race build's leg trim", () => {
+  const raceGoal = { distance: "half" as const, targetDate: "2026-07-16" };
+  /** A half-marathon plan saved part-way into its block: a 16-week block
+   *  with nine weeks left puts the plan in a build week. */
+  function inBuildWeek(over: Partial<PlanBuilderInput> = {}) {
+    const fresh = buildPlan(
+      makeInput({ runMode: "race_prep", weeklyRunDays: 3, raceGoal })
+    ).programState;
+    const existingState = {
+      ...fresh,
+      runPlan: { ...fresh.runPlan!, totalWeeks: 16 },
+    };
+    return makeInput({
+      runMode: "race_prep",
+      weeklyRunDays: 3,
+      raceGoal,
+      existingState,
+      preserveHistory: true,
+      ...over,
+    });
+  }
+  const legSets = (state: ProgramState) =>
+    state.workouts.flatMap((d) =>
+      d.exercises.filter(loadsTheLegs).map((e) => [e.sets, e.baseSets])
+    );
+
+  it("is set up in a build week", () => {
+    const out = buildPlan(inBuildWeek());
+    expect(isRaceBuildWeek(raceBlockWeek(out.programState.runPlan))).toBe(true);
+  });
+
+  it("trims the leg lifts at once on a yes, and saves the answer", () => {
+    const out = buildPlan(inBuildWeek({ raceLegTrim: true }));
+    expect(out.programState.raceWeek).toBe("build");
+    const legs = legSets(out.programState);
+    expect(legs.length).toBeGreaterThan(0);
+    for (const [sets, base] of legs) expect(sets).toBe(raceLegSets(base!));
+    expect(legs.some(([sets, base]) => sets! < base!)).toBe(true);
+    expect(out.profileUpdates.raceLegTrim).toBe(true);
+  });
+
+  it("gives the sets back on a no", () => {
+    const trimmed = buildPlan(inBuildWeek({ raceLegTrim: true })).programState;
+    const out = buildPlan(
+      inBuildWeek({ raceLegTrim: false, existingState: trimmed })
+    );
+    expect(out.programState.raceWeek).toBeUndefined();
+    for (const [sets, base] of legSets(out.programState))
+      expect(sets).toBe(base);
+    expect(out.profileUpdates.raceLegTrim).toBe(false);
+  });
+
+  it("leaves a lighter week as it is", () => {
+    const fresh = buildPlan(inBuildWeek()).programState;
+    const lighter = { ...fresh, currentPhase: "deload" as const };
+    const out = buildPlan(
+      inBuildWeek({ raceLegTrim: true, existingState: lighter })
+    );
+    expect(out.programState.raceWeek).toBeUndefined();
+    for (const [sets, base] of legSets(out.programState))
+      expect(sets).toBe(base ?? sets);
+  });
+});
+
+/* ─── A rebuild inside a lighter week keeps it lighter ──────────────── */
+
+describe("buildPlan · a rebuild inside a lighter week", () => {
+  /** A four-day plan in a lighter week: half the sets, from the plan's. */
+  function lighterWeek(over: Partial<ProgramState> = {}): ProgramState {
+    const fresh = buildPlan(makeInput()).programState;
+    return {
+      ...fresh,
+      currentPhase: "deload",
+      workouts: applyDeload(fresh.workouts),
+      ...over,
+    };
+  }
+  const halved = (state: ProgramState) =>
+    state.workouts.every((d) =>
+      d.exercises.every(
+        (e) => e.sets === Math.max(1, Math.ceil((e.baseSets ?? e.sets) / 2))
+      )
+    );
+
+  it("keeps half the sets when the lift days change", () => {
+    const out = buildPlan(
+      makeInput({
+        liftDays: 3,
+        preferredSplit: "full_body",
+        existingState: lighterWeek(),
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(out.currentPhase).toBe("deload");
+    expect(out.workouts).toHaveLength(3);
+    expect(halved(out)).toBe(true);
+    expect(
+      out.workouts.some((d) => d.exercises.some((e) => e.sets < e.baseSets!))
+    ).toBe(true);
+  });
+
+  it("keeps half the sets when the session length changes", () => {
+    const existing = lighterWeek({ sessionMinutes: 60 });
+    const out = buildPlan(
+      makeInput({
+        existingState: existing,
+        preserveHistory: true,
+        sessionMinutes: 45,
+        previousSessionMinutes: 60,
+      })
+    ).programState;
+    expect(out.currentPhase).toBe("deload");
+    expect(halved(out)).toBe(true);
+  });
+
+  it("keeps the set fewer of the first week back after a break", () => {
+    const fresh = buildPlan(makeInput()).programState;
+    const back = easeBackIn(fresh, 0.1);
+    const out = buildPlan(
+      makeInput({
+        liftDays: 3,
+        preferredSplit: "full_body",
+        existingState: back,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(out.easingBack).toEqual({ weeksLeft: 2 });
+    for (const day of out.workouts)
+      for (const lift of day.exercises)
+        expect(lift.sets).toBe(Math.max(1, lift.baseSets! - 1));
+  });
+
+  it("keeps a lighter week taken in a race build week as it is", () => {
+    const raceGoal = { distance: "half" as const, targetDate: "2026-07-16" };
+    const race = buildPlan(
+      makeInput({ runMode: "race_prep", weeklyRunDays: 3, raceGoal })
+    ).programState;
+    const trimmed = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal,
+        raceLegTrim: true,
+        existingState: {
+          ...race,
+          runPlan: { ...race.runPlan!, totalWeeks: 16 },
+        },
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(trimmed.raceWeek).toBe("build");
+    // "Take a lighter week": half the plan's sets, the build mark kept.
+    const lighter = {
+      ...trimmed,
+      currentPhase: "deload" as const,
+      workouts: applyDeload(trimmed.workouts),
+    };
+    const saved = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal,
+        raceLegTrim: false,
+        existingState: lighter,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(saved.workouts).toEqual(lighter.workouts);
+  });
+
+  it("keeps race week one short session, its legs halved once", () => {
+    const fullBody = { liftDays: 3, preferredSplit: "full_body" as const };
+    const fresh = buildPlan(
+      makeInput({ ...fullBody, bodyweightKg: 80 })
+    ).programState;
+    // A week trained, so each lift has a load in its history and keeps it.
+    const raceWeek = advanceWeek(
+      {
+        ...fresh,
+        workouts: fresh.workouts.map((d) => ({
+          ...d,
+          completed: true,
+          exercises: d.exercises.map((e) => ({
+            ...e,
+            performanceHistory: [
+              {
+                date: "2026-05-10",
+                weight: e.weight,
+                repsCompleted: e.reps,
+                repsTarget: e.reps,
+              },
+            ],
+          })),
+        })),
+      },
+      "intermediate",
+      undefined,
+      { weekIndex: 15, totalWeeks: 16, distance: "half" }
+    );
+    expect(raceWeek.raceWeek).toBe("race");
+    const legsOf = (state: ProgramState) =>
+      state.workouts[0].exercises
+        .filter((e) => loadsTheLegs(e) && e.weight > 0)
+        .map((e) => [e.weight, e.preDeloadWeight]);
+    const before = legsOf(raceWeek);
+    expect(before.length).toBeGreaterThan(0);
+    // A refit keeps the week's sessions: the legs are not halved again.
+    const refit = buildPlan(
+      makeInput({
+        ...fullBody,
+        bodyweightKg: 80,
+        existingState: { ...raceWeek, sessionMinutes: 60 },
+        preserveHistory: true,
+        sessionMinutes: 45,
+        previousSessionMinutes: 60,
+      })
+    ).programState;
+    expect(legsOf(refit)).toEqual(before);
+    expect(refit.workouts.slice(1).every((d) => d.skipped)).toBe(true);
+    // New lift days rebuild it: still one session, the other skipped, and
+    // its legs at half their weight.
+    const rebuilt = buildPlan(
+      makeInput({
+        liftDays: 2,
+        preferredSplit: "full_body",
+        bodyweightKg: 80,
+        existingState: raceWeek,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(rebuilt.raceWeek).toBe("race");
+    expect(rebuilt.workouts.map((d) => !!d.skipped)).toEqual([false, true]);
+    // Halved once, from the plan's own weights, which the week after gives
+    // back.
+    expect(legsOf(rebuilt)).toEqual(before);
   });
 });

@@ -276,7 +276,7 @@ function accountFrom(daysAgo: number) {
     })),
     fatigueScore: 0,
     updatedAt: 0,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays: [],

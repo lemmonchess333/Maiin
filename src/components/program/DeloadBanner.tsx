@@ -36,13 +36,13 @@ interface DeloadBannerProps {
    * deload the athlete is in, instead of one sentence covering both.
    */
   runsEased?: number;
-  /** Training age, straight from `profile.experience`. Drives the
-   *  ACTIVE-state copy so it describes the recipe the deload actually
-   *  applied (backlog #8's tier split — see deloadEngine): beginner or
-   *  unknown cuts a set AND load; intermediate/advanced cuts a set and
-   *  reps AT THE SAME LOAD. The old fixed "lighter weights" sentence
-   *  was false for every post-novice user (evidence-handoff LIFT-EV-03). */
-  experience?: "beginner" | "intermediate" | "advanced";
+  /** Lift4 (10): which of a race's final weeks this lighter week is
+   *  (`programState.raceWeek`), so the confirmation says so. A lighter week
+   *  taken in a build week is an ordinary one. */
+  raceWeek?: "build" | "taper" | "race" | "after";
+  /** Lift4 (10): today is one of the race's rest days (`isRaceRestDay`),
+   *  when a session not done is skipped, so the banner says why. */
+  raceRest?: boolean;
   /** PROGRAM-DELOAD-01: applies the deload to the active week (the
    *  server `applyDeloadWeek` command). Resolves true on success —
    *  the banner fires the reserved `action: 'applied'` telemetry;
@@ -66,12 +66,10 @@ interface DeloadBannerProps {
  *
  * PROGRAM-DELOAD-01 delivers the Apply CTA that v1 reserved: `onApply`
  * routes through the server `applyDeloadWeek` programme command, which
- * applies the SAME tier-split recipe as the automatic week-4 path
- * (deloadEngine mirror of programEngine.applyDeload — beginner/unknown:
- * −1 set + weight ×0.85; intermediate/advanced: −1 set and lower
- * targets at held load). While the week is already deloaded
- * (`deloadActive`) the banner renders a calm confirmation instead of
- * the CTA, worded for the recipe the user's tier actually received.
+ * applies the SAME recipe as the calendar's lighter week (deloadEngine
+ * mirror of programEngine.applyDeload: half the sets at the same
+ * weights). While the week is already a lighter one (`deloadActive`) the
+ * banner renders a calm confirmation instead of the CTA.
  *
  * Telemetry per Pgm3 lock:
  *   - programme_deload_banner_viewed: fires once per session when
@@ -93,16 +91,12 @@ export default function DeloadBanner({
   weekKey,
   deloadActive = false,
   runsEased,
-  experience,
+  raceWeek,
+  raceRest = false,
   onApply,
   dismissed: dismissedProp,
   onDismiss,
 }: DeloadBannerProps) {
-  // Mirrors the recipe branch in programEngine.applyDeload /
-  // functions/lib/deloadEngine.js exactly: only these two tiers hold
-  // load; beginner AND unknown fall back to the novice cut.
-  const deloadHoldsLoad =
-    experience === "intermediate" || experience === "advanced";
   const own = useDismissOnce(deloadDismissKey(weekKey));
   const dismissed = dismissedProp ?? own.dismissed;
   const dismiss = onDismiss ?? own.dismiss;
@@ -112,6 +106,33 @@ export default function DeloadBanner({
     runsEased && runsEased > 0
       ? ` ${runsEased === 1 ? "One run is" : `${runsEased} runs are`} a step shorter too.`
       : "";
+  /* The race's final weeks say what each is for (Lift4 (10)), and its rest
+     days why nothing is left to lift. */
+  const active =
+    raceRest && (raceWeek === "taper" || raceWeek === "race")
+      ? {
+          title: raceWeek === "race" ? "Race week" : "Taper",
+          body: "No lifting in the two days before your race, or on the day, so your legs are fresh for it.",
+        }
+      : raceWeek === "taper"
+        ? {
+            title: "Taper",
+            body: "Half the sets this week, at the same weights, so you reach the race fresh.",
+          }
+        : raceWeek === "race"
+          ? {
+              title: "Race week",
+              body: "One short session this week, with nothing heavy for your legs, at least three days before the race.",
+            }
+          : raceWeek === "after"
+            ? {
+                title: "Recovery",
+                body: "Half the sets this week, at the same weights, while you recover from the race. The full plan is back next week.",
+              }
+            : {
+                title: "Lighter week",
+                body: `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`,
+              };
   const prefersReducedMotion = useReducedMotion();
   // viewedFiredRef ensures the viewed event fires at most once per
   // mount-visible cycle. If the week changes or the flag re-trips
@@ -191,9 +212,7 @@ export default function DeloadBanner({
               background: (deloadActive ? THEME.success : THEME.warning) + "14",
             }}
             role="region"
-            aria-label={
-              deloadActive ? "Deload week active" : "Deload week recommended"
-            }
+            aria-label={deloadActive ? active.title : "Lighter week suggested"}
           >
             {/* The flame gives its room to the words under 14em of banner
                 (larger text on the phone), where "Consider" no longer
@@ -221,25 +240,19 @@ export default function DeloadBanner({
                       : "hsl(var(--warning-strong))",
                   }}
                 >
-                  {deloadActive
-                    ? "Deload week active"
-                    : "Consider a deload week"}
+                  {deloadActive ? active.title : "Consider a lighter week"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                   {deloadActive
-                    ? `${
-                        deloadHoldsLoad
-                          ? "This week's volume is eased — one set fewer and slightly lower targets, at the same weights."
-                          : "This week's loads are eased — lighter weights, one set fewer."
-                      }${runsEasedClause} Push again next week.`
-                    : "Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger."}
+                    ? active.body
+                    : "Your running load has been high, with signs of reduced recovery. A lighter week can help you come back stronger."}
                 </p>
               </div>
               {!deloadActive && (
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  aria-label="Dismiss deload banner"
+                  aria-label="Dismiss the lighter week suggestion"
                   className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
                 >
                   <X className="size-4" aria-hidden="true" />
@@ -254,7 +267,7 @@ export default function DeloadBanner({
                   loading={applying}
                   onClick={() => void handleApply()}
                 >
-                  Apply deload week
+                  Take a lighter week
                 </Button>
               </div>
             )}

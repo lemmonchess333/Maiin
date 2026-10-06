@@ -1,20 +1,29 @@
 import { sameStoredValue } from "./stateTransition";
-import type { ProgramExercise, ProgramState } from "./programTypes";
+import {
+  DEFAULT_PROGRAM_SETTINGS,
+  type ProgramExercise,
+  type ProgramState,
+} from "./programTypes";
 import type { LoggedSet } from "./workoutSetRecord";
 import {
-  applyProgression,
+  afterLoweredLine,
+  applySessionSets,
   liftedLoad,
   PERFORMANCE_HISTORY_CAP,
 } from "./programEngine";
-import { progressionSetFor } from "./sessionSetPolicy";
-import { blockWeekOf } from "./trainingBlock";
-import { isProgressionHeld } from "./represcribe";
+import { readSessionSets, recordedReps } from "./sessionSets";
+import { keptSwap, type SessionSwap } from "./sessionSwap";
+import { loadsTheLegs } from "./easierToday";
+import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
 
 /** The session owns these facts even if the plan changes while it is open. */
 export interface SessionPrescription {
   dayName?: string;
   exercises: ProgramExercise[];
   progressionBaseline: ProgramExercise[];
+  /** Lift4 (11): exercises swapped in for today, and whether Finish kept
+   *  each in the plan (`sessionSwap.ts`). */
+  swaps?: SessionSwap[];
 }
 
 export interface SessionProgression {
@@ -23,6 +32,9 @@ export interface SessionProgression {
   prescription: SessionPrescription;
   setLogs: LoggedSet[][];
   sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
+  /** Lift4 (14): a long or hard run fell in the 24 hours before the
+   *  session, so a leg miss counts half (Lift4 (7)). */
+  afterHardRun?: boolean;
 }
 
 export function withoutSessionProgression(
@@ -38,10 +50,7 @@ export function applySessionProgression(
   dayIndex: number,
   session: SessionProgression
 ): ProgramState {
-  const settings = state.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
+  const settings = state.settings ?? DEFAULT_PROGRAM_SETTINGS;
   const held = isProgressionHeld(
     state.trainingBlock,
     state.trainingBlock ? blockWeekOf(state.trainingBlock, session.date) : null
@@ -59,6 +68,13 @@ export function applySessionProgression(
                   (ex) => !!ex.instanceId && ex.instanceId === stored.instanceId
                 );
               if (inputIndex < 0) return stored;
+              // A swapped exercise's sets say nothing about the lift it
+              // stood in for (Lift4 (11)): unless Finish kept it, the lift
+              // stays as it was.
+              const swap = session.prescription.swaps?.find(
+                (entry) => entry.index === inputIndex
+              );
+              if (swap && swap.keep !== true) return stored;
               // Old drafts may already have applied an incremental progression. Undo
               // that provisional result before evaluating their final completed work.
               const legacy =
@@ -71,30 +87,46 @@ export function applySessionProgression(
               );
               if (!legacy && !sameStoredValue(baseline, expected))
                 return stored;
-              const logs = (session.setLogs[inputIndex] ?? []).filter(
-                (set) => set.type !== "warmup"
+              // A lowered lift's line is this session's alone (Lift4). A
+              // kept swap takes the lift's place, and today's sets are its
+              // first session.
+              const start = swap
+                ? keptSwap(baseline, session.prescription.exercises[inputIndex])
+                : afterLoweredLine(baseline);
+              // Lift4: every working set counts, and a set not done is just
+              // not done, so a session cut short counts like any other.
+              const read = readSessionSets(
+                session.setLogs[inputIndex] ?? [],
+                baseline.sets
               );
-              const last = progressionSetFor(
-                logs.map((set) => ({ ...set, type: set.type ?? "working" }))
-              );
+              if (!read) return swap ? start : legacy ? baseline : stored;
+              // An easier session's weights are lighter by design, and a
+              // lighter week's sessions are easy by design: either can move
+              // a weight up, never down, and says nothing else (Lift4 (8)).
               if (
                 session.sessionVariant === "easier_today" ||
-                (session.sessionVariant === "time_budget" &&
-                  logs.length < baseline.sets) ||
-                !last ||
-                !logs.every((set) => set.completed)
-              )
-                return legacy ? baseline : stored;
+                state.currentPhase === "deload"
+              ) {
+                const lifted = liftedLoad(start.exerciseId, read.weight);
+                if (lifted !== null && lifted > start.weight)
+                  return {
+                    ...start,
+                    weight: lifted,
+                    lastAttemptedWeight: lifted,
+                  };
+                return legacy || swap ? start : afterLoweredLine(stored);
+              }
+              const reps = recordedReps(read);
 
               let next: ProgramExercise;
               if (!held && settings.autoProgression) {
-                next = applyProgression(
-                  baseline,
-                  last.reps,
-                  last.weight,
-                  state.goal,
-                  settings.microloading,
-                  last.rpe
+                // A leg miss within a day after a long or hard run counts
+                // half (Lift4 (7)): the run explains some of it.
+                next = applySessionSets(
+                  start,
+                  read,
+                  settings.smallPlates,
+                  session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1
                 );
                 // A late/offline save belongs to the session's original local date.
                 next.performanceHistory = next.performanceHistory?.map(
@@ -111,26 +143,26 @@ export function applySessionProgression(
                 // load is not auto-progression.
                 const lifted = held
                   ? null
-                  : liftedLoad(baseline.exerciseId, last.weight);
+                  : liftedLoad(start.exerciseId, read.weight);
                 next = {
-                  ...baseline,
+                  ...start,
                   ...(lifted === null ? {} : { weight: lifted }),
-                  lastAttemptedWeight: last.weight,
+                  lastAttemptedWeight: read.weight,
                   lastPerformance: {
-                    sets: baseline.sets,
-                    reps: last.reps,
-                    weight: last.weight,
-                    completed: last.reps >= baseline.reps,
+                    sets: start.sets,
+                    reps,
+                    weight: read.weight,
+                    completed: reps >= start.reps,
                   },
                   ...(held
                     ? {
                         performanceHistory: [
-                          ...(baseline.performanceHistory ?? []),
+                          ...(start.performanceHistory ?? []),
                           {
                             date: session.date,
-                            weight: last.weight,
-                            repsCompleted: last.reps,
-                            repsTarget: baseline.reps,
+                            weight: read.weight,
+                            repsCompleted: reps,
+                            repsTarget: start.reps,
                           },
                         ].slice(-PERFORMANCE_HISTORY_CAP),
                       }

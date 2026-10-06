@@ -50,8 +50,8 @@ export type Goal = "cut" | "lean bulk" | "recomp";
 
 /**
  * Lifting goal from onboarding — orthogonal to the `Goal` type above.
- * `Goal` describes the nutrition phase (cut / lean bulk / recomp) and is
- * already used in the engine to scale volume. `PrimaryGoal` describes the
+ * `Goal` describes the nutrition phase (cut / lean bulk / recomp), which the
+ * lifting doesn't read (Lift4 (4)). `PrimaryGoal` describes the
  * training stimulus the user wants — strength vs hypertrophy vs fat loss
  * vs general vs running-supportive.
  *
@@ -146,12 +146,11 @@ export interface ProgramExercise {
    */
   repRangeMax?: number;
   /**
-   * Steady-state set-count anchor (backlog #5, volume ramp). Stamped at
-   * generation (after volume balancing) and lazily on first advance for
-   * legacy docs. advanceWeek derives each week's sets FROM this anchor —
-   * which is also the fix for the compounding auto-deload decay (the
-   * sets−1 / ×0.85 cut was applied to live state and never restored, so
-   * every mesocycle permanently shrank the programme). Any future UI
+   * The lift's set count, the anchor each week starts from
+   * (`resetToBaseSets`). Stamped at generation (after the time fit) and
+   * lazily on first advance for legacy docs. Deriving each week's sets from
+   * it is what keeps a lighter week's cut from compounding into the next
+   * cycle. Any future UI
    * that edits an exercise's set count MUST update baseSets too, or the
    * next weekly advance will revert the edit. Optional + defaulting
    * readers → no schema bump.
@@ -171,24 +170,13 @@ export interface ProgramExercise {
    * their experience level mid-mesocycle must still get their reps back.
    */
   preDeloadReps?: number;
-  /**
-   * The calibration this slot's load lineage descends from — the exercise
-   * identity and weight at the last CALIBRATED assignment (cold-start seed,
-   * or a one-shot rescaled swap). Mesocycle rotation scales the next
-   * variation's load from HERE rather than from the previous rotation's
-   * output, which is what makes repeated rotation non-compounding (the
-   * documented 50 → 30 → 12.5 decay). Absent on legacy slots, which keep
-   * the old carry-the-weight rotation behaviour.
-   */
-  rotationAnchor?: { exerciseId: string; weight: number };
   /** Unit for `reps` / `repRangeMax`. Absent = repetitions. */
   repUnit?: RepUnit;
   /**
    * Per-exercise rest between sets in seconds, carried from
-   * TemplateExercise.restSeconds. WorkoutSession prefers this over
-   * profile.defaultRestSeconds; a mid-session manual target change by the
-   * user wins over both. Absent on generated programs (they have no
-   * authored rest yet).
+   * TemplateExercise.restSeconds. It stands in for the plan's suggestion by
+   * role and reps (`restTime.ts`); a rest the person fixes in Workout
+   * preferences wins over both. Absent on generated programmes.
    */
   restSeconds?: number;
   weight: number;
@@ -230,6 +218,46 @@ export interface ProgramExercise {
    * until their next regeneration.
    */
   isAccessory?: boolean;
+  /**
+   * Lift4 (7): the plan lowered this lift itself, after two sessions in a
+   * row under its reps at the weight it asked for (`loweringOf` reads it).
+   * Also Lift4 (11): the person eased back in after a break, in which case
+   * it is marked shown from the start, since they chose it.
+   */
+  lowered?: LoweredBy;
+  /**
+   * Lift4 (11): the lift an equipment or injury swap put this one in place
+   * of, so a save that lifts the limitation brings it back
+   * (`restoreSwappedLifts`).
+   */
+  swappedFrom?: { exerciseId: string };
+}
+
+/** What the plan lowered a lift from, and the target it was missing. */
+export interface LoweredBy {
+  /** The exercise it lowered. A swap to another leaves this behind, and
+   *  nothing reads it there (`loweringOf`). */
+  exerciseId: string;
+  /** The weight it came down from, which the lift climbs back to a step a
+   *  session; or a bodyweight lift's reps or hold, which climb back by the
+   *  usual rules. */
+  from: number;
+  unit: "kg" | "reps" | "s";
+  /** The reps, or a hold's seconds, two sessions in a row fell short of. */
+  target: number;
+  /** Set once the next session has shown the line ("Down from 100 kg: two
+   *  sessions under 5 reps"), which it shows only then; set from the start
+   *  when the person eased back in (`easeBackIn`), with no line to show. */
+  shown?: true;
+}
+
+/** The plan's own lowering of this lift, if it was this lift's. */
+export function loweringOf(
+  exercise: Pick<ProgramExercise, "exerciseId" | "lowered">
+): LoweredBy | undefined {
+  return exercise.lowered?.exerciseId === exercise.exerciseId
+    ? exercise.lowered
+    : undefined;
 }
 
 /* ================================
@@ -253,8 +281,20 @@ export interface WorkoutDay {
 
 export interface ProgramSettings {
   autoProgression: boolean;
-  microloading: boolean;
+  /**
+   * Lift4 (6): "I have small plates", so a barbell steps 1.25 kg instead of
+   * 2.5 kg (`loadSteps.ts`). Off until the person turns it on. It replaced
+   * Microloading, whose `microloading` key older documents still carry and
+   * nothing reads.
+   */
+  smallPlates: boolean;
 }
+
+/** A new plan's settings. */
+export const DEFAULT_PROGRAM_SETTINGS: ProgramSettings = {
+  autoProgression: true,
+  smallPlates: false,
+};
 
 /* ================================
    WEEK SNAPSHOT (for history)
@@ -263,6 +303,8 @@ export interface ProgramSettings {
 export interface WeekSnapshot {
   weekNumber: number;
   workouts: WorkoutDay[];
+  /** A lighter week, so the next can't be one too (Lift4 (9)). */
+  lighter?: true;
 }
 
 /**
@@ -350,7 +392,10 @@ export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v3 (2026-08-04): one-time coverage backfill for plans generated before the
 // lateral-raise and calf slots existed. Version-gated precisely so it runs
 // ONCE — a user who deletes those slots afterwards keeps them deleted.
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 4 as const;
+// v5: Lift4's one-time repairs — a load a swap carried onto a bodyweight
+// lift (`repairSwappedBodyweightLoad`), and every miss count, kept under
+// the old rule (`resetMissCount`). One-shot for the same reason.
+export const CURRENT_PROGRAM_SCHEMA_VERSION = 5 as const;
 
 /* ================================
    SCHEDULED RUN
@@ -666,13 +711,9 @@ export interface ActiveTrainingBlock {
    */
   goalBefore: PrimaryGoal;
   /**
-   * Weeks of plateau-RESPONSE amnesty remaining, decremented by
-   * `advanceWeek`. Set when the focus changed or the pace is easing, both
-   * of which make early misses expected rather than informative.
-   *
-   * A counter rather than a date so it expires monotonically with no sweep,
-   * no clock and no review step — including for a user who abandons the
-   * block and never opens the app again.
+   * Weeks the programme-level response to a stall was held back after a
+   * block began. The block command still sets it, but nothing reads it: the
+   * response it held back, the adjustment rule, is retired (Lift4 (13)).
    */
   amnestyWeeksLeft: number;
   /**
@@ -700,6 +741,11 @@ export interface ProgramState {
   weekNumber: number;
   splitType: SplitType;
   workouts: WorkoutDay[];
+  /**
+   * The score the retired fatigue shave read (Lift4 (13)). Nothing computes
+   * it now: new plans seed 0, and stored plans and the server's deload
+   * snapshot carry it.
+   */
   fatigueScore: number;
   updatedAt: number;
   settings?: ProgramSettings;
@@ -751,12 +797,16 @@ export interface ProgramState {
    */
   primaryGoal?: PrimaryGoal;
   /**
-   * Backlog #9 (Helms H5): how many times the adjustment rule has already
-   * cut volume for the CURRENT stall without it clearing. Reset to 0 the
-   * moment the programme is no longer plateaued. Its only job is the
-   * flowchart's second-order branch — if a light week didn't fix it, the
-   * problem isn't fatigue, so escalate to reorganising rather than cutting
-   * again. Optional with a defaulting reader → no schema bump.
+   * The session length, in minutes, the plan's sets were fitted to (Lift4
+   * (5)): 30, 45, 60 or 75 for "75+". A plan built for 30 minutes also rests
+   * less (`suggestedRestSeconds`). Absent on a plan built before plans were
+   * fitted to time; for those, Start still trims to the person's usual time.
+   */
+  sessionMinutes?: number;
+  /**
+   * How many times the retired adjustment rule cut volume for a stall
+   * (Lift4 (13)). Nothing writes or reads it now; stored plans still carry
+   * it, and the server's allow-list admits it.
    */
   plateauResponses?: number;
   /**
@@ -780,7 +830,9 @@ export interface ProgramState {
    * changes. v2 added the run-identity tuple (id/date/weekKey/status)
    * to ScheduledRunDay. v4 is a meaning change rather than a shape
    * one: `WEEK_STARTS_ON` moved to Monday, so every stored week key
-   * written under the Sunday anchor is re-anchored once on read.
+   * written under the Sunday anchor is re-anchored once on read. v5
+   * repairs, once, a load a swap carried onto a bodyweight lift, and
+   * resets the miss counts kept under the old miss rule.
    */
   programSchemaVersion?: number;
   /**
@@ -838,22 +890,31 @@ export interface ProgramState {
   liftWeekKey?: string;
 
   /**
-   * Canonical muscles given a RECOVERY SESSION on the most recent weekly
-   * advance (14b) — halved sets and reps at held load, per RP Ch3 P202.
-   *
-   * Persisted for one reason: the cut restores itself in full via
-   * `applyWeeklyVolumeShape`, so a muscle sitting at its ceiling would show
-   * the MRV signal again immediately and oscillate half → full → half. This is
-   * the refractory list that stops that — a muscle here is re-entering and is
-   * not eligible for another recovery session this week. `advanceWeek` clears
-   * it as it writes the next one, so it never accumulates.
-   *
-   * NOT a history: it holds one week only, and `recoveryTrigger.ts` explains
-   * why this is a local device rather than RP Ch3 P203's midpoint re-entry.
-   *
-   * Optional with a defaulting reader → no schema bump. Absent means "nothing
-   * re-entering", which is the correct reading for every existing document, so
-   * there is nothing to backfill.
+   * Lift4 (11): the person eased back in after a break, on the Welcome back
+   * sheet (`easeBackIn`). The return's weeks left to train: the first has
+   * one set fewer on each lift, and no calendar lighter week comes in it or
+   * the next, since the break was the rest (`advanceWeek`, which counts
+   * them down by trained weeks and drops this when they're done). The loads
+   * came down once, when the person chose it, and climb back a step a
+   * session on each lift (`lowered`).
+   */
+  easingBack?: { weeksLeft: number };
+
+  /**
+   * Lift4 (10): which of the race's weeks this is, set at the rollover: a
+   * build week with its leg lifts trimmed (a yes at race setup), or one of
+   * the race's final weeks (`raceLiftWeek`): the last two before the race,
+   * race week, or the week after. Each final week is a lighter week
+   * (`currentPhase` "deload"); this names which, for Train's label and the
+   * banner.
+   */
+  raceWeek?: "build" | "taper" | "race" | "after";
+
+  /**
+   * The muscles the retired per-muscle recovery session eased (Lift4 (13)).
+   * Nothing reads or writes it now, and the rollover drops a stored one; it
+   * stays declared because stored plans carry it and the server's
+   * allow-list admits it.
    */
   recoveringMuscles?: CanonicalMuscle[];
 
@@ -977,9 +1038,6 @@ export function normalizeExercise(
     ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
-    ...(ex.rotationAnchor !== undefined
-      ? { rotationAnchor: ex.rotationAnchor }
-      : {}),
     weight: ex.weight ?? 0,
     progressionType: ex.progressionType ?? "linear",
     lastSuccessfulWeight: ex.lastSuccessfulWeight ?? ex.weight ?? 0,
@@ -992,6 +1050,8 @@ export function normalizeExercise(
       ? { sessionProgression: ex.sessionProgression }
       : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
+    ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
+    ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
   };
 }
 
@@ -1010,7 +1070,10 @@ export function normalizeProgramState(
   const resolvedPrimaryGoal = state.primaryGoal ?? backfill?.primaryGoal;
   return {
     ...state,
-    settings: state.settings ?? { autoProgression: true, microloading: true },
+    settings: {
+      autoProgression: state.settings?.autoProgression ?? true,
+      smallPlates: state.settings?.smallPlates === true,
+    },
     weekHistory: state.weekHistory ?? [],
     ...(resolvedPrimaryGoal !== undefined && {
       primaryGoal: resolvedPrimaryGoal,

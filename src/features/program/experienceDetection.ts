@@ -13,7 +13,7 @@
  * cost the user real progress:
  *
  *   - A stored BEGINNER whose linear progress has exhausted keeps a toolset
- *     built for session-to-session gains — no undulation, load-cut deloads —
+ *     built for session-to-session gains — no undulation, no lighter weeks —
  *     after the stimulus stopped working. The intermediate tools exist for
  *     exactly this moment.
  *   - A stored INTERMEDIATE who is still adding load every session (common:
@@ -52,8 +52,8 @@
  *     stall in a deficit is expected physiology.
  *   - CONSISTENCY + MATURITY: the 6-session window must sit inside 21–84
  *     days (scattered sessions are detraining, not a ceiling), and the
- *     programme must be ≥6 weeks old (one full mesocycle incl. its
- *     calendar deload). Level is a months-scale judgement — the novice
+ *     programme must be ≥6 weeks old (more than one full four-week
+ *     cycle). Level is a months-scale judgement — the novice
  *     phase alone typically runs 3–9 months.
  *
  * Mechanics shared with v1, still in force:
@@ -111,9 +111,9 @@ export const MIN_AGREEING_LIFTS = 2;
 export const MIN_FAILED_SESSIONS = 2;
 /**
  * A load dip of at least this fraction inside the window reads as a RESET
- * (a calendar deload's 15% cut, or a lighter load the person chose, which
- * the plan follows; the engine's own response to three misses resets the
- * rep target, not the load). Rippetoe's novice-exhaustion protocol requires
+ * (the 10% the plan takes off a lift after two misses in a row, or a
+ * lighter load the person chose, which the plan
+ * follows). Rippetoe's novice-exhaustion protocol requires
  * the stall to SURVIVE resets: back off ~10%, rebuild, and only conclude the
  * phase is over after 2–3 such cycles fail to set new highs. A stall with no
  * reset in evidence is indistinguishable from "needs a deload" — the
@@ -122,8 +122,8 @@ export const MIN_FAILED_SESSIONS = 2;
 export const RESET_DIP_FRACTION = 0.04;
 /**
  * Programme weeks that must have elapsed before a promotion is suggested.
- * Week 6 guarantees at least one full mesocycle including its calendar
- * deload has run — level changes are a months-scale judgement, and the
+ * Week 6 means more than one full four-week cycle has run — level changes
+ * are a months-scale judgement, and the
  * novice phase alone typically spans 3–9 months of consistent training.
  */
 export const MIN_PROGRAM_WEEKS = 6;

@@ -12,6 +12,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { formatRepTarget } from "@/features/program/repTarget";
 import { parseLocalDate, weekPosition } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +136,7 @@ export default function WeekPreview({
                 >
                   <span>{exercise.name}</span>
                   <span className="shrink-0 text-muted-foreground">
-                    <InlineNumerals>{`${exercise.sets} × ${exercise.reps}${exercise.repUnit === "seconds" ? " s" : " reps"}`}</InlineNumerals>
+                    <InlineNumerals>{`${exercise.sets} × ${formatRepTarget(exercise)}${exercise.repUnit === "seconds" ? "" : " reps"}`}</InlineNumerals>
                   </span>
                 </li>
               ))}

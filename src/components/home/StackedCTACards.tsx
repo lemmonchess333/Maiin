@@ -55,6 +55,7 @@ export default function StackedCTACards({
         <motion.div key="lift" variants={fadeUp} data-guide-stop="today-lift">
           <LiftCTACard
             nextWorkout={lift.workout}
+            rest={session.restContext}
             navigate={navigate}
             muscleGroups={lift.muscleGroups}
             dayIndex={lift.index}
@@ -115,6 +116,7 @@ export default function StackedCTACards({
           {rest.kind === "first-workout" ? (
             <LiftCTACard
               nextWorkout={rest.workout}
+              rest={session.restContext}
               navigate={navigate}
               dayIndex={rest.index}
               eyebrowLabel="Your first workout"

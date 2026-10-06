@@ -84,6 +84,20 @@ describe("applyEquipmentFilterToWorkouts", () => {
     expect(swapped.notes).toMatch(/not available with your equipment/i);
   });
 
+  it("carries no load onto a bodyweight lift it swaps in at home_gym", () => {
+    // A home gym has no cable stack, so the lat pulldown becomes a pull-up.
+    // Scaled as a full-weight lift, 45 kg arrived as 75 kg of added load.
+    const w = [
+      day([
+        ex("lat-pulldown", "Lat Pulldown", "vertical_pull", { weight: 45 }),
+      ]),
+    ];
+    const swapped = applyEquipmentFilterToWorkouts(w, "home_gym")[0]
+      .exercises[0];
+    expect(getExerciseById(swapped.exerciseId)!.equipment).toBe("Bodyweight");
+    expect(swapped.weight).toBe(0);
+  });
+
   it("keeps an already-available exercise (Dumbbells at home_gym)", () => {
     const w = [day([ex("db-row", "Dumbbell Row", "horizontal_pull")])];
     const out = applyEquipmentFilterToWorkouts(w, "home_gym");

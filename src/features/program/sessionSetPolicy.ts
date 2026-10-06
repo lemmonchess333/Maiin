@@ -36,27 +36,3 @@ export function isSetEligibleForStrengthPr(
 export function isSetEligibleForProgression(setType: string): boolean {
   return setType !== "warmup" && setType !== "dropset";
 }
-
-/**
- * The set an exercise's progression should be read from: the LAST completed
- * set that is eligible, or `null` when the session produced no working-set
- * evidence at all.
- *
- * Lives here rather than in the session component because it is policy, not
- * presentation — and because the behaviour it encodes (a drop set must not
- * walk a lifter's load down 5% every third session) needs to be pinned by a
- * test that drives the real progression engine, which a component cannot be.
- *
- * `null` is a deliberate outcome, not an error: an exercise logged as
- * warm-ups only, or as a lone drop set, carries no evidence about the
- * prescription. Skipping is strictly better than inventing a data point.
- */
-export function progressionSetFor<
-  T extends { completed: boolean; type: string },
->(sets: readonly T[]): T | null {
-  for (let i = sets.length - 1; i >= 0; i--) {
-    const s = sets[i];
-    if (s.completed && isSetEligibleForProgression(s.type)) return s;
-  }
-  return null;
-}

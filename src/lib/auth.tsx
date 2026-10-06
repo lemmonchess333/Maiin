@@ -386,6 +386,11 @@ export interface UserProfileRunning {
    */
   runVolume?: "lighter" | "standard" | "bigger";
   runDifficulty?: "gentler" | "standard" | "harder";
+  /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
+   *  your runs build?": yes trims the leg lifts in the run plan's build
+   *  weeks. Never asked reads as no. Written by configurePlan and
+   *  completeOnboarding alongside the plan. */
+  raceLegTrim?: boolean;
   runningBaseline?:
     | import("@/features/program/runningBaseline").RunningBaseline
     | null;
@@ -470,6 +475,9 @@ export interface UserProfileOnboarding {
   experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
+  /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
+   *  setup's kit, so the plan can give barbell lifts. */
+  barbellAtHome?: boolean;
   preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];

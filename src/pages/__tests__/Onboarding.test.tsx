@@ -244,6 +244,104 @@ describe("the review in the person's own units", () => {
   });
 });
 
+describe("session length (Lift4 (5))", () => {
+  it("asks how long a session is on the days step and builds the plan to fit", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit lift sessions" }));
+    const lengths = screen.getByRole("radiogroup", {
+      name: "Minutes per lift session",
+    });
+    expect(
+      within(lengths).getByRole("radio", { name: "60 min" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(lengths).getByRole("radio", { name: "30 min" }));
+    const built = builder.mock.calls.at(-1)!;
+    expect(built[0].sessionMinutes).toBe(30);
+    expect(builder.mock.results.at(-1)!.value.programState.sessionMinutes).toBe(
+      30
+    );
+  });
+});
+
+describe("what do you have? (Lift4 (11))", () => {
+  it("offers a barbell and a rack beside a home gym, and small plates to anyone", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit setup" }));
+    // A full gym has barbells: only the plates are asked.
+    expect(screen.getByText("What do you have?")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("switch", { name: "Small plates" }));
+    expect(builder.mock.calls.at(-1)![0].smallPlates).toBe(true);
+    expect(
+      builder.mock.results.at(-1)!.value.programState.settings.smallPlates
+    ).toBe(true);
+    fireEvent.click(screen.getByText("Home gym"));
+    fireEvent.click(
+      screen.getByRole("switch", { name: "A barbell and a rack" })
+    );
+    expect(builder.mock.calls.at(-1)![0].barbellAtHome).toBe(true);
+  });
+});
+
+describe("the legs while the runs build (Lift4 (10))", () => {
+  const legTrim = () =>
+    screen.queryByRole("switch", {
+      name: "Lighten leg sessions while your runs build",
+    });
+  const withRace = (over: Partial<OnboardingDraft> = {}) =>
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceTargetDate: "2027-06-01",
+      ...over,
+    });
+
+  it("asks with a race, no unless running comes first, and the plan keeps the answer", () => {
+    withRace();
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toHaveAttribute("aria-checked", "false");
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      false
+    );
+    fireEvent.click(legTrim()!);
+    expect(legTrim()).toHaveAttribute("aria-checked", "true");
+    expect(builder.mock.calls.at(-1)![0].raceLegTrim).toBe(true);
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      true
+    );
+  });
+
+  it("starts at yes for Support my running", () => {
+    withRace({ primaryGoal: "running" });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toHaveAttribute("aria-checked", "true");
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      true
+    );
+  });
+
+  it("is not asked without a race", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toBeNull();
+    expect(
+      builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim
+    ).toBeUndefined();
+  });
+});
+
 describe("activity-relevant setup", () => {
   it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();

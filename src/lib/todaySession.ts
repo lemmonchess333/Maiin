@@ -13,6 +13,7 @@ import {
 } from "@/lib/trainingResolver";
 import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
+import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getExerciseById } from "@/lib/exercises";
@@ -102,6 +103,9 @@ export type RestDayOffer =
 
 export interface TodaySession {
   type: DayType;
+  /** How a lift session's timer will rest, so its card's minutes price
+   *  it: the person's fixed rest, and the length the plan is built for. */
+  restContext: RestContext;
   /** Set on a lifting day ("lift" or "both"). */
   lift: TodayLift | null;
   /** Set on a run day ("run" or "both"). */
@@ -151,6 +155,10 @@ export function todaySession(input: TodaySessionInput): TodaySession {
 
   return {
     type,
+    restContext: {
+      fixedRest: profile?.defaultRestSeconds,
+      sessionMinutes: programState?.sessionMinutes,
+    },
     lift: lifting
       ? {
           workout: homeLift.workout,

@@ -13,14 +13,13 @@ import {
   LAST_FULL_WEEK,
   LIGHTER_WEEK,
   liftSessionPurpose,
+  RACE_CYCLE,
   type LiftPurposeProgramme,
 } from "../liftSessionPurpose";
-import {
-  generateWeekPrescription,
-  goalProfileFor,
-} from "@/features/program/programEngine";
+import { goalProfileFor } from "@/features/program/programEngine";
+import { generateWeekPrescription } from "@/features/program/weekPrescription";
 import { volumeLandmark } from "@/features/program/volumeModel";
-import { EASING_HOLD_WEEKS } from "@/features/program/represcribe";
+import { EASING_HOLD_WEEKS } from "@/features/program/trainingBlock";
 import { buildPlan } from "@/features/program/planBuilder";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
 import type {
@@ -53,8 +52,17 @@ function block(
   };
 }
 
+/** A three-day plan: with an intermediate's level, the calendar brings
+ *  it lighter weeks (`lighterWeeksScheduled`). */
+const THREE_DAYS = [{}, {}, {}] as LiftPurposeProgramme["workouts"];
+
 function purpose(programme: LiftPurposeProgramme, date = TODAY) {
-  return liftSessionPurpose(programme, DAY, date);
+  return liftSessionPurpose(
+    { workouts: THREE_DAYS, ...programme },
+    DAY,
+    date,
+    "intermediate"
+  );
 }
 
 describe("liftSessionPurpose", () => {
@@ -106,6 +114,51 @@ describe("liftSessionPurpose", () => {
     }
   });
 
+  it("says nothing of a cycle when the calendar brings no lighter weeks", () => {
+    // A beginner, an unknown level, or a plan of two days (Lift4 (9)).
+    const programme = { weekNumber: 3, primaryGoal: "strength" as const };
+    for (const [experience, workouts] of [
+      ["beginner", THREE_DAYS],
+      [undefined, THREE_DAYS],
+      ["intermediate", [{}, {}]],
+    ] as const) {
+      expect(
+        liftSessionPurpose(
+          { ...programme, workouts } as LiftPurposeProgramme,
+          DAY,
+          TODAY,
+          experience
+        )
+      ).toBe(FOCUS_PURPOSE.strength);
+    }
+  });
+
+  /* Lift4 (9): with a race plan the lighter weeks fall on the run plan's
+     step-back weeks, so the sentence reads them from there. A 16-week half
+     steps back in weeks 3, 7 and 11 (0-based) and tapers from week 13. */
+  it("reads the weeks ahead from the run plan with a race plan", () => {
+    const race = (currentWeek: number) =>
+      purpose({
+        weekNumber: 3,
+        primaryGoal: "running",
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "half", targetDate: "2026-12-20" },
+          currentWeek,
+          totalWeeks: 16,
+        },
+      });
+    // Lifting week 3 would be the cycle's last full week; the race's week 6
+    // is the one before a step-back.
+    expect(race(6)).toBe(`${FOCUS_PURPOSE.running} ${LAST_FULL_WEEK}`);
+    expect(race(4)).toBe(`${FOCUS_PURPOSE.running} ${RACE_CYCLE}`);
+    // A step-back week that came full, and the weeks past the last one,
+    // say nothing of lighter weeks.
+    expect(race(7)).toBe(FOCUS_PURPOSE.running);
+    expect(race(12)).toBe(FOCUS_PURPOSE.running);
+    expect(race(14)).toBe(FOCUS_PURPOSE.running);
+  });
+
   it("describes a lighter week only when the lighter recipe was applied", () => {
     /* The calendar's fourth week, after a week with no training in it, is
        an ordinary week: advanceWeek withheld the recipe and left the phase
@@ -132,26 +185,34 @@ describe("liftSessionPurpose", () => {
     const custom = { isCustom: true };
     expect(
       liftSessionPurpose(
-        { weekNumber: 1, primaryGoal: "strength" },
+        { weekNumber: 1, primaryGoal: "strength", workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
       )
     ).toBe(CYCLE);
-    expect(liftSessionPurpose({ weekNumber: 3 }, custom, TODAY)).toBe(
-      LAST_FULL_WEEK
-    );
     expect(
       liftSessionPurpose(
-        { weekNumber: 4, currentPhase: "progression" },
+        { weekNumber: 3, workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
+      )
+    ).toBe(LAST_FULL_WEEK);
+    expect(
+      liftSessionPurpose(
+        { weekNumber: 4, currentPhase: "progression", workouts: THREE_DAYS },
+        custom,
+        TODAY,
+        "intermediate"
       )
     ).toBeNull();
     expect(
       liftSessionPurpose(
-        { weekNumber: 4, currentPhase: "deload" },
+        { weekNumber: 4, currentPhase: "deload", workouts: THREE_DAYS },
         custom,
-        TODAY
+        TODAY,
+        "intermediate"
       )
     ).toBe(LIGHTER_WEEK);
   });
@@ -219,10 +280,12 @@ describe("the words match the engine", () => {
     expect(goalProfileFor("hypertrophy").mainReps).toBeGreaterThan(
       goalProfileFor("strength").mainReps
     );
-    for (const goal of ["strength", "fat_loss", "general", "running"]) {
+    for (const goal of ["strength", "general", "running"]) {
       expect(muscle.low, goal).toBeGreaterThan(volumeLandmark(goal).low);
       expect(muscle.high, goal).toBeGreaterThan(volumeLandmark(goal).high);
     }
+    // Losing fat trains as building muscle (Lift4 (4)).
+    expect(volumeLandmark("fat_loss")).toEqual(muscle);
   });
 
   it("gives running support heavy main lifts and fewer sets", () => {

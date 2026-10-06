@@ -275,3 +275,22 @@ The tally therefore adds a fourth kind: reverse (challenge SUM metrics,
 lifetime totals), recompute (Performance Index, `fastest_effort` when its
 driving run is deleted), rebuild on next use (the best-lift map), and
 leave standing as history (partner streaks, milestone badges).
+
+## Fifth amendment (2026-10-05) — a delete puts the plan back
+
+Lift4 (14). Deleting a plan day's latest session puts the plan back when
+nothing has moved on since: the lifts the session stepped return to the
+weights, reps and history they had, and its day is no longer done, in the
+same transaction as the delete (`planWithoutSession`,
+`src/lib/workoutCompletion.ts`). "Nothing has moved on" is the check a
+correction already makes (`sessionStillInPlan`): the plan is in the same
+week, block and policy, its day is the one the session marked done, and
+each lift is unchanged since the session stepped it. A lift the person
+changed since keeps their change; the others still go back. Once the week
+has rolled over the plan stays as it is, as before, and the progression the
+session earned is history.
+
+This is a fifth kind beside the tally above: put back while still current
+(the plan). The reversal, recompute and rebuild rules for the other state
+are unchanged, and the confirmation copy needed nothing new: the plan's
+numbers go back to what the remaining sessions explain.

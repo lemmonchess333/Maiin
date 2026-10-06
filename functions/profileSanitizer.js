@@ -250,6 +250,8 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   experience: (v) => cleanEnum(v, ["beginner", "intermediate", "advanced"]),
   daysPerWeek: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
   equipment: (v) => cleanString(v, 30),
+  // Lift4 (11): a barbell and a rack beside a home gym's kit.
+  barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
   goal: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
@@ -260,6 +262,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
+  // Lift4 (10): the race-setup answer on trimming the leg lifts while the
+  // runs build.
+  raceLegTrim: (v) => (typeof v === "boolean" ? v : undefined),
   liftTimeBudgetMinutes: (v) =>
     v === null
       ? null

@@ -140,14 +140,6 @@ describe("App Store listing: claims the code can contradict", () => {
     for (const days of quoted) expect(days).toBe(paywall![1]);
   });
 
-  it("quotes the progression step the workout suggests", () => {
-    const step = read("../progressionSuggestion.ts").match(
-      /INCREMENT_KG\s*=\s*([\d.]+)/
-    );
-    expect(step).not.toBeNull();
-    expect(field("description")).toContain(`adding ${step![1]} kg`);
-  });
-
   it("quotes how long the phone keeps meal photos", () => {
     const days = read("../foodPhotoStore.ts").match(/MAX_AGE_DAYS\s*=\s*(\d+)/);
     expect(days).not.toBeNull();

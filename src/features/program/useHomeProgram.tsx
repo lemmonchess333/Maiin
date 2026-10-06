@@ -30,6 +30,7 @@ type Actions = Pick<
   | "moveRunDay"
   | "dismissFellBehindPrompt"
   | "realignRacePlan"
+  | "easeBackIn"
 >;
 
 export function useHomeProgram() {
@@ -198,5 +199,6 @@ export function useHomeProgram() {
     moveRunDay: action("moveRunDay"),
     dismissFellBehindPrompt: action("dismissFellBehindPrompt"),
     realignRacePlan: action("realignRacePlan"),
+    easeBackIn: action("easeBackIn"),
   };
 }

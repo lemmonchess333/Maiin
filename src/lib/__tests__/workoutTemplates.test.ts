@@ -3,8 +3,8 @@
  *
  * The LIFTING half of this suite (WORKOUT_TEMPLATES plus the five helpers
  * over it) went with the code it covered on 2026-07-25: that library had
- * zero production consumers — programme generation runs on
- * `src/features/program/templates.ts` — so every one of those assertions
+ * zero production consumers — programme generation runs on the procedural
+ * generator, `src/features/program/programEngine.ts` — so every one of those assertions
  * proved something about code nobody ran (ADR-0008).
  *
  * What remains guards the RUN templates, which are live: RUN_TEMPLATES has

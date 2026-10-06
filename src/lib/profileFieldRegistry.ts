@@ -109,6 +109,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "autoPostRuns", sanitized: false },
   { field: "autoPostWorkouts", sanitized: false },
   { field: "autoRestTimer", sanitized: true },
+  { field: "barbellAtHome", sanitized: true },
   { field: "createdAt", sanitized: false, serverGuarded: true },
   // LEGACY: crews retired 2026-07-20 — kept so existing docs pass the
   // allow-list; never read or written by live code.
@@ -168,6 +169,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "primaryGoal", sanitized: true },
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
+  { field: "raceLegTrim", sanitized: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
   { field: "runDifficulty", sanitized: true },
   { field: "runFitness", sanitized: true },

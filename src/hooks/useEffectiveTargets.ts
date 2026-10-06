@@ -401,7 +401,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const annotation = taper
       ? taper.annotation
       : signals.isDeload
-        ? "Deload week"
+        ? "Lighter week"
         : eve && (intensity === "REST" || intensity === "EASY")
           ? `${eve.templateName} tomorrow — fuel up today`
           : intensity === "REST"

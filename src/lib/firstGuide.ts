@@ -213,9 +213,10 @@ export const GUIDE_HINTS = {
     title: "Workouts go in order",
     body: "Each one waits its turn, whatever the weekday. Miss a day and the next one is still next.",
   },
+  // Lift4: starting weights are an estimate, said once, here.
   "first-set": {
     title: "Your first set",
-    body: "Each row is a set. Check the weight and reps, then tap the box when it’s done. Your rest timer starts on its own.",
+    body: "Each row is a set. Check the weight and reps, then tap the box when it’s done. Your rest timer starts on its own. The weights are a first guess. Feels easy? Add weight on the next set.",
   },
   "food-composer": {
     title: "Logging food",
@@ -230,7 +231,7 @@ export const GUIDE_HINTS = {
 /** The first-set hint for someone who has turned the automatic rest timer
  *  off in Settings: the box is still how a set is done. */
 export const FIRST_SET_BODY_NO_AUTO_REST =
-  "Each row is a set. Check the weight and reps, then tap the box when it’s done.";
+  "Each row is a set. Check the weight and reps, then tap the box when it’s done. The weights are a first guess. Feels easy? Add weight on the next set.";
 
 export type GuideHintId = keyof typeof GUIDE_HINTS;
 

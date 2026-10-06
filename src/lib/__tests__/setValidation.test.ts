@@ -156,3 +156,39 @@ describe("validateSet — false-PR regression", () => {
     if (r.ok) expect(r.warn?.kind).toBe("huge-jump");
   });
 });
+
+describe("validateSet — timed holds (Lift4 (14))", () => {
+  it("completes a hold past 100 seconds", () => {
+    const r = validateSet({
+      reps: 120,
+      weight: 0,
+      isBodyweight: true,
+      timed: true,
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.normalized.reps).toBe(120);
+  });
+
+  it("still refuses more than 100 reps", () => {
+    const r = validateSet({ reps: 120, weight: 0, isBodyweight: true });
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses an hour-plus hold, in seconds", () => {
+    const r = validateSet({ reps: 3601, weight: 20, timed: true });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toMatch(/hold looks too long/);
+  });
+
+  it("speaks in seconds for an empty hold", () => {
+    const r = validateSet({
+      reps: 0,
+      weight: 0,
+      isBodyweight: true,
+      timed: true,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok)
+      expect(r.message).toBe("Log at least one second to complete the set.");
+  });
+});

@@ -69,8 +69,14 @@ export default function WorkoutPrefsSection({
         </div>
 
         <div className={ROW}>
-          <span className="text-sm text-foreground">Default rest time</span>
+          <label
+            htmlFor="rest-between-sets"
+            className="text-sm text-foreground"
+          >
+            Rest between sets
+          </label>
           <select
+            id="rest-between-sets"
             value={defaultRestSeconds}
             onChange={async (e) => {
               const prev = defaultRestSeconds;
@@ -81,6 +87,7 @@ export default function WorkoutPrefsSection({
             }}
             className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
           >
+            <option value={0}>Plan's suggestion</option>
             <option value={60}>1:00</option>
             <option value={90}>1:30</option>
             <option value={120}>2:00</option>

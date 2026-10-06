@@ -126,7 +126,7 @@ function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
     workouts: [],
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays,
@@ -834,14 +834,14 @@ describe("DayPeekCard — why this lift", () => {
       weekNumber: 1,
       currentPhase: "progression",
       primaryGoal: "hypertrophy",
-      workouts: [
-        {
-          dayName: "Pull — Lat Focus",
-          dayType: "pull",
-          exercises: [],
-          completed: false,
-        },
-      ],
+      // Three days and an intermediate's level: the calendar brings this
+      // plan lighter weeks, so the cycle has a line to say.
+      workouts: ["Pull — Lat Focus", "Push", "Legs"].map((dayName) => ({
+        dayName,
+        dayType: "pull",
+        exercises: [],
+        completed: false,
+      })),
       ...overrides,
     } as ProgramState;
   }
@@ -854,7 +854,7 @@ describe("DayPeekCard — why this lift", () => {
       <DayPeekCard
         todayKey={localDateString()}
         dateKey={dayOfThisWeek(2)}
-        profile={makeProfile(LIFT_WEEK)}
+        profile={{ ...makeProfile(LIFT_WEEK), experience: "intermediate" }}
         programState={programState}
         claimMap={emptyClaimMap}
         extras={emptyExtras}
@@ -865,24 +865,38 @@ describe("DayPeekCard — why this lift", () => {
     );
   }
 
-  it("discloses the planned lift's reason, closed until asked for", () => {
+  /** Opens "Why this session": the rules sheet, the reasons first
+   *  (Lift4 (3)). */
+  async function openWhy() {
+    fireEvent.click(screen.getByRole("button", { name: "Why this session" }));
+    return screen.findByRole(
+      "dialog",
+      { name: "Why this session" },
+      { timeout: 5000 }
+    );
+  }
+
+  it("gives the planned lift's reason on a tap, with the plan's rules", async () => {
     renderDay(liftProgramme());
     expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
-    const why = screen.getByText("Why this session").closest("details")!;
-    expect(why).not.toHaveAttribute("open");
+    // Closed until asked for.
+    expect(screen.queryByText(/built for muscle growth/)).toBeNull();
+    const why = await openWhy();
     expect(why).toHaveTextContent(
       "This session is built for muscle growth: higher reps, and more weekly sets for each muscle."
     );
     expect(why).toHaveTextContent(
       "Your plan builds for three weeks, then a lighter week follows."
     );
+    expect(why).toHaveTextContent("How your plan works");
+    expect(why).toHaveTextContent("Stuck on a lift?");
   });
 
-  it("names a lighter week as one, and nothing else", () => {
+  it("names a lighter week as one, and nothing else", async () => {
     renderDay(liftProgramme({ weekNumber: 4, currentPhase: "deload" }));
-    const why = screen.getByText("Why this session").closest("details")!;
+    const why = await openWhy();
     expect(why).toHaveTextContent(
-      "This is a lighter week, with fewer sets and easier targets, so the fatigue of recent weeks can clear."
+      "This is a lighter week, with half the sets at the same weights, so the fatigue of recent weeks can clear."
     );
     expect(why).not.toHaveTextContent(/built for/);
   });

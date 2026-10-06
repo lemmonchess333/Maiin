@@ -127,7 +127,7 @@ describe.skipIf(!enabled)("trusted state with the Firestore emulator", () => {
         },
       ],
       fatigueScore: 7,
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       updatedAt: 1,
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,

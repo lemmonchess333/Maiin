@@ -72,19 +72,22 @@ for (const budget of [null, 30] as const) {
       await expect(
         page.getByRole("button", { name: "Start workout", exact: true })
       ).toBeVisible();
+      // Lift4 (5): the plan is built for the session length, which Lift
+      // plan edits beside the lift days.
       await page.goto("settings/lift-plan");
-      const liftingTime = page.getByRole("region", {
-        name: "Usual lifting time",
+      const sessionLength = page.getByRole("radiogroup", {
+        name: "Minutes per lift session",
       });
-      await expect(liftingTime.getByRole("combobox")).toHaveValue("30");
-      await expect(liftingTime.getByText(/ · about /).first()).toBeVisible();
+      await expect(
+        sessionLength.getByRole("radio", { name: "30 min" })
+      ).toHaveAttribute("aria-checked", "true");
       for (const dark of [false, true]) {
         await page.evaluate(
           (value) => document.documentElement.classList.toggle("dark", value),
           dark
         );
-        await liftingTime.screenshot({
-          path: `screenshots/usual-lifting-time-${dark ? "dark" : "light"}.png`,
+        await sessionLength.locator("..").screenshot({
+          path: `screenshots/session-length-${dark ? "dark" : "light"}.png`,
           animations: "disabled",
         });
       }
@@ -296,8 +299,19 @@ for (const budget of [null, 30] as const) {
     );
     expect(saved.ok()).toBe(true);
     const { fields } = await saved.json();
-    expect(fields.sessionVariant?.stringValue).toBe(
-      budget === null ? undefined : "time_budget"
-    );
+    // Lift4 (5): a new plan is built for the session length and records
+    // it, so Start runs the plan's own session in full at any length; only
+    // a plan from before that still trims to the usual time.
+    expect(fields.sessionVariant?.stringValue).toBeUndefined();
+    if (budget !== null) {
+      const programme = await request.get(
+        `${DOCS}/users/${uid}/programState/current`,
+        { headers }
+      );
+      expect(programme.ok()).toBe(true);
+      expect((await programme.json()).fields.sessionMinutes?.integerValue).toBe(
+        String(budget)
+      );
+    }
   });
 }

@@ -96,6 +96,7 @@ const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
 
 const liftDay = (extra: Partial<TodayLift> = {}): TodaySession => ({
   type: "lift",
+  restContext: {},
   lift: lift(extra),
   run: null,
   rest: null,
@@ -103,6 +104,7 @@ const liftDay = (extra: Partial<TodayLift> = {}): TodaySession => ({
 
 const runDay = (extra: Partial<TodayRun> = {}): TodaySession => ({
   type: "run",
+  restContext: {},
   lift: null,
   run: run(extra),
   rest: null,
@@ -113,6 +115,7 @@ const bothDay = (
   runExtra: Partial<TodayRun> = {}
 ): TodaySession => ({
   type: "both",
+  restContext: {},
   lift: lift(liftExtra),
   run: run(runExtra),
   rest: null,
@@ -120,7 +123,13 @@ const bothDay = (
 
 const restDay = (
   offer: RestDayOffer = { kind: "rest", tomorrow: null }
-): TodaySession => ({ type: "rest", lift: null, run: null, rest: offer });
+): TodaySession => ({
+  type: "rest",
+  restContext: {},
+  lift: null,
+  run: null,
+  rest: offer,
+});
 
 function renderCards(session: TodaySession = bothDay(), navigate = vi.fn()) {
   return render(
