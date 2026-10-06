@@ -40,6 +40,9 @@ interface DeloadBannerProps {
    *  (`programState.raceWeek`), so the confirmation says so. A lighter week
    *  taken in a build week is an ordinary one. */
   raceWeek?: "build" | "taper" | "race" | "after";
+  /** Lift4 (10): today is one of the race's rest days (`isRaceRestDay`),
+   *  when a session not done is skipped, so the banner says why. */
+  raceRest?: boolean;
   /** PROGRAM-DELOAD-01: applies the deload to the active week (the
    *  server `applyDeloadWeek` command). Resolves true on success —
    *  the banner fires the reserved `action: 'applied'` telemetry;
@@ -89,6 +92,7 @@ export default function DeloadBanner({
   deloadActive = false,
   runsEased,
   raceWeek,
+  raceRest = false,
   onApply,
   dismissed: dismissedProp,
   onDismiss,
@@ -102,27 +106,33 @@ export default function DeloadBanner({
     runsEased && runsEased > 0
       ? ` ${runsEased === 1 ? "One run is" : `${runsEased} runs are`} a step shorter too.`
       : "";
-  /* The race's final weeks say what each is for (Lift4 (10)). */
+  /* The race's final weeks say what each is for (Lift4 (10)), and its rest
+     days why nothing is left to lift. */
   const active =
-    raceWeek === "taper"
+    raceRest && (raceWeek === "taper" || raceWeek === "race")
       ? {
-          title: "Taper",
-          body: "Half the sets this week, at the same weights, so you reach the race fresh.",
+          title: raceWeek === "race" ? "Race week" : "Taper",
+          body: "No lifting in the two days before your race, or on the day, so your legs are fresh for it.",
         }
-      : raceWeek === "race"
+      : raceWeek === "taper"
         ? {
-            title: "Race week",
-            body: "One short session this week, with nothing heavy for your legs, at least three days before the race.",
+            title: "Taper",
+            body: "Half the sets this week, at the same weights, so you reach the race fresh.",
           }
-        : raceWeek === "after"
+        : raceWeek === "race"
           ? {
-              title: "Recovery",
-              body: "Half the sets this week, at the same weights, while you recover from the race. The full plan is back next week.",
+              title: "Race week",
+              body: "One short session this week, with nothing heavy for your legs, at least three days before the race.",
             }
-          : {
-              title: "Lighter week",
-              body: `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`,
-            };
+          : raceWeek === "after"
+            ? {
+                title: "Recovery",
+                body: "Half the sets this week, at the same weights, while you recover from the race. The full plan is back next week.",
+              }
+            : {
+                title: "Lighter week",
+                body: `Half the sets this week, at the same weights.${runsEasedClause} The full plan is back next week.`,
+              };
   const prefersReducedMotion = useReducedMotion();
   // viewedFiredRef ensures the viewed event fires at most once per
   // mount-visible cycle. If the week changes or the flag re-trips

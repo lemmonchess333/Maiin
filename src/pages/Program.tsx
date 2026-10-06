@@ -15,6 +15,7 @@ import {
 import { useProgram } from "@/features/program/useProgram";
 import { changeStands } from "@/features/program/programOutcome";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
+import { isRaceRestDay } from "@/features/program/raceRest";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -1053,6 +1054,7 @@ function ProgramInner() {
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
               raceWeek={programState.raceWeek}
+              raceRest={isRaceRestDay(programState.runPlan, localDateString())}
               onApply={handleApplyDeload}
             />
           </TrackProgrammeSectionView>

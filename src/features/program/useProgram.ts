@@ -8,6 +8,7 @@ import {
   raceWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
+import { raceRestSkips } from "./raceRest";
 import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import {
   completeLift,
@@ -18,7 +19,13 @@ import {
   applySessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { captureError } from "@/lib/errorReporting";
 import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
 import {
@@ -1394,6 +1401,55 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+  ]);
+
+  /* The race's rest days (Lift4 (10)): from two days before a race, and on
+     race day, a lift session not done yet is skipped (`raceRestSkips`), so
+     race week's session is at least three days before the race. Through
+     the same command as a skip the person makes, one session per run (the
+     optimistic skip re-runs this for the next), and silently: Train's
+     banner says why. Each session is tried once, so a refusal can't loop.
+     The same waits as the rollovers above, and after them: a week still to
+     roll over is theirs to move first. */
+  const raceRestTried = useRef(new Set<string>());
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!mirrorReady) return;
+    if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
+      return;
+    if (finishOutstanding(user?.uid)) return;
+    const rollover = weekRolloverAnchor(programState, profile);
+    if (rollover && rollover.weekKey < localWeekKey()) return;
+    for (const dayIndex of raceRestSkips(programState, localDateString())) {
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) continue;
+      const key = `${precondition.expectedWeekNumber}:${dayIndex}:${precondition.expectedDaySignature}`;
+      if (raceRestTried.current.has(key)) continue;
+      raceRestTried.current.add(key);
+      void runProgramCommand(
+        {
+          kind: "skipWorkoutDay",
+          commandId: generateInstanceId(),
+          ...precondition,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: true } : d
+          ),
+        }),
+        null
+      );
+      return;
+    }
+  }, [
+    programState,
+    profile,
+    mirrorReady,
+    user,
+    queuedWrites,
+    openSessions,
+    runProgramCommand,
   ]);
 
   // Mark a workout day as completed (does NOT auto-advance week)

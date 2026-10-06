@@ -1376,6 +1376,82 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     ]);
   });
 
+  /** Race week with its one session not done yet, the race `daysOut`
+   *  days from today. */
+  function seedRaceWeek(daysOut: number) {
+    const targetDate = localDateString(addLocalDays(new Date(), daysOut));
+    mockProfile = raceProfile(targetDate);
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "deload",
+      raceWeek: "race",
+      weekNumber: 7,
+      splitType: "ppl",
+      workouts: [
+        { dayName: "Push", dayType: "push", completed: false, exercises: [] },
+        {
+          dayName: "Pull",
+          dayType: "pull",
+          completed: false,
+          skipped: true,
+          exercises: [],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: localWeekKey(),
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 4,
+        totalWeeks: 4,
+      },
+    } as ProgramState);
+  }
+
+  const raceRestSkipsSent = () =>
+    sentCommands.filter((command) => command.kind === "skipWorkoutDay");
+
+  it("Lift4 (10) — the race's rest days skip a session not done yet", async () => {
+    seedRaceWeek(1);
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    // Through the skip command the person's own skip uses, so the server
+    // checks it like any other (the mock holds it to the server's rules).
+    await waitFor(
+      () =>
+        expect(raceRestSkipsSent()).toEqual([
+          expect.objectContaining({ dayIndex: 0, expectedWeekNumber: 7 }),
+        ]),
+      { timeout: 2000 }
+    );
+    // Once: the fake doesn't apply commands, so the re-read brings the day
+    // back unskipped, and the same day isn't tried again.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    expect(raceRestSkipsSent()).toHaveLength(1);
+  });
+
+  it("Lift4 (10) — three days before the race, race week's session is still there", async () => {
+    seedRaceWeek(3);
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    expect(result.current.programState?.workouts[0].skipped).toBeFalsy();
+    expect(raceRestSkipsSent()).toEqual([]);
+  });
+
   it("Lift4 (10) — advanceToNextWeek into a build week trims the legs on a yes at race setup", async () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70));
     mockProfile = { ...raceProfile(targetDate), raceLegTrim: true };

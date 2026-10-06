@@ -338,6 +338,31 @@ describe("DeloadBanner — the race's final weeks", () => {
     expect(screen.queryByText(/Half the sets/)).toBeNull();
   });
 
+  it("says why nothing is left to lift on the race's rest days", () => {
+    for (const raceWeek of ["race", "taper"] as const) {
+      const { unmount } = render(
+        <DeloadBanner
+          visible={false}
+          weekKey="w41"
+          deloadActive
+          raceWeek={raceWeek}
+          raceRest
+        />
+      );
+      expect(
+        screen.getByRole("region", {
+          name: raceWeek === "race" ? "Race week" : "Taper",
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "No lifting in the two days before your race, or on the day, so your legs are fresh for it."
+        )
+      ).toBeInTheDocument();
+      unmount();
+    }
+  });
+
   it("names the week after", () => {
     render(
       <DeloadBanner

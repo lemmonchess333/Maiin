@@ -25,6 +25,7 @@ import {
   LONG_BREAK_EASE_BACK_SHARE,
   WELCOME_BACK_DAYS,
 } from "@/features/program/liftLayoff";
+import { RACE_REST_DAYS } from "@/features/program/raceRest";
 import type { Experience } from "@/features/program/programTypes";
 import type { LiftPurposeProgramme } from "@/lib/liftSessionPurpose";
 
@@ -122,7 +123,7 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     rules.push({
       id: "race",
       title: "Your race",
-      body: "The last two weeks before your race are lighter, race week is one short session with nothing heavy for your legs, and the week after is light. If you chose to lighten your leg sessions while your runs build, your leg lifts have a third fewer sets from the build weeks until those two lighter weeks. You can change that in your run plan.",
+      body: `The last two weeks before your race are lighter. Race week is one short session with nothing heavy for your legs, at least ${word(RACE_REST_DAYS + 1)} days before the race: the ${word(RACE_REST_DAYS)} days before it have no lifting. The week after is light. If you chose to lighten your leg sessions while your runs build, your leg lifts have a third fewer sets from the build weeks until those two lighter weeks. You can change that in your run plan.`,
     });
   }
   rules.push(

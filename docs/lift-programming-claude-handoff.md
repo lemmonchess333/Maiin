@@ -595,6 +595,19 @@ weeks, gave the legs their full sets back for one week between the trimmed
 build and the two lighter weeks; the trim now runs until those take over
 (`isRaceBuildWeek`).
 
+STATUS 2026-10-06 (Lift4 (10), owner call): race week's session "at least
+three days before the race" is a rule now, not advice. The two days before
+a race, and race day, are its rest days (`raceRest.ts`): from two days out
+a lift session not done yet is skipped, as the rollover skips race week's
+others, so the session can't drift to the day before. When the race falls
+early in a week the taper week's last session two days before it waits too.
+Each skip goes through the same command as a skip the person makes
+(`skipWorkoutDay`, from `useProgram`, with the rollover's waits and after
+it), so no new writer bypasses the command boundary (ADR-0011), and each
+session is tried once, so a refusal can't loop. Train's banner says why
+("No lifting in the two days before your race, or on the day, so your legs
+are fresh for it."), and the rules sheet's race rule says so.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

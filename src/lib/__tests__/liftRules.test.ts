@@ -19,6 +19,7 @@ import {
   WELCOME_BACK_DAYS,
 } from "@/features/program/liftLayoff";
 import { LIGHTER_WEEK_EVERY } from "@/features/program/weekPrescription";
+import { RACE_REST_DAYS } from "@/features/program/raceRest";
 
 const rule = (rules: LiftRule[], id: string) =>
   rules.find((r) => r.id === id)?.body ?? "";
@@ -102,6 +103,10 @@ describe("liftRules", () => {
     expect(rule(racing, "lighter")).toContain("your run plan's easier weeks");
     expect(rule(racing, "race")).toContain(
       "The last two weeks before your race are lighter"
+    );
+    expect(RACE_REST_DAYS).toBe(2);
+    expect(rule(racing, "race")).toContain(
+      "at least three days before the race: the two days before it have no lifting"
     );
     expect(rule(intermediate, "race")).toBe("");
   });
