@@ -101,7 +101,7 @@ export function heatAdjustmentLine(
   }
   const pctLabel = `~${adj.pct * 100 >= 1 ? Math.round(adj.pct * 100) : adj.pct * 100}%`;
   if (prescribedPaceS && prescribedPaceS > 0) {
-    return `In this heat, ${paceMinSec(prescribedPaceS, unit)}${paceUnitLabel(unit)} effort runs ≈ ${paceMinSec(heatAdjustedPaceS(prescribedPaceS, adj), unit)}${paceUnitLabel(unit)} (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
+    return `In this heat, ${paceMinSec(prescribedPaceS, unit)} ${paceUnitLabel(unit)} effort runs ≈ ${paceMinSec(heatAdjustedPaceS(prescribedPaceS, adj), unit)} ${paceUnitLabel(unit)} (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
   }
   return `Heat check: expect ${pctLabel} slower at the same effort today (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
 }

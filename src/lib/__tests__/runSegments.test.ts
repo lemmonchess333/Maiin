@@ -59,7 +59,7 @@ describe("segmentsFromIntervals", () => {
       },
       "km"
     );
-    expect(segs[0].label).toMatch(/@ 4:10\/km/);
+    expect(segs[0].label).toMatch(/@ 4:10 \/km/);
     expect(segs[0].paceTarget).toBe(250);
   });
 });
@@ -87,7 +87,7 @@ describe("segmentsFromTempo — the promoted prose", () => {
       "moderate",
       "cooldown",
     ]);
-    expect(segs[1].label).toBe("20 min tempo @ 4:30/km");
+    expect(segs[1].label).toBe("20 min tempo @ 4:30 /km");
     expect(segs[2].label).toBe("Float");
     expect(segs[1].rep).toBe(1);
     expect(segs[3].rep).toBe(2);
@@ -193,13 +193,13 @@ describe("A2 — segmentsFromLongWithRacePace", () => {
     expect(block.paceTarget).toBe(285);
     expect(block.pacePinned).toBe(true);
     expect(block.eyebrow).toBe("RACE PACE");
-    expect(block.label).toBe("7 km @ 4:45/km");
+    expect(block.label).toBe("7 km @ 4:45 /km");
     /* Same session read in miles: the block is the same DISTANCE, so its
        metre target is untouched — only the label and the pace convert.
        (7 km is 4.3 mi; 4:45/km is 7:39/mi.) */
     const mi = segmentsFromLongWithRacePace(20, 7, 285, "mi");
     const miBlock = mi.find((x) => x.type === "moderate")!;
-    expect(miBlock.label).toBe("4.3 mi @ 7:39/mi");
+    expect(miBlock.label).toBe("4.3 mi @ 7:39 /mi");
     expect(miBlock.target).toEqual(block.target);
     expect(block.cue).toMatch(/race-pace block/i);
     // The easy lead-in tells the runner what's coming.

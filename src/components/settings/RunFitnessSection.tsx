@@ -4,7 +4,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
-import { paceLabel } from "@/lib/runLabels";
+import { paceBandLabel, paceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   paceTableFromFitness,
@@ -216,7 +216,7 @@ export default function RunFitnessSection({
             )}
 
             {/* Paces grid. One pace per row under 10em of card (double
-                text): two abreast, a tile was narrower than "5:34/km",
+                text): two abreast, a tile was narrower than "5:34 /km",
                 and a pace is never cut. A range still wraps after its
                 dash where one row is too narrow for it. Wide-first. */}
             <div className="grid grid-cols-2 @max-[10em]:grid-cols-1 gap-2">
@@ -317,7 +317,7 @@ function PaceRow({
       <SectionLabel>{label}</SectionLabel>
       <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
         {band
-          ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`
+          ? paceBandLabel(band, unit)
           : value
             ? /* `paceLabel` already appends the unit (runLabels.ts:66), so
                  the extra `paceUnitLabel` here printed it twice — the 10K

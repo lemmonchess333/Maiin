@@ -66,9 +66,9 @@ export function getTargetValidationError(
       return null;
     case "pace":
       if (value < TARGET_PACE_MIN_S_PER_KM)
-        return "Pace must be at least 2:00/km";
+        return "Pace must be at least 2:00 /km";
       if (value > TARGET_PACE_MAX_S_PER_KM)
-        return "Pace must be at most 15:00/km";
+        return "Pace must be at most 15:00 /km";
       return null;
   }
   return null;

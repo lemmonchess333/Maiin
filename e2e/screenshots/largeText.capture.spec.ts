@@ -29,7 +29,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { layoutBreaks } from "../helpers/layoutBreaks";
+import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 
 const WIDTHS = [393, 320] as const;
@@ -122,7 +122,10 @@ test.describe("large text", () => {
         document.documentElement.style.fontSize = `${s}%`;
       }, scale);
       await page.waitForTimeout(400);
-      const breaks = await layoutBreaks(page, "body *", "html", IGNORE);
+      const breaks = [
+        ...(await layoutBreaks(page, "body *", "html", IGNORE)),
+        ...(await brokenWords(page, IGNORE)),
+      ];
       // The page itself, which the per-element check cannot see when what
       // widens it is skipped (a chart's axis labels are aria-hidden).
       const wider = await page.evaluate(

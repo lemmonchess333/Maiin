@@ -297,8 +297,8 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   option) and AM/PM in copy are banned by
   `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
   "5:18 /km") are not times of day.
-- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
-  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal", and a pace "5:34 /km"
+  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km and a pace glued to its unit, including
   the `${x}kg` template form). Two named exceptions: grams on the food
   surface stay unspaced ("128g" — MacroColumn's documented house style), and
   `ShareCardRenderer`'s compact forms ("12.3km") are a deliberate

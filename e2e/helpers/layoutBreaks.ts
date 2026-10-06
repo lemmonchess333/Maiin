@@ -72,8 +72,13 @@ export async function layoutBreaks(
             if (r.width > 0) tops.add(Math.round(r.top));
         }
         const lines = tops.size;
-        const words = textOfOwn.trim().split(/\s+/).length;
-        const chars = textOfOwn.replace(/\s+/g, "").length;
+        // Words and letters from all of the element's text, links and
+        // spans included: counted from its own text alone, a line of
+        // links (the map credit's "OpenFreeMap © OpenMapTiles Data from
+        // OpenStreetMap") read as " Data from " on three lines.
+        const all = el.textContent ?? "";
+        const words = all.trim().split(/\s+/).length;
+        const chars = all.replace(/\s+/g, "").length;
         if (ownText && lines >= 3 && lines > words && chars / lines < 3.5) {
           out.push(`squeezed to ${el.clientWidth}px: ${label}`);
         }
@@ -81,5 +86,55 @@ export async function layoutBreaks(
       return out;
     },
     { scope, card, ignore }
+  );
+}
+
+/**
+ * Ordinary words split across two lines: a word of letters only, 15 or
+ * fewer, laid out on more than one line. A long compound, an address or a
+ * URL may wrap anywhere; a word like "Notifications" breaking mid-word
+ * means its box is too narrow for it. Browsers without a hyphenation
+ * dictionary (CI's Chromium) break it bare where iOS would hyphenate, so
+ * the fix is room for the word, not a hyphen.
+ */
+export async function brokenWords(
+  page: Page,
+  ignore?: string
+): Promise<string[]> {
+  return page.evaluate(
+    ({ ignore }) => {
+      const out = new Set<string>();
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT
+      );
+      const range = document.createRange();
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const el = n.parentElement;
+        if (!el || (ignore && el.closest(ignore))) continue;
+        const style = getComputedStyle(el);
+        if (style.visibility === "hidden" || style.display === "none") continue;
+        const text = n.textContent ?? "";
+        // An address or a link may break anywhere.
+        if (/@|:\/\//.test(text)) continue;
+        for (const m of text.matchAll(/\p{L}{2,15}/gu)) {
+          range.setStart(n, m.index!);
+          range.setEnd(n, m.index! + m[0].length);
+          const tops = new Set(
+            Array.from(range.getClientRects())
+              .filter((r) => r.width > 0)
+              .map((r) => Math.round(r.top))
+          );
+          if (tops.size > 1)
+            out.add(
+              `breaks "${m[0]}" mid-word in ${el.tagName.toLowerCase()} "${text
+                .trim()
+                .slice(0, 30)}"`
+            );
+        }
+      }
+      return [...out];
+    },
+    { ignore }
   );
 }

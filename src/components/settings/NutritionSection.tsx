@@ -361,7 +361,7 @@ export default function NutritionSection({
         <div
           id="calorie-targets"
           ref={calorieTargetsRef}
-          className="scroll-mt-20 rounded-xl bg-muted/50 p-3 space-y-2"
+          className="scroll-mt-20 rounded-xl bg-muted/50 px-[12px] py-3 space-y-2"
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">

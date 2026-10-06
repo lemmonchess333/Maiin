@@ -148,15 +148,18 @@ export function SettingsRow({
       {trailing && <span className="ml-auto flex shrink-0">{trailing}</span>}
       {showChevron && (
         <ChevronRight
-          className="size-4 text-muted-foreground shrink-0"
+          className="size-[16px] text-muted-foreground shrink-0"
           aria-hidden="true"
         />
       )}
     </>
   );
 
+  // The row's side padding and chevron are px, as an iOS cell's insets
+  // and accessory are: in rem they doubled at the largest text sizes and
+  // broke "Notifications" mid-word on a 320pt phone.
   const rowClass = cn(
-    "w-full px-4 py-3 min-h-[52px] flex items-center gap-3 text-left",
+    "w-full px-[16px] py-3 min-h-[52px] flex items-center gap-3 text-left",
     (trailing || value !== undefined) && "flex-wrap gap-y-2"
   );
 

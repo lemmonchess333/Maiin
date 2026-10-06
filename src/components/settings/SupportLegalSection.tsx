@@ -61,7 +61,7 @@ function buildModerationMailto(): string {
    room to the words, as SettingsRow's does: beside it "objectionable"
    no longer fit. At 1.35x a row is 12.8em or more and keeps it. */
 const ROW =
-  "@container flex items-center justify-between gap-3 p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors";
+  "@container flex items-center justify-between gap-3 px-[16px] py-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors";
 const ICON = "size-5 shrink-0 @max-[11em]:hidden";
 
 interface SupportLegalSectionProps {

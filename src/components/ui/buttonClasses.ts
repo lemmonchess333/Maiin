@@ -91,11 +91,14 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 /**
  * Size → height + padding + text + icon gap. `md` is the canonical
  * default and meets the 44px touch-target floor without padding tweaks.
+ * The side padding is px, as an iOS button's content insets are: the
+ * label grows with the phone's text size and the insets do not, which at
+ * the largest sizes left "Recalculate" a word too narrow to fit.
  */
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "min-h-[36px] px-3 text-xs gap-1.5",
-  md: "min-h-[44px] px-4 text-sm gap-2",
-  lg: "min-h-[52px] px-5 text-base gap-2",
+  sm: "min-h-[36px] px-[12px] text-xs gap-1.5",
+  md: "min-h-[44px] px-[16px] text-sm gap-2",
+  lg: "min-h-[52px] px-[20px] text-base gap-2",
 };
 
 /**

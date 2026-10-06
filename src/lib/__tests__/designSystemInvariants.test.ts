@@ -154,10 +154,14 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
       "utf8"
     );
     // The primitive must guarantee the touch target — a 44px affordance
-    // somewhere in its markup (`size-11` = 44px square, or a min/fixed height).
+    // somewhere in its markup (`size-11` / `size-[44px]` = 44px square, or a
+    // min/fixed height; it is px since controls keep their size at larger
+    // text).
     // This is what makes routing through it the fix for the ratchet above.
     expect(
-      /size-11|min-h-\[44|h-11|h-12|h-14|min-h-11|min-h-12/.test(toggle)
+      /size-11|size-\[44px\]|min-h-\[44|h-11|h-12|h-14|min-h-11|min-h-12/.test(
+        toggle
+      )
     ).toBe(true);
   });
 

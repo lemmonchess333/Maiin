@@ -91,9 +91,10 @@ export default function MuscleVolumeCard({
       </p>
 
       {/* Under 15em of card (larger text) a row's fixed widths alone were
-          wider than the card. The row becomes two lines: the name (wrapping
-          rather than ending in "…") and its count, then the range bar and
-          the status word. Wide-first. */}
+          wider than the card. The row becomes two lines: the name across
+          the whole width (a column beside "Below" left "Hamstrings" too
+          narrow), then the range bar, the count and the status word.
+          Wide-first. */}
       <ul className="@container space-y-2">
         {rows.map((row) => {
           const label = JUDGEMENT_MUSCLE_LABEL[row.muscle];
@@ -106,13 +107,13 @@ export default function MuscleVolumeCard({
           return (
             <li
               key={row.muscle}
-              className="flex items-center gap-3 @max-[15em]:grid @max-[15em]:grid-cols-[minmax(0,1fr)_auto] @max-[15em]:gap-y-1"
+              className="flex items-center gap-3 @max-[15em]:grid @max-[15em]:grid-cols-[minmax(0,1fr)_auto_auto] @max-[15em]:gap-y-1"
             >
               <span className="sr-only">
                 {`${label}: ${setsText(row.setsPerWeek)} sets a week, ${verdict} of ${row.landmark.low} to ${row.landmark.high}`}
               </span>
               <span
-                className="w-24 shrink-0 truncate text-sm text-foreground @max-[15em]:col-start-1 @max-[15em]:row-start-1 @max-[15em]:w-auto @max-[15em]:whitespace-normal @max-[15em]:break-words @max-[15em]:hyphens-auto"
+                className="w-24 shrink-0 truncate text-sm text-foreground @max-[15em]:col-span-3 @max-[15em]:row-start-1 @max-[15em]:w-auto @max-[15em]:whitespace-normal @max-[15em]:break-words @max-[15em]:hyphens-auto"
                 aria-hidden="true"
               >
                 {label}
@@ -138,14 +139,14 @@ export default function MuscleVolumeCard({
                 />
               </div>
               <span
-                className="w-8 shrink-0 text-right text-sm font-semibold font-mono tabular-nums text-foreground @max-[15em]:col-start-2 @max-[15em]:row-start-1 @max-[15em]:w-auto"
+                className="w-8 shrink-0 text-right text-sm font-semibold font-mono tabular-nums text-foreground @max-[15em]:col-start-2 @max-[15em]:row-start-2 @max-[15em]:w-auto"
                 aria-hidden="true"
               >
                 {setsText(row.setsPerWeek)}
               </span>
               <span
                 className={cn(
-                  "w-12 shrink-0 text-right text-xs font-semibold @max-[15em]:col-start-2 @max-[15em]:row-start-2 @max-[15em]:w-auto",
+                  "w-12 shrink-0 text-right text-xs font-semibold @max-[15em]:col-start-3 @max-[15em]:row-start-2 @max-[15em]:w-auto",
                   row.status === "low"
                     ? "text-warning-strong"
                     : "text-lifting-strong"

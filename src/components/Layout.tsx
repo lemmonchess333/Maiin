@@ -261,10 +261,12 @@ export default function Layout() {
 
       {/* Page fade also gated on reduced motion — the cross-page
           opacity transition is purely cosmetic. Reduced-motion users
-          get an instant change. */}
+          get an instant change. The side gutter is px, as iOS keeps its
+          layout margins: in rem it doubled at the largest text sizes and
+          took the room words needed. */}
       <main
         id="main-content"
-        className="max-w-md mx-auto px-4 py-6 sm:py-7"
+        className="max-w-md mx-auto px-[16px] py-6 sm:py-7"
         onTouchStart={onSwipeStart}
         onTouchEnd={onSwipeEnd}
       >

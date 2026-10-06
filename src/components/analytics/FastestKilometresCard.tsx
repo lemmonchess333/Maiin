@@ -84,7 +84,7 @@ export default function FastestKilometresCard({
                         {day(inRange.date)} ·{" "}
                         <span className="font-mono tabular-nums">
                           {paceMinSec(inRange.seconds / km, unit)}
-                        </span>
+                        </span>{" "}
                         {paceUnitLabel(unit)}
                       </p>
                     </>

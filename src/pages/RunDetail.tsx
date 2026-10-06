@@ -357,9 +357,11 @@ export default function RunDetail() {
           "FREE RUN" label + Share pill at 393px (audit #3a/#3b). Only shown
           with a pace-coloured map: a trace, and an average pace to colour
           it against (without one the map draws a plain line). */}
-      {run.points?.length > 1 && avgPace > 0 && <PaceLegend className="px-4" />}
+      {run.points?.length > 1 && avgPace > 0 && (
+        <PaceLegend className="px-[16px]" />
+      )}
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-[16px] pt-4 space-y-4">
         {/* Saved-anyway notice. Surfaces only when the run was
             persisted with `isInvalid: true` (PR #480 metadata). The
             user already saw InvalidRunReview at save time and chose

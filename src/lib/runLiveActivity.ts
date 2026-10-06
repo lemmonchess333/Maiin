@@ -42,7 +42,7 @@ import type {
 export interface RunActivityData {
   /** Pre-formatted, unit-aware distance, e.g. "3.42 km". */
   distance: string;
-  /** Pre-formatted rolling pace, e.g. "5:12/km" (em-dash when unknown). */
+  /** Pre-formatted rolling pace, e.g. "5:12 /km" (em-dash when unknown). */
   pace: string;
   /** Pre-formatted elapsed time from the run timer, e.g. "23:41". */
   elapsed: string;

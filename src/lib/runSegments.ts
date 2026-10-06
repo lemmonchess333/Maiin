@@ -134,7 +134,7 @@ export function segmentsFromIntervals(
     });
   }
   const pace = shape.workPace
-    ? ` @ ${paceMinSec(shape.workPace, unit)}${paceUnitLabel(unit)}`
+    ? ` @ ${paceMinSec(shape.workPace, unit)} ${paceUnitLabel(unit)}`
     : "";
   for (let rep = 1; rep <= shape.reps; rep++) {
     out.push({
@@ -196,7 +196,7 @@ export function segmentsFromTempo(
     cue: warmupCue(seed),
   });
   const pace = paceTarget
-    ? ` @ ${paceMinSec(paceTarget, unit)}${paceUnitLabel(unit)}`
+    ? ` @ ${paceMinSec(paceTarget, unit)} ${paceUnitLabel(unit)}`
     : "";
   shape.workSecs.forEach((seconds, i) => {
     if (i > 0 && shape.floatSec) {
@@ -351,7 +351,7 @@ export function segmentsFromLongWithRacePace(
     },
     {
       type: "moderate",
-      label: `${blockLabel} ${u} @ ${paceLabel}${paceUnitLabel(unit)}`,
+      label: `${blockLabel} ${u} @ ${paceLabel} ${paceUnitLabel(unit)}`,
       instruction: "Your goal race pace — strong to the finish",
       target: { kind: "distance", meters: Math.round(blockKm * 1000) },
       paceTarget: goalPaceS,

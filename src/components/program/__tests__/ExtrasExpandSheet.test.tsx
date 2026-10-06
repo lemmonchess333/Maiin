@@ -123,7 +123,7 @@ describe("ExtrasExpandSheet", () => {
       />
     );
     // The pace label is `5:30/km` from paceLabel(330).
-    expect(screen.getByText(/5:30\/km/)).toBeInTheDocument();
+    expect(screen.getByText(/5:30 \/km/)).toBeInTheDocument();
   });
 
   it("tap on a row navigates to /run/:id then closes the sheet", () => {

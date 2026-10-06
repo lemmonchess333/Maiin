@@ -85,8 +85,8 @@ export default function RunPaceCard({
               </div>
               <div className="ml-auto shrink-0 text-right">
                 <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                  {paceMinSec(row.paceSecPerKm, unit)}
-                  <span className="ml-0.5 text-xs font-medium text-muted-foreground">
+                  {paceMinSec(row.paceSecPerKm, unit)}{" "}
+                  <span className="text-xs font-medium text-muted-foreground">
                     {paceUnitLabel(unit)}
                   </span>
                 </p>

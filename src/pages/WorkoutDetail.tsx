@@ -261,7 +261,7 @@ function WorkoutDetailContent() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-[16px] pt-4 space-y-4">
         <IconButton
           icon={<ChevronLeft className="size-5" />}
           aria-label="Back"
