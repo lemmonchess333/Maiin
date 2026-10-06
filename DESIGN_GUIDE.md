@@ -249,6 +249,12 @@ the count can only fall.
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
 
+Sizes are at the designed text size. The iPhone app follows the phone's
+text size (`systemTextSize.ts`, 1× to 2×): body and small text grow in
+proportion, while the four heading steps grow by the same amount as body
+text, as iOS titles do under Dynamic Type (`tokens.css`). At double text
+a page title is 47px, not 62px.
+
 **Onboarding question role (approved first release, 7 September 2026):**
 The question heading uses the existing `text-h1` token with `font-extrabold`,
 tight leading and natural wrapping. Standard route titles keep their existing

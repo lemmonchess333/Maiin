@@ -130,11 +130,13 @@ export default function BodyInputs({
         className="rounded-2xl bg-card card-shadow p-4 space-y-3"
         aria-label="Starting weight"
       >
-        <div className="flex items-center justify-between gap-3">
+        {/* The unit control drops under its heading at larger text, and
+            never grows past the card. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <h2 className="text-base font-semibold">Weight</h2>
           <SegmentedControl<WeightUnit>
             ariaLabel="Weight unit"
-            className="w-44 shrink-0"
+            className="w-44 max-w-full shrink-0"
             value={weightUnit}
             disabled={!weightValid}
             options={[
@@ -221,11 +223,11 @@ export default function BodyInputs({
         className="rounded-2xl bg-card card-shadow p-4 space-y-3"
         aria-label="Height"
       >
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <h2 className="text-base font-semibold">Height</h2>
           <SegmentedControl<"cm" | "ft">
             ariaLabel="Height unit"
-            className="w-36 shrink-0"
+            className="w-36 max-w-full shrink-0"
             value={heightUnit}
             disabled={!heightValid}
             options={[

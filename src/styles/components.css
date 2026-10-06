@@ -304,7 +304,9 @@ select.ds-input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--safe-top) + 1rem) 1rem calc(var(--safe-bottom) + 1rem);
+  /* Side margins in px, as iOS keeps its layout margins at every text
+     size: in rem, double text spent 64px of a 320pt screen on them. */
+  padding: calc(var(--safe-top) + 1rem) 16px calc(var(--safe-bottom) + 1rem);
 }
 
 .dark .ds-auth-shell {
@@ -335,7 +337,9 @@ select.ds-input:focus {
 .ds-auth-card {
   width: 100%;
   max-width: 24rem;
-  padding: clamp(1.25rem, 5vw, 1.75rem);
+  /* px for the same reason as the shell's margins: the designed 20–28px
+     at every text size. */
+  padding: clamp(20px, 5vw, 28px);
   border-radius: 1.75rem;
   background: hsl(var(--card) / 0.92);
   border: 1px solid hsl(var(--border) / 0.72);
