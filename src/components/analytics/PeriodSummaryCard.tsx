@@ -194,7 +194,7 @@ export default function PeriodSummaryCard({
         <div
           role="radiogroup"
           aria-label="Show on the chart"
-          className="grid grid-cols-1 @min-[17em]:grid-cols-3 gap-1"
+          className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-1"
         >
           {figures.map((f, i) => {
             const selected = i === selectedIndex;
@@ -348,7 +348,7 @@ export default function PeriodSummaryCard({
                      than a bar's slot at double size. */
                   className={cn(
                     "min-w-0 text-center leading-tight",
-                    !end && "invisible @min-[11em]:visible",
+                    !end && "@max-[11em]:invisible",
                     b.current && "font-semibold text-foreground",
                     // The last label may be wider than its bar's slot.
                     i === bins.length - 1 && every > 1 && "text-right"

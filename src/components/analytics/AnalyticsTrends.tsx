@@ -61,7 +61,7 @@ export default function AnalyticsTrends({
               <Sparkline
                 values={row.series}
                 color={row.color}
-                className="hidden shrink-0 @min-[20em]:block"
+                className="shrink-0 @max-[20em]:hidden"
               />
             )}
             {/* The figure and the chevron move as one, so a wrapped row

@@ -200,7 +200,7 @@ export default function DeloadBanner({
                 fitted beside it. */}
             <div className="flex items-start gap-3">
               <Flame
-                className="size-5 shrink-0 mt-0.5 hidden @min-[14em]:block"
+                className="size-5 shrink-0 mt-0.5 @max-[14em]:hidden"
                 style={{
                   color: deloadActive
                     ? "hsl(var(--success-strong))"
@@ -247,7 +247,7 @@ export default function DeloadBanner({
               )}
             </div>
             {!deloadActive && onApply && (
-              <div className="mt-3 @min-[14em]:pl-8">
+              <div className="mt-3 pl-8 @max-[14em]:pl-0">
                 <Button
                   variant="secondary"
                   size="sm"

@@ -139,7 +139,7 @@ export default function TodayEnergy({
           the same size, so the card does not grow when the meals land.
           Under 12em of card (larger text on the phone) the macros go
           under the ring instead: beside it they ran into each other. */}
-      <div className="mt-3 flex flex-col items-center gap-2.5 @min-[12em]:flex-row">
+      <div className="mt-3 flex items-center gap-2.5 @max-[12em]:flex-col">
         {caloriesPending ? (
           <span
             role="status"
@@ -158,7 +158,7 @@ export default function TodayEnergy({
             trajectoryLabel={null}
           />
         )}
-        <div className="grid w-full min-w-0 grid-cols-3 gap-1.5 @min-[12em]:w-auto @min-[12em]:flex-1">
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">
           {macros.map((m) => (
             <div key={m.key} className="flex min-w-0 px-0.5 py-1">
               {caloriesPending ? (

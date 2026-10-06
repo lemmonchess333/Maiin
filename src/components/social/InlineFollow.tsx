@@ -33,8 +33,11 @@ export default function InlineFollow({
   if (followedHere && following) {
     return (
       <span className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-medium text-muted-foreground">
-        <UserCheck className="size-5 @min-[20.5em]:hidden" aria-hidden="true" />
-        <span className="sr-only @min-[20.5em]:not-sr-only">Following</span>
+        <UserCheck
+          className="hidden size-5 @max-[20.5em]:block"
+          aria-hidden="true"
+        />
+        <span className="@max-[20.5em]:sr-only">Following</span>
       </span>
     );
   }
@@ -58,8 +61,11 @@ export default function InlineFollow({
       }}
       className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,transform] disabled:opacity-50"
     >
-      <UserPlus className="size-5 @min-[20.5em]:hidden" aria-hidden="true" />
-      <span className="hidden @min-[20.5em]:inline">Follow</span>
+      <UserPlus
+        className="hidden size-5 @max-[20.5em]:block"
+        aria-hidden="true"
+      />
+      <span className="@max-[20.5em]:hidden">Follow</span>
     </button>
   );
 }

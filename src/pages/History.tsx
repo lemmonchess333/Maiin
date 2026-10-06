@@ -1769,7 +1769,7 @@ export default function History() {
                       designed size), stacked below: at larger text
                       "115.2k kg" was wider than a third. */}
                   <div className="@container">
-                    <div className="grid grid-cols-1 @min-[17em]:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
                       <Card size="compact" className="text-center">
                         <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                         <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">

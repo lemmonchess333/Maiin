@@ -114,7 +114,7 @@ export default function WeightStepsTiles({
     <>
       <div className="flex items-center gap-2 mb-1.5">
         <div
-          className="size-8 rounded-lg hidden @min-[9em]:flex items-center justify-center flex-shrink-0"
+          className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
           style={{ backgroundColor: THEME.iconBg }}
         >
           {/* The weight tile's colour: steps are a reading like weight,
@@ -185,7 +185,7 @@ export default function WeightStepsTiles({
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
-            className="size-8 rounded-lg hidden @min-[9em]:flex items-center justify-center flex-shrink-0"
+            className="size-8 rounded-lg flex @max-[9em]:hidden items-center justify-center flex-shrink-0"
             style={{ backgroundColor: THEME.iconBg }}
           >
             <Scale

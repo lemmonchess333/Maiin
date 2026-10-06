@@ -411,7 +411,7 @@ export default function FoodHeroCard({
         (double text on a 320px phone) they stack: three across, "101g"
         ran into its neighbours. */}
       <div className="@container mt-4">
-        <div className="grid grid-cols-1 @min-[10em]:grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
           <Card size="compact" className="min-w-0 flex">
             <MacroColumn
               macroKey="protein"

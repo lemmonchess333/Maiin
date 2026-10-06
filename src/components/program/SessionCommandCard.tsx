@@ -120,7 +120,7 @@ export default function SessionCommandCard({
           </div>
           {figure ? (
             <div
-              className="shrink-0 -my-1 hidden @min-[14em]:block"
+              className="shrink-0 -my-1 @max-[14em]:hidden"
               aria-hidden="true"
             >
               {figure}
@@ -128,7 +128,7 @@ export default function SessionCommandCard({
           ) : (
             <div
               className={cn(
-                "size-12 rounded-2xl hidden @min-[14em]:flex items-center justify-center shrink-0",
+                "size-12 rounded-2xl flex @max-[14em]:hidden items-center justify-center shrink-0",
                 tileClass
               )}
             >

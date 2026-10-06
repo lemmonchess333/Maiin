@@ -50,7 +50,7 @@ export default function ExerciseRowSummary({
       <ExerciseThumb
         exerciseId={exercise.exerciseId}
         size={thumbSize}
-        className="hidden @min-[10em]:flex"
+        className="@max-[10em]:hidden"
       />
       <div className="min-w-0 flex-1">
         <p className="text-base font-semibold text-foreground truncate">

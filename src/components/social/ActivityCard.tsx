@@ -59,7 +59,7 @@ const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
 
 /* Written out whole, so Tailwind sees every class it has to build. */
 const RUN_STAT_COLUMNS =
-  "grid-cols-[minmax(max-content,1fr)] @min-[14.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @min-[17.5em]:grid-cols-[repeat(3,minmax(max-content,1fr))]";
+  "grid-cols-[repeat(3,minmax(max-content,1fr))] @max-[17.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)]";
 const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 interface ActivityCardProps {
@@ -500,7 +500,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             the card at 375px. Two columns give every cell a predictable
             half-width and wrap the rest onto a second line, and stack
             to one column when the card is too narrow in em for two. */}
-        <div className="grid grid-cols-[minmax(max-content,1fr)] @min-[14.5em]:grid-cols-[repeat(2,minmax(max-content,1fr))] gap-x-4 gap-y-3">
+        <div className="grid grid-cols-[repeat(2,minmax(max-content,1fr))] @max-[14.5em]:grid-cols-[minmax(max-content,1fr)] gap-x-4 gap-y-3">
           {!showVolumeOverlay && (activity.totalVolume ?? 0) > 0 && (
             /* Volume is the primary metric of a lift, and renders at
                text-2xl/800 in the muscle-hero overlay already — this
@@ -582,7 +582,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                       {feedItem.authorName}
                     </p>
                   </div>
-                  <p className="text-small text-muted-foreground @min-[14em]:whitespace-nowrap">
+                  <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
                     {timeAgo}
                   </p>
                 </div>
@@ -629,7 +629,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                     ) : (
                       <Dumbbell className="size-3.5 text-lifting" />
                     )}
-                    <p className="text-small @min-[14em]:whitespace-nowrap">
+                    <p className="text-small whitespace-nowrap @max-[14em]:whitespace-normal">
                       {timeAgo}
                     </p>
                   </div>

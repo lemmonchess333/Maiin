@@ -159,7 +159,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
     for (const cls of [
       "absolute",
-      "@min-[9em]:top-3",
+      "top-3",
       "right-3",
       "size-8",
       "rounded-full",

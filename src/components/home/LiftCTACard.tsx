@@ -139,13 +139,13 @@ export default function LiftCTACard({
           aria-hidden="true"
           draggable={false}
           decoding="async"
-          className="pointer-events-none absolute right-2 top-3 z-0 hidden h-[136px] w-[42%] object-contain object-right-top @min-[14em]:block"
+          className="pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top @max-[14em]:hidden"
         />
       )}
       <div
         className={
           "pointer-events-none relative z-10 px-5 pt-5 " +
-          (art ? "@min-[14em]:pr-[46%]" : "")
+          (art ? "pr-[46%] @max-[14em]:pr-5" : "")
         }
       >
         <p className="text-sm font-bold text-lifting-strong">

@@ -180,7 +180,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
           aria-expanded={picking}
           className="w-full min-h-[44px] flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
-          <div className="hidden @min-[12em]:flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+          <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
             <UtensilsCrossed
               className="size-4 text-nutrition"
               aria-hidden="true"
@@ -226,7 +226,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   return (
     <div className="@container p-3 rounded-xl bg-card space-y-2">
       <div className="flex items-center gap-3">
-        <div className="hidden @min-[12em]:flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+        <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
           <UtensilsCrossed
             className="size-4 text-nutrition"
             aria-hidden="true"

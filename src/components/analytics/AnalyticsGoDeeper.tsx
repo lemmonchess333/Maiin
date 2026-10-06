@@ -64,7 +64,7 @@ export default function AnalyticsGoDeeper({
       <SectionHeading>Go deeper</SectionHeading>
       {/* One column under 11em (larger text on a small phone), where two
           ran "Running" into the card's edge. */}
-      <div className="grid grid-cols-1 @min-[11em]:grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 @max-[11em]:grid-cols-1 gap-2">
         {ORDER.map((page) => {
           const { title, detail, icon: Icon, tint } = ANALYTICS_PAGES[page];
           return (

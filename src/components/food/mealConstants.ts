@@ -44,7 +44,7 @@ export const MEAL_LABELS: Record<MealKey, string> = {
  * "Breakfast" overflowed a half too.
  */
 export const MEAL_PICKER_LAYOUT =
-  "grid grid-cols-1 @min-[9em]:grid-cols-2 @min-[20em]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
+  "grid grid-cols-4 @max-[20em]:grid-cols-2 @max-[9em]:grid-cols-1 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
 
 /**
  * Best-guess meal slot for "now" (local hour), used to pre-select the

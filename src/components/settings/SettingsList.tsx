@@ -86,7 +86,7 @@ export function SettingsRow({
           (larger text on the phone): beside it "Programme" and
           "Subscription" broke mid-word. */}
       {Icon && !destructive && (
-        <span className="size-8 rounded-lg bg-muted hidden @min-[14em]:flex items-center justify-center shrink-0">
+        <span className="size-8 rounded-lg bg-muted flex @max-[14em]:hidden items-center justify-center shrink-0">
           <Icon
             className={cn("size-4 text-muted-foreground", iconClassName)}
             aria-hidden="true"
