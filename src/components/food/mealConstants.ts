@@ -31,8 +31,9 @@ export const MEAL_LABELS: Record<MealKey, string> = {
 
 /**
  * Layout for both meal-slot pickers, the composer's row and the edit
- * sheet's: the four slots on one row while the picker is 17em wide (a
- * 360px phone at the designed text size), two by two below that. Left to
+ * sheet's: the four slots on one row while the picker is 20em wide (on
+ * the Food page, a phone of about 360px at the designed text size; at
+ * 320px it is 18em), two by two below that. Left to
  * the solid SegmentedControl's own wrapping, the sheet's pills fit three
  * to a line and leave "Dinner" on a line of its own.
  *
@@ -43,7 +44,7 @@ export const MEAL_LABELS: Record<MealKey, string> = {
  * "Breakfast" overflowed a half too.
  */
 export const MEAL_PICKER_LAYOUT =
-  "grid grid-cols-1 @min-[9em]:grid-cols-2 @min-[17em]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
+  "grid grid-cols-1 @min-[9em]:grid-cols-2 @min-[20em]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
 
 /**
  * Best-guess meal slot for "now" (local hour), used to pre-select the
