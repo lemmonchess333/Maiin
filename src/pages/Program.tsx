@@ -30,11 +30,7 @@ import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWe
 import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import {
-  deloadDismissKey,
-  pickLiftAdvice,
-  recoveryDismissKey,
-} from "@/lib/programNotices";
+import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import MiniMuscleFigure, {
@@ -113,7 +109,6 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
-import RecoveryReductionBanner from "@/components/program/RecoveryReductionBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
@@ -171,7 +166,6 @@ function ProgramInner() {
     dismissFellBehindPrompt,
     applyDeloadWeek,
     revertDeloadWeek,
-    undoRecoveryReduction,
     startTrainingBlock,
     adoptLegacyTrainingBlock,
     releaseTrainingBlock,
@@ -565,7 +559,6 @@ function ProgramInner() {
       : (programState?.weekNumber ?? 1)
   }`;
   const deloadNotice = useDismissOnce(deloadDismissKey(noticeWeekKey));
-  const recoveryNotice = useDismissOnce(recoveryDismissKey(noticeWeekKey));
 
   // Today index: the next-up cursor, the session Home offers too.
   const todayIndex = useMemo(() => {
@@ -867,9 +860,6 @@ function ProgramInner() {
       | undefined,
   });
   const liftAdvice = pickLiftAdvice({
-    recovery:
-      (programState.recoveringMuscles ?? []).length > 0 &&
-      !recoveryNotice.dismissed,
     deload:
       showDeloadSuggest &&
       programState.currentPhase !== "deload" &&
@@ -1036,9 +1026,8 @@ function ProgramInner() {
                 reopens on a new week if the signal still applies. */}
           <TrackProgrammeSectionView section="deload_banner">
             <DeloadBanner
-              /* A recovery reduction outranks the recommendation; an
-                 active deload week is state and shows regardless. */
-              visible={showDeloadSuggest && liftAdvice !== "recovery"}
+              /* An active lighter week is state and shows regardless. */
+              visible={showDeloadSuggest}
               dismissed={deloadNotice.dismissed}
               onDismiss={deloadNotice.dismiss}
               weekKey={`w${displayWeekNumber}`}
@@ -1047,26 +1036,6 @@ function ProgramInner() {
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
               onApply={handleApplyDeload}
-            />
-          </TrackProgrammeSectionView>
-
-          {/* LIFT-EV-05: the rollover's automatic recovery reduction
-              (sets/reps halved for regressing muscles) was invisible —
-              this surfaces it with honest copy and a one-tap restore.
-              Week-level signal, same placement rationale as the deload
-              banner above. */}
-          <TrackProgrammeSectionView section="recovery_banner">
-            <RecoveryReductionBanner
-              muscles={programState.recoveringMuscles ?? []}
-              dismissed={recoveryNotice.dismissed}
-              onDismiss={recoveryNotice.dismiss}
-              weekKey={`w${displayWeekNumber}`}
-              onUndo={async () => {
-                const ok = await undoRecoveryReduction();
-                if (ok) toast.success("Full volume restored for this week");
-                else toast.error("Couldn't restore volume. Try again.");
-                return ok;
-              }}
             />
           </TrackProgrammeSectionView>
 
@@ -1131,7 +1100,7 @@ function ProgramInner() {
                 Below keeps navigator adjacency without burying the
                 navigator, which moving the card ABOVE the header would. */}
           <ExperienceSuggestionCard
-            suppressed={liftAdvice === "recovery" || liftAdvice === "deload"}
+            suppressed={liftAdvice === "deload"}
             workouts={programState?.workouts}
             context={{
               weekNumber: programState?.weekNumber,

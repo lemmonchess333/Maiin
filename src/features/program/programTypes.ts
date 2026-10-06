@@ -885,22 +885,10 @@ export interface ProgramState {
   liftWeekKey?: string;
 
   /**
-   * Canonical muscles given a RECOVERY SESSION on the most recent weekly
-   * advance (14b) — halved sets and reps at held load, per RP Ch3 P202.
-   *
-   * Persisted for one reason: the cut restores itself in full via
-   * `resetToBaseSets`, so a muscle sitting at its ceiling would show
-   * the MRV signal again immediately and oscillate half → full → half. This is
-   * the refractory list that stops that — a muscle here is re-entering and is
-   * not eligible for another recovery session this week. `advanceWeek` clears
-   * it as it writes the next one, so it never accumulates.
-   *
-   * NOT a history: it holds one week only, and `recoveryTrigger.ts` explains
-   * why this is a local device rather than RP Ch3 P203's midpoint re-entry.
-   *
-   * Optional with a defaulting reader → no schema bump. Absent means "nothing
-   * re-entering", which is the correct reading for every existing document, so
-   * there is nothing to backfill.
+   * The muscles the retired per-muscle recovery session eased (Lift4 (13)).
+   * Nothing reads or writes it now, and the rollover drops a stored one; it
+   * stays declared because stored plans carry it and the server's
+   * allow-list admits it.
    */
   recoveringMuscles?: CanonicalMuscle[];
 

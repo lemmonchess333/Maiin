@@ -33,17 +33,6 @@
  * a pure mapper, so nothing blocks it — it is a one-time backfill for
  * pre-Blk2 blocks that simply never moved. Marked `unaccounted` rather
  * than folded into a category that does not describe it.
- *
- * `undoRecoveryReduction` was marked that way too on the first pass, and
- * that was WRONG — checked rather than assumed, and the check overturned
- * it. It calls `revertRecoverySession`, which needs
- * `primaryCanonicalForExercise` -> `volumeModel` -> per-exercise muscle
- * attributions; `functions/` has no muscle data of any kind. That is
- * exactly the dependency ADR-0011 measured for `musclesAtMrv`, reached
- * through a helper the ADR did not happen to name. So the ADR's REASONING
- * covers it even though its enumeration does not, and recording it as an
- * unexplained gap would have sent the next reader hunting for a decision
- * nobody failed to make.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -98,11 +87,6 @@ const EXPECTED_WRITERS: ReadonlyArray<{
     owner: "adoptLegacyTrainingBlock",
     category: "unaccounted",
     why: "NOT covered by ADR-0011's reasoning. Its blocker was the represcribe mirror, which §8.6 records as DONE on 2026-08-02 — so the stated obstacle no longer exists and nothing has recorded what replaced it",
-  },
-  {
-    owner: "undoRecoveryReduction",
-    category: "week-engine",
-    why: "engine-blocked through a helper ADR-0011 does not enumerate but whose blocker it measured: revertRecoverySession -> primaryCanonicalForExercise -> volumeModel -> per-exercise muscle attributions, and functions/ has NO muscle data of any kind",
   },
   {
     owner: "realignRacePlan",
@@ -161,9 +145,7 @@ describe("programme document writers outside the command boundary", () => {
   });
 
   it("matches ADR-0011's reasoning for all but one, which is marked", () => {
-    /* Seven are covered by the ADR's reasoning — six it enumerates plus
-       `undoRecoveryReduction`, which reaches the same measured
-       muscle-attribution blocker through a helper it does not name. One
+    /* Six are covered by the ADR's reasoning, the six it enumerates. One
        deliberate fallback. One genuinely outside the account.
 
        Pinning the SHAPE of that gap rather than hiding it means the next
@@ -172,7 +154,7 @@ describe("programme document writers outside the command boundary", () => {
        to work out for themselves. */
     const byCategory = (c: string) =>
       EXPECTED_WRITERS.filter((w) => w.category === c).length;
-    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(7);
+    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(6);
     expect(byCategory("deliberate")).toBe(1);
     expect(byCategory("unaccounted")).toBe(1);
   });

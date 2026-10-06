@@ -21,12 +21,6 @@ import {
 } from "./variationBank";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
-  applyRecoverySession,
-  escalatesToWholeBody,
-  musclesAtMrv,
-  recoveryTargets,
-} from "./recoveryTrigger";
-import {
   balancePushPull,
   judgementLandmark,
   reconcileToLandmarks,
@@ -2551,24 +2545,6 @@ export function advanceWeek(
     }));
   }
 
-  /* 14b — the evidence-triggered tier, read from the week just TRAINED.
-     The calendar deload (`week % 4 === 0`) is a starting point, not a
-     detector: Schoenfeld p.200 says no study has quantified that cadence.
-     This reads RP Ch3 P154's two-session regression instead, escalates
-     muscle-local → whole-body per Ch3 P209-212, and biases toward firing
-     because a false positive costs ~nothing (Ch3 P213; Schoenfeld p.200's
-     3-week-break study) while a miss costs overtraining.
-
-     Muscles still re-entering from LAST week's recovery session are excluded
-     — the cut restores itself in full, so without that they would re-trigger
-     forever. See `recoveryTrigger.ts`. */
-  const { atMrv, trained } = musclesAtMrv(state.workouts);
-  const recoveryMuscles = recoveryTargets(atMrv, state.recoveringMuscles);
-  const escalateWholeBody =
-    !prescription.deload &&
-    recoveryMuscles.length > 0 &&
-    escalatesToWholeBody(recoveryMuscles, trained);
-
   /* A deload dissipates ACCUMULATED fatigue. A week with no completed session
      accumulated none, so there is nothing to dissipate — and running the
      recipe anyway is not merely a no-op, it hands the user a REDUCED week
@@ -2583,14 +2559,6 @@ export function advanceWeek(
      of a plan they had never touched. Per CLAUDE.md, lapsed-and-returning is
      a real user segment, not an edge case.
 
-     Both arms are gated, not just the calendar one: `liftAtMrv` reads
-     `performanceHistory`, which does not decay while a user is away, so a
-     regression streak recorded before a break could otherwise escalate a
-     whole-body deload for someone who has not trained since. Gating can only
-     ever WITHHOLD a deload on a week nobody trained; it can never cause one,
-     so it preserves 14b's deliberate bias toward firing (RP Ch3 P213 —
-     deloading early beats deloading late) everywhere that bias is meaningful.
-
      Note this withholds the RECIPE only. The rollover itself is untouched:
      the calendar anchor still advances and the weekly reset still runs, so
      nobody gets stuck. (`weekWasTrained` is computed at the top of
@@ -2602,19 +2570,12 @@ export function advanceWeek(
   const applyDeloadThisWeek =
     weekWasTrained &&
     state.currentPhase !== "deload" &&
-    ((prescription.deload &&
-      lighterWeeksScheduled(experience, state.workouts.length)) ||
-      escalateWholeBody);
+    prescription.deload &&
+    lighterWeeksScheduled(experience, state.workouts.length);
 
-  if (applyDeloadThisWeek) {
-    workouts = applyDeload(workouts);
-  } else {
-    workouts = resetToBaseSets(workouts);
-    // Muscle-local recovery sessions land last, on the reset week — halve
-    // what the lifter would otherwise have done. Zatsiorsky p.81: fatigue is
-    // specific, so the muscles that are fine keep their full week.
-    workouts = applyRecoverySession(workouts, recoveryMuscles);
-  }
+  workouts = applyDeloadThisWeek
+    ? applyDeload(workouts)
+    : resetToBaseSets(workouts);
 
   /* Lift4: the week opens with the session the last one didn't reach.
      Lifts run in order, not by weekday (ADR-0002), so the session that was
@@ -2632,8 +2593,11 @@ export function advanceWeek(
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
   }
 
+  // The retired per-muscle recovery session's list (Lift4 (13)): nothing
+  // reads it, so a stored one goes with this week.
+  const { recoveringMuscles: _retired, ...kept } = state;
   return {
-    ...state,
+    ...kept,
     weekNumber: nextWeek,
     // Both of these key off the RESOLVED flag, not the raw prescription.
     // Keying the phase off `prescription.deload` would label a week "deload"
@@ -2645,16 +2609,6 @@ export function advanceWeek(
     workouts,
     weekHistory: history,
     ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
-    // The refractory list for next week. Written even when empty so a muscle
-    // that finishes re-entering is released rather than held forever, and
-    // omitted entirely when there is nothing to say — Firestore rejects
-    // `undefined`, and an always-present empty array is bytes for no
-    // information. A whole-body escalation records nothing: `applyDeload` is
-    // its own restore cycle and does not need this guard.
-    ...(!escalateWholeBody &&
-    (recoveryMuscles.length > 0 || state.recoveringMuscles?.length)
-      ? { recoveringMuscles: recoveryMuscles }
-      : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };

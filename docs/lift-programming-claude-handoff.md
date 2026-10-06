@@ -421,6 +421,15 @@ the cycle only when lighter weeks come, and the level suggestion's copy
 says what a level changes. Easier today keeps its own 85%
 (`deloadWeight`).
 
+STATUS 2026-10-05 (Lift4 (13), build step 5, second part): the automatic
+whole-body lighter week (two regressing sessions on more than half the
+trained muscles) and the per-muscle recovery session ("Eased this week":
+half the sets and reps for a regressing muscle, with a banner and its
+undo) are retired, with `recoveryTrigger.ts`, `RecoveryReductionBanner`
+and `undoRecoveryReduction`. A lighter week now comes only on the calendar
+(above) or when the person takes one. Train's advice is the lighter-week
+suggestion, then "Go easier today".
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
@@ -669,6 +678,15 @@ a prescription-writing path through `configurePlan` (the legacy
 full-document exception); if the command boundary ever closes over
 configurePlan, this belongs in a `represcribeFocus` command reusing
 the existing `functions/lib/represcribe.js` mirror.
+
+STATUS 2026-10-05 (Lift4 owner call (3), build step 5): LIFT-EV-05 is
+REVERSED. The automatic protective reductions are retired rather than
+surfaced: the per-muscle recovery session ("Eased this week", with its
+banner and undo) and the whole-body lighter week it escalated to are gone
+with `recoveryTrigger.ts`. A lift that keeps missing is lowered by the
+progression rule (two misses, 10% lighter), and a lighter week comes on the
+calendar or from Train. `recoveringMuscles` stays declared and unread; the
+rollover drops a stored one.
 
 STATUS 2026-08-09, merge-cascade close-out (PR #1888, merged to main):
 LIFT-EV-01 RESOLVED — all four consecutiveFailures decrement sites

@@ -1395,6 +1395,16 @@ describe("advanceWeek — stalls and absences", () => {
   const idsOf = (s: ProgramState) =>
     s.workouts.map((d) => d.exercises.map((e) => e.exerciseId));
 
+  it("eases no muscle by itself, and drops a stored recovery list", () => {
+    // Lift4 (13): the per-muscle recovery session and the whole-body
+    // lighter week it escalated to are retired.
+    const st = { ...stall(makeState()), recoveringMuscles: ["Chest" as const] };
+    const out = advanceWeek(trained(st), "intermediate");
+    expect(out.currentPhase).toBe("progression");
+    expect(setsOf(out)).toEqual(setsOf(st));
+    expect("recoveringMuscles" in out).toBe(false);
+  });
+
   it("keeps every lift, its sets and its anchor through a stalled week", () => {
     for (const experience of ["beginner", "intermediate"] as const) {
       const st = stall(makeState());

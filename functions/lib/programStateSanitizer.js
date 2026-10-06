@@ -88,7 +88,7 @@ const PROGRAM_STATE_KEYS = new Set([
   // and strand the user's rollover.
   "liftWeekKey",
   // 14b: canonical muscles that got a recovery session on the last advance.
-  // One week's refractory list, not a history — see `recoveryTrigger.ts`.
+  // The retired per-muscle recovery session's list; stored plans carry it.
   // Unlisted, it would strand a muscle mid-re-entry AND reject the deload
   // command outright for any user carrying one.
   "recoveringMuscles",
