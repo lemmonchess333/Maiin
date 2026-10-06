@@ -90,12 +90,17 @@ export async function layoutBreaks(
 }
 
 /**
- * Ordinary words split across two lines: a word of letters only, 15 or
- * fewer, laid out on more than one line. A long compound, an address or a
- * URL may wrap anywhere; a word like "Notifications" breaking mid-word
- * means its box is too narrow for it. Browsers without a hyphenation
- * dictionary (CI's Chromium) break it bare where iOS would hyphenate, so
- * the fix is room for the word, not a hyphen.
+ * Ordinary words too wide for their line: a word of letters only, 15 or
+ * fewer, split across lines when it is wider than the line it sits in. A
+ * long compound, an address or a URL may wrap anywhere; a word like
+ * "Notifications" that cannot fit on a line of its own means its box is
+ * too narrow for it, and the fix is room for the word, not a hyphen.
+ *
+ * A word that would fit and was split anyway is hyphenation at the end
+ * of a line ("ca-bles"), which iOS does too and is not a break. Whether a
+ * browser hyphenates depends on its build: CI's Chromium does, the
+ * container's older one did not, so the test is the word's width, not
+ * whether it was split.
  */
 export async function brokenWords(
   page: Page,
@@ -120,12 +125,24 @@ export async function brokenWords(
         for (const m of text.matchAll(/\p{L}{2,15}/gu)) {
           range.setStart(n, m.index!);
           range.setEnd(n, m.index! + m[0].length);
-          const tops = new Set(
-            Array.from(range.getClientRects())
-              .filter((r) => r.width > 0)
-              .map((r) => Math.round(r.top))
+          const rects = Array.from(range.getClientRects()).filter(
+            (r) => r.width > 0
           );
-          if (tops.size > 1)
+          const tops = new Set(rects.map((r) => Math.round(r.top)));
+          if (tops.size < 2) continue;
+          // The word's width laid out whole, against the width of the
+          // block its lines are set in.
+          const width = rects.reduce((sum, r) => sum + r.width, 0);
+          let block: Element | null = el;
+          while (block && getComputedStyle(block).display.startsWith("inline"))
+            block = block.parentElement;
+          if (!block) continue;
+          const bs = getComputedStyle(block);
+          const line =
+            block.clientWidth -
+            parseFloat(bs.paddingLeft) -
+            parseFloat(bs.paddingRight);
+          if (width > line + 1)
             out.add(
               `breaks "${m[0]}" mid-word in ${el.tagName.toLowerCase()} "${text
                 .trim()
