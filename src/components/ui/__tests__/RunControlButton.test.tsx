@@ -60,10 +60,10 @@ describe("RunControlButton — sizes", () => {
     expect(screen.getByRole("button").className).toContain("size-[76px]");
   });
 
-  it("sm is 56px (size-14)", () => {
+  it("sm is 56px, in px so it keeps its size at larger text", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} size="sm" />);
     const cls = screen.getByRole("button").className;
-    expect(cls).toContain("size-14");
+    expect(cls).toContain("size-[56px]");
   });
 });
 

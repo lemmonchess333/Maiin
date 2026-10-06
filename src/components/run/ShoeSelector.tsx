@@ -29,13 +29,16 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
       <button
         type="button"
         onClick={() => navigate("/settings/shoes")}
-        className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
+        className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
       >
         <Footprints className="size-4 text-muted-foreground shrink-0" />
-        <span className="flex-1 text-sm text-muted-foreground">
+        {/* "Add shoes" goes under the words when they cannot keep 8em
+            beside it (larger text on the phone), rather than off the
+            card. */}
+        <span className="min-w-[min(100%,8em)] flex-1 text-sm text-muted-foreground">
           Track your shoe mileage
         </span>
-        <span className="flex items-center gap-1 text-xs font-semibold text-lifting-strong">
+        <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-lifting-strong">
           <Plus className="size-3.5" aria-hidden="true" />
           Add shoes
         </span>
