@@ -21,13 +21,20 @@ export default function TrialEndingStrip({
       href={storeSubscriptionsUrl(trial.store)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2.5 px-3 py-2 min-h-[44px] rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"
+      // The pill drops under the words when they need the room: at the
+      // largest text on a small phone it ran off the strip's edge. Under
+      // 16em the icon gives way, as Banner's does. Wide-first, so iOS 15
+      // keeps the designed row.
+      className="@container flex flex-wrap items-center gap-x-2.5 gap-y-1.5 px-3 py-2 min-h-[44px] rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"
     >
-      <Sparkles aria-hidden="true" className="size-4 text-primary shrink-0" />
-      <span className="text-xs font-medium text-foreground flex-1 text-pretty">
+      <Sparkles
+        aria-hidden="true"
+        className="size-4 text-primary shrink-0 @max-[16em]:hidden"
+      />
+      <span className="text-xs font-medium text-foreground flex-1 basis-[9em] min-w-0 text-pretty">
         {text}
       </span>
-      <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
+      <span className="ml-auto text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
         Manage
       </span>
     </a>
