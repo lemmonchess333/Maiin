@@ -9,7 +9,7 @@ import { dirname, join, relative, resolve } from "node:path";
  * (`flex @max-[14em]:hidden`, `grid-cols-3 @max-[17em]:grid-cols-1`).
  *
  * Safari has container queries from 16.0, and the iOS app supports iOS 15
- * (`IPHONEOS_DEPLOYMENT_TARGET = 15.0`; the iPhone 6s, 7 and first SE end
+ * (`IPHONEOS_DEPLOYMENT_TARGET = 15.4`; the iPhone 6s, 7 and first SE end
  * there). A browser without them ignores every `@container` rule, so it
  * gets the classes with no variant. Written narrow-first
  * (`hidden @min-[14em]:flex`), that is the narrow layout at every text
