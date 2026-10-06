@@ -159,6 +159,10 @@ export interface OnboardingDraft {
    *  gym's or a minimal setup's kit, and small plates. */
   barbellAtHome?: boolean;
   smallPlates?: boolean;
+  /** Lift4 (10): "Lighten leg sessions while your runs build?", asked with
+   *  a race. Unanswered, the plan takes yes for Support my running and no
+   *  otherwise. */
+  raceLegTrim?: boolean;
 }
 
 interface DraftEnvelope {
@@ -231,7 +235,8 @@ export function isValidDraft(
     (d.sessionMinutes === undefined ||
       oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
     (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
-    (d.smallPlates === undefined || typeof d.smallPlates === "boolean")
+    (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
+    (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean")
   );
 }
 

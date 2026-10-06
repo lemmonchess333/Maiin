@@ -72,7 +72,13 @@ import {
   balanceWeekVolume,
   generateProgram,
   expectedDayCount,
+  withRaceLegTrim,
 } from "./programEngine";
+import {
+  firstWeekBack,
+  isRaceBuildWeek,
+  raceBlockWeek,
+} from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
 import { represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
@@ -194,6 +200,11 @@ export interface PlanBuilderInput {
    *  setup's kit ("what do you have?"). */
   barbellAtHome?: boolean;
 
+  /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
+   *  your runs build?". Saved on the profile, and the week being saved in
+   *  takes it at once when it is a build week. */
+  raceLegTrim?: boolean;
+
   /** Lift4 (11): "I have small plates", for a new plan's settings; a plan
    *  the person has keeps the setting it has. */
   smallPlates?: boolean;
@@ -258,6 +269,8 @@ export interface PlanBuilderOutput {
     liftTimeBudgetMinutes?: number;
     /** A barbell and a rack beside the equipment tier's kit (Lift4 (11)). */
     barbellAtHome?: boolean;
+    /** The race-setup answer on the leg trim (Lift4 (10)). */
+    raceLegTrim?: boolean;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
     // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
@@ -469,6 +482,34 @@ function refitWeek(
   }));
 }
 
+/**
+ * The race build's leg trim on the week a plan is saved in (Lift4 (10)):
+ * a yes at race setup trims the leg lifts at once in a build week, where
+ * the rollover would have; a no gives back what a trim took. Not inside a
+ * lighter week, a race's final weeks or the first week back, which have
+ * fewer sets already. A week kept (`preserveHistory`) keeps which race week
+ * it is.
+ */
+function raceLegTrimNow(
+  input: PlanBuilderInput,
+  workouts: WorkoutDay[],
+  runPlan: RunPlan | undefined
+): { workouts: WorkoutDay[]; raceWeek: ProgramState["raceWeek"] } {
+  const kept = input.preserveHistory ? input.existingState : undefined;
+  const raceWeek = kept?.raceWeek;
+  const trim =
+    input.raceLegTrim === true &&
+    isRaceBuildWeek(raceBlockWeek(runPlan)) &&
+    kept?.currentPhase !== "deload" &&
+    (raceWeek === undefined || raceWeek === "build") &&
+    !(kept && firstWeekBack(kept));
+  if (trim)
+    return { workouts: withRaceLegTrim(workouts, true), raceWeek: "build" };
+  if (raceWeek === "build")
+    return { workouts: withRaceLegTrim(workouts, false), raceWeek: undefined };
+  return { workouts, raceWeek };
+}
+
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
  *  injected currentDate, not wall clock). Uses the V2 scheduler API
  *  (P0-3) — both `scheduleStructuredWeekV2` and `generateRacePlanV2`
@@ -580,6 +621,7 @@ function buildProfileUpdates(
     updates.liftTimeBudgetMinutes = sessionMinutesFor(input.sessionMinutes);
   if (input.barbellAtHome !== undefined)
     updates.barbellAtHome = input.barbellAtHome;
+  if (input.raceLegTrim !== undefined) updates.raceLegTrim = input.raceLegTrim;
   if (input.runningBaseline !== undefined)
     updates.runningBaseline = input.runningBaseline;
   if (input.runTimeLimits !== undefined)
@@ -687,6 +729,11 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
   const weekSchedule = buildWeekSchedule(input);
   const { splitType, workouts, sessionMinutes } = buildLiftProgram(input);
   const { runDays, runPlan } = buildRunPlan(input, weekSchedule);
+  const { workouts: weekWorkouts, raceWeek } = raceLegTrimNow(
+    input,
+    workouts,
+    runPlan
+  );
   const profileUpdates = buildProfileUpdates(input, weekSchedule);
 
   // Blk2. This literal spreads nothing from `existingState`, so every
@@ -720,7 +767,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
         ? input.existingState.weekNumber
         : 1,
     splitType,
-    workouts,
+    workouts: weekWorkouts,
     fatigueScore:
       input.preserveHistory && input.existingState
         ? input.existingState.fatigueScore
@@ -764,9 +811,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
       : {}),
     // Lift4 (10): and one in a race's final weeks keeps which it is, as it
     // keeps the week's phase.
-    ...(input.preserveHistory && input.existingState?.raceWeek
-      ? { raceWeek: input.existingState.raceWeek }
-      : {}),
+    ...(raceWeek ? { raceWeek } : {}),
     ...(input.preserveHistory &&
     input.raceGoal &&
     continuingRacePlan(input.existingState?.runPlan, input.raceGoal) &&

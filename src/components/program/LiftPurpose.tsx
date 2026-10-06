@@ -19,7 +19,10 @@ export default function LiftPurpose({
   className,
 }: {
   programme: LiftPurposeProgramme | null | undefined;
-  day: Pick<WorkoutDay, "isCustom"> | null | undefined;
+  day:
+    | (Pick<WorkoutDay, "isCustom"> & Partial<Pick<WorkoutDay, "exercises">>)
+    | null
+    | undefined;
   /** The day's local YYYY-MM-DD, or today where the surface has no date. */
   date: string;
   /** The person's level (`profile.experience`). */

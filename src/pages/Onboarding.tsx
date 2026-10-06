@@ -207,6 +207,11 @@ export default function Onboarding() {
     draft?.barbellAtHome ?? false
   );
   const [smallPlates, setSmallPlates] = useState(draft?.smallPlates ?? false);
+  // Lift4 (10): asked with a race. Unanswered, the plan takes yes for
+  // Support my running and no otherwise (`buildOnboardingPlan`).
+  const [raceLegTrim, setRaceLegTrim] = useState<boolean | undefined>(
+    draft?.raceLegTrim
+  );
   // Until the person picks one, the draft week is a beginner's: an unknown
   // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
@@ -282,6 +287,7 @@ export default function Onboarding() {
       sessionMinutes,
       barbellAtHome,
       smallPlates,
+      raceLegTrim,
     }),
     [
       step,
@@ -316,6 +322,7 @@ export default function Onboarding() {
       sessionMinutes,
       barbellAtHome,
       smallPlates,
+      raceLegTrim,
     ]
   );
   useEffect(() => {
@@ -390,6 +397,7 @@ export default function Onboarding() {
           sessionMinutes,
           barbellAtHome: equipment !== "full_gym" && barbellAtHome,
           smallPlates,
+          raceLegTrim,
         },
         goalPlan.fitnessGoal,
         currentDate,
@@ -415,6 +423,7 @@ export default function Onboarding() {
       sessionMinutes,
       barbellAtHome,
       smallPlates,
+      raceLegTrim,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
@@ -1087,6 +1096,29 @@ export default function Onboarding() {
                         <p className="text-sm text-muted-foreground">
                           Some days include a lift and a run.
                         </p>
+                      )}
+                      {hasLifting && (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-foreground">
+                              Lighten leg sessions while your runs build
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              A third fewer sets on leg lifts, at the same
+                              weights, in your plan's build weeks.
+                            </p>
+                          </div>
+                          <Toggle
+                            checked={raceLegTrim ?? primaryGoal === "running"}
+                            label="Lighten leg sessions while your runs build"
+                            className="ml-3"
+                            onChange={() =>
+                              setRaceLegTrim(
+                                !(raceLegTrim ?? primaryGoal === "running")
+                              )
+                            }
+                          />
+                        </div>
                       )}
                     </div>
                   )}

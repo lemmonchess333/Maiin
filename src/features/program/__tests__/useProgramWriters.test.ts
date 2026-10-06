@@ -169,6 +169,7 @@ type MockProfile = {
   } | null;
   primaryGoal?: string;
   program?: { goal?: string };
+  raceLegTrim?: boolean;
 };
 
 let mockProfile: MockProfile | null = null;
@@ -1375,6 +1376,76 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     ]);
   });
 
+  it("Lift4 (10) — advanceToNextWeek into a build week trims the legs on a yes at race setup", async () => {
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = { ...raceProfile(targetDate), raceLegTrim: true };
+    const squat = {
+      instanceId: "squat-1",
+      exerciseId: "squat",
+      name: "Squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 5,
+      weight: 100,
+      progressionType: "linear",
+    };
+    const bench = {
+      ...squat,
+      instanceId: "bench-1",
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      movementCategory: "horizontal_push",
+      weight: 80,
+    };
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "full_body",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: true,
+          exercises: [squat, bench],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      // Base week 5 of 16: the advance carries the plan into build week 6.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 5,
+        totalWeeks: 16,
+      },
+    } as unknown as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.advanceToNextWeek();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.runPlan?.currentWeek).toBe(6);
+    expect(lastWrite.raceWeek).toBe("build");
+    const lifts = lastWrite.workouts[0].exercises;
+    expect(lifts.map((ex) => [ex.exerciseId, ex.sets])).toEqual([
+      ["squat", 2],
+      ["bench-press", 3],
+    ]);
+  });
+
   it("RUN-H1 — advanceToNextWeek mid-recovery keeps the phase + emits a recovery week (not a race regen)", async () => {
     // A week rolling over while recovery is still active must NOT regenerate a
     // race plan — that path drops phase/recoveryEndDate via makeRunPlanRecord
@@ -1639,6 +1710,79 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         // weeks that were trained. The old unconditional archive made an
         // empty-plan user look like they had lift history.
         expect(lastWrite?.runDays?.[0]?.weekKey).toBe(localWeekKey());
+      },
+      { timeout: 2000 }
+    );
+  });
+
+  it("Lift4 (10): trims the legs rolling into a race build week on a yes", async () => {
+    const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = {
+      ...raceProfile(targetDate, { weeklyRunDaysTarget: 2 }),
+      raceLegTrim: true,
+    };
+    const squat = {
+      instanceId: "squat-1",
+      exerciseId: "squat",
+      name: "Squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 5,
+      weight: 100,
+      progressionType: "linear",
+    };
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "full_body",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: true,
+          exercises: [squat],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: lastWeek,
+      runDays: [
+        {
+          id: "last_week_run",
+          dayIndex: 1,
+          date: lastWeek,
+          weekKey: lastWeek,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+        } as ScheduledRunDay,
+      ],
+      // Base week 5 of 16, rolling into build week 6.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 5,
+        totalWeeks: 16,
+      },
+    } as unknown as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(
+      () => {
+        const lastWrite = setDocCalls()[setDocCalls().length - 1]?.data as
+          | ProgramState
+          | undefined;
+        expect(lastWrite?.runPlan?.currentWeek).toBe(6);
+        expect(lastWrite?.raceWeek).toBe("build");
+        expect(lastWrite?.workouts[0].exercises[0].sets).toBe(2);
       },
       { timeout: 2000 }
     );

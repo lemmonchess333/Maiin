@@ -13,6 +13,7 @@ import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
   lighterWeeksScheduled,
+  isRaceBuildWeek,
   raceLiftWeek,
   type RaceBlockWeek,
 } from "./weekPrescription";
@@ -2523,7 +2524,10 @@ export function advanceWeek(
    * are then the lighter weeks (Lift4 (9)), and its final weeks the race's
    * (Lift4 (10)). Absent, lighter weeks come every 4th trained week.
    */
-  nextRaceWeek?: RaceBlockWeek | null
+  nextRaceWeek?: RaceBlockWeek | null,
+  /** The answer at race setup (`raceLegTrim` on the profile): yes trims
+   *  the leg lifts in the run plan's build weeks (Lift4 (10)). */
+  options: { raceLegTrim?: boolean } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
      `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks where
@@ -2639,6 +2643,16 @@ export function advanceWeek(
   if (raceWeek === null && easingLeft >= EASING_BACK_WEEKS) {
     workouts = oneSetFewer(workouts);
   }
+  /* The race build's leg trim (Lift4 (10)), on a yes at race setup. Last in
+     the order the precedence table gives: never in a lighter week or the
+     first week back, which take sets away already. */
+  const legTrim =
+    options.raceLegTrim === true &&
+    raceWeek === null &&
+    !applyDeloadThisWeek &&
+    easingLeft < EASING_BACK_WEEKS &&
+    isRaceBuildWeek(nextRaceWeek);
+  if (legTrim) workouts = withRaceLegTrim(workouts, true);
 
   /* Lift4: the week opens with the session the last one didn't reach.
      Lifts run in order, not by weekday (ADR-0002), so the session that was
@@ -2671,7 +2685,11 @@ export function advanceWeek(
   return {
     ...kept,
     ...(easingLeft > 0 ? { easingBack: { weeksLeft: easingLeft } } : {}),
-    ...(raceWeek ? { raceWeek } : {}),
+    ...(raceWeek
+      ? { raceWeek }
+      : legTrim
+        ? { raceWeek: "build" as const }
+        : {}),
     weekNumber: nextWeek,
     // Both of these key off the RESOLVED flag, not the raw prescription.
     // Keying the phase off `prescription.deload` would label a week "deload"
@@ -2698,6 +2716,39 @@ function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
       return { ...ex, baseSets: base, sets: Math.max(1, base - 1) };
     }),
   }));
+}
+
+/** A leg lift's sets in a race build week (Lift4 (10)): a third fewer,
+ *  never below two (or the one set a single-set lift has). */
+export function raceLegSets(sets: number): number {
+  return Math.max(Math.min(sets, 2), Math.round((sets * 2) / 3));
+}
+
+/**
+ * The race build's leg trim on the sessions not yet done (Lift4 (10)): on,
+ * each leg lift (`loadsTheLegs`) has `raceLegSets` of its plan's sets, at
+ * the same weights; off, the plan's sets again. Nothing else changes.
+ */
+export function withRaceLegTrim(
+  workouts: WorkoutDay[],
+  on: boolean
+): WorkoutDay[] {
+  return workouts.map((day) =>
+    day.completed
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!loadsTheLegs(ex)) return ex;
+            const base = ex.baseSets ?? ex.sets;
+            return {
+              ...ex,
+              baseSets: base,
+              sets: on ? raceLegSets(base) : base,
+            };
+          }),
+        }
+  );
 }
 
 /**

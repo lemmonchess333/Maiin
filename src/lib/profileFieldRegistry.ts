@@ -169,6 +169,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "primaryGoal", sanitized: true },
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
+  { field: "raceLegTrim", sanitized: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
   { field: "runDifficulty", sanitized: true },
   { field: "runFitness", sanitized: true },

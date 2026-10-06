@@ -270,6 +270,20 @@ describe("what do you have? (Lift4 (11))", () => {
   });
 });
 
+describe("the legs while the runs build (Lift4 (10))", () => {
+  it("round-trips the answer, and rejects anything but yes or no", () => {
+    const answered = makeDraft({ raceLegTrim: false });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    expect(
+      isValidDraft(
+        { ...makeDraft(), raceLegTrim: 1 } as unknown as OnboardingDraft,
+        MAX_STEP
+      )
+    ).toBe(false);
+  });
+});
+
 describe("activity choices", () => {
   it("round-trips running-only and remembers lifting choices for switching back", () => {
     const draft = makeDraft({

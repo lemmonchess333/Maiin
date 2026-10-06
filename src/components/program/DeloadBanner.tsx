@@ -37,8 +37,9 @@ interface DeloadBannerProps {
    */
   runsEased?: number;
   /** Lift4 (10): which of a race's final weeks this lighter week is
-   *  (`programState.raceWeek`), so the confirmation says so. */
-  raceWeek?: "taper" | "race" | "after";
+   *  (`programState.raceWeek`), so the confirmation says so. A lighter week
+   *  taken in a build week is an ordinary one. */
+  raceWeek?: "build" | "taper" | "race" | "after";
   /** PROGRAM-DELOAD-01: applies the deload to the active week (the
    *  server `applyDeloadWeek` command). Resolves true on success —
    *  the banner fires the reserved `action: 'applied'` telemetry;

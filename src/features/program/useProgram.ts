@@ -1260,7 +1260,8 @@ export function useProgram() {
             rolling,
             profile.experience,
             nextLiftWeekKey,
-            raceBlockWeek(runs.runPlan)
+            raceBlockWeek(runs.runPlan),
+            { raceLegTrim: profile.raceLegTrim === true }
           );
       advanced.runDays = runs.runDays;
       advanced.runPlan = runs.runPlan;
@@ -1678,7 +1679,8 @@ export function useProgram() {
         base,
         profile?.experience,
         localWeekKey(addLocalDays(new Date(), 7)),
-        raceBlockWeek(runs?.runPlan)
+        raceBlockWeek(runs?.runPlan),
+        { raceLegTrim: profile?.raceLegTrim === true }
       );
       if (runs) {
         advanced.runDays = runs.runDays;

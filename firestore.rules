@@ -351,6 +351,9 @@ service cloud.firestore {
         // the configurePlan CF today, but allow-listed here so a future direct
         // updateProfile write isn't silently rejected. Also in profileSanitizer.js.
         'runVolume', 'runDifficulty', 'runTimeLimits', 'runningBaseline', 'nonRaceGoal', 'liftTimeBudgetMinutes',
+        // Lift4 (10): the race-setup answer on the leg trim. Also in
+        // profileSanitizer.js.
+        'raceLegTrim',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',

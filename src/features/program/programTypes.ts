@@ -901,12 +901,14 @@ export interface ProgramState {
   easingBack?: { weeksLeft: number };
 
   /**
-   * Lift4 (10): which of a race's final weeks this is, set at the rollover
-   * (`raceLiftWeek`): the last two before the race, race week, or the week
-   * after. Each is a lighter week (`currentPhase` "deload"); this names
-   * which, for Train's label and the banner.
+   * Lift4 (10): which of the race's weeks this is, set at the rollover: a
+   * build week with its leg lifts trimmed (a yes at race setup), or one of
+   * the race's final weeks (`raceLiftWeek`): the last two before the race,
+   * race week, or the week after. Each final week is a lighter week
+   * (`currentPhase` "deload"); this names which, for Train's label and the
+   * banner.
    */
-  raceWeek?: "taper" | "race" | "after";
+  raceWeek?: "build" | "taper" | "race" | "after";
 
   /**
    * The muscles the retired per-muscle recovery session eased (Lift4 (13)).

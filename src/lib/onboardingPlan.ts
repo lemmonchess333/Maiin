@@ -29,6 +29,7 @@ export function buildOnboardingPlan(
     | "sessionMinutes"
     | "barbellAtHome"
     | "smallPlates"
+    | "raceLegTrim"
   >,
   nutritionPhase: Goal,
   currentDate: string,
@@ -58,6 +59,13 @@ export function buildOnboardingPlan(
     sessionMinutes: draft.sessionMinutes,
     barbellAtHome: draft.barbellAtHome,
     smallPlates: draft.smallPlates,
+    // Lift4 (10): asked with a race, of someone who lifts; yes unless
+    // answered for Support my running, no unless answered otherwise.
+    ...(runMode === "race_prep" && draft.daysPerWeek > 0
+      ? {
+          raceLegTrim: draft.raceLegTrim ?? draft.primaryGoal === "running",
+        }
+      : {}),
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,

@@ -386,6 +386,11 @@ export interface UserProfileRunning {
    */
   runVolume?: "lighter" | "standard" | "bigger";
   runDifficulty?: "gentler" | "standard" | "harder";
+  /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
+   *  your runs build?": yes trims the leg lifts in the run plan's build
+   *  weeks. Never asked reads as no. Written by configurePlan and
+   *  completeOnboarding alongside the plan. */
+  raceLegTrim?: boolean;
   runningBaseline?:
     | import("@/features/program/runningBaseline").RunningBaseline
     | null;

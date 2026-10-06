@@ -289,6 +289,59 @@ describe("what do you have? (Lift4 (11))", () => {
   });
 });
 
+describe("the legs while the runs build (Lift4 (10))", () => {
+  const legTrim = () =>
+    screen.queryByRole("switch", {
+      name: "Lighten leg sessions while your runs build",
+    });
+  const withRace = (over: Partial<OnboardingDraft> = {}) =>
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runMode: "race_prep",
+      raceTargetDate: "2027-06-01",
+      ...over,
+    });
+
+  it("asks with a race, no unless running comes first, and the plan keeps the answer", () => {
+    withRace();
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toHaveAttribute("aria-checked", "false");
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      false
+    );
+    fireEvent.click(legTrim()!);
+    expect(legTrim()).toHaveAttribute("aria-checked", "true");
+    expect(builder.mock.calls.at(-1)![0].raceLegTrim).toBe(true);
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      true
+    );
+  });
+
+  it("starts at yes for Support my running", () => {
+    withRace({ primaryGoal: "running" });
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toHaveAttribute("aria-checked", "true");
+    expect(builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim).toBe(
+      true
+    );
+  });
+
+  it("is not asked without a race", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(legTrim()).toBeNull();
+    expect(
+      builder.mock.results.at(-1)!.value.profileUpdates.raceLegTrim
+    ).toBeUndefined();
+  });
+});
+
 describe("activity-relevant setup", () => {
   it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();

@@ -18,12 +18,16 @@ import {
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
+  type ProgramState,
 } from "../programTypes";
 import {
   assignDayRoles,
+  raceLegSets,
   repFloorFor,
   undulationDeltaFor,
 } from "../programEngine";
+import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
+import { loadsTheLegs } from "../easierToday";
 import { roleRepsFor } from "../roleTable";
 import { getExerciseById } from "@/lib/exercises";
 
@@ -1113,5 +1117,71 @@ describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", ()
     expect(save("2026-10-05")).toBe("2026-10-05");
     expect(save("2026-09-28")).toBe("2026-09-28");
     expect(save("2026-09-21")).toBe("2026-09-28");
+  });
+});
+
+/* ─── Lift4 (10): the race build's leg trim on save ─────────────────── */
+
+describe("buildPlan · the race build's leg trim", () => {
+  const raceGoal = { distance: "half" as const, targetDate: "2026-07-16" };
+  /** A half-marathon plan saved part-way into its block: a 16-week block
+   *  with nine weeks left puts the plan in a build week. */
+  function inBuildWeek(over: Partial<PlanBuilderInput> = {}) {
+    const fresh = buildPlan(
+      makeInput({ runMode: "race_prep", weeklyRunDays: 3, raceGoal })
+    ).programState;
+    const existingState = {
+      ...fresh,
+      runPlan: { ...fresh.runPlan!, totalWeeks: 16 },
+    };
+    return makeInput({
+      runMode: "race_prep",
+      weeklyRunDays: 3,
+      raceGoal,
+      existingState,
+      preserveHistory: true,
+      ...over,
+    });
+  }
+  const legSets = (state: ProgramState) =>
+    state.workouts.flatMap((d) =>
+      d.exercises.filter(loadsTheLegs).map((e) => [e.sets, e.baseSets])
+    );
+
+  it("is set up in a build week", () => {
+    const out = buildPlan(inBuildWeek());
+    expect(isRaceBuildWeek(raceBlockWeek(out.programState.runPlan))).toBe(true);
+  });
+
+  it("trims the leg lifts at once on a yes, and saves the answer", () => {
+    const out = buildPlan(inBuildWeek({ raceLegTrim: true }));
+    expect(out.programState.raceWeek).toBe("build");
+    const legs = legSets(out.programState);
+    expect(legs.length).toBeGreaterThan(0);
+    for (const [sets, base] of legs) expect(sets).toBe(raceLegSets(base!));
+    expect(legs.some(([sets, base]) => sets! < base!)).toBe(true);
+    expect(out.profileUpdates.raceLegTrim).toBe(true);
+  });
+
+  it("gives the sets back on a no", () => {
+    const trimmed = buildPlan(inBuildWeek({ raceLegTrim: true })).programState;
+    const out = buildPlan(
+      inBuildWeek({ raceLegTrim: false, existingState: trimmed })
+    );
+    expect(out.programState.raceWeek).toBeUndefined();
+    for (const [sets, base] of legSets(out.programState))
+      expect(sets).toBe(base);
+    expect(out.profileUpdates.raceLegTrim).toBe(false);
+  });
+
+  it("leaves a lighter week as it is", () => {
+    const fresh = buildPlan(inBuildWeek()).programState;
+    const lighter = { ...fresh, currentPhase: "deload" as const };
+    const out = buildPlan(
+      inBuildWeek({ raceLegTrim: true, existingState: lighter })
+    );
+    expect(out.programState.raceWeek).toBeUndefined();
+    for (const [sets, base] of legSets(out.programState))
+      expect(sets).toBe(base ?? sets);
   });
 });

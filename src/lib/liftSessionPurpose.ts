@@ -41,6 +41,7 @@ import {
   type RaceBlockWeek,
 } from "@/features/program/weekPrescription";
 import { isRunStepBackWeek } from "@/features/program/runPlanTiming";
+import { loadsTheLegs } from "@/features/program/easierToday";
 import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { formatWeekdayDayMonth } from "@/utils/formatters";
 import type {
@@ -109,6 +110,19 @@ export const RACE_WEEK =
 export const RACE_AFTER =
   "This is a lighter week after your race, with half the sets at the same weights, while you recover.";
 
+/* Lift4 (10): a build week's leg trim, on a yes at race setup. */
+export const RACE_BUILD_LEGS =
+  "Your leg lifts have a third fewer sets at the same weights while your runs build, as you chose for your race.";
+
+/** Whether the race build's trim took sets off one of the day's leg lifts
+ *  (a lift of two sets keeps them). */
+function legsTrimmed(day: Partial<Pick<WorkoutDay, "exercises">>): boolean {
+  return (day.exercises ?? []).some(
+    (ex) =>
+      loadsTheLegs(ex) && ex.baseSets !== undefined && ex.sets < ex.baseSets
+  );
+}
+
 /** Race week's last day to lift: three days before the race. */
 function raceWeekCutoff(targetDate: string | undefined): string | null {
   if (!targetDate) return null;
@@ -171,7 +185,10 @@ export const HOLD = `Your weights hold for the first ${count(EASING_HOLD_WEEKS)}
  */
 export function liftSessionPurpose(
   programme: LiftPurposeProgramme | null | undefined,
-  day: Pick<WorkoutDay, "isCustom"> | null | undefined,
+  day:
+    | (Pick<WorkoutDay, "isCustom"> & Partial<Pick<WorkoutDay, "exercises">>)
+    | null
+    | undefined,
   date: string,
   experience?: Experience
 ): string | null {
@@ -210,6 +227,9 @@ export function liftSessionPurpose(
           ? block.focus
           : programme.primaryGoal) ?? "general";
       sentences.push(FOCUS_PURPOSE[focus] ?? FOCUS_PURPOSE.general);
+    }
+    if (programme.raceWeek === "build" && legsTrimmed(day)) {
+      sentences.push(RACE_BUILD_LEGS);
     }
     if (lighterWeeksScheduled(experience, programme.workouts?.length ?? 0)) {
       const ahead = lighterWeeksAhead(programme, week);

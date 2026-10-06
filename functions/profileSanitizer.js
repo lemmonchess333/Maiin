@@ -262,6 +262,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
+  // Lift4 (10): the race-setup answer on trimming the leg lifts while the
+  // runs build.
+  raceLegTrim: (v) => (typeof v === "boolean" ? v : undefined),
   liftTimeBudgetMinutes: (v) =>
     v === null
       ? null
