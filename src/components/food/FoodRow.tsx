@@ -217,7 +217,10 @@ export default function FoodRow({
      the Food pass. A food's macros are one tap away, in its edit sheet. */
   const rowBody = (
     <>
-      <div className="flex-1 min-w-0 mr-2">
+      {/* The calories drop under the name when the two no longer fit
+          (larger text, and the reduced-motion row's delete button beside
+          them), rather than leaving the name a column 24px wide. */}
+      <div className="min-w-[min(100%,7em)] flex-1 mr-2">
         {/* flex-wrap: the name is what the row is for, so when it and
             the pills cannot share a line the pills move under it,
             rather than the name being cut to "Protei…" beside them.
@@ -225,10 +228,12 @@ export default function FoodRow({
             end; text-left keeps it at the row's start. */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
           {/* Two lines before an ellipsis: product names often differ
-              only at the end ("…Yogurt Strawberry" / "…Blueberry"). */}
+              only at the end ("…Yogurt Strawberry" / "…Blueberry"). A
+              word wider than the row (larger text on a narrow phone)
+              breaks at a syllable with a hyphen, not at any letter. */}
           <p
             dir="auto"
-            className="min-w-0 max-w-full text-left text-sm text-foreground line-clamp-2 break-words"
+            className="min-w-0 max-w-full text-left text-sm text-foreground line-clamp-2 break-words hyphens-auto"
           >
             {group.foodName}
           </p>
@@ -256,7 +261,7 @@ export default function FoodRow({
           </p>
         )}
       </div>
-      <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+      <span className="ml-auto text-xs font-mono tabular-nums text-muted-foreground shrink-0">
         {formatCalories(group.totalCal)} {CALORIE_UNIT}
       </span>
     </>
@@ -291,7 +296,9 @@ export default function FoodRow({
            it reads as a text log rather than as breakage. */
           onError={() => setFailedSrc(photoUrl)}
         />
-        <div className="flex items-center justify-between">{rowBody}</div>
+        <div className="flex flex-wrap items-center justify-between gap-y-1">
+          {rowBody}
+        </div>
       </div>
     ) : (
       rowBody
@@ -309,12 +316,12 @@ export default function FoodRow({
             type="button"
             onClick={onEdit}
             aria-label={`Edit ${group.foodName}`}
-            className="flex items-center flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
+            className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
             {rowInner}
           </button>
         ) : (
-          <div className="flex items-center flex-1 min-w-0 px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5">
             {rowInner}
           </div>
         )}
@@ -397,7 +404,7 @@ export default function FoodRow({
             }
           }}
           className={cn(
-            "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y cursor-pointer select-none"
+            "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
           )}
         >
           {rowInner}

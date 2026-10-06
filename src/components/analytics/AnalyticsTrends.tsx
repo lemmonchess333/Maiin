@@ -44,8 +44,12 @@ export default function AnalyticsTrends({
             {/* The figure drops under the words when the two no longer
                 fit side by side (larger text on the phone), rather than
                 pushing "target 2,200" past the card. */}
+            {/* No hyphenation: a browser that hyphenates counts the
+                pieces in the column's min-content, so "10K prediction"
+                split as "predic-tion" rather than the figure dropping
+                under it. The longest label word fits a line of its own. */}
             <span className="min-w-min flex-1">
-              <span className="block text-base font-semibold text-foreground break-words hyphens-auto">
+              <span className="block text-base font-semibold text-foreground break-words">
                 {row.label}
               </span>
               {/* Wraps rather than cuts: "Down 1.2 kg since 30 A…" hid the

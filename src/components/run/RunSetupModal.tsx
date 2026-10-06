@@ -952,8 +952,7 @@ export default function RunSetupModal({
                               }
                               className={presetChipClass(active)}
                             >
-                              {paceMinSec(s, unit)}
-                              {paceUnitLabel(unit)}
+                              {paceMinSec(s, unit)} {paceUnitLabel(unit)}
                             </button>
                           );
                         })}

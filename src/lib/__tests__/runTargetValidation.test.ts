@@ -201,7 +201,7 @@ describe("getTargetValidationError — pace", () => {
         activityType: "easy",
         target: { type: "pace", value: 30 },
       })
-    ).toBe("Pace must be at least 2:00/km");
+    ).toBe("Pace must be at least 2:00 /km");
   });
 
   it("rejects 60:00/km (slower than walking)", () => {
@@ -210,6 +210,6 @@ describe("getTargetValidationError — pace", () => {
         activityType: "easy",
         target: { type: "pace", value: 3600 },
       })
-    ).toBe("Pace must be at most 15:00/km");
+    ).toBe("Pace must be at most 15:00 /km");
   });
 });

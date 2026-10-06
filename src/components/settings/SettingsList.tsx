@@ -93,7 +93,24 @@ export function SettingsRow({
           />
         </span>
       )}
-      <span className="flex-1 min-w-0">
+      {/* A row with a control wraps: once the label would be narrower than
+          4em (double text on a 320px phone, beside a switch or a 124px
+          two-way control) the control drops under it, at the right, rather
+          than leaving a column too narrow for "milestones". At the designed
+          size the label has 76px or more beside the widest control, so the
+          row is one line as before. Under 13em of row (larger text) the
+          label asks for 8em, so a switch no longer leaves it a word a
+          line. */}
+      <span
+        className={cn(
+          "flex-1",
+          trailing
+            ? "min-w-[min(100%,4em)] @max-[13em]:min-w-[min(100%,8em)]"
+            : value !== undefined
+              ? "min-w-0 @max-[13em]:min-w-[min(100%,8em)]"
+              : "min-w-0"
+        )}
+      >
         {/* Hyphenates a word wider than the room left (only "Subscription"
             beside its plan, on a 320px phone at larger text) rather than
             running under the value. */}
@@ -122,23 +139,29 @@ export function SettingsRow({
       {value !== undefined && (
         /* Shrinks to its longest word and wraps, rather than taking the
            label's room: at larger text "Trial · 12 days left" left
-           "Subscription" wider than what remained. */
-        <span className="min-w-min text-right text-sm text-muted-foreground">
+           "Subscription" wider than what remained. Under 13em of row the
+           label asks for 8em and the value drops under it, at the right. */
+        <span className="ml-auto min-w-min text-right text-sm text-muted-foreground">
           {value}
         </span>
       )}
-      {trailing}
+      {trailing && <span className="ml-auto flex shrink-0">{trailing}</span>}
       {showChevron && (
         <ChevronRight
-          className="size-4 text-muted-foreground shrink-0"
+          className="size-[16px] text-muted-foreground shrink-0"
           aria-hidden="true"
         />
       )}
     </>
   );
 
-  const rowClass =
-    "w-full px-4 py-3 min-h-[52px] flex items-center gap-3 text-left";
+  // The row's side padding and chevron are px, as an iOS cell's insets
+  // and accessory are: in rem they doubled at the largest text sizes and
+  // broke "Notifications" mid-word on a 320pt phone.
+  const rowClass = cn(
+    "w-full px-[16px] py-3 min-h-[52px] flex items-center gap-3 text-left",
+    (trailing || value !== undefined) && "flex-wrap gap-y-2"
+  );
 
   if (onClick && !trailing) {
     return (

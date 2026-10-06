@@ -57,13 +57,13 @@ export function paceMinSec(paceSec: number, unit: DistanceUnit): string {
 }
 
 /**
- * Format a pace value (seconds per km) as `M:SS/km`. Returns the
+ * Format a pace value (seconds per km) as `M:SS /km`. Returns the
  * em-dash placeholder when pace is missing or non-positive (a
  * stationary or zero-distance leg shouldn't display "0:00/km").
  */
 export function paceLabel(paceSec: number, unit: DistanceUnit): string {
   if (!paceSec || paceSec <= 0) return "—";
-  return `${paceMinSec(paceSec, unit)}${paceUnitLabel(unit)}`;
+  return `${paceMinSec(paceSec, unit)} ${paceUnitLabel(unit)}`;
 }
 
 /**

@@ -297,8 +297,8 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   option) and AM/PM in copy are banned by
   `src/utils/__tests__/timeTreatment.test.ts`. Durations and paces ("23:41",
   "5:18 /km") are not times of day.
-- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal"
-  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km, including
+- **Units:** spaced — "60 kg", "5.2 km", "400 m", "2,633 cal", and a pace "5:34 /km"
+  (`src/utils/__tests__/unitTreatment.test.ts` bans unspaced kg/km and a pace glued to its unit, including
   the `${x}kg` template form). Two named exceptions: grams on the food
   surface stay unspaced ("128g" — MacroColumn's documented house style), and
   `ShareCardRenderer`'s compact forms ("12.3km") are a deliberate
@@ -380,7 +380,7 @@ already made for this repo.
 - Run: `npm run test:e2e` or `npm run test:e2e:ui` (interactive)
 - Signed-in specs locally: `npm run test:e2e:auth`, which runs them one at a time as CI does; in parallel they share one seeded account and fail with nothing wrong in the app
 - Capture specs, the emulator rig and screenshot diffs: `docs/agents/capture-rig.md`
-- `e2e/screenshots/largeText.capture.spec.ts` opens the main screens, a workout, a run, sign-up, setup and Pro at 393 and 320 px with 1.35× and 2× text, and fails on anything past the screen or wider than its box. When it fails, fix the layout (wrap, give way, px for controls and margins), not the list: its `ACCEPTED` entries each carry a reason
+- `e2e/screenshots/largeText.capture.spec.ts` opens the main screens, every Settings section, a workout, a run, the detail pages, the Weekly review, sign-up, setup and Pro at 393 and 320 px with 1.35× and 2× text, and fails on anything past the screen or wider than its box. When it fails, fix the layout (wrap, give way, px for controls and margins), not the list: its `ACCEPTED` entries each carry a reason
 
 ## CI/CD
 

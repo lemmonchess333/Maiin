@@ -781,7 +781,7 @@ export default function Onboarding() {
         : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`;
   return (
     <div
-      className="h-dvh flex flex-col bg-background text-foreground px-4 max-w-lg mx-auto"
+      className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",

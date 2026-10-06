@@ -36,22 +36,22 @@ import {
 } from "../runLabels";
 
 describe("paceLabel", () => {
-  it("formats sub-minute pace as M:SS/km", () => {
-    expect(paceLabel(45, "km")).toBe("0:45/km");
+  it("formats sub-minute pace as M:SS /km", () => {
+    expect(paceLabel(45, "km")).toBe("0:45 /km");
   });
 
   it("formats whole-minute pace with zero seconds padded", () => {
-    expect(paceLabel(300, "km")).toBe("5:00/km");
+    expect(paceLabel(300, "km")).toBe("5:00 /km");
   });
 
   it("zero-pads single-digit seconds", () => {
     /* 5:05 not 5:5 — the zero-padding is the contract. */
-    expect(paceLabel(305, "km")).toBe("5:05/km");
+    expect(paceLabel(305, "km")).toBe("5:05 /km");
   });
 
   it("rounds the seconds component to the nearest second", () => {
     /* 304.6s should round to 5:05, not 5:04. */
-    expect(paceLabel(304.6, "km")).toBe("5:05/km");
+    expect(paceLabel(304.6, "km")).toBe("5:05 /km");
   });
 
   it("returns the em-dash placeholder for zero pace", () => {
@@ -76,8 +76,8 @@ describe("paceLabel", () => {
     /* The direction check. 5:00/km is 8:03/mi — if this ever reads 3:06
        the conversion has been inverted, which is the failure mode the
        whole module exists to prevent. */
-    expect(paceLabel(300, "mi")).toBe("8:03/mi");
-    expect(paceLabel(240, "mi")).toBe("6:26/mi");
+    expect(paceLabel(300, "mi")).toBe("8:03 /mi");
+    expect(paceLabel(240, "mi")).toBe("6:26 /mi");
   });
 });
 

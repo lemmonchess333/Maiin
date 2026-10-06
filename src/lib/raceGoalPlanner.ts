@@ -355,7 +355,7 @@ export function raceTargetVerdict(input: {
     band === "long_shot"
       ? " Training paces stay on your current fitness until the gap closes."
       : "";
-  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)}${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)} ${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
   return {
     band,
     goalPaceS,

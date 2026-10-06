@@ -634,12 +634,14 @@ export default function RunPlanSettings({
   return (
     <div className="space-y-5 pb-6">
       {/* ── Mode ─────────────────────────────────────────────────────── */}
-      <div className="space-y-2">
+      {/* Under 15em (larger text on the phone) the two cards stack: side
+          by side, "Periodised" no longer fit inside its half. Wide-first. */}
+      <div className="@container space-y-2">
         <SectionHeading size="compact">Run mode</SectionHeading>
         <div
           role="radiogroup"
           aria-label="Run mode"
-          className="grid grid-cols-2 gap-2"
+          className="grid grid-cols-2 gap-2 @max-[15em]:grid-cols-1"
         >
           {MODE_OPTIONS.map((opt) => {
             const selected = runMode === opt.id;
@@ -900,38 +902,45 @@ export default function RunPlanSettings({
       )}
 
       {/* ── The way back to the Programme page ───────────────────────── */}
-      <button
-        type="button"
-        onClick={() => {
-          haptic();
-          onOpenFullSettings();
-        }}
-        className="w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
-      >
-        {/* Icon container + trailing chevron, i.e. the row shape every
+      {/* The container is a wrapper, not the button: a query against the
+          button itself did not apply reliably to its children. */}
+      <div className="@container">
+        <button
+          type="button"
+          onClick={() => {
+            haptic();
+            onOpenFullSettings();
+          }}
+          className="w-full text-left rounded-2xl bg-card border border-border/40 px-[14px] py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
+        >
+          {/* Icon container + trailing chevron, i.e. the row shape every
             other drill-in in Settings uses (`SettingsIndex.tsx`). Without
             them this was the only cross-page navigation row in Settings
             with neither affordance, so the one escape hatch out to
             /settings/training read as a static description card. */}
-        <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <SlidersHorizontal className="size-4 text-muted-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground">Programme</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Your setup, lift plan, reset
-          </p>
-        </div>
-        <ChevronRight
-          className="size-4 text-muted-foreground shrink-0"
-          aria-hidden="true"
-        />
-      </button>
+          {/* Under 12em (larger text on the phone) the icon gives way so
+            "Programme" keeps room, and a word wider than the row still
+            hyphenates rather than running out of it. Wide-first. */}
+          <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 @max-[10em]:hidden">
+            <SlidersHorizontal className="size-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0 break-words hyphens-auto">
+            <p className="text-sm font-medium text-foreground">Programme</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Your setup, lift plan, reset
+            </p>
+          </div>
+          <ChevronRight
+            className="size-4 text-muted-foreground shrink-0"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
 
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           {loadFailed && (

@@ -238,7 +238,7 @@ describe("fanoutActivityToFeeds", () => {
     const item = firestore._writes[0].data;
     expect(item.summary).toContain("5.0 km");
     expect(item.summary).toContain("25:00");
-    expect(item.summary).toContain("5:00/km");
+    expect(item.summary).toContain("5:00 /km");
     expect(item.summary).toContain("Tempo");
   });
 

@@ -489,8 +489,12 @@ function EditServingsSheet({
           </div>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-center justify-center gap-4">
+        {/* Stepper. The round buttons and the gaps are px, as iOS keeps
+            a stepper's controls one size whatever the text size: in rem,
+            at larger text the row outgrew the sheet, the buttons squeezed
+            to ovals and the count's "serving" ran out of its box. The
+            count itself still grows, and never shrinks below its words. */}
+        <div className="flex items-center justify-center gap-[16px]">
           <button
             type="button"
             onClick={() => {
@@ -499,11 +503,11 @@ function EditServingsSheet({
             }}
             disabled={target <= 1 || saving}
             aria-label="Decrease servings"
-            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
           >
             −
           </button>
-          <div className="text-center min-w-[80px]" aria-live="polite">
+          <div className="text-center min-w-[80px] shrink-0" aria-live="polite">
             <p
               className="text-4xl font-mono tabular-nums font-extrabold text-foreground"
               aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
@@ -522,7 +526,7 @@ function EditServingsSheet({
             }}
             disabled={saving}
             aria-label="Increase servings"
-            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
           >
             +
           </button>
@@ -591,24 +595,29 @@ function EditServingsSheet({
         )}
       </div>
 
-      <div className="flex gap-2 border-t border-border/40 px-5 pt-3 pb-4">
-        <Button
-          variant="secondary"
-          size="lg"
-          className="flex-1"
-          onClick={onCancel}
-          disabled={saving}
-        >
-          Cancel
-        </Button>
-        <Button
-          size="lg"
-          className="flex-1"
-          onClick={handleSave}
-          disabled={unchanged || hasInvalidMacro || saving}
-        >
-          {saving ? "Saving…" : "Save"}
-        </Button>
+      {/* Under 15em of footer (larger text on the phone) Cancel and Save
+          no longer fit side by side: Save goes on top, Cancel under it,
+          each the full width. Wide-first. */}
+      <div className="@container border-t border-border/40 px-5 pt-3 pb-4">
+        <div className="flex gap-2 @max-[15em]:flex-col-reverse">
+          <Button
+            variant="secondary"
+            size="lg"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="lg"
+            className="flex-1"
+            onClick={handleSave}
+            disabled={unchanged || hasInvalidMacro || saving}
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </div>
       </div>
     </BottomSheet>
   );

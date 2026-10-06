@@ -324,7 +324,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   {
     id: "speed_demon",
     name: "Speed Demon",
-    description: "Run a sub-5:00/km pace",
+    description: "Run a sub-5:00 /km pace",
     icon: "zap",
     lucideIcon: "Zap",
     tier: "silver",

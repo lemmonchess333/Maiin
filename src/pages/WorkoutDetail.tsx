@@ -101,11 +101,18 @@ function ExerciseRecord({
   const sets = workingSets(exercise);
   const timed = exercise.repUnit === "seconds";
   return (
-    <Card padded={false}>
+    <Card padded={false} className="@container">
+      {/* The drawing gives way under 10em of card (double size): beside it
+          the name had a column narrower than "Squat". A long one-word name
+          breaks rather than running out of the card. Wide-first. */}
       <div className="flex items-center gap-3 p-3">
-        <ExerciseThumb exerciseId={exercise.exerciseId} size="sm" />
+        <ExerciseThumb
+          exerciseId={exercise.exerciseId}
+          size="sm"
+          className="@max-[10em]:hidden"
+        />
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-semibold text-foreground text-balance">
+          <h3 className="text-base font-semibold text-foreground text-balance break-words hyphens-auto">
             {exercise.exerciseName}
           </h3>
           <p className="text-sm text-muted-foreground font-mono tabular-nums">
@@ -123,9 +130,12 @@ function ExerciseRecord({
                 ? `, ${SET_TYPE_COPY[type].name.toLowerCase()}`
                 : "";
             return (
+              /* The result drops under the set's badge when the two no
+                 longer fit (larger text), and wraps at its spaces, rather
+                 than stacking "60 kg × 8" a piece a line beside it. */
               <li
                 key={i}
-                className="flex items-center gap-3 border-b border-border/40 px-3 py-1.5 last:border-b-0"
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/40 px-3 py-1.5 last:border-b-0"
               >
                 <SetTypeChip type={type} label={setBadge(sets, i)} />
                 <span
@@ -251,7 +261,7 @@ function WorkoutDetailContent() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-[16px] pt-4 space-y-4">
         <IconButton
           icon={<ChevronLeft className="size-5" />}
           aria-label="Back"
@@ -262,10 +272,14 @@ function WorkoutDetailContent() {
         {/* Header (DS3), as RunDetail's: the sport, the session's name,
             when. Share makes the picture card. */}
         <div>
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+          {/* Share drops under the title when the two no longer fit
+              (larger text) rather than squeezing it: with `min-w-0` and
+              nothing to make it grow, the title column shrank to a letter
+              a line beside the button. */}
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+            <div className="min-w-[min(100%,8em)] flex-1">
               <p className="text-sm font-bold text-lifting-strong">Lift</p>
-              <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words">
+              <h1 className="mt-1 text-h1 font-extrabold leading-tight text-foreground text-balance break-words hyphens-auto">
                 {title}
               </h1>
             </div>
@@ -273,7 +287,7 @@ function WorkoutDetailContent() {
               variant="secondary"
               onClick={() => setCardOpen(true)}
               leftIcon={<Share2 className="size-4" aria-hidden="true" />}
-              className="shrink-0"
+              className="ml-auto shrink-0"
             >
               Share
             </Button>
@@ -281,14 +295,19 @@ function WorkoutDetailContent() {
           <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-border">
-          {figures.map((figure) => (
-            <StatFigure
-              key={figure.unit}
-              value={figure.format(figure.to)}
-              unit={figure.unit}
-            />
-          ))}
+        {/* One figure per row under 15em of page (larger text, from 1.35x
+            on a 393px phone): a third of it no longer held "minutes", or a
+            heavy session's "12,480". Wide-first. */}
+        <div className="@container">
+          <div className="grid grid-cols-3 divide-x divide-border @max-[15em]:grid-cols-1 @max-[15em]:gap-y-3 @max-[15em]:divide-x-0">
+            {figures.map((figure) => (
+              <StatFigure
+                key={figure.unit}
+                value={figure.format(figure.to)}
+                unit={figure.unit}
+              />
+            ))}
+          </div>
         </div>
 
         {/* The session's sets — the thing no other surface shows. */}

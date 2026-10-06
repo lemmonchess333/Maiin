@@ -80,7 +80,7 @@ export default function RunLaunchCard({
       : null;
   const paceLabel =
     target?.type === "pace" && target.value
-      ? `${paceMinSec(target.value, unit)}${paceUnitLabel(unit)}`
+      ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
 

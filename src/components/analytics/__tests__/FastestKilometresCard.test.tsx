@@ -100,7 +100,7 @@ describe("FastestKilometresCard", () => {
       "mi"
     );
     // 4:48 a kilometre is 7:43 a mile.
-    expect(screen.getByRole("link")).toHaveTextContent(/7:43\/mi/);
+    expect(screen.getByRole("link")).toHaveTextContent(/7:43 \/mi/);
   });
 
   it("renders nothing without an effort", () => {

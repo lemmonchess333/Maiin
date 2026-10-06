@@ -23,7 +23,9 @@ export default function OptionCard({
   // The card is a container so its picture can give way at larger text:
   // under 15em the 3rem drawing left a word like "Experienced" no room,
   // and a single word cannot wrap. Wide-first, so a browser without
-  // container queries keeps the designed card.
+  // container queries keeps the designed card. Its padding and the tick's
+  // slot are px, as an iOS cell's insets are, so they leave the words the
+  // room that larger text needs.
   return (
     <div className="@container">
       <Button
@@ -33,7 +35,7 @@ export default function OptionCard({
         disabled={disabled}
         aria-pressed={selected}
         className={cn(
-          "h-auto justify-start gap-3 p-4 rounded-2xl text-left whitespace-normal",
+          "h-auto justify-start gap-3 p-[16px] rounded-2xl text-left whitespace-normal",
           selected
             ? tone === "running"
               ? "bg-running/10 border-running/50"
@@ -62,7 +64,7 @@ export default function OptionCard({
             </span>
           )}
         </span>
-        <span className="w-4 shrink-0" aria-hidden="true">
+        <span className="w-[16px] shrink-0" aria-hidden="true">
           {selected && (
             <Check
               className={cn(

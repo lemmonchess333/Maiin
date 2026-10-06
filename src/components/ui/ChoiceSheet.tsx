@@ -125,14 +125,14 @@ export function ChoiceSheet({
                 onClick={() => handleSelect(choice)}
                 disabled={!!pendingId}
                 className={cn(
-                  /* `px-4` is the `md` size's own horizontal padding, and
+                  /* `px-[16px]` is the `md` size's own horizontal padding, and
                      this row already borrows that size's `min-h-[44px]`.
                      Without it the label and the sublabel start at the
                      button's edge: "Recommended — hard run yesterday, and
                      this session loads the same legs" is wider than the
                      row, so it wrapped flush against both rounded
                      corners. */
-                  "w-full min-h-[44px] px-4 py-2.5 rounded-xl",
+                  "w-full min-h-[44px] px-[16px] py-2.5 rounded-xl",
                   "active:scale-[0.97] transition-transform",
                   VARIANT_CLASSES[choice.variant],
                   otherPending && "opacity-40"

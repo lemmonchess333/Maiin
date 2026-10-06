@@ -15,8 +15,23 @@ import { dirname, join, resolve } from "node:path";
  *    drift; changing them is out of this ratchet's scope.
  *  - bare metres ("400 m") were fixed but not ratcheted: /\dm\b/ is too
  *    false-positive-prone (durations "12m", ids) to scan safely.
- *  - "5K"/"10K" race names, "1.5k" abbreviations, "2.6t" tonnes and
- *    pace "/km" are not value+unit adjacencies and never match.
+ *  - "5K"/"10K" race names, "1.5k" abbreviations and "2.6t" tonnes are
+ *    not value+unit adjacencies and never match.
+ *
+ * Pace IS in scope (2026-10-06). It used to be excluded as "not a
+ * value+unit adjacency", and that was wrong: "5:34/km" is a value glued
+ * to its unit exactly as "60kg" is, and the app rendered it both ways —
+ * RunStatGrid and RacePredictionsCard wrote "6:00 /km" while the central
+ * `paceLabel` (~30 consumers), the run-launch pill, the interval labels,
+ * the heat note, the race-goal line and the validation copy wrote
+ * "5:34/km". The one treatment is spaced, the unit once: "5:34 /km",
+ * "5:05–5:12 /km" for a range. The second test bans the three shapes the
+ * glued form took: a template `}${paceUnitLabel(`, a literal or
+ * interpolated `5:00/km` / `}/km`, and JSX that sets the unit beside the
+ * value with nothing but a line break between them (JSX drops whitespace
+ * that contains a newline, so `{pace}` over `{paceUnitLabel(unit)}`
+ * renders glued). "12 s/km faster" is already spaced (number, space,
+ * unit) and never matches.
  *
  * Exemption: ShareCardRenderer's compact no-space forms ("12.3km") are a
  * DOCUMENTED deliberate variant for the rasterised share card's small
@@ -44,11 +59,12 @@ function walk(dir: string, out: string[] = []): string[] {
 
 /** Strip block and line comments so prose mentioning "0km bugs" or
  *  "a 60kg squat" cannot trip the scan — only code and string literals
- *  remain. Crude (a // inside a string would truncate that line) but
+ *  remain. A block comment keeps its line breaks, so a hit's line
+ *  number is the file's. Crude (a // inside a string would truncate that line) but
  *  safe for a ban: it can only under-match lines that contain //. */
 function stripComments(text: string): string {
   return text
-    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ""))
     .split("\n")
     .map((l) => l.replace(/\/\/.*$/, ""))
     .join("\n");
@@ -75,6 +91,45 @@ describe("one unit treatment (spaced: '60 kg', '5.2 km')", () => {
       "unspaced unit — the app writes '60 kg' / '5.2 km' (space before " +
         "the unit). If a site is a genuinely deliberate compact variant, " +
         "document it at the site and add the FILE to EXEMPT here:\n" +
+        hits.join("\n")
+    ).toEqual([]);
+  });
+
+  it("no pace glued to its unit ('5:34 /km', never '5:34/km')", () => {
+    const hits: string[] = [];
+    // JSX: a value (`}` closing an expression, or `</span>`) followed by
+    // the unit with only a line break between them — optionally inside an
+    // opening <span> — renders glued. `{" "}` ends in a space, so it is
+    // the spaced form and is excluded by the lookbehind.
+    const jsxGlue =
+      /(?:(?<![ ]["'`])\}|<\/span>)(?:[ \t]*\n\s*)?(?:<span(?:\s[^>]*)?>\s*)*\{paceUnitLabel\(/g;
+    for (const file of walk(SRC_ROOT)) {
+      const rel = file.slice(SRC_ROOT.length + 1);
+      if (EXEMPT.has(rel)) continue;
+      const code = stripComments(readFileSync(file, "utf8"));
+      code.split("\n").forEach((line, i) => {
+        // `${pace}${paceUnitLabel(unit)}` — the template form — and
+        // `2:00/km` / `${x}/km` — the literal and interpolated forms. A
+        // range of two `paceLabel`s says the unit twice ("5:05 /km–5:12
+        // /km"); `paceBandLabel` says it once, at the end.
+        if (
+          /\}\$\{paceUnitLabel\(/.test(line) ||
+          /[\d}]\/(km|mi)\b/.test(line) ||
+          /paceLabel\([^)]*\)\}\s*[–-]\s*\$\{paceLabel\(/.test(line)
+        )
+          hits.push(`${rel}:${i + 1} ${line.trim()}`);
+      });
+      for (const m of code.matchAll(jsxGlue)) {
+        const lineNo = code.slice(0, m.index).split("\n").length;
+        hits.push(`${rel}:${lineNo} ${m[0].replace(/\s+/g, " ").trim()}`);
+      }
+    }
+    expect(
+      hits,
+      "pace glued to its unit — the app writes '5:34 /km' (a space before " +
+        "the unit; a range '5:05–5:12 /km', unit once). Use `paceLabel` / " +
+        '`paceBandLabel` from runLabels, or put {" "} before the unit in ' +
+        "JSX:\n" +
         hits.join("\n")
     ).toEqual([]);
   });

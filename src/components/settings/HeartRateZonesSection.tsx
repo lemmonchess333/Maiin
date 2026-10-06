@@ -98,17 +98,20 @@ export default function HeartRateZonesSection({
               </Button>
             </div>
 
-            {/* Zone bands preview */}
+            {/* Zone bands preview. The range drops under the zone's name,
+                at the right, when the two no longer fit on one line (double
+                text on a 320px phone), rather than stacking "93–", "112"
+                and "bpm" a piece a line. */}
             <div className="space-y-1.5">
               {zones.map((z) => (
                 <div
                   key={z.zone}
-                  className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-1.5"
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-lg bg-muted/50 px-3 py-1.5"
                 >
                   <span className="text-xs font-semibold text-foreground">
                     Z{z.zone} · {ZONE_NAMES[z.zone]}
                   </span>
-                  <span className="text-xs font-mono tabular-nums text-muted-foreground">
+                  <span className="ml-auto whitespace-nowrap text-xs font-mono tabular-nums text-muted-foreground">
                     {z.minBpm}–{z.maxBpm} bpm
                   </span>
                 </div>

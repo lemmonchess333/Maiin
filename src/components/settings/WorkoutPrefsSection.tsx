@@ -5,6 +5,14 @@ import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
+/* A row's control drops under its label, at the right, once the label
+   would be narrower than 8em: at double text on a 320px phone the switch
+   beside it ran past the screen. At the designed size each row is one
+   line, as before. */
+const ROW =
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+const LABEL = "min-w-[min(100%,8em)] flex-1";
+
 interface WorkoutPrefsSectionProps {
   autoRestTimer: boolean;
   setAutoRestTimer: (v: boolean) => void;
@@ -34,14 +42,15 @@ export default function WorkoutPrefsSection({
       subtitle="Rest timer, audio cues"
     >
       <div className="space-y-3">
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Auto-start rest timer</p>
             <p className="text-xs text-muted-foreground">
               Timer starts after completing a set
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={autoRestTimer}
             label="Toggle auto-start rest timer"
             onChange={async () => {
@@ -59,7 +68,7 @@ export default function WorkoutPrefsSection({
           />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+        <div className={ROW}>
           <label
             htmlFor="rest-between-sets"
             className="text-sm text-foreground"
@@ -76,7 +85,7 @@ export default function WorkoutPrefsSection({
               const result = await updateProfile({ defaultRestSeconds: val });
               if (!result.ok) setDefaultRestSeconds(prev);
             }}
-            className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+            className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
           >
             <option value={0}>Plan's suggestion</option>
             <option value={60}>1:00</option>
@@ -89,14 +98,15 @@ export default function WorkoutPrefsSection({
           </select>
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Audio cues</p>
             <p className="text-xs text-muted-foreground">
               Voice announcements during runs
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={audioCues}
             label="Toggle audio cues"
             onChange={async () => {

@@ -54,7 +54,8 @@ function formatDuration(seconds) {
 function formatPace(secPerKm) {
   const m = Math.floor(secPerKm / 60);
   const s = Math.round(secPerKm % 60);
-  return `${m}:${s.toString().padStart(2, "0")}/km`;
+  // Spaced, as the app writes every pace ("5:00 /km"; unitTreatment.test.ts).
+  return `${m}:${s.toString().padStart(2, "0")} /km`;
 }
 
 function buildSummary(activity) {

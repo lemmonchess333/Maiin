@@ -211,8 +211,8 @@ describe("raceTargetVerdict — A2 feasibility (display register)", () => {
     const mi = raceTargetVerdict({ ...args, unit: "mi" })!;
     expect(mi.band).toBe(km.band);
     expect(mi.goalPaceS).toBe(km.goalPaceS); // stored value stays sec/km
-    expect(km.line).toContain("Goal pace 5:00/km");
-    expect(mi.line).toContain("Goal pace 8:03/mi");
+    expect(km.line).toContain("Goal pace 5:00 /km");
+    expect(mi.line).toContain("Goal pace 8:03 /mi");
   });
 
   it("goal pace is the target spread over the distance", () => {

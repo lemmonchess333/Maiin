@@ -4,7 +4,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
-import { paceLabel } from "@/lib/runLabels";
+import { paceBandLabel, paceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   paceTableFromFitness,
@@ -147,11 +147,14 @@ export default function RunFitnessSection({
         />
       )}
 
-      <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
+      <div className="@container rounded-xl bg-card border border-border/40 p-3 space-y-3">
         {paceTable ? (
           <>
-            <div className="flex items-center justify-between">
-              <div>
+            {/* "Update" drops under the heading, at the right, once the
+                heading would be narrower than 8em (double text): beside it
+                the button ran off the screen. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="min-w-[min(100%,8em)] flex-1">
                 <p className="text-sm font-semibold text-foreground">
                   Personalised paces
                 </p>
@@ -171,6 +174,7 @@ export default function RunFitnessSection({
               <Button
                 variant="ghost"
                 size="sm"
+                className="ml-auto"
                 onClick={() => {
                   haptic("light");
                   setEditing((v) => !v);
@@ -192,7 +196,7 @@ export default function RunFitnessSection({
                   predictions now — accept it to also drive your session pace
                   targets, or remove it to stay on standard paces.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     loading={confirming}
@@ -211,8 +215,11 @@ export default function RunFitnessSection({
               </div>
             )}
 
-            {/* Paces grid */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Paces grid. One pace per row under 10em of card (double
+                text): two abreast, a tile was narrower than "5:34 /km",
+                and a pace is never cut. A range still wraps after its
+                dash where one row is too narrow for it. Wide-first. */}
+            <div className="grid grid-cols-2 @max-[10em]:grid-cols-1 gap-2">
               <PaceRow label="Easy" band={paceTable.easy} />
               <PaceRow label="Threshold" band={paceTable.threshold} />
               <PaceRow label="Interval" band={paceTable.interval} />
@@ -220,8 +227,8 @@ export default function RunFitnessSection({
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-between">
-            <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="min-w-[min(100%,8em)] flex-1">
               <p className="text-sm font-semibold text-foreground">
                 Set your fitness
               </p>
@@ -233,6 +240,7 @@ export default function RunFitnessSection({
               <Button
                 variant="primary"
                 size="sm"
+                className="ml-auto"
                 onClick={() => {
                   haptic("light");
                   setEditing(true);
@@ -309,7 +317,7 @@ function PaceRow({
       <SectionLabel>{label}</SectionLabel>
       <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
         {band
-          ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`
+          ? paceBandLabel(band, unit)
           : value
             ? /* `paceLabel` already appends the unit (runLabels.ts:66), so
                  the extra `paceUnitLabel` here printed it twice — the 10K

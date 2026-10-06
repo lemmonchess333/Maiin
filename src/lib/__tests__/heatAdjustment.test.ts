@@ -58,8 +58,8 @@ describe("heatAdjustedPaceS + the display line", () => {
 
   it("with a prescribed pace, shows the concrete equivalent AND that the plan is unchanged", () => {
     const line = heatAdjustmentLine(warm, "km", 300);
-    expect(line).toContain("5:00/km");
-    expect(line).toContain("5:09/km");
+    expect(line).toContain("5:00 /km");
+    expect(line).toContain("5:09 /km");
     expect(line).toMatch(/paces are unchanged/i);
     expect(line).toMatch(/published heat curves/i);
   });
@@ -69,8 +69,8 @@ describe("heatAdjustedPaceS + the display line", () => {
        two quoted paces convert. 5:00/km is 8:03/mi and its 3%-slower
        equivalent 5:09/km is 8:17/mi. */
     const line = heatAdjustmentLine(warm, "mi", 300);
-    expect(line).toContain("8:03/mi");
-    expect(line).toContain("8:17/mi");
+    expect(line).toContain("8:03 /mi");
+    expect(line).toContain("8:17 /mi");
     expect(line).not.toMatch(/\/km/);
   });
 
