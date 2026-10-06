@@ -6,6 +6,38 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The lifting system, Lift4 (2026-10-06, #2593)
+
+Affects: progression, the plan generator, lighter weeks and races
+(`raceRest.ts`, `weekPrescription.ts`), Swap for today and Skip
+(`WorkoutSession`), Welcome back, the rules sheet, and the schema 5
+migrations (`migrations.ts`). Deploy production release 242 shipped it,
+with the functions' source read back.
+
+Unit, emulator and large-text checks cover the rules and the layout in
+Chromium; these need the iOS app or a production account.
+
+- [ ] **The screens in the iOS app.** In the native shell, at the phone's
+      own text size and at its largest: the rules sheet from the ⓘ beside
+      Train's week label and from "Why this session"; an exercise's menu,
+      Swap for today (one pick, its bar reads "Swap for today"), Skip, and
+      Finish's question about keeping a swap; Welcome back's "Ease back
+      in" after two weeks away; setup's "What do you have?" and the
+      session length beside the days.
+- [ ] **The schema 5 migration on a real plan.** After the first open
+      on the new build, the console shows `programSchemaVersion: 5`;
+      every weight sits on its equipment's steps (no 101 kg, no 9.25 kg);
+      miss counts are 0; a bodyweight lift that a swap had handed a load
+      shows none.
+- [ ] **A plan carrying the new fields takes a command.** With
+      `easingBack` (after "Ease back in") or `raceWeek` (a race plan in its
+      last two weeks) on the plan, "Take a lighter week" and Skip are
+      accepted by the deployed allow-list, not refused.
+- [ ] **The race's rest days on a real race plan.** Two days before the
+      race date, race week's session, if not done, shows as skipped, and
+      Train's banner reads "No lifting in the two days before your race,
+      or on the day, so your legs are fresh for it."
+
 ## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
 
 Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,

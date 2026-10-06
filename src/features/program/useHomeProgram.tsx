@@ -49,6 +49,8 @@ export function useHomeProgram() {
     uid: string;
     value: LayoffClass;
   } | null>(null);
+  /** The account whose missing programme could not be built. */
+  const [buildFailed, setBuildFailed] = useState<string | null>(null);
   const api = useRef<{ uid: string; value: ProgramController } | null>(null);
   const pending = useRef<
     {
@@ -140,9 +142,10 @@ export function useHomeProgram() {
         );
         setSnapshot({ uid, ...read });
         if (read.needsMaintenance)
-          void prepare().catch((error) =>
-            logger.warn("Home programme maintenance pending", error)
-          );
+          void prepare().catch((error) => {
+            logger.warn("Home programme maintenance pending", error);
+            if (!read.programState) setBuildFailed(uid);
+          });
       },
       (error) => {
         if (active) {
@@ -183,10 +186,20 @@ export function useHomeProgram() {
     loadedController && loadedController.uid === uid
       ? loadedController.component
       : null;
+  const current = snapshot && snapshot.uid === uid ? snapshot : null;
   return {
-    programState:
-      snapshot && snapshot.uid === uid ? snapshot.programState : null,
-    loading: !!uid && snapshot?.uid !== uid,
+    programState: current ? current.programState : null,
+    // A missing programme is built as soon as the server confirms it is
+    // missing, so until the built one arrives this is still loading: Home
+    // said "Today is a lifting day, but no workout is linked" for the
+    // second the build took. A build that fails ends it, and Home shows
+    // what it can without a plan.
+    loading:
+      !!uid &&
+      (!current ||
+        (!current.programState &&
+          current.needsMaintenance &&
+          buildFailed !== uid)),
     recentLayoff:
       layoff && layoff.uid === uid ? layoff.value : ("none" as LayoffClass),
     controller: Controller ? <Controller key={uid} publish={publish} /> : null,
