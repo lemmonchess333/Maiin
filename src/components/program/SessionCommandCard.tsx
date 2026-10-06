@@ -93,7 +93,10 @@ export default function SessionCommandCard({
         surfaceClass
       )}
     >
-      <div className="relative space-y-4 p-4">
+      <div className="@container relative space-y-4 p-4">
+        {/* The picture gives its room to the title under 14em of card
+            (larger text on the phone), where beside it "Lat focus" ran
+            past the card. */}
         <div className="flex items-start gap-3">
           {/* The description and the dose sit under the title, beside the
               picture: below it, a lift day's figure (taller than two lines
@@ -116,13 +119,16 @@ export default function SessionCommandCard({
             )}
           </div>
           {figure ? (
-            <div className="shrink-0 -my-1" aria-hidden="true">
+            <div
+              className="shrink-0 -my-1 hidden @min-[14em]:block"
+              aria-hidden="true"
+            >
               {figure}
             </div>
           ) : (
             <div
               className={cn(
-                "size-12 rounded-2xl flex items-center justify-center shrink-0",
+                "size-12 rounded-2xl hidden @min-[14em]:flex items-center justify-center shrink-0",
                 tileClass
               )}
             >

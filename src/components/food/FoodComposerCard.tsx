@@ -249,7 +249,11 @@ function FoodComposerCard({
                  larger text on the phone still fits; the camera and the
                  pencil stay in px, as iOS keeps a control's size when
                  the text grows, which leaves the field the width its
-                 placeholder needs ("Searc / h or" at double size). py-[17px] centres that one line in the
+                 placeholder needs ("Searc / h or" at double size).
+                 `field-sizing-content` grows the field a line when its
+                 placeholder or what is typed wraps (at larger text, the
+                 prompt's second line was cut in half), up to max-h-40;
+                 where it is unsupported the field stays one line. py-[17px] centres that one line in the
                  56px box (1 + 17 + 20 + 17 + 1), level with the pencil
                  and the send button, which centre on the row. `block`,
                  because an inline textarea sits on a text baseline and
@@ -262,7 +266,7 @@ function FoodComposerCard({
                  camera button the field is narrower, and an empty field
                  needs that width for its placeholder. */
               className={cn(
-                "block min-h-[56px] w-full pl-[44px] py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
+                "block min-h-[56px] max-h-40 field-sizing-content w-full pl-[44px] py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
                 nlInput.trim() ? "pr-11" : "pr-3"
               )}
               style={{

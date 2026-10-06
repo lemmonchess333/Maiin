@@ -39,10 +39,11 @@ export const MEAL_LABELS: Record<MealKey, string> = {
  * Measured in em on the picker's wrapper (both call sites wrap it in an
  * `@container`), so larger text moves it to two by two as a narrower
  * phone does: at 1.35x on a 393px phone, "Breakfast" overflowed a
- * quarter.
+ * quarter. Under 9em (double text on a 320px phone) it is one per row:
+ * "Breakfast" overflowed a half too.
  */
 export const MEAL_PICKER_LAYOUT =
-  "grid grid-cols-2 @min-[17em]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
+  "grid grid-cols-1 @min-[9em]:grid-cols-2 @min-[17em]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
 
 /**
  * Best-guess meal slot for "now" (local hour), used to pre-select the

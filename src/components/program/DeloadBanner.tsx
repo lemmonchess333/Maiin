@@ -186,7 +186,7 @@ export default function DeloadBanner({
           className="overflow-hidden"
         >
           <div
-            className="p-4 rounded-2xl relative"
+            className="@container p-4 rounded-2xl relative"
             style={{
               background: (deloadActive ? THEME.success : THEME.warning) + "14",
             }}
@@ -195,9 +195,12 @@ export default function DeloadBanner({
               deloadActive ? "Deload week active" : "Deload week recommended"
             }
           >
+            {/* The flame gives its room to the words under 14em of banner
+                (larger text on the phone), where "Consider" no longer
+                fitted beside it. */}
             <div className="flex items-start gap-3">
               <Flame
-                className="size-5 shrink-0 mt-0.5"
+                className="size-5 shrink-0 mt-0.5 hidden @min-[14em]:block"
                 style={{
                   color: deloadActive
                     ? "hsl(var(--success-strong))"
@@ -244,7 +247,7 @@ export default function DeloadBanner({
               )}
             </div>
             {!deloadActive && onApply && (
-              <div className="mt-3 pl-8">
+              <div className="mt-3 @min-[14em]:pl-8">
                 <Button
                   variant="secondary"
                   size="sm"

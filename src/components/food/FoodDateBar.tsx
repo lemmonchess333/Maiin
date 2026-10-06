@@ -58,7 +58,7 @@ function FoodDateBar({
         aria-label="Previous day"
         /* 44×44 hit area; the icon stays 16px so the cluster reads as
            one pill rather than three buttons. */
-        className="size-11 flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
+        className="size-[44px] flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronLeft aria-hidden="true" className="size-4 text-foreground" />
       </button>
@@ -66,7 +66,7 @@ function FoodDateBar({
         type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
-        className="flex items-center justify-center gap-1.5 min-h-11 px-1 active:scale-[0.97] transition-transform"
+        className="flex items-center justify-center gap-1.5 min-h-[44px] px-1 active:scale-[0.97] transition-transform"
       >
         <CalendarDays
           aria-hidden="true"
@@ -99,7 +99,7 @@ function FoodDateBar({
         }}
         disabled={!canGoForward}
         aria-label="Next day"
-        className="size-11 flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
+        className="size-[44px] flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronRight aria-hidden="true" className="size-4 text-foreground" />
       </button>

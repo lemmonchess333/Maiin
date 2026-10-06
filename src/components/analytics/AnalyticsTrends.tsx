@@ -64,23 +64,27 @@ export default function AnalyticsTrends({
                 className="hidden shrink-0 @min-[20em]:block"
               />
             )}
-            {row.value && (
-              <span className="ml-auto min-w-min text-right">
-                <span className="text-lg font-bold font-mono tabular-nums text-foreground">
-                  {row.value}
-                </span>
-                {row.unit && (
-                  <span className="text-sm text-muted-foreground">
-                    {" "}
-                    {row.unit}
+            {/* The figure and the chevron move as one, so a wrapped row
+                does not leave the chevron alone on a line. */}
+            <span className="ml-auto flex min-w-min items-center gap-3">
+              {row.value && (
+                <span className="text-right">
+                  <span className="text-lg font-bold font-mono tabular-nums text-foreground">
+                    {row.value}
                   </span>
-                )}
-              </span>
-            )}
-            <ChevronRight
-              className="size-4 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
+                  {row.unit && (
+                    <span className="text-sm text-muted-foreground">
+                      {" "}
+                      {row.unit}
+                    </span>
+                  )}
+                </span>
+              )}
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </span>
           </button>
         ))}
       </Card>

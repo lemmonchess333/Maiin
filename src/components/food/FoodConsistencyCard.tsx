@@ -170,7 +170,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   // Unset — one quiet row; the picker expands in place.
   if (commitment === null) {
     return (
-      <div className="p-3 rounded-xl bg-card space-y-2">
+      <div className="@container p-3 rounded-xl bg-card space-y-2">
         <button
           type="button"
           onClick={() => {
@@ -180,7 +180,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
           aria-expanded={picking}
           className="w-full min-h-[44px] flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+          <div className="hidden @min-[12em]:flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
             <UtensilsCrossed
               className="size-4 text-nutrition"
               aria-hidden="true"
@@ -224,9 +224,9 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
 
   const progress = deriveProgress(commitment.intent, mealDates, weekKey);
   return (
-    <div className="p-3 rounded-xl bg-card space-y-2">
+    <div className="@container p-3 rounded-xl bg-card space-y-2">
       <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+        <div className="hidden @min-[12em]:flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
           <UtensilsCrossed
             className="size-4 text-nutrition"
             aria-hidden="true"
