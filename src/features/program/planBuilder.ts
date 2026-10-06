@@ -69,9 +69,13 @@ import {
   weekPosition,
 } from "@/lib/dateHelpers";
 import {
+  applyDeload,
   balanceWeekVolume,
   generateProgram,
   expectedDayCount,
+  oneSetFewer,
+  raceWeekSession,
+  resetToBaseSets,
   withRaceLegTrim,
 } from "./programEngine";
 import {
@@ -333,9 +337,11 @@ function buildLiftProgram(input: PlanBuilderInput): {
       ? // Content edit → preserve the user's structure + customizations.
         { splitType: input.existingState.splitType, workouts: existing }
       : // No existing plan, or lift-days changed → rebuild from template.
+        // The new week starts from the plan's own numbers, not this week's
+        // lighter ones, which `keepWeekLighter` applies again.
         generateProgram(
           input.liftDays,
-          existing,
+          existing && resetToBaseSets(existing),
           input.primaryGoal,
           loadCtx,
           // Backlog #10 (M6): the week's SHAPE, derived from the SAME inputs
@@ -458,9 +464,33 @@ function buildLiftProgram(input: PlanBuilderInput): {
   );
   return {
     splitType: base.splitType,
-    workouts,
+    // New days or a new session length build the week's sets afresh, so a
+    // week made lighter goes lighter again (`keepWeekLighter`).
+    workouts: !preserve || refit ? keepWeekLighter(input, workouts) : workouts,
     ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
   };
+}
+
+/**
+ * A rebuild inside a lighter week keeps the week lighter (the precedence
+ * table in the lifting handoff): half the sets in a lighter week, with race
+ * week's one short session; one set fewer in the first week back. Without
+ * it, new lift days or a new session length gave the week its full sets
+ * while it still read as lighter.
+ */
+function keepWeekLighter(
+  input: PlanBuilderInput,
+  workouts: WorkoutDay[]
+): WorkoutDay[] {
+  const kept = input.preserveHistory ? input.existingState : undefined;
+  if (!kept) return workouts;
+  if (kept.currentPhase === "deload") {
+    const lighter = applyDeload(workouts);
+    return kept.raceWeek === "race"
+      ? raceWeekSession(lighter, kept.settings?.smallPlates === true)
+      : lighter;
+  }
+  return firstWeekBack(kept) ? oneSetFewer(workouts) : workouts;
 }
 
 /** A re-fitted week, balanced as a new plan's is, with its volume anchor
@@ -505,7 +535,8 @@ function raceLegTrimNow(
     !(kept && firstWeekBack(kept));
   if (trim)
     return { workouts: withRaceLegTrim(workouts, true), raceWeek: "build" };
-  if (raceWeek === "build")
+  // A lighter week taken in a build week has its own sets: they stay.
+  if (raceWeek === "build" && kept?.currentPhase !== "deload")
     return { workouts: withRaceLegTrim(workouts, false), raceWeek: undefined };
   return { workouts, raceWeek };
 }

@@ -551,6 +551,16 @@ supersedes RP2, which was never built, and reverses the lifting v8
 evaluation's STATUS of 2026-08-02c that kept running out of the lift plan
 (noted there).
 
+STATUS 2026-10-06 (Lift4 (9) to (11), build step 5, eleventh part): a
+rebuild inside a lighter week keeps it lighter. New lift days or a new
+session length build the week's sessions afresh, which gave a lighter week
+its full sets while it still read as one, the first week back its set
+fewer, and race week every session. The rebuild now starts from the plan's
+own numbers (`resetToBaseSets`) and applies the week's lightening again
+(`keepWeekLighter`): half the sets, race week's one short session with its
+legs halved once, or the set fewer. A save in a lighter week taken in a
+build week leaves its leg lifts as the lighter week set them.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

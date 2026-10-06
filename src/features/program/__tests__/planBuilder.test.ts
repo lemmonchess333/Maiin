@@ -21,7 +21,10 @@ import {
   type ProgramState,
 } from "../programTypes";
 import {
+  advanceWeek,
+  applyDeload,
   assignDayRoles,
+  easeBackIn,
   raceLegSets,
   repFloorFor,
   undulationDeltaFor,
@@ -1183,5 +1186,179 @@ describe("buildPlan · the race build's leg trim", () => {
     expect(out.programState.raceWeek).toBeUndefined();
     for (const [sets, base] of legSets(out.programState))
       expect(sets).toBe(base ?? sets);
+  });
+});
+
+/* ─── A rebuild inside a lighter week keeps it lighter ──────────────── */
+
+describe("buildPlan · a rebuild inside a lighter week", () => {
+  /** A four-day plan in a lighter week: half the sets, from the plan's. */
+  function lighterWeek(over: Partial<ProgramState> = {}): ProgramState {
+    const fresh = buildPlan(makeInput()).programState;
+    return {
+      ...fresh,
+      currentPhase: "deload",
+      workouts: applyDeload(fresh.workouts),
+      ...over,
+    };
+  }
+  const halved = (state: ProgramState) =>
+    state.workouts.every((d) =>
+      d.exercises.every(
+        (e) => e.sets === Math.max(1, Math.ceil((e.baseSets ?? e.sets) / 2))
+      )
+    );
+
+  it("keeps half the sets when the lift days change", () => {
+    const out = buildPlan(
+      makeInput({
+        liftDays: 3,
+        preferredSplit: "full_body",
+        existingState: lighterWeek(),
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(out.currentPhase).toBe("deload");
+    expect(out.workouts).toHaveLength(3);
+    expect(halved(out)).toBe(true);
+    expect(
+      out.workouts.some((d) => d.exercises.some((e) => e.sets < e.baseSets!))
+    ).toBe(true);
+  });
+
+  it("keeps half the sets when the session length changes", () => {
+    const existing = lighterWeek({ sessionMinutes: 60 });
+    const out = buildPlan(
+      makeInput({
+        existingState: existing,
+        preserveHistory: true,
+        sessionMinutes: 45,
+        previousSessionMinutes: 60,
+      })
+    ).programState;
+    expect(out.currentPhase).toBe("deload");
+    expect(halved(out)).toBe(true);
+  });
+
+  it("keeps the set fewer of the first week back after a break", () => {
+    const fresh = buildPlan(makeInput()).programState;
+    const back = easeBackIn(fresh, 0.1);
+    const out = buildPlan(
+      makeInput({
+        liftDays: 3,
+        preferredSplit: "full_body",
+        existingState: back,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(out.easingBack).toEqual({ weeksLeft: 2 });
+    for (const day of out.workouts)
+      for (const lift of day.exercises)
+        expect(lift.sets).toBe(Math.max(1, lift.baseSets! - 1));
+  });
+
+  it("keeps a lighter week taken in a race build week as it is", () => {
+    const raceGoal = { distance: "half" as const, targetDate: "2026-07-16" };
+    const race = buildPlan(
+      makeInput({ runMode: "race_prep", weeklyRunDays: 3, raceGoal })
+    ).programState;
+    const trimmed = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal,
+        raceLegTrim: true,
+        existingState: {
+          ...race,
+          runPlan: { ...race.runPlan!, totalWeeks: 16 },
+        },
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(trimmed.raceWeek).toBe("build");
+    // "Take a lighter week": half the plan's sets, the build mark kept.
+    const lighter = {
+      ...trimmed,
+      currentPhase: "deload" as const,
+      workouts: applyDeload(trimmed.workouts),
+    };
+    const saved = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal,
+        raceLegTrim: false,
+        existingState: lighter,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(saved.workouts).toEqual(lighter.workouts);
+  });
+
+  it("keeps race week one short session, its legs halved once", () => {
+    const fullBody = { liftDays: 3, preferredSplit: "full_body" as const };
+    const fresh = buildPlan(
+      makeInput({ ...fullBody, bodyweightKg: 80 })
+    ).programState;
+    // A week trained, so each lift has a load in its history and keeps it.
+    const raceWeek = advanceWeek(
+      {
+        ...fresh,
+        workouts: fresh.workouts.map((d) => ({
+          ...d,
+          completed: true,
+          exercises: d.exercises.map((e) => ({
+            ...e,
+            performanceHistory: [
+              {
+                date: "2026-05-10",
+                weight: e.weight,
+                repsCompleted: e.reps,
+                repsTarget: e.reps,
+              },
+            ],
+          })),
+        })),
+      },
+      "intermediate",
+      undefined,
+      { weekIndex: 15, totalWeeks: 16, distance: "half" }
+    );
+    expect(raceWeek.raceWeek).toBe("race");
+    const legsOf = (state: ProgramState) =>
+      state.workouts[0].exercises
+        .filter((e) => loadsTheLegs(e) && e.weight > 0)
+        .map((e) => [e.weight, e.preDeloadWeight]);
+    const before = legsOf(raceWeek);
+    expect(before.length).toBeGreaterThan(0);
+    // A refit keeps the week's sessions: the legs are not halved again.
+    const refit = buildPlan(
+      makeInput({
+        ...fullBody,
+        bodyweightKg: 80,
+        existingState: { ...raceWeek, sessionMinutes: 60 },
+        preserveHistory: true,
+        sessionMinutes: 45,
+        previousSessionMinutes: 60,
+      })
+    ).programState;
+    expect(legsOf(refit)).toEqual(before);
+    expect(refit.workouts.slice(1).every((d) => d.skipped)).toBe(true);
+    // New lift days rebuild it: still one session, the other skipped, and
+    // its legs at half their weight.
+    const rebuilt = buildPlan(
+      makeInput({
+        liftDays: 2,
+        preferredSplit: "full_body",
+        bodyweightKg: 80,
+        existingState: raceWeek,
+        preserveHistory: true,
+      })
+    ).programState;
+    expect(rebuilt.raceWeek).toBe("race");
+    expect(rebuilt.workouts.map((d) => !!d.skipped)).toEqual([false, true]);
+    // Halved once, from the plan's own weights, which the week after gives
+    // back.
+    expect(legsOf(rebuilt)).toEqual(before);
   });
 });

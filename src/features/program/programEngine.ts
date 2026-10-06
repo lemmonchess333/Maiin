@@ -2481,7 +2481,7 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
  * also restores the weight and reps it stashed; `max()` keeps anything the
  * person progressed during it.
  */
-function resetToBaseSets(workouts: WorkoutDay[]): WorkoutDay[] {
+export function resetToBaseSets(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
@@ -2708,7 +2708,7 @@ export function advanceWeek(
 
 /** A week with one set fewer on every lift, from the plan's own sets: the
  *  first week back after a break (Lift4 (11)). */
-function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
+export function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
@@ -2756,9 +2756,10 @@ export function withRaceLegTrim(
  * with nothing heavy for the legs; the other days are skipped. Its sets are
  * already halved (`applyDeload`), and each leg lift comes down to half its
  * weight on its own steps, stashed so the next week gets it back
- * (`resetToBaseSets`).
+ * (`resetToBaseSets`). A leg lift already under its stash stays as it is,
+ * so a rebuild can apply it again.
  */
-function raceWeekSession(
+export function raceWeekSession(
   workouts: WorkoutDay[],
   smallPlates: boolean
 ): WorkoutDay[] {
@@ -2769,6 +2770,7 @@ function raceWeekSession(
           ...day,
           exercises: day.exercises.map((ex) => {
             if (!loadsTheLegs(ex) || !(ex.weight > 0)) return ex;
+            if ((ex.preDeloadWeight ?? 0) > ex.weight) return ex;
             const light = lighterBy(
               loadGridFor(ex.exerciseId, smallPlates),
               ex.weight,
