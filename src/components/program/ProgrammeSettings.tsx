@@ -85,8 +85,8 @@ import {
   computeProgrammeChanges,
   RACE_DISTANCE_LABELS,
   programmePreservationNote,
-  sessionLengthLabel,
 } from "@/lib/programmeChanges";
+import SessionLengthLabel from "./SessionLengthLabel";
 import {
   SESSION_MINUTES_OPTIONS,
   sessionLengthOption,
@@ -1088,14 +1088,11 @@ export default function ProgrammeSettings({
             ariaLabel="Minutes per lift session"
             options={SESSION_MINUTES_OPTIONS.map((n) => ({
               value: n,
-              label: (
-                <span className="font-mono tabular-nums">
-                  {sessionLengthLabel(n)}
-                </span>
-              ),
+              label: <SessionLengthLabel minutes={n} />,
             }))}
             value={sessionMinutes}
             onChange={setSessionMinutes}
+            className="@container"
           />
           <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
             Your sessions are built to fit this, warm-ups and rests included.

@@ -47,6 +47,7 @@ import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import SessionLengthLabel from "@/components/program/SessionLengthLabel";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -924,14 +925,11 @@ export default function Onboarding() {
                   value={sessionMinutes}
                   options={DRAFT_SESSION_MINUTES.map((n) => ({
                     value: n,
-                    label: (
-                      <span className="font-mono tabular-nums">
-                        {n === 75 ? "75+" : n} min
-                      </span>
-                    ),
+                    label: <SessionLengthLabel minutes={n} />,
                   }))}
                   onChange={setSessionMinutes}
                   tone="lifting"
+                  className="@container"
                 />
               )}
               <p className="text-sm text-muted-foreground">

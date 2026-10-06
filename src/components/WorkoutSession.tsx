@@ -1731,7 +1731,9 @@ export default function WorkoutSession({
           the exercise's drawing beside its name, where a bare dumbbell
           icon sat. Under 16em of row (larger text on the phone) the drawing
           gives its room to the name, which beside it pushed the form
-          guide's button off the screen. Wide-first. */}
+          guide's button off the screen, and the name's two buttons drop
+          under it when beside it they would squeeze a word ("Bench" at 2x
+          on a 320px phone) out of its box. Wide-first. */}
       <div className="@container flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
         {currentExercise && (
           <ExerciseThumb
@@ -1741,35 +1743,35 @@ export default function WorkoutSession({
           />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
             <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
               {currentExercise?.name}
             </h2>
             {currentExercise?.name && (
-              <IconButton
-                aria-label={`How to do ${currentExercise.name}`}
-                variant="ghost"
-                size="sm"
-                icon={<Info className="size-5 text-muted-foreground" />}
-                onClick={() => {
-                  haptic("light");
-                  setShowFormGuide(true);
-                }}
-              />
-            )}
-            {currentExercise?.name && (
-              <IconButton
-                aria-label={`More for ${currentExercise.name}`}
-                variant="ghost"
-                size="sm"
-                icon={
-                  <MoreHorizontal className="size-5 text-muted-foreground" />
-                }
-                onClick={() => {
-                  haptic("light");
-                  setMenuFor(safeExIndex);
-                }}
-              />
+              <div className="flex shrink-0 items-center gap-1">
+                <IconButton
+                  aria-label={`How to do ${currentExercise.name}`}
+                  variant="ghost"
+                  size="sm"
+                  icon={<Info className="size-5 text-muted-foreground" />}
+                  onClick={() => {
+                    haptic("light");
+                    setShowFormGuide(true);
+                  }}
+                />
+                <IconButton
+                  aria-label={`More for ${currentExercise.name}`}
+                  variant="ghost"
+                  size="sm"
+                  icon={
+                    <MoreHorizontal className="size-5 text-muted-foreground" />
+                  }
+                  onClick={() => {
+                    haptic("light");
+                    setMenuFor(safeExIndex);
+                  }}
+                />
+              </div>
             )}
           </div>
           {skippedRows[safeExIndex] !== undefined && (
