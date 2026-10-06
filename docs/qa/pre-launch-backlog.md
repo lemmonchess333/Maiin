@@ -191,8 +191,8 @@ browser reads Dynamic Type, so the reading itself needs the iPhone app.
       decorative icon rather than overlap. On the phone, at the largest
       standard size and at the largest accessibility size, scroll each
       and note anything cut off or overlapping. Known and accepted: the
-      day names under Train's week end in "…", and at 2× on a 320px
-      phone (iPhone SE, 1st generation) some rows still crowd.
+      day names under Train's week, and segmented-control labels at 2× on
+      a 320px screen (Display Zoom on an SE or mini), end in "…".
 
 ## The first-visit guide (2026-10-04)
 
