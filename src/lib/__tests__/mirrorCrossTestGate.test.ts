@@ -175,9 +175,6 @@ const PINNED: Record<string, string> = {
   // scheduledRunStatus.ts). Pinned by the cross-test below.
   "functions/lib/programCommands.js":
     "src/features/program/__tests__/programCommands.cross.test.ts",
-  // Packet 18 — CF progression engine mirrors programEngine.ts applyProgression.
-  "functions/lib/progressionEngine.js":
-    "src/features/program/__tests__/applyProgression.cross.test.ts",
   // Packet 18 — CF bodyweight id set mirrors the catalog's Bodyweight rows.
   "functions/lib/bodyweightExerciseIds.js":
     "src/features/program/__tests__/bodyweightExerciseIds.cross.test.ts",
@@ -202,10 +199,6 @@ const PINNED: Record<string, string> = {
   // applyDeload (and the easierToday.deloadWeight weight rule).
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
-  // Easing-block progression hold — the third branch of logExercise, which
-  // the server reducer lacked until the writer migrated to the boundary.
-  "functions/lib/progressionHold.js":
-    "src/features/program/__tests__/progressionHold.cross.test.ts",
   // One-off run move — the copy inside the command transaction is the one
   // that decides where the run is actually stored.
   "functions/lib/runReschedule.js":
@@ -215,6 +208,10 @@ const PINNED: Record<string, string> = {
   // a block actually writes.
   "functions/lib/represcribe.js":
     "src/features/program/__tests__/represcribe.cross.test.ts",
+  // Lift4 (5) — the role table a block's re-prescription reads its sets and
+  // reps from, with the catalogue's isolation and 12–20 id lists.
+  "functions/lib/roleTable.js":
+    "src/features/program/__tests__/roleTable.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.

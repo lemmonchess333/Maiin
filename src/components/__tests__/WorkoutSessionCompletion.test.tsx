@@ -113,10 +113,12 @@ const writer = (queued?: Promise<"synced" | "failed">) =>
 function openSession(
   onCompleteDay = writer(),
   onClose = vi.fn(),
-  exercise: Partial<ProgramExercise> = {}
+  exercise: Partial<ProgramExercise> = {},
+  extra: Partial<ComponentProps<typeof WorkoutSession>> = {}
 ) {
   render(
     <WorkoutSession
+      {...extra}
       day={{
         dayName: "Test lift",
         dayType: "upper",
@@ -175,6 +177,26 @@ describe("set completion through row controls", () => {
     expect(
       screen.getByRole("spinbutton", { name: "Set 2 reps" })
     ).toBeEnabled();
+  });
+
+  it("completes a hold timed past 100 seconds (Lift4 (14))", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "plank",
+      name: "Plank",
+      reps: 60,
+      repUnit: "seconds",
+    });
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" }),
+      { target: { value: "120" } }
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    expect(h.error).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" })
+    ).toBeDisabled();
   });
 
   it("offers undo for a valid out-of-order set", () => {
@@ -868,6 +890,39 @@ describe("completed-set corrections", () => {
   });
 });
 
+describe("WorkoutSession — the record of a hard run before it (Lift4 (14))", () => {
+  async function finished(hardRunBefore?: (startedAt: number) => boolean) {
+    const complete = writer();
+    openSession(complete, vi.fn(), {}, hardRunBefore ? { hardRunBefore } : {});
+    for (let i = 0; i < 3; i++)
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    return complete.mock.calls[0][1];
+  }
+
+  it("carries a long or hard run in the day before the start to the save", async () => {
+    const asked: number[] = [];
+    const data = await finished((startedAt) => {
+      asked.push(startedAt);
+      return true;
+    });
+    expect(data.afterHardRun).toBe(true);
+    // Asked about the session's own start.
+    expect(asked[0]).toBe(data.startedAt);
+  });
+
+  it("records nothing without one", async () => {
+    expect((await finished(() => false)).afterHardRun).toBeUndefined();
+    cleanup();
+    expect((await finished()).afterHardRun).toBeUndefined();
+  });
+});
+
 describe("WorkoutSession — an accidental extra set can be removed", () => {
   /* "Add set" had no inverse, so a mis-tap left an uncompleted set the
      session counted as outstanding: finishing the three sets the programme
@@ -1182,17 +1237,27 @@ describe("WorkoutSession — warm-ups are optional", () => {
 });
 
 describe("WorkoutSession — rest timer", () => {
-  /* The fixture carries `restSeconds: 0` and a null profile, so every rest
-     falls back to the 90s default. That makes the default the thing a leak
-     would visibly overwrite. */
+  /* The exercise carries a 90s rest and the profile fixes none, so every
+     rest is 90s. That makes it the thing a leak would visibly overwrite. */
   // The time left reads as a clock (DS3): "1:30", not "90 s".
   const restLabel = () =>
     screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
 
   function startFirstRest() {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
   }
+
+  it("rests as the plan suggests when none is fixed (Lift4 (5))", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
+  });
 
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
@@ -1286,7 +1351,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("ticks both displays without re-rendering the set editor or saving drafts", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     // Let mount work settle, then observe real editor renders via its auth read.
     await act(async () => {});
@@ -1312,7 +1377,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("stops paint pulses while hidden and catches up on foreground immediately", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     await act(async () => {});
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
@@ -1341,7 +1406,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
        chime flag stayed set from the first expiry, so the second one passed
        in silence — a timer running with no alert at the end of it. */
     const { haptic } = await import("@/lib/haptic");
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
 
     // Run past the 90s target: the alert fires once.
@@ -1579,5 +1644,47 @@ describe("wayfinding between exercises", () => {
       screen.getByRole("button", { name: "Pull-Ups, done" })
     ).toBeVisible();
     expect(screen.queryByText("Up next")).toBeNull();
+  });
+});
+
+describe("the session's target (Lift4 (3))", () => {
+  it("names a climbing lift's range", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 10,
+      baseReps: 8,
+      repRangeMax: 12,
+      progressionType: "double",
+      weight: 60,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8–12 @ 60 kg"
+    );
+  });
+});
+
+describe("the plate hint (Lift4 (6))", () => {
+  it("loads the plan's 2.5 kg step with a 1.25 kg plate a side", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 62.5,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 + 1.25"
+    );
+    expect(screen.queryByText(/kg short/)).toBeNull();
+  });
+
+  it("says what the plates can't make", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 61,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 · 1 kg short"
+    );
   });
 });

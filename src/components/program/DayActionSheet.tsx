@@ -725,6 +725,7 @@ export default function DayActionSheet({
                   programme={programState}
                   day={lift.workout}
                   date={dateKey}
+                  experience={profile?.experience}
                 />
               </div>
               <div className="shrink-0 pt-1">

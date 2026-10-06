@@ -171,6 +171,10 @@ describe("weightAfterExerciseSwap", () => {
     });
     // catalog equipment "Bodyweight" → BODYWEIGHT_IDS
     expect(weightAfterExerciseSwap(from, "chin-ups", ctx()).weight).toBe(0);
+    // The category's primary, which the bank leaves unfactored, with profile
+    // context (Replace, plan building) and without it (the week engine).
+    expect(weightAfterExerciseSwap(from, "pull-ups", ctx()).weight).toBe(0);
+    expect(weightAfterExerciseSwap(from, "pull-ups").weight).toBe(0);
     // core: catalog bodyweight
     const core = ex({
       exerciseId: "cable-crunch",

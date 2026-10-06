@@ -26,11 +26,53 @@ describe("liftCompletionContext", () => {
   ];
 
   it("names the next lift as the other screens do", () => {
-    const context = liftCompletionContext(state(week), 0, "2026-09-27");
+    const context = liftCompletionContext(
+      state(week),
+      0,
+      "2026-09-27",
+      "intermediate"
+    );
     expect(context.next).toBe("Next: Push · Chest focus");
     expect(context.progress).toBe(
       "Week 1 of 4 · 1 of 3 planned lifts complete"
     );
+  });
+
+  it("counts the race block's weeks while a race plan runs", () => {
+    // Lift4 (9): the lighter weeks follow the run plan then, at any level.
+    const racing = state(week, {
+      weekNumber: 6,
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "half", targetDate: "2026-12-20" },
+        currentWeek: 6,
+        totalWeeks: 16,
+      },
+    });
+    for (const level of ["intermediate", "beginner"] as const) {
+      expect(
+        liftCompletionContext(racing, 0, "2026-09-27", level).progress
+      ).toBe("Week 7 of 16 · 1 of 3 planned lifts complete");
+    }
+  });
+
+  it("counts a cycle only where the calendar gives lighter weeks", () => {
+    // Lift4 (9): a beginner, an unknown level and a two-day plan get no
+    // lighter week on the calendar, so no cycle of four to count.
+    const later = state(week, { weekNumber: 6 });
+    for (const level of ["beginner", undefined] as const) {
+      expect(
+        liftCompletionContext(later, 0, "2026-09-27", level).progress
+      ).toBe("Week 6 · 1 of 3 planned lifts complete");
+    }
+    expect(
+      liftCompletionContext(
+        state(week.slice(0, 2), { weekNumber: 6 }),
+        0,
+        "2026-09-27",
+        "intermediate"
+      ).progress
+    ).toBe("Week 6 · 1 of 2 planned lifts complete");
   });
 
   it("follows a chosen next lift, and skips skipped and done days", () => {

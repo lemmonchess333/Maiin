@@ -19,17 +19,17 @@
  *      (`isAccessory !== true` — the undefined-legacy rule matches
  *      expressSession: ambiguity protects) and
  *      {@link EASIER_ACCESSORY_MIN_SETS} for accessories.
- *   3. Non-zero suggested loads follow the EXISTING deload policy
- *      (programEngine.applyDeload's weight rule): ×0.85, rounded to the
- *      nearest 2.5 kg. Bodyweight/uncalibrated zero loads stay 0 — the
- *      set reduction is the whole signal.
+ *   3. Non-zero suggested loads come down to 85%, rounded to the nearest
+ *      2.5 kg ({@link deloadWeight}). Bodyweight/uncalibrated zero loads
+ *      stay 0 — the set reduction is the whole signal.
  *   4. Recommendation ({@link easierTodayRecommendation}) is pure and
- *      deterministic, fired only from strong EXISTING signals, and
- *      gives one factual reason — never a readiness percentage. Full
- *      Plan remains the primary choice and is never auto-overridden.
+ *      deterministic, and fires for one reason only: a hard run
+ *      yesterday before a session that loads the same legs (Lift4 (3)).
+ *      Full Plan remains the primary choice and is never
+ *      auto-overridden.
  *
- * Privacy: the reason and the recovery inputs stay on this device — the
- * only persisted trace of an easier session is
+ * Privacy: the reason stays on this device — the only persisted trace of
+ * an easier session is
  * `sessionVariant: "easier_today"` on the PRIVATE workout record
  * (users/{uid}/workouts). Nothing variant- or reason-shaped enters
  * social posts, notifications or analytics events.
@@ -37,8 +37,7 @@
 
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 import { estimateSessionMinutes, type ExpressPlan } from "./expressSession";
-import { primaryCanonicalForExercise } from "./volumeModel";
-import type { MuscleRecoveryEntry } from "@/lib/muscleRecovery";
+import type { RestContext } from "./restTime";
 
 /** A primary/compound never goes below 2 sets on an easier day. */
 export const EASIER_PRIMARY_MIN_SETS = 2;
@@ -46,9 +45,9 @@ export const EASIER_PRIMARY_MIN_SETS = 2;
 export const EASIER_ACCESSORY_MIN_SETS = 1;
 
 /**
- * The existing deload weight rule — MIRRORS programEngine.applyDeload
- * (×0.85, nearest 2.5 kg plate; zero stays zero). Pinned equal to
- * applyDeload by easierToday.test.ts so the two can't drift.
+ * An easier session's weight: 85%, to the nearest 2.5 kg plate; zero stays
+ * zero. A lighter week keeps its weights (`applyDeload`), so this is the
+ * easier session's alone.
  */
 export function deloadWeight(weight: number): number {
   return weight === 0 ? 0 : Math.round((weight * 0.85) / 2.5) * 2.5;
@@ -71,7 +70,11 @@ export interface EasierPlan extends Omit<ExpressPlan, "trim"> {
  * deterministic; the input day is never mutated — the caller feeds the
  * clone into the live session exactly like an Express plan.
  */
-export function buildEasierSession(day: WorkoutDay): EasierPlan {
+export function buildEasierSession(
+  day: WorkoutDay,
+  /** Prices the estimate as the session's timer will rest. */
+  rest: RestContext = {}
+): EasierPlan {
   const adjustments: EasierAdjustments = { setsReduced: 0, loadsReduced: 0 };
   const exercises: ProgramExercise[] = day.exercises.map((ex) => {
     const floor =
@@ -87,7 +90,7 @@ export function buildEasierSession(day: WorkoutDay): EasierPlan {
   return {
     variant: "easier_today",
     exercises,
-    estimatedMinutes: estimateSessionMinutes(exercises),
+    estimatedMinutes: estimateSessionMinutes(exercises, rest),
     adjustments,
   };
 }
@@ -107,10 +110,6 @@ export interface EasierTodaySignals {
   hardRunYesterday: boolean;
   /** Today's session loads the lower body (knee/hip-dominant work). */
   lowerBodyDay: boolean;
-  /** Day target muscles still "recovering" per muscleRecovery. */
-  recoveringMuscles: string[];
-  /** The performance engine's existing deload recommendation flag. */
-  deloadRecommended: boolean;
 }
 
 export interface EasierTodayRecommendation {
@@ -121,11 +120,12 @@ export interface EasierTodayRecommendation {
 }
 
 /**
- * Whether to mark "Easier today" as Recommended, from strong EXISTING
- * signals only. Pure + deterministic; first matching signal wins, in
- * specificity order. Deliberately NOT a readiness score — and it never
- * reads the performance recoveryScore (a retrospective weekly analytics
- * input, not a medical/readiness measure).
+ * Whether to mark "Easier today" as Recommended: only after a hard run
+ * yesterday, before a session that loads the same legs (Lift4 (3)). The
+ * one reason the app knows rather than guesses; muscle soreness from a
+ * calendar and the weekly performance score are guesses, and the person
+ * can always pick the easier session themselves. Pure + deterministic,
+ * and never a readiness score.
  */
 export function easierTodayRecommendation(
   s: EasierTodaySignals
@@ -136,61 +136,26 @@ export function easierTodayRecommendation(
       reason: "hard run yesterday, and this session loads the same legs",
     };
   }
-  if (s.recoveringMuscles.length > 0) {
-    const list =
-      s.recoveringMuscles.length <= 2
-        ? s.recoveringMuscles.join(" and ")
-        : `${s.recoveringMuscles.slice(0, 2).join(", ")} and more`;
-    return {
-      recommended: true,
-      reason: `${list} still recovering from recent training`,
-    };
-  }
-  if (s.deloadRecommended) {
-    return {
-      recommended: true,
-      reason: "your recent training week points to a deload",
-    };
-  }
   return { recommended: false, reason: null };
 }
 
 // ── Signal derivation helpers (pure — Program.tsx supplies the data) ──
 
-/** A day "loads the lower body" when any exercise is knee- or
- *  hip-dominant. (The saved-doc `/leg|lower/` category test elsewhere
- *  never matched these values — key off movementCategory directly.) */
-export function isLowerBodyDay(day: Pick<WorkoutDay, "exercises">): boolean {
-  return day.exercises.some(
-    (ex) =>
-      ex.movementCategory === "knee_dominant" ||
-      ex.movementCategory === "hip_dominant"
+/** Whether a lift loads the legs: knee- or hip-dominant. (The saved-doc
+ *  `/leg|lower/` category test elsewhere never matched these values — key
+ *  off movementCategory directly.) */
+export function loadsTheLegs(
+  ex: Pick<ProgramExercise, "movementCategory">
+): boolean {
+  return (
+    ex.movementCategory === "knee_dominant" ||
+    ex.movementCategory === "hip_dominant"
   );
 }
 
-/**
- * The day's target muscles that are still "recovering". Exercises
- * resolve to canonical muscles with the volume tally's own attribution
- * rule (`primaryCanonicalForExercise`: DB primary by exerciseId, else
- * the movement-category fallback for custom lifts) so this speaks the
- * identical muscle language as the recovery model. Only PRIMARY
- * involvement counts as a target.
- */
-export function recoveringTargetMuscles(
-  day: Pick<WorkoutDay, "exercises">,
-  entries: MuscleRecoveryEntry[]
-): string[] {
-  const recovering = new Set(
-    entries.filter((e) => e.status === "recovering").map((e) => e.muscle)
-  );
-  const out: string[] = [];
-  for (const ex of day.exercises) {
-    const primary = primaryCanonicalForExercise(ex);
-    if (primary && recovering.has(primary) && !out.includes(primary)) {
-      out.push(primary);
-    }
-  }
-  return out;
+/** A day "loads the lower body" when any of its lifts does. */
+export function isLowerBodyDay(day: Pick<WorkoutDay, "exercises">): boolean {
+  return day.exercises.some(loadsTheLegs);
 }
 
 /* ================================
@@ -221,16 +186,17 @@ export interface LighterDaySwap {
  */
 export function pickLighterDay(
   days: readonly WorkoutDay[],
-  todayIndex: number
+  todayIndex: number,
+  rest: RestContext = {}
 ): LighterDaySwap | null {
   const today = days[todayIndex];
   if (!today) return null;
-  const todayMinutes = estimateSessionMinutes(today.exercises);
+  const todayMinutes = estimateSessionMinutes(today.exercises, rest);
   let best: LighterDaySwap | null = null;
   days.forEach((day, index) => {
     if (index === todayIndex || day.completed) return;
     if (!day.exercises || day.exercises.length === 0) return;
-    const minutes = estimateSessionMinutes(day.exercises);
+    const minutes = estimateSessionMinutes(day.exercises, rest);
     // "Meaningfully lighter": at least 15% fewer estimated minutes.
     // Marginal differences would make the option noise, not relief.
     if (minutes >= todayMinutes * 0.85) return;

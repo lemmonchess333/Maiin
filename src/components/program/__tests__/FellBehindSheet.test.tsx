@@ -249,9 +249,9 @@ describe("sport-coding — the return sheets are two colours, not one", () => {
   });
 
   it("and the lift sheet's stays primary", () => {
-    expect(read("../LiftReturnSheet.tsx")).toMatch(
-      /variant:\s*"primary" as const/
-    );
+    // Its main action is whichever choice it puts first (Lift4 (11)), and
+    // that one takes the primary variant.
+    expect(read("../LiftReturnSheet.tsx")).toMatch(/variant:[^\n]*"primary"/);
     expect(read("../LiftReturnSheet.tsx")).not.toMatch(/"sport"/);
   });
 

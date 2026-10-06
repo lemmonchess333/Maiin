@@ -184,8 +184,429 @@ prescription. This reverses the Lift2 lock, which read a lighter session as
 a user modification to hold under steps 2 and 4 above, and its four-step
 bound on a heavier one; do not re-derive either from this ladder. Code:
 `liftedLoad` and `applyProgression` in
-`src/features/program/programEngine.ts`, mirrored in
-`functions/lib/progressionEngine.js`.
+`src/features/program/programEngine.ts`, the only copy since Lift4 build
+step 3 retired the server's (below).
+
+STATUS 2026-10-05 (Lift4 (7), build step 3, second release): the third-miss
+rule above is replaced. A miss counts only at the weight the plan asked for
+(`sessionOutcome` in `sessionSets.ts`), and the first holds, silently. The
+second in a row lowers a loaded lift 10% on its step grid, by at least one
+step, with the rep target kept; the lift then climbs back a step for each
+session that is not a miss, to the weight it came down from, and the usual
+rules resume there. Its next session shows one line, "Down from 100 kg: two
+sessions under 5 reps". One record on the exercise, `lowered`, carries both,
+tagged with the exercise it lowered so a swap can't take it to another.
+Bodyweight lifts come down a rep and bodyweight holds five seconds, as
+before; a weighted hold comes down in load again, as the LIFT-EV-01
+close-out had it. Code: `countMiss` and `applySessionSets` in
+`programEngine.ts`.
+
+STATUS 2026-10-05 (Lift4 (6), build step 3, third release): steps follow the
+equipment (`loadSteps.ts`). A barbell steps 2.5 kg, or 1.25 kg with "I have
+small plates", which replaced Microloading and its 1 kg a session and starts
+off; dumbbells go to the next pair (kilos to 10 kg, then 2.5 kg), a machine or
+cable stack 2.5 kg, a kettlebell the next bell. Every set at a fixed target is
+a step; a range steps at its top, as before. The lean-bulk bonus and the
+light-lift microplate step (`movementClass.ts`) are gone. A step of more than
+about 15% is never taken on its own: the target climbs a rep a session past
+the range instead, up to the reps at which the next weight for the range's
+bottom is the same effort by Epley, and reps past the range's top never count
+toward a miss. When the person lifts a heavier weight, the plan follows it and
+the reps start from the bottom again. Off-grid weights round once (schema v5),
+and the server's settings validator takes `smallPlates` while still accepting
+an older app's `microloading`.
+
+STATUS 2026-10-05 (Lift4 (3) and (7), build step 3, fourth release): ranges
+are shown. A lift that climbs reps before it adds weight reads as its range
+("3 sets × 8–12 reps", "30–45s"), on Train, in the session and in
+onboarding's preview; a fixed target reads alone ("3 sets × 5 reps"), even
+where generation stamped a range on it, and a target that has climbed past
+its range shows how far ("12–18"). `prescribedRepRange` in `programEngine.ts`
+is the one reading. A climbing lift's miss is judged at the bottom of its
+range, so reps it has climbed, inside the range or past it, are never a bar.
+Which lifts climb a range and which hold a fixed target for a new plan is
+step 4's generator.
+
+STATUS 2026-10-05 (Lift4 (5), build step 4, first part): a new plan's sets,
+reps and progression come from each lift's role (`roleTable.ts`): main lifts,
+other compounds and isolations, by goal, with a beginner column (fixed main
+lifts on three sets, two sets of everything else) and four sets on a strength
+main lift from intermediate up. A range climbs; a fixed target steps. The
+heavier and lighter days stay for intermediates as they were, two reps either
+side of the table, so a Build muscle main lift runs 4–8 on a heavier day and
+8–12 on a lighter one. A session the table takes past 18 working sets sheds
+accessory sets, isolations first, down to two (`fitSessionsToBudget`).
+Starting loads are estimated for the main lifts' bottom (`mainRepAnchor`). A
+block re-prescribes from the same table on the server (`roleTable.js`, pinned
+by `roleTable.cross.test.ts`), and its copy reads the lifter's level. Get
+stronger and Support my running share every target, as do Build muscle and
+Lose fat, so a block between them changes nothing and says so. A lift an
+equipment or injury swap brings in still keeps its slot's numbers; giving it
+its own role's numbers, and fitting the plan to the session length, are the
+next parts of step 4.
+
+STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
+session length. A new plan's sessions are cut to the minutes the person has
+(`sessionFit.ts`; an hour when the question was never answered), priced with
+the app's own estimator, which now counts the warm-up sets the session puts
+before each body part's first loaded lift and the rest its timer runs: the
+person's fixed rest, or the plan's by role and reps. A plan built for 30
+minutes rests less. What doesn't fit goes in this order: isolations' sets to
+two, other compounds' sets to two, isolations, main lifts' sets to two, other
+compounds. A muscle's last direct lift in the week stays while anything else
+can give way, and a main lift is never dropped. The weekly bands are only a
+ceiling now, in two tiers (a beginner's are two thirds of everyone else's):
+the floor-chasing top-up (`balanceWeeklyVolume`) retired, and the push/pull
+balancer adds only inside what a session fits. A settings save that changes
+the session length re-fits the plan's sets and nothing else. The plan records
+the length it was fitted to (`programState.sessionMinutes`, on the server's
+allow-list), and Start trims only a plan from before this. The question on
+the days step and the settings control come next.
+
+STATUS 2026-10-05 (Lift4 (5), build step 4, third part): onboarding's days
+step asks about how long a session is (30, 45, 60 or 75+ minutes) beside the
+lift days, and Lift plan settings edits it in the same place; the separate
+"Usual time for lifting" section retired. The Weekly volume card judges each
+muscle against what the days and time can fit (`weeklyVolumeTargets`: the
+floor, or what a fresh plan for the same days, focus, level and length gives
+the muscle, where that is less), with a beginner's lower ceiling.
+
+STATUS 2026-10-05 (Lift4 (5), build step 4, fourth part): an unknown level is
+a beginner's everywhere: `toExperience` and its server copies, an omitted
+level in `generateProgram`, a stored value outside the three, and the level
+onboarding shows before one is picked. The builders still pick at the
+intermediate tier (`BUILDER_TIER`) and the complexity gate re-points what a
+beginner can't be offered, so a known level's plan is unchanged. With no
+bodyweight a new plan starts from the bar: a barbell lift at 20 kg and any
+other loaded lift at the estimate for a 60 kg beginner, not the builders'
+fixed loads; a plan the person already has keeps the loads it shows. The time
+fit prices each loaded lift's warm-up at the heavier of its load and an 80 kg
+intermediate's estimate for it, so a plan started at the bar still fits once
+its lifts carry a full ramp, and the volume card's reference plan prices the
+same as the person's.
+
+STATUS 2026-10-05 (Lift4 (5), build step 4, fifth part): every muscle twice a
+week on a plan of two or more days, as far as the time and the ceilings
+allow. A muscle is worked on a day when a lift counts sets toward it, as the
+volume model counts them (ADR-0010), so the compounds give every big muscle
+its two days; the side delts, calves and abs, which nothing else reaches, get
+a lift on each day short of one (`weeklyFrequency.ts`), the week's own where
+it has one. Those added lifts are extras to the time fit: they go after the
+lifts whose muscles keep two days and before the plan's own, they never count
+as a muscle's direct work, and a day that loses one is fitted again without
+it, so no set stays cut for it. A main lift never gives a set for one. The
+table is a ceiling: an added lift that leaves a muscle over its ceiling once
+the week is balanced goes (a lateral raise counts toward the upper back too,
+so a week whose rows fill that ceiling keeps the side delts on one day), and
+the fat-loss band's lower ceiling, which goes with its volume multiplier in
+step 4's retirements, holds Lose fat plans to that for now. Measured on Build
+muscle for intermediate and advanced lifters: every muscle on two days at 75
+minutes on 2 to 6 days, and at 60 minutes on 4 to 6.
+
+STATUS 2026-10-05 (Lift4 (11), build step 4, sixth part): every lift the
+injury promises name is covered. The swaps read `CONTRAINDICATED`
+(`injurySubstitutions.ts`), which lists, from each option's words, the lifts
+it promises to change, the generator's included; the hand-written templates'
+annotations were the index before, and missed the back squat, front squat and
+standing press for a lower back, the hack and front squats for a knee, the
+Arnold press, barbell bench and dips for a shoulder, and the dips, dumbbell
+curl, skull crusher and overhead extension for an elbow. The templates are
+deleted with it. A substitute must be safe for every injury the person has,
+not only its original's, and none is offered for an injury it is itself
+named for, so the next save swaps nothing more. Home gyms gained safe options
+(the incline dumbbell press and push-ups for overhead pressing, inverted and
+dumbbell rows for pull-ups, a second hammer curl, the kickback, the glute
+bridge), and the inverted row now stands in for any vertical pull a home gym
+can't do safely, not only a beginner's. With a sore elbow at home a push day
+with two triceps slots still keeps one it can't do, flagged, since the
+kickback is the only safe triceps lift without a cable.
+
+STATUS 2026-10-05 (Lift4 (5) and (11), build step 4, seventh part): a new
+plan's equipment and injury swaps happen inside the generator, after the
+identity passes and the twice-a-week lifts and before the role table, so the
+lifts swapped in get their own role's numbers and the time fit prices the
+lifts the person will do (a home gym's dumbbell bench keeps the sets the
+barbell's warm-ups cost it). Every caller passes the person's limits, which
+fixes a reset, and a first plan built with none saved, that ignored both and
+gave a knee-injured person the squat back. In a plan the person already has,
+a lift a swap brings in takes its role's reps, range and progression on its
+day, its load moved down to more reps (never up), and no more sets than its
+slot had (`represcribeSwapped`).
+
+STATUS 2026-10-05 (Lift4 (11), build step 4, eighth part): removing a
+limitation brings the original lifts back as part of saving. Each equipment
+or injury swap records the lift it replaced (`swappedFrom` on the exercise,
+the first one through a second swap, carried by both exercise builders and
+through a regenerate), and a save puts it back once the person's injuries
+no longer name it and their equipment has it, unless the day holds it
+already (`restoreSwappedLifts`). It comes back with its role's numbers on
+its day and a fresh load and history, as any swap's.
+
+STATUS 2026-10-05 (Lift4 (11), build step 4, ninth part): beside the three
+equipment setups, an optional "What do you have?" list. Onboarding asks for a
+barbell and a rack (beside a home gym or a minimal setup) and small plates
+(the new plan's "I have small plates"); Lift plan settings asks for the
+barbell beside the setups, through the save, and keeps small plates in
+Advanced, where it saves at once. A barbell and a rack (`barbellAtHome` on
+the profile: rules, server sanitizer and registry) lets the swaps keep and
+pick barbell lifts at home, and a save that adds it brings the barbell lifts
+the setup swapped out back. The home gym's own copy still names only what it
+gives without one.
+
+STATUS 2026-10-05 (Lift4 (13), build step 4, tenth part): the weekly
+rollover no longer changes a plan's sets by itself. Retired: the accessory
+set wave (an accessory ran one set below, at and one above its anchor across
+the cycle; every week now starts from the anchor, the weekly reset that
+stays), the adjustment rule (two or more stalled lifts added accessory sets
+for a recovered lifter, cut them for a strained one, and the second time
+swapped the stalled accessories; `adjustmentRule.ts` is deleted, and with it
+the rollover's read of the performance document and the block's amnesty,
+which only held that rule back), and the fatigue shave (every lift's sets
+×0.9 once three lifts had a miss standing, which at two to five sets changed
+nothing). Misses are the lowering rule's (build step 3); lighter weeks stay
+on the calendar until step 5. A lifter who hits every target now holds 66
+sets a week through the cycle, 44 in its lighter week, where the wave ran
+52, 66 and 80 (`volumeProgressionOverTime.test.ts`). `fatigueScore`,
+`plateauResponses` and the block's `amnestyWeeksLeft` stay on stored plans,
+which the server's allow-list admits; nothing reads them.
+
+STATUS 2026-10-05 (Lift4 (2) and (13), build step 4, eleventh part): the
+engine never swaps a lift on its own. Retired: the untrained-accessory
+rotation (at each new cycle, an accessory with no logged sets moved to
+another variation; it also re-ran on every untrained rollover into such a
+week) and the plateau swaps at rebuild (a lift stalled three times was
+re-picked when the plan was next built, `makeExercise` for accessories and
+`applyExperienceAwarePlateauPicks` for mains, zeroing its history).
+`pickExercise` keeps the current lift when the level allows it and otherwise
+gives the primary; the variation roles that ranked a stall's replacement
+(technique, weak point, size) and the rotation's load anchor
+(`rotationAnchor`) go with them. Advanced variations come in when the person
+picks one; the rules sheet (step 6) says a variation often gets a stuck lift
+moving.
+
+STATUS 2026-10-05 (Lift4 (4) and (13), build step 4, twelfth part): a cut
+or a bulk no longer changes the lifting. Retired: the nutrition nudges on
+the builders' sets (×0.9 on a cut, ×1.12 on a lean bulk), which the role
+table had already overwritten everywhere but the week's ordering, and with
+them the generator's nutrition-goal argument. Lose fat's weekly bands are
+Build muscle's (6 to 14 became 12 to 20), so a Lose fat plan is now the same
+plan as Build muscle's at every day count and setup in the golden sweep, and
+the Weekly volume card judges it the same way; the cut is in the nutrition
+targets. The goal profiles the server mirrors are unchanged.
+
+STATUS 2026-10-05 (Lift4 (3) and (13), build step 4, thirteenth part): "Go
+easier today" is recommended for one reason only, a hard run yesterday
+before a session that loads the same legs. Retired: its two guessed reasons,
+a muscle "still recovering" by the calendar model (`computeMuscleRecovery`,
+which History's recovery view keeps) and the weekly performance score's
+deload flag. The easier session itself is unchanged and stays one tap away
+in the session chooser. With this, step 4's retirements are done; the
+automatic whole-body lighter week and the per-muscle "Eased this week" cut
+share one trigger (`recoveryTrigger.ts`) and retire with step 5's lighter
+weeks.
+
+STATUS 2026-10-05 (Lift4 (7), (8) and (9), build step 5, first part): one
+lighter-week recipe for everyone, half the working sets, rounded up, at the
+same weights and reps, from the plan's own sets (`applyDeload`, and the
+server's `deloadEngine.js` for "Apply" on Train, pinned together). The
+calendar's lighter week, every 4th trained week as before, now comes only
+to intermediate and advanced lifters on three or more lift days
+(`lighterWeeksScheduled`, `weekPrescription.ts`), never straight after
+another (a manual one included), and a lighter week's sessions can raise a
+weight but never lower it. Miss counts start again once a lighter week is
+over. The by-level recipes (a beginner's one set fewer at 85% of the
+weight; everyone else's one set fewer two reps lower) and the stashes that
+undid them are gone; old stashes still restore. "Why this session" names
+the cycle only when lighter weeks come, and the level suggestion's copy
+says what a level changes. Easier today keeps its own 85%
+(`deloadWeight`).
+
+STATUS 2026-10-05 (Lift4 (13), build step 5, second part): the automatic
+whole-body lighter week (two regressing sessions on more than half the
+trained muscles) and the per-muscle recovery session ("Eased this week":
+half the sets and reps for a regressing muscle, with a banner and its
+undo) are retired, with `recoveryTrigger.ts`, `RecoveryReductionBanner`
+and `undoRecoveryReduction`. A lighter week now comes only on the calendar
+(above) or when the person takes one. Train's advice is the lighter-week
+suggestion, then "Go easier today".
+
+STATUS 2026-10-06 (Lift4 (4) and (9), build step 5, third part): "Take a
+lighter week" is in Train's More options, whenever the person wants one:
+one at a time and never two in a row, counted in trained weeks, as the
+calendar's are (the rollover marks a trained lighter week in `weekHistory`;
+`lighterWeekAllowed`, and the server's `applyDeloadWeek` refuses the same).
+The suggestion card, now "Consider a lighter week", shows only when the
+week's load came from running (`loadFromRunning`), its running half left
+for the running grill; a lifting week gets no early offer. The plan says
+"lighter week" wherever it names one: Train's week label ("Week 3 of 4 ·
+Lighter week"), the banner, its toasts, the effort cue and Food's day
+label. A plan the calendar gives no lighter weeks (a beginner's, an unknown
+level's, one or two lift days) counts its weeks without a cycle ("Week 7 ·
+Build muscle"), on Train and on the finish screen. The Performance Index
+keeps its "Deload" band and insight copy, which describe the measured
+load, not the plan's week.
+
+STATUS 2026-10-06 (Lift4 (3) and (9), build step 5, fourth part): with a
+race plan the calendar's lighter week falls on the run plan's step-back
+week (`isRunStepBackWeek` in `runPlanTiming.ts`, which the scheduler's ramp
+now reads for its cutbacks too, so the two can't part), rather than every
+4th trained lift week; who gets lighter weeks and one at a time are
+unchanged. The rollover works out the run week first and hands
+`advanceWeek` where the race block lands (`raceBlockWeek`). Train's week
+row and the finish screen count a race plan's weeks in the race block and
+name them by the run plan's phases ("Week 7 of 16 · Build", "Week 14 of 16
+· Taper"), at every level; "Why this session" names the week before a
+step-back as the last full one. A week from the history is named by its
+own number and its own lighter mark. The race's final weeks, the week
+after it and the leg-session rules follow in the running link (step 5d).
+
+STATUS 2026-10-06 (Lift4 (11), build step 5, fifth part): the Welcome back
+sheet is the one way back in after a break. It is offered from two weeks
+away (it was one), and asks "Ease back in" or "Keep my old weights", with
+easing back put first from three weeks. Easing back is a plan change on
+the person's yes (`easeBackIn`): every loaded lift 10% lighter on its own
+steps, or 20% after more than eight weeks away, by at least one step, and
+climbing back a step a session to where it was (the drop's `lowered`
+record, marked shown, so no line explains a choice the person made); a
+bodyweight lift or hold as much shorter; one set fewer in the first week
+back, kept through a week with no training in it; the miss counts reset.
+`easingBack` on the plan counts the return's two weeks down by trained
+weeks, and no calendar lighter week, nor one taken from Train in the first
+week, comes inside them, as the precedence table says. It is a document
+write like the rollover (ADR-0011's update): the load steps read equipment
+the server has no copy of. The old "Start easier" route to the session
+chooser is gone; "Easier today" stays on it for one-off days.
+
+STATUS 2026-10-06 (Lift4 (11), build step 5, sixth part): each exercise in
+a session has a menu beside its name, with "Swap for today" (offered until
+a set of it is done) and "Skip". A swapped exercise takes the slot for the
+session: the planned sets and reps, the weight it was last lifted at or a
+start from the planned lift's (`swappedForToday`), and rows from its own
+last sets; "Back to …" undoes it. Skipping keeps the sets done and sets
+the rest aside, out of the counts and the cursor's way, until "Don't
+skip". Finish asks once, before the save, whether to keep today's swaps
+that have a set done: kept, a swap takes the planned lift's place in the
+same slot, with today's sets as its first session; not kept, the plan's
+lift stays as it was, since the swap's sets say nothing about it
+(`applySessionProgression`). A kept swap is the person's choice, so it
+carries no `swappedFrom`. Deleting the session puts the planned lift
+back, and a correction replays the swap.
+
+STATUS 2026-10-06 (Lift4 (7) and (14), build step 5, seventh part): each
+saved session records whether a long or hard run (`isHardRun`) finished
+in the 24 hours before it started (`afterHardRun` on the workout and its
+stored progression, from `useHardRunBefore` on Train). A miss on a lift
+that loads the legs (`loadsTheLegs`) in such a session counts half, so it
+takes two of them to count as one miss; a correction replays the same
+count. Everything else about misses is unchanged.
+
+STATUS 2026-10-06 (Lift4 (10), build step 5, eighth part): with a race
+plan, the race's final weeks are lighter for every level, whether or not
+the week before was trained (`raceLiftWeek`, kept on the plan as
+`raceWeek`). The last two weeks before the race, whatever the run plan's
+taper, and the week after it have half the sets at the same weights. Race
+week keeps the week's first session, its sets halved and each leg lift at
+half its weight (stashed, so the week after gives it back), and skips the
+others. They win over a calendar lighter week and over the weeks back
+after a break without stacking on either, and the calendar's count starts
+again after them: the week after the race takes the next multiple of 4.
+The week after comes from the lifting's own mark that the week left was
+race week, because logging the race moves the run plan into its recovery
+at once. Train names them in the run plan's words ("Week 15 of 16 ·
+Taper", "Race", then "Recovery"; a 5K or 10K's last build week reads
+"Lighter week"), the banner and "Why this session" say what each is for,
+and race week's names the day to lift by, three days before the race. That
+day is copy, not a rule: nothing stops a later session. Known limit: the
+week strip shows race week's skipped days as planned until each day comes,
+as it does any skipped session (the future-day rule in
+`trainingResolver.ts`).
+
+STATUS 2026-10-06 (Lift4 (10), build step 5, ninth part): race setup asks
+"Lighten leg sessions while your runs build?" of someone who lifts, in
+onboarding's race card and in the run plan settings, where it can be
+changed (`raceLegTrim` on the profile: rules, server sanitizer and
+registry). Unanswered in onboarding it is yes for Support my running and no
+otherwise; never asked, as for a race set before this, it is no. On a yes,
+each leg lift (`loadsTheLegs`) has a third fewer sets at the same weights,
+never below two (`raceLegSets`), in the run plan's build weeks, the ones
+Train labels "Build"; the base weeks keep their legs. The rollover applies
+it and marks the week (`raceWeek` "build"), and a save applies a changed
+answer to the week at once (`raceLegTrimNow`). Never inside a lighter week,
+a race's final weeks or the first week back, which take sets away already,
+and a lighter week taken in a build week halves the plan's sets, not the
+trimmed ones. The week's label stays the run plan's "Build", as every race
+week's is (Lift4 (3)); a session whose leg lifts lost sets says why in "Why
+this session".
+
+STATUS 2026-10-06 (Lift4 (10), build step 5, tenth part): heavy legs the
+day before a long run or a key session stay the person's choice. Nothing
+moves: a session with leg lifts whose next day holds a long run, a tempo
+run, an interval session or a race (`isDemandingScheduledRun`, which reads
+a swapped run's own type and passes over a skipped one) says so once in "Why
+this session" ("Your long run is the next day, and heavy leg work can leave
+your legs tired for it."), on Train, Home's day card and the day sheet.
+Race week has its own line. Runners without a race keep the rules after a
+hard run: "Easier today" and a leg miss counting half. With this, Lift4 (10)
+supersedes RP2, which was never built, and reverses the lifting v8
+evaluation's STATUS of 2026-08-02c that kept running out of the lift plan
+(noted there).
+
+STATUS 2026-10-06 (Lift4 (9) to (11), build step 5, eleventh part): a
+rebuild inside a lighter week keeps it lighter. New lift days or a new
+session length build the week's sessions afresh, which gave a lighter week
+its full sets while it still read as one, the first week back its set
+fewer, and race week every session. The rebuild now starts from the plan's
+own numbers (`resetToBaseSets`) and applies the week's lightening again
+(`keepWeekLighter`): half the sets, race week's one short session with its
+legs halved once, or the set fewer. A save in a lighter week taken in a
+build week leaves its leg lifts as the lighter week set them.
+
+STATUS 2026-10-06 (Lift4 (3) and (7), build step 6): the rules live on one
+sheet, merged with "Why this session". The control keeps its name and its
+three places (Train's lift tab, the day sheet, Home's day details) and
+opens the sheet: the session's reasons first, then "How your plan works",
+the rules that apply to the person (`liftRules.ts`): adding weight, how big
+a step is, the weight lifted, missed reps, lighter weeks (who gets them, or
+that their plan schedules none, and that anyone can take one), the race
+weeks with a race plan, coming back after a break, swaps and skips, and the
+owner's "Stuck on a lift? A variation often gets it moving." Every number
+in it is read from the engine's constants (`AUTOMATIC_STEP_SHARE`,
+`BARBELL_STEP_KG`, `LOWERED_SHARE`, `MISSES_BEFORE_LOWERING`,
+`LIGHTER_WEEK_EVERY`, the return's days and shares), so a rule changed in
+the code changes on the sheet. Train also has an ⓘ beside the week label
+that opens the rules on any day. The sheet loads when first opened, so a
+day card on Home carries none of the engine. With this, the build order's
+six steps have all landed.
+
+STATUS 2026-10-06 (Lift4 (3), (7), (10) and (11), the device check): the
+app was driven at a phone's size against the emulator through the rules
+sheet, "Why this session", Swap for today, Skip, Finish's question about a
+swap and Welcome back's "Ease back in" (loads 10% lighter on each lift's
+steps, a set fewer, as the eleventh part says). Three corrections came of
+it. The swap opened the plan builder's add-many exercise list, whose bar
+read "1 exercise selected — Add to workout" and whose second tick swapped
+again; `ExercisePicker` takes `pickAction` now, one exercise at a time with
+the bar saying the action, for "Swap for today" and Train's "Replace" alike.
+The rules sheet's missed-reps line said "short of its target on every set",
+which reads as every set falling short; a miss is the session's reps in
+total (`sessionOutcome`), and the line now says so. And the leg trim ended
+with the run plan's build weeks, so a marathon, whose run taper is three
+weeks, gave the legs their full sets back for one week between the trimmed
+build and the two lighter weeks; the trim now runs until those take over
+(`isRaceBuildWeek`).
+
+STATUS 2026-10-06 (Lift4 (10), owner call): race week's session "at least
+three days before the race" is a rule now, not advice. The two days before
+a race, and race day, are its rest days (`raceRest.ts`): from two days out
+a lift session not done yet is skipped, as the rollover skips race week's
+others, so the session can't drift to the day before. When the race falls
+early in a week the taper week's last session two days before it waits too.
+Each skip goes through the same command as a skip the person makes
+(`skipWorkoutDay`, from `useProgram`, with the rollover's waits and after
+it), so no new writer bypasses the command boundary (ADR-0011), and each
+session is tried once, so a refusal can't loop. Train's banner says why
+("No lifting in the two days before your race, or on the day, so your legs
+are fresh for it."), and the rules sheet's race rule says so.
 
 ### Contemporary evidence checkpoints
 
@@ -197,15 +618,15 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
 
 ## Current remote-main architecture
 
-| Concern                  | Primary paths                                                                                                    | Current meaning                                                                                                                                                                                                                                   |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Persisted programme      | src/features/program/programTypes.ts                                                                             | ProgramState holds the rolling lift state; ProgramExercise holds stable instance identity, prescription, rep unit/range, progression state, and history.                                                                                          |
-| Plan construction        | src/features/program/planBuilder.ts and programEngine.ts                                                         | buildPlan composes profile, schedule, lift programme, and run plan. It preserves any existing same-day-count plan on content edits; cold start, day-count/experience rebuild, and explicit reset follow the template/procedural generation rules. |
-| Templates and selection  | templates, templateConversion, matchTemplate, variationBank, startingLoads, injurySubstitutions, experienceModel | Exercise identity, equipment fit, calibrated load, and history preservation are high-risk boundaries.                                                                                                                                             |
-| Volume and recovery      | volumeModel, muscleTaxonomy, overlapModel, adjustmentRule                                                        | The system uses auditable muscle accounting and recovery/overlap controls. Internal MRV-style labels are product heuristics, not a diagnosis or measured personal physiology.                                                                     |
-| Block lifecycle          | trainingBlock, represcribe, useProgram, server command reducers                                                  | An active block temporarily owns the lift prescription and is reversibly released through the command boundary.                                                                                                                                   |
-| Commands and persistence | programCommandClient, commandOutbox, useProgram, functions/index.js, functions/lib/programCommands.js            | Most interactive programme mutations now use optimistic command application, durable outbox handling, rejection rollback, and authoritative refetch.                                                                                              |
-| Session and progression  | WorkoutSession, useProgram, programEngine, functions/lib/progressionEngine.js                                    | Completion, effort, progression, history, and persistence must stay semantically aligned on client and server.                                                                                                                                    |
+| Concern                  | Primary paths                                                                                                                                           | Current meaning                                                                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Persisted programme      | src/features/program/programTypes.ts                                                                                                                    | ProgramState holds the rolling lift state; ProgramExercise holds stable instance identity, prescription, rep unit/range, progression state, and history.                                                                                                         |
+| Plan construction        | src/features/program/planBuilder.ts and programEngine.ts                                                                                                | buildPlan composes profile, schedule, lift programme, and run plan. It preserves any existing same-day-count plan on content edits; cold start, a day-count rebuild and an explicit reset run the procedural generator, which builds every new plan (Lift4 (5)). |
+| Templates and selection  | templates (no longer start plans), matchTemplate (the injury and equipment filters), variationBank, startingLoads, injurySubstitutions, experienceModel | Exercise identity, equipment fit, calibrated load, and history preservation are high-risk boundaries.                                                                                                                                                            |
+| Volume and recovery      | volumeModel, muscleTaxonomy, overlapModel, adjustmentRule                                                                                               | The system uses auditable muscle accounting and recovery/overlap controls. Internal MRV-style labels are product heuristics, not a diagnosis or measured personal physiology.                                                                                    |
+| Block lifecycle          | trainingBlock, represcribe, useProgram, server command reducers                                                                                         | An active block temporarily owns the lift prescription and is reversibly released through the command boundary.                                                                                                                                                  |
+| Commands and persistence | programCommandClient, commandOutbox, useProgram, functions/index.js, functions/lib/programCommands.js                                                   | Most interactive programme mutations now use optimistic command application, durable outbox handling, rejection rollback, and authoritative refetch.                                                                                                             |
+| Session and progression  | WorkoutSession, useProgram, programEngine, sessionCompletion, workoutCompletion                                                                         | Completion, effort, progression, history, and persistence must stay semantically aligned; progression runs only in the client, inside the completion transaction.                                                                                                |
 
 ## Current remote-main behavior to preserve
 
@@ -235,6 +656,8 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
   intermediate and advanced plans, automatic day roles can shift final
   rep targets by plus or minus two; treat the bands as anchors, not every
   final row's exact output.
+  STATUS 2026-10-05: a new plan's bands are the Lift4 role table's now; see
+  the build step 4 STATUS under the conservative response ladder.
 - Beginner, intermediate, and advanced tiers gate complexity and coaching
   autonomy. Advanced work may use more appropriate variants and RPE; that does
   not mean an indiscriminate volume increase.
@@ -287,6 +710,36 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
   existing workouts. Do not mistake the temporary block re-prescription path
   for a decision to silently rebuild every saved programme.
 
+### Lighter-week precedence (Lift4, 2026-10-05)
+
+The precedence table asked for above, for the system the owner locked as
+Lift4 (plan file row Lift4). Its code lands in build step 5; until then the
+current owners run as this document describes. It lists every way the plan
+gets lighter, which wins when two meet, where the person's copy comes from,
+and what can be undone. Completed sessions are never changed: a lightening
+applies only to sessions not yet done.
+
+| Owner, in precedence order                                                                                                                  | What it changes                                                                                                                                                    | When it meets another                                                                                                                          | Copy                                                                            | Undo                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Race weeks: the last two weeks before a race, race week, and the week after                                                                 | Half the working sets at the same weights; race week is one short session at least three days before the race, nothing heavy for the legs; the week after is light | Wins over every other week-level lightening. The calendar lighter week doesn't run inside it, and its count restarts after the race            | The run plan's own phase name on the week                                       | None; a heavier weight lifted still moves the plan up               |
+| Coming back after a break ("Ease back in" in the Welcome back sheet)                                                                        | Loads 10% lower after 3–8 weeks away, 20% after longer, one set fewer in the first week; then each lift climbs back a step a session to where it was               | Yields to race weeks. Replaces a calendar lighter week due in its first two weeks: the break was the rest                                      | The Welcome back sheet, where the person chose it                               | "Keep my old weights" in the sheet; the plan follows what is lifted |
+| A lighter week the person takes ("Take a lighter week")                                                                                     | Half the working sets at the same weights for the rest of that week                                                                                                | Yields to the two above. Counts as the calendar lighter week and restarts its count                                                            | "Lighter week" on the week                                                      | Within the week                                                     |
+| The calendar lighter week: intermediates and up on 3+ lift days, every 4th trained week; with a race plan, on the run plan's step-back week | Half the working sets at the same weights                                                                                                                          | Yields to all of the above. Never two lighter weeks in a row outside a race period                                                             | "Lighter week" on the week; the week before, "Why this session"                 | None; a heavier weight lifted still moves the plan up               |
+| Race build leg trim, agreed at race setup                                                                                                   | Leg sets down by a third through the build, at the same weights                                                                                                    | Inside any lighter week the lighter-week recipe applies to the base sets instead, so the two never stack                                       | The run plan's "Build" on the week; "Why this session" on a trimmed leg session | The race-setup answer, changeable in the run plan settings          |
+| A lift's drop after two misses in a row                                                                                                     | That lift 10% lighter, by at least one step, then back up a step a session                                                                                         | A miss doesn't count inside a lighter week, race weeks or an Easier today session; miss counts reset after any lighter week and after a return | One line on that lift's next session                                            | Type the old weight; the plan follows                               |
+| Easier today, one session                                                                                                                   | One set fewer and loads × 0.85 for that session                                                                                                                    | Can run inside any of the above. Never moves the plan down                                                                                     | The session's own label                                                         | Not needed: one session                                             |
+| Block pace (Lighter, Easing back in)                                                                                                        | The short session offered first; easing holds progression for the block's first two weeks                                                                          | Runs alongside; a lighter week inside a block applies as normal                                                                                | The block's consequence line                                                    | End the block                                                       |
+
+One week-level lightening runs at a time, in the order above, and never two
+in a row outside a race period. The numbers to restore are saved once, by
+the first lightening, and a later one never overwrites them (today a second
+deload in a row overwrites the first one's stash, so the prescription from
+before them is never restored). A lift's drop is per lift and starts only
+once a week-level lightening has ended. Lift4 (13) retires four reduction
+owners outright, so none appears here: the muscle-local recovery reduction
+("Eased this week"), the whole-body escalation, the adjustment rule and the
+fatigue shave.
+
 ### Command and mutation boundary
 
 - The canonical program-command transport is a bare command object. The server
@@ -302,6 +755,14 @@ bound on a heavier one; do not re-derive either from this ladder. Code:
   the current reorder-rejection fallback. A new direct snapshot write needs a
   named owner, an explicit precedence/conflict reason, and tests showing no
   hidden-field loss.
+- The server's progression copy, `functions/lib/progressionEngine.js`, ran
+  only inside the `logExercise` command, which no client had sent since
+  progression moved to the finish (`applySessionProgression` inside
+  `commitWorkoutCompletion`). Classified for Lift4 at build step 0 and
+  retired at the start of build step 3 (2026-10-05): the command, that copy
+  and the easing-block hold's server copy (`progressionHold.js`) are gone
+  with their parity tests, so the client engine is the only copy the
+  progression changes touch. ADR-0008 records it.
 
 ## Status ledger
 
@@ -395,6 +856,15 @@ a prescription-writing path through `configurePlan` (the legacy
 full-document exception); if the command boundary ever closes over
 configurePlan, this belongs in a `represcribeFocus` command reusing
 the existing `functions/lib/represcribe.js` mirror.
+
+STATUS 2026-10-05 (Lift4 owner call (3), build step 5): LIFT-EV-05 is
+REVERSED. The automatic protective reductions are retired rather than
+surfaced: the per-muscle recovery session ("Eased this week", with its
+banner and undo) and the whole-body lighter week it escalated to are gone
+with `recoveryTrigger.ts`. A lift that keeps missing is lowered by the
+progression rule (two misses, 10% lighter), and a lighter week comes on the
+calendar or from Train. `recoveringMuscles` stays declared and unread; the
+rollover drops a stored one.
 
 STATUS 2026-08-09, merge-cascade close-out (PR #1888, merged to main):
 LIFT-EV-01 RESOLVED — all four consecutiveFailures decrement sites

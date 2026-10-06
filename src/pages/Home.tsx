@@ -147,6 +147,7 @@ export default function Home() {
     moveRunDay,
     dismissFellBehindPrompt,
     realignRacePlan,
+    easeBackIn,
     recentLayoff,
     controller: programController,
   } = useHomeProgram();
@@ -511,7 +512,7 @@ export default function Home() {
   const liftReturnSurface = useSurface({
     id: "lift-return",
     priority: 28,
-    eligible: liftReturn.layoff !== "none" && !liftReturnDismissed,
+    eligible: liftReturn.welcomeBack && !liftReturnDismissed,
     // The run side speaks first when it has something to say about the same
     // absence: two welcome-backs in one visit is the pile-up the coordinator
     // exists to prevent, and the run sheet carries the race stakes.
@@ -1218,20 +1219,21 @@ export default function Home() {
         />
       )}
 
-      {liftReturn.daysAway !== null && liftReturn.layoff !== "none" && (
+      {liftReturn.daysAway !== null && liftReturn.welcomeBack && (
         <LiftReturnSheet
           open={liftReturnSurface.active}
           onClose={() => {
             dismissLiftReturn();
             liftReturnSurface.dismiss();
           }}
-          onGoToProgramme={() => {
-            dismissLiftReturn();
-            liftReturnSurface.dismiss();
-            navigate("/program");
+          onEaseBack={async () => {
+            if (!(await easeBackIn(liftReturn.easeBackShare))) {
+              throw new Error("The plan wasn't eased back");
+            }
           }}
           daysAway={liftReturn.daysAway}
-          layoff={liftReturn.layoff}
+          easeBackFirst={liftReturn.easeBackFirst}
+          easeBackShare={liftReturn.easeBackShare}
         />
       )}
 

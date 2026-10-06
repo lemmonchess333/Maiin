@@ -108,3 +108,14 @@ worth doubling the exercise-data maintenance surface.
 `docs/proposals/lifting-v8-evaluation.md` will see P6 listed with 8 sites
 outstanding and may read that as unfinished work. It is not: the stopping point
 is this decision, and §8.6 of that document carries the per-site triage.
+
+## Update 2026-10-06 — a ninth document writer, for the same reason
+
+"Ease back in" on the Welcome back sheet (Lift4 (11), `easeBackIn`) is a
+new whole-document write, and stays one for the reason the week engine
+does: it lowers every lift on its equipment's load steps (`loadSteps.ts`),
+which read exercise equipment that `functions/` has no copy of, and the
+return's weeks it starts are counted down by `advanceWeek`. It runs once
+per return, on the person's yes, against the live document
+(`saveProgram`'s updater), so the clobber window is the rollover's.
+`saveProgramSites.test.ts` names it with the others.

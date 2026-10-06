@@ -132,7 +132,7 @@ function makeProgramState(
     workouts,
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays,
@@ -1055,17 +1055,24 @@ describe("DayActionSheet — lift section", () => {
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
 
-  it("gives the lift its reason behind 'Why this session', closed", () => {
+  it("gives the lift its reason behind 'Why this session', with the plan's rules", async () => {
     const { profile, programState, callbacks } = setup();
     programState.weekNumber = 3;
     programState.currentPhase = "progression";
     programState.primaryGoal = "strength";
+    // Three days and an intermediate's level: a lighter week comes next.
+    const [first] = programState.workouts;
+    programState.workouts = [
+      first,
+      { ...first, dayName: "B" },
+      { ...first, dayName: "C" },
+    ];
     render(
       <DayActionSheet
         open={true}
         onClose={() => {}}
         dateKey={todayKey()}
-        profile={profile}
+        profile={{ ...profile!, experience: "intermediate" }}
         programState={programState}
         claimMap={emptyClaimMap}
         unclaimedByDate={emptyUnclaimed}
@@ -1073,14 +1080,23 @@ describe("DayActionSheet — lift section", () => {
       />
     );
     const lift = screen.getByRole("region", { name: "Lift actions" });
-    const why = within(lift).getByText("Why this session").closest("details")!;
-    expect(why).not.toHaveAttribute("open");
+    // Closed until asked for.
+    expect(screen.queryByText(/built for strength/)).toBeNull();
+    fireEvent.click(
+      within(lift).getByRole("button", { name: "Why this session" })
+    );
+    const why = await screen.findByRole(
+      "dialog",
+      { name: "Why this session" },
+      { timeout: 5000 }
+    );
     expect(why).toHaveTextContent(
       "This session is built for strength: heavier main lifts for lower reps."
     );
     expect(why).toHaveTextContent(
       "This is the last full week before a lighter one, planned for next week."
     );
+    expect(why).toHaveTextContent("How your plan works");
   });
 
   it("offers no reason it cannot place in the programme", () => {

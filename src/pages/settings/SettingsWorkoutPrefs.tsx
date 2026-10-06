@@ -1,7 +1,6 @@
 /** SettingsWorkoutPrefs — Workout-preferences nested page (Set1.2). */
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import SettingsSection from "@/components/settings/SettingsSection";
 import WorkoutPrefsSection from "@/components/settings/WorkoutPrefsSection";
 
@@ -10,8 +9,9 @@ export default function SettingsWorkoutPrefs() {
   const [autoRestTimer, setAutoRestTimer] = useState(
     profile?.autoRestTimer ?? true
   );
+  // 0, or no answer yet: the plan suggests each lift's rest (`restTime.ts`).
   const [defaultRestSeconds, setDefaultRestSeconds] = useState(
-    profile?.defaultRestSeconds ?? DEFAULT_REST_SECONDS
+    profile?.defaultRestSeconds ?? 0
   );
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
 

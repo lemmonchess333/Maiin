@@ -1,17 +1,20 @@
 import { describe, it, expect } from "vitest";
 import {
   blockConsequence,
+  blockReleaseLine,
+  focusRepSummary,
   blockPrefersShorterSessions,
   blockOfferBlockedByRace,
+  represcribeSwapped,
   represcribeWorkouts,
   scaleLoadForReps,
-  isProgressionHeld,
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
-import { generateProgram, advanceWeek, goalProfileFor } from "../programEngine";
-import { FOCUS_ORDER } from "../trainingBlock";
+import { generateProgram, advanceWeek } from "../programEngine";
+import { FOCUS_ORDER, isProgressionHeld } from "../trainingBlock";
 import type {
   ActiveTrainingBlock,
+  Experience,
   PrimaryGoal,
   ProgramExercise,
   ProgramState,
@@ -84,17 +87,36 @@ describe("scaleLoadForReps", () => {
 });
 
 describe("represcribeWorkouts — rep targets", () => {
-  it("moves mains to the new focus's tier and accessories to theirs", () => {
+  it("moves each lift to its role's row for the new focus", () => {
     const out = represcribeWorkouts(
-      [day([ex(), ex({ isAccessory: true, exerciseId: "db-curl" })])],
+      [
+        day([
+          ex(),
+          ex({ isAccessory: true, exerciseId: "romanian-deadlift" }),
+          ex({ isAccessory: true, exerciseId: "db-curl" }),
+        ]),
+      ],
       "strength",
       "beginner"
     );
-    // strength: mains 5-7, accessories 8-12. One day → "moderate", delta 0.
+    // Get stronger (`roleTable.ts`): main lifts a fixed 5, other compounds
+    // 6-10, isolations 8-12. One day → "moderate", delta 0.
     expect(out[0].exercises[0].reps).toBe(5);
-    expect(out[0].exercises[0].repRangeMax).toBe(7);
-    expect(out[0].exercises[1].reps).toBe(8);
-    expect(out[0].exercises[1].repRangeMax).toBe(12);
+    expect(out[0].exercises[0].repRangeMax).toBeUndefined();
+    expect(out[0].exercises[1].reps).toBe(6);
+    expect(out[0].exercises[1].repRangeMax).toBe(10);
+    expect(out[0].exercises[2].reps).toBe(8);
+    expect(out[0].exercises[2].repRangeMax).toBe(12);
+  });
+
+  it("gives Build muscle's calves, side delts and abs 12-20", () => {
+    const out = represcribeWorkouts(
+      [day([ex({ isAccessory: true, exerciseId: "lateral-raise" })])],
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(out[0].exercises[0].reps).toBe(12);
+    expect(out[0].exercises[0].repRangeMax).toBe(20);
   });
 
   it("treats an unflagged slot as a MAIN, not an accessory", () => {
@@ -106,13 +128,13 @@ describe("represcribeWorkouts — rep targets", () => {
       "strength",
       "beginner"
     );
-    expect(out[0].exercises[0].reps).toBe(5); // main tier, not 8
+    expect(out[0].exercises[0].reps).toBe(5); // a main's 5, not a compound's 6
   });
 
-  it("sets progressionType from the tier, not the slot's old value", () => {
+  it("sets progressionType from the row, not the slot's old value", () => {
     const out = represcribeWorkouts(
       [day([ex({ progressionType: "double" }), ex({ isAccessory: true })])],
-      "strength", // mains linear, accessories always double
+      "strength", // a fixed 5 steps ("linear"); a range climbs ("double")
       "beginner"
     );
     expect(out[0].exercises[0].progressionType).toBe("linear");
@@ -135,7 +157,7 @@ describe("represcribeWorkouts — rep targets", () => {
           ex({ exerciseId: "hack-squat", isAccessory: true }),
         ]),
       ],
-      "fat_loss", // accessories 15-20
+      "fat_loss", // built as Build muscle
       "beginner"
     );
     expect(out[0].exercises[0].reps).toBeLessThanOrEqual(15); // bodyweight
@@ -170,11 +192,11 @@ describe("represcribeWorkouts — undulation", () => {
     ];
     const out = represcribeWorkouts(four, "hypertrophy", "intermediate");
     const reps = out.map((d) => d.exercises[0].reps);
-    // hypertrophy mains base 8 → heavy(-2), heavy(-2), pump(+2), pump(+2)
-    expect(reps).toEqual([6, 6, 10, 10]);
+    // Build muscle's mains start at 6 → heavy(-2), heavy(-2), pump(+2), pump(+2)
+    expect(reps).toEqual([4, 4, 8, 8]);
   });
 
-  it("gives a beginner the flat goal base", () => {
+  it("gives a beginner the table's flat 8", () => {
     const four = [
       day([ex()], "D1"),
       day([ex()], "D2"),
@@ -195,7 +217,7 @@ describe("represcribeWorkouts — undulation", () => {
     const out = represcribeWorkouts(four, "hypertrophy", "intermediate");
     for (const d of out) {
       const e = d.exercises[0];
-      expect((e.repRangeMax ?? e.reps) - e.reps).toBe(4); // 8..12 span
+      expect((e.repRangeMax ?? e.reps) - e.reps).toBe(4); // 6..10 span
     }
   });
 });
@@ -234,6 +256,16 @@ describe("represcribeWorkouts — what it must not touch", () => {
     expect(out[0].exercises[0].plateauCount).toBe(0);
   });
 
+  it("drops a lowered lift's way back and its line, both about the retired target", () => {
+    const lowered = ex({
+      weight: 55,
+      lowered: { exerciseId: "bench-press", from: 60, unit: "kg", target: 8 },
+    });
+    const o = represcribeWorkouts([day([lowered])], "strength", "beginner")[0]
+      .exercises[0];
+    expect("lowered" in o).toBe(false);
+  });
+
   it("preserves day structure and does not mutate the input", () => {
     const input = [day([ex()], "Upper"), day([ex()], "Lower")];
     const snapshot = JSON.parse(JSON.stringify(input));
@@ -247,7 +279,6 @@ describe("represcribeWorkouts — invertibility", () => {
   // This is why a block stores one scalar and not a per-slot snapshot.
   it("re-applying with a second focus equals going there directly", () => {
     const start = generateProgram(
-      "recomp",
       4,
       undefined,
       "hypertrophy",
@@ -273,8 +304,7 @@ describe("represcribeWorkouts — invertibility", () => {
 
   it("a round trip restores the rep prescription it started from", () => {
     const start = represcribeWorkouts(
-      generateProgram("recomp", 4, undefined, "hypertrophy", undefined)
-        .workouts,
+      generateProgram(4, undefined, "hypertrophy", undefined).workouts,
       "hypertrophy",
       "intermediate"
     );
@@ -327,29 +357,15 @@ describe("isProgressionHeld", () => {
   });
 });
 
-describe("advanceWeek — block amnesty", () => {
-  // The other judge-caught failure. A represcribe plateaus every main at
-  // once; resolveAdjustment escalates to `reorganize`, which used to call
-  // swapExerciseIdentity on MAINS and zero their history. That was Blk1's
-  // objection arriving through the back door, and amnesty was built as the
-  // workaround for it.
-  //
-  // D7 fixed the root cause: the reorganise arm now sits INSIDE the
-  // isAccessory guard, so a main is never swapped by the engine at all.
-  // Amnesty is still load-bearing — it holds the whole programme-level
-  // response, accessories included — but the observable had to move. These
-  // tests used to read "did the adjustment run?" off a main-lift identity
-  // swap, which is now permanently false and would have made every
-  // not-shielded assertion pass for the wrong reason. They read it off the
-  // accessory's set count instead, which is what `reorganize` actually does.
+describe("advanceWeek — a block's first weeks", () => {
+  // A block that changes the focus moves every rep target at once, so its
+  // first weeks can read as a programme-wide stall. Nothing at the rollover
+  // responds to one (Lift4 (13)): every lift keeps its identity, history and
+  // sets, with a block or without, and the misses stay recorded for the
+  // lowering rule.
   const stalledState = (trainingBlock?: ActiveTrainingBlock): ProgramState => ({
     goal: "recomp",
     currentPhase: "progression",
-    // Rolls into week 2 — position 2 of the mesocycle, where
-    // `applyWeeklyVolumeShape` holds accessories at `baseSets`. Positions 1
-    // and 3 shave and ramp respectively, which would confound the accessory
-    // set count that these tests read the adjustment off. Week 4 would
-    // deload and skip `applyAdjustment` entirely.
     weekNumber: 1,
     splitType: "upper_lower",
     workouts: [
@@ -371,7 +387,6 @@ describe("advanceWeek — block amnesty", () => {
     fatigueScore: 0,
     updatedAt: 0,
     primaryGoal: "strength",
-    plateauResponses: 1,
     ...(trainingBlock ? { trainingBlock } : {}),
   });
 
@@ -391,90 +406,35 @@ describe("advanceWeek — block amnesty", () => {
     schemaVersion: 1,
   };
 
-  it("keeps every main's identity and history while amnesty is live", () => {
-    const before = stalledState(activeBlock);
-    const after = advanceWeek(before, "intermediate", "strained");
-    const ids = after.workouts[0].exercises
-      .filter((e) => e.isAccessory !== true)
-      .map((e) => e.exerciseId);
-    expect(ids).toEqual(["bench-press", "barbell-row", "squat"]);
-  });
-
-  it("decrements amnesty monotonically so it expires unattended", () => {
-    let state = stalledState(activeBlock);
-    const seen: number[] = [];
-    for (let i = 0; i < 4; i++) {
-      state = advanceWeek(state, "intermediate", "strained");
-      seen.push(state.trainingBlock?.amnestyWeeksLeft ?? -1);
+  it("keeps every lift, its history and its sets, with a block or without", () => {
+    for (const block of [activeBlock, undefined]) {
+      const before = stalledState(block);
+      before.workouts[0].exercises[0].performanceHistory = [
+        { date: "2026-07-01", weight: 60, repsCompleted: 8, repsTarget: 8 },
+      ];
+      const after = advanceWeek(before, "intermediate");
+      const exs = after.workouts[0].exercises;
+      expect(exs.map((e) => e.exerciseId)).toEqual([
+        "bench-press",
+        "barbell-row",
+        "squat",
+        "dumbbell-curl",
+      ]);
+      expect(exs.map((e) => e.sets)).toEqual(
+        before.workouts[0].exercises.map((e) => e.sets)
+      );
+      expect(exs[0].performanceHistory).toHaveLength(1);
+      expect(exs[0].instanceId).toBe(
+        before.workouts[0].exercises[0].instanceId
+      );
     }
-    expect(seen).toEqual([2, 1, 0, 0]);
   });
 
-  it("leaves plateauCount accumulating truthfully — only the response is held", () => {
-    const after = advanceWeek(
-      stalledState(activeBlock),
-      "intermediate",
-      "strained"
-    );
+  it("leaves plateauCount accumulating truthfully", () => {
+    const after = advanceWeek(stalledState(activeBlock), "intermediate");
     expect(
       after.workouts[0].exercises.every((e) => (e.plateauCount ?? 0) > 0)
     ).toBe(true);
-  });
-
-  /** The accessory is the only slot `applyAdjustment` may touch, so its set
-   *  count is the honest observable for "the adjustment ran". */
-  const accessorySets = (s: ProgramState) =>
-    s.workouts[0].exercises.find((e) => e.isAccessory === true)?.sets;
-
-  it("holds the accessory response too while amnesty is live", () => {
-    const after = advanceWeek(
-      stalledState(activeBlock),
-      "intermediate",
-      "strained"
-    );
-    expect(accessorySets(after)).toBe(4);
-  });
-
-  it("does not shield a plan with no block", () => {
-    const after = advanceWeek(stalledState(), "intermediate", "strained");
-    expect(accessorySets(after)).toBeLessThan(4);
-  });
-
-  it("stops shielding once amnesty runs out", () => {
-    const spent = { ...activeBlock, amnestyWeeksLeft: 0 };
-    const after = advanceWeek(stalledState(spent), "intermediate", "strained");
-    expect(accessorySets(after)).toBeLessThan(4);
-  });
-
-  /* ─── D7 · the engine never swaps a MAIN ───────────────────────
-     The regression pin for moving the reorganise arm inside the
-     isAccessory guard. Amnesty is OFF here, the mains are deeply
-     stalled, and `resolveAdjustment` has escalated to `reorganize`
-     — the exact state that used to re-pick every main lift and
-     zero its history via swapExerciseIdentity. Mains must keep
-     both their identity and their history; the accessory in the
-     same day proves the adjustment genuinely ran. ── */
-  it("never swaps a main lift or erases its history, even with no amnesty", () => {
-    const before = stalledState();
-    before.workouts[0].exercises[0].performanceHistory = [
-      { date: "2026-07-01", weight: 60, repsCompleted: 8, repsTarget: 8 },
-    ];
-    const after = advanceWeek(before, "intermediate", "strained");
-    const mains = after.workouts[0].exercises.filter(
-      (e) => e.isAccessory !== true
-    );
-
-    expect(mains.map((e) => e.exerciseId)).toEqual([
-      "bench-press",
-      "barbell-row",
-      "squat",
-    ]);
-    expect(mains[0].performanceHistory).toHaveLength(1);
-    expect(mains[0].instanceId).toBe(
-      before.workouts[0].exercises[0].instanceId
-    );
-    // …and this is not vacuous: the adjustment did fire this week.
-    expect(accessorySets(after)).toBeLessThan(4);
   });
 });
 
@@ -490,17 +450,45 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       running: "Running support",
     })[g];
 
-  it("names the exact new rep range when the focus changes", () => {
+  it("names the exact new target when the focus changes", () => {
     const s = blockConsequence({
       focus: "strength",
       currentFocus: "hypertrophy",
       pace: "full",
       durationWeeks: 8,
       focusLabel: label,
+      experience: "intermediate",
     });
-    expect(s).toContain("sets of 5-7");
-    expect(s).toContain("8 weeks");
+    expect(s).toContain("move to sets of 5 for 8 weeks");
     expect(s).toContain("Same exercises, same days");
+    // …and the range, at the level's column of the table
+    const back = (experience: Experience) =>
+      blockConsequence({
+        focus: "hypertrophy",
+        currentFocus: "strength",
+        pace: "full",
+        durationWeeks: 8,
+        focusLabel: label,
+        experience,
+      });
+    expect(back("intermediate")).toContain("sets of 6–10");
+    expect(back("beginner")).toContain("sets of 8 ");
+  });
+
+  // Get stronger and Support my running share every row of the table, so a
+  // block between them re-aims nothing; the copy must not claim it does.
+  it("says the main lifts stay when the two focuses share every target", () => {
+    const s = blockConsequence({
+      focus: "running",
+      currentFocus: "strength",
+      pace: "full",
+      durationWeeks: 8,
+      focusLabel: label,
+      experience: "intermediate",
+    });
+    expect(s).toContain("stay at sets of 5");
+    expect(s).toMatch(/same weights\.$/i);
+    expect(s).not.toMatch(/aiming for changes|come down/i);
   });
 
   // "Showing up is the whole goal" is only honest if it is literally true,
@@ -512,6 +500,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       pace: "full",
       durationWeeks: 8,
       focusLabel: label,
+      experience: "intermediate",
     });
     expect(s).toMatch(/Nothing about your sessions changes/i);
     expect(s).not.toMatch(/sets of/);
@@ -525,6 +514,7 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
         pace,
         durationWeeks: 4,
         focusLabel: label,
+        experience: "intermediate",
       });
     expect(of("easing")).toMatch(/hold steady for the first two weeks/i);
     expect(of("lighter")).not.toMatch(/hold steady/i);
@@ -539,8 +529,9 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       pace: "easing",
       durationWeeks: 12,
       focusLabel: label,
+      experience: "intermediate",
     });
-    expect(s).toContain("sets of 5-7");
+    expect(s).toContain("sets of 5");
     expect(s).toMatch(/short session/i);
     expect(s).toMatch(/hold steady/i);
   });
@@ -626,6 +617,7 @@ describe("blockConsequence — copy matches the mechanism", () => {
         pace,
         durationWeeks: 8,
         focusLabel: label,
+        experience: "intermediate",
       });
       expect(s).toMatch(/short session/i);
       expect(s).not.toMatch(/trimmed to/i);
@@ -640,77 +632,112 @@ describe("blockConsequence — copy matches the mechanism", () => {
       pace: "full",
       durationWeeks: 8,
       focusLabel: label,
+      experience: "intermediate",
     });
     expect(s).toMatch(/Nothing about your sessions changes/i);
     expect(s).not.toMatch(/short session/i);
   });
 });
 
-describe("blockConsequence — the load claim tracks scaleLoadForReps", () => {
+/** Every ordered pair of different focuses. */
+const ORDERED_PAIRS = FOCUS_ORDER.flatMap((from) =>
+  FOCUS_ORDER.filter((to) => to !== from).map(
+    (to) => [from, to] as [PrimaryGoal, PrimaryGoal]
+  )
+);
+const LEVELS: Experience[] = ["beginner", "intermediate", "advanced"];
+
+/** A day holding one lift from each row of the table. */
+const rowDay = () => [
+  day([
+    ex(),
+    ex({ exerciseId: "romanian-deadlift", isAccessory: true }),
+    ex({ exerciseId: "db-curl", isAccessory: true }),
+    ex({ exerciseId: "lateral-raise", isAccessory: true }),
+  ]),
+];
+
+/**
+ * Whether re-prescribing a week from one focus to another brings any weight
+ * down: the mechanism the copy's "come down a little" has to agree with.
+ * Read off the transform itself rather than off the table.
+ */
+function weightsDrop(
+  from: PrimaryGoal,
+  to: PrimaryGoal,
+  experience: Experience
+): boolean {
+  const at = represcribeWorkouts(rowDay(), from, experience);
+  const moved = represcribeWorkouts(at, to, experience);
+  return moved[0].exercises.some(
+    (e, i) => e.weight < at[0].exercises[i].weight
+  );
+}
+
+/** Whether two focuses prescribe every lift alike (Get stronger and
+ *  Support my running do; so do Build muscle and Lose fat). */
+function sameTargets(
+  a: PrimaryGoal,
+  b: PrimaryGoal,
+  experience: Experience
+): boolean {
+  const x = represcribeWorkouts(rowDay(), a, experience)[0].exercises;
+  const y = represcribeWorkouts(rowDay(), b, experience)[0].exercises;
+  return x.every(
+    (e, i) => e.reps === y[i].reps && e.repRangeMax === y[i].repRangeMax
+  );
+}
+
+describe("blockConsequence — the load claim tracks the transform", () => {
   const label = () => "x";
-  const say = (focus: PrimaryGoal, currentFocus: PrimaryGoal) =>
+  const say = (
+    focus: PrimaryGoal,
+    currentFocus: PrimaryGoal,
+    experience: Experience
+  ) =>
     blockConsequence({
       focus,
       currentFocus,
       pace: "full",
       durationWeeks: 8,
       focusLabel: label,
+      experience,
     });
 
   // The copy said "the weights come down a little" for EVERY focus change.
-  // scaleLoadForReps only reduces a load when the rep target goes UP, so it
+  // scaleLoadForReps only reduces a load when a rep target goes UP, so it
   // was false for most of the ordered pairs — including the pair the picker
   // puts first.
   //
-  // The pairs are DERIVED from the profiles, not listed. The listed version
-  // rotted: this block used to cite "hypertrophy 8 → fat_loss 12" as a pair
-  // that rises, and fat_loss later moved to 8-12 — the same mains as general
-  // — when the deficit row was rewritten around Fleck & Kraemer's
+  // The pairs are DERIVED, not listed. The listed version rotted: this block
+  // used to cite "hypertrophy 8 → fat_loss 12" as a pair that rises, and
+  // fat_loss later moved to 8-12 — the same mains as general — when the
+  // deficit row was rewritten around Fleck & Kraemer's
   // maintain-intensity-cut-volume finding. The pair stopped rising, and the
   // anchor went on asserting copy the model no longer produces.
-  const orderedPairs = FOCUS_ORDER.flatMap((from) =>
-    FOCUS_ORDER.filter((to) => to !== from).map(
-      (to) => [from, to] as [PrimaryGoal, PrimaryGoal]
-    )
-  );
-  const rises = orderedPairs.filter(
-    ([from, to]) => goalProfileFor(to).mainReps > goalProfileFor(from).mainReps
-  );
-  const holds = orderedPairs.filter(
-    ([from, to]) => goalProfileFor(to).mainReps <= goalProfileFor(from).mainReps
+  const cases = LEVELS.flatMap((level) =>
+    ORDERED_PAIRS.map(([from, to]) => ({
+      from,
+      to,
+      level,
+      drops: weightsDrop(from, to, level),
+    }))
   );
 
   // Without this the agreement test below is vacuous in one direction: a
-  // profile table where NO pair raises the target (or where every pair does)
-  // is satisfied by copy that never varies at all.
+  // table where NO pair raises a target (or where every pair does) is
+  // satisfied by copy that never varies at all.
   it("has focus pairs on both sides of the claim", () => {
-    expect(rises.length).toBeGreaterThan(0);
-    expect(holds.length).toBeGreaterThan(0);
+    expect(cases.some((c) => c.drops)).toBe(true);
+    expect(cases.some((c) => !c.drops)).toBe(true);
   });
 
-  it("promises no weight change when the rep target does not rise", () => {
-    for (const [from, to] of holds) {
-      expect(say(to, from), `${from} -> ${to}`).toMatch(/same weights/i);
-      expect(say(to, from), `${from} -> ${to}`).not.toMatch(/come down/i);
-    }
-  });
-
-  it("still promises the drop when the target genuinely rises", () => {
-    for (const [from, to] of rises) {
-      expect(say(to, from), `${from} -> ${to}`).toMatch(/come down a little/i);
-    }
-  });
-
-  it("agrees with scaleLoadForReps on every ordered focus pair", () => {
-    for (const [from, to] of orderedPairs) {
-      const moved =
-        scaleLoadForReps(
-          100,
-          goalProfileFor(from).mainReps,
-          goalProfileFor(to).mainReps
-        ) < 100;
-      const claims = /come down a little/i.test(say(to, from));
-      expect(claims, `${from} -> ${to}`).toBe(moved);
+  it("agrees with the transform on every ordered focus pair and level", () => {
+    for (const { from, to, level, drops } of cases) {
+      const said = say(to, from, level);
+      const at = `${from} -> ${to} (${level})`;
+      expect(/come down a little/i.test(said), at).toBe(drops);
+      expect(/same weights|stay where they are/i.test(said), at).toBe(!drops);
     }
   });
 });
@@ -725,6 +752,7 @@ describe("blockConsequence — L2, the lead and tail must not contradict", () =>
         pace,
         durationWeeks: 8,
         focusLabel: label,
+        experience: "intermediate",
       });
       // The lead promotes the short session, which drops accessories and
       // cuts sets — so the tail cannot also claim the day is unchanged.
@@ -740,7 +768,177 @@ describe("blockConsequence — L2, the lead and tail must not contradict", () =>
       pace: "full",
       durationWeeks: 8,
       focusLabel: label,
+      experience: "intermediate",
     });
     expect(s).toMatch(/same exercises, same days/i);
+  });
+});
+
+describe("blockReleaseLine — ending a block says what happens (Lift4)", () => {
+  const label = (g: PrimaryGoal) =>
+    ({
+      hypertrophy: "Build muscle",
+      strength: "Get stronger",
+      fat_loss: "Lose fat",
+      general: "Stay fit",
+      running: "Running support",
+    })[g];
+  const line = (
+    focus: PrimaryGoal,
+    goalBefore: PrimaryGoal,
+    over: Partial<Pick<ActiveTrainingBlock, "pace" | "owned">> = {}
+  ) =>
+    blockReleaseLine({
+      block: { focus, goalBefore, pace: "full", owned: true, ...over },
+      focusLabel: label,
+      experience: "intermediate",
+    });
+  const orderedPairs = FOCUS_ORDER.flatMap((focus) =>
+    FOCUS_ORDER.filter((before) => before !== focus).map(
+      (before) => [focus, before] as [PrimaryGoal, PrimaryGoal]
+    )
+  );
+
+  it("names the rep range it goes back to, and whose it is", () => {
+    expect(line("strength", "hypertrophy")).toContain(
+      `sets of ${focusRepSummary("hypertrophy", "intermediate")} (Build muscle)`
+    );
+    expect(focusRepSummary("hypertrophy", "intermediate")).toBe("6–10");
+  });
+
+  // It said the lifts went back to how they were prescribed before the
+  // block. The release keeps the weights lifted now; nothing winds back.
+  it("never says the week goes back to how it was", () => {
+    for (const [focus, before] of orderedPairs)
+      expect(line(focus, before), `${focus} -> ${before}`).not.toMatch(
+        /before the block|how it was|how they were/i
+      );
+  });
+
+  it("agrees with what the release does to the weight, on every pair", () => {
+    for (const [focus, before] of orderedPairs) {
+      const said = line(focus, before);
+      // Nothing to hand back between focuses that share every target.
+      if (sameTargets(focus, before, "intermediate")) {
+        expect(said, `${focus} -> ${before}`).toBe(
+          "Your sessions stay as they are."
+        );
+        continue;
+      }
+      const moved = weightsDrop(focus, before, "intermediate");
+      expect(/come down a little/i.test(said), `${focus} -> ${before}`).toBe(
+        moved
+      );
+      expect(/weights you lift now/i.test(said), `${focus} -> ${before}`).toBe(
+        !moved
+      );
+    }
+  });
+
+  it("says the sessions stay when the block hands back its own focus", () => {
+    expect(line("strength", "strength")).toBe(
+      "Your sessions stay as they are."
+    );
+    // …or one whose every target is the same
+    expect(line("running", "strength")).toBe("Your sessions stay as they are.");
+  });
+
+  it("says the sessions stay for a block that never owned them", () => {
+    expect(line("strength", "hypertrophy", { owned: false })).toBe(
+      "Your sessions stay as they are."
+    );
+  });
+
+  it("tells a lighter or easing block the full session comes first again", () => {
+    for (const pace of ["lighter", "easing"] as const) {
+      expect(line("strength", "hypertrophy", { pace })).toMatch(
+        /full session first again/
+      );
+      expect(line("strength", "strength", { pace })).toMatch(
+        /full session first again/
+      );
+    }
+    expect(line("strength", "hypertrophy")).not.toMatch(/full session/);
+  });
+});
+
+describe("represcribeSwapped — a swapped-in lift takes its own role's numbers (Lift4 (5))", () => {
+  const legExtension = ex({
+    name: "Leg Extension",
+    exerciseId: "leg-extension",
+    movementCategory: "knee_dominant",
+    isAccessory: true,
+    sets: 2,
+    baseSets: 2,
+    reps: 10,
+    baseReps: 10,
+    repRangeMax: 15,
+    weight: 40,
+  });
+  const bench = ex({ reps: 9, repRangeMax: 11 });
+
+  it("gives the new lift its role's reps, range and progression, at no more sets than its slot had", () => {
+    // The knee swap put a split squat (another compound) where a leg
+    // extension (an isolation) was: 8–12, not the isolation's 10–15.
+    const before = [day([bench, legExtension])];
+    const after = [
+      day([
+        bench,
+        {
+          ...legExtension,
+          exerciseId: "bulgarian-split",
+          name: "Bulgarian Split Squat",
+        },
+      ]),
+    ];
+    const [out] = represcribeSwapped(
+      before,
+      after,
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(out.exercises[1]).toMatchObject({
+      exerciseId: "bulgarian-split",
+      sets: 2,
+      baseSets: 2,
+      reps: 8,
+      baseReps: 8,
+      repRangeMax: 12,
+      progressionType: "double",
+    });
+    // Fewer reps than the slot had: the load holds (a represcribe never
+    // raises one; progression does).
+    expect(out.exercises[1].weight).toBe(40);
+  });
+
+  it("moves the load down to a swapped-in lift's higher reps", () => {
+    const split = {
+      ...legExtension,
+      exerciseId: "bulgarian-split",
+      name: "Bulgarian Split Squat",
+      reps: 8,
+      baseReps: 8,
+      repRangeMax: 12,
+    };
+    const [out] = represcribeSwapped(
+      [day([bench, split])],
+      [
+        day([
+          bench,
+          { ...split, exerciseId: "leg-extension", name: "Leg Extension" },
+        ]),
+      ],
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(out.exercises[1]).toMatchObject({ reps: 10, repRangeMax: 15 });
+    expect(out.exercises[1].weight).toBeLessThan(40);
+  });
+
+  it("leaves every slot the swap didn't touch as it was", () => {
+    const week = [day([bench, legExtension])];
+    expect(
+      represcribeSwapped(week, week, "hypertrophy", "intermediate")
+    ).toEqual(week);
   });
 });

@@ -6,16 +6,14 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
-import { estimateSessionMinutes } from "@/features/program/expressSession";
+import {
+  estimateSessionMinutes,
+  type PricedExercise,
+} from "@/features/program/expressSession";
+import type { RestContext } from "@/features/program/restTime";
 import { liftDayTitle } from "@/lib/liftDayLabel";
 
-interface LiftCardExercise {
-  name: string;
-  exerciseId?: string;
-  sets?: number;
-  restSeconds?: number;
-  weight?: number;
-}
+type LiftCardExercise = Partial<PricedExercise> & { name: string };
 
 /**
  * Today's lift, as Home's lead card (DS3).
@@ -38,6 +36,7 @@ export default function LiftCTACard({
   isStartable = true,
   status,
   eyebrowLabel,
+  rest,
 }: {
   nextWorkout: {
     completed?: boolean;
@@ -59,6 +58,8 @@ export default function LiftCTACard({
   /** Replaces the day's category above the title, for a card that is not
    *  today's planned session (a new person's first workout on a rest day). */
   eyebrowLabel?: string;
+  /** How the session's timer will rest, so the minutes price it. */
+  rest?: RestContext;
 }) {
   const dayTarget =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
@@ -96,9 +97,9 @@ export default function LiftCTACard({
         typeof ex.sets === "number" && ex.sets > 0
     );
     return priced.length === count && count > 0
-      ? estimateSessionMinutes(priced)
+      ? estimateSessionMinutes(priced, rest)
       : null;
-  }, [nextWorkout.exercises, count]);
+  }, [nextWorkout.exercises, count, rest]);
   const art = useMemo(() => {
     for (const ex of nextWorkout.exercises) {
       const cutout = ex.exerciseId ? getFormArtCutout(ex.exerciseId) : null;

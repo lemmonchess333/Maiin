@@ -105,7 +105,17 @@ function week(days: number): WorkoutDay[] {
     completed: false,
     skipped: false,
     exercises: [
-      exercise({ instanceId: `main-${i}` }),
+      // Lowered after two misses (Lift4): both copies drop the way back.
+      exercise({
+        instanceId: `main-${i}`,
+        weight: 55,
+        lowered: {
+          exerciseId: "bench-press",
+          from: 60,
+          unit: "kg",
+          target: 8,
+        },
+      }),
       exercise({
         instanceId: `acc-${i}`,
         exerciseId: "cable-fly",
@@ -113,6 +123,16 @@ function week(days: number): WorkoutDay[] {
         reps: 12,
         baseReps: 12,
         weight: 20,
+      }),
+      // A side-delt isolation: Build muscle's 12–20 row (`roleTable.ts`).
+      exercise({
+        instanceId: `raise-${i}`,
+        exerciseId: "lateral-raise",
+        movementCategory: "vertical_push",
+        isAccessory: true,
+        reps: 12,
+        baseReps: 12,
+        weight: 8,
       }),
       // Bodyweight: a LOWER ceiling (15), the branch a single fixture misses.
       exercise({

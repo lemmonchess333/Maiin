@@ -27,29 +27,22 @@ describe("Train's advice waits its turn", () => {
     expect(code).toMatch(/const liftAdvice = pickLiftAdvice\(\{/);
   });
 
-  it("owns both week-level dismissals and hands them to the banners", () => {
+  it("owns the week-level dismissal and hands it to the banner", () => {
     expect(code).toMatch(/useDismissOnce\(deloadDismissKey\(noticeWeekKey\)\)/);
-    expect(code).toMatch(
-      /useDismissOnce\(recoveryDismissKey\(noticeWeekKey\)\)/
-    );
     expect(code).toContain("dismissed={deloadNotice.dismissed}");
-    expect(code).toContain("dismissed={recoveryNotice.dismissed}");
   });
 
-  it("holds the deload recommendation back behind a recovery reduction", () => {
-    expect(code).toMatch(
-      /visible=\{showDeloadSuggest && liftAdvice !== "recovery"\}/
-    );
+  it("shows no recovery reduction, which is retired (Lift4 (13))", () => {
+    expect(code).not.toContain("RecoveryReductionBanner");
+    expect(code).not.toContain("recoveringMuscles");
   });
 
   it("offers today's lighter session only when it is the notice", () => {
     expect(around("Go easier today", 900)).toContain('liftAdvice === "easier"');
   });
 
-  it("lets the level-up suggestion give way to the week-level notices", () => {
-    expect(code).toMatch(
-      /suppressed=\{liftAdvice === "recovery" \|\| liftAdvice === "deload"\}/
-    );
+  it("lets the level-up suggestion give way to the week-level notice", () => {
+    expect(code).toMatch(/suppressed=\{liftAdvice === "deload"\}/);
   });
 
   /* Owner, 2026-10-05: no row per lift that has held ("Seated Leg Curl has

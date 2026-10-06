@@ -234,56 +234,6 @@ describe("completeWorkoutDay", () => {
   });
 });
 
-describe("logExercise", () => {
-  const valid = {
-    kind: "logExercise",
-    commandId: CMD_ID,
-    ...PRECONDITION,
-    exerciseInstanceId: "inst-a",
-    actual: { weight: 60, reps: 10, completed: true },
-  };
-
-  it("accepts a valid log", () => {
-    expect(assertClientProgramCommand(valid)).toMatchObject({
-      kind: "logExercise",
-      exerciseInstanceId: "inst-a",
-      actual: { weight: 60, reps: 10, completed: true },
-    });
-  });
-
-  it("accepts a correction only with a bounded session id", () => {
-    expect(
-      assertClientProgramCommand({
-        ...valid,
-        sessionId: "session-1",
-        correction: true,
-      })
-    ).toMatchObject({ sessionId: "session-1", correction: true });
-    expectRejected({ ...valid, correction: true });
-    expectRejected({ ...valid, sessionId: "", correction: true });
-    expectRejected({ ...valid, sessionId: "session-1", correction: false });
-    expectRejected({ ...valid, sessionId: "session-1", baseline: {} });
-  });
-
-  it("rejects a malformed actual", () => {
-    expectRejected({ ...valid, actual: { weight: 60, reps: 10 } });
-    expectRejected({
-      ...valid,
-      actual: { weight: 60, reps: 10, completed: "yes" },
-    });
-    expectRejected({
-      ...valid,
-      actual: { weight: -1, reps: 10, completed: true },
-    });
-  });
-
-  it("rejects a missing instance id", () => {
-    const { exerciseInstanceId, ...rest } = valid;
-    void exerciseInstanceId;
-    expectRejected(rest);
-  });
-});
-
 describe("exercise mutation commands", () => {
   it("removeExercise validates an instance id", () => {
     expect(
@@ -427,32 +377,51 @@ describe("exercise mutation commands", () => {
 });
 
 describe("preconditionless commands", () => {
-  it("setProgramSettings requires both boolean flags, nothing else", () => {
+  it("setProgramSettings takes auto-progression and small plates, nothing else", () => {
     expect(
       assertClientProgramCommand({
         kind: "setProgramSettings",
         commandId: CMD_ID,
-        settings: { autoProgression: true, microloading: false },
+        settings: { autoProgression: true, smallPlates: true },
       })
     ).toMatchObject({
-      settings: { autoProgression: true, microloading: false },
+      settings: { autoProgression: true, smallPlates: true },
     });
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true },
+      settings: { smallPlates: true },
     });
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true, microloading: false, extra: 1 },
+      settings: { autoProgression: true, smallPlates: "yes" },
+    });
+    expectRejected({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: true, smallPlates: false, extra: 1 },
     });
     // preconditions are NOT part of this command
     expectRejected({
       kind: "setProgramSettings",
       commandId: CMD_ID,
-      settings: { autoProgression: true, microloading: false },
+      settings: { autoProgression: true, smallPlates: false },
       dayIndex: 1,
+    });
+  });
+
+  it("setProgramSettings still takes an older app's microloading, and drops it", () => {
+    const validated = assertClientProgramCommand({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: false, microloading: true },
+    });
+    expect(validated.settings).toEqual({ autoProgression: false });
+    expectRejected({
+      kind: "setProgramSettings",
+      commandId: CMD_ID,
+      settings: { autoProgression: false, microloading: "on" },
     });
   });
 
@@ -570,7 +539,6 @@ describe("every declared client kind round-trips", () => {
         "completeWorkoutDay",
         "skipWorkoutDay",
         "setNextWorkout",
-        "logExercise",
         "removeExercise",
         "addExercises",
         "replaceExercise",
@@ -623,7 +591,7 @@ describe("makeCommandReceipt", () => {
 
   it("never leaks the command payload into the receipt", () => {
     const receipt = makeCommandReceipt({
-      command: { kind: "logExercise", actual: { weight: 999 } },
+      command: { kind: "updateExercise", patch: { weight: 999 } },
       now: 1,
     });
     expect(Object.keys(receipt).sort()).toEqual([
@@ -657,7 +625,7 @@ function baseState() {
     splitType: "upper_lower",
     fatigueScore: 0,
     updatedAt: 1000,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     workouts: [
       {
@@ -936,11 +904,31 @@ describe("preconditionless field commands", () => {
     const { state } = apply({
       kind: "setProgramSettings",
       commandId: CMD,
-      settings: { autoProgression: false, microloading: false },
+      settings: { autoProgression: false, smallPlates: true },
     });
     expect(state.settings).toEqual({
       autoProgression: false,
-      microloading: false,
+      smallPlates: true,
+    });
+  });
+
+  it("setProgramSettings from an older app keeps the small-plates answer", () => {
+    const first = apply({
+      kind: "setProgramSettings",
+      commandId: CMD,
+      settings: { autoProgression: true, smallPlates: true },
+    }).state;
+    const { state } = apply(
+      {
+        kind: "setProgramSettings",
+        commandId: `${CMD}-old`,
+        settings: { autoProgression: false, microloading: true },
+      },
+      first
+    );
+    expect(state.settings).toEqual({
+      autoProgression: false,
+      smallPlates: true,
     });
   });
 
@@ -1080,6 +1068,57 @@ describe("training block start/release (Blk2)", () => {
     expect(state.primaryGoal).toBe("strength");
     // Untouched: it never owned a prescription, so releasing must not
     // retroactively rewrite one.
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  // ── the same focus changes nothing (Lift4) ───────────────────────────
+  // A week mid-climb: reps above where the focus would set them, and misses
+  // counted. Re-deriving would put the reps back and clear the counts.
+  function climbingStrengthWeek() {
+    const seeded = baseState();
+    seeded.primaryGoal = "strength";
+    seeded.workouts[0].exercises[0] = {
+      ...seeded.workouts[0].exercises[0],
+      reps: 7,
+      baseReps: 5,
+      consecutiveFailures: 1,
+      plateauCount: 1,
+    };
+    return seeded;
+  }
+
+  it("a block with the week's own focus leaves the week as it is", () => {
+    const seeded = climbingStrengthWeek();
+    const { state } = apply(START, seeded, {
+      experience: "advanced",
+      primaryGoal: "strength",
+    });
+    expect(state.trainingBlock.focus).toBe("strength");
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("another block of the same focus after one ends keeps the week too", () => {
+    // "Another 8 weeks of this": the block ends keeping its focus, then the
+    // same block starts, so the week's focus is the block's while the
+    // standing focus is still the one before it.
+    const seeded = climbingStrengthWeek();
+    const { state } = apply(START, seeded, {
+      experience: "advanced",
+      primaryGoal: "hypertrophy",
+    });
+    expect(state.workouts).toEqual(seeded.workouts);
+  });
+
+  it("ending a block that hands back its own focus leaves the week too", () => {
+    const seeded = climbingStrengthWeek();
+    seeded.trainingBlock = {
+      id: "blk",
+      owned: true,
+      focus: "strength",
+      goalBefore: "strength",
+    };
+    const { state } = apply(RELEASE, seeded, { experience: "advanced" });
+    expect("trainingBlock" in state).toBe(false);
     expect(state.workouts).toEqual(seeded.workouts);
   });
 
@@ -2293,7 +2332,7 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
 
   it("replaceExercise bounds the client-sent load", () => {
     // The scalar is trusted only within bounds. Same treatment as every other
-    // client-supplied weight (logExercise, updateExercise.patch).
+    // client-supplied weight (updateExercise.patch).
     for (const bad of [-1, 1e9, "60", NaN, Infinity, null]) {
       expectHttps(
         () =>
@@ -2356,251 +2395,6 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
   });
 });
 
-describe("logExercise (reducer wiring — progression math pinned by cross-test)", () => {
-  function logCmd(overrides) {
-    return {
-      kind: "logExercise",
-      commandId: CMD,
-      ...dayPre(),
-      exerciseInstanceId: "inst-a",
-      actual: { weight: 100, reps: 8, completed: true },
-      ...overrides,
-    };
-  }
-
-  it("rejects an old queued set command once a saved workout owns progression", () => {
-    const current = baseState();
-    current.workouts[0].completed = true;
-    current.workouts[0].completedWorkoutId = "programme-session-1";
-    const before = structuredClone(current);
-    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow(
-      "Correct it from History"
-    );
-    expect(current).toEqual(before);
-  });
-
-  it("autoProgression on: applies progression to the target exercise", () => {
-    // inst-a: linear (no progressionType), microloading on, completed set at
-    // prescription → +1kg microload (client applyProgression rule).
-    const { state } = apply(logCmd());
-    const row = state.workouts[0].exercises.find(
-      (e) => e.instanceId === "inst-a"
-    );
-    expect(row.weight).toBe(101);
-    expect(row.lastAttemptedWeight).toBe(100);
-    expect(row.performanceHistory).toHaveLength(1);
-  });
-
-  it("replaces a session's result from its original prescription without progressing twice", () => {
-    const input = baseState();
-    const initial = apply(logCmd({ sessionId: "session-1" }), input).state;
-    expect(initial.workouts[0].exercises[0].weight).toBe(101);
-    const correctedActual = { weight: 100, reps: 6, completed: true };
-    const corrected = apply(
-      logCmd({
-        sessionId: "session-1",
-        correction: true,
-        actual: correctedActual,
-      }),
-      initial
-    ).state;
-    const expected = apply(logCmd({ actual: correctedActual }), input).state
-      .workouts[0].exercises[0];
-    const { sessionProgression, ...row } = corrected.workouts[0].exercises[0];
-    expect(row).toEqual(expected);
-    expect(row.performanceHistory).toHaveLength(1);
-    expect(sessionProgression.baseline).toEqual(input.workouts[0].exercises[0]);
-    const correctedAgain = apply(
-      logCmd({ sessionId: "session-1", correction: true }),
-      corrected
-    ).state;
-    expect(correctedAgain.workouts[0].exercises[0].weight).toBe(101);
-    expect(
-      correctedAgain.workouts[0].exercises[0].performanceHistory
-    ).toHaveLength(1);
-    expect(input.workouts[0].exercises[0].sessionProgression).toBeUndefined();
-  });
-
-  it("a new session retains history but does not nest prior baselines", () => {
-    const first = apply(logCmd({ sessionId: "session-1" })).state;
-    const second = apply(
-      logCmd({
-        sessionId: "session-2",
-        actual: { weight: 101, reps: 8, completed: true },
-      }),
-      first
-    ).state;
-    const row = second.workouts[0].exercises[0];
-    expect(row.performanceHistory).toHaveLength(2);
-    expect(row.sessionProgression.baseline.sessionProgression).toBeUndefined();
-    expectHttps(
-      () => apply(logCmd({ sessionId: "session-1", correction: true }), second),
-      "failed-precondition"
-    );
-    expectHttps(
-      () => apply(logCmd({ sessionId: "unrecorded", correction: true })),
-      "failed-precondition"
-    );
-  });
-
-  // ── Blk2: the easing-block hold — the reducer's THIRD branch ──────────
-  //
-  // Added with the boundary migration. The client had this branch and the
-  // reducer did not, so migrating logExercise as-was would have progressed a
-  // returning lifter straight through the window designed to hold them —
-  // silently, since both branches write a plausible-looking exercise.
-
-  function easingState(startDate = "2026-03-02") {
-    const s = baseState();
-    s.trainingBlock = { pace: "easing", startDate, durationWeeks: 8 };
-    return s;
-  }
-
-  it("easing block, week 2: HOLDS the load but still records the session", () => {
-    const { state } = apply(logCmd({ today: "2026-03-09" }), easingState());
-    const row = state.workouts[0].exercises.find(
-      (e) => e.instanceId === "inst-a"
-    );
-    // Held: no microload, unlike the autoProgression branch above (which
-    // takes the same input to 101).
-    expect(row.weight).toBe(100);
-    // But recorded — this is what separates the hold from autoProgression:off,
-    // which writes no history at all. The sessions happened.
-    expect(row.performanceHistory).toHaveLength(1);
-    expect(row.performanceHistory[0]).toMatchObject({
-      weight: 100,
-      repsCompleted: 8,
-      repsTarget: 8,
-    });
-    expect(row.lastAttemptedWeight).toBe(100);
-  });
-
-  it("easing block, week 3: the hold has expired and load progresses", () => {
-    // 2026-03-16 is the first day of week 3 — one day past EASING_HOLD_WEEKS.
-    // Pinning the day AFTER the boundary is what makes the previous test
-    // mean "held" rather than "this fixture never progresses anyway".
-    const { state } = apply(logCmd({ today: "2026-03-16" }), easingState());
-    expect(
-      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
-    ).toBe(101);
-  });
-
-  it("a non-easing block does not hold", () => {
-    const s = easingState();
-    s.trainingBlock.pace = "standard";
-    const { state } = apply(logCmd({ today: "2026-03-09" }), s);
-    expect(
-      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
-    ).toBe(101);
-  });
-
-  it("no `today` on the command means no hold (a pre-migration client)", () => {
-    const { state } = apply(logCmd(), easingState());
-    expect(
-      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
-    ).toBe(101);
-  });
-
-  it("actualRpe reaches the progression engine", () => {
-    // The command used to drop RPE entirely, so a maximal-effort set
-    // progressed exactly like an easy one. 10 is past RPE_HOLD_THRESHOLD.
-    const { state } = apply(logCmd({ actualRpe: 10 }));
-    expect(
-      state.workouts[0].exercises.find((e) => e.instanceId === "inst-a").weight
-    ).toBe(100);
-  });
-
-  it("autoProgression off: records the attempt without changing prescription", () => {
-    const s = baseState();
-    s.settings = { autoProgression: false, microloading: true };
-    const { state } = apply(logCmd(), s);
-    const row = state.workouts[0].exercises.find(
-      (e) => e.instanceId === "inst-a"
-    );
-    expect(row.weight).toBe(100); // unchanged
-    expect(row.lastAttemptedWeight).toBe(100);
-    expect(row.lastPerformance).toEqual({
-      sets: 3,
-      reps: 8,
-      weight: 100,
-      completed: true,
-    });
-  });
-
-  // Owner, 2026-10-05: the plan follows the load lifted, and following the
-  // person's own load is not auto-progression. Same literals as the client's
-  // applySessionProgression cases in progressionUserLoad.test.ts.
-  it("autoProgression off: the plan takes the load lifted, with no step and no miss counted", () => {
-    const s = baseState();
-    s.settings = { autoProgression: false, microloading: true };
-    s.workouts[0].exercises[0].consecutiveFailures = 1;
-    const row = (actual) =>
-      apply(
-        logCmd({ actual: { ...actual, completed: true } }),
-        s
-      ).state.workouts[0].exercises.find((e) => e.instanceId === "inst-a");
-
-    const lighterMissed = row({ weight: 90, reps: 4 });
-    expect(lighterMissed.weight).toBe(90);
-    expect(lighterMissed.consecutiveFailures).toBe(1); // no failure accounting
-    expect(lighterMissed.performanceHistory).toBeUndefined(); // no history, as before
-
-    // A 4-rep overshoot would step the load with auto-progression on.
-    expect(row({ weight: 130, reps: 12 }).weight).toBe(130);
-    // No load logged: nothing to follow.
-    expect(row({ weight: 0, reps: 8 }).weight).toBe(100);
-  });
-
-  it("autoProgression off does not follow a bodyweight movement's load", () => {
-    const s = baseState();
-    s.settings = { autoProgression: false, microloading: true };
-    Object.assign(s.workouts[0].exercises[0], {
-      exerciseId: "weighted-chest-dip",
-      weight: 10,
-    });
-    const { state } = apply(
-      logCmd({ actual: { weight: 20, reps: 8, completed: true } }),
-      s
-    );
-    expect(state.workouts[0].exercises[0].weight).toBe(10);
-  });
-
-  it("an easing-block hold keeps the load even with autoProgression off", () => {
-    const s = easingState();
-    s.settings = { autoProgression: false, microloading: true };
-    const { state } = apply(
-      logCmd({
-        today: "2026-03-09",
-        actual: { weight: 90, reps: 8, completed: true },
-      }),
-      s
-    );
-    expect(state.workouts[0].exercises[0].weight).toBe(100);
-  });
-
-  it("only the target exercise changes; the other is untouched", () => {
-    const { state } = apply(logCmd());
-    const other = state.workouts[0].exercises.find(
-      (e) => e.instanceId === "inst-b"
-    );
-    expect(other.weight).toBe(60);
-    expect(other.lastAttemptedWeight).toBeUndefined();
-  });
-
-  it("rejects an unknown exercise instance id", () => {
-    expectHttps(
-      () => apply(logCmd({ exerciseInstanceId: "inst-x" })),
-      "failed-precondition"
-    );
-  });
-
-  it("does not mutate the input state", () => {
-    const input = baseState();
-    apply(logCmd(), input);
-    expect(input.workouts[0].exercises[0].weight).toBe(100);
-  });
-});
-
 describe("deload week commands (PROGRAM-DELOAD-01)", () => {
   const applyCmd = (overrides) => ({
     kind: "applyDeloadWeek",
@@ -2615,21 +2409,16 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     ...overrides,
   });
 
-  it("applies the mirrored transform: −1 set (floor 2), weight ×0.85 → nearest 2.5", () => {
+  it("applies the mirrored lighter week: half the sets, rounded up, same weights and reps", () => {
     const { state } = apply(applyCmd());
     const [push, legs] = state.workouts;
-    // 100 ×0.85 = 85 (already on the 2.5 grid)
-    expect(push.exercises[0]).toMatchObject({ sets: 2, weight: 85 });
-    // 60 ×0.85 = 51 → 50
-    expect(push.exercises[1]).toMatchObject({ sets: 2, weight: 50 });
-    // 140 ×0.85 = 119 → 120
-    expect(legs.exercises[0]).toMatchObject({ sets: 2, weight: 120 });
+    // 3 sets → 2, every weight and rep target as it was (Lift4 (9)).
+    expect(push.exercises[0]).toMatchObject({ sets: 2, reps: 8, weight: 100 });
+    expect(push.exercises[1]).toMatchObject({ sets: 2, reps: 10, weight: 60 });
+    expect(legs.exercises[0]).toMatchObject({ sets: 2, reps: 5, weight: 140 });
   });
 
-  it("post-novice lifters get the volume recipe instead (backlog #8)", () => {
-    // Helms H4: intermediate+ take ~half the volume at the SAME load, so the
-    // reducer must read profile.experience. An absent/unknown value stays on
-    // the novice recipe the two tests either side of this one pin.
+  it("is one recipe whatever the level (Lift4 (9))", () => {
     const withExperience = (experience) =>
       applyProgramCommand({
         state: baseState(),
@@ -2637,36 +2426,15 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
         command: applyCmd(),
         now: NOW,
       }).state.workouts;
-
-    const inter = withExperience("intermediate");
-    // Push: bench 3×8×100 → 2×6×100; row 3×10×60 → 2×8×60
-    expect(inter[0].exercises[0]).toMatchObject({
-      sets: 2,
-      reps: 6,
-      weight: 100,
-    });
-    expect(inter[0].exercises[1]).toMatchObject({
-      sets: 2,
-      reps: 8,
-      weight: 60,
-    });
-    // Legs: squat 3×5×140 → 2×3×140 (rep floor is 3)
-    expect(inter[1].exercises[0]).toMatchObject({
-      sets: 2,
-      reps: 3,
-      weight: 140,
-    });
-
-    expect(withExperience("advanced")).toEqual(inter);
-    // Unknown / absent → novice recipe (load cut, reps untouched)
-    expect(withExperience("nonsense")[0].exercises[0]).toMatchObject({
-      sets: 2,
-      reps: 8,
-      weight: 85,
-    });
-    expect(withExperience(undefined)[0].exercises[0]).toMatchObject({
-      weight: 85,
-    });
+    const beginner = withExperience("beginner");
+    for (const experience of [
+      "intermediate",
+      "advanced",
+      "nonsense",
+      undefined,
+    ]) {
+      expect(withExperience(experience)).toEqual(beginner);
+    }
   });
 
   it("sets currentPhase deload, clears fatigue, stamps updatedAt", () => {
@@ -2857,6 +2625,33 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
   it("rejects a second apply — no ×0.85² compounding", () => {
     const { state } = apply(applyCmd());
     expectHttps(() => apply(applyCmd(), state), "failed-precondition");
+  });
+
+  it("rejects one in the first week back after a break (Lift4 (11))", () => {
+    // That week has its own set fewer; one lightening at a time.
+    const back = baseState();
+    back.easingBack = { weeksLeft: 2 };
+    expectHttps(() => apply(applyCmd(), back), "failed-precondition");
+    // The week after it has no set fewer, and can be a lighter week.
+    back.easingBack = { weeksLeft: 1 };
+    expect(apply(applyCmd(), back).state.currentPhase).toBe("deload");
+  });
+
+  it("rejects one straight after a trained lighter week (Lift4 (9))", () => {
+    // Never two in a row: the client's rollover marks the archived week
+    // (`advanceWeek`), and this side reads the mark as the client does.
+    const after = baseState();
+    after.weekHistory = [{ weekNumber: 4, workouts: [], lighter: true }];
+    expectHttps(() => apply(applyCmd(), after), "failed-precondition");
+    // A full week in between, or no history at all, leaves it open.
+    after.weekHistory = [
+      { weekNumber: 3, workouts: [], lighter: true },
+      { weekNumber: 4, workouts: [] },
+    ];
+    expect(apply(applyCmd(), after).state.currentPhase).toBe("deload");
+    const fresh = baseState();
+    delete fresh.weekHistory;
+    expect(apply(applyCmd(), fresh).state.currentPhase).toBe("deload");
   });
 
   it("rejects a stale week cursor", () => {

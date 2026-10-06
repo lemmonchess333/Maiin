@@ -93,6 +93,10 @@ export const DRAFT_PRIMARY_GOALS = [
   "running",
 ] as const;
 export const DRAFT_DAYS_PER_WEEK = [0, 2, 3, 4, 5, 6] as const;
+/** About how long a lift session is, in minutes; 75 reads "75+" (Lift4 (5)).
+ *  The time fit's own list (`SESSION_MINUTES_OPTIONS`), written out so the
+ *  draft stays light; `onboardingDraft.test.ts` holds the two equal. */
+export const DRAFT_SESSION_MINUTES = [30, 45, 60, 75] as const;
 export const DRAFT_TRAINING_ACTIVITIES = [
   "lifting",
   "running",
@@ -149,6 +153,16 @@ export interface OnboardingDraft {
   trainingActivity?: OnboardingActivity;
   /** Keep the chosen lifting rhythm when switching to running and back. */
   liftDaysPreference?: Exclude<OnboardingDraft["daysPerWeek"], 0>;
+  /** About how long a lift session is; the plan is built to fit it. */
+  sessionMinutes?: (typeof DRAFT_SESSION_MINUTES)[number];
+  /** "What do you have?" (Lift4 (11)): a barbell and a rack beside a home
+   *  gym's or a minimal setup's kit, and small plates. */
+  barbellAtHome?: boolean;
+  smallPlates?: boolean;
+  /** Lift4 (10): "Lighten leg sessions while your runs build?", asked with
+   *  a race. Unanswered, the plan takes yes for Support my running and no
+   *  otherwise. */
+  raceLegTrim?: boolean;
 }
 
 interface DraftEnvelope {
@@ -217,7 +231,12 @@ export function isValidDraft(
     (d.trainingActivity === undefined ||
       oneOf(DRAFT_TRAINING_ACTIVITIES, d.trainingActivity)) &&
     (d.liftDaysPreference === undefined ||
-      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference))
+      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference)) &&
+    (d.sessionMinutes === undefined ||
+      oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
+    (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
+    (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
+    (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean")
   );
 }
 

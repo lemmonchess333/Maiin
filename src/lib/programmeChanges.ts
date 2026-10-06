@@ -32,6 +32,11 @@ export interface ProgrammeSnapshot {
   /** Pgm6 tuning knobs — race-prep only, mirroring the engine's gating. */
   runVolume: string;
   runDifficulty: string;
+  /** Minutes a lift session lasts (Lift4 (5)); 75 reads "75+". */
+  sessionMinutes?: number;
+  /** A barbell and a rack beside a home gym's or a minimal setup's kit
+   *  (Lift4 (11)). */
+  barbellAtHome?: boolean;
 }
 
 export interface ProgrammeChange {
@@ -153,6 +158,11 @@ function formatRaceDate(iso: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+/** "45 min", or "75+ min" for the longest. */
+export function sessionLengthLabel(minutes: number): string {
+  return minutes >= 75 ? "75+ min" : `${minutes} min`;
+}
+
 /**
  * Diff the persisted snapshot against the draft, returning one row per
  * plan-shaping field the user actually changed. `[]` means nothing to save.
@@ -195,6 +205,18 @@ export function computeProgrammeChanges(
     });
   }
 
+  if (
+    draft.sessionMinutes !== undefined &&
+    saved.sessionMinutes !== undefined &&
+    draft.sessionMinutes !== saved.sessionMinutes
+  ) {
+    changes.push({
+      label: "Session length",
+      from: sessionLengthLabel(saved.sessionMinutes),
+      to: sessionLengthLabel(draft.sessionMinutes),
+    });
+  }
+
   if (draft.preferredSplit !== saved.preferredSplit) {
     changes.push({
       label: "Preferred split",
@@ -208,6 +230,19 @@ export function computeProgrammeChanges(
       label: "Equipment",
       from: labelFrom(EQUIPMENT_LABELS, saved.equipment),
       to: labelFrom(EQUIPMENT_LABELS, draft.equipment),
+    });
+  }
+
+  if (
+    draft.equipment !== "full_gym" &&
+    draft.barbellAtHome !== undefined &&
+    saved.barbellAtHome !== undefined &&
+    draft.barbellAtHome !== saved.barbellAtHome
+  ) {
+    changes.push({
+      label: "A barbell and a rack",
+      from: saved.barbellAtHome ? "Yes" : "No",
+      to: draft.barbellAtHome ? "Yes" : "No",
     });
   }
 
@@ -288,12 +323,24 @@ export function computeProgrammeChanges(
 export function programmePreservationNote(args: {
   liftDaysChanged: boolean;
   weekNumber?: number;
+  /** The new session length, when the save changes it (Lift4 (5)): the
+   *  plan the person has is re-fitted, sets only. */
+  sessionMinutesTo?: number;
 }): string {
   const week =
     typeof args.weekNumber === "number" && args.weekNumber > 0
       ? `Week ${args.weekNumber}`
       : "Your current week";
-  return args.liftDaysChanged
-    ? `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`
-    : `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. ${week}, your history, and logged sessions stay.`;
+  if (args.liftDaysChanged) {
+    return `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`;
+  }
+  const refit =
+    args.sessionMinutesTo === undefined
+      ? ""
+      : ` Your sets are refitted to sessions of about ${
+          args.sessionMinutesTo >= 75
+            ? "75 minutes or more"
+            : `${args.sessionMinutesTo} minutes`
+        }.`;
+  return `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised.${refit} ${week}, your history, and logged sessions stay.`;
 }

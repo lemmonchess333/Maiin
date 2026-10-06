@@ -102,7 +102,7 @@ function makeProgramState(): ProgramState {
     workouts: [],
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays: [],

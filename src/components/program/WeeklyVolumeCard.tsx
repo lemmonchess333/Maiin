@@ -1,25 +1,29 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import {
   weeklyVolumeByJudgementMuscle,
-  judgementLandmark,
   classifyVolume,
   JUDGEMENT_MUSCLE_ORDER,
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
 } from "@/features/program/volumeModel";
-import type { WorkoutDay } from "@/features/program/programTypes";
+import { weeklyVolumeTargets } from "@/features/program/volumeTargets";
+import type {
+  Experience,
+  PrimaryGoal,
+  WorkoutDay,
+} from "@/features/program/programTypes";
 import Card from "@/components/ui/Card";
 
 /**
  * Weekly sets-per-muscle summary (D-LIFT-1, read-only). Surfaces the hard-set
- * tally per JUDGEMENT group for the viewed week, each against its own
- * goal-driven landmark band — the same groups and bands the generator's
- * balancers and reconciler act on, so what this card flags is what the
- * engine actually manages. (The old canonical view judged a lateral raise
+ * tally per JUDGEMENT group for the viewed week, each against what the days
+ * and session length can fit (`weeklyVolumeTargets`, Lift4 (5)) under its
+ * goal's ceiling — the same groups and bands the generator acts on, so what
+ * this card flags is what the engine actually manages. (The old canonical view judged a lateral raise
  * and a rear-delt flye against one "Shoulders" band — the incoherence the
  * judgement layer exists to end; see volumeModel's taxonomy-split notes.)
  * Hides when there's no attributable resistance volume.
@@ -52,15 +56,32 @@ const STATUS_LABEL: Record<VolumeStatus, string> = {
 export default function WeeklyVolumeCard({
   workouts,
   primaryGoal,
+  experience,
+  sessionMinutes,
 }: {
   workouts: WorkoutDay[];
-  primaryGoal?: string;
+  primaryGoal?: PrimaryGoal;
+  /** The lifter's level: a beginner's bands are the lower tier. */
+  experience?: Experience;
+  /** The session length the plan is built for. */
+  sessionMinutes?: number;
 }) {
   /* Collapsed by default (owner declutter call, 2026-07-11): the full
      per-muscle table is standing scroll mass on the lift tab. The summary
      line carries the actionable read (how many muscles are below target);
      the table expands in place for the detailed look. */
   const [expanded, setExpanded] = useState(false);
+  const days = workouts.length;
+  const targets = useMemo(
+    () =>
+      weeklyVolumeTargets({
+        goal: primaryGoal,
+        experience,
+        days,
+        sessionMinutes,
+      }),
+    [primaryGoal, experience, days, sessionMinutes]
+  );
   const volume = weeklyVolumeByJudgementMuscle(workouts);
   if (volume.length === 0) return null;
 
@@ -81,7 +102,7 @@ export default function WeeklyVolumeCard({
   const tallied = new Map(volume.map((v) => [v.muscle, v.sets]));
   const rows = JUDGEMENT_MUSCLE_ORDER.map((muscle) => {
     const sets = tallied.get(muscle) ?? 0;
-    const landmark = judgementLandmark(primaryGoal, muscle);
+    const landmark = targets.get(muscle)!;
     return { muscle, sets, landmark, status: classifyVolume(sets, landmark) };
   }).filter(({ sets, landmark }) => sets > 0 || landmark.low > 0);
   // A group whose band has no floor (front delts: pressing covers it) can
@@ -111,7 +132,7 @@ export default function WeeklyVolumeCard({
             >
               {summary}
             </span>{" "}
-            · per-muscle targets
+            · targets for your days and time
           </p>
         </div>
         <ChevronDown

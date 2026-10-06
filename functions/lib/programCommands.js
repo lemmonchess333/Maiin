@@ -42,17 +42,6 @@
  * `HttpsError("invalid-argument", …)` / `"failed-precondition"`.
  */
 
-// Server mirror of the client progression engine (pinned by a parity
-// cross-test). Used by the logExercise reducer.
-const {
-  applyProgression,
-  dateStampUTC,
-  liftedLoad,
-  PERFORMANCE_HISTORY_CAP,
-} = require("./progressionEngine");
-// Easing-block progression hold (pinned by a parity cross-test). The third
-// branch of the logExercise reducer.
-const { holdsProgression } = require("./progressionHold");
 // Catalog name mirror + ProgramExercise builder (both pinned by cross-tests).
 // Used by the addExercises / replaceExercise reducers to derive exercise fields
 // server-side rather than trust a client-supplied exercise object.
@@ -88,7 +77,6 @@ const {
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
   applyDeloadToWorkouts,
-  prepareForDeloadWorkouts,
 } = require("./deloadEngine");
 
 /* Extracted to lib/timedExerciseIds.js. It was a private four-id set here
@@ -110,7 +98,6 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "completeWorkoutDay",
   "skipWorkoutDay",
   "setNextWorkout",
-  "logExercise",
   "removeExercise",
   "addExercises",
   "replaceExercise",
@@ -209,6 +196,9 @@ function invalidCommand(message) {
 // ---------------------------------------------------------------------------
 // Primitive validators
 // ---------------------------------------------------------------------------
+
+/** The weeks of a return after a break (client `EASING_BACK_WEEKS`). */
+const EASING_BACK_WEEKS = 2;
 
 function isPlainObject(value) {
   return (
@@ -491,42 +481,6 @@ const KIND_VALIDATORS = {
     validatePrecondition(command, out);
   },
 
-  logExercise(command, out) {
-    assertKeys(
-      command,
-      "logExercise",
-      ["kind", "commandId", "exerciseInstanceId", "actual", ...PRECONDITION_KEYS],
-      // `today` is the user's LOCAL calendar day, which the server cannot
-      // derive (no timezone on programState). It feeds the easing-block hold
-      // only. `actualRpe` is the client's optional RPE — the progression
-      // engine already takes it; the command used to drop it, which silently
-      // progressed a session the user had flagged as maximal.
-      ["today", "actualRpe", "sessionId", "correction"]
-    );
-    validatePrecondition(command, out);
-    out.exerciseInstanceId = assertString(
-      command.exerciseInstanceId,
-      "exerciseInstanceId",
-      MAX_ID_LEN
-    );
-    out.actual = validateSetLog(command.actual, "actual");
-    if ("sessionId" in command) {
-      out.sessionId = assertString(command.sessionId, "sessionId", MAX_ID_LEN);
-    }
-    if ("correction" in command) {
-      if (command.correction !== true || !out.sessionId) {
-        invalidCommand("A correction requires its session id.");
-      }
-      out.correction = true;
-    }
-    if ("today" in command) {
-      out.today = assertLocalDate(command.today, "today");
-    }
-    if ("actualRpe" in command) {
-      out.actualRpe = assertFiniteNumber(command.actualRpe, "actualRpe", 1, 10);
-    }
-  },
-
   removeExercise(command, out) {
     assertKeys(
       command,
@@ -769,16 +723,31 @@ const KIND_VALIDATORS = {
 
   setProgramSettings(command, out) {
     assertKeys(command, "setProgramSettings", ["kind", "commandId", "settings"], []);
-    assertKeys(command.settings, "settings", ["autoProgression", "microloading"], []);
+    // `smallPlates` replaced Microloading (Lift4 (6)). App versions from
+    // before it still send `microloading`, which is accepted and dropped:
+    // nothing reads it, and their saves keep the small-plates answer.
+    assertKeys(
+      command.settings,
+      "settings",
+      ["autoProgression"],
+      ["smallPlates", "microloading"]
+    );
+    if (command.settings.microloading !== undefined) {
+      assertBoolean(command.settings.microloading, "settings.microloading");
+    }
     out.settings = {
       autoProgression: assertBoolean(
         command.settings.autoProgression,
         "settings.autoProgression"
       ),
-      microloading: assertBoolean(
-        command.settings.microloading,
-        "settings.microloading"
-      ),
+      ...(command.settings.smallPlates !== undefined
+        ? {
+            smallPlates: assertBoolean(
+              command.settings.smallPlates,
+              "settings.smallPlates"
+            ),
+          }
+        : {}),
     };
   },
 
@@ -1038,14 +1007,6 @@ function makeCommandReceipt({ command, now }) {
 // concurrent commands, each retried against the LATEST committed state, both
 // survive instead of the last client snapshot winning.
 //
-// SCOPE OF THIS PR. Ten of the fourteen command kinds are implemented here —
-// every kind that is a pure state transform. The four GENERATION-dependent
-// kinds (`completeWorkoutDay`'s workout effect, `logExercise`'s progression
-// engine, and `addExercises`/`replaceExercise`'s catalog build) are staged
-// into the next PR, where they pair with the callable that injects admin
-// `Timestamp`, the progression engine, and the exercise catalog. Until then
-// they throw a clear staged error. The reducer is INERT: nothing calls it yet.
-//
 // DETERMINISM. `normalizeForReducer` applies only value defaults + a deep-safe
 // per-slice immutable update — it NEVER invents `instanceId`s. Per the packet,
 // `ensureProgramState` persists exercise identities before any identity command
@@ -1149,7 +1110,7 @@ function normalizeForReducer(state) {
     ...state,
     settings: isPlainObject(state.settings)
       ? state.settings
-      : { autoProgression: true, microloading: true },
+      : { autoProgression: true, smallPlates: false },
     weekHistory: Array.isArray(state.weekHistory) ? state.weekHistory : [],
     workouts: workouts.map((day, d) => ({
       ...day,
@@ -1540,11 +1501,19 @@ function startTrainingBlock(state, profile, command, now) {
   return {
     ...state,
     primaryGoal: command.focus,
-    workouts: represcribeWorkouts(
-      workouts,
-      command.focus,
-      toExperience(profile && profile.experience)
-    ),
+    // A block with the focus the week is already prescribed for changes
+    // nothing (Lift4), as its consequence line says. Re-deriving would put
+    // every climbing rep target back to its base and clear the miss counts
+    // for no change of focus. The focus read here is the one Train passes
+    // the block card as `currentFocus`, so the line and the week agree.
+    workouts:
+      command.focus === (state.primaryGoal || "general")
+        ? workouts
+        : represcribeWorkouts(
+            workouts,
+            command.focus,
+            toExperience(profile && profile.experience)
+          ),
     trainingBlock: block,
   };
 }
@@ -1572,14 +1541,16 @@ function releaseTrainingBlock(state, profile, command) {
     primaryGoal: block.goalBefore,
     // A legacy block adopted at deploy never represcribed anything, so
     // releasing it must not retroactively rewrite a prescription it never
-    // owned.
-    workouts: block.owned
-      ? represcribeWorkouts(
-          workouts,
-          block.goalBefore,
-          toExperience(profile && profile.experience)
-        )
-      : workouts,
+    // owned. Nor does a block whose focus was the one it hands back to: as
+    // at the start, the same focus changes nothing.
+    workouts:
+      block.owned && block.goalBefore !== (state.primaryGoal || block.focus)
+        ? represcribeWorkouts(
+            workouts,
+            block.goalBefore,
+            toExperience(profile && profile.experience)
+          )
+        : workouts,
   };
 }
 
@@ -1662,12 +1633,12 @@ function overrideRunDay(state, command) {
 // PROGRAM-DELOAD-01 — user-invoked deload week (apply / revert).
 //
 // applyDeloadWeek eases the WHOLE active week via the mirrored transform
-// (−1 set floor 2, weight ×0.85 → nearest 2.5 kg), sets currentPhase
-// "deload" and clears acute fatigue — exactly what the automatic week-4
-// path (client advanceWeek) does. Semantic idempotency: a week already in
-// "deload" phase rejects, so a second Apply (new commandId) can never
-// compound to ×0.85². The pre-deload state is stashed in
-// `deloadSnapshot` for the undo path.
+// (`deloadEngine.js`: half the working sets, rounded up, at the same
+// weights and reps), sets currentPhase "deload" and clears acute fatigue —
+// exactly what the automatic lighter week (client advanceWeek) does.
+// Semantic idempotency: a week already in "deload" phase rejects, so a
+// second Apply (new commandId) can never halve the sets twice. The
+// pre-deload state is stashed in `deloadSnapshot` for the undo path.
 //
 // revertDeloadWeek restores the stash — valid only while the week cursor
 // still matches the snapshot's, so a stale snapshot from a previous week
@@ -1723,6 +1694,24 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   if (state.currentPhase === "deload") {
     failedPrecondition("This week is already a deload week.");
   }
+  // Never two in a row (Lift4 (9)): the week last trained, as the client's
+  // rollover archived it, says whether it was a lighter one (client
+  // `lighterWeekAllowed`).
+  const history = Array.isArray(state.weekHistory) ? state.weekHistory : [];
+  const last = history[history.length - 1];
+  if (isPlainObject(last) && last.lighter === true) {
+    failedPrecondition("The last week you trained was a lighter week.");
+  }
+  // One at a time (Lift4 (11)): the first week back after a break has its
+  // own set fewer, so it can't be a lighter week too. The client's
+  // `firstWeekBack` reads the same two weeks.
+  if (
+    isPlainObject(state.easingBack) &&
+    typeof state.easingBack.weeksLeft === "number" &&
+    state.easingBack.weeksLeft >= EASING_BACK_WEEKS
+  ) {
+    failedPrecondition("This is your first week back.");
+  }
   return {
     ...state,
     deloadSnapshot: {
@@ -1743,19 +1732,9 @@ function applyDeloadWeekCommand(state, profile, command, now) {
       appliedAt: now,
     },
     runDays: applyDeloadRunSwaps(state, command.runSwaps),
-    // Backlog #8: the recipe follows training age. An absent/unknown
-    // experience falls back to the novice recipe — the pre-#8 behaviour.
-    //
-    // `prepareForDeloadWorkouts` FIRST, exactly as the client's automatic
-    // week-4 path does (`applyDeload(prepareForDeload(workouts))`). Without
-    // it this command cut load/reps with nothing to restore from, so meso
-    // exit never undid the cut and the user stayed permanently lighter. The
-    // deloadSnapshot below does not cover that: its weekNumber guard makes it
-    // inert once the week rolls, which is precisely when the restore is due.
-    workouts: applyDeloadToWorkouts(
-      prepareForDeloadWorkouts(state.workouts),
-      profile && profile.experience
-    ),
+    // One recipe for everyone (Lift4 (9)), from the plan's own sets, so
+    // the next week's reset restores it whatever the snapshot's state.
+    workouts: applyDeloadToWorkouts(state.workouts),
     currentPhase: "deload",
     fatigueScore: 0,
   };
@@ -1972,107 +1951,6 @@ function revertEaseWeekCommand(state, command) {
   return next;
 }
 
-function logExercise(state, command, now) {
-  const day = requireWorkoutDay(state, command);
-  // Older clients can replay per-set commands after the final save arrived.
-  // The saved workout now owns progression; only its revisioned correction
-  // path may replace that result.
-  if (day.completed && day.completedWorkoutId) {
-    failedPrecondition("This workout is saved. Correct it from History.");
-  }
-  const idx = day.exercises.findIndex(
-    (ex) => ex && ex.instanceId === command.exerciseInstanceId
-  );
-  if (idx === -1) {
-    failedPrecondition("That exercise is no longer in this workout.");
-  }
-  const storedExercise = day.exercises[idx];
-  if (command.correction && storedExercise.sessionProgression?.id !== command.sessionId) {
-    failedPrecondition("This session's progression can no longer be corrected. Refresh your workout.");
-  }
-  // Only a baseline recorded by this reducer is trusted. A corrected set
-  // replaces this session's result instead of counting as another workout.
-  const { sessionProgression, ...currentExercise } = storedExercise;
-  const exercise = command.sessionId && sessionProgression?.id === command.sessionId
-    ? sessionProgression.baseline
-    : currentExercise;
-  const settings = isPlainObject(state.settings)
-    ? state.settings
-    : { autoProgression: true, microloading: true };
-
-  // Mirrors useProgram.logExercise — all THREE of its branches. The held one
-  // arrived with the boundary migration: the client had it and this reducer
-  // did not, so the server would have progressed a returning lifter straight
-  // through the window designed to hold them. See lib/progressionHold.js.
-  let updatedExercise;
-  if (holdsProgression(state.trainingBlock, command.today)) {
-    // Blk2: an "easing back in" block holds LOAD, but still records the
-    // session — the sessions happened and the user should see them. This is
-    // what separates the hold from the autoProgression:false branch below,
-    // which writes no history at all.
-    const history = [
-      ...(Array.isArray(exercise.performanceHistory)
-        ? exercise.performanceHistory
-        : []),
-      {
-        // UTC stamp, as everywhere else on the server. The field is
-        // informational and not week-bucketed — progressionEngine.js makes
-        // the same call and documents it.
-        date: dateStampUTC(now),
-        weight: command.actual.weight,
-        repsCompleted: command.actual.reps,
-        repsTarget: exercise.reps,
-      },
-    ].slice(-PERFORMANCE_HISTORY_CAP);
-    updatedExercise = {
-      ...exercise,
-      lastAttemptedWeight: command.actual.weight,
-      lastPerformance: {
-        sets: exercise.sets,
-        reps: command.actual.reps,
-        weight: command.actual.weight,
-        completed: command.actual.reps >= exercise.reps,
-      },
-      performanceHistory: history,
-    };
-  } else if (settings.autoProgression) {
-    updatedExercise = applyProgression(
-      exercise,
-      command.actual.reps,
-      command.actual.weight,
-      state.goal,
-      settings.microloading,
-      command.actualRpe,
-      now
-    );
-  } else {
-    // Auto-progression off: no step, and no success or failure accounting,
-    // but the plan still carries the load lifted (`liftedLoad`) — following
-    // the person's own load is not auto-progression. Mirror of the client's
-    // sessionCompletion.applySessionProgression.
-    const lifted = liftedLoad(exercise.exerciseId, command.actual.weight);
-    updatedExercise = {
-      ...exercise,
-      ...(lifted === null ? {} : { weight: lifted }),
-      lastAttemptedWeight: command.actual.weight,
-      lastPerformance: {
-        sets: exercise.sets,
-        reps: command.actual.reps,
-        weight: command.actual.weight,
-        completed: command.actual.reps >= exercise.reps,
-      },
-    };
-  }
-
-  if (command.sessionId) {
-    updatedExercise.sessionProgression = { id: command.sessionId, baseline: exercise };
-  }
-  return mapWorkoutDay(state, command.dayIndex, (d) => ({
-    ...d,
-    exercises: d.exercises.map((ex, i) => (i === idx ? updatedExercise : ex)),
-  }));
-}
-
 // Build the exercise catalog lookup + validation for add/replace. Rejects an
 // unknown id as invalid-argument (the id comes from the catalog picker; an
 // unknown one is a malformed/forged command, not stale state).
@@ -2158,7 +2036,7 @@ function replaceExercise(state, command) {
      it. What the validator refuses is a client-supplied EXERCISE OBJECT — the
      name, the category, the identity — because those must be derived from the
      catalog server-side, and they still are. A bounded non-negative number is
-     the same shape as the weight already accepted on `logExercise` and
+     the same shape as the weight already accepted on
      `updateExercise.patch`. The failure mode if a client sends a silly value
      is a bad starting weight in that user's own programme, which the
      progression engine corrects within a session or two — the module that
@@ -2384,9 +2262,6 @@ function applyProgramCommand({ state, profile, command, now }) {
     case "reorderExercises":
       next = reorderExercises(current, validated);
       break;
-    case "logExercise":
-      next = logExercise(current, validated, now);
-      break;
     case "addExercises":
       next = addExercises(current, validated);
       break;
@@ -2422,7 +2297,15 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     }
     case "setProgramSettings":
-      next = { ...current, settings: { ...validated.settings } };
+      next = {
+        ...current,
+        settings: {
+          autoProgression: validated.settings.autoProgression,
+          smallPlates:
+            validated.settings.smallPlates ??
+            current.settings.smallPlates === true,
+        },
+      };
       break;
     case "setProgramGoalMirror":
       next = { ...current, goal: validated.goal };

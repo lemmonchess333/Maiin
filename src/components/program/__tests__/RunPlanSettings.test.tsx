@@ -455,6 +455,55 @@ describe("RunPlanSettings", () => {
     expect(payload.profileUpdates.runDifficulty).toBe("gentler");
   });
 
+  it("Lift4 (10): asks a lifter about the legs while the runs build, and saves the answer with the plan", async () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const legTrim = screen.getByRole("switch", {
+      name: "Lighten leg sessions while your runs build",
+    });
+    // Never asked reads as no.
+    expect(legTrim).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(legTrim);
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceLegTrim).toBe(true);
+  });
+
+  it("Lift4 (10): the answer alone is a change to save", async () => {
+    renderPage({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      raceLegTrim: true,
+    } as UserProfile);
+    expect(screen.queryByRole("button", { name: /Save .*plan/i })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceLegTrim).toBe(false);
+  });
+
+  it("Lift4 (10): not asked of someone who doesn't lift", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 0 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    expect(
+      screen.queryByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeNull();
+  });
+
   it("D14: knobs hidden in freeform (nothing scheduled to tune)", () => {
     renderPage(baseProfile);
     expect(screen.queryByText("Long-run volume")).not.toBeInTheDocument();
@@ -608,7 +657,7 @@ describe("RunPlanSettings", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: 1,
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
     } as unknown as ProgramState;
 

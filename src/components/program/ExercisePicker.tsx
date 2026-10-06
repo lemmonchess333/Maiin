@@ -38,6 +38,11 @@ interface Props {
   headerTitle?: string;
   existingExerciseIds?: string[];
   onRemoveExercise?: (exerciseId: string) => void;
+  /** One exercise, for a swap or a replace, named by its action ("Swap for
+   *  today", "Replace"): choosing another clears the first, the bar says
+   *  the action rather than adding, and the detail sheet's button does it.
+   *  Without it the picker adds, as many as are ticked. */
+  pickAction?: string;
 }
 
 export default function ExercisePicker({
@@ -48,6 +53,7 @@ export default function ExercisePicker({
   headerTitle = "Select exercise",
   existingExerciseIds,
   onRemoveExercise,
+  pickAction,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -108,6 +114,10 @@ export default function ExercisePicker({
 
   const toggleSelection = (id: string) => {
     haptic("light");
+    if (pickAction) {
+      setSelectedIds((prev) => (prev.has(id) ? new Set() : new Set([id])));
+      return;
+    }
     if (preExistingIds.has(id)) {
       if (selectedIds.has(id)) {
         onRemoveExercise?.(id);
@@ -375,9 +385,13 @@ export default function ExercisePicker({
                     fullWidth
                     onClick={handleAddSelected}
                   >
-                    {newlySelectedCount} exercise
-                    {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
-                    workout
+                    {pickAction ?? (
+                      <>
+                        {newlySelectedCount} exercise
+                        {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
+                        workout
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               )}
@@ -410,18 +424,31 @@ export default function ExercisePicker({
                 <div className="mt-5">
                   <Button
                     variant={
-                      selectedIds.has(detail.id) ? "secondary" : "primary"
+                      !pickAction && selectedIds.has(detail.id)
+                        ? "secondary"
+                        : "primary"
                     }
                     fullWidth
-                    onClick={() => toggleSelection(detail.id)}
+                    onClick={() => {
+                      if (!pickAction) {
+                        toggleSelection(detail.id);
+                        return;
+                      }
+                      haptic("light");
+                      onSelect(detail);
+                      setDetail(null);
+                      onClose();
+                    }}
                   >
-                    {preExistingIds.has(detail.id)
-                      ? selectedIds.has(detail.id)
-                        ? "In this workout — tap to remove"
-                        : "Add back to workout"
-                      : selectedIds.has(detail.id)
-                        ? "Selected — tap to unselect"
-                        : "Add to workout"}
+                    {pickAction
+                      ? pickAction
+                      : preExistingIds.has(detail.id)
+                        ? selectedIds.has(detail.id)
+                          ? "In this workout — tap to remove"
+                          : "Add back to workout"
+                        : selectedIds.has(detail.id)
+                          ? "Selected — tap to unselect"
+                          : "Add to workout"}
                   </Button>
                   <Button
                     variant="ghost"

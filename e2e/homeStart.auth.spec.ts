@@ -96,7 +96,7 @@ test.describe("Home's Today card", () => {
           updatedAt: wednesday.getTime(),
           liftWeekKey: localWeekKey(wednesday),
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [],
         } satisfies ProgramState);
       const seedUser = await auth.getUserByEmail(TEST_USER.email);

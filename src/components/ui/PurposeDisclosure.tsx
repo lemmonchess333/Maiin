@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 
 /**
  * Coaching context on demand, beside the prescription: "Why this run" on
- * a run, "Why this session" on a lift. It opens closed, so a day's details
+ * a run. (A lift's "Why this session" opens the rules sheet instead,
+ * Lift4 (3).) It opens closed, so a day's details
  * lead with the session and its dose and the reason is one tap away (the
  * owner's daily-logging direction in DESIGN_GUIDE.md). Renders nothing
  * when there is nothing to say.

@@ -169,6 +169,7 @@ type MockProfile = {
   } | null;
   primaryGoal?: string;
   program?: { goal?: string };
+  raceLegTrim?: boolean;
 };
 
 let mockProfile: MockProfile | null = null;
@@ -401,7 +402,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         workouts: [],
         fatigueScore: 0,
         updatedAt: Date.now(),
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
         programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
         runDays: [], // empty so refresh writes
@@ -453,7 +454,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -503,7 +504,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [], // empty so refresh writes
@@ -548,7 +549,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -609,7 +610,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -659,7 +660,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       // Deliberately omit programSchemaVersion to test the
       // explicit write on regenerate.
@@ -719,7 +720,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       runDays: [],
       runPlan: { mode: "race_prep" },
@@ -752,7 +753,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       runDays: [],
       runPlan: { mode: "race_prep" },
@@ -818,7 +819,7 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [legacyCompletedRunDay()],
@@ -983,7 +984,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1022,7 +1023,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [plannedRunDay(1, "runday_a"), plannedRunDay(3, "runday_b")],
@@ -1059,7 +1060,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1156,7 +1157,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: structuredPeriodRunDays,
@@ -1224,7 +1225,7 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1293,7 +1294,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -1330,6 +1331,197 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     expect(lastWrite.runPlan?.phase).toBe("recovery");
   });
 
+  it("Lift4 (10) — advanceToNextWeek into race week makes it race week, and says so", async () => {
+    const targetDate = raceDateThreeWeeksOut();
+    mockProfile = raceProfile(targetDate);
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "ppl",
+      workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      // The week before race week: the advance carries the plan on a week.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 2,
+        totalWeeks: 4,
+      },
+    } as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+    vi.mocked(toast.info).mockClear();
+
+    await act(async () => {
+      await result.current.advanceToNextWeek();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.runPlan?.currentWeek).toBe(3);
+    expect(lastWrite.raceWeek).toBe("race");
+    expect(lastWrite.currentPhase).toBe("deload");
+    expect(vi.mocked(toast.info).mock.calls.map(([text]) => text)).toEqual([
+      "Race week: one short session, with nothing heavy for your legs",
+    ]);
+  });
+
+  /** Race week with its one session not done yet, the race `daysOut`
+   *  days from today. */
+  function seedRaceWeek(daysOut: number) {
+    const targetDate = localDateString(addLocalDays(new Date(), daysOut));
+    mockProfile = raceProfile(targetDate);
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "deload",
+      raceWeek: "race",
+      weekNumber: 7,
+      splitType: "ppl",
+      workouts: [
+        { dayName: "Push", dayType: "push", completed: false, exercises: [] },
+        {
+          dayName: "Pull",
+          dayType: "pull",
+          completed: false,
+          skipped: true,
+          exercises: [],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: localWeekKey(),
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 4,
+        totalWeeks: 4,
+      },
+    } as ProgramState);
+  }
+
+  const raceRestSkipsSent = () =>
+    sentCommands.filter((command) => command.kind === "skipWorkoutDay");
+
+  it("Lift4 (10) — the race's rest days skip a session not done yet", async () => {
+    seedRaceWeek(1);
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    // Through the skip command the person's own skip uses, so the server
+    // checks it like any other (the mock holds it to the server's rules).
+    await waitFor(
+      () =>
+        expect(raceRestSkipsSent()).toEqual([
+          expect.objectContaining({ dayIndex: 0, expectedWeekNumber: 7 }),
+        ]),
+      { timeout: 2000 }
+    );
+    // Once: the fake doesn't apply commands, so the re-read brings the day
+    // back unskipped, and the same day isn't tried again.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    expect(raceRestSkipsSent()).toHaveLength(1);
+  });
+
+  it("Lift4 (10) — three days before the race, race week's session is still there", async () => {
+    seedRaceWeek(3);
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+    expect(result.current.programState?.workouts[0].skipped).toBeFalsy();
+    expect(raceRestSkipsSent()).toEqual([]);
+  });
+
+  it("Lift4 (10) — advanceToNextWeek into a build week trims the legs on a yes at race setup", async () => {
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = { ...raceProfile(targetDate), raceLegTrim: true };
+    const squat = {
+      instanceId: "squat-1",
+      exerciseId: "squat",
+      name: "Squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 5,
+      weight: 100,
+      progressionType: "linear",
+    };
+    const bench = {
+      ...squat,
+      instanceId: "bench-1",
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      movementCategory: "horizontal_push",
+      weight: 80,
+    };
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "full_body",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: true,
+          exercises: [squat, bench],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      // Base week 5 of 16: the advance carries the plan into build week 6.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 5,
+        totalWeeks: 16,
+      },
+    } as unknown as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+
+    await act(async () => {
+      await result.current.advanceToNextWeek();
+    });
+
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
+    expect(lastWrite.runPlan?.currentWeek).toBe(6);
+    expect(lastWrite.raceWeek).toBe("build");
+    const lifts = lastWrite.workouts[0].exercises;
+    expect(lifts.map((ex) => [ex.exerciseId, ex.sets])).toEqual([
+      ["squat", 2],
+      ["bench-press", 3],
+    ]);
+  });
+
   it("RUN-H1 — advanceToNextWeek mid-recovery keeps the phase + emits a recovery week (not a race regen)", async () => {
     // A week rolling over while recovery is still active must NOT regenerate a
     // race plan — that path drops phase/recoveryEndDate via makeRunPlanRecord
@@ -1351,7 +1543,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -1425,7 +1617,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -1483,7 +1675,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -1554,7 +1746,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1599,6 +1791,79 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     );
   });
 
+  it("Lift4 (10): trims the legs rolling into a race build week on a yes", async () => {
+    const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = {
+      ...raceProfile(targetDate, { weeklyRunDaysTarget: 2 }),
+      raceLegTrim: true,
+    };
+    const squat = {
+      instanceId: "squat-1",
+      exerciseId: "squat",
+      name: "Squat",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 5,
+      weight: 100,
+      progressionType: "linear",
+    };
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 6,
+      splitType: "full_body",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: true,
+          exercises: [squat],
+        },
+      ],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: lastWeek,
+      runDays: [
+        {
+          id: "last_week_run",
+          dayIndex: 1,
+          date: lastWeek,
+          weekKey: lastWeek,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+        } as ScheduledRunDay,
+      ],
+      // Base week 5 of 16, rolling into build week 6.
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        currentWeek: 5,
+        totalWeeks: 16,
+      },
+    } as unknown as ProgramState);
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(
+      () => {
+        const lastWrite = setDocCalls()[setDocCalls().length - 1]?.data as
+          | ProgramState
+          | undefined;
+        expect(lastWrite?.runPlan?.currentWeek).toBe(6);
+        expect(lastWrite?.raceWeek).toBe("build");
+        expect(lastWrite?.workouts[0].exercises[0].sets).toBe(2);
+      },
+      { timeout: 2000 }
+    );
+  });
+
   describe("a lift anchor already at the week being rolled into", () => {
     // A Thursday-to-Sunday start anchors the lifts on the next week, so its
     // week 1 runs on to the following Sunday. The run side rolls each
@@ -1617,7 +1882,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         ],
         fatigueScore: 0,
         updatedAt: Date.now(),
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
         weekHistory: [],
         programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
         liftWeekKey,
@@ -1692,7 +1957,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
@@ -1730,7 +1995,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -1759,7 +2024,7 @@ describe("cache-first paint (cold-open latency)", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
     } as ProgramState;
@@ -1809,7 +2074,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       splitType: "ppl",
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       workouts: [
@@ -2167,7 +2432,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
       workouts: [day("Push", { completed: true }), day("Pull"), day("Legs")],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -2262,7 +2527,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       // A valid V2 race run day so the load preserves it (no regen).
@@ -2353,7 +2618,7 @@ describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
@@ -2423,7 +2688,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       workouts,
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays,
@@ -2608,7 +2873,7 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays,
@@ -2769,6 +3034,7 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     mockProfile = lifterProfile();
     resetFirestore();
     seedProgram(frozenLifter(staleKey()));
+    vi.mocked(toast.success).mockClear();
 
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -2797,6 +3063,14 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     expect(last.weekNumber).toBe(4);
     // …and the week that WAS trained is archived rather than silently dropped.
     expect(last.weekHistory?.length).toBe(1);
+    // Lift4: the session it didn't reach opens the week it comes back to.
+    // The two empty weeks after it had nothing to move.
+    expect(last.workouts.map((d) => d.dayName)).toEqual(["Lower", "Upper"]);
+    // …and the change of week says nothing. It said "Week advanced — 3
+    // weeks" here while the plan moved one. Settled past the save's own
+    // continuation, which is where it spoke.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("does nothing when the anchor is already the current week", async () => {
@@ -2832,6 +3106,237 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     const last = writes[writes.length - 1]?.data as ProgramState | undefined;
     // The migration seeds today; the rollover then finds nothing to do.
     expect(last?.weekNumber ?? 3).toBe(3);
+  });
+});
+
+/* ─── Lift4 · the week waits for a finish ───────────────────────────────
+   A finish lands only on the week it was started in: `commitWorkoutCompletion`
+   checks the week number and the day before it ticks the day and applies the
+   session's progression. The rollover used to run regardless, so a session
+   finished offline on Sunday and synced on Monday saved its workout while its
+   day stayed undone in the archived week and its progression was dropped.
+   A session left open across the change of week lost the same way. ── */
+describe("the week rollover waits for a finish (Lift4)", () => {
+  const lastWeek = () =>
+    localWeekKey(addLocalDays(parseLocalDate(localWeekKey()), -7));
+
+  const lifterProfile = (): MockProfile => ({
+    uid: "test-user-1",
+    weekSchedule: generateSchedule(2, 0),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 2,
+    weeklyRunDaysTarget: 0,
+    primaryGoal: "hypertrophy",
+  });
+
+  /** Last week's plan: Upper done, Lower still to do. Lower carries an
+   *  exercise with an instance id, so a finish can name the day. */
+  function lastWeeksPlan(): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: lastWeek(),
+      workouts: [
+        { dayName: "Upper", dayType: "push", completed: true, exercises: [] },
+        {
+          dayName: "Lower",
+          dayType: "legs",
+          completed: false,
+          exercises: [
+            {
+              instanceId: "lower-squat",
+              exerciseId: "barbell-squat",
+              name: "Barbell Squat",
+              sets: 3,
+              reps: 5,
+              weight: 100,
+              progressionType: "linear",
+            },
+          ],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  const rolled = () =>
+    setDocCalls().some(
+      (w) => (w.data as ProgramState)?.liftWeekKey === localWeekKey()
+    );
+
+  it("rolls only after a finish queued offline has landed on its own week", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    const plan = lastWeeksPlan();
+    seedProgram(plan);
+    const {
+      flushQueue,
+      hasPendingProgrammeCompletion,
+      queueWorkoutCompletion,
+    } = await import("@/lib/offlineQueue");
+    const { workoutCompletionDayIdentity } =
+      await import("@/lib/workoutCompletion");
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      // Sunday's Lower session, finished with no connection.
+      void queueWorkoutCompletion(
+        {} as Parameters<typeof queueWorkoutCompletion>[0],
+        "test-user-1",
+        "programme-sunday",
+        { date: lastWeek(), completionId: "sunday", exercises: [] },
+        {
+          weekNumber: 3,
+          dayIndex: 1,
+          dayIdentity: workoutCompletionDayIdentity(plan.workouts[1])!,
+        }
+      );
+      expect(hasPendingProgrammeCompletion("test-user-1")).toBe(true);
+
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      // Loaded, a week stale, and still last week's: the finish is waiting.
+      expect(result.current.programState?.liftWeekKey).toBe(lastWeek());
+      expect(rolled()).toBe(false);
+
+      online.mockReturnValue(true);
+      await act(async () => {
+        await flushQueue({} as Parameters<typeof flushQueue>[0], "test-user-1");
+      });
+
+      await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+      const last = setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+      // The archived week is the one the session belonged to, with its day
+      // ticked by the finish rather than left undone.
+      const archived = last.weekHistory?.[last.weekHistory.length - 1];
+      expect(archived?.weekNumber).toBe(3);
+      expect(archived?.workouts[1]).toMatchObject({
+        completed: true,
+        completedWorkoutId: "programme-sunday",
+      });
+      expect(
+        readDoc("users/test-user-1/workouts/programme-sunday")
+      ).toBeTruthy();
+    } finally {
+      online.mockRestore();
+    }
+  });
+
+  it("rolls only once an open session closes", async () => {
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    try {
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      expect(result.current.programState?.liftWeekKey).toBe(lastWeek());
+      expect(rolled()).toBe(false);
+
+      act(() => close());
+      await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+    } finally {
+      close();
+    }
+  });
+
+  it("does not wait on a finish whose sync failed", async () => {
+    // A failed entry waits on the person's retry. The week must not freeze
+    // behind it, the defect D1 fixed.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    seedProgram(lastWeeksPlan());
+    localStorage.setItem(
+      "tropos_offline_queue",
+      JSON.stringify([
+        {
+          id: "failed-finish",
+          uid: "test-user-1",
+          collectionPath: "users/test-user-1/workouts",
+          docId: "programme-failed",
+          data: {},
+          timestamp: Date.now(),
+          durable: true,
+          workoutCompletion: {
+            programme: { weekNumber: 3, dayIndex: 1, dayIdentity: "x" },
+          },
+          failed: true,
+        },
+      ])
+    );
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(() => expect(rolled()).toBe(true), { timeout: 2000 });
+  });
+
+  it("holds the race-plan rollover the same way", async () => {
+    const stale = lastWeek();
+    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    resetFirestore();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "stale_runday",
+          dayIndex: 1,
+          date: stale,
+          weekKey: stale,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+          completed: false,
+        } as ScheduledRunDay,
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+      },
+    } as ProgramState);
+    const { openLiftSession } = await import("../openLiftSession");
+    const close = openLiftSession();
+    const runWeekRolled = () =>
+      setDocCalls().some(
+        (w) =>
+          (w.data as ProgramState)?.runDays?.[0]?.weekKey === localWeekKey()
+      );
+    try {
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      await new Promise((r) => setTimeout(r, 100));
+      expect(result.current.programState?.runDays?.[0]?.weekKey).toBe(stale);
+      expect(runWeekRolled()).toBe(false);
+
+      act(() => close());
+      await waitFor(() => expect(runWeekRolled()).toBe(true), {
+        timeout: 2000,
+      });
+    } finally {
+      close();
+    }
   });
 });
 
@@ -3101,7 +3606,7 @@ describe("refetchProgramState keeps programState byte-equal to the store", () =>
       workouts: [],
       fatigueScore: 0,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],

@@ -43,6 +43,7 @@ import {
 } from "./programTypes";
 import { primaryJudgementForExercise } from "./volumeModel";
 import { exerciseDisplayName } from "./variationBank";
+import { equipmentGridFor } from "./loadSteps";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
@@ -54,6 +55,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+import { isBodyweightExerciseId } from "@/lib/exercises";
 
 /**
  * A MAIN lift's minimum set anchor — mirrors volumeModel's
@@ -182,7 +184,7 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *
  * `fa19724a` fixed the engine forward-only. Worse, its lazy anchor
  * (`ex.baseSets ?? ex.sets`) then CAPTURED the already-decayed value as the
- * permanent anchor, so `applyWeeklyVolumeShape` now re-pins the shrunken
+ * permanent anchor, so `resetToBaseSets` re-pins the shrunken
  * number every week. Without this pass the damage is not merely unrepaired,
  * it is cemented.
  *
@@ -235,6 +237,81 @@ function repairDeloadDecay(
     // visible now rather than after the next rollover recomputes from it.
     sets: anchorMoved ? Math.max(ex.sets, repairedAnchor) : ex.sets,
   };
+}
+
+/**
+ * One-time repair (schema v5, Lift4): a bodyweight lift carrying a load a
+ * swap handed it.
+ *
+ * A swap into pull-ups scaled the outgoing lift's load by the bank's
+ * factors, and the pull-up's missing factor read as a full-weight lift, so
+ * a lat pulldown's 45 kg arrived as 75 kg of pull-ups. A bodyweight lift's
+ * programme weight is ADDED load: the session pre-filled 75 kg, and since a
+ * bodyweight set only counts as hit at the plan's added load, every
+ * unweighted session was a miss. `rescaleForSwap` no longer does this; this
+ * puts right the plans it already happened to.
+ *
+ * Only on positive evidence the load was not the person's: the equipment or
+ * injury filter brought the lift in (its "Swapped from" note), or no session
+ * ever logged it with added weight. A weighted pull-up someone set and
+ * lifted keeps its load. Its miss counts go too, since every miss was
+ * against a load nobody had asked for, and so does a lighter week's stash
+ * of the load, or the week's end would bring it back.
+ */
+function repairSwappedBodyweightLoad(ex: ProgramExercise): ProgramExercise {
+  if (!isBodyweightExerciseId(ex.exerciseId) || !(ex.weight > 0)) return ex;
+  const swappedIn = ex.notes?.startsWith("Swapped from") ?? false;
+  const loggedWithLoad = (ex.performanceHistory ?? []).some(
+    (record) => record.weight > 0
+  );
+  if (!swappedIn && loggedWithLoad) return ex;
+  return {
+    ...ex,
+    weight: 0,
+    lastSuccessfulWeight: 0,
+    lastAttemptedWeight: 0,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    ...(ex.preDeloadWeight !== undefined ? { preDeloadWeight: 0 } : {}),
+  };
+}
+
+/**
+ * One-time reset (schema v5, Lift4): every miss count starts again.
+ *
+ * Lift4 changed what a miss is. A count was kept from the last set alone;
+ * a miss is now a session whose sets add up to fewer reps than the target
+ * on every set, at the plan's own weight. Counts kept under the old rule
+ * are not evidence under the new one, so they reset when it ships.
+ */
+function resetMissCount(ex: ProgramExercise): ProgramExercise {
+  return ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex;
+}
+
+/**
+ * One-time rounding (schema v5, Lift4 (6)): a weight off its equipment's
+ * grid goes to the nearest weight on it, the lighter on a tie. Microloading
+ * added 1 kg a session and the old light-lift step 1.25 kg, which left
+ * weights no plate set or rack makes, such as 101 kg or a 9.25 kg
+ * dumbbell. Small plates start off, so a barbell rounds to 2.5 kg. A lift
+ * whose equipment the catalogue doesn't name keeps its weight, and a weight
+ * lifted afterwards is followed as lifted.
+ */
+function roundOntoGrid(ex: ProgramExercise): ProgramExercise {
+  const grid = equipmentGridFor(ex.exerciseId, false);
+  if (!grid || !(ex.weight > 0)) return ex;
+  const weight = grid.nearest(ex.weight);
+  const preDeloadWeight =
+    ex.preDeloadWeight !== undefined && ex.preDeloadWeight > 0
+      ? grid.nearest(ex.preDeloadWeight)
+      : ex.preDeloadWeight;
+  return weight === ex.weight && preDeloadWeight === ex.preDeloadWeight
+    ? ex
+    : {
+        ...ex,
+        weight,
+        ...(preDeloadWeight !== undefined ? { preDeloadWeight } : {}),
+      };
 }
 
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
@@ -390,6 +467,11 @@ export function migrateProgramState(
   // below and for the same reason: run on every load it would fight every
   // legitimate load below the last success (see `repairDeloadDecay`).
   const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
+  // One-shot for the same reason: run on every load, the first would take
+  // away a load someone set on a swapped-in pull-up after the repair, the
+  // second every miss counted since, and the third an odd weight someone
+  // lifts on purpose.
+  const lift4OneShots = (state.programSchemaVersion ?? 1) < 5;
   let workoutsChanged = false;
   const migratedWorkouts = state.workouts.map((day) => {
     let dayChanged = false;
@@ -402,6 +484,8 @@ export function migrateProgramState(
       }
 
       next = repairDeloadDecay(next, restoreDecayedLoads);
+      if (lift4OneShots)
+        next = roundOntoGrid(resetMissCount(repairSwappedBodyweightLoad(next)));
 
       if (next !== exercise) {
         workoutsChanged = true;

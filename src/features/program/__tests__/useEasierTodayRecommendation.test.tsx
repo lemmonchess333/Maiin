@@ -56,17 +56,13 @@ describe("the next lifting session uses performed run evidence", () => {
         completedAt: Timestamp.fromDate(new Date(2026, 8, 13, 0, 10)),
       }),
     });
-    const { result } = renderHook(() =>
-      useEasierTodayRecommendation(lower, [], false)
-    );
+    const { result } = renderHook(() => useEasierTodayRecommendation(lower));
     await flushSnapshots();
     expect(result.current?.reason).toContain("hard run yesterday");
   });
   it("does not relabel a two-day-old run as yesterday after a late finish", async () => {
     seedFirestore({ [path]: run({ date: "2026-09-11" }) });
-    const { result } = renderHook(() =>
-      useEasierTodayRecommendation(lower, [], false)
-    );
+    const { result } = renderHook(() => useEasierTodayRecommendation(lower));
     await flushSnapshots();
     expect(result.current?.recommended).toBe(false);
   });
@@ -75,7 +71,7 @@ describe("the next lifting session uses performed run evidence", () => {
     delete legacy.date;
     seedFirestore({ [path]: legacy });
     const { result, rerender } = renderHook(
-      ({ day }) => useEasierTodayRecommendation(day, [], false),
+      ({ day }) => useEasierTodayRecommendation(day),
       { initialProps: { day: lower } }
     );
     await waitFor(() => expect(result.current?.recommended).toBe(true));
@@ -91,18 +87,14 @@ describe("the next lifting session uses performed run evidence", () => {
     "does not infer a demanding run from ineligible work %j",
     async (overrides) => {
       seedFirestore({ [path]: run(overrides) });
-      const { result } = renderHook(() =>
-        useEasierTodayRecommendation(lower, [], false)
-      );
+      const { result } = renderHook(() => useEasierTodayRecommendation(lower));
       await flushSnapshots();
       expect(result.current?.recommended).toBe(false);
     }
   );
   it("withdraws advice during pending corrections and re-evaluates after sync and deletion", async () => {
     seedFirestore({ [path]: run() });
-    const { result } = renderHook(() =>
-      useEasierTodayRecommendation(lower, [], false)
-    );
+    const { result } = renderHook(() => useEasierTodayRecommendation(lower));
     await waitFor(() => expect(result.current?.recommended).toBe(true));
     act(() =>
       queueDurableWrite(
@@ -135,7 +127,7 @@ describe("the next lifting session uses performed run evidence", () => {
   it("expires yesterday's advice on app resume and clears it on account changes", async () => {
     seedFirestore({ [path]: run() });
     const { result, rerender } = renderHook(() =>
-      useEasierTodayRecommendation(lower, [], false)
+      useEasierTodayRecommendation(lower)
     );
     await waitFor(() => expect(result.current?.recommended).toBe(true));
     act(() => {
@@ -152,43 +144,5 @@ describe("the next lifting session uses performed run evidence", () => {
     owner.currentUser = { uid: "other" };
     rerender();
     expect(result.current?.recommended).toBe(false);
-  });
-  it.each([
-    { label: "no sets", sets: [] },
-    {
-      label: "warm-ups only",
-      sets: [{ type: "warmup", reps: 8, weightKg: 20 }],
-    },
-  ])("does not treat $label as muscle training", async ({ sets }) => {
-    const workouts = [
-      { date: "2026-09-12", exercises: [{ exerciseId: "squat", sets }] },
-    ];
-    const { result } = renderHook(() =>
-      useEasierTodayRecommendation(lower, workouts, false)
-    );
-    await flushSnapshots();
-    expect(result.current?.recommended).toBe(false);
-  });
-  it("keeps genuine completed bodyweight work and an independent deload recommendation", async () => {
-    const workouts = [
-      {
-        date: "2026-09-12",
-        exercises: [
-          {
-            exerciseId: "squat",
-            sets: [{ type: "working", reps: 8, weightKg: 0 }],
-          },
-        ],
-      },
-    ];
-    const { result, rerender } = renderHook(
-      ({ history, deload }) =>
-        useEasierTodayRecommendation(lower, history, deload),
-      { initialProps: { history: workouts, deload: false } }
-    );
-    await flushSnapshots();
-    expect(result.current?.reason).toContain("Quads");
-    rerender({ history: [], deload: true });
-    expect(result.current?.reason).toContain("deload");
   });
 });

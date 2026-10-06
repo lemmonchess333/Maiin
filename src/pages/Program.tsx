@@ -15,6 +15,7 @@ import {
 import { useProgram } from "@/features/program/useProgram";
 import { changeStands } from "@/features/program/programOutcome";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
+import { isRaceRestDay } from "@/features/program/raceRest";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -30,11 +31,8 @@ import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWe
 import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import {
-  deloadDismissKey,
-  pickLiftAdvice,
-  recoveryDismissKey,
-} from "@/lib/programNotices";
+import LiftRulesInfo from "@/components/program/LiftRulesInfo";
+import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import MiniMuscleFigure, {
@@ -56,17 +54,22 @@ import {
   estimateSessionMinutes,
   type SessionVariant,
 } from "@/features/program/expressSession";
+import type { RestContext } from "@/features/program/restTime";
 import {
   buildEasierSession,
   pickLighterDay,
   summarizeEasier,
 } from "@/features/program/easierToday";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
+import {
+  useEasierTodayRecommendation,
+  useHardRunBefore,
+} from "@/features/program/useEasierTodayRecommendation";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   CalendarRange,
   Dumbbell,
+  Feather,
   Settings2,
   CalendarDays,
   Footprints,
@@ -82,7 +85,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
-import { splitLabel, isCycleEndWeek } from "@/features/program/programEngine";
+import { splitLabel } from "@/features/program/programEngine";
+import {
+  isCycleEndWeek,
+  lighterWeekAllowed,
+} from "@/features/program/weekPrescription";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
@@ -111,14 +118,18 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
-import RecoveryReductionBanner from "@/components/program/RecoveryReductionBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
-import { shouldSuggestDeload } from "@/lib/deloadSuggestVisibility";
+import {
+  loadFromRunning,
+  shouldSuggestDeload,
+} from "@/lib/deloadSuggestVisibility";
 import { runHeaderLine } from "@/lib/runHeaderLine";
 import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
+import { openLiftSession } from "@/features/program/openLiftSession";
+import { lastSetsByExercise } from "@/features/program/lastSets";
 
 /**
  * IMPORTANT:
@@ -167,7 +178,6 @@ function ProgramInner() {
     dismissFellBehindPrompt,
     applyDeloadWeek,
     revertDeloadWeek,
-    undoRecoveryReduction,
     startTrainingBlock,
     adoptLegacyTrainingBlock,
     releaseTrainingBlock,
@@ -198,11 +208,11 @@ function ProgramInner() {
     const ok = await applyDeloadWeek();
     if (!ok) {
       toast.error(
-        "Couldn't apply the deload. Check your connection and try again."
+        "Couldn't take a lighter week. Check your connection and try again."
       );
       return false;
     }
-    toast.success("Deload applied — this week's loads are eased", {
+    toast.success("A lighter week: half the sets, at the same weights", {
       duration: 8000,
       action: {
         label: "Undo",
@@ -212,9 +222,9 @@ function ProgramInner() {
               trackProgrammeEvent("programme_deload_banner_action", {
                 action: "undo",
               });
-              toast.success("Deload undone — this week is back to plan");
+              toast.success("Back to the full plan this week");
             } else {
-              toast.error("Couldn't undo the deload.");
+              toast.error("Couldn't undo the lighter week.");
             }
           });
         },
@@ -262,40 +272,12 @@ function ProgramInner() {
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
-  // Per-exercise best working set from last session containing that exercise
-  const lastPerformanceMap = useMemo(() => {
-    const map = new Map<string, { weight: number; reps: number }>();
-    if (!recentWorkouts.length) return map;
-
-    // workouts are sorted by date desc — first occurrence of an exercise is the most recent
-    for (const workout of recentWorkouts) {
-      for (const wex of workout.exercises) {
-        if (map.has(wex.exerciseId) || !wex.sets.length) continue;
-
-        const maxWeight = Math.max(...wex.sets.map((s) => s.weightKg));
-
-        if (maxWeight > 0) {
-          // Filter out warm-up sets (< 50% of heaviest)
-          const workingSets = wex.sets.filter(
-            (s) => s.weightKg >= maxWeight * 0.5
-          );
-          // Best set: heaviest weight, then highest reps
-          const best = workingSets.reduce((a, b) =>
-            b.weightKg > a.weightKg ||
-            (b.weightKg === a.weightKg && b.reps > a.reps)
-              ? b
-              : a
-          );
-          map.set(wex.exerciseId, { weight: best.weightKg, reps: best.reps });
-        } else {
-          // Bodyweight: take highest reps
-          const best = wex.sets.reduce((a, b) => (b.reps > a.reps ? b : a));
-          map.set(wex.exerciseId, { weight: 0, reps: best.reps });
-        }
-      }
-    }
-    return map;
-  }, [recentWorkouts]);
+  // Every counted set from the last session with each exercise, for the
+  // rows' "Last:" line (`lastSetsByExercise`).
+  const lastSetsMap = useMemo(
+    () => lastSetsByExercise(recentWorkouts),
+    [recentWorkouts]
+  );
 
   // Core navigation state. The selected training day is mirrored into the URL
   // (?day=N) so opening an exercise detail and pressing back RESTORES the day
@@ -336,6 +318,10 @@ function ProgramInner() {
   const [showOverflow, setShowOverflow] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
+  // The week rollover waits while a session is open, so its finish lands on
+  // the week it started in (`openLiftSession`).
+  const sessionOpen = sessionDayIndex !== null;
+  useEffect(() => (sessionOpen ? openLiftSession() : undefined), [sessionOpen]);
   // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
   // The chooser only opens when a budget would actually change the day
   // (expressChoices > 1); otherwise Start workout stays one tap.
@@ -585,7 +571,6 @@ function ProgramInner() {
       : (programState?.weekNumber ?? 1)
   }`;
   const deloadNotice = useDismissOnce(deloadDismissKey(noticeWeekKey));
-  const recoveryNotice = useDismissOnce(recoveryDismissKey(noticeWeekKey));
 
   // Today index: the next-up cursor, the session Home offers too.
   const todayIndex = useMemo(() => {
@@ -593,10 +578,9 @@ function ProgramInner() {
     return nextUpIndex(programState);
   }, [programState, viewingHistoryIndex]);
 
+  const hardRunBefore = useHardRunBefore();
   const easierRecommendation = useEasierTodayRecommendation(
-    programState?.workouts[expressChooserDay ?? todayIndex],
-    recentWorkouts,
-    resolveDeloadRecommended(perfWeek)
+    programState?.workouts[expressChooserDay ?? todayIndex]
   );
 
   // Auto-select on week change (not on individual completion). Skips the reset
@@ -626,8 +610,8 @@ function ProgramInner() {
   }, [selectedDayIndex]);
 
   // Home's Today card links here with `?day=N&start=1` (DS3): Start on Home
-  // begins the session. Begin it the way this page's own Start does (the
-  // usual session time when one is set), once, then drop `start` from the
+  // begins the session. Begin it the way this page's own Start does, once,
+  // then drop `start` from the
   // URL so a refresh or a back navigation lands on the day instead of
   // starting it again. A finished or skipped day just opens. N is the day
   // Home showed, which can differ from this page's rotation cursor
@@ -647,9 +631,13 @@ function ProgramInner() {
     if (viewingHistoryIndex !== null || urlDay === null) return;
     const day = programState.workouts[urlDay];
     if (!day || day.completed || day.skipped) return;
-    const budget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-      ? profile!.liftTimeBudgetMinutes!
-      : null;
+    // A plan built to fit the person's time (Lift4 (5)) starts in full; one
+    // built before that still trims to their usual time at Start.
+    const budget =
+      programState.sessionMinutes === undefined &&
+      isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+        ? profile!.liftTimeBudgetMinutes!
+        : null;
     /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
        to the deep link, consumed above so it cannot repeat */
     setSessionBudgetMinutes(budget ?? 60);
@@ -697,6 +685,10 @@ function ProgramInner() {
     displayWorkouts.length > 0 &&
     displayWorkouts.every((d) => d.completed || d.skipped);
   const history = programState.weekHistory ?? [];
+  // A week from the history reads as a lighter week by its own mark, not by
+  // this week's phase.
+  const viewedWeekLighter =
+    isViewingHistory && history[viewingHistoryIndex]?.lighter === true;
 
   // Clamp selectedDayIndex
   const idx =
@@ -753,20 +745,30 @@ function ProgramInner() {
     })
   );
 
-  // Session metadata
-  const usualBudget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-    ? profile.liftTimeBudgetMinutes
-    : null;
+  // Session metadata. Every estimate here prices the rests the session's
+  // timer will run (`restSecondsFor`): the person's fixed rest, or the
+  // plan's, shorter in a plan built for 30 minutes.
+  const restContext: RestContext = {
+    fixedRest: profile?.defaultRestSeconds,
+    sessionMinutes: programState.sessionMinutes,
+  };
+  // The trim at Start retires with plans built to fit the time (Lift4 (5)):
+  // only a plan from before then still trims to the person's usual time.
+  const usualBudget =
+    programState.sessionMinutes === undefined &&
+    isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+      ? profile.liftTimeBudgetMinutes
+      : null;
   const usualPlan =
     selectedWorkout && usualBudget !== null
-      ? buildTimeBudgetSession(selectedWorkout, usualBudget)
+      ? buildTimeBudgetSession(selectedWorkout, usualBudget, restContext)
       : null;
   // Was an inline copy of the old sets x 2.5 formula. A second copy of a
   // shared rule is the drift this repo keeps paying for — and it would now
   // disagree with the chooser sheet on the same screen.
   const estimatedMinutes =
     usualPlan?.estimatedMinutes ??
-    estimateSessionMinutes(selectedWorkout?.exercises ?? []);
+    estimateSessionMinutes(selectedWorkout?.exercises ?? [], restContext);
 
   /* The session card's words and picture (DS3). "Pull — Lat Focus" set
      whole as a title broke at the dash on a phone, so the category joins
@@ -855,7 +857,7 @@ function ProgramInner() {
    *
    * The Performance Index can recommend a deload for a runner who is
    * already tapering into a race, and the banner had no guard: it offered
-   * "Apply deload week" on top of a taper that is itself a planned load
+   * a lighter week on top of a taper that is itself a planned load
    * cut. The lock's words are "taper IS the deload; no double-deload".
    *
    * The decision lives in `shouldSuggestDeload` rather than inline here,
@@ -865,6 +867,7 @@ function ProgramInner() {
    */
   const showDeloadSuggest = shouldSuggestDeload({
     deloadRecommended: resolveDeloadRecommended(perfWeek),
+    loadFromRunning: loadFromRunning(perfWeek),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
@@ -875,9 +878,6 @@ function ProgramInner() {
       | undefined,
   });
   const liftAdvice = pickLiftAdvice({
-    recovery:
-      (programState.recoveringMuscles ?? []).length > 0 &&
-      !recoveryNotice.dismissed,
     deload:
       showDeloadSuggest &&
       programState.currentPhase !== "deload" &&
@@ -1044,9 +1044,8 @@ function ProgramInner() {
                 reopens on a new week if the signal still applies. */}
           <TrackProgrammeSectionView section="deload_banner">
             <DeloadBanner
-              /* A recovery reduction outranks the recommendation; an
-                 active deload week is state and shows regardless. */
-              visible={showDeloadSuggest && liftAdvice !== "recovery"}
+              /* An active lighter week is state and shows regardless. */
+              visible={showDeloadSuggest}
               dismissed={deloadNotice.dismissed}
               onDismiss={deloadNotice.dismiss}
               weekKey={`w${displayWeekNumber}`}
@@ -1054,28 +1053,9 @@ function ProgramInner() {
               // The run half of the deload, named in the copy. Derived from
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
-              experience={profile?.experience}
+              raceWeek={programState.raceWeek}
+              raceRest={isRaceRestDay(programState.runPlan, localDateString())}
               onApply={handleApplyDeload}
-            />
-          </TrackProgrammeSectionView>
-
-          {/* LIFT-EV-05: the rollover's automatic recovery reduction
-              (sets/reps halved for regressing muscles) was invisible —
-              this surfaces it with honest copy and a one-tap restore.
-              Week-level signal, same placement rationale as the deload
-              banner above. */}
-          <TrackProgrammeSectionView section="recovery_banner">
-            <RecoveryReductionBanner
-              muscles={programState.recoveringMuscles ?? []}
-              dismissed={recoveryNotice.dismissed}
-              onDismiss={recoveryNotice.dismiss}
-              weekKey={`w${displayWeekNumber}`}
-              onUndo={async () => {
-                const ok = await undoRecoveryReduction();
-                if (ok) toast.success("Full volume restored for this week");
-                else toast.error("Couldn't restore volume. Try again.");
-                return ok;
-              }}
             />
           </TrackProgrammeSectionView>
 
@@ -1085,20 +1065,31 @@ function ProgramInner() {
                 weekNumber={displayWeekNumber}
                 label={
                   liftWeekLabel(
-                    {
-                      ...programState,
-                      weekNumber: displayWeekNumber,
-                      trainingBlock: isViewingHistory
-                        ? undefined
-                        : programState.trainingBlock,
-                    },
-                    localDateString()
+                    isViewingHistory
+                      ? {
+                          weekNumber: displayWeekNumber,
+                          primaryGoal: programState.primaryGoal,
+                          currentPhase: viewedWeekLighter
+                            ? "deload"
+                            : "progression",
+                          archived: true,
+                        }
+                      : programState,
+                    localDateString(),
+                    profile?.experience
                   ) ?? undefined
                 }
                 onPrevWeek={goBack}
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
                 canGoNext={canGoForward}
+                info={
+                  <LiftRulesInfo
+                    purpose={null}
+                    programme={programState}
+                    experience={profile?.experience}
+                  />
+                }
               />
             </div>
           </TrackProgrammeSectionView>
@@ -1140,7 +1131,7 @@ function ProgramInner() {
                 Below keeps navigator adjacency without burying the
                 navigator, which moving the card ABOVE the header would. */}
           <ExperienceSuggestionCard
-            suppressed={liftAdvice === "recovery" || liftAdvice === "deload"}
+            suppressed={liftAdvice === "deload"}
             workouts={programState?.workouts}
             context={{
               weekNumber: programState?.weekNumber,
@@ -1344,6 +1335,7 @@ function ProgramInner() {
                           programme={programState}
                           day={selectedWorkout}
                           date={localDateString()}
+                          experience={profile?.experience}
                           className="px-3"
                         />
                       )}
@@ -1372,7 +1364,7 @@ function ProgramInner() {
                             <p className="text-sm font-semibold text-foreground">
                               Go easier today ·{" "}
                               {summarizeEasier(
-                                buildEasierSession(selectedWorkout)
+                                buildEasierSession(selectedWorkout, restContext)
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -1419,7 +1411,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastPerf={lastPerformanceMap.get(
+                                        lastSets={lastSetsMap.get(
                                           ex.exerciseId
                                         )}
                                         thumbSize="sm"
@@ -1483,7 +1475,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastPerf={lastPerformanceMap.get(
+                                        lastSets={lastSetsMap.get(
                                           ex.exerciseId
                                         )}
                                         showNotes
@@ -1641,6 +1633,7 @@ function ProgramInner() {
                           uid={profile.uid}
                           block={programState.trainingBlock}
                           currentFocus={programState.primaryGoal ?? "general"}
+                          experience={profile?.experience}
                           liftDaysPerWeek={programState.workouts.length}
                           mainCompoundIds={blockAnchorIds}
                           trainingWhy={profile?.trainingWhy?.trim() ?? ""}
@@ -1802,6 +1795,7 @@ function ProgramInner() {
       {/* Pre-session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01) */}
       <ExpressSessionSheet
         timeBudgetMinutes={usualBudget}
+        rest={restContext}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1811,7 +1805,11 @@ function ProgramInner() {
         easierRecommendation={easierRecommendation}
         lighterDay={
           expressChooserDay !== null
-            ? pickLighterDay(programState.workouts, expressChooserDay)
+            ? pickLighterDay(
+                programState.workouts,
+                expressChooserDay,
+                restContext
+              )
             : null
         }
         blockPrefersShorter={blockPrefersShorterSessions(
@@ -1854,13 +1852,19 @@ function ProgramInner() {
             sessionVariant === "full"
               ? null
               : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay)
+                ? buildEasierSession(storedDay, restContext)
                 : sessionVariant === "time_budget"
-                  ? buildTimeBudgetSession(storedDay, sessionBudgetMinutes)
-                  : buildExpressSession(storedDay, sessionVariant);
+                  ? buildTimeBudgetSession(
+                      storedDay,
+                      sessionBudgetMinutes,
+                      restContext
+                    )
+                  : buildExpressSession(storedDay, sessionVariant, restContext);
           return (
             <WorkoutSession
+              hardRunBefore={hardRunBefore}
               deloadWeek={programState.currentPhase === "deload"}
+              sessionMinutes={programState.sessionMinutes}
               day={
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
@@ -1868,7 +1872,8 @@ function ProgramInner() {
               planContext={liftCompletionContext(
                 programState,
                 sessionDayIndex,
-                localDateString()
+                localDateString(),
+                profile?.experience
               )}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
@@ -1930,6 +1935,7 @@ function ProgramInner() {
         <ExercisePicker
           open={true}
           headerTitle={`Replace ${programState.workouts[replaceTarget.dayIndex]?.exercises[replaceTarget.exIndex]?.name || "Exercise"}`}
+          pickAction="Replace"
           onSelect={(ex) =>
             replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)
           }
@@ -2023,6 +2029,33 @@ function ProgramInner() {
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           Drag to change today&apos;s order
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                {/* A lighter week whenever the person wants one (Lift4 (9)):
+                    half the sets this week, at the same weights, one at a
+                    time and never two in a row. */}
+                {activeTab === "lift" &&
+                  !isViewingHistory &&
+                  (programState?.workouts?.length ?? 0) > 0 &&
+                  lighterWeekAllowed(programState) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOverflow(false);
+                        void handleApplyDeload();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                      style={{ minHeight: 44 }}
+                    >
+                      <Feather className="size-5 text-muted-foreground" />
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-foreground">
+                          Take a lighter week
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Half the sets this week, at the same weights
                         </span>
                       </span>
                     </button>

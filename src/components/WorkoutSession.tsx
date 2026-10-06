@@ -30,31 +30,43 @@ import {
   X,
   Trophy,
   Info,
-  TrendingUp,
   Disc,
   Timer,
   Trash2,
   Plus,
+  MoreHorizontal,
+  SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import LoweredLine from "@/components/program/LoweredLine";
 import EditSetSheet from "@/components/workout/EditSetSheet";
 import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import { lastSetsByExercise } from "@/features/program/lastSets";
+import { startingSetRows } from "@/features/program/setStartValues";
+import { swappedForToday } from "@/features/program/sessionSwap";
+import { followedWeight } from "@/features/program/sessionSets";
+import { loadContextFrom } from "@/features/program/startingLoads";
+import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
+import KeepSwapSheet, {
+  type SwapToKeep,
+} from "@/components/workout/KeepSwapSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
-import { formatRepTarget } from "@/features/program/templateConversion";
+import { formatRepTarget } from "@/features/program/repTarget";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
+import { restSecondsFor } from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   exercisesForLiftBadges,
@@ -83,10 +95,6 @@ import {
   loadLiftRecords,
   type LiftRecords,
 } from "@/lib/liftRecordsStore";
-import {
-  suggestNextLoad,
-  type ProgressionSuggestion,
-} from "@/lib/progressionSuggestion";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
@@ -109,7 +117,7 @@ import {
   setOrdinal,
   type SetType,
 } from "@/features/program/setLabels";
-import { platesPerSide } from "@/lib/plateCalculator";
+import { platesPerSide } from "@/lib/plateMath";
 import {
   useWorkoutDraft,
   computeDraftIdentity,
@@ -138,6 +146,10 @@ import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
+// The exercise list for "Swap for today", loaded when it is opened.
+const ExercisePicker = lazyRetry(
+  () => import("@/components/program/ExercisePicker")
+);
 
 interface WorkoutDay {
   dayName: string;
@@ -149,6 +161,24 @@ interface WorkoutDay {
 /** "Set 2" → "set 2", for the middle of a sentence. */
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
+
+/** A planned exercise as this session sets it out: at the weight and reps
+ *  its progression started from, should an older draft have moved it. */
+function sessionExercise(
+  ex: ProgramExercise,
+  completionId: string
+): ProgramExercise {
+  const baseline = withoutSessionProgression(
+    ex.sessionProgression?.id === completionId
+      ? ex.sessionProgression.baseline
+      : ex
+  );
+  return {
+    ...withoutSessionProgression(ex),
+    weight: baseline.weight,
+    reps: baseline.reps,
+  };
+}
 
 /** Last session's set as the Previous column shows it. */
 function previousLabel(
@@ -196,6 +226,9 @@ interface Props {
   /** Backlog #4: true during a step-back (deload) week — the effort cue
    *  under the set counter switches to the step-back line. */
   deloadWeek?: boolean;
+  /** The session length the plan is built for
+   *  (`programState.sessionMinutes`): a 30-minute plan rests less. */
+  sessionMinutes?: number;
   progressionBaseline?: ProgramExercise[];
   programmeContext?: ProgrammeCompletionContext;
   /** Saves the session (`completeLift`) and hands back its receipt. */
@@ -208,6 +241,9 @@ interface Props {
    *  may point at the first row (FV1). Train knows this; a saved routine
    *  doesn't pass it. */
   firstWorkout?: boolean;
+  /** Whether a long or hard run finished in the 24 hours before a start
+   *  (`useHardRunBefore`); the finish records it. Train passes it. */
+  hardRunBefore?: (startedAt: number) => boolean;
 }
 
 export default function WorkoutSession({
@@ -218,11 +254,13 @@ export default function WorkoutSession({
   draftEpoch,
   sessionVariant,
   deloadWeek = false,
+  sessionMinutes,
   progressionBaseline,
   programmeContext,
   onCompleteDay,
   onClose,
   firstWorkout = false,
+  hardRunBefore,
 }: Props) {
   const { user, profile } = useAuth();
   const [initialDay] = useState(incomingDay);
@@ -264,7 +302,7 @@ export default function WorkoutSession({
   const completionCommandIdRef = useRef(
     initialDraft?.completionCommandId ?? initialCompletionId
   );
-  const [prescription] = useState<SessionPrescription>(() => {
+  const [prescription, setPrescription] = useState<SessionPrescription>(() => {
     if (initialDraft?.prescription) return initialDraft.prescription;
     const baseline = (ex: ProgramExercise) =>
       withoutSessionProgression(
@@ -274,11 +312,9 @@ export default function WorkoutSession({
       );
     return structuredClone({
       dayName: initialDay.dayName,
-      exercises: initialDay.exercises.map((ex) => ({
-        ...withoutSessionProgression(ex),
-        weight: baseline(ex).weight,
-        reps: baseline(ex).reps,
-      })),
+      exercises: initialDay.exercises.map((ex) =>
+        sessionExercise(ex, initialCompletionId)
+      ),
       progressionBaseline: initialDay.exercises.map((ex) =>
         baseline(
           progressionBaseline?.find(
@@ -313,6 +349,9 @@ export default function WorkoutSession({
   const [currentSetIndex, setCurrentSetIndex] = useState(
     resumeCursor?.setIndex ?? 0
   );
+  // Set once each row has its start (`startingSetRows`); a resumed draft's
+  // rows already have theirs.
+  const rowsStarted = useRef(!!initialDraft?.setLogs);
   const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
     if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
     // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
@@ -321,6 +360,25 @@ export default function WorkoutSession({
     // already filters on that type excludes them for free.
     return buildInitialSetLogs(day.exercises);
   });
+  /* The rows a skipped exercise set aside (Lift4 (11)), by its place in the
+     session: out of the counts and the cursor's way until "Don't skip"
+     brings them back. */
+  const [skippedRows, setSkippedRows] = useState<Record<number, SetLog[]>>(
+    () => initialDraft?.skippedRows ?? {}
+  );
+  /* The exercise whose menu is open, the one being swapped, and Finish's
+     question about today's swaps. */
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const [swapFor, setSwapFor] = useState<number | null>(null);
+  const [keepQuestion, setKeepQuestion] = useState<{
+    open: boolean;
+    swaps: SwapToKeep[];
+  }>({ open: false, swaps: [] });
+  /** Last time's counted sets by exercise id, read with the Previous
+   *  column, so a swapped-in exercise starts from its own. */
+  const lastSetsById = useRef(
+    new Map<string, { weight: number; reps: number }[]>()
+  );
   // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
   // for someone who can calibrate it and noise-plus-jargon for someone who
   // cannot, so an advanced lifter opens the session with it on and everyone
@@ -403,12 +461,6 @@ export default function WorkoutSession({
   // Loaded with the PR map; persisted undo-safe from final setLogs.
   const [volumeBest, setVolumeBest] = useState<VolumeBestMap>({});
   const firedVolumePRs = useRef<Set<string>>(new Set());
-  /* Double-progression nudges per exercise index (2026-07 audit). Computed
-     alongside the prefill from the SAME previous-session data; the chip
-     only renders while the exercise is untouched this session. */
-  const [suggestions, setSuggestions] = useState<
-    Record<number, ProgressionSuggestion>
-  >({});
   const [showPlates, setShowPlates] = useState(false);
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>(
     {}
@@ -425,8 +477,6 @@ export default function WorkoutSession({
       // has not synced yet: it is the last session even offline.
       const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
 
-      const prevWeights: Record<string, { weight: number; reps: number }[]> =
-        {};
       const notes: Record<number, { text: string; date: string }> = {};
 
       recent.forEach((data) => {
@@ -443,67 +493,45 @@ export default function WorkoutSession({
             ?.notes?.trim();
           if (text) notes[index] = { text, date: data.date };
         });
-        (data.exercises || []).forEach(
-          (ex: {
-            exerciseName: string;
-            sets?: { weightKg?: number; reps?: number }[];
-          }) => {
-            const name = ex.exerciseName;
-            if (!prevWeights[name] && ex.sets?.length && ex.sets.length > 0) {
-              prevWeights[name] = ex.sets.map((s) => ({
-                weight: s.weightKg || 0,
-                reps: s.reps || 0,
-              }));
-            }
-          }
-        );
       });
       setPreviousNotes(notes);
+      // Last time's counted sets, as Train's "Last:" line lists them: the
+      // Previous column and where each row starts both read these.
+      const lastSets = new Map(
+        [
+          ...lastSetsByExercise(
+            recent.filter(
+              (data) => data.completionId !== completionIdRef.current
+            )
+          ),
+        ].map(([id, sets]) => [
+          id,
+          sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps })),
+        ])
+      );
+      lastSetsById.current = lastSets;
       setPreviousSets(
         Object.fromEntries(
-          day.exercises.flatMap((ex, i) =>
-            prevWeights[ex.name] ? [[i, prevWeights[ex.name]]] : []
-          )
+          day.exercises.flatMap((ex, i) => {
+            const sets = lastSets.get(ex.exerciseId);
+            return sets ? [[i, sets]] : [];
+          })
         )
       );
 
-      // Double-progression suggestions from the same history the prefill
-      // uses (one fetch, two consumers).
-      const nextSuggestions: Record<number, ProgressionSuggestion> = {};
-      day.exercises.forEach((ex, i) => {
-        const prevSets = prevWeights[ex.name];
-        if (!prevSets) return;
-        const suggestion = suggestNextLoad({
-          prevSets,
-          targetReps: ex.reps,
-        });
-        if (suggestion && suggestion.kind === "increase") {
-          nextSuggestions[i] = suggestion;
-        }
-      });
-      setSuggestions(nextSuggestions);
-
-      setSetLogs((prev) => {
-        const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-        day.exercises.forEach((ex, i) => {
-          const name = ex.name;
-          const prevSets = prevWeights[name];
-          if (prevSets && updated[i]) {
-            // A warm-up keeps its ramp; a counted set fills from the same
-            // counted set last time, which the ramp's rows used to offset.
-            updated[i] = updated[i].map((set, si, sets) => {
-              if (set.type === "warmup") return set;
-              const prior = prevSets[setOrdinal(sets, si) - 1] ?? prevSets[0];
-              return {
-                ...set,
-                weight: set.weight || (prior?.weight ?? 0),
-                reps: set.reps || (prior?.reps ?? 0),
-              };
-            });
-          }
-        });
-        return updated;
-      });
+      // Each row starts from what that set did last time (Lift4,
+      // `startingSetRows`), once per session: a resumed draft's rows, and
+      // anything typed since, hold what the person put there.
+      if (!rowsStarted.current) {
+        rowsStarted.current = true;
+        setSetLogs((prev) =>
+          prev.map((rows, i) => {
+            const ex = day.exercises[i];
+            if (!ex || rows.some((set) => set.completed)) return rows;
+            return startingSetRows(rows, ex, lastSets.get(ex.exerciseId));
+          })
+        );
+      }
 
       // The best-lift map, as stored or rebuilt from history
       // (liftRecordsStore.ts). If it cannot be read, this session celebrates
@@ -543,10 +571,12 @@ export default function WorkoutSession({
       completionCommandId: completionCommandIdRef.current,
       startedAt: originalStartedAt,
       prescription,
+      skippedRows,
       programmeContext: sessionProgrammeContext,
     });
   }, [
     setLogs,
+    skippedRows,
     exerciseNotes,
     currentExIndex,
     dayIndex,
@@ -560,16 +590,13 @@ export default function WorkoutSession({
 
   const formatElapsed = formatClock;
 
-  // Rest timer. PR E (audit P1 #13): pre-PR-E the target was
-  // hardcoded to 90s and never read profile.defaultRestSeconds —
-  // the Settings → Workout preferences slider had no effect on
-  // the actual session. Now the default is sourced from the
-  // profile with a 90s fallback for users who haven't set one.
-  const profileRestDefault =
-    typeof profile?.defaultRestSeconds === "number" &&
-    profile.defaultRestSeconds > 0
+  // Rest timer: the rest fixed in Settings → Workout preferences, or the
+  // plan's suggestion by role and reps, shorter in a plan built for 30
+  // minutes (`restSecondsFor`, Lift4 (5)).
+  const fixedRest =
+    typeof profile?.defaultRestSeconds === "number"
       ? profile.defaultRestSeconds
-      : DEFAULT_REST_SECONDS;
+      : undefined;
   const [rest, setRest] = useState<{
     id: number;
     startedAt: number;
@@ -735,8 +762,8 @@ export default function WorkoutSession({
   const currentExercise = day.exercises[safeExIndex];
 
   // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
-  // barbell-only (dumbbell/machine lifts don't load plates). Standard plates;
-  // micro-plate awareness via the microloading setting is a follow-up.
+  // barbell-only (dumbbell/machine lifts don't load plates). The standard set
+  // runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
   const plateLoad = useMemo(() => {
     if (!currentExercise || currentExercise.weight <= 0) return null;
     if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
@@ -768,18 +795,19 @@ export default function WorkoutSession({
      Safari — the Vibrate API has never shipped there. */
 
   const startRest = useCallback(
-    (exerciseRest?: number) => {
+    (exercise: ProgramExercise | undefined) => {
       setRest({
         id: ++restSequence.current,
         startedAt: Date.now(),
-        target:
-          typeof exerciseRest === "number" && exerciseRest > 0
-            ? exerciseRest
-            : profileRestDefault,
+        target: exercise
+          ? restSecondsFor(exercise, { fixedRest, sessionMinutes })
+          : fixedRest && fixedRest > 0
+            ? fixedRest
+            : DEFAULT_REST_SECONDS,
       });
       haptic(50);
     },
-    [profileRestDefault]
+    [fixedRest, sessionMinutes]
   );
 
   const stopRest = useCallback(() => setRest(null), []);
@@ -912,6 +940,7 @@ export default function WorkoutSession({
       // as bodyweight. If a richer bodyweight-flag arrives via the
       // exercise registry it can plug in here.
       isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
+      timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
     });
 
@@ -1069,12 +1098,12 @@ export default function WorkoutSession({
       } else {
         setCurrentExIndex(next.exerciseIndex);
         setCurrentSetIndex(next.setIndex);
-        if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
+        if (autoRest) startRest(day.exercises[currentExIndex]);
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
-      if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
+      if (autoRest) startRest(day.exercises[currentExIndex]);
     }
   };
 
@@ -1110,6 +1139,7 @@ export default function WorkoutSession({
     const validation = validateSet({
       ...values,
       isBodyweight: values.weight === 0 && !best,
+      timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
     });
     if (!validation.ok) throw new Error(validation.message);
@@ -1157,9 +1187,119 @@ export default function WorkoutSession({
     };
   }, []);
 
+  /* Lift4 (11): "Swap for today" and "Skip", from an exercise's menu. */
+  const swapAt = (index: number) =>
+    prescription.swaps?.find((swap) => swap.index === index);
+
+  /** The planned exercise at a place in the session, as it was set out. */
+  const plannedAt = (index: number): ProgramExercise | undefined => {
+    const ex = initialDay.exercises[index];
+    return ex ? sessionExercise(ex, initialCompletionId) : undefined;
+  };
+
+  /** Another exercise in a planned one's place today, or the planned one
+   *  back. Its rows start from what it did last time. */
+  const swapForToday = (index: number, replacementId: string) => {
+    const planned = plannedAt(index);
+    if (!planned) return;
+    const back = replacementId === planned.exerciseId;
+    const last = lastSetsById.current.get(replacementId);
+    const exercise = back
+      ? planned
+      : swappedForToday(planned, replacementId, {
+          lastWeight: (last && followedWeight(last)) ?? undefined,
+          loadContext: loadContextFrom(profile),
+        });
+    setPrescription((current) => ({
+      ...current,
+      exercises: current.exercises.map((ex, i) =>
+        i === index ? exercise : ex
+      ),
+      swaps: [
+        ...(current.swaps ?? []).filter((swap) => swap.index !== index),
+        ...(back ? [] : [{ index }]),
+      ],
+    }));
+    setSetLogs((logs) =>
+      logs.map((rows, i) =>
+        i === index
+          ? startingSetRows(buildInitialSetLogs([exercise])[0], exercise, last)
+          : rows
+      )
+    );
+    setLastCompleted(null);
+    setCurrentExIndex(index);
+    setCurrentSetIndex(0);
+  };
+
+  /** Skipping keeps the sets done and sets the rest aside. */
+  const skipExercise = (index: number) => {
+    const next = setLogs.map((rows, i) =>
+      i === index ? rows.filter((set) => set.completed) : rows
+    );
+    setSkippedRows((current) => ({
+      ...current,
+      [index]: (setLogs[index] ?? []).filter((set) => !set.completed),
+    }));
+    setSetLogs(next);
+    setLastCompleted(null);
+    const cursor = nextIncompleteSet(next, (index + 1) % next.length);
+    if (cursor) {
+      setCurrentExIndex(cursor.exerciseIndex);
+      setCurrentSetIndex(cursor.setIndex);
+    }
+  };
+
+  const unskipExercise = (index: number) => {
+    const rows = [...(setLogs[index] ?? []), ...(skippedRows[index] ?? [])];
+    setSetLogs((logs) => logs.map((r, i) => (i === index ? rows : r)));
+    setSkippedRows(({ [index]: _back, ...rest }) => rest);
+    setLastCompleted(null);
+    setCurrentExIndex(index);
+    const first = rows.findIndex((_, i) => isSetOutstanding(rows, i));
+    setCurrentSetIndex(first >= 0 ? first : 0);
+  };
+
+  /** The swaps Finish asks about: those not decided yet with a set done. */
+  const swapsToAsk = (finishing: SessionPrescription) =>
+    (finishing.swaps ?? []).filter(
+      (swap) =>
+        swap.keep === undefined &&
+        (setLogs[swap.index] ?? []).some(
+          (set) => set.completed && set.type !== "warmup"
+        )
+    );
+
+  /** Finish's one answer about today's swaps, then the save. */
+  const decideSwaps = async (keep: boolean) => {
+    const asked = new Set(swapsToAsk(prescription).map((swap) => swap.index));
+    const decided: SessionPrescription = {
+      ...prescription,
+      swaps: (prescription.swaps ?? []).map((swap) =>
+        asked.has(swap.index) ? { ...swap, keep } : swap
+      ),
+    };
+    setPrescription(decided);
+    setKeepQuestion((question) => ({ ...question, open: false }));
+    await handleFinish(decided);
+  };
+
   const finishPending = useRef(false);
-  const handleFinish = async () => {
+  const handleFinish = async (decided?: SessionPrescription) => {
     if (finishPending.current || saved) return;
+    const finishing = decided ?? prescription;
+    // Asked once, before the save: whether to keep today's swaps.
+    const asks = swapsToAsk(finishing);
+    if (asks.length > 0) {
+      setKeepQuestion({
+        open: true,
+        swaps: asks.map((swap) => ({
+          today: day.exercises[swap.index]?.name ?? "",
+          planned: plannedAt(swap.index)?.name ?? "",
+        })),
+      });
+      return;
+    }
     finishPending.current = true;
     setCompleting(true);
     const completionUid = user?.uid;
@@ -1178,7 +1318,8 @@ export default function WorkoutSession({
         completionCommandId: completionCommandIdRef.current,
         completionPending: true,
         startedAt: originalStartedAt,
-        prescription,
+        prescription: finishing,
+        skippedRows,
         programmeContext: sessionProgrammeContext,
       });
       if (navigator.onLine === false && !recoveryStored) {
@@ -1201,8 +1342,9 @@ export default function WorkoutSession({
         // Lift3: the doc is dated by when the session STARTED (draft-resume
         // aware — sessionStartedAt is backdated by the draft's elapsed time).
         startedAt: originalStartedAt,
-        prescription,
+        prescription: finishing,
         programmeContext: sessionProgrammeContext,
+        ...(hardRunBefore?.(originalStartedAt) ? { afterHardRun: true } : {}),
         // These were written to the resume draft and dropped on Finish, so
         // they survived closing a session and were lost by completing one.
         // The draft is deleted the moment the workout commits, so Finish was
@@ -1290,7 +1432,17 @@ export default function WorkoutSession({
   };
 
   const handleStartFresh = () => {
-    setSetLogs(buildInitialSetLogs(day.exercises));
+    // A fresh start drops the draft's swaps and skips with its sets.
+    const planned = prescription.exercises.map((ex, i) =>
+      swapAt(i) ? (plannedAt(i) ?? ex) : ex
+    );
+    setPrescription((current) => ({
+      ...current,
+      exercises: planned,
+      swaps: [],
+    }));
+    setSkippedRows({});
+    setSetLogs(buildInitialSetLogs(planned));
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
@@ -1331,11 +1483,19 @@ export default function WorkoutSession({
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}
-          onFinish={handleFinish}
+          onFinish={() => void handleFinish()}
           onEdit={
             !completionPending ? () => setSessionComplete(false) : undefined
           }
           onClose={onClose}
+        />
+        <KeepSwapSheet
+          open={keepQuestion.open}
+          swaps={keepQuestion.swaps}
+          onDecide={decideSwaps}
+          onClose={() =>
+            setKeepQuestion((question) => ({ ...question, open: false }))
+          }
         />
       </>
     );
@@ -1479,7 +1639,8 @@ export default function WorkoutSession({
         >
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
-            const done = isExerciseDone(setsForEx);
+            const skipped = skippedRows[i] !== undefined;
+            const done = !skipped && isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
                The current one is ringed, a finished one carries a check,
@@ -1489,7 +1650,13 @@ export default function WorkoutSession({
               <button
                 type="button"
                 key={i}
-                aria-label={done ? `${ex.name}, done` : ex.name}
+                aria-label={
+                  skipped
+                    ? `${ex.name}, skipped`
+                    : done
+                      ? `${ex.name}, done`
+                      : ex.name
+                }
                 aria-current={active ? "step" : undefined}
                 onClick={() => {
                   haptic(10);
@@ -1510,11 +1677,16 @@ export default function WorkoutSession({
                 >
                   <ExerciseThumb
                     exerciseId={ex.exerciseId}
-                    className={cn(done && !active && "opacity-60")}
+                    className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
                     <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
                       <Check className="size-3" strokeWidth={3} />
+                    </span>
+                  )}
+                  {skipped && (
+                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                      <SkipForward className="size-3" strokeWidth={3} />
                     </span>
                   )}
                 </span>
@@ -1559,7 +1731,9 @@ export default function WorkoutSession({
           the exercise's drawing beside its name, where a bare dumbbell
           icon sat. Under 16em of row (larger text on the phone) the drawing
           gives its room to the name, which beside it pushed the form
-          guide's button off the screen. Wide-first. */}
+          guide's button off the screen, and the name's two buttons drop
+          under it when beside it they would squeeze a word ("Bench" at 2x
+          on a 320px phone) out of its box. Wide-first. */}
       <div className="@container flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
         {currentExercise && (
           <ExerciseThumb
@@ -1569,23 +1743,40 @@ export default function WorkoutSession({
           />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
             <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
               {currentExercise?.name}
             </h2>
             {currentExercise?.name && (
-              <IconButton
-                aria-label={`How to do ${currentExercise.name}`}
-                variant="ghost"
-                size="sm"
-                icon={<Info className="size-5 text-muted-foreground" />}
-                onClick={() => {
-                  haptic("light");
-                  setShowFormGuide(true);
-                }}
-              />
+              <div className="flex shrink-0 items-center gap-1">
+                <IconButton
+                  aria-label={`How to do ${currentExercise.name}`}
+                  variant="ghost"
+                  size="sm"
+                  icon={<Info className="size-5 text-muted-foreground" />}
+                  onClick={() => {
+                    haptic("light");
+                    setShowFormGuide(true);
+                  }}
+                />
+                <IconButton
+                  aria-label={`More for ${currentExercise.name}`}
+                  variant="ghost"
+                  size="sm"
+                  icon={
+                    <MoreHorizontal className="size-5 text-muted-foreground" />
+                  }
+                  onClick={() => {
+                    haptic("light");
+                    setMenuFor(safeExIndex);
+                  }}
+                />
+              </div>
             )}
           </div>
+          {skippedRows[safeExIndex] !== undefined && (
+            <p className="text-sm text-muted-foreground">Skipped today</p>
+          )}
           {currentSets[currentSetIndex] &&
             (() => {
               /* Counted within its kind: "Warm-up 2 of 3" during the ramp,
@@ -1685,68 +1876,13 @@ export default function WorkoutSession({
               leftIcon={<Timer className="size-4" aria-hidden="true" />}
               onClick={() => {
                 haptic("light");
-                startRest(day.exercises[currentExIndex]?.restSeconds);
+                startRest(day.exercises[currentExIndex]);
               }}
             >
               Start rest timer
             </Button>
           </div>
         )}
-
-        {/* Double-progression nudge — only while this exercise is untouched
-            this session (a mid-session flip would be noise), and only the
-            "increase" case (prefill already covers "repeat"). Apply sets
-            every set's weight in one tap. */}
-        {suggestions[currentExIndex] &&
-          !currentSets.some((st) => st.completed) && (
-            /* Apply drops under the words when 8em will not fit beside
-               them (larger text on the phone): beside it, a word ran past
-               the line. */
-            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-lifting/10">
-              <TrendingUp
-                className="size-4 shrink-0 text-lifting"
-                aria-hidden="true"
-              />
-              <p className="min-w-[min(100%,8em)] flex-1 text-xs text-foreground leading-relaxed">
-                All sets hit{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].targetReps}
-                </span>{" "}
-                reps at{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].lastWeightKg} kg
-                </span>{" "}
-                last time — try{" "}
-                <span className="font-mono tabular-nums font-semibold">
-                  {suggestions[currentExIndex].weightKg} kg
-                </span>
-                .
-              </p>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="ml-auto"
-                onClick={() => {
-                  haptic("light");
-                  const target = suggestions[currentExIndex].weightKg;
-                  setSetLogs((prev) => {
-                    const updated = prev.map((sets) =>
-                      sets.map((st) => ({ ...st }))
-                    );
-                    if (updated[currentExIndex]) {
-                      updated[currentExIndex] = updated[currentExIndex].map(
-                        (st) =>
-                          st.type === "warmup" ? st : { ...st, weight: target }
-                      );
-                    }
-                    return updated;
-                  });
-                }}
-              >
-                Apply
-              </Button>
-            </div>
-          )}
 
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
@@ -2210,12 +2346,24 @@ export default function WorkoutSession({
                 : ""}
           </p>
         )}
+        {currentExercise && (
+          <LoweredLine
+            exercise={currentExercise}
+            className="text-xs text-muted-foreground text-center"
+          />
+        )}
 
         {/* #985 — plate breakdown per side (barbell only). */}
         {plateLoad && plateLoad.perSide.length > 0 && (
           <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
-            Per side: {plateLoad.perSide.join(" + ")}
-            {!plateLoad.exact && ` · ${plateLoad.leftover} kg short`}
+            Per side:{" "}
+            {plateLoad.perSide
+              .flatMap(({ plateKg, count }) =>
+                Array<number>(count).fill(plateKg)
+              )
+              .join(" + ")}
+            {plateLoad.remainderKg > 0 &&
+              ` · ${plateLoad.remainderKg} kg short`}
           </p>
         )}
       </div>
@@ -2250,6 +2398,12 @@ export default function WorkoutSession({
               <Button
                 size="lg"
                 fullWidth
+                // Everything skipped with nothing done leaves nothing to save.
+                disabled={
+                  !setLogs.some((sets) =>
+                    sets.some((set) => set.completed && set.type !== "warmup")
+                  )
+                }
                 onClick={completeSession}
                 leftIcon={<Trophy className="size-4" aria-hidden="true" />}
               >
@@ -2333,6 +2487,38 @@ export default function WorkoutSession({
           completeSession();
         }}
       />
+
+      {menuFor !== null && day.exercises[menuFor] && (
+        <ExerciseMenuSheet
+          open
+          onClose={() => setMenuFor(null)}
+          exerciseName={day.exercises[menuFor].name}
+          nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
+          swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
+          skipped={skippedRows[menuFor] !== undefined}
+          onSwap={() => setSwapFor(menuFor)}
+          onSwapBack={() => {
+            const planned = plannedAt(menuFor);
+            if (planned) swapForToday(menuFor, planned.exerciseId);
+          }}
+          onSkip={() => skipExercise(menuFor)}
+          onUnskip={() => unskipExercise(menuFor)}
+        />
+      )}
+      {swapFor !== null && day.exercises[swapFor] && (
+        <Suspense fallback={null}>
+          <ExercisePicker
+            open
+            headerTitle={`Swap ${day.exercises[swapFor].name} for today`}
+            pickAction="Swap for today"
+            onSelect={(picked) => {
+              swapForToday(swapFor, picked.id);
+              setSwapFor(null);
+            }}
+            onClose={() => setSwapFor(null)}
+          />
+        </Suspense>
+      )}
 
       <PlateCalculatorSheet
         open={showPlates}

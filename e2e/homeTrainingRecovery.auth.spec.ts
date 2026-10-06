@@ -72,7 +72,7 @@ test.describe("Home training recovery", () => {
           updatedAt: saturday.getTime(),
           liftWeekKey: localWeekKey(saturday),
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [],
         } satisfies ProgramState);
         // Give each theme its own account; other auth specs use the shared seed.

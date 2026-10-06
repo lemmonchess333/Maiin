@@ -8,15 +8,16 @@
  * nobody in the other captures. `scripts/seed-liftreturn-capture.ts`
  * stages the one user it should greet.
  *
- * The spec asserts the REGISTER before shooting. Both the detrained line
- * and the two choices must be present, so a regression that silently
- * dropped a choice, or swapped the detrained copy for the ordinary gap
- * wording, fails the capture rather than filming the wrong sheet — the
+ * The spec asserts the REGISTER before shooting. Both the line for a
+ * three-week break and the two choices must be present, so a regression
+ * that silently dropped a choice, or swapped that copy for a shorter
+ * break's, fails the capture rather than filming the wrong sheet — the
  * mistake the fell-behind spec was written to prevent on its own surface.
  *
- * It also asserts the sheet does NOT mutate: only two controls, and
- * neither promises a plan change. That is the locked
- * navigation-not-mutation rule, checked where a reviewer can see it.
+ * It also asserts there are exactly two controls, easing back put first
+ * at this gap (Lift4 (11)): "Ease back in", the one plan change, and
+ * "Keep my old weights", which changes nothing. Nothing is tapped, so the
+ * seeded plan is filmed as it was staged.
  *
  * Reading its row in the capture diff report: this is a bottom sheet, the
  * frame family that changes between runs with no code change because the
@@ -94,21 +95,18 @@ test.describe("lift return screenshots", () => {
       timeout: 25_000,
     });
     await expect(
-      page.getByText(/starting a little lighter is the usual way back/i)
+      page.getByText(/your plan still has the weights you left on/i)
     ).toBeVisible({ timeout: 10_000 });
 
-    // Two ways out and no third: the sheet routes or dismisses, so a
-    // control that did anything else would be the mutation this surface
-    // is not allowed to make. Scoped to the sheet — Home behind it has
-    // buttons of its own, and a page-wide count would drift with Home.
+    // Two choices and no third, easing back first at this gap. Scoped to
+    // the sheet — Home behind it has buttons of its own, and a page-wide
+    // count would drift with Home.
     const sheet = page.getByRole("dialog");
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole("button")).toHaveCount(2);
+    await expect(sheet.getByRole("button").first()).toHaveText(/ease back in/i);
     await expect(
-      sheet.getByRole("button", { name: /pick up where i left off/i })
-    ).toBeVisible();
-    await expect(
-      sheet.getByRole("button", { name: /start easier/i })
+      sheet.getByRole("button", { name: /keep my old weights/i })
     ).toBeVisible();
 
     // No scolding, in the register a returning lifter is most exposed to.

@@ -120,18 +120,22 @@ describe("a bodyweight lift's last set is not a load", () => {
       "utf8"
     )
   );
-  const chains = (src: string) =>
-    [...src.matchAll(/Last:\{" "\}([\s\S]*?)\}\s*<\/p>/g)].map((m) => m[1]);
+  /* The line is drawn by `LastSetsLine`, which lists every set of the last
+     session (Lift4); the pins below follow it there. */
+  const lines = (src: string) => [
+    ...src.matchAll(/Last:\{" "\}\s*<LastSetsLine\b/g),
+  ];
 
   it("has one copy, in the shared row summary", () => {
-    expect(chains(summary)).toHaveLength(1);
-    expect(chains(code)).toHaveLength(0);
+    expect(lines(summary)).toHaveLength(1);
+    expect(code).not.toMatch(/Last:\{" "\}/);
   });
 
   it("asks isBW before it asks about weight", () => {
-    const [chain] = chains(summary);
-    const bw = chain.indexOf("isBW");
-    const weight = chain.indexOf("lastPerf.weight > 0");
+    expect(summary).toMatch(/bodyweight=\{isBW\}/);
+    const line = summary.slice(summary.indexOf("function LastSetsLine"));
+    const bw = line.indexOf("if (bodyweight)");
+    const weight = line.indexOf("group.weightKg > 0");
     expect(bw).toBeGreaterThan(-1);
     expect(weight).toBeGreaterThan(-1);
     expect(bw).toBeLessThan(weight);

@@ -21,7 +21,7 @@ const GOALS = ["hypertrophy", "strength", "general", "fat_loss"] as const;
 const DAYS = [1, 2, 3, 4, 5, 6];
 
 const week = (days: number, goal: (typeof GOALS)[number]) =>
-  generateProgram("recomp", days, undefined, goal, CTX).workouts;
+  generateProgram(days, undefined, goal, CTX).workouts;
 
 const allEx = (w: WorkoutDay[]) => w.flatMap((d) => d.exercises);
 
@@ -338,13 +338,7 @@ describe("generator audit — a template plan survives its first regenerate", ()
         .flatMap((d) => d.exercises)
         .map((e) => [e.weight, e.movementCategory] as const)
     );
-    const { workouts } = generateProgram(
-      "recomp",
-      3,
-      saved,
-      "general",
-      undefined
-    );
+    const { workouts } = generateProgram(3, saved, "general", undefined);
     for (const day of workouts) {
       for (const ex of day.exercises) {
         const from = byWeight.get(ex.weight);
@@ -359,14 +353,17 @@ describe("generator audit — a template plan survives its first regenerate", ()
 
   it("still keeps the loads it legitimately can", () => {
     // The guard must not be satisfied by dropping every load. Slot alignment
-    // puts each saved lift at the index its own movement is built at.
+    // puts each saved lift at the index its own movement is built at. An
+    // intermediate's, so the level gate re-points nothing (a beginner's
+    // front squat and incline bench would become simpler lifts).
     const saved = templatePlan();
     const { workouts } = generateProgram(
-      "recomp",
       3,
       saved,
       "general",
-      undefined
+      undefined,
+      undefined,
+      "intermediate"
     );
     const carried = workouts
       .flatMap((d) => d.exercises)

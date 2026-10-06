@@ -133,3 +133,25 @@ pinning the server copy that does run. `CONTEXT.md` previously claimed it
   planned distance). The stricter reading was taken; the divergence is
   unreachable in production because `raceGoal.distance` is a closed enum.
   Recorded in the module header rather than resolved silently.
+
+## Update 2026-10-05 — the progression mirror is retired, not pinned (Lift4)
+
+`functions/lib/progressionEngine.js` mirrored the client's `applyProgression`
+and was pinned by a large equality cross-test, but the only code that ran it
+was the `logExercise` command reducer, and no client had sent `logExercise`
+since a session's progression moved to the finish (`applySessionProgression`
+inside `commitWorkoutCompletion`). The easing-block hold's server copy
+(`progressionHold.js`) existed for the same reducer. Both were running copies
+in name and test-only in practice.
+
+Decision 3 settles it: something genuinely orphaned is deleted, not kept.
+The command, both modules, their parity tests and their gate entries are
+gone, and the client engine is the only copy of the progression rules. Lift4
+changes those rules in several releases, and a second copy would have had to
+move in step with each one for a command nothing sends. A client still on a
+version that sends `logExercise` now has it refused as an unknown kind
+(`invalid-argument`).
+
+`represcribe.js` took one constant from the progression copy
+(`MAX_BODYWEIGHT_REPS`); it now holds its own, and the represcribe
+cross-test pins the ceiling it sets.

@@ -3,59 +3,90 @@ import { describe, it, expect } from "vitest";
 import { effortCueFor, rpeReserveWords } from "../effortCue";
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
-const ex = (movementCategory: MovementCategory) => ({ movementCategory });
+/** A real catalogue exercise in a given slot: the cue reads the catalogue
+ *  (whether it is an isolation, what equipment it uses) through
+ *  `exerciseRole`, so these name exercises rather than bare categories. */
+const ex = (
+  exerciseId: string,
+  movementCategory: MovementCategory,
+  isAccessory?: boolean
+) => ({ exerciseId, movementCategory, isAccessory });
+
+const last = { isLastSet: true, deloadWeek: false };
+const notLast = { isLastSet: false, deloadWeek: false };
 
 describe("effortCueFor (backlog #4 — effort cues as words)", () => {
-  it("compounds get the reserve cue with a tooltip, on every set", () => {
-    for (const isLastSet of [false, true]) {
-      const cue = effortCueFor(ex("knee_dominant"), {
-        isLastSet,
-        deloadWeek: false,
-      });
+  it("main lifts get the reserve cue with a tooltip, on every set", () => {
+    for (const opts of [notLast, last]) {
+      const cue = effortCueFor(ex("squat", "knee_dominant", false), opts);
       expect(cue?.kind).toBe("reserve");
       expect(cue?.text).toBe("Finish with 2 reps to spare");
       expect(cue?.tooltip).toContain("2 more clean reps");
     }
   });
 
-  it("single-joint arm work gets the push cue on the LAST set only", () => {
+  it("an isolation gets the push cue on the LAST set only", () => {
     expect(
-      effortCueFor(ex("arms_biceps"), { isLastSet: false, deloadWeek: false })
+      effortCueFor(ex("db-curl", "arms_biceps", true), notLast)
     ).toBeNull();
-    const last = effortCueFor(ex("arms_triceps"), {
-      isLastSet: true,
-      deloadWeek: false,
-    });
-    expect(last?.kind).toBe("push");
-    expect(last?.text).toBe("Last set — OK to go to your limit.");
-    expect(last?.tooltip).toBeUndefined();
+    const cue = effortCueFor(ex("rope-tricep-pushdown", "arms_triceps"), last);
+    expect(cue?.kind).toBe("push");
+    expect(cue?.text).toBe("Last set — OK to go to your limit.");
+    expect(cue?.tooltip).toBeUndefined();
   });
 
-  it("never offers the push cue outside the arm categories", () => {
-    // isAccessory alone can't distinguish a lateral raise from an RDL —
-    // hinges and presses must never be pushed to the limit (all sources).
-    for (const cat of [
-      "hip_dominant",
-      "vertical_push",
-      "horizontal_pull",
-    ] as MovementCategory[]) {
-      const cue = effortCueFor(ex(cat), { isLastSet: true, deloadWeek: false });
-      expect(cue?.kind).toBe("reserve");
+  it("reaches the isolations the arm categories missed", () => {
+    // The lateral raise sits in vertical_push beside the overhead press, so
+    // no category test could tell them apart; the catalogue can (Lift4).
+    for (const [id, cat] of [
+      ["lateral-raise", "vertical_push"],
+      ["seated-leg-curl", "hip_dominant"],
+      ["leg-extension", "knee_dominant"],
+      ["cable-fly", "horizontal_push"],
+    ] as const) {
+      expect(effortCueFor(ex(id, cat, true), last)?.kind).toBe("push");
+    }
+  });
+
+  it("pushes a supporting compound's last set only on a machine", () => {
+    expect(
+      effortCueFor(ex("leg-press", "knee_dominant", true), last)?.kind
+    ).toBe("push");
+    expect(
+      effortCueFor(ex("leg-press", "knee_dominant", true), notLast)?.kind
+    ).toBe("reserve");
+    // The same machine as the day's main lift keeps its reps to spare.
+    expect(
+      effortCueFor(ex("leg-press", "knee_dominant", false), last)?.kind
+    ).toBe("reserve");
+  });
+
+  it("never pushes a free-weight compound or a main press to the limit", () => {
+    for (const [id, cat, accessory] of [
+      ["romanian-deadlift", "hip_dominant", true],
+      ["barbell-row", "horizontal_pull", true],
+      ["overhead-press", "vertical_push", false],
+      ["bench-press", "horizontal_push", undefined],
+    ] as const) {
+      expect(effortCueFor(ex(id, cat, accessory), last)?.kind).toBe("reserve");
     }
   });
 
   it("core gets no cue (timed holds make rep-reserve language nonsense)", () => {
-    expect(
-      effortCueFor(ex("core"), { isLastSet: true, deloadWeek: false })
-    ).toBeNull();
+    expect(effortCueFor(ex("plank", "core", true), last)).toBeNull();
+    expect(effortCueFor(ex("cable-crunch", "core", true), last)).toBeNull();
   });
 
   it("the step-back week overrides everything", () => {
-    for (const cat of ["knee_dominant", "arms_biceps", "core"] as const) {
-      const cue = effortCueFor(ex(cat), { isLastSet: true, deloadWeek: true });
+    for (const exercise of [
+      ex("squat", "knee_dominant"),
+      ex("db-curl", "arms_biceps", true),
+      ex("plank", "core", true),
+    ]) {
+      const cue = effortCueFor(exercise, { isLastSet: true, deloadWeek: true });
       expect(cue?.kind).toBe("deload");
       expect(cue?.text).toBe(
-        "Step-back week — keep everything comfortably easy."
+        "Lighter week — keep everything comfortably easy."
       );
     }
   });

@@ -117,3 +117,17 @@ describe("a past week's open day reads as missed", () => {
     );
   });
 });
+
+describe("the week waits while a session is open", () => {
+  it("marks the session open for as long as one is on screen", () => {
+    /* `useProgram`'s rollover waits on the marker (pinned through the hook in
+       `useProgramWriters.test.ts`); this holds that Train sets it from the
+       state that puts the session on screen, and closes it through the
+       effect's cleanup. */
+    expect(code).toMatch(/const sessionOpen = sessionDayIndex !== null;/);
+    expect(code).toMatch(
+      /useEffect\(\(\) => \(sessionOpen \? openLiftSession\(\) : undefined\), \[sessionOpen\]\);/
+    );
+    expect(code).toMatch(/\{sessionDayIndex !== null &&/);
+  });
+});

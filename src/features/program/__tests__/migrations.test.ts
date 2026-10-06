@@ -901,3 +901,275 @@ describe("migrateProgramState — v3 coverage backfill", () => {
     expect(idsIn(out).filter((id) => id === "lateral-raise")).toHaveLength(1);
   });
 });
+
+/* ─── v5 one-time repair: a load a swap carried onto a bodyweight lift ─── */
+
+/**
+ * The equipment filter swapped a home-gym lat pulldown for pull-ups and the
+ * bank read the pull-up as a full-weight lift, so the slot arrived at 75 kg.
+ * The session pre-filled 75 kg and every unweighted session counted as a
+ * miss. The swap is fixed (`rescaleForSwap`); this pins the one-time repair
+ * of plans it already happened to.
+ */
+describe("migrateProgramState — v5 swapped bodyweight load repair", () => {
+  const pullUps = (
+    overrides: Record<string, unknown> = {}
+  ): Record<string, unknown> => ({
+    name: "Pull-Ups",
+    exerciseId: "pull-ups",
+    instanceId: "i-pull",
+    movementCategory: "vertical_pull",
+    sets: 3,
+    baseSets: 3,
+    reps: 14,
+    baseReps: 14,
+    repUnit: "reps",
+    weight: 75,
+    progressionType: "double",
+    lastSuccessfulWeight: 75,
+    lastAttemptedWeight: 0,
+    consecutiveFailures: 4,
+    plateauCount: 2,
+    performanceHistory: [
+      { date: "2026-09-28", weight: 0, repsCompleted: 12, repsTarget: 14 },
+    ],
+    lastPerformance: null,
+    notes: "Swapped from Lat Pulldown — not available with your equipment.",
+    ...overrides,
+  });
+
+  const v4With = (ex: Record<string, unknown>) =>
+    makeLegacyProgramState({
+      programSchemaVersion: 4,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Pull",
+          dayType: "pull",
+          completed: false,
+          exercises: [ex],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  const repaired = (ex: Record<string, unknown>) =>
+    migrateProgramState(v4With(ex), "2026-10-05").workouts[0].exercises[0];
+
+  it("takes the load off a pull-up the equipment filter swapped in", () => {
+    const ex = repaired(pullUps());
+    expect(ex.weight).toBe(0);
+    expect(ex.lastSuccessfulWeight).toBe(0);
+    expect(ex.lastAttemptedWeight).toBe(0);
+  });
+
+  it("clears the misses counted against that load", () => {
+    const ex = repaired(pullUps());
+    expect(ex.consecutiveFailures).toBe(0);
+    expect(ex.plateauCount).toBe(0);
+  });
+
+  it("clears a lighter week's stash, or the week's end would put it back", () => {
+    expect(repaired(pullUps({ preDeloadWeight: 75 })).preDeloadWeight).toBe(0);
+  });
+
+  it("repairs a swapped-in load even when sets were ticked at the pre-fill", () => {
+    // The session pre-filled 75 kg, so ticking the sets logged it.
+    const ex = repaired(
+      pullUps({
+        performanceHistory: [
+          { date: "2026-09-28", weight: 75, repsCompleted: 14, repsTarget: 14 },
+        ],
+      })
+    );
+    expect(ex.weight).toBe(0);
+  });
+
+  it("repairs a load no session ever lifted, whatever brought it", () => {
+    // A Replace leaves no note; nothing logged with added weight is enough.
+    expect(repaired(pullUps({ notes: undefined })).weight).toBe(0);
+  });
+
+  it("keeps a weighted pull-up the person set and lifted", () => {
+    const ex = repaired(
+      pullUps({
+        weight: 10,
+        notes: undefined,
+        consecutiveFailures: 1,
+        performanceHistory: [
+          { date: "2026-09-28", weight: 10, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })
+    );
+    expect(ex.weight).toBe(10);
+    // Its miss count resets with every other (the v5 miss-count reset).
+    expect(ex.consecutiveFailures).toBe(0);
+  });
+
+  it("leaves loaded lifts alone", () => {
+    const ex = repaired(
+      pullUps({
+        name: "Lat Pulldown",
+        exerciseId: "lat-pulldown",
+        weight: 45,
+        notes: undefined,
+        performanceHistory: [],
+      })
+    );
+    expect(ex.weight).toBe(45);
+  });
+
+  it("runs once: a load set after the repair stays", () => {
+    const current = {
+      ...v4With(pullUps({ weight: 10 })),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    expect(
+      migrateProgramState(current, "2026-10-05").workouts[0].exercises[0].weight
+    ).toBe(10);
+  });
+});
+
+/* ─── v5 one-time reset: miss counts kept under the old rule ───────────── */
+
+describe("migrateProgramState — v5 miss-count reset", () => {
+  const counted = (consecutiveFailures: number) =>
+    makeLegacyProgramState({
+      programSchemaVersion: 4,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: false,
+          exercises: [
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              instanceId: "i-bench",
+              movementCategory: "horizontal_push",
+              sets: 3,
+              baseSets: 3,
+              reps: 8,
+              baseReps: 8,
+              repUnit: "reps",
+              weight: 60,
+              progressionType: "double",
+              lastSuccessfulWeight: 60,
+              lastAttemptedWeight: 60,
+              consecutiveFailures,
+              plateauCount: 1,
+              performanceHistory: [],
+              lastPerformance: null,
+            },
+          ],
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+
+  it("resets every miss count once, when the new miss rule ships", () => {
+    const ex = migrateProgramState(counted(2), "2026-10-05").workouts[0]
+      .exercises[0];
+    expect(ex.consecutiveFailures).toBe(0);
+    // The stall record is not a miss count.
+    expect(ex.plateauCount).toBe(1);
+  });
+
+  it("keeps a count made under the new rule", () => {
+    const current = {
+      ...counted(1),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    expect(
+      migrateProgramState(current, "2026-10-05").workouts[0].exercises[0]
+        .consecutiveFailures
+    ).toBe(1);
+  });
+});
+
+describe("migrateProgramState — v5 rounding onto the equipment's grid", () => {
+  const lifted = (
+    exercises: ({ exerciseId: string; weight: number } & Record<
+      string,
+      unknown
+    >)[],
+    programSchemaVersion = 4
+  ) =>
+    makeLegacyProgramState({
+      programSchemaVersion,
+      liftWeekKey: "2026-09-28",
+      workouts: [
+        {
+          dayName: "Full body",
+          dayType: "full_body",
+          completed: false,
+          exercises: exercises.map((ex, i) => ({
+            name: ex.exerciseId,
+            instanceId: `i-${i}`,
+            movementCategory: "horizontal_push",
+            sets: 3,
+            baseSets: 3,
+            reps: 8,
+            baseReps: 8,
+            repUnit: "reps",
+            progressionType: "linear",
+            lastSuccessfulWeight: ex.weight,
+            lastAttemptedWeight: ex.weight,
+            consecutiveFailures: 0,
+            plateauCount: 0,
+            performanceHistory: [],
+            lastPerformance: null,
+            ...ex,
+          })),
+        },
+      ],
+    } as unknown as Partial<ProgramState>);
+  const weights = (state: ProgramState) =>
+    migrateProgramState(state, "2026-10-05").workouts[0].exercises.map(
+      (ex) => ex.weight
+    );
+
+  it("rounds the weights Microloading and the old light-lift step left, once", () => {
+    expect(
+      weights(
+        lifted([
+          { exerciseId: "bench-press", weight: 101 },
+          { exerciseId: "squat", weight: 102.5 },
+          { exerciseId: "lateral-raise", weight: 9.25 },
+          { exerciseId: "db-bench", weight: 11.25 },
+          { exerciseId: "lat-pulldown", weight: 46 },
+        ])
+      )
+    ).toEqual([100, 102.5, 9, 10, 45]);
+  });
+
+  it("rounds the weight a lighter week will put back, too", () => {
+    const ex = migrateProgramState(
+      lifted([{ exerciseId: "bench-press", weight: 85, preDeloadWeight: 101 }]),
+      "2026-10-05"
+    ).workouts[0].exercises[0];
+    expect(ex.preDeloadWeight).toBe(100);
+  });
+
+  it("leaves a lift whose equipment the catalogue doesn't name", () => {
+    // A weighted pull-up's load was lifted, so the swap repair keeps it.
+    const vest = [
+      { date: "2026-09-30", weight: 7, repsCompleted: 8, repsTarget: 8 },
+    ];
+    expect(
+      weights(
+        lifted([
+          { exerciseId: "my-own-lift", weight: 23 },
+          { exerciseId: "pull-ups", weight: 7, performanceHistory: vest },
+        ])
+      )
+    ).toEqual([23, 7]);
+  });
+
+  it("never rounds again: an odd weight lifted later is the person's", () => {
+    const current = lifted(
+      [{ exerciseId: "bench-press", weight: 101 }],
+      CURRENT_PROGRAM_SCHEMA_VERSION
+    );
+    expect(weights(current)).toEqual([101]);
+  });
+});

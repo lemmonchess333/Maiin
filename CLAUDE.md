@@ -206,10 +206,9 @@ run-surface feature modules.
 - `programEngine.ts` — Periodized workout program generation
 - `programTypes.ts` — TypeScript interfaces for program state
 - `useProgram.ts` — Program state management hook
-- `templates.ts` — Workout template library
 - `variationBank.ts` — Exercise variation database
 - `runScheduler.ts` — Goal-driven run scheduling engine (freeform, structured, race prep)
-- `matchTemplate.ts` — Template matching logic
+- `matchTemplate.ts` — Equipment and injury swaps on a plan (`injurySubstitutions.ts` lists what each injury option promises)
 
 ## Custom Hooks (src/hooks/)
 

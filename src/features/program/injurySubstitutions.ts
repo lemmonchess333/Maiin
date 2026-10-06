@@ -90,6 +90,88 @@ function sub(
   return { id, name, safeFor, rationale };
 }
 
+/**
+ * The lifts each injury's promise names, and so the lifts a plan swaps for
+ * someone with it (Lift4 (11)). The promises are the injury options' copy:
+ *
+ *   lower_back  "We'll avoid heavy axial loading": the deadlifts, the
+ *               bent-over barbell rows, the barbell squats and the standing
+ *               barbell press.
+ *   knee        "We'll adjust squat and lunge variations": the barbell and
+ *               machine squats, the lunges and the leg extension. The goblet
+ *               squat, the Bulgarian split squat and the step-up are the
+ *               adjusted variations, so they stay.
+ *   shoulder    "We'll modify pressing movements": overhead pressing, the
+ *               barbell bench presses, dips, the upright row and pull-ups.
+ *   elbow       "We'll swap heavy curls/dips for cable work": the supinated
+ *               curls, chin-ups and pull-ups, dips, and the triceps work
+ *               that loads the elbow at its end range.
+ *   wrist       "We'll pick neutral-grip and machine variants": the barbell
+ *               presses and curls, the front squat's rack, push-ups and
+ *               skull crushers.
+ *
+ * Every lift named here has a substitute for each of its injuries in
+ * `INJURY_SUBSTITUTIONS`, and no substitute is named here for an injury it
+ * is chosen for, so a swap holds on the next save
+ * (`injurySubstitutions.test.ts`).
+ */
+export const CONTRAINDICATED: Readonly<
+  Record<string, readonly InjuryCategory[]>
+> = {
+  deadlift: ["lower_back"],
+  "sumo-deadlift": ["lower_back"],
+  "romanian-deadlift": ["lower_back"],
+  "db-rdl": ["lower_back"],
+  "superman-hold": ["lower_back"],
+  "barbell-row": ["lower_back"],
+  "pendlay-row": ["lower_back"],
+  "t-bar-row": ["lower_back"],
+  "meadows-row": ["lower_back"],
+  squat: ["lower_back", "knee"],
+  "front-squat": ["lower_back", "knee", "wrist"],
+  "zercher-squat": ["lower_back", "knee"],
+  "overhead-press": ["lower_back", "shoulder", "wrist"],
+  "hack-squat": ["knee"],
+  "leg-press": ["knee"],
+  "smith-machine-squat": ["knee"],
+  "pistol-squat": ["knee"],
+  "sissy-squat": ["knee"],
+  "leg-extension": ["knee"],
+  lunges: ["knee"],
+  "walking-dumbbell-lunges": ["knee"],
+  "bodyweight-lunge": ["knee"],
+  "db-shoulder-press": ["shoulder"],
+  "arnold-press": ["shoulder"],
+  "smith-shoulder-press": ["shoulder"],
+  "pike-push-up": ["shoulder", "wrist"],
+  "handstand-push-ups": ["shoulder"],
+  "bench-press": ["shoulder", "wrist"],
+  "incline-bench": ["shoulder", "wrist"],
+  "decline-bench": ["shoulder", "wrist"],
+  "close-grip-bench": ["shoulder", "elbow", "wrist"],
+  dips: ["shoulder", "elbow", "wrist"],
+  "tricep-dips": ["shoulder", "elbow", "wrist"],
+  "weighted-chest-dip": ["shoulder", "elbow", "wrist"],
+  "barbell-upright-row": ["shoulder"],
+  "pull-ups": ["shoulder", "elbow"],
+  "chin-ups": ["elbow"],
+  "barbell-curl": ["elbow", "wrist"],
+  "db-curl": ["elbow"],
+  "skull-crushers": ["elbow", "wrist"],
+  "overhead-extension": ["elbow"],
+  "push-ups": ["wrist"],
+  "diamond-push-ups": ["elbow", "wrist"],
+};
+
+/** The injuries, of `injuries`, a lift is contraindicated for. */
+export function contraindicatedFor(
+  exerciseId: string,
+  injuries: readonly string[]
+): InjuryCategory[] {
+  const contras = CONTRAINDICATED[exerciseId] ?? [];
+  return contras.filter((c) => injuries.includes(c));
+}
+
 export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
   // ═══════════════════════════════════════════════════════════════════════
   // LOWER BACK — axial-loaded hinge patterns that need substitutes
@@ -120,6 +202,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["lower_back"],
       "Hamstring-focused with minimal spinal load"
     ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
   ],
 
   "romanian-deadlift": [
@@ -141,6 +229,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["lower_back"],
       "Isolated posterior chain, minimal lumbar demand"
     ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
   ],
 
   "sumo-deadlift": [
@@ -156,6 +250,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["lower_back"],
       "Spine supported, loads posterior chain"
     ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
   ],
 
   "barbell-row": [
@@ -170,12 +270,6 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Seated Cable Row",
       ["lower_back", "shoulder"],
       "Seated position, fixed torso angle"
-    ),
-    sub(
-      "t-bar-row",
-      "T-Bar Row",
-      ["lower_back"],
-      "Supported T-bar variant keeps torso braced"
     ),
   ],
 
@@ -261,6 +355,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["lower_back"],
       "Hamstring isolation, minimal lumbar demand"
     ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
   ],
 
   // Superman Hold — loaded lumbar extension, not appropriate for
@@ -317,6 +417,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["knee"],
       "Controlled unilateral, start low height"
     ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
   ],
 
   "hack-squat": [
@@ -337,6 +443,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Step-Up",
       ["knee"],
       "Controlled unilateral alternative"
+    ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
     ),
   ],
 
@@ -364,6 +476,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Nordic Hamstring Curl",
       ["knee"],
       "Posterior-chain focus, eccentric hamstring work"
+    ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
     ),
   ],
 
@@ -504,7 +622,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "bulgarian-split",
       "Bulgarian Split Squat",
-      ["knee"],
+      ["knee", "lower_back"],
       "Unilateral knee-friendly pattern"
     ),
   ],
@@ -523,14 +641,26 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "db-shoulder-press",
       "Seated DB Press",
-      ["shoulder", "wrist"],
+      ["wrist", "lower_back"],
       "Neutral grip keeps the wrist aligned with the forearm"
     ),
     sub(
       "shoulder-press-machine",
       "Shoulder Press Machine",
-      ["shoulder", "wrist", "elbow"],
+      ["shoulder", "wrist", "elbow", "lower_back"],
       "Controlled plane + limited ROM — spares stabilisers, wrist, and elbow"
+    ),
+    sub(
+      "incline-db-press",
+      "Incline DB Press",
+      ["shoulder", "wrist", "lower_back"],
+      "Neutral-grip press below the overhead arc, with dumbbells a home gym has"
+    ),
+    sub(
+      "push-ups",
+      "Push-Ups",
+      ["shoulder"],
+      "Pressing below the overhead arc, with the shoulder blades free to move"
     ),
   ],
 
@@ -544,7 +674,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "db-shoulder-press",
       "Seated DB Press",
-      ["shoulder", "wrist"],
+      ["wrist"],
       "Neutral-grip alternative"
     ),
     sub(
@@ -552,6 +682,18 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Shoulder Press Machine",
       ["shoulder", "wrist", "elbow"],
       "Controlled plane with limited elbow ROM"
+    ),
+    sub(
+      "incline-db-press",
+      "Incline DB Press",
+      ["shoulder", "wrist", "lower_back"],
+      "Neutral-grip press below the overhead arc, with dumbbells a home gym has"
+    ),
+    sub(
+      "push-ups",
+      "Push-Ups",
+      ["shoulder"],
+      "Pressing below the overhead arc, with the shoulder blades free to move"
     ),
   ],
 
@@ -567,6 +709,18 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Shoulder Press Machine",
       ["shoulder", "wrist", "elbow"],
       "Machine-controlled, reduced stabiliser and joint load"
+    ),
+    sub(
+      "incline-db-press",
+      "Incline DB Press",
+      ["shoulder", "wrist", "lower_back"],
+      "Neutral-grip press below the overhead arc, with dumbbells a home gym has"
+    ),
+    sub(
+      "push-ups",
+      "Push-Ups",
+      ["shoulder"],
+      "Pressing below the overhead arc, with the shoulder blades free to move"
     ),
   ],
 
@@ -590,8 +744,14 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "incline-db-press",
       "Incline DB Press",
-      ["shoulder", "wrist"],
+      ["shoulder", "wrist", "lower_back"],
       "Inclined pressing preserves the pattern with friendlier wrist loading"
+    ),
+    sub(
+      "push-ups",
+      "Push-Ups",
+      ["shoulder"],
+      "Pressing below the overhead arc, with the shoulder blades free to move"
     ),
   ],
 
@@ -614,7 +774,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "db-shoulder-press",
       "Seated DB Press",
-      ["shoulder", "wrist"],
+      ["wrist"],
       "Neutral-grip seated alternative"
     ),
     sub(
@@ -622,6 +782,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Push-Ups",
       ["shoulder"],
       "Horizontal press pattern avoids overhead impingement (still wrist-loaded)"
+    ),
+    sub(
+      "incline-db-press",
+      "Incline DB Press",
+      ["shoulder", "wrist", "lower_back"],
+      "Neutral-grip press below the overhead arc, with dumbbells a home gym has"
     ),
   ],
 
@@ -706,7 +872,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "close-grip-bench",
       "Close-Grip Bench Press",
-      ["shoulder"],
+      [],
       "Removes the deep bottom-position shoulder stretch"
     ),
   ],
@@ -733,7 +899,7 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
     sub(
       "close-grip-bench",
       "Close-Grip Bench Press",
-      ["shoulder"],
+      [],
       "Removes bottom-position shoulder stretch"
     ),
   ],
@@ -775,6 +941,18 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       ["shoulder"],
       "Supinated grip externally rotates the shoulder — friendlier position (still elbow-loaded)"
     ),
+    sub(
+      "inverted-row",
+      "Inverted Row",
+      ["shoulder", "elbow"],
+      "Bodyweight row with a neutral grip: no overhead pull and less strain at the elbow"
+    ),
+    sub(
+      "db-row",
+      "Dumbbell Row",
+      ["shoulder", "elbow"],
+      "Supported one-arm row with a neutral grip"
+    ),
   ],
 
   // Chin-ups — elbow-flexion under bodyweight load, worst for tennis /
@@ -798,6 +976,18 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Seated Cable Row",
       ["elbow", "shoulder", "lower_back"],
       "Seated cable variant with controlled tension"
+    ),
+    sub(
+      "inverted-row",
+      "Inverted Row",
+      ["shoulder", "elbow"],
+      "Bodyweight row with a neutral grip: no overhead pull and less strain at the elbow"
+    ),
+    sub(
+      "db-row",
+      "Dumbbell Row",
+      ["shoulder", "elbow"],
+      "Supported one-arm row with a neutral grip"
     ),
   ],
 
@@ -827,6 +1017,12 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "EZ Bar Curl",
       ["wrist"],
       "Angled grip reduces wrist stress (still loaded elbow flexion)"
+    ),
+    sub(
+      "cross-body-hammer-curl",
+      "Cross-Body Hammer Curl",
+      ["elbow", "wrist"],
+      "Neutral grip across the body spares the inside of the elbow"
     ),
   ],
 
@@ -949,6 +1145,80 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
       "Hack Squat",
       ["wrist"],
       "No rack position, shoulder-pad loading"
+    ),
+    sub(
+      "glute-bridge",
+      "Glute Bridge",
+      ["knee", "lower_back"],
+      "The hip thrust's pattern from the floor, with no load on the spine or the knee"
+    ),
+  ],
+
+  // Tricep dips: the shoulder at the bottom, the elbow at the lockout and
+  // the wrist under the body's weight. Cable or dumbbell triceps work spares
+  // all three.
+  "tricep-dips": [
+    sub(
+      "rope-tricep-pushdown",
+      "Rope Tricep Pushdown",
+      ["shoulder", "elbow", "wrist"],
+      "Arms at the sides and a smooth cable load through the elbow"
+    ),
+    sub(
+      "tricep-kickback",
+      "Tricep Kickback",
+      ["shoulder", "elbow", "wrist"],
+      "Light dumbbell triceps work with the shoulder at rest"
+    ),
+  ],
+
+  // A supinated dumbbell curl loads the inside of the elbow; a neutral grip
+  // or a cable spares it.
+  "db-curl": [
+    sub(
+      "hammer-curl",
+      "Hammer Curl",
+      ["elbow", "wrist"],
+      "Neutral grip takes the strain off the inside of the elbow"
+    ),
+    sub(
+      "cable-curl",
+      "Cable Curl",
+      ["elbow", "wrist"],
+      "Smooth cable load through the elbow's painful arc"
+    ),
+    sub(
+      "cross-body-hammer-curl",
+      "Cross-Body Hammer Curl",
+      ["elbow", "wrist"],
+      "Neutral grip across the body spares the inside of the elbow"
+    ),
+  ],
+
+  "handstand-push-ups": [
+    sub(
+      "landmine-press",
+      "Landmine Press",
+      ["shoulder", "wrist"],
+      "Angled path removes the impingement arc"
+    ),
+    sub(
+      "shoulder-press-machine",
+      "Shoulder Press Machine",
+      ["shoulder", "wrist", "elbow"],
+      "Controlled plane and limited range"
+    ),
+    sub(
+      "incline-db-press",
+      "Incline DB Press",
+      ["shoulder", "wrist", "lower_back"],
+      "Neutral-grip press below the overhead arc, with dumbbells a home gym has"
+    ),
+    sub(
+      "push-ups",
+      "Push-Ups",
+      ["shoulder"],
+      "Pressing below the overhead arc, with the shoulder blades free to move"
     ),
   ],
 };

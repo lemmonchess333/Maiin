@@ -18,7 +18,7 @@
  *     two pages.
  *
  * Save model (the lift editor):
- *   - The two engine toggles (auto-progression, microloading) live-save via
+ *   - The two engine toggles (auto-progression, small plates) live-save via
  *     `updateSettings` — no rebuild.
  *   - Every plan-shaping field (focus, experience, lift days, equipment,
  *     injuries) is a DRAFT. A single "Save changes" action runs `buildPlan`
@@ -70,6 +70,7 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
   represcribeWorkouts,
@@ -85,6 +86,11 @@ import {
   RACE_DISTANCE_LABELS,
   programmePreservationNote,
 } from "@/lib/programmeChanges";
+import SessionLengthLabel from "./SessionLengthLabel";
+import {
+  SESSION_MINUTES_OPTIONS,
+  sessionLengthOption,
+} from "@/features/program/sessionFit";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
@@ -101,6 +107,7 @@ import type {
   RaceDistance,
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
+import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -122,7 +129,7 @@ interface ProgrammeSettingsProps {
    *  programme loads it is null or the cached copy, and a save built on
    *  null starts from no programme and is refused as a conflict. */
   readiness: ProgramReadiness;
-  /** Live-saves the engine toggles (auto-progression / microloading). */
+  /** Live-saves the engine toggles (auto-progression / small plates). */
   updateSettings: (patch: Partial<ProgramSettings>) => Promise<unknown> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
   regenerateProgram: (
@@ -270,9 +277,9 @@ const FOCUS_OPTIONS: {
   {
     id: "fat_loss",
     label: "Lose fat",
-    // The engine gives this focus the general reps, not high-rep
-    // "conditioning" work: the lifting keeps strength while the calorie
-    // deficit does the fat loss (GOAL_PROFILES.fat_loss).
+    // The engine builds this focus as Build muscle (`roleTable.ts`), not
+    // high-rep "conditioning" work: the lifting keeps strength and muscle
+    // while the calorie deficit does the fat loss (Lift4 (4)).
     desc: "Keeps your strength and muscle as you lose fat",
     icon: <Flame size={18} style={{ color: THEME.brand }} />,
   },
@@ -438,14 +445,18 @@ export default function ProgrammeSettings({
     () => ({
       primaryGoal: (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
       nutritionPhase: getNutritionPhase(profile),
-      experience: (profile.experience as Experience) ?? "intermediate",
+      experience: toExperience(profile.experience),
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
+      // Lift4 (5): how long a session is; the plan is fitted to it.
+      sessionMinutes: sessionLengthOption(profile.liftTimeBudgetMinutes),
       preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
         profile.preferredSplit ?? ""
       )
         ? (profile.preferredSplit as SplitChoice)
         : "auto",
       equipment: (profile.equipment as Equipment) ?? "full_gym",
+      // Lift4 (11): "what do you have?" beside a home gym's kit.
+      barbellAtHome: profile.barbellAtHome === true,
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -475,7 +486,11 @@ export default function ProgrammeSettings({
   const nutritionPhase: Goal = saved.nutritionPhase;
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
+  const [sessionMinutes, setSessionMinutes] = useState<number>(
+    saved.sessionMinutes
+  );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
+  const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -488,10 +503,7 @@ export default function ProgrammeSettings({
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const settings = programState?.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
+  const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
   // The per-field diff is the single source of truth: the recap shown in the
   // confirm modal and the dirty state both derive from it, so they can't drift.
@@ -500,8 +512,10 @@ export default function ProgrammeSettings({
     nutritionPhase,
     experience,
     liftDays,
+    sessionMinutes,
     preferredSplit: saved.preferredSplit,
     equipment,
+    barbellAtHome,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -517,17 +531,18 @@ export default function ProgrammeSettings({
   // lift-days change re-derives the skeleton. The confirm copy must name the
   // customization reset for a day-count change, and reassure otherwise.
   const liftDaysChanged = liftDays !== saved.liftDays;
+  const sessionMinutesChanged = sessionMinutes !== saved.sessionMinutes;
   // LIFT-EV-06 (owner decision 2026-08-09): a permanent goal change at the
   // SAME frequency used to be silent — buildPlan's preserve branch keeps the
   // workouts verbatim, so only the label moved. The confirm dialog now offers
   // a visible keep-or-represcribe choice (reusing the training-block
   // transform). The choice only exists when the preserve branch would run:
-  // a day-count or experience change already forces a rebuild, and an active
-  // block owns the focus.
+  // a day-count change rebuilds, and an active block owns the focus. A level
+  // change never rebuilds (Lift4 (12)), so a focus changed with one still
+  // needs the choice, and the new level re-aims the sessions.
   const focusChangedSameFrequency =
     primaryGoal !== saved.primaryGoal &&
     !liftDaysChanged &&
-    experience === saved.experience &&
     !activeBlockFocus &&
     (programState?.workouts?.length ?? 0) > 0;
 
@@ -619,15 +634,18 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
-        // Without this a level change is invisible to the builder — it
-        // preserves the saved week whenever the day count is unchanged, so
-        // Beginner ↔ Advanced produced byte-identical workouts behind this
-        // flow's own "Plan updated" toast.
+        // Marks this as a save of someone's own plan, so the experience gate
+        // leaves its exercises alone. A level change is a content edit
+        // (Lift4): it keeps the week, as the confirm above it says.
         previousExperience: saved.experience,
         // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
         bodyweightKg: profile.weightKg,
         sex: profile.sex,
         liftDays,
+        // Lift4 (5): a new plan is fitted to the session length; a changed
+        // one re-fits the plan the person has, sets only.
+        sessionMinutes,
+        previousSessionMinutes: saved.sessionMinutes,
         // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
         // value (inert in generation, keeps profileUpdates consistent).
         preferredSplit:
@@ -658,6 +676,7 @@ export default function ProgrammeSettings({
             }
           : {}),
         equipment,
+        barbellAtHome,
         injuries,
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -816,10 +835,13 @@ export default function ProgrammeSettings({
                   {confirmReset
                     ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
                     : focusChangedSameFrequency
-                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          ...(sessionMinutesChanged
+                            ? { sessionMinutesTo: sessionMinutes }
+                            : {}),
                         })}
                 </p>
               </div>
@@ -1060,6 +1082,23 @@ export default function ProgrammeSettings({
           />
         </div>
 
+        <div>
+          <GroupHeading>Session length</GroupHeading>
+          <SegmentedControl
+            ariaLabel="Minutes per lift session"
+            options={SESSION_MINUTES_OPTIONS.map((n) => ({
+              value: n,
+              label: <SessionLengthLabel minutes={n} />,
+            }))}
+            value={sessionMinutes}
+            onChange={setSessionMinutes}
+            className="@container"
+          />
+          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+            Your sessions are built to fit this, warm-ups and rests included.
+          </p>
+        </div>
+
         {/* Pgm5 (Q1): split is a derived DISPLAY — the coach sets it from your
             weekly training days; the user expresses preference via lift-days +
             the exercise editor, not a split toggle. */}
@@ -1159,6 +1198,23 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
+          {/* Lift4 (11): "what do you have?" beside the setups. */}
+          {equipment !== "full_gym" && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A barbell and a rack</p>
+                <p className="text-xs text-muted-foreground">
+                  Squats, deadlifts and presses with the bar.
+                </p>
+              </div>
+              <Toggle
+                checked={barbellAtHome}
+                label="A barbell and a rack"
+                className="ml-3"
+                onChange={() => setBarbellAtHome((v) => !v)}
+              />
+            </div>
+          )}
         </div>
 
         <div>
@@ -1204,18 +1260,17 @@ export default function ProgrammeSettings({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-foreground">Microloading</p>
+              <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Add 1 kg every session you hit the target reps, instead of 2.5
-                kg only after a 2-rep overshoot.
+                Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
               </p>
             </div>
             <Toggle
-              checked={settings.microloading}
-              label="Microloading"
+              checked={settings.smallPlates}
+              label="I have small plates"
               className="ml-3"
               onChange={() =>
-                updateSettings({ microloading: !settings.microloading })
+                updateSettings({ smallPlates: !settings.smallPlates })
               }
             />
           </div>

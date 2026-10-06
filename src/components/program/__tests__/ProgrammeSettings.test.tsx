@@ -64,7 +64,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 }
 
 const programState = {
-  settings: { autoProgression: true, microloading: true },
+  settings: { autoProgression: true, smallPlates: false },
 } as ProgramState;
 
 /** Where the page sent the user. */
@@ -243,7 +243,81 @@ describe("ProgrammeSettings — rebuild path", () => {
   });
 });
 
+describe("ProgrammeSettings — session length (Lift4 (5))", () => {
+  it("edits the session length beside the lift days, and saves it with the plan", async () => {
+    setup({ liftTimeBudgetMinutes: 60 });
+    const lengths = screen.getByRole("radiogroup", {
+      name: "Minutes per lift session",
+    });
+    expect(
+      within(lengths).getByRole("radio", { name: "60 min" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(lengths).getByRole("radio", { name: "45 min" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm says what a re-fit does before it happens.
+    expect(
+      screen.getByText(/sets are refitted to sessions of about 45 minutes/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.liftTimeBudgetMinutes).toBe(45);
+  });
+
+  it("reads an older 90-minute answer as 75+", () => {
+    setup({ liftTimeBudgetMinutes: 90 });
+    expect(screen.getByRole("radio", { name: "75+ min" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+});
+
+describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
+  it("offers a barbell and a rack beside a home gym, and saves it with the plan", async () => {
+    setup({ equipment: "full_gym" });
+    // A full gym has barbells.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    const bar = screen.getByRole("switch", { name: "A barbell and a rack" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm's recap names it.
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A barbell and a rack")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("home_gym");
+    expect(payload.profileUpdates.barbellAtHome).toBe(true);
+  });
+
+  it("shows the answer the person gave", () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    expect(
+      screen.getByRole("switch", { name: "A barbell and a rack" })
+    ).toHaveAttribute("aria-checked", "true");
+  });
+});
+
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
+  it("asks about small plates, off until turned on, in Microloading's place (Lift4 (6))", () => {
+    const { updateSettings } = setup();
+    expect(screen.queryByText(/microloading/i)).toBeNull();
+    const plates = screen.getByRole("switch", { name: /i have small plates/i });
+    expect(plates).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(plates);
+    expect(updateSettings).toHaveBeenCalledWith({ smallPlates: true });
+  });
+
   it("toggling auto-progression calls updateSettings, not configurePlan", () => {
     const { updateSettings } = setup();
     fireEvent.click(screen.getByRole("switch", { name: /auto progression/i }));
@@ -342,7 +416,7 @@ describe("ProgrammeSettings — waits for the programme it is built on", () => {
     workouts: [],
     fatigueScore: 0,
     updatedAt: 1,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
   } as unknown as ProgramState;
   const LOAD_FAILED =
@@ -538,7 +612,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     lastPerformance: null,
   });
   const liftState = {
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     splitType: "upper_lower",
     weekNumber: 5,
     currentPhase: "progression",
@@ -618,6 +692,27 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     };
     expect(payload.profileUpdates.primaryGoal).toBe("strength");
     expect(payload.programState.workouts).toEqual(liftState.workouts);
+  });
+
+  it("offers the choice when the level changes too, and re-aims at the new level", async () => {
+    // A level change keeps the plan (Lift4 (12)), so the focus would go
+    // nowhere without the choice.
+    const { represcribeWorkouts } =
+      await import("@/features/program/represcribe");
+    setup({}, "lift", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /^advanced/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /save and update sessions/i })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      programState: { workouts: unknown };
+    };
+    expect(payload.programState.workouts).toEqual(
+      represcribeWorkouts(liftState.workouts, "strength", "advanced")
+    );
   });
 
   it("no choice when lift days change too — the rebuild arm owns that", () => {

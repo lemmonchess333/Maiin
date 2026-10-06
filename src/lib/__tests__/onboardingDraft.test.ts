@@ -17,10 +17,12 @@ import {
   loadOnboardingDraft,
   clearOnboardingDraft,
   isValidDraft,
+  DRAFT_SESSION_MINUTES,
   DRAFT_VERSION,
   DRAFT_TTL_MS,
   type OnboardingDraft,
 } from "../onboardingDraft";
+import { SESSION_MINUTES_OPTIONS } from "@/features/program/sessionFit";
 
 const MAX_STEP = 7; // TOTAL_STEPS - 1 in Onboarding.tsx
 
@@ -232,6 +234,52 @@ describe("chapter redesign metadata", () => {
     ).toBe(false);
     expect(
       isValidDraft({ ...makeDraft(), weightDisplayUnit: "oz" }, MAX_STEP)
+    ).toBe(false);
+  });
+});
+
+describe("session length (Lift4 (5))", () => {
+  it("offers the time fit's own lengths", () => {
+    expect([...DRAFT_SESSION_MINUTES]).toEqual([...SESSION_MINUTES_OPTIONS]);
+  });
+
+  it("round-trips an answer and rejects one the days step never offers", () => {
+    const answered = makeDraft({ sessionMinutes: 45 });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    expect(
+      isValidDraft(
+        { ...makeDraft(), sessionMinutes: 50 } as unknown as OnboardingDraft,
+        MAX_STEP
+      )
+    ).toBe(false);
+  });
+});
+
+describe("what do you have? (Lift4 (11))", () => {
+  it("round-trips the barbell and the small plates, and rejects anything but yes or no", () => {
+    const answered = makeDraft({ barbellAtHome: true, smallPlates: true });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    expect(
+      isValidDraft(
+        { ...makeDraft(), barbellAtHome: "yes" } as unknown as OnboardingDraft,
+        MAX_STEP
+      )
+    ).toBe(false);
+  });
+});
+
+describe("the legs while the runs build (Lift4 (10))", () => {
+  it("round-trips the answer, and rejects anything but yes or no", () => {
+    const answered = makeDraft({ raceLegTrim: false });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    expect(
+      isValidDraft(
+        { ...makeDraft(), raceLegTrim: 1 } as unknown as OnboardingDraft,
+        MAX_STEP
+      )
     ).toBe(false);
   });
 });

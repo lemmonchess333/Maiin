@@ -53,6 +53,18 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
         restSeconds: 60,
         isAccessory: true,
       },
+      // Lift4's drop: where a lowered lift climbs back to, and its line.
+      {
+        lowered: {
+          exerciseId: "bench-press",
+          from: 100,
+          target: 5,
+          unit: "kg",
+          shown: true,
+        },
+      },
+      // Lift4 (11): the lift a swap replaced, for the way back.
+      { swappedFrom: { exerciseId: "squat" } },
     ];
 
     let compared = 0;

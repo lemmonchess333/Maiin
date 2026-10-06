@@ -92,6 +92,8 @@ export interface RunPlanDraft {
   runTimeLimits?: RunTimeLimits;
   runningBaseline?: RunningBaseline | null;
   nonRaceGoal?: NonRaceGoal | null;
+  /** Lift4 (10): the leg trim while the runs build. Additive in v1. */
+  raceLegTrim?: boolean;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -169,6 +171,7 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
       (!(e.nonRaceGoal.kind === "runs" || e.nonRaceGoal.kind === "minutes") ||
         !Number.isFinite(e.nonRaceGoal.target))) ||
     (e.runTimeLimits !== undefined && !isRunTimeLimits(e.runTimeLimits)) ||
+    (e.raceLegTrim !== undefined && typeof e.raceLegTrim !== "boolean") ||
     !isOneOf(RUN_MODES, e.runMode) ||
     !isOneOf(VALID_RACE_DISTANCE, e.raceDistance) ||
     !isOneOf(VOLUMES, e.runVolume) ||
@@ -204,5 +207,6 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
     ...(e.runTimeLimits === undefined
       ? {}
       : { runTimeLimits: e.runTimeLimits }),
+    ...(e.raceLegTrim === undefined ? {} : { raceLegTrim: e.raceLegTrim }),
   };
 }

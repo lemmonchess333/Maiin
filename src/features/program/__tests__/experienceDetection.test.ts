@@ -453,14 +453,13 @@ describe("boundaries the module promises", () => {
     ).toBeNull();
   });
 
-  it("unknown/legacy stored values coerce to intermediate behaviour", () => {
-    // toExperience coerces garbage to "intermediate", whose only suggestion
-    // direction is the novice window.
-    const out = detectExperienceSuggestion(
-      week(main("bench-press", CLIMB), main("squat", CLIMB)),
-      "Novice"
-    );
-    expect(out?.to).toBe("beginner");
+  it("unknown/legacy stored values coerce to beginner behaviour", () => {
+    // toExperience coerces garbage to "beginner" (Lift4 (5)): lifts still
+    // climbing session to session are a beginner's, so nothing is suggested,
+    // where the old intermediate coercion offered "beginner" here.
+    const climbing = week(main("bench-press", CLIMB), main("squat", CLIMB));
+    expect(detectExperienceSuggestion(climbing, "Novice")).toBeNull();
+    expect(detectExperienceSuggestion(climbing, "beginner")).toBeNull();
   });
 
   it("suggestionSignature is stable per (to, reason)", () => {

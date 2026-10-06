@@ -4,16 +4,10 @@
  * for each pattern slot (e.g. horizontal_push → bench press / incline
  * bench / DB bench / etc).
  *
- * `pickExercise` has three deterministic branches and one
- * non-deterministic (random) one:
- *   1. plateauCount < 3 + matching currentExerciseId → returns current
- *   2. plateauCount < 3 + no current → returns the primary
- *   3. plateauCount >= 3 → rotates to a different variation (random)
- *
- * `pickAccessory` is always random across non-primary, non-excluded
- * options. We pin the random paths by asserting the result is
- * always in the expected candidate set rather than asserting a
- * specific id (which would require mocking Math.random).
+ * `pickExercise` keeps the current exercise when the level allows it and
+ * otherwise returns the category's primary; a stall never changes it
+ * (Lift4 (2)). `pickAccessory` picks deterministically across the
+ * non-primary, non-excluded options.
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -49,6 +43,34 @@ describe("rescaleForSwap — unsafe boundaries", () => {
       rescaleForSwap(120, "deadlift", "incline-db-press", "hip_dominant")
     ).toBe(0);
   });
+
+  it("carries no load into pull-ups, the vertical pull the bank leaves unfactored", () => {
+    // Read by its factor alone, each of these came out at 82.5 to 200 kg.
+    for (const from of [
+      "lat-pulldown",
+      "straight-arm-pulldown",
+      "single-arm-lat-pulldown",
+    ]) {
+      expect(rescaleForSwap(50, from, "pull-ups", "vertical_pull")).toBe(0);
+    }
+  });
+
+  it("does not read a weighted pull-up's added load as a pulldown's", () => {
+    expect(
+      rescaleForSwap(10, "pull-ups", "lat-pulldown", "vertical_pull")
+    ).toBe(0);
+  });
+
+  it("still scales between two loaded vertical pulls", () => {
+    expect(
+      rescaleForSwap(
+        50,
+        "lat-pulldown",
+        "single-arm-lat-pulldown",
+        "vertical_pull"
+      )
+    ).toBeGreaterThan(0);
+  });
 });
 
 describe("exerciseBank — structural invariants", () => {
@@ -74,7 +96,7 @@ describe("exerciseBank — structural invariants", () => {
   });
 
   it("every category has exactly one primary exercise", () => {
-    /* pickExercise's no-plateau-no-current branch falls back to
+    /* pickExercise with no current exercise falls back to
        `options.find(primary)` then `options[0]`. Both should be the
        same exercise — if multiple are flagged primary the picker
        silently picks the first one, which is fragile. */
@@ -85,104 +107,37 @@ describe("exerciseBank — structural invariants", () => {
   });
 });
 
-describe("pickExercise — no plateau (deterministic)", () => {
-  it("returns the matching current exercise when plateauCount < 3", () => {
+describe("pickExercise", () => {
+  it("returns the matching current exercise", () => {
     /* User has been on db-bench for a while, hasn't plateaued.
        Stay on db-bench — don't shuffle them onto bench-press
        for no reason. */
-    const result = pickExercise("horizontal_push", 0, "db-bench");
+    const result = pickExercise("horizontal_push", "db-bench");
     expect(result.id).toBe("db-bench");
   });
 
   it("falls through to the primary when current id is not in the category", () => {
     /* The id doesn't match any exercise in horizontal_push (it's
        a hip-dominant id). Picker falls back to the primary. */
-    const result = pickExercise("horizontal_push", 0, "deadlift");
+    const result = pickExercise("horizontal_push", "deadlift");
     expect(result.id).toBe("bench-press");
   });
 
   it("returns the primary when no current id is provided", () => {
-    expect(pickExercise("horizontal_push", 0).id).toBe("bench-press");
-    expect(pickExercise("hip_dominant", 0).id).toBe("deadlift");
-    expect(pickExercise("knee_dominant", 0).id).toBe("squat");
+    expect(pickExercise("horizontal_push").id).toBe("bench-press");
+    expect(pickExercise("hip_dominant").id).toBe("deadlift");
+    expect(pickExercise("knee_dominant").id).toBe("squat");
   });
 
-  it("returns the primary at plateauCount = 2 (just under the threshold)", () => {
-    /* The rotation threshold is `>= 3`, so 2 still uses the
-       no-plateau path. */
-    expect(pickExercise("vertical_push", 2).id).toBe("overhead-press");
-  });
-});
-
-describe("pickExercise — plateau rotation", () => {
-  it("returns a DIFFERENT exercise from the current id when plateauCount >= 3", () => {
-    /* Run the picker enough times to ensure it doesn't accidentally
-       always return the same exercise — but every result must
-       differ from the current id, which is the contract. */
-    for (let i = 0; i < 30; i++) {
-      const result = pickExercise("horizontal_push", 3, "bench-press");
-      expect(result.id).not.toBe("bench-press");
-    }
-  });
-
-  // Backlog #11 (P4/B6/N5) — the rotation used to be
-  // `others[Math.floor(Math.random() * others.length)]`.
-  it("is DETERMINISTIC — a regenerate can't churn a plateaued main", () => {
-    /* The random pick re-rolled on every regenerate, so a stalled lift
-       changed exercise each time the user touched a setting. */
-    const picks = Array.from(
-      { length: 30 },
-      () => pickExercise("knee_dominant", 3, "squat").id
+  it("keeps a variation the level allows, and gives the primary otherwise", () => {
+    // A front squat is technical: a beginner gets the squat, an
+    // intermediate keeps theirs.
+    expect(pickExercise("knee_dominant", "front-squat", "beginner").id).toBe(
+      "squat"
     );
-    expect(new Set(picks).size).toBe(1);
-  });
-
-  it("prefers a TECHNIQUE variation over a size one", () => {
-    /* Three sources say the substitute should have a job, and Nippard
-       adds that changing exercises flattens progression — so when you do
-       change, change to something that improves the parent lift. */
-    const bank = exerciseBank.knee_dominant;
-    const picked = pickExercise("knee_dominant", 3, "squat").id;
-    expect(bank.find((o) => o.id === picked)?.role).toBe("technique");
-  });
-
-  it("falls back through the ranking when no technique option is left", () => {
-    /* Exclude the technique picks; the next-best role wins, still
-       deterministically. */
-    const bank = exerciseBank.horizontal_push; // no technique entries at all
-    const picked = pickExercise("horizontal_push", 3, "bench-press").id;
-    const role = bank.find((o) => o.id === picked)?.role;
-    expect(role).toBe("weak_point");
-  });
-
-  it("every non-primary option carries a role", () => {
-    /* Otherwise the ranking silently degrades to bank order for that
-       category — the arbitrary behaviour this replaced. */
-    for (const [category, options] of Object.entries(exerciseBank)) {
-      for (const o of options.filter((x) => !x.primary)) {
-        expect(o.role, `${category}/${o.id}`).toBeDefined();
-      }
-    }
-  });
-
-  it("returns a valid exercise from the category", () => {
-    /* The picked exercise must be one of the category's options. */
-    const validIds = new Set(exerciseBank.knee_dominant.map((o) => o.id));
-    for (let i = 0; i < 30; i++) {
-      const result = pickExercise("knee_dominant", 5, "squat");
-      expect(validIds.has(result.id)).toBe(true);
-    }
-  });
-
-  it("handles plateau when no current id is provided", () => {
-    /* options.filter(e => e.id !== currentExerciseId) keeps all
-       options when current is undefined; picker still rotates
-       within the full set. */
-    const validIds = new Set(exerciseBank.arms_biceps.map((o) => o.id));
-    for (let i = 0; i < 20; i++) {
-      const result = pickExercise("arms_biceps", 4);
-      expect(validIds.has(result.id)).toBe(true);
-    }
+    expect(
+      pickExercise("knee_dominant", "front-squat", "intermediate").id
+    ).toBe("front-squat");
   });
 });
 
@@ -333,14 +288,7 @@ describe("one exercise record (11b)", () => {
     // whether THIS generator may offer the movement to a beginner — not a
     // movement description, so it lives here (2026-08-03 beginner audit).
     expect(fields.sort()).toEqual(
-      [
-        "bodyweightFloor",
-        "complexity",
-        "id",
-        "loadFactor",
-        "primary",
-        "role",
-      ].sort()
+      ["bodyweightFloor", "complexity", "id", "loadFactor", "primary"].sort()
     );
   });
 
@@ -361,7 +309,7 @@ describe("one exercise record (11b)", () => {
       "Chest-Supported Dumbbell Row"
     );
     // …and every picker agrees, because they all resolve through it.
-    const picked = pickExercise("horizontal_pull", 0, "chest-supported-db-row");
+    const picked = pickExercise("horizontal_pull", "chest-supported-db-row");
     expect(picked.name).toBe(getExerciseById(picked.id)?.name);
   });
 });

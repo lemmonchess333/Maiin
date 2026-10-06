@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
@@ -9,6 +10,8 @@ interface WeekPhaseRowProps {
   onNextWeek: () => void;
   canGoPrev: boolean;
   canGoNext: boolean;
+  /** Beside the label: Train's ⓘ for how the plan works (Lift4 (3)). */
+  info?: ReactNode;
 }
 
 export default function WeekPhaseRow({
@@ -18,6 +21,7 @@ export default function WeekPhaseRow({
   onNextWeek,
   canGoPrev,
   canGoNext,
+  info,
 }: WeekPhaseRowProps) {
   const showChevrons = canGoPrev || canGoNext;
 
@@ -37,6 +41,7 @@ export default function WeekPhaseRow({
       <span className="text-sm font-semibold text-foreground text-center">
         <InlineNumerals>{label ?? `Week ${weekNumber}`}</InlineNumerals>
       </span>
+      {info}
 
       {showChevrons &&
         (canGoNext ? (
