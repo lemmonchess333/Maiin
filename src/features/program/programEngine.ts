@@ -2526,7 +2526,8 @@ export function advanceWeek(
    */
   nextRaceWeek?: RaceBlockWeek | null,
   /** The answer at race setup (`raceLegTrim` on the profile): yes trims
-   *  the leg lifts in the run plan's build weeks (Lift4 (10)). */
+   *  the leg lifts from the run plan's build weeks until the two lighter
+   *  weeks before the race (Lift4 (10), `isRaceBuildWeek`). */
   options: { raceLegTrim?: boolean } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?

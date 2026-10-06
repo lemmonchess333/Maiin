@@ -156,14 +156,20 @@ export function raceLiftWeek(
   return weekLeft === "race" ? "after" : null;
 }
 
-/** Whether a week of the race block is one of the run plan's build weeks,
- *  where a yes at race setup trims the leg lifts (Lift4 (10)). */
+/** Whether a yes at race setup trims the leg lifts in this week of the race
+ *  block (Lift4 (10), "through the build"): from the run plan's build weeks
+ *  until the two lighter weeks before the race (`raceLiftWeek`) take over.
+ *  A marathon's run taper is three weeks, so its first taper week keeps the
+ *  trim; ending it with the build gave the legs their full sets back for
+ *  one week, between the trimmed build and the lighter weeks. */
 export function isRaceBuildWeek(
   week: RaceBlockWeek | null | undefined
 ): boolean {
+  if (!week) return false;
+  const phase = getPhaseForWeek(week.weekIndex, week.totalWeeks, week.distance);
   return (
-    !!week &&
-    getPhaseForWeek(week.weekIndex, week.totalWeeks, week.distance) === "build"
+    (phase === "build" || phase === "taper") &&
+    raceLiftWeek(week, undefined) === null
   );
 }
 

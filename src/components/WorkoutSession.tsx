@@ -2508,6 +2508,7 @@ export default function WorkoutSession({
           <ExercisePicker
             open
             headerTitle={`Swap ${day.exercises[swapFor].name} for today`}
+            pickAction="Swap for today"
             onSelect={(picked) => {
               swapForToday(swapFor, picked.id);
               setSwapFor(null);

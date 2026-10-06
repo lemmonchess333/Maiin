@@ -1,7 +1,8 @@
 /**
  * The race build's leg trim (Lift4 (10)): race setup asks "Lighten leg
  * sessions while your runs build?", and on a yes the leg lifts have a
- * third fewer sets, at the same weights, in the run plan's build weeks.
+ * third fewer sets, at the same weights, from the run plan's build weeks
+ * until the two lighter weeks before the race.
  * Inside any lighter week the lighter week's recipe applies to the plan's
  * sets instead, so the two never stack (the precedence table in the
  * lifting handoff).
@@ -27,6 +28,14 @@ const half = (weekIndex: number): RaceBlockWeek => ({
   weekIndex,
   totalWeeks: 16,
   distance: "half",
+});
+
+/** A 16-week marathon: base weeks 0–4, build 5–11, a three-week run taper
+ *  12–14, race week 15. */
+const marathon = (weekIndex: number): RaceBlockWeek => ({
+  weekIndex,
+  totalWeeks: 16,
+  distance: "marathon",
 });
 
 function lift(over: Partial<ProgramExercise>): ProgramExercise {
@@ -98,11 +107,16 @@ describe("raceLegSets", () => {
 });
 
 describe("isRaceBuildWeek", () => {
-  it("is the run plan's build weeks only", () => {
-    const build = Array.from({ length: 16 }, (_, w) => w).filter((w) =>
-      isRaceBuildWeek(half(w))
-    );
-    expect(build).toEqual([6, 7, 8, 9, 10, 11, 12]);
+  it("runs from the build weeks to the lighter weeks before the race", () => {
+    const weeks = (block: (w: number) => RaceBlockWeek) =>
+      Array.from({ length: 16 }, (_, w) => w).filter((w) =>
+        isRaceBuildWeek(block(w))
+      );
+    expect(weeks(half)).toEqual([6, 7, 8, 9, 10, 11, 12]);
+    // The marathon's first taper week keeps the trim: ending it with the
+    // build gave the legs their full sets back for one week, between the
+    // trimmed build and the two lighter weeks.
+    expect(weeks(marathon)).toEqual([5, 6, 7, 8, 9, 10, 11, 12]);
     expect(isRaceBuildWeek(null)).toBe(false);
   });
 });
@@ -118,6 +132,18 @@ describe("the rollover into a build week", () => {
     expect(out.workouts[0].exercises.map((e) => e.weight)).toEqual([
       100, 100, 80,
     ]);
+  });
+
+  it("keeps the trim into a marathon's first taper week", () => {
+    const out = advanceWeek(
+      week(),
+      "intermediate",
+      undefined,
+      marathon(12),
+      yes
+    );
+    expect(out.raceWeek).toBe("build");
+    expect(setsOf(out)).toEqual([2, 3, 3]);
   });
 
   it("leaves the legs whole without a yes, and in the base weeks", () => {

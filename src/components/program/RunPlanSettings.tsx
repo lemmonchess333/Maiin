@@ -883,8 +883,9 @@ export default function RunPlanSettings({
                   Lighten leg sessions while your runs build
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  A third fewer sets on leg lifts, at the same weights, in your
-                  plan&apos;s build weeks.
+                  A third fewer sets on leg lifts, at the same weights, from
+                  your plan&apos;s build weeks until the two lighter weeks
+                  before your race.
                 </p>
               </div>
               <Toggle

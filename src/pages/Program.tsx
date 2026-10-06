@@ -1933,6 +1933,7 @@ function ProgramInner() {
         <ExercisePicker
           open={true}
           headerTitle={`Replace ${programState.workouts[replaceTarget.dayIndex]?.exercises[replaceTarget.exIndex]?.name || "Exercise"}`}
+          pickAction="Replace"
           onSelect={(ex) =>
             replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)
           }

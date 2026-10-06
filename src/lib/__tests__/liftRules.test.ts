@@ -47,7 +47,14 @@ describe("liftRules", () => {
 
   it("states the miss rule", () => {
     expect(MISSES_BEFORE_LOWERING).toBe(2);
-    expect(rule(intermediate, "misses")).toContain("Two in a row");
+    // A miss is the session's reps in total (sessionOutcome), so 8, 8 and
+    // 6 against 3×8 is one. "Short on every set" read as each set falling
+    // short, which is not the rule.
+    expect(rule(intermediate, "misses")).toMatch(
+      /^Fewer reps in total than planned, at the planned weight, is a miss/
+    );
+    expect(rule(intermediate, "misses")).not.toMatch(/every set/);
+    expect(rule(intermediate, "misses")).toContain("Two misses in a row");
     expect(rule(intermediate, "misses")).toContain(
       `${Math.round(LOWERED_SHARE * 100)}% lighter`
     );

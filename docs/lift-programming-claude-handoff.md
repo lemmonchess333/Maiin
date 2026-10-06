@@ -578,6 +578,23 @@ that opens the rules on any day. The sheet loads when first opened, so a
 day card on Home carries none of the engine. With this, the build order's
 six steps have all landed.
 
+STATUS 2026-10-06 (Lift4 (3), (7), (10) and (11), the device check): the
+app was driven at a phone's size against the emulator through the rules
+sheet, "Why this session", Swap for today, Skip, Finish's question about a
+swap and Welcome back's "Ease back in" (loads 10% lighter on each lift's
+steps, a set fewer, as the eleventh part says). Three corrections came of
+it. The swap opened the plan builder's add-many exercise list, whose bar
+read "1 exercise selected — Add to workout" and whose second tick swapped
+again; `ExercisePicker` takes `pickAction` now, one exercise at a time with
+the bar saying the action, for "Swap for today" and Train's "Replace" alike.
+The rules sheet's missed-reps line said "short of its target on every set",
+which reads as every set falling short; a miss is the session's reps in
+total (`sessionOutcome`), and the line now says so. And the leg trim ended
+with the run plan's build weeks, so a marathon, whose run taper is three
+weeks, gave the legs their full sets back for one week between the trimmed
+build and the two lighter weeks; the trim now runs until those take over
+(`isRaceBuildWeek`).
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

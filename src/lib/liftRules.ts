@@ -102,7 +102,7 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     {
       id: "misses",
       title: "Missed reps",
-      body: `A session short of its target on every set keeps the weight. ${capitalised(word(MISSES_BEFORE_LOWERING))} in a row make the lift ${percent(LOWERED_SHARE)} lighter, and it climbs back a step a session to where it was. After a long or hard run the day before, a miss on a leg lift counts half.`,
+      body: `Fewer reps in total than planned, at the planned weight, is a miss, and the weight stays. ${capitalised(word(MISSES_BEFORE_LOWERING))} misses in a row make the lift ${percent(LOWERED_SHARE)} lighter, and it climbs back a step a session to where it was. After a long or hard run the day before, a miss on a leg lift counts half.`,
     },
     {
       id: "lighter",
@@ -122,7 +122,7 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     rules.push({
       id: "race",
       title: "Your race",
-      body: "The last two weeks before your race are lighter, race week is one short session with nothing heavy for your legs, and the week after is light. If you chose to lighten your leg sessions while your runs build, your leg lifts have a third fewer sets in the build weeks. You can change that in your run plan.",
+      body: "The last two weeks before your race are lighter, race week is one short session with nothing heavy for your legs, and the week after is light. If you chose to lighten your leg sessions while your runs build, your leg lifts have a third fewer sets from the build weeks until those two lighter weeks. You can change that in your run plan.",
     });
   }
   rules.push(

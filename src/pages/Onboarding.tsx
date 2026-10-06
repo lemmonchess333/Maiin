@@ -1105,7 +1105,8 @@ export default function Onboarding() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               A third fewer sets on leg lifts, at the same
-                              weights, in your plan's build weeks.
+                              weights, from your plan's build weeks until the
+                              two lighter weeks before your race.
                             </p>
                           </div>
                           <Toggle

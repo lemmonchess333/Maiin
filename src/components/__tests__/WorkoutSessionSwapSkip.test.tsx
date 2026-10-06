@@ -64,9 +64,14 @@ vi.mock("@/lib/restTimerNotification", () => ({
 vi.mock("@/components/program/ExercisePicker", () => ({
   default: (props: {
     headerTitle?: string;
+    pickAction?: string;
     onSelect: (exercise: { id: string; name: string }) => void;
   }) => (
-    <div role="dialog" aria-label={props.headerTitle}>
+    <div
+      role="dialog"
+      aria-label={props.headerTitle}
+      data-pick-action={props.pickAction}
+    >
       <button
         type="button"
         onClick={() =>
@@ -212,9 +217,15 @@ describe("Swap for today", () => {
   async function swapBench() {
     menu("Bench Press");
     fireEvent.click(screen.getByRole("button", { name: /^Swap for today/ }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Pick Dumbbell Bench Press" })
-    );
+    const pick = await screen.findByRole("button", {
+      name: "Pick Dumbbell Bench Press",
+    });
+    // One exercise, named by the action: the picker's add-many mode read
+    // "1 exercise selected — Add to workout" and swapped once per tick.
+    expect(
+      screen.getByRole("dialog", { name: "Swap Bench Press for today" })
+    ).toHaveAttribute("data-pick-action", "Swap for today");
+    fireEvent.click(pick);
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(heading()).toBe("Dumbbell Bench Press");
   }
