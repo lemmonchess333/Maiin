@@ -477,6 +477,21 @@ write like the rollover (ADR-0011's update): the load steps read equipment
 the server has no copy of. The old "Start easier" route to the session
 chooser is gone; "Easier today" stays on it for one-off days.
 
+STATUS 2026-10-06 (Lift4 (11), build step 5, sixth part): each exercise in
+a session has a menu beside its name, with "Swap for today" (offered until
+a set of it is done) and "Skip". A swapped exercise takes the slot for the
+session: the planned sets and reps, the weight it was last lifted at or a
+start from the planned lift's (`swappedForToday`), and rows from its own
+last sets; "Back to …" undoes it. Skipping keeps the sets done and sets
+the rest aside, out of the counts and the cursor's way, until "Don't
+skip". Finish asks once, before the save, whether to keep today's swaps
+that have a set done: kept, a swap takes the planned lift's place in the
+same slot, with today's sets as its first session; not kept, the plan's
+lift stays as it was, since the swap's sets say nothing about it
+(`applySessionProgression`). A kept swap is the person's choice, so it
+carries no `swappedFrom`. Deleting the session puts the planned lift
+back, and a correction replays the swap.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

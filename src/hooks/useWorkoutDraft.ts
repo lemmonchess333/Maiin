@@ -93,6 +93,9 @@ export interface WorkoutDraft {
   /** Preserve the original date when retrying a finished session later. */
   startedAt?: number;
   prescription?: SessionPrescription;
+  /** The rows each skipped exercise set aside (Lift4 (11)), by its place in
+   *  the session, so a resumed session can still bring them back. */
+  skippedRows?: Record<number, DraftSetLog[]>;
   programmeContext?: ProgrammeCompletionContext;
 }
 

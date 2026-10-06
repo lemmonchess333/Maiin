@@ -34,6 +34,8 @@ import {
   Timer,
   Trash2,
   Plus,
+  MoreHorizontal,
+  SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -48,6 +50,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import { lastSetsByExercise } from "@/features/program/lastSets";
 import { startingSetRows } from "@/features/program/setStartValues";
+import { swappedForToday } from "@/features/program/sessionSwap";
+import { followedWeight } from "@/features/program/sessionSets";
+import { loadContextFrom } from "@/features/program/startingLoads";
+import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
+import KeepSwapSheet, {
+  type SwapToKeep,
+} from "@/components/workout/KeepSwapSheet";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -137,6 +146,10 @@ import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
+// The exercise list for "Swap for today", loaded when it is opened.
+const ExercisePicker = lazyRetry(
+  () => import("@/components/program/ExercisePicker")
+);
 
 interface WorkoutDay {
   dayName: string;
@@ -148,6 +161,24 @@ interface WorkoutDay {
 /** "Set 2" → "set 2", for the middle of a sentence. */
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
+
+/** A planned exercise as this session sets it out: at the weight and reps
+ *  its progression started from, should an older draft have moved it. */
+function sessionExercise(
+  ex: ProgramExercise,
+  completionId: string
+): ProgramExercise {
+  const baseline = withoutSessionProgression(
+    ex.sessionProgression?.id === completionId
+      ? ex.sessionProgression.baseline
+      : ex
+  );
+  return {
+    ...withoutSessionProgression(ex),
+    weight: baseline.weight,
+    reps: baseline.reps,
+  };
+}
 
 /** Last session's set as the Previous column shows it. */
 function previousLabel(
@@ -267,7 +298,7 @@ export default function WorkoutSession({
   const completionCommandIdRef = useRef(
     initialDraft?.completionCommandId ?? initialCompletionId
   );
-  const [prescription] = useState<SessionPrescription>(() => {
+  const [prescription, setPrescription] = useState<SessionPrescription>(() => {
     if (initialDraft?.prescription) return initialDraft.prescription;
     const baseline = (ex: ProgramExercise) =>
       withoutSessionProgression(
@@ -277,11 +308,9 @@ export default function WorkoutSession({
       );
     return structuredClone({
       dayName: initialDay.dayName,
-      exercises: initialDay.exercises.map((ex) => ({
-        ...withoutSessionProgression(ex),
-        weight: baseline(ex).weight,
-        reps: baseline(ex).reps,
-      })),
+      exercises: initialDay.exercises.map((ex) =>
+        sessionExercise(ex, initialCompletionId)
+      ),
       progressionBaseline: initialDay.exercises.map((ex) =>
         baseline(
           progressionBaseline?.find(
@@ -327,6 +356,25 @@ export default function WorkoutSession({
     // already filters on that type excludes them for free.
     return buildInitialSetLogs(day.exercises);
   });
+  /* The rows a skipped exercise set aside (Lift4 (11)), by its place in the
+     session: out of the counts and the cursor's way until "Don't skip"
+     brings them back. */
+  const [skippedRows, setSkippedRows] = useState<Record<number, SetLog[]>>(
+    () => initialDraft?.skippedRows ?? {}
+  );
+  /* The exercise whose menu is open, the one being swapped, and Finish's
+     question about today's swaps. */
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const [swapFor, setSwapFor] = useState<number | null>(null);
+  const [keepQuestion, setKeepQuestion] = useState<{
+    open: boolean;
+    swaps: SwapToKeep[];
+  }>({ open: false, swaps: [] });
+  /** Last time's counted sets by exercise id, read with the Previous
+   *  column, so a swapped-in exercise starts from its own. */
+  const lastSetsById = useRef(
+    new Map<string, { weight: number; reps: number }[]>()
+  );
   // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
   // for someone who can calibrate it and noise-plus-jargon for someone who
   // cannot, so an advanced lifter opens the session with it on and everyone
@@ -457,6 +505,7 @@ export default function WorkoutSession({
           sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps })),
         ])
       );
+      lastSetsById.current = lastSets;
       setPreviousSets(
         Object.fromEntries(
           day.exercises.flatMap((ex, i) => {
@@ -518,10 +567,12 @@ export default function WorkoutSession({
       completionCommandId: completionCommandIdRef.current,
       startedAt: originalStartedAt,
       prescription,
+      skippedRows,
       programmeContext: sessionProgrammeContext,
     });
   }, [
     setLogs,
+    skippedRows,
     exerciseNotes,
     currentExIndex,
     dayIndex,
@@ -1132,9 +1183,119 @@ export default function WorkoutSession({
     };
   }, []);
 
+  /* Lift4 (11): "Swap for today" and "Skip", from an exercise's menu. */
+  const swapAt = (index: number) =>
+    prescription.swaps?.find((swap) => swap.index === index);
+
+  /** The planned exercise at a place in the session, as it was set out. */
+  const plannedAt = (index: number): ProgramExercise | undefined => {
+    const ex = initialDay.exercises[index];
+    return ex ? sessionExercise(ex, initialCompletionId) : undefined;
+  };
+
+  /** Another exercise in a planned one's place today, or the planned one
+   *  back. Its rows start from what it did last time. */
+  const swapForToday = (index: number, replacementId: string) => {
+    const planned = plannedAt(index);
+    if (!planned) return;
+    const back = replacementId === planned.exerciseId;
+    const last = lastSetsById.current.get(replacementId);
+    const exercise = back
+      ? planned
+      : swappedForToday(planned, replacementId, {
+          lastWeight: (last && followedWeight(last)) ?? undefined,
+          loadContext: loadContextFrom(profile),
+        });
+    setPrescription((current) => ({
+      ...current,
+      exercises: current.exercises.map((ex, i) =>
+        i === index ? exercise : ex
+      ),
+      swaps: [
+        ...(current.swaps ?? []).filter((swap) => swap.index !== index),
+        ...(back ? [] : [{ index }]),
+      ],
+    }));
+    setSetLogs((logs) =>
+      logs.map((rows, i) =>
+        i === index
+          ? startingSetRows(buildInitialSetLogs([exercise])[0], exercise, last)
+          : rows
+      )
+    );
+    setLastCompleted(null);
+    setCurrentExIndex(index);
+    setCurrentSetIndex(0);
+  };
+
+  /** Skipping keeps the sets done and sets the rest aside. */
+  const skipExercise = (index: number) => {
+    const next = setLogs.map((rows, i) =>
+      i === index ? rows.filter((set) => set.completed) : rows
+    );
+    setSkippedRows((current) => ({
+      ...current,
+      [index]: (setLogs[index] ?? []).filter((set) => !set.completed),
+    }));
+    setSetLogs(next);
+    setLastCompleted(null);
+    const cursor = nextIncompleteSet(next, (index + 1) % next.length);
+    if (cursor) {
+      setCurrentExIndex(cursor.exerciseIndex);
+      setCurrentSetIndex(cursor.setIndex);
+    }
+  };
+
+  const unskipExercise = (index: number) => {
+    const rows = [...(setLogs[index] ?? []), ...(skippedRows[index] ?? [])];
+    setSetLogs((logs) => logs.map((r, i) => (i === index ? rows : r)));
+    setSkippedRows(({ [index]: _back, ...rest }) => rest);
+    setLastCompleted(null);
+    setCurrentExIndex(index);
+    const first = rows.findIndex((_, i) => isSetOutstanding(rows, i));
+    setCurrentSetIndex(first >= 0 ? first : 0);
+  };
+
+  /** The swaps Finish asks about: those not decided yet with a set done. */
+  const swapsToAsk = (finishing: SessionPrescription) =>
+    (finishing.swaps ?? []).filter(
+      (swap) =>
+        swap.keep === undefined &&
+        (setLogs[swap.index] ?? []).some(
+          (set) => set.completed && set.type !== "warmup"
+        )
+    );
+
+  /** Finish's one answer about today's swaps, then the save. */
+  const decideSwaps = async (keep: boolean) => {
+    const asked = new Set(swapsToAsk(prescription).map((swap) => swap.index));
+    const decided: SessionPrescription = {
+      ...prescription,
+      swaps: (prescription.swaps ?? []).map((swap) =>
+        asked.has(swap.index) ? { ...swap, keep } : swap
+      ),
+    };
+    setPrescription(decided);
+    setKeepQuestion((question) => ({ ...question, open: false }));
+    await handleFinish(decided);
+  };
+
   const finishPending = useRef(false);
-  const handleFinish = async () => {
+  const handleFinish = async (decided?: SessionPrescription) => {
     if (finishPending.current || saved) return;
+    const finishing = decided ?? prescription;
+    // Asked once, before the save: whether to keep today's swaps.
+    const asks = swapsToAsk(finishing);
+    if (asks.length > 0) {
+      setKeepQuestion({
+        open: true,
+        swaps: asks.map((swap) => ({
+          today: day.exercises[swap.index]?.name ?? "",
+          planned: plannedAt(swap.index)?.name ?? "",
+        })),
+      });
+      return;
+    }
     finishPending.current = true;
     setCompleting(true);
     const completionUid = user?.uid;
@@ -1153,7 +1314,8 @@ export default function WorkoutSession({
         completionCommandId: completionCommandIdRef.current,
         completionPending: true,
         startedAt: originalStartedAt,
-        prescription,
+        prescription: finishing,
+        skippedRows,
         programmeContext: sessionProgrammeContext,
       });
       if (navigator.onLine === false && !recoveryStored) {
@@ -1176,7 +1338,7 @@ export default function WorkoutSession({
         // Lift3: the doc is dated by when the session STARTED (draft-resume
         // aware — sessionStartedAt is backdated by the draft's elapsed time).
         startedAt: originalStartedAt,
-        prescription,
+        prescription: finishing,
         programmeContext: sessionProgrammeContext,
         // These were written to the resume draft and dropped on Finish, so
         // they survived closing a session and were lost by completing one.
@@ -1265,7 +1427,17 @@ export default function WorkoutSession({
   };
 
   const handleStartFresh = () => {
-    setSetLogs(buildInitialSetLogs(day.exercises));
+    // A fresh start drops the draft's swaps and skips with its sets.
+    const planned = prescription.exercises.map((ex, i) =>
+      swapAt(i) ? (plannedAt(i) ?? ex) : ex
+    );
+    setPrescription((current) => ({
+      ...current,
+      exercises: planned,
+      swaps: [],
+    }));
+    setSkippedRows({});
+    setSetLogs(buildInitialSetLogs(planned));
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
@@ -1306,11 +1478,19 @@ export default function WorkoutSession({
           saveStatus={saveStatus}
           planContext={planContext}
           share={shareAction}
-          onFinish={handleFinish}
+          onFinish={() => void handleFinish()}
           onEdit={
             !completionPending ? () => setSessionComplete(false) : undefined
           }
           onClose={onClose}
+        />
+        <KeepSwapSheet
+          open={keepQuestion.open}
+          swaps={keepQuestion.swaps}
+          onDecide={decideSwaps}
+          onClose={() =>
+            setKeepQuestion((question) => ({ ...question, open: false }))
+          }
         />
       </>
     );
@@ -1454,7 +1634,8 @@ export default function WorkoutSession({
         >
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
-            const done = isExerciseDone(setsForEx);
+            const skipped = skippedRows[i] !== undefined;
+            const done = !skipped && isExerciseDone(setsForEx);
             const active = i === currentExIndex;
             /* DS3: the session's exercises as their drawings, in order.
                The current one is ringed, a finished one carries a check,
@@ -1464,7 +1645,13 @@ export default function WorkoutSession({
               <button
                 type="button"
                 key={i}
-                aria-label={done ? `${ex.name}, done` : ex.name}
+                aria-label={
+                  skipped
+                    ? `${ex.name}, skipped`
+                    : done
+                      ? `${ex.name}, done`
+                      : ex.name
+                }
                 aria-current={active ? "step" : undefined}
                 onClick={() => {
                   haptic(10);
@@ -1485,11 +1672,16 @@ export default function WorkoutSession({
                 >
                   <ExerciseThumb
                     exerciseId={ex.exerciseId}
-                    className={cn(done && !active && "opacity-60")}
+                    className={cn((done || skipped) && !active && "opacity-60")}
                   />
                   {done && (
                     <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
                       <Check className="size-3" strokeWidth={3} />
+                    </span>
+                  )}
+                  {skipped && (
+                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground ring-2 ring-background">
+                      <SkipForward className="size-3" strokeWidth={3} />
                     </span>
                   )}
                 </span>
@@ -1554,7 +1746,24 @@ export default function WorkoutSession({
                 }}
               />
             )}
+            {currentExercise?.name && (
+              <IconButton
+                aria-label={`More for ${currentExercise.name}`}
+                variant="ghost"
+                size="sm"
+                icon={
+                  <MoreHorizontal className="size-5 text-muted-foreground" />
+                }
+                onClick={() => {
+                  haptic("light");
+                  setMenuFor(safeExIndex);
+                }}
+              />
+            )}
           </div>
+          {skippedRows[safeExIndex] !== undefined && (
+            <p className="text-sm text-muted-foreground">Skipped today</p>
+          )}
           {currentSets[currentSetIndex] &&
             (() => {
               /* Counted within its kind: "Warm-up 2 of 3" during the ramp,
@@ -2158,6 +2367,12 @@ export default function WorkoutSession({
               <Button
                 size="lg"
                 fullWidth
+                // Everything skipped with nothing done leaves nothing to save.
+                disabled={
+                  !setLogs.some((sets) =>
+                    sets.some((set) => set.completed && set.type !== "warmup")
+                  )
+                }
                 onClick={completeSession}
                 leftIcon={<Trophy className="size-4" aria-hidden="true" />}
               >
@@ -2241,6 +2456,37 @@ export default function WorkoutSession({
           completeSession();
         }}
       />
+
+      {menuFor !== null && day.exercises[menuFor] && (
+        <ExerciseMenuSheet
+          open
+          onClose={() => setMenuFor(null)}
+          exerciseName={day.exercises[menuFor].name}
+          nothingDone={!(setLogs[menuFor] ?? []).some((set) => set.completed)}
+          swappedFor={swapAt(menuFor) ? plannedAt(menuFor)?.name : undefined}
+          skipped={skippedRows[menuFor] !== undefined}
+          onSwap={() => setSwapFor(menuFor)}
+          onSwapBack={() => {
+            const planned = plannedAt(menuFor);
+            if (planned) swapForToday(menuFor, planned.exerciseId);
+          }}
+          onSkip={() => skipExercise(menuFor)}
+          onUnskip={() => unskipExercise(menuFor)}
+        />
+      )}
+      {swapFor !== null && day.exercises[swapFor] && (
+        <Suspense fallback={null}>
+          <ExercisePicker
+            open
+            headerTitle={`Swap ${day.exercises[swapFor].name} for today`}
+            onSelect={(picked) => {
+              swapForToday(swapFor, picked.id);
+              setSwapFor(null);
+            }}
+            onClose={() => setSwapFor(null)}
+          />
+        </Suspense>
+      )}
 
       <PlateCalculatorSheet
         open={showPlates}
