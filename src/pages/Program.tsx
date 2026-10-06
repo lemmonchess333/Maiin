@@ -574,9 +574,7 @@ function ProgramInner() {
   }, [programState, viewingHistoryIndex]);
 
   const easierRecommendation = useEasierTodayRecommendation(
-    programState?.workouts[expressChooserDay ?? todayIndex],
-    recentWorkouts,
-    resolveDeloadRecommended(perfWeek)
+    programState?.workouts[expressChooserDay ?? todayIndex]
   );
 
   // Auto-select on week change (not on individual completion). Skips the reset

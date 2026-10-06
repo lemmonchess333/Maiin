@@ -394,6 +394,17 @@ plan as Build muscle's at every day count and setup in the golden sweep, and
 the Weekly volume card judges it the same way; the cut is in the nutrition
 targets. The goal profiles the server mirrors are unchanged.
 
+STATUS 2026-10-05 (Lift4 (3) and (13), build step 4, thirteenth part): "Go
+easier today" is recommended for one reason only, a hard run yesterday
+before a session that loads the same legs. Retired: its two guessed reasons,
+a muscle "still recovering" by the calendar model (`computeMuscleRecovery`,
+which History's recovery view keeps) and the weekly performance score's
+deload flag. The easier session itself is unchanged and stays one tap away
+in the session chooser. With this, step 4's retirements are done; the
+automatic whole-body lighter week and the per-muscle "Eased this week" cut
+share one trigger (`recoveryTrigger.ts`) and retire with step 5's lighter
+weeks.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

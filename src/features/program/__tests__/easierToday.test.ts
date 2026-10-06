@@ -8,10 +8,10 @@
  *   - non-zero loads follow the EXISTING deload policy (×0.85, nearest
  *     2.5 kg) — pinned equal to programEngine.applyDeload so the two
  *     can never drift; zero (bodyweight/uncalibrated) stays zero
- *   - recommendation: strong existing signals only, ONE factual reason,
- *     no readiness percentage, deterministic priority order
- *   - signal helpers: lower-body via movementCategory, recovering
- *     target muscles via the recovery model's resolution rules
+ *   - recommendation: only a hard run yesterday before a session that
+ *     loads the same legs (Lift4 (3)), ONE factual reason, no readiness
+ *     percentage
+ *   - signal helper: lower-body via movementCategory
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -19,7 +19,6 @@ import {
   deloadWeight,
   easierTodayRecommendation,
   isLowerBodyDay,
-  recoveringTargetMuscles,
   summarizeEasier,
   EASIER_PRIMARY_MIN_SETS,
   EASIER_ACCESSORY_MIN_SETS,
@@ -31,7 +30,6 @@ import type {
   ProgramExercise,
   WorkoutDay,
 } from "../programTypes";
-import type { MuscleRecoveryEntry } from "@/lib/muscleRecovery";
 
 let uid = 0;
 function ex(
@@ -148,12 +146,7 @@ describe("buildEasierSession", () => {
 });
 
 describe("easierTodayRecommendation", () => {
-  const NONE = {
-    hardRunYesterday: false,
-    lowerBodyDay: false,
-    recoveringMuscles: [] as string[],
-    deloadRecommended: false,
-  };
+  const NONE = { hardRunYesterday: false, lowerBodyDay: false };
 
   it("no signal → not recommended, no reason", () => {
     expect(easierTodayRecommendation(NONE)).toEqual({
@@ -178,32 +171,12 @@ describe("easierTodayRecommendation", () => {
     ).toBe(false);
   });
 
-  it("recovering target muscles → recommended, muscles named factually", () => {
-    const r = easierTodayRecommendation({
-      ...NONE,
-      recoveringMuscles: ["Quads", "Hamstrings"],
-    });
-    expect(r.recommended).toBe(true);
-    expect(r.reason).toBe(
-      "Quads and Hamstrings still recovering from recent training"
-    );
-  });
-
-  it("the existing deload recommendation → recommended", () => {
-    const r = easierTodayRecommendation({ ...NONE, deloadRecommended: true });
-    expect(r.recommended).toBe(true);
-    expect(r.reason).toMatch(/deload/i);
-  });
-
   it("never emits a percentage — one factual sentence only", () => {
-    for (const s of [
-      { ...NONE, hardRunYesterday: true, lowerBodyDay: true },
-      { ...NONE, recoveringMuscles: ["Chest"] },
-      { ...NONE, deloadRecommended: true },
-    ]) {
-      const r = easierTodayRecommendation(s);
-      expect(r.reason).not.toMatch(/%|\bpercent\b|\breadiness\b/i);
-    }
+    const r = easierTodayRecommendation({
+      hardRunYesterday: true,
+      lowerBodyDay: true,
+    });
+    expect(r.reason).not.toMatch(/%|\bpercent\b|\breadiness\b/i);
   });
 });
 
@@ -224,24 +197,6 @@ describe("signal helpers", () => {
         day([ex("Bench Press", 4, 80, { movementCategory: "horizontal_push" })])
       )
     ).toBe(false);
-  });
-
-  it("recoveringTargetMuscles intersects day PRIMARY muscles with recovering entries", () => {
-    const entries = [
-      { muscle: "Quads", status: "recovering" },
-      { muscle: "Chest", status: "ready" },
-      { muscle: "Hamstrings", status: "nearly" },
-    ] as MuscleRecoveryEntry[];
-    // Custom-lift ids exercise the movement-category attribution
-    // fallback (knee_dominant → Quads, horizontal_push → Chest) — the
-    // same rule the weekly volume tally applies.
-    const lower = day([
-      ex("Back Squat", 4, 100, { movementCategory: "knee_dominant" }),
-      ex("Bench Press", 4, 80, { movementCategory: "horizontal_push" }),
-      ex("Romanian Deadlift", 3, 90, { movementCategory: "hip_dominant" }),
-    ]);
-    const result = recoveringTargetMuscles(lower, entries);
-    expect(result).toEqual(["Quads"]); // Chest ready, Hamstrings only "nearly"
   });
 });
 

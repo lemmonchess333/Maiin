@@ -23,10 +23,9 @@ import {
  *
  * Each option shows what it costs ("2 accessories trimmed", "one set
  * less per lift, lighter loads") so the choice is informed, not magic.
- * Easier today carries a "Recommended — {reason}" sublabel ONLY when a
- * strong existing signal supports it (hard run before a lower-body
- * day, target muscles still recovering, or the deload recommendation)
- * — one factual reason, never a readiness percentage. The plans are
+ * Easier today carries a "Recommended — {reason}" sublabel ONLY after a
+ * hard run yesterday before a lower-body day (Lift4 (3)) — one factual
+ * reason, never a readiness percentage. The plans are
  * `buildExpressSession` / `buildEasierSession` — deterministic, stored
  * programme never mutated.
  */
