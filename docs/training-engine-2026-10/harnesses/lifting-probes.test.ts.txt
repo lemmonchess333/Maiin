@@ -1,0 +1,94 @@
+import { it } from "vitest";
+import { writeFileSync } from "fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { represcribeWorkouts } from "../represcribe";
+import { advanceWeek, generateProgram } from "../programEngine";
+import { normalizeProgramState, type ProgramState } from "../programTypes";
+import { exerciseRole } from "../exerciseRole";
+
+const OUT =
+  (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+const base = (o: Partial<PlanBuilderInput>): PlanBuilderInput =>
+  ({
+    primaryGoal: "hypertrophy",
+    nutritionPhase: "recomp",
+    experience: "beginner",
+    sessionMinutes: 60,
+    bodyweightKg: 80,
+    sex: "male",
+    liftDays: 4,
+    preferredSplit: "auto",
+    runMode: "freeform",
+    weeklyRunDays: 0,
+    equipment: "full_gym",
+    injuries: [],
+    currentDate: "2026-03-09",
+    ...o,
+  }) as PlanBuilderInput;
+
+const show = (s: ProgramState) =>
+  s.workouts
+    .map(
+      (d) =>
+        `${d.dayName}: ` +
+        d.exercises
+          .map(
+            (e) =>
+              `${e.exerciseId}${e.isAccessory ? "~" : ""}(${exerciseRole(e)}) ${e.sets}×${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""} ${e.progressionType}@${e.weight}`
+          )
+          .join(" | ")
+    )
+    .join("\n");
+
+it("probes", () => {
+  const out: string[] = [];
+  // (a) level change beginner -> intermediate as a settings save (content edit)
+  const beg = normalizeProgramState(buildPlan(base({})).programState);
+  out.push("## (a) beginner 4d Build muscle, as built\n" + show(beg));
+  const lvl = buildPlan(
+    base({
+      experience: "intermediate",
+      previousExperience: "beginner",
+      existingState: beg,
+      preserveHistory: true,
+      previousSessionMinutes: 60,
+    })
+  ).programState;
+  out.push("\n## (a') after settings save beginner->intermediate (same days)\n" + show(lvl));
+  const fresh = buildPlan(base({ experience: "intermediate" })).programState;
+  out.push("\n## (a'') a fresh intermediate plan for comparison\n" + show(fresh));
+
+  // (b) goal change hypertrophy -> strength, same days, "keep current sessions"
+  const goal = buildPlan(
+    base({
+      experience: "intermediate",
+      primaryGoal: "strength",
+      previousExperience: "intermediate",
+      existingState: normalizeProgramState(fresh),
+      preserveHistory: true,
+      previousSessionMinutes: 60,
+    })
+  ).programState;
+  out.push("\n## (b) intermediate Build muscle -> Get stronger via buildPlan preserve (keep current sessions)\n" + show(goal));
+  const repres = represcribeWorkouts(fresh.workouts, "strength", "intermediate");
+  out.push("\n## (b') same with 'Save and update sessions' (represcribeWorkouts)\n" + show({ ...fresh, workouts: repres }));
+
+  // (c) represcribe after the order carried over (rotation)
+  let st: ProgramState = normalizeProgramState(fresh);
+  st = {
+    ...st,
+    workouts: st.workouts.map((d, i) => (i < 2 ? { ...d, completed: true } : d)),
+  };
+  const rotated = advanceWeek(st, "intermediate", "2026-03-16");
+  out.push("\n## (c) after a week with 2 of 4 done: order " + rotated.workouts.map((d) => d.dayName).join(", "));
+  const rr = represcribeWorkouts(rotated.workouts, "strength", "intermediate");
+  out.push("represcribed for strength on the rotated week:\n" + show({ ...rotated, workouts: rr }));
+  const rr0 = represcribeWorkouts(fresh.workouts, "strength", "intermediate");
+  out.push("represcribed for strength on the builder order:\n" + show({ ...fresh, workouts: rr0 }));
+
+  // (d) undulation day roles: which days are heavy (reps) in a fresh 4d intermediate strength plan
+  const g = generateProgram(4, undefined, "strength", { bodyweightKg: 80, experience: "intermediate" }, undefined, "intermediate", 60).workouts;
+  out.push("\n## (d) generateProgram 4d strength (no week schedule):\n" + g.map((d) => `${d.dayName}: ${d.exercises.map((e) => `${e.exerciseId} ${e.sets}×${e.reps}`).join(", ")}`).join("\n"));
+  writeFileSync(`${OUT}/probes.md`, out.join("\n"));
+});

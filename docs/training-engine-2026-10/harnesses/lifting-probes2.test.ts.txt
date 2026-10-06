@@ -1,0 +1,105 @@
+import { it } from "vitest";
+import { writeFileSync } from "fs";
+import { applySessionSets, generateProgram } from "../programEngine";
+import { readSessionSets } from "../sessionSets";
+import type { ProgramExercise } from "../programTypes";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import { weeklyVolumeByJudgementMuscle } from "../volumeModel";
+
+const OUT =
+  (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+const pullups = (o: Partial<ProgramExercise> = {}): ProgramExercise => ({
+  name: "Pull-Ups",
+  exerciseId: "pull-ups",
+  instanceId: "pu",
+  movementCategory: "vertical_pull",
+  sets: 4,
+  reps: 7,
+  baseReps: 7,
+  weight: 0,
+  progressionType: "linear",
+  lastSuccessfulWeight: 0,
+  lastAttemptedWeight: 0,
+  consecutiveFailures: 0,
+  plateauCount: 0,
+  performanceHistory: [],
+  lastPerformance: null,
+  ...o,
+});
+
+const run = (ex: ProgramExercise, reps: number[], weight = 0) => {
+  const read = readSessionSets(
+    reps.map((r) => ({ weight, reps: r, completed: true, type: "working" })),
+    ex.sets
+  )!;
+  return applySessionSets(ex, read, false);
+};
+
+it("probes2", () => {
+  const out: string[] = [];
+  // fixed-target bodyweight main: compliant lifter
+  let ex = pullups();
+  const seq: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    ex = run(ex, [ex.reps, ex.reps, ex.reps, ex.reps]);
+    seq.push(`${ex.sets}×${ex.reps}`);
+  }
+  out.push(`pull-ups 4×7 fixed (strength/running main), compliant 10 sessions: ${seq.join(" ")}`);
+  ex = pullups();
+  const seq2: string[] = [];
+  for (let i = 0; i < 5; i++) {
+    ex = run(ex, [ex.reps + 1, ex.reps + 1, ex.reps + 1, ex.reps + 1]);
+    seq2.push(`${ex.sets}×${ex.reps}`);
+  }
+  out.push(`pull-ups 4×7 fixed, lifter does +1 every set: ${seq2.join(" ")}`);
+  ex = pullups();
+  const seq3: string[] = [];
+  for (let i = 0; i < 5; i++) {
+    ex = run(ex, [9, 9, 9, 9]);
+    seq3.push(`${ex.sets}×${ex.reps}`);
+  }
+  out.push(`pull-ups 4×7 fixed, lifter does 9s: ${seq3.join(" ")}`);
+  // weighted pull-ups logged with +10 kg: does the plan follow?
+  ex = pullups();
+  ex = run(ex, [7, 7, 7, 7], 10);
+  out.push(`pull-ups logged at +10 kg ×7: plan weight=${ex.weight} reps=${ex.reps}`);
+
+  // generator determinism / instance ids
+  const a = generateProgram(4, undefined, "strength", undefined, undefined, "intermediate", 60).workouts;
+  const b = generateProgram(4, undefined, "strength", undefined, undefined, "intermediate", 60).workouts;
+  out.push(`instanceIds deterministic across two builds: ${a[0].exercises[0].instanceId === b[0].exercises[0].instanceId}`);
+
+  // fat_loss vs hypertrophy identical?
+  const inp = (g: string): PlanBuilderInput =>
+    ({
+      primaryGoal: g,
+      nutritionPhase: "cut",
+      experience: "intermediate",
+      sessionMinutes: 60,
+      bodyweightKg: 80,
+      sex: "male",
+      liftDays: 4,
+      preferredSplit: "auto",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      equipment: "full_gym",
+      injuries: [],
+      currentDate: "2026-03-09",
+    }) as PlanBuilderInput;
+  const sig = (g: string) =>
+    buildPlan(inp(g)).programState.workouts.map((d) =>
+      d.exercises.map((e) => `${e.exerciseId}:${e.sets}x${e.reps}-${e.repRangeMax}:${e.progressionType}:${e.weight}`).join(",")
+    ).join("|");
+  out.push(`fat_loss plan == hypertrophy plan: ${sig("fat_loss") === sig("hypertrophy")}`);
+  out.push(`running plan == strength plan (4d, 60): ${sig("running") === sig("strength")}`);
+  // female starting loads vs male
+  const fem = buildPlan({ ...inp("hypertrophy"), sex: "female", bodyweightKg: 60 }).programState.workouts[0].exercises.map((e) => `${e.exerciseId}@${e.weight}`).join(", ");
+  out.push(`female 60 kg intermediate Upper A seeds: ${fem}`);
+  // 1-day plans
+  for (const g of ["hypertrophy", "strength"]) {
+    const p = buildPlan({ ...inp(g), liftDays: 1 }).programState;
+    out.push(`1-day ${g}: ${p.workouts[0].exercises.map((e) => `${e.exerciseId} ${e.sets}×${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""}`).join(", ")}; vol ${weeklyVolumeByJudgementMuscle(p.workouts).map((v) => `${v.muscle} ${v.sets}`).join(", ")}`);
+  }
+  writeFileSync(`${OUT}/probes2.md`, out.join("\n"));
+});

@@ -1,0 +1,196 @@
+/* Scratch audit harness — generates real plans through buildPlan and dumps
+   per-plan tables. Not part of the repo; copied in only while running. */
+import { it } from "vitest";
+import { writeFileSync } from "fs";
+import { buildPlan, type PlanBuilderInput } from "../planBuilder";
+import {
+  weeklyVolumeByJudgementMuscle,
+  judgementLandmark,
+} from "../volumeModel";
+import { daysPerMuscle } from "../weeklyFrequency";
+import { exerciseRole } from "../exerciseRole";
+import { suggestedRestSeconds } from "../restTime";
+import { estimateSessionSeconds } from "../expressSession";
+import { effortCueFor } from "../effortCue";
+import { warmupSetCounts } from "../warmupRamp";
+import { getExerciseById, EXERCISES } from "@/lib/exercises";
+import { toExperience } from "../experienceModel";
+import { exerciseBank } from "../variationBank";
+import type { PrimaryGoal, WorkoutDay } from "../programTypes";
+
+const OUT =
+  (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+interface Persona {
+  key: string;
+  experience: "beginner" | "intermediate" | "advanced";
+  liftDays: number;
+  goal: PrimaryGoal;
+  minutes: number;
+  equipment: "full_gym" | "home_gym" | "minimal";
+  runMode?: "freeform" | "race_prep";
+  weeklyRunDays?: number;
+  bodyweightKg?: number;
+  sex?: string;
+}
+
+const PERSONAS: Persona[] = [
+  { key: "P1 beginner 3d Build muscle 60 full_gym", experience: "beginner", liftDays: 3, goal: "hypertrophy", minutes: 60, equipment: "full_gym" },
+  { key: "P2 intermediate 4d Get stronger 60 full_gym", experience: "intermediate", liftDays: 4, goal: "strength", minutes: 60, equipment: "full_gym" },
+  { key: "P3 intermediate 4d Build muscle 45 full_gym", experience: "intermediate", liftDays: 4, goal: "hypertrophy", minutes: 45, equipment: "full_gym" },
+  { key: "P4 advanced 5d Build muscle 75 full_gym", experience: "advanced", liftDays: 5, goal: "hypertrophy", minutes: 75, equipment: "full_gym" },
+  { key: "P5 intermediate 3d Support running 45 full_gym (race_prep, 3 run days)", experience: "intermediate", liftDays: 3, goal: "running", minutes: 45, equipment: "full_gym", runMode: "race_prep", weeklyRunDays: 3 },
+  { key: "P6 beginner 2d General 30 minimal (DB+BW)", experience: "beginner", liftDays: 2, goal: "general", minutes: 30, equipment: "minimal" },
+  // extras for comparison
+  { key: "X1 intermediate 3d Get stronger 60 full_gym", experience: "intermediate", liftDays: 3, goal: "strength", minutes: 60, equipment: "full_gym" },
+  { key: "X2 intermediate 5d Build muscle 75 full_gym", experience: "intermediate", liftDays: 5, goal: "hypertrophy", minutes: 75, equipment: "full_gym" },
+  { key: "X3 advanced 4d Get stronger 75 full_gym", experience: "advanced", liftDays: 4, goal: "strength", minutes: 75, equipment: "full_gym" },
+  { key: "X4 intermediate 6d Build muscle 75 full_gym", experience: "intermediate", liftDays: 6, goal: "hypertrophy", minutes: 75, equipment: "full_gym" },
+  { key: "X5 intermediate 4d Build muscle 30 full_gym", experience: "intermediate", liftDays: 4, goal: "hypertrophy", minutes: 30, equipment: "full_gym" },
+  { key: "X6 intermediate 4d Get stronger 60 home_gym", experience: "intermediate", liftDays: 4, goal: "strength", minutes: 60, equipment: "home_gym" },
+];
+
+function inputFor(p: Persona): PlanBuilderInput {
+  return {
+    primaryGoal: p.goal,
+    nutritionPhase: "recomp",
+    experience: p.experience,
+    sessionMinutes: p.minutes,
+    bodyweightKg: p.bodyweightKg ?? 80,
+    sex: p.sex ?? "male",
+    liftDays: p.liftDays,
+    preferredSplit: "auto",
+    runMode: p.runMode ?? "freeform",
+    weeklyRunDays: p.weeklyRunDays ?? 0,
+    equipment: p.equipment,
+    injuries: [],
+    currentDate: "2026-03-09", // a Monday
+    ...(p.runMode === "race_prep"
+      ? { raceGoal: { distance: "half", targetDate: "2026-06-28" } }
+      : {}),
+  } as PlanBuilderInput;
+}
+
+function fmtReps(ex: WorkoutDay["exercises"][number]) {
+  const top = ex.repRangeMax;
+  const u = ex.repUnit === "seconds" ? "s" : "";
+  return top ? `${ex.reps}–${top}${u}` : `${ex.reps}${u}`;
+}
+
+it("dumps plans", () => {
+  const lines: string[] = [];
+  const json: Record<string, unknown> = {};
+  for (const p of PERSONAS) {
+    const out = buildPlan(inputFor(p));
+    const st = out.programState;
+    const mins = st.sessionMinutes;
+    lines.push(`\n## ${p.key}`);
+    lines.push(
+      `split=${st.splitType} sessionMinutes=${mins} weekSchedule=${out.weekSchedule.map((d) => d.type[0]).join("")} (Mon..Sun? index0=Sun)`
+    );
+    const perDay: unknown[] = [];
+    st.workouts.forEach((day, di) => {
+      const warm = warmupSetCounts(day.exercises);
+      const secs = estimateSessionSeconds(day.exercises, { sessionMinutes: mins });
+      const sets = day.exercises.reduce((n, e) => n + e.sets, 0);
+      lines.push(
+        `\n### Day ${di + 1}: ${day.dayName} (${day.dayType}) — ${day.exercises.length} exercises, ${sets} working sets, est ${Math.round(secs / 60)} min`
+      );
+      lines.push(
+        `| # | exercise | equip | role | slot | sets×reps | load kg | prog | rest s | warm-ups | cue |`
+      );
+      lines.push(`|---|---|---|---|---|---|---|---|---|---|---|`);
+      day.exercises.forEach((ex, i) => {
+        const cat = getExerciseById(ex.exerciseId);
+        const cue = effortCueFor(ex, { isLastSet: true, deloadWeek: false });
+        lines.push(
+          `| ${i + 1} | ${ex.name} (${ex.exerciseId}) | ${cat?.equipment ?? "?"} | ${exerciseRole(ex)} | ${ex.isAccessory ? "acc" : "main"} | ${ex.sets}×${fmtReps(ex)} | ${ex.weight} | ${ex.progressionType} | ${suggestedRestSeconds(ex, mins)} | ${warm[i]} | ${cue ? cue.kind : "-"} |`
+        );
+      });
+      perDay.push({
+        dayName: day.dayName,
+        exercises: day.exercises.map((e) => ({
+          id: e.exerciseId,
+          role: exerciseRole(e),
+          acc: !!e.isAccessory,
+          sets: e.sets,
+          reps: e.reps,
+          top: e.repRangeMax,
+          w: e.weight,
+          prog: e.progressionType,
+          cat: e.movementCategory,
+        })),
+        minutes: secs / 60,
+      });
+    });
+    const vol = weeklyVolumeByJudgementMuscle(st.workouts);
+    const freq = daysPerMuscle(st.workouts);
+    lines.push(`\nWeekly hard sets per judgement muscle (1:1 currency) / days per week / ceiling:`);
+    lines.push(`| muscle | sets | days | band (mv/low/high) | flag |`);
+    lines.push(`|---|---|---|---|---|`);
+    for (const v of vol) {
+      const band = judgementLandmark(p.goal, v.muscle, toExperience(p.experience));
+      const flag =
+        v.sets > band.high ? "OVER" : v.sets < band.low ? "under" : "";
+      lines.push(
+        `| ${v.muscle} | ${v.sets} | ${freq.get(v.muscle) ?? 0} | ${band.mv}/${band.low}/${band.high} | ${flag} |`
+      );
+    }
+    // direct (primary-only) sets per muscle, a more conservative count
+    const direct = new Map<string, number>();
+    for (const d of st.workouts)
+      for (const e of d.exercises) {
+        const m = getExerciseById(e.exerciseId)?.muscleGroup ?? "?";
+        direct.set(m, (direct.get(m) ?? 0) + e.sets);
+      }
+    lines.push(
+      `\nDirect (primary muscleGroup) sets: ${[...direct].map(([m, n]) => `${m} ${n}`).join(", ")}`
+    );
+    // main-lift frequency
+    const exposures = new Map<string, { n: number; mainN: number; sets: number }>();
+    for (const d of st.workouts)
+      for (const e of d.exercises) {
+        const k = e.exerciseId;
+        const cur = exposures.get(k) ?? { n: 0, mainN: 0, sets: 0 };
+        cur.n++;
+        if (!e.isAccessory) cur.mainN++;
+        cur.sets += e.sets;
+        exposures.set(k, cur);
+      }
+    lines.push(
+      `\nLift exposures/week (id: sessions [as main] sets): ${[...exposures].map(([k, v]) => `${k}: ${v.n}[${v.mainN}] ${v.sets}s`).join("; ")}`
+    );
+    const total = st.workouts.reduce(
+      (n, d) => n + d.exercises.reduce((m, e) => m + e.sets, 0),
+      0
+    );
+    lines.push(`Total weekly working sets: ${total}`);
+    json[p.key] = { split: st.splitType, mins, perDay, vol, freq: [...freq] };
+  }
+
+  // catalogue stats
+  const byEquip = new Map<string, number>();
+  const byCat = new Map<string, number>();
+  let iso = 0;
+  for (const e of EXERCISES) {
+    byEquip.set(e.equipment, (byEquip.get(e.equipment) ?? 0) + 1);
+    byCat.set(e.category, (byCat.get(e.category) ?? 0) + 1);
+    if (e.mechanic === "isolation") iso++;
+  }
+  lines.push(`\n## Catalogue: ${EXERCISES.length} exercises; isolation-tagged ${iso}`);
+  lines.push(`by equipment: ${[...byEquip].map(([k, v]) => `${k} ${v}`).join(", ")}`);
+  lines.push(`by category: ${[...byCat].map(([k, v]) => `${k} ${v}`).join(", ")}`);
+  lines.push(`\n## Variation bank`);
+  for (const [cat, opts] of Object.entries(exerciseBank)) {
+    lines.push(
+      `${cat} (${opts.length}): ${opts
+        .map(
+          (o) =>
+            `${o.id}${o.primary ? "*" : ""}${o.complexity ? `[${o.complexity[0]}]` : ""}${o.bodyweightFloor ? "[bwf]" : ""}`
+        )
+        .join(", ")}`
+    );
+  }
+  writeFileSync(`${OUT}/plans.md`, lines.join("\n"));
+  writeFileSync(`${OUT}/plans.json`, JSON.stringify(json, null, 1));
+});

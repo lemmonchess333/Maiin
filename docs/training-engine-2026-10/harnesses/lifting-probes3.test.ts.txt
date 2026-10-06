@@ -1,0 +1,79 @@
+import { it } from "vitest";
+import { writeFileSync } from "fs";
+import { createRequire } from "node:module";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
+import { normalizeProgramState, type ProgramState } from "../programTypes";
+import { applyDeload } from "../programEngine";
+import { raceRestSkips } from "../raceRest";
+
+const require = createRequire(import.meta.url);
+const cf = require("../../../../functions/lib/programCommands") as {
+  applyProgramCommand: (a: {
+    state: unknown;
+    profile?: unknown;
+    command: unknown;
+    now: number;
+  }) => { state: ProgramState; effects?: unknown };
+};
+
+const OUT =
+  (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+it("server reducer drivable from the sim", () => {
+  const plan = buildOnboardingPlan(
+    {
+      primaryGoal: "strength",
+      daysPerWeek: 4,
+      experience: "intermediate",
+      sessionMinutes: 60,
+      gender: "male",
+      weightKg: 80,
+      runFrequency: "none",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      raceDistance: "half",
+      raceTargetDate: "",
+      injuries: [],
+      equipment: "full_gym",
+      barbellAtHome: false,
+      smallPlates: false,
+    } as never,
+    "recomp",
+    "2026-03-09"
+  );
+  const state = normalizeProgramState(plan.programState);
+  const out: string[] = [];
+  const r = cf.applyProgramCommand({
+    state,
+    profile: { experience: "intermediate", primaryGoal: "strength" },
+    command: {
+      kind: "applyDeloadWeek",
+      commandId: "c1abcdefghijklmnop",
+      expectedWeekNumber: state.weekNumber,
+    },
+    now: 1773000000000,
+  });
+  const serverSets = r.state.workouts.map((d) => d.exercises.map((e) => e.sets).join(",")).join(" | ");
+  const clientSets = applyDeload(state.workouts).map((d) => d.exercises.map((e) => e.sets).join(",")).join(" | ");
+  out.push(`applyDeloadWeek server: ${serverSets}`);
+  out.push(`applyDeload client:     ${clientSets}`);
+  out.push(`phase=${r.state.currentPhase} snapshot=${!!r.state.deloadSnapshot}`);
+  const b = cf.applyProgramCommand({
+    state,
+    profile: { experience: "intermediate", primaryGoal: "strength" },
+    command: {
+      kind: "startTrainingBlock",
+      commandId: "c2abcdefghijklmnop",
+      focus: "hypertrophy",
+      pace: "full",
+      durationWeeks: 8,
+      startDate: "2026-03-09",
+    },
+    now: 1773000000000,
+  });
+  out.push(`startTrainingBlock(hypertrophy) on a strength plan: ${b.state.workouts[0].exercises.map((e) => `${e.exerciseId} ${e.sets}×${e.reps}${e.repRangeMax ? "-" + e.repRangeMax : ""}@${e.weight}`).join(", ")}`);
+  // race rest skip list is pure
+  const raced = { ...state, runPlan: { mode: "race_prep", raceGoal: { distance: "half", targetDate: "2026-03-15" } } } as ProgramState;
+  out.push(`raceRestSkips 2026-03-13 (2 days before a Sunday race): ${JSON.stringify(raceRestSkips(raced, "2026-03-13"))}`);
+  writeFileSync(`${OUT}/probes3.md`, out.join("\n"));
+});

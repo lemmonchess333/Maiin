@@ -1,0 +1,19 @@
+// Scratch config for the feasibility probe. Lives OUTSIDE the repo; the
+// preview server is started by hand on 4173 serving a scratch e2e build.
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: ".",
+  testMatch: /.*\.sim\.spec\.ts/,
+  workers: 1,
+  retries: 0,
+  reporter: "line",
+  outputDir: "./results",
+  timeout: 600_000,
+  use: {
+    ...devices["Desktop Chrome"],
+    baseURL: "http://localhost:4173/Maiin/",
+    bypassCSP: true,
+    launchOptions: { executablePath: process.env.PW_CHROMIUM },
+  },
+});
