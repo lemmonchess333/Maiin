@@ -423,9 +423,11 @@ export default function RunDetail() {
         )}
 
         {/* Header (DS3): the run's type, then the distance as the page's
-            one big number, then when. */}
+            one big number, then when. At larger text Share drops under the
+            distance rather than squeezing it: the column keeps its own
+            width, so the row wraps exactly when the two no longer fit. */}
         <div>
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-0">
               <p className="text-sm font-bold text-running-strong">
                 {runTypeTitle(run.activityType)}
@@ -446,6 +448,7 @@ export default function RunDetail() {
               variant="sport-tinted"
               onClick={handleShare}
               leftIcon={<Share2 className="size-4" aria-hidden="true" />}
+              className="ml-auto"
             >
               Share
             </Button>
@@ -539,27 +542,37 @@ export default function RunDetail() {
             one full-width action and the two utilities pair beneath it
             (three-up left "Save route" wrapping at 393px). "Export GPX",
             not "Share": the header's Share makes a picture card, this
-            hands over a .gpx file. */}
+            hands over a .gpx file. At larger text the pair goes one per
+            row, and under 7em the icons give way: at double size on a 320px
+            phone "Export" and its icon were wider than the page. */}
         {hasGpsTrace && (
-          <div className="space-y-2">
+          <div className="@container space-y-2">
             <Button
               variant="sport"
               size="lg"
               fullWidth
-              leftIcon={<Repeat className="size-4" aria-hidden="true" />}
+              leftIcon={
+                <Repeat
+                  className="size-4 @max-[7em]:hidden"
+                  aria-hidden="true"
+                />
+              }
               onClick={() =>
                 navigate("/run", { state: { followRoute: run.points } })
               }
             >
               Run this route again
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 className="flex-1"
                 onClick={() => void saveThisRoute()}
               >
-                <Bookmark className="size-4" aria-hidden="true" />
+                <Bookmark
+                  className="size-4 @max-[7em]:hidden"
+                  aria-hidden="true"
+                />
                 Save route
               </Button>
               <Button
@@ -567,7 +580,10 @@ export default function RunDetail() {
                 className="flex-1"
                 onClick={() => shareThisRoute()}
               >
-                <Share2 className="size-4" aria-hidden="true" />
+                <Share2
+                  className="size-4 @max-[7em]:hidden"
+                  aria-hidden="true"
+                />
                 Export GPX
               </Button>
             </div>

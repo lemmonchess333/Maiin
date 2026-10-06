@@ -201,46 +201,56 @@ function SettingsOptionCard({
   index = 0,
   accent = THEME.brand,
 }: SettingsOptionCardProps) {
+  // The card is a container so its picture can give way at larger text,
+  // as setup's OptionCard does: under 15em the icon tile left a word like
+  // "Intermediate" no room, and a single word cannot wrap. Wide-first, so
+  // a browser without container queries keeps the designed card.
   return (
-    <motion.button
-      data-motion-driven
-      type="button"
-      onClick={onSelect}
-      disabled={disabled}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, delay: index * 0.025 }}
-      className={cn(
-        "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-        "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-        selected ? "border-transparent" : "border-border/70",
-        disabled && "opacity-35 pointer-events-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      )}
-      style={
-        selected
-          ? {
-              background: `${accent}14`,
-              borderColor: `${accent}45`,
-            }
-          : undefined
-      }
-    >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-body font-bold leading-tight">{label}</span>
-        {desc ? (
-          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-            {desc}
+    <div className="@container">
+      <motion.button
+        data-motion-driven
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, delay: index * 0.025 }}
+        className={cn(
+          "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
+          selected ? "border-transparent" : "border-border/70",
+          disabled && "opacity-35 pointer-events-none",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        )}
+        style={
+          selected
+            ? {
+                background: `${accent}14`,
+                borderColor: `${accent}45`,
+              }
+            : undefined
+        }
+      >
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50 @max-[15em]:hidden">
+          {icon}
+        </span>
+        {/* A word wider than the card (larger text on a narrow phone)
+          hyphenates rather than running out of it. */}
+        <span className="min-w-0 flex-1 break-words hyphens-auto">
+          <span className="block text-body font-bold leading-tight">
+            {label}
           </span>
+          {desc ? (
+            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+              {desc}
+            </span>
+          ) : null}
+        </span>
+        {selected && !disabled ? (
+          <Check className="size-4 shrink-0" style={{ color: accent }} />
         ) : null}
-      </span>
-      {selected && !disabled ? (
-        <Check className="size-4 shrink-0" style={{ color: accent }} />
-      ) : null}
-    </motion.button>
+      </motion.button>
+    </div>
   );
 }
 
@@ -1091,8 +1101,10 @@ export default function ProgrammeSettings({
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
         <div className="rounded-xl bg-muted px-3 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+          {/* "Edit days" drops under the counts when the two no longer
+              fit side by side (larger text), rather than squeezing them. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="min-w-[min(100%,8em)] flex-1">
               <p className="text-sm font-medium text-foreground">
                 Weekly layout
               </p>
@@ -1131,7 +1143,7 @@ export default function ProgrammeSettings({
             <button
               type="button"
               onClick={onOpenWeeklyLayout}
-              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
+              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
             >
               Edit days &rarr;
             </button>

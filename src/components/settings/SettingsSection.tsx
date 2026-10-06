@@ -84,8 +84,11 @@ export default function SettingsSection({
         {/* The H1 token, as PageShell sets it for every other page title
             (DS3) and for the Settings list these pages open from. It was
             text-xl from DS2, when every page title was; once PageShell
-            moved them to text-h1 these were left a tier smaller. */}
-        <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground">
+            moved them to text-h1 these were left a tier smaller.
+            At double text on a 320px phone one word ("Subscription",
+            "preferences") is wider than the page, so a long word
+            hyphenates rather than running off the screen. */}
+        <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground break-words hyphens-auto">
           {title}
         </h1>
         {subtitle ? (

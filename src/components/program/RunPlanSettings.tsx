@@ -622,12 +622,14 @@ export default function RunPlanSettings({
   return (
     <div className="space-y-5 pb-6">
       {/* ── Mode ─────────────────────────────────────────────────────── */}
-      <div className="space-y-2">
+      {/* Under 15em (larger text on the phone) the two cards stack: side
+          by side, "Periodised" no longer fit inside its half. Wide-first. */}
+      <div className="@container space-y-2">
         <SectionHeading size="compact">Run mode</SectionHeading>
         <div
           role="radiogroup"
           aria-label="Run mode"
-          className="grid grid-cols-2 gap-2"
+          className="grid grid-cols-2 gap-2 @max-[15em]:grid-cols-1"
         >
           {MODE_OPTIONS.map((opt) => {
             const selected = runMode === opt.id;
@@ -872,17 +874,20 @@ export default function RunPlanSettings({
           haptic();
           onOpenFullSettings();
         }}
-        className="w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
+        className="@container w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
       >
         {/* Icon container + trailing chevron, i.e. the row shape every
             other drill-in in Settings uses (`SettingsIndex.tsx`). Without
             them this was the only cross-page navigation row in Settings
             with neither affordance, so the one escape hatch out to
             /settings/training read as a static description card. */}
-        <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+        {/* Under 12em (larger text on the phone) the icon gives way so
+            "Programme" keeps room, and a word wider than the row still
+            hyphenates rather than running out of it. Wide-first. */}
+        <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 @max-[10em]:hidden">
           <SlidersHorizontal className="size-4 text-muted-foreground" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 break-words hyphens-auto">
           <p className="text-sm font-medium text-foreground">Programme</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Your setup, lift plan, reset

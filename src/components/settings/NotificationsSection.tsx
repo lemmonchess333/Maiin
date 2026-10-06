@@ -27,6 +27,16 @@ import {
   unregisterDeviceToken,
 } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+/* A row's control (switch, time field, button) drops under its label,
+   at the right, once the label would be narrower than 8em: at double
+   text on a 320px phone a switch beside it left a column too narrow for
+   one word, and a time field ran off the screen. At the designed size
+   every row is one line, as before. */
+const ROW =
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+const LABEL = "min-w-[min(100%,8em)] flex-1";
 
 interface NotificationsSectionProps {
   mealReminders: MealReminders;
@@ -229,14 +239,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Meal reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Enable meal reminders</p>
             <p className="text-xs text-muted-foreground">
               Get notified when it&apos;s time to eat
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={mealReminders.enabled}
             label="Toggle meal reminders"
             onChange={async () => {
@@ -270,11 +281,10 @@ export default function NotificationsSection({
               onTest={() => handleTestNotification("meal")}
             />
             {(["breakfast", "lunch", "dinner"] as const).map((meal) => (
-              <div
-                key={meal}
-                className="flex items-center justify-between p-4 rounded-lg bg-muted"
-              >
-                <div className="flex items-center gap-3">
+              <div key={meal} className={ROW}>
+                {/* Wraps too: at double text on a 320px phone the switch
+                    and "Breakfast" together are wider than the row. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <Toggle
                     checked={mealReminders[meal].enabled}
                     label={`${meal} reminder`}
@@ -301,7 +311,7 @@ export default function NotificationsSection({
                       [meal]: { ...mealReminders[meal], time: e.target.value },
                     })
                   }
-                  className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+                  className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
                   disabled={!mealReminders[meal].enabled}
                 />
               </div>
@@ -314,14 +324,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Workout reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Enable workout reminders</p>
             <p className="text-xs text-muted-foreground">
               Get notified when it&apos;s time to train
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={workoutReminders.enabled}
             label="Toggle workout reminders"
             onChange={async () => {
@@ -353,14 +364,14 @@ export default function NotificationsSection({
         )}
 
         {workoutReminders.enabled && (
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
               aria-label="Workout reminder time"
               value={workoutReminders.time}
               onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
-              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -376,14 +387,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Streak reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div className="pr-3">
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Streak reminder</p>
             <p className="text-xs text-muted-foreground">
               Remind me if I haven&apos;t logged today
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={streakReminder.enabled}
             label="Toggle streak reminder"
             onChange={async () => {
@@ -418,14 +430,14 @@ export default function NotificationsSection({
         )}
 
         {streakReminder.enabled && (
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
               aria-label="Streak reminder time"
               value={streakReminder.time}
               onChange={(e) => updateStreakReminder({ time: e.target.value })}
-              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -438,14 +450,15 @@ export default function NotificationsSection({
             see pushOffered above. */}
         {pushOffered && (
           <>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-              <div className="pr-3">
+            <div className={ROW}>
+              <div className={LABEL}>
                 <p className="text-sm text-foreground">Push notifications</p>
                 <p className="text-xs text-muted-foreground">
                   Get nudges and recaps even when the app is closed
                 </p>
               </div>
               <Toggle
+                className="ml-auto"
                 checked={pushConsent.enabled}
                 label="Toggle push notifications"
                 onChange={async () => {
@@ -504,12 +517,12 @@ export default function NotificationsSection({
                   ["badge", "Badge unlocked"],
                 ] as const
               ).map(([type, label]) => (
-                <div
-                  key={type}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted"
-                >
-                  <span className="text-sm text-foreground">{label}</span>
+                <div key={type} className={ROW}>
+                  <span className={cn(LABEL, "text-sm text-foreground")}>
+                    {label}
+                  </span>
                   <Toggle
+                    className="ml-auto"
                     checked={pushConsent[type]}
                     label={`Toggle ${label} push`}
                     onChange={() => {
@@ -570,8 +583,8 @@ export function ReminderDiagnostics({
 }) {
   const relative = next ? formatNextFire(next.scheduleAt) : null;
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/60 border border-border/40">
-      <div className="text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3 rounded-lg bg-muted/60 border border-border/40">
+      <div className={cn(LABEL, "text-xs text-muted-foreground")}>
         {relative ? (
           <>
             Next:{" "}
@@ -584,7 +597,12 @@ export function ReminderDiagnostics({
           <span>Reminders fire while this tab is open.</span>
         )}
       </div>
-      <Button variant="ghost" size="sm" onClick={onTest} className="shrink-0">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onTest}
+        className="ml-auto shrink-0"
+      >
         Send test
       </Button>
     </div>

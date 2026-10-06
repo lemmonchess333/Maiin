@@ -323,7 +323,9 @@ export default function ExerciseHistory() {
             {decodedName}
           </h1>
           {exercise && (
-            <div className="flex items-center gap-2 mt-0.5">
+            /* Wraps at larger text: "Barbell" ran past the screen at double
+               size on a 320px phone. */
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
               <SectionLabel as="span" className="font-bold text-lifting-strong">
                 {exercise.muscleGroup}
               </SectionLabel>
@@ -352,45 +354,53 @@ export default function ExerciseHistory() {
         ]}
       />
 
-      {/* Statistics belong to Progress; Form can render while history loads. */}
+      {/* Statistics belong to Progress; Form can render while history loads.
+          One tile per row under 15.5em of page (larger text, from 1.35x on
+          a 320px phone): a third of the page no longer held "Sessions" or
+          "101 kg". Wide-first. */}
       {tab === "progress" && (
-        <div className="grid grid-cols-3 gap-2">
-          <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel>
-              {isTimed
-                ? "Longest hold"
-                : isBodyweight
-                  ? "Max reps"
-                  : "Best 1RM"}
-            </SectionLabel>
-            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-              {isTimed
-                ? headerStats.longestHold
-                  ? `${headerStats.longestHold}s`
-                  : "—"
-                : isBodyweight
-                  ? headerStats.maxReps || "—"
-                  : headerStats.best1RM
-                    ? `${headerStats.best1RM}`
-                    : "—"}
-              {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
-                <span className="text-xs font-normal text-muted-foreground ml-1">
-                  kg
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel>Sessions</SectionLabel>
-            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-              {headerStats.totalSessions}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel>Total sets</SectionLabel>
-            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-              {headerStats.totalSets}
-            </p>
+        <div className="@container">
+          <div className="grid grid-cols-3 gap-2 @max-[15.5em]:grid-cols-1">
+            <div className="p-3 rounded-xl bg-card card-shadow">
+              <SectionLabel>
+                {isTimed
+                  ? "Longest hold"
+                  : isBodyweight
+                    ? "Max reps"
+                    : "Best 1RM"}
+              </SectionLabel>
+              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+                {isTimed
+                  ? headerStats.longestHold
+                    ? `${headerStats.longestHold}s`
+                    : "—"
+                  : isBodyweight
+                    ? headerStats.maxReps || "—"
+                    : headerStats.best1RM
+                      ? `${headerStats.best1RM}`
+                      : "—"}
+                {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
+                  <>
+                    {" "}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      kg
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-card card-shadow">
+              <SectionLabel>Sessions</SectionLabel>
+              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+                {headerStats.totalSessions}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-card card-shadow">
+              <SectionLabel>Total sets</SectionLabel>
+              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+                {headerStats.totalSets}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -417,7 +427,7 @@ export default function ExerciseHistory() {
         <>
           {/* ── Personal bests by reps ───────────────────────────────── */}
           {!isTimed && (
-            <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
+            <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
                 <Trophy className="size-4 text-achievement" />
                 {/* One heading, and it is the accurate one. The weighted
@@ -433,8 +443,10 @@ export default function ExerciseHistory() {
               {/* The columns are the rep counts THIS lifter trains, so
                   every one carries a record and the em-dash branch is
                   gone. A fixed 1/3/5/10 left someone programming eights
-                  looking at four blanks. */}
-              <div className="grid grid-cols-4 gap-2">
+                  looking at four blanks. Two a row under 15em of card
+                  (larger text, from 1.35× on a 393pt phone): a quarter of
+                  it no longer held "142.5 kg" or a date. Wide-first. */}
+              <div className="grid grid-cols-4 gap-2 @max-[15em]:grid-cols-2">
                 {repRangePRs.map((pr) => (
                   <div key={pr.reps} className="text-center">
                     <SectionLabel>{pr.reps}RM</SectionLabel>
@@ -443,9 +455,12 @@ export default function ExerciseHistory() {
                         ? "BW"
                         : `${pr.weightKg}`}
                       {pr.weightKg > 0 && !isBodyweight && (
-                        <span className="text-caption font-normal text-muted-foreground ml-0.5">
-                          kg
-                        </span>
+                        <>
+                          {" "}
+                          <span className="text-caption font-normal text-muted-foreground">
+                            kg
+                          </span>
+                        </>
                       )}
                     </p>
                     <p className="text-caption text-muted-foreground mt-0.5">
@@ -480,10 +495,13 @@ export default function ExerciseHistory() {
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
-              <div className="flex items-center justify-between gap-2">
+            <div className="@container rounded-2xl bg-card p-4 space-y-3 card-shadow">
+              {/* At larger text the switch drops under its label, and under
+                  10.5em of card (double size) its options stack full width:
+                  in a row they were wider than the screen. Wide-first. */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionLabel>Progression</SectionLabel>
-                <div className="flex gap-1 bg-muted rounded-full p-0.5">
+                <div className="flex gap-1 bg-muted rounded-full p-0.5 @max-[10.5em]:w-full @max-[10.5em]:flex-col @max-[10.5em]:rounded-2xl">
                   {metricOptions.map((m) => (
                     <button
                       type="button"
@@ -549,11 +567,13 @@ export default function ExerciseHistory() {
                   const delta = prevDeltas.get(s.date);
                   const isPR = prDates.has(s.date);
                   return (
+                    /* At larger text the top set drops under the
+                       session's text rather than squeezing it. */
                     <div
                       key={s.date}
-                      className="flex items-center justify-between px-4 py-3"
+                      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
                     >
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-[min(100%,8em)] flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="text-xs font-medium text-foreground">
                             {formatDayMonth(parseLocalDate(s.date))}
@@ -580,7 +600,7 @@ export default function ExerciseHistory() {
                               : `${Math.round(s.volume)} kg volume`}
                         </p>
                       </div>
-                      <div className="text-right flex-shrink-0 ml-3">
+                      <div className="ml-auto text-right flex-shrink-0">
                         <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                           {s.topSet
                             ? isTimed

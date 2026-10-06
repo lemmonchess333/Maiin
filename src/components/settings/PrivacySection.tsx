@@ -92,8 +92,8 @@ export default function PrivacySection({
             Turning it on here IS that yes, which is why the line under it
             says what is sent and to whom. Off writes false: nothing more
             is sent, and the server refuses it as well. */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-          <div className="flex-1 mr-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+          <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               AI food analysis
             </p>
@@ -118,8 +118,8 @@ export default function PrivacySection({
 
         {/* Shared-route end clipping — default-on home-location protection,
             independent of (and composed with) explicit Privacy zones below. */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-          <div className="flex-1 mr-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+          <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               Hide route start &amp; end on shared runs
             </p>
@@ -181,19 +181,22 @@ export default function PrivacySection({
             </div>
           ))}
 
-          <div className="flex gap-2">
+          {/* The radius goes under the name once the name field would be
+             narrower than 8em (double text): a text field's natural width
+             alone had pushed the radius off the screen at larger text. */}
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               aria-label="Privacy zone name"
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
-              className="flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="min-w-[min(100%,8em)] flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
             />
             <select
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="min-h-11 max-w-full px-3 rounded-lg bg-card border border-border text-sm"
             >
               <option value={200}>200 m</option>
               <option value={500}>500 m</option>
@@ -237,10 +240,12 @@ export default function PrivacySection({
 
         {/* Blocked users (#25) */}
         <div className="p-4 rounded-lg bg-muted space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="size-4 text-primary" />
-              <div>
+          {/* "Show" drops under the heading, at the right, rather than
+              past the card at double text on a 320px phone. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex min-w-[min(100%,8em)] flex-1 items-center gap-2">
+              <Shield className="size-4 shrink-0 text-primary" />
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
                   Blocked users
                 </p>
@@ -253,6 +258,7 @@ export default function PrivacySection({
               <Button
                 variant="outline"
                 size="sm"
+                className="ml-auto"
                 loading={blockedUsersLoading}
                 onClick={async () => {
                   if (!user) return;

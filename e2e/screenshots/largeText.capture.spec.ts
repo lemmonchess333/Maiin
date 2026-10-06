@@ -6,6 +6,12 @@
  * would notice one coming back: a new fixed width, a row that cannot
  * wrap, a picture that never gives way all pass every other test.
  *
+ * The screens: Home, Train, History's five pages, Food and its manual
+ * entry and edit sheets, Settings and every section of it, Train's
+ * exercise menu, a workout, a run before, during and after, the
+ * exercise, run and workout detail pages, the Weekly review, sign-up,
+ * setup and the Pro page.
+ *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
  * 200% (where the app's scaling stops), and measured with layoutBreaks:
@@ -59,6 +65,26 @@ const ACCEPTED: {
       "screen (#2592).",
   },
 ];
+
+/** Every Settings section, as App.tsx routes them. */
+const SETTINGS_PAGES = [
+  "profile",
+  "account",
+  "training",
+  "lift-plan",
+  "run-plan",
+  "workout-prefs",
+  "nutrition",
+  "data",
+  "recently-deleted-meals",
+  "health",
+  "shoes",
+  "notifications",
+  "privacy",
+  "units-appearance",
+  "subscription",
+  "support-legal",
+] as const;
 
 const START = { latitude: 51.5074, longitude: -0.1657 };
 test.use({
@@ -303,6 +329,118 @@ test.describe("large text", () => {
       await page.getByRole("radio", { name: /^25/ }).click();
       await next();
       await measure(page, "setup-summary", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    test(`the Settings pages at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      for (const section of SETTINGS_PAGES) {
+        await page.goto(`settings/${section}`);
+        await ready(page, page.getByRole("heading", { level: 1 }).first());
+        await measure(page, `settings-${section}`, width, found);
+      }
+      expect(found).toEqual([]);
+    });
+
+    test(`the detail screens at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const follow = async (from: string, href: string, screen: string) => {
+        await page.goto(from);
+        const link = page.locator(`a[href*="${href}"]`).first();
+        await link.waitFor({ state: "attached", timeout: 20_000 });
+        await link.scrollIntoViewIfNeeded();
+        await link.click();
+        await page.waitForURL((url) => url.pathname.includes(href));
+        await page.waitForTimeout(2000);
+        await measure(page, screen, width, found);
+      };
+
+      await follow("history?view=lifting", "/history/exercise/", "exercise");
+      // A saved run and a saved workout, by the ids seed:rich gives them.
+      for (const [path, screen] of [
+        ["run/rich-r0", "run-detail"],
+        ["workout/rich-w0", "workout-detail"],
+      ] as const) {
+        await page.goto(path);
+        await ready(page, page.getByRole("heading").first());
+        await page.waitForTimeout(1000);
+        await measure(page, screen, width, found);
+      }
+
+      await page.goto("review");
+      await ready(page, page.getByRole("heading").first());
+      await measure(page, "weekly-review", width, found);
+
+      // A meal's edit sheet, from today's diary.
+      await page.goto("food");
+      const meal = page.getByRole("button", { name: /^Edit / }).first();
+      await ready(page, meal);
+      await meal.click();
+      await page.getByRole("dialog").waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "food-edit-sheet", width, found);
+      await page.keyboard.press("Escape");
+
+      // The run finish screen, handed a finished run through router
+      // state as Run.tsx does (run-finish.capture.spec.ts); nothing is
+      // saved.
+      await page.evaluate(() => {
+        const start = Date.now() - 30 * 60 * 1000;
+        const points = Array.from({ length: 61 }, (_, i) => {
+          const a = (i / 60) * 2 * Math.PI;
+          const lat = 51.5074 + 0.0072 * Math.sin(a);
+          const lon = -0.1278 + 0.0115 * Math.cos(a);
+          return {
+            lat,
+            lon,
+            rawLat: lat,
+            rawLon: lon,
+            altitude: 20 + 15 * Math.sin(a * 2),
+            accuracy: 5,
+            speed: 2.8,
+            timestamp: start + i * 30_000,
+          };
+        });
+        const splits = [372, 364, 352, 358, 354].map((paceSeconds, i) => ({
+          km: i + 1,
+          time: paceSeconds,
+          pace: `${Math.floor(paceSeconds / 60)}:${String(paceSeconds % 60).padStart(2, "0")}`,
+          paceSeconds,
+          elevationGain: 6,
+          elevationLoss: 6,
+        }));
+        history.pushState(
+          {
+            usr: {
+              points,
+              distance: 5000,
+              elapsed: 1800,
+              splits,
+              elevationGain: 30,
+              runConfig: { activityType: "tempo" },
+            },
+            key: "e2e-large-text-finish",
+            idx: (history.state?.idx ?? 0) + 1,
+          },
+          "",
+          "/Maiin/run-summary"
+        );
+        window.dispatchEvent(
+          new PopStateEvent("popstate", { state: history.state })
+        );
+      });
+      await page
+        .getByRole("button", { name: "Save run", exact: true })
+        .waitFor({ timeout: 20_000 });
+      await page.waitForTimeout(1500);
+      await measure(page, "run-summary", width, found);
 
       expect(found).toEqual([]);
     });
