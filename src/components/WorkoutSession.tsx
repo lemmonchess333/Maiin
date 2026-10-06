@@ -885,6 +885,7 @@ export default function WorkoutSession({
       // as bodyweight. If a richer bodyweight-flag arrives via the
       // exercise registry it can plug in here.
       isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
+      timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
     });
 
@@ -1083,6 +1084,7 @@ export default function WorkoutSession({
     const validation = validateSet({
       ...values,
       isBodyweight: values.weight === 0 && !best,
+      timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
     });
     if (!validation.ok) throw new Error(validation.message);

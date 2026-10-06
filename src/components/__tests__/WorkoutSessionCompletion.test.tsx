@@ -177,6 +177,26 @@ describe("set completion through row controls", () => {
     ).toBeEnabled();
   });
 
+  it("completes a hold timed past 100 seconds (Lift4 (14))", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "plank",
+      name: "Plank",
+      reps: 60,
+      repUnit: "seconds",
+    });
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" }),
+      { target: { value: "120" } }
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    expect(h.error).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" })
+    ).toBeDisabled();
+  });
+
   it("offers undo for a valid out-of-order set", () => {
     openSession();
     fireEvent.click(

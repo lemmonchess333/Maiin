@@ -20,6 +20,8 @@
  *
  * Caps + decimal rules
  *   reps:    integer, finite, in [0, 100]. Decimal reps rejected.
+ *   seconds: a timed hold's `reps`: integer, in [1, 3,600] (Lift4 (14):
+ *            a hold can be timed past 100 seconds).
  *   weight:  finite, in [0, 500] kg. Negative rejected. Decimal
  *            allowed; the caller may choose to round to 0.5kg /
  *            1.25kg, but we don't enforce that here because some
@@ -64,6 +66,8 @@ export interface SetValidationInput {
   /** True when the exercise has no weight column (bodyweight
    *  movement). Skips weight checks; reps still validated. */
   isBodyweight?: boolean;
+  /** True for a timed hold, whose `reps` are seconds held. */
+  timed?: boolean;
   /** When present, enables the huge-jump warning. Caller's current
    *  best in the matching rep bucket. */
   currentBestForBucket?: number;
@@ -73,6 +77,7 @@ export interface SetValidationInput {
 }
 
 const REP_MAX = 100;
+const HOLD_MAX_SECONDS = 3600;
 const WEIGHT_MAX_KG = 500;
 const DEFAULT_JUMP_WARN_RATIO = 1.25;
 
@@ -93,27 +98,47 @@ function toFiniteNumber(raw: unknown): number | null {
 
 export function validateSet(input: SetValidationInput): SetValidationResult {
   const reps = toFiniteNumber(input.reps);
+  const timed = input.timed === true;
   if (reps === null) {
-    return { ok: false, severity: "block", message: "Enter a rep count." };
+    return {
+      ok: false,
+      severity: "block",
+      message: timed ? "Enter the seconds held." : "Enter a rep count.",
+    };
   }
   if (reps < 0) {
-    return { ok: false, severity: "block", message: "Reps can't be negative." };
+    return {
+      ok: false,
+      severity: "block",
+      message: timed ? "Seconds can't be negative." : "Reps can't be negative.",
+    };
   }
   if (!Number.isInteger(reps)) {
     return {
       ok: false,
       severity: "block",
-      message: "Reps must be a whole number.",
+      message: timed
+        ? "Seconds must be a whole number."
+        : "Reps must be a whole number.",
     };
   }
   if (reps === 0) {
     return {
       ok: false,
       severity: "block",
-      message: "Log at least one rep to complete the set.",
+      message: timed
+        ? "Log at least one second to complete the set."
+        : "Log at least one rep to complete the set.",
     };
   }
-  if (reps > REP_MAX) {
+  if (timed && reps > HOLD_MAX_SECONDS) {
+    return {
+      ok: false,
+      severity: "block",
+      message: "That hold looks too long (max 3,600 seconds). Check the value.",
+    };
+  }
+  if (!timed && reps > REP_MAX) {
     return {
       ok: false,
       severity: "block",
