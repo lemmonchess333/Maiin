@@ -330,7 +330,8 @@ export default function TrainingWeeksCard({
             </div>
           </div>
           <div
-            className="mt-1 grid text-xs text-muted-foreground"
+            className="mt-1 grid @max-[11em]:hidden text-xs text-muted-foreground"
+            data-testid="axis-labels"
             style={{
               gridTemplateColumns: `repeat(${bins.length}, minmax(0, 1fr))`,
             }}
@@ -339,17 +340,15 @@ export default function TrainingWeeksCard({
             {bins.map((b, i) => {
               const fromEnd = bins.length - 1 - i;
               const shown = fromEnd % every === 0;
-              const end = i === firstLabelled || fromEnd === 0;
               return (
                 <span
                   key={b.key}
                   /* As in PeriodSummaryCard: a label wraps within its bar's
-                     slot, and under 11em of card only the two ends keep
-                     theirs. Held to one line, the dates ran past the card
-                     and the page scrolled sideways at larger text. */
+                     slot, and under 11em of card the row below takes over.
+                     Held to one line, the dates ran past the card and the
+                     page scrolled sideways at larger text. */
                   className={cn(
                     "min-w-0 text-center leading-tight",
-                    !end && "@max-[11em]:invisible",
                     b.key === selected.key && "font-semibold text-foreground",
                     i === bins.length - 1 && every > 1 && "text-right"
                   )}
@@ -360,6 +359,29 @@ export default function TrainingWeeksCard({
                 </span>
               );
             })}
+          </div>
+          {/* Under 11em of card only the two ends are named, at the
+              chart's edges: even wrapped, "Sept" was wider than a bar's
+              slot at double size. Wide-first. */}
+          <div
+            className="mt-1 hidden @max-[11em]:flex justify-between gap-2 text-xs leading-tight text-muted-foreground"
+            data-testid="axis-ends"
+            aria-hidden="true"
+          >
+            {[firstLabelled, bins.length - 1]
+              .filter((i, n, all) => all.indexOf(i) === n)
+              .map((i) => (
+                <span
+                  key={bins[i].key}
+                  className={cn(
+                    i === bins.length - 1 && "text-right",
+                    bins[i].key === selected.key &&
+                      "font-semibold text-foreground"
+                  )}
+                >
+                  {summaryAxisLabel(bins[i], granularity, i === firstLabelled)}
+                </span>
+              ))}
           </div>
 
           <p

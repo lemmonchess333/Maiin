@@ -381,6 +381,7 @@ already made for this repo.
 - Run: `npm run test:e2e` or `npm run test:e2e:ui` (interactive)
 - Signed-in specs locally: `npm run test:e2e:auth`, which runs them one at a time as CI does; in parallel they share one seeded account and fail with nothing wrong in the app
 - Capture specs, the emulator rig and screenshot diffs: `docs/agents/capture-rig.md`
+- `e2e/screenshots/largeText.capture.spec.ts` opens the main screens, a workout, a run, sign-up, setup and Pro at 393 and 320 px with 1.35× and 2× text, and fails on anything past the screen or wider than its box. When it fails, fix the layout (wrap, give way, px for controls and margins), not the list: its `ACCEPTED` entries each carry a reason
 
 ## CI/CD
 

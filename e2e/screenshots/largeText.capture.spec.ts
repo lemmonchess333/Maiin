@@ -12,8 +12,8 @@
  * nothing may reach past the screen, and no text may be wider than its
  * own box unless it ends in an ellipsis on purpose.
  *
- * Skipped: rows that scroll sideways by design, and anything hidden from
- * assistive tech. ACCEPTED lists the breaks that were judged and kept;
+ * Skipped: rows that scroll sideways by design, text only for screen
+ * readers, and the drawings inside SVGs. ACCEPTED lists the breaks that were judged and kept;
  * each says why. Add to it only with a reason, never to get green.
  */
 import { test, expect, type Page } from "@playwright/test";
@@ -29,8 +29,10 @@ import { verifySignupEmail } from "../helpers/verifySignupEmail";
 const WIDTHS = [393, 320] as const;
 const SCALES = [135, 200] as const;
 
+/* Not skipped: aria-hidden. Much of what it marks is visible text that
+   is announced another way (a chart's axis dates, a row's status word),
+   and it breaks the same as any other. */
 const IGNORE = [
-  '[aria-hidden="true"]',
   ".sr-only",
   "svg",
   '[class*="snap-x"]',
@@ -99,8 +101,10 @@ test.describe("large text", () => {
       // widens it is skipped (a chart's axis labels are aria-hidden).
       const wider = await page.evaluate(
         () =>
-          document.documentElement.scrollWidth -
-          document.documentElement.clientWidth
+          Math.max(
+            document.documentElement.scrollWidth,
+            document.body.scrollWidth
+          ) - document.documentElement.clientWidth
       );
       if (wider > 1) breaks.push(`the page scrolls sideways by ${wider}px`);
       for (const b of breaks) {

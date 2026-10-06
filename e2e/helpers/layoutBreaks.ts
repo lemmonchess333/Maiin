@@ -27,6 +27,8 @@ export async function layoutBreaks(
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) continue;
         if (ignore && el.closest(ignore)) continue;
+        // Laid out but not drawn: it cannot visibly break.
+        if (getComputedStyle(el).visibility === "hidden") continue;
         const label = `${el.tagName.toLowerCase()} "${(el.textContent ?? "")
           .trim()
           .slice(0, 40)}"`;

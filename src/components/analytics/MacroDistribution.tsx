@@ -85,7 +85,14 @@ export default function MacroDistribution({
             Recharts injects (default tabIndex=0) doesn't leave a
             tab-stop inside an aria-hidden subtree — that's the
             axe-core aria-hidden-focus violation. */}
-        <div className="size-24 shrink-0 relative" aria-hidden="true">
+        {/* The ring is a drawing, fixed at 96px like the chart inside it,
+            so its hole is 56px at any text size. Past 4em of box (above
+            1.35x text) the figure no longer fits the hole and is left to
+            the Avg calories card above, which shows the same number. */}
+        <div
+          className="@container size-[96px] shrink-0 relative"
+          aria-hidden="true"
+        >
           <ResponsiveContainer width="100%" height={96}>
             {/* `accessibilityLayer={false}`, and the `rootTabIndex` below
                 is no longer what does the work. Recharts 3 defaults
@@ -145,7 +152,7 @@ export default function MacroDistribution({
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex @max-[4em]:hidden flex-col items-center justify-center pointer-events-none">
             {/* The hole held the word "avg" — a label for a figure that
                 was not there, the average of nothing in particular. It
                 holds the figure now.
