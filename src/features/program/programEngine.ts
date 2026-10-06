@@ -11,6 +11,7 @@ import type {
 import { generateInstanceId, loweringOf } from "./programTypes";
 import {
   calendarLighterWeek,
+  EASING_BACK_WEEKS,
   lighterWeeksScheduled,
   type RaceBlockWeek,
 } from "./weekPrescription";
@@ -40,6 +41,7 @@ import {
 } from "./startingLoads";
 import {
   automaticStepUp,
+  lighterBy,
   loadGridFor,
   loweredLoad,
   stretchedRepCeiling,
@@ -2582,15 +2584,24 @@ export function advanceWeek(
      plan's step-back week with a race plan (`calendarLighterWeek`), and
      lighter weeks come one at a time: never straight after one, a manual
      one included. */
+  /* Lift4 (11): the weeks of a return after a break count down by trained
+     weeks. The first keeps its set fewer until it has been trained, and no
+     calendar lighter week comes in either of them: the break was the
+     rest. */
+  const easingLeft = state.easingBack
+    ? state.easingBack.weeksLeft - (weekWasTrained ? 1 : 0)
+    : 0;
   const applyDeloadThisWeek =
     weekWasTrained &&
     state.currentPhase !== "deload" &&
+    easingLeft <= 0 &&
     calendarLighterWeek(nextWeek, nextRaceWeek ?? null) &&
     lighterWeeksScheduled(experience, state.workouts.length);
 
   workouts = applyDeloadThisWeek
     ? applyDeload(workouts)
     : resetToBaseSets(workouts);
+  if (easingLeft >= EASING_BACK_WEEKS) workouts = oneSetFewer(workouts);
 
   /* Lift4: the week opens with the session the last one didn't reach.
      Lifts run in order, not by weekday (ADR-0002), so the session that was
@@ -2609,10 +2620,12 @@ export function advanceWeek(
   }
 
   // The retired per-muscle recovery session's list (Lift4 (13)): nothing
-  // reads it, so a stored one goes with this week.
-  const { recoveringMuscles: _retired, ...kept } = state;
+  // reads it, so a stored one goes with this week. The return's weeks go
+  // once they are done.
+  const { recoveringMuscles: _retired, easingBack: _easing, ...kept } = state;
   return {
     ...kept,
+    ...(easingLeft > 0 ? { easingBack: { weeksLeft: easingLeft } } : {}),
     weekNumber: nextWeek,
     // Both of these key off the RESOLVED flag, not the raw prescription.
     // Keying the phase off `prescription.deload` would label a week "deload"
@@ -2626,5 +2639,80 @@ export function advanceWeek(
     ...(nextWeekKey ? { liftWeekKey: nextWeekKey } : {}),
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
+  };
+}
+
+/** A week with one set fewer on every lift, from the plan's own sets: the
+ *  first week back after a break (Lift4 (11)). */
+function oneSetFewer(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets ?? ex.sets;
+      return { ...ex, baseSets: base, sets: Math.max(1, base - 1) };
+    }),
+  }));
+}
+
+/**
+ * "Ease back in" on the Welcome back sheet (Lift4 (11)), on the person's
+ * yes. Every loaded lift comes down `share` (10%, or 20% after a long
+ * break; `liftLayoff.ts`) on its own steps, by at least one, and climbs
+ * back a step a session to the weight it came down from (`lowered`,
+ * already marked shown: the person chose this, so no line explains it).
+ * A bodyweight lift or a hold comes down as much in reps or seconds and
+ * climbs back by the usual rules; a lift with no weight yet keeps it. This
+ * week has one set fewer on every lift, the miss counts start again, and
+ * the return's two weeks begin (`easingBack`, which `advanceWeek` counts
+ * down).
+ */
+export function easeBackIn(state: ProgramState, share: number): ProgramState {
+  const smallPlates = state.settings?.smallPlates === true;
+  return {
+    ...state,
+    workouts: oneSetFewer(state.workouts).map((day) => ({
+      ...day,
+      exercises: day.exercises.map((ex) =>
+        easedBack({ ...ex, consecutiveFailures: 0 }, share, smallPlates)
+      ),
+    })),
+    easingBack: { weeksLeft: EASING_BACK_WEEKS },
+    updatedAt: Date.now(),
+  };
+}
+
+function easedBack(
+  ex: ProgramExercise,
+  share: number,
+  smallPlates: boolean
+): ProgramExercise {
+  if (isBodyweightExerciseId(ex.exerciseId)) {
+    const timed = ex.repUnit === "seconds";
+    const step = timed ? HOLD_STEP_SECONDS : 1;
+    const floor = Math.min(timed ? MIN_HOLD_SECONDS : 4, ex.reps);
+    const cut = Math.max(step, Math.round((ex.reps * share) / step) * step);
+    return { ...ex, reps: Math.max(floor, ex.reps - cut) };
+  }
+  if (!(ex.weight > 0)) return ex;
+  const weight = lighterBy(
+    loadGridFor(ex.exerciseId, smallPlates),
+    ex.weight,
+    share
+  );
+  if (!(weight > 0)) return ex;
+  const climbing = loweringOf(ex);
+  return {
+    ...ex,
+    weight,
+    lowered: {
+      exerciseId: ex.exerciseId,
+      from: Math.max(
+        ex.weight,
+        climbing?.unit === "kg" ? climbing.from : ex.weight
+      ),
+      unit: "kg",
+      target: ex.reps,
+      shown: true,
+    },
   };
 }

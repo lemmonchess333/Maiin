@@ -69,6 +69,11 @@ const EXPECTED_WRITERS: ReadonlyArray<{
     why: "the manual button for the same engine",
   },
   {
+    owner: "easeBackInAfterBreak",
+    category: "week-engine",
+    why: "Ease back in after a break (Lift4 (11)) lowers every lift on its equipment's load steps (`loadSteps.ts`), which read exercise equipment `functions/` has no copy of — the same unmirrored-data blocker, and the return's weeks are counted down by advanceWeek",
+  },
+  {
     owner: "regenerateProgram",
     category: "whole-plan",
     why: "rebuilds from the generator; configurePlan-shaped, and a public command kind would put whole-plan authorship on the client surface",
@@ -145,8 +150,10 @@ describe("programme document writers outside the command boundary", () => {
   });
 
   it("matches ADR-0011's reasoning for all but one, which is marked", () => {
-    /* Six are covered by the ADR's reasoning, the six it enumerates. One
-       deliberate fallback. One genuinely outside the account.
+    /* Seven are covered by the ADR's reasoning: the six it enumerates,
+       and easing back after a break, which its 2026-10-06 update adds for
+       the same reason. One deliberate fallback. One genuinely outside the
+       account.
 
        Pinning the SHAPE of that gap rather than hiding it means the next
        person to open the ADR knows before they start that it does not
@@ -154,7 +161,7 @@ describe("programme document writers outside the command boundary", () => {
        to work out for themselves. */
     const byCategory = (c: string) =>
       EXPECTED_WRITERS.filter((w) => w.category === c).length;
-    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(6);
+    expect(byCategory("week-engine") + byCategory("whole-plan")).toBe(7);
     expect(byCategory("deliberate")).toBe(1);
     expect(byCategory("unaccounted")).toBe(1);
   });

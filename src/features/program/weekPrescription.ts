@@ -56,17 +56,33 @@ export function lighterWeeksScheduled(
 }
 
 /**
+ * The weeks of a return after a break (Lift4 (11)): the first, with one set
+ * fewer, and the one after. No calendar lighter week comes in either.
+ */
+export const EASING_BACK_WEEKS = 2;
+
+/** Whether this is the first week back after easing back in, which has its
+ *  set fewer on every lift. */
+export function firstWeekBack(
+  state: Pick<ProgramState, "easingBack">
+): boolean {
+  return (state.easingBack?.weeksLeft ?? 0) >= EASING_BACK_WEEKS;
+}
+
+/**
  * Whether the person can take a lighter week now (Lift4 (9)): one at a
- * time, so not while this week is one, and never two in a row, so not
- * when the week last trained was one. Lighter weeks count trained weeks,
- * as the calendar's do, so a week with no session in between changes
- * nothing. The server's command checks the same (`applyDeloadWeekCommand`).
+ * time, so not while this week is one or is the first week back after a
+ * break, and never two in a row, so not when the week last trained was
+ * one. Lighter weeks count trained weeks, as the calendar's do, so a week
+ * with no session in between changes nothing. The server's command checks
+ * the same (`applyDeloadWeekCommand`).
  */
 export function lighterWeekAllowed(
-  state: Pick<ProgramState, "currentPhase" | "weekHistory">
+  state: Pick<ProgramState, "currentPhase" | "weekHistory" | "easingBack">
 ): boolean {
   return (
     state.currentPhase !== "deload" &&
+    !firstWeekBack(state) &&
     state.weekHistory?.at(-1)?.lighter !== true
   );
 }

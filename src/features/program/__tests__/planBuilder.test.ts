@@ -528,6 +528,25 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     schemaVersion: 1 as const,
   };
 
+  it("carries the weeks back after a break through a content edit", () => {
+    // Lift4 (11): or a calendar lighter week could follow the break.
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const existingState = {
+      ...first.programState,
+      easingBack: { weeksLeft: 1 },
+    };
+    expect(
+      buildPlan(
+        makeInput({ liftDays: 4, existingState, preserveHistory: true })
+      ).programState.easingBack
+    ).toEqual({ weeksLeft: 1 });
+    expect(
+      buildPlan(
+        makeInput({ liftDays: 4, existingState, preserveHistory: false })
+      ).programState.easingBack
+    ).toBeUndefined();
+  });
+
   it("carries an active training block through a content edit", () => {
     const first = buildPlan(makeInput({ liftDays: 4 }));
     const edited = buildPlan(

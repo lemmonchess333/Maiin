@@ -137,7 +137,16 @@ export function stretchedRepCeiling(
   );
 }
 
+/** A share lighter on the grid, by at least one step. */
+export function lighterBy(
+  grid: LoadGrid,
+  weight: number,
+  share: number
+): number {
+  return Math.min(grid.nearest(weight * (1 - share)), grid.below(weight));
+}
+
 /** 10% lighter on the grid, by at least one step. */
 export function loweredLoad(grid: LoadGrid, weight: number): number {
-  return Math.min(grid.nearest(weight * 0.9), grid.below(weight));
+  return lighterBy(grid, weight, 0.1);
 }

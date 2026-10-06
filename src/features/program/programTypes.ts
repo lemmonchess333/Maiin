@@ -221,6 +221,8 @@ export interface ProgramExercise {
   /**
    * Lift4 (7): the plan lowered this lift itself, after two sessions in a
    * row under its reps at the weight it asked for (`loweringOf` reads it).
+   * Also Lift4 (11): the person eased back in after a break, in which case
+   * it is marked shown from the start, since they chose it.
    */
   lowered?: LoweredBy;
   /**
@@ -244,7 +246,8 @@ export interface LoweredBy {
   /** The reps, or a hold's seconds, two sessions in a row fell short of. */
   target: number;
   /** Set once the next session has shown the line ("Down from 100 kg: two
-   *  sessions under 5 reps"), which it shows only then. */
+   *  sessions under 5 reps"), which it shows only then; set from the start
+   *  when the person eased back in (`easeBackIn`), with no line to show. */
   shown?: true;
 }
 
@@ -885,6 +888,17 @@ export interface ProgramState {
    * docs/proposals/schema-versioning.md).
    */
   liftWeekKey?: string;
+
+  /**
+   * Lift4 (11): the person eased back in after a break, on the Welcome back
+   * sheet (`easeBackIn`). The return's weeks left to train: the first has
+   * one set fewer on each lift, and no calendar lighter week comes in it or
+   * the next, since the break was the rest (`advanceWeek`, which counts
+   * them down by trained weeks and drops this when they're done). The loads
+   * came down once, when the person chose it, and climb back a step a
+   * session on each lift (`lowered`).
+   */
+  easingBack?: { weeksLeft: number };
 
   /**
    * The muscles the retired per-muscle recovery session eased (Lift4 (13)).

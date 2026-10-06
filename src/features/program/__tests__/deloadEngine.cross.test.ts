@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 import { advanceWeek, applyDeload } from "../programEngine";
+import { lighterWeekAllowed } from "../weekPrescription";
 import type {
   ProgramState,
   WorkoutDay,
@@ -34,13 +35,13 @@ function fixtureWeek(): WorkoutDay[] {
       completed: false,
       skipped: false,
       exercises: [
-        // On the 2.5 grid after ×0.85 (100 → 85).
+        // Three sets to two: half, rounded up.
         mkEx("bench", 3, 8, 100),
-        // Off-grid after ×0.85 (60 → 51 → 50).
+        // Four to two.
         mkEx("row", 4, 10, 60),
-        // Bodyweight stays 0; sets floor at 2.
+        // Bodyweight: two sets to one, the weight still none.
         mkEx("pullup", 2, 12, 0),
-        // A timed hold steps down by five seconds, never by "two reps".
+        // A timed hold keeps its seconds.
         { ...mkEx("plank", 3, 30, 0), repUnit: "seconds" },
       ],
     },
@@ -50,9 +51,9 @@ function fixtureWeek(): WorkoutDay[] {
       completed: false,
       skipped: false,
       exercises: [
-        // Rounds UP (140 → 119 → 120).
+        // Five to three: rounded up.
         mkEx("squat", 5, 5, 140),
-        // Tiny weight collapses to the grid (2.5 → 2.125 → 2.5).
+        // A light weight is kept as it is.
         mkEx("curl", 3, 15, 2.5),
       ],
     },
@@ -95,6 +96,62 @@ describe("lighter-week recipe parity (client engine ↔ CF mirror)", () => {
     cf.applyDeloadToWorkouts(b);
     expect(a).toEqual(fixtureWeek());
     expect(b).toEqual(fixtureWeek());
+  });
+});
+
+/* The first week back after a break has its own set fewer, so neither the
+   client's option nor the server's command allows a lighter week in it
+   (Lift4 (11)); both read the same two weeks. */
+describe("no lighter week in the first week back (client ↔ server)", () => {
+  const cmds = require("../../../../functions/lib/programCommands") as {
+    applyProgramCommand: (a: {
+      state: unknown;
+      profile: unknown;
+      command: unknown;
+      now: number;
+    }) => { state: ProgramState };
+  };
+  const serverAllows = (state: ProgramState) => {
+    try {
+      cmds.applyProgramCommand({
+        state,
+        profile: {},
+        command: {
+          kind: "applyDeloadWeek",
+          commandId: "bbbbbbbbbbbbbbbb",
+          expectedWeekNumber: state.weekNumber,
+        },
+        now: 1,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  it("agrees week by week through a return", () => {
+    for (const weeksLeft of [undefined, 1, 2]) {
+      const state: ProgramState = {
+        goal: "recomp",
+        currentPhase: "progression",
+        weekNumber: 3,
+        splitType: "full_body",
+        fatigueScore: 0,
+        updatedAt: 0,
+        workouts: [
+          {
+            dayName: "Full body",
+            dayType: "full_body",
+            completed: false,
+            exercises: [mkEx("bench-press", 3, 8, 100)],
+          } as WorkoutDay,
+        ],
+        ...(weeksLeft === undefined ? {} : { easingBack: { weeksLeft } }),
+      };
+      expect(serverAllows(state), `weeksLeft ${weeksLeft}`).toBe(
+        lighterWeekAllowed(state)
+      );
+    }
   });
 });
 

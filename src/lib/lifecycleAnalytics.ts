@@ -100,7 +100,8 @@ export type ReturnChoice =
   | "skip"
   | "upgrade"
   | "enable"
-  | "acknowledge";
+  | "acknowledge"
+  | "ease_back";
 
 export interface LifecycleEventMetadata {
   /** auth_screen_viewed: which signed-out screen was shown. */

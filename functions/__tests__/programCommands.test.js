@@ -2627,6 +2627,16 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     expectHttps(() => apply(applyCmd(), state), "failed-precondition");
   });
 
+  it("rejects one in the first week back after a break (Lift4 (11))", () => {
+    // That week has its own set fewer; one lightening at a time.
+    const back = baseState();
+    back.easingBack = { weeksLeft: 2 };
+    expectHttps(() => apply(applyCmd(), back), "failed-precondition");
+    // The week after it has no set fewer, and can be a lighter week.
+    back.easingBack = { weeksLeft: 1 };
+    expect(apply(applyCmd(), back).state.currentPhase).toBe("deload");
+  });
+
   it("rejects one straight after a trained lighter week (Lift4 (9))", () => {
     // Never two in a row: the client's rollover marks the archived week
     // (`advanceWeek`), and this side reads the mark as the client does.

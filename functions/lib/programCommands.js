@@ -197,6 +197,9 @@ function invalidCommand(message) {
 // Primitive validators
 // ---------------------------------------------------------------------------
 
+/** The weeks of a return after a break (client `EASING_BACK_WEEKS`). */
+const EASING_BACK_WEEKS = 2;
+
 function isPlainObject(value) {
   return (
     typeof value === "object" &&
@@ -1698,6 +1701,16 @@ function applyDeloadWeekCommand(state, profile, command, now) {
   const last = history[history.length - 1];
   if (isPlainObject(last) && last.lighter === true) {
     failedPrecondition("The last week you trained was a lighter week.");
+  }
+  // One at a time (Lift4 (11)): the first week back after a break has its
+  // own set fewer, so it can't be a lighter week too. The client's
+  // `firstWeekBack` reads the same two weeks.
+  if (
+    isPlainObject(state.easingBack) &&
+    typeof state.easingBack.weeksLeft === "number" &&
+    state.easingBack.weeksLeft >= EASING_BACK_WEEKS
+  ) {
+    failedPrecondition("This is your first week back.");
   }
   return {
     ...state,

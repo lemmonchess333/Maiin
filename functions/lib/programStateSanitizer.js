@@ -92,6 +92,11 @@ const PROGRAM_STATE_KEYS = new Set([
   // Unlisted, it would strand a muscle mid-re-entry AND reject the deload
   // command outright for any user carrying one.
   "recoveringMuscles",
+  // Lift4 (11): the weeks of a return after a break, written by the
+  // client's "Ease back in" (`easeBackIn`) and counted down by its rollover.
+  // Unlisted, every command on a plan that carries it would be refused for
+  // the dropped key, the lighter week's guard below among them.
+  "easingBack",
   // P6 soft delete: the single-slot stash the `restoreExercise` undo reads.
   // Unlisted, `removeExercise` would write a key the sanitiser drops — and
   // `applyProgramCommand` REJECTS on any dropped key, so every removal would

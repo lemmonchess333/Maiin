@@ -65,6 +65,7 @@ import {
 import {
   generateProgram,
   advanceWeek,
+  easeBackIn,
   shouldAdvanceWeek,
 } from "./programEngine";
 import { generateWeekPrescription, raceBlockWeek } from "./weekPrescription";
@@ -1675,6 +1676,28 @@ export function useProgram() {
       toast.success(`Week ${saved.weekNumber} started`);
     }
   }, [programState, profile, saveProgram, recentLayoff]);
+
+  /**
+   * "Ease back in" on Home's Welcome back sheet (Lift4 (11)): the plan's
+   * loads `share` lighter, a set fewer this week and the miss counts reset
+   * (`easeBackIn`). Built against the live document, as the rollover is:
+   * lowering a lift reads its equipment's steps, which `functions/` has no
+   * copy of (ADR-0011). Resolves whether it was saved; a failed save has
+   * said so already (`saveProgram`).
+   */
+  const easeBackInAfterBreak = useCallback(
+    async (share: number): Promise<boolean> => {
+      try {
+        const saved = await saveProgram((base) =>
+          base.workouts.length > 0 ? easeBackIn(base, share) : null
+        );
+        return saved !== null;
+      } catch {
+        return false;
+      }
+    },
+    [saveProgram]
+  );
 
   // P0-6: Mark a run day as completed.
   //
@@ -3437,6 +3460,7 @@ export function useProgram() {
     skipWorkoutDay,
     setNextWorkout,
     advanceToNextWeek,
+    easeBackIn: easeBackInAfterBreak,
     updateSettings,
     regenerateProgram,
     saveProgram,

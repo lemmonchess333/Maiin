@@ -460,6 +460,23 @@ step-back as the last full one. A week from the history is named by its
 own number and its own lighter mark. The race's final weeks, the week
 after it and the leg-session rules follow in the running link (step 5d).
 
+STATUS 2026-10-06 (Lift4 (11), build step 5, fifth part): the Welcome back
+sheet is the one way back in after a break. It is offered from two weeks
+away (it was one), and asks "Ease back in" or "Keep my old weights", with
+easing back put first from three weeks. Easing back is a plan change on
+the person's yes (`easeBackIn`): every loaded lift 10% lighter on its own
+steps, or 20% after more than eight weeks away, by at least one step, and
+climbing back a step a session to where it was (the drop's `lowered`
+record, marked shown, so no line explains a choice the person made); a
+bodyweight lift or hold as much shorter; one set fewer in the first week
+back, kept through a week with no training in it; the miss counts reset.
+`easingBack` on the plan counts the return's two weeks down by trained
+weeks, and no calendar lighter week, nor one taken from Train in the first
+week, comes inside them, as the precedence table says. It is a document
+write like the rollover (ADR-0011's update): the load steps read equipment
+the server has no copy of. The old "Start easier" route to the session
+chooser is gone; "Easier today" stays on it for one-off days.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |

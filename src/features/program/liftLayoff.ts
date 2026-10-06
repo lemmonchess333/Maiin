@@ -18,13 +18,21 @@
  * reachability gate refused it, correctly. A single assessment is also the
  * honest API: every caller wants all three answers together.
  *
- * This module REPORTS. It prescribes nothing: what the app offers a
- * returning lifter is the sheet's business, and per the check-in's locked
- * rule that a response maps to a navigation rather than a mutation, a plan
- * does not swing on one absence either.
+ * This module REPORTS. It prescribes nothing: it says whether the Welcome
+ * back sheet is offered and what its "Ease back in" would take off, and
+ * the plan changes only when the person chooses it there (Lift4 (11),
+ * `easeBackIn`).
  */
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { classifyLayoff, type LayoffClass } from "./layoffDetection";
+
+/** Days away from which the Welcome back sheet is offered: two weeks
+ *  (Lift4 (11)). A week away is a missed week, not a break. */
+const WELCOME_BACK_DAYS = 14;
+
+/** Days away past which easing back takes 20% off the loads, not 10%:
+ *  eight weeks (Lift4 (11)). */
+const LONG_BREAK_DAYS = 56;
 
 /** A logged session, as far as this module is concerned. */
 export interface DatedWorkout {
@@ -56,6 +64,17 @@ export interface LiftReturnAssessment {
    * feature permanently after a single dismissal.
    */
   dismissKey: string | null;
+  /** Whether the Welcome back sheet is offered: two weeks away or more. */
+  welcomeBack: boolean;
+  /**
+   * Whether "Ease back in" is the choice the sheet puts first: three weeks
+   * away or more, the shared `detrained` line, past which the plan's loads
+   * are no longer the person's.
+   */
+  easeBackFirst: boolean;
+  /** What easing back takes off the loads: 10%, or 20% after more than
+   *  eight weeks away. */
+  easeBackShare: number;
 }
 
 /**
@@ -82,7 +101,14 @@ export function assessLiftReturn(
     if (latest === null || workout.date > latest) latest = workout.date;
   }
   if (latest === null) {
-    return { daysAway: null, layoff: "none", dismissKey: null };
+    return {
+      daysAway: null,
+      layoff: "none",
+      dismissKey: null,
+      welcomeBack: false,
+      easeBackFirst: false,
+      easeBackShare: 0.1,
+    };
   }
 
   const last = parseLocalDate(latest).getTime();
@@ -91,5 +117,13 @@ export function assessLiftReturn(
   // layoff. Clamp at 0 rather than reporting negative days away.
   const daysAway = Math.max(0, Math.round((today - last) / 86_400_000));
 
-  return { daysAway, layoff: classifyLayoff(daysAway), dismissKey: latest };
+  const layoff = classifyLayoff(daysAway);
+  return {
+    daysAway,
+    layoff,
+    dismissKey: latest,
+    welcomeBack: daysAway >= WELCOME_BACK_DAYS,
+    easeBackFirst: layoff === "detrained",
+    easeBackShare: daysAway > LONG_BREAK_DAYS ? 0.2 : 0.1,
+  };
 }

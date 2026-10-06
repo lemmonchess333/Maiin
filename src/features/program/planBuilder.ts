@@ -757,6 +757,11 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     // A start late in the week is anchored on next week (firstLiftWeekKey).
     liftWeekKey: firstLiftWeekKey(input),
     ...(carriedBlock ? { trainingBlock: carriedBlock } : {}),
+    // Lift4 (11): a rebuild in the weeks back after a break keeps them, or
+    // a calendar lighter week could follow the break straight away.
+    ...(input.preserveHistory && input.existingState?.easingBack
+      ? { easingBack: input.existingState.easingBack }
+      : {}),
     ...(input.preserveHistory &&
     input.raceGoal &&
     continuingRacePlan(input.existingState?.runPlan, input.raceGoal) &&

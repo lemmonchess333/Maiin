@@ -1,77 +1,121 @@
 /**
- * LiftReturnSheet contract tests.
+ * LiftReturnSheet contract tests (Lift4 (11)).
  *
- * The sheet has one job and two prohibitions, and all three are things a
- * later edit could quietly break:
+ * The sheet is the one way back in after a break, and the things a later
+ * edit could quietly break:
  *
- *   1. It offers exactly two ways out, and BOTH are non-destructive — one
- *      dismisses, one routes. No choice may acquire a writer, because the
- *      check-in's locked rule is that a response maps to a navigation and
- *      never to a plan change.
- *   2. It states the gap and nothing else. No missed-session count, no
+ *   1. It offers exactly two choices. Only "Ease back in" changes the
+ *      plan, on the person's yes; "Keep my old weights" changes nothing.
+ *   2. Easing back is the choice put first from three weeks away, and it
+ *      says what it will do (10% or 20%, a set fewer this week, a step
+ *      back a session) before it does it.
+ *   3. It states the gap and nothing else. No missed-session count, no
  *      streak language, no loss framing — the standing copy constraint
  *      applies most exactly to the person who has just come back.
- *   3. The detrained register differs from the ordinary gap, because a
- *      three-week absence and a nine-day one are not the same news.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LiftReturnSheet from "../LiftReturnSheet";
 
-function setup({ daysAway = 9, layoff = "gap" as "gap" | "detrained" } = {}) {
+function setup({
+  daysAway = 24,
+  easeBackFirst = true,
+  easeBackShare = 0.1,
+  onEaseBack = vi.fn(async () => {}),
+} = {}) {
   const onClose = vi.fn();
-  const onGoToProgramme = vi.fn();
   render(
     <LiftReturnSheet
       open
       onClose={onClose}
-      onGoToProgramme={onGoToProgramme}
+      onEaseBack={onEaseBack}
       daysAway={daysAway}
-      layoff={layoff}
+      easeBackFirst={easeBackFirst}
+      easeBackShare={easeBackShare}
     />
   );
-  return { onClose, onGoToProgramme };
+  return { onClose, onEaseBack };
 }
 
-describe("LiftReturnSheet — what it offers", () => {
-  it("offers exactly two ways out, and neither changes the plan", async () => {
-    const { onClose, onGoToProgramme } = setup();
+const buttons = () =>
+  screen
+    .getAllByRole("button")
+    .map((b) => b.textContent ?? "")
+    .filter((t) => /ease back in|keep my old weights/i.test(t));
 
-    fireEvent.click(screen.getByRole("button", { name: /pick up where/i }));
+describe("LiftReturnSheet — what it offers", () => {
+  it("eases the plan back on the person's yes, then closes", async () => {
+    const { onClose, onEaseBack } = setup();
+    fireEvent.click(screen.getByRole("button", { name: /ease back in/i }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(onGoToProgramme).not.toHaveBeenCalled();
+    expect(onEaseBack).toHaveBeenCalledTimes(1);
   });
 
-  it("routes to the programme rather than easing the plan itself", async () => {
-    // "Start easier" names an option that already exists on the session
-    // chooser. If this ever gains a writer instead, that is the locked
-    // navigation-not-mutation rule being broken.
-    const { onGoToProgramme } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /start easier/i }));
-    await waitFor(() => expect(onGoToProgramme).toHaveBeenCalled());
+  it("keeps the old weights without touching the plan", async () => {
+    const { onClose, onEaseBack } = setup();
+    fireEvent.click(
+      screen.getByRole("button", { name: /keep my old weights/i })
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onEaseBack).not.toHaveBeenCalled();
+  });
+
+  it("stays open when easing back couldn't be saved", async () => {
+    const onEaseBack = vi.fn(async () => {
+      throw new Error("offline");
+    });
+    const { onClose } = setup({ onEaseBack });
+    fireEvent.click(screen.getByRole("button", { name: /ease back in/i }));
+    await waitFor(() => expect(onEaseBack).toHaveBeenCalled());
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: /ease back in/i })
+    ).not.toBeDisabled();
+  });
+
+  it("puts easing back first from three weeks, and keeping first before", () => {
+    const { unmount } = render(
+      <LiftReturnSheet
+        open
+        onClose={() => {}}
+        onEaseBack={async () => {}}
+        daysAway={24}
+        easeBackFirst
+        easeBackShare={0.1}
+      />
+    );
+    expect(buttons()[0]).toMatch(/ease back in/i);
+    unmount();
+    setup({ daysAway: 16, easeBackFirst: false });
+    expect(buttons()[0]).toMatch(/keep my old weights/i);
   });
 });
 
 describe("LiftReturnSheet — what it says", () => {
-  it("states the gap in days under a fortnight", () => {
-    setup({ daysAway: 9 });
-    expect(screen.getByText("It's been 9 days")).toBeInTheDocument();
-  });
-
-  it("rounds to weeks past a fortnight, where days invite arithmetic", () => {
-    setup({ daysAway: 24, layoff: "detrained" });
+  it("rounds the gap to weeks, where days invite arithmetic", () => {
+    setup({ daysAway: 24 });
     expect(screen.getByText("It's been about 3 weeks")).toBeInTheDocument();
   });
 
-  it("changes register for a detrained absence", () => {
-    setup({ daysAway: 24, layoff: "detrained" });
+  it("says what easing back does before it does it", () => {
+    setup({ easeBackShare: 0.2, daysAway: 70 });
     expect(
-      screen.getByText(/starting a little lighter is the usual way back/i)
+      screen.getByText(/takes 20% off each lift and a set off this week/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/climbs back a step a session to where it was/i)
     ).toBeInTheDocument();
   });
 
-  it("keeps the ordinary gap matter-of-fact", () => {
-    setup({ daysAway: 9 });
+  it("changes register once the old weights are no longer the person's", () => {
+    setup({ easeBackFirst: true });
+    expect(
+      screen.getByText(/your plan still has the weights you left on/i)
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a shorter break matter-of-fact", () => {
+    setup({ daysAway: 16, easeBackFirst: false });
     expect(
       screen.getByText(/your plan is where you left it/i)
     ).toBeInTheDocument();
@@ -80,14 +124,15 @@ describe("LiftReturnSheet — what it says", () => {
   it("never scolds: no streak, loss or missed-session language", () => {
     // The constraint stated as a test rather than as a comment, so a
     // future copy edit that reaches for urgency fails here.
-    for (const layoff of ["gap", "detrained"] as const) {
+    for (const easeBackFirst of [false, true]) {
       const { unmount } = render(
         <LiftReturnSheet
           open
           onClose={() => {}}
-          onGoToProgramme={() => {}}
-          daysAway={layoff === "gap" ? 9 : 24}
-          layoff={layoff}
+          onEaseBack={async () => {}}
+          daysAway={easeBackFirst ? 24 : 16}
+          easeBackFirst={easeBackFirst}
+          easeBackShare={0.1}
         />
       );
       const text = document.body.textContent ?? "";
