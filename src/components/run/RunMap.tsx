@@ -554,7 +554,7 @@ export default function RunMap({
       // (components.css). An attribute, not a class: MapLibre adds its
       // own classes to this element, and React rewrites className.
       data-map-theme={darkMode ? "dark" : "light"}
-      className={`relative w-full ${height} ${className}`}
+      className={`@container relative w-full ${height} ${className}`}
     >
       {liveControls && (
         // On-map control stack (right edge, clear of the top GPS pills and the
@@ -603,9 +603,21 @@ export default function RunMap({
         // max-w reserves ~8rem (2× a top-4 size-11 corner control) so the
         // pill can never sit under a corner button in any consumer; in the
         // active-run map it lines up with the existing centred GPS pills.
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
-          Map tiles unavailable. Check your connection. GPS status is shown
-          separately.
+        // Under 20rem of map (larger text on the phone) the reserve leaves
+        // a word no room, and lower down the live run's sheet covers the
+        // map. So the pill says only "Map unavailable", on one line, in 12px
+        // with px padding like the map's own credit, at the top right: clear
+        // of the top-left back button and GPS chip at any text size, and no
+        // consumer puts a control top right. The chip beside it is the GPS status the long
+        // copy points to. Wide-first. In rem, not em: MapLibre sets this
+        // element's font to 12px, and a container query's em is the
+        // container's own, so 20em never matched.
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[12px] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+          <span className="@max-[20rem]:hidden">
+            Map tiles unavailable. Check your connection. GPS status is shown
+            separately.
+          </span>
+          <span className="hidden @max-[20rem]:inline">Map unavailable</span>
         </div>
       )}
     </div>

@@ -1555,14 +1555,20 @@ export default function WorkoutSession({
 
       {/* Exercise name + set counter — always visible above scroll. DS3:
           the exercise's drawing beside its name, where a bare dumbbell
-          icon sat. */}
-      <div className="flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
+          icon sat. Under 16em of row (larger text on the phone) the drawing
+          gives its room to the name, which beside it pushed the form
+          guide's button off the screen. Wide-first. */}
+      <div className="@container flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
         {currentExercise && (
-          <ExerciseThumb exerciseId={currentExercise.exerciseId} size="lg" />
+          <ExerciseThumb
+            exerciseId={currentExercise.exerciseId}
+            size="lg"
+            className="@max-[16em]:hidden"
+          />
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1">
-            <h2 className="text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
+            <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
               {currentExercise?.name}
             </h2>
             {currentExercise?.name && (
@@ -1691,12 +1697,15 @@ export default function WorkoutSession({
             every set's weight in one tap. */}
         {suggestions[currentExIndex] &&
           !currentSets.some((st) => st.completed) && (
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-lifting/10">
+            /* Apply drops under the words when 8em will not fit beside
+               them (larger text on the phone): beside it, a word ran past
+               the line. */
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-lifting/10">
               <TrendingUp
                 className="size-4 shrink-0 text-lifting"
                 aria-hidden="true"
               />
-              <p className="min-w-0 flex-1 text-xs text-foreground leading-relaxed">
+              <p className="min-w-[min(100%,8em)] flex-1 text-xs text-foreground leading-relaxed">
                 All sets hit{" "}
                 <span className="font-mono tabular-nums font-semibold">
                   {suggestions[currentExIndex].targetReps}
@@ -1714,6 +1723,7 @@ export default function WorkoutSession({
               <Button
                 size="sm"
                 variant="secondary"
+                className="ml-auto"
                 onClick={() => {
                   haptic("light");
                   const target = suggestions[currentExIndex].weightKg;
@@ -1739,8 +1749,18 @@ export default function WorkoutSession({
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
-            done set's row turns green, as the tick it carries. */}
-        <Card padded={false} className="overflow-hidden">
+            done set's row turns green, as the tick it carries.
+
+            Under 19em of card (larger text on the phone, and a 320px phone
+            already at the designed size) the five columns do not fit:
+            "Previous" cut "80 × 8" to "80 …" and the weight to "32.".
+            There the row keeps four columns and the same
+            set last time goes on a line of its own under the weight and
+            reps, still a tap to fill. Wide-first, so a browser without
+            container queries keeps the five. The badge, the tick and the
+            plate button stay 44px, as iOS keeps a control's size, which
+            leaves the larger figures their room. */}
+        <Card padded={false} className="@container overflow-hidden">
           {(() => {
             const lastSets = previousSets[currentExIndex];
             const lastPerformance = currentExercise?.lastPerformance;
@@ -1750,18 +1770,20 @@ export default function WorkoutSession({
               : false;
             const isTimedExercise = currentExercise?.repUnit === "seconds";
             const columns =
-              "grid grid-cols-[2.75rem_minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)_2.75rem] items-center gap-2";
+              "grid grid-cols-[44px_minmax(0,1.1fr)_minmax(0,1.25fr)_minmax(0,1fr)_44px] @max-[19em]:grid-cols-[44px_minmax(0,1.25fr)_minmax(0,1fr)_44px] items-center gap-x-[8px]";
 
             return (
               <>
                 <div
                   className={cn(
                     columns,
-                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wider text-muted-foreground"
+                    "px-3 pt-3 pb-1 text-micro font-semibold uppercase tracking-wide text-muted-foreground"
                   )}
                 >
                   <div className="text-center">Set</div>
-                  <div className="text-center">Previous</div>
+                  <div className="min-w-0 text-center @max-[19em]:hidden">
+                    Previous
+                  </div>
                   <div className="flex items-center justify-center">
                     kg
                     <button
@@ -1771,7 +1793,7 @@ export default function WorkoutSession({
                         haptic("light");
                         setShowPlates(true);
                       }}
-                      className="-my-3 flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+                      className="-my-3 flex size-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <Disc className="size-3.5" aria-hidden="true" />
                     </button>
@@ -1829,16 +1851,17 @@ export default function WorkoutSession({
                             haptic(10);
                             setTypeSheet(setIdx);
                           }}
-                          className="mx-auto flex size-11 items-center justify-center rounded-xl transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95"
+                          className="mx-auto flex size-[44px] items-center justify-center rounded-xl transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95"
                         >
                           <SetTypeChip
                             type={type}
                             label={setBadge(currentSets, setIdx)}
+                            className="h-[32px] w-auto min-w-[32px] px-1"
                           />
                         </button>
                         {priorLabel === null ? (
                           <span
-                            className="block text-center text-small text-muted-foreground"
+                            className="block text-center text-small text-muted-foreground @max-[19em]:hidden"
                             aria-hidden="true"
                           >
                             —
@@ -1867,12 +1890,17 @@ export default function WorkoutSession({
                             }}
                             disabled={set.completed || !canFill}
                             className={cn(
-                              "min-h-11 w-full truncate text-center text-small font-mono tabular-nums",
+                              "min-h-[44px] w-full truncate text-center text-small font-mono tabular-nums",
+                              // Its own line under the weight and reps.
+                              "@max-[19em]:col-span-2 @max-[19em]:col-start-2 @max-[19em]:row-start-2 @max-[19em]:min-h-[32px] @max-[19em]:text-left",
                               canFill && !set.completed
                                 ? "text-lifting-strong active:opacity-70"
                                 : "text-muted-foreground"
                             )}
                           >
+                            <span className="hidden @max-[19em]:inline font-sans">
+                              Last{" "}
+                            </span>
                             {priorLabel}
                           </button>
                         )}
@@ -1899,7 +1927,7 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-11 w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
                         />
                         <input
                           type="number"
@@ -1917,7 +1945,7 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-11 w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
                         />
                         {set.completed ? (
                           <button
@@ -1930,9 +1958,9 @@ export default function WorkoutSession({
                                 setIdx,
                               });
                             }}
-                            className="mx-auto flex size-11 flex-col items-center justify-center gap-0.5 rounded-xl transition-transform active:scale-95"
+                            className="mx-auto flex min-h-[44px] w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl transition-transform active:scale-95"
                           >
-                            <span className="flex size-8 items-center justify-center rounded-lg bg-success text-success-foreground">
+                            <span className="flex size-[32px] items-center justify-center rounded-lg bg-success text-success-foreground">
                               <Check
                                 className="size-4"
                                 strokeWidth={3}
@@ -1957,9 +1985,9 @@ export default function WorkoutSession({
                                 : undefined
                             }
                             onClick={() => void completeSet(setIdx)}
-                            className="group mx-auto flex size-11 items-center justify-center active:scale-90"
+                            className="group mx-auto flex size-[44px] items-center justify-center active:scale-90"
                           >
-                            <span className="size-8 rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
+                            <span className="size-[32px] rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
                           </button>
                         )}
                       </div>
