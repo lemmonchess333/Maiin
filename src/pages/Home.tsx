@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
+import TrialEndingStrip from "@/components/home/TrialEndingStrip";
 import WeightLogSheet from "@/components/home/WeightLogSheet";
 import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
@@ -849,6 +850,9 @@ export default function Home() {
           </span>
         </button>
       )}
+      {/* A store trial's last two days (Sub1 pin 12): when it ends and what
+          it costs after, with the store's own page to manage it. */}
+      <TrialEndingStrip trial={profile.subscriptionTrial} />
       {/* home-declutter 6b — the upgrade strip is snoozeable (uid-scoped,
           30 days) so the funnel resurfaces monthly instead of living
           permanently at the top of every session. Who sees it is

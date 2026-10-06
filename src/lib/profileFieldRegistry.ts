@@ -190,6 +190,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
   { field: "subscriptionSource", sanitized: false, serverOnly: true },
   { field: "subscriptionTier", sanitized: false, serverGuarded: true },
+  // The free trial a purchase is in, written by the RevenueCat sync
+  // (functions/lib/trialReminder.js). The reminder email reads it, so a
+  // client that could write it could move or cancel its own reminder.
+  { field: "subscriptionTrial", sanitized: false, serverOnly: true },
   { field: "targetCalories", sanitized: true },
   { field: "targetCarbs", sanitized: true },
   { field: "targetFat", sanitized: true },

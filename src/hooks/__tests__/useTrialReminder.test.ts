@@ -184,3 +184,71 @@ describe("useTrialReminderInternal — the schedule", () => {
     expect(scheduledIds()).toEqual([]);
   });
 });
+
+/* The store trial a purchase is in (Sub1, STATUS 2026-10-06): the phone's
+   reminder goes at the instant the server chose for the email. */
+describe("useTrialReminderInternal — a store trial", () => {
+  // Local wall clock: reminder Thursday 3 September 10:00, last moment to
+  // cancel Saturday 5 September 09:00, trial ends Sunday 6 September.
+  const REMIND = new Date(2026, 8, 3, 10, 0, 0, 0);
+  function storeTrial(overrides: Record<string, unknown> = {}) {
+    return {
+      productId: "com.tropos.app.pro.monthly",
+      store: "app_store",
+      period: "month",
+      startedAt: new Date(2026, 7, 30, 9, 0).toISOString(),
+      endsAt: new Date(2026, 8, 6, 9, 0).toISOString(),
+      cancelBy: new Date(2026, 8, 5, 9, 0).toISOString(),
+      reminderAt: REMIND.toISOString(),
+      willRenew: true,
+      price: { amount: 3.99, currencyCode: "GBP", display: "£3.99" },
+      reminderEmailedAt: null,
+      ...overrides,
+    };
+  }
+
+  it("holds one reminder at the email's instant, in the store trial's words", async () => {
+    mockProfile = { subscriptionTier: "pro", subscriptionTrial: storeTrial() };
+    renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([TRIAL_NOTIFICATION_ID]);
+    const payload = scheduledAt(TRIAL_NOTIFICATION_ID)!;
+    expect(payload.scheduleAt).toEqual(REMIND);
+    expect(payload.title).toBe("Your free trial ends on Sunday 6 September");
+    expect(payload.body).toBe(
+      "Cancel by 09:00 on Saturday 5 September if you don't want to pay £3.99 a month. Already cancelled? There's nothing to do."
+    );
+  });
+
+  it("drops the reminder once renewal is turned off", async () => {
+    mockProfile = { subscriptionTier: "pro", subscriptionTrial: storeTrial() };
+    const { rerender } = renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([TRIAL_NOTIFICATION_ID]);
+
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionTrial: storeTrial({ willRenew: false }),
+    };
+    rerender();
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([]);
+  });
+
+  it("holds nothing once the reminder's instant has passed, or when the trial converts", async () => {
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionTrial: storeTrial({
+        reminderAt: new Date(2026, 8, 1, 8, 0).toISOString(),
+      }),
+    };
+    const { rerender } = renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([]);
+
+    mockProfile = { subscriptionTier: "pro", subscriptionTrial: null };
+    rerender();
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([]);
+  });
+});

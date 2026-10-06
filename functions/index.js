@@ -102,6 +102,9 @@ const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
 
+// The reminder before a free trial is charged (Sub1, STATUS 2026-10-06).
+exports.trialReminderSweep = require("./trialReminders").trialReminderSweep;
+
 // The pre-run weather strip, from MET Norway through this server (currentWeather.js).
 exports.getCurrentWeather = require("./currentWeather").getCurrentWeather;
 

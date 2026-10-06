@@ -17,6 +17,7 @@ const admin = require("firebase-admin");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const rateLimiter = require("./rateLimiter");
 const entitlement = require("./lib/revenueCatEntitlement");
+const { readReportedPrice } = require("./lib/trialReminder");
 
 // Secret Manager bindings (docs/iap/revenuecat-setup.md, Part C). A deploy
 // that binds an unprovisioned secret fails, so both must exist before this
@@ -84,6 +85,10 @@ async function fetchSubscriber(uid, { apiKey, fetchImpl = fetch }) {
  * A sandbox purchase counts only when the uid is on REVENUECAT_SANDBOX_UIDS.
  * The webhook and the callable both reach the plan through here, so the
  * list is checked in one place for both.
+ *
+ * `reportedPrice` is the price the app sold the plan at, from the callable
+ * only (readReportedPrice has checked it). RevenueCat does not hold a
+ * trial's renewal price, and the trial reminder's email names it.
  */
 async function syncUser({
   db,
@@ -92,6 +97,7 @@ async function syncUser({
   fetchImpl,
   serverTimestamp,
   logger,
+  reportedPrice = null,
 }) {
   const userRef = db.collection("users").doc(uid);
   if (!(await userRef.get()).exists) return { uid, result: "no-user" };
@@ -107,6 +113,7 @@ async function syncUser({
     const userData = userSnap.data() || {};
     const plan = entitlement.planEntitlementWrite(userData, snapshot, {
       sandboxAllowed,
+      reportedPrice,
     });
     if (plan.write) {
       txn.set(
@@ -260,8 +267,12 @@ async function handleWebhook(req, res, deps) {
   }
 }
 
-/** The callable, with its dependencies injected so it can be tested whole. */
-async function handleSync(context, deps) {
+/** The callable, with its dependencies injected so it can be tested whole.
+ *  `data.price` is the price the app showed for the plan it just sold
+ *  (`{ productId, amount, currencyCode, display }`); anything else in
+ *  `data` is ignored, and a price that does not pass readReportedPrice is
+ *  dropped rather than refused, so it can never fail a purchase. */
+async function handleSync(context, deps, data = {}) {
   const { db, apiKey, fetchImpl, serverTimestamp, logger } = deps;
   if (!context || !context.auth || !context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -295,6 +306,7 @@ async function handleSync(context, deps) {
       fetchImpl,
       serverTimestamp,
       logger,
+      reportedPrice: readReportedPrice(data && data.price),
     });
     return {
       result: synced.result,
@@ -341,7 +353,12 @@ exports.revenueCatWebhook = functions
 // (purchaseProvider.ts syncEntitlementBestEffort).
 exports.syncRevenueCatEntitlement = functions
   .runWith({ ...REVENUECAT_CAP, secrets: [REVENUECAT_REST_KEY] })
-  .https.onCall((data, context) => handleSync(context, productionDeps()));
+  .https.onCall((data, context) => handleSync(context, productionDeps(), data));
+
+// The trial reminder's sweep re-reads RevenueCat through the same path
+// before it emails anyone (trialReminders.js).
+exports.syncUser = syncUser;
+exports.RevenueCatUnavailable = RevenueCatUnavailable;
 
 exports._internals = {
   REVENUECAT_CAP,

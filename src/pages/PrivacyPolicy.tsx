@@ -460,8 +460,9 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Resend:</strong> sends
                 account emails, such as verifying your email address or
-                resetting your password. It receives your email address and the
-                email.
+                resetting your password, and the reminder before a free trial
+                turns into a paid subscription. It receives your email address
+                and the email.
               </li>
               <li>
                 <strong className="text-foreground">Open Food Facts:</strong>{" "}
