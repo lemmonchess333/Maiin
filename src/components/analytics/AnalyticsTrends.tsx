@@ -27,7 +27,10 @@ export default function AnalyticsTrends({
   return (
     <section aria-label="Trends" className="space-y-2">
       <SectionHeading>Trends</SectionHeading>
-      <Card padded={false} className="divide-y divide-border overflow-hidden">
+      <Card
+        padded={false}
+        className="@container divide-y divide-border overflow-hidden"
+      >
         {rows.map((row) => (
           <button
             key={row.key}
@@ -36,10 +39,13 @@ export default function AnalyticsTrends({
               haptic();
               onOpen(row.page);
             }}
-            className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            className="flex min-h-16 w-full flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition-colors active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-semibold text-foreground">
+            {/* The figure drops under the words when the two no longer
+                fit side by side (larger text on the phone), rather than
+                pushing "target 2,200" past the card. */}
+            <span className="min-w-min flex-1">
+              <span className="block text-base font-semibold text-foreground break-words hyphens-auto">
                 {row.label}
               </span>
               {/* Wraps rather than cuts: "Down 1.2 kg since 30 A…" hid the
@@ -49,29 +55,36 @@ export default function AnalyticsTrends({
               </span>
             </span>
             {row.series && (
+              /* The line is a glance at the shape, not the figure: it
+                 gives its room to the label once the card is under 20em
+                 (a 320px phone at larger text). */
               <Sparkline
                 values={row.series}
                 color={row.color}
-                className="shrink-0"
+                className="shrink-0 @max-[20em]:hidden"
               />
             )}
-            {row.value && (
-              <span className="shrink-0 text-right">
-                <span className="text-lg font-bold font-mono tabular-nums text-foreground">
-                  {row.value}
-                </span>
-                {row.unit && (
-                  <span className="text-sm text-muted-foreground">
-                    {" "}
-                    {row.unit}
+            {/* The figure and the chevron move as one, so a wrapped row
+                does not leave the chevron alone on a line. */}
+            <span className="ml-auto flex min-w-min items-center gap-3">
+              {row.value && (
+                <span className="text-right">
+                  <span className="text-lg font-bold font-mono tabular-nums text-foreground">
+                    {row.value}
                   </span>
-                )}
-              </span>
-            )}
-            <ChevronRight
-              className="size-4 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
+                  {row.unit && (
+                    <span className="text-sm text-muted-foreground">
+                      {" "}
+                      {row.unit}
+                    </span>
+                  )}
+                </span>
+              )}
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </span>
           </button>
         ))}
       </Card>

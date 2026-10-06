@@ -56,7 +56,9 @@ export default function FoodWeekStrip({
     <div
       role="group"
       aria-label={`Week of ${format(parseLocalDate(days[0].key), "d MMMM")}`}
-      className="flex items-center justify-between"
+      /* Seven equal columns, as on Home's strip: fixed 44px buttons
+         pushed Sunday off a 320px phone once the text was larger. */
+      className="grid grid-cols-7 items-center justify-items-center"
     >
       {days.map((day) => {
         const date = parseLocalDate(day.key);
@@ -77,7 +79,7 @@ export default function FoodWeekStrip({
               eatingLabel(day) +
               (day.isToday ? " (today)" : "")
             }
-            className="flex flex-col items-center justify-center gap-1.5 min-w-[44px] min-h-[44px] transition-transform enabled:active:scale-[0.95]"
+            className="flex flex-col items-center justify-center gap-1.5 w-full min-w-0 min-h-[44px] transition-transform enabled:active:scale-[0.95]"
           >
             <span
               className={cn(

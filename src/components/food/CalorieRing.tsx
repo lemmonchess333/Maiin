@@ -124,7 +124,9 @@ export default function CalorieRing({
       }
       className={cn(
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
-        compact ? "size-26 shrink-0" : "size-40 mx-auto"
+        // Never wider than its card: at larger text on the phone the
+        // ring's rem size outgrew it.
+        compact ? "w-26 max-w-full shrink-0" : "w-40 max-w-full mx-auto"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's

@@ -112,7 +112,7 @@ export default function LiftCTACard({
       className={cardClasses({
         tone: "tinted",
         padded: false,
-        className: "relative overflow-hidden bg-lifting/12",
+        className: "@container relative overflow-hidden bg-lifting/12",
       })}
     >
       {/* The card-wide preview. It sits beneath the content, which lets
@@ -129,6 +129,9 @@ export default function LiftCTACard({
         aria-label={`Open ${nextWorkout.dayName} in Train`}
         className="absolute inset-0 z-0 rounded-[inherit] motion-safe:active:bg-lifting/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
       />
+      {/* The drawing gives the text the card's width once the card is
+          under 14em (larger text on the phone): beside it, "about 43 min"
+          and the day's name ran past the card at double size. */}
       {art && (
         <img
           src={formArtCutoutUrl(art)}
@@ -136,13 +139,13 @@ export default function LiftCTACard({
           aria-hidden="true"
           draggable={false}
           decoding="async"
-          className="pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top"
+          className="pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top @max-[14em]:hidden"
         />
       )}
       <div
         className={
           "pointer-events-none relative z-10 px-5 pt-5 " +
-          (art ? "pr-[46%]" : "")
+          (art ? "pr-[46%] @max-[14em]:pr-5" : "")
         }
       >
         <p className="text-sm font-bold text-lifting-strong">

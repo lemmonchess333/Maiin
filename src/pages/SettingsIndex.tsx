@@ -199,7 +199,7 @@ export default function SettingsIndex() {
           a button cannot sit inside a button. */}
       <motion.div
         variants={pageItemVariant}
-        className="rounded-xl bg-card flex items-center gap-3 pl-3"
+        className="rounded-xl bg-card flex flex-wrap items-center gap-x-3 pl-3"
       >
         {profile ? <SettingsAvatar profile={profile} /> : null}
         <button
@@ -208,13 +208,16 @@ export default function SettingsIndex() {
             haptic();
             navigate("/settings/profile");
           }}
-          className="flex-1 min-w-0 min-h-[80px] pr-4 py-3 flex items-center gap-3 text-left rounded-r-xl hover:bg-muted/30 motion-safe:transition-colors"
+          className="flex-1 min-w-[min(100%,9em)] min-h-[80px] pr-4 py-3 flex items-center gap-3 text-left rounded-r-xl hover:bg-muted/30 motion-safe:transition-colors"
         >
+          {/* Two lines each before they cut, and under the photo when
+              9em will not fit beside it: at larger text one line beside
+              the photo read "E2…" and "e2e-…". */}
           <span className="flex-1 min-w-0">
-            <span className="block text-body font-bold text-foreground truncate">
+            <span className="block text-body font-bold text-foreground line-clamp-2 break-words">
               {profile?.displayName || "Your profile"}
             </span>
-            <span className="block text-xs text-muted-foreground truncate">
+            <span className="block text-xs text-muted-foreground line-clamp-2 [overflow-wrap:anywhere]">
               {user?.email ?? "Name, photo, body metrics"}
             </span>
           </span>

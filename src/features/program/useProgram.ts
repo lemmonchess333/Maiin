@@ -832,6 +832,11 @@ export function useProgram() {
     const ref = doc(db, "users", uid, "programState", PROGRAM_DOC);
     const unsubscribe = onSnapshot(
       ref,
+      // A write it skipped as pending (another tab's, say) is confirmed by
+      // a change to metadata alone, which Firestore delivers only to a
+      // listener that asks for metadata changes; without it the mirror
+      // kept the state from before that write until the next one.
+      { includeMetadataChanges: true },
       (snap) => {
         if (auth.currentUser?.uid !== uid) return;
         if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;

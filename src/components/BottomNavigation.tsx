@@ -41,7 +41,7 @@ export default function BottomNavigation({
         page-navigation pattern. Removing the role rather than
         implementing a half-tablist that would confuse screen
         readers. */}
-        <div className="bottom-nav-frost max-w-md mx-auto flex items-stretch rounded-full p-1">
+        <div className="bottom-nav-frost max-w-md mx-auto flex items-stretch rounded-full p-[4px]">
           {tabs.map((tab) => {
             const hasBadge = tab.to === "/social" && unreadCount > 0;
             const Icon = tab.icon;
@@ -150,7 +150,7 @@ export default function BottomNavigation({
                     </div>
                     <span
                       className={cn(
-                        "relative z-10 max-w-full text-xs",
+                        "bottom-nav-label relative z-10 max-w-full",
                         isActive ? "font-semibold" : "font-medium"
                       )}
                     >

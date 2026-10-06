@@ -199,6 +199,36 @@ the iPhone app.
 - [ ] **Swipe a food row** to delete: still horizontal, the page does
       not scroll with it.
 
+## Text follows the phone's text size on iPhone (2026-10-05)
+
+Affects: `src/lib/systemTextSize.ts` (reads `@capacitor/text-zoom`'s
+`getPreferred()` and scales the root font size, held between 1× and
+2×), `src/main.tsx`, `ios/App/CapApp-SPM/Package.swift` (the plugin,
+added by `npx cap update ios`).
+
+`systemTextSize.test.ts` pins the scaling and the limits, and the feed
+and food diary capture specs measure both at double text. Nothing in a
+browser reads Dynamic Type, so the reading itself needs the iPhone app.
+
+- [ ] **Larger text reaches the app.** Settings → Display & Brightness
+      → Text Size, drag to the largest standard size, return to Tropos:
+      the text is about a third larger, and Home, the feed and Food
+      still read with nothing cut off or overlapping.
+- [ ] **An accessibility size stops at double.** Settings →
+      Accessibility → Display & Text Size → Larger Text, turn it on and
+      drag to the largest: the app grows to twice its size and no
+      further.
+- [ ] **Back to the default** restores the designed size, and a smaller
+      setting does not shrink the app below it.
+- [ ] **The main screens at large text.** Home, Train, History, Food
+      and Settings were measured in a browser at 1.35× and 2× text
+      (393, 375 and 320 px wide) and fixed to wrap, stack or drop a
+      decorative icon rather than overlap. On the phone, at the largest
+      standard size and at the largest accessibility size, scroll each
+      and note anything cut off or overlapping. Known and accepted: the
+      day names under Train's week, and segmented-control labels at 2× on
+      a 320px screen (Display Zoom on an SE or mini), end in "…".
+
 ## The first-visit guide (2026-10-04)
 
 Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
