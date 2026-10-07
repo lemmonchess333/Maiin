@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   startingWeightForCategory,
+  startingWeightForExercise,
   seedStartingLoads,
   weightAfterExerciseSwap,
   type StartingLoadContext,
 } from "../startingLoads";
+import { equipmentGridFor, loadGridFor } from "../loadSteps";
+import { EXERCISES } from "@/lib/exercises";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
 const ctx = (over: Partial<StartingLoadContext> = {}): StartingLoadContext => ({
@@ -426,5 +431,104 @@ describe("seedStartingLoads", () => {
     ];
     seedStartingLoads(input, ctx());
     expect(input[0].exercises[0].weight).toBe(80);
+  });
+});
+
+/* A start on the equipment's own weights. Plates and stacks move in 2.5 kg,
+   but a rack of dumbbells goes 1–10 kg in 1 kg steps (`loadSteps.ts`), so a
+   2.5 or 7.5 kg dumbbell start is a weight nobody can pick up. */
+describe("a start on the equipment's own weights", () => {
+  const racked = EXERCISES.filter(
+    (e) => e.equipment === "Dumbbells" || e.equipment === "Kettlebell"
+  );
+
+  it("starts every dumbbell and kettlebell lift on its rack", () => {
+    expect(racked.length).toBeGreaterThan(10);
+    const off: string[] = [];
+    for (const e of racked)
+      for (const bodyweightKg of [50, 62, 80, 110])
+        for (const experience of [
+          "beginner",
+          "intermediate",
+          "advanced",
+        ] as const)
+          for (const sex of ["male", "female"])
+            for (const reps of [6, 10, 15]) {
+              const w = startingWeightForExercise(
+                e.id,
+                inferMovementCategory(e.name, e.id),
+                { bodyweightKg, experience, sex },
+                true,
+                reps
+              );
+              const grid = equipmentGridFor(e.id, false)!;
+              if (w > 0 && Math.abs(grid.nearest(w) - w) > 1e-9)
+                off.push(`${e.id} ${String(w)} kg`);
+            }
+    expect(off).toEqual([]);
+  });
+
+  it("keeps every other start in 2.5 kg steps", () => {
+    const loaded = EXERCISES.filter(
+      (e) =>
+        e.equipment !== "Dumbbells" &&
+        e.equipment !== "Kettlebell" &&
+        e.equipment !== "Bodyweight"
+    );
+    expect(loaded.length).toBeGreaterThan(10);
+    const off: string[] = [];
+    for (const e of loaded)
+      for (const bodyweightKg of [50, 80, 110])
+        for (const reps of [5, 10, 15]) {
+          const w = startingWeightForExercise(
+            e.id,
+            inferMovementCategory(e.name, e.id),
+            ctx({ bodyweightKg }),
+            true,
+            reps
+          );
+          if (w % 2.5 !== 0) off.push(`${e.id} ${String(w)} kg`);
+        }
+    expect(off).toEqual([]);
+  });
+
+  it("starts every loaded lift of a new plan on its equipment's grid", () => {
+    const off = new Set<string>();
+    for (const primaryGoal of ["hypertrophy", "strength", "general"] as const)
+      for (const experience of [
+        "beginner",
+        "intermediate",
+        "advanced",
+      ] as const)
+        for (const gender of ["male", "female"] as const)
+          for (const equipment of ["full_gym", "home_gym"] as const)
+            for (const weightKg of [55, 80, 110]) {
+              const plan = buildOnboardingPlan(
+                {
+                  primaryGoal,
+                  daysPerWeek: 4,
+                  equipment,
+                  gender,
+                  experience,
+                  weightKg,
+                  runFrequency: "none",
+                  runMode: "freeform",
+                  weeklyRunDays: 0,
+                  raceDistance: "10k",
+                  raceTargetDate: "",
+                  injuries: ["none"],
+                },
+                "recomp",
+                "2026-09-07"
+              );
+              for (const d of plan.programState.workouts)
+                for (const e of d.exercises) {
+                  if (e.weight <= 0) continue;
+                  const grid = loadGridFor(e.exerciseId, false);
+                  if (Math.abs(grid.nearest(e.weight) - e.weight) > 1e-9)
+                    off.add(`${e.exerciseId} ${String(e.weight)} kg`);
+                }
+            }
+    expect([...off]).toEqual([]);
   });
 });
