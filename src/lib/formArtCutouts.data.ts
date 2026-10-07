@@ -187,6 +187,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d",
     sha256: "0256252af7e2954b64be78a15a254368554234749830a898bfc73079cb8d6dd0",
   },
+  "cable-glute-kickback": {
+    src: "form-art/cable-glute-kickback.webp",
+    width: 432,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-glute-kickback/1.webp",
+    sourceSha256:
+      "eee19276afe8c0be6eb978a86c9d801832926e81d699ec52ac97f7cdbe4363b0",
+    sha256: "3f570de43aa720f7a2d9fd5ad55cd9eb8712a51750670b166e51e683f1507c5a",
+  },
   "cable-lateral-raise": {
     src: "form-art/cable-lateral-raise.webp",
     width: 289,

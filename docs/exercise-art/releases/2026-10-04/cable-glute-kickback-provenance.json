@@ -1,0 +1,232 @@
+{
+  "generator": "Built-in imagegen anatomy and poses; common framing and authorized stationary grip/support-shoe copies",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "pilot": "fdf6eeee-1e3c-4e89-88e8-198a00697f2a",
+    "master": "29ee0d80-2027-4225-940d-2e1e195b6116",
+    "endpoint": "4339951a-1d5f-48be-8373-6a736fadbe8c",
+    "rejectedMiddle": "59a49de1-eb0b-4b06-ad93-190b39eb2153",
+    "middle": "7e2749f5-7b54-4a9c-b2f8-7b8b449df72e"
+  },
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "d22e7aae131d4b9f2f6686addff8f05e5fadfdee21b1aedf5988bc063f18a61b"
+    },
+    {
+      "file": "originals/2-drive.png",
+      "sha256": "d057647dde3eb9177966a7ae4b56c45c23f2408e896f9c280316eb25952123c4"
+    },
+    {
+      "file": "originals/3-extend.png",
+      "sha256": "6cd6c602842ad396d50ecbf052782e2cc00bf3eba9db7c959242ed685ef0d7e9"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "4a41f7619dc8561989a9ab95b1f349253d8dbbe5d0492706944f777c5470031d"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "e9adb020e33a429ab4ff232c30d4d9f2e0f2576b053f35092897e808d535ab01"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "215b50af0c96c5ed2654761881b3b26ff2cb251be39c9d216cf42eb8bd2cad90"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "215b50af0c96c5ed2654761881b3b26ff2cb251be39c9d216cf42eb8bd2cad90"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "e9adb020e33a429ab4ff232c30d4d9f2e0f2576b053f35092897e808d535ab01"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "4a41f7619dc8561989a9ab95b1f349253d8dbbe5d0492706944f777c5470031d"
+    }
+  ],
+  "framing": {
+    "files": ["1-master.png", "2-drive.png", "3-extend.png"],
+    "sequence": [1, 2, 3, 3, 2, 1],
+    "contacts": [
+      {
+        "left": 385,
+        "top": 345,
+        "width": 110,
+        "height": 85
+      },
+      {
+        "left": 620,
+        "top": 848,
+        "width": 155,
+        "height": 82
+      }
+    ],
+    "crop": {
+      "left": 110,
+      "top": 0,
+      "width": 1040,
+      "height": 960
+    },
+    "padding": {
+      "left": 24,
+      "right": 24,
+      "top": 32,
+      "bottom": 24
+    },
+    "scope": "Common crop/padding and authorized stationary hand/handle and supporting shoe copies only. Moving anatomy and equipment not transformed."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "4a41f7619dc8561989a9ab95b1f349253d8dbbe5d0492706944f777c5470031d"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "e9adb020e33a429ab4ff232c30d4d9f2e0f2576b053f35092897e808d535ab01"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "215b50af0c96c5ed2654761881b3b26ff2cb251be39c9d216cf42eb8bd2cad90"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "215b50af0c96c5ed2654761881b3b26ff2cb251be39c9d216cf42eb8bd2cad90"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "e9adb020e33a429ab4ff232c30d4d9f2e0f2576b053f35092897e808d535ab01"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      },
+      "sha256": "4a41f7619dc8561989a9ab95b1f349253d8dbbe5d0492706944f777c5470031d"
+    }
+  ],
+  "stationaryCopies": [
+    {
+      "left": 385,
+      "top": 345,
+      "width": 110,
+      "height": 85
+    },
+    {
+      "left": 620,
+      "top": 848,
+      "width": 155,
+      "height": 82
+    }
+  ],
+  "losslessPixelsVerified": true
+}

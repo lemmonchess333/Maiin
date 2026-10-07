@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "cable-glute-kickback": placard(
+    "cable-glute-kickback",
+    ["Glutes"],
+    ["Hamstrings"],
+    [
+      [0, "Set", "Brace and grip the frame for balance."],
+      [0.6, "Drive", "Move your working leg straight back."],
+      [1, "Extend", "Squeeze your glute without arching your back."],
+      [1, "Squeeze", "Keep your pelvis still at full extension."],
+      [0.6, "Return", "Bring your leg forward under control."],
+      [0, "Reset", "Keep cable tension before the next repetition."],
+    ]
+  ),
   "hip-adduction-machine": placard(
     "hip-adduction-machine",
     ["Adductors"],

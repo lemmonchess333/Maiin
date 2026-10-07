@@ -1,0 +1,205 @@
+{
+  "exerciseId": "cable-glute-kickback",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1088,
+  "height": 1016,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-07T09:29:30.473Z",
+  "reference": {
+    "path": "form-frames/cable-glute-kickback/1.webp",
+    "sha256": "eee19276afe8c0be6eb978a86c9d801832926e81d699ec52ac97f7cdbe4363b0"
+  },
+  "cueSha256": "216c5dcd3fbb1d0b958ed9cc3c07665b461d8b42303bcca0a7c2f2dd45f03250",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 athlete, neutral featureless pelvic centre, imagegen-authored anatomy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed rear-side three-quarter view, common110,0,1040,960 crop and24side/32top/24bottom padding."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native all six and loop reviewed. Slight fixed torso hinge, stable pelvis, almost straight working knee and monotonic backward hip extension. Natural cuff/shoe yaw, no lumbar arch or limb-length change."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Rigid functional cable tower, enclosed weight housing, fixed frame/base/low outlet and two stationary grips. Ankle cuff stays secured to same anatomical site; uninterrupted taut cable meets D ring."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived left/right grip and planted sole anchors plus planted shoe contour width/height pass all six. Exact stationary grip/support-shoe copies only."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Working leg extends at hip, cuff and cable follow. Selected stack and drive routing remain hidden by opaque housing; no fabricated visible plate travel or calibrated routing ratio."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Glutes primary purple, hamstrings secondary lilac, other anatomy neutral; continuous fibre bundles and stable qualitative hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six distinct labels Set, Drive, Extend, Squeeze, Return, Reset; cues at most seven words match physical states."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native and actual mobile all six and6-to1 reviewed, sequence1,2,3,3,2,1. Autoplay advanced Set1 to Reset6, pause visibly restored Play."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light all six and6-to1 reviewed, full machine/athlete/cuff and readable cues."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 dark all six and6-to1 reviewed, no clipping and consistent control/cue visibility."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Kickback with fixed hand grips and planted support shoe",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftGrip", "rightGrip", "plantedSole"],
+      "dimensionNames": ["plantedShoeContourWidth", "plantedShoeContourHeight"],
+      "evidence": "Pixel-derived stationary hand and planted shoe contacts, plus native hip extension and cuff/cable/fixed-frame review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/cable-glute-kickback/1.webp",
+      "sha256": "eee19276afe8c0be6eb978a86c9d801832926e81d699ec52ac97f7cdbe4363b0",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    },
+    {
+      "path": "form-frames/cable-glute-kickback/2.webp",
+      "sha256": "d1fbe9984b090cc1c9b8ef434ebaca9478f0fa1f42474f1d602569a1f0b611fb",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    },
+    {
+      "path": "form-frames/cable-glute-kickback/3.webp",
+      "sha256": "ff4cc20dd95bcdd68f6661bad4dcd7557148d2bf96c56326341668e943721088",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    },
+    {
+      "path": "form-frames/cable-glute-kickback/4.webp",
+      "sha256": "ff4cc20dd95bcdd68f6661bad4dcd7557148d2bf96c56326341668e943721088",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    },
+    {
+      "path": "form-frames/cable-glute-kickback/5.webp",
+      "sha256": "d1fbe9984b090cc1c9b8ef434ebaca9478f0fa1f42474f1d602569a1f0b611fb",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    },
+    {
+      "path": "form-frames/cable-glute-kickback/6.webp",
+      "sha256": "eee19276afe8c0be6eb978a86c9d801832926e81d699ec52ac97f7cdbe4363b0",
+      "anchors": {
+        "leftGrip": {
+          "x": 339,
+          "y": 389
+        },
+        "rightGrip": {
+          "x": 383,
+          "y": 386
+        },
+        "plantedSole": {
+          "x": 648,
+          "y": 952
+        }
+      },
+      "invariantDimensions": {
+        "plantedShoeContourWidth": 135,
+        "plantedShoeContourHeight": 73
+      }
+    }
+  ]
+}
