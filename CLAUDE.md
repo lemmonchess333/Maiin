@@ -610,7 +610,8 @@ measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
 de-slop, front-end, design), and `training-engine-prompt.md` for lifting and
 running (a simulator on the real engine, end-to-end journeys, owner
-decisions; its inputs are in `docs/training-engine-2026-10/`). The first two
+decisions; its inputs, checked against their sources on 2026-10-07, are in
+`docs/training-engine-2026-10/`). The first two
 also carry the calls their last run earned. Re-verify their cited lines
 before acting; the citations are starting points, not a to-do list.
 `app-improvement-pass-2026-09-05.md` is that prompt's first run: what

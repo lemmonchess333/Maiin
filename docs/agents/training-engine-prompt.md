@@ -1,7 +1,7 @@
 # The training-engine prompt
 
 The reusable prompt for a multi-agent pass on Tropos's lifting and running:
-verify the evidence, extract the seams a simulation needs, build a simulator
+close the evidence gaps, extract the seams a simulation needs, build a simulator
 that drives the real engine for synthetic people over 16–52 weeks, test the
 app end to end, fix what is broken, and put every change to a locked decision
 to the owner. Paste the block and choose the scope line. It runs as a
@@ -9,7 +9,8 @@ workflow (`/effort ultracode`, or the word "workflow").
 
 Its inputs are in [`docs/training-engine-2026-10/`](../training-engine-2026-10/README.md),
 gathered on 2026-10-06 at `55c195a`: audits of the lifting, running and test
-code; lifting and running evidence; how other apps explain training; the
+code; lifting and running evidence, checked against its primary sources on
+2026-10-07; how other apps explain training; the
 owner's coaching sources; and the harnesses behind every measured number. The
 block points into them rather than restating them. What each clause buys is
 explained below the block.
@@ -41,7 +42,9 @@ not knowing if stuff works".
 READ FIRST, before the first edit:
 - docs/training-engine-2026-10/README.md and every file it indexes. They are
   this prompt's reference: audits of the code at 55c195a (every claim a
-  file:line or a measurement), the evidence (with verification markers), the
+  file:line or a measurement), the evidence (each claim marked [VF] full
+  text, [VA] abstract or page, [U] unchecked, [R] unidentified or [C]
+  computed), the
   owner's coaching sources, the explanation research, and the harnesses
   behind the numbers. Below, a bare name (lifting-evidence,
   running-engine-audit, harnesses/…) means a file in that folder.
@@ -62,9 +65,11 @@ GROUND YOURSELF
   unit tests passed, 372 skipped). Every PR reports movement against it.
 - Probe the network with a PubMed E-utilities query. On 2026-10-06 this
   environment's egress policy blocked PubMed, the publishers, the coaching
-  sites and the app help centres, and web search was capped at 200 calls a
-  turn across all agents. If it is still blocked, tell the owner the fix (the
-  environment's Network access setting) and run Phase 0 in flag mode.
+  sites and the app help centres. On 2026-10-07 PubMed, Europe PMC, Crossref,
+  open full text and the coaching and app pages loaded; Springer,
+  journals.lww.com, journals.physiology.org and six app pages did not. If
+  PubMed is blocked, tell the owner the fix (the environment's Network access
+  setting) and run Phase 0 in flag mode.
 - The emulator rig works in this container: firebase-tools through npx,
   PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome, builds and
   Playwright output written outside the repo, firestore-debug.log deleted
@@ -92,7 +97,7 @@ STANDING RULES
   test.
 - Sex stays a cold-start seed only (LIFT-EV-07). An emphasis the person
   chooses is a legitimate input.
-- Evidence: a number tagged [R] or [K] stays out of code and copy until
+- Evidence: a number tagged [U] or [R] stays out of code and copy until
   Phase 0 verifies it. The non-adoption lists bind (both handoffs;
   lifting-evidence §7; running-evidence §8): ranges in place of promises,
   advisory guards in place of risk scores, an effort or talk-test cue beside
@@ -107,16 +112,28 @@ STANDING RULES
   any layout change.
 
 ────────────────────────────────────────────────────────────────────────
-PHASE 0 — VERIFY THE EVIDENCE
-Verify in order: lifting-evidence §8's list (Pelland 2025's curves, its
-counting-method comparison and frequency slopes; then Nuzzo 2024, Latella
-2020, Steele 2023), then running-evidence §9's list (Frandsen 2025's full
-text first; then Daniels' caps, the minimal-dose papers, the Banister
-priors). Record each PMID or DOI, the population and the exact number,
-correct the doc in place, and promote the decision-relevant rows into the
-handoff ledgers in their intake format. Check owner-lifting-sources OREB-07's
-"Dr. Rhea" citation.
-Done when every [R] or [K] that a later phase relies on is verified, or is
+PHASE 0 — CLOSE THE EVIDENCE GAPS
+The evidence was read against its primary sources on 2026-10-07. Done:
+Pelland 2025's curves, counting comparison and frequency slopes; Nuzzo 2024;
+Latella 2020; Steele 2023; Frandsen 2025's full text; Daniels' caps; the
+minimal-dose papers; the Banister priors; OREB-07's "Dr. Rhea" citation.
+Left:
+- the [U] and [R] claims listed at the top of lifting-evidence (10) and
+  running-evidence (the talk-test levels, Seiler's three zones, masters
+  trainability and age caps, Pfitzinger's strides, Milanović's window,
+  Wilson's "small at moderate volume");
+- lifting-evidence §8: Busso 1990's fits, Bosquet 2013's time course, Wilson
+  2012's full text, a journal version of Remmert 2025, Strong's help pages,
+  Alpha Progression's in-app targets, Conti 2026's hazard tables;
+- running-evidence §9 and the end of §4.3: the Olympiatoppen zones, a
+  strides trial, a 26–52-week recreational curve, heat slopes for training
+  paces, whether the single-run guard holds for duration or for novices;
+- explanation-ux §8: the six blocked pages, Edge and Strong.
+Close the ones a later phase relies on. Record each PMID or DOI, the
+population and the exact number, correct the doc in place and change its
+marker, and promote the decision-relevant verified rows into the handoff
+ledgers in their intake format.
+Done when every [U] or [R] that a later phase relies on is verified, or is
 carried into the final report as unverified.
 
 PHASE 1 — THE SEAMS (behaviour-preserving extractions, one PR each)
@@ -162,10 +179,42 @@ Phase 1 exports.
   timeout, and one persona whose span crosses each Auckland DST change.
 - The virtual athlete: lifting-evidence §4.4 and running-evidence §6.2–6.7
   specify both halves. Every parameter goes in one table with its value,
-  range, source and grade; the unsourced ones (adherence, injury severity)
-  are swept. Calibrate before any comparison: lifting-evidence §4.2 and its
+  range, source, marker and grade; the weakly sourced ones are swept:
+  adherence (anchors in lifting-evidence §2.22 and running-evidence §9
+  item 4) and injury severity beyond novices (running-evidence §6.3).
+  Calibrate before any comparison: lifting-evidence §4.2 and its
   §4.4 calibration list, running-evidence §6.7 item 8. A missed target is a
   finding about the model.
+- Priors the 2026-10-07 check settled (values and sources in the evidence
+  docs' "Verified parameters" blocks):
+  - fitness–fatigue: draw τ₁, τ₂ and k₂/k₁ jointly from published sets (Peng
+    2023), or lognormal medians τ₁ 42 days (log-SD 0.35), τ₂ 10 (0.6), k₂/k₁
+    2 (0.7). Individual fits are ill-conditioned: a smoother, not a
+    predictor (running-evidence §6.2).
+  - the app's own form curve (trainingLoad.ts, gains 1 − e^(−1/τ)) implies
+    k₂/k₁ ≈ 5.7, so a session reads net-negative for about 15 days. Simulate
+    the athlete on the published prior, measure the app's curve separately,
+    and put the ratio to the owner.
+  - lifting fatigue: §4.4's 2–4-day time constant is an ASSUMPTION;
+    strength-sport fits put it at 13–22 days [U]. Sweep it.
+  - reps achieved: Nuzzo 2024's mean + z × SD at each load, z drawn once per
+    lifter (lifting-evidence §2.15).
+  - adherence: Conti 2026 (median dropout 19 weeks, 10.1% training at 52
+    weeks, counted from users already active in their first 28 days, so
+    retention from install is lower), Fuente-Vidal 2026 (about half of
+    planned sessions done), Couch to 5K completion 27.3% (Relph 2023). Sweep
+    9-week plan completion from 25% to 70%.
+  - injury: about 30 per 1000 h in a novice's first 8–13 weeks, falling
+    towards 7.7; prior injury ×1.5–2, never the odds ratio 2.21; Kluitenberg
+    2016's novice tiers (22% run less, 52% stop 1–6 days, 26% stop a week or
+    more); match each calibration target's injury definition (§6.3).
+  - concurrent training: key the multipliers to session spacing and
+    endurance hours, not km. The two docs give 0.6–0.8 vs 0.6–0.85 for a
+    trained man at high volume and 0.95–1.0 vs 0.9–1.0 for the upper body:
+    pick one per cell in the table. A heavy leg session impairs running for
+    up to 48 h, fading after 2–3 sessions.
+  - recreational running anchor: Festa 2020 (VDOT ≈ 42, +3.0–3.5% in 8
+    weeks) is the only in-band trial; Muñoz's runners sit near VDOT 53.
 - The model is a hypothesis. Report outcomes as ranges across seeds and at
   least two model variants. Its jobs, in order: show what the engine does
   (invariants, coaching checks); test plausibility (each persona lands in its
@@ -201,10 +250,15 @@ Phase 1 exports.
       does it — land green with today's defects pinned, remove an entry with
       each fix: the generator checks in owner-lifting-sources.md, the
       per-goal tables in lifting-evidence §3, the week rules in
-      running-evidence §5.20, its taper finding (§2 item 4), and the coach
-      objections in lifting-engine-audit §6.3 and running-engine-audit §7.
+      running-evidence §5.20, its taper finding (§2 item 4), the coach
+      objections in lifting-engine-audit §6.3 and running-engine-audit §7,
+      and the ACSM 2026 stand (MSSE 58(4):851–72): training at least twice a
+      week with all major muscle groups (not each muscle twice), strength
+      work at ≥80% 1RM for 2–3 sets, ≥10 sets per muscle group a week for
+      size.
   (c) outcome bands, reported, and asserted only as broad plausibility:
-      medians and 80% ranges against the evidence tables; the owner's coaching
+      medians and 80% ranges against the evidence tables (whose own 80%
+      intervals are model outputs, not data); the owner's coaching
       anchors reached around the 90th–95th percentile, never as medians;
       drops per 100 sessions.
 - A soak gated by TROPOS_SIM_SEEDS=500 runs on a schedule, outside the PR
@@ -258,31 +312,63 @@ PHASE 4 — LIFTING
     30- and 45-minute plans (calibrate the session estimator against real
     saved durations; superset the accessories); curls padded as "pull";
     duplicate lifts that drift apart; light lifts that never step; and
-    "advanced" changing only the starting loads.
+    "advanced" changing only the starting loads. Also: L20 (a leg miss within
+    24 h of a hard run counts half) is now an assumption, not supported (no
+    study measured leg strength after a run); 83.7% of athletes also lighten
+    multi-joint loads in a deload, which Lift4's same-weights lighter week
+    does not (Rogerson 2024; beside L23); Oreb's 4%-per-rep table is steeper
+    than Nuzzo's 2–3%, so his 6RM load (80%) leaves about 3–4 reps in
+    reserve and wave loads built from it run light.
 4c. The most advanced lifting model: designed under the quiet rule and
     simulated, for the package (lifting-evidence §3 and §5.2; the owner's
     sources):
-    - a strength track: a frequency floor per main lift; a top set at RPE 7–9
-      with back-offs; a phase structure ending in heavy singles and an
-      optional dated test built on the race-week machinery, with the lighter
-      week before the test;
+    - a strength track: a frequency floor per main lift (the per-lift
+      counts are CONVENTION: Pelland 2025 fits one pooled curve, with
+      nothing detectable past 3 sessions a week); a top set at RPE 7–9 with
+      back-offs; a phase structure ending in heavy singles and an optional
+      dated test built on the race-week machinery, with a 1–2-week taper
+      before it (volume cut 30–50%, up to 70%, intensity kept, then 2–7 days
+      off; lifting-evidence §2.13);
     - a hypertrophy track: fractional sets per muscle with diminishing
-      returns and per-session caps; 1–3 priority muscles the person chooses;
-      a set added when a muscle stalls; exercises that load muscles at long
+      returns, and a per-session point (about 11 fractional sets; Remmert
+      2025) past which extra gain is undetectable — a detection point, not a
+      cap; 1–3 priority muscles the person chooses; a set added when a
+      muscle stalls (adding sets raised strength, not reliably size: Enes
+      2024 and 2025); exercises that load muscles at long
       lengths; the order and redundancy rules; coverage of rectus femoris,
       the hamstring short head, the triceps long head, side delts and calves;
     - powerbuilding as a dial between the two (Lift4 (4) already calls goals
       dials);
     - lift targets ("+10 kg on my bench by June") answered with the
-      simulator's forecast range;
+      simulator's forecast range, calibrated against lifting-evidence §4.5
+      persona 2 (about 15–25% odds on a general programme, 30–45% on a bench
+      block; WEAK, model-based) — honest copy says "possible, not typical";
+    - set volume: about 2 direct sets per session is strength's detection
+      point (Remmert); splitting a weekly volume over more sessions helped
+      strength, not size (Boutagy & McKean 2026, preprint); about 60 weekly
+      sets added nothing over about 40 (Räntilä & Ahtiainen 2026), so Lift4's
+      ceilings stand;
     - effort that rises as frequency falls (2-day plans train closer to
-      failure);
-    - an e1RM trend in the back end, weighted to 3–8-rep sets, for stall
-      detection, expectation copy and starting loads after swaps and returns;
-    - ADR-0010: the evidence favours fractional counting for hypertrophy and
-      direct-only counting for strength; the 1:1 flip landed on 2026-08-03,
-      so the question is whether to go back. Re-open the ADR with the
-      planSweep measurement.
+      failure) — a design to simulate, not a finding: nearer failure adds a
+      little size and no strength (Robinson 2024);
+    - an e1RM trend in the back end, weighted toward sets of about 5 reps
+      and discounting sets above 10 (Reynolds 2006; a 3–8-rep band is
+      CONVENTION), judged over 3–6 exposures against 3–5.5% noise (median
+      4.2%; Grgic 2020), for stall detection, expectation copy and starting
+      loads after swaps and returns. A one-set e1RM is good to about ±5–7%,
+      not ±3–5%; analytics.ts's estimate1RMRange bands are centred 2–6% high
+      on true sets to failure (about 15% on the leg press), while the Epley
+      scaling in represcribe.ts and startingLoads.ts is within 1.5% of Nuzzo
+      2024 from 3 to 12 reps and can stay;
+    - ADR-0010: Pelland 2025's weekly fits favour fractional counting for
+      strength as well as hypertrophy (best indirect weight about
+      0.38–0.39; 0.5 fits well) and fit weekly strength worst with
+      direct-only counting, which fits best only per session (Remmert
+      2025). The 1:1 flip landed on 2026-08-03, so the question is whether
+      to return to about 0.4–0.5 for both. Re-open the ADR with the
+      planSweep measurement, and check that Tropos's secondary map counts
+      as indirect what Pelland did (lifting-evidence §2.4, Verified
+      parameters).
 Done when every §4 verdict and §6.3 item is fixed with a test or is in the
 package, and each 4c design has a simulated comparison against Lift4 as
 built.
@@ -299,8 +385,11 @@ PHASE 5 — RUNNING
       judges against 5:00/km: effort words until a pace exists.
     - Easy and medium-long runs reach the player with no duration.
     - The taper sharpener bypasses placement.
-    - The copy drift in running-engine-audit §0 item 7 and §7 item 10, and
-      the false comment that the UI enforces 2 or more run days.
+    - The copy drift in running-engine-audit §0 item 7 and §7 item 10, the
+      false comment that the UI enforces 2 or more run days, and the
+      LONG_RUN_MAX_MINUTES comment in runScheduler.ts, which gives Daniels
+      as "the LESSER of 150 minutes and ~25-30%" (he applies 150 minutes
+      from 64 km a week, 30% below it).
     Every ⚠ cell in running-engine-audit §2.3 is fixed or in the package.
 5b. Plan quality, for the package: this is the running grill Lift4 deferred
     to. Every item of running-engine-audit §7, read against running-evidence
@@ -310,12 +399,32 @@ PHASE 5 — RUNNING
     freeform runners getting no plan; only the current week being visible;
     onboarding asking for no benchmark. Beside them, the evidence's
     alternatives: a single-run guard against the longest run of the last 30
-    days, long runs capped by time, quality introduced in Lydiard order and
-    ramped from exposure, cruise intervals as the threshold default, strides
-    2–4 times a week, a 2–3-week taper that keeps frequency and a reduced long
-    run, tune-up races, predictions as ranges, and phase-aware lifting for
-    hybrids (build early, maintain in the marathon-specific block, heavy legs
-    placed by the person's stated priority).
+    days, measured by distance (Frandsen 2025 studied distance only; a
+    duration bound is a Tropos extrapolation, and a step under 10% is not
+    shown safe); long runs capped by Daniels' rule (30% of the week below
+    64 km a week, the lesser of 25% or 150 minutes from 64 km; Tropos caps
+    every long run at 150 minutes and enforces no share); intensity added
+    gradually and ramped from exposure, race-specific work last (strides and
+    hill sprints early; coaches order the middle differently); threshold as
+    steady tempo or cruise intervals (the sources name no default, so the
+    choice is Tropos's); strides on 2–3 easy days a week; a taper of about
+    2 weeks (8–14 days; up to 3 still works) that cuts volume about 41–60%,
+    keeps intensity and frequency and keeps a reduced long run; tune-up
+    races; predictions as ranges with a mileage-aware correction (Vickers &
+    Vertosick's Model 1, running-evidence §6.7 item 7); and phase-aware
+    lifting for hybrids (build early, maintain in the marathon-specific
+    block, heavy legs placed by the person's stated priority). Also: judge
+    the year-out marathon's +34–59% weeks by the single-run guard, not the
+    weekly percentage (Frandsen found week-to-week change unrelated to
+    injury; Buist found no effect of the 10% rule); trainingLoad.ts's
+    ACWR-above-1.4 line, which Frandsen's null ACWR bands and Impellizzeri
+    2021 (c-statistic 0.574) do not support as a risk signal — keep it
+    advisory or retire the ratio wording; heavy lifting improved running
+    economy only above 12 km/h and in highly trained runners, and most
+    Tropos runners are slower than 5:00 /km (plyometrics helped at 12 km/h
+    or slower; combined methods most); no structured quality for a novice's
+    first 4–6 weeks; 48 h between heavy legs and the long run is convention
+    (Robineau supports 24 h).
 5c. Explanation — the owner's direct complaint: "it says easy, hard, strides
     … and it's not explanatory what this actually is". The quiet rule for
     runs (explanation-ux §7): the name and one feel line say what to do; the
@@ -330,9 +439,19 @@ PHASE 5 — RUNNING
     - An ⓘ "About this run" sheet on every run surface, race plan or not:
       what it is, how it should feel, why it's in your week, what to do if
       it feels wrong.
-    - Easy runs carry a ceiling ("6:10 /km or slower"); strides show on the
-      week strip; "hard" keeps one meaning; the post-run line speaks only
-      when a run didn't match its type; "Run by feel today".
+    - Easy runs carry a ceiling ("6:10 /km or slower") — but runPaces.ts
+      sets the easy band's fast end at 72% of VO2max, about 18–20 s/km slower
+      than Daniels' E table at VDOT 35–50 [C]; check before deriving the
+      number. Strides show on the week strip; "hard" keeps one meaning; the
+      post-run line speaks only when a run didn't match its type; "Run by
+      feel today" (race pace slows about 0.2–0.6% per °C WBGT above about
+      10 °C, more for slower runners [C, WEAK]; no source gives slopes for
+      training paces).
+    - "Tempo" means different paces across apps (Runna 10K–half pace,
+      Garmin and COROS marathon pace, NRC 5K + 30–35 s), and the Steady /
+      Comfortably hard split is Tropos's own: the sheet states Tropos's
+      pace. A new runner with no pace data gets a "not enough data yet"
+      state, as Runna's Pace Insights does.
     - Home's today card withholds the explainer by owner decision
       (SessionPurpose.test.tsx). One tap away is in scope; inline is a
       package question.
@@ -348,7 +467,11 @@ who gains and who loses), the options, a recommended answer, the copy it
 implies under the quiet rule, and what happens to existing plans. CLAUDE.md's
 reference-app rule for grills applies. Then put it to the owner and wait.
 Each answer is locked with the lock-decision skill and its new domain terms
-go into GLOSSARY.md before it is built, in small PRs.
+go into GLOSSARY.md before it is built, in small PRs. Include the stretched
+range: when the next weight is a jump of more than about 15%, Lift4 adds reps
+first, as MacroFactor, Alpha, RP and Gravl do; by the quiet rule that target
+needs its one line ("Reps first: 12.5 kg is a big jump"; explanation-ux §3.12,
+§7.6).
 
 METHOD
 - A red test first for every fix — a simulation invariant, a coaching
@@ -383,10 +506,13 @@ target; the new baseline.
   and bringing everything else as a question. A silent rewrite of a lock one
   day old would cost more trust than any programming gain, and Pgm5 forbids
   discarding a plan choice without a yes.
-- **Phase 0 before any number.** The research for this prompt ran with every
-  primary source blocked. Its `[R]`/`[K]` numbers are good leads and bad
-  constants: a taper percentage or a volume threshold encoded from memory
-  ships into every plan.
+- **Phase 0 before any number.** The research for this prompt was drafted
+  with every primary source blocked. Reading the sources on 2026-10-07
+  corrected 115 lifting and 131 running claims, among them the taper length,
+  Pelland's strength threshold and which counting method fits strength: a
+  taper percentage or a volume threshold encoded from the draft would have
+  shipped into every plan. What is still `[U]` or `[R]` is in the same state,
+  a good lead and a bad constant.
 - **The running copy.** CLAUDE.md records a runs query that read nothing in
   production for five months with its tests green, because the tests
   exercised a fake that disagreed with the real thing. The audits' own
@@ -424,8 +550,10 @@ target; the new baseline.
   shape in Runna, Garmin and NRC (a name that says what you'll do, a feel
   line, the why one tap away, a change that asks first) and the same failures
   elsewhere (Strava's AI summaries, Garmin Coach's silent adaptation). Lift4's
-  rule already says this for lifting; carrying it over keeps one voice across
-  both sports.
+  rule already says this for lifting, and the lifting apps checked on
+  2026-10-07 (RP, MacroFactor, Gravl, Alpha Progression) do the same: the
+  number first, the reason one tap away, a flag only when it differs from
+  what you'd expect. Carrying it over keeps one voice across both sports.
 - **Home's today card.** Withholding the explainer there is an owner decision
   pinned in a test. A pass told to "make it explanatory" would overturn it;
   the prompt keeps it a question.
@@ -444,9 +572,13 @@ at the start.
 ## What the prompt routes to the owner
 
 - Network access to primary sources (the environment's Network access
-  setting), without which Phase 0 runs in flag mode.
+  setting), if PubMed is blocked again; it was open on 2026-10-07. Without
+  it, what is left of Phase 0 runs in flag mode.
 - Every decision-package question, including the reading question on Lift4
-  (9), which hard-run definition wins, and the Home today card.
+  (9), which hard-run definition wins, the Home today card, ADR-0010's
+  counting weight (1.0 today; the evidence favours about 0.4–0.5), the app's
+  fatigue:fitness ratio (about 5.7 against a published median of 2), and the
+  one line for a stretched rep range.
 - The video URLs for the Oreb transcripts (`owner-lifting-sources.md`).
 - A CI home for the signed-out specs, if wiring them is not cheap.
 - Merging.
