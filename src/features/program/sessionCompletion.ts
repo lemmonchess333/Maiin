@@ -122,18 +122,14 @@ export function applySessionProgression(
               if (!held && settings.autoProgression) {
                 // A leg miss within a day after a long or hard run counts
                 // half (Lift4 (7)): the run explains some of it.
+                // A late/offline save belongs to the session's original
+                // local date, which the record is stamped with.
                 next = applySessionSets(
                   start,
                   read,
                   settings.smallPlates,
-                  session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1
-                );
-                // A late/offline save belongs to the session's original local date.
-                next.performanceHistory = next.performanceHistory?.map(
-                  (record, i, all) =>
-                    i === all.length - 1
-                      ? { ...record, date: session.date }
-                      : record
+                  session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1,
+                  session.date
                 );
               } else {
                 // A held week keeps the prescription and records the
