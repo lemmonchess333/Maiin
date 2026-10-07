@@ -907,6 +907,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8",
     sha256: "e4e27d65259672a0317a3c0d316a7f19365dfbf233d8cc529f0bf7084ac24dd6",
   },
+  "weighted-plank": {
+    src: "form-art/weighted-plank.webp",
+    width: 480,
+    height: 196,
+    keyed: true,
+    source: "form-frames/weighted-plank/1.webp",
+    sourceSha256:
+      "e1f6fcef4730ba3942f851208847441d9d8a16d1a94a1506e7399c9517ad825b",
+    sha256: "dc878e1989e91c4e5d7612a866845371d5561fa092eb23213b4493f36d747f97",
+  },
   "weighted-push-ups": {
     src: "form-art/weighted-push-ups.webp",
     width: 480,

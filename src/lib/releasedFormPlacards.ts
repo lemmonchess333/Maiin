@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "weighted-plank": placard(
+    "weighted-plank",
+    ["Core"],
+    ["Shoulders", "Glutes"],
+    [
+      [0, "Set", "Place elbows under shoulders and brace."],
+      [1, "Load", "Partner places plate over your shoulder blades."],
+      [1, "Brace", "Tighten your core and glutes."],
+      [1, "Hold", "Keep your body straight and still."],
+      [1, "Breathe", "Breathe shallowly while maintaining your brace."],
+      [0, "Finish", "Have your partner remove the plate."],
+    ]
+  ),
   "cable-glute-kickback": placard(
     "cable-glute-kickback",
     ["Glutes"],

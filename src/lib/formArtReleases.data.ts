@@ -579,6 +579,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "weighted-plank": {
+    folder: "2026-10-04",
+    version: "anatomy-v3-2026-10-04",
+    width: 1528,
+    height: 631,
+    reference: 1,
+  },
   "weighted-push-ups": {
     folder: "2026-09-22",
     version: "anatomy-v3-2026-09-22",
