@@ -9,7 +9,10 @@ import {
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
-import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
+import {
+  markDayDone,
+  type ProgrammeCompletionContext,
+} from "@/lib/workoutCompletion";
 import {
   completeLift,
   liftSessionDay,
@@ -17,6 +20,7 @@ import {
 } from "@/lib/liftCompletion";
 import {
   applySessionProgression,
+  toSessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
 import {
@@ -1172,23 +1176,6 @@ export function useProgram() {
       }
 
       const workoutId = liftWorkoutId("programme", sessionData.completionId);
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex
-            ? {
-                ...d,
-                completed: true,
-                skipped: false,
-                completedWorkoutId: workoutId,
-              }
-            : d
-        ),
-        // Clear next-workout override if completing the overridden day
-        ...(programState.nextWorkoutOverride === dayIndex && {
-          nextWorkoutOverride: undefined,
-        }),
-      };
 
       // The exercises the session ran: its prescription, or (a day marked
       // done without one) the day's, at the baseline this completion's
@@ -1212,22 +1199,12 @@ export function useProgram() {
               trainingBlockId: programState.trainingBlock?.id,
             }
           : undefined);
+      const progression = toSessionProgression({
+        ...sessionData,
+        date: liftSessionDay(sessionData.startedAt),
+      });
       const completionContext = savedContext
-        ? {
-            ...savedContext,
-            ...(sessionData.prescription
-              ? {
-                  progression: {
-                    completionId: sessionData.completionId,
-                    date: liftSessionDay(sessionData.startedAt),
-                    prescription: sessionData.prescription,
-                    setLogs: sessionData.setLogs,
-                    sessionVariant: sessionData.sessionVariant,
-                    ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
-                  },
-                }
-              : {}),
-          }
+        ? { ...savedContext, ...(progression ? { progression } : {}) }
         : undefined;
       const matchesCurrentDay =
         completionContext?.weekNumber === programState.weekNumber &&
@@ -1235,15 +1212,21 @@ export function useProgram() {
         completionContext.dayIdentity === dayIdentity &&
         completionContext.trainingBlockId === programState.trainingBlock?.id &&
         !(day.completed && day.completedWorkoutId !== workoutId);
+      // The plan as the save's transaction leaves it: the session's
+      // progression, then the day marked done.
       let committedState: ProgramState | null = matchesCurrentDay
-        ? updated
+        ? markDayDone(
+            completionContext?.progression
+              ? applySessionProgression(
+                  programState,
+                  dayIndex,
+                  completionContext.progression
+                )
+              : programState,
+            dayIndex,
+            workoutId
+          )
         : programState;
-      if (matchesCurrentDay && completionContext?.progression)
-        committedState = applySessionProgression(
-          updated,
-          dayIndex,
-          completionContext.progression
-        );
 
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
