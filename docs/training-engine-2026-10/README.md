@@ -45,8 +45,8 @@ not changes to make.
   transcripts, paraphrased into principles with timestamps. The coach's claims
   carry no marker: they are his. The research notes added against them on
   2026-10-07 carry the markers above. The transcripts themselves are not
-  stored and must never be committed. The video URLs were
-  not supplied; ask the owner for them before citing.
+  stored and must never be committed. The video links aren't needed (owner,
+  2026-10-07); the doc cites the coach by name and video title.
 
 ## Read order
 
@@ -58,6 +58,7 @@ not changes to make.
 | [lifting-evidence.md](lifting-evidence.md)                   | Powerlifting, hypertrophy, powerbuilding, general fitness and lifting for runners: volume, frequency, effort, periodization, peaking, expected progress by training age, adherence priors, a virtual-lifter response model, what adaptive apps publish about their models, a Lift4 gap analysis, non-adoptions; each topic's verified parameters         |
 | [running-evidence.md](running-evidence.md)                   | A source ledger, every row marked by how it was checked; intensity, injury, taper, concurrent training; a 19-type session dictionary with plain-English lines; simulation priors (Banister, injury hazard, detraining); personas; a year ending in a marathon while lifting; non-adoptions                                                               |
 | [explanation-ux.md](explanation-ux.md)                       | How Runna, Strava, NRC, Garmin, COROS, TrainingPeaks, Apple, Polar, Hevy, Strong, Fitbod, RP, JuggernautAI, MacroFactor Workouts, Alpha Progression, Boostcamp, Gravl and Liftosaur explain sessions, effort and changes; a pattern library; recommendations for Tropos under Lift4's quiet-by-default rule; what checking every cited page changed (§9) |
+| [owner-answers.md](owner-answers.md)                         | The owner's answers to the open calls (A1–A12, 2026-10-07), each with its reason and what the run does with it, and the rules for the questions the run finds                                                                                                                                                                                            |
 | [owner-lifting-sources.md](owner-lifting-sources.md)         | The owner's coaching sources (Oreb), mapped against Lift4, with the generator checks they imply; his citations checked (OREB-07's "Dr. Rhea" range matches Rhea 2003 and Peterson 2004–2005, which count sets per muscle group per session) and his %1RM table set against Nuzzo 2024                                                                    |
 | `measurements/`                                              | Raw outputs the lifting audit cites (generated plans, the simulation summary, probes)                                                                                                                                                                                                                                                                    |
 | `harnesses/`                                                 | The scratch harnesses that produced the measurements, saved as `.txt` so no toolchain runs them. Seeds for the real simulator, not the simulator: they re-implement private logic inline (ADR-0008's drift risk)                                                                                                                                         |
@@ -88,8 +89,8 @@ were wrong in the agents' first drafts and are corrected in place:
 3. **Lighter-week precedence.** The lifting audit marks Lift4 (9) as built to
    the lock's text but not to the handoff's precedence table, which says a
    lighter week taken from Train restarts the calendar count. Which reading
-   governs is unresolved; the prompt asks for it to be confirmed before any
-   fix.
+   governs was decided on 2026-10-07: the precedence table does
+   (`owner-answers.md` A4).
 
 ## Checked against the sources, 2026-10-07
 

@@ -3,15 +3,17 @@
 The reusable prompt for a multi-agent pass on Tropos's lifting and running:
 close the evidence gaps, extract the seams a simulation needs, build a simulator
 that drives the real engine for synthetic people over 16–52 weeks, test the
-app end to end, fix what is broken, and put every change to a locked decision
-to the owner. Paste the block and choose the scope line. It runs as a
+app end to end, fix what is broken, and decide and build the changes to
+locked decisions under the owner's delegation (`owner-answers.md`, 2026-10-07).
+Paste the block and choose the scope line. It runs as a
 workflow (`/effort ultracode`, or the word "workflow").
 
 Its inputs are in [`docs/training-engine-2026-10/`](../training-engine-2026-10/README.md),
 gathered on 2026-10-06 at `55c195a`: audits of the lifting, running and test
 code; lifting and running evidence, checked against its primary sources on
 2026-10-07; how other apps explain training; the
-owner's coaching sources; and the harnesses behind every measured number. The
+owner's coaching sources; the owner's answers to the open calls; and the
+harnesses behind every measured number. The
 block points into them rather than restating them. What each clause buys is
 explained below the block.
 
@@ -48,6 +50,9 @@ READ FIRST, before the first edit:
   owner's coaching sources, the explanation research, and the harnesses
   behind the numbers. Below, a bare name (lifting-evidence,
   running-engine-audit, harnesses/…) means a file in that folder.
+- owner-answers.md in that folder: the owner's answers to the open calls
+  (A1–A12, 2026-10-07) and the rules for the questions this run finds. They
+  are decided: build on them, don't ask again.
 - CLAUDE.md; CODING_STANDARDS.md for each area you touch; GLOSSARY.md.
 - .claude/plans/programme-run-followups.md rows Lift1–Lift4, Run9, Run9a,
   Run10, Run13–Run18, Pgm4–Pgm6 and Time1. Lift4 is the lifting system's
@@ -83,10 +88,12 @@ STANDING RULES
 - OWNER CALL: Lift4 is the acceptance spec for the lifting system as built.
   The Run locks (Run9a's two-state surface, Run15, Run16, Run17, Run18,
   Pgm6) and RUN-EV-08's consent rule are the same for running. A change to
-  what any of them decided is an owner call: it goes into the decision
-  package (Phase 6) with its evidence and simulation results, and is built
-  only after the owner's answer is locked with the lock-decision skill on its
-  own claude/lock-<id> branch. Locks are append-only.
+  what any of them decided is an owner call, and the owner delegated those
+  calls on 2026-10-07: owner-answers.md answers the open ones, and its last
+  section says how this run answers the ones it finds. An explicit earlier
+  owner decision is never reversed without the owner. Every answer is locked
+  with the lock-decision skill on its own claude/lock-<id> branch before it
+  is built. Locks are append-only.
 - THE RUNNING COPY: the simulator and the tests call the code production
   runs. When they need logic that is inline or private, extract it, then call
   it (ADR-0008). ADR-0002: lifts stay split-ordered and runs date-pinned.
@@ -112,7 +119,10 @@ STANDING RULES
   any layout change.
 
 ────────────────────────────────────────────────────────────────────────
-PHASE 0 — CLOSE THE EVIDENCE GAPS
+PHASE 0 — LOCK THE ANSWERS, CLOSE THE EVIDENCE GAPS
+First, lock owner-answers.md A1–A12 with the lock-decision skill, marked
+"owner-delegated, 2026-10-07", and append the ADR-0010 addendum it records if
+it is not on main yet.
 The evidence was read against its primary sources on 2026-10-07. Done:
 Pelland 2025's curves, counting comparison and frequency slopes; Nuzzo 2024;
 Latella 2020; Steele 2023; Frandsen 2025's full text; Daniels' caps; the
@@ -150,8 +160,11 @@ which a simulator would otherwise have to copy:
    PRNG in src/test/prng.ts replacing the 13 mulberry32 copies;
 5. one exported definition of a hard run that both sides import. Today the
    lift side counts any run of at least 45 min or 8 km as hard, and the run
-   plan counts long, tempo, intervals and race; which definition wins is an
-   owner call.
+   plan counts long, tempo, intervals and race. The run plan's wins
+   (owner-answers A5): long, tempo, intervals, race and any other quality
+   type; an untyped run counts as long at 75 minutes or more; distance never
+   counts on its own. This one changes behaviour, so it lands with its own
+   red test, after the golden traces of the other four.
 Done when each extraction has a golden trace equal before and after and
 `npm run verify` is green.
 
@@ -192,9 +205,10 @@ Phase 1 exports.
     2 (0.7). Individual fits are ill-conditioned: a smoother, not a
     predictor (running-evidence §6.2).
   - the app's own form curve (trainingLoad.ts, gains 1 − e^(−1/τ)) implies
-    k₂/k₁ ≈ 5.7, so a session reads net-negative for about 15 days. Simulate
-    the athlete on the published prior, measure the app's curve separately,
-    and put the ratio to the owner.
+    k₂/k₁ ≈ 5.7, so a session reads net-negative for about 15 days. That is
+    the 42/7 fitness-and-freshness convention (the file names Strava's as
+    its model), display-only, and it stays (owner-answers A2): simulate the
+    athlete on the published prior, never on trainingLoad.ts.
   - lifting fatigue: §4.4's 2–4-day time constant is an ASSUMPTION;
     strength-sport fits put it at 13–22 days [U]. Sweep it.
   - reps achieved: Nuzzo 2024's mean + z × SD at each load, z drawn once per
@@ -285,27 +299,28 @@ test-infrastructure-audit.md §4(b) is the design; build it.
   only UI path that keeps the planned-run link, and no spec covers it today.
 - CI: a `journeys` job with its own budget, retries 0 and serial steps,
   outside the existing auth.spec.ts regex, with SHA-pinned actions and the
-  workflow guard tests green. Wire the cheap signed-out specs that run in no
-  workflow (smoke, navigation, legal-pages), or put that gap to the owner.
+  workflow guard tests green. Wire smoke, navigation and legal-pages into the
+  emulator workflow (not required until green for two weeks) and the other
+  six signed-out specs into a nightly run (owner-answers A11).
 Done when each journey passes twice in a row and goes red when its key
 assertion is broken on purpose.
 
 PHASE 4 — LIFTING
 4a. Lift4 as built. Each P, D or U verdict in lifting-engine-audit §4 is a
     correction (it restores the lock's text: red test first, then the fix) or
-    a reading question (into the package). The corrections include: a level
+    a reading question (into decisions.md). The corrections include: a level
     change that leaves main-lift progression untouched; bodyweight mains on a
     fixed target that never progress; miss counts that survive a break taken
     with "Keep my old weights"; the Performance tab's "Lifting suggestions";
     represcription assigning heavier days by day index; Replace and Add
     ignoring the role table; "Improve running" where the lock says "Support
     my running"; a 2-of-4 lifter's lighter weeks always landing on the same
-    sessions. The reading question: whether a lighter week taken from Train
-    restarts the calendar count (the lock's text and the handoff's precedence
-    table differ).
+    sessions; and a lighter week taken from Train that doesn't restart the
+    calendar count, which the precedence table says it does (owner-answers
+    A4).
 4b. Programming quality. Every item of lifting-engine-audit §6.3, with the
-    matching verdict from lifting-evidence §6 beside it, goes into the
-    package with options and simulation results — above all: Get stronger
+    matching verdict from lifting-evidence §6 beside it, goes into
+    decisions.md with options and simulation results — above all: Get stronger
     training squat and bench as mains once a week; the session-to-session
     sawtooth (simulate a weekly step, an effort-gated step, e1RM-based loads,
     Oreb's rotary and effort waves, and a drop scaled by level); the starved
@@ -313,14 +328,14 @@ PHASE 4 — LIFTING
     saved durations; superset the accessories); curls padded as "pull";
     duplicate lifts that drift apart; light lifts that never step; and
     "advanced" changing only the starting loads. Also: L20 (a leg miss within
-    24 h of a hard run counts half) is now an assumption, not supported (no
-    study measured leg strength after a run); 83.7% of athletes also lighten
-    multi-joint loads in a deload, which Lift4's same-weights lighter week
-    does not (Rogerson 2024; beside L23); Oreb's 4%-per-rep table is steeper
-    than Nuzzo's 2–3%, so his 6RM load (80%) leaves about 3–4 reps in
+    24 h of a hard run counts half) stays, labelled an assumption
+    (owner-answers A9; report how often it changes a drop); Lift4's
+    same-weights lighter week stays (A8), though 83.7% of athletes also
+    lighten loads (Rogerson 2024); Oreb's 4%-per-rep table is steeper than
+    Nuzzo's 2–3%, so his 6RM load (80%) leaves about 3–4 reps in
     reserve and wave loads built from it run light.
 4c. The most advanced lifting model: designed under the quiet rule and
-    simulated, for the package (lifting-evidence §3 and §5.2; the owner's
+    simulated, for decisions.md (lifting-evidence §3 and §5.2; the owner's
     sources):
     - a strength track: a frequency floor per main lift (the per-lift
       counts are CONVENTION: Pelland 2025 fits one pooled curve, with
@@ -360,17 +375,16 @@ PHASE 4 — LIFTING
       on true sets to failure (about 15% on the leg press), while the Epley
       scaling in represcribe.ts and startingLoads.ts is within 1.5% of Nuzzo
       2024 from 3 to 12 reps and can stay;
-    - ADR-0010: Pelland 2025's weekly fits favour fractional counting for
-      strength as well as hypertrophy (best indirect weight about
-      0.38–0.39; 0.5 fits well) and fit weekly strength worst with
-      direct-only counting, which fits best only per session (Remmert
-      2025). The 1:1 flip landed on 2026-08-03, so the question is whether
-      to return to about 0.4–0.5 for both. Re-open the ADR with the
-      planSweep measurement, and check that Tropos's secondary map counts
-      as indirect what Pelland did (lifting-evidence §2.4, Verified
-      parameters).
-Done when every §4 verdict and §6.3 item is fixed with a test or is in the
-package, and each 4c design has a simulated comparison against Lift4 as
+    - ADR-0010, decided (owner-answers A1): the plan keeps counting an
+      indirect set as 1.0, because its bands' sources counted that way; the
+      virtual lifter and any forecast count it as 0.5, because they use
+      Pelland 2025's curves. Check that Tropos's secondary map counts as
+      indirect what Pelland did (lifting-evidence §2.4, Verified
+      parameters), and measure whether the reconciler starves direct work
+      for groups fed mostly by compounds (triceps, biceps, hamstrings,
+      chest); a fix is per group, through an ADR-0010 addendum.
+Done when every §4 verdict and §6.3 item is fixed with a test or is in
+decisions.md, and each 4c design has a simulated comparison against Lift4 as
 built.
 
 PHASE 5 — RUNNING
@@ -385,13 +399,18 @@ PHASE 5 — RUNNING
       judges against 5:00/km: effort words until a pace exists.
     - Easy and medium-long runs reach the player with no duration.
     - The taper sharpener bypasses placement.
+    - A race plan on one run a week (owner-answers A7): a race plan needs at
+      least two run days, a marathon's setup recommends three, "New to
+      running" with a race set defaults to two, and fewer days are offered
+      more days, a shorter race or a later date. Existing plans keep theirs.
+      Re-run running-engine-audit persona (d).
     - The copy drift in running-engine-audit §0 item 7 and §7 item 10, the
       false comment that the UI enforces 2 or more run days, and the
       LONG_RUN_MAX_MINUTES comment in runScheduler.ts, which gives Daniels
       as "the LESSER of 150 minutes and ~25-30%" (he applies 150 minutes
       from 64 km a week, 30% below it).
-    Every ⚠ cell in running-engine-audit §2.3 is fixed or in the package.
-5b. Plan quality, for the package: this is the running grill Lift4 deferred
+    Every ⚠ cell in running-engine-audit §2.3 is fixed or in decisions.md.
+5b. Plan quality, for decisions.md: this is the running grill Lift4 deferred
     to. Every item of running-engine-audit §7, read against running-evidence
     §2, §5.20 and §7: the year-out marathon's shape; the 1-run-a-week
     marathon default; quality ramped by block position; back-to-back
@@ -418,9 +437,10 @@ PHASE 5 — RUNNING
     weekly percentage (Frandsen found week-to-week change unrelated to
     injury; Buist found no effect of the 10% rule); trainingLoad.ts's
     ACWR-above-1.4 line, which Frandsen's null ACWR bands and Impellizzeri
-    2021 (c-statistic 0.574) do not support as a risk signal — keep it
-    advisory or retire the ratio wording; heavy lifting improved running
-    economy only above 12 km/h and in highly trained runners, and most
+    2021 (c-statistic 0.574) do not support as a risk signal — it stays as
+    written, advisory and never a risk score (owner-answers A10); heavy
+    lifting improved running economy only above 12 km/h and in highly
+    trained runners, and most
     Tropos runners are slower than 5:00 /km (plyometrics helped at 12 km/h
     or slower; combined methods most); no structured quality for a novice's
     first 4–6 weeks; 48 h between heavy legs and the long run is convention
@@ -453,25 +473,25 @@ PHASE 5 — RUNNING
       pace. A new runner with no pace data gets a "not enough data yet"
       state, as Runna's Pace Insights does.
     - Home's today card withholds the explainer by owner decision
-      (SessionPurpose.test.tsx). One tap away is in scope; inline is a
-      package question.
+      (SessionPurpose.test.tsx), and that stands (owner-answers A6): the
+      sheet is one tap away, on the session the card opens.
 Done when every 5a item is fixed with a test, every explanation surface in
-running-engine-audit §2.3 carries the new language, and 5b is in the
-package with simulation results.
+running-engine-audit §2.3 carries the new language, and every 5b item is
+decided by owner-answers.md's rules, with its simulation results.
 
-PHASE 6 — THE OWNER DECISION PACKAGE
+PHASE 6 — THE DECISIONS
 Write docs/training-engine-2026-10/decisions.md: numbered questions, lifting
 and running in separate parts. Each carries what is locked today (row and
 clause), the evidence (graded), the simulation (ranges, both model variants,
-who gains and who loses), the options, a recommended answer, the copy it
-implies under the quiet rule, and what happens to existing plans. CLAUDE.md's
-reference-app rule for grills applies. Then put it to the owner and wait.
-Each answer is locked with the lock-decision skill and its new domain terms
-go into GLOSSARY.md before it is built, in small PRs. Include the stretched
-range: when the next weight is a jump of more than about 15%, Lift4 adds reps
-first, as MacroFactor, Alpha, RP and Gravl do; by the quiet rule that target
-needs its one line ("Reps first: 12.5 kg is a big jump"; explanation-ux §3.12,
-§7.6).
+who gains and who loses), the options, the answer, the copy it implies under
+the quiet rule, and what happens to existing plans. CLAUDE.md's
+reference-app rule for grills applies. The owner delegated the answers:
+decide each by owner-answers.md's rules, lock it with the lock-decision skill
+(owner-delegated, 2026-10-07), put its new domain terms into GLOSSARY.md, and
+build it in small draft PRs. Only what those rules reserve goes back to the
+owner. The stretched range is answered (A3): one line, once, when a target
+first climbs past its range ("Up to 22 reps on 10 kg: 12.5 kg is a big
+jump"), after the ceiling's maths is checked against Nuzzo 2024.
 
 METHOD
 - A red test first for every fix — a simulation invariant, a coaching
@@ -487,7 +507,8 @@ METHOD
 
 DONE MEANS
 A final report with: the PRs shipped; the KNOWN_DEFECTS left, each with its
-reason; the decision package and which answers are pending; Phase 0's
+reason; decisions.md, each answer with its lock, and anything handed back
+to the owner; Phase 0's
 verified and still-unverified claims; the simulator's calibration status per
 target; the new baseline.
 ```
@@ -505,7 +526,11 @@ target; the new baseline.
   honoured by measuring Lift4 as built, fixing what departs from its text,
   and bringing everything else as a question. A silent rewrite of a lock one
   day old would cost more trust than any programming gain, and Pgm5 forbids
-  discarding a plan choice without a yes.
+  discarding a plan choice without a yes. On 2026-10-07 the owner delegated
+  the answers ("you answer the decisions"): owner-answers.md records them and
+  the rules for the rest. Those rules keep every explicit earlier owner
+  decision, and the merge, with the owner, and every answer is locked before
+  it is built, so nothing changes silently.
 - **Phase 0 before any number.** The research for this prompt was drafted
   with every primary source blocked. Reading the sources on 2026-10-07
   corrected 115 lifting and 131 running claims, among them the taper length,
@@ -556,7 +581,7 @@ target; the new baseline.
   what you'd expect. Carrying it over keeps one voice across both sports.
 - **Home's today card.** Withholding the explainer there is an owner decision
   pinned in a test. A pass told to "make it explanatory" would overturn it;
-  the prompt keeps it a question.
+  owner-answers A6 keeps it.
 
 ## Baselines
 
@@ -571,14 +596,14 @@ at the start.
 
 ## What the prompt routes to the owner
 
+The owner delegated the decisions on 2026-10-07 (`owner-answers.md`). What
+still goes back:
+
+- Merging every PR.
+- A question whose answer would reverse an explicit earlier owner decision (a
+  Lift4 owner call, a lock row's "owner:" line, Home's today card), brought
+  with its evidence and simulation results.
+- Anything that touches money, privacy, or a medical or safety claim.
 - Network access to primary sources (the environment's Network access
-  setting), if PubMed is blocked again; it was open on 2026-10-07. Without
-  it, what is left of Phase 0 runs in flag mode.
-- Every decision-package question, including the reading question on Lift4
-  (9), which hard-run definition wins, the Home today card, ADR-0010's
-  counting weight (1.0 today; the evidence favours about 0.4–0.5), the app's
-  fatigue:fitness ratio (about 5.7 against a published median of 2), and the
-  one line for a stretched rep range.
-- The video URLs for the Oreb transcripts (`owner-lifting-sources.md`).
-- A CI home for the signed-out specs, if wiring them is not cheap.
-- Merging.
+  setting), only if PubMed is blocked again; without it, what is left of
+  Phase 0 runs in flag mode.

@@ -35,7 +35,8 @@ commands) and describes coaching Hafþór Björnsson; corroborated by
 BarBend/Fitness Volt coverage of Oreb as Björnsson's coach and as a pupil of
 Kirill Sarychev (barbend.com/sebastian-oreb-bench-press-guide,
 barbend.com/news/why-hafthor-bjornsson-strength-coach-doesnt-deadlift,
-fitnessvolt.com/sebastian-oreb-400kg-squat). Video URLs: ask the owner.
+fitnessvolt.com/sebastian-oreb-400kg-squat). Video links aren't needed
+(owner, 2026-10-07): cite by coach and video title.
 
 Population/context: an elite-level coach (best raw squat ~320 kg paused, 250 kg
 bench at 116 kg bodyweight) describing how he coaches recreational and

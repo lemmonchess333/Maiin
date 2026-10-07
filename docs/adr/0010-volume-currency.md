@@ -185,3 +185,23 @@ itself makes: FrontDelts' band was re-authored press-inclusive (a
 direct-raise band against a press-counting tally repeated the original
 mismatch), and Glutes gained the hinge-inclusive band above. No band was
 adjusted to absorb a residual the sources do not explain.
+
+## Status addendum — 2026-10-07: Pelland 2025 reviewed; the plan keeps 1:1
+
+Pelland et al. 2025 (_Sports Med_; read in its preprint and OSF files) fitted
+weekly volume against growth and strength three ways and found fractional
+counting (an indirect set at about 0.38–0.39, with 0.5 close) fits both best,
+and direct-only counting fits weekly strength worst. That is a finding about
+which count best **predicts outcomes**. This ADR's question is which currency
+the plan's **bands** are published in, and Pelland publishes pooled curves, not
+per-muscle bands, and no maximum (its growth curve keeps rising, with no
+detectable gain past about 31 fractional sets a week), so it gives the judged
+layer nothing to re-denominate into.
+
+Decided (owner-delegated, 2026-10-07; `docs/training-engine-2026-10/owner-answers.md`
+A1): the plan keeps `SECONDARY_SET_WEIGHT = 1.0`. The simulator's virtual
+lifter and any forecast shown to a person count indirect sets at 0.5, because
+they use Pelland's curves. If the simulator shows a judged group fed mostly by
+compounds (triceps, biceps, hamstrings, chest) under-growing at an in-band
+tally because the reconciler cut its direct work, the fix is per group, through
+a further addendum with the planSweep measurement, never a global flip.
