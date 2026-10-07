@@ -9,14 +9,13 @@
  * long or hard run in the 24 hours before it (Lift4 (14), so a leg miss
  * counts half, Lift4 (7)) and the hard-run reason in "Easier today".
  *
- * The run plan's definition wins (Pgm7 A5, 2026-10-07). A run carrying a
- * planned type is judged by that type alone, against the same
- * `HARD_RUN_TYPES` the run scheduler, spacing, rescheduling and day
- * intensity read: an easy run is never hard, and a race always is. A run
- * with no planned type (a free run, treadmill, manual, guided, or one
- * logged without the plan) counts as long from 75 minutes. Distance never
- * counts on its own: 8 km takes 40 minutes for one runner and 70 for
- * another.
+ * The run plan's definition wins (Pgm7 A5). A run carrying a planned type
+ * is judged by that type alone, against the same `HARD_RUN_TYPES` the run
+ * scheduler, spacing, rescheduling and day intensity read: an easy run is
+ * never hard, and a race always is. A run with no planned type (a free run,
+ * treadmill, manual, guided, or one logged without the plan) counts as long
+ * from 75 minutes. Distance never counts on its own: 8 km takes 40 minutes
+ * for one runner and 70 for another.
  *
  * Pure + deterministic.
  */
