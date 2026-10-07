@@ -32,6 +32,8 @@ import { THEME } from "@/lib/theme";
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import type { RecentSession } from "./useRecentSessions";
 import { distanceLabel } from "@/lib/runLabels";
@@ -124,6 +126,7 @@ export default function SpacePostComposer({
 }) {
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
+  const { isRestricted } = useRestrictedStatus(user?.uid);
   const unit = useDistanceUnit();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -152,10 +155,15 @@ export default function SpacePostComposer({
     picked ?? (attachLatest && !latestRemoved ? (sessions[0] ?? null) : null);
 
   const profane = containsProfanity(title) || containsProfanity(body);
-  // Space posts are public content: the rules refuse an unverified email,
-  // so the action is held here and the notice below says why.
+  // Space posts are public content: the rules refuse an unverified email
+  // and a restricted account (S4e), so the action is held here and the
+  // notice below says why.
   const canPost =
-    body.trim().length > 0 && !profane && !busy && !gate.needsVerification;
+    body.trim().length > 0 &&
+    !profane &&
+    !busy &&
+    !gate.needsVerification &&
+    !isRestricted;
 
   const submit = async () => {
     if (!user || !canPost) return;
@@ -384,8 +392,12 @@ export default function SpacePostComposer({
           </div>
         )}
 
-        {gate.needsVerification && (
-          <VerifyEmailNotice onRecheck={gate.recheck} />
+        {isRestricted ? (
+          <RestrictedNotice />
+        ) : (
+          gate.needsVerification && (
+            <VerifyEmailNotice onRecheck={gate.recheck} />
+          )
         )}
 
         <Button

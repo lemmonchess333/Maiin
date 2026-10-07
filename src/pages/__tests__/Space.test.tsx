@@ -23,6 +23,10 @@ import { MemoryRouter, Routes, Route, useLocation } from "react-router-dom";
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -75,6 +79,7 @@ import {
   seedFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
+import { toast } from "@/lib/toast";
 
 const SPACE = "spaces/womens-running";
 const MEMBER_DOC = `${SPACE}/members/viewer`;
@@ -309,4 +314,27 @@ it("shows an expired race as awaiting its next edition without a training action
   expect(
     screen.getByRole("link", { name: /Visit official website/i })
   ).toHaveAttribute("href", "https://www.bmw-berlin-marathon.com/en/");
+});
+
+describe("a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("can read a Space, is told why it can't join, and Join writes nothing", async () => {
+    restriction.isRestricted = true;
+    seedFirestore({ [`${SPACE}/posts/coach-2026-09-21`]: COACH });
+    renderSpace();
+
+    expect(
+      await screen.findByText("Your account is restricted")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Join" }));
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+      "Your account is restricted, so you can't do this for now.",
+      expect.anything()
+    );
+    expect(screen.getByRole("button", { name: "Join" })).toBeInTheDocument();
+    expect(readDoc(MEMBER_DOC)).toBeUndefined();
+  });
 });

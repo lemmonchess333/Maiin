@@ -18,6 +18,11 @@
  *     (activity or Space post) or a Space post is deleted. The server
  *     says which reports it can act on (`targetHideable`).
  *   - "Restrict user" — mark resolved AND restrict the target's author
+ *   - Restricted accounts, each with Lift (S4e, STATUS 2026-10-06). Once a
+ *     restriction stops posts, comments, props and follows, a mistaken one
+ *     needs an undo that is not the Firebase console. Through the
+ *     `listRestrictedUsers` and `liftRestriction` callables, which re-check
+ *     admin like the queue's.
  *
  * Out of v1: pagination beyond 50, status filters
  * (pending/resolved), ban-user flow. Each is a small follow-up.
@@ -29,6 +34,9 @@ import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import type { ReportTargetType } from "@/lib/socialApi";
+import { formatDayMonthYear } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Loader2, ShieldAlert, EyeOff, Check, UserX } from "lucide-react";
 
 interface ReportTarget {
@@ -99,6 +107,24 @@ function canHide(report: Report): boolean {
   return report.targetHideable ?? report.targetType === "activity";
 }
 
+/** An account under a restriction, as `listRestrictedUsers` returns it. */
+interface RestrictedAccount {
+  uid: string;
+  displayName: string | null;
+  restrictedAt: number | null;
+  lastActionedReport: string | null;
+}
+
+/** One read of the restricted accounts through the admin-gated callable. */
+async function readRestrictedAccounts(): Promise<RestrictedAccount[]> {
+  const callable = httpsCallable<unknown, { restricted: RestrictedAccount[] }>(
+    functions,
+    "listRestrictedUsers"
+  );
+  const result = await callable({});
+  return result.data.restricted;
+}
+
 /** One read of the pending queue through the admin-gated callable. */
 async function readPendingReports(): Promise<Report[]> {
   const callable = httpsCallable<unknown, { reports: Report[] }>(
@@ -133,6 +159,12 @@ export default function AdminModeration() {
   const [reports, setReports] = useState<Report[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyReportId, setBusyReportId] = useState<string | null>(null);
+  const [restricted, setRestricted] = useState<RestrictedAccount[] | null>(
+    null
+  );
+  const [restrictedError, setRestrictedError] = useState<string | null>(null);
+  const [liftTarget, setLiftTarget] = useState<RestrictedAccount | null>(null);
+  const [liftingUid, setLiftingUid] = useState<string | null>(null);
 
   const isAdmin = isAdminUid(uid);
 
@@ -159,6 +191,50 @@ export default function AdminModeration() {
     if (!isAdmin) return;
     void loadReports();
   }, [isAdmin, loadReports]);
+
+  // Same shape as the queue's read: commits when it settles.
+  const loadRestricted = useCallback(
+    () =>
+      readRestrictedAccounts().then(
+        (rows) => {
+          setRestrictedError(null);
+          setRestricted(rows);
+        },
+        (err: unknown) => {
+          setRestrictedError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load restricted accounts."
+          );
+        }
+      ),
+    []
+  );
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void loadRestricted();
+  }, [isAdmin, loadRestricted]);
+
+  const lift = async (account: RestrictedAccount) => {
+    setLiftTarget(null);
+    setLiftingUid(account.uid);
+    try {
+      const callable = httpsCallable<
+        { uid: string },
+        { ok: boolean; lifted: boolean }
+      >(functions, "liftRestriction");
+      await callable({ uid: account.uid });
+      toast.success("Restriction lifted.");
+      setRestricted((prev) =>
+        prev ? prev.filter((r) => r.uid !== account.uid) : prev
+      );
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Lift failed.");
+    } finally {
+      setLiftingUid(null);
+    }
+  };
 
   /* S4e (PR #722): resolveReport callable gains optional `restrictUser`
      param. Admin queue UI gets a third button (Restrict user) alongside
@@ -190,6 +266,7 @@ export default function AdminModeration() {
       setReports((prev) =>
         prev ? prev.filter((r) => r.reportId !== reportId) : prev
       );
+      if (restrictUser) void loadRestricted();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Action failed.";
       toast.error(message);
@@ -343,7 +420,7 @@ export default function AdminModeration() {
                       onClick={() =>
                         void resolveReport(report.reportId, false, true)
                       }
-                      aria-label="Restrict user — they can't search, follow, or invite from the Find tab until admin lifts."
+                      aria-label="Restrict user — they can't post, comment or follow anyone until the restriction is lifted."
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
                       <UserX className="size-3.5" aria-hidden="true" />
@@ -356,6 +433,78 @@ export default function AdminModeration() {
           })}
         </ul>
       )}
+
+      <section aria-labelledby="restricted-heading" className="space-y-3 pt-4">
+        <h2 id="restricted-heading" className="text-lg font-extrabold">
+          Restricted accounts
+        </h2>
+        {restrictedError && (
+          <div
+            role="alert"
+            className="text-sm text-destructive-strong font-medium"
+          >
+            {restrictedError}
+          </div>
+        )}
+        {restricted === null && !restrictedError && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2
+              className="size-4 motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+            <span>Loading restricted accounts…</span>
+          </div>
+        )}
+        {restricted && restricted.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No account is restricted.
+          </p>
+        )}
+        {restricted && restricted.length > 0 && (
+          <ul className="space-y-2">
+            {restricted.map((account) => (
+              <li
+                key={account.uid}
+                className="rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-3"
+              >
+                <div className="flex-1 basis-[12em] min-w-0">
+                  <p className="text-sm font-semibold text-foreground break-words">
+                    {account.displayName ?? "(no name)"}
+                  </p>
+                  <p className="text-caption font-mono text-muted-foreground break-all">
+                    {account.uid}
+                  </p>
+                  {account.restrictedAt !== null && (
+                    <p className="text-caption text-muted-foreground mt-0.5">
+                      Restricted{" "}
+                      {formatDayMonthYear(new Date(account.restrictedAt))}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  loading={liftingUid === account.uid}
+                  onClick={() => setLiftTarget(account)}
+                  aria-label={`Lift the restriction on ${account.displayName ?? account.uid}`}
+                >
+                  Lift
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <ConfirmDialog
+        open={liftTarget !== null}
+        title="Lift this restriction?"
+        description="They can post, comment, give props and follow people again straight away."
+        confirmLabel="Lift"
+        onConfirm={() => {
+          if (liftTarget) void lift(liftTarget);
+        }}
+        onCancel={() => setLiftTarget(null)}
+      />
     </div>
   );
 }

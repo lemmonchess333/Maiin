@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
 import SettingsSection from "@/components/settings/SettingsSection";
 import PrivacySection from "@/components/settings/PrivacySection";
+import RestrictionExplainer from "@/components/settings/RestrictionExplainer";
 
 export default function SettingsPrivacy() {
   const { user, profile, updateProfile, updateShareDefaults, refreshProfile } =
@@ -30,6 +31,8 @@ export default function SettingsPrivacy() {
       subtitle="Visibility, auto-post, GPS zones"
       section="privacy"
     >
+      {/* Only for a restricted account: what is stopped and why (S4e D6). */}
+      <RestrictionExplainer uid={user?.uid} />
       <PrivacySection
         inline
         user={user}

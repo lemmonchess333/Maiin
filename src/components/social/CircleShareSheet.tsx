@@ -30,6 +30,8 @@ import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GOAL_SPACE_TEXT_MAX } from "@/features/goalSpace/goalSpaceTypes";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import RestrictedNotice from "./RestrictedNotice";
 
 interface CircleShareSheetProps {
   open: boolean;
@@ -43,6 +45,8 @@ export default function CircleShareSheet({
   uid,
 }: CircleShareSheetProps) {
   const { loading, circles, publishEvent } = useGoalSpaces(uid);
+  // A restricted account shares nothing with a Circle (S4e).
+  const { isRestricted } = useRestrictedStatus(uid);
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -60,7 +64,7 @@ export default function CircleShareSheet({
   }
 
   const share = async () => {
-    if (!selectedId || busy) return;
+    if (!selectedId || busy || isRestricted) return;
     haptic("light");
     setBusy(true);
     const ok = await publishEvent(
@@ -167,10 +171,12 @@ export default function CircleShareSheet({
               className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
 
+            {isRestricted && <RestrictedNotice />}
+
             <Button
               className="w-full"
               loading={busy}
-              disabled={selectedId === null}
+              disabled={selectedId === null || isRestricted}
               onClick={() => void share()}
             >
               Share to circle

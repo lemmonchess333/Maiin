@@ -29,7 +29,13 @@ import { Spinner } from "@/components/ui/Spinner";
 import { describeRejection } from "@/lib/callableErrors";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import {
+  isRestrictedRefusal,
+  showRestrictedToast,
+} from "@/lib/accountRestriction";
 import VerifyEmailNotice from "./VerifyEmailNotice";
+import RestrictedNotice from "./RestrictedNotice";
 
 interface Comment {
   id: string;
@@ -68,6 +74,8 @@ export default function CommentSheet({
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
   const { blocked } = useBlockedUsers();
+  // A restricted account can read the thread but not add to it (S4e).
+  const { isRestricted } = useRestrictedStatus(user?.uid);
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -154,7 +162,7 @@ export default function CommentSheet({
   const handleSend = async () => {
     // Comments are public content: the callable refuses an unverified
     // email. Held here too so Enter cannot bypass the disabled button.
-    if (!user || !text.trim() || gate.needsVerification) return;
+    if (!user || !text.trim() || gate.needsVerification || isRestricted) return;
     // Client-side profanity check — UX-only; the server is the
     // trust boundary (addCommentCallable refuses the same text with
     // the same sentence, and the onCommentCreated trigger deletes
@@ -182,12 +190,16 @@ export default function CommentSheet({
       setHasMore(result.hasMore);
     } catch (err) {
       logger.error("[CommentSheet] send failed", err);
-      const reason = describeRejection(err);
-      toast.error(
-        reason
-          ? `Couldn't post comment. ${reason}`
-          : "Couldn't post comment. Try again."
-      );
+      if (isRestrictedRefusal(err)) {
+        showRestrictedToast();
+      } else {
+        const reason = describeRejection(err);
+        toast.error(
+          reason
+            ? `Couldn't post comment. ${reason}`
+            : "Couldn't post comment. Try again."
+        );
+      }
       haptic("error");
     } finally {
       setSending(false);
@@ -234,14 +246,24 @@ export default function CommentSheet({
 
   const handleReact = async (commentId: string, reaction: CommentReaction) => {
     if (!user) return;
+    // A restricted account can take a reaction back, not add one (S4e).
+    const adding = !(
+      comments.find((c) => c.id === commentId)?.reactions?.[reaction] ?? []
+    ).includes(user.uid);
+    if (adding && isRestricted) {
+      haptic("error");
+      showRestrictedToast();
+      return;
+    }
     haptic("light");
     setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
     try {
       await toggleCommentReaction(activityId, commentId, reaction);
-    } catch {
+    } catch (err) {
       // Revert the optimistic flip (toggle is symmetric).
       setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
       haptic("error");
+      if (isRestrictedRefusal(err)) showRestrictedToast();
     }
   };
 
@@ -438,10 +460,14 @@ export default function CommentSheet({
 
           {/* Quick chips + input */}
           <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
-            {gate.needsVerification && (
-              <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+            {isRestricted ? (
+              <RestrictedNotice />
+            ) : (
+              gate.needsVerification && (
+                <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+              )
             )}
-            {quickChips && quickChips.length > 0 && (
+            {quickChips && quickChips.length > 0 && !isRestricted && (
               <div
                 data-no-page-swipe
                 className="flex gap-1.5 overflow-x-auto pb-1"
@@ -466,12 +492,17 @@ export default function CommentSheet({
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Add a comment..."
                 aria-label="Add a comment"
-                disabled={sending || gate.needsVerification}
+                disabled={sending || gate.needsVerification || isRestricted}
                 className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
               />
               <Button
                 onClick={handleSend}
-                disabled={sending || !text.trim() || gate.needsVerification}
+                disabled={
+                  sending ||
+                  !text.trim() ||
+                  gate.needsVerification ||
+                  isRestricted
+                }
               >
                 Send
               </Button>

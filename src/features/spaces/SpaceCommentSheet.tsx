@@ -26,7 +26,13 @@ import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import {
+  isRestrictedRefusal,
+  showRestrictedToast,
+} from "@/lib/accountRestriction";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
 
 /**
  * SOC-P2g — comments on a Space post. The activity CommentSheet's
@@ -63,6 +69,8 @@ export default function SpaceCommentSheet({
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
   const { blocked } = useBlockedUsers();
+  // A restricted account can read the comments but not add one (S4e).
+  const { isRestricted } = useRestrictedStatus(user?.uid);
   const [comments, setComments] = useState<SpacePostComment[] | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -100,7 +108,8 @@ export default function SpaceCommentSheet({
     const trimmed = text.trim();
     // Comments are public content: the callable refuses an unverified
     // email. Held here as well as on the button.
-    if (!user || !trimmed || sending || gate.needsVerification) return;
+    if (!user || !trimmed || sending || gate.needsVerification || isRestricted)
+      return;
     // The word filter, caught before the round-trip. The callable is the
     // boundary and refuses the same text with the same sentence.
     if (containsProfanity(trimmed)) {
@@ -133,12 +142,16 @@ export default function SpaceCommentSheet({
       onCountChange(1);
     } catch (err) {
       logger.error("[SpaceComments] send failed", err);
-      const reason = describeRejection(err);
-      toast.error(
-        reason
-          ? `Couldn't post the comment. ${reason}`
-          : "Couldn't post the comment. Try again."
-      );
+      if (isRestrictedRefusal(err)) {
+        showRestrictedToast();
+      } else {
+        const reason = describeRejection(err);
+        toast.error(
+          reason
+            ? `Couldn't post the comment. ${reason}`
+            : "Couldn't post the comment. Try again."
+        );
+      }
     } finally {
       setSending(false);
     }
@@ -246,9 +259,14 @@ export default function SpaceCommentSheet({
             );
           })}
 
-          {user && gate.needsVerification && (
-            <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
-          )}
+          {user &&
+            (isRestricted ? (
+              <RestrictedNotice />
+            ) : (
+              gate.needsVerification && (
+                <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
+              )
+            ))}
 
           {user && (
             <div className="flex items-end gap-2 pt-2 border-t border-border/40">
@@ -258,13 +276,18 @@ export default function SpaceCommentSheet({
                 placeholder="Add a comment…"
                 rows={1}
                 maxLength={1000}
-                disabled={sending || gate.needsVerification}
+                disabled={sending || gate.needsVerification || isRestricted}
                 className="flex-1 resize-none rounded-xl bg-muted px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
               />
               <IconButton
                 aria-label="Post comment"
                 onClick={send}
-                disabled={sending || !text.trim() || gate.needsVerification}
+                disabled={
+                  sending ||
+                  !text.trim() ||
+                  gate.needsVerification ||
+                  isRestricted
+                }
                 icon={<Send className="size-4" />}
                 className="bg-primary-strong text-primary-foreground"
               />

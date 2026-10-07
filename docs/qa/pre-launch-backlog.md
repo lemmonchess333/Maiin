@@ -6,6 +6,36 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A restriction stops what reaches other people (S4e, 2026-10-06)
+
+Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
+follows, Space and challenge joins, Circle events and partner bonds), the
+props, comment, like, reaction and Circle callables
+(`functions/lib/restriction.js`), the app's gates (`RestrictedNotice`,
+`showRestrictedToast`), Settings → Social & privacy's explanation, and
+the moderation page's Restricted accounts with Lift (`listRestrictedUsers`,
+`liftRestriction`).
+
+The rules suite (`firestore.restriction.rules.test.ts`) and the unit tests
+cover each refusal and what stays open; these need a device or the
+console.
+
+- [ ] **One restriction, end to end.** With two test accounts, report the
+      second from the first, then Restrict user on the moderation page.
+      On the second account (no sign-out): the feed and Space composers,
+      comments, props, likes, reactions, Follow (a profile's too), Space,
+      challenge and Circle joins, a Circle check-in and a partner streak
+      each say "Your account is restricted" and nothing goes out; taking
+      back props, unfollowing and leaving still work; Social & privacy
+      explains it, and Contact support opens Mail.
+- [ ] **Lift.** Lift the second account from Restricted accounts: within
+      a minute, without signing out, every one of those works again, and
+      the report in the console shows `restrictionLiftedBy`.
+- [ ] **App Review notes.** If the notes are already in App Store Connect,
+      paste the moderation sentence from `docs/app-store/listing.md`
+      ("…restricting the account so it can't post, comment or follow
+      anyone"). This replaces the trial reminder section's notes row.
+
 ## The trial reminder (Sub1, 2026-10-06)
 
 Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),

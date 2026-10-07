@@ -6,6 +6,11 @@ import { toggleSpacePostLike } from "@/lib/socialApi";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import {
+  isRestrictedRefusal,
+  showRestrictedToast,
+} from "@/lib/accountRestriction";
 
 /**
  * SOC-P2c — the viewer's like state for a Space page's posts.
@@ -22,10 +27,14 @@ import { logger } from "@/lib/logger";
  *
  * uid-scoped: an account switch resets all local state (queues/caches
  * never leak across accounts — the standing rule).
+ *
+ * A restricted account can take a like back but not give one (S4e): the
+ * tap says why rather than flipping.
  */
 export function useSpacePostLikes(spaceId: string, postIds: string[]) {
   const { user, profile } = useAuth();
   const uid = user?.uid ?? null;
+  const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [deltas, setDeltas] = useState<Record<string, number>>({});
   const busyRef = useRef<Set<string>>(new Set());
@@ -78,9 +87,14 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
   const toggle = useCallback(
     async (postId: string) => {
       if (!uid || busyRef.current.has(postId)) return;
+      const wasLiked = liked.has(postId);
+      if (!wasLiked && isRestricted) {
+        haptic("error");
+        showRestrictedToast();
+        return;
+      }
       busyRef.current.add(postId);
       haptic("light");
-      const wasLiked = liked.has(postId);
       // Optimistic flip.
       setLiked((prev) => {
         const next = new Set(prev);
@@ -122,12 +136,13 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
           ...prev,
           [postId]: (prev[postId] ?? 0) + (wasLiked ? 1 : -1),
         }));
-        toast.error("Couldn't update. Try again.");
+        if (isRestrictedRefusal(err)) showRestrictedToast();
+        else toast.error("Couldn't update. Try again.");
       } finally {
         busyRef.current.delete(postId);
       }
     },
-    [uid, spaceId, liked, fromName]
+    [uid, spaceId, liked, fromName, isRestricted]
   );
 
   return { liked, deltas, toggle };

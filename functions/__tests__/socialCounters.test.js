@@ -286,7 +286,9 @@ describe("addComment", () => {
       serverTimestamp,
     });
     const setOp = firestore._writes.find((w) => w.op === "set");
-    expect(setOp.data.authorPhotoURL).toBe("https://lh3.googleusercontent.com/a.png");
+    expect(setOp.data.authorPhotoURL).toBe(
+      "https://lh3.googleusercontent.com/a.png"
+    );
   });
 });
 
@@ -477,5 +479,42 @@ describe("socialCounters — activity visibility gate", () => {
       })
     ).rejects.toThrow(/activity-not-accessible/);
     expect(firestore._writes).toHaveLength(0);
+  });
+});
+
+describe("toggleKudos — a restricted account (S4e)", () => {
+  it("may take props back but not give them", async () => {
+    const { toggleKudos } = require("../lib/socialCounters");
+    const giving = makeFirestoreStub({
+      initial: { "activities/A1": { kudosCount: 5 } },
+    });
+    await expect(
+      toggleKudos({
+        firestore: giving,
+        uid: "alice",
+        activityId: "A1",
+        increment,
+        serverTimestamp,
+        refuseAdd: true,
+      })
+    ).rejects.toMatchObject({ code: "account-restricted" });
+    // Refused inside the transaction, so nothing landed.
+    expect(giving._writes).toEqual([]);
+
+    const takingBack = makeFirestoreStub({
+      initial: {
+        "activities/A1": { kudosCount: 5 },
+        "kudos/A1/users/alice": { createdAt: 12345 },
+      },
+    });
+    const result = await toggleKudos({
+      firestore: takingBack,
+      uid: "alice",
+      activityId: "A1",
+      increment,
+      serverTimestamp,
+      refuseAdd: true,
+    });
+    expect(result.kudosed).toBe(false);
   });
 });

@@ -17,6 +17,10 @@ const H = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "me" }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/socialApi", () => ({
   isFollowing: () =>
     new Promise<boolean>((resolve) => {
@@ -36,6 +40,7 @@ import InlineFollow from "../InlineFollow";
 import { __resetFollowStatesForTests } from "@/hooks/useFollowState";
 
 beforeEach(() => {
+  restriction.isRestricted = false;
   __resetFollowStatesForTests();
   H.read = null;
   H.follow = vi.fn(async (_viewer: string, _target: string) => {});
@@ -93,5 +98,15 @@ describe("InlineFollow", () => {
     ).toBeInTheDocument();
     expect(H.toastError).toHaveBeenCalledWith("Couldn't follow. Try again.");
     expect(H.track).not.toHaveBeenCalled();
+  });
+});
+
+describe("InlineFollow — a restricted account (S4e)", () => {
+  it("offers no Follow beside a post, since it cannot follow anyone", async () => {
+    restriction.isRestricted = true;
+    render(<InlineFollow targetUid="maya" targetName="Maya" />);
+    await answer(false);
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(H.follow).not.toHaveBeenCalled();
   });
 });

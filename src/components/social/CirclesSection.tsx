@@ -61,6 +61,9 @@ import {
 } from "@/features/goalSpace/useGoalSpaces";
 import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
+import RestrictedNotice from "./RestrictedNotice";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { showRestrictedToast } from "@/lib/accountRestriction";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -253,6 +256,17 @@ export default function CirclesSection({
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
+
+  /* A restricted account can read its Circles and leave them, but not
+     start, join, check in, back a check-in or share (S4e). The section
+     says so once, at the top; each of those taps says why. */
+  const { isRestricted } = useRestrictedStatus(uid);
+  const refused = (): boolean => {
+    if (!isRestricted) return false;
+    haptic("error");
+    showRestrictedToast();
+    return true;
+  };
 
   /* SOC-P1e — report the ordering state upward (effect-time, latest
      values). */
@@ -548,6 +562,7 @@ export default function CirclesSection({
   };
 
   const create = async () => {
+    if (refused()) return;
     setBusy(true);
     const trimmed = title.trim();
     const res = await createCircle({
@@ -569,6 +584,7 @@ export default function CirclesSection({
   };
 
   const join = async () => {
+    if (refused()) return;
     const raw = joinInput.trim();
     if (!raw) {
       toast.error("Enter your invite code.");
@@ -593,7 +609,7 @@ export default function CirclesSection({
   };
 
   const publish = async (kind: "milestone" | "needs_support") => {
-    if (!detailOf) return;
+    if (!detailOf || refused()) return;
     haptic("light");
     const ok = await publishEvent(detailOf.space.id, kind);
     if (ok) {
@@ -621,7 +637,7 @@ export default function CirclesSection({
   // the sheet timeline can never disagree.
   const submitFocus = async (focus: WeeklyFocus | null) => {
     const target = focusSource === "featured" ? featured : detailOf;
-    if (!target) return;
+    if (!target || refused()) return;
     const spaceId = target.space.id;
     setFocusBusy(true);
     const res = await setWeeklyFocus(spaceId, focus);
@@ -672,7 +688,7 @@ export default function CirclesSection({
   };
 
   const back = async (eventId: string) => {
-    if (!detailOf) return;
+    if (!detailOf || refused()) return;
     haptic("light");
     setBackingId(eventId);
     const res = await backCheckIn(detailOf.space.id, eventId);
@@ -696,6 +712,8 @@ export default function CirclesSection({
   return (
     <div className="space-y-3">
       <SectionHeading>Circles</SectionHeading>
+
+      {isRestricted && <RestrictedNotice />}
 
       {loading && (
         <div
@@ -749,6 +767,7 @@ export default function CirclesSection({
             <Button
               className="flex-1"
               onClick={() => {
+                if (refused()) return;
                 haptic("light");
                 setChooserOpen(true);
               }}
@@ -759,6 +778,7 @@ export default function CirclesSection({
               variant="secondary"
               className="flex-1"
               onClick={() => {
+                if (refused()) return;
                 haptic("light");
                 setShowJoin(true);
               }}
@@ -970,6 +990,7 @@ export default function CirclesSection({
             size="sm"
             className="flex-1"
             onClick={() => {
+              if (refused()) return;
               haptic("light");
               setGoalPrechosen(false); // manual entry — user still picks a goal
               setShowCreate(true);
@@ -982,6 +1003,7 @@ export default function CirclesSection({
             size="sm"
             className="flex-1"
             onClick={() => {
+              if (refused()) return;
               haptic("light");
               setShowJoin(true);
             }}
