@@ -43,6 +43,7 @@ import {
   commitmentDocPath,
 } from "@/lib/nutritionConsistency";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 
 /** Compact segment labels — the card copy above carries the "logging
  *  focus" context, so the control itself stays glanceable at 375px. */
@@ -63,6 +64,9 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   const [intent, setIntent] = useState<NutritionIntent>("log_3_days");
   const [saving, setSaving] = useState(false);
   const { circles, publishEvent } = useGoalSpaces(uid);
+  // A restricted account shares nothing with a Circle (S4e), so the card
+  // keeps its progress and drops the offer.
+  const { isRestricted } = useRestrictedStatus(uid);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +153,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   };
 
   const shareMet = async () => {
-    if (!commitment) return;
+    if (!commitment || isRestricted) return;
     haptic("light");
     const activeCircles = circles.filter((c) => c.space.active);
     const results = await Promise.all(
@@ -256,6 +260,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       </div>
       {progress.met &&
         !commitment.sharedMet &&
+        !isRestricted &&
         circles.some((c) => c.space.active) && (
           <Button
             variant="secondary"

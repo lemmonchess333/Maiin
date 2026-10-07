@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { UserCheck, UserPlus } from "lucide-react";
 import { useFollowState } from "@/hooks/useFollowState";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useUid } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
@@ -19,6 +21,10 @@ import { track as trackSocialEvent } from "@/lib/socialAnalytics";
  * third of the author row there, and the name beside it read "Aleksan…"
  * with its time on two lines; the name is what the row is for. The
  * width is the card's: ActivityCard is the query container.
+ *
+ * Not shown to a restricted account (S4e), which cannot follow anyone: a
+ * notice beside every post would be noise, and the profile's Follow says
+ * why.
  */
 export default function InlineFollow({
   targetUid,
@@ -28,6 +34,7 @@ export default function InlineFollow({
   targetName: string;
 }) {
   const { following, busy, toggle } = useFollowState(targetUid);
+  const { isRestricted } = useRestrictedStatus(useUid() ?? undefined);
   const [followedHere, setFollowedHere] = useState(false);
 
   if (followedHere && following) {
@@ -41,7 +48,7 @@ export default function InlineFollow({
       </span>
     );
   }
-  if (following !== false) return null;
+  if (following !== false || isRestricted) return null;
 
   return (
     <button

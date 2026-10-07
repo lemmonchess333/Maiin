@@ -174,3 +174,17 @@ describe("the mapping tracks the server", () => {
     }
   });
 });
+
+describe("describeJoinRejection — a restricted account (S4e)", () => {
+  it("says the app's one sentence for it, not a guess about the code", () => {
+    // The join gate (functions/index.js goalSpaceCallableGate) refuses a
+    // restricted account before the join path's own refusals can run.
+    expect(
+      describeJoinRejection({
+        code: "functions/permission-denied",
+        message: "Your account is restricted",
+        details: { reason: "account-restricted" },
+      })
+    ).toBe("Your account is restricted, so you can't do this for now.");
+  });
+});

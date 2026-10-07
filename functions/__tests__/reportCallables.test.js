@@ -12,6 +12,8 @@
  *   - resolveReport's Hide content removes each kind of content: an activity
  *     made private, a comment or Space comment deleted with its parent's
  *     count, a space post deleted with its likes and comments.
+ *   - resolveReport's Restrict user writes the restriction, and the
+ *     moderation page's Lift takes it off again (S4e).
  *
  * Firestore is the in-memory double (helpers/memoryFirestore.cjs), put
  * behind `admin.firestore()` for the duration of a test; the rate limiter
@@ -30,7 +32,13 @@ const admin = require("firebase-admin");
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
-const { createReport, listPendingReports, resolveReport } = require("../index");
+const {
+  createReport,
+  listPendingReports,
+  resolveReport,
+  listRestrictedUsers,
+  liftRestriction,
+} = require("../index");
 
 const realIsRateLimited = rateLimiter.isRateLimited;
 const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
@@ -398,5 +406,152 @@ describe("resolveReport — Hide content", () => {
     expect(db.data.get("reports/r1")).not.toHaveProperty("hideOutcome");
     expect(db.data.has(SPACE_COMMENT)).toBe(true);
     expect(db.data.get(SPACE).commentCount).toBe(2);
+  });
+});
+
+describe("resolveReport — Restrict user (S4e)", () => {
+  beforeEach(() => vi.stubEnv("ADMIN_UIDS", "admin-1"));
+
+  it("restricts the reported account with the report, in one write", async () => {
+    const db = useMemoryFirestore({
+      ...spaceCommentSeed(),
+      ...pendingReport("r1", {
+        targetType: "space_post_comment",
+        targetId: "runners:p1:c1",
+        targetUid: "commenter",
+      }),
+    });
+
+    await resolveReport.run(
+      { reportId: "r1", hideActivity: false, restrictUser: true },
+      ADMIN
+    );
+
+    expect(db.data.get("globalRestrictedUids/commenter")).toEqual({
+      uid: "commenter",
+      restrictedAt: "SERVER_TS",
+      restrictionEndsAt: null,
+      strikes: null,
+      lastActionedReport: "r1",
+    });
+    expect(db.data.get("reports/r1")).toMatchObject({
+      status: "resolved",
+      restrictAppliedByAdmin: true,
+      hideAppliedByAdmin: false,
+    });
+    // Restricting is not hiding: the comment stays until it is hidden.
+    expect(db.data.has(SPACE_COMMENT)).toBe(true);
+  });
+
+  it("restricts nobody from a report the server cannot vouch for", async () => {
+    const db = useMemoryFirestore({
+      ...spaceCommentSeed(),
+      "reports/r1": {
+        reporterId: "reporter-1",
+        targetUid: "commenter",
+        status: "pending",
+        createdAt: 1,
+      },
+    });
+
+    await expect(
+      resolveReport.run(
+        { reportId: "r1", hideActivity: false, restrictUser: true },
+        ADMIN
+      )
+    ).rejects.toMatchObject({ code: "failed-precondition" });
+    expect(db.data.has("globalRestrictedUids/commenter")).toBe(false);
+    expect(db.data.get("reports/r1").status).toBe("pending");
+  });
+});
+
+describe("listRestrictedUsers and liftRestriction (S4e)", () => {
+  beforeEach(() => vi.stubEnv("ADMIN_UIDS", "admin-1"));
+
+  const restricted = (uid, report) => ({
+    [`globalRestrictedUids/${uid}`]: {
+      uid,
+      restrictedAt: "SERVER_TS",
+      restrictionEndsAt: null,
+      strikes: null,
+      lastActionedReport: report,
+    },
+  });
+
+  it("lists each restricted account with its name and report", async () => {
+    useMemoryFirestore({
+      ...restricted("u1", "r1"),
+      ...restricted("u2", "r2"),
+      "users/u1/public/profile": { displayName: "Dana" },
+    });
+
+    const { restricted: rows } = await listRestrictedUsers.run({}, ADMIN);
+
+    expect(rows).toEqual([
+      {
+        uid: "u1",
+        displayName: "Dana",
+        restrictedAt: null,
+        lastActionedReport: "r1",
+      },
+      {
+        uid: "u2",
+        displayName: null,
+        restrictedAt: null,
+        lastActionedReport: "r2",
+      },
+    ]);
+  });
+
+  it("lifts a restriction and records who lifted it on its report", async () => {
+    const db = useMemoryFirestore({
+      ...restricted("u1", "r1"),
+      "reports/r1": { status: "resolved", resolvedBy: "admin-2" },
+    });
+
+    await expect(liftRestriction.run({ uid: "u1" }, ADMIN)).resolves.toEqual({
+      ok: true,
+      lifted: true,
+    });
+
+    expect(db.data.has("globalRestrictedUids/u1")).toBe(false);
+    expect(db.data.get("reports/r1")).toEqual({
+      status: "resolved",
+      resolvedBy: "admin-2",
+      restrictionLiftedBy: "admin-1",
+      restrictionLiftedAt: "SERVER_TS",
+    });
+    // A second tap finds nothing to lift and changes nothing.
+    await expect(liftRestriction.run({ uid: "u1" }, ADMIN)).resolves.toEqual({
+      ok: true,
+      lifted: false,
+    });
+  });
+
+  it("still lifts when the report has gone", async () => {
+    const db = useMemoryFirestore(restricted("u1", "r-gone"));
+    await liftRestriction.run({ uid: "u1" }, ADMIN);
+    expect(db.data.has("globalRestrictedUids/u1")).toBe(false);
+    expect(db.data.has("reports/r-gone")).toBe(false);
+  });
+
+  it("refuses anyone but an admin, and a malformed uid", async () => {
+    const db = useMemoryFirestore(restricted("u1", "r1"));
+    const someone = { auth: { uid: "someone" } };
+    await expect(listRestrictedUsers.run({}, someone)).rejects.toMatchObject({
+      code: "permission-denied",
+    });
+    await expect(
+      liftRestriction.run({ uid: "u1" }, someone)
+    ).rejects.toMatchObject({ code: "permission-denied" });
+    await expect(liftRestriction.run({ uid: "u1" }, {})).rejects.toMatchObject({
+      code: "unauthenticated",
+    });
+    for (const uid of ["", " u1", "a/b", "..", 7, undefined]) {
+      await expect(liftRestriction.run({ uid }, ADMIN)).rejects.toMatchObject({
+        code: "invalid-argument",
+      });
+    }
+    expect(db.data.has("globalRestrictedUids/u1")).toBe(true);
   });
 });

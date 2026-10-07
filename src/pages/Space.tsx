@@ -59,6 +59,7 @@ import {
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
@@ -274,7 +275,7 @@ export default function Space() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const def = spaceId ? spaceDef(spaceId) : undefined;
-  const { joined, memberCount, busy, join, leave } =
+  const { joined, memberCount, busy, join, leave, restricted } =
     useSpaceMembership(spaceId);
   const { blocked: blockedUsers } = useBlockedUsers();
   const sessions = useRecentSessions();
@@ -533,6 +534,10 @@ export default function Space() {
 
       <div className="px-4 pt-4 space-y-4">
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
+
+        {/* A restricted account can read a Space and leave it, but not
+            join, post or comment (S4e). */}
+        {restricted && <RestrictedNotice />}
 
         {def.kind === "race" && resolvedEvent && (
           <>

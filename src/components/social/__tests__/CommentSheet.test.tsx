@@ -46,6 +46,10 @@ vi.mock("@/components/social/BlockAwareAvatar", () => ({
   default: () => null,
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -73,6 +77,7 @@ const H = vi.hoisted(() => ({
   }[],
   addComment: vi.fn(),
   deleteComment: vi.fn(),
+  toggleCommentReaction: vi.fn(),
   reportContent: vi.fn(),
   blockUser: vi.fn(),
 }));
@@ -83,7 +88,7 @@ vi.mock("@/lib/socialApi", () => ({
     }),
   addComment: H.addComment,
   deleteComment: H.deleteComment,
-  toggleCommentReaction: vi.fn(),
+  toggleCommentReaction: H.toggleCommentReaction,
   isPermissionDenied: (e: { code?: string }) => e?.code === "permission-denied",
   reportContent: H.reportContent,
   blockUser: H.blockUser,
@@ -95,6 +100,7 @@ afterEach(cleanup);
 beforeEach(() => {
   H.reads = [];
   vi.clearAllMocks();
+  restriction.isRestricted = false;
   B.blocked = new Set<string>();
   B.addBlocked.mockImplementation((uid: string) => B.blocked.add(uid));
   H.reportContent.mockResolvedValue(undefined);
@@ -294,5 +300,75 @@ describe("the word filter", () => {
     });
     expect(toast.error).toHaveBeenCalledWith(OBJECTIONABLE_COMMENT_MESSAGE);
     expect(H.addComment).not.toHaveBeenCalled();
+  });
+});
+
+describe("a restricted account (S4e)", () => {
+  it("reads the thread but cannot comment, and is told why", async () => {
+    restriction.isRestricted = true;
+    await openWith([{ id: "c1", authorId: "priya", text: "Strong finish" }]);
+    expect(screen.getByText("Strong finish")).toBeInTheDocument();
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Contact support" })
+    ).toHaveAttribute("href", expect.stringMatching(/^mailto:support@/));
+    expect(screen.getByLabelText("Add a comment")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+  });
+
+  it("cannot add a reaction, but can take one back", async () => {
+    restriction.isRestricted = true;
+    H.toggleCommentReaction.mockResolvedValue({ reacted: false, count: 0 });
+    await openWith([
+      {
+        id: "c1",
+        authorId: "priya",
+        text: "Strong finish",
+        reactions: { muscle: ["me"] },
+      },
+    ]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Add fire reaction" })
+      );
+    });
+    expect(H.toggleCommentReaction).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(
+      "Your account is restricted, so you can't do this for now.",
+      expect.anything()
+    );
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Remove strong reaction" })
+      );
+    });
+    expect(H.toggleCommentReaction).toHaveBeenCalledWith(
+      "post-1",
+      "c1",
+      "muscle"
+    );
+  });
+
+  it("says so when the server refuses a comment for a restriction", async () => {
+    // Restricted after the sheet opened: the server's refusal is the
+    // first the app hears of it.
+    H.addComment.mockRejectedValue(
+      Object.assign(new Error("restricted"), {
+        code: "functions/permission-denied",
+        details: { reason: "account-restricted" },
+      })
+    );
+    await openWith([]);
+    fireEvent.change(screen.getByLabelText("Add a comment"), {
+      target: { value: "Nice one" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Your account is restricted, so you can't do this for now.",
+      expect.anything()
+    );
   });
 });

@@ -343,6 +343,17 @@ const EXPECTED = {
     maxInstances: 10,
     secrets: [],
   },
+  // S4e: the moderation page's restricted accounts and its Lift.
+  listRestrictedUsers: {
+    kind: "callable",
+    maxInstances: 10,
+    secrets: [],
+  },
+  liftRestriction: {
+    kind: "callable",
+    maxInstances: 10,
+    secrets: [],
+  },
   toggleKudosCallable: {
     kind: "callable",
     maxInstances: 100,

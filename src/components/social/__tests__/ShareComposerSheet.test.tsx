@@ -15,6 +15,10 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/sessionDelete", () => ({ recordSharedActivity: vi.fn() }));
 // The sheet reads the signed-in user for the verified-email gate; a
@@ -271,5 +275,25 @@ describe("drain records the share link", () => {
 
     expect(postActivity).toHaveBeenCalledTimes(1);
     expect(recordSharedActivity).not.toHaveBeenCalled();
+  });
+});
+
+describe("ShareComposerSheet — a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("holds both shares and says why; declining stays open", () => {
+    restriction.isRestricted = true;
+    render(<ShareComposerSheet />);
+    void openSheet();
+    expect(screen.getByText("Your account is restricted")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /share to followers/i })
+    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /make public/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /don't share this one/i })
+    ).not.toBeDisabled();
   });
 });

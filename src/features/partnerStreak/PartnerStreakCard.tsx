@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { useUid } from "@/lib/auth";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { usePartnerStreak } from "./usePartnerStreak";
 
 interface PartnerStreakCardProps {
@@ -23,6 +25,10 @@ interface PartnerStreakCardProps {
  * both partners log on the same day (the activity-persist slice). That
  * is the correct cold state, not a bug — the copy reads "Streak ready"
  * rather than showing a misleading "0 days".
+ *
+ * A restricted account is not offered a new streak (S4e): starting one
+ * reaches the partner, and the rules refuse it. A streak that already
+ * exists still shows, and can still be ended.
  */
 export default function PartnerStreakCard({
   partnerUid,
@@ -30,6 +36,7 @@ export default function PartnerStreakCard({
 }: PartnerStreakCardProps) {
   const { loading, mutualFollow, bond, busy, start, end } =
     usePartnerStreak(partnerUid);
+  const { isRestricted } = useRestrictedStatus(useUid() ?? undefined);
   const [confirming, setConfirming] = useState(false);
 
   // Hidden until eligibility resolves — avoids a flash of the start CTA
@@ -116,7 +123,8 @@ export default function PartnerStreakCard({
     );
   }
 
-  // ---- Eligible, no bond: start CTA ----
+  // ---- Eligible, no bond: start CTA, unless restricted ----
+  if (isRestricted) return null;
   return (
     <div className="flex items-center gap-3 rounded-xl bg-muted p-3">
       <div className="flex size-9 items-center justify-center rounded-lg bg-streak/10">
