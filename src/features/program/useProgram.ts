@@ -9,12 +9,6 @@ import {
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
-import {
-  nextRunWeek,
-  regenerateRacePlan,
-  rollLiftWeeks,
-  rollRunWeeks,
-} from "./weekRollover";
 import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import {
   completeLift,
@@ -82,6 +76,12 @@ import {
   shouldAdvanceWeek,
 } from "./programEngine";
 import { generateWeekPrescription, raceBlockWeek } from "./weekPrescription";
+import {
+  nextRunWeek,
+  regenerateRacePlan,
+  rollLiftWeeks,
+  rollRunWeeks,
+} from "./weekRollover";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { sessionMinutesFor } from "./sessionFit";
