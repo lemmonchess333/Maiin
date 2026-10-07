@@ -5,10 +5,9 @@ The owner delegated the open calls on 2026-10-07, after the verification pass:
 answers, each with its reason and what the run does with it. They are decided:
 the run builds on them and does not ask again.
 
-Each answer becomes a lock row in `.claude/plans/programme-run-followups.md`
-before code relies on it, filed with the lock-decision skill on its own
-`claude/lock-<id>` branch, as CLAUDE.md requires. The run files them first
-(Phase 0). None of them reverses an earlier owner decision.
+They are locked as Pgm7 in `.claude/plans/programme-run-followups.md`
+(lemmonchess333/Maiin#2604, on its own `claude/lock-pgm7` branch, as CLAUDE.md
+requires). None of them reverses an earlier owner decision.
 
 ## The answers
 

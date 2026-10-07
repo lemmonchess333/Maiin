@@ -55,7 +55,7 @@ READ FIRST, before the first edit:
   are decided: build on them, don't ask again.
 - CLAUDE.md; CODING_STANDARDS.md for each area you touch; GLOSSARY.md.
 - .claude/plans/programme-run-followups.md rows Lift1–Lift4, Run9, Run9a,
-  Run10, Run13–Run18, Pgm4–Pgm6 and Time1. Lift4 is the lifting system's
+  Run10, Run13–Run18, Pgm4–Pgm7 and Time1. Lift4 is the lifting system's
   spec.
 - docs/training-programming-claude-handoff.md and the two handoffs it
   indexes (ledgers, non-adoptions, verification matrices).
@@ -119,10 +119,10 @@ STANDING RULES
   any layout change.
 
 ────────────────────────────────────────────────────────────────────────
-PHASE 0 — LOCK THE ANSWERS, CLOSE THE EVIDENCE GAPS
-First, lock owner-answers.md A1–A12 with the lock-decision skill, marked
-"owner-delegated, 2026-10-07", and append the ADR-0010 addendum it records if
-it is not on main yet.
+PHASE 0 — CLOSE THE EVIDENCE GAPS
+owner-answers.md A1–A12 are locked as Pgm7 (lemmonchess333/Maiin#2604). If
+the Pgm7 row is not on main yet, build on that PR and say so; never re-lock
+them. The ADR-0010 addendum they record is in #2601.
 The evidence was read against its primary sources on 2026-10-07. Done:
 Pelland 2025's curves, counting comparison and frequency slopes; Nuzzo 2024;
 Latella 2020; Steele 2023; Frandsen 2025's full text; Daniels' caps; the
