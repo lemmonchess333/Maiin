@@ -9,6 +9,16 @@ here and must never be committed.
 > material, not a lock. Verification status, corrections and read order:
 > [README.md](README.md).
 
+The coach's claims carry no marker: they are his. The research notes added
+against them on 2026-10-07 carry these markers:
+
+- [VF] — checked against the full text on 2026-10-07.
+- [VA] — checked against the abstract, or the book or web page itself, on
+  2026-10-07.
+- [U] — the source was identified, but this claim could not be checked.
+- [R] — still not identified or not checked; do not encode it.
+- [C] — computed from the cited sources' figures, not stated in them.
+
 ## Source identity
 
 | ID       | Author / channel                                                                  | Title (as supplied)                                                             | Format                                 | Locator                                        | Received   |
@@ -30,9 +40,9 @@ fitnessvolt.com/sebastian-oreb-400kg-squat). Video URLs: ask the owner.
 Population/context: an elite-level coach (best raw squat ~320 kg paused, 250 kg
 bench at 116 kg bodyweight) describing how he coaches recreational and
 competitive lifters, mostly men of 80–100 kg, toward barbell milestones. It is
-COACHING CONVENTION backed by long practice, with one research citation that
-needs checking (OREB-07). Weight it as expert opinion: strong on structure and
-sequencing, weak as proof of rates or of injury mechanisms.
+COACHING CONVENTION backed by long practice, with one research citation,
+checked 2026-10-07 (OREB-07). Weight it as expert opinion: strong on structure
+and sequencing, weak as proof of rates or of injury mechanisms.
 
 Chapter locators. OREB-SQ: 0:01 the goal · 2:50 "strong" is relative · 6:07
 heel-elevated "stiletto" squats · 10:05 high bar vs low bar · 16:56 heavy single
@@ -94,9 +104,45 @@ shoulders. (SQ 26:24; BP 17:56, 38:35–42:34)
 per week suits most lifters; ~6 can be enough for very demanding lifts or
 elite lifters. Per session on a big lift, 4–6 working sets (advanced ≈ 4).
 Hypertrophy: the commonly cited 10–20 sets per muscle per week. He attributes
-the strength range to "Dr. Rhea and colleagues, 2014" — probably the
-Rhea / Peterson dose-response meta-analyses of 2003–2005; VERIFY against the
-lifting research before citing. (SQ 28:48)
+the strength range to "Dr. Rhea and colleagues, 2014" (in OREB-27, "around
+2009"). (SQ 28:48)
+
+Checked 2026-10-07: PubMed lists no Rhea dose-response paper from 2009 or
+2014 [VA]. The range matches the Arizona State meta-analyses:
+
+- Rhea et al. 2003, _MSSE_ 35(3):456–64,
+  doi:10.1249/01.MSS.0000053727.63505.D4 [VF]. 140 studies, 1,433 effect
+  sizes. The largest mean gains came from 4 sets per muscle group: 3 days a
+  week at 60% of 1RM for the untrained, 2 days at 80% for the trained (at
+  least a year of training).
+- Peterson, Rhea & Alvar 2004, _JSCR_ 18(2):377–82, doi:10.1519/R-12842.1
+  [VF]. 37 studies of athletes: 8 sets per muscle group, 2 days a week, 85% of
+  1RM.
+- Peterson, Rhea & Alvar 2005, _JSCR_ 19(4):950–8, doi:10.1519/R-16874.1
+  [VF]: a review that applies both (177 studies, 1,803 effect sizes).
+
+They counted sets per muscle group per workout, not per week [VF]. 4 sets ×
+2–3 days gives 8–12 a week, which is his range. Athletes: 8 × 2 = 16 [C].
+
+Three cautions:
+
+- The unit is the muscle group, not the movement pattern.
+- The optimum is where pooled, uncontrolled pre–post effect sizes peaked. The
+  data are thin at the top [VF]. In trained lifters the effect size was 0.47
+  at 1 set, 1.0 at 3, 1.17 at 4 (from only 12 effect sizes) and 1.15 at 5.
+- Later work flattens the curve. 2–3 sets per exercise beat 1, and 4–6 were no
+  better (Krieger 2009, _JSCR_ 23(6):1890–901,
+  doi:10.1519/JSC.0b013e3181b370be [VA]; possibly his "around 2009"). Ralston
+  2017 counted per exercise per week: 5–9 or ≥10 sets beat ≤5 only by a
+  trivial margin (ES 0.15 and 0.18; doi:10.1007/s40279-017-0762-7 [VF]).
+  ACSM 2026 says 2–3 sets a session at ≥80% of 1RM, at least twice a week
+  (doi:10.1249/MSS.0000000000003897 [VF]).
+
+Verdict: 6–12 sets per pattern a week is a sound working range, not a
+measured optimum. The per-pattern unit is his own. The nearest published
+equivalent is ACSM 2026's four to six regions: upper and lower body, push and
+pull, with upper-body push and pull optionally split into horizontal and
+vertical [VF].
 
 **OREB-08 — Frequency and heavy days.** Squat about twice a week for most
 people. Pressing 3 times a week while building strength (not all bench: one
@@ -235,13 +281,13 @@ that makes them "junk volume". Two a week is his default; three adds little.
 **OREB-27 — Start volume low, add it when progress stalls.** Hypertrophy:
 10–20 hard sets per muscle per week (warm-ups don't count) — start near 10 and
 add sets (12, 14 …) as the lever when a muscle plateaus. Strength: 6–12 sets per
-MOVEMENT PATTERN per week (he now dates the Rhea citation "around 2009" —
-still unverified). Volume load matters: the stronger the lifter, the longer the
-rest between sets and between sessions for the same sets × reps. In practice
-he builds a session (main lift, a complementary second lift, a low-cost third
-for arms or joint health — rotator cuff, serratus, core, hips) to fit about an
-hour rather than counting sets; main-lift top sets run 3–5 for a beginner,
-1–2 for a very strong lifter. (SPL 6:33–9:46, 13:00–16:00)
+MOVEMENT PATTERN per week (he dates the Rhea citation "around 2009"; see
+OREB-07 for the papers). Volume load matters: the stronger the lifter, the
+longer the rest between sets and between sessions for the same sets × reps. In
+practice he builds a session (main lift, a complementary second lift, a
+low-cost third for arms or joint health — rotator cuff, serratus, core, hips)
+to fit about an hour rather than counting sets; main-lift top sets run 3–5 for
+a beginner, 1–2 for a very strong lifter. (SPL 6:33–9:46, 13:00–16:00)
 
 **OREB-28 — Diminishing returns are still returns.** The first set of an
 exercise returns the most, each extra set less; elite lifters accept small
@@ -396,9 +442,31 @@ fly is autoregulation. (ROT 6:03–14:20, 16:38–18:20)
 2RM ≈ 96%, 3RM ≈ 92%, 4RM ≈ 88%, 5RM ≈ 84%, 6RM ≈ 80%; it drifts by 7–8 reps
 and is unreliable at 10+, where people differ widely. Dropping two reps ≈ +8%.
 Round every jump to the plates a gym really has: 2.5 kg steps (1.25 kg a
-side); fractional plates are rare. (ROT 19:05–25:09) NOTE: more conservative
-than Epley/Brzycki at 6 reps (≈ 83%) — reconcile with the reps-at-%1RM
-meta-regression in the lifting research before using any table.
+side); fractional plates are rare. (ROT 19:05–25:09)
+
+Against the research, checked 2026-10-07 (the full reps-at-%1RM tables are in
+[lifting-evidence.md](lifting-evidence.md) §2.15):
+
+- His table is clearly steeper than lab sets to failure. From 1 to 6 reps it
+  drops 20 points of 1RM. Nuzzo et al. 2024's meta-regression (_Sports Med_
+  54(2):303–321, doi:10.1007/s40279-023-01937-7 [VF]) drops 12.6 points on its
+  main table and 14.5 on the bench press; Epley drops 16.7 and Brzycki 13.9 [C].
+- In the lab data a rep costs about 2.5% of 1RM from 2 to 6 reps, and about 2%
+  from 6 to 10 [C]. Nuzzo's tables stop at 95% of 1RM, so the 2-rep loads
+  behind the first figure assume a bridge to 1 rep at 100%.
+- At 6 reps, Epley gives 83.3% and Brzycki 86.1% [C]. His 80% sits below
+  both.
+- At 80% of 1RM the average lifter reaches 8.8 reps on the bench press and 9.8
+  on other lifts [VF]. So his 6RM load, used as a working load, leaves about
+  3–4 reps in reserve on average [C]. That fits OREB-47.
+- Dropping from 6 reps to 4 adds about 6% to the load in the lab data and in
+  Epley (5.6–6.0%) [C]. His own table adds 10% (80% to 88% of 1RM, the 8
+  points he calls +8%) [C].
+- Of the curves compared, his sits closest to Marzagao 2026's curve fitted to
+  app logs, at heavy barbell loads (arXiv:2603.17495, a preprint [VF]). At a
+  100 kg load it gives 94.9, 91.1, 87.9, 85.1 and 82.5% of 1RM for 2 to 6 reps
+  [C]. That curve was fitted for consistency across logged sets, not checked
+  against tested maxima [VF].
 
 **OREB-46 — Structure before intuition.** Beginners should follow a written
 structure: "how you feel is a lie" — a bad-feeling day can go well and a
@@ -441,35 +509,35 @@ and surgery is clinical territory, outside what the app should advise).
 
 ## Against Lift4 (the locked lifting system, built in #2593)
 
-| Lift4 clause                                                                                        | Oreb says                                                                                                                                          | Reading                                                                                                                                                                  |
-| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| (9) No lighter weeks for beginners or 1–2-day plans                                                 | No planned deloads in year 1 (OREB-03)                                                                                                             | AGREES                                                                                                                                                                   |
-| (9) Lighter week = half the working sets, same weights, every 4th trained week, intermediates+      | After ~a year, halve the sets on week 4 (OREB-03)                                                                                                  | AGREES on the recipe; DIFFERS on effort — Lift4's lighter week is "comfortably easy", Oreb's week 4 is the hardest week at half volume                                   |
-| (5) Effort cue: 2 reps to spare on compounds, last set to the limit on isolations/machines          | Failure on machines/dumbbells, not barbells (OREB-06)                                                                                              | AGREES on where failure belongs; DIFFERS in that Lift4's effort is constant, Oreb's climbs 7 → 8 → 9 → 10 every 4 weeks (OREB-02)                                        |
-| (5) Get stronger: fixed reps such as 4 × 5 on main lifts, all year                                  | Rep phases 10s → 8s → 5s → peak (OREB-04)                                                                                                          | GAP: no phase progression of rep targets on the strength goal                                                                                                            |
-| (12) Blocks are 4, 8 or 12 weeks                                                                    | 16-week macrocycles of 4-week phases, a test 2–3×/year (OREB-04)                                                                                   | GAP: no peak, no test, no heavy-single practice (OREB-05)                                                                                                                |
-| (5) Warm-up: today's ramp plus 85% × 2 before sets of ≤ 6 reps                                      | Heavy singles as skill practice before a test (OREB-05)                                                                                            | PARTIAL: the primer exists; heavy-single practice and a test do not                                                                                                      |
-| (2) Never swaps an exercise on its own; (13) retires accessory rotation                             | Planned variation of main lifts by phase, narrowing to the tested lift (OREB-09)                                                                   | TENSION: planned rotation is plan design, not a swap — but Lift4 routes plan changes through a yes; would need an owner call                                             |
-| (5) Every muscle at least twice a week                                                              | Squat 2×, press 3× while building, ≤ 1 heavy session per lift per week (OREB-08)                                                                   | CHECK in the engine audit how often each main lift actually recurs per goal                                                                                              |
-| (5) Sets: 3 default, 4 on strength main lifts from intermediate                                     | 4–6 sets per big-lift session; 8–12 sets per pattern per week (OREB-07)                                                                            | CHECK weekly sets per pattern in generated plans                                                                                                                         |
-| (4) Goals as dials; "Lose fat" = Build muscle + a cut                                               | No deficit when strength is the goal (OREB-01)                                                                                                     | CHECK the nutrition coupling for Get stronger; the simulation should model energy balance                                                                                |
-| —                                                                                                   | Pair each press with a pull, supersetted (OREB-11)                                                                                                 | OPPORTUNITY for time-limited plans (30–45 min) — verify against the superset evidence before proposing                                                                   |
-| —                                                                                                   | Milestones and timelines by bodyweight (OREB-13)                                                                                                   | OPPORTUNITY: a lift target ("+10 kg on my bench by June") with an honest forecast; the owner's own example goal                                                          |
-| (5) Straight sets; "a top set and back-offs are logged, not prescribed"                             | Top set + back-offs (OREB-21), top set + less-loadable variation for strong lifters near a peak (OREB-36)                                          | GAP for strength users; owner call                                                                                                                                       |
-| (5) Ranges by role are constant all year (Build muscle 6–10 / 8–12 / 10–15)                         | Alternate accumulation and intensification monthly (OREB-19) or run a linear phase sequence (OREB-04); accessories keep their own ranges (OREB-22) | GAP: no phase structure on any goal; the accessory half already matches (Lift4's calves / side delts / abs 12–20)                                                        |
-| (5) Every muscle at least twice a week on 2+ days; the once-a-week Bro Split retires                | 2× per muscle mainly for set quality; bro split works but is worse (OREB-26, OREB-29)                                                              | AGREES                                                                                                                                                                   |
-| (5) The plan is built to fit the session length                                                     | He builds sessions to about an hour, not to a set count (OREB-27)                                                                                  | AGREES                                                                                                                                                                   |
-| (5) Effort cue constant across plans                                                                | 2-day plans should train closer to failure; higher frequency, lower effort (OREB-25)                                                               | GAP: effort does not scale with frequency                                                                                                                                |
-| (7)/(3) A stuck lift gets nothing said; the sheet says "a variation often gets it moving"           | Add sets (10 → 12 → 14 per muscle) when a muscle stalls (OREB-27)                                                                                  | DIFFERENT LEVER: volume progression on a plateau; owner call                                                                                                             |
-| (6) Rest by role (heavy main ≤ 6 reps 3 min …)                                                      | Rest and session spacing grow with ABSOLUTE strength (OREB-27, OREB-30)                                                                            | CHECK: rest scales with the role, not with the load lifted                                                                                                               |
-| (11) The session order carries over; no weekday pinning                                             | "I don't think of the calendar week" — just alternate upper and lower (OREB-41)                                                                    | AGREES                                                                                                                                                                   |
-| (5) Every exercise records its role (main, other compound, isolation)                               | Main → complementary secondary(ies) → low-cost ancillary, difficulty falling (OREB-33–35)                                                          | AGREES in structure; CHECK the generator for redundant pairs and for order                                                                                               |
-| (4) No per-muscle priority beyond the goal                                                          | Emphasis as a stated preference (e.g. lower-body emphasis), never a sex rule (OREB-31)                                                             | OPPORTUNITY, and LIFT-EV-07 fences sex-based programming — the emphasis must be the person's choice                                                                      |
-| ADR-0010 set counting                                                                               | Warm-up drills never count as training volume (OREB-35)                                                                                            | CHECK how warm-up sets and ramps are excluded from the weekly volume card                                                                                                |
-| (6) One visible rule: weight steps up when every set hits target; fixed reps on strength main lifts | Rotary waves: the main lift's rep target falls every week (10-8-6 … 5-3-1) and the load rises ~4% per rep dropped (OREB-44, OREB-45)               | ALTERNATIVE strength model, explainable in one line ("fewer reps this week, more weight"); owner call. The load-per-rep table must be reconciled with the research first |
-| (6) Steps follow the equipment (2.5 kg barbell; 1.25 kg with small plates)                          | Round every jump to the plates a gym really has (OREB-45)                                                                                          | AGREES                                                                                                                                                                   |
-| (6) Optional per-set effort row; no "how do you feel" check                                         | Beginners follow structure; feel is unreliable; autoregulate with experience (OREB-46)                                                             | AGREES                                                                                                                                                                   |
-| (5) Rest by role, a fixed rest option in Workout preferences                                        | Rest fully on heavy main lifts (minutes, scaling with strength); superset accessories (OREB-48)                                                    | CHECK: does any plan superset? does rest scale beyond the role?                                                                                                          |
+| Lift4 clause                                                                                        | Oreb says                                                                                                                                          | Reading                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (9) No lighter weeks for beginners or 1–2-day plans                                                 | No planned deloads in year 1 (OREB-03)                                                                                                             | AGREES                                                                                                                                                                                                                                                                                            |
+| (9) Lighter week = half the working sets, same weights, every 4th trained week, intermediates+      | After ~a year, halve the sets on week 4 (OREB-03)                                                                                                  | AGREES on the recipe; DIFFERS on effort — Lift4's lighter week is "comfortably easy", Oreb's week 4 is the hardest week at half volume                                                                                                                                                            |
+| (5) Effort cue: 2 reps to spare on compounds, last set to the limit on isolations/machines          | Failure on machines/dumbbells, not barbells (OREB-06)                                                                                              | AGREES on where failure belongs; DIFFERS in that Lift4's effort is constant, Oreb's climbs 7 → 8 → 9 → 10 every 4 weeks (OREB-02)                                                                                                                                                                 |
+| (5) Get stronger: fixed reps such as 4 × 5 on main lifts, all year                                  | Rep phases 10s → 8s → 5s → peak (OREB-04)                                                                                                          | GAP: no phase progression of rep targets on the strength goal                                                                                                                                                                                                                                     |
+| (12) Blocks are 4, 8 or 12 weeks                                                                    | 16-week macrocycles of 4-week phases, a test 2–3×/year (OREB-04)                                                                                   | GAP: no peak, no test, no heavy-single practice (OREB-05)                                                                                                                                                                                                                                         |
+| (5) Warm-up: today's ramp plus 85% × 2 before sets of ≤ 6 reps                                      | Heavy singles as skill practice before a test (OREB-05)                                                                                            | PARTIAL: the primer exists; heavy-single practice and a test do not                                                                                                                                                                                                                               |
+| (2) Never swaps an exercise on its own; (13) retires accessory rotation                             | Planned variation of main lifts by phase, narrowing to the tested lift (OREB-09)                                                                   | TENSION: planned rotation is plan design, not a swap — but Lift4 routes plan changes through a yes; would need an owner call                                                                                                                                                                      |
+| (5) Every muscle at least twice a week                                                              | Squat 2×, press 3× while building, ≤ 1 heavy session per lift per week (OREB-08)                                                                   | CHECK in the engine audit how often each main lift actually recurs per goal                                                                                                                                                                                                                       |
+| (5) Sets: 3 default, 4 on strength main lifts from intermediate                                     | 4–6 sets per big-lift session; 8–12 sets per pattern per week (OREB-07)                                                                            | CHECK weekly sets per pattern in generated plans. The pattern is his unit; the papers behind his range count sets per muscle group (OREB-07)                                                                                                                                                      |
+| (4) Goals as dials; "Lose fat" = Build muscle + a cut                                               | No deficit when strength is the goal (OREB-01)                                                                                                     | CHECK the nutrition coupling for Get stronger; the simulation should model energy balance                                                                                                                                                                                                         |
+| —                                                                                                   | Pair each press with a pull, supersetted (OREB-11)                                                                                                 | OPPORTUNITY for time-limited plans (30–45 min) — verify against the superset evidence before proposing                                                                                                                                                                                            |
+| —                                                                                                   | Milestones and timelines by bodyweight (OREB-13)                                                                                                   | OPPORTUNITY: a lift target ("+10 kg on my bench by June") with an honest forecast; the owner's own example goal                                                                                                                                                                                   |
+| (5) Straight sets; "a top set and back-offs are logged, not prescribed"                             | Top set + back-offs (OREB-21), top set + less-loadable variation for strong lifters near a peak (OREB-36)                                          | GAP for strength users; owner call                                                                                                                                                                                                                                                                |
+| (5) Ranges by role are constant all year (Build muscle 6–10 / 8–12 / 10–15)                         | Alternate accumulation and intensification monthly (OREB-19) or run a linear phase sequence (OREB-04); accessories keep their own ranges (OREB-22) | GAP: no phase structure on any goal; the accessory half already matches (Lift4's calves / side delts / abs 12–20)                                                                                                                                                                                 |
+| (5) Every muscle at least twice a week on 2+ days; the once-a-week Bro Split retires                | 2× per muscle mainly for set quality; bro split works but is worse (OREB-26, OREB-29)                                                              | AGREES                                                                                                                                                                                                                                                                                            |
+| (5) The plan is built to fit the session length                                                     | He builds sessions to about an hour, not to a set count (OREB-27)                                                                                  | AGREES                                                                                                                                                                                                                                                                                            |
+| (5) Effort cue constant across plans                                                                | 2-day plans should train closer to failure; higher frequency, lower effort (OREB-25)                                                               | GAP: effort does not scale with frequency                                                                                                                                                                                                                                                         |
+| (7)/(3) A stuck lift gets nothing said; the sheet says "a variation often gets it moving"           | Add sets (10 → 12 → 14 per muscle) when a muscle stalls (OREB-27)                                                                                  | DIFFERENT LEVER: volume progression on a plateau; owner call                                                                                                                                                                                                                                      |
+| (6) Rest by role (heavy main ≤ 6 reps 3 min …)                                                      | Rest and session spacing grow with ABSOLUTE strength (OREB-27, OREB-30)                                                                            | CHECK: rest scales with the role, not with the load lifted                                                                                                                                                                                                                                        |
+| (11) The session order carries over; no weekday pinning                                             | "I don't think of the calendar week" — just alternate upper and lower (OREB-41)                                                                    | AGREES                                                                                                                                                                                                                                                                                            |
+| (5) Every exercise records its role (main, other compound, isolation)                               | Main → complementary secondary(ies) → low-cost ancillary, difficulty falling (OREB-33–35)                                                          | AGREES in structure; CHECK the generator for redundant pairs and for order                                                                                                                                                                                                                        |
+| (4) No per-muscle priority beyond the goal                                                          | Emphasis as a stated preference (e.g. lower-body emphasis), never a sex rule (OREB-31)                                                             | OPPORTUNITY, and LIFT-EV-07 fences sex-based programming — the emphasis must be the person's choice                                                                                                                                                                                               |
+| ADR-0010 set counting                                                                               | Warm-up drills never count as training volume (OREB-35)                                                                                            | CHECK how warm-up sets and ramps are excluded from the weekly volume card                                                                                                                                                                                                                         |
+| (6) One visible rule: weight steps up when every set hits target; fixed reps on strength main lifts | Rotary waves: the main lift's rep target falls every week (10-8-6 … 5-3-1) and the load rises ~4% per rep dropped (OREB-44, OREB-45)               | ALTERNATIVE strength model, explainable in one line ("fewer reps this week, more weight"); owner call. His ~4% per rep is steeper than lab sets to failure (about 2.5% a rep from 2 to 6 reps), and his 6RM load leaves about 3–4 reps in reserve (OREB-45); the step per rep is part of the call |
+| (6) Steps follow the equipment (2.5 kg barbell; 1.25 kg with small plates)                          | Round every jump to the plates a gym really has (OREB-45)                                                                                          | AGREES                                                                                                                                                                                                                                                                                            |
+| (6) Optional per-set effort row; no "how do you feel" check                                         | Beginners follow structure; feel is unreliable; autoregulate with experience (OREB-46)                                                             | AGREES                                                                                                                                                                                                                                                                                            |
+| (5) Rest by role, a fixed rest option in Workout preferences                                        | Rest fully on heavy main lifts (minutes, scaling with strength); superset accessories (OREB-48)                                                    | CHECK: does any plan superset? does rest scale beyond the role?                                                                                                                                                                                                                                   |
 
 ## Generator checks these sources imply (for the generator audit and the simulation)
 
@@ -489,7 +557,9 @@ failing check is a finding for the owner, not an automatic fix.
    a week where days allow (the PPL ×1 failure mode); deadlift heavy ≤ 1×/week.
 5. Volume: hard sets per muscle per week land in ~10–20 for hypertrophy goals
    and ~6–12 per movement pattern for strength goals, given the days and time;
-   warm-ups excluded.
+   warm-ups excluded. The strength band and its per-pattern unit are his; the
+   papers behind his citation give 8–12 sets per muscle group a week, 16 for
+   athletes (OREB-07).
 6. Two-day plans: whole body both days, the two days varied in pattern
    (vertical vs horizontal push; knee vs hip dominant), compounds prioritised.
 
@@ -503,8 +573,13 @@ failing check is a finding for the owner, not an automatic fix.
   recent low-rep exposure; e1RM from high-rep sets is a biased predictor);
   per-set effort (reps in reserve) feeding both stimulus and fatigue; bodyweight
   and sex scaling; an energy-balance modifier; a training-age decay of gain
-  rate; a fatigue state that effort waves and lighter weeks dissipate; and RIR
-  misjudgment noise if any RPE-driven option is simulated.
+  rate; a fatigue state that effort waves and lighter weeks dissipate; and, if
+  any RPE-driven option is simulated, RIR misjudgment as a stable personal
+  bias, not set-to-set noise. Halperin 2022 (_Sports Med_ 52(2):377–390,
+  doi:10.1007/s40279-021-01559-x [VA]): people under-predict the reps they
+  have left by 0.95 on average, with a between-person SD of 1.45 reps;
+  set-to-set noise is not quantified (see
+  [lifting-evidence.md](lifting-evidence.md) §4.4).
 - A head-to-head the owner will care about: Lift4's Get stronger as built vs an
   Oreb-style strength track (effort waves, rep phases, 16-week cycle with
   heavy singles and a test) — reported as RANGES across model variants, never
