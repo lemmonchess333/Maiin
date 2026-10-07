@@ -487,6 +487,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
     sha256: "17e58c8d8529b533bdd5b520c649e5baf621119465676b5bcb4a4add233b3ea8",
   },
+  "hip-adduction-machine": {
+    src: "form-art/hip-adduction-machine.webp",
+    width: 480,
+    height: 429,
+    keyed: true,
+    source: "form-frames/hip-adduction-machine/1.webp",
+    sourceSha256:
+      "41f33486badb636550846805c1719f8e687704f2abea31642b5315b104351aee",
+    sha256: "7afb81357370a581eb5b7e8226ec6db88e4ec060826b2a76c4615382e4a9b3de",
+  },
   "incline-bench": {
     src: "form-art/incline-bench.webp",
     width: 480,

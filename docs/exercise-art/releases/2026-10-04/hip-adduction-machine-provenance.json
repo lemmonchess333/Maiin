@@ -1,0 +1,237 @@
+{
+  "generator": "Built-in imagegen grounded master and poses; common crop/padding and authorized stationary grip/cap copies",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "groundedWide": "09abd482-8638-455b-9286-2f4ffb78d0cc",
+    "neutralCleanup": "561dc542-090f-4931-8000-fe802231c650",
+    "master": "2c8ea1d3-c422-4a1e-b8c5-2d94dbdc64ab",
+    "middle": "cfb58ddc-f0d9-44e6-bab4-3408a6eb8dc8",
+    "middleMuscleCleanup": "bb94877e-5e3d-4201-a880-088f9851ea6d",
+    "closed": "3450754f-a653-4b10-8d22-7bbc603428b3"
+  },
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "bd643625391f94f1025fa86fad5045974a9380a26d1168857d27d7d83e6787ed"
+    },
+    {
+      "file": "originals/2-middle-clean.png",
+      "sha256": "027f1fe60232f797d5f42eb859a23d8797fe30808f54417e87eef611b1eab5ea"
+    },
+    {
+      "file": "originals/3-closed.png",
+      "sha256": "0bcc5fa25d87f1f8090f0b4c48d61c4a9d4d2519291e55f001121618814371b4"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "18bd303b671a10040b103a3283ce4489e40e48ee7e78999c7ed8b3dcc8138bd1"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "a1d82ab0735d002a9db48817be44257d53aea2cb16cb9de4dfebb9612a8ce59c"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "98a85da991d3b0e9bb20c592ee6b39a4052561245bdb28ca68588fdd7e153593"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "98a85da991d3b0e9bb20c592ee6b39a4052561245bdb28ca68588fdd7e153593"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "a1d82ab0735d002a9db48817be44257d53aea2cb16cb9de4dfebb9612a8ce59c"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "18bd303b671a10040b103a3283ce4489e40e48ee7e78999c7ed8b3dcc8138bd1"
+    }
+  ],
+  "framing": {
+    "files": ["1-master.png", "2-middle-clean.png", "3-closed.png"],
+    "sequence": [1, 2, 3, 3, 2, 1],
+    "contacts": [
+      {
+        "left": 300,
+        "top": 275,
+        "width": 80,
+        "height": 90
+      },
+      {
+        "left": 780,
+        "top": 275,
+        "width": 90,
+        "height": 90
+      },
+      {
+        "left": 320,
+        "top": 245,
+        "width": 50,
+        "height": 30
+      },
+      {
+        "left": 810,
+        "top": 245,
+        "width": 50,
+        "height": 30
+      }
+    ],
+    "crop": {
+      "left": 170,
+      "top": 0,
+      "width": 1170,
+      "height": 1024
+    },
+    "padding": {
+      "left": 24,
+      "right": 24,
+      "top": 32,
+      "bottom": 24
+    },
+    "scope": "Common crop/padding and authorized stationary grip-contact copies only; no moving anatomy or equipment transformations."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "18bd303b671a10040b103a3283ce4489e40e48ee7e78999c7ed8b3dcc8138bd1"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "a1d82ab0735d002a9db48817be44257d53aea2cb16cb9de4dfebb9612a8ce59c"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "98a85da991d3b0e9bb20c592ee6b39a4052561245bdb28ca68588fdd7e153593"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "98a85da991d3b0e9bb20c592ee6b39a4052561245bdb28ca68588fdd7e153593"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "a1d82ab0735d002a9db48817be44257d53aea2cb16cb9de4dfebb9612a8ce59c"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      },
+      "sha256": "18bd303b671a10040b103a3283ce4489e40e48ee7e78999c7ed8b3dcc8138bd1"
+    }
+  ],
+  "stationaryCopies": [
+    {
+      "left": 300,
+      "top": 275,
+      "width": 80,
+      "height": 90
+    },
+    {
+      "left": 780,
+      "top": 275,
+      "width": 90,
+      "height": 90
+    },
+    {
+      "left": 320,
+      "top": 245,
+      "width": 50,
+      "height": 30
+    },
+    {
+      "left": 810,
+      "top": 245,
+      "width": 50,
+      "height": 30
+    }
+  ],
+  "losslessPixelsVerified": true,
+  "preservedLegacy": {
+    "file": "originals/legacy-1.png",
+    "sha256": "467ed14e4f4ad3182772b516531a6ec8a4b4090af563938bec4a05cf0d531f57"
+  }
+}

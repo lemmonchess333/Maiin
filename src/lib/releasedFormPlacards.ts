@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "hip-adduction-machine": placard(
+    "hip-adduction-machine",
+    ["Adductors"],
+    ["Glutes"],
+    [
+      [0, "Wide", "Keep your back against the pad."],
+      [0.6, "Close", "Squeeze your knees inward under control."],
+      [1, "Squeeze", "Bring the pads together without bouncing."],
+      [1, "Hold", "Hold the squeeze with your core braced."],
+      [0.6, "Open", "Return slowly to the wide position."],
+      [0, "Reset", "Keep tension before the next repetition."],
+    ]
+  ),
   "db-rdl": placard(
     "db-rdl",
     ["Hamstrings"],
