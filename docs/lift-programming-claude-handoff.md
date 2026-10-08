@@ -257,6 +257,20 @@ level change lands on the same sessions), and both copies of
 `represcribeWorkouts` read it. A plan built before has none: its roles come
 from the positions, as before, and are kept from its first block.
 
+STATUS 2026-10-08 (Lift4 (12), the level change): a level change sets how the
+main lifts progress, on the plan the person has (`represcribeMainLifts`, run
+by the settings save's `buildPlan`). Each main lift takes the new level's
+numbers from the role table, a beginner's one target or everyone else's
+range, with its session's heavier or lighter shift where the level brings
+one, as the generator gives a lifter at that level. A main lift whose numbers
+stay the same keeps everything, its climb included; the other lifts, every
+lift's sets and the exercises stay. The lifts are set for the focus the
+sessions already follow, a block's while one runs. Settings' confirm says
+"Your main lifts take the targets for your new level.", and the level
+suggestion says what changes for the person's goal: a range of reps and
+heavier and lighter days for Build muscle and General fitness, the heavier
+and lighter days alone for Get stronger and Support my running.
+
 STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
 session length. A new plan's sessions are cut to the minutes the person has
 (`sessionFit.ts`; an hour when the question was never answered), priced with
