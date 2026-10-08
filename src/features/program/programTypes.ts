@@ -973,7 +973,7 @@ export interface WeeklyPrescription {
  * crypto.randomUUID; falls back to a timestamp+random token in environments
  * without it (older WebViews / jsdom without the global).
  */
-export function generateInstanceId(): string {
+function randomInstanceId(): string {
   if (
     typeof crypto !== "undefined" &&
     typeof crypto.randomUUID === "function"
@@ -983,6 +983,26 @@ export function generateInstanceId(): string {
   return `ex_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 10)}`;
+}
+
+let instanceIdSource: () => string = randomInstanceId;
+
+export function generateInstanceId(): string {
+  return instanceIdSource();
+}
+
+/**
+ * Swap where new instance ids come from — tests and the simulator only, so
+ * two builds of the same plan come out identical (`src/test/instanceIds.ts`).
+ * Returns a function that puts the previous source back; `null` restores the
+ * random default.
+ */
+export function setInstanceIdSource(source: (() => string) | null): () => void {
+  const previous = instanceIdSource;
+  instanceIdSource = source ?? randomInstanceId;
+  return () => {
+    instanceIdSource = previous;
+  };
 }
 
 /**
