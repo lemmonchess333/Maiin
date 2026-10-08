@@ -76,34 +76,48 @@ a draft PR with a red test first.
 | A plan made mid-week plans no run before that day                                   | F16; Run19            | lemmonchess333/Maiin#2636 (lock lemmonchess333/Maiin#2634)   |
 | Home shows a run on the date the plan holds it                                      | F14, F21; ADR-0002    | lemmonchess333/Maiin#2637                                    |
 | A race plan needs at least two run days a week                                      | A7; audit §7 item 11  | lemmonchess333/Maiin#2638                                    |
-| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3 | `claude/run-easy-runs-carry-their-time`                      |
+| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3 | lemmonchess333/Maiin#2639                                    |
+| The taper's session is placed like every quality run                                | R10; RUN-EV-10        | lemmonchess333/Maiin#2642                                    |
+| The copy that was wrong today                                                       | R12                   | lemmonchess333/Maiin#2641                                    |
 | The rest-day card and the usual-meal row fit at large text                          | #2612's capture run   | lemmonchess333/Maiin#2631                                    |
 
 The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 #2609, #2615, #2616 and #2618.
 
+### Answered, locked and built
+
+| What                                                                 | Answer         | PR                        |
+| -------------------------------------------------------------------- | -------------- | ------------------------- |
+| A tempo and intervals say how they feel until there's a pace to give | R2; Run20 (1)  | lemmonchess333/Maiin#2643 |
+| A medium-long run of an hour or more isn't put beside a hard day     | R9; Run20 (3)  | lemmonchess333/Maiin#2644 |
+| The quality ladder starts at its first rung                          | R13; Run20 (4) | lemmonchess333/Maiin#2645 |
+| After race day, the race plan waits for the race's own ending        | R22 (F6)       | lemmonchess333/Maiin#2646 |
+
+Run20 is lemmonchess333/Maiin#2640. R22 needed no lock: it restores what
+the race lifecycle (PR-J) already decides.
+
 ### Every ⚠ cell in running-engine-audit §2.3
 
-| Cell                                                                 | Where it went                                   |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| Easy: Home today "About 40 min"                                      | E6                                              |
-| Easy: week strip "40m"; strides invisible on the strip               | E2, E5                                          |
-| Easy: the chooser's "Easy Run · Recovery pace" against Z2's "Easy"   | R12                                             |
-| Easy and medium-long: nothing in the run, no time, no countdown      | Built (`claude/run-easy-runs-carry-their-time`) |
-| "Easy 60" against "Medium-long 75"                                   | E2                                              |
-| Tempo: "4:30 /km" with no benchmark                                  | R2                                              |
-| Tempo: the run screen's "MODERATE"                                   | E1                                              |
-| Tempo: PaceZoneBar on the whole-run average; alerts in the warm-up   | Built (lemmonchess333/Maiin#2633)               |
-| Tempo: "A touch outside the window" on a perfect run                 | Built (lemmonchess333/Maiin#2633)               |
-| Intervals: "1 km hard"                                               | E4                                              |
-| Intervals: no pace without a benchmark, "1K" in the run              | R2                                              |
-| 8×400: the interval band, not repetition pace                        | R8                                              |
-| Long: Home's "about 80 min" from nominal minutes                     | E6                                              |
-| Long: "Steady, controlled effort" while judged against the easy band | R12                                             |
-| Long with a race-pace finish: the peek doesn't mention the block     | E2                                              |
-| Race: "All-out…", and race HR in Z4 for every distance               | R12, E1                                         |
-| Phase chip "Build · week 9 of 52" with no definition                 | E3                                              |
-| HR zone "Z2 · 111–129 bpm" with no name                              | E1                                              |
+| Cell                                                                 | Where it went                     |
+| -------------------------------------------------------------------- | --------------------------------- |
+| Easy: Home today "About 40 min"                                      | E6                                |
+| Easy: week strip "40m"; strides invisible on the strip               | E2, E5                            |
+| Easy: the chooser's "Easy Run · Recovery pace" against Z2's "Easy"   | R12                               |
+| Easy and medium-long: nothing in the run, no time, no countdown      | Built (lemmonchess333/Maiin#2639) |
+| "Easy 60" against "Medium-long 75"                                   | E2                                |
+| Tempo: "4:30 /km" with no benchmark                                  | R2                                |
+| Tempo: the run screen's "MODERATE"                                   | E1                                |
+| Tempo: PaceZoneBar on the whole-run average; alerts in the warm-up   | Built (lemmonchess333/Maiin#2633) |
+| Tempo: "A touch outside the window" on a perfect run                 | Built (lemmonchess333/Maiin#2633) |
+| Intervals: "1 km hard"                                               | E4                                |
+| Intervals: no pace without a benchmark, "1K" in the run              | R2                                |
+| 8×400: the interval band, not repetition pace                        | R8                                |
+| Long: Home's "about 80 min" from nominal minutes                     | E6                                |
+| Long: "Steady, controlled effort" while judged against the easy band | R12                               |
+| Long with a race-pace finish: the peek doesn't mention the block     | E2                                |
+| Race: "All-out…", and race HR in Z4 for every distance               | R12, E1                           |
+| Phase chip "Build · week 9 of 52" with no definition                 | E3                                |
+| HR zone "Z2 · 111–129 bpm" with no name                              | E1                                |
 
 ---
 
@@ -229,8 +243,18 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 - **Found:** lifting-engine-audit §6.3 item 5: pull-ups at 4 × 7 never
   progressed (built: lemmonchess333/Maiin#2625 climbs a rep), and added load
   on a bodyweight lift is ignored.
-- **Answer: Answered** as a correction of Lift4 (1): added load the person
-  logs is followed like any weight. To check in the code and build.
+- **Checked in the code:** the exclusion is deliberate and pinned. The
+  change that built Lift4 (1) lists, among "what the change leaves alone",
+  "a bodyweight movement with load added keeps its load and its old success
+  test" (`progressionUserLoad.test.ts`): weighted dips planned at 10 kg and
+  lifted at 20 stay at 10, and `sessionSets.ts` says a bodyweight lift's
+  added load is one "the plan does not follow".
+- **Answer: Owner** (rule 3: a decision pinned in a test). The
+  recommendation: follow the added load the person logs, as Lift4 (1) does
+  for every other weight, and keep the rep climb for a bodyweight lift done
+  with none. Lift4 (1)'s own reason applies: a load that is too light or
+  too heavy is put right by the first session rather than typed over in
+  every session after it.
 
 ### L7. The beginner's deadlift
 
@@ -361,9 +385,8 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 
 - **Locked today:** Lift5 (lemmonchess333/Maiin#2628): Replace and Add take
   their role's numbers. Lift4 (11): Finish asks once whether to keep a swap.
-- **Answer: Answered**, by Lift5's rule: a kept swap is a replace, so the new
-  lift takes the slot's role numbers. To check in the code (the simulator's
-  swaps-bench-keeps persona) and build if it doesn't.
+- **Answer: Kept.** Lift5 answers it: its call (c) keeps Swap for today as it
+  is, and a swap kept at Finish keeps its numbers. Nothing to build.
 
 ### L18. A leg miss after a hard run counts half (A9)
 
@@ -414,11 +437,12 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Evidence:** Runna shows "not enough data yet" until it has paces
   (explanation-ux §3); RPE-based targets are what the evidence gives when no
   pace exists (running-evidence §2).
-- **Answer: Answered.** Until a pace exists, a tempo and intervals carry their
-  effort words, not a pace: no pace target, no pace bar, no pace alerts, and
-  no pace verdict. The effort words are E1's. To lock and build.
-- **Copy:** "Comfortably hard: a pace you could hold for about an hour." on a
-  tempo; "Hard, but even across every rep." on intervals.
+- **Answer: Built** (Run20 (1), lemmonchess333/Maiin#2643). Until a pace
+  exists, a tempo and intervals carry their effort words, not a pace: no
+  pace target, no pace bar, no pace alerts, and no pace verdict.
+- **Copy:** "Comfortably hard" on a tempo's launch card, with "Comfortably
+  hard — hold the rhythm" on its blocks; "Hard, and even across every rep"
+  on intervals. E1's one effort language can replace these words later.
 - **Existing plans:** they change at once; nothing is stored.
 
 ### R3. Runs with no session type and the quality day
@@ -441,8 +465,11 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Options:** (a) keep; (b) the long run goes on the weekend day among the
   person's run days (Sunday, else Saturday), else their last run day;
   (c) setup asks for the long-run day.
-- **Answer: Answered: (b)**, for new plans and rebuilds; (c) adds a setup
-  step and waits for evidence that (b) isn't enough. To lock and build.
+- **Answer: Answered: (b)**, for new plans and rebuilds, locked as Run20 (2)
+  (lemmonchess333/Maiin#2640); (c) adds a setup step and waits for evidence
+  that (b) isn't enough. To build: the setup schedules are also the stored
+  fallback for profiles without a week schedule, so the change needs a
+  versioned schedule rather than an edit to the generator.
 - **Existing plans:** keep their weekdays until rebuilt (Pgm5).
 
 ### R5. The plan doesn't start from the runner's own running
@@ -466,9 +493,10 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Found:** running-engine-audit §0 item 6: re-confirming from recorded runs
   gives 150 → 142 → 129 → 120 minutes, and the long run is gone by week 9.
   A runner who follows the plan can never grow it.
-- **Answer: Measuring.** The review prompt offering a confirmed step up
-  (about 10% a week, the longest run by R7's guard), within the planning
-  foundations' rule that nothing raises it unconfirmed.
+- **Answer: Measuring.** The review prompt offering a step up the person
+  confirms, within the planning foundations' rule that nothing raises it
+  unconfirmed; the size of the step is what the simulation sets, read
+  against its spike check (R7).
 
 ### R7. Single runs far longer than the month's longest
 
@@ -479,12 +507,18 @@ against Lift4 as built on the simulator before it comes here with an answer.
   the longest of the last 30 days raised the hazard of injury (HR 1.64; 1.52
   for 30–100% longer, 2.28 past double). It measured distance only, and a
   step under 10% isn't shown safe. MODERATE.
-- **Answer: Answered.** No planned run more than 10% longer, by distance,
-  than the longest run of the last 30 days; the race itself excepted, and
-  R8's taper keeps a long run close enough to it. To lock and build in the
-  scheduler (a correctness-critical engine: plan, simulate, then build).
-- **Simulation:** to run, for the record (spikes, long-run peaks, VDOT by
-  race day). Fewer injuries follow by construction.
+- **Held back by the running handoff:** its explicit non-adoptions bar "a
+  universal 10 percent rule" and "a new source-derived … long-run cap"
+  added because a source has one, and its rules call long runs "purpose- and
+  context-dependent", not "a universal percentage" (`docs/running-programming-claude-handoff.md`).
+  A hard 10% cap in the scheduler is exactly that.
+- **Answer: Measuring.** The spikes have three causes, each with its own fix
+  elsewhere: the first long run set without the runner's own longest (R5),
+  the rebound after a step-back week, and the race after a taper with no long
+  run (R8). The simulation compares those fixes against as built; Frandsen's
+  guard stays the simulator's `spike` check, which is where a source's
+  number belongs. Fewer injuries follow from fewer spikes by construction,
+  so the check reports spikes, not injuries.
 
 ### R8. The taper
 
@@ -495,12 +529,18 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Evidence:** Bosquet 2007 [VA]: 8–14 days, volume cut 41–60%, intensity
   and frequency kept; up to 3 weeks still works. Pfitzinger and Daniels keep a
   reduced long run 2–3 weeks out.
-- **Answer: Answered.** About two weeks (three for a marathon), cutting
-  progressively to 40–60% below the last build week; run days and intensity
-  kept; a reduced long run in the first taper week; the taper's quality at
-  race pace or threshold, not repetition-length intervals. To lock and build.
-- **Simulation:** the model prices a taper low (+0.5% against 2.6%), so it
-  can't rank tapers; the answer rests on the evidence (rule 1).
+- **Held back by the running handoff:** "a new source-derived or universal
+  taper duration/percentage" is an explicit non-adoption; the handoff asks
+  for a taper made "deliberate rather than accidental".
+- **Answer: Measuring.** The defects are in the shape, not the length: one
+  step held for three weeks, and no long run in the last four, so the
+  marathon itself is the first long run in a month. The direction: a
+  reduced long run in the first taper week, the cut in steps rather than
+  one, run days and intensity kept, and the taper's quality at race pace or
+  threshold rather than 400 m repeats. Its numbers stay Tropos heuristics,
+  labelled as such. The model prices a taper low (+0.5% against the 2.6% the
+  evidence expects), so the simulation can show spikes and the long-run gap,
+  not which taper races faster.
 
 ### R9. Demanding days back to back
 
@@ -508,18 +548,23 @@ against Lift4 as built on the simulator before it comes here with an answer.
   isn't treated as demanding, so it sits the day before quality in every
   4-day marathon build week; two-day weeks put the long run and quality on
   consecutive days; the beginner 5K runs Tuesday to Thursday in a row.
-- **Evidence:** the hard–easy principle (CONVENTION, every coach);
+- **Evidence:** the hard–easy principle (CONVENTION, every coach); the
+  running handoff's "space demanding sessions in the actual calendar";
   RUN-EV-10's own placement model.
-- **Answer: Answered.** Placement counts a run of an hour or more as
-  demanding, and no two demanding runs fall on consecutive days where the
-  person's days allow it. To lock and build.
+- **Answer: Built** (Run20 (3), lemmonchess333/Maiin#2644). Placement
+  counts a run of an hour or more as demanding: the medium-long takes the
+  first easy day not beside the long run or a quality session. Where every
+  easy day is beside one, the week keeps its order, since the days are the
+  person's; so do a two-day week's long run and quality, and a beginner's
+  three days in a row.
 
 ### R10. The taper sharpener bypasses placement
 
 - **Found:** audit §0 item 5 and RUN-EV-10: the taper branch's `remaining[0]`
   puts 8 × 400 m on the first free day, after the long run.
-- **Answer: Answered** as a correction: the taper's session goes through the
-  same placement as every quality session. Its content is R8's.
+- **Answer: Built** as a correction (lemmonchess333/Maiin#2642): the taper's
+  session goes through the same placement as every quality session. Its
+  content is R8's.
 
 ### R11. Setup asks for no benchmark
 
@@ -543,7 +588,7 @@ against Lift4 as built on the simulator before it comes here with an answer.
   - "Easy Run · Recovery pace" against Z2's "Easy";
   - `LONG_RUN_MAX_MINUTES`'s comment: Daniels applies 150 minutes from 64 km a
     week and 30% below it, not "the lesser of 150 minutes and ~25–30%".
-- **Answer: Answered** as corrections. One PR.
+- **Answer: Built** as corrections (lemmonchess333/Maiin#2641).
 
 ### R13. The quality ladder starts mid-way
 
@@ -553,9 +598,11 @@ against Lift4 as built on the simulator before it comes here with an answer.
   6 × 1K at VO2max.
 - **Evidence:** intensity added gradually and ramped from exposure
   (running-evidence §5.20; Daniels, Lydiard order of phases [VA]).
-- **Answer: Answered.** A runner's first quality session is the ladder's
-  first rung, and each one done climbs a rung; the block position caps it.
-  To lock and build.
+- **Answer: Built** (Run20 (4), lemmonchess333/Maiin#2645). A runner's first
+  quality session is the ladder's first rung, and each one climbs at most a
+  rung past the highest before it; the block position caps it. It counts the
+  sessions the plan held, not the ones done: counting completions needs run
+  history the generator doesn't read today.
 
 ### R14. Quality for a new runner, and run-walk
 
@@ -565,18 +612,23 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Evidence:** no structured quality for a novice's first 4–6 weeks;
   strides and hill sprints allowed (running-evidence, Daniels [VA]); NHS
   Couch to 5K and Galloway use run-walk [VA].
-- **Answer: Answered.** No tempo or intervals in a new runner's first six
-  weeks; a new runner's first weeks run as run-walk, through the session
-  player's segments, building to continuous running. To lock and build. The
-  runner model has no run-walk, so the injury effect can't be simulated.
+- **Answer: Answered**, locked as Run20 (5) (lemmonchess333/Maiin#2640). No
+  tempo or intervals in a new runner's first six weeks; a new runner's first
+  weeks run as run-walk, through the session player's segments, building to
+  continuous running. To build: "New to running" has to reach the plan
+  generator first (RUN-EV-04), and run-walk needs its own template. The
+  six weeks is a Tropos heuristic inside the evidence's 4–6, serving the
+  running handoff's own rule: build broad capacity before making work more
+  event-specific. The runner model has no run-walk, so the injury effect
+  can't be simulated.
 
 ### R15. Weekly jumps after step-back weeks
 
 - **Found:** F18 `volume-jump`: +25% to +59% after a step-back.
 - **Evidence:** Frandsen found week-to-week change unrelated to injury, and
   the only trial of the 10% rule (Buist) found no effect.
-- **Answer: Kept.** The single-run guard (R7) is the check; the weekly
-  percentage isn't.
+- **Answer: Kept.** Single-run spikes (R7) are what the simulator checks;
+  the weekly percentage isn't.
 
 ### R16. The long run's share of a short week
 
@@ -605,8 +657,8 @@ against Lift4 as built on the simulator before it comes here with an answer.
   long run for 29 weeks, no race-specific work without a goal time, no
   tune-up race. The persona ends the year at −0.4 VDOT and 4:10, against
   +2–5 and 3:45–3:50 expected.
-- **Answer: Measuring**, after R5, R7, R8 and R13 are built: the year
-  re-run with them, then with strides and hills in base and a tune-up half.
+- **Answer: Measuring**, after R5, R8 and R13 are settled: the year re-run
+  with them, then with strides and hills in base and a tune-up half.
 
 ### R19. Strides once a week; threshold as steady tempo
 
@@ -637,8 +689,16 @@ against Lift4 as built on the simulator before it comes here with an answer.
   recovery, deletes the run plan before the server's no-show and
   recovery-exit checks can read it. Every race persona ends still in race
   prep, and the Monday check then says they fell behind, weekly.
-- **Answer: Answered** as a correction: the race's own lifecycle (PR-J)
-  decides when race prep ends, and the rollover leaves it alone until then.
+- **Answer: Built** as a correction (lemmonchess333/Maiin#2646): the race's
+  own lifecycle (PR-J) decides when race prep ends. Past race week the
+  rollover keeps the plan and race week's days, on their own dates, which
+  the no-show, the return to free running and recovery for a race logged
+  late read; no runs are planned, and the lifts move as they did before.
+  Train's Run tab counts "All runs done this week" from this week's days
+  only. The server's Monday check skips a week that began after the race.
+- **Found on the way, not changed:** the no-show banner's "Log race now"
+  opens the run screen, which records a run dated today, and recovery needs
+  one on the race date, so a late log can't clear a no-show.
 
 ### R23. Freeform runners get no plan; only this week is visible
 
@@ -740,6 +800,7 @@ tap away, and a change the person didn't make gets one line.
 | --- | ----------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- |
 | L3  | 4 × 3 and 4 × 7 on Get stronger                 | Lift4 (5)'s heavier and lighter days            | Keep; or undulate by load at a fixed 5                   |
 | L4  | The sawtooth                                    | Lift4 (6); owner call (1)                       | After the simulation                                     |
+| L6  | Added load on bodyweight lifts                  | Lift4 (1)'s change, pinned in its tests         | Follow the added load the person logs                    |
 | L11 | Light lifts that wait for the person, beyond A3 | Lift4 (6): no automatic big step, no "try X kg" | A3's line first; measure before anything more            |
 | L15 | Barbell lifts under the bar in existing plans   | Lift4 (2): no automatic swaps                   | Dumbbell twins for new plans; existing plans as they are |
 | R1  | The derived benchmark                           | Adaptive paces §10.2; RUN-EV-08                 | Derive from efforts only, plus the setup question (R11)  |

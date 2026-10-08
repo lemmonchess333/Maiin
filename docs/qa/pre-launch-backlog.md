@@ -10,10 +10,11 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 
 Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
 session, which now judge only the work segments
-(lemmonchess333/Maiin#2633), and a planned easy run's time target,
-countdown and finish cue (`claude/run-easy-runs-carry-their-time`). The unit
-tests cover which segment is judged and what each run is set for; these need
-a phone's speaker and screen.
+(lemmonchess333/Maiin#2633), a planned easy run's time target, countdown and
+finish cue (lemmonchess333/Maiin#2639), and a tempo or intervals with no pace
+to give (lemmonchess333/Maiin#2643). The unit tests cover which segment is
+judged and what each run is set for; these need a phone's speaker and
+screen.
 
 - [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
       tempo: no pace alert in the warm-up; the pace bar appears with the
@@ -25,6 +26,26 @@ a phone's speaker and screen.
       from 40 minutes, says "Easy running for 40 minutes. Keep it
       conversational." as it starts, and marks the 40 minutes without saving
       the run by itself.
+- [ ] **A tempo with no pace yet.** On an account with no benchmark, open a
+      planned tempo: the launch card says "Comfortably hard" where a pace
+      would be, and the run shows no pace bar and speaks no pace alert.
+
+## After race day, the race's own ending (F6, 2026-10-08)
+
+Affects: the client's rollover after race day, which now leaves the run plan
+and race week's days for the race's own ending, and `weeklyFellBehindCheck`'s
+skip of a week that began after the race (`functions/lib/fellBehindWeek.js`),
+both in lemmonchess333/Maiin#2646. The unit tests cover the rollover and the
+skip; these need the deployed functions and a test account a week past its
+race.
+
+- [ ] **No "fell behind" after the race.** After the deploy, a test account
+      whose race was the week before gets no fell-behind flag from the next
+      Monday's `weeklyFellBehindCheck`, and no recap push saying so.
+- [ ] **A no-show ends race prep.** A test account that skips its race: the
+      Run tab shows the no-show banner from the fourth day, without "All
+      runs done this week", and `dailyRaceReconciliationSweep` returns it to
+      free running after the fourteenth.
 
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
