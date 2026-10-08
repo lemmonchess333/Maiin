@@ -135,6 +135,13 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["REVENUECAT_REST_KEY"],
   },
+  trialReminderSweep: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: ["RESEND_API_KEY", "REVENUECAT_REST_KEY"],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
   deleteMyAccount: {
     kind: "callable",
     maxInstances: 100,
@@ -332,6 +339,17 @@ const EXPECTED = {
     secrets: [],
   },
   resolveReport: {
+    kind: "callable",
+    maxInstances: 10,
+    secrets: [],
+  },
+  // S4e: the moderation page's restricted accounts and its Lift.
+  listRestrictedUsers: {
+    kind: "callable",
+    maxInstances: 10,
+    secrets: [],
+  },
+  liftRestriction: {
     kind: "callable",
     maxInstances: 10,
     secrets: [],

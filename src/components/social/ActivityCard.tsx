@@ -6,6 +6,11 @@ import InlineFollow from "@/components/social/InlineFollow";
 import { useAuth } from "../../lib/auth";
 import { giveHighFive, getKudosList, blockUser } from "../../lib/socialApi";
 import { useBlockedUsers } from "../../hooks/useBlockedUsers";
+import { useRestrictedStatus } from "../../hooks/useRestrictedStatus";
+import {
+  isRestrictedRefusal,
+  showRestrictedToast,
+} from "../../lib/accountRestriction";
 import {
   activityExercisesToRoutine,
   type SavedRoutineExercise,
@@ -76,6 +81,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
      whoever is reading it, which is what every social running app does. */
   const unit = useDistanceUnit();
   const { addBlocked } = useBlockedUsers();
+  const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
   const [showCommentSheet, setShowCommentSheet] = useState(false);
@@ -130,6 +136,12 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
 
   const handleHighFive = async () => {
     if (!user || liked) return; // One-way — can't undo
+    // A restricted account gives no props (S4e); the tap says why.
+    if (isRestricted) {
+      haptic("error");
+      showRestrictedToast();
+      return;
+    }
     // Optimistic UI
     setLiked(true);
     setKudosCount((c) => c + 1);
@@ -147,12 +159,14 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       await giveHighFive(feedItem.activityId, user.uid, {
         fromName: profile?.displayName || "Someone",
       });
-    } catch {
+    } catch (err) {
       // Network / auth failure — revert the optimistic flip so the
       // UI reflects the server truth. Error haptic signals the bounce.
       setLiked(false);
       setKudosCount((c) => Math.max(0, c - 1));
       haptic("error");
+      // A restriction that landed after the feed loaded.
+      if (isRestrictedRefusal(err)) showRestrictedToast();
     }
   };
 

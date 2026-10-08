@@ -24,6 +24,7 @@ process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "demo-tropos";
 const admin = require("firebase-admin");
 const rateLimiter = require("../rateLimiter");
 const accountDeletionLocks = require("../lib/accountDeletionLocks");
+const restriction = require("../lib/restriction");
 const socialCounters = require("../lib/socialCounters");
 const spacePostEngagement = require("../lib/spacePostEngagement");
 const socialFanout = require("../lib/socialFanout");
@@ -38,6 +39,7 @@ const {
 
 const realIsRateLimited = rateLimiter.isRateLimited;
 const realActorLock = accountDeletionLocks.assertCallableActorNotDeleting;
+const realAssertNotRestricted = restriction.assertNotRestricted;
 
 const VERIFIED = {
   auth: { uid: "commenter-1", token: { email_verified: true } },
@@ -48,6 +50,10 @@ beforeEach(() => {
   calls = [];
   accountDeletionLocks.assertCallableActorNotDeleting = async () => {
     calls.push("lock");
+  };
+  // Not restricted (S4e): the restriction read is the gate after the lock.
+  restriction.assertNotRestricted = async () => {
+    calls.push("restriction");
   };
   // Limited: a call that gets past the filter stops here, before any write.
   rateLimiter.isRateLimited = async () => {
@@ -60,6 +66,7 @@ afterEach(() => {
   delete admin.firestore;
   rateLimiter.isRateLimited = realIsRateLimited;
   accountDeletionLocks.assertCallableActorNotDeleting = realActorLock;
+  restriction.assertNotRestricted = realAssertNotRestricted;
   vi.restoreAllMocks();
 });
 
@@ -128,7 +135,7 @@ describe.each([
         VERIFIED
       )
     ).rejects.toMatchObject({ code: "resource-exhausted" });
-    expect(calls).toEqual(["lock", "limiter"]);
+    expect(calls).toEqual(["lock", "restriction", "limiter"]);
   });
 });
 

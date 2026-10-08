@@ -284,3 +284,36 @@ describe("deleteSpacePostComment", () => {
     expect(firestore._writes).toEqual([]);
   });
 });
+
+describe("toggleSpacePostLike — a restricted account (S4e)", () => {
+  const args = (firestore) => ({
+    firestore,
+    uid: "alice",
+    spaceId: "runners",
+    postId: "coach-2026-07-20",
+    increment,
+    serverTimestamp,
+    refuseAdd: true,
+  });
+
+  it("may take a like back but not give one", async () => {
+    const liking = makeFirestoreStub({
+      initial: { [POST]: { authorId: "bob", likeCount: 0 } },
+    });
+    await expect(toggleSpacePostLike(args(liking))).rejects.toMatchObject({
+      code: "account-restricted",
+    });
+    expect(liking._writes).toEqual([]);
+
+    const unliking = makeFirestoreStub({
+      initial: {
+        [POST]: { authorId: "bob", likeCount: 1 },
+        [LIKE]: { createdAt: 1 },
+      },
+    });
+    expect(await toggleSpacePostLike(args(unliking))).toEqual({
+      liked: false,
+      postAuthorId: "bob",
+    });
+  });
+});

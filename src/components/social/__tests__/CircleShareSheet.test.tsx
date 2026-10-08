@@ -31,6 +31,10 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -194,5 +198,23 @@ describe("with circles", () => {
     expect(
       screen.getByRole("button", { name: /share to circle/i })
     ).toBeInTheDocument();
+  });
+});
+
+describe("a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("holds the share and says why", () => {
+    restriction.isRestricted = true;
+    const hook = hookValue({ circles: [summary("c1", "Squad", true)] });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    renderSheet();
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    const share = screen.getByRole("button", { name: /share to circle/i });
+    expect(share).toBeDisabled();
+    fireEvent.click(share);
+    expect(hook.publishEvent).not.toHaveBeenCalled();
   });
 });

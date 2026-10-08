@@ -67,6 +67,8 @@ import {
 } from "@/lib/proPlans";
 import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
+import TrialDetails from "@/components/TrialDetails";
+import { runningTrial } from "@/lib/subscriptionTrial";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { useAuth } from "@/lib/auth";
@@ -135,6 +137,9 @@ export default function Upgrade() {
   // authoritative (`checkoutTrial.js`).
   const withTrial = isCheckoutTrialEligible(profile);
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
+  // A store trial in progress (Sub1, STATUS 2026-10-06): the Pro card says
+  // when it ends and offers the phone reminder.
+  const storeTrial = runningTrial(profile?.subscriptionTrial, new Date());
   const [searchParams, setSearchParams] = useSearchParams();
   const from = searchParams.get("from");
   const source = sourceFromParam(from);
@@ -388,6 +393,7 @@ export default function Upgrade() {
             Manage your subscription in your Apple Account. Apple doesn&apos;t
             let us cancel or refund App Store subscriptions on your behalf.
           </p>
+          {storeTrial && <TrialDetails trial={storeTrial} />}
           <a
             href="https://apps.apple.com/account/subscriptions"
             target="_blank"
@@ -434,6 +440,7 @@ export default function Upgrade() {
           <p className="text-sm text-muted-foreground">
             Full access to all features.
           </p>
+          {storeTrial && <TrialDetails trial={storeTrial} />}
           <ul className="space-y-1.5 text-sm text-foreground">
             {[
               // The server caps Pro scans (DAILY_AI_LIMITS), so not

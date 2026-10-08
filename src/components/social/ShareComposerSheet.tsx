@@ -12,6 +12,8 @@ import { CAPTION_MAX } from "@/lib/activityPost";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import { containsProfanity } from "@/lib/profanityFilter";
 import VerifyEmailNotice from "./VerifyEmailNotice";
+import RestrictedNotice from "./RestrictedNotice";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import {
   subscribeShareComposer,
   resolveCompose,
@@ -62,6 +64,9 @@ export default function ShareComposerSheet() {
   const uid = useUid();
   const { user, updateShareDefaults } = useAuth();
   const gate = useEmailVerificationGate(user);
+  // A restricted account cannot share to the feed (S4e).
+  const { isRestricted } = useRestrictedStatus(user?.uid);
+  const held = gate.needsVerification || isRestricted;
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -130,7 +135,7 @@ export default function ShareComposerSheet() {
   const choose = (visibility: ShareVisibility) => {
     // The buttons are disabled while gated; this keeps a stale click or a
     // keyboard activation from resolving a post the rules will refuse.
-    if (gate.needsVerification) return;
+    if (held) return;
     if (captionIsProfane) {
       haptic("error");
       return;
@@ -230,8 +235,12 @@ export default function ShareComposerSheet() {
         {/* Public posts need a verified email (rules + callables). The two
             share actions are held while it is missing; declining stays open
             because a "never" default needs no email. */}
-        {gate.needsVerification && (
-          <VerifyEmailNotice onRecheck={gate.recheck} />
+        {isRestricted ? (
+          <RestrictedNotice />
+        ) : (
+          gate.needsVerification && (
+            <VerifyEmailNotice onRecheck={gate.recheck} />
+          )
         )}
 
         {/* Visibility actions — three EQUAL rows, deliberately (operator,
@@ -248,7 +257,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("followers")}
-            disabled={captionIsProfane || gate.needsVerification}
+            disabled={captionIsProfane || held}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
             Share to followers
@@ -257,7 +266,7 @@ export default function ShareComposerSheet() {
             fullWidth
             variant="secondary"
             onClick={() => choose("public")}
-            disabled={captionIsProfane || gate.needsVerification}
+            disabled={captionIsProfane || held}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >
             Make public

@@ -33,10 +33,12 @@ vi.mock("firebase/functions", () => ({
 const rcEnabled = vi.fn(() => true);
 const rcPurchase = vi.fn();
 const rcRestore = vi.fn();
+const rcGetLocalizedPrices = vi.fn();
 vi.mock("@/lib/revenuecat", () => ({
   isRevenueCatEnabled: () => rcEnabled(),
   rcPurchase: (...args: unknown[]) => rcPurchase(...args),
   rcRestore: () => rcRestore(),
+  rcGetLocalizedPrices: () => rcGetLocalizedPrices(),
 }));
 
 import {
@@ -44,6 +46,7 @@ import {
   isNativeIOS,
   manageSubscription,
   purchase,
+  reportTrialPrice,
   restorePurchases,
 } from "../purchaseProvider";
 
@@ -119,6 +122,51 @@ describe("on an iPad in the iOS app", () => {
     expect(result).toEqual({ success: true });
     expect(rcPurchase).toHaveBeenCalledWith(APPLE_PRODUCT_IDS.yearly);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("sends the price Apple showed to the sync, for the trial reminder's email", async () => {
+    rcPurchase.mockResolvedValue({
+      success: true,
+      isProActive: true,
+      price: { priceString: "£34.99", price: 34.99, currencyCode: "GBP" },
+    });
+    await purchase("yearly", "uid-1", "a@example.com");
+    expect(syncEntitlement).toHaveBeenCalledWith({
+      price: {
+        productId: APPLE_PRODUCT_IDS.yearly,
+        amount: 34.99,
+        currencyCode: "GBP",
+        display: "£34.99",
+      },
+    });
+
+    syncEntitlement.mockClear();
+    rcPurchase.mockResolvedValue({ success: true, isProActive: true });
+    await purchase("yearly", "uid-1", "a@example.com");
+    expect(syncEntitlement).toHaveBeenCalledWith({});
+  });
+
+  it("fills in a trial's missing price from the store's own prices", async () => {
+    rcGetLocalizedPrices.mockResolvedValue({
+      [APPLE_PRODUCT_IDS.monthly]: {
+        priceString: "$4.99",
+        price: 4.99,
+        currencyCode: "USD",
+      },
+    });
+    expect(await reportTrialPrice(APPLE_PRODUCT_IDS.monthly)).toBe(true);
+    expect(syncEntitlement).toHaveBeenCalledWith({
+      price: {
+        productId: APPLE_PRODUCT_IDS.monthly,
+        amount: 4.99,
+        currencyCode: "USD",
+        display: "$4.99",
+      },
+    });
+
+    syncEntitlement.mockClear();
+    expect(await reportTrialPrice("com.other.product")).toBe(false);
+    expect(syncEntitlement).not.toHaveBeenCalled();
   });
 
   it("Restore restores through the App Store", async () => {

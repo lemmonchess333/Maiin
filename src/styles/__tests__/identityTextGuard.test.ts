@@ -283,7 +283,9 @@ function bareUses(token: string): string[] {
 // section took one icon.
 // 43 → 41 with the first-week pass: the welcome card's two tab icons
 // (Train, Analytics) in text-primary went with it.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
+// 2026-10-06: 41 → 42. Home's strip for a store trial's last two days
+// carries the same sparkle icon as the free-week strip beside it.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

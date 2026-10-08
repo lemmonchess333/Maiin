@@ -98,6 +98,10 @@ export interface RcPurchaseOutcome {
   isProActive: boolean;
   /** True when the user dismissed Apple's purchase sheet — not an error. */
   userCancelled?: boolean;
+  /** The price of the product bought, as Apple's sheet showed it. The
+   *  server keeps it for the trial reminder's email, since RevenueCat holds
+   *  no renewal price for a trial. */
+  price?: StorePrice;
   error?: string;
 }
 
@@ -162,7 +166,13 @@ export async function rcPurchase(
     if (!isProActive) {
       logger.error("[RevenueCat] purchase completed without pro entitlement");
     }
-    return { success: isProActive, isProActive };
+    if (!isProActive) return { success: false, isProActive };
+    const { priceString, price, currencyCode } = pkg.product;
+    return {
+      success: true,
+      isProActive,
+      price: { priceString, price, currencyCode },
+    };
   } catch (err) {
     if (isUserCancelled(err)) {
       return { success: false, isProActive: false, userCancelled: true };

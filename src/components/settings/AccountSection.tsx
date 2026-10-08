@@ -57,15 +57,22 @@ function listSupportedProviders(user: User): SupportedReauthProviderId[] {
 }
 
 /**
- * Apple's private-relay addresses are random@privaterelay.appleid.com.
- * Showing that in the "Re-enter password for <email>" line would be
- * confusing; the user can't recognise it. Hide and show a generic
- * fallback instead.
+ * Apple's private-relay addresses are random@privaterelay.appleid.com, and
+ * from late 2026 random@private.icloud.com for new ones (Apple developer
+ * news, 24 August 2026; the old domain keeps working). Showing one in the
+ * "Re-enter password for <email>" line would be confusing; the user can't
+ * recognise it. Hide and show a generic fallback instead.
  */
+const APPLE_RELAY_DOMAINS = [
+  "@privaterelay.appleid.com",
+  "@private.icloud.com",
+];
+
 function displayEmail(user: User): string | null {
   const email = user.email;
   if (!email) return null;
-  if (email.endsWith("@privaterelay.appleid.com")) return null;
+  const lower = email.toLowerCase();
+  if (APPLE_RELAY_DOMAINS.some((domain) => lower.endsWith(domain))) return null;
   return email;
 }
 

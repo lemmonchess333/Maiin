@@ -3,6 +3,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { suggestionReason } from "@/components/social/suggestionReason";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import RestrictedNotice from "../RestrictedNotice";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useUid } from "@/lib/auth";
@@ -204,24 +205,13 @@ export default function PeopleView({
   return (
     <section aria-label="People">
       <div className="space-y-6">
-        {/* S4e-MVP — restricted-user gate banner. Renders ABOVE
-            all Find-tab content when useRestrictedStatus reports
-            the current user is restricted. Search input +
-            FollowButtons + invite-share below are disabled. Copy
-            matches Soc5 #15 locked spec verbatim ("Your account
-            is restricted · Contact support"). role="status" so
-            screen readers announce on tab entry. */}
-        {isRestricted && (
-          <div
-            role="status"
-            aria-label="Your account is restricted. Contact support."
-            className="p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-          >
-            <p className="text-xs text-destructive-strong">
-              Your account is restricted · Contact support
-            </p>
-          </div>
-        )}
+        {/* S4e — the restricted-user notice, ABOVE all Find-tab
+            content when useRestrictedStatus reports the current user
+            is restricted. Search input + FollowButtons + invite-share
+            below are disabled. The shared notice (Soc5 #15's "Your
+            account is restricted · Contact support"), whose Contact
+            support now opens a mail to support. */}
+        {isRestricted && <RestrictedNotice />}
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
       people next (most relevant social action). Invite

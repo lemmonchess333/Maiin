@@ -18,6 +18,7 @@
  *   - inline checkout error is visible
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { formatWeekdayDayMonth } from "@/utils/formatters";
 import {
   render,
   screen,
@@ -726,6 +727,45 @@ describe("Upgrade — Sub1 P2 cross-platform Pro guard", () => {
     expect(
       screen.queryByRole("button", { name: /Start your 7-day free trial/ })
     ).toBeNull();
+  });
+
+  it("a store trial says when it ends and what it then costs, in the app and on the web", () => {
+    // Sub1, STATUS 2026-10-06. Dates from the clock, so every run's
+    // trial is still running.
+    const now = Date.now();
+    const ends = new Date(now + 3 * 86_400_000);
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "ios_iap",
+      subscriptionTrial: {
+        productId: "com.tropos.app.pro.monthly",
+        store: "app_store",
+        period: "month",
+        startedAt: new Date(now - 4 * 86_400_000).toISOString(),
+        endsAt: ends.toISOString(),
+        cancelBy: new Date(ends.getTime() - 86_400_000).toISOString(),
+        reminderAt: new Date(now + 86_400_000).toISOString(),
+        willRenew: true,
+        price: { amount: 3.99, currencyCode: "GBP", display: "£3.99" },
+        reminderEmailedAt: null,
+      },
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+    });
+    const line = `Free trial until ${formatWeekdayDayMonth(ends)}.`;
+    for (const native of [true, false]) {
+      isNativeIOSMock.mockReturnValue(native);
+      const view = renderPage();
+      expect(screen.getByText(line), String(native)).toBeInTheDocument();
+      expect(
+        screen.getByText(/^Then £3\.99 a month, unless you cancel by /)
+      ).toBeInTheDocument();
+      view.unmount();
+    }
   });
 
   it("Cycle 9: Stripe Pro user on web sees the standard Manage subscription button (no cross-platform notice)", () => {

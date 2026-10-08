@@ -25,6 +25,7 @@
  */
 
 const crypto = require("crypto");
+const trialReminder = require("./trialReminder");
 const {
   resolveSubscriptionUpdate,
   SOURCE_IOS_IAP,
@@ -132,7 +133,7 @@ function readEntitlement(response) {
   }
   const entitlement = subscriber.entitlements && subscriber.entitlements[ENTITLEMENT_ID];
   if (!entitlement || typeof entitlement !== "object") {
-    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs };
+    return { present: false, active: false, expiresAtMs: null, productId: null, store: null, sandbox: false, syncedAtMs, trial: null };
   }
   if (!("expires_date" in entitlement)) {
     throw new RevenueCatResponseError("entitlement has no expires_date");
@@ -153,6 +154,36 @@ function readEntitlement(response) {
     store: purchase && typeof purchase.store === "string" ? purchase.store : null,
     sandbox: Boolean(purchase) && purchase.is_sandbox !== false,
     syncedAtMs,
+    trial: readTrial(purchase, productId),
+  };
+}
+
+/** A date RevenueCat may or may not have sent, read without throwing. */
+function softDateMs(value) {
+  const ms = typeof value === "string" ? Date.parse(value) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * The free trial a purchase is in, or null: RevenueCat marks one with
+ * `period_type: "trial"` (lowercase in the REST API; the SDKs spell it
+ * TRIAL), and `unsubscribe_detected_at` is set while renewal is off. Only a
+ * store that bills at the end of the trial counts. A date that cannot be
+ * read means no trial rather than a failed sync: the entitlement matters
+ * more than the reminder.
+ */
+function readTrial(purchase, productId) {
+  if (!purchase || typeof purchase !== "object" || !productId) return null;
+  if (String(purchase.period_type || "").toLowerCase() !== "trial") return null;
+  if (!trialReminder.BILLED_STORES.has(purchase.store)) return null;
+  const endsAtMs = softDateMs(purchase.expires_date);
+  if (endsAtMs === null) return null;
+  return {
+    productId,
+    store: purchase.store,
+    startedAtMs: softDateMs(purchase.purchase_date),
+    endsAtMs,
+    willRenew: purchase.unsubscribe_detected_at == null,
   };
 }
 
@@ -174,15 +205,67 @@ function revenueCatOwnsPro(userData) {
  * Decide the merge-write for one user from one entitlement snapshot.
  *
  * `sandboxAllowed` is whether this user's sandbox purchases count
- * (isSandboxAllowedUid). Anything but `true` refuses them.
+ * (isSandboxAllowedUid). Anything but `true` refuses them. `reportedPrice`
+ * is the price the app sold the plan at (readReportedPrice), for the trial
+ * reminder's email.
  *
  * Returns `{ write, result, conflict?, conflictReason?, sandboxRefused? }`.
  * `write` is the merge payload (null for nothing to write). `result` is a
  * fixed code for logs and the webhook's event record:
  *   granted | revoked | stale | lifetime | unsupported-store | not-ours
  * `sandboxRefused` is true when an unexpired sandbox purchase did not count.
+ *
+ * `subscriptionTrial` (lib/trialReminder.js) rides on the same write: the
+ * trial a granted entitlement is in, or null once there is none. It is left
+ * out when it has not changed, so a sync that changes nothing about the
+ * trial does not rewrite it.
  */
-function planEntitlementWrite(userData, entitlement, { sandboxAllowed = false } = {}) {
+function planEntitlementWrite(userData, entitlement, { sandboxAllowed = false, reportedPrice = null } = {}) {
+  const plan = planEntitlementBase(userData, entitlement, { sandboxAllowed });
+  if (plan.result === "stale") return withLatePrice(plan, userData, reportedPrice);
+  if (!plan.write) return plan;
+  const trial =
+    plan.result === "granted"
+      ? trialReminder.planTrialRecord({
+          stored: userData.subscriptionTrial,
+          trial: entitlement.trial ?? null,
+          timeZone: userData.timezone,
+          reportedPrice,
+        })
+      : null;
+  if (trialReminder.sameRecord(userData.subscriptionTrial ?? null, trial)) return plan;
+  return { ...plan, write: { ...plan.write, subscriptionTrial: trial } };
+}
+
+/**
+ * The app's sync and RevenueCat's webhook race after a purchase, and the
+ * webhook's snapshot can land first and newer. The app's snapshot is then
+ * stale and writes nothing, but the price it carries is still the only one
+ * there is, so it goes onto the stored trial when the product matches.
+ */
+function withLatePrice(plan, userData, reportedPrice) {
+  const stored = userData.subscriptionTrial;
+  if (!reportedPrice || !stored || stored.productId !== reportedPrice.productId) return plan;
+  const endsAtMs = Date.parse(stored.endsAt);
+  if (!Number.isFinite(endsAtMs)) return plan;
+  const startedAtMs = Date.parse(stored.startedAt);
+  const trial = trialReminder.planTrialRecord({
+    stored,
+    trial: {
+      productId: stored.productId,
+      store: stored.store,
+      startedAtMs: Number.isFinite(startedAtMs) ? startedAtMs : null,
+      endsAtMs,
+      willRenew: stored.willRenew === true,
+    },
+    timeZone: userData.timezone,
+    reportedPrice,
+  });
+  if (trialReminder.sameRecord(stored, trial)) return plan;
+  return { ...plan, write: { subscriptionTrial: trial } };
+}
+
+function planEntitlementBase(userData, entitlement, { sandboxAllowed }) {
   const stored = userData.revenueCat;
   if (stored && Number(stored.syncedAtMs) > entitlement.syncedAtMs) {
     return { write: null, result: "stale" };

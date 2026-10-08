@@ -46,7 +46,8 @@ def verify():
         ["gcloud", "auth", "print-access-token"], text=True
     ).strip()
     root = pathlib.Path(__file__).resolve().parent.parent / "functions"
-    comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
+    comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js",
+                     "lib/restriction.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
     deletion_paths = ["index.js", "package-lock.json", "accountDeletion.js", "lib/spaceIds.js",
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
@@ -63,11 +64,20 @@ def verify():
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        # S4e: a restriction refuses props and comments; the moderation page lifts one.
+        "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js"],
+        "liftRestriction": ["index.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
         "onWorkoutCreated": training_paths,
         "onWorkoutUpdated": training_paths,
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
+        # The reminder before a free trial is charged, and the sync it reads.
+        "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",
+                               "lib/trialReminderEmail.js", "revenueCat.js",
+                               "lib/revenueCatEntitlement.js", "email/accountEmails.js"],
+        "syncRevenueCatEntitlement": ["index.js", "revenueCat.js", "lib/revenueCatEntitlement.js",
+                                      "lib/trialReminder.js"],
     }
     for name, paths in targets.items():
         endpoint = (

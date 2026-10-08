@@ -47,6 +47,8 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
+// S4e: a restricted account is refused anything that reaches another person.
+const restriction = require("./lib/restriction");
 const {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
@@ -101,6 +103,9 @@ exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+
+// The reminder before a free trial is charged (Sub1, STATUS 2026-10-06).
+exports.trialReminderSweep = require("./trialReminders").trialReminderSweep;
 
 // The pre-run weather strip, from MET Norway through this server (currentWeather.js).
 exports.getCurrentWeather = require("./currentWeather").getCurrentWeather;
@@ -6350,6 +6355,119 @@ exports.resolveReport = functions
     return { ok: true };
   });
 
+/* The restricted accounts and the undo (S4e, STATUS 2026-10-06). Once a
+   restriction refuses posts, comments, props and follows, a mistaken one
+   needs a way back that is not the Firebase console. Admin-only, like the
+   queue: the page's VITE_ADMIN_UIDS gate is a convenience, ADMIN_UIDS here
+   is the check. */
+
+/** Admin-only: accounts under a restriction, most recent first. */
+exports.listRestrictedUsers = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
+
+    const firestore = admin.firestore();
+    const snap = await firestore
+      .collection("globalRestrictedUids")
+      .orderBy("restrictedAt", "desc")
+      .limit(100)
+      .get();
+    const restricted = await Promise.all(
+      snap.docs.map(async (restrictionDoc) => {
+        const row = restrictionDoc.data() || {};
+        const profileSnap = await firestore
+          .collection("users")
+          .doc(restrictionDoc.id)
+          .collection("public")
+          .doc("profile")
+          .get();
+        return {
+          uid: restrictionDoc.id,
+          displayName: profileSnap.exists
+            ? nullableString((profileSnap.data() || {}).displayName)
+            : null,
+          restrictedAt:
+            row.restrictedAt && typeof row.restrictedAt.toMillis === "function"
+              ? row.restrictedAt.toMillis()
+              : null,
+          lastActionedReport: nullableString(row.lastActionedReport),
+        };
+      })
+    );
+    return { restricted };
+  });
+
+/**
+ * Admin-only: lift a restriction. Deletes globalRestrictedUids/{uid} and
+ * records who lifted it, and when, on the report that caused it — the
+ * report already holds who restricted (`resolvedBy`), so the two ends of
+ * one restriction sit together. Lifting an account that is not restricted
+ * succeeds with `lifted: false`, so a second tap is harmless.
+ */
+exports.liftRestriction = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
+
+    const uid = data && typeof data === "object" ? data.uid : undefined;
+    if (
+      typeof uid !== "string" ||
+      !uid ||
+      uid !== uid.trim() ||
+      uid.includes("/") ||
+      uid === "." ||
+      uid === ".."
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which account? Send its uid."
+      );
+    }
+
+    const firestore = admin.firestore();
+    const restrictionRef = firestore
+      .collection("globalRestrictedUids")
+      .doc(uid);
+    const lifted = await firestore.runTransaction(async (transaction) => {
+      const snap = await transaction.get(restrictionRef);
+      if (!snap.exists) return false;
+      const reportId = nullableString((snap.data() || {}).lastActionedReport);
+      const reportRef =
+        reportId && !reportId.includes("/")
+          ? firestore.collection("reports").doc(reportId)
+          : null;
+      const reportSnap = reportRef ? await transaction.get(reportRef) : null;
+      transaction.delete(restrictionRef);
+      if (reportSnap && reportSnap.exists) {
+        transaction.update(reportRef, {
+          restrictionLiftedBy: context.auth.uid,
+          restrictionLiftedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      return true;
+    });
+
+    functions.logger.info("liftRestriction", {
+      adminUid: context.auth.uid,
+      uid,
+      lifted,
+    });
+    return { ok: true, lifted };
+  });
+
 // ══════════════════════════════════════════════
 // SOCIAL COUNTERS — 2026-05-26 audit PR 2
 //
@@ -6383,6 +6501,11 @@ exports.toggleKudosCallable = functions
     // mutate kudos on other users' activities on the way out — the
     // counter+sub-doc write would leak past the cascade.
     await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    // Read before the toggle; the toggle refuses only an add with it.
+    const refuseAdd = await restriction.isRestricted(
       admin.firestore(),
       context.auth.uid
     );
@@ -6426,6 +6549,7 @@ exports.toggleKudosCallable = functions
         activityId,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        refuseAdd,
       });
       // 2026-05-26 audit PR 3 (finding #6) — kudos notification is
       // now written server-side, atomically with the kudos doc.
@@ -6468,6 +6592,9 @@ exports.toggleKudosCallable = functions
       }
       return result;
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleKudosCallable.error", {
         uid: context.auth.uid,
         activityId,
@@ -6520,6 +6647,10 @@ exports.toggleSpacePostLikeCallable = functions
       admin.firestore(),
       context.auth.uid
     );
+    const refuseAdd = await restriction.isRestricted(
+      admin.firestore(),
+      context.auth.uid
+    );
     const limited = await isRateLimited(
       context.auth.uid,
       "toggleSpacePostLike",
@@ -6540,6 +6671,7 @@ exports.toggleSpacePostLikeCallable = functions
         postId,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        refuseAdd,
       });
       // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
       // self, never the retired coach author (not a notifiable user).
@@ -6582,6 +6714,9 @@ exports.toggleSpacePostLikeCallable = functions
       }
       return result;
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleSpacePostLikeCallable.error", {
         uid: context.auth.uid,
         spaceId,
@@ -6665,6 +6800,11 @@ exports.addSpacePostCommentCallable = functions
     await accountDeletionLocks.assertCallableActorNotDeleting(
       admin.firestore(),
       context.auth.uid
+    );
+    await restriction.assertNotRestricted(
+      admin.firestore(),
+      context.auth.uid,
+      functions
     );
     const limited = await isRateLimited(
       context.auth.uid,
@@ -6825,6 +6965,11 @@ exports.addCommentCallable = functions
     await accountDeletionLocks.assertCallableActorNotDeleting(
       admin.firestore(),
       context.auth.uid
+    );
+    await restriction.assertNotRestricted(
+      admin.firestore(),
+      context.auth.uid,
+      functions
     );
     const limited = await isRateLimited(
       context.auth.uid,
@@ -7000,6 +7145,10 @@ exports.toggleCommentReactionCallable = functions
       admin.firestore(),
       context.auth.uid
     );
+    const refuseAdd = await restriction.isRestricted(
+      admin.firestore(),
+      context.auth.uid
+    );
     // Same budget as kudos — reactions are the same tap economy.
     const limited = await isRateLimited(
       context.auth.uid,
@@ -7020,8 +7169,12 @@ exports.toggleCommentReactionCallable = functions
         activityId,
         commentId,
         reaction,
+        refuseAdd,
       });
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleCommentReactionCallable.error", {
         uid: context.auth.uid,
         activityId,
@@ -7247,7 +7400,15 @@ function mapGoalSpaceError(err) {
   return new functions.https.HttpsError("internal", "Something went wrong.");
 }
 
-async function goalSpaceCallableGate(context, action, limit) {
+/* `reachesOthers`: the action puts this person in front of the other
+   members (starting or joining a Circle, a check-in, backing one), so a
+   restricted account is refused it (S4e). Leaving and removing are not. */
+async function goalSpaceCallableGate(
+  context,
+  action,
+  limit,
+  { reachesOthers = false } = {}
+) {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -7256,6 +7417,9 @@ async function goalSpaceCallableGate(context, action, limit) {
     admin.firestore(),
     uid
   );
+  if (reachesOthers) {
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+  }
   const limited = await isRateLimited(uid, action, limit, 600_000);
   if (limited) {
     throw new functions.https.HttpsError(
@@ -7269,7 +7433,9 @@ async function goalSpaceCallableGate(context, action, limit) {
 exports.createGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceCreate", 5);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCreate", 5, {
+      reachesOthers: true,
+    });
     const profile = await goalSpaceCallerProfile(uid);
     try {
       return await goalSpaceMembership.createGoalSpace({
@@ -7290,7 +7456,9 @@ exports.createGoalSpace = functions
 exports.joinGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceJoin", 10);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceJoin", 10, {
+      reachesOthers: true,
+    });
     const profile = await goalSpaceCallerProfile(uid);
     try {
       await goalSpaceMembership.joinGoalSpace({
@@ -7353,7 +7521,9 @@ const goalSpaceCheckIn = require("./lib/goalSpaceCheckIn");
 exports.goalSpaceWeeklyCheckIn = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceCheckIn", 10);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCheckIn", 10, {
+      reachesOthers: true,
+    });
     try {
       return await goalSpaceCheckIn.weeklyCheckIn({
         firestore: admin.firestore(),
@@ -7371,7 +7541,9 @@ exports.goalSpaceWeeklyCheckIn = functions
 exports.backGoalSpaceCheckIn = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceBack", 20);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceBack", 20, {
+      reachesOthers: true,
+    });
     try {
       const result = await goalSpaceCheckIn.backWeeklyCheckIn({
         firestore: admin.firestore(),

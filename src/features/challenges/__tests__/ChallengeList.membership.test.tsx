@@ -21,6 +21,10 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/leaderboard", () => ({ buildLeaderboard: async () => [] }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({ toast: { error: h.toastError } }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
@@ -157,5 +161,24 @@ describe("weekly challenge membership", () => {
     expect(
       screen.queryByRole("button", { name: "Join weekly challenge" })
     ).toBeNull();
+  });
+});
+
+describe("a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("is told why it can't join, and Join enrols nothing", async () => {
+    restriction.isRestricted = true;
+    const join = await openList();
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    fireEvent.click(join);
+    await flushSnapshots();
+    expect(readDoc(PATH)).toBeUndefined();
+    expect(h.toastError).toHaveBeenCalledWith(
+      "Your account is restricted, so you can't do this for now.",
+      expect.anything()
+    );
   });
 });

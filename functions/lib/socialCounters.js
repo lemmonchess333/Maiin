@@ -27,6 +27,7 @@
 const {
   assertCanInteractWithActivity,
 } = require("./activityAccess");
+const { refusedAddError } = require("./restriction");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 
 /**
@@ -53,6 +54,8 @@ async function toggleKudos({
   activityId,
   increment,
   serverTimestamp,
+  // A restricted account may take props back but not give them (S4e).
+  refuseAdd = false,
 }) {
   if (!firestore || !uid || !activityId) {
     throw new Error("toggleKudos: firestore, uid, activityId required");
@@ -82,6 +85,7 @@ async function toggleKudos({
       txn.update(activityRef, { kudosCount: increment(-1) });
       return { kudosed: false, activityAuthorId: activity.authorId };
     }
+    if (refuseAdd) throw refusedAddError();
     txn.set(kudosRef, { createdAt: serverTimestamp() });
     txn.update(activityRef, { kudosCount: increment(1) });
     return { kudosed: true, activityAuthorId: activity.authorId };

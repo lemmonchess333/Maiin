@@ -48,6 +48,10 @@ vi.mock("@/components/ui/BottomSheet", () => ({
 }));
 vi.mock("@/components/Avatar", () => ({ default: () => null }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -225,5 +229,19 @@ describe("the word filter", () => {
     expect(toast.error).toHaveBeenCalledWith(
       `Couldn't post the comment. ${refusal}`
     );
+  });
+});
+
+describe("SpaceCommentSheet — a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("shows the comments but holds a new one, and says why", async () => {
+    restriction.isRestricted = true;
+    await openSheet();
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Add a comment…")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Post comment" })).toBeDisabled();
   });
 });

@@ -232,6 +232,34 @@ export interface UserProfileSubscription {
    *  flag is the Stripe-pipeline equivalent. */
   hasUsedTrial?: boolean;
   trialExpiryPromptShown?: boolean;
+  /** The free trial a store purchase is in, before its first payment.
+   *  Written by the server from RevenueCat (functions/lib/trialReminder.js);
+   *  null or absent once there is none. Not `trialExpiresAt`, the old
+   *  onboarding free week. */
+  subscriptionTrial?: SubscriptionTrial | null;
+}
+
+/** A free trial that becomes a paid subscription unless it is cancelled
+ *  (Sub1, STATUS 2026-10-06). Instants are ISO strings. */
+export interface SubscriptionTrial {
+  productId: string;
+  store: string;
+  /** How often it renews once paid; null for a product the server does
+   *  not know. */
+  period: "month" | "year" | null;
+  startedAt: string | null;
+  /** When the trial ends and the first payment is taken. */
+  endsAt: string;
+  /** The last moment to cancel without being charged: Apple wants a day. */
+  cancelBy: string;
+  /** When the reminder goes: 10:00 local, two days before `cancelBy`. The
+   *  email and the phone notification both use this instant. */
+  reminderAt: string;
+  /** False once the person has turned renewal off. */
+  willRenew: boolean;
+  /** The price the app showed when it sold the plan, when it reported one. */
+  price: { amount: number; currencyCode: string; display: string } | null;
+  reminderEmailedAt: string | null;
 }
 
 /** User preferences and settings */
@@ -858,6 +886,7 @@ const PROTECTED_FIELDS = [
   "appleOriginalTransactionId",
   "hasUsedTrial",
   "trialExpiresAt",
+  "subscriptionTrial",
 ] as const;
 
 // Subset of UserProfile fields that also need to be mirrored onto the

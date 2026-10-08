@@ -16,6 +16,9 @@ vi.mock("../../../lib/socialApi", () => ({
   getKudosList: vi.fn(async () => []),
   blockUser: vi.fn(),
 }));
+vi.mock("../../../hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => ({ isRestricted: false, loading: false }),
+}));
 vi.mock("../../../hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ addBlocked: vi.fn(), blockedUsers: new Set() }),
 }));

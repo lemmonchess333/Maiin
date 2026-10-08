@@ -35,6 +35,9 @@ function subscriberResponse({
   sandbox = false,
   requestMs = NOW,
   entitlement = true,
+  periodType = "normal",
+  unsubscribedAt = null,
+  purchaseMs = NOW - DAY,
 } = {}) {
   return {
     request_date: iso(requestMs),
@@ -56,8 +59,10 @@ function subscriberResponse({
           expires_date: expires === null ? null : iso(expires),
           store,
           is_sandbox: sandbox,
-          period_type: "normal",
-          unsubscribe_detected_at: null,
+          period_type: periodType,
+          purchase_date: iso(purchaseMs),
+          unsubscribe_detected_at:
+            unsubscribedAt === null ? null : iso(unsubscribedAt),
           billing_issues_detected_at: grace ? iso(NOW - DAY) : null,
         },
       },
@@ -78,6 +83,7 @@ describe("readEntitlement", () => {
       store: "app_store",
       sandbox: false,
       syncedAtMs: NOW,
+      trial: null,
     });
   });
 
@@ -566,5 +572,193 @@ describe("isAuthorized", () => {
     expect(rc.isAuthorized("", "")).toBe(false);
     expect(rc.isAuthorized("Bearer ", "")).toBe(false);
     expect(rc.isAuthorized("anything", undefined)).toBe(false);
+  });
+});
+
+/* The free trial a purchase is in (Sub1, STATUS 2026-10-06). It rides on the
+   entitlement write as `subscriptionTrial`; lib/trialReminder.js decides its
+   instants and trialReminder.test.js pins them across zones. */
+describe("trials", () => {
+  const LONDON = { subscriptionTier: "free", timezone: "Europe/London" };
+  const TRIAL_END = NOW + 7 * DAY; // 2026-10-04T12:00Z
+  const PRICE = {
+    productId: MONTHLY,
+    amount: 3.99,
+    currencyCode: "GBP",
+    display: "£3.99",
+  };
+  const trialSnapshot = (options = {}) =>
+    snapshot({
+      expires: TRIAL_END,
+      purchaseMs: NOW,
+      periodType: "trial",
+      ...options,
+    });
+
+  it("reads a trial, in either spelling RevenueCat uses", () => {
+    for (const periodType of ["trial", "TRIAL"]) {
+      expect(trialSnapshot({ periodType }).trial, periodType).toEqual({
+        productId: MONTHLY,
+        store: "app_store",
+        startedAtMs: NOW,
+        endsAtMs: TRIAL_END,
+        willRenew: true,
+      });
+    }
+  });
+
+  it("reads renewal as off once RevenueCat has seen the cancel", () => {
+    expect(trialSnapshot({ unsubscribedAt: NOW + DAY }).trial.willRenew).toBe(
+      false
+    );
+  });
+
+  it("is no trial when the period is paid, or the store bills nobody here", () => {
+    expect(snapshot({ periodType: "normal" }).trial).toBeNull();
+    expect(snapshot({ periodType: "intro" }).trial).toBeNull();
+    expect(trialSnapshot({ store: "promotional" }).trial).toBeNull();
+    expect(trialSnapshot({ store: "play_store" }).trial).toMatchObject({
+      store: "play_store",
+    });
+  });
+
+  it("drops a trial whose end cannot be read rather than failing the sync", () => {
+    const response = subscriberResponse({
+      expires: TRIAL_END,
+      periodType: "trial",
+    });
+    response.subscriber.subscriptions[MONTHLY].expires_date = "not a date";
+    const read = rc.readEntitlement(response);
+    expect(read.active).toBe(true);
+    expect(read.trial).toBeNull();
+  });
+
+  it("records the trial with the last moment to cancel and the reminder's instant", () => {
+    const plan = rc.planEntitlementWrite(LONDON, trialSnapshot());
+    expect(plan.result).toBe("granted");
+    expect(plan.write.subscriptionTrial).toEqual({
+      productId: MONTHLY,
+      store: "app_store",
+      period: "month",
+      startedAt: iso(NOW),
+      endsAt: iso(TRIAL_END),
+      // A day before the end: Apple renews in the last 24 hours.
+      cancelBy: "2026-10-03T12:00:00.000Z",
+      // 10:00 BST two days before the last day to cancel.
+      reminderAt: "2026-10-01T09:00:00.000Z",
+      willRenew: true,
+      price: null,
+      reminderEmailedAt: null,
+    });
+  });
+
+  it("does not rewrite an unchanged trial on every sync", () => {
+    const first = rc.planEntitlementWrite(LONDON, trialSnapshot());
+    const again = rc.planEntitlementWrite(
+      { ...LONDON, ...first.write },
+      trialSnapshot({ requestMs: NOW + 1000 })
+    );
+    expect(again.result).toBe("granted");
+    expect(again.write).not.toHaveProperty("subscriptionTrial");
+  });
+
+  it("keeps the price and the sent mark through a cancel, and drops both for a new trial", () => {
+    const first = rc.planEntitlementWrite(LONDON, trialSnapshot(), {
+      reportedPrice: PRICE,
+    });
+    const sentAt = "2026-10-01T09:00:05.000Z";
+    const stored = {
+      ...LONDON,
+      ...first.write,
+      subscriptionTrial: {
+        ...first.write.subscriptionTrial,
+        reminderEmailedAt: sentAt,
+      },
+    };
+    const cancelled = rc.planEntitlementWrite(
+      stored,
+      trialSnapshot({ requestMs: NOW + 1000, unsubscribedAt: NOW + 500 })
+    );
+    expect(cancelled.write.subscriptionTrial).toMatchObject({
+      willRenew: false,
+      price: { amount: 3.99, currencyCode: "GBP", display: "£3.99" },
+      reminderEmailedAt: sentAt,
+    });
+    const another = rc.planEntitlementWrite(
+      stored,
+      trialSnapshot({ requestMs: NOW + 1000, expires: TRIAL_END + 30 * DAY })
+    );
+    expect(another.write.subscriptionTrial).toMatchObject({
+      price: null,
+      reminderEmailedAt: null,
+    });
+  });
+
+  it("takes the app's price only for the product it sold", () => {
+    const price = (reportedPrice) =>
+      rc.planEntitlementWrite(LONDON, trialSnapshot(), { reportedPrice }).write
+        .subscriptionTrial.price;
+    expect(price(PRICE)).toEqual({
+      amount: 3.99,
+      currencyCode: "GBP",
+      display: "£3.99",
+    });
+    expect(
+      price({ ...PRICE, productId: "com.tropos.app.pro.yearly" })
+    ).toBeNull();
+  });
+
+  it("clears the trial when it converts or lapses", () => {
+    const first = rc.planEntitlementWrite(LONDON, trialSnapshot());
+    const inTrial = { ...LONDON, ...first.write };
+    const converted = rc.planEntitlementWrite(
+      inTrial,
+      snapshot({ requestMs: NOW + 8 * DAY, expires: TRIAL_END + 30 * DAY })
+    );
+    expect(converted.result).toBe("granted");
+    expect(converted.write.subscriptionTrial).toBeNull();
+    const lapsed = rc.planEntitlementWrite(
+      inTrial,
+      trialSnapshot({ requestMs: TRIAL_END + DAY })
+    );
+    expect(lapsed.result).toBe("revoked");
+    expect(lapsed.write.subscriptionTrial).toBeNull();
+  });
+
+  it("puts a late price onto the stored trial when the app's snapshot is the older one", () => {
+    const first = rc.planEntitlementWrite(
+      LONDON,
+      trialSnapshot({ requestMs: NOW + 5000 })
+    );
+    const stored = { ...LONDON, ...first.write };
+    const late = rc.planEntitlementWrite(
+      stored,
+      trialSnapshot({ requestMs: NOW }),
+      { reportedPrice: PRICE }
+    );
+    expect(late.result).toBe("stale");
+    expect(late.write).toEqual({
+      subscriptionTrial: {
+        ...stored.subscriptionTrial,
+        price: { amount: 3.99, currencyCode: "GBP", display: "£3.99" },
+      },
+    });
+    expect(
+      rc.planEntitlementWrite(stored, trialSnapshot({ requestMs: NOW }))
+    ).toEqual({ write: null, result: "stale" });
+  });
+
+  it("records a sandbox trial only where the sandbox purchase counts", () => {
+    const allowed = rc.planEntitlementWrite(
+      LONDON,
+      trialSnapshot({ sandbox: true }),
+      { sandboxAllowed: true }
+    );
+    expect(allowed.write.subscriptionTrial).toMatchObject({ willRenew: true });
+    const refused = rc.planEntitlementWrite(
+      LONDON,
+      trialSnapshot({ sandbox: true })
+    );
+    expect(refused.write).not.toHaveProperty("subscriptionTrial");
   });
 });
