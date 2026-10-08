@@ -1353,24 +1353,34 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
         if (!compressed && !gentler && !detrainedSkipsQuality) {
+          // Placed like every quality session (RUN-EV-10): away from the
+          // long-run slot and off a lifting day where the week allows.
+          const [taperDay] = chooseQualityRunSlots({
+            availableDays: remaining,
+            longDay: longSlot,
+            count: 1,
+            weekSchedule: input.weekSchedule,
+          });
           week.push(
             buildRunDayV2({
-              dayIndex: remaining[0],
+              dayIndex: taperDay,
               templateId: "8x400",
               type: "intervals",
               weekStart,
             })
           );
-          remaining.slice(1).forEach((d) =>
-            week.push(
-              buildRunDayV2({
-                dayIndex: d,
-                templateId: easyId,
-                type: "easy",
-                weekStart,
-              })
-            )
-          );
+          remaining
+            .filter((d) => d !== taperDay)
+            .forEach((d) =>
+              week.push(
+                buildRunDayV2({
+                  dayIndex: d,
+                  templateId: easyId,
+                  type: "easy",
+                  weekStart,
+                })
+              )
+            );
         } else {
           remaining.forEach((d) =>
             week.push(
