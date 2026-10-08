@@ -42,6 +42,35 @@ describe("a new runner's first weeks", () => {
     ).toBe("2026-10-19");
     expect(profileNewRunnerUntil({ runFrequency: "new" } as never)).toBeNull();
   });
+
+  /* Setup counts the weeks from the day it finishes, and a plan made later
+     has to count from the same day. Someone who signs up, leaves setup and
+     finishes it two weeks later began running then, not at sign-up: counted
+     from sign-up, their first plan held six weeks and the next Monday's
+     held four. */
+  it("count from the day setup finished, where the profile has it", () => {
+    const createdAt = { toMillis: () => new Date(2026, 8, 7, 9).getTime() };
+    const onboardingCompletedAt = {
+      toMillis: () => new Date(2026, 8, 21, 18).getTime(),
+    };
+    expect(
+      profileNewRunnerUntil({
+        runFrequency: "new",
+        createdAt,
+        onboardingCompletedAt,
+      })
+    ).toBe(newRunnerUntil("new", "2026-09-21"));
+    expect(newRunnerUntil("new", "2026-09-21")).toBe("2026-11-02");
+    // Until the server's time comes back, and on a profile set up before
+    // setup's day was kept, the day the account began.
+    expect(
+      profileNewRunnerUntil({
+        runFrequency: "new",
+        createdAt,
+        onboardingCompletedAt: {},
+      })
+    ).toBe("2026-10-19");
+  });
 });
 
 describe("the race plan in a new runner's first weeks", () => {
