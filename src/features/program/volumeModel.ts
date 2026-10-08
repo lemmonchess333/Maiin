@@ -960,17 +960,11 @@ function overshootsCeiling(
 // Push:pull balance is computed at the MOVEMENT level (robust + unambiguous)
 // rather than the muscle level — the canonical "Shoulders" group lumps the
 // push-y front delt with the pull-y rear delt, so a muscle-level ratio would
-// be misleading.
-const PUSH_CATEGORIES = new Set([
-  "horizontal_push",
-  "vertical_push",
-  "arms_triceps",
-]);
-const PULL_CATEGORIES = new Set([
-  "horizontal_pull",
-  "vertical_pull",
-  "arms_biceps",
-]);
+// be misleading. Lift6: pressing against rows and pull-downs, the movements
+// the shoulder balance is about. Arm work counts on neither side, so the
+// pull grown is never a curl, and triceps sets don't add push to match.
+const PUSH_CATEGORIES = new Set(["horizontal_push", "vertical_push"]);
+const PULL_CATEGORIES = new Set(["horizontal_pull", "vertical_pull"]);
 
 /** Safety bound on auto-added pull sets per week. */
 const MAX_ADDED_PULL_SETS = 8;
