@@ -11,10 +11,10 @@ Manual checks deferred from work that already shipped to a feature branch. Burn 
 Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
 session, which now judge only the work segments
 (lemmonchess333/Maiin#2633), a planned easy run's time target, countdown and
-finish cue (lemmonchess333/Maiin#2639), and a tempo or intervals with no pace
-to give (lemmonchess333/Maiin#2643). The unit tests cover which segment is
-judged and what each run is set for; these need a phone's speaker and
-screen.
+finish cue (lemmonchess333/Maiin#2639), a tempo or intervals with no pace
+to give (lemmonchess333/Maiin#2643), and a new runner's run-walk sessions
+(lemmonchess333/Maiin#2655). The unit tests cover which segment is judged
+and what each run is set for; these need a phone's speaker and screen.
 
 - [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
       tempo: no pace alert in the warm-up; the pace bar appears with the
@@ -29,6 +29,11 @@ screen.
 - [ ] **A tempo with no pace yet.** On an account with no benchmark, open a
       planned tempo: the launch card says "Comfortably hard" where a pace
       would be, and the run shows no pace bar and speaks no pace alert.
+- [ ] **A run-walk.** On a new runner's account with a race, start the
+      week's planned run-walk and lock the screen: each walk and run is
+      announced as it starts ("Run 1 of 8. 1 minute, easy enough to talk."),
+      on time, for the whole 29 minutes, with no pace bar or pace alert; the
+      summary says nothing about pace.
 
 ## After race day, the race's own ending (F6, 2026-10-08)
 
