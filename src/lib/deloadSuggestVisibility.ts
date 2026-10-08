@@ -11,6 +11,11 @@ export interface DeloadSuggestInput {
   totalWeeks: number | undefined;
   /** Resolved race distance — absent for non-race plans. */
   distance: "5k" | "10k" | "half" | "marathon" | undefined;
+  /** `lighterWeekAllowed(programState)`: whether Train's menu offers a
+   *  lighter week now (Lift4 (9): not during one, not straight after one,
+   *  not in a first week back). The banner's button sends the menu's
+   *  command, which the server refuses otherwise. */
+  lighterWeekAllowed: boolean;
 }
 
 /**
@@ -54,6 +59,8 @@ export interface DeloadSuggestInput {
 export function shouldSuggestDeload(input: DeloadSuggestInput): boolean {
   // The running half stays until the running grill decides it.
   if (!input.deloadRecommended || !input.loadFromRunning) return false;
+  // Only a lighter week that can be taken: one at a time (Lift4 (9)).
+  if (!input.lighterWeekAllowed) return false;
   return !isCurrentWeekInRaceWindDown(
     input.currentWeek,
     input.totalWeeks,
