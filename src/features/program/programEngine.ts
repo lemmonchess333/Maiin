@@ -1,4 +1,5 @@
 import type {
+  DayRole,
   Experience,
   GoalProfile,
   MovementCategory,
@@ -1297,7 +1298,7 @@ export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
    DAY ROLES (backlog #3 — N9 daily undulating periodization)
 ================================ */
 
-export type DayRole = "heavy" | "moderate" | "pump";
+export type { DayRole };
 
 /** Rep shift a day role applies on top of the goal profile's base. */
 export function repDeltaForRole(role: DayRole): number {
@@ -1376,6 +1377,35 @@ export function assignDayRoles(count: number): DayRole[] {
   });
 }
 
+const DAY_ROLES: ReadonlySet<string> = new Set(["heavy", "moderate", "pump"]);
+
+/**
+ * The role a session takes: the one it was given when the plan was built
+ * (`withDayRoles`), or, on an older plan that keeps none, its position's,
+ * as every role was read before they were kept.
+ */
+export function dayRoleOf(
+  day: Pick<WorkoutDay, "dayRole">,
+  byPosition: DayRole
+): DayRole {
+  return typeof day.dayRole === "string" && DAY_ROLES.has(day.dayRole)
+    ? day.dayRole
+    : byPosition;
+}
+
+/**
+ * Gives each session its role by its place in the week the builders made,
+ * and the session keeps it (`WorkoutDay.dayRole`): the week's order carries
+ * over by moving whole days (Lift4 (11)), so the position stops saying
+ * which session was the heavier one. Every level gets one. A beginner's
+ * reps don't shift by role (`usesUndulation`), but a level change can bring
+ * the shifts in, and they should land on the same sessions.
+ */
+export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
+  const roles = assignDayRoles(workouts.length);
+  return workouts.map((day, i) => ({ ...day, dayRole: roles[i] }));
+}
+
 /**
  * Backlog #3 (training-book backlog; N9): put the first rep variation
  * into a Tropos week. Every source converged on varying what the week
@@ -1397,7 +1427,7 @@ function applyDayRoles(
   if (!usesUndulation(experience)) return workouts;
   const roles = assignDayRoles(workouts.length);
   return workouts.map((day, i) => {
-    const role = roles[i];
+    const role = dayRoleOf(day, roles[i]);
     if (role === "moderate") return day;
     return {
       ...day,
@@ -1906,7 +1936,7 @@ export function generateProgram(
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
   workouts = applyRoleTable(workouts, primaryGoal, experience);
-  workouts = applyDayRoles(workouts, experience);
+  workouts = applyDayRoles(withDayRoles(workouts), experience);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it

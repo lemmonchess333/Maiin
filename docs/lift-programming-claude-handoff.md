@@ -245,6 +245,18 @@ equipment or injury swap brings in still keeps its slot's numbers; giving it
 its own role's numbers, and fitting the plan to the session length, are the
 next parts of step 4.
 
+STATUS 2026-10-08 (Lift4 (5), (11) and (12), the day roles): each session
+keeps its heavier or lighter role. The roles were read from the days'
+positions, and the week's order carries over by moving whole days, so a
+block started after a carried-over week shifted the reps by another
+session's role (the training-engine audit measured a heavier upper day's
+bench going from 3 × 3 to 3 × 7), and the block's end didn't put back what
+its start replaced. A plan's days now keep their role (`WorkoutDay.dayRole`,
+given by `withDayRoles` when the plan is built, at every level, so a later
+level change lands on the same sessions), and both copies of
+`represcribeWorkouts` read it. A plan built before has none: its roles come
+from the positions, as before, and are kept from its first block.
+
 STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
 session length. A new plan's sessions are cut to the minutes the person has
 (`sessionFit.ts`; an hour when the question was never answered), priced with
