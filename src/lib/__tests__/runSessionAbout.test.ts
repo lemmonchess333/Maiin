@@ -65,6 +65,19 @@ describe("runSessionAbout", () => {
     );
   });
 
+  it("says the last run-walk is one run, and the first has no week before it", () => {
+    // Run-walk 6 is one 20-minute run between the walks (Run20 (5)).
+    const last = about("run_walk_6");
+    expect(last.what).toMatch(/^One easy run without stopping/);
+    expect(last.what).not.toMatch(/walks between/);
+    expect(last.feel).toMatch(/^Easy on the run: /);
+    expect(about("run_walk_5").what).toMatch(/walks between/);
+    // Run-walk 1 is the first week's: there is no last week's to swap in.
+    expect(about("run_walk_1").ifWrong).not.toMatch(/last week/);
+    expect(about("run_walk_1").ifWrong).toMatch(/start the walk early/);
+    expect(last.ifWrong).toMatch(/last week's session/);
+  });
+
   it("offers a way through when it feels wrong, not a verdict", () => {
     expect(about("easy_30").ifWrong).toMatch(/walk for a minute/);
     expect(about("4x1k").ifWrong).toMatch(/One fewer rep is still the session/);

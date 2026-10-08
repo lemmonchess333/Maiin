@@ -10,7 +10,11 @@
  * depends on its distance. The register is the explainer's: what the session
  * is and how to run it, never a physiology measurement, readiness or safety.
  */
-import { isRunWalkTemplateId, type RunTemplate } from "./workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  RUN_WALK_TEMPLATE_IDS,
+  type RunTemplate,
+} from "./workoutTemplates";
 
 export interface RunSessionAbout {
   /** What the session is, in a sentence. */
@@ -40,11 +44,23 @@ export function runSessionAbout(
     };
   }
   if (isRunWalkTemplateId(template.id)) {
+    // The first week's has no week before it to swap in.
+    const swapBack =
+      template.id === RUN_WALK_TEMPLATE_IDS[0]
+        ? ""
+        : " Too much this week? You can swap in last week's session for this day.";
+    // The last is one run, between the two walks (Run20 (5)).
+    if (config.runWalk?.runSecs.length === 1) {
+      return {
+        what: "One easy run without stopping, between a walk to warm up and a walk to finish.",
+        feel: "Easy on the run: you can talk in full sentences. Brisk on the walks.",
+        ifWrong: `Can't talk? Slow down, or walk for a minute, then run again.${swapBack}`,
+      };
+    }
     return {
       what: "Easy runs with walks between them, after a walk to warm up.",
       feel: "Easy on the runs: you can talk in full sentences. Brisk on the walks.",
-      ifWrong:
-        "Can't talk on a run? Slow down, or start the walk early. Too much this week? You can swap in last week's session for this day.",
+      ifWrong: `Can't talk on a run? Slow down, or start the walk early.${swapBack}`,
     };
   }
   if (template.type === "intervals") {
