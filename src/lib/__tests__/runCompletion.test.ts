@@ -136,6 +136,16 @@ describe("runDocument", () => {
     ).toEqual([]);
   });
 
+  it("keeps what the session's work segments covered, and null for a run with none", () => {
+    // A tempo is judged by its blocks (`plannedRunVerdict`); the run keeps
+    // the figures it was judged on.
+    expect(
+      runDocument(run({ workPortion: { seconds: 1200, meters: 4000 } }))
+        .workPortion
+    ).toEqual({ seconds: 1200, meters: 4000 });
+    expect(runDocument(run()).workPortion).toBeNull();
+  });
+
   it("thins the trace, trims the notes and names the shoe", () => {
     const saved = runDocument(run(), FINISH);
     expect(saved.points).toEqual(sampleRoute(trace(600), 500));

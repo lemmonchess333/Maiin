@@ -93,4 +93,64 @@ describe("RunLaunchCard", () => {
     expect(screen.getByText("Extra run")).toBeInTheDocument();
     expect(screen.queryByText("Today · Run day")).not.toBeInTheDocument();
   });
+
+  /* Run20 (1): with no pace to prescribe, a tempo and an interval session
+     say how they should feel where a pace would be. */
+  describe("a quality session with no pace", () => {
+    const tempo: RunTemplate = {
+      id: "tempo_20",
+      name: "20 Min Tempo",
+      type: "tempo",
+      icon: "Zap",
+      description: "5 min warmup → 20 min tempo → 5 min cooldown",
+      estimatedDuration: 30,
+      config: {},
+    };
+    const intervals: RunTemplate = {
+      id: "5x1k",
+      name: "5×1K Intervals",
+      type: "intervals",
+      icon: "RefreshCw",
+      description: "5 reps of 1 km with 90s rest",
+      estimatedDuration: 35,
+      config: {},
+    };
+
+    it("a tempo says comfortably hard", () => {
+      setup({ workout: tempo, prefill: { activityType: "tempo" } });
+      expect(screen.getByText("Comfortably hard")).toBeInTheDocument();
+    });
+
+    it("an interval session says hard, and even", () => {
+      setup({
+        workout: intervals,
+        prefill: {
+          activityType: "intervals",
+          intervals: {
+            reps: 5,
+            workDistance: 1000,
+            restDuration: 90,
+            warmupDuration: 600,
+            cooldownDuration: 300,
+          },
+        },
+      });
+      expect(screen.getByText("5 × 1K")).toBeInTheDocument();
+      expect(
+        screen.getByText("Hard, and even across every rep")
+      ).toBeInTheDocument();
+    });
+
+    it("a tempo with a pace shows the pace, not the words", () => {
+      setup({
+        workout: tempo,
+        prefill: {
+          activityType: "tempo",
+          target: { type: "pace", value: 320 },
+        },
+      });
+      expect(screen.getByText("5:20 /km")).toBeInTheDocument();
+      expect(screen.queryByText("Comfortably hard")).not.toBeInTheDocument();
+    });
+  });
 });
