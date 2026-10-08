@@ -12,6 +12,7 @@ import { generateInstanceId, loweringOf } from "./programTypes";
 import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
+  LIGHTER_WEEK_EVERY,
   lighterWeeksScheduled,
   isRaceBuildWeek,
   raceLiftWeek,
@@ -2551,10 +2552,31 @@ export function advanceWeek(
       ? 1
       : state.weekNumber + 1;
   /* Lift4 (10): the race's final weeks (`raceLiftWeek`). The week after
-     the race ends a cycle, so the calendar's count starts again after it. */
+     the race ends a cycle, so the calendar's count starts again after it.
+     A lighter week the person took (the `applyDeloadWeek` command's
+     snapshot of this week) ends one too, where the calendar brings lighter
+     weeks: it counts as the calendar's, so the next comes four trained
+     weeks later (Lift4 (9), and the lifting handoff's lighter-week
+     precedence table). An untrained one holds the number, as any week
+     does. Without a calendar cycle, or with a race plan placing the
+     lighter weeks, the number carries on. */
   const raceWeek = raceLiftWeek(nextRaceWeek, state.raceWeek);
+  const takenLighter =
+    weekWasTrained &&
+    state.currentPhase === "deload" &&
+    state.deloadSnapshot?.weekNumber === state.weekNumber &&
+    !nextRaceWeek &&
+    lighterWeeksScheduled(experience, state.workouts.length);
+  const cycleEnd =
+    Math.ceil(state.weekNumber / LIGHTER_WEEK_EVERY) * LIGHTER_WEEK_EVERY;
   const nextWeek =
-    raceWeek === "after" ? Math.ceil(heldOrNext / 4) * 4 : heldOrNext;
+    raceWeek === "after"
+      ? Math.ceil(heldOrNext / 4) * 4
+      : takenLighter && cycleEnd !== state.weekNumber
+        ? cycleEnd >= 52
+          ? 1
+          : cycleEnd + 1
+        : heldOrNext;
 
   /* Archive only weeks that happened. `weekHistory` is capped at 8, so
      archiving absent weeks would let a 12-week catch-up evict every real
