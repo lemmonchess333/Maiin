@@ -163,6 +163,47 @@ export function represcribeWorkouts(
 }
 
 /**
+ * A lift a person puts into a plan takes its role's numbers (Lift5): Train's
+ * Replace with an exercise of another role, and Add. The reps, range and
+ * progression its role gives on that session, with the session's heavier
+ * or lighter shift, its load moved to those reps, and its role's sets, no
+ * more than `maxSets` (the slot's, for a Replace). Everything else stays.
+ * Mirrored by `functions/lib/represcribe.js`, which the commands run.
+ */
+export function withRoleNumbers(
+  workouts: readonly WorkoutDay[],
+  dayIndex: number,
+  instanceId: string,
+  goal: PrimaryGoal,
+  experience: Experience | undefined,
+  maxSets?: number
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience)[
+    dayIndex
+  ]?.exercises.find((ex) => ex.instanceId === instanceId);
+  if (!fresh) return [...workouts];
+  return workouts.map((day, d) =>
+    d !== dayIndex
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (ex.instanceId !== instanceId || ex.repUnit === "seconds")
+              return ex;
+            const roleSets = roleRepsFor(goal, ex, experience).sets;
+            const sets =
+              maxSets === undefined ? roleSets : Math.min(maxSets, roleSets);
+            return {
+              ...fresh,
+              sets,
+              ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+            };
+          }),
+        }
+  );
+}
+
+/**
  * A lift an equipment or injury swap brings into a plan the person already
  * has takes its own role's numbers (Lift4 (5)): the reps, range and
  * progression its role gives on that day, its load moved to those reps, and

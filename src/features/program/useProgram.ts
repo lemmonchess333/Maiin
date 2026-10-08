@@ -54,7 +54,8 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { represcribeWorkouts } from "./represcribe";
+import { represcribeWorkouts, withRoleNumbers } from "./represcribe";
+import { exerciseRole } from "./exerciseRole";
 import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
 import {
   DEFAULT_PROGRAM_SETTINGS,
@@ -2853,9 +2854,8 @@ export function useProgram() {
           ...precondition,
           exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const added = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2879,13 +2879,29 @@ export function useProgram() {
                   ],
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: each added lift takes its role's numbers, as the reducer
+          // gives them.
+          return {
+            ...state,
+            workouts: exerciseIds.reduce(
+              (workouts, _id, n) =>
+                withRoleNumbers(
+                  workouts,
+                  dayIndex,
+                  `cmd-${commandId}-${n}`,
+                  state.primaryGoal ?? "general",
+                  toExperience(profile?.experience)
+                ),
+              added
+            ),
+          };
+        },
         "Couldn't add that."
       );
       return changeStands(outcome);
     },
-    [programState, runProgramCommand]
+    [programState, profile, runProgramCommand]
   );
 
   /**
@@ -2977,9 +2993,8 @@ export function useProgram() {
           replacementExerciseId,
           replacementWeight: calibrated.weight,
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const replaced = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -3021,8 +3036,27 @@ export function useProgram() {
                   ),
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: within a role the slot's numbers stay; across one the
+          // replacement takes its role's, no more sets than the slot had.
+          const replacement = replaced[dayIndex].exercises.find(
+            (ex) => ex.instanceId === `cmd-${commandId}`
+          );
+          return {
+            ...state,
+            workouts:
+              replacement && exerciseRole(old) !== exerciseRole(replacement)
+                ? withRoleNumbers(
+                    replaced,
+                    dayIndex,
+                    `cmd-${commandId}`,
+                    state.primaryGoal ?? "general",
+                    toExperience(profile?.experience),
+                    old.sets
+                  )
+                : replaced,
+          };
+        },
         "Couldn't swap that."
       );
       return changeStands(outcome);

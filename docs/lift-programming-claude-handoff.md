@@ -345,6 +345,17 @@ a lift a swap brings in takes its role's reps, range and progression on its
 day, its load moved down to more reps (never up), and no more sets than its
 slot had (`represcribeSwapped`).
 
+STATUS 2026-10-08 (Lift5, owner-delegated): Train's Replace and Add follow
+the role table too. A Replace keeps the slot's sets, reps and progression
+when the new exercise has the old one's role, so a person's own numbers
+stay; across roles the slot takes the new role's numbers on its day, its
+load moved to them, and no more sets than it had. An Add takes its role's
+numbers unless the command brings its own; its load starts empty as before.
+Both run through one helper on each side of the command boundary
+(`withRoleNumbers`, in `represcribe.ts` and the server's `represcribe.js`,
+pinned by `represcribe.cross.test.ts`). Swap for today, kept or not, keeps
+the session's numbers.
+
 STATUS 2026-10-05 (Lift4 (11), build step 4, eighth part): removing a
 limitation brings the original lifts back as part of saving. Each equipment
 or injury swap records the lift it replaced (`swappedFrom` on the exercise,
