@@ -336,6 +336,71 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
  * the chosen day was conveyed by fill colour alone, with no `aria-pressed`
  * and no textual equivalent — unusable rather than merely terse.
  */
+/* F14 and F21 (the training-engine simulator): a run sits on the date the
+   plan holds it, whatever the weekday (ADR-0002). The strip asked the
+   weekday, so a Sunday race read as rest, and the weekday a run moved from
+   read as a missed run. */
+describe("WeekStrip — a run sits on its date, whatever the weekday", () => {
+  it("shows a Sunday race as planned, and the weekday a run left as rest", () => {
+    // Wednesday 30 September 2026; the week runs Monday 28 to Sunday 4.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12, 0, 0));
+    try {
+      const week = "2026-09-28";
+      // Runs on Tuesday and Thursday by the week's pattern; Sunday rests.
+      const profile = makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
+      );
+      const programState = makeProgramState([
+        // Tuesday's run, moved to Monday.
+        makeRunDay({
+          id: "moved",
+          dayIndex: 1,
+          date: "2026-09-28",
+          weekKey: week,
+          movedFromDate: "2026-09-29",
+        }),
+        makeRunDay({
+          id: "thu",
+          dayIndex: 4,
+          date: "2026-10-01",
+          weekKey: week,
+        }),
+        makeRunDay({
+          id: "race",
+          dayIndex: 0,
+          date: "2026-10-04",
+          weekKey: week,
+          templateId: "half_race",
+          type: "race",
+        }),
+      ]);
+      const { container } = render(
+        <WeekStrip
+          todayKey={localDateString()}
+          dayMap={new Map()}
+          profile={profile}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          selectedDate={null}
+          onDayTap={vi.fn()}
+        />
+      );
+      expect(circleStates(container)).toEqual([
+        "missed", // Monday: the moved run, not done
+        "rest", // Tuesday: its run moved away
+        "rest", // today, Wednesday: no run, and the pattern rests it
+        "planned", // Thursday's run
+        "rest",
+        "rest",
+        "planned", // Sunday's race
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe("WeekStrip — accessible name and selection state", () => {
   const DOW = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
