@@ -112,6 +112,22 @@ describe("runSessionExplainer", () => {
       expect(line).not.toMatch(/VO2|lactate|MRV/i);
     }
   });
+
+  it("calls tempo and intervals the quality sessions: hard is an effort, not a family (Run21 (4))", () => {
+    expect(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...build })
+    ).toMatch(/quality sessions/);
+    for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
+      for (const templateId of ["x", "easy_40_strides", "easy_90"]) {
+        for (const ctx of [base, build, taper, race]) {
+          const line = runSessionExplainer({ type, templateId, ...ctx }) ?? "";
+          expect(line, `${type} ${templateId}`).not.toMatch(
+            /\bhard (days|sessions|runs)\b/i
+          );
+        }
+      }
+    }
+  });
 });
 
 describe("shared run purpose presentation", () => {
