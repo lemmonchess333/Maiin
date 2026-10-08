@@ -1,9 +1,10 @@
 /**
- * Every parameter of the virtual lifter, in one table: its value, the range
+ * Every parameter of the virtual athlete, in one table: its value, the range
  * a sweep covers, its source, the evidence marker and its grade, as in
- * docs/training-engine-2026-10/lifting-evidence.md §4.4. The model reads
- * its numbers from here and nowhere else, so this table is the whole of
- * what the simulator assumes about a person.
+ * docs/training-engine-2026-10/lifting-evidence.md §4.4 for the lifter and
+ * running-evidence.md §6.2–6.7 for the runner. The models read their
+ * numbers from here and nowhere else, so this table is the whole of what
+ * the simulator assumes about a person.
  *
  * Markers: VF checked in full text, VA abstract or book, U identified but
  * unchecked, C computed here from checked sources, ASSUMPTION the harness's
@@ -348,6 +349,185 @@ export const ADHERENCE = {
     [0.5, 0.95],
     "of planned",
     "Fuente-Vidal 2026; running-evidence §6.7",
+    "VF",
+    "WEAK"
+  ),
+} as const;
+
+/**
+ * The virtual runner (running-evidence §6.2–6.7, `runner.ts`). Fitness and
+ * fatigue are running averages of weekly effort-minutes (a quality minute
+ * counts 1.3) over τ₁ and τ₂ days. True VDOT is the untrained base plus a
+ * concave curve of fitness, H · r · (1 − e^(−F / w*)); on the day,
+ * freshness (recent load below fitness) adds up to a taper's worth and
+ * fatigue takes as much away.
+ *
+ * A linear Banister sum can't be fitted to both §6.1's gains and §6.4's
+ * detraining with one gain; the concave curve holds both. At r = 1
+ * (`runnerCalibration.test.ts` pins each): a VDOT 42 runner on 175 minutes
+ * a week whose 16-week block adds 90 gains +2.1 VDOT (§6.1: +1.5–3); 1, 3,
+ * 6 and 10 weeks off lose 0, 3.2, 7.5 and 11.3% (§6.4: 0–2, 3–6, 5–10,
+ * 8–15); a VDOT 55 runner adding 60 minutes to 300 gains +0.9; a novice
+ * going from 100 to 150 minutes gains +1.6 in 12 weeks (+1.5–3). A known
+ * gap: fitness follows minutes, so a 2-week taper at half the easy minutes
+ * nets only about +0.5%, against an observational +2.6% for a strict
+ * 3-week taper (Smyth & Lawlor 2021).
+ */
+export const RUNNER = {
+  fitnessTauDays: p(
+    42,
+    [30, 57],
+    "days",
+    "Peng 2023's 57 published sets: median 42, IQR 30–57 (§6.2)",
+    "C",
+    "WEAK-MODERATE"
+  ),
+  fatigueTauDays: p(
+    10,
+    [5, 16],
+    "days",
+    "Peng 2023: median 10, IQR 5–16 (§6.2)",
+    "C",
+    "WEAK-MODERATE"
+  ),
+  /** A quality minute (tempo, intervals, a race) against an easy one. */
+  qualityLoadFactor: p(
+    1.3,
+    [1.3, 1.3],
+    "× minute",
+    "§6.2's load units, the effort-weighted minutes used consistently",
+    "ASSUMPTION",
+    "ASSUMPTION"
+  ),
+  /** VDOT above the untrained base at saturating load, before r. */
+  headroom: p(
+    15,
+    [12, 18],
+    "VDOT",
+    "fit to §6.1's recreational and well-trained rows and §6.4's losses",
+    "C",
+    "WEAK"
+  ),
+  /** The weekly load at which 63% of the headroom is reached. */
+  loadScale: p(250, [200, 300], "min/week", "the same fit", "C", "WEAK"),
+  /** The most a taper (or the start of a break) adds, as a share of VDOT;
+   *  sustained fatigue costs as much the other way. */
+  freshnessCap: p(
+    0.026,
+    [0.018, 0.03],
+    "of VDOT",
+    "Smyth & Lawlor 2021: strict 3-week taper about 2.6% (1.8% adjusted)",
+    "VF",
+    "WEAK"
+  ),
+  /** r ~ lognormal(0, σ), drawn once per runner, scales the headroom. */
+  responderSigma: p(
+    0.4,
+    [0.4, 0.5],
+    "log-SD",
+    "HERITAGE (Bouchard 1999): CV ≈ 0.5 with test noise, 0.41 without [C]",
+    "C",
+    "WEAK-MODERATE"
+  ),
+  /** Day-to-day variation in what the runner can do. */
+  dayNoise: p(
+    0.015,
+    [0.01, 0.025],
+    "of VDOT",
+    "no source checked",
+    "ASSUMPTION",
+    "ASSUMPTION"
+  ),
+  /** Running-related injuries per 1000 h: a novice's first weeks, and a
+   *  runner past them. */
+  injuryNovice: p(
+    30,
+    [17.8, 33],
+    "per 1000 h",
+    "Videbæk 2015: 30.1–33.0 in the 8–13-week studies, 17.8 pooled",
+    "VF",
+    "MODERATE"
+  ),
+  injuryRecreational: p(
+    7.7,
+    [6.9, 8.7],
+    "per 1000 h",
+    "Videbæk 2015",
+    "VF",
+    "MODERATE"
+  ),
+  /** Weeks over which a novice's rate falls to a runner's. */
+  noviceRiskWeeks: p(
+    13,
+    [8, 26],
+    "weeks",
+    "Videbæk 2015's short studies run 8–13 weeks; the fall itself is unsourced",
+    "ASSUMPTION",
+    "WEAK"
+  ),
+  /** A single run against the longest of the last 30 days (Frandsen 2025,
+   *  first overuse injury): 10–30% longer, 30–100%, more than 100%. */
+  spike10to30: p(1.64, [1.31, 2.05], "HRR", "Frandsen 2025", "VF", "MODERATE"),
+  spike30to100: p(1.52, [1.16, 2], "HRR", "Frandsen 2025", "VF", "MODERATE"),
+  spikeOver100: p(2.28, [1.5, 3.48], "HRR", "Frandsen 2025", "VF", "MODERATE"),
+  /** For a year after an injury. */
+  priorInjury: p(
+    1.5,
+    [1.5, 2],
+    "×",
+    "Fokkema 2019: RR ≈ 1.63 at a 29% baseline [C]; never the OR 2.21",
+    "C",
+    "MODERATE"
+  ),
+  /** What an injury does (Kluitenberg 2016, novices; others unsourced):
+   *  running reduced, stopped 1–6 days, stopped a week or more. */
+  injuryReducedShare: p(
+    0.22,
+    [0.22, 0.22],
+    "of injuries",
+    "Kluitenberg 2016",
+    "VF",
+    "WEAK-MODERATE"
+  ),
+  injuryShortShare: p(
+    0.52,
+    [0.52, 0.52],
+    "of injuries",
+    "Kluitenberg 2016",
+    "VF",
+    "WEAK-MODERATE"
+  ),
+  injuryShortDays: p(
+    5,
+    [4, 7],
+    "days",
+    "Kluitenberg 2016: medians 4–7 days",
+    "VF",
+    "WEAK-MODERATE"
+  ),
+  injuryLongDays: p(
+    21,
+    [20, 22],
+    "days",
+    "Kluitenberg 2016: medians 20–22 days, censored at 6 weeks",
+    "VF",
+    "WEAK-MODERATE"
+  ),
+  /** A beginner who lifts as well: the aerobic gain. */
+  concurrentNovice: p(
+    0.9,
+    [0.8, 1],
+    "× stimulus",
+    "Huiberts 2024: SMD −0.35 (−0.70 to −0.01); §6.6",
+    "VF",
+    "WEAK"
+  ),
+  /** A quality run within two days of a heavy leg session. */
+  afterHeavyLegs: p(
+    0.9,
+    [0.85, 0.95],
+    "× stimulus",
+    "Doma & Deakin 2013: running cost +5.3% at 24 h; §6.6",
     "VF",
     "WEAK"
   ),
