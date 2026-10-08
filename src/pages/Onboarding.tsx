@@ -24,7 +24,11 @@ import {
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import {
+  getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
+} from "@/lib/raceGoalPlanner";
 import {
   loadOnboardingDraft,
   saveOnboardingDraft,
@@ -227,7 +231,10 @@ export default function Onboarding() {
   const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
     draft?.runMode === "race_prep" ? "race_prep" : "freeform"
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState(draft?.weeklyRunDays ?? 2);
+  // At least two, a race plan's least (A7), for a draft saved before that.
+  const [weeklyRunDays, setWeeklyRunDays] = useState(
+    Math.max(MIN_RACE_RUN_DAYS, draft?.weeklyRunDays ?? MIN_RACE_RUN_DAYS)
+  );
   const [raceDistance, setRaceDistance] = useState<
     OnboardingDraft["raceDistance"]
   >(draft?.raceDistance ?? "10k");
@@ -998,15 +1005,10 @@ export default function Onboarding() {
                          themselves under "occasional runner"; it does not
                          change a freeform plan, and reading it as a
                          freeform scheduling lever is reading it wrong.
-                         One a week when a race IS set, for the same
-                         volume-preserving reason ADR-0002 gives for not
-                         punishing a light trainer. */
+                         Two a week when a race IS set: a race plan needs
+                         at least two run days (Pgm7 A7). */
                       setWeeklyRunDays(
-                        option.id === "regular"
-                          ? 3
-                          : option.id === "new"
-                            ? 1
-                            : 2
+                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
                       );
                     }}
                   />
@@ -1034,7 +1036,7 @@ export default function Onboarding() {
                         <RangeInput
                           className="min-h-11"
                           aria-label="Runs per week"
-                          min={1}
+                          min={MIN_RACE_RUN_DAYS}
                           max={7}
                           step={1}
                           value={weeklyRunDays}
@@ -1055,6 +1057,11 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                        <p className="text-sm text-muted-foreground">
+                          {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                        </p>
+                      )}
                       <label className="block text-sm space-y-2">
                         <span>Race target date</span>
                         <input

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   getRaceGoalPlannerState,
+  raceRunDaysNote,
   raceTargetVerdict,
   type RaceGoalPlannerInput,
 } from "../raceGoalPlanner";
@@ -150,6 +151,26 @@ describe("getRaceGoalPlannerState", () => {
     });
     expect(s.recommendedRunDays).toBeGreaterThan(0);
     expect(s.recommendedRunDays).toBeLessThanOrEqual(7);
+  });
+});
+
+/* Pgm7 A7: a race plan needs at least two run days a week, and a
+   marathon's setup recommends three. */
+describe("raceRunDaysNote", () => {
+  it("says a race plan needs two runs a week, under two", () => {
+    expect(raceRunDaysNote("5k", 1)).toMatch(/needs at least two runs a week/);
+  });
+
+  it("recommends three for a marathon, and offers a half or a later date", () => {
+    expect(raceRunDaysNote("marathon", 2)).toBe(
+      "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date."
+    );
+  });
+
+  it("says nothing when the count suits the race", () => {
+    expect(raceRunDaysNote("5k", 2)).toBeNull();
+    expect(raceRunDaysNote("half", 2)).toBeNull();
+    expect(raceRunDaysNote("marathon", 3)).toBeNull();
   });
 });
 
