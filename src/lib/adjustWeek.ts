@@ -23,6 +23,7 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
+import { newRunnerTemplate } from "@/features/program/newRunner";
 
 /** The eased target — one convention, shared with the recovery week. */
 export const EASY_TEMPLATE_ID = "easy_30";
@@ -42,7 +43,10 @@ export interface EasySwap {
 
 export function planEasierWeek(
   runDays: ScheduledRunDay[],
-  todayKey: string
+  todayKey: string,
+  /** Run20 (5): the day a new runner's first weeks end. Their runs ease to
+   *  the week's run-walk, or to an easy run the build's minutes allow. */
+  newRunnerUntil?: string | null
 ): EasySwap[] {
   const easyName =
     RUN_TEMPLATES.find((t) => t.id === EASY_TEMPLATE_ID)?.name ?? "Easy 30";
@@ -57,13 +61,18 @@ export function planEasierWeek(
     // Type-based gate (never id string matching — race ids are `5k_race` etc):
     // quality eases; easy stays; race day is NEVER swapped.
     if (!tpl || !QUALITY_TYPES.has(tpl.type)) continue;
+    const newRunners = newRunnerTemplate(
+      EASY_TEMPLATE_ID,
+      rd.weekKey ?? "",
+      newRunnerUntil
+    );
     swaps.push({
       key: rd.id ?? rd.dayIndex,
       date: rd.date,
       fromTemplateId: tpl.id,
       fromName: tpl.name,
-      toTemplateId: EASY_TEMPLATE_ID,
-      toName: easyName,
+      toTemplateId: newRunners?.id ?? EASY_TEMPLATE_ID,
+      toName: newRunners?.name ?? easyName,
     });
   }
   return swaps;

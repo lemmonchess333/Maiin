@@ -291,6 +291,26 @@ describe("a run-walk's announcements", () => {
     expect(h.timeCue).not.toHaveBeenCalled();
   });
 
+  it("leave them out when the run type was changed and the steps still play", async () => {
+    // Free run picked on a run-walk day: the run-walk's steps stay, the
+    // started template is cleared, and the plan's is the run-walk (review
+    // of #2655).
+    const runWalk = RUN_TEMPLATES.find((t) => t.id === "run_walk_1")!;
+    await resumeFromSnapshot("active", {
+      activityType: "freerun",
+      segments: segmentsFromRunWalk(runWalk.config.runWalk!),
+      planMetadata: {
+        ...freeformPlanMetadata("race_prep"),
+        planSource: "today_plan",
+        plannedTemplateId: "run_walk_1",
+        plannedTemplateType: "easy",
+        actualTemplateId: null,
+      },
+    });
+    expect(h.distanceCue).not.toHaveBeenCalled();
+    expect(h.timeCue).not.toHaveBeenCalled();
+  });
+
   it("are an easy run's as before", async () => {
     await resumeFromSnapshot("active");
     expect(h.distanceCue).toHaveBeenCalled();
