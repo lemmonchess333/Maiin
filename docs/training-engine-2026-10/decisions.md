@@ -101,6 +101,8 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 | "Why this run" says what it is, how it should feel and what to do      | E3; Run21 (3)               | lemmonchess333/Maiin#2656                                  |
 | The run summary speaks only when a run didn't match its type           | E9; Run21 (6)               | lemmonchess333/Maiin#2657                                  |
 | Tempo and intervals are the quality sessions; "hard" is an effort      | E4; Run21 (4)               | lemmonchess333/Maiin#2658                                  |
+| "Why this run" names the quality sessions only when the week holds one | E3 (a correction)           | lemmonchess333/Maiin#2660                                  |
+| A run states its own minutes: its time, or a long run's at its pace    | E6; Run21 (5)               | lemmonchess333/Maiin#2659                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -825,6 +827,15 @@ tap away, and a change the person didn't make gets one line.
   the closed "Why this run" disclosure on Train's card, the day sheet, Home's
   day details and the launch card, with lines of its own for each kind of
   session. The ⓘ sheet and the phase names wait for the owner (E3a, E3b).
+  Shown together, no two lines share a phrase (a test reads every session in
+  every phase): run-walk's and race day's reasons had repeated what the run
+  is.
+- **Found (2026-10-08):** the build's easy-day and long-run reasons named
+  the quality sessions in every week, and a returning runner's weeks hold
+  none (Run15), nor every other build week on the gentler setting: an
+  invented reason. **Built** as a correction
+  (lemmonchess333/Maiin#2660): they name them only when the run's week
+  holds a tempo or intervals session.
 
 ### E4. "Hard" means one thing
 
@@ -855,6 +866,11 @@ tap away, and a change the person didn't make gets one line.
 - **Checked:** no owner decision sets the minutes shown. "A benchmark" means
   a confirmed one, the gate prescriptions use (RUN-EV-08, as Run17 plans
   with it).
+- **Built** as Run21 (5) (lemmonchess333/Maiin#2659): "40 min" for a timed
+  run, "15 km · about 100 min" for a long run at a confirmed pace and
+  "15 km" without one, on Home's card and day details, the day sheet,
+  Train's card and setup. The fuelling line still reads the template's
+  minutes (nutrition's).
 
 ### E7. An easy run's ceiling
 
@@ -862,6 +878,16 @@ tap away, and a change the person didn't make gets one line.
   about 18–20 s/km slower than Daniels' E table at VDOT 35–50 [C].
 - **Answer: Measuring**: the band against Daniels' table before an easy
   ceiling ("6:10 /km or slower") is shown.
+- **Measured (2026-10-08):** `trainingBands` gives VDOT 40 an easy band of
+  5:59–6:44 /km, against the book's 5:56–6:38 [VA] (running-evidence §5.0):
+  the fast end 3 s/km slower, the slow end 6 s/km slower. The "18–20 s/km"
+  above doesn't reproduce from `runPaces.ts`, whose fast end is 72% of the
+  VDOT oxygen cost, not Appendix A's 70% (6:07 at VDOT 40). Other VDOTs:
+  25 → 8:36–9:36, 30 → 7:29–8:23, 35 → 6:38–7:28, 45 → 5:27–6:08,
+  50 → 5:00–5:38 /km. The evidence carries the book's E range at VDOT 40
+  only, so the other rows can't be checked against it here. Within noise
+  at the one point that can, so the band stands; whether to show its fast
+  end as a ceiling is still open.
 
 ### E8. "Run by feel today" in the heat
 
