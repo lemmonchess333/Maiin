@@ -100,6 +100,7 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 | The Monday check grades a first week against what it planned           | R20 (F16b)                  | lemmonchess333/Maiin#2651                                  |
 | "Why this run" says what it is, how it should feel and what to do      | E3; Run21 (3)               | lemmonchess333/Maiin#2656                                  |
 | The run summary speaks only when a run didn't match its type           | E9; Run21 (6)               | lemmonchess333/Maiin#2657                                  |
+| Tempo and intervals are the quality sessions; "hard" is an effort      | E4; Run21 (4)               | lemmonchess333/Maiin#2658                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -835,6 +836,10 @@ tap away, and a change the person didn't make gets one line.
   below-floor plan's "no hard sessions" becomes "no quality sessions", a
   test pin. The owner's label for that plan, "mostly-easy plan"
   (RUN-EV-05), stays.
+- **Built** as Run21 (4) (lemmonchess333/Maiin#2658): the planner, the race
+  cockpit, the realign message and "Why this run" say "quality sessions";
+  the verdict's line is E9's (lemmonchess333/Maiin#2657). "1 km hard" stays:
+  hard there is the effort, E1's Hard.
 
 ### E5. Strides on the week strip
 
