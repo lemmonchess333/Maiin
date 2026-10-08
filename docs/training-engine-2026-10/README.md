@@ -7,10 +7,10 @@ one session at HEAD `55c195a` by six parallel agents, plus coaching transcripts
 the owner supplied. The evidence was checked against its primary sources on
 2026-10-07.
 
-**Nothing here is a decision.** Locks live in
+**Nothing here is a lock.** Locks live in
 `.claude/plans/programme-run-followups.md`; the lifting system's spec is the
-Lift4 row. These files are evidence and measurements to bring to the owner,
-not changes to make.
+Lift4 row. These files are evidence and measurements; `decisions.md` records
+the answers the pass reached from them and points at each lock.
 
 ## How far to trust each kind of file
 
@@ -59,6 +59,7 @@ not changes to make.
 | [running-evidence.md](running-evidence.md)                   | A source ledger, every row marked by how it was checked; intensity, injury, taper, concurrent training; a 19-type session dictionary with plain-English lines; simulation priors (Banister, injury hazard, detraining); personas; a year ending in a marathon while lifting; non-adoptions                                                               |
 | [explanation-ux.md](explanation-ux.md)                       | How Runna, Strava, NRC, Garmin, COROS, TrainingPeaks, Apple, Polar, Hevy, Strong, Fitbod, RP, JuggernautAI, MacroFactor Workouts, Alpha Progression, Boostcamp, Gravl and Liftosaur explain sessions, effort and changes; a pattern library; recommendations for Tropos under Lift4's quiet-by-default rule; what checking every cited page changed (§9) |
 | [owner-answers.md](owner-answers.md)                         | The owner's answers to the open calls (A1–A12, 2026-10-07), each with its reason and what the run does with it, and the rules for the questions the run finds                                                                                                                                                                                            |
+| [decisions.md](decisions.md)                                 | The questions the pass found, lifting and running: what is locked, the evidence, the simulation, the options and each answer, and what goes back to the owner                                                                                                                                                                                            |
 | [owner-lifting-sources.md](owner-lifting-sources.md)         | The owner's coaching sources (Oreb), mapped against Lift4, with the generator checks they imply; his citations checked (OREB-07's "Dr. Rhea" range matches Rhea 2003 and Peterson 2004–2005, which count sets per muscle group per session) and his %1RM table set against Nuzzo 2024                                                                    |
 | `measurements/`                                              | Raw outputs the lifting audit cites (generated plans, the simulation summary, probes)                                                                                                                                                                                                                                                                    |
 | `harnesses/`                                                 | The scratch harnesses that produced the measurements, saved as `.txt` so no toolchain runs them. Seeds for the real simulator, not the simulator: they re-implement private logic inline (ADR-0008's drift risk)                                                                                                                                         |

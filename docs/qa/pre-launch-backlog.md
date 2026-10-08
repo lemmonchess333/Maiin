@@ -6,6 +6,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The run screen in the training-engine pass (2026-10-08)
+
+Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
+session, which now judge only the work segments
+(lemmonchess333/Maiin#2633), and a planned easy run's time target,
+countdown and finish cue (`claude/run-easy-runs-carry-their-time`). The unit
+tests cover which segment is judged and what each run is set for; these need
+a phone's speaker and screen.
+
+- [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
+      tempo: no pace alert in the warm-up; the pace bar appears with the
+      first tempo block and goes in the float and the cool-down; alerts speak
+      only in a block.
+- [ ] **An interval session.** The same for reps and recoveries: the bar and
+      the alerts in the reps only.
+- [ ] **A planned easy run.** Start a planned Easy 40: the screen counts down
+      from 40 minutes, says "Easy running for 40 minutes. Keep it
+      conversational." as it starts, and marks the 40 minutes without saving
+      the run by itself.
+
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
