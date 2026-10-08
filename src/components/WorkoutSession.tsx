@@ -48,7 +48,11 @@ import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import {
+  lastSetsByExercise,
+  lastSetsBySlot,
+  type LastSet,
+} from "@/features/program/lastSets";
 import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
@@ -230,6 +234,10 @@ interface Props {
    *  (`programState.sessionMinutes`): a 30-minute plan rests less. */
   sessionMinutes?: number;
   progressionBaseline?: ProgramExercise[];
+  /** Every lift of the plan, each in its slot: a lift starts from the last
+   *  session that ran its slot (`lastSetsBySlot`). Train passes it; a saved
+   *  routine's lifts start from their exercise's last session. */
+  planLifts?: readonly { exerciseId: string; instanceId?: string }[];
   programmeContext?: ProgrammeCompletionContext;
   /** Saves the session (`completeLift`) and hands back its receipt. */
   onCompleteDay: (
@@ -256,6 +264,7 @@ export default function WorkoutSession({
   deloadWeek = false,
   sessionMinutes,
   progressionBaseline,
+  planLifts,
   programmeContext,
   onCompleteDay,
   onClose,
@@ -374,8 +383,8 @@ export default function WorkoutSession({
     open: boolean;
     swaps: SwapToKeep[];
   }>({ open: false, swaps: [] });
-  /** Last time's counted sets by exercise id, read with the Previous
-   *  column, so a swapped-in exercise starts from its own. */
+  /** Last time's counted sets by exercise id, on any day, so a
+   *  swapped-in exercise starts from its own. */
   const lastSetsById = useRef(
     new Map<string, { weight: number; reps: number }[]>()
   );
@@ -495,27 +504,27 @@ export default function WorkoutSession({
         });
       });
       setPreviousNotes(notes);
+      const done = recent.filter(
+        (data) => data.completionId !== completionIdRef.current
+      );
+      const asRows = (sets: readonly LastSet[]) =>
+        sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps }));
+      const byExercise = lastSetsByExercise(done);
+      lastSetsById.current = new Map(
+        [...byExercise].map(([id, sets]) => [id, asRows(sets)])
+      );
       // Last time's counted sets, as Train's "Last:" line lists them: the
       // Previous column and where each row starts both read these.
-      const lastSets = new Map(
-        [
-          ...lastSetsByExercise(
-            recent.filter(
-              (data) => data.completionId !== completionIdRef.current
-            )
-          ),
-        ].map(([id, sets]) => [
-          id,
-          sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps })),
-        ])
-      );
-      lastSetsById.current = lastSets;
+      const lastOf = planLifts
+        ? lastSetsBySlot(done, planLifts)
+        : (ex: { exerciseId: string }) => byExercise.get(ex.exerciseId);
+      const lastSets = day.exercises.map((ex) => {
+        const sets = lastOf(ex);
+        return sets && asRows(sets);
+      });
       setPreviousSets(
         Object.fromEntries(
-          day.exercises.flatMap((ex, i) => {
-            const sets = lastSets.get(ex.exerciseId);
-            return sets ? [[i, sets]] : [];
-          })
+          lastSets.flatMap((sets, i) => (sets ? [[i, sets]] : []))
         )
       );
 
@@ -528,7 +537,7 @@ export default function WorkoutSession({
           prev.map((rows, i) => {
             const ex = day.exercises[i];
             if (!ex || rows.some((set) => set.completed)) return rows;
-            return startingSetRows(rows, ex, lastSets.get(ex.exerciseId));
+            return startingSetRows(rows, ex, lastSets[i]);
           })
         );
       }
@@ -550,7 +559,7 @@ export default function WorkoutSession({
     };
 
     fetchPreviousWeights();
-  }, [user?.uid, day.exercises]);
+  }, [user?.uid, day.exercises, planLifts]);
 
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
