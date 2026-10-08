@@ -634,6 +634,47 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
   });
 
+  it("Run20 (5): today's run-walk card shows its time and no pace, where an easy run shows its pace", () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+        pendingConfirmation: false,
+      },
+    } as Partial<UserProfile>);
+    // The meta line sets each token in its own span; read it whole. It
+    // opens with the plan position ("Base · week 1 of 12").
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /· \d+ min\b/.test(text));
+    const renderToday = (templateId: string) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...props}
+          profile={profile}
+          programState={makeProgramState([
+            makeRunDay({
+              id: `runday_${templateId}`,
+              templateId,
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ])}
+        />
+      );
+    const easy = renderToday("easy_30");
+    expect(metaLine()).toMatch(/· 30 min · .*\/km/);
+    easy.unmount();
+    renderToday("run_walk_1");
+    expect(metaLine()).toMatch(/· 29 min · /);
+    expect(metaLine()).not.toMatch(/\/km/);
+  });
+
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });

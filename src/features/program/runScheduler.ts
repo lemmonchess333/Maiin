@@ -22,6 +22,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
+import { runWalkTemplateIdForWeek } from "./newRunner";
 import { chooseQualityRunSlots } from "./runPlacement";
 import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 
@@ -936,7 +937,8 @@ export interface RacePlanV2Input {
   /**
    * Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`). A
    * week that starts before it gets no tempo or intervals, in build or
-   * taper; strides stay. Null/omitted → no new runner's weeks,
+   * taper, and every run in it but the race is the week's run-walk session
+   * (`runWalkTemplateIdForWeek`). Null/omitted → no new runner's weeks,
    * byte-identical to before. Every live path threads it, from the profile
    * (`profileNewRunnerUntil`) or, at setup, from the answer just given.
    */
@@ -1437,7 +1439,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
   const flaggedWeeks = weeks.map((week) => {
-    const limited = week.map((row) =>
+    // Run20 (5): every run but the race in a new runner's first weeks is
+    // that week's run-walk session. Applied before the fits, which leave a
+    // run-walk session as it is: each fits in 30 minutes, the shortest time
+    // limit there is, and the running baseline fits continuous runs.
+    const walked = week.map((row) => {
+      const runWalkId =
+        row.type === "race"
+          ? null
+          : runWalkTemplateIdForWeek(row.weekKey ?? "", input.newRunnerUntil);
+      return runWalkId ? { ...row, templateId: runWalkId, type: "easy" } : row;
+    });
+    const limited = walked.map((row) =>
       fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
     );
     const fitted = fitWeekToRunningBaseline(

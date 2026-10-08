@@ -99,6 +99,19 @@ describe("runSessionExplainer", () => {
     expect(strides).toMatch(/not a hard session/i);
   });
 
+  it("a run-walk says what it is, in base and build alike (Run20 (5))", () => {
+    for (const ctx of [base, build]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_2",
+        ...ctx,
+      });
+      expect(line).toMatch(/^Run-walk/);
+      expect(line).toMatch(/walks are part of the method/);
+      expect(line).not.toMatch(/readiness|safe|VO2/i);
+    }
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {

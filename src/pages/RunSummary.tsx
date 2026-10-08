@@ -60,7 +60,7 @@ import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
 import { getAdherenceLabel } from "../lib/runPlanMetadata";
-import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { RUN_TEMPLATES, isRunWalkTemplateId } from "../lib/workoutTemplates";
 import {
   paceTableFromFitness,
   resolveSessionPaces,
@@ -779,14 +779,16 @@ export default function RunSummary() {
   // PLANNED session with a resolvable per-session pace target, say how the
   // run compared — including the "keep the easy days easy" nudge when an easy
   // session ran hot. Only planned runs are judged (custom/extra have no honest
-  // target), and intervals are excluded (session avg mixes work + rest — the
-  // same reason the primary stat swaps to the work-set summary for them).
+  // target), and intervals and run-walk are excluded (the session average
+  // mixes work and rest, or runs and walks — the same reason the primary stat
+  // swaps to the work-set summary for intervals).
   const paceVerdict = (() => {
     if (adherenceLabel !== "Planned") return null;
     const pm = runConfig?.planMetadata;
     const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
     const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-    if (!tmpl || tmpl.type === "intervals") return null;
+    if (!tmpl || tmpl.type === "intervals" || isRunWalkTemplateId(tmpl.id))
+      return null;
     if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
     const table = paceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;

@@ -148,6 +148,7 @@ import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
@@ -788,9 +789,11 @@ export default function ProgrammeRunSection({
   // surfaced on the command card so the "made for you" pace is visible where
   // the run is started — not just in Settings. Band-first via the shared
   // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no
-  // benchmark (the run then shows distance/type only, as before).
+  // benchmark (the run then shows distance/type only, as before), and for
+  // run-walk, which is run by feel (Run20 (5)).
   const selectedPaceLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+    if (!selectedTemplate || isRunWalkTemplateId(selectedTemplate.id))
+      return null;
     const table = prescriptivePaceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(

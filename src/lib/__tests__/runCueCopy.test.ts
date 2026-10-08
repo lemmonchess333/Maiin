@@ -19,6 +19,11 @@ import {
   cooldownCue,
   walkBackCue,
   paceResolvedCue,
+  spokenDuration,
+  runWalkRunCue,
+  runWalkWalkCue,
+  runWalkWarmupCue,
+  runWalkCooldownCue,
 } from "../runCueCopy";
 
 describe("splitCue", () => {
@@ -356,6 +361,50 @@ describe("pace-alert resolution cue", () => {
       // or slow down — that's the alert's job, and mixing the registers
       // makes recovery sound like criticism.
       expect(line).not.toMatch(/slow|behind|drift|ease off|lift/i);
+    }
+  });
+});
+
+describe("run-walk cues (Run20 (5))", () => {
+  it("speak a duration in full, for the ear", () => {
+    expect(spokenDuration(45)).toBe("45 seconds");
+    expect(spokenDuration(60)).toBe("1 minute");
+    expect(spokenDuration(90)).toBe("90 seconds");
+    expect(spokenDuration(150)).toBe("2 and a half minutes");
+    expect(spokenDuration(200)).toBe("3 minutes 20 seconds");
+    expect(spokenDuration(1200)).toBe("20 minutes");
+  });
+
+  it("name the first run, the last, and the walk before it", () => {
+    expect(runWalkRunCue(1, 8, 60, 0)).toBe(
+      "Run 1 of 8. 1 minute, easy enough to talk."
+    );
+    expect(runWalkRunCue(8, 8, 60, 0)).toBe(
+      "Last run. 1 minute, easy to the end."
+    );
+    expect(runWalkWalkCue(7, 8, 90, 0)).toBe(
+      "Walk. 90 seconds. One more run after this."
+    );
+    expect(runWalkRunCue(3, 8, 60, 0)).toMatch(/^Run 3 of 8\. 1 minute\. /);
+    expect(runWalkWalkCue(3, 8, 90, 0)).toMatch(/^Walk\. 90 seconds\. /);
+  });
+
+  it("open and close with the walk's own length, and never sound like a correction", () => {
+    expect(runWalkWarmupCue(300, 0)).toMatch(
+      /^Walk for 5 minutes to warm up\. /
+    );
+    expect(runWalkCooldownCue(330, 0)).toMatch(
+      / Walk for 5 and a half minutes to cool down\.$/
+    );
+    const lines = [0, 1, 2, 3, 4, 5, 6, 7].flatMap((v) => [
+      runWalkRunCue(4, 8, 60, v),
+      runWalkWalkCue(4, 8, 90, v),
+      runWalkWarmupCue(300, v),
+      runWalkCooldownCue(300, v),
+    ]);
+    for (const line of lines) {
+      expect(line).not.toMatch(/pace|faster|behind|push/i);
+      expect(line).not.toMatch(/\b\d+(s|min)\b/);
     }
   });
 });

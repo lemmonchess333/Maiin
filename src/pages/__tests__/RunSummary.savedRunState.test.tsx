@@ -456,3 +456,66 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     expect(h.mapProps.at(-1)?.paceColored).toBe(true);
   });
 });
+
+/* Run20 (5): a run-walk is run by feel. Its average mixes runs and walks,
+   so no pace can judge it; an easy run that ran hot still hears so. */
+describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
+  const auth = h.auth as { profile: Record<string, unknown> };
+  const profile = auth.profile;
+  afterEach(() => {
+    auth.profile = profile;
+  });
+
+  function renderPlanned(templateId: string) {
+    const state = {
+      ...savedRun(),
+      runConfig: {
+        activityType: "easy",
+        planMetadata: {
+          planMode: "race_prep",
+          planSource: "today_plan",
+          plannedRunDayIndex: 2,
+          plannedTemplateId: templateId,
+          plannedTemplateType: "easy",
+          actualTemplateId: templateId,
+          matchedPlanExact: true,
+          matchedPlanType: true,
+          offPlan: false,
+          planWeekIndex: 0,
+          planTotalWeeks: 10,
+          scheduledRunId: "rd-1",
+        },
+      },
+    };
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("judges a planned easy run on pace, and a run-walk on nothing", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    // 5 km in 25 minutes: 5:00 /km, quicker than a 25-minute 5K's easy.
+    const easy = renderPlanned("easy_30");
+    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(screen.getByText(/Keep the easy days easy/)).toBeInTheDocument();
+    easy.unmount();
+
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/easy days easy|on target|Quicker than|Slower than/)
+    ).toBeNull();
+  });
+});
