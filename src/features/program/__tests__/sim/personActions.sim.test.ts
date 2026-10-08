@@ -32,8 +32,8 @@ const TIMEOUT = 60_000;
  * Rules each persona breaks today, by the finding that explains them
  * (docs/training-engine-2026-10/simulator.md). Take an entry out with its
  * fix. Most are the base persona's own: F8 `over-time`, F10 `below-bar`,
- * F13 `not-counted`, F14 `race-day-card`, F6 `race-unresolved`. The
- * actions' own:
+ * F13 `not-counted`, F14 `race-day-card`, F6 `race-unresolved`, F22
+ * `verdict-slow`. The actions' own:
  *
  * - F20 `session-off-grid`: "Easier today" takes 85% of each weight to
  *   the nearest 2.5 kg, whatever the equipment: 7.5 kg and 2.5 kg
@@ -54,6 +54,7 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
     "not-counted",
     "over-time",
     "race-unresolved",
+    "verdict-slow",
   ],
   "half-moves-long-run": [
     "not-counted",

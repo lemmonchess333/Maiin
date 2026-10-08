@@ -336,6 +336,9 @@ export type Rule =
   /** A run planned for today, not a race, that Home's card doesn't show:
    *  runs are pinned to their dates (ADR-0002). */
   | "run-day-card"
+  /** The run summary calls a tempo slow whose tempo pace the runner
+   *  held. */
+  | "verdict-slow"
   /** A planned run done on its day that Home doesn't count. */
   | "not-counted"
   /** Two weeks after race day the plan is still preparing for it. */
@@ -1006,6 +1009,16 @@ export function simulateLiftSeason(
             });
             state = result.state;
             season.runs.push(result.record);
+            // A tempo is judged on its whole run, warm-up and cool-down
+            // included (running-engine-audit §2.3): one run at its pace
+            // reads slow.
+            const { done: ran, verdict, type } = result.record;
+            if (type === "tempo" && verdict === "slow" && !ran.tooFast)
+              fail(
+                "verdict-slow",
+                date,
+                `${result.record.templateId}: its tempo held, ${String(Math.round(ran.pace))} s/km over the whole run`
+              );
             if (planned.date === date && !result.record.counted)
               fail(
                 "not-counted",

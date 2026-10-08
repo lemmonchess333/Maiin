@@ -4,7 +4,9 @@ Phase 2 of the training-engine prompt (`docs/agents/training-engine-prompt.md`).
 It puts simulated people through the app's own plan code, lifting and
 running, one day at a time, and checks what comes out. The lifting half
 came first (lemmonchess333/Maiin#2613); the running half is below, under
-"The running half", and its findings are F13–F18.
+"The running half", and its findings are F13–F18. "The person's actions"
+puts the app's buttons besides Start through what the app does with them;
+its findings are F19–F22.
 
 The code is in `src/test/sim/`, and the suites are in
 `src/features/program/__tests__/sim/`.
@@ -17,8 +19,10 @@ The code is in `src/test/sim/`, and the suites are in
 - `npx vitest run src/features/program/__tests__/sim` runs just the
   simulator, in about 20 seconds.
 - A change to what the plan does shows up as a diff in the traces
-  (`__traces__/<persona>.txt`, and `__traces__/run/<persona>.txt` for the
-  run and hybrid personas). Read the diff, then accept it with `-u`.
+  (`__traces__/<persona>.txt`, `__traces__/run/<persona>.txt` for the run
+  and hybrid personas, and `__traces__/actions/<persona>.txt` for the
+  people who tap more than Start). Read the diff, then accept it with
+  `-u`.
 - The soak:
   `TROPOS_SIM_SEEDS=500 npx vitest run src/features/program/__tests__/sim/liftOutcomes.sim.test.ts`
   runs 500 seeds of each model variant and writes
@@ -26,7 +30,9 @@ The code is in `src/test/sim/`, and the suites are in
   the report stays uncommitted. Without the variable, the outcome suite
   runs 3 seeds of each, which is enough for its plausibility checks in the
   PR gate. `runOutcomes.sim.test.ts` does the same for the runners, into
-  `test-results/sim/running-outcomes.md`.
+  `test-results/sim/running-outcomes.md`. `sim-soak.yml` runs both at 500
+  seeds each Monday, outside the PR gate, and uploads the reports with the
+  run (about 30 and 45 minutes; each suite's timeout grows with the seeds).
 
 ## What runs
 
@@ -95,9 +101,10 @@ its range, source, marker and grade.
 - age (the over-55 persona's lifts are an assumption);
 - injuries;
 - logged effort;
-- correcting a pre-filled set by hand;
-- the person's other actions: Swap, Skip, Easier today, Take a lighter
-  week, Adjust this week.
+- correcting a pre-filled set by hand.
+
+The person's other taps (Skip, Swap, Replace, Easier today, a lighter
+week) are under "The person's actions" below.
 
 ## The personas
 
@@ -354,9 +361,19 @@ The app's rules gain six (`Rule` in `liftSeason.ts`), held the same way:
 | `not-counted`     | a planned run done on its day is not counted by Home                       |
 | `race-unresolved` | two weeks after the race (or its recovery), the plan still prepares for it |
 | `race-week-stale` | after the rollover, this week's race runs need building again              |
+| `race-weeks`      | a hybrid's lifting out of Lift4 (10)'s race weeks, read off the calendar   |
+| `verdict-slow`    | the run summary calls a tempo slow whose tempo pace the runner held        |
 
-**Today:** no persona breaks `after-race` or `race-week-stale`. The others
-are F6, F13, F14 and F16 below.
+`race-weeks` holds Lift4 (10) against the calendar rather than the run
+plan's own count: the two weeks before race week are lighter, race week is
+one session with none from two days out, and the week after is light. On
+a yes at race setup the leg lifts are trimmed in the run plan's build
+weeks, and never on a no. `verdict-slow` reads the run summary's verdict
+(`plannedRunVerdict`, lemmonchess333/Maiin#2618), which each simulated run
+saves as the app does.
+
+**Today:** no persona breaks `after-race`, `race-week-stale` or
+`race-weeks`. The others are F6, F13, F14, F16 and F22 below.
 
 The coaching checks (`runCoaching.ts`) are judgements from running-evidence
 §5.20, §2 and §4.5 and running-engine-audit §7, in the same ratchet:
@@ -381,15 +398,18 @@ The coaching checks (`runCoaching.ts`) are judgements from running-evidence
 - `under-dose`: the plan's first full month under 80% of what the runner
   already ran;
 - `derived-low`: a derived benchmark three or more VDOT under the runner;
-- `nag-after-race`: the server saying they fell behind after their race.
+- `nag-after-race`: the server saying they fell behind after their race;
+- `easy-nag`: the run summary telling them to slow down on most easy and
+  long runs.
 
 **Today:** no `quality-cap` finding; the rest are in F6, F15, F17 and F18.
 
 **The traces** (`__traces__/run/`), one per persona at seed 1 under the
 base model: each week's plan phase and week, the planned runs by day,
 their planned minutes, long run and quality sessions, and how many Home
-counted; each run as run (distance, minutes, pace, NOT COUNTED, a target
-too fast, an injury, a race's finish); the week's minutes, kilometres,
+counted; each run as run (distance, minutes, pace, the run summary's
+verdict, NOT COUNTED, a target too fast, an injury, a race's finish); the
+week's minutes, kilometres,
 easy share and its longest run against the month's; and the runner's
 true VDOT and fitness, with their own easy band against the one the app
 prescribed. A hybrid's trace has its lifting after.
@@ -454,6 +474,56 @@ What the table says, with the model's limits in view:
 | §6.3's injury proportions, each by its definition                         | Not checked against a programme's exposure; the C25K result runs high                        |
 | Riegel optimistic by 10 minutes for half of recreational marathoners      | Built in: Vickers & Vertosick's correction on race day                                       |
 
+## The person's actions
+
+The person's taps besides Start go through what the app does with them
+(`actionPersonas.ts`, `personActions.sim.test.ts`). Each persona is a
+lifting or running one tapping one thing more, so its trace reads against
+theirs.
+
+A tap the app sends as a programme command runs through the server's
+reducer and then the transaction's top-level allow-list, as the
+`applyProgramCommand` callable runs them (`commands.ts`, over
+`functions/lib/programCommands.js` and `programStateSanitizer.js`). The
+plan afterwards is the stored document as the client reads it back: raw,
+or loaded again after a lighter week, as `sendDeloadCommand` does. A
+refusal leaves the plan as it was and fails `refused`. A result the
+transaction couldn't store fails `unstorable`: a key the allow-list drops,
+or an `undefined`, which the Admin SDK's `tx.set` rejects. The client's own
+writes strip them and the server's don't, so the state sent is stripped
+first, as the client's last write stored it.
+
+| Action                   | What the app does                                                                                        | Persona                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Skip a lift              | `skipWorkoutDay`, from Home's day sheet                                                                  | light-trainer-skips, on each lift day they don't train                    |
+| Swap for today, kept     | the session's swap (`swappedForToday`), then Finish's question; kept, the new lift takes the slot        | swaps-bench-keeps: dumbbells for the barbell bench from week 3            |
+| Swap for today, not kept | the same; not kept, the planned lift stays as it was                                                     | swaps-squat-today: the leg press for the squat, every session from week 5 |
+| Replace Exercise         | `replaceExercise`, at `weightAfterExerciseSwap`'s start                                                  | replaces-row: a seated row for the barbell row in week 2                  |
+| Easier today             | `buildEasierSession`'s copy of the day; the plan moves at Finish, up only                                | dumbbell-easier-days, barbell-easier-days: a third of sessions            |
+| Take a lighter week      | Train's menu, where `lighterWeekAllowed` offers it: `applyDeloadWeek`, with `planDeloadWeek`'s run swaps | lighter-after-misses (3 misses the week before), hybrid-lighter-week (2)  |
+| Move the long run        | `moveRunDay`, to a day `resolveRunMoveOptions` allows                                                    | half-moves-long-run: to Sunday each week                                  |
+| Skip a run               | `transitionRunDay` to skipped                                                                            | half-moves-long-run: each run they miss                                   |
+| Not now                  | the fell-behind sheet's `dismissFellBehindPrompt`                                                        | half-moves-long-run                                                       |
+
+The app's own race-rest skips (`raceRestSkips`, Lift4 (10)) run for
+everyone with a race: from two days out, each session not done is skipped
+through the same command, after the rollovers.
+
+Rules added with them:
+
+| Rule               | Broken when                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `refused`          | the server refuses a command the app sent                                                           |
+| `unstorable`       | a command's result the transaction couldn't store                                                   |
+| `session-off-grid` | the workout screen sets out a weight the equipment doesn't come in, or a barbell lift under the bar |
+| `run-day-card`     | a run planned for today, not a race, that Home's card doesn't show                                  |
+
+**Today:** the server accepted and could store all 73 commands: 42 lift
+skips, a replace, 13 lighter weeks, 11 moves, 4 run skips and 2 "Not now".
+The 22 swaps and 32 easier sessions, which stay on the phone until Finish,
+saved as the plan's rules say. The actions' own findings are F20 and F21;
+the rest are their base personas'.
+
 ## Calibration status (lifting)
 
 | Target (lifting-evidence §4.2, §4.4)                                                         | Status                                                                                                                                                  |
@@ -490,20 +560,25 @@ take it out.
 | F14 | Setup's week schedules never put a run on a Sunday (runner-only at 1–6 days; hybrids at 2+2, 2+3, 3+2, 3+3 and 4+3), and Home shows a run only on a run day, so a Sunday race reads as a rest day: 7 of the 10 race personas. Runner-only long runs land on a Monday                                                                                                                                                                                                                                                         | Pinned (`race-day-card`)                                                                                                               |
 | F15 | The plan doesn't size from the runner, and setup never asks how much they run: weeks 2–5 average 57–75% of what the running-only experienced runners already ran (126 of 220 minutes for the 10K runner) and 86–90% for the year-out marathoner and the hybrids, against 2.6 and 5.8 times what the two beginners ran                                                                                                                                                                                                        | Pinned (`under-dose`)                                                                                                                  |
 | F16 | A plan made mid-week writes that week's earlier runs: made on a Thursday, it plans that Monday and Wednesday. The prompt's question, confirmed                                                                                                                                                                                                                                                                                                                                                                               | Pinned (`before-plan`)                                                                                                                 |
-| F17 | The benchmark the app derives takes the best of a runner's first easy runs as a race: 6.7–9.7 VDOT under the runner. It lands pending, so prescriptions wait, but measurement surfaces use it at once                                                                                                                                                                                                                                                                                                                        | Pinned (`derived-low`)                                                                                                                 |
+| F17 | The benchmark the app derives takes the best of a runner's first easy runs as a race: 6.7–9.7 VDOT under the runner. It lands pending, so prescriptions wait, but measurement surfaces use it at once. The run summary is one: it then tells the runner to slow down on every easy and long run it judges, 20 for couch-to-5k, 18 for the new marathoner and 29 for each 2+3 hybrid                                                                                                                                          | Pinned (`derived-low`, `easy-nag`)                                                                                                     |
+| F19 | Train's "Take a lighter week" banner comes from the Performance Index alone (`shouldSuggestDeload`) and doesn't ask `lighterWeekAllowed`. In the week after a lighter week, or a first week back, its button sends a command the server refuses (`applyDeloadWeek`'s preconditions), and the person gets an error for the app's own suggestion. Found reading the code                                                                                                                                                       | Not pinned: the simulator doesn't run the Performance Index yet                                                                        |
+| F20 | "Easier today" takes 85% of each weight to the nearest 2.5 kg, whatever the equipment (`deloadWeight`). The dumbbell plan's easier sessions set out 13 weights in 10 sessions that a rack doesn't have (7.5 kg bench and row dumbbells, a 2.5 kg curl); a light barbell plan's bench and row went to 17.5 kg, under the bar, 4 times in 22                                                                                                                                                                                   | Pinned (`session-off-grid`)                                                                                                            |
+| F21 | A run moved to a day that isn't one of the plan's run days is dated there, and Home's card shows a rest day. The half marathoner moved the long run to Sunday 11 times, and Home showed a rest day each time; the simulator has them start it from Train. It is F14's weekday reading again                                                                                                                                                                                                                                  | Pinned (`run-day-card`)                                                                                                                |
+| F22 | The run summary judges a tempo by the whole run's average, warm-up and cool-down included (running-engine-audit §2.3, the prompt's Phase 5a): 27 of the 29 tempos run by the running personas who entered a benchmark read slow, 14 of them with the tempo pace held; with a derived benchmark (F17), tempos read fast                                                                                                                                                                                                       | Pinned (`verdict-slow`)                                                                                                                |
 | F18 | The plan's shape, as running-engine-audit §7 found it: long runs step past the single-run guard in build (up to 1.76 times the month's longest), a marathon comes 28 or more days after the last long run (6.9 and 10.6 times the month's longest), weeks jump over 25%, demanding days sit back to back, the taper cuts about 60% in one step and holds it, long runs fill over half the week on 3 days or fewer, and a new runner gets continuous runs from week 1, intervals from week 5 and a marathon on one run a week | Pinned (`spike`, `volume-jump`, `back-to-back`, `taper-cut`, `taper-long`, `long-share`, `run-walk`, `novice-quality`, `one-run-week`) |
 
 ## Not covered yet
 
-- **The person's actions as the commands the app sends:** Swap, Skip,
-  Easier today, Take a lighter week and Adjust this week, on both sides.
-  Ease back in is covered.
-- **The `applyProgramCommand` reducers:** the server's other pure
-  deciders (the race sweep, recovery entry, fell-behind) run.
 - **Home against Train on runs:** Train's run surface has no pure
   resolver to compare with yet.
-- **Lift4 (10)'s race weeks** are traced on the lifting side but not yet
-  checked against the run plan's position.
-- **The run screen's pace verdict and Pace Insight**, and what a runner
-  does with them.
-- **A scheduled soak:** it runs by hand for now.
+- **The "Take this week easier?" nudge:** its inputs are put together
+  inline in `ProgrammeRunSection.tsx`, so it needs a seam before the
+  simulator can show it and have the person answer it. So does the
+  post-run effort check-in it also reads.
+- **The Performance Index:** the server's weekly scores aren't computed,
+  so its lighter-week banner (F19) and Home's performance card aren't
+  shown.
+- **Pace Insight**, and Adjust this week's "Re-plan from today" and the
+  fell-behind sheet's "Rebuild my plan" (`realignRacePlan`).
+- **Express and time-budget sessions**, the other workout-screen variants
+  beside Easier today.
