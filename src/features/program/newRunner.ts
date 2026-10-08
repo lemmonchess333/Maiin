@@ -1,4 +1,3 @@
-import type { UserProfile } from "@/lib/auth";
 import {
   addLocalDays,
   localDateString,
@@ -15,12 +14,25 @@ import { startDayKey } from "@/lib/startDay";
 export const NEW_RUNNER_WEEKS = 6;
 
 /**
+ * The profile's fields a new runner's first weeks are read from: setup's
+ * answer, and the days setup finished and the account began. Written out
+ * rather than picked from `UserProfile`, so the plan's generator can read
+ * this module without importing auth, which reaches the generator through
+ * the Run screen's modules.
+ */
+export interface NewRunnerProfile {
+  runFrequency?: string;
+  createdAt?: unknown;
+  onboardingCompletedAt?: unknown;
+}
+
+/**
  * The day a new runner's first weeks end, counted from the day they began:
  * setup's "New to running" (`runFrequency: "new"`). Null for anyone else, or
  * while the day they began isn't known.
  */
 export function newRunnerUntil(
-  runFrequency: UserProfile["runFrequency"] | undefined,
+  runFrequency: string | undefined,
   startKey: string | null | undefined
 ): string | null {
   if (runFrequency !== "new" || !startKey) return null;
@@ -29,9 +41,20 @@ export function newRunnerUntil(
   );
 }
 
-/** `newRunnerUntil` for a stored profile, which began on its `createdAt`. */
+/**
+ * `newRunnerUntil` for a stored profile. Setup counts from the day it
+ * finishes, so a plan made later counts from that day too: the server stamps
+ * it as `onboardingCompletedAt`. Someone can sign up and finish setup weeks
+ * later, and they began running then. Until the stamp comes back from the
+ * server, and on a profile set up before it was kept, the day the account
+ * began (`createdAt`), which is setup's day for nearly everyone.
+ */
 export function profileNewRunnerUntil(
-  profile: Pick<UserProfile, "runFrequency" | "createdAt"> | null | undefined
+  profile: NewRunnerProfile | null | undefined
 ): string | null {
-  return newRunnerUntil(profile?.runFrequency, startDayKey(profile?.createdAt));
+  return newRunnerUntil(
+    profile?.runFrequency,
+    startDayKey(profile?.onboardingCompletedAt) ??
+      startDayKey(profile?.createdAt)
+  );
 }
