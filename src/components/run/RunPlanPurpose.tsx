@@ -1,22 +1,29 @@
 import { format } from "date-fns";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { runSessionAbout } from "@/lib/runSessionAbout";
 import { adjacentDemandingRuns } from "@/lib/runSpacing";
+import type { RunTemplate } from "@/lib/workoutTemplates";
+import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
 
 export default function RunPlanPurpose({
   purpose,
+  template,
   run,
   runDays,
 }: {
   purpose?: string | null;
+  /** The session the day holds, override included: its own three lines. */
+  template?: RunTemplate | null;
   run: ScheduledRunDay | null | undefined;
   runDays: readonly ScheduledRunDay[];
 }) {
   const neighbours = run ? adjacentDemandingRuns(run, runDays) : [];
   const timeLimit = !run?.userOverride ? run?.timeLimit : undefined;
   const trainingBasis = !run?.userOverride ? run?.trainingBasis : undefined;
-  if (!purpose && !neighbours.length && !timeLimit && !trainingBasis)
+  const about = template ? runSessionAbout(template) : null;
+  if (!about && !purpose && !neighbours.length && !timeLimit && !trainingBasis)
     return null;
   const days = [
     ...new Set(
@@ -25,7 +32,7 @@ export default function RunPlanPurpose({
   ].join(" and ");
   return (
     <RunPurpose>
-      {purpose}
+      <RunAbout about={about} why={purpose} />
       {trainingBasis && (
         <p className="text-sm text-muted-foreground leading-relaxed mt-2">
           {trainingBasis.reason === "experience"

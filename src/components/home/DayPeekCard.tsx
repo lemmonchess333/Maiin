@@ -1,5 +1,7 @@
+import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import { runSessionAbout } from "@/lib/runSessionAbout";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
@@ -549,7 +551,12 @@ export default function DayPeekCard({
                     {" · "}
                     {runTemplate.description}
                   </p>
-                  <RunPurpose>{runPurpose}</RunPurpose>
+                  <RunPurpose>
+                    <RunAbout
+                      about={runSessionAbout(runTemplate)}
+                      why={runPurpose}
+                    />
+                  </RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

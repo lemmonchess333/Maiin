@@ -675,6 +675,27 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            templateId: "tempo_20",
+            type: "tempo",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*How it should feel.*Comfortably hard.*Why it's in your week.*If it feels wrong/
+    );
+  });
+
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });

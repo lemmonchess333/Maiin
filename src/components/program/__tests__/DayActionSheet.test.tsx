@@ -289,6 +289,25 @@ describe("DayActionSheet — planned run", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (3): says what the run is with no plan to give a reason", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(/What it is.*Relaxed running/);
+    expect(why).not.toHaveTextContent(/Why it's in your week/);
+  });
+
   it("renders template select (enabled), Mark complete, and Skip this run", () => {
     const { profile, programState, callbacks } = setup();
     render(
