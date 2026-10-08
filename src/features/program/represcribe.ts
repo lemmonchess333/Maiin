@@ -36,12 +36,14 @@
 
 import {
   assignDayRoles,
+  dayRoleOf,
   prescribedRepCeiling,
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
+import { exerciseRole } from "./exerciseRole";
 import { roleReps, roleRepsFor } from "./roleTable";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
@@ -100,13 +102,18 @@ export function represcribeWorkouts(
   goal: PrimaryGoal,
   experience: Experience | undefined
 ): WorkoutDay[] {
-  // Undulation is applied per DAY INDEX, so the roles have to be computed
-  // over the whole week before any slot is touched.
-  const roles = assignDayRoles(workouts.length);
+  // Undulation follows each session's own role, kept with it as the week's
+  // order carries over (`dayRoleOf`). An older plan keeps none, so its roles
+  // come from the days' positions, over the whole week before any slot is
+  // touched, and are kept from here: a block's end then finds the roles its
+  // start used, whatever the order has done since.
+  const byPosition = assignDayRoles(workouts.length);
+  const roles = workouts.map((day, i) => dayRoleOf(day, byPosition[i]));
   const undulates = usesUndulation(experience);
 
   return workouts.map((day, dayIndex) => ({
     ...day,
+    dayRole: roles[dayIndex],
     exercises: day.exercises.map((ex) => {
       // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. `prescribedRepCeiling` already returns Infinity for
@@ -152,6 +159,39 @@ export function represcribeWorkouts(
       // line names that target (Lift4); neither holds for the new one.
       delete out.lowered;
       return out;
+    }),
+  }));
+}
+
+/**
+ * A level change (Lift4 (12)): it sets how the main lifts progress. Each
+ * main lift takes the new level's numbers from the role table (a
+ * beginner's one target, or everyone else's range) with its session's
+ * heavier or lighter shift where the level brings one, as the plan's own
+ * generator gives a lifter at that level. A main lift whose numbers stay
+ * the same keeps everything, its climb included, and nothing else moves:
+ * the other lifts, every lift's sets, and the exercises themselves. A level
+ * change never rebuilds or swaps (Pgm5's content-edit rule); whether
+ * lighter weeks come, and what a plan built later picks, read the level
+ * where they're used.
+ */
+export function represcribeMainLifts(
+  workouts: readonly WorkoutDay[],
+  goal: PrimaryGoal,
+  experience: Experience | undefined
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience);
+  return fresh.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      const before = workouts[d].exercises[e];
+      if (exerciseRole(before) !== "main" || before.repUnit === "seconds")
+        return before;
+      const same =
+        (before.baseReps ?? before.reps) === ex.baseReps &&
+        before.repRangeMax === ex.repRangeMax &&
+        before.progressionType === ex.progressionType;
+      return same ? before : ex;
     }),
   }));
 }

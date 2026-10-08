@@ -245,6 +245,32 @@ equipment or injury swap brings in still keeps its slot's numbers; giving it
 its own role's numbers, and fitting the plan to the session length, are the
 next parts of step 4.
 
+STATUS 2026-10-08 (Lift4 (5), (11) and (12), the day roles): each session
+keeps its heavier or lighter role. The roles were read from the days'
+positions, and the week's order carries over by moving whole days, so a
+block started after a carried-over week shifted the reps by another
+session's role (the training-engine audit measured a heavier upper day's
+bench going from 3 × 3 to 3 × 7), and the block's end didn't put back what
+its start replaced. A plan's days now keep their role (`WorkoutDay.dayRole`,
+given by `withDayRoles` when the plan is built, at every level, so a later
+level change lands on the same sessions), and both copies of
+`represcribeWorkouts` read it. A plan built before has none: its roles come
+from the positions, as before, and are kept from its first block.
+
+STATUS 2026-10-08 (Lift4 (12), the level change): a level change sets how the
+main lifts progress, on the plan the person has (`represcribeMainLifts`, run
+by the settings save's `buildPlan`). Each main lift takes the new level's
+numbers from the role table, a beginner's one target or everyone else's
+range, with its session's heavier or lighter shift where the level brings
+one, as the generator gives a lifter at that level. A main lift whose numbers
+stay the same keeps everything, its climb included; the other lifts, every
+lift's sets and the exercises stay. The lifts are set for the focus the
+sessions already follow, a block's while one runs. Settings' confirm says
+"Your main lifts take the targets for your new level.", and the level
+suggestion says what changes for the person's goal: a range of reps and
+heavier and lighter days for Build muscle and General fitness, the heavier
+and lighter days alone for Get stronger and Support my running.
+
 STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
 session length. A new plan's sessions are cut to the minutes the person has
 (`sessionFit.ts`; an hour when the question was never answered), priced with
