@@ -3,7 +3,7 @@ import {
   plannedRunMinutes,
   type RunTimeLimits,
 } from "@/features/program/runTimeLimits";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
@@ -113,6 +113,9 @@ export interface RaceGoalPlannerState {
   hardClashDays: number;
   timeLimitedRuns: number;
   firstWeekMinutes: number;
+  /** The first week runs as run-walk: a new runner's first weeks (Run20
+   *  (5)), which no fit shortens. */
+  runWalkWeeks: boolean;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -152,6 +155,7 @@ export function getRaceGoalPlannerState(
     hardClashDays: 0,
     timeLimitedRuns: 0,
     firstWeekMinutes: 0,
+    runWalkWeeks: false,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -285,6 +289,7 @@ export function getRaceGoalPlannerState(
         (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
       );
     }, 0),
+    runWalkWeeks: week0.some((run) => isRunWalkTemplateId(run.templateId)),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,
