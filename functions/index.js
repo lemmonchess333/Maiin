@@ -3161,7 +3161,12 @@ async function maybeSendWeeklyRecap(uid, now) {
     }
   }
   const status = ctx
-    ? _fellBehindRatio(ctx.profile, ctx.programState, priorWeekRuns)
+    ? _fellBehindRatio(
+        ctx.profile,
+        ctx.programState,
+        priorWeekRuns,
+        range.weekKey
+      )
     : null;
   const behind = !!(status && status.fellBehind);
 

@@ -365,6 +365,14 @@ export default function ProgrammeRunSection({
     () => programState?.runDays ?? [],
     [programState?.runDays]
   );
+  // The run days from this week on. Past race week a race plan keeps race
+  // week's days for the race's own ending (`raceAwaitsItsEnding`): the
+  // no-show banner reads the race day among them, but none is this week's
+  // run to start, nor one of this week's runs done.
+  const runDaysFromThisWeek = useMemo(() => {
+    const monday = localWeekKey(parseLocalDate(todayKeyDerivation));
+    return runDays.filter((rd) => !rd.date || rd.date >= monday);
+  }, [runDays, todayKeyDerivation]);
 
   // Race-elapsed is a cheap render-time derivation; not memoised
   // because the comparison against "now" is impure and useMemo
@@ -483,13 +491,13 @@ export default function ProgrammeRunSection({
     // completion covers it; otherwise "Next planned run" would promote an
     // already-run slot and "all runs done" would never fire after a claimed log.
     return (
-      runDays.find(
+      runDaysFromThisWeek.find(
         (rd) =>
           isScheduledRunStartable(getScheduledRunStatus(rd)) &&
           !(rd.id && isRunDayComplete(rd.id, claimMap))
       ) ?? null
     );
-  }, [currentMode, runDays, claimMap]);
+  }, [currentMode, runDaysFromThisWeek, claimMap]);
 
   // `nextStartable` is still derived above — it feeds the hero state machine
   // and the "all runs done" affirmation. The old "next planned run" command
@@ -497,7 +505,9 @@ export default function ProgrammeRunSection({
   // replaced by the date-driven selected-day card; per the locked UX the card
   // must reflect the SELECTED date, never a global next-run.
   const allRunsDone =
-    currentMode !== "freeform" && runDays.length > 0 && !nextStartable;
+    currentMode !== "freeform" &&
+    runDaysFromThisWeek.length > 0 &&
+    !nextStartable;
 
   // Run8 PR1c — hero state machine. Single discriminator replaces
   // the scattered `currentMode === X && raceGoal && ...` conjunctions
