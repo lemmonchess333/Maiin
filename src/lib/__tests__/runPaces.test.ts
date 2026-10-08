@@ -12,6 +12,8 @@ import {
   predictedRaceTimesFromFitness,
   prescriptivePaceTableFromFitness,
   raceTargetBand,
+  benchmarkFromRaceTime,
+  manualRunFitness,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -246,6 +248,63 @@ describe("parseRaceTimeToSeconds", () => {
     expect(parseRaceTimeToSeconds("22:90")).toBeNull();
     expect(parseRaceTimeToSeconds("a:bc")).toBeNull();
     expect(parseRaceTimeToSeconds("0:00")).toBeNull();
+  });
+});
+
+/* A race time the person typed, in Settings or at setup (adaptive paces
+   §10.2): read as a benchmark, then stored as their own. */
+describe("benchmarkFromRaceTime and manualRunFitness", () => {
+  it("reads a time as a benchmark at its distance, VDOT to a tenth", () => {
+    expect(benchmarkFromRaceTime("5k", "22:30")).toEqual({
+      benchmark: { distanceM: 5000, timeS: 1350 },
+      vdot: 43.4,
+    });
+    expect(benchmarkFromRaceTime("10k", "48:00")).toEqual({
+      benchmark: { distanceM: 10000, timeS: 2880 },
+      vdot: 42,
+    });
+    expect(benchmarkFromRaceTime("half", "1:45:00")).toMatchObject({
+      benchmark: { distanceM: 21097.5, timeS: 6300 },
+    });
+  });
+
+  it("refuses a time that doesn't read as one", () => {
+    expect(benchmarkFromRaceTime("5k", "22")).toEqual({ error: "format" });
+    expect(benchmarkFromRaceTime("5k", "22:75")).toEqual({ error: "format" });
+    expect(benchmarkFromRaceTime("5k", "0:00")).toEqual({ error: "format" });
+  });
+
+  it("refuses a time faster than anyone has raced", () => {
+    // The records sit at VDOT 85 to 87: a 12:35 5K reads, a 12:00 one
+    // (90.1) or a 25:00 10K (90.4) doesn't.
+    expect(benchmarkFromRaceTime("5k", "12:35")).not.toHaveProperty("error");
+    expect(benchmarkFromRaceTime("5k", "12:00")).toEqual({
+      error: "implausible",
+    });
+    expect(benchmarkFromRaceTime("10k", "25:00")).toEqual({
+      error: "implausible",
+    });
+  });
+
+  it("keeps a slow time: a 45-minute 5K is a benchmark too", () => {
+    expect(benchmarkFromRaceTime("5k", "45:00")).toEqual({
+      benchmark: { distanceM: 5000, timeS: 2700 },
+      vdot: 18.7,
+    });
+  });
+
+  it("stores a typed benchmark as the person's own, never pending (RUN-EV-08)", () => {
+    const entry = benchmarkFromRaceTime("5k", "22:30");
+    if ("error" in entry) throw new Error("22:30 reads as a 5K");
+    expect(
+      manualRunFitness(entry, new Date("2026-10-08T07:00:00.000Z"))
+    ).toEqual({
+      benchmark: { distanceM: 5000, timeS: 1350 },
+      vdot: 43.4,
+      source: "manual",
+      updatedAt: "2026-10-08T07:00:00.000Z",
+      pendingConfirmation: false,
+    });
   });
 });
 

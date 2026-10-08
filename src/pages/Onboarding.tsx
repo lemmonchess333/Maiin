@@ -43,6 +43,8 @@ import {
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { benchmarkFromRaceTime, manualRunFitness } from "@/lib/runPaces";
+import { finishTimeLabel } from "@/lib/runLabels";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -234,6 +236,16 @@ export default function Onboarding() {
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
   );
+  // Adaptive paces §10.2: an optional recent race, which sets the paces.
+  const [recentRaceDistance, setRecentRaceDistance] = useState<
+    NonNullable<OnboardingDraft["recentRaceDistance"]>
+  >(draft?.recentRaceDistance ?? "5k");
+  const [recentRaceMinutes, setRecentRaceMinutes] = useState(
+    draft?.recentRaceMinutes ?? ""
+  );
+  const [recentRaceSeconds, setRecentRaceSeconds] = useState(
+    draft?.recentRaceSeconds ?? ""
+  );
   const [injuries, setInjuries] = useState<string[]>(draft?.injuries ?? []);
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
     draft?.gender ?? "unspecified"
@@ -289,6 +301,9 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
     }),
     [
       step,
@@ -324,6 +339,9 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
     ]
   );
   useEffect(() => {
@@ -379,6 +397,25 @@ export default function Onboarding() {
       ),
     [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
   );
+  /* Asked of someone who runs already: a new runner has no recent race to
+     give. Typed as minutes and seconds, because a phone's number pad has no
+     colon. Blank is no answer, and an answer the plan can't read holds the
+     step until it's corrected or cleared. */
+  const askRecentRace =
+    runConfirmed &&
+    (runFrequency === "occasional" || runFrequency === "regular");
+  const recentRace = useMemo(
+    () =>
+      askRecentRace && (recentRaceMinutes !== "" || recentRaceSeconds !== "")
+        ? benchmarkFromRaceTime(
+            recentRaceDistance,
+            `${recentRaceMinutes || "0"}:${recentRaceSeconds.padStart(2, "0")}`
+          )
+        : null,
+    [askRecentRace, recentRaceDistance, recentRaceMinutes, recentRaceSeconds]
+  );
+  const recentRaceBenchmark =
+    recentRace && !("error" in recentRace) ? recentRace : null;
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -405,7 +442,7 @@ export default function Onboarding() {
         {
           runningBaseline: profile?.runningBaseline ?? null,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: profile?.runFitness,
+          runFitness: recentRaceBenchmark ?? profile?.runFitness,
         }
       ),
     [
@@ -429,6 +466,7 @@ export default function Onboarding() {
       currentDate,
       profile?.runningBaseline,
       profile?.runTimeLimits,
+      recentRaceBenchmark,
       profile?.runFitness,
     ]
   );
@@ -461,7 +499,8 @@ export default function Onboarding() {
       runFrequency !== "none" &&
       runMode === "race_prep" &&
       (racePreview.status === "invalid" || racePreview.status === "empty")
-    );
+    ) &&
+    !(recentRace && "error" in recentRace);
   const validBody =
     ageConfirmed &&
     bodyAnswered &&
@@ -551,6 +590,9 @@ export default function Onboarding() {
         ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
+        ...(recentRaceBenchmark
+          ? { runFitness: manualRunFitness(recentRaceBenchmark, new Date()) }
+          : {}),
         // #975: race_prep without a date → freeform substrate (Run9a),
         // never a dangling race_prep with no raceGoal. Single source of
         // truth for the branch is resolveOnboardingRunMode.
@@ -776,9 +818,12 @@ export default function Onboarding() {
     ? "Choose your running setup"
     : runFrequency === "none"
       ? "No running selected"
-      : effectiveRunMode === "freeform"
-        ? "Free running · no scheduled runs"
-        : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`;
+      : (effectiveRunMode === "freeform"
+          ? "Free running · no scheduled runs"
+          : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+        (recentRaceBenchmark
+          ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
+          : "");
   return (
     <div
       className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
@@ -1120,6 +1165,90 @@ export default function Onboarding() {
                         </div>
                       )}
                     </div>
+                  )}
+                  {askRecentRace && (
+                    <section
+                      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+                      aria-label="Recent race"
+                    >
+                      {/* The distance drops under the heading at larger
+                          text, and never grows past the card. */}
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <h2 className="text-base font-semibold">Recent race</h2>
+                        <SegmentedControl<
+                          NonNullable<OnboardingDraft["recentRaceDistance"]>
+                        >
+                          ariaLabel="Recent race distance"
+                          tone="running"
+                          className="w-36 max-w-full shrink-0"
+                          value={recentRaceDistance}
+                          onChange={setRecentRaceDistance}
+                          options={[
+                            { value: "5k", label: "5K" },
+                            { value: "10k", label: "10K" },
+                          ]}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Optional. A recent race or hard solo run sets your
+                        training paces. You can add one later in Settings.
+                      </p>
+                      <div className="flex gap-3">
+                        {(
+                          [
+                            {
+                              label: "Minutes",
+                              unit: "min",
+                              value: recentRaceMinutes,
+                              set: setRecentRaceMinutes,
+                              digits: 3,
+                            },
+                            {
+                              label: "Seconds",
+                              unit: "sec",
+                              value: recentRaceSeconds,
+                              set: setRecentRaceSeconds,
+                              digits: 2,
+                            },
+                          ] as const
+                        ).map((field) => (
+                          <label key={field.unit} className="flex-1 min-w-0">
+                            <span className="sr-only">{field.label}</span>
+                            <input
+                              inputMode="numeric"
+                              className="ds-input w-full min-w-0 text-center text-h2 font-mono tabular-nums"
+                              value={field.value}
+                              aria-invalid={Boolean(
+                                recentRace && "error" in recentRace
+                              )}
+                              onChange={(event) =>
+                                field.set(
+                                  event.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, field.digits)
+                                )
+                              }
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="block text-center text-sm text-muted-foreground"
+                            >
+                              {field.unit}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {recentRace && "error" in recentRace && (
+                        <p
+                          role="alert"
+                          className="text-sm text-destructive-strong"
+                        >
+                          {Number(recentRaceSeconds) > 59
+                            ? "Seconds go up to 59."
+                            : "That time doesn't look right. Check it and try again."}
+                        </p>
+                      )}
+                    </section>
                   )}
                 </div>
               )}

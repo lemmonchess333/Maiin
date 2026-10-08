@@ -57,6 +57,41 @@ describe("RunFitnessSection", () => {
   });
 });
 
+describe("RunFitnessSection — a race time typed in", () => {
+  const enter = (time: string) => {
+    fireEvent.change(screen.getByLabelText("Finish time"), {
+      target: { value: time },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save fitness" }));
+  };
+
+  it("saves it as the person's own benchmark, never pending", async () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("22:30");
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    expect(updateProfile.mock.calls[0][0]).toEqual({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 1350 },
+        vdot: 43.4,
+        source: "manual",
+        updatedAt: expect.any(String),
+        pendingConfirmation: false,
+      },
+    });
+  });
+
+  it("refuses a time faster than anyone has raced", () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("12:00");
+    expect(
+      screen.getByText("That time doesn't look right. Check it and try again.")
+    ).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+});
+
 describe("RunFitnessSection — pending auto-derive (RUN-EV-08)", () => {
   const pending = {
     benchmark: { distanceM: 5000, timeS: 1200 },
