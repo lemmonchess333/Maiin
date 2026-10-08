@@ -83,6 +83,55 @@ describe("quality placement within the actual available week", () => {
     });
   });
 
+  /* Run20 (3): a run of an hour or more is demanding. The medium-long run
+     took the week's first easy day, so in every 4-day marathon build week
+     it sat the day before the quality session, and in base weeks the day
+     after the Sunday long run (running-engine-audit §7 item 3). */
+  describe("the medium-long run", () => {
+    const MEDIUM_LONG = new Set(["easy_60", "easy_75", "easy_90"]);
+    const weeksFor = (days: number[]) =>
+      generateRacePlanV2({
+        weekSchedule: schedule(days),
+        raceGoal: { distance: "marathon", targetDate: "2027-04-25" },
+        weeklyRunDays: days.length,
+        currentDate: "2026-09-07",
+        weekStart: "2026-09-07",
+        recentLayoff: "none",
+        tuning: { difficulty: "standard", volume: "standard" },
+      }).weeks;
+    const demanding = (d: { type: string; templateId: string }) =>
+      d.type === "long" ||
+      d.type === "tempo" ||
+      d.type === "intervals" ||
+      d.type === "race";
+
+    it("never falls the day before or after a long run or quality session when the week has room", () => {
+      const weeks = weeksFor([0, 2, 3, 5]);
+      let mediumLongs = 0;
+      for (const week of weeks) {
+        const ml = week.find((d) => MEDIUM_LONG.has(d.templateId));
+        if (!ml) continue;
+        mediumLongs++;
+        for (const other of week.filter(demanding)) {
+          expect(
+            adjacent(ml.dayIndex, other.dayIndex),
+            `${ml.templateId} on ${ml.dayIndex} beside ${other.templateId} on ${other.dayIndex}`
+          ).toBe(false);
+        }
+      }
+      expect(mediumLongs).toBeGreaterThan(5);
+    });
+
+    it("keeps the week's own days when every easy day is beside a demanding one", () => {
+      // Sunday long, Monday and Tuesday easy, Wednesday quality: no easy
+      // day is clear of a demanding one, so the plan keeps its first.
+      const weeks = weeksFor([0, 1, 2, 3]);
+      expect(
+        weeks.some((week) => week.some((d) => MEDIUM_LONG.has(d.templateId)))
+      ).toBe(true);
+    });
+  });
+
   it("avoids consecutive demanding days whenever a feasible pair exists", () => {
     for (let longDay = 0; longDay < 7; longDay++) {
       for (let mask = 1; mask < 128; mask++) {
