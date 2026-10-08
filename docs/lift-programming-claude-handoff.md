@@ -608,6 +608,19 @@ session is tried once, so a refusal can't loop. Train's banner says why
 ("No lifting in the two days before your race, or on the day, so your legs
 are fresh for it."), and the rules sheet's race rule says so.
 
+STATUS 2026-10-08 (Lift4 (7), "after a return"): the miss counts start
+again with the first session back after two weeks or more away, however
+the person came back. "Ease back in" reset them already; "Keep my old
+weights", or closing the Welcome back sheet, left them, so one miss back
+lowered a lift 10% at once. The session's save now resets every lift's
+count, not only its own lifts' (`applySessionProgression`), when it comes
+two weeks or more (`WELCOME_BACK_DAYS`) after the plan's last session. It
+counts the plan's sessions by its lifts' records, not all lifting, since a
+miss count is the plan lift's; the save already writes the plan, so no new
+writer (ADR-0011). Sessions that keep no record (Easier today, a lighter
+week's) count as time away, which can only put a drop off, never bring one
+on.
+
 ### Contemporary evidence checkpoints
 
 | Source                                                                                                             | Safe product implication                                                                           | Limitation                                                                |
