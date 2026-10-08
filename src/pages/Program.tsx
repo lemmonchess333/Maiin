@@ -868,6 +868,7 @@ function ProgramInner() {
   const showDeloadSuggest = shouldSuggestDeload({
     deloadRecommended: resolveDeloadRecommended(perfWeek),
     loadFromRunning: loadFromRunning(perfWeek),
+    lighterWeekAllowed: !!programState && lighterWeekAllowed(programState),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
