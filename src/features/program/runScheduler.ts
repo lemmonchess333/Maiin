@@ -21,7 +21,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
-import { chooseQualityRunSlots } from "./runPlacement";
+import { chooseQualityRunSlots, easyDaysInFillOrder } from "./runPlacement";
 import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 
 // Re-export so existing imports of these types from runScheduler keep
@@ -684,6 +684,11 @@ export function qualityTemplateId(input: {
   taperWeeks: number;
   distance: "5k" | "10k" | "half" | "marathon";
   difficulty: RunDifficultyPreset;
+  /** The highest rung of this ladder the plan's earlier sessions reached,
+   *  -1 before the first (`highestRungBefore`). The session climbs at most
+   *  one rung past it (Run20), so the first is the first rung however far
+   *  into the block it falls. Omitted, the block's position alone decides. */
+  highestBefore?: number;
 }): string {
   const tiers = input.flavour === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
   const sizeOf = (t: (typeof tiers)[number]) =>
@@ -706,9 +711,36 @@ export function qualityTemplateId(input: {
       : ramped;
   }
 
-  let chosen = tiers[0];
-  for (const tier of tiers) if (sizeOf(tier) <= target) chosen = tier;
-  return chosen.id;
+  let rung = 0;
+  tiers.forEach((tier, i) => {
+    if (sizeOf(tier) <= target) rung = i;
+  });
+  if (input.highestBefore != null) {
+    rung = Math.min(rung, input.highestBefore + 1);
+  }
+  return tiers[rung].id;
+}
+
+/** Which quality sessions a build week holds, by flavour, under a plan's
+ *  rules: the generator's build branch reads it, and so does the walk that
+ *  finds how far up each ladder the plan's earlier weeks climbed. */
+function qualityFlavoursForWeek(input: {
+  weekIndex: number;
+  phase: "base" | "build" | "taper" | "race";
+  hardCapApplies: boolean;
+  skipQuality: boolean;
+  gentler: boolean;
+  secondQuality: boolean;
+}): Array<"tempo" | "intervals"> {
+  if (input.phase !== "build" || input.skipQuality) return [];
+  if (input.hardCapApplies && input.weekIndex % 2 !== 0) return [];
+  const first: "tempo" | "intervals" = input.gentler
+    ? "tempo"
+    : input.weekIndex % 2 === 0
+      ? "tempo"
+      : "intervals";
+  if (!input.secondQuality) return [first];
+  return [first, first === "tempo" ? "intervals" : "tempo"];
 }
 
 /** Resolve the long-run template for a week of a race plan. Taper and race
@@ -1071,6 +1103,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               distance: input.raceGoal.distance,
             })
           );
+    // Run20: a medium-long run of an hour or more is demanding, so it is
+    // kept off the days beside the long run and the quality sessions.
+    const midLongDemanding =
+      (EASY_RUN_TIERS.find((tier) => tier.id === midLongId)?.minutes ?? 0) >=
+      60;
 
     // RUN-M2: race week is identical whether or not the plan is belowFloor —
     // the race on `targetDate` (so `date === raceGoal.targetDate`) plus easy
@@ -1234,7 +1271,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // since there's no time for a real build phase). The first slot
         // carries the medium-long (RUN-EV-11); the second gains strides
         // (WAVE1-STRIDES) — a detrained returner gets neither.
-        remaining.forEach((d, i) =>
+        easyDaysInFillOrder({
+          easyDays: remaining,
+          demandingDays: [longSlot],
+          mediumLongDemanding: midLongDemanding,
+        }).forEach((d, i) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
@@ -1250,25 +1291,62 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           )
         );
       } else if (phase === "build") {
-        const allowQuality = !hardCapApplies || w % 2 === 0;
-        if (allowQuality && !skipQualityEntirely && !detrainedSkipsQuality) {
-          // 1 quality + rest easy (or all easy if compressed and
-          // the long run already consumed the week's quality budget).
-          // Gentler forces the quality to tempo — no intervals.
-          const qualityType = gentler
-            ? "tempo"
-            : w % 2 === 0
-              ? "tempo"
-              : "intervals";
+        // 1 quality + rest easy (or all easy if compressed and the long run
+        // already consumed the week's quality budget); gentler forces the
+        // quality to tempo, no intervals; harder adds the other flavour.
+        const rules = {
+          hardCapApplies,
+          skipQuality: skipQualityEntirely || detrainedSkipsQuality,
+          gentler,
+          secondQuality: allowSecondQuality && remaining.length >= 3,
+        };
+        const ladder = {
+          totalWeeks: blockWeeks,
+          taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
+          distance: input.raceGoal.distance,
+          difficulty: tuning.difficulty,
+        };
+        /* Run20: the highest rung each ladder reached in the block's
+           earlier weeks, walked under the same rules, so the first session
+           of each kind is its first rung and a regenerated week climbs on
+           from where the plan had got to. */
+        const highestRungBefore = (flavour: "tempo" | "intervals") => {
+          const tiers = flavour === "tempo" ? TEMPO_TIERS : INTERVAL_TIERS;
+          let highest = -1;
+          for (let k = 0; k < w; k++) {
+            const held = qualityFlavoursForWeek({
+              weekIndex: k,
+              phase: getPhaseForWeek(k, blockWeeks, input.raceGoal.distance),
+              ...rules,
+            });
+            if (!held.includes(flavour)) continue;
+            const id = qualityTemplateId({
+              ...ladder,
+              flavour,
+              weekIndex: k,
+              highestBefore: highest,
+            });
+            highest = Math.max(
+              highest,
+              tiers.findIndex((tier) => tier.id === id)
+            );
+          }
+          return highest;
+        };
+        const flavours = qualityFlavoursForWeek({
+          weekIndex: w,
+          phase,
+          ...rules,
+        });
+        if (flavours.length > 0) {
+          const qualityType = flavours[0];
           const qualityId = qualityTemplateId({
+            ...ladder,
             flavour: qualityType,
             weekIndex: w,
-            totalWeeks: blockWeeks,
-            taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
-            distance: input.raceGoal.distance,
-            difficulty: tuning.difficulty,
+            highestBefore: highestRungBefore(qualityType),
           });
-          const secondQualityHere = allowSecondQuality && remaining.length >= 3;
+          const secondQualityHere = flavours.length === 2;
           const qualitySlots = chooseQualityRunSlots({
             availableDays: remaining,
             longDay: longSlot,
@@ -1290,47 +1368,51 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // (tempo + intervals + long, nothing easy), so it needs three
           // remaining slots, i.e. four run days or more.
           if (secondQualityHere) {
-            const secondType = qualityType === "tempo" ? "intervals" : "tempo";
+            const secondType = flavours[1];
             week.push(
               buildRunDayV2({
                 dayIndex: qualitySlots[1],
                 templateId: qualityTemplateId({
+                  ...ladder,
                   flavour: secondType,
                   weekIndex: w,
-                  totalWeeks: blockWeeks,
-                  taperWeeks: TAPER_WEEKS_BY_DISTANCE[input.raceGoal.distance],
-                  distance: input.raceGoal.distance,
-                  difficulty: tuning.difficulty,
+                  highestBefore: highestRungBefore(secondType),
                 }),
                 type: secondType,
                 weekStart,
               })
             );
           }
-          remaining
-            .filter((day) => !qualitySlots.includes(day))
-            .forEach((d, i) =>
-              week.push(
-                buildRunDayV2({
-                  dayIndex: d,
-                  // RUN-EV-11: first easy slot is the medium-long;
-                  // WAVE1-STRIDES: the next plain easy gains strides.
-                  templateId:
-                    i === 0
-                      ? midLongId
-                      : i === 1 && input.recentLayoff !== "detrained"
-                        ? stridesVariantOf(easyId)
-                        : easyId,
-                  type: "easy",
-                  weekStart,
-                })
-              )
-            );
+          easyDaysInFillOrder({
+            easyDays: remaining.filter((day) => !qualitySlots.includes(day)),
+            demandingDays: [longSlot, ...qualitySlots],
+            mediumLongDemanding: midLongDemanding,
+          }).forEach((d, i) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                // RUN-EV-11: first easy slot is the medium-long;
+                // WAVE1-STRIDES: the next plain easy gains strides.
+                templateId:
+                  i === 0
+                    ? midLongId
+                    : i === 1 && input.recentLayoff !== "detrained"
+                      ? stridesVariantOf(easyId)
+                      : easyId,
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         } else {
           // Skip quality this week — all easy; first slot carries the
           // medium-long (RUN-EV-11), the second gains strides
           // (WAVE1-STRIDES).
-          remaining.forEach((d, i) =>
+          easyDaysInFillOrder({
+            easyDays: remaining,
+            demandingDays: [longSlot],
+            mediumLongDemanding: midLongDemanding,
+          }).forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
@@ -1353,24 +1435,34 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
         if (!compressed && !gentler && !detrainedSkipsQuality) {
+          // Placed like every quality session (RUN-EV-10): away from the
+          // long-run slot and off a lifting day where the week allows.
+          const [taperDay] = chooseQualityRunSlots({
+            availableDays: remaining,
+            longDay: longSlot,
+            count: 1,
+            weekSchedule: input.weekSchedule,
+          });
           week.push(
             buildRunDayV2({
-              dayIndex: remaining[0],
+              dayIndex: taperDay,
               templateId: "8x400",
               type: "intervals",
               weekStart,
             })
           );
-          remaining.slice(1).forEach((d) =>
-            week.push(
-              buildRunDayV2({
-                dayIndex: d,
-                templateId: easyId,
-                type: "easy",
-                weekStart,
-              })
-            )
-          );
+          remaining
+            .filter((d) => d !== taperDay)
+            .forEach((d) =>
+              week.push(
+                buildRunDayV2({
+                  dayIndex: d,
+                  templateId: easyId,
+                  type: "easy",
+                  weekStart,
+                })
+              )
+            );
         } else {
           remaining.forEach((d) =>
             week.push(
