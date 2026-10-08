@@ -98,6 +98,8 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 | A new runner's first six weeks run as run-walk, then build from 20 min | R14; Run20 (5), second half | lemmonchess333/Maiin#2655                                  |
 | The push/pull balance weighs presses against pulls                     | L8; Lift6                   | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
 | The Monday check grades a first week against what it planned           | R20 (F16b)                  | lemmonchess333/Maiin#2651                                  |
+| "Why this run" says what it is, how it should feel and what to do      | E3; Run21 (3)               | lemmonchess333/Maiin#2656                                  |
+| The run summary speaks only when a run didn't match its type           | E9; Run21 (6)               | lemmonchess333/Maiin#2657                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -814,6 +816,10 @@ tap away, and a change the person didn't make gets one line.
   go inside the disclosure, and an ⓘ sheet for runs is the owner's (E3b).
   "Why it's in your week" needs a plan: a run with none gets the other three
   lines and no invented reason (`runSessionExplainer.test.ts`).
+- **Built** as Run21 (3) (lemmonchess333/Maiin#2656): the four lines inside
+  the closed "Why this run" disclosure on Train's card, the day sheet, Home's
+  day details and the launch card, with lines of its own for each kind of
+  session. The ⓘ sheet and the phase names wait for the owner (E3a, E3b).
 
 ### E4. "Hard" means one thing
 
@@ -864,6 +870,9 @@ tap away, and a change the person didn't make gets one line.
   benchmark judges a run stays RUN-EV-08's until the owner answers R1; a
   derived benchmark that is too slow already says "faster than easy" on most
   easy runs, and E9 doesn't change that.
+- **Built** as Run21 (6) (lemmonchess333/Maiin#2657): an easy or long run
+  run hard, and a tempo off its pace either way, get one calm line; a run on
+  target, an easy run slower than its window and a race say nothing.
 
 ---
 
