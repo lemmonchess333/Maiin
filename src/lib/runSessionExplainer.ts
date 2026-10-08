@@ -112,5 +112,5 @@ export function runSessionExplainer(
   }
   return phase === "base"
     ? "Base phase — easy aerobic volume is the foundation everything later stands on."
-    : "Easy day — it makes the hard days work. If it feels too easy, it's right.";
+    : "Easy day — it makes the quality sessions work. If it feels too easy, it's right.";
 }
