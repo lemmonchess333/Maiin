@@ -393,6 +393,15 @@ export function generateInsight(
 
 // ── Plan adjustments ─────────────────────────
 
+/**
+ * The Performance tab's suggestions: running only. Lift4 (3) has no
+ * suggestion cards for lifting, and the lifting half contradicted the
+ * plan's own rules ("Reduce working sets by 30–40%" against a lighter
+ * week's half the sets; "… or extra set" against (13), which adds none).
+ * `lift` stays, empty, because older app versions read its length. The
+ * running half waits for the running grill (Lift4 (9)). Mirrored by
+ * `functions/lib/perfScoring.js`.
+ */
 export function generatePlanAdjustments(
   doc: Pick<
     PerformanceDoc,
@@ -403,30 +412,22 @@ export function generatePlanAdjustments(
     | "deloadRecommended"
   >
 ): PerformanceDoc["planAdjustments"] {
-  const lift: string[] = [];
   const run: string[] = [];
 
   if (doc.deloadRecommended) {
-    lift.push("Reduce working sets by 30–40% or drop accessory work.");
     run.push(
       "Cap runs at easy pace. Replace one session with active recovery."
     );
-    return { lift, run };
-  }
-
-  if (doc.loadBand === "overreach") {
-    lift.push("Maintain intensity but consider reducing total volume 10–15%.");
+  } else if (doc.loadBand === "overreach") {
     run.push("Keep long run but drop one mid-week session if fatigued.");
-  } else if (doc.loadBand === "low" || doc.loadBand === "deload") {
-    if (doc.liftLoadScore < 30)
-      lift.push(
-        "Focus on progressive overload — small weight jumps or extra set."
-      );
-    if (doc.runLoadScore < 30)
-      run.push("Add one easy 20-min run to rebuild aerobic base.");
+  } else if (
+    (doc.loadBand === "low" || doc.loadBand === "deload") &&
+    doc.runLoadScore < 30
+  ) {
+    run.push("Add one easy 20-min run to rebuild aerobic base.");
   }
 
-  return { lift, run };
+  return { lift: [], run };
 }
 
 // ── Profile shape + post-baseline scoring (the parity seam) ──

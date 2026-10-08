@@ -15,6 +15,7 @@ const require = createRequire(import.meta.url);
 const {
   computeRecoveryScore,
   computeAdherenceScore,
+  generatePlanAdjustments,
   scorePerformance,
 } = require("../lib/perfScoring");
 
@@ -171,5 +172,20 @@ describe("perfScoring.scorePerformance — goal-aware composition", () => {
     expect(doc).not.toHaveProperty("confidence");
     expect(doc).toHaveProperty("insight");
     expect(doc).toHaveProperty("planAdjustments");
+  });
+
+  it("stores no lifting suggestions, and an empty list for older apps", () => {
+    // Lift4 (3): no lifting suggestion cards. Older apps read
+    // `planAdjustments.lift.length`, so the list stays, empty.
+    const weeks = [
+      { loadBand: "moderate", liftLoadScore: 50, runLoadScore: 50, deloadRecommended: true },
+      { loadBand: "overreach", liftLoadScore: 50, runLoadScore: 50, deloadRecommended: false },
+      { loadBand: "low", liftLoadScore: 10, runLoadScore: 10, deloadRecommended: false },
+    ];
+    for (const week of weeks) {
+      const adj = generatePlanAdjustments(week);
+      expect(adj.lift).toEqual([]);
+      expect(adj.run).toHaveLength(1);
+    }
   });
 });

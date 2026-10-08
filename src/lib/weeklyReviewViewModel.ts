@@ -269,7 +269,7 @@ export function verdictFor(args: {
      `deloadRecommended` is the engine's FORWARD-looking advice, and it
      fires on the opposite of a light week: its own insight bullet reads
      "Consider a deload week — sustained HIGH load with limited recovery
-     signals", and its plan adjustment is "Reduce working sets by
+     signals", and its plan adjustment was "Reduce working sets by
      30-40%". Rendering it as a past-tense description told a user who
      had just trained hard that last week was light.
 
