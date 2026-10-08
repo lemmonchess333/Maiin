@@ -129,7 +129,7 @@ import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import { lastSetsBySlot } from "@/features/program/lastSets";
 
 /**
  * IMPORTANT:
@@ -272,11 +272,16 @@ function ProgramInner() {
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
-  // Every counted set from the last session with each exercise, for the
-  // rows' "Last:" line (`lastSetsByExercise`).
-  const lastSetsMap = useMemo(
-    () => lastSetsByExercise(recentWorkouts),
-    [recentWorkouts]
+  // Every lift of the plan in its slot, and every counted set from the last
+  // session each one ran in it, for the rows' "Last:" line
+  // (`lastSetsBySlot`). The workout screen reads the same.
+  const planLifts = useMemo(
+    () => programState?.workouts.flatMap((day) => day.exercises) ?? [],
+    [programState?.workouts]
+  );
+  const lastSetsOf = useMemo(
+    () => lastSetsBySlot(recentWorkouts, planLifts),
+    [recentWorkouts, planLifts]
   );
 
   // Core navigation state. The selected training day is mirrored into the URL
@@ -1411,9 +1416,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         thumbSize="sm"
                                       />
                                     </div>
@@ -1475,9 +1478,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         showNotes
                                       />
                                     </button>
@@ -1892,6 +1893,7 @@ function ProgramInner() {
                   : undefined
               }
               progressionBaseline={storedDay.exercises}
+              planLifts={planLifts}
               firstWorkout={!workoutsLoading && recentWorkouts.length === 0}
               programmeContext={{
                 weekNumber: programState.weekNumber,
