@@ -14,7 +14,9 @@ import {
 import { readSessionSets, recordedReps } from "./sessionSets";
 import { keptSwap, type SessionSwap } from "./sessionSwap";
 import { loadsTheLegs } from "./easierToday";
+import { WELCOME_BACK_DAYS } from "./liftLayoff";
 import { blockWeekOf, isProgressionHeld } from "./trainingBlock";
+import { parseLocalDate } from "@/lib/dateHelpers";
 
 /** The session owns these facts even if the plan changes while it is open. */
 export interface SessionPrescription {
@@ -44,12 +46,78 @@ export function withoutSessionProgression(
   return baseline;
 }
 
+/** The day of the plan's last session before this one, by the dates its
+ *  lifts' records carry, or null for a plan with none yet. An old draft's
+ *  lift is read from before its provisional progression, which may already
+ *  carry this session's record. */
+function lastSessionDate(
+  state: ProgramState,
+  completionId: string
+): string | null {
+  let last: string | null = null;
+  for (const day of state.workouts)
+    for (const ex of day.exercises) {
+      const before =
+        ex.sessionProgression?.id === completionId
+          ? ex.sessionProgression.baseline
+          : ex;
+      // "YYYY-MM-DD" compares in date order. Every record is read, not the
+      // last: a late save can append one dated before the one ahead of it.
+      for (const record of before.performanceHistory ?? [])
+        if (last === null || record.date > last) last = record.date;
+    }
+  return last;
+}
+
+/**
+ * Whether this session is a return, after which the miss counts start again
+ * (Lift4 (7); "after a return" in the lifting handoff's lighter-week
+ * precedence table): two weeks or more after the plan's last session, the
+ * Welcome back sheet's two weeks (`WELCOME_BACK_DAYS`). It counts the
+ * plan's own sessions, not all lifting, because a miss count is the plan
+ * lift's: weeks of other training still come between two misses. "Ease
+ * back in" resets the counts as it lowers the plan; "Keep my old weights",
+ * or closing the sheet, writes nothing, so the first session back does it.
+ */
+function isReturn(state: ProgramState, session: SessionProgression): boolean {
+  const last = lastSessionDate(state, session.completionId);
+  if (last === null) return false;
+  const days = Math.round(
+    (parseLocalDate(session.date).getTime() - parseLocalDate(last).getTime()) /
+      86_400_000
+  );
+  // A date that doesn't parse gives NaN, which is no return.
+  return days >= WELCOME_BACK_DAYS;
+}
+
+function withoutMisses<T extends Pick<ProgramExercise, "consecutiveFailures">>(
+  ex: T
+): T {
+  return ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex;
+}
+
 /** Called only within the transaction that creates this session's workout. */
 export function applySessionProgression(
-  state: ProgramState,
+  before: ProgramState,
   dayIndex: number,
   session: SessionProgression
 ): ProgramState {
+  const returning = isReturn(before, session);
+  const state: ProgramState = returning
+    ? {
+        ...before,
+        workouts: before.workouts.map((day) => ({
+          ...day,
+          exercises: day.exercises.map(withoutMisses),
+        })),
+      }
+    : before;
+  // The session's own copy of each lift starts again too, so the check
+  // below that the plan hasn't moved since it started compares like with
+  // like.
+  const fresh = <T extends Pick<ProgramExercise, "consecutiveFailures">>(
+    ex: T
+  ): T => (returning ? withoutMisses(ex) : ex);
   const settings = state.settings ?? DEFAULT_PROGRAM_SETTINGS;
   const held = isProgressionHeld(
     state.trainingBlock,
@@ -80,10 +148,12 @@ export function applySessionProgression(
               const legacy =
                 stored.sessionProgression?.id === session.completionId;
               const baseline = legacy
-                ? stored.sessionProgression!.baseline
+                ? fresh(stored.sessionProgression!.baseline)
                 : withoutSessionProgression(stored);
-              const expected = withoutSessionProgression(
-                session.prescription.progressionBaseline[inputIndex]
+              const expected = fresh(
+                withoutSessionProgression(
+                  session.prescription.progressionBaseline[inputIndex]
+                )
               );
               if (!legacy && !sameStoredValue(baseline, expected))
                 return stored;
