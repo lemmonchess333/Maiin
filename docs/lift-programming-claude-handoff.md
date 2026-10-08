@@ -245,6 +245,18 @@ equipment or injury swap brings in still keeps its slot's numbers; giving it
 its own role's numbers, and fitting the plan to the session length, are the
 next parts of step 4.
 
+STATUS 2026-10-08 (Lift4 (5), (11) and (12), the day roles): each session
+keeps its heavier or lighter role. The roles were read from the days'
+positions, and the week's order carries over by moving whole days, so a
+block started after a carried-over week shifted the reps by another
+session's role (the training-engine audit measured a heavier upper day's
+bench going from 3 × 3 to 3 × 7), and the block's end didn't put back what
+its start replaced. A plan's days now keep their role (`WorkoutDay.dayRole`,
+given by `withDayRoles` when the plan is built, at every level, so a later
+level change lands on the same sessions), and both copies of
+`represcribeWorkouts` read it. A plan built before has none: its roles come
+from the positions, as before, and are kept from its first block.
+
 STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
 session length. A new plan's sessions are cut to the minutes the person has
 (`sessionFit.ts`; an hour when the question was never answered), priced with
@@ -332,6 +344,17 @@ gave a knee-injured person the squat back. In a plan the person already has,
 a lift a swap brings in takes its role's reps, range and progression on its
 day, its load moved down to more reps (never up), and no more sets than its
 slot had (`represcribeSwapped`).
+
+STATUS 2026-10-08 (Lift5, owner-delegated): Train's Replace and Add follow
+the role table too. A Replace keeps the slot's sets, reps and progression
+when the new exercise has the old one's role, so a person's own numbers
+stay; across roles the slot takes the new role's numbers on its day, its
+load moved to them, and no more sets than it had. An Add takes its role's
+numbers unless the command brings its own; its load starts empty as before.
+Both run through one helper on each side of the command boundary
+(`withRoleNumbers`, in `represcribe.ts` and the server's `represcribe.js`,
+pinned by `represcribe.cross.test.ts`). Swap for today, kept or not, keeps
+the session's numbers.
 
 STATUS 2026-10-05 (Lift4 (11), build step 4, eighth part): removing a
 limitation brings the original lifts back as part of saving. Each equipment

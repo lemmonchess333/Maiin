@@ -36,6 +36,7 @@
 
 import {
   assignDayRoles,
+  dayRoleOf,
   prescribedRepCeiling,
   undulationDeltaFor,
   repFloorFor,
@@ -100,13 +101,18 @@ export function represcribeWorkouts(
   goal: PrimaryGoal,
   experience: Experience | undefined
 ): WorkoutDay[] {
-  // Undulation is applied per DAY INDEX, so the roles have to be computed
-  // over the whole week before any slot is touched.
-  const roles = assignDayRoles(workouts.length);
+  // Undulation follows each session's own role, kept with it as the week's
+  // order carries over (`dayRoleOf`). An older plan keeps none, so its roles
+  // come from the days' positions, over the whole week before any slot is
+  // touched, and are kept from here: a block's end then finds the roles its
+  // start used, whatever the order has done since.
+  const byPosition = assignDayRoles(workouts.length);
+  const roles = workouts.map((day, i) => dayRoleOf(day, byPosition[i]));
   const undulates = usesUndulation(experience);
 
   return workouts.map((day, dayIndex) => ({
     ...day,
+    dayRole: roles[dayIndex],
     exercises: day.exercises.map((ex) => {
       // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. `prescribedRepCeiling` already returns Infinity for
@@ -154,6 +160,47 @@ export function represcribeWorkouts(
       return out;
     }),
   }));
+}
+
+/**
+ * A lift a person puts into a plan takes its role's numbers (Lift5): Train's
+ * Replace with an exercise of another role, and Add. The reps, range and
+ * progression its role gives on that session, with the session's heavier
+ * or lighter shift, its load moved to those reps, and its role's sets, no
+ * more than `maxSets` (the slot's, for a Replace). Everything else stays.
+ * Mirrored by `functions/lib/represcribe.js`, which the commands run.
+ */
+export function withRoleNumbers(
+  workouts: readonly WorkoutDay[],
+  dayIndex: number,
+  instanceId: string,
+  goal: PrimaryGoal,
+  experience: Experience | undefined,
+  maxSets?: number
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience)[
+    dayIndex
+  ]?.exercises.find((ex) => ex.instanceId === instanceId);
+  if (!fresh) return [...workouts];
+  return workouts.map((day, d) =>
+    d !== dayIndex
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (ex.instanceId !== instanceId || ex.repUnit === "seconds")
+              return ex;
+            const roleSets = roleRepsFor(goal, ex, experience).sets;
+            const sets =
+              maxSets === undefined ? roleSets : Math.min(maxSets, roleSets);
+            return {
+              ...fresh,
+              sets,
+              ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+            };
+          }),
+        }
+  );
 }
 
 /**

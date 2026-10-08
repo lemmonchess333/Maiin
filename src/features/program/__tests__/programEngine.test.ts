@@ -3,6 +3,7 @@ import {
   applyProgression,
   applyDeload,
   advanceWeek,
+  assignDayRoles,
   generateProgram,
   expectedDayCount,
   goalProfileFor,
@@ -604,6 +605,21 @@ describe("advanceWeek — the week opens with the session not reached", () => {
     expect(next.workouts.every((d) => !d.completed && !d.skipped)).toBe(true);
   });
 
+  it("carries each session's heavier or lighter role with it", () => {
+    const next = advanceWeek(
+      week([
+        { ...day("A", { completed: true }), dayRole: "heavy" },
+        { ...day("B"), dayRole: "moderate" },
+        { ...day("C"), dayRole: "pump" },
+      ])
+    );
+    expect(next.workouts.map((d) => [d.dayName, d.dayRole])).toEqual([
+      ["B", "moderate"],
+      ["C", "pump"],
+      ["A", "heavy"],
+    ]);
+  });
+
   it("passes over a skipped session, as Train's Up next does", () => {
     const next = advanceWeek(
       week([
@@ -872,6 +888,27 @@ describe("day roles (backlog #3)", () => {
   const mainRepsOf = (w: {
     exercises: { isAccessory?: boolean; reps: number }[];
   }) => w.exercises.filter((e) => e.isAccessory !== true).map((e) => e.reps);
+
+  it("keeps each session's role on the day, at every level", () => {
+    // A beginner's reps don't shift by role, but a level change can bring
+    // the shifts in, on the sessions the plan was built with.
+    for (const experience of ["beginner", "intermediate"] as const) {
+      for (const days of [1, 2, 3, 4, 5, 6]) {
+        const { workouts } = generateProgram(
+          days,
+          undefined,
+          "hypertrophy",
+          undefined,
+          undefined,
+          experience
+        );
+        expect(
+          workouts.map((d) => d.dayRole),
+          `${experience}, ${String(days)} days`
+        ).toEqual(assignDayRoles(workouts.length));
+      }
+    }
+  });
 
   it("single-day weeks stay at the table's numbers", () => {
     const one = generateProgram(
