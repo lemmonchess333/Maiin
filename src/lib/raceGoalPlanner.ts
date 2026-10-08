@@ -247,7 +247,7 @@ export function getRaceGoalPlannerState(
   } else if (status === "compressed") {
     statusTitle = "Short runway";
     statusDescription =
-      "Tropos will compress the plan — fewer hard sessions, a shorter long-run progression.";
+      "Tropos will compress the plan — less interval work, and the long runs build in fewer weeks, with bigger jumps between them.";
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";

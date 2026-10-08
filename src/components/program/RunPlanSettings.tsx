@@ -846,7 +846,8 @@ export default function RunPlanSettings({
               Long-run volume
             </p>
             <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter caps them at 10K.
+              How big your long runs build — Lighter peaks about a quarter
+              lower, Bigger about a quarter higher.
             </p>
             <SegmentedControl
               options={[

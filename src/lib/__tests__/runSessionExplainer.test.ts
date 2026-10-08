@@ -68,6 +68,21 @@ describe("runSessionExplainer", () => {
     }
   });
 
+  /* A tempo's pace comes from the benchmark, from the goal race pace in
+     build and taper (A2), or from the template when there is neither, so
+     the line can't say where it comes from, nor how hard it feels: a
+     marathon's goal pace is steadier than threshold. The session's own
+     segments say both. */
+  it("the tempo line says what a tempo does, not where its pace comes from", () => {
+    const line = runSessionExplainer({
+      type: "tempo",
+      templateId: "tempo_30",
+      ...build,
+    });
+    expect(line).not.toMatch(/fitness/);
+    expect(line).toMatch(/blocks get longer/);
+  });
+
   it("phase drives the copy: same template reads differently in build vs taper", () => {
     const inBuild = runSessionExplainer({
       type: "easy",
