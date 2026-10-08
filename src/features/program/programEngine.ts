@@ -2197,7 +2197,14 @@ export function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        const rangeMax = exercise.repRangeMax;
+        // A fixed target has no range, so it takes the ceiling a range-less
+        // double does (`impliedDoubleRangeMax`): every set at the target is
+        // a step, and a bodyweight lift's step is a rep (Lift4 (6), on the
+        // axis (7) lowers it on). Without it a pull-up main on a fixed
+        // target climbed only on a 2-rep overshoot, and then a single rep.
+        const rangeMax =
+          exercise.repRangeMax ??
+          impliedDoubleRangeMax(resetReps, isBodyweight, isTimed);
         if (rangeMax != null && rangeMax > resetReps) {
           // Range-aware bodyweight climb on the LINEAR path too — a
           // running-goal pull-up main (4-6, linear) was frozen for a
@@ -2213,7 +2220,9 @@ export function applyProgression(
             }
           }
         } else if (actualReps >= exercise.reps + 2 && rpeOk) {
-          // Legacy: no authored range — climb on a 2-rep overshoot (capped)
+          // No ceiling to climb to: a timed hold, whose time axis
+          // `impliedDoubleRangeMax` leaves as it was, or a target already
+          // at the cap. Climb on a 2-rep overshoot (capped), as before.
           bumpBodyweightReps();
         }
       } else if (rpeOk) {

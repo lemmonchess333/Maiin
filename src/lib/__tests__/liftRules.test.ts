@@ -46,6 +46,14 @@ describe("liftRules", () => {
     expect(rule(small, "steps")).toContain(`${SMALL_PLATES_STEP_KG} kg`);
   });
 
+  it("says a bodyweight lift climbs in reps", () => {
+    // A fixed target met on every set climbs a rep, a range climbs to its
+    // top (bodyweightFixedTarget.test.ts); neither adds weight.
+    expect(rule(intermediate, "climb")).toContain(
+      "A bodyweight lift, such as pull-ups, climbs in reps instead."
+    );
+  });
+
   it("states the miss rule", () => {
     expect(MISSES_BEFORE_LOWERING).toBe(2);
     // A miss is the session's reps in total (sessionOutcome), so 8, 8 and
