@@ -1,9 +1,10 @@
-# The lifting simulator
+# The training simulator
 
-Phase 2 of the training-engine prompt (`docs/agents/training-engine-prompt.md`),
-its lifting half. It puts simulated people through 26 weeks of the app's
-own plan code, one day at a time, and checks what comes out. The running
-half follows in its own PR.
+Phase 2 of the training-engine prompt (`docs/agents/training-engine-prompt.md`).
+It puts simulated people through the app's own plan code, lifting and
+running, one day at a time, and checks what comes out. The lifting half
+came first (lemmonchess333/Maiin#2613); the running half is below, under
+"The running half", and its findings are F13–F18.
 
 The code is in `src/test/sim/`, and the suites are in
 `src/features/program/__tests__/sim/`.
@@ -16,14 +17,16 @@ The code is in `src/test/sim/`, and the suites are in
 - `npx vitest run src/features/program/__tests__/sim` runs just the
   simulator, in about 20 seconds.
 - A change to what the plan does shows up as a diff in the traces
-  (`__traces__/<persona>.txt`). Read the diff, then accept it with `-u`.
+  (`__traces__/<persona>.txt`, and `__traces__/run/<persona>.txt` for the
+  run and hybrid personas). Read the diff, then accept it with `-u`.
 - The soak:
   `TROPOS_SIM_SEEDS=500 npx vitest run src/features/program/__tests__/sim/liftOutcomes.sim.test.ts`
   runs 500 seeds of each model variant and writes
   `test-results/sim/lifting-outcomes.md`. That file is ignored by git, so
   the report stays uncommitted. Without the variable, the outcome suite
   runs 3 seeds of each, which is enough for its plausibility checks in the
-  PR gate.
+  PR gate. `runOutcomes.sim.test.ts` does the same for the runners, into
+  `test-results/sim/running-outcomes.md`.
 
 ## What runs
 
@@ -94,8 +97,7 @@ its range, source, marker and grade.
 - logged effort;
 - correcting a pre-filled set by hand;
 - the person's other actions: Swap, Skip, Easier today, Take a lighter
-  week, Adjust this week;
-- running.
+  week, Adjust this week.
 
 ## The personas
 
@@ -246,7 +248,213 @@ What the table says:
 - **The over-55 persona's press** is a 15 kg barbell, below the bar
   (F10). Under the harsh model, the person mostly can't lift it.
 
-## Calibration status
+## The running half
+
+The run and hybrid personas live their plans through the app's run code
+and its server's, on the same day loop as the lifting: `liftSeason.ts`
+drives both, and `runSeason.ts` has the run side.
+
+### What runs
+
+Each simulated day, in this order:
+
+1. **The server's morning.** The daily race sweep
+   (`decideReconciliationActions`: the no-show, the recovery exit, the
+   return to freeform) and, on a Monday, the fell-behind check
+   (`decideFellBehindFlag`), required from `functions/lib/`
+   (lemmonchess333/Maiin#2616). Each write lands as Firestore would apply
+   it: run days replaced, the run plan and the profile merged. The sweep
+   runs before the app opens on each simulated local day. That is true in
+   Europe and a simplification further east and west, kept so a day
+   happens in the same order in every time zone.
+2. **Opening the app.** The rollover gets the layoff class from the 20
+   latest runs (`layoffFromRuns`, as `fetchRecentLayoff` reads them), and
+   `raceWeekNeedsBuilding` is asked after it. The Programme page's
+   benchmark derive runs (`resolveAutoDeriveBenchmark`). Home's card gets
+   the app's claim map (`claimableRuns`, `claimMapFor`,
+   lemmonchess333/Maiin#2615).
+3. **The run.** Home's card's run, or on race day the race, from Train
+   when Home shows none. The run screen sets it out with Run.tsx's inputs
+   (`computePlanMetadata`, then `finalisePlanMetadata` at Start), the
+   runner runs it, and the saved run (`runDocument`, read back by
+   `parseSavedRun`) goes to the server's recovery entry
+   (`decideRecoveryEntry`, as `onRunCreated` calls it).
+4. **A hybrid's lift** comes after the run, or before it (`runsFirst`). A
+   long or hard run in the 24 hours before the lift rides its finish
+   (`isHardRun`, as `useHardRunBefore` reads it), and a lift day that loaded
+   the legs (`isLowerBodyDay`) dampens the next 48 hours' quality running.
+
+### The runner (`runner.ts`)
+
+running-evidence §6.2–6.7. Every number is in `athleteParameters.ts`'s
+`RUNNER` table, with its range, source, marker and grade.
+
+- **Fitness and fatigue** are running averages of weekly effort-minutes
+  over τ₁ 42 days and τ₂ 10. A quality minute counts as 1.3 easy ones,
+  the app's own `QUALITY_RUN_FACTOR`.
+- **True VDOT** is an untrained base plus a concave curve of fitness
+  (headroom 15, scale 250 minutes a week), times a responder draw (log-SD
+  0.4). On the day, freshness adds up to 2.6% and fatigue takes as much.
+- **Paces** come from the app's own Daniels–Gilbert bands
+  (`trainingBands`). A target faster than the runner can hold is run at
+  what they can.
+- **Injury:** 30 per 1000 h, falling to 7.7 over a novice's first 13
+  weeks; × Frandsen's single-run spikes (1.64 for 10–30% past the month's
+  longest run, 1.52 to double it, 2.28 past that); × 1.5 for a year after
+  an injury. Kluitenberg's tiers decide whether it halves running for a
+  week or stops it for days or weeks. A runner arrives with a longest run
+  of a third of their weekly minutes, unless the persona says otherwise.
+- **Race day** is the race the day's VDOT runs, with Vickers & Vertosick's
+  low-volume correction on a marathon (§6.7 item 7).
+- **Three variants:** base; harsh (fitness fading faster, fatigue
+  lingering, less headroom, injuries at the novice rate's top); and
+  intensity (a quality minute at 2.5 easy ones, TRIMP's interval
+  weighting), which shows how much an outcome rests on what the model
+  gives intensity.
+- **Not modelled:** heat, terrain, economy, run-walk, illness beyond a
+  break the persona takes, and how the runner feels.
+
+**How they use the app:**
+
+- They go out for the share of Home's planned runs their persona sets.
+  On race day they always race, unless injured.
+- They run each session as the run screen sets it out: its segments, its
+  distance or time, or else the session's own length. They run at their
+  own band's pace, or at the target when they can hold it.
+- When their persona says so, they enter a race result and a goal time in
+  Settings, and accept a benchmark the app derives.
+- A freeform runner runs their own weekdays.
+
+### The personas
+
+| Persona              | Who                                                                                               | How they use the app                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| couch-to-5k          | §6.5 A: sedentary (VDOT 24, 20 minutes a week), "New to running", a 5K in 11 weeks, 3 runs a week | sets up on a Thursday; 80% of runs                                         |
+| half-3-days          | VDOT 42 on 175 minutes a week, a half in 14 weeks on 3 run days                                   | 90%; entered a 5K                                                          |
+| sub-3-30             | §6.5 C: a 3:45 marathoner on about 48 km a week, sub-3:30 in 16 weeks, 5 run days                 | 92%; entered the 3:45 and the goal                                         |
+| sick-six-weeks       | §6.5 D: VDOT 44 on 220 minutes a week, a 10K in 20 weeks, 4 run days                              | 90%; 6 weeks off sick (weeks 6–11), app closed                             |
+| new-runner-marathon  | "New to running" at setup's default of one run a week, a marathon in 20 weeks                     | 85%                                                                        |
+| freeform-runner      | VDOT 38, no plan, 20 weeks                                                                        | 40, 40 and 75 minutes on Tuesday, Thursday and Sunday                      |
+| year-out-marathon    | §6.5 B: a 50-minute 10K on 30 km a week, a first marathon in 52 weeks, 3 lifts and 4 runs         | 85% of each; runs before lifting; crosses both of Auckland's clock changes |
+| hybrid-3-4-(no-)trim | VDOT 40, 3 lifts and 4 runs, a half in 16 weeks; the race leg trim on, and off                    | 90%; runs before lifting                                                   |
+| hybrid-2-3-(no-)trim | VDOT 36, 2 lifts and 3 runs, a 10K in 12 weeks; the leg trim on, and off                          | 85% of runs, 90% of lifts; lifts before running                            |
+
+Each season runs to the race, through its recovery and three weeks on,
+where the plan has to have let the race go.
+
+### The checks
+
+The app's rules gain six (`Rule` in `liftSeason.ts`), held the same way:
+
+| Rule              | Broken when                                                                |
+| ----------------- | -------------------------------------------------------------------------- |
+| `before-plan`     | a planned run is dated before the plan was made                            |
+| `after-race`      | a planned run comes after race day, outside recovery                       |
+| `race-day-card`   | on race day, Home's card shows no run                                      |
+| `not-counted`     | a planned run done on its day is not counted by Home                       |
+| `race-unresolved` | two weeks after the race (or its recovery), the plan still prepares for it |
+| `race-week-stale` | after the rollover, this week's race runs need building again              |
+
+**Today:** no persona breaks `after-race` or `race-week-stale`. The others
+are F6, F13, F14 and F16 below.
+
+The coaching checks (`runCoaching.ts`) are judgements from running-evidence
+§5.20, §2 and §4.5 and running-engine-audit §7, in the same ratchet:
+
+- `quality-cap`: more than two quality sessions besides the long run in a
+  week;
+- `novice-quality`: tempo or intervals in a new runner's first six weeks;
+- `back-to-back`: two demanding days in a row (a long run, tempo,
+  intervals, a race, or an easy run of an hour or more);
+- `spike`: a run more than 10% longer than the month's longest (the
+  single-run guard);
+- `volume-jump`: a week planning over 25% more than the last, outside race
+  week;
+- `taper-long`: a half or marathon plan with no long run in the two weeks
+  before race week;
+- `taper-cut`: a taper whose first week plans under half the last build
+  week;
+- `long-share`: the long run over half the week's minutes in most weeks;
+- `one-run-week`: race preparation on one run a week;
+- `run-walk`: a new runner's first week asking for more than 20 minutes at
+  a time;
+- `under-dose`: the plan's first full month under 80% of what the runner
+  already ran;
+- `derived-low`: a derived benchmark three or more VDOT under the runner;
+- `nag-after-race`: the server saying they fell behind after their race.
+
+**Today:** no `quality-cap` finding; the rest are in F6, F15, F17 and F18.
+
+**The traces** (`__traces__/run/`), one per persona at seed 1 under the
+base model: each week's plan phase and week, the planned runs by day,
+their planned minutes, long run and quality sessions, and how many Home
+counted; each run as run (distance, minutes, pace, NOT COUNTED, a target
+too fast, an injury, a race's finish); the week's minutes, kilometres,
+easy share and its longest run against the month's; and the runner's
+true VDOT and fitness, with their own easy band against the one the app
+prescribed. A hybrid's trace has its lifting after.
+
+### Outcomes (`runOutcomes.sim.test.ts`)
+
+The change in true VDOT by race morning, the finish, the share of seasons
+with an injury and the share of planned runs Home counted, across seeds
+and the three variants. Asserted only as broad plausibility: the median
+change between −4 and +6, and a median race no slower than twice its
+start-of-season equivalent. At 20 seeds of each:
+
+| Persona              | VDOT change (base / harsh / intensity) | Finish (median [10th–90th]) | Injured | Counted | Expected (§6.1, §6.5)                     |
+| -------------------- | -------------------------------------- | --------------------------- | ------- | ------- | ----------------------------------------- |
+| couch-to-5k          | +2.9 / +2.1 / +3.4                     | 33:57 [31:50–35:37]         | 42%     | 82%     | first 5K 30–40 min; 10–25% injured        |
+| half-3-days          | −1.1 / −0.9 / −0.6                     | 1:46:25 [1:44:23–1:49:04]   | 20%     | 84%     | +1.5–3 VDOT                               |
+| sub-3-30             | −1.6 / −1.5 / −0.9                     | 3:48:36 [3:44:36–3:58:38]   | 47%     | 90%     | +1.5–3; sub-3:30 for 10–25%               |
+| sick-six-weeks       | −2.6 / −1.9 / −2.3                     | 48:20 [47:03–50:14]         | 25%     | 93%     | −7% to −16% VO2max off, rebuilt in ~6 wks |
+| new-runner-marathon  | +0.8 / +0.4 / +0.8                     | 5:11:42 [5:04:11–5:18:40]   | 80%     | 99%     | none                                      |
+| freeform-runner      | +0.2 / +0.2 / +0.2                     | no race                     | 50%     | -       | little change                             |
+| year-out-marathon    | −0.4 / −0.6 / −0.1                     | 4:10:31 [4:04:44–4:17:55]   | 55%     | 87%     | +2 to +5; 3:45–3:50, 80% 3:35–4:10        |
+| hybrid-3-4-(no-)trim | −0.3 / −0.3 / +0.1                     | 1:49:21 [1:47:09–1:51:59]   | 27%     | 88%     | +1.5–3                                    |
+| hybrid-2-3-(no-)trim | −0.2 / −0.2 / +0.2                     | 54:15 [53:06–55:41]         | 15%     | 83%     | +1–3                                      |
+
+What the table says, with the model's limits in view:
+
+- **The beginner gains as §6.5 A expects:** +2.9 VDOT, and a first 5K of
+  34 minutes, inside 30–40. But 42% of seasons have an injury against
+  10–25%: the plan gives about two hours of continuous running a week
+  from week 1, not Couch to 5K's run-walk (F15, F18).
+- **Recreational runners lose fitness by race day:** −0.3 to −1.6 VDOT on
+  the base model against §6.1's +1.5–3, and −0.9 to +0.2 crediting quality
+  sessions at their top weight. The plan's dose is most of it, and the
+  dose is the plan's, not the model's: weeks 2–5 average 57–75% of what
+  the running-only runners already ran (F15), and the taper cuts the week by about 60% in
+  one step (F18). The model also prices a taper low (+0.5% where §6.7
+  expects about 2.6%), so race-morning VDOT understates what the taper
+  adds.
+- **No sub-3:30:** a median 3:48:36 and no seed under 3:30, against §6.5
+  C's 10–25%.
+- **The year-out marathoner gets −0.4 VDOT for the year and a 4:10,** the
+  slow end of §6.5 B's 80% range. The plan's peak is 353 minutes in the
+  last build weeks, after 20 weeks of base below the runner's 195.
+- **One run a week to a marathon injures 80% of seasons,** on single runs
+  up to ten times the month's longest.
+- **Home counts 82–99% of planned runs done;** every miss is a quality
+  session (F13).
+- **The leg trim changes only the lifting.** Both hybrid pairs run the
+  same plan; the trim's fewer leg sets bring a 3-day hybrid's sessions in
+  under their length more often (`over-time` 2 times against 6).
+
+### Calibration status
+
+| Target (running-evidence §6.1, §6.4, §6.7 item 8)                         | Status                                                                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Recreational, 16 weeks adding 90 minutes a week: +1.5–3 VDOT              | Met: +2.1 (`runnerCalibration.test.ts`)                                                      |
+| Well-trained, 16 weeks: about +2% of race time (+0.5–2 VDOT at 55)        | Met: +0.9                                                                                    |
+| Novice, 12 weeks from 100 to 150 minutes: +1.5–3 VDOT                     | Met: +1.6                                                                                    |
+| Detraining after 1, 3, 6 and 10 weeks off (§6.4)                          | Met: 0%, 3.2%, 7.5%, 11.3%                                                                   |
+| A strict taper's 2.6% over a relaxed one                                  | Missed, pinned: +0.5%. Fitness follows minutes, so a taper loses some                        |
+| Recreational trials at about constant volume (Festa 2020: +3% in 8 weeks) | Not reproduced: the model credits volume more than intensity; the intensity variant spans it |
+| §6.3's injury proportions, each by its definition                         | Not checked against a programme's exposure; the C25K result runs high                        |
+| Riegel optimistic by 10 minutes for half of recreational marathoners      | Built in: Vickers & Vertosick's correction on race day                                       |
+
+## Calibration status (lifting)
 
 | Target (lifting-evidence §4.2, §4.4)                                                         | Status                                                                                                                                                  |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -264,27 +472,38 @@ What the table says:
 Numbered as found. Each pinned one sits in a ratchet, so its fix has to
 take it out.
 
-| #   | What                                                                                                                                                                                                                                                                                                                                                                                                      | Status                                                      |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| F1  | New plans started dumbbell lifts at 2.5 or 7.5 kg, which a dumbbell rack doesn't have. A scan of 1,800 setups found eleven lifts started off the rack                                                                                                                                                                                                                                                     | Fixed in lemmonchess333/Maiin#2610, merged into this branch |
-| F2  | A light barbell press waits at a stretched rep target: the novice woman's 15 kg press sat at 14 reps for 19 sessions, with 3–9 in reserve                                                                                                                                                                                                                                                                 | Part of F9                                                  |
-| F3  | A high-rep slot stalls at its ceiling when the sets don't all reach the top (20, 20, 18)                                                                                                                                                                                                                                                                                                                  | Part of F9; at the lifter's limit, so not flagged           |
-| F4  | Linear steps outrun slow-gaining lifts: novice presses miss or come down in 38–55 of every 100 sessions, the light trainer's squat and press in a third, the over-55's bench, deadlift and press                                                                                                                                                                                                          | Pinned (`misses`)                                           |
-| F5  | `programTypes.ts`'s `repRangeMax` comment says generated plans don't set it; they do                                                                                                                                                                                                                                                                                                                      | For the lifting pass                                        |
-| F6  | The client's Monday rollover past race day may delete the run plan before the server's no-show and recovery checks read it                                                                                                                                                                                                                                                                                | For the running half                                        |
-| F7  | The loader's set floor undid the time fit: every load raised a main lift's 2 sets to 3, so the 30-minute dumbbell beginner ran 31–33 minutes                                                                                                                                                                                                                                                              | Fixed in lemmonchess333/Maiin#2612, merged into this branch |
-| F8  | The time fit prices warm-ups at the starting weight, but a light barbell lift gains warm-up sets as it grows: a press under 50 kg gets the empty bar and another ramp step once past it. Fitted 60-minute sessions run 61–63                                                                                                                                                                              | Pinned (`over-time`)                                        |
-| F9  | A light lift waits for the person. The plan's own step is at most 15%, so on a 2.5 kg grid nothing under 16.7 kg steps by itself, nor dumbbells from 10 to 17.5 kg. The reps stretch, then wait for the person to pick up the next weight. Someone who doesn't sits there: a 10 kg leg curl at 20 reps for 15 sessions with 9 in reserve, and every dumbbell main of the 2-day beginner from about week 8 | Pinned (`stall`)                                            |
-| F10 | Barbell lifts planned below the bar: curls at 5–17.5 kg, skull crushers at 15–17.5 kg, a weak lifter's press at 12.5–15 kg. The barbell grid starts at 0, and starting loads from setup aren't floored at the bar                                                                                                                                                                                         | Pinned (`below-bar`); swap or floor is an owner call        |
-| F11 | The workout screen starts a lift's rows from that exercise's last session, not that slot's. When one exercise is on two days, each day's rows take the other day's off-weight sets: the novice man's heavy squat day opens at 65 kg × 9, the light day's set. A failed set's reps also carry over as the next session's target for that set                                                               | Pinned (`stall:squat`)                                      |
-| F12 | Size plans give the quads 9 sets a week, under ACSM 2026's 10                                                                                                                                                                                                                                                                                                                                             | Pinned (`acsm-size:quads`)                                  |
+| #   | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Status                                                                                                                                 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | New plans started dumbbell lifts at 2.5 or 7.5 kg, which a dumbbell rack doesn't have. A scan of 1,800 setups found eleven lifts started off the rack                                                                                                                                                                                                                                                                                                                                                                        | Fixed in lemmonchess333/Maiin#2610, merged into this branch                                                                            |
+| F2  | A light barbell press waits at a stretched rep target: the novice woman's 15 kg press sat at 14 reps for 19 sessions, with 3–9 in reserve                                                                                                                                                                                                                                                                                                                                                                                    | Part of F9                                                                                                                             |
+| F3  | A high-rep slot stalls at its ceiling when the sets don't all reach the top (20, 20, 18)                                                                                                                                                                                                                                                                                                                                                                                                                                     | Part of F9; at the lifter's limit, so not flagged                                                                                      |
+| F4  | Linear steps outrun slow-gaining lifts: novice presses miss or come down in 38–55 of every 100 sessions, the light trainer's squat and press in a third, the over-55's bench, deadlift and press                                                                                                                                                                                                                                                                                                                             | Pinned (`misses`)                                                                                                                      |
+| F5  | `programTypes.ts`'s `repRangeMax` comment says generated plans don't set it; they do                                                                                                                                                                                                                                                                                                                                                                                                                                         | For the lifting pass                                                                                                                   |
+| F6  | The client's Monday rollover after race day, and after recovery, deletes the run plan before the server's no-show and recovery-exit checks can read it. Every race persona ends its season still in race prep for a race that is over, and the Monday server check then tells them weekly that they fell behind                                                                                                                                                                                                              | Confirmed; pinned (`race-unresolved`, `nag-after-race`)                                                                                |
+| F7  | The loader's set floor undid the time fit: every load raised a main lift's 2 sets to 3, so the 30-minute dumbbell beginner ran 31–33 minutes                                                                                                                                                                                                                                                                                                                                                                                 | Fixed in lemmonchess333/Maiin#2612, merged into this branch                                                                            |
+| F8  | The time fit prices warm-ups at the starting weight, but a light barbell lift gains warm-up sets as it grows: a press under 50 kg gets the empty bar and another ramp step once past it. Fitted 60-minute sessions run 61–63                                                                                                                                                                                                                                                                                                 | Pinned (`over-time`)                                                                                                                   |
+| F9  | A light lift waits for the person. The plan's own step is at most 15%, so on a 2.5 kg grid nothing under 16.7 kg steps by itself, nor dumbbells from 10 to 17.5 kg. The reps stretch, then wait for the person to pick up the next weight. Someone who doesn't sits there: a 10 kg leg curl at 20 reps for 15 sessions with 9 in reserve, and every dumbbell main of the 2-day beginner from about week 8                                                                                                                    | Pinned (`stall`)                                                                                                                       |
+| F10 | Barbell lifts planned below the bar: curls at 5–17.5 kg, skull crushers at 15–17.5 kg, a weak lifter's press at 12.5–15 kg. The barbell grid starts at 0, and starting loads from setup aren't floored at the bar                                                                                                                                                                                                                                                                                                            | Pinned (`below-bar`); swap or floor is an owner call                                                                                   |
+| F11 | The workout screen starts a lift's rows from that exercise's last session, not that slot's. When one exercise is on two days, each day's rows take the other day's off-weight sets: the novice man's heavy squat day opens at 65 kg × 9, the light day's set. A failed set's reps also carry over as the next session's target for that set                                                                                                                                                                                  | Fix in lemmonchess333/Maiin#2614; pinned (`stall:squat`) until it lands                                                                |
+| F12 | Size plans give the quads 9 sets a week, under ACSM 2026's 10                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Pinned (`acsm-size:quads`)                                                                                                             |
+| F13 | Home counts a tempo or interval day only when the whole run averaged under 4:30/km (`runClaims.ts`'s pace bar). None of the 86 quality sessions the personas ran counted, the sub-3:30 runner's included; the race-day check already says why that bar is wrong for races                                                                                                                                                                                                                                                    | Pinned (`not-counted`)                                                                                                                 |
+| F14 | Setup's week schedules never put a run on a Sunday (runner-only at 1–6 days; hybrids at 2+2, 2+3, 3+2, 3+3 and 4+3), and Home shows a run only on a run day, so a Sunday race reads as a rest day: 7 of the 10 race personas. Runner-only long runs land on a Monday                                                                                                                                                                                                                                                         | Pinned (`race-day-card`)                                                                                                               |
+| F15 | The plan doesn't size from the runner, and setup never asks how much they run: weeks 2–5 average 57–75% of what the running-only experienced runners already ran (126 of 220 minutes for the 10K runner) and 86–90% for the year-out marathoner and the hybrids, against 2.6 and 5.8 times what the two beginners ran                                                                                                                                                                                                        | Pinned (`under-dose`)                                                                                                                  |
+| F16 | A plan made mid-week writes that week's earlier runs: made on a Thursday, it plans that Monday and Wednesday. The prompt's question, confirmed                                                                                                                                                                                                                                                                                                                                                                               | Pinned (`before-plan`)                                                                                                                 |
+| F17 | The benchmark the app derives takes the best of a runner's first easy runs as a race: 6.7–9.7 VDOT under the runner. It lands pending, so prescriptions wait, but measurement surfaces use it at once                                                                                                                                                                                                                                                                                                                        | Pinned (`derived-low`)                                                                                                                 |
+| F18 | The plan's shape, as running-engine-audit §7 found it: long runs step past the single-run guard in build (up to 1.76 times the month's longest), a marathon comes 28 or more days after the last long run (6.9 and 10.6 times the month's longest), weeks jump over 25%, demanding days sit back to back, the taper cuts about 60% in one step and holds it, long runs fill over half the week on 3 days or fewer, and a new runner gets continuous runs from week 1, intervals from week 5 and a marathon on one run a week | Pinned (`spike`, `volume-jump`, `back-to-back`, `taper-cut`, `taper-long`, `long-share`, `run-walk`, `novice-quality`, `one-run-week`) |
 
 ## Not covered yet
 
 - **The person's actions as the commands the app sends:** Swap, Skip,
-  Easier today, Take a lighter week and Adjust this week. Ease back in is
-  covered.
-- **The server's pure deciders**, through `createRequire`.
-- **The running half:** runs, hybrids, race weeks (Lift4 (10)), runs only
-  between a plan's creation and race day, and F6.
+  Easier today, Take a lighter week and Adjust this week, on both sides.
+  Ease back in is covered.
+- **The `applyProgramCommand` reducers:** the server's other pure
+  deciders (the race sweep, recovery entry, fell-behind) run.
+- **Home against Train on runs:** Train's run surface has no pure
+  resolver to compare with yet.
+- **Lift4 (10)'s race weeks** are traced on the lifting side but not yet
+  checked against the run plan's position.
+- **The run screen's pace verdict and Pace Insight**, and what a runner
+  does with them.
 - **A scheduled soak:** it runs by hand for now.

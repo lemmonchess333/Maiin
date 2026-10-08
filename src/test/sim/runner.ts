@@ -33,6 +33,8 @@ export interface RunnerVariant {
   headroom: number;
   loadScale: number;
   freshnessCap: number;
+  /** A quality minute's load against an easy one. */
+  qualityLoadFactor: number;
   /** × the injury rates. */
   injuryScale: number;
 }
@@ -46,6 +48,7 @@ export const BASE_RUNNER: RunnerVariant = {
   headroom: R.headroom.value,
   loadScale: R.loadScale.value,
   freshnessCap: R.freshnessCap.value,
+  qualityLoadFactor: R.qualityLoadFactor.value,
   injuryScale: 1,
 };
 
@@ -58,7 +61,17 @@ export const HARSH_RUNNER: RunnerVariant = {
   headroom: R.headroom.range[0],
   loadScale: R.loadScale.range[1],
   freshnessCap: R.freshnessCap.range[0],
+  qualityLoadFactor: R.qualityLoadFactor.value,
   injuryScale: R.injuryNovice.range[1] / R.injuryNovice.value,
+};
+
+/** The base model with quality sessions credited at their top weight
+ *  (TRIMP's interval-minute weighting): how much of an outcome rests on
+ *  what the model gives intensity. */
+export const INTENSITY_RUNNER: RunnerVariant = {
+  ...BASE_RUNNER,
+  name: "intensity",
+  qualityLoadFactor: R.qualityLoadFactor.range[1],
 };
 
 export interface RunnerSetup {
@@ -74,6 +87,10 @@ export interface RunnerSetup {
   lifts?: boolean;
   /** A fixed responder in place of the draw, for calibration. */
   responder?: number;
+  /** Their longest run in the month before, km: by default a third of
+   *  their weekly minutes at their easy pace, so the plan's first long run
+   *  is judged against it (the single-run guard). */
+  longestRunKm?: number;
 }
 
 /** One stretch of a run. `minutes` or `km` sets how long; `pace` (s/km) is
@@ -92,6 +109,8 @@ export interface RunDone {
   pace: number;
   /** Any segment above easy. */
   quality: boolean;
+  /** Minutes run above easy. */
+  qualityMinutes: number;
   /** Effort-minutes it added to the runner's load. */
   load: number;
   /** A target pace the runner couldn't hold. */
@@ -144,6 +163,11 @@ export class VirtualRunner {
     this.base = setup.vdot - this.curve(setup.weeklyMinutes);
     this.weeksRunning = setup.runningWeeks;
     if (setup.priorInjury) this.lastInjuryDay = -1;
+    const [fast, slow] = trainingBands(setup.vdot).easy;
+    const longest =
+      setup.longestRunKm ??
+      ((setup.weeklyMinutes / 3) * 60) / ((fast + slow) / 2);
+    if (longest > 0) this.recent.push({ day: -7, km: longest });
   }
 
   private normal(): number {
@@ -222,6 +246,7 @@ export class VirtualRunner {
     let km = 0;
     let load = 0;
     let quality = false;
+    let qualityMinutes = 0;
     let tooFast = false;
     for (const seg of segments) {
       const [fastest, slowest] = bands[seg.intensity];
@@ -239,9 +264,10 @@ export class VirtualRunner {
       minutes += segMinutes;
       km += segKm;
       quality ||= isQuality;
+      if (isQuality) qualityMinutes += segMinutes;
       load +=
         segMinutes *
-        (isQuality ? R.qualityLoadFactor.value : 1) *
+        (isQuality ? this.variant.qualityLoadFactor : 1) *
         (isQuality && options.afterHeavyLegs ? R.afterHeavyLegs.value : 1);
     }
     if (this.setup.lifts && this.weeksRunning < NOVICE_EASE_WEEKS)
@@ -254,6 +280,7 @@ export class VirtualRunner {
       km,
       pace: km > 0 ? (minutes * 60) / km : 0,
       quality,
+      qualityMinutes,
       load,
       tooFast,
       injury,

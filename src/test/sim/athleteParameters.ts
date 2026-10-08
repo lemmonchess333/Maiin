@@ -390,14 +390,20 @@ export const RUNNER = {
     "C",
     "WEAK-MODERATE"
   ),
-  /** A quality minute (tempo, intervals, a race) against an easy one. */
+  /** A quality minute (tempo, intervals, a race) against an easy one. The
+   *  low end is the app's own effort-weighted minutes (`trainingLoad.ts`'s
+   *  QUALITY_RUN_FACTOR), which §6.7 item 3 allows; Banister's TRIMP
+   *  weighting makes a threshold minute about 2.1 and an interval minute
+   *  about 2.6 easy ones, and session RPE about 2. Calibration runs on easy
+   *  running, so this only moves what quality sessions buy: swept by the
+   *  `intensity` variant. */
   qualityLoadFactor: p(
     1.3,
-    [1.3, 1.3],
+    [1.3, 2.5],
     "× minute",
-    "§6.2's load units, the effort-weighted minutes used consistently",
+    "trainingLoad.ts QUALITY_RUN_FACTOR; Banister TRIMP at threshold and interval heart rates [C]",
     "ASSUMPTION",
-    "ASSUMPTION"
+    "WEAK"
   ),
   /** VDOT above the untrained base at saturating load, before r. */
   headroom: p(
