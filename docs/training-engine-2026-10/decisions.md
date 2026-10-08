@@ -87,17 +87,17 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 
 ### Answered, locked and built
 
-| What                                                                 | Answer                      | PR                                                         |
-| -------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------- |
-| A tempo and intervals say how they feel until there's a pace to give | R2; Run20 (1)               | lemmonchess333/Maiin#2643                                  |
-| A medium-long run of an hour or more isn't put beside a hard day     | R9; Run20 (3)               | lemmonchess333/Maiin#2644                                  |
-| The quality ladder starts at its first rung                          | R13; Run20 (4)              | lemmonchess333/Maiin#2645                                  |
-| After race day, the race plan waits for the race's own ending        | R22 (F6)                    | lemmonchess333/Maiin#2646                                  |
-| A new plan's week runs on the weekend, and the long run goes there   | R4; Run20 (2)               | lemmonchess333/Maiin#2647                                  |
-| A new runner's first six weeks hold no tempo or intervals            | R14; Run20 (5), first half  | lemmonchess333/Maiin#2648                                  |
-| A new runner's first six weeks run as run-walk                       | R14; Run20 (5), second half | lemmonchess333/Maiin#2655                                  |
-| The push/pull balance weighs presses against pulls                   | L8; Lift6                   | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
-| The Monday check grades a first week against what it planned         | R20 (F16b)                  | lemmonchess333/Maiin#2651                                  |
+| What                                                                   | Answer                      | PR                                                         |
+| ---------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| A tempo and intervals say how they feel until there's a pace to give   | R2; Run20 (1)               | lemmonchess333/Maiin#2643                                  |
+| A medium-long run of an hour or more isn't put beside a hard day       | R9; Run20 (3)               | lemmonchess333/Maiin#2644                                  |
+| The quality ladder starts at its first rung                            | R13; Run20 (4)              | lemmonchess333/Maiin#2645                                  |
+| After race day, the race plan waits for the race's own ending          | R22 (F6)                    | lemmonchess333/Maiin#2646                                  |
+| A new plan's week runs on the weekend, and the long run goes there     | R4; Run20 (2)               | lemmonchess333/Maiin#2647                                  |
+| A new runner's first six weeks hold no tempo or intervals              | R14; Run20 (5), first half  | lemmonchess333/Maiin#2648                                  |
+| A new runner's first six weeks run as run-walk, then build from 20 min | R14; Run20 (5), second half | lemmonchess333/Maiin#2655                                  |
+| The push/pull balance weighs presses against pulls                     | L8; Lift6                   | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
+| The Monday check grades a first week against what it planned           | R20 (F16b)                  | lemmonchess333/Maiin#2651                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -531,7 +531,8 @@ against Lift4 as built on the simulator before it comes here with an answer.
   run (R8). The simulation compares those fixes against as built; Frandsen's
   guard stays the simulator's `spike` check, which is where a source's
   number belongs. Fewer injuries follow from fewer spikes by construction,
-  so the check reports spikes, not injuries.
+  so the check reports spikes, not injuries. The new runner's own spike is
+  built out by R14's build after run-walk (lemmonchess333/Maiin#2655).
 
 ### R8. The taper
 
@@ -636,11 +637,22 @@ against Lift4 as built on the simulator before it comes here with an answer.
   weeks run as run-walk, through the session player's segments, building to
   continuous running. The first half is built (lemmonchess333/Maiin#2648):
   setup's "New to running" reaches the generator as the day the six weeks
-  end, counted from the day the person began. The second half is built
+  end, counted from the day setup finished (`onboardingCompletedAt`, which
+  the server stamps; plans after setup counted from sign-up until the
+  review caught it). The second half is built
   (lemmonchess333/Maiin#2655): a run-walk template family, from Couch to
   5K's week 1 to 20 minutes non-stop, and the generator giving each of a new
   runner's first weeks its session, run through the player's segments with
-  no pace. A new runner without a race has no planned runs (R23). The
+  no pace. After the six weeks the running builds from those 20 minutes,
+  five more a week (the novice convention's 5–10 minutes a run every 1–3
+  weeks), each run the longest of its kind that fits, until the plan's own
+  runs fit: run-walk ended at 20 minutes while the race plan built on
+  underneath, and week 7 asked for a 55-minute long run. That is part of
+  "building to continuous running", specific to leaving run-walk, not the
+  general cap R7 holds back. A new runner without a race has no planned
+  runs (R23). A race too soon to build to (a half twelve weeks out builds
+  to about 35 minutes before a race of two hours or more) is the owner's
+  (R14c): saying so is a claim about readiness. The
   six weeks is a Tropos heuristic inside the evidence's 4–6, serving the
   running handoff's own rule: build broad capacity before making work more
   event-specific. The runner model has no run-walk, so the injury effect
@@ -857,15 +869,16 @@ tap away, and a change the person didn't make gets one line.
 
 ## Handed back to the owner
 
-| #   | Question                                            | Why it's theirs                                 | Recommendation                                           |
-| --- | --------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- |
-| L3  | 4 × 3 and 4 × 7 on Get stronger                     | Lift4 (5)'s heavier and lighter days            | Keep; or undulate by load at a fixed 5                   |
-| L4  | The sawtooth                                        | Lift4 (6); owner call (1)                       | After the simulation                                     |
-| L6  | Added load on bodyweight lifts                      | Lift4 (1)'s change, pinned in its tests         | Follow the added load the person logs                    |
-| L11 | Light lifts that wait for the person, beyond A3     | Lift4 (6): no automatic big step, no "try X kg" | A3's line first; measure before anything more            |
-| L15 | Barbell lifts under the bar in existing plans       | Lift4 (2): no automatic swaps                   | Dumbbell twins for new plans; existing plans as they are |
-| R1  | The derived benchmark                               | Adaptive paces §10.2; RUN-EV-08                 | Derive from efforts only, plus the setup question (R11)  |
-| R23 | Freeform runners' plan; the weeks ahead             | Run9                                            | An outline of the coming weeks on race plans             |
-| E8  | Heat                                                | A safety claim                                  | "Run by feel today" on hot days, with no number          |
-| E3a | Phase names on run surfaces                         | Run9f keeps base, build and peak internal       | Define the names only where they already show            |
-| E3b | A sheet for runs, not the "Why this run" disclosure | The design guide's note on Lift4 (3)            | Keep the disclosure, with E3's four lines inside it      |
+| #    | Question                                            | Why it's theirs                                 | Recommendation                                              |
+| ---- | --------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
+| L3   | 4 × 3 and 4 × 7 on Get stronger                     | Lift4 (5)'s heavier and lighter days            | Keep; or undulate by load at a fixed 5                      |
+| L4   | The sawtooth                                        | Lift4 (6); owner call (1)                       | After the simulation                                        |
+| L6   | Added load on bodyweight lifts                      | Lift4 (1)'s change, pinned in its tests         | Follow the added load the person logs                       |
+| L11  | Light lifts that wait for the person, beyond A3     | Lift4 (6): no automatic big step, no "try X kg" | A3's line first; measure before anything more               |
+| L15  | Barbell lifts under the bar in existing plans       | Lift4 (2): no automatic swaps                   | Dumbbell twins for new plans; existing plans as they are    |
+| R1   | The derived benchmark                               | Adaptive paces §10.2; RUN-EV-08                 | Derive from efforts only, plus the setup question (R11)     |
+| R23  | Freeform runners' plan; the weeks ahead             | Run9                                            | An outline of the coming weeks on race plans                |
+| E8   | Heat                                                | A safety claim                                  | "Run by feel today" on hot days, with no number             |
+| E3a  | Phase names on run surfaces                         | Run9f keeps base, build and peak internal       | Define the names only where they already show               |
+| E3b  | A sheet for runs, not the "Why this run" disclosure | The design guide's note on Lift4 (3)            | Keep the disclosure, with E3's four lines inside it         |
+| R14c | A race too soon for someone new to running          | A claim about readiness                         | Say so at setup, and suggest run-walking it or a later date |
