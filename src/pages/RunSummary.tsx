@@ -533,6 +533,8 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          templateId:
+            state.runConfig?.planMetadata?.actualTemplateId ?? undefined,
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {

@@ -99,8 +99,11 @@ describe("runSessionExplainer", () => {
     expect(strides).toMatch(/not a hard session/i);
   });
 
-  it("a run-walk says what it is, in base and build alike (Run20 (5))", () => {
-    for (const ctx of [base, build]) {
+  it("a run-walk says what it is, in every phase (Run20 (5))", () => {
+    // A 5K six weeks out is all run-walk, its taper and race week too, and
+    // there a run-walk was "Taper — easy and short on purpose" and a
+    // "Race-week shakeout".
+    for (const ctx of [base, build, taper, race]) {
       const line = runSessionExplainer({
         type: "easy",
         templateId: "run_walk_2",

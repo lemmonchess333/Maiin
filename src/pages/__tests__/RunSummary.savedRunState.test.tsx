@@ -118,7 +118,9 @@ import {
   releaseAllReads,
   resetFirestore,
   resumeReads,
+  seedFirestore,
 } from "@/test/firestoreHarness";
+import { Timestamp } from "firebase/firestore";
 
 /** A valid outdoor run, already saved (the receipt), that didn't match
  *  today's planned tempo — the shape that raises the off-plan prompt. */
@@ -517,5 +519,37 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(
       screen.queryByText(/easy days easy|on target|Quicker than|Slower than/)
     ).toBeNull();
+  });
+
+  it("gives a run-walk no pace trend against runs", async () => {
+    // Eight 5 km runs at 5:30 /km: this 5:00 /km is a PR for a run, and
+    // nothing for a run-walk, whose pace includes its walks.
+    seedFirestore(
+      Object.fromEntries(
+        Array.from({ length: 8 }, (_, i) => [
+          `users/runner/runs/past-${i}`,
+          {
+            completedAt: Timestamp.fromMillis(
+              Date.now() - (i + 2) * 86_400_000
+            ),
+            distance: 5000,
+            duration: 1650,
+            avgPace: 330,
+            activityType: "freerun",
+          },
+        ])
+      )
+    );
+    const easy = renderPlanned("easy_30");
+    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    easy.unmount();
+
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    // The history has been read and judged by the time the insight settles.
+    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("PR!")).toBeNull();
   });
 });

@@ -78,7 +78,7 @@ import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
-import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
   requiresManualDistance,
@@ -440,6 +440,10 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
+  // A run-walk session (Run20 (5)) is running its steps.
+  const runWalkSession =
+    !!runConfig?.segments?.length &&
+    isRunWalkTemplateId(runConfig.planMetadata?.actualTemplateId);
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -859,8 +863,12 @@ export default function Run() {
        `calculatePace(gps.distance, timer.elapsed)` — the whole-run average
        — and then announced it as that kilometre's pace. Same mistake the
        pace alert below already documents, on the other cue. */
-    audioCues.checkDistanceCue(gps.distance, timer.elapsed);
-    audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    // Run20 (5): not on a run-walk, whose pace is an average over its runs
+    // and its walks, and whose every step speaks its own line.
+    if (!runWalkSession) {
+      audioCues.checkDistanceCue(gps.distance, timer.elapsed);
+      audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    }
 
     // Pace zone alerts for tempo/interval runs.
     //
@@ -896,7 +904,15 @@ export default function Run() {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }
-  }, [gps.distance, gps.points, timer.elapsed, phase, audioCues, runConfig]);
+  }, [
+    gps.distance,
+    gps.points,
+    timer.elapsed,
+    phase,
+    audioCues,
+    runConfig,
+    runWalkSession,
+  ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
   // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so

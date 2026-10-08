@@ -404,6 +404,7 @@ function nextRunWeek(
       runDays: scheduleRecoveryWeekV2({
         weekSchedule,
         weekStart: next.weekStart,
+        newRunnerUntil: profileNewRunnerUntil(profile),
       }),
       runPlan: { ...runPlan },
     };
@@ -2538,7 +2539,11 @@ export function useProgram() {
         const inRecovery = isInRecoveryOn(base.runPlan, localDateString());
 
         if (inRecovery) {
-          runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+          runDays = scheduleRecoveryWeekV2({
+            weekSchedule,
+            weekStart,
+            newRunnerUntil: profileNewRunnerUntil(profile),
+          });
           runPlan = { ...base.runPlan! };
         } else if (
           profile.runMode === "race_prep" &&

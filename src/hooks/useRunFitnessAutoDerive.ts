@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useRunningStats } from "./useRunningStats";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import { deriveBenchmarkFromRuns, vdotFromRace } from "@/lib/runPaces";
 import { logger } from "@/lib/logger";
 
@@ -14,7 +15,8 @@ import { logger } from "@/lib/logger";
  *
  * Mounted once on the Programme page. Conservative + guarded:
  *  - only when the profile is loaded and `runFitness` is absent
- *  - only outdoor-GPS, non-invalid runs (`isPaceEligible`), ≥ MIN_RUNS of them
+ *  - only outdoor-GPS, non-invalid runs (`isPaceEligible`), ≥ MIN_RUNS of them,
+ *    and never a run-walk (Run20 (5)), whose time includes its walks
  *  - writes exactly once per mount (`firedRef`) and never overwrites a
  *    user-set benchmark (the absence check + the manual "manual" source win,
  *    since once written `runFitness` is set and this early-returns).
@@ -53,7 +55,7 @@ export function useRunFitnessAutoDerive(): void {
     if (profile.runFitness) return; // user-set or already derived
 
     const eligible = runs
-      .filter((r) => isPaceEligible(r))
+      .filter((r) => isPaceEligible(r) && !isRunWalkTemplateId(r.templateId))
       .map((r) => ({
         distanceM: r.distance,
         durationS: r.duration,
