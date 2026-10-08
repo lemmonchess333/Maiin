@@ -212,7 +212,7 @@ export function segmentsFromTempo(
     out.push({
       type: "moderate",
       label: atGoal
-        ? `${min(seconds)} min @ goal pace${pace}`
+        ? `${min(seconds)} min goal pace${pace}`
         : `${min(seconds)} min tempo${pace}`,
       instruction: atGoal
         ? "Your goal race pace — hold the rhythm"

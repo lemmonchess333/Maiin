@@ -145,7 +145,8 @@ describe("A2 — segmentsFromTempo at goal pace", () => {
     for (const b of blocks) {
       expect(b.paceTarget).toBe(300);
       expect(b.pacePinned).toBe(true);
-      expect(b.label).toContain("@ goal pace");
+      // One "@", as a tempo block reads ("20 min tempo @ 5:20 /km").
+      expect(b.label).toBe("20 min goal pace @ 5:00 /km");
       expect(b.cue).toMatch(/goal race pace/i);
     }
     // Warmup/cooldown stay unpinned.

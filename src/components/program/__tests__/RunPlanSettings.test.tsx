@@ -438,6 +438,12 @@ describe("RunPlanSettings", () => {
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
+    // Pgm6's knob scales the race's own peak (runScheduler's
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Lighter peaks about a quarter lower/)
+    ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });

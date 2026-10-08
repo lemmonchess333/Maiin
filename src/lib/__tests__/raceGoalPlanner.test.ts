@@ -72,6 +72,12 @@ describe("getRaceGoalPlannerState", () => {
     expect(s.belowFloor).toBe(false);
     expect(s.ctaLabel).toBe("Save compressed plan");
     expect(s.statusTitle).toBe("Short runway");
+    // The compressed band packs the long-run build into fewer weeks, so its
+    // jumps are the steepest in the system (racePlanSafetySweep): the copy
+    // says so, as the race cockpit does, rather than "a shorter
+    // long-run progression".
+    expect(s.statusDescription).not.toMatch(/shorter long-run/);
+    expect(s.statusDescription).toMatch(/fewer weeks/);
   });
 
   // ── State E — below floor / finish safely ──────────────────────────
