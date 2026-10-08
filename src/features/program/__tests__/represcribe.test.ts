@@ -446,8 +446,8 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       hypertrophy: "Build muscle",
       strength: "Get stronger",
       fat_loss: "Lose fat",
-      general: "Stay fit",
-      running: "Running support",
+      general: "General fitness",
+      running: "Support my running",
     })[g];
 
   it("names the exact new target when the focus changes", () => {
@@ -780,8 +780,8 @@ describe("blockReleaseLine — ending a block says what happens (Lift4)", () => 
       hypertrophy: "Build muscle",
       strength: "Get stronger",
       fat_loss: "Lose fat",
-      general: "Stay fit",
-      running: "Running support",
+      general: "General fitness",
+      running: "Support my running",
     })[g];
   const line = (
     focus: PrimaryGoal,

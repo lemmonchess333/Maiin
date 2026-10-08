@@ -5,18 +5,15 @@
  * the typecheck here until it has a label.
  *
  * programmeChanges.ts carries a second, deliberately different register
- * for the settings confirm modal, and ProgrammeSettings a third ("Stay
- * fit", "Running support" — lifting that supports running, a different
- * question with different words). Those are separate surfaces, not
- * duplicates to merge (GLOSSARY.md naming rule).
+ * for the settings confirm modal.
  *
- * `goalLabel` is the exception, and for the reason that rule gives: what
- * hurts is inconsistency INSIDE one file. The goal labels here are read
- * back on onboarding's own review screen, over a choice the user made
- * from `GOALS` in the same file — so a goal picked as "Build muscle"
- * summarised itself as "Hypertrophy focus". `GOALS` now takes its copy
- * from here, which is why these read as the user's own words rather than
- * in the "… focus" register of their neighbours.
+ * `goalLabel` is the exception: the goals have one set of names everywhere
+ * (Lift4 (4)), the same as Train's and Settings' (`FOCUS_LABELS` in
+ * trainingBlock.ts). They are read back on onboarding's own review screen,
+ * over a choice the user made from `GOALS` in the same file — so a goal
+ * picked as "Build muscle" summarised itself as "Hypertrophy focus".
+ * `GOALS` takes its copy from here, which is why these read as the user's
+ * own words rather than in the "… focus" register of their neighbours.
  */
 import type {
   Equipment,
@@ -56,7 +53,7 @@ export function goalLabel(g: PrimaryGoal): string {
     case "general":
       return "General fitness";
     case "running":
-      return "Improve running";
+      return "Support my running";
   }
 }
 
