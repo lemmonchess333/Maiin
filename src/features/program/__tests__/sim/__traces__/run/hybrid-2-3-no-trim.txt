@@ -157,21 +157,21 @@ w9 2026-05-04  plan week 9 progression  1/2 sessions  59–59 min
   overhead-press  plan 32.5 × 8 × 3  1RM 35.4 logged -
   sets/days: Chest 3/1 · FrontDelts 3/1 · RearDelts 2/1 · Triceps 3/1 · Lats 2/1 · UpperBack 2/1 · LowerBack 2/1 · Biceps 2/1 · Quads 3/1 · Hamstrings 5/1 · Glutes 5/1 · Calves 2/1 · Abs 2/1
 
-w10 2026-05-11  plan week 10 deload  2/2 sessions  41–43 min
+w10 2026-05-11  plan week 10 deload (race: taper)  2/2 sessions  41–43 min
   squat           plan 62.5 × 8 × 2  1RM 72.6 logged 79.2  55×[8] hold | 62.5×[8,6] hold
   bench-press     plan 45 × 8 × 2  1RM 55.4 logged 57.0  45×[8,8] hold
   deadlift        plan 80 × 8 × 2  1RM 97.2 logged 101.3  80×[8,8] hold | 70×[10] hold
   overhead-press  plan 32.5 × 8 × 2  1RM 35.7 logged 37.9  32.5×[5,2] hold
   sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/2 · Triceps 4/2 · Lats 2/2 · UpperBack 4/2 · LowerBack 3/2 · Biceps 3/2 · Quads 3/2 · Hamstrings 6/2 · Glutes 6/2 · Calves 2/2 · Abs 1/1
 
-w11 2026-05-18  plan week 11 deload  1/2 sessions  41–41 min
+w11 2026-05-18  plan week 11 deload (race: taper)  1/2 sessions  41–41 min
   squat           plan 62.5 × 8 × 2  1RM 73.1 logged 69.7  55×[8] hold
   bench-press     plan 45 × 8 × 2  1RM 55.3 logged -
   deadlift        plan 80 × 8 × 2  1RM 98.0 logged 101.3  80×[8,8] hold
   overhead-press  plan 32.5 × 8 × 2  1RM 36.1 logged 39.0  32.5×[6,5] hold
   sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 1/1 · Triceps 2/1 · Lats 1/1 · UpperBack 3/1 · LowerBack 2/1 · Biceps 2/1 · Quads 1/1 · Hamstrings 3/1 · Glutes 3/1 · Calves 1/1
 
-w12 2026-05-25  plan week 12 deload  1/1 sessions  41–41 min
+w12 2026-05-25  plan week 12 deload (race: race)  1/1 sessions  41–41 min
   squat           plan 55 × 8 × 1  1RM 72.8 logged 38.0  30×[8,8] hold
   bench-press     plan 45 × 8 × 2  1RM 55.8 logged 57.0  45×[8,8] hold
   deadlift        plan 80 × 8 × 2  1RM 97.7 logged 46.7  35×[10] hold
@@ -179,7 +179,7 @@ w12 2026-05-25  plan week 12 deload  1/1 sessions  41–41 min
   sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 1/1 · Triceps 2/1 · Lats 1/1 · UpperBack 1/1 · LowerBack 1/1 · Biceps 1/1 · Quads 2/1 · Hamstrings 3/1 · Glutes 3/1 · Calves 1/1 · Abs 1/1
   · 2026-05-31: server entered recovery until 2026-06-14
 
-w13 2026-06-01  plan week 16 deload  1/2 sessions  43–43 min
+w13 2026-06-01  plan week 16 deload (race: after)  1/2 sessions  43–43 min
   squat           plan 62.5 × 8 × 2  1RM 73.5 logged 79.2  62.5×[8,6] hold
   bench-press     plan 45 × 8 × 2  1RM 56.2 logged 57.0  45×[8,8] hold
   deadlift        plan 80 × 8 × 2  1RM 98.1 logged 93.3  70×[10] hold

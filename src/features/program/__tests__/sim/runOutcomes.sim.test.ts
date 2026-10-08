@@ -11,7 +11,8 @@
  * The soak: `TROPOS_SIM_SEEDS=500 npx vitest run
  * src/features/program/__tests__/sim/runOutcomes.sim.test.ts` runs 500
  * seeds of each and writes a markdown report to `test-results/sim/`
- * (uncommitted). Without it, three seeds keep the PR gate quick.
+ * (uncommitted); `sim-soak.yml` runs it each week. Without it, three seeds
+ * keep the PR gate quick.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -26,6 +27,9 @@ import { raceTimeS } from "@/test/sim/runSeason";
 import { clock } from "@/test/sim/runTrace";
 
 const SEEDS = Number(process.env.TROPOS_SIM_SEEDS ?? 3);
+/** A persona runs three seasons a seed, a year's about a second each: the
+ *  timeout grows with the soak, twice over to spare. */
+const TIMEOUT = Math.max(180_000, SEEDS * 6_000);
 
 const RACE_M: Record<string, number> = {
   "5k": 5000,
@@ -77,69 +81,73 @@ const report: string[] = [
 describe.each(RUN_PERSONAS.map((p) => [p.persona.name, p] as const))(
   "%s",
   (name, { persona, weeks }) => {
-    it("lands within broad plausibility of running-evidence §6", () => {
-      const start = persona.running!.runner.vdot;
-      const byVariant = [BASE_RUNNER, HARSH_RUNNER, INTENSITY_RUNNER].map(
-        (runnerVariant) =>
-          Array.from({ length: SEEDS }, (_, i) =>
-            simulateLiftSeason(persona, { weeks, seed: i + 1, runnerVariant })
-          )
-      );
-      const seasons = byVariant.flat();
-      const change = (list: Season[]) =>
-        sorted(list.map((s) => vdotAtRace(s) - start));
-      const all = change(seasons);
-      const median = quantile(all, 0.5);
-      expect(
-        median,
-        `${name}: median VDOT change ${oneDp(median)}`
-      ).toBeGreaterThan(-4);
-      expect(
-        median,
-        `${name}: median VDOT change ${oneDp(median)}`
-      ).toBeLessThan(6);
-
-      const distance = persona.answers.raceDistance;
-      const finishes = sorted(
-        seasons
-          .flatMap((s) => s.runs)
-          .filter((r) => r.raceTimeS !== undefined)
-          .map((r) => r.raceTimeS!)
-      );
-      let finishCell = "no race";
-      if (persona.answers.runMode === "race_prep" && distance) {
-        const equivalent = raceTimeS(start, RACE_M[distance], 0);
-        const mid = quantile(finishes, 0.5);
-        expect(finishes.length, `${name}: no race run`).toBeGreaterThan(0);
-        expect(mid, `${name}: median finish ${clock(mid)}`).toBeLessThan(
-          2 * equivalent
+    it(
+      "lands within broad plausibility of running-evidence §6",
+      () => {
+        const start = persona.running!.runner.vdot;
+        const byVariant = [BASE_RUNNER, HARSH_RUNNER, INTENSITY_RUNNER].map(
+          (runnerVariant) =>
+            Array.from({ length: SEEDS }, (_, i) =>
+              simulateLiftSeason(persona, { weeks, seed: i + 1, runnerVariant })
+            )
         );
-        finishCell = `${clock(mid)} [${clock(quantile(finishes, 0.1))}–${clock(quantile(finishes, 0.9))}]`;
-        if (name === "sub-3-30")
-          finishCell += ` · under 3:30 in ${String(Math.round((100 * finishes.filter((t) => t < 12600).length) / finishes.length))}%`;
-      }
-      const injured =
-        seasons.filter((s) => s.runs.some((r) => r.done.injury)).length /
-        seasons.length;
-      const planned = seasons.flatMap((s) =>
-        s.runs.filter((r) => r.templateId !== "free")
-      );
-      const counted = planned.length
-        ? planned.filter((r) => r.counted).length / planned.length
-        : NaN;
-      const [base, harsh, intensity] = byVariant.map((list) =>
-        quantile(change(list), 0.5)
-      );
-      report.push(
-        "",
-        `## ${name}`,
-        "",
-        `- VDOT ${oneDp(start)}: ${oneDp(base)} / ${oneDp(harsh)} / ${oneDp(intensity)} [${oneDp(quantile(all, 0.1))}–${oneDp(quantile(all, 0.9))}]`,
-        `- Finish: ${finishCell}`,
-        `- Injured: ${String(Math.round(injured * 100))}% · counted: ${Number.isFinite(counted) ? String(Math.round(counted * 100)) : "-"}%`,
-        `- Expected: ${EXPECTED[name] ?? "-"}`
-      );
-    }, 180_000);
+        const seasons = byVariant.flat();
+        const change = (list: Season[]) =>
+          sorted(list.map((s) => vdotAtRace(s) - start));
+        const all = change(seasons);
+        const median = quantile(all, 0.5);
+        expect(
+          median,
+          `${name}: median VDOT change ${oneDp(median)}`
+        ).toBeGreaterThan(-4);
+        expect(
+          median,
+          `${name}: median VDOT change ${oneDp(median)}`
+        ).toBeLessThan(6);
+
+        const distance = persona.answers.raceDistance;
+        const finishes = sorted(
+          seasons
+            .flatMap((s) => s.runs)
+            .filter((r) => r.raceTimeS !== undefined)
+            .map((r) => r.raceTimeS!)
+        );
+        let finishCell = "no race";
+        if (persona.answers.runMode === "race_prep" && distance) {
+          const equivalent = raceTimeS(start, RACE_M[distance], 0);
+          const mid = quantile(finishes, 0.5);
+          expect(finishes.length, `${name}: no race run`).toBeGreaterThan(0);
+          expect(mid, `${name}: median finish ${clock(mid)}`).toBeLessThan(
+            2 * equivalent
+          );
+          finishCell = `${clock(mid)} [${clock(quantile(finishes, 0.1))}–${clock(quantile(finishes, 0.9))}]`;
+          if (name === "sub-3-30")
+            finishCell += ` · under 3:30 in ${String(Math.round((100 * finishes.filter((t) => t < 12600).length) / finishes.length))}%`;
+        }
+        const injured =
+          seasons.filter((s) => s.runs.some((r) => r.done.injury)).length /
+          seasons.length;
+        const planned = seasons.flatMap((s) =>
+          s.runs.filter((r) => r.templateId !== "free")
+        );
+        const counted = planned.length
+          ? planned.filter((r) => r.counted).length / planned.length
+          : NaN;
+        const [base, harsh, intensity] = byVariant.map((list) =>
+          quantile(change(list), 0.5)
+        );
+        report.push(
+          "",
+          `## ${name}`,
+          "",
+          `- VDOT ${oneDp(start)}: ${oneDp(base)} / ${oneDp(harsh)} / ${oneDp(intensity)} [${oneDp(quantile(all, 0.1))}–${oneDp(quantile(all, 0.9))}]`,
+          `- Finish: ${finishCell}`,
+          `- Injured: ${String(Math.round(injured * 100))}% · counted: ${Number.isFinite(counted) ? String(Math.round(counted * 100)) : "-"}%`,
+          `- Expected: ${EXPECTED[name] ?? "-"}`
+        );
+      },
+      TIMEOUT
+    );
   }
 );
 

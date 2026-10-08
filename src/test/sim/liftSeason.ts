@@ -111,6 +111,18 @@ import {
   type RunRecord,
 } from "./runSeason";
 import { trainingBands } from "@/lib/runPaces";
+import { planDeloadWeek } from "@/lib/planDeloadWeek";
+import { resolveRunMoveOptions, canRescheduleRun } from "@/lib/runReschedule";
+import { buildEasierSession } from "@/features/program/easierToday";
+import { workoutDayPrecondition } from "@/features/program/programCommandPrecondition";
+import { raceRestSkips } from "@/features/program/raceRest";
+import { swappedForToday } from "@/features/program/sessionSwap";
+import {
+  loadContextFrom,
+  weightAfterExerciseSwap,
+} from "@/features/program/startingLoads";
+import { lighterWeekAllowed } from "@/features/program/weekPrescription";
+import { CommandSender } from "./commands";
 
 /** A person, as the simulator puts them through the plan. */
 export interface LiftPersona {
@@ -144,6 +156,44 @@ export interface LiftPersona {
   running?: RunHabits;
   /** They run before they lift on a day with both. */
   runsFirst?: boolean;
+  /** What they tap besides Start. */
+  actions?: PersonActions;
+}
+
+/**
+ * The person's taps besides Start, each as the app carries it out: a
+ * programme command through the server's reducer (`commands.ts`), or the
+ * workout screen's own choice where the app keeps it on the phone.
+ */
+export interface PersonActions {
+  /** "Skip this lift" on this share of the lift days they don't train
+   *  (Home's day sheet; `skipWorkoutDay`). */
+  skipsLifts?: number;
+  /** "Easier today" for this share of the sessions they start
+   *  (`buildEasierSession`; the plan moves at Finish). */
+  easierToday?: number;
+  /** "Swap for today" from an exercise's menu in every session from this
+   *  week on that has the lift, and Finish's answer about keeping it. */
+  swap?: {
+    fromWeek: number;
+    exerciseId: string;
+    replacementId: string;
+    keep: boolean;
+  };
+  /** Train's "Replace Exercise" in the plan in this week
+   *  (`replaceExercise`). */
+  replace?: { week: number; exerciseId: string; replacementId: string };
+  /** "Take a lighter week" from Train's menu, where it offers one, after a
+   *  week with this many misses or lowered lifts (`applyDeloadWeek`). */
+  lighterWeekAfterMisses?: number;
+  /** "Skip this run" on this share of the planned runs Home offers that
+   *  they don't go out for (`transitionRunDay`). */
+  skipsRuns?: number;
+  /** They move each week's long run to this weekday (0 = Sunday) where the
+   *  move sheet allows it (`moveRunDay`). */
+  longRunOn?: number;
+  /** "Not now" on the fell-behind sheet (`dismissFellBehindPrompt`). */
+  dismissesFellBehind?: boolean;
 }
 
 export interface SeasonOptions {
@@ -245,6 +295,8 @@ export interface WeekDone {
   done: number;
   trueMax: Record<string, number | null>;
   plan: Record<string, Prescription | null>;
+  /** The race's lifting week (Lift4 (10)), when the plan marks one. */
+  raceWeek?: ProgramState["raceWeek"];
 }
 
 /** The rules of the app's own code a season is checked against. */
@@ -281,12 +333,28 @@ export type Rule =
   | "after-race"
   /** Race day, and Home's card shows no run. */
   | "race-day-card"
+  /** A run planned for today, not a race, that Home's card doesn't show:
+   *  runs are pinned to their dates (ADR-0002). */
+  | "run-day-card"
   /** A planned run done on its day that Home doesn't count. */
   | "not-counted"
   /** Two weeks after race day the plan is still preparing for it. */
   | "race-unresolved"
   /** After the rollover, this week's race runs need building again. */
-  | "race-week-stale";
+  | "race-week-stale"
+  /** The race's lifting weeks out of place (Lift4 (10)): the two weeks
+   *  before race week, race week and the week after lighter; race week one
+   *  session, none from two days out; the leg trim through the build on a
+   *  yes at setup, and never on a no. */
+  | "race-weeks"
+  /** The server refused a command the app sent, for the person or on its
+   *  own: a button that fails when tapped. */
+  | "refused"
+  /** A command's result the server's transaction can't store. */
+  | "unstorable"
+  /** A weight the workout screen sets out that the lift's equipment doesn't
+   *  come in, or a barbell lift under the bar. */
+  | "session-off-grid";
 
 export interface RuleFailure {
   rule: Rule;
@@ -490,6 +558,74 @@ function weekStartFailures(state: ProgramState, date: string): RuleFailure[] {
   return out;
 }
 
+/**
+ * Lift4 (10)'s race weeks, read off the calendar rather than the run plan's
+ * own count: the two weeks before race week are lighter (`taper`), race
+ * week is one short session (`race`), at least three days before the race,
+ * and the week after is light (`after`). On a yes at race setup the leg
+ * lifts are trimmed (`build`) in the run plan's build weeks before those,
+ * and never on a no.
+ */
+function raceWeekFailures(
+  season: Season,
+  raceDate: string,
+  legTrim: boolean
+): RuleFailure[] {
+  const out: RuleFailure[] = [];
+  const add = (at: string, detail: string) =>
+    out.push({ rule: "race-weeks", at, detail });
+  const raceWeek = parseLocalDate(weekOf(raceDate)).getTime();
+  season.weeks.forEach((w, i) => {
+    const toRace = Math.round(
+      (raceWeek - parseLocalDate(weekOf(w.weekStart)).getTime()) / (7 * DAY_MS)
+    );
+    const expected =
+      toRace === 1 || toRace === 2
+        ? "taper"
+        : toRace === 0
+          ? "race"
+          : toRace === -1
+            ? "after"
+            : null;
+    const marked = w.raceWeek ? ` (${w.raceWeek})` : "";
+    if (expected && (w.raceWeek !== expected || w.phase !== "deload"))
+      add(
+        w.weekStart,
+        `${String(toRace)} weeks to race week: ${w.phase}${marked}, not a lighter ${expected} week`
+      );
+    if (!expected && w.raceWeek && w.raceWeek !== "build")
+      add(w.weekStart, `${String(toRace)} weeks to race week, marked${marked}`);
+    // The trim runs through the run plan's build (`isRaceBuildWeek`: a
+    // marathon's first taper week too), outside a lighter week.
+    const runPhase = season.runWeeks[i]?.phase;
+    if (
+      toRace > 2 &&
+      w.phase !== "deload" &&
+      (runPhase === "build" || runPhase === "taper") &&
+      (w.raceWeek === "build") !== legTrim
+    )
+      add(
+        w.weekStart,
+        `a ${runPhase} week ${legTrim ? "without" : "with"} the leg trim, on a ${legTrim ? "yes" : "no"} at setup`
+      );
+  });
+  const restFrom = day(raceDate, -2);
+  const inRaceWeek = season.sessions.filter(
+    (s) => weekOf(s.date) === weekOf(raceDate)
+  );
+  if (inRaceWeek.length > 1)
+    add(
+      raceDate,
+      `${String(inRaceWeek.length)} sessions in race week: ${inRaceWeek.map((s) => `${s.date} ${s.dayName}`).join(", ")}`
+    );
+  for (const s of season.sessions)
+    if (s.date >= restFrom && s.date <= raceDate)
+      add(s.date, `${s.dayName}, within two days of the race on ${raceDate}`);
+  return out;
+}
+
+const DAY_MS = 86_400_000;
+
 /** What the session did to a slot, from the plan before and after it. */
 function outcomeOf(
   before: ProgramExercise,
@@ -518,7 +654,8 @@ function outcomeOf(
  *   a lowered lift's way back, a step a session that is not a miss;
  * - it comes down only when the person lifted less, or on the second miss
  *   in a row at the plan's weight, to 10% lighter by at least one step;
- * - in a lighter week it never comes down;
+ * - in a lighter week, or a session taken easier today, it never comes
+ *   down;
  * - the reps climb only when every set hit its target.
  */
 export function unexplainedChange(
@@ -526,7 +663,8 @@ export function unexplainedChange(
   after: ProgramExercise,
   lifted: number,
   reps: readonly number[],
-  lighterWeek: boolean,
+  /** The session is light by design: which kind, or false. */
+  lighter: false | "a lighter week" | "an easier session",
   grid: LoadGrid
 ): string | null {
   const e = 1e-6;
@@ -544,10 +682,10 @@ export function unexplainedChange(
   const from = before.lowered?.unit === "kg" ? before.lowered.from : null;
   const what = `${String(w0)} kg × ${String(target)} → ${String(w1)} kg × ${String(after.reps)}, lifted ${String(lifted)} kg × [${done.join(",")}]`;
 
-  if (lighterWeek) {
-    if (w1 < w0 - e) return `came down in a lighter week: ${what}`;
+  if (lighter) {
+    if (w1 < w0 - e) return `came down in ${lighter}: ${what}`;
     if (w1 > w0 + e && Math.abs(w1 - lifted) > e)
-      return `rose in a lighter week past the weight lifted: ${what}`;
+      return `rose in ${lighter} past the weight lifted: ${what}`;
     return null;
   }
   if (!atPlan) {
@@ -629,6 +767,42 @@ export function simulateLiftSeason(
     };
     const fail = (rule: Rule, at: string, detail: string) =>
       season.failures.push({ rule, at, detail });
+    const sender = new CommandSender(`${persona.name}-${String(options.seed)}`);
+    /** A command the app sends, for the person or on its own, and the plan
+     *  as the app holds it after: the stored document as read back, or for
+     *  a lighter week, loaded again (`sendDeloadCommand` normalises and
+     *  migrates what it reads). A refusal leaves the plan as it was. */
+    const send = (
+      at: string,
+      command: { kind: string } & Record<string, unknown>,
+      what: string,
+      reread: "raw" | "loaded" = "raw"
+    ): boolean => {
+      const out = sender.send(state, profile, command);
+      if (!out.applied) {
+        if ("refused" in out)
+          fail("refused", at, `${what} (${command.kind}): ${out.refused}`);
+        else
+          fail(
+            "unstorable",
+            at,
+            `${what} (${command.kind}): ${out.unstorable}`
+          );
+        return false;
+      }
+      state =
+        reread === "loaded"
+          ? migrateProgramState(
+              normalizeProgramState(out.state, {
+                primaryGoal: profile.primaryGoal,
+              }),
+              weekOf(at)
+            )
+          : out.state;
+      if (out.profile) profile = { ...profile, ...out.profile };
+      season.events.push(`${at}: ${what}`);
+      return true;
+    };
     const running = persona.running;
     const runSide = running
       ? new RunSide(persona.name, running, options.seed, options.runnerVariant)
@@ -678,8 +852,8 @@ export function simulateLiftSeason(
             "this week's race runs no longer match the race"
           );
         if (runSide) profile = runSide.deriveBenchmark(profile, date);
-        if (opened === null || weekOf(opened) !== weekOf(date))
-          season.failures.push(...weekStartFailures(state, date));
+        const weekOpened = opened === null || weekOf(opened) !== weekOf(date);
+        if (weekOpened) season.failures.push(...weekStartFailures(state, date));
         opened = date;
 
         // Home's welcome back after a break: answered the day the person
@@ -706,6 +880,32 @@ export function simulateLiftSeason(
             );
           }
         }
+
+        // The race's rest days (Lift4 (10)): from two days out the app skips
+        // each session not done, through the Skip command, after the
+        // rollovers (`raceRestSkips`, in useProgram).
+        for (let guard = 0; guard < 7; guard++) {
+          const index = raceRestSkips(state, date)[0];
+          const pre =
+            index === undefined ? null : workoutDayPrecondition(state, index);
+          if (
+            !pre ||
+            !send(
+              date,
+              { kind: "skipWorkoutDay", ...pre },
+              `the app skipped ${state.workouts[pre.dayIndex].dayName} for the race`
+            )
+          )
+            break;
+        }
+        const actions = persona.actions;
+        if (actions && weekOpened) planTheWeek(actions, date);
+        if (actions?.dismissesFellBehind && state.pendingFellBehindPrompt)
+          send(
+            date,
+            { kind: "dismissFellBehindPrompt" },
+            "said not now to falling behind"
+          );
 
         // Home's card, and the session it starts.
         const card = todaySession({
@@ -754,12 +954,53 @@ export function simulateLiftSeason(
               ? card.run.runDay
               : null;
           if (offeredRun) runsOffered++;
-          const planned = race ?? offeredRun;
+          // A run dated today that Home doesn't show. Someone who moved it
+          // there knows it is today's, and starts it from Train.
+          const hidden = (state.runDays ?? []).find(
+            (rd) =>
+              rd.date === date &&
+              rd.type !== "race" &&
+              getScheduledRunStatus(rd) === "planned" &&
+              rd.id !== offeredRun?.id
+          );
+          if (hidden && !offeredRun)
+            fail(
+              "run-day-card",
+              date,
+              `${hidden.userOverride || hidden.templateId} is planned today, and Home's card is a ${card.type} day's`
+            );
+          const fromTrain =
+            hidden && !offeredRun && persona.actions?.longRunOn !== undefined
+              ? hidden
+              : null;
+          const planned = race ?? offeredRun ?? fromTrain;
           if (planned) {
             const goes =
               able &&
               (planned === race || runSide.runner.chance(running.runShare));
-            if (!goes) return;
+            if (planned === fromTrain && goes)
+              season.events.push(
+                `${date}: started the ${planned.userOverride || planned.templateId} from Train`
+              );
+            if (!goes) {
+              const skips = persona.actions?.skipsRuns;
+              if (
+                planned === offeredRun &&
+                planned.id &&
+                skips !== undefined &&
+                runSide.runner.chance(skips)
+              )
+                send(
+                  date,
+                  {
+                    kind: "transitionRunDay",
+                    runDayId: planned.id,
+                    to: "skipped",
+                  },
+                  `skipped the ${planned.userOverride || planned.templateId}`
+                );
+              return;
+            }
             const result = runSide.run(state, profile, date, planned, {
               afterHeavyLegs,
             });
@@ -813,6 +1054,18 @@ export function simulateLiftSeason(
               )
                 legDays.push(date);
             }
+          } else if (
+            !resting &&
+            persona.actions?.skipsLifts !== undefined &&
+            lifter.chance(persona.actions.skipsLifts)
+          ) {
+            const pre = workoutDayPrecondition(state, lift.index);
+            if (pre)
+              send(
+                date,
+                { kind: "skipWorkoutDay", ...pre },
+                `skipped ${state.workouts[lift.index].dayName}`
+              );
           }
         }
         if (!persona.runsFirst) runToday();
@@ -837,6 +1090,7 @@ export function simulateLiftSeason(
           plan: Object.fromEntries(
             persona.tracked.map((id) => [id, prescriptionOf(state, id)])
           ),
+          ...(state.raceWeek ? { raceWeek: state.raceWeek } : {}),
         });
         offered = 0;
         done = 0;
@@ -861,10 +1115,119 @@ export function simulateLiftSeason(
           last,
           `still preparing for the ${goal.distance} on ${goal.targetDate}`
         );
+      const raceDate = persona.answers.raceTargetDate;
+      if (
+        persona.tracked.length > 0 &&
+        persona.answers.runMode === "race_prep" &&
+        raceDate
+      )
+        season.failures.push(
+          ...raceWeekFailures(
+            season,
+            raceDate,
+            persona.answers.raceLegTrim === true
+          )
+        );
       season.events.push(...runSide.events);
       season.events.sort();
     }
     return season;
+
+    /** The person's first look at a new week, on Train: a lift replaced in
+     *  the plan, a lighter week after a bad one, the long run moved to
+     *  their day. */
+    function planTheWeek(actions: PersonActions, date: string): void {
+      const replace = actions.replace;
+      if (replace && week === replace.week) {
+        const dayIndex = state.workouts.findIndex((d) =>
+          d.exercises.some((ex) => ex.exerciseId === replace.exerciseId)
+        );
+        const pre =
+          dayIndex >= 0 ? workoutDayPrecondition(state, dayIndex) : null;
+        const old = pre
+          ? state.workouts[dayIndex].exercises.find(
+              (ex) => ex.exerciseId === replace.exerciseId
+            )
+          : undefined;
+        if (pre && old?.instanceId) {
+          // Train's "Replace Exercise" (`replaceExerciseInDay`).
+          const calibrated = weightAfterExerciseSwap(
+            old,
+            replace.replacementId,
+            loadContextFrom(profile)
+          );
+          send(
+            date,
+            {
+              kind: "replaceExercise",
+              ...pre,
+              oldInstanceId: old.instanceId,
+              replacementExerciseId: replace.replacementId,
+              replacementWeight: calibrated.weight,
+            },
+            `replaced ${replace.exerciseId} with ${replace.replacementId} at ${String(calibrated.weight)} kg`
+          );
+        }
+      }
+      const after = actions.lighterWeekAfterMisses;
+      if (
+        after !== undefined &&
+        state.workouts.length > 0 &&
+        lighterWeekAllowed(state)
+      ) {
+        const lastWeek = weekOf(day(date, -7));
+        const misses = season.sessions
+          .filter((s) => weekOf(s.date) === lastWeek)
+          .flatMap((s) => s.lifts)
+          .filter(
+            (l) => l.outcome === "miss" || l.outcome === "lowered"
+          ).length;
+        if (misses >= after) {
+          // Train's menu (`applyDeloadWeek` in useProgram): the week's runs
+          // a rung easier with it.
+          const runSwaps = planDeloadWeek(state.runDays ?? [], date).map(
+            (swap) => ({
+              runDayId: String(swap.key),
+              templateId: swap.toTemplateId,
+            })
+          );
+          send(
+            date,
+            {
+              kind: "applyDeloadWeek",
+              expectedWeekNumber: state.weekNumber,
+              ...(runSwaps.length > 0 ? { runSwaps } : {}),
+            },
+            `took a lighter week after ${String(misses)} misses`,
+            "loaded"
+          );
+        }
+      }
+      const target = actions.longRunOn;
+      if (target !== undefined) {
+        const long = (state.runDays ?? []).find(
+          (rd) =>
+            rd.weekKey === weekOf(date) &&
+            runTypeOf(rd.userOverride || rd.templateId) === "long" &&
+            rd.dayIndex !== target &&
+            canRescheduleRun(rd)
+        );
+        const option = long
+          ? resolveRunMoveOptions({
+              source: long,
+              runDays: state.runDays ?? [],
+              weekSchedule: profile.weekSchedule ?? [],
+              todayKey: date,
+            }).find((o) => o.dayIndex === target)
+          : undefined;
+        if (long?.id && option?.available)
+          send(
+            date,
+            { kind: "moveRunDay", runDayId: long.id, targetDayIndex: target },
+            `moved the long run from ${DAY_NAMES[long.dayIndex]} to ${DAY_NAMES[target]}`
+          );
+      }
+    }
 
     /** The plan's runs in a week, what Home counted, and the runner then. */
     function runWeek(week: number, from: string, to: string): RunWeekPlan {
@@ -953,11 +1316,56 @@ export function simulateLiftSeason(
       const workoutId = liftWorkoutId("programme", completionId);
       // Train: the baseline is the stored day, and the completion context
       // its week, day and block (Program.tsx's props to WorkoutSession).
-      const prescription = sessionPrescription(
-        stored,
+      // "Easier today" runs a lighter copy of the day and leaves the stored
+      // one as it is (`buildEasierSession`).
+      const actions = persona.actions;
+      const easier =
+        actions?.easierToday !== undefined &&
+        lifter.chance(actions.easierToday);
+      let prescription = sessionPrescription(
+        easier
+          ? { ...stored, exercises: buildEasierSession(stored, rest).exercises }
+          : stored,
         completionId,
         stored.exercises
       );
+      if (easier) season.events.push(`${date}: easier today`);
+      // "Swap for today" from the exercise's menu (WorkoutSession's
+      // `swapForToday`): the new movement in the lift's slot, from its own
+      // last weight or a start from the planned lift's.
+      const swap = actions?.swap;
+      const swapAt =
+        swap && week >= swap.fromWeek
+          ? prescription.exercises.findIndex(
+              (ex) => ex.exerciseId === swap.exerciseId
+            )
+          : -1;
+      if (swap && swapAt >= 0) {
+        const last = lastSetsByExercise(saved).get(swap.replacementId);
+        const exercise = swappedForToday(
+          prescription.exercises[swapAt],
+          swap.replacementId,
+          {
+            lastWeight:
+              (last &&
+                followedWeight(
+                  last.map((set) => ({ weight: set.weightKg }))
+                )) ??
+              undefined,
+            loadContext: loadContextFrom(profile),
+          }
+        );
+        prescription = {
+          ...prescription,
+          exercises: prescription.exercises.map((ex, k) =>
+            k === swapAt ? exercise : ex
+          ),
+          swaps: [{ index: swapAt }],
+        };
+        season.events.push(
+          `${date}: swapped ${swap.exerciseId} for ${swap.replacementId} today, at ${String(exercise.weight)} kg`
+        );
+      }
       const context = {
         weekNumber: before.weekNumber,
         dayIndex,
@@ -983,6 +1391,37 @@ export function simulateLiftSeason(
           return startingSetRows(exRows, ex, prior);
         }
       );
+      // Every weight the screen sets out is one the equipment comes in, and
+      // a barbell's is no lighter than the bar (unless the plan's own is:
+      // that is `below-bar`).
+      rows.forEach((exRows, i) => {
+        const ex = prescription.exercises[i];
+        if (!isLoaded(ex)) return;
+        const grid = loadGridFor(
+          ex.exerciseId,
+          before.settings?.smallPlates ?? false
+        );
+        const planned =
+          stored.exercises.find((p) => p.instanceId === ex.instanceId)
+            ?.weight ?? ex.weight;
+        for (const row of exRows) {
+          if (row.type !== "working" || !(row.weight > 0)) continue;
+          const offGrid =
+            Math.abs(grid.nearest(row.weight) - row.weight) > 1e-6;
+          const underBar =
+            isBarbell(ex.exerciseId) &&
+            row.weight < BAR_KG &&
+            !(planned < BAR_KG);
+          if (offGrid || underBar) {
+            fail(
+              "session-off-grid",
+              date,
+              `${stored.dayName} ${ex.exerciseId}${easier ? " (easier today)" : ""}: ${String(row.weight)} kg${underBar ? ", under the bar" : ""}`
+            );
+            break;
+          }
+        }
+      });
 
       lifter.startDay();
       const lifts: Omit<LiftDone, "outcome">[] = [];
@@ -1098,7 +1537,22 @@ export function simulateLiftSeason(
         });
       });
 
-      // Finish.
+      // Finish: its one question about today's swaps that had a set done
+      // (`decideSwaps`), then the save.
+      const asked = (prescription.swaps ?? []).filter(
+        (entry) =>
+          entry.keep === undefined &&
+          (setLogs[entry.index] ?? []).some(
+            (set) => set.completed && set.type !== "warmup"
+          )
+      );
+      if (swap && asked.length > 0)
+        prescription = {
+          ...prescription,
+          swaps: (prescription.swaps ?? []).map((entry) =>
+            asked.includes(entry) ? { ...entry, keep: swap.keep } : entry
+          ),
+        };
       const completionLogs = toCompletionSetLogs(setLogs);
       // A long or hard run in the 24 hours before the start
       // (`useHardRunBefore`) rides the finish (Lift4 (14)).
@@ -1107,6 +1561,7 @@ export function simulateLiftSeason(
         date,
         prescription,
         setLogs: completionLogs,
+        ...(easier ? { sessionVariant: "easier_today" as const } : {}),
         ...(runSide?.hardRunBefore(Date.now()) ? { afterHardRun: true } : {}),
       });
       const current = before.workouts[dayIndex];
@@ -1138,7 +1593,11 @@ export function simulateLiftSeason(
       const next = new Map(
         after.workouts[dayIndex].exercises.map((ex) => [slotOf(ex), ex])
       );
-      for (const l of lifts) {
+      // A swapped slot follows its own rule (Lift4 (11)): not kept, the
+      // planned lift stays as it was; kept, the new one starts from today.
+      const swapped = new Set((prescription.swaps ?? []).map((e) => e.index));
+      for (const [k, l] of lifts.entries()) {
+        if (swapped.has(k)) continue;
         const plan = was.get(l.slot);
         const now = next.get(l.slot);
         if (!plan || !now || !isLoaded(plan) || !(plan.weight > 0)) continue;
@@ -1147,7 +1606,13 @@ export function simulateLiftSeason(
           now,
           l.weight,
           l.reps.filter((_, k) => Math.abs(l.weights[k] - l.weight) < 0.01),
-          before.currentPhase === "deload",
+          // Light by design, so a weight can rise and never come down
+          // (Lift4 (8)): a lighter week's session, or an easier one.
+          before.currentPhase === "deload"
+            ? "a lighter week"
+            : easier
+              ? "an easier session"
+              : false,
           loadGridFor(plan.exerciseId, before.settings?.smallPlates ?? false)
         );
         if (why)
