@@ -675,6 +675,44 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (5): today's long run states its minutes at the runner's confirmed pace", () => {
+    const props = commonProps();
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /· 15 km\b/.test(text));
+    const renderToday = (extra: Partial<UserProfile>) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...props}
+          profile={makeProfile(extra)}
+          programState={makeProgramState([
+            makeRunDay({
+              id: "runday_long",
+              templateId: "long_15k",
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ])}
+        />
+      );
+    const confirmed = renderToday({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+        pendingConfirmation: false,
+      },
+    } as Partial<UserProfile>);
+    expect(metaLine()).toMatch(/· 15 km · about 100 min\b/);
+    confirmed.unmount();
+    renderToday({});
+    expect(metaLine()).toMatch(/· 15 km\b/);
+    expect(metaLine()).not.toMatch(/about \d+ min/);
+  });
+
   it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
     renderWith(
       <ProgrammeRunSection

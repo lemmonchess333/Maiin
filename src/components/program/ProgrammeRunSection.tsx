@@ -123,10 +123,12 @@ import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
+import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
@@ -819,11 +821,10 @@ export default function ProgrammeRunSection({
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
-    if (selectedTemplate.config.targetDistanceKm) {
-      meta.push(`${selectedTemplate.config.targetDistanceKm} km`);
-    } else if (selectedTemplate.estimatedDuration) {
-      meta.push(`${selectedTemplate.estimatedDuration} min`);
-    }
+    // Run21 (5): a long run's minutes at the runner's own pace.
+    meta.push(
+      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
+    );
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
     if (selectedHrLabel) meta.push(selectedHrLabel);
     meta.push(

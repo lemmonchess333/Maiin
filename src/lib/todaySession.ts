@@ -16,6 +16,8 @@ import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
 import {
@@ -82,6 +84,10 @@ export interface TodayRun {
   completed: boolean;
   /** A new person's first run. */
   isFirst: boolean;
+  /** Its dose, as the card states it (`runDoseLine`): "40 min", "15 km",
+   *  or "15 km · about 100 min" at a confirmed easy pace. Null with no
+   *  planned run. */
+  dose: string | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -173,6 +179,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           runDay: resolved.run.runDay,
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
+          dose: runDose(resolved.run.runDay, profile),
         }
       : null,
     rest:
@@ -289,6 +296,21 @@ function tomorrowSession(
       ? `/program?day=${tomorrowLift.index}`
       : `/program?tab=run&rday=${dateKey}`;
   return { label, target };
+}
+
+/** A planned run's dose at the person's confirmed easy pace (Run21 (5)). */
+function runDose(
+  runDay: ScheduledRunDay | null,
+  profile: UserProfile | null
+): string | null {
+  const template = runDay
+    ? RUN_TEMPLATES.find(
+        (t) => t.id === (runDay.userOverride || runDay.templateId)
+      )
+    : null;
+  return template
+    ? runDoseLine(template, planningEasyPaceSPerKm(profile?.runFitness))
+    : null;
 }
 
 /** Up to three of a workout's muscle groups, then "+ more". */

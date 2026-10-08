@@ -27,6 +27,7 @@ export default function RunCTACard({
   isFirst = false,
   eyebrowLabel,
   completed,
+  dose,
 }: {
   todayRun: ScheduledRunDay | null;
   navigate: (p: string) => void;
@@ -36,6 +37,8 @@ export default function RunCTACard({
    *  planned session (free running plans none). */
   eyebrowLabel?: string;
   completed?: boolean;
+  /** The session's dose, as `todaySession` decided it (Run21 (5)). */
+  dose?: string | null;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -54,15 +57,6 @@ export default function RunCTACard({
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
   const queryString = params.length ? "?" + params.join("&") : "";
-
-  // Key metric = the planned distance, read from the template config (the
-  // source of truth) rather than regex-parsed out of the prose description.
-  // Descriptions are coaching-led now ("Steady, controlled effort"), so the
-  // distance no longer lives in the text; reading config also makes the metric
-  // work for race templates whose descriptions carry no distance.
-  const runKeyMetric = tmpl?.config.targetDistanceKm
-    ? `${tmpl.config.targetDistanceKm} km`
-    : null;
 
   // HOME-ACTION-01: a terminal/reconciliation run must not relaunch the run
   // flow, so it gets no Start. No todayRun (cold-start) is startable.
@@ -111,13 +105,9 @@ export default function RunCTACard({
           <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
             <InlineNumerals>{runLabel}</InlineNumerals>
           </p>
-          {tmpl && (
+          {tmpl && dose && (
             <p className="mt-2 text-sm font-medium text-muted-foreground">
-              <InlineNumerals>
-                {runKeyMetric
-                  ? `${runKeyMetric} · about ${tmpl.estimatedDuration} min`
-                  : `About ${tmpl.estimatedDuration} min`}
-              </InlineNumerals>
+              <InlineNumerals>{dose}</InlineNumerals>
             </p>
           )}
         </div>

@@ -58,10 +58,12 @@ import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
+import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import { format } from "date-fns";
 import {
@@ -224,9 +226,11 @@ export default function DayActionSheet({
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [
-        selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm} km`
-          : `${selectedRunTemplate.estimatedDuration} min`,
+        // Run21 (5): a long run's minutes at the runner's own pace.
+        runDoseLine(
+          selectedRunTemplate,
+          planningEasyPaceSPerKm(profile?.runFitness)
+        ),
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
     : null;
