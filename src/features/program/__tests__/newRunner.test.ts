@@ -15,6 +15,7 @@ import { plannedRunMinutes } from "../runTimeLimits";
 import type { ScheduledRunDay } from "../programTypes";
 import type { RunningBaseline } from "../runningBaseline";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import {
   isRunWalkTemplateId,
   RUN_TEMPLATES,
@@ -323,6 +324,47 @@ describe("a new runner's runs after the run-walk weeks", () => {
     expect(plan("5k", 14, until).weeks.slice(10)).toEqual(
       regular.weeks.slice(10)
     );
+  });
+
+  /* A tempo or intervals session that doesn't fit shortens to a smaller
+     dose of itself, the deload's rungs (`DELOAD_LADDERS`), or becomes an
+     easy run. 6 × 1K cut to 8 × 400 is another session, not a smaller one
+     (review of #2655): someone who began on a Thursday got it, in a 5K
+     nine weeks out, the week after run-walk. */
+  it("shorten a quality session only to a smaller dose of itself", () => {
+    const thursday = "2026-09-10";
+    const fromThursday = newRunnerUntil("new", thursday);
+    const family = (id: string) =>
+      DELOAD_LADDERS.find((ladder) => ladder.includes(id)) ?? [id];
+    for (const [distance, weeks] of [...races, ["5k", 9] as const]) {
+      for (const days of [2, 3, 4]) {
+        const plan2 = (newRunner: string | null) =>
+          generateRacePlanV2({
+            recentLayoff: "none",
+            weekSchedule: generateSchedule(0, days),
+            weeklyRunDays: days,
+            raceGoal: {
+              distance,
+              targetDate: localDateString(
+                addLocalDays(parseLocalDate(thursday), weeks * 7 - 1)
+              ),
+            },
+            currentDate: thursday,
+            weekStart: thursday,
+            newRunnerUntil: newRunner,
+          });
+        const regular = plan2(null);
+        plan2(fromThursday).weeks.forEach((week, i) =>
+          week.forEach((run, j) => {
+            if (run.type !== "tempo" && run.type !== "intervals") return;
+            expect(
+              family(regular.weeks[i][j].templateId),
+              `${distance} in ${weeks} weeks, ${days} days, week ${i + 1}`
+            ).toContain(run.templateId);
+          })
+        );
+      }
+    }
   });
 
   it("are no one else's", () => {

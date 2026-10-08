@@ -42,6 +42,25 @@ describe("the running starting point, for someone new to running", () => {
     expect(preview(null).runWalkWeeks).toBe(false);
   });
 
+  it("knows it from the six weeks, whatever this week still holds", () => {
+    // A week with no runs left in it: a plan made from today (Run19) on
+    // the week's last day, or a race week that holds only the race.
+    const noRunsLeft = getRaceGoalPlannerState({
+      distance: "5k",
+      targetDate: localDateString(
+        new Date(Date.now() + 70 * 24 * 60 * 60 * 1000)
+      ),
+      currentDate: today,
+      liftDays: 3,
+      weeklyRunDays: 0,
+      runningBaseline: baseline,
+      newRunnerUntil: newRunnerUntil("new", today),
+      weekSchedule: generateSchedule(3, 0),
+    });
+    expect(noRunsLeft.firstWeekMinutes).toBe(0);
+    expect(noRunsLeft.runWalkWeeks).toBe(true);
+  });
+
   it("says run-walk doesn't follow the report", () => {
     render(
       <RunningBaselineSettings
