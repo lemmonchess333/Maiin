@@ -1045,6 +1045,25 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
     expect(edited.workouts).toEqual(first.workouts);
   });
 
+  it("keeps the sessions' focus when the same save changes the focus", () => {
+    // "Keep your current sessions and change the focus only": the level
+    // still sets the main lifts, for the focus the sessions follow.
+    const first = buildPlan(makeInput({ experience: "intermediate" }));
+    const edited = buildPlan(
+      makeInput({
+        primaryGoal: "strength",
+        experience: "beginner",
+        previousExperience: "intermediate",
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    ).programState;
+    // A beginner's Build muscle main lifts, 8, not Get stronger's 5.
+    for (const lift of lifts(edited, true)) {
+      expect(lift.reps, lift.name).toBe(8);
+    }
+  });
+
   it("sets the main lifts for a block's focus while one runs", () => {
     const first = buildPlan(makeInput({ experience: "intermediate" }));
     const block: ProgramState = {
