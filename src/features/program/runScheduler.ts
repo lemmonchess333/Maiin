@@ -21,7 +21,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
-import { chooseQualityRunSlots } from "./runPlacement";
+import { chooseQualityRunSlots, easyDaysInFillOrder } from "./runPlacement";
 import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 
 // Re-export so existing imports of these types from runScheduler keep
@@ -1071,6 +1071,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               distance: input.raceGoal.distance,
             })
           );
+    // Run20: a medium-long run of an hour or more is demanding, so it is
+    // kept off the days beside the long run and the quality sessions.
+    const midLongDemanding =
+      (EASY_RUN_TIERS.find((tier) => tier.id === midLongId)?.minutes ?? 0) >=
+      60;
 
     // RUN-M2: race week is identical whether or not the plan is belowFloor —
     // the race on `targetDate` (so `date === raceGoal.targetDate`) plus easy
@@ -1234,7 +1239,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // since there's no time for a real build phase). The first slot
         // carries the medium-long (RUN-EV-11); the second gains strides
         // (WAVE1-STRIDES) — a detrained returner gets neither.
-        remaining.forEach((d, i) =>
+        easyDaysInFillOrder({
+          easyDays: remaining,
+          demandingDays: [longSlot],
+          mediumLongDemanding: midLongDemanding,
+        }).forEach((d, i) =>
           week.push(
             buildRunDayV2({
               dayIndex: d,
@@ -1307,30 +1316,36 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               })
             );
           }
-          remaining
-            .filter((day) => !qualitySlots.includes(day))
-            .forEach((d, i) =>
-              week.push(
-                buildRunDayV2({
-                  dayIndex: d,
-                  // RUN-EV-11: first easy slot is the medium-long;
-                  // WAVE1-STRIDES: the next plain easy gains strides.
-                  templateId:
-                    i === 0
-                      ? midLongId
-                      : i === 1 && input.recentLayoff !== "detrained"
-                        ? stridesVariantOf(easyId)
-                        : easyId,
-                  type: "easy",
-                  weekStart,
-                })
-              )
-            );
+          easyDaysInFillOrder({
+            easyDays: remaining.filter((day) => !qualitySlots.includes(day)),
+            demandingDays: [longSlot, ...qualitySlots],
+            mediumLongDemanding: midLongDemanding,
+          }).forEach((d, i) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                // RUN-EV-11: first easy slot is the medium-long;
+                // WAVE1-STRIDES: the next plain easy gains strides.
+                templateId:
+                  i === 0
+                    ? midLongId
+                    : i === 1 && input.recentLayoff !== "detrained"
+                      ? stridesVariantOf(easyId)
+                      : easyId,
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         } else {
           // Skip quality this week — all easy; first slot carries the
           // medium-long (RUN-EV-11), the second gains strides
           // (WAVE1-STRIDES).
-          remaining.forEach((d, i) =>
+          easyDaysInFillOrder({
+            easyDays: remaining,
+            demandingDays: [longSlot],
+            mediumLongDemanding: midLongDemanding,
+          }).forEach((d, i) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
@@ -1353,24 +1368,34 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
         if (!compressed && !gentler && !detrainedSkipsQuality) {
+          // Placed like every quality session (RUN-EV-10): away from the
+          // long-run slot and off a lifting day where the week allows.
+          const [taperDay] = chooseQualityRunSlots({
+            availableDays: remaining,
+            longDay: longSlot,
+            count: 1,
+            weekSchedule: input.weekSchedule,
+          });
           week.push(
             buildRunDayV2({
-              dayIndex: remaining[0],
+              dayIndex: taperDay,
               templateId: "8x400",
               type: "intervals",
               weekStart,
             })
           );
-          remaining.slice(1).forEach((d) =>
-            week.push(
-              buildRunDayV2({
-                dayIndex: d,
-                templateId: easyId,
-                type: "easy",
-                weekStart,
-              })
-            )
-          );
+          remaining
+            .filter((d) => d !== taperDay)
+            .forEach((d) =>
+              week.push(
+                buildRunDayV2({
+                  dayIndex: d,
+                  templateId: easyId,
+                  type: "easy",
+                  weekStart,
+                })
+              )
+            );
         } else {
           remaining.forEach((d) =>
             week.push(
