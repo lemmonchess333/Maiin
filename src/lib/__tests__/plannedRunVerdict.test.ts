@@ -47,20 +47,28 @@ describe("plannedRunVerdict", () => {
   const tempo = resolveSessionPaces("tempo", TABLE);
   const tempoTarget = tempo.targetPace ?? tempo.workPace!;
 
-  it("calls an easy run inside its window on target", () => {
-    expect(verdict(planned("easy_30"), (easy[0] + easy[1]) / 2)?.tone).toBe(
-      "on"
-    );
+  it("calls an easy run inside its window on target, and says nothing", () => {
+    const v = verdict(planned("easy_30"), (easy[0] + easy[1]) / 2);
+    expect(v?.tone).toBe("on");
+    expect(v?.speaks).toBe(false);
   });
 
-  it("tells an easy run well under its window to keep the easy days easy", () => {
-    expect(verdict(planned("easy_30"), easy[0] - 30)?.tone).toBe(
-      "easy-too-fast"
-    );
+  it("tells an easy run well under its window that easy running works best slower", () => {
+    const v = verdict(planned("easy_30"), easy[0] - 30);
+    expect(v?.tone).toBe("easy-too-fast");
+    expect(v?.speaks).toBe(true);
   });
 
-  it("calls a tempo well over its pace slow", () => {
-    expect(verdict(planned("tempo_20"), tempoTarget + 30)?.tone).toBe("slow");
+  it("calls a tempo well over its pace slow, and says so", () => {
+    const v = verdict(planned("tempo_20"), tempoTarget + 30);
+    expect(v?.tone).toBe("slow");
+    expect(v?.speaks).toBe(true);
+  });
+
+  it("Run21 (6): keeps quiet about an easy run slower than its window", () => {
+    const v = verdict(planned("easy_30"), easy[1] + 60);
+    expect(v?.tone).toBe("slow");
+    expect(v?.speaks).toBe(false);
   });
 
   it("judges only a run that did its planned session", () => {

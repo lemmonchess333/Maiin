@@ -5,12 +5,16 @@
  * performance).
  *
  * Coaching-honest, adherence-neutral register (the nutrition rule applies
- * here too — never shame a slow day):
- *  - within the tolerance band → on-target praise
- *  - EASY/LONG sessions run notably faster than target get a gentle
- *    "easy days easy" nudge, NOT praise — the mistake every coach corrects
- *  - hard sessions run faster → strong day
- *  - slower → calm, no-drama framing
+ * here too — never shame a slow day). The summary speaks only when a run
+ * didn't match its type (Run21 (6)), so `speaks` says when:
+ *  - within the tolerance band → quiet
+ *  - EASY/LONG sessions run notably faster than target → one line: easy
+ *    days work best slower, the mistake every coach corrects
+ *  - an easy or long run slower than its window → quiet: slower is fine
+ *  - a tempo quicker or easier than its pace → one line, calm either way
+ *  - a race → quiet: its result says it
+ * The tone is worked out either way: the run saves it, and the easier-week
+ * nudge reads it.
  *
  * Band-aware (Runna teardown #2): when the session has a pace BAND, the
  * verdict judges against the band edges (anywhere inside the window is
@@ -31,6 +35,9 @@ export const ON_TARGET_TOLERANCE_S = 10;
 export interface PaceVerdict {
   tone: "on" | "fast" | "easy-too-fast" | "slow";
   line: string;
+  /** Whether the summary shows `line`: only when the run didn't match its
+   *  type (Run21 (6)). */
+  speaks: boolean;
 }
 
 /** Session types where faster-than-target is a caution, not a win.
@@ -39,6 +46,10 @@ export interface PaceVerdict {
  *  ("long" was missing pre-bands: a hot long run got "Strong day" praise
  *  instead of the easy-days-easy nudge this module documents.) */
 const EASY_TYPES = new Set(["easy", "recovery", "long", "longrun"]);
+
+/** Sessions whose pace is the point, so a run off it on either side didn't
+ *  match its type. A race is not among them: its result says it. */
+const WORKOUT_TYPES = new Set(["tempo", "intervals"]);
 
 export function resolvePaceVerdict(args: {
   /** Session template type (easy / tempo / intervals / long / race …). */
@@ -97,28 +108,31 @@ export function resolvePaceVerdict(args: {
       line: band
         ? `Right on target — ${actual}, inside ${target}.`
         : `Right on target — ${actual} against a ${target} goal.`,
+      speaks: false,
     };
   }
+  const against = band ? target : `a ${target} target`;
+  const workout = WORKOUT_TYPES.has(templateType);
+  const session = templateType === "tempo" ? "a tempo" : "this session";
   if (diff < 0) {
     if (EASY_TYPES.has(templateType)) {
       return {
         tone: "easy-too-fast",
-        line: band
-          ? `Quicker than ${target} (${actual}). Keep the easy days easy — save it for the hard sessions.`
-          : `Quicker than the ${target} easy target (${actual}). Keep the easy days easy — save it for the hard sessions.`,
+        line: `Faster than easy today: ${actual}, against ${against}. Easy running works best slower, so the harder runs get your energy.`,
+        speaks: true,
       };
     }
     return {
       tone: "fast",
-      line: band
-        ? `Faster than ${target} — ${actual}. Strong day.`
-        : `Faster than the ${target} target — ${actual}. Strong day.`,
+      line: `Quicker than ${session} today: ${actual}, against ${against}. It works best held a little back, so you can keep it up for longer.`,
+      speaks: workout,
     };
   }
   return {
     tone: "slow",
-    line: band
-      ? `A touch outside ${target} (${actual}). Still a deposit in the bank.`
-      : `A touch off the ${target} target (${actual}). Still a deposit in the bank.`,
+    line: workout
+      ? `Easier than ${session} today: ${actual}, against ${against}. It still counts. Next time, aim for a few words at a time.`
+      : `Slower than ${against} today: ${actual}. Slower is fine on an easy day.`,
+    speaks: workout,
   };
 }

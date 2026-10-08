@@ -1201,8 +1201,9 @@ export default function RunSummary() {
               })}
             </p>
             {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). */}
-            {paceVerdict && (
+                calm register (never shames a slow day). It speaks only
+                when the run didn't match its type (Run21 (6)). */}
+            {paceVerdict?.speaks && (
               <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
               </p>

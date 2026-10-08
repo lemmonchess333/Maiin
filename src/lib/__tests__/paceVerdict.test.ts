@@ -1,6 +1,6 @@
 /**
  * Post-run pace verdict (Runna-style plan-vs-actual). Pins the tolerance
- * band, the "easy days easy" coaching rule (faster on an easy/recovery/long
+ * band, the "easy running works best slower" coaching rule (faster on an easy/recovery/long
  * run is a nudge, not praise), the adherence-neutral slow framing, and the
  * garbage-input guards.
  */
@@ -19,6 +19,8 @@ describe("resolvePaceVerdict", () => {
     expect(v.line).toContain("Right on target");
     expect(v.line).toContain("5:44");
     expect(v.line).toContain("5:50");
+    // Run21 (6): a run that matched its type gets no line.
+    expect(v.speaks).toBe(false);
   });
 
   it("boundary: exactly the tolerance still counts as on-target", () => {
@@ -31,7 +33,7 @@ describe("resolvePaceVerdict", () => {
     expect(v.tone).toBe("on");
   });
 
-  it("faster on a HARD session is a strong day", () => {
+  it("a tempo quicker than its pace says so, without praise (Run21 (6))", () => {
     const v = resolvePaceVerdict({
       unit: "km",
       templateType: "tempo",
@@ -39,7 +41,10 @@ describe("resolvePaceVerdict", () => {
       targetPaceS: 350,
     })!;
     expect(v.tone).toBe("fast");
-    expect(v.line).toContain("Strong day");
+    expect(v.speaks).toBe(true);
+    expect(v.line).toBe(
+      "Quicker than a tempo today: 5:30 /km, against a 5:50 /km target. It works best held a little back, so you can keep it up for longer."
+    );
   });
 
   it("faster on an EASY session gets the easy-days-easy nudge, not praise", () => {
@@ -51,7 +56,8 @@ describe("resolvePaceVerdict", () => {
         targetPaceS: 360,
       })!;
       expect(v.tone).toBe("easy-too-fast");
-      expect(v.line).toContain("easy days easy");
+      expect(v.speaks).toBe(true);
+      expect(v.line).toContain("Easy running works best slower");
     }
   });
 
@@ -63,8 +69,26 @@ describe("resolvePaceVerdict", () => {
       targetPaceS: 350,
     })!;
     expect(v.tone).toBe("slow");
+    expect(v.speaks).toBe(true);
     expect(v.line.toLowerCase()).not.toContain("behind");
     expect(v.line.toLowerCase()).not.toContain("fail");
+    expect(v.line).toContain("It still counts.");
+  });
+
+  it("Run21 (6): quiet when the run matched its type, and for a race", () => {
+    const quiet = [
+      // An easy or long run slower than its window: slower is fine.
+      { templateType: "easy", actualPaceS: 400, targetPaceS: 360 },
+      { templateType: "long", actualPaceS: 400, targetPaceS: 360 },
+      // A race, quicker or slower: its result says it.
+      { templateType: "race", actualPaceS: 300, targetPaceS: 330 },
+      { templateType: "race", actualPaceS: 360, targetPaceS: 330 },
+    ];
+    for (const args of quiet) {
+      const v = resolvePaceVerdict({ unit: "km", ...args })!;
+      expect(v.speaks, JSON.stringify(args)).toBe(false);
+      expect(v.line).not.toMatch(/deposit|bank|strong day/i);
+    }
   });
 
   it("garbage inputs → null", () => {
@@ -136,7 +160,7 @@ describe("resolvePaceVerdict — band-aware (Runna teardown #2)", () => {
       targetBandS: [370, 400],
     })!;
     expect(v.tone).toBe("easy-too-fast");
-    expect(v.line).toContain("easy days easy");
+    expect(v.line).toContain("Easy running works best slower");
   });
 
   it("slower than the band is calm and quotes the window", () => {
