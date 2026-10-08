@@ -158,8 +158,8 @@ export const FOCUS_LABELS: Record<PrimaryGoal, string> = {
   hypertrophy: "Build muscle",
   strength: "Get stronger",
   fat_loss: "Lose fat",
-  general: "Stay fit",
-  running: "Running support",
+  general: "General fitness",
+  running: "Support my running",
 };
 
 export function focusLabel(goal: PrimaryGoal): string {

@@ -358,11 +358,11 @@ export function blockConsequence(input: {
 
   // Same focus: the prescription is untouched, so the block's whole value is
   // the window and the pace. Naming the focus keeps it concrete.
-  const kept = focusLabel(currentFocus).toLowerCase();
   if (pace === "full") {
-    // "gives 8 weeks of stay fit a shape" read as a sentence with a verb
-    // phrase wedged into it; the focus goes at the end, as the thing kept.
-    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line, with the same ${kept} focus.`;
+    // The focus's name is the person's own goal ("Support my running"),
+    // so it goes in whole, as the thing kept, not lowercased into the
+    // sentence.
+    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line. Your focus stays ${focusLabel(currentFocus)}.`;
   }
   if (pace === "lighter") {
     return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;
