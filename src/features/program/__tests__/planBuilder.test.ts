@@ -349,6 +349,76 @@ describe("buildPlan · race_prep mode", () => {
   });
 });
 
+/* ─── Run19: a plan made mid-week plans no run before that day ─── */
+
+describe("buildPlan · a plan made mid-week plans no run before that day (Run19)", () => {
+  // The week of Monday 11 May 2026.
+  const monday = "2026-05-11";
+  const thursday = "2026-05-14";
+  const raceInput = (currentDate: string) =>
+    makeInput({
+      currentDate,
+      runMode: "race_prep",
+      liftDays: 3,
+      weeklyRunDays: 4,
+      raceGoal: { distance: "10k", targetDate: "2026-08-14" },
+    });
+  const runsOf = (out: ReturnType<typeof buildPlan>) =>
+    out.programState.runDays ?? [];
+
+  it("dates no run before the day the plan is made", () => {
+    // Made on the Monday, the week has runs before Thursday...
+    expect(
+      runsOf(buildPlan(raceInput(monday))).some((run) => run.date! < thursday)
+    ).toBe(true);
+    // ...which the same plan made on the Thursday doesn't plan. It keeps
+    // the week's runs from Thursday on.
+    const made = runsOf(buildPlan(raceInput(thursday)));
+    expect(made.length).toBeGreaterThan(0);
+    expect(made.every((run) => run.date! >= thursday)).toBe(true);
+  });
+
+  it("keeps the week's days from the day it is made, as a Monday plan has them", () => {
+    const fromThursday = (runs: ReturnType<typeof runsOf>) =>
+      runs
+        .filter((run) => run.date! >= thursday)
+        .map((run) => [run.date, run.templateId]);
+    expect(fromThursday(runsOf(buildPlan(raceInput(thursday))))).toEqual(
+      fromThursday(runsOf(buildPlan(raceInput(monday))))
+    );
+  });
+
+  it("keeps a continuing plan's own days before today", () => {
+    const existingState = buildPlan(raceInput(monday)).programState;
+    const before = (existingState.runDays ?? []).filter(
+      (run) => run.date! < thursday
+    );
+    expect(before.length).toBeGreaterThan(0);
+    const saved = runsOf(
+      buildPlan({
+        ...raceInput(thursday),
+        preserveHistory: true,
+        existingState,
+      })
+    );
+    expect(saved.filter((run) => run.date! < thursday)).toEqual(before);
+  });
+
+  it("plans a structured week from that day too", () => {
+    const runs = runsOf(
+      buildPlan(
+        makeInput({
+          currentDate: thursday,
+          runMode: "structured",
+          liftDays: 3,
+          weeklyRunDays: 4,
+        })
+      )
+    );
+    expect(runs.every((run) => run.date! >= thursday)).toBe(true);
+  });
+});
+
 /* ─── Lift programme ─────────────────────────────────────────── */
 
 describe("buildPlan · lift programme", () => {

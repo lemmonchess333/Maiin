@@ -9,7 +9,12 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -309,6 +314,21 @@ describe("RunPlanSettings", () => {
   });
 
   it("RUN-EV-02: a 2→4 run-day change moves slots, rows and targets TOGETHER", async () => {
+    /* Saved on this week's Monday, so the whole week is ahead: a plan made
+       later in the week plans no run before that day (Run19), and the
+       first week would hold fewer rows than the week's four. */
+    const monday = parseLocalDate(localWeekKey(new Date()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await saveTwoToFour();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  async function saveTwoToFour() {
     // Saved baseline says 2 run days; the draft raises it to 4.
     const profile = {
       ...baseProfile,
@@ -345,7 +365,7 @@ describe("RunPlanSettings", () => {
       (payload.programState.runDays ?? []).slice(0, 4).map((r) => r.date)
     );
     expect(firstWeekDates.size).toBe(4);
-  });
+  }
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
