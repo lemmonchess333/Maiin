@@ -216,6 +216,17 @@ the reps start from the bottom again. Off-grid weights round once (schema v5),
 and the server's settings validator takes `smallPlates` while still accepting
 an older app's `microloading`.
 
+STATUS 2026-10-08 (Lift4 (6), bodyweight lifts on a fixed target): every set
+at a fixed target is a step for a bodyweight lift too, and its step is a rep,
+the axis (7) lowers it on. A fixed target climbed only on a 2-rep overshoot,
+and then by one rep, so pull-ups as a Get stronger or Support my running main
+lift stayed at their first target for a lifter doing what the plan asked. A
+fixed bodyweight target now takes the ceiling a range-less one already climbs
+to (`impliedDoubleRangeMax`): one past the weakest set, up to 20 reps, where
+the plan asks for added load. Holds keep their own step. The rules sheet says
+a bodyweight lift climbs in reps. Added load on a bodyweight lift is still not
+followed (`liftedLoad`).
+
 STATUS 2026-10-05 (Lift4 (3) and (7), build step 3, fourth release): ranges
 are shown. A lift that climbs reps before it adds weight reads as its range
 ("3 sets × 8–12 reps", "30–45s"), on Train, in the session and in
