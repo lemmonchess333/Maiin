@@ -35,7 +35,7 @@ export function runSessionAbout(
   if (template.type === "race") {
     const short = (config.targetDistanceKm ?? 0) <= 10;
     return {
-      what: "Race day: the run the plan has been building to.",
+      what: "Your race, over its full distance.",
       feel: short
         ? "Even through the middle, then all you have left at the end."
         : "Start steady and finish strong. Hold back early, however good you feel.",
