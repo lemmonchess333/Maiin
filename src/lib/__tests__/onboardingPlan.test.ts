@@ -162,6 +162,25 @@ describe("supported running-only plans", () => {
       );
     }
   );
+  /* Run20 (2): setup's week gives the runs a weekend day and the long run
+     takes it. Mon, Wed, Fri put a runner-only plan's long run on Monday. */
+  it("puts a runner-only race plan's long run on Sunday", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        primaryGoal: "running",
+        daysPerWeek: 0,
+        runMode: "race_prep",
+        raceTargetDate: "2026-12-13",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.weekSchedule[0].type).toBe("run");
+    const long = plan.programState.runDays?.find((rd) => rd.type === "long");
+    expect(long?.dayIndex).toBe(0);
+  });
+
   it("derives activity from older drafts without changing their week", () => {
     expect(onboardingActivity(draft)).toBe("both");
     expect(onboardingActivity({ ...draft, runFrequency: "none" })).toBe(

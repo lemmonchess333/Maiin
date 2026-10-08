@@ -69,6 +69,13 @@ export const SCHEDULE_TYPE_META: Record<
 };
 
 /**
+ * The order the week's days are filled in: Mon, Wed, Fri, Tue, Thu, Sat,
+ * Sun. Both days take the highest-priority slots (most-used training days)
+ * so the user's hardest sessions land early in the week.
+ */
+const SLOT_ORDER = [1, 3, 5, 2, 4, 6, 0];
+
+/**
  * Generate a sensible weekly schedule given lift + run day counts.
  *
  * Two regimes:
@@ -120,11 +127,6 @@ export function generateSchedule(
 
   if (totalActive === 0) return schedule;
 
-  // Slot order — Mon/Wed/Fri/Tue/Thu/Sat/Sun.
-  // Both days take the highest-priority slots (most-used training
-  // days) so the user's hardest sessions land early in the week.
-  const slotOrder = [1, 3, 5, 2, 4, 6, 0];
-
   if (totalActive <= 7) {
     // Original behaviour — no doubles needed. Interleave lift/run
     // and place into priority slots.
@@ -143,8 +145,8 @@ export function generateSchedule(
       }
     }
 
-    for (let i = 0; i < pattern.length && i < slotOrder.length; i++) {
-      schedule[slotOrder[i]].type = pattern[i];
+    for (let i = 0; i < pattern.length && i < SLOT_ORDER.length; i++) {
+      schedule[SLOT_ORDER[i]].type = pattern[i];
     }
 
     return schedule;
@@ -170,17 +172,17 @@ export function generateSchedule(
       const cappedLift = Math.max(0, liftOnlyCount - overflow);
       return assembleSlots(
         { bothCount, liftOnlyCount: cappedLift, runOnlyCount },
-        slotOrder
+        SLOT_ORDER
       );
     }
     const cappedRun = Math.max(0, runOnlyCount - overflow);
     return assembleSlots(
       { bothCount, liftOnlyCount, runOnlyCount: cappedRun },
-      slotOrder
+      SLOT_ORDER
     );
   }
 
-  return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount }, slotOrder);
+  return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount }, SLOT_ORDER);
 }
 
 /** Place computed counts into the 7 weekday slots in priority order.
@@ -283,7 +285,79 @@ export function isValidWeekSchedule(
   return seenDays.size === 7;
 }
 
-/** Keep chosen weekdays when the requested weekly counts have not changed. */
+/**
+ * The week a new plan is offered (Run20 (2)): `generateSchedule`'s, with a
+ * run on the weekend. The long run goes on a weekend run day
+ * (`pickLongRunSlot`), as races mostly do, but `generateSchedule` fills the
+ * weekend last, so its weeks seldom held a weekend run and a runner-only
+ * plan's long run fell on a Monday.
+ *
+ * When no run falls on Saturday or Sunday, one run day moves to Sunday, or
+ * to Saturday when Sunday is taken: the one that leaves the runs most
+ * spread out, so the long run doesn't land beside another run where the
+ * week has room (Mon, Wed, Fri becomes Wed, Fri, Sun, not Mon, Wed, Sun).
+ * A week with no free weekend day stays as it is, and so do the lift days.
+ *
+ * `generateSchedule` stays the week derived for a profile that never stored
+ * one (`backfillWeekScheduleIfMissing`, the calendar's fallback), so a plan
+ * already made keeps its weekdays.
+ */
+export function defaultWeekSchedule(
+  liftDays: number,
+  runDays: number
+): ScheduleDay[] {
+  const schedule = generateSchedule(liftDays, runDays);
+  const runsOn = (day: ScheduleDay) =>
+    day.type === "run" || day.type === "both";
+  if (schedule.some((d) => (d.day === 0 || d.day === 6) && runsOn(d)))
+    return schedule;
+  const weekend = [0, 6].find((day) => schedule[day].type === "rest");
+  if (weekend === undefined) return schedule;
+  const runDaysNow = schedule.filter(runsOn).map((d) => d.day);
+  // Only a run-only day moves: a Both day would take its lift with it.
+  const movable = schedule.filter((d) => d.type === "run").map((d) => d.day);
+  let best: { day: number; score: number[] } | null = null;
+  for (const day of movable) {
+    const after = runDaysNow.map((d) => (d === day ? weekend : d));
+    // The tightest gap between runs, then the fewest back-to-back pairs,
+    // then the run filled last.
+    const gaps = circularGaps(after);
+    const score = [
+      Math.min(...gaps),
+      -gaps.filter((gap) => gap === 1).length,
+      SLOT_ORDER.indexOf(day),
+    ];
+    if (!best || isBetter(score, best.score)) best = { day, score };
+  }
+  if (!best) return schedule;
+  const moved = best.day;
+  return schedule.map((d) =>
+    d.day === moved
+      ? { ...d, type: "rest" }
+      : d.day === weekend
+        ? { ...d, type: "run" }
+        : d
+  );
+}
+
+/** The days between each run and the next, round the week (Sunday to
+ *  Monday is one day). */
+function circularGaps(days: number[]): number[] {
+  const sorted = [...days].sort((a, b) => a - b);
+  return sorted.map((day, i) =>
+    i + 1 < sorted.length ? sorted[i + 1] - day : sorted[0] + 7 - day
+  );
+}
+
+function isBetter(score: number[], than: number[]): boolean {
+  for (let i = 0; i < score.length; i++) {
+    if (score[i] !== than[i]) return score[i] > than[i];
+  }
+  return false;
+}
+
+/** Keep chosen weekdays when the requested weekly counts have not changed;
+ *  otherwise the week a new plan is offered (`defaultWeekSchedule`). */
 export function planWeekSchedule(
   liftDays: number,
   runDays: number,
@@ -297,7 +371,7 @@ export function planWeekSchedule(
       .length === runDays
   )
     return existing;
-  return generateSchedule(liftDays, runDays);
+  return defaultWeekSchedule(liftDays, runDays);
 }
 
 /**

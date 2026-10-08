@@ -41,7 +41,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * explicit commit (you're picking a date), and the RaceGoalPlanner CTA
  * carries the honest runway label (Save race plan / compressed /
  * mostly-easy). Preview ≡ commit: the planner preview and buildPlan derive
- * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
+ * the week from the same `planWeekSchedule(liftDays, weeklyRunDays, …)`
  * derivation, so what the runway preview shows is what the save writes.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -453,8 +453,8 @@ export default function RunPlanSettings({
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
-      // effective weekSchedule (the same generateSchedule(liftDays,
-      // weeklyRunDays) derivation the planner preview uses), run targets,
+      // effective weekSchedule (the same planWeekSchedule(liftDays,
+      // weeklyRunDays, …) derivation the planner preview uses), run targets,
       // goal, mode, tuning, runDays and plan — so none of them can
       // disagree. The lift slice threads unchanged from the saved profile
       // with preserveHistory: true (run edits never rebuild lifting).
