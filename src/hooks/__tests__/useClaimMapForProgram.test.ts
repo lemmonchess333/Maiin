@@ -711,6 +711,47 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
     expect(r.claimMap.get("rd-onthe-line")?.claimedSavedRunId).toBeUndefined();
   });
 
+  /* F13: none of the 86 tempo and interval sessions the training-engine
+     simulator's runners did counted, the warm-up and cool-down putting
+     the whole run's average over the bar above. A run done as a tempo is
+     one, whatever its pace (Pgm7 A5); the bar stays for a run with no
+     session type. Red before: the claim map read only the pace. */
+  it("completes a tempo day with the run done as that tempo, at an ordinary pace", async () => {
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-done-as-tempo",
+          date: "2026-05-26",
+          dayIndex: 2,
+          templateId: "tempo_20",
+          type: "tempo",
+          status: "planned",
+        },
+      ],
+      manualCompletions: {},
+    };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-tempo",
+          data: {
+            date: "2026-05-26",
+            distance: 7000,
+            avgPace: EASY_PACE,
+            activityType: "tempo",
+            actualTemplateId: "tempo_20",
+            completedAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    expect(
+      result.current.claimMap.get("rd-done-as-tempo")?.claimedSavedRunId
+    ).toBe("saved-tempo");
+  });
+
   it("a tempo day swapped DOWN to easy IS completed by an easy run", async () => {
     // The user removed the quality requirement; holding them to the tempo's
     // pace bar would be judging a session they chose not to do.

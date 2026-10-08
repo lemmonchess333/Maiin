@@ -392,6 +392,74 @@ describe("race day", () => {
   });
 });
 
+/* F13 (the training-engine simulator): a tempo or interval day counted a
+   run only when the whole run averaged under the pace bar, and a warm-up
+   and cool-down put nearly every runner's tempo over it. A run done as a
+   quality session is one, whatever its pace (Pgm7 A5). */
+describe("a run done as a quality session", () => {
+  const QUALITY_DEPS: CompletionDeps = {
+    ...DEPS,
+    isQualityRun: (s) =>
+      s.activityType === "tempo" ||
+      s.activityType === "intervals" ||
+      s.activityType === "race",
+  };
+  const tempoDay = day("tempo", "2026-05-12", 2, "tempo_6k");
+
+  it("completes a tempo day at an ordinary runner's pace", () => {
+    const map = computeClaims(
+      [tempoDay],
+      [
+        run("r1", "2026-05-12", 100, {
+          distance: 6000,
+          avgPace: 330,
+          activityType: "tempo",
+        }),
+      ],
+      {},
+      "2026-05-12",
+      QUALITY_DEPS
+    );
+    expect(claimOf(map, "tempo")).toBe("r1");
+  });
+
+  it("still holds an easy run, or one with no session type, to the pace bar", () => {
+    for (const activityType of ["easy", undefined]) {
+      const map = computeClaims(
+        [tempoDay],
+        [
+          run("r1", "2026-05-12", 100, {
+            distance: 6000,
+            avgPace: 330,
+            activityType,
+          }),
+        ],
+        {},
+        "2026-05-12",
+        QUALITY_DEPS
+      );
+      expect(claimOf(map, "tempo")).toBeUndefined();
+    }
+  });
+
+  it("still needs the day's distance", () => {
+    const map = computeClaims(
+      [tempoDay],
+      [
+        run("r1", "2026-05-12", 100, {
+          distance: 3000,
+          avgPace: 330,
+          activityType: "tempo",
+        }),
+      ],
+      {},
+      "2026-05-12",
+      QUALITY_DEPS
+    );
+    expect(claimOf(map, "tempo")).toBeUndefined();
+  });
+});
+
 describe("legacy and manual completions", () => {
   const legacy = day("old", "2026-05-12", 2, "easy_30", {
     status: "completed_exact",

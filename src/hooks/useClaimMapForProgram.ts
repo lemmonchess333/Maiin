@@ -3,7 +3,8 @@
  *
  * Subscribes to the user's saved runs, reads the programState its caller
  * already holds (Train's engine, Home's snapshot), and produces a single `Map<runDayId, ClaimState>` via
- * `computeClaims` from `@/lib/scheduledRunCompletion`.
+ * `claimMapFor` (`@/lib/runClaims`), which supplies `computeClaims` its
+ * catalogue lookups and pace bar.
  *
  * Why a hook (not raw useMemo at the call site):
  *   - The fingerprint guard (Q3 P37) needs subscription-aware
@@ -32,116 +33,11 @@
 
 import { useMemo } from "react";
 import type { ProgramState } from "@/features/program/programTypes";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { localDateString } from "@/lib/dateHelpers";
-import {
-  computeClaims,
-  type ClaimState,
-  type CompletionDeps,
-  type SavedRunLike,
-} from "@/lib/scheduledRunCompletion";
+import type { ClaimState, SavedRunLike } from "@/lib/scheduledRunCompletion";
 import type { RunWindow, SavedRun } from "@/lib/savedRuns";
+import { claimableRuns, claimMapFor, type SavedRunDoc } from "@/lib/runClaims";
 import { useSavedRuns } from "./useSavedRuns";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
-
-/**
- * Pre-computed template-quality lookup. Keyed by `RUN_TEMPLATES[i].id`.
- * `tempo` / `intervals` / `race` are quality; everything else is easy.
- * Q3 P41: helper is template-agnostic — we supply this lookup so the
- * helper doesn't import RUN_TEMPLATES itself.
- */
-const TEMPLATE_QUALITY_BUCKET: Record<string, "quality" | "easy"> = (() => {
-  const map: Record<string, "quality" | "easy"> = {};
-  for (const t of RUN_TEMPLATES) {
-    map[t.id] =
-      t.type === "tempo" || t.type === "intervals" || t.type === "race"
-        ? "quality"
-        : "easy";
-  }
-  return map;
-})();
-
-/**
- * Race-template ids, by TYPE. Same construction as the quality lookup
- * above, and injected for the same reason (Q3 P41: the completion helper
- * stays template-agnostic).
- *
- * Never compare against the literal "race" — the real ids are `5k_race`
- * … `marathon_race`, which is exactly the bug this replaces on both sides
- * of the race-day short-circuit.
- */
-const RACE_TEMPLATE_IDS: ReadonlySet<string> = new Set(
-  RUN_TEMPLATES.filter((t) => t.type === "race").map((t) => t.id)
-);
-
-function defaultIsRaceTemplate(templateId: string | undefined): boolean {
-  return typeof templateId === "string" && RACE_TEMPLATE_IDS.has(templateId);
-}
-
-/**
- * Default pace-bucket classifier. Saved runs with avgPace under
- * 270 sec/km (4:30/km) read as "quality"; otherwise "easy". This
- * is a v1 best-guess; a future PR can pull from `paceTrends.ts`
- * once user-specific baselines are stable.
- */
-function defaultPaceBucketFor(saved: SavedRunLike): "quality" | "easy" {
-  if (typeof saved.avgPace !== "number") return "easy";
-  return saved.avgPace < 270 ? "quality" : "easy";
-}
-
-/**
- * Default planned-distance lookup from RUN_TEMPLATES, in METRES.
- *
- * The catalogue authors distances in kilometres (`targetDistanceKm`), but
- * `saved.distance` is metres end-to-end through the run flow (RunSummary.tsx:
- * "`distance` is metres throughout the run flow"). `distanceAndBucketOk`
- * divides one by the other, so this map MUST be metres.
- *
- * It was kilometres until 2026-08-02, which made the ratio 1000× too large
- * and the 70% threshold (PR-J-Q1 pin P2) a no-op: a `long_15k` slot was
- * claimable by a 10.5-METRE run, `marathon_race` by 29.5m. Every fixture in
- * the test file used metres against km templates, so all of them cleared the
- * bar trivially and none asserted a rejection — the same shape as the
- * `templateId === "race"` bug in PR #1775.
- *
- * Returns 0 when the template isn't in the registry (triggers Q1 P29 fallback
- * — date + template-bucket match, distance branch skipped).
- */
-const PLANNED_DISTANCE_M_BY_TEMPLATE: Record<string, number> = (() => {
-  const map: Record<string, number> = {};
-  for (const t of RUN_TEMPLATES) {
-    const km = t.config?.targetDistanceKm;
-    if (typeof km === "number" && km > 0) {
-      map[t.id] = km * 1000;
-    }
-  }
-  return map;
-})();
-
-/**
- * Resolve on `userOverride ?? templateId` — a swapped day is the session the
- * user actually chose. Every other resolution site does this
- * (`runPlanMetadata.ts:626`, `runProgrammeViewModel.ts:143`,
- * `adjustWeek.ts:55`, `runHeroState.ts:136`, `raceRunDaysReconcile.ts:62`),
- * and `scheduledRunCompletion.ts:132` resolves the same way for the race
- * short-circuit — so reading `templateId` alone meant a day swapped from
- * `long_15k` to `easy_30` still had to clear the 15K bar.
- */
-function defaultPlannedDistanceFor(runDay: {
-  templateId?: string;
-  userOverride?: string;
-}): number {
-  const id = runDay.userOverride || runDay.templateId;
-  if (!id) return 0;
-  return PLANNED_DISTANCE_M_BY_TEMPLATE[id] ?? 0;
-}
-
-const DEFAULT_DEPS: CompletionDeps = {
-  paceBucketFor: defaultPaceBucketFor,
-  templateQualityBucket: TEMPLATE_QUALITY_BUCKET,
-  plannedDistanceFor: defaultPlannedDistanceFor,
-  isRaceTemplate: defaultIsRaceTemplate,
-};
 
 /**
  * Stable-by-content fingerprint per Q3 P37. Multiple cheap signals
@@ -167,18 +63,6 @@ function computeFingerprint(
   return `${savedRuns.length}|${sumUpdated}|${manualKeys}|${today}`;
 }
 
-/**
- * Saved-run row as the hook exposes it — the `SavedRunLike` shape
- * the helper consumes, plus the Firestore-shaped extras (duration,
- * type) the UI reads when rendering Q5 "extras" pills. Exported so
- * RunWeekStrip / DayPeekCard / DayActionSheet can type their own
- * extras-display props without importing the shape twice.
- */
-export interface SavedRunDoc extends SavedRunLike {
-  duration?: number;
-  type?: string;
-}
-
 interface UseClaimMapResult {
   claimMap: Map<string, ClaimState>;
   /** Saved runs that don't claim any runDay slot. Keyed by date for
@@ -196,27 +80,6 @@ interface UseClaimMapResult {
 /** Every saved run: a planned day can be claimed by any run on its date. */
 const ALL_RUNS: RunWindow = { all: true };
 
-const NO_SAVED_RUNS: SavedRunDoc[] = [];
-
-/**
- * A saved run as the completion helper reads it. `date` is the run's day
- * under Lift3 (the day it started), the same day History, the streak and
- * Food count it on. `createdAt` orders claims: a legacy `createdAt` where
- * one exists, else `completedAt`.
- */
-function toSavedRunDoc(run: SavedRun): SavedRunDoc {
-  return {
-    id: run.id,
-    date: run.day,
-    distance: run.distance,
-    avgPace: run.avgPace,
-    templateId: run.templateId,
-    createdAt: { seconds: run.savedAtSeconds },
-    duration: run.duration,
-    type: run.type,
-  };
-}
-
 /**
  * @param dateAnchor optional override for "today" (test fixtures,
  *   future midnight-rollover effect). Defaults to the local date.
@@ -232,14 +95,9 @@ export function useClaimMapForProgram(
      with runs saved on this phone but not yet synced, so an offline run
      fills its day on Home at once. */
   const { runs, loading } = useSavedRuns(ALL_RUNS);
-  /* Only runs that count fill a planned day or show as an extra: a run saved
-     anyway counts in no total (`isVolumeEligible`), so it completes no
-     planned run either, and the strip agrees with the week's counts. A
-     planned run done without a run that counts can be marked done by hand. */
-  const savedRuns = useMemo(() => {
-    const counted = runs.filter((run) => isVolumeEligible(run));
-    return counted.length ? counted.map(toSavedRunDoc) : NO_SAVED_RUNS;
-  }, [runs]);
+  /* Only runs that count fill a planned day or show as an extra
+     (`claimableRuns`). */
+  const savedRuns = useMemo(() => claimableRuns(runs), [runs]);
 
   const today = dateAnchor ?? localDateString(new Date());
 
@@ -261,13 +119,7 @@ export function useClaimMapForProgram(
   // runDays identity covers plan-shape changes.
   const claimMap = useMemo(
     function () {
-      return computeClaims(
-        runDays,
-        savedRuns,
-        manualCompletions,
-        today,
-        DEFAULT_DEPS
-      );
+      return claimMapFor(runDays, savedRuns, manualCompletions, today);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `fingerprint` stands in for savedRuns / manualCompletions / today (see above); listing them directly would recompute on every reference change
     [runDays, fingerprint]

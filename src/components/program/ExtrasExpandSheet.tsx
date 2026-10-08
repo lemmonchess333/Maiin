@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 
 interface ExtrasExpandSheetProps {
   open: boolean;
