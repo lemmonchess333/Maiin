@@ -1014,8 +1014,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     .filter((d) => d.type === "run" || d.type === "both")
     .map((d) => d.day);
   if (runEligibleSlots.length === 0) {
-    // Shouldn't happen — race_prep requires at least 2 runs per week
-    // and the UI enforces it. Defensive fallback: empty plan.
+    // No run slot at all. Setup and the run plan editor start a race plan
+    // at two run days (Pgm7 A7); a plan already on one keeps it (Pgm5), and
+    // a week with none is a defensive fallback: an empty plan.
     return { totalWeeks, compressed, belowFloor, weeks: [] };
   }
 

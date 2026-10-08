@@ -4,6 +4,7 @@ import { buildPlan } from "@/features/program/planBuilder";
 import type { Goal } from "@/features/program/programTypes";
 import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
+import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
 
 /**
  * The review and the commit consume this SAME result. Every new plan comes
@@ -48,7 +49,11 @@ export function buildOnboardingPlan(
       draft.raceTargetDate && draft.raceTargetDate >= currentDate
     ),
   });
-  const weeklyRunDays = runMode === "freeform" ? 0 : draft.weeklyRunDays;
+  // A race plan needs at least two run days a week (Pgm7 A7).
+  const weeklyRunDays =
+    runMode === "freeform"
+      ? 0
+      : Math.max(MIN_RACE_RUN_DAYS, draft.weeklyRunDays);
   return buildPlan({
     primaryGoal: draft.primaryGoal,
     nutritionPhase,

@@ -55,6 +55,29 @@ import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
+/** Pgm7 A7: a race plan needs at least two run days a week. A plan that
+ *  already has fewer keeps them (Pgm5: no silent rebuild); a new one starts
+ *  at two. */
+export const MIN_RACE_RUN_DAYS = 2;
+/** Pgm7 A7: a marathon's setup recommends three. */
+export const MARATHON_RUN_DAYS = 3;
+
+/**
+ * The line under a race plan's run-days control, or null when the count
+ * suits the race. Fewer days are offered more days, a shorter race or a
+ * later date (A7).
+ */
+export function raceRunDaysNote(
+  distance: RaceDistance,
+  runDays: number
+): string | null {
+  if (runDays < MIN_RACE_RUN_DAYS)
+    return "A race plan needs at least two runs a week. Add a day when you can.";
+  if (distance === "marathon" && runDays < MARATHON_RUN_DAYS)
+    return "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date.";
+  return null;
+}
+
 /**
  * Five states, not four. `below-floor` (finish-safely) is DISTINCT from
  * `compressed`: below the taper-safe floor, compress-to-keep-date stops being
