@@ -84,6 +84,25 @@ export function judgesPaceNow(
   return segments.length === 0 || isWorkSegment(current);
 }
 
+/**
+ * The pace the Run screen's live bar judges against: an interval session's
+ * work pace, or a pace target. Null when the run has no pace to judge, as a
+ * tempo or an interval session has none until a benchmark gives one
+ * (Run20): the bar then doesn't show, rather than judging against a pace
+ * nobody prescribed, and a distance or a time target is never read as one.
+ */
+export function livePaceTarget(config: {
+  intervals?: Partial<IntervalShape> | null;
+  target?: { type: string; value?: number } | null;
+}): number | null {
+  const work = config.intervals?.workPace;
+  if (work && work > 0) return work;
+  const target = config.target;
+  if (target?.type === "pace" && target.value && target.value > 0)
+    return target.value;
+  return null;
+}
+
 export type SegmentTarget =
   | { kind: "duration"; seconds: number }
   | { kind: "distance"; meters: number };

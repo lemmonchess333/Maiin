@@ -11,6 +11,7 @@ import { describe, it, expect } from "vitest";
 import {
   isWorkSegment,
   judgesPaceNow,
+  livePaceTarget,
   pinnedWorkPace,
   racePaceBlockKm,
   segmentsFromEasyWithStrides,
@@ -300,6 +301,46 @@ describe("isWorkSegment — where a session's pace is judged", () => {
     );
     expect(reps.filter((s) => isWorkSegment(s))).toHaveLength(2);
     expect(isWorkSegment(null)).toBe(false);
+  });
+});
+
+/* Run20 (1): the live pace bar showed with no pace to judge against, at a
+   5:00 /km it made up (and, for a session whose target was a distance, read
+   the metres as a pace). It shows only for a real pace. */
+describe("livePaceTarget — the pace the Run screen's bar judges against", () => {
+  it("an interval session's work pace", () => {
+    expect(
+      livePaceTarget({
+        intervals: {
+          reps: 5,
+          workDistance: 1000,
+          restDuration: 90,
+          workPace: 285,
+        },
+        target: { type: "none" },
+      })
+    ).toBe(285);
+  });
+
+  it("a pace target", () => {
+    expect(livePaceTarget({ target: { type: "pace", value: 320 } })).toBe(320);
+  });
+
+  it("none with no pace: no 5:00, and never a distance or a time read as one", () => {
+    expect(livePaceTarget({ target: { type: "none" } })).toBeNull();
+    expect(
+      livePaceTarget({
+        intervals: { reps: 5, workDistance: 1000, restDuration: 90 },
+        target: { type: "none" },
+      })
+    ).toBeNull();
+    expect(
+      livePaceTarget({ target: { type: "distance", value: 5000 } })
+    ).toBeNull();
+    expect(
+      livePaceTarget({ target: { type: "time", value: 1800 } })
+    ).toBeNull();
+    expect(livePaceTarget({})).toBeNull();
   });
 });
 
