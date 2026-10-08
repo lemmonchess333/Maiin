@@ -1365,6 +1365,78 @@ describe("lighter weeks (Lift4 (9))", () => {
     expect(lighterWeekAllowed(full)).toBe(true);
   });
 
+  it("restarts the calendar's count when the person takes one", () => {
+    // A lighter week taken from Train counts as the calendar's and
+    // restarts its count (Lift4 (9), and the lifting handoff's lighter-week
+    // precedence table): the next comes four trained weeks later.
+    const takenIn = (weekNumber: number) =>
+      atWeek3(3, {
+        weekNumber,
+        currentPhase: "deload",
+        deloadSnapshot: {
+          weekNumber,
+          workouts: [],
+          runDays: [],
+          currentPhase: "progression",
+          fatigueScore: 0,
+          appliedAt: 0,
+        },
+      });
+    /** Which of the next six trained weeks are lighter, 1 = the one after. */
+    const lighterAfter = (state: ProgramState) => {
+      const out: number[] = [];
+      let st = state;
+      for (let k = 1; k <= 6; k++) {
+        st = advanceWeek(trained(st), "intermediate");
+        if (st.currentPhase === "deload") out.push(k);
+      }
+      return out;
+    };
+    // Taken in week 2: the next is four weeks on, in week 6.
+    expect(lighterAfter(takenIn(2))).toEqual([4]);
+    // Taken in week 3: week 4 is a full week, and the next comes in week 7.
+    expect(lighterAfter(takenIn(3))).toEqual([4]);
+    // The calendar's own lighter week runs on as it did: week 4, then 8.
+    const calendar = advanceWeek(trained(atWeek3(3)), "intermediate");
+    expect(calendar.currentPhase).toBe("deload");
+    expect(lighterAfter(calendar)).toEqual([4]);
+  });
+
+  it("leaves the count alone for a lighter week taken but not trained", () => {
+    const untrained = atWeek3(3, {
+      weekNumber: 2,
+      currentPhase: "deload",
+      deloadSnapshot: {
+        weekNumber: 2,
+        workouts: [],
+        runDays: [],
+        currentPhase: "progression",
+        fatigueScore: 0,
+        appliedAt: 0,
+      },
+    });
+    // An untrained week holds the number, as any week does.
+    expect(advanceWeek(untrained, "intermediate").weekNumber).toBe(2);
+  });
+
+  it("leaves the number to run on where the calendar brings none", () => {
+    // A beginner's plan has no calendar lighter weeks to restart, and its
+    // counter reads "Week 7", so the number carries on.
+    const beginner = atWeek3(3, {
+      weekNumber: 6,
+      currentPhase: "deload",
+      deloadSnapshot: {
+        weekNumber: 6,
+        workouts: [],
+        runDays: [],
+        currentPhase: "progression",
+        fatigueScore: 0,
+        appliedAt: 0,
+      },
+    });
+    expect(advanceWeek(trained(beginner), "beginner").weekNumber).toBe(7);
+  });
+
   it("is taken one at a time", () => {
     expect(lighterWeekAllowed(atWeek3(3))).toBe(true);
     expect(lighterWeekAllowed(atWeek3(3, { currentPhase: "deload" }))).toBe(
