@@ -9,6 +9,9 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  isWorkSegment,
+  judgesPaceNow,
+  pinnedWorkPace,
   racePaceBlockKm,
   segmentsFromEasyWithStrides,
   segmentsFromGuided,
@@ -269,5 +272,113 @@ describe("cross-run cue rotation (seed)", () => {
       .map((s) => s.cue);
     expect(walkBacks.length).toBe(5);
     expect(new Set(walkBacks).size).toBe(5);
+  });
+});
+
+describe("isWorkSegment — where a session's pace is judged", () => {
+  it("is a tempo block or an interval rep, never the easy parts around them", () => {
+    const tempo = segmentsFromTempo(
+      { warmupSec: 600, workSecs: [600, 600], floatSec: 120, cooldownSec: 300 },
+      "km"
+    );
+    expect(tempo.map((s) => isWorkSegment(s))).toEqual([
+      false, // warm-up
+      true,
+      false, // float
+      true,
+      false, // cool-down
+    ]);
+    const reps = segmentsFromIntervals(
+      {
+        reps: 2,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 300,
+        cooldownDuration: 120,
+      },
+      "km"
+    );
+    expect(reps.filter((s) => isWorkSegment(s))).toHaveLength(2);
+    expect(isWorkSegment(null)).toBe(false);
+  });
+});
+
+describe("judgesPaceNow — where the Run screen judges a pace target", () => {
+  const tempo = segmentsFromTempo(
+    { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+    "km",
+    270
+  );
+  const easyWithStrides = segmentsFromEasyWithStrides(30, {
+    reps: 4,
+    workSeconds: 20,
+  });
+
+  it("judges a tempo in its blocks only, never its warm-up or cool-down", () => {
+    expect(tempo.map((s) => judgesPaceNow("tempo", tempo, s))).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    // Past the cool-down's end, the session is over.
+    expect(judgesPaceNow("tempo", tempo, null)).toBe(false);
+  });
+
+  it("judges an interval session in its reps only", () => {
+    const reps = segmentsFromIntervals(
+      {
+        reps: 2,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 300,
+        cooldownDuration: 120,
+      },
+      "km"
+    );
+    expect(
+      reps.filter((s) => judgesPaceNow("intervals", reps, s)).map((s) => s.type)
+    ).toEqual(["hard", "hard"]);
+  });
+
+  it("judges any other run's pace goal throughout, its strides included", () => {
+    for (const s of easyWithStrides)
+      expect(judgesPaceNow("easy", easyWithStrides, s)).toBe(true);
+    expect(judgesPaceNow("long", [], null)).toBe(true);
+  });
+
+  it("judges a tempo with no structure throughout", () => {
+    expect(judgesPaceNow("tempo", [], null)).toBe(true);
+  });
+});
+
+describe("pinnedWorkPace — the goal pace a session prescribes", () => {
+  it("is the goal pace of a goal-pace tempo or a race-pace block", () => {
+    expect(
+      pinnedWorkPace(
+        segmentsFromTempo(
+          { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+          "km",
+          330,
+          { atGoalPace: true }
+        )
+      )
+    ).toBe(330);
+    expect(pinnedWorkPace(segmentsFromLongWithRacePace(16, 5, 330, "km"))).toBe(
+      330
+    );
+  });
+
+  it("is none for a threshold tempo, or a run with no segments", () => {
+    expect(
+      pinnedWorkPace(
+        segmentsFromTempo(
+          { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+          "km",
+          300
+        )
+      )
+    ).toBeNull();
+    expect(pinnedWorkPace(undefined)).toBeNull();
+    expect(pinnedWorkPace([])).toBeNull();
   });
 });
