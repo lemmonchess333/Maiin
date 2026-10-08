@@ -92,6 +92,7 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
@@ -440,10 +441,12 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
-  // A run-walk session (Run20 (5)) is running its steps.
+  // A run-walk session (Run20 (5)) is running its steps. A run type picked
+  // on a run-walk day leaves the steps playing, so this reads the template
+  // as the saved run will, the plan's when none was started from.
   const runWalkSession =
     !!runConfig?.segments?.length &&
-    isRunWalkTemplateId(runConfig.planMetadata?.actualTemplateId);
+    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no

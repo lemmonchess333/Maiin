@@ -11,6 +11,7 @@ import {
   RUN_WALK_TEMPLATE_IDS,
   type RunTemplate,
 } from "@/lib/workoutTemplates";
+import { DELOAD_LADDERS } from "@/lib/planDeloadWeek";
 import { plannedRunMinutes } from "./runTimeLimits";
 
 /**
@@ -126,9 +127,11 @@ export function newRunnerBuildMinutes(
  * (Run20 (5)), or null when it keeps its own: that week's run-walk session
  * in the first weeks, then, while the running builds, the longest template
  * of the run's own kind that fits the week's minutes
- * (`newRunnerBuildMinutes`), or else the longest easy run that does. The
- * race is always the race. The build stops on its own once the plan's runs
- * fit.
+ * (`newRunnerBuildMinutes`), or else the longest easy run that does. A
+ * tempo or intervals session's own kind is a smaller dose of itself, the
+ * deload's rungs (`DELOAD_LADDERS`): 6 × 1K cut to 8 × 400 is another
+ * session. The race is always the race. The build stops on its own once
+ * the plan's runs fit.
  */
 export function newRunnerTemplate(
   templateId: string,
@@ -146,11 +149,14 @@ export function newRunnerTemplate(
   const fitting = RUN_TEMPLATES.filter(
     (t) => t.type !== "race" && !isRunWalkTemplateId(t.id) && minutes(t) <= most
   ).sort((a, b) => minutes(b) - minutes(a) || a.id.localeCompare(b.id));
+  const quality = original.type === "tempo" || original.type === "intervals";
+  const rungs = DELOAD_LADDERS.find((ladder) => ladder.includes(original.id));
   return (
-    fitting.find(
-      (t) =>
-        t.type === original.type &&
-        Boolean(t.config.strides) === Boolean(original.config.strides)
+    fitting.find((t) =>
+      quality
+        ? (rungs ?? []).includes(t.id)
+        : t.type === original.type &&
+          Boolean(t.config.strides) === Boolean(original.config.strides)
     ) ??
     fitting.find((t) => t.type === "easy" && !t.config.strides) ??
     null

@@ -111,6 +111,9 @@ interface AdjustWeekSheetProps {
    * can forget is to stop asking it to remember.
    */
   uid: string;
+  /** Run20 (5): the day a new runner's first weeks end, for the eased runs
+   *  (`planEasierWeek`). */
+  newRunnerUntil?: string | null;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -172,11 +175,12 @@ export default function AdjustWeekSheet({
   realignRacePlan,
   initialIntent,
   uid,
+  newRunnerUntil = null,
 }: AdjustWeekSheetProps) {
   const todayKey = localDateString();
   const swaps = useMemo(
-    () => planEasierWeek(runDays, todayKey),
-    [runDays, todayKey]
+    () => planEasierWeek(runDays, todayKey, newRunnerUntil),
+    [runDays, todayKey, newRunnerUntil]
   );
 
   // The inputs are applied on mount and again whenever one of them changes

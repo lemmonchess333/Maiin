@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { runSessionAbout } from "../runSessionAbout";
+import { runSessionExplainer } from "../runSessionExplainer";
 import { RUN_TEMPLATES } from "../workoutTemplates";
 
 const about = (id: string) =>
@@ -63,6 +64,53 @@ describe("runSessionAbout", () => {
     expect(about("easy_40_strides").what).toMatch(
       /4 strides: 20 seconds of quick, smooth running/
     );
+  });
+
+  it("says the last run-walk is one run, and the first has no week before it", () => {
+    // Run-walk 6 is one 20-minute run between the walks (Run20 (5)).
+    const last = about("run_walk_6");
+    expect(last.what).toMatch(/^One easy run without stopping/);
+    expect(last.what).not.toMatch(/walks between/);
+    expect(last.feel).toMatch(/^Easy on the run: /);
+    expect(about("run_walk_5").what).toMatch(/walks between/);
+    // Run-walk 1 is the first week's: there is no last week's to swap in.
+    expect(about("run_walk_1").ifWrong).not.toMatch(/last week/);
+    expect(about("run_walk_1").ifWrong).toMatch(/start the walk early/);
+    expect(last.ifWrong).toMatch(/last week's session/);
+  });
+
+  it("says each thing once: the plan's reason repeats none of the other lines", () => {
+    // The four lines sit together (RunAbout), so a reason that restates the
+    // session or its pacing says nothing new: Run-walk 6's read "One easy
+    // run without stopping…" twice, and race day's said where the plan was
+    // building, and to start carefully, twice each.
+    const phrases = (line: string) => {
+      const words = line
+        .toLowerCase()
+        .replace(/[^a-z0-9' ]+/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+      return new Set(
+        words.slice(2).map((_, i) => words.slice(i, i + 3).join(" "))
+      );
+    };
+    for (const t of RUN_TEMPLATES) {
+      const lines = runSessionAbout(t);
+      for (const currentWeek of [2, 9, 13, 15]) {
+        const why = runSessionExplainer({
+          type: t.type,
+          templateId: t.id,
+          currentWeek,
+          totalWeeks: 16,
+          distance: "marathon",
+        });
+        if (!why) continue;
+        for (const line of [lines.what, lines.feel, lines.ifWrong]) {
+          const shared = [...phrases(why)].filter((p) => phrases(line).has(p));
+          expect(shared, `${t.id}, week ${currentWeek + 1}`).toEqual([]);
+        }
+      }
+    }
   });
 
   it("offers a way through when it feels wrong, not a verdict", () => {

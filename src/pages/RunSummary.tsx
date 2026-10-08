@@ -59,7 +59,7 @@ import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import { getAdherenceLabel } from "../lib/runPlanMetadata";
+import { getAdherenceLabel, runTemplateIdOf } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES, isRunWalkTemplateId } from "../lib/workoutTemplates";
 import {
   paceTableFromFitness,
@@ -533,8 +533,7 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
-          templateId:
-            state.runConfig?.planMetadata?.actualTemplateId ?? undefined,
+          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
@@ -567,6 +566,7 @@ export default function RunSummary() {
       activityType: state.runConfig?.activityType ?? "freerun",
       isInvalid: false,
       savedAnyway: false,
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 

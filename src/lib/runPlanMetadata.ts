@@ -136,6 +136,20 @@ export interface RunPlanPrefill {
 // ─── Default / freeform shape ───────────────────────────────────────
 
 /**
+ * The template a run was, as the saved-run reader reads it (`savedRuns.ts`):
+ * the one it was started from, else the plan's. A run started as something
+ * else on a planned day keeps the plan's, as its saved document will.
+ */
+export function runTemplateIdOf(
+  metadata:
+    | Pick<RunPlanMetadata, "actualTemplateId" | "plannedTemplateId">
+    | null
+    | undefined
+): string | undefined {
+  return metadata?.actualTemplateId ?? metadata?.plannedTemplateId ?? undefined;
+}
+
+/**
  * The metadata we write for a run that has no programme context —
  * either the user is on `freeform` runMode, or they started a run
  * via the manual path with no URL override and no programme plan.

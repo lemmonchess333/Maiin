@@ -115,6 +115,21 @@ describe("runSessionExplainer", () => {
     }
   });
 
+  it("the last run-walk is the one the weeks before built to, with no walks between", () => {
+    // Run-walk 6 is a walk, 20 minutes of running and a walk (review of
+    // #2655). What it is, "Why this run" says in its own line (Run21 (3)),
+    // so this is the reason only.
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_6",
+        ...ctx,
+      });
+      expect(line).toMatch(/^The last run-walk — what the weeks before/);
+      expect(line).not.toMatch(/walks between/);
+    }
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {

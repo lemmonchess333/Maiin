@@ -40,6 +40,7 @@ const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
   domAtRender: [] as string[],
   paceLoading: [] as boolean[],
+  paceRuns: [] as { id?: string; templateId?: string }[],
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
   track: vi.fn(),
@@ -61,8 +62,12 @@ vi.mock("@/features/program/useProgram", () => ({
   },
 }));
 vi.mock("@/hooks/usePaceInsight", () => ({
-  usePaceInsightFromRuns: (_runs: unknown, opts: { loading?: boolean }) => {
+  usePaceInsightFromRuns: (
+    runs: { id?: string; templateId?: string }[],
+    opts: { loading?: boolean }
+  ) => {
     h.paceLoading.push(opts.loading ?? false);
+    h.paceRuns = runs;
     return { insight: null, accept: vi.fn(), dismiss: vi.fn() };
   },
 }));
@@ -519,6 +524,16 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(
       screen.queryByText(/easy days easy|on target|Quicker than|Slower than/)
     ).toBeNull();
+  });
+
+  it("hands Pace Insight a run-walk as one, so it sets no benchmark", async () => {
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    expect(h.paceRuns.find((r) => r.id === "run-1")?.templateId).toBe(
+      "run_walk_1"
+    );
   });
 
   it("gives a run-walk no pace trend against runs", async () => {

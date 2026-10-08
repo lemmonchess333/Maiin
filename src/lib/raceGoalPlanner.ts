@@ -3,7 +3,8 @@ import {
   plannedRunMinutes,
   type RunTimeLimits,
 } from "@/features/program/runTimeLimits";
-import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { runWalkTemplateIdForWeek } from "@/features/program/newRunner";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
@@ -289,7 +290,9 @@ export function getRaceGoalPlannerState(
         (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
       );
     }, 0),
-    runWalkWeeks: week0.some((run) => isRunWalkTemplateId(run.templateId)),
+    // From the six weeks, not this week's runs: a week can have none left.
+    runWalkWeeks:
+      runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,

@@ -145,6 +145,7 @@ import {
   getEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek } from "@/lib/adjustWeek";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
@@ -561,6 +562,8 @@ export default function ProgrammeRunSection({
   );
   const coachingReady =
     !runsLoading && !runsFailed && runsEvidenceReady !== false;
+  // Run20 (5): the day a new runner's first weeks end, for easing a week.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
   const easeNudge = useMemo(
     () =>
       evaluateEaseWeekNudge({
@@ -576,7 +579,8 @@ export default function ProgrammeRunSection({
         // Nothing left to ease this week ⇒ already eased (or no quality
         // runs remain) — no persisted flag needed.
         weekAlreadyEased:
-          planEasierWeek(runDays, todayKeyDerivation).length === 0,
+          planEasierWeek(runDays, todayKeyDerivation, newRunnerUntil).length ===
+          0,
         fellBehindPending: contextualPrompt === "fell-behind",
         dismissedWeekKey: getDismissedWeekKey(profile.uid),
         lastShownAt: getLastShownAt(profile.uid),
@@ -592,6 +596,7 @@ export default function ProgrammeRunSection({
       recoveryEnded,
       raceCockpitVM?.phaseLabel,
       runDays,
+      newRunnerUntil,
       contextualPrompt,
       profile.uid,
     ]
@@ -1129,7 +1134,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
-          description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
+          description="Easy runs until recovery ends."
           action={
             <button
               type="button"
@@ -1810,6 +1815,7 @@ export default function ProgrammeRunSection({
         <AdjustWeekSheet
           open={adjustOpen}
           onClose={() => setAdjustOpen(false)}
+          newRunnerUntil={newRunnerUntil}
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{

@@ -150,6 +150,20 @@ vi.mock("@/hooks/useRunningStats", () => ({
 // Mock it so the dismissal test runs without a mounted <Toaster>.
 const toastMock = vi.fn();
 const toastSuccessMock = vi.fn();
+// The adjust sheet as it is, with the props Train hands it kept.
+const adjustSheet = vi.hoisted(() => ({
+  props: [] as { newRunnerUntil?: string | null }[],
+}));
+vi.mock("../AdjustWeekSheet", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../AdjustWeekSheet")>();
+  return {
+    default: (props: Parameters<typeof real.default>[0]) => {
+      adjustSheet.props.push(props);
+      return real.default(props);
+    },
+  };
+});
+
 vi.mock("sonner", () => ({
   toast: Object.assign((...args: unknown[]) => toastMock(...args), {
     success: (...args: unknown[]) => toastSuccessMock(...args),
@@ -632,6 +646,49 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       screen.getByRole("button", { name: /View run/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  it("says a recovery week is easy runs, in words", () => {
+    // It named a template ("easy_30"), and a new runner's recovery week is
+    // run-walk or the build's easy runs (review of #2655).
+    const ends = new Date();
+    ends.setDate(ends.getDate() + 5);
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile()}
+        programState={makeProgramState([], {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+            phase: "recovery",
+            recoveryEndDate: localDateString(ends),
+          },
+        } as Partial<ProgramState>)}
+      />
+    );
+    expect(
+      screen.getByText("Easy runs until recovery ends.")
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/easy_30/);
+  });
+
+  it("Run20 (5): hands the adjust sheet a new runner's six weeks, for easing", () => {
+    // Easing in the weeks after run-walk takes the build's minutes
+    // (`planEasierWeek`), so the sheet needs the day they end.
+    adjustSheet.props.length = 0;
+    const began = new Date(2026, 8, 7, 9).getTime();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({
+          runFrequency: "new",
+          onboardingCompletedAt: { toMillis: () => began },
+        } as Partial<UserProfile>)}
+        programState={makeProgramState([])}
+      />
+    );
+    expect(adjustSheet.props.at(-1)?.newRunnerUntil).toBe("2026-10-19");
   });
 
   it("Run20 (5): today's run-walk card shows its time and no pace, where an easy run shows its pace", () => {
