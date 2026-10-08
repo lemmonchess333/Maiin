@@ -2034,14 +2034,19 @@ export default function Food() {
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two
-           cannot disagree. */
+           cannot disagree.
+
+           At larger text the two controls drop under the words together,
+           at the right, once the words would have less than 7em beside
+           them: at double size on a 320px screen, "Your usual at
+           breakfast" ran 74px past the card. */
         <Card
           size="compact"
-          className="flex items-center gap-2"
+          className="flex flex-wrap items-center gap-2"
           role="group"
           aria-labelledby={usualHeadingId}
         >
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 grow basis-[7em]">
             <p
               id={usualHeadingId}
               className="text-micro leading-tight text-muted-foreground"
@@ -2058,22 +2063,24 @@ export default function Food() {
               kcal{usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
-          <IconButton
-            aria-label="Adjust portion or meal"
-            disabled={quickAdding !== null}
-            onClick={() => setPortionMeal(usual)}
-            icon={<Pencil className="size-4" />}
-          />
-          {/* Logs to the slot the heading names. With no slot selected the
-              heading names the hour's slot, and a meal saved without one
-              is filed by the diary's own hour rule, which differs. */}
-          <Button
-            variant="nutrition"
-            disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual, usualSlot)}
-          >
-            Log
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <IconButton
+              aria-label="Adjust portion or meal"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+              icon={<Pencil className="size-4" />}
+            />
+            {/* Logs to the slot the heading names. With no slot selected
+                the heading names the hour's slot, and a meal saved without
+                one is filed by the diary's own hour rule, which differs. */}
+            <Button
+              variant="nutrition"
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual, usualSlot)}
+            >
+              Log
+            </Button>
+          </div>
         </Card>
       )}
       {copyPreviewOpen && (
