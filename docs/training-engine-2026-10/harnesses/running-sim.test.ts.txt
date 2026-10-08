@@ -1,0 +1,776 @@
+/* SCRATCH — run-engine audit simulation (delete after use). Drives the REAL
+   generator week by week exactly as useProgram's creation path (planBuilder)
+   and Monday rollover (nextRunWeek -> regenerateRacePlan) do, feeding back
+   simulated completed runs through the real layoff classifier, the real
+   benchmark auto-derive / Pace Insight math and the real baseline fitter. */
+import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import {
+  generateRacePlanV2,
+  getPhaseForWeek,
+  DEFAULT_RUN_TUNING,
+  type RunTuning,
+  type ScheduledRunDay,
+} from "@/features/program/runScheduler";
+import {
+  isRunStepBackWeek,
+  TAPER_WEEKS_BY_DISTANCE,
+} from "@/features/program/runPlanTiming";
+import {
+  layoffFromRuns,
+  type DatedRun,
+  type LayoffClass,
+} from "@/features/program/layoffDetection";
+import type { RunningBaseline } from "@/features/program/runningBaseline";
+import {
+  trainingBands,
+  vdotFromRace,
+  planningEasyPaceSPerKm,
+  resolvePaceInsight,
+  deriveBenchmarkFromRuns,
+  paceTableFromFitness,
+  resolveSessionPaces,
+  type RunFitnessInput,
+} from "@/lib/runPaces";
+import { computePlanMetadata } from "@/lib/runPlanMetadata";
+import { resolvePaceVerdict } from "@/lib/paceVerdict";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import {
+  calendarLighterWeek,
+  raceLiftWeek,
+  isRaceBuildWeek,
+  type RaceLiftWeek,
+} from "@/features/program/weekPrescription";
+import { runSessionExplainer } from "@/lib/runSessionExplainer";
+import { recentRunningContext } from "@/lib/recentRunningContext";
+import type { RunSummaryItem } from "@/lib/savedRuns";
+
+const OUT =
+  `${process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim"}/running-sim-output.md`;
+const lines: string[] = [];
+const out = (s = "") => lines.push(s);
+
+type Dist = "5k" | "10k" | "half" | "marathon";
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const tmpl = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
+const mid = (b: [number, number]) => (b[0] + b[1]) / 2;
+const fmtPace = (s: number) =>
+  `${Math.floor(Math.round(s) / 60)}:${String(Math.round(s) % 60).padStart(2, "0")}`;
+
+/** Runner model: true fitness (VDOT) and the paces they actually run. */
+function paces(vdot: number) {
+  const b = trainingBands(vdot);
+  return {
+    easy: mid(b.easy),
+    thr: mid(b.threshold),
+    int: mid(b.interval),
+    bands: b,
+  };
+}
+
+/** Minutes + km a template costs THIS runner (true paces). */
+function dose(id: string, vdot: number): { min: number; km: number } {
+  const t = tmpl(id);
+  const p = paces(vdot);
+  if (t.type === "long" || t.type === "race") {
+    const km = t.config.targetDistanceKm ?? 0;
+    const pace = t.type === "race" ? p.thr * 1.06 : p.easy; // rough
+    return { min: (km * pace) / 60, km };
+  }
+  if (t.type === "easy") {
+    const min = t.config.targetDurationMinutes ?? t.estimatedDuration;
+    return { min, km: (min * 60) / p.easy };
+  }
+  if (t.type === "tempo" && t.config.tempo) {
+    const tp = t.config.tempo;
+    const easySec =
+      tp.warmupSec + tp.cooldownSec + (tp.floatSec ?? 0) * (tp.workSecs.length - 1);
+    const workSec = tp.workSecs.reduce((a, b) => a + b, 0);
+    return {
+      min: (easySec + workSec) / 60,
+      km: easySec / p.easy + workSec / p.thr,
+    };
+  }
+  if (t.type === "intervals" && t.config.intervals) {
+    const iv = t.config.intervals;
+    const wu = (iv.warmupDuration ?? 0) + (iv.cooldownDuration ?? 0);
+    const workM = iv.reps * (iv.workDistance ?? 0);
+    const workSec = (workM / 1000) * p.int;
+    const restSec = (iv.reps - 1) * iv.restDuration;
+    return {
+      min: (wu + workSec + restSec) / 60,
+      km: wu / p.easy + workM / 1000 + restSec / (p.easy + 90),
+    };
+  }
+  return { min: t.estimatedDuration, km: 0 };
+}
+
+const DEMANDING = (rd: ScheduledRunDay) =>
+  rd.type === "long" ||
+  rd.type === "tempo" ||
+  rd.type === "intervals" ||
+  rd.type === "race";
+const MEDIUM_LONG = new Set(["easy_60", "easy_75", "easy_90"]);
+
+interface Scenario {
+  name: string;
+  distance: Dist;
+  raceDate: string;
+  liftDays: number;
+  runDays: number;
+  /** Runner's real starting fitness (5K seconds). */
+  start5kS: number;
+  /** VDOT gained per week of consistent training (true fitness). */
+  vdotGainPerWeek: number;
+  /** Benchmark the APP holds: "confirmed" = a 5K entered & accepted,
+   *  "none" = nothing (template paces; maybe auto-derived later). */
+  benchmark: "confirmed" | "none";
+  /** What the user does with derived benchmarks / Pace Insights. */
+  acceptDerived?: boolean;
+  proInsightsAutoAccept?: boolean;
+  baseline?: RunningBaseline | null;
+  /** Re-confirm the baseline from recorded runs every N weeks. */
+  refreshBaselineEveryWeeks?: number;
+  /** [fromWeek, toWeek] inclusive with zero runs. */
+  layoff?: [number, number];
+  tuning?: RunTuning;
+  showWeeks?: (w: number) => boolean;
+}
+
+const START = "2026-10-06"; // Tuesday — "today" (the env date)
+
+function simulate(sc: Scenario) {
+  const weekSchedule: ScheduleDay[] = generateSchedule(sc.liftDays, sc.runDays);
+  const raceGoal = { distance: sc.distance, targetDate: sc.raceDate };
+  const tuning = sc.tuning ?? DEFAULT_RUN_TUNING;
+  const startVdot = vdotFromRace(5000, sc.start5kS);
+  let runFitness: (RunFitnessInput & { source?: string }) | null =
+    sc.benchmark === "confirmed"
+      ? {
+          benchmark: { distanceM: 5000, timeS: sc.start5kS },
+          vdot: Math.round(startVdot * 10) / 10,
+          pendingConfirmation: false,
+        }
+      : null;
+  let baseline = sc.baseline ?? null;
+  const history: DatedRun[] = [];
+  const summaries: RunSummaryItem[] = [];
+  const events: string[] = [];
+  const explainers = new Map<string, number>();
+  const rows: string[] = [];
+  let prevMin: number | null = null;
+  let prevKey: string | null = null;
+  let lastSundayDemanding = false;
+  let maxJump = { pct: 0, week: -1 };
+  let consistentWeeks = 0;
+  let totalWeeks = 0;
+  let currentWeek = 0;
+  const weekStart0 = localWeekKey(parseLocalDate(START));
+
+  out(`### ${sc.name}`);
+  out();
+  out(
+    `Schedule (generateSchedule(${sc.liftDays} lift, ${sc.runDays} run)): ` +
+      weekSchedule.map((d) => `${DOW[d.day]}=${d.type}`).join(" ")
+  );
+  const p0 = paces(startVdot);
+  out(
+    `Runner: 5K ${fmtPace(sc.start5kS)} (VDOT ${startVdot.toFixed(1)}), true easy ${fmtPace(p0.easy)}/km, threshold ${fmtPace(p0.thr)}/km, interval ${fmtPace(p0.int)}/km. App benchmark: ${sc.benchmark}${baseline ? `; baseline ${baseline.experience} ${baseline.weeklyMinutes} min/wk, longest ${baseline.longestRunMinutes} min` : "; no baseline"}. Tuning ${tuning.volume}/${tuning.difficulty}.`
+  );
+  out();
+  out(
+    "| wk | Mon | phase | step-back | layoff | sessions (day:template) | min | ~km | long km | long % of min | quality | flags | lift week |"
+  );
+  out("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+
+  for (let i = 0; ; i++) {
+    const monday = localDateString(
+      addLocalDays(parseLocalDate(weekStart0), i * 7)
+    );
+    const today = i === 0 ? START : monday;
+    if (today > sc.raceDate) break;
+    const trueVdot = startVdot + sc.vdotGainPerWeek * consistentWeeks;
+    const layoff: LayoffClass = layoffFromRuns(history, today);
+    const easyPace = planningEasyPaceSPerKm(runFitness);
+    const plan = generateRacePlanV2({
+      weekSchedule,
+      raceGoal,
+      weeklyRunDays: sc.runDays,
+      currentDate: today,
+      weekStart: monday,
+      recentLayoff: layoff,
+      tuning,
+      easyPaceSPerKm: easyPace,
+      runningBaseline: baseline,
+      runTimeLimits: null,
+      planTotalWeeks: i === 0 ? undefined : totalWeeks,
+    });
+    if (i === 0) totalWeeks = plan.totalWeeks;
+    currentWeek = i; // carry: prev + 1 each rollover
+    const position = totalWeeks - plan.totalWeeks;
+    const week = plan.weeks[0] ?? [];
+    const phase = getPhaseForWeek(currentWeek, totalWeeks, sc.distance);
+    const stepBack = isRunStepBackWeek(currentWeek, totalWeeks, sc.distance);
+
+    // Explainer copy the person would see (the selected-day "Why this run").
+    for (const rd of week) {
+      const t = tmpl(rd.userOverride ?? rd.templateId);
+      const line = runSessionExplainer({
+        type: t.type,
+        templateId: t.id,
+        currentWeek,
+        totalWeeks,
+        distance: sc.distance,
+      });
+      if (line) {
+        const k = `${t.type}${t.id.endsWith("_strides") ? "+strides" : MEDIUM_LONG.has(t.id) ? "(medium-long)" : ""} [${phase}] → ${line}`;
+        explainers.set(k, (explainers.get(k) ?? 0) + 1);
+      }
+    }
+
+    // Week metrics at the runner's TRUE paces.
+    let min = 0;
+    let km = 0;
+    let longKm = 0;
+    let longMin = 0;
+    const quality: string[] = [];
+    for (const rd of week) {
+      const d = dose(rd.templateId, trueVdot);
+      min += d.min;
+      km += d.km;
+      if (rd.type === "long") {
+        longKm = tmpl(rd.templateId).config.targetDistanceKm ?? 0;
+        longMin = d.min;
+      }
+      if (rd.type === "tempo" || rd.type === "intervals") quality.push(rd.templateId);
+    }
+    // Adjacent demanding days (incl. last week's Sunday → this Monday).
+    const flags: string[] = [];
+    if (plan.compressed) flags.push("compressed");
+    if (plan.belowFloor) flags.push("belowFloor");
+    if (position !== currentWeek) flags.push(`POS≠${position}`);
+    const sorted = [...week].sort((a, b) => (a.date! < b.date! ? -1 : 1));
+    const demandingDates = new Set(
+      sorted
+        .filter((rd) => DEMANDING(rd) || MEDIUM_LONG.has(rd.templateId))
+        .map((rd) => rd.date!)
+    );
+    for (const rd of sorted) {
+      if (!(DEMANDING(rd) || MEDIUM_LONG.has(rd.templateId))) continue;
+      const next = localDateString(addLocalDays(parseLocalDate(rd.date!), 1));
+      if (demandingDates.has(next)) {
+        const other = sorted.find((x) => x.date === next)!;
+        flags.push(`b2b ${rd.templateId}→${other.templateId}`);
+      }
+    }
+    if (lastSundayDemanding) {
+      const mon = sorted.find((rd) => rd.date === monday);
+      if (mon && (DEMANDING(mon) || MEDIUM_LONG.has(mon.templateId)))
+        flags.push(`b2b(prev Sun)→${mon.templateId}`);
+    }
+    const sunday = localDateString(addLocalDays(parseLocalDate(monday), 6));
+    const sun = sorted.find((rd) => rd.date === sunday);
+    lastSundayDemanding = !!sun && (DEMANDING(sun) || MEDIUM_LONG.has(sun.templateId));
+    if (week.some((rd) => rd.trainingBasis)) {
+      const reasons = [...new Set(week.filter((r) => r.trainingBasis).map((r) => r.trainingBasis!.reason))];
+      flags.push(`baseline:${reasons.join("/")}`);
+    }
+    if (week.some((rd) => rd.clashesWithLift)) flags.push("clashesWithLift");
+    if (prevMin && prevMin > 0) {
+      const pct = (min - prevMin) / prevMin;
+      if (pct > maxJump.pct && phase !== "race") maxJump = { pct, week: i };
+      if (pct >= 0.2) flags.push(`+${Math.round(pct * 100)}% vol`);
+    }
+
+    // Lift coupling (Lift4): calendar lighter week + race lift weeks.
+    const race = { weekIndex: currentWeek, totalWeeks, distance: sc.distance };
+    const rlw = raceLiftWeek(race, prevKey as RaceLiftWeek | undefined);
+    const liftWeek = [
+      calendarLighterWeek(i + 1, race) ? "lighter" : "",
+      rlw ?? "",
+      isRaceBuildWeek(race) ? "leg-trim" : "",
+    ]
+      .filter(Boolean)
+      .join("+");
+    prevKey = rlw ?? (isRaceBuildWeek(race) ? "build" : null);
+
+    const sessions = sorted
+      .map((rd) => `${DOW[rd.dayIndex]}:${rd.templateId}`)
+      .join(" ");
+    const show = sc.showWeeks ? sc.showWeeks(i) : true;
+    if (show) {
+      rows.push(
+        `| ${i + 1} | ${monday.slice(5)} | ${phase} | ${stepBack ? "yes" : ""} | ${layoff === "none" ? "" : layoff} | ${sessions} | ${Math.round(min)} | ${km.toFixed(1)} | ${longKm || ""} | ${longMin ? Math.round((longMin / min) * 100) + "%" : ""} | ${quality.join(",") || "–"} | ${flags.join("; ")} | ${liftWeek} |`
+      );
+    }
+    prevMin = min;
+
+    // The runner executes the week (unless laid off).
+    const off = sc.layoff && i >= sc.layoff[0] && i <= sc.layoff[1];
+    if (!off) {
+      consistentWeeks++;
+      for (const rd of week) {
+        if (rd.date! < today) continue; // creation week: days before today
+        const d = dose(rd.templateId, trueVdot);
+        const run: DatedRun = {
+          date: rd.date,
+          distance: d.km * 1000,
+          duration: d.min * 60,
+        };
+        history.push(run);
+        summaries.push({
+          id: `${rd.date}-${rd.templateId}`,
+          distance: d.km * 1000,
+          duration: d.min * 60,
+          avgPace: (d.min * 60) / d.km,
+          elevationGain: 0,
+          calories: 0,
+          activityType: rd.type === "race" ? "race" : rd.type,
+          completedAt: parseLocalDate(rd.date!),
+          date: rd.date,
+          relativeEffort: null,
+        });
+      }
+    }
+
+    // Feedback loops at the END of the week (what the app could do next).
+    const sundayEnd = parseLocalDate(sunday);
+    const ninety = summaries.filter(
+      (r) => sundayEnd.getTime() - r.completedAt.getTime() <= 90 * 86400000
+    );
+    const eligible = ninety.map((r) => ({
+      distanceM: r.distance,
+      durationS: r.duration,
+      id: r.id,
+      completedAt: r.completedAt,
+    }));
+    if (!runFitness && eligible.length >= 3) {
+      const derived = deriveBenchmarkFromRuns(eligible);
+      if (derived) {
+        const v = vdotFromRace(derived.distanceM, derived.timeS);
+        runFitness = {
+          benchmark: { distanceM: derived.distanceM, timeS: derived.timeS },
+          vdot: Math.round(v * 10) / 10,
+          pendingConfirmation: !sc.acceptDerived,
+        };
+        events.push(
+          `wk ${i + 1}: auto-derive set benchmark ${(derived.distanceM / 1000).toFixed(1)} km in ${Math.round(derived.timeS / 60)} min → VDOT ${v.toFixed(1)} (true VDOT ${trueVdot.toFixed(1)}); ${sc.acceptDerived ? "user ACCEPTS → prescriptive" : "pending (not prescriptive)"}; derived easy pace ${fmtPace(mid(trainingBands(v).easy))}/km vs true ${fmtPace(paces(trueVdot).easy)}/km`
+        );
+      }
+    } else if (runFitness && !runFitness.pendingConfirmation) {
+      const ins = resolvePaceInsight(runFitness, eligible);
+      if (ins) {
+        events.push(
+          `wk ${i + 1}: Pace Insight (Pro) → ${ins.direction} — VDOT ${ins.currentVdot} → ${ins.suggestedVdot} (true ${trueVdot.toFixed(1)})${sc.proInsightsAutoAccept ? " — ACCEPTED" : " — shown, not accepted"}`
+        );
+        if (sc.proInsightsAutoAccept) {
+          runFitness = {
+            benchmark: {
+              distanceM: ins.suggestedBenchmark.distanceM,
+              timeS: ins.suggestedBenchmark.timeS,
+            },
+            vdot: ins.suggestedVdot,
+            pendingConfirmation: false,
+          };
+        }
+      }
+    }
+    if (
+      baseline &&
+      sc.refreshBaselineEveryWeeks &&
+      (i + 1) % sc.refreshBaselineEveryWeeks === 0
+    ) {
+      const ctx = recentRunningContext(summaries, addLocalDays(sundayEnd, 0));
+      const next: RunningBaseline = {
+        ...baseline,
+        weeklyMinutes: Math.max(10, Math.round(ctx.averageWeeklyMinutes)),
+        longestRunMinutes: Math.max(
+          10,
+          Math.min(
+            Math.round(ctx.longestMinutes),
+            Math.round(ctx.averageWeeklyMinutes)
+          )
+        ),
+        source: "recorded",
+        confirmedAt: sunday,
+      };
+      events.push(
+        `wk ${i + 1}: baseline re-confirmed from recorded runs → ${next.weeklyMinutes} min/wk, longest ${next.longestRunMinutes} min`
+      );
+      baseline = next;
+    }
+  }
+  rows.forEach((r) => out(r));
+  out();
+  out(
+    `Block: ${totalWeeks} weeks; biggest week-over-week volume jump (non-race): +${Math.round(maxJump.pct * 100)}% into week ${maxJump.week + 1}.`
+  );
+  if (events.length) {
+    out();
+    out("Feedback events:");
+    events.forEach((e) => out(`- ${e}`));
+  }
+  out();
+  out("Explainer lines this plan shows (count of scheduled sessions):");
+  [...explainers.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([k, n]) => out(`- ${n}× ${k}`));
+  out();
+  return { totalWeeks };
+}
+
+describe("scratch run-engine audit simulation", () => {
+  it("prints week-by-week plans", () => {
+    // (a) marathon a year out, ~25 km/week runner, 4 run days, lifts 3x.
+    // A 25:00 5K runner (VDOT ~38) runs easy ~6:3x/km → 4 runs ≈ 25 km/wk.
+    simulate({
+      name: "(a) Marathon 52 weeks out — 4 run days + 3 lift days, 5K 25:00 benchmark CONFIRMED, no baseline, standard knobs",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+    });
+    simulate({
+      name: "(a-nobench) Same runner, NO benchmark (the onboarding default) — derived benchmark left pending",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "none",
+      acceptDerived: false,
+      showWeeks: (w) => w < 3 || w % 8 === 0 || w > 46,
+    });
+    simulate({
+      name: "(a-derived-accepted) NO benchmark, auto-derived benchmark ACCEPTED (Use for pace targets)",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "none",
+      acceptDerived: true,
+      showWeeks: (w) => w < 3 || w % 8 === 0 || w > 43,
+    });
+    simulate({
+      name: "(a-insight) Confirmed benchmark + Pro Pace Insights auto-accepted",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+      proInsightsAutoAccept: true,
+      showWeeks: (w) => w < 3 || w % 8 === 0 || w > 43,
+    });
+    simulate({
+      name: "(a-baseline) Confirmed benchmark + running baseline set ONCE at creation (regular, 150 min/wk, longest 70 min), never re-confirmed",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+      baseline: {
+        version: 1,
+        experience: "regular",
+        weeklyMinutes: 150,
+        longestRunMinutes: 70,
+        confirmedAt: START,
+        source: "self_reported",
+      },
+      showWeeks: (w) => w < 6 || w % 8 === 0 || w > 47,
+    });
+    simulate({
+      name: "(a-baseline-refresh) Same baseline, re-confirmed from RECORDED runs every 4 weeks (Use recent running)",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+      baseline: {
+        version: 1,
+        experience: "regular",
+        weeklyMinutes: 150,
+        longestRunMinutes: 70,
+        confirmedAt: START,
+        source: "self_reported",
+      },
+      refreshBaselineEveryWeeks: 4,
+      showWeeks: (w) => w < 6 || w % 8 === 0 || w > 47,
+    });
+    simulate({
+      name: "(a-layoff) Confirmed benchmark, runner stops for 4 weeks (weeks 21-24), then resumes",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 4,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+      layoff: [20, 23],
+      showWeeks: (w) => w >= 18 && w <= 32,
+    });
+    simulate({
+      name: "(a-5days) Same runner, 5 run days + 3 lift days (one Both day)",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 5,
+      start5kS: 25 * 60,
+      vdotGainPerWeek: 0.06,
+      benchmark: "confirmed",
+      showWeeks: (w) => w < 2 || w === 19 || w === 20 || w === 27 || w > 45,
+    });
+    // (b) half marathon 16 weeks out, 3 run days.
+    simulate({
+      name: "(b) Half marathon 16 weeks out — 3 run days + 3 lift days, 5K 27:30 benchmark confirmed",
+      distance: "half",
+      raceDate: "2027-01-24",
+      liftDays: 3,
+      runDays: 3,
+      start5kS: 27 * 60 + 30,
+      vdotGainPerWeek: 0.08,
+      benchmark: "confirmed",
+    });
+    simulate({
+      name: "(b-harder) Same, difficulty=harder (Run18: no second quality at 3 days)",
+      distance: "half",
+      raceDate: "2027-01-24",
+      liftDays: 3,
+      runDays: 3,
+      start5kS: 27 * 60 + 30,
+      vdotGainPerWeek: 0.08,
+      benchmark: "confirmed",
+      tuning: { volume: "standard", difficulty: "harder" },
+      showWeeks: (w) => w >= 6 && w <= 9,
+    });
+    // (c) 5K 10 weeks out, near-beginner.
+    simulate({
+      name: "(c) 5K 10 weeks out — near-beginner, 3 run days + 2 lift days, no benchmark, no baseline (onboarding default)",
+      distance: "5k",
+      raceDate: "2026-12-13",
+      liftDays: 2,
+      runDays: 3,
+      start5kS: 36 * 60,
+      vdotGainPerWeek: 0.15,
+      benchmark: "none",
+    });
+    simulate({
+      name: "(c-baseline) Same beginner with a 'building' baseline: 60 min/wk, longest 25 min",
+      distance: "5k",
+      raceDate: "2026-12-13",
+      liftDays: 2,
+      runDays: 3,
+      start5kS: 36 * 60,
+      vdotGainPerWeek: 0.15,
+      benchmark: "none",
+      baseline: {
+        version: 1,
+        experience: "building",
+        weeklyMinutes: 60,
+        longestRunMinutes: 25,
+        confirmedAt: START,
+        source: "self_reported",
+      },
+    });
+    simulate({
+      name: "(c-0lift) Same beginner, 3 run days and NO lifting",
+      distance: "5k",
+      raceDate: "2026-12-13",
+      liftDays: 0,
+      runDays: 3,
+      start5kS: 36 * 60,
+      vdotGainPerWeek: 0.15,
+      benchmark: "none",
+      showWeeks: (w) => w < 3,
+    });
+
+    // (d) "New to running" picks Race prep + Full; onboarding defaults to
+    // 1 run/week for that tier (Onboarding.tsx setWeeklyRunDays(new → 1)).
+    simulate({
+      name: "(d) 'New to running' + marathon 52 weeks out, onboarding default 1 run/week, 3 lift days",
+      distance: "marathon",
+      raceDate: "2027-10-03",
+      liftDays: 3,
+      runDays: 1,
+      start5kS: 38 * 60,
+      vdotGainPerWeek: 0.1,
+      benchmark: "none",
+      showWeeks: (w) => w < 2 || w === 20 || w === 40 || w > 47,
+    });
+    simulate({
+      name: "(e) 10K 20 weeks out, 2 run days (the 'occasional runner' default), 4 lift days",
+      distance: "10k",
+      raceDate: "2027-02-21",
+      liftDays: 4,
+      runDays: 2,
+      start5kS: 30 * 60,
+      vdotGainPerWeek: 0.08,
+      benchmark: "confirmed",
+    });
+
+    // Long-run ceiling (Run17) by confirmed easy pace.
+    out("### Long-run ceiling by confirmed easy pace (Run17: km × easy pace ≤ 150 min)");
+    out();
+    for (const pace of [300, 330, 360, 394, 420, 450, 460, 484, 540]) {
+      const tiers = [6, 8, 10, 12, 15, 20, 25, 30].filter(
+        (km) => (km * pace) / 60 <= 150
+      );
+      out(
+        `- easy ${fmtPace(pace)}/km → longest schedulable long run ${tiers.at(-1)} km (marathon = ${(42.2 / (tiers.at(-1) ?? 1)).toFixed(2)}× it)`
+      );
+    }
+    out("- no confirmed benchmark → nominal minutes (≈5:36/km) → 25 km");
+    out();
+
+    // Session-level evidence: the real prefill + segments per template.
+    const unit = "km" as const;
+    const table383 = paceTableFromFitness({
+      benchmark: { distanceM: 5000, timeS: 1500 },
+      vdot: null,
+    });
+    const ids = [
+      "easy_30",
+      "easy_40",
+      "easy_60",
+      "easy_90",
+      "easy_30_strides",
+      "tempo_20",
+      "tempo_40",
+      "4x1k",
+      "6x1k",
+      "8x400",
+      "long_15k",
+      "long_20k",
+      "marathon_race",
+    ];
+    const rp = {
+      mode: "race_prep" as const,
+      raceGoal: { distance: "marathon" as const, targetDate: "2027-10-03" },
+      totalWeeks: 52,
+      currentWeek: 30, // build
+    };
+    for (const [label, table, raceTarget] of [
+      ["NO benchmark", null, null],
+      ["benchmark 5K 25:00 (VDOT 38.3)", table383, null],
+      [
+        "benchmark + marathon goal 4:15:00 (A2, build phase)",
+        table383,
+        { distance: "marathon" as const, targetTimeS: 4.25 * 3600, currentVdot: table383!.vdot },
+      ],
+    ] as const) {
+      out(`### Prefill + segments the player gets — ${label}`);
+      out();
+      for (const id of ids) {
+        const { prefill } = computePlanMetadata({
+          displayUnit: unit,
+          profileRunMode: "race_prep",
+          todayDayIndex: 3,
+          todayDate: "2027-05-05",
+          runPlan: rp as never,
+          runDays: [],
+          paceTable: table as never,
+          urlTemplateId: id,
+          urlType: null,
+          raceTarget: raceTarget as never,
+          urlScheduledRunId: null,
+        });
+        const tgt = prefill.target
+          ? `${prefill.target.type}${prefill.target.value ? "=" + (prefill.target.type === "pace" ? fmtPace(prefill.target.value) + "/km" : prefill.target.type === "distance" ? prefill.target.value / 1000 + " km" : prefill.target.value / 60 + " min") : ""}`
+          : "none";
+        const work = prefill.intervals?.workPace
+          ? ` workPace=${fmtPace(prefill.intervals.workPace)}/km`
+          : prefill.intervals
+            ? " workPace=undefined (PaceZoneBar falls back to 5:00/km)"
+            : "";
+        const segs = prefill.segments
+          ? prefill.segments
+              .map((s) => `[${s.eyebrow ?? (s.rep && s.type === "hard" ? `REP ${s.rep}/${s.totalReps}` : s.type.toUpperCase())}] ${s.label}`)
+              .join(" → ")
+          : "(no segments: the in-run screen has no step shell, no countdown)";
+        out(`- **${id}** (${tmpl(id).name}): target ${tgt}${work}; segments: ${segs}`);
+      }
+      out();
+    }
+
+    // Post-run verdict + live PaceZoneBar for PERFECT execution.
+    out("### Post-run verdict (RunSummary) and live PaceZoneBar for a perfectly executed session — 5K 25:00 runner, benchmark confirmed");
+    out();
+    const pz = (avg: number, target: number) => {
+      const diff = avg - target;
+      return Math.abs(diff) <= 15
+        ? "On pace"
+        : diff > 0
+          ? `+${Math.round(diff)}s slow`
+          : `${Math.round(diff)}s fast`;
+    };
+    for (const id of ["tempo_20", "tempo_30", "tempo_40", "4x1k", "6x1k", "easy_40", "long_15k"]) {
+      const d = dose(id, vdotFromRace(5000, 1500));
+      const avg = (d.min * 60) / d.km;
+      const t = tmpl(id);
+      const paces = resolveSessionPaces(t.type as never, table383);
+      const target =
+        paces.targetPace ?? paces.workPace ?? (paces.band ? (paces.band[0] + paces.band[1]) / 2 : 0);
+      const verdict =
+        t.type === "intervals"
+          ? "(intervals excluded from the verdict)"
+          : resolvePaceVerdict({
+              templateType: t.type,
+              actualPaceS: avg,
+              targetPaceS: target,
+              targetBandS: paces.band,
+              unit,
+            })?.line;
+      const bar =
+        t.type === "tempo" || t.type === "intervals"
+          ? `; PaceZoneBar at the end (whole-run avg ${fmtPace(avg)} vs ${fmtPace(target)}): "${pz(avg, target)}"`
+          : "";
+      out(`- ${id}: whole-run avg ${fmtPace(avg)}/km → verdict: ${verdict}${bar}`);
+    }
+    // A2 long run with a race-pace finish judged against the EASY band.
+    {
+      const goal = (4.25 * 3600) / 42.195;
+      const km = 20;
+      const block = 7;
+      const easy = mid(trainingBands(38.3).easy);
+      const avg = ((km - block) * easy + block * goal) / km;
+      const b = table383!.easy;
+      out(
+        `- long_20k with a ${block} km goal-pace finish (A2, goal ${fmtPace(goal)}/km): whole-run avg ${fmtPace(avg)}/km vs easy band ${fmtPace(b[0])}–${fmtPace(b[1])} → verdict: ${resolvePaceVerdict({ templateType: "long", actualPaceS: avg, targetPaceS: mid(b), targetBandS: b, unit })?.line}`
+      );
+      const tempoAvg = dose("tempo_30", 38.3);
+      void tempoAvg;
+    }
+    out();
+
+    // Template paces with no benchmark vs these runners.
+    out("### Template fallback paces (no benchmark) vs the simulated runners");
+    out();
+    for (const s5k of [25 * 60, 27 * 60 + 30, 36 * 60]) {
+      const p = paces(vdotFromRace(5000, s5k));
+      out(
+        `- 5K ${fmtPace(s5k)} runner: true threshold ${fmtPace(p.thr)}/km, interval ${fmtPace(p.int)}/km, 5K race pace ${fmtPace(s5k / 5)}/km — the no-benchmark tempo target is 4:30/km (tempo_* targetPace 270) and PaceZoneBar's interval fallback is 5:00/km (300).`
+      );
+    }
+    out();
+    fs.writeFileSync(OUT, lines.join("\n"));
+    expect(lines.length).toBeGreaterThan(10);
+  });
+});
