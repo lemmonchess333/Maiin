@@ -196,7 +196,7 @@ const PINNED: Record<string, string> = {
   "functions/lib/workoutBurn.js":
     "src/features/program/__tests__/workoutBurn.cross.test.ts",
   // PROGRAM-DELOAD-01 — CF deload transform mirrors programEngine.ts
-  // applyDeload (and the easierToday.deloadWeight weight rule).
+  // applyDeload.
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
   // One-off run move — the copy inside the command transaction is the one

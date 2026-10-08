@@ -1364,7 +1364,15 @@ function ProgramInner() {
                             <p className="text-sm font-semibold text-foreground">
                               Go easier today ·{" "}
                               {summarizeEasier(
-                                buildEasierSession(selectedWorkout, restContext)
+                                buildEasierSession(
+                                  selectedWorkout,
+                                  restContext,
+                                  {
+                                    smallPlates:
+                                      programState.settings?.smallPlates ===
+                                      true,
+                                  }
+                                )
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -1796,6 +1804,7 @@ function ProgramInner() {
       <ExpressSessionSheet
         timeBudgetMinutes={usualBudget}
         rest={restContext}
+        smallPlates={programState.settings?.smallPlates === true}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1852,7 +1861,9 @@ function ProgramInner() {
             sessionVariant === "full"
               ? null
               : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay, restContext)
+                ? buildEasierSession(storedDay, restContext, {
+                    smallPlates: programState.settings?.smallPlates === true,
+                  })
                 : sessionVariant === "time_budget"
                   ? buildTimeBudgetSession(
                       storedDay,
