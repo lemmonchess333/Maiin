@@ -55,31 +55,32 @@ several answers below:
 These restore a lock's text or fix a defect; they needed no decision. Each is
 a draft PR with a red test first.
 
-| What                                                                                | Finding               | PR                                                           |
-| ----------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------ |
-| Dumbbell and kettlebell lifts start on a weight the rack has                        | F1                    | lemmonchess333/Maiin#2610                                    |
-| A short session's two-set main lifts survive every load                             | F7                    | lemmonchess333/Maiin#2612                                    |
-| "Last time" is the last session in the lift's own slot                              | F11                   | lemmonchess333/Maiin#2614                                    |
-| Easier today's weights on the lift's own equipment, never under the bar             | F20                   | lemmonchess333/Maiin#2620                                    |
-| The lighter-week banner only when a lighter week can be taken                       | F19                   | lemmonchess333/Maiin#2621                                    |
-| A lighter week taken from Train restarts the calendar's count                       | Lift4 (9), A4         | lemmonchess333/Maiin#2622                                    |
-| One set of goal names                                                               | Lift4 (4)             | lemmonchess333/Maiin#2623                                    |
-| Miss counts start again after any break                                             | Lift4 (7)             | lemmonchess333/Maiin#2624                                    |
-| A bodyweight lift on a fixed target climbs a rep when every set hits it             | Lift4 (6)             | lemmonchess333/Maiin#2625                                    |
-| No lifting suggestions on the Performance tab                                       | Lift4 (3)             | lemmonchess333/Maiin#2626                                    |
-| Each session keeps its heavier or lighter role as the order carries over            | Lift4 (12)(b)         | lemmonchess333/Maiin#2627                                    |
-| A level change sets how the main lifts progress                                     | Lift4 (12)(a)         | lemmonchess333/Maiin#2629                                    |
-| Replace and Add take their role's numbers                                           | Lift4 (5); Lift5      | lemmonchess333/Maiin#2630 (lock lemmonchess333/Maiin#2628)   |
-| One definition of a long or hard run, the run plan's                                | A5                    | lemmonchess333/Maiin#2607                                    |
-| A tempo is judged by its blocks, live and after; a goal-pace tempo against its pace | F22; audit §0 item 3  | lemmonchess333/Maiin#2633                                    |
-| A quality day counts the run done as that session                                   | F13; PR-J-Q1          | lemmonchess333/Maiin#2635 (STATUS lemmonchess333/Maiin#2632) |
-| A plan made mid-week plans no run before that day                                   | F16; Run19            | lemmonchess333/Maiin#2636 (lock lemmonchess333/Maiin#2634)   |
-| Home shows a run on the date the plan holds it                                      | F14, F21; ADR-0002    | lemmonchess333/Maiin#2637                                    |
-| A race plan needs at least two run days a week                                      | A7; audit §7 item 11  | lemmonchess333/Maiin#2638                                    |
-| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3 | lemmonchess333/Maiin#2639                                    |
-| The taper's session is placed like every quality run                                | R10; RUN-EV-10        | lemmonchess333/Maiin#2642                                    |
-| The copy that was wrong today                                                       | R12                   | lemmonchess333/Maiin#2641                                    |
-| The rest-day card and the usual-meal row fit at large text                          | #2612's capture run   | lemmonchess333/Maiin#2631                                    |
+| What                                                                                | Finding                   | PR                                                           |
+| ----------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
+| Dumbbell and kettlebell lifts start on a weight the rack has                        | F1                        | lemmonchess333/Maiin#2610                                    |
+| A short session's two-set main lifts survive every load                             | F7                        | lemmonchess333/Maiin#2612                                    |
+| "Last time" is the last session in the lift's own slot                              | F11                       | lemmonchess333/Maiin#2614                                    |
+| Easier today's weights on the lift's own equipment, never under the bar             | F20                       | lemmonchess333/Maiin#2620                                    |
+| The lighter-week banner only when a lighter week can be taken                       | F19                       | lemmonchess333/Maiin#2621                                    |
+| A lighter week taken from Train restarts the calendar's count                       | Lift4 (9), A4             | lemmonchess333/Maiin#2622                                    |
+| One set of goal names                                                               | Lift4 (4)                 | lemmonchess333/Maiin#2623                                    |
+| Miss counts start again after any break                                             | Lift4 (7)                 | lemmonchess333/Maiin#2624                                    |
+| A bodyweight lift on a fixed target climbs a rep when every set hits it             | Lift4 (6)                 | lemmonchess333/Maiin#2625                                    |
+| No lifting suggestions on the Performance tab                                       | Lift4 (3)                 | lemmonchess333/Maiin#2626                                    |
+| Each session keeps its heavier or lighter role as the order carries over            | Lift4 (12)(b)             | lemmonchess333/Maiin#2627                                    |
+| A level change sets how the main lifts progress                                     | Lift4 (12)(a)             | lemmonchess333/Maiin#2629                                    |
+| Replace and Add take their role's numbers                                           | Lift4 (5); Lift5          | lemmonchess333/Maiin#2630 (lock lemmonchess333/Maiin#2628)   |
+| One definition of a long or hard run, the run plan's                                | A5                        | lemmonchess333/Maiin#2607                                    |
+| A tempo is judged by its blocks, live and after; a goal-pace tempo against its pace | F22; audit §0 item 3      | lemmonchess333/Maiin#2633                                    |
+| A quality day counts the run done as that session                                   | F13; PR-J-Q1              | lemmonchess333/Maiin#2635 (STATUS lemmonchess333/Maiin#2632) |
+| A plan made mid-week plans no run before that day                                   | F16; Run19                | lemmonchess333/Maiin#2636 (lock lemmonchess333/Maiin#2634)   |
+| Home shows a run on the date the plan holds it                                      | F14, F21; ADR-0002        | lemmonchess333/Maiin#2637                                    |
+| A race plan needs at least two run days a week                                      | A7; audit §7 item 11      | lemmonchess333/Maiin#2638                                    |
+| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3     | lemmonchess333/Maiin#2639                                    |
+| The taper's session is placed like every quality run                                | R10; RUN-EV-10            | lemmonchess333/Maiin#2642                                    |
+| The copy that was wrong today                                                       | R12                       | lemmonchess333/Maiin#2641                                    |
+| The rest-day card and the usual-meal row fit at large text                          | #2612's capture run       | lemmonchess333/Maiin#2631                                    |
+| Setup asks, optionally, for a recent 5K or 10K time                                 | R11; adaptive paces §10.2 | lemmonchess333/Maiin#2653                                    |
 
 The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 #2609, #2615, #2616 and #2618.
@@ -585,6 +586,12 @@ against Lift4 as built on the simulator before it comes here with an answer.
   current running.
 - **Answer: Answered** as a correction: build the optional question the
   owner locked. Skipping it stays possible (§10.2: "never a dead-end").
+  The race-time half is built (lemmonchess333/Maiin#2653): occasional and
+  regular runners are asked for a recent 5K or 10K in minutes and seconds,
+  saved as their own benchmark, and setup's plan uses it. Settings and
+  setup read a typed time through one function, which refuses a time
+  faster than anyone has raced. The self-rated level for a new runner is
+  to build once the evidence gives a conservative VDOT for each level.
 
 ### R12. The copy that is wrong today
 

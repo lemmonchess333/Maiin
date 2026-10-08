@@ -51,6 +51,20 @@ race.
       runs on Tuesday, Thursday and Saturday, one of them done: no
       fell-behind flag on its first Monday.
 
+## Setup's recent race (R11, 2026-10-08)
+
+Affects: setup's optional recent 5K or 10K, typed as minutes and seconds,
+and the typed-time reader it shares with Settings → Your running fitness
+(lemmonchess333/Maiin#2653). The unit tests cover the reading and the save;
+these need a phone's keyboard.
+
+- [ ] **The number pad.** On an iPhone, setup's minutes and seconds boxes
+      bring up the number pad, and a time typed there is on the review.
+- [ ] **A colon on the number pad.** On an iPhone, Settings → Your running
+      fitness's finish time and the run plan editor's goal time are one box
+      each that asks for the number pad. Check whether "22:30" can be typed
+      in either; if not, they need setup's minutes-and-seconds boxes.
+
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
