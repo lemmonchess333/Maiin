@@ -1,0 +1,190 @@
+dumbbell-beginner · seed 1 · base model · 26 weeks from 2026-03-09 · sessions fitted to 30 minutes
+
+w1 2026-03-09  plan week 1 progression  1/2 sessions  26–26 min
+  db-bench           plan 9 × 8 × 2  1RM 11.3 logged 10.1  8×[8,8] step
+  goblet-squat       plan 12.5 × 9 × 2  1RM 17.7 logged 15.8  12.5×[8,8] reps
+  db-rdl             plan 12.5 × 8 × 2  1RM - logged -
+  db-shoulder-press  plan 5 × 8 × 2  1RM - logged -
+  sets/days: Chest 2/1 · FrontDelts 2/1 · Triceps 2/1 · UpperBack 2/1 · Biceps 2/1 · Quads 2/1 · Glutes 2/1 · Abs 2/1
+
+w2 2026-03-16  plan week 2 progression  2/2 sessions  27–29 min
+  db-bench           plan 9 × 8 × 2  1RM 11.5 logged 11.4  9×[8,6] miss
+  goblet-squat       plan 12.5 × 10 × 2  1RM 18.0 logged 16.3  12.5×[9,9] reps
+  db-rdl             plan 12.5 × 9 × 2  1RM 17.7 logged 15.8  12.5×[8,8] reps
+  db-shoulder-press  plan 5 × 9 × 2  1RM 7.0 logged 6.3  5×[8,8] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w3 2026-03-23  plan week 3 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 8 × 2  1RM 11.6 logged 11.4  9×[8,8] step
+  goblet-squat       plan 12.5 × 11 × 2  1RM 18.2 logged 16.7  12.5×[10,10] reps
+  db-rdl             plan 12.5 × 10 × 2  1RM 18.0 logged 16.3  12.5×[9,9] reps
+  db-shoulder-press  plan 5 × 10 × 2  1RM 7.1 logged 6.5  5×[9,9] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w4 2026-03-30  plan week 4 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 8 × 2  1RM 11.8 logged 12.7  10×[8,6] miss
+  goblet-squat       plan 12.5 × 12 × 2  1RM 18.3 logged 17.1  12.5×[11,11] reps
+  db-rdl             plan 12.5 × 11 × 2  1RM 18.1 logged 16.7  12.5×[10,10] reps
+  db-shoulder-press  plan 5 × 11 × 2  1RM 7.2 logged 6.7  5×[10,10] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w5 2026-04-06  plan week 5 progression  2/2 sessions  27–29 min
+  db-bench           plan 9 × 8 × 2  1RM 11.9 logged 12.7  10×[8,6] LOWERED
+  goblet-squat       plan 12.5 × 13 × 2  1RM 18.5 logged 17.5  12.5×[12,12] reps
+  db-rdl             plan 12.5 × 12 × 2  1RM 18.3 logged 17.1  12.5×[11,11] reps
+  db-shoulder-press  plan 5 × 12 × 2  1RM 7.2 logged 6.8  5×[11,11] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w6 2026-04-13  plan week 6 progression  1/2 sessions  29–29 min
+  db-bench           plan 9 × 8 × 2  1RM 11.9 logged -
+  goblet-squat       plan 12.5 × 13 × 2  1RM 18.5 logged -
+  db-rdl             plan 12.5 × 13 × 2  1RM 18.5 logged 17.5  12.5×[12,12] reps
+  db-shoulder-press  plan 5 × 13 × 2  1RM 7.3 logged 7.0  5×[12,12] reps
+  sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 2/1 · Triceps 2/1 · Lats 2/1 · UpperBack 4/1 · LowerBack 2/1 · Biceps 4/1 · Hamstrings 2/1 · Glutes 2/1
+
+w7 2026-04-20  plan week 7 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 8 × 2  1RM 12.0 logged 11.4  9×[8,8] step
+  goblet-squat       plan 12.5 × 14 × 2  1RM 18.7 logged 17.9  12.5×[13,13] reps
+  db-rdl             plan 12.5 × 14 × 2  1RM 18.7 logged 17.9  12.5×[13,13] reps
+  db-shoulder-press  plan 5 × 14 × 2  1RM 7.3 logged 7.2  5×[13,13] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w8 2026-04-27  plan week 8 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 8 × 2  1RM 12.1 logged 12.3  10×[7,6] miss
+  goblet-squat       plan 12.5 × 15 × 2  1RM 18.9 logged 18.3  12.5×[14,14] reps
+  db-rdl             plan 12.5 × 15 × 2  1RM 18.9 logged 18.3  12.5×[14,14] reps
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.4 logged 7.3  5×[14,14] reps
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w9 2026-05-04  plan week 9 progression  1/2 sessions  27–27 min
+  db-bench           plan 10 × 9 × 2  1RM 12.3 logged 12.7  10×[8,8] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.1 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 18.8 logged -
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.4 logged -
+  sets/days: Chest 2/1 · FrontDelts 2/1 · Triceps 2/1 · UpperBack 2/1 · Biceps 2/1 · Quads 2/1 · Glutes 2/1 · Abs 2/1
+
+w10 2026-05-11  plan week 10 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 10 × 2  1RM 12.4 logged 13.0  10×[9,9] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.3 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.0 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.4 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w11 2026-05-18  plan week 11 progression  1/2 sessions  29–29 min
+  db-bench           plan 10 × 10 × 2  1RM 12.3 logged -
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.2 logged -
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.2 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.5 logged 7.5  5×[15,15] hold
+  sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 2/1 · Triceps 2/1 · Lats 2/1 · UpperBack 4/1 · LowerBack 2/1 · Biceps 4/1 · Hamstrings 2/1 · Glutes 2/1
+
+w12 2026-05-25  plan week 12 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 11 × 2  1RM 12.4 logged 13.3  10×[10,10] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.4 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.4 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.5 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w13 2026-06-01  plan week 13 progression  1/2 sessions  27–27 min
+  db-bench           plan 10 × 11 × 2  1RM 12.6 logged 13.0  10×[9,7] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.6 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.4 logged -
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.5 logged -
+  sets/days: Chest 2/1 · FrontDelts 2/1 · Triceps 2/1 · UpperBack 2/1 · Biceps 2/1 · Quads 2/1 · Glutes 2/1 · Abs 2/1
+
+w14 2026-06-08  plan week 14 progression  1/2 sessions  29–29 min
+  db-bench           plan 10 × 11 × 2  1RM 12.5 logged -
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.5 logged -
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.6 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.6 logged 7.5  5×[15,15] hold
+  sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 2/1 · Triceps 2/1 · Lats 2/1 · UpperBack 4/1 · LowerBack 2/1 · Biceps 4/1 · Hamstrings 2/1 · Glutes 2/1
+
+w15 2026-06-15  plan week 15 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 11 × 2  1RM 12.6 logged 12.3  10×[7,6] miss
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.7 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.7 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.6 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w16 2026-06-22  plan week 16 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 12 × 2  1RM 12.7 logged 13.7  10×[11,11] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 19.8 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 19.9 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.7 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w17 2026-06-29  plan week 17 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 12 × 2  1RM 12.8 logged 13.7  10×[11,9] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.0 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.0 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.7 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w18 2026-07-06  plan week 18 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 12.9 logged 14.0  10×[12,12] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.1 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.2 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.8 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w19 2026-07-13  plan week 19 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 13.0 logged 12.7  10×[8,6] miss
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.3 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.3 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.8 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w20 2026-07-20  plan week 20 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 13.1 logged 14.3  10×[13,11] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.4 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.4 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.9 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w21 2026-07-27  plan week 21 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 13.2 logged 14.3  10×[13,11] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.6 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.5 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.9 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w22 2026-08-03  plan week 22 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 13.3 logged 14.3  10×[13,11] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.7 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.6 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 7.9 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w23 2026-08-10  plan week 23 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 13 × 2  1RM 13.4 logged 13.7  10×[11,9] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.8 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.8 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 8.0 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w24 2026-08-17  plan week 24 progression  1/2 sessions  27–27 min
+  db-bench           plan 10 × 13 × 2  1RM 13.4 logged 14.3  10×[13,11] hold
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.9 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.7 logged -
+  db-shoulder-press  plan 5 × 15 × 2  1RM 8.0 logged -
+  sets/days: Chest 2/1 · FrontDelts 2/1 · Triceps 2/1 · UpperBack 2/1 · Biceps 2/1 · Quads 2/1 · Glutes 2/1 · Abs 2/1
+
+w25 2026-08-24  plan week 25 progression  2/2 sessions  27–29 min
+  db-bench           plan 10 × 14 × 2  1RM 13.5 logged 14.3  10×[13,13] reps
+  goblet-squat       plan 12.5 × 15 × 2  1RM 21.0 logged 18.8  12.5×[15,15] hold
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.8 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 8.0 logged 7.5  5×[15,15] hold
+  sets/days: Chest 4/2 · FrontDelts 4/2 · RearDelts 2/1 · Triceps 4/2 · Lats 2/1 · UpperBack 6/2 · LowerBack 2/1 · Biceps 6/2 · Quads 2/1 · Hamstrings 2/1 · Glutes 4/2 · Abs 2/1
+
+w26 2026-08-31  plan week 26 progression  1/2 sessions  29–29 min
+  db-bench           plan 10 × 14 × 2  1RM 13.5 logged -
+  goblet-squat       plan 12.5 × 15 × 2  1RM 20.9 logged -
+  db-rdl             plan 12.5 × 15 × 2  1RM 20.9 logged 18.8  12.5×[15,15] hold
+  db-shoulder-press  plan 5 × 15 × 2  1RM 8.0 logged 7.5  5×[15,15] hold
+  sets/days: Chest 2/1 · FrontDelts 2/1 · RearDelts 2/1 · Triceps 2/1 · Lats 2/1 · UpperBack 4/1 · LowerBack 2/1 · Biceps 4/1 · Hamstrings 2/1 · Glutes 2/1
+
+summary
+  sessions 44/52 · lighter weeks 0 · rule failures none
+  db-bench           1RM 11.2 → 13.5 (20.1%) · plan 9 → 10 kg · 22 sessions: 3 steps, 6 rep climbs, 7 holds, 5 misses, 1 lowered, 0 own weight
+  goblet-squat       1RM 17.5 → 20.9 (19.6%) · plan 12.5 → 12.5 kg · 22 sessions: 0 steps, 7 rep climbs, 15 holds, 0 misses, 0 lowered, 0 own weight
+  db-rdl             1RM 17.5 → 20.9 (19.4%) · plan 12.5 → 12.5 kg · 22 sessions: 0 steps, 7 rep climbs, 15 holds, 0 misses, 0 lowered, 0 own weight
+  db-shoulder-press  1RM 7.0 → 8.0 (14.6%) · plan 5 → 5 kg · 22 sessions: 0 steps, 7 rep climbs, 15 holds, 0 misses, 0 lowered, 0 own weight
