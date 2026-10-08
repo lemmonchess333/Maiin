@@ -58,6 +58,10 @@ describe("resolvePaceVerdict", () => {
       expect(v.tone).toBe("easy-too-fast");
       expect(v.speaks).toBe(true);
       expect(v.line).toContain("Easy running works best slower");
+      // Run21 (4): "hard" is the effort word only; the family the easy days
+      // save energy for is the quality sessions.
+      expect(v.line).toContain("so the quality sessions get your energy");
+      expect(v.line).not.toMatch(/\bhard(er)?\b/i);
     }
   });
 

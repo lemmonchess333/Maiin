@@ -118,7 +118,7 @@ export function resolvePaceVerdict(args: {
     if (EASY_TYPES.has(templateType)) {
       return {
         tone: "easy-too-fast",
-        line: `Faster than easy today: ${actual}, against ${against}. Easy running works best slower, so the harder runs get your energy.`,
+        line: `Faster than easy today: ${actual}, against ${against}. Easy running works best slower, so the quality sessions get your energy.`,
         speaks: true,
       };
     }
