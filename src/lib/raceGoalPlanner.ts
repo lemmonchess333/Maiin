@@ -85,6 +85,9 @@ export interface RaceGoalPlannerInput {
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  /** Run20 (5): as the save passes it (`PlanBuilderInput.newRunnerUntil`),
+   *  so the preview shows the weeks the save writes. */
+  newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
 }
 
@@ -204,6 +207,7 @@ export function getRaceGoalPlannerState(
     runningBaseline: input.runningBaseline,
     runTimeLimits: input.runTimeLimits,
     easyPaceSPerKm: input.easyPaceSPerKm,
+    newRunnerUntil: input.newRunnerUntil,
     planTotalWeeks: continued?.totalWeeks,
   });
   if (continued && plan.weeks[0]) {

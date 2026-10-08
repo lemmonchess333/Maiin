@@ -154,6 +154,43 @@ describe("same-race plan edits", () => {
     expect(restored.programState.runDays).toEqual(existing.runDays);
   });
 
+  it("gives a new runner's save and preview no tempo or intervals in their first weeks", () => {
+    // Run20 (5): the same mid-block save holds quality for anyone else
+    // (above).
+    const existing = midBlock();
+    const newRunnerUntil = "2026-11-02";
+    const saved = buildPlan({
+      ...base,
+      currentDate: today,
+      preserveHistory: true,
+      existingState: existing,
+      newRunnerUntil,
+    });
+    expect(
+      saved.programState.runDays!.some((run) =>
+        ["tempo", "intervals"].includes(run.type)
+      )
+    ).toBe(false);
+    const preview = getRaceGoalPlannerState({
+      distance: goal.distance,
+      targetDate: goal.targetDate,
+      currentDate: today,
+      liftDays: 2,
+      weeklyRunDays: 4,
+      existingState: existing,
+      newRunnerUntil,
+    });
+    expect(preview.firstWeekMinutes).toBe(
+      saved.programState.runDays!.reduce(
+        (sum, run) =>
+          sum +
+          RUN_TEMPLATES.find((template) => template.id === run.templateId)!
+            .estimatedDuration,
+        0
+      )
+    );
+  });
+
   it("retains completed and manually completed runs, swaps and move identity", () => {
     const existing = midBlock();
     const [completed, manual, moved, swapped] = existing.runDays!;
