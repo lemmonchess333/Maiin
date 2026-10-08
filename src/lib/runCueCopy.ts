@@ -416,7 +416,7 @@ const RUN_WALK_RUN = [
   "Relax the shoulders.",
   "Short, easy strides.",
   "Nice and steady.",
-  "Easy enough to talk.",
+  "Look ahead, not down.",
   "Smooth and gentle.",
 ];
 

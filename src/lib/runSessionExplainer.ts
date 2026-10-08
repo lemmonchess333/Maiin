@@ -75,6 +75,12 @@ export function runSessionExplainer(
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 
+  // A new runner's run-walk (Run20 (5)) is that in any week, the taper's
+  // and race week's included.
+  if (isRunWalkTemplateId(templateId)) {
+    return "Run-walk — easy running in short runs, with walks between. The runs grow each week until you run without stopping; the walks are part of the method, not giving up.";
+  }
+
   if (phase === "race") {
     if (type === "race") {
       return "Race day. The whole block pointed here — trust the plan and start conservatively.";
@@ -105,9 +111,6 @@ export function runSessionExplainer(
     return "Intervals — short fast repeats for top-end economy. The recovery between reps is part of the session, not a failure of it.";
   }
   // Easy family.
-  if (isRunWalkTemplateId(templateId)) {
-    return "Run-walk — easy running in short runs, with walks between. The runs grow each week until you run without stopping; the walks are part of the method, not giving up.";
-  }
   if (isMediumLong) {
     return "The week's medium-long run — extra easy volume midweek, so the long run isn't carrying the whole week.";
   }

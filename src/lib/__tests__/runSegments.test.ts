@@ -350,12 +350,26 @@ describe("segmentsFromRunWalk", () => {
   });
 
   it("says something new at every step, past the numbers", () => {
+    // Phrase by phrase, whatever the case and punctuation: "1 minute, easy
+    // enough to talk." and a later "Easy enough to talk." are the same
+    // words twice. Short and numbered phrases ("Walk.", "90 seconds") are
+    // the steps' own names.
+    const phrases = (cue: string) =>
+      cue
+        .toLowerCase()
+        .split(/[.,]/)
+        .map((p) => p.trim())
+        .filter((p) => p && !/\d/.test(p) && p.split(/\s+/).length >= 3);
     for (const t of ladder) {
-      for (const seed of [0, 5]) {
-        const lines = segmentsFromRunWalk(shape(t), seed).map((s) =>
-          s.cue!.replace(/\d+/g, "#")
+      for (const seed of [0, 1, 2, 3, 4, 5, 6, 7]) {
+        const said = segmentsFromRunWalk(shape(t), seed).flatMap((s) =>
+          phrases(s.cue!)
         );
-        expect(new Set(lines).size, `${t.id} seed ${seed}`).toBe(lines.length);
+        expect(said.length, `${t.id}`).toBeGreaterThan(0);
+        expect(
+          said.filter((p, i) => said.indexOf(p) !== i),
+          `${t.id} seed ${seed}`
+        ).toEqual([]);
       }
     }
   });

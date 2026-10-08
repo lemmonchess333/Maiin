@@ -22,7 +22,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
-import { runWalkTemplateIdForWeek } from "./newRunner";
+import { newRunnerTemplate } from "./newRunner";
 import { chooseQualityRunSlots } from "./runPlacement";
 import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 
@@ -820,6 +820,8 @@ export function scheduleStructuredWeekV2(
 export function scheduleRecoveryWeekV2(input: {
   weekSchedule: ScheduleDay[];
   weekStart: string;
+  /** Run20 (5): as the race plan takes it (`RacePlanV2Input`). */
+  newRunnerUntil?: string | null;
 }): ScheduledRunDay[] {
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -827,11 +829,19 @@ export function scheduleRecoveryWeekV2(input: {
   if (runEligibleSlots.length === 0) return [];
 
   const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
+  // A new runner's recovery week is that week's run-walk, or the runs the
+  // running has built to, as the race plan's weeks are.
+  const templateId =
+    newRunnerTemplate(
+      "easy_30",
+      localDateString(weekStart),
+      input.newRunnerUntil
+    )?.id ?? "easy_30";
   return runEligibleSlots
     .map((dayIndex) =>
       buildRunDayV2({
         dayIndex,
-        templateId: "easy_30",
+        templateId,
         type: "easy",
         weekStart,
       })
@@ -1440,15 +1450,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   );
   const flaggedWeeks = weeks.map((week) => {
     // Run20 (5): every run but the race in a new runner's first weeks is
-    // that week's run-walk session. Applied before the fits, which leave a
-    // run-walk session as it is: each fits in 30 minutes, the shortest time
-    // limit there is, and the running baseline fits continuous runs.
+    // that week's run-walk session, and after them each run is held to the
+    // minutes the running has built to (`newRunnerTemplate`). Applied before
+    // the fits, which leave a run-walk session as it is: each fits in 30
+    // minutes, the shortest time limit there is, and the running baseline
+    // fits continuous runs. Both fits only ever shorten a run.
     const walked = week.map((row) => {
-      const runWalkId =
+      const next =
         row.type === "race"
           ? null
-          : runWalkTemplateIdForWeek(row.weekKey ?? "", input.newRunnerUntil);
-      return runWalkId ? { ...row, templateId: runWalkId, type: "easy" } : row;
+          : newRunnerTemplate(
+              row.templateId,
+              row.weekKey ?? "",
+              input.newRunnerUntil,
+              input.easyPaceSPerKm
+            );
+      return next ? { ...row, templateId: next.id, type: next.type } : row;
     });
     const limited = walked.map((row) =>
       fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
