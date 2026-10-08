@@ -456,3 +456,67 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     expect(h.mapProps.at(-1)?.paceColored).toBe(true);
   });
 });
+
+/* Run21 (6): the summary speaks only when a run didn't match its type.
+   An easy run inside its window gets no line; one run hard gets one. */
+describe("RunSummary — the pace line speaks only when the run didn't match", () => {
+  const auth = h.auth as { profile: Record<string, unknown> };
+  const profile = auth.profile;
+  afterEach(() => {
+    auth.profile = profile;
+  });
+
+  function renderPlannedEasy(elapsed: number) {
+    const state = {
+      ...savedRun(),
+      elapsed,
+      runConfig: {
+        activityType: "easy",
+        planMetadata: {
+          planMode: "race_prep",
+          planSource: "today_plan",
+          plannedRunDayIndex: 2,
+          plannedTemplateId: "easy_30",
+          plannedTemplateType: "easy",
+          actualTemplateId: "easy_30",
+          matchedPlanExact: true,
+          matchedPlanType: true,
+          offPlan: false,
+          planWeekIndex: 0,
+          planTotalWeeks: 10,
+          scheduledRunId: "rd-1",
+        },
+      },
+    };
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("says nothing for an easy run at easy pace, and one line for one run hard", async () => {
+    // A 25-minute 5K: an easy window of about 6:13–6:52 /km.
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    // 5 km in 32 minutes: 6:24 /km, inside the window.
+    const easy = renderPlannedEasy(32 * 60);
+    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(screen.queryByText(/on target|Faster than easy/)).toBeNull();
+    easy.unmount();
+
+    // 5 km in 25 minutes: 5:00 /km, an easy run run hard.
+    renderPlannedEasy(25 * 60);
+    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(
+      screen.getByText(/^Faster than easy today: 5:00 \/km/)
+    ).toBeInTheDocument();
+  });
+});

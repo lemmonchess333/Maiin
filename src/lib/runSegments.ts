@@ -41,6 +41,68 @@ import {
   warmupCue,
 } from "./runCueCopy";
 
+/**
+ * A segment the runner works in: a tempo block (`moderate`) or an interval
+ * rep (`hard`), as against the warm-up, floats, recoveries and cool-down
+ * around them.
+ */
+export function isWorkSegment(
+  segment: Pick<SessionSegment, "type"> | null | undefined
+): boolean {
+  return segment?.type === "moderate" || segment?.type === "hard";
+}
+
+/**
+ * The pace a session pinned as its prescription: the goal race pace on a
+ * goal-pace tempo's blocks or a long run's race-pace block (`pacePinned`).
+ * Null when no work segment pins one.
+ */
+export function pinnedWorkPace(
+  segments: readonly SessionSegment[] | null | undefined
+): number | null {
+  const pinned = segments?.find(
+    (s) => isWorkSegment(s) && s.pacePinned && (s.paceTarget ?? 0) > 0
+  );
+  return pinned?.paceTarget ?? null;
+}
+
+/**
+ * Whether a run's pace target is judged in the segment it is in. A tempo's
+ * or an interval session's target is its work pace, so it is judged in the
+ * work segments only: the warm-up, floats, recoveries and cool-down are
+ * meant to be slower, and a pace bar or an alert there would call a perfect
+ * tempo slow. Any other run with a pace goal (an easy run's, say, whose
+ * strides are faster) is judged throughout, and so is a session with no
+ * structure.
+ */
+export function judgesPaceNow(
+  activityType: string | undefined,
+  segments: readonly Pick<SessionSegment, "type">[],
+  current: Pick<SessionSegment, "type"> | null
+): boolean {
+  if (activityType !== "tempo" && activityType !== "intervals") return true;
+  return segments.length === 0 || isWorkSegment(current);
+}
+
+/**
+ * The pace the Run screen's live bar judges against: an interval session's
+ * work pace, or a pace target. Null when the run has no pace to judge, as a
+ * tempo or an interval session has none until a benchmark gives one
+ * (Run20): the bar then doesn't show, rather than judging against a pace
+ * nobody prescribed, and a distance or a time target is never read as one.
+ */
+export function livePaceTarget(config: {
+  intervals?: Partial<IntervalShape> | null;
+  target?: { type: string; value?: number } | null;
+}): number | null {
+  const work = config.intervals?.workPace;
+  if (work && work > 0) return work;
+  const target = config.target;
+  if (target?.type === "pace" && target.value && target.value > 0)
+    return target.value;
+  return null;
+}
+
 export type SegmentTarget =
   | { kind: "duration"; seconds: number }
   | { kind: "distance"; meters: number };
