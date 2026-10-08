@@ -72,6 +72,37 @@ describe("zoneForHr — bucket a single reading", () => {
   });
 });
 
+describe("zone names — Run21's effort words (E1)", () => {
+  it("names each zone by how it feels, not its physiology", () => {
+    expect(ZONE_NAMES).toEqual({
+      1: "Recovery",
+      2: "Easy",
+      3: "Steady",
+      4: "Comfortably hard",
+      5: "Hard",
+    });
+    expect(Object.values(ZONE_NAMES).join(" ")).not.toMatch(
+      /aerobic|threshold|max/i
+    );
+  });
+});
+
+describe("targetZoneForRun — a race's zone follows its distance (E1)", () => {
+  // A 5K or 10K is raced at 90% of max heart rate or more, a half or a
+  // marathon at about 80–89% (running-evidence §5.0b, Daniels).
+  it("a 5K or 10K in zone 5, a half or marathon in zone 4", () => {
+    expect(targetZoneForRun("race", 200, 5)?.zone).toBe(5);
+    expect(targetZoneForRun("race", 200, 10)?.zone).toBe(5);
+    expect(targetZoneForRun("race", 200, 21.1)?.zone).toBe(4);
+    expect(targetZoneForRun("race", 200, 42.2)?.zone).toBe(4);
+  });
+
+  it("a race of no known distance keeps zone 4, and other runs ignore it", () => {
+    expect(targetZoneForRun("race", 200)?.zone).toBe(4);
+    expect(targetZoneForRun("easy", 200, 5)?.zone).toBe(2);
+  });
+});
+
 describe("targetZoneForRun — intensity → prescribed zone", () => {
   it("maps each intensity to the coaching-conventional zone", () => {
     const max = 200;

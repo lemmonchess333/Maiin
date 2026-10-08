@@ -35,7 +35,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import {
   APPLIED,
@@ -308,6 +308,32 @@ describe("ProgrammeRunSection — runDay rendering", () => {
     expect(
       screen.queryByText(/Race completed separately/i)
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — the heart-rate zone carries its name", () => {
+  // Run21 (1): "Z2 · Easy", not "Z2" alone; the run's own type word isn't
+  // said twice beside it.
+  it("names the zone on the selected run's line", () => {
+    const today = new Date();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ maxHeartRate: 200 })}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            dayIndex: today.getDay(),
+            date: localDateString(today),
+            weekKey: localWeekKey(today),
+            templateId: "easy_30",
+          }),
+        ])}
+      />
+    );
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Z2 · Easy · 120–140 bpm");
+    expect(text).not.toContain("120–140 bpm · Easy");
   });
 });
 

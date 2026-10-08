@@ -211,6 +211,105 @@ describe("A2 — segmentsFromLongWithRacePace", () => {
   });
 });
 
+describe("step headings in Run21's effort words (E1)", () => {
+  // The Run screen's step shell heads each step with its effort: Easy,
+  // Comfortably hard, Hard, or Quick and relaxed (Run21 (1)), with its
+  // place in the session where it has one. The type keys ("WARMUP",
+  // "MODERATE", "COOLDOWN") were what it showed before.
+  const eyebrows = (segs: { eyebrow?: string }[]) => segs.map((s) => s.eyebrow);
+
+  it("intervals: easy around hard repeats, or quick and relaxed short ones", () => {
+    const shape = {
+      reps: 2,
+      restDuration: 90,
+      warmupDuration: 600,
+      cooldownDuration: 300,
+    };
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDistance: 1000 }, "km"))
+    ).toEqual([
+      "EASY",
+      "HARD · REP 1/2",
+      "EASY · AFTER REP 1/2",
+      "HARD · REP 2/2",
+      "EASY",
+    ]);
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDistance: 400 }, "km"))[1]
+    ).toBe("QUICK AND RELAXED · REP 1/2");
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDuration: 180 }, "km"))[1]
+    ).toBe("HARD · REP 1/2");
+  });
+
+  it("tempo: comfortably hard blocks, or race pace at a goal pace", () => {
+    const one = RUN_TEMPLATES.find((x) => x.id === "tempo_20")!;
+    const two = RUN_TEMPLATES.find((x) => x.id === "tempo_40")!;
+    expect(eyebrows(segmentsFromTempo(one.config.tempo!, "km"))).toEqual([
+      "EASY",
+      "COMFORTABLY HARD",
+      "EASY",
+    ]);
+    expect(eyebrows(segmentsFromTempo(two.config.tempo!, "km"))).toEqual([
+      "EASY",
+      "COMFORTABLY HARD · BLOCK 1/2",
+      "EASY",
+      "COMFORTABLY HARD · BLOCK 2/2",
+      "EASY",
+    ]);
+    expect(
+      eyebrows(
+        segmentsFromTempo(two.config.tempo!, "km", 330, { atGoalPace: true })
+      )[1]
+    ).toBe("RACE PACE · BLOCK 1/2");
+  });
+
+  it("strides: quick and relaxed, with a walk back", () => {
+    expect(
+      eyebrows(segmentsFromEasyWithStrides(30, { reps: 2, workSeconds: 20 }))
+    ).toEqual([
+      "EASY",
+      "QUICK AND RELAXED",
+      "WALK",
+      "QUICK AND RELAXED",
+      "WALK",
+    ]);
+  });
+
+  it("a long run's easy part before its race-pace block", () => {
+    expect(eyebrows(segmentsFromLongWithRacePace(18, 6, 330, "km"))).toEqual([
+      "EASY",
+      "RACE PACE",
+    ]);
+  });
+
+  it("no step is headed by its type key", () => {
+    const all = [
+      ...segmentsFromIntervals(
+        {
+          reps: 3,
+          workDistance: 1000,
+          restDuration: 90,
+          warmupDuration: 600,
+          cooldownDuration: 300,
+        },
+        "km"
+      ),
+      ...RUN_TEMPLATES.filter((t) => t.config.tempo).flatMap((t) =>
+        segmentsFromTempo(t.config.tempo!, "km")
+      ),
+      ...segmentsFromEasyWithStrides(30, { reps: 4, workSeconds: 20 }),
+      ...segmentsFromLongWithRacePace(18, 6, 330, "km"),
+    ];
+    for (const seg of all) {
+      expect(seg.eyebrow, seg.label).toBeTruthy();
+      expect(seg.eyebrow, seg.label).not.toMatch(
+        /WARMUP|MODERATE|COOLDOWN|RECOVERY/
+      );
+    }
+  });
+});
+
 describe("segmentsFromGuided", () => {
   it("is an identity mapping over the catalogue's segments", () => {
     const w = GUIDED_WORKOUTS[0];

@@ -263,6 +263,38 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
   });
 
+  it("names the heart-rate zone, and a race's follows its distance (Run21 (1))", () => {
+    const { profile, runDay } = setup();
+    const zoneLine = (templateId: string) => {
+      const { unmount } = render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, maxHeartRate: 200 }}
+          programState={makeProgramState([
+            {
+              ...runDay,
+              templateId,
+              type: templateId.endsWith("race") ? "race" : "easy",
+            },
+          ])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(zoneLine("easy_30")).toContain("Z2 · Easy · 120–140 bpm");
+    expect(zoneLine("5k_race")).toContain("Z5 · Hard · 180–200 bpm");
+    expect(zoneLine("marathon_race")).toContain(
+      "Z4 · Comfortably hard · 160–180 bpm"
+    );
+  });
+
   it("Mark complete calls markManualComplete with the runDay's id (PR-J Q2)", () => {
     const { profile, programState, callbacks, runDay } = setup();
     render(
