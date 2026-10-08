@@ -49,7 +49,10 @@ import {
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -251,6 +254,10 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
+      weekHasQuality: weekHoldsQuality(
+        programState?.runDays,
+        run.runDay.weekKey
+      ),
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
