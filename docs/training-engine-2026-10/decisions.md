@@ -86,15 +86,20 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 
 ### Answered, locked and built
 
-| What                                                                 | Answer         | PR                        |
-| -------------------------------------------------------------------- | -------------- | ------------------------- |
-| A tempo and intervals say how they feel until there's a pace to give | R2; Run20 (1)  | lemmonchess333/Maiin#2643 |
-| A medium-long run of an hour or more isn't put beside a hard day     | R9; Run20 (3)  | lemmonchess333/Maiin#2644 |
-| The quality ladder starts at its first rung                          | R13; Run20 (4) | lemmonchess333/Maiin#2645 |
-| After race day, the race plan waits for the race's own ending        | R22 (F6)       | lemmonchess333/Maiin#2646 |
+| What                                                                 | Answer                     | PR                                                         |
+| -------------------------------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
+| A tempo and intervals say how they feel until there's a pace to give | R2; Run20 (1)              | lemmonchess333/Maiin#2643                                  |
+| A medium-long run of an hour or more isn't put beside a hard day     | R9; Run20 (3)              | lemmonchess333/Maiin#2644                                  |
+| The quality ladder starts at its first rung                          | R13; Run20 (4)             | lemmonchess333/Maiin#2645                                  |
+| After race day, the race plan waits for the race's own ending        | R22 (F6)                   | lemmonchess333/Maiin#2646                                  |
+| A new plan's week runs on the weekend, and the long run goes there   | R4; Run20 (2)              | lemmonchess333/Maiin#2647                                  |
+| A new runner's first six weeks hold no tempo or intervals            | R14; Run20 (5), first half | lemmonchess333/Maiin#2648                                  |
+| The push/pull balance weighs presses against pulls                   | L8; Lift6                  | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
+| The Monday check grades a first week against what it planned         | R20 (F16b)                 | lemmonchess333/Maiin#2651                                  |
 
-Run20 is lemmonchess333/Maiin#2640. R22 needed no lock: it restores what
-the race lifecycle (PR-J) already decides.
+Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
+restores what the race lifecycle (PR-J) already decides, and R20 is the
+correction Run19 recorded.
 
 ### Every ⚠ cell in running-engine-audit §2.3
 
@@ -275,8 +280,12 @@ the race lifecycle (PR-J) already decides.
   biceps as pull, so a beginner gets a 4-set barbell curl.
 - **Evidence:** the balance exists for shoulder health (D-LIFT-3), which
   curls don't serve.
-- **Answer: Answered.** The balance counts rows and pull-downs only; curls
-  stop filling it. To lock and build for new plans; existing plans untouched.
+- **Answer: Built** (Lift6, lemmonchess333/Maiin#2649; lemmonchess333/Maiin#2650).
+  The balance weighs pressing against rows and pull-downs; arm work counts on
+  neither side, so curls stop filling it. It runs when a plan is made,
+  rebuilt or re-fitted, so existing plans keep their sets until then. In the
+  plan sweep the 4-set barbell curl is 2 sets, other curls drop a set, and
+  two full-body plans' pull-ups gain one.
 
 ### L9. Ceilings exceeded where only main lifts feed a muscle
 
@@ -465,11 +474,13 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Options:** (a) keep; (b) the long run goes on the weekend day among the
   person's run days (Sunday, else Saturday), else their last run day;
   (c) setup asks for the long-run day.
-- **Answer: Answered: (b)**, for new plans and rebuilds, locked as Run20 (2)
-  (lemmonchess333/Maiin#2640); (c) adds a setup step and waits for evidence
-  that (b) isn't enough. To build: the setup schedules are also the stored
-  fallback for profiles without a week schedule, so the change needs a
-  versioned schedule rather than an edit to the generator.
+- **Answer: Built: (b)** for setup's default week, locked as Run20 (2)
+  (lemmonchess333/Maiin#2640; lemmonchess333/Maiin#2647); (c) adds a setup
+  step and waits for evidence that (b) isn't enough. `defaultWeekSchedule`
+  moves one run to Sunday (Saturday when Sunday is taken) when no run falls
+  on the weekend, choosing the run that leaves the runs most spread out; the
+  long run takes the weekend day as before. `generateSchedule` stays the week
+  derived for a profile that never stored one, so existing plans don't move.
 - **Existing plans:** keep their weekdays until rebuilt (Pgm5).
 
 ### R5. The plan doesn't start from the runner's own running
@@ -615,8 +626,11 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Answer: Answered**, locked as Run20 (5) (lemmonchess333/Maiin#2640). No
   tempo or intervals in a new runner's first six weeks; a new runner's first
   weeks run as run-walk, through the session player's segments, building to
-  continuous running. To build: "New to running" has to reach the plan
-  generator first (RUN-EV-04), and run-walk needs its own template. The
+  continuous running. The first half is built (lemmonchess333/Maiin#2648):
+  setup's "New to running" reaches the generator as the day the six weeks
+  end, counted from the day the person began. Run-walk is to build: a
+  template family, the player's run and walk segments, and the generator
+  giving a new runner's first weeks to them. The
   six weeks is a Tropos heuristic inside the evidence's 4–6, serving the
   running handoff's own rule: build broad capacity before making work more
   event-specific. The runner model has no run-walk, so the injury effect
@@ -672,9 +686,11 @@ against Lift4 as built on the simulator before it comes here with an answer.
 
 - **Found:** the fell-behind check measures a partial first week against the
   full weekly target, so a plan made on a Thursday can read as behind.
-- **Answer: Answered** as a correction under Run19: the first week is
-  measured against what it planned. A `functions/` change, read against
-  `docs/agents/functions-deploy.md`.
+- **Answer: Built** as a correction under Run19 (lemmonchess333/Maiin#2651):
+  the prior week is graded against the runs it planned, counted from the day
+  the account began when it began that week: the week's run days while the
+  plan holds them, else the schedule's from that day, else the weekly target.
+  A week begun after its last run day isn't graded.
 
 ### R21. Rebuilding a stale race week and "Re-plan from today"
 

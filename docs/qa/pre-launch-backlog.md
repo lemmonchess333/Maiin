@@ -46,6 +46,10 @@ race.
       Run tab shows the no-show banner from the fourth day, without "All
       runs done this week", and `dailyRaceReconciliationSweep` returns it to
       free running after the fourteenth.
+- [ ] **A first week begun on a Thursday** (F16b,
+      lemmonchess333/Maiin#2651). A test account made on a Thursday with
+      runs on Tuesday, Thursday and Saturday, one of them done: no
+      fell-behind flag on its first Monday.
 
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
