@@ -651,8 +651,12 @@ against Lift4 as built on the simulator before it comes here with an answer.
   runs fit: run-walk ended at 20 minutes while the race plan built on
   underneath, and week 7 asked for a 55-minute long run. That is part of
   "building to continuous running", specific to leaving run-walk, not the
-  general cap R7 holds back. A new runner without a race has no planned
-  runs (R23). A race too soon to build to (a half twelve weeks out builds
+  general cap R7 holds back. A tempo or intervals session that doesn't fit
+  becomes a smaller dose of itself (the deload's rungs) or an easy run,
+  never another session. A new runner without a race has no planned runs
+  (R23), and one who runs freely first and adds a race later counts the six
+  weeks from setup, so the race plan can find them part gone; where that
+  plan should start is R5's. A race too soon to build to (a half twelve weeks out builds
   to about 35 minutes before a race of two hours or more) is the owner's
   (R14c): saying so is a claim about readiness. The
   six weeks is a Tropos heuristic inside the evidence's 4–6, serving the
