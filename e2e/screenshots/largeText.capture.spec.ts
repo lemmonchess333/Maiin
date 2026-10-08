@@ -381,8 +381,17 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading").first());
       await measure(page, "weekly-review", width, found);
 
-      // A meal's edit sheet, from today's diary.
-      await page.goto("food");
+      // A meal's edit sheet, from yesterday's diary. seed:rich logs meals
+      // on the five days up to the one it ran on, so yesterday has them
+      // whether or not the run has crossed midnight since it seeded. One
+      // that seeded at 23:59 on 7 October 2026 found today's diary empty.
+      const yesterday = await page.evaluate(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      });
+      await page.goto(`food?date=${yesterday}`);
       const meal = page.getByRole("button", { name: /^Edit / }).first();
       await ready(page, meal);
       await meal.click();
