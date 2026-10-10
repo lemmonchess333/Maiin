@@ -1,6 +1,7 @@
 import type { RunTimeLimits } from "@/features/program/runTimeLimits";
 import type { RunFitnessInput } from "./runPaces";
 import { buildPlan } from "@/features/program/planBuilder";
+import { newRunnerUntil } from "@/features/program/newRunner";
 import type { Goal } from "@/features/program/programTypes";
 import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
@@ -72,6 +73,9 @@ export function buildOnboardingPlan(
     runningBaseline: runningPreferences?.runningBaseline,
     runTimeLimits: runningPreferences?.runTimeLimits,
     runFitness: runningPreferences?.runFitness,
+    // Run20 (5): someone new to running begins today, the day the server
+    // stamps as `onboardingCompletedAt` for the plans made after this one.
+    newRunnerUntil: newRunnerUntil(draft.runFrequency, currentDate),
     ...(runMode === "race_prep"
       ? {
           raceGoal: {

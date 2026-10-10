@@ -12,6 +12,7 @@ import {
   addLocalDays,
   dateForDayOfWeek,
   generateScheduledRunId,
+  localDateString,
   localWeekKey,
   parseLocalDate,
   startOfLocalWeek,
@@ -932,6 +933,14 @@ export interface RacePlanV2Input {
    * to the nominal ceiling on the weekly refresh.
    */
   easyPaceSPerKm?: number | null;
+  /**
+   * Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`). A
+   * week that starts before it gets no tempo or intervals, in build or
+   * taper; strides stay. Null/omitted → no new runner's weeks,
+   * byte-identical to before. Every live path threads it, from the profile
+   * (`profileNewRunnerUntil`) or, at setup, from the answer just given.
+   */
+  newRunnerUntil?: string | null;
 }
 
 export interface RacePlanV2Output {
@@ -1031,6 +1040,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     const weekStart = addLocalDays(weekStartDate, offset * 7);
     const week: ScheduledRunDay[] = [];
+    // Run20 (5): a new runner's first weeks hold no tempo or intervals.
+    const newRunnerWeek =
+      !!input.newRunnerUntil &&
+      localDateString(weekStart) < input.newRunnerUntil;
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
@@ -1251,7 +1264,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         );
       } else if (phase === "build") {
         const allowQuality = !hardCapApplies || w % 2 === 0;
-        if (allowQuality && !skipQualityEntirely && !detrainedSkipsQuality) {
+        if (
+          allowQuality &&
+          !skipQualityEntirely &&
+          !detrainedSkipsQuality &&
+          !newRunnerWeek
+        ) {
           // 1 quality + rest easy (or all easy if compressed and
           // the long run already consumed the week's quality budget).
           // Gentler forces the quality to tempo — no intervals.
@@ -1352,7 +1370,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it too (freshness over sharpening); a detrained runner drops
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
-        if (!compressed && !gentler && !detrainedSkipsQuality) {
+        if (
+          !compressed &&
+          !gentler &&
+          !detrainedSkipsQuality &&
+          !newRunnerWeek
+        ) {
           week.push(
             buildRunDayV2({
               dayIndex: remaining[0],
