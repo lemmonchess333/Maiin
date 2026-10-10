@@ -3160,7 +3160,12 @@ async function maybeSendWeeklyRecap(uid, now) {
     }
   }
   const status = ctx
-    ? _fellBehindRatio(ctx.profile, ctx.programState, priorWeekRuns)
+    ? _fellBehindRatio(
+        ctx.profile,
+        ctx.programState,
+        priorWeekRuns,
+        range.weekKey
+      )
     : null;
   const behind = !!(status && status.fellBehind);
 
@@ -3483,6 +3488,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   const { userRef, programRef, profile, programState, programUpdateTime } = ctx;
@@ -3514,6 +3520,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   } = _decideReconciliationActions(
     profile,
     programState,
@@ -3522,7 +3529,12 @@ async function _runDailyRaceReconciliationForUser(uid) {
   );
 
   if (!payload && !profilePayload) {
-    return { noShowWritten, recoveryCleared, noShowCleared };
+    return {
+      noShowWritten,
+      recoveryCleared,
+      noShowCleared,
+      orphanedGoalCleared,
+    };
   }
 
   // R1A: tombstone guard immediately before the write — per spec
@@ -3540,6 +3552,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
@@ -3579,11 +3592,13 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Include noShowCleared so the sweep's observability counter increments when
   // an L4 clear actually writes (the early no-write return above already did).
-  return { noShowWritten, recoveryCleared, noShowCleared };
+  // An orphaned goal writes no programState (`programWritten` starts true).
+  return { noShowWritten, recoveryCleared, noShowCleared, orphanedGoalCleared };
 }
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
@@ -3598,21 +3613,28 @@ exports.dailyRaceReconciliationSweep = functions
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
       let totalNoShowCleared = 0;
+      let totalOrphanedGoalCleared = 0;
       await sweepActiveUsers({
         name: "dailyRaceReconciliationSweep",
         cutoffDays: 30,
         perUser: async (uid) => {
-          const { noShowWritten, recoveryCleared, noShowCleared } =
-            await _runDailyRaceReconciliationForUser(uid);
+          const {
+            noShowWritten,
+            recoveryCleared,
+            noShowCleared,
+            orphanedGoalCleared,
+          } = await _runDailyRaceReconciliationForUser(uid);
           if (noShowWritten) totalNoShow += 1;
           if (recoveryCleared) totalRecoveryCleared += 1;
           if (noShowCleared) totalNoShowCleared += 1;
+          if (orphanedGoalCleared) totalOrphanedGoalCleared += 1;
         },
       });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
           `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
-          `noShowCleared=${totalNoShowCleared}`
+          `noShowCleared=${totalNoShowCleared}, ` +
+          `orphanedGoalCleared=${totalOrphanedGoalCleared}`
       );
     } catch (err) {
       console.error("dailyRaceReconciliationSweep: fatal error:", {

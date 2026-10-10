@@ -32,8 +32,8 @@ const TIMEOUT = 60_000;
  * Rules each persona breaks today, by the finding that explains them
  * (docs/training-engine-2026-10/simulator.md). Take an entry out with its
  * fix. Most are the base persona's own: F8 `over-time`, F10 `below-bar`,
- * F13 `not-counted`, F14 `race-day-card`, F6 `race-unresolved`, F22
- * `verdict-slow`. The actions' own:
+ * F13 `not-counted`, F14 `race-day-card`, F22 `verdict-slow`. The actions'
+ * own:
  *
  * - F20 `session-off-grid`: "Easier today" takes 85% of each weight to
  *   the nearest 2.5 kg, whatever the equipment: 7.5 kg and 2.5 kg
@@ -53,22 +53,16 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
     "below-bar",
     "not-counted",
     "over-time",
-    "race-unresolved",
     "verdict-slow",
   ],
-  "half-moves-long-run": [
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-    "run-day-card",
-  ],
+  "half-moves-long-run": ["not-counted", "race-day-card", "run-day-card"],
 };
 
 /**
  * Coaching findings each persona has today; a runner's lifting ones carry
  * `lift:`. Take an entry out with its fix. F4 `misses`, F9 `stall`, F12
- * `acsm-size:quads`, F6 `nag-after-race`, F15 `under-dose` and F18's plan
- * shape are the base personas'. Two follow the person's own choice:
+ * `acsm-size:quads`, F15 `under-dose` and F18's plan shape are the base
+ * personas'. Two follow the person's own choice:
  *
  * - `acsm-heavy:bench-press`: the kept swap took the barbell bench out of
  *   the plan in week 3.
@@ -96,7 +90,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "lighter-after-misses": ["stall:barbell-curl", "stall:hack-squat"],
   "hybrid-lighter-week": [
     "back-to-back",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
@@ -104,7 +97,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "half-moves-long-run": [
     "long-share",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",

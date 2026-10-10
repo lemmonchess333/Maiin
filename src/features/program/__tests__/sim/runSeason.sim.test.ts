@@ -49,10 +49,6 @@ const TIMEOUT = 60_000;
  *   sessions never count.
  * - F14 `race-day-card`: setup's week schedules never run on a Sunday, and
  *   Home shows a run only on a run day, so race day reads as a rest day.
- * - F6 `race-unresolved`: the Monday rollover after race day (or after
- *   recovery) deletes the run plan before the server's no-show and
- *   recovery-exit checks can read it, so the person stays in race prep for
- *   a race that is over.
  * - F16 `before-plan`: a plan made on a Thursday writes that week's Monday
  *   and Wednesday runs.
  * - F22 `verdict-slow`: the run summary judges a tempo on the whole run's
@@ -61,59 +57,26 @@ const TIMEOUT = 60_000;
  * - F8 `over-time` and F10 `below-bar`: the lifting side's, on a hybrid.
  */
 const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "couch-to-5k": [
-    "before-plan",
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-  ],
-  "half-3-days": [
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-    "verdict-slow",
-  ],
-  "sub-3-30": [
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-    "verdict-slow",
-  ],
-  "sick-six-weeks": ["not-counted", "race-day-card", "race-unresolved"],
-  "new-runner-marathon": ["race-day-card", "race-unresolved"],
+  "couch-to-5k": ["before-plan", "not-counted", "race-day-card"],
+  "half-3-days": ["not-counted", "race-day-card", "verdict-slow"],
+  "sub-3-30": ["not-counted", "race-day-card", "verdict-slow"],
+  "sick-six-weeks": ["not-counted", "race-day-card"],
+  "new-runner-marathon": ["race-day-card"],
   "year-out-marathon": [
     "below-bar",
     "not-counted",
     "over-time",
-    "race-unresolved",
     "verdict-slow",
   ],
-  "hybrid-3-4-trim": [
-    "below-bar",
-    "not-counted",
-    "over-time",
-    "race-unresolved",
-    "verdict-slow",
-  ],
+  "hybrid-3-4-trim": ["below-bar", "not-counted", "over-time", "verdict-slow"],
   "hybrid-3-4-no-trim": [
     "below-bar",
     "not-counted",
     "over-time",
-    "race-unresolved",
     "verdict-slow",
   ],
-  "hybrid-2-3-trim": [
-    "below-bar",
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-  ],
-  "hybrid-2-3-no-trim": [
-    "below-bar",
-    "not-counted",
-    "race-day-card",
-    "race-unresolved",
-  ],
+  "hybrid-2-3-trim": ["below-bar", "not-counted", "race-day-card"],
+  "hybrid-2-3-no-trim": ["below-bar", "not-counted", "race-day-card"],
 };
 
 /**
@@ -126,8 +89,6 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *   first easy runs as a race, 7–10 VDOT under the runner; `easy-nag`: the
  *   run summary, which reads it at once, then tells the runner to slow down
  *   on most easy and long runs.
- * - F6 `nag-after-race`: with the plan gone, the Monday server check tells
- *   the runner each week that they fell behind it.
  * - F18, the plan's shape (running-engine-audit §7): long runs that step
  *   past the single-run guard (`spike`), weeks that jump (`volume-jump`),
  *   demanding days back to back, a one-step taper with no long run
@@ -141,7 +102,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": [
     "derived-low",
     "easy-nag",
-    "nag-after-race",
     "novice-quality",
     "run-walk",
     "spike",
@@ -149,7 +109,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "half-3-days": [
     "long-share",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
@@ -158,25 +117,17 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "sub-3-30": [
     "back-to-back",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
     "under-dose",
     "volume-jump",
   ],
-  "sick-six-weeks": [
-    "back-to-back",
-    "nag-after-race",
-    "spike",
-    "under-dose",
-    "volume-jump",
-  ],
+  "sick-six-weeks": ["back-to-back", "spike", "under-dose", "volume-jump"],
   "new-runner-marathon": [
     "derived-low",
     "easy-nag",
     "long-share",
-    "nag-after-race",
     "one-run-week",
     "run-walk",
     "spike",
@@ -187,7 +138,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "freeform-runner": ["derived-low"],
   "year-out-marathon": [
     "back-to-back",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
@@ -195,7 +145,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "hybrid-3-4-trim": [
     "back-to-back",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
@@ -203,7 +152,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "hybrid-3-4-no-trim": [
     "back-to-back",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "taper-long",
@@ -214,7 +162,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "derived-low",
     "easy-nag",
     "lift:misses:overhead-press",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "volume-jump",
@@ -224,7 +171,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "derived-low",
     "easy-nag",
     "lift:misses:overhead-press",
-    "nag-after-race",
     "spike",
     "taper-cut",
     "volume-jump",

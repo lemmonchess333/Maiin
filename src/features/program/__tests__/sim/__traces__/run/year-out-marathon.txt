@@ -286,14 +286,13 @@ w56 2027-03-29  recovery, plan week 52 of 52  counted 4/4  plan 120 min, long 0.
 w57 2027-04-05  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 38.61 · fitness 147 min
+  · 2027-04-11: server ended recovery
 w58 2027-04-12  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 37.85 · fitness 125 min
-  · 2027-04-12: server flagged the week of 2027-04-05 as fallen behind
 w59 2027-04-19  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 37.15 · fitness 106 min
-  · 2027-04-19: server flagged the week of 2027-04-12 as fallen behind
 
 runs 195 · counted 167 of the 195 planned · injuries 0 · VDOT 40.0 → 37.15
 race 2027-03-07 marathon_race 4:07:24 at VDOT 39.84
@@ -714,6 +713,7 @@ w57 2027-04-05  plan week 8 deload  3/3 sessions  40–45 min
   deadlift        plan 120 × 9 × 2  1RM 146.1 logged 156.7  120×[9,8] hold | 117.5×[10,8] hold
   overhead-press  plan 45 × 11 × 2  1RM 54.5 logged 58.5  45×[9,7] hold
   sets/days: Chest 6/3 · FrontDelts 6/3 · SideDelts 1/1 · RearDelts 5/3 · Triceps 6/3 · Lats 5/3 · UpperBack 7/2 · LowerBack 4/2 · Biceps 6/3 · Quads 5/3 · Hamstrings 9/3 · Glutes 9/3 · Calves 2/2 · Abs 2/2
+  · 2027-04-11: server ended recovery
 
 w58 2027-04-12  plan week 9 progression  3/3 sessions  53–61 min
   squat           plan 95 × 10 × 3  1RM 112.5 logged 123.5  95×[9,7,6] hold | 92.5×[10,8,6] hold
@@ -721,7 +721,6 @@ w58 2027-04-12  plan week 9 progression  3/3 sessions  53–61 min
   deadlift        plan 120 × 9 × 3  1RM 146.2 logged 164.5  120×[9,9,7] hold | 117.5×[12,11,9] hold
   overhead-press  plan 45 × 11 × 3  1RM 54.5 logged 60.0  45×[10,8,6] hold
   sets/days: Chest 9/3 · FrontDelts 9/3 · SideDelts 2/1 · RearDelts 8/3 · Triceps 9/3 · Lats 8/3 · UpperBack 11/2 · LowerBack 6/2 · Biceps 10/3 · Quads 8/3 · Hamstrings 14/3 · Glutes 14/3 · Calves 4/2 · Abs 4/2
-  · 2027-04-12: server flagged the week of 2027-04-05 as fallen behind
 
 w59 2027-04-19  plan week 10 progression  3/3 sessions  53–61 min
   squat           plan 95 × 10 × 3  1RM 112.5 logged 123.3  95×[7,6,4] miss | 92.5×[10,8,6] hold
@@ -729,10 +728,9 @@ w59 2027-04-19  plan week 10 progression  3/3 sessions  53–61 min
   deadlift        plan 120 × 10 × 3  1RM 146.2 logged 156.7  120×[9,9,9] reps | 117.5×[10,8,6] hold
   overhead-press  plan 45 × 11 × 3  1RM 54.6 logged 60.0  45×[10,8,7] hold
   sets/days: Chest 9/3 · FrontDelts 9/3 · SideDelts 2/1 · RearDelts 8/3 · Triceps 9/3 · Lats 8/3 · UpperBack 11/2 · LowerBack 6/2 · Biceps 10/3 · Quads 8/3 · Hamstrings 14/3 · Glutes 14/3 · Calves 4/2 · Abs 4/2
-  · 2027-04-19: server flagged the week of 2027-04-12 as fallen behind
 
 summary
-  sessions 154/175 · lighter weeks 16 · rule failures below-bar 59, over-time 12, not-counted 28, verdict-slow 8, race-unresolved 1
+  sessions 154/175 · lighter weeks 16 · rule failures below-bar 59, over-time 12, not-counted 28, verdict-slow 8
   squat           1RM 100.0 → 112.5 (12.5%) · plan 87.5 → 95 kg · 102 sessions: 9 steps, 30 rep climbs, 55 holds, 6 misses, 1 lowered, 1 own weight
   bench-press     1RM 80.0 → 88.4 (10.5%) · plan 67.5 → 72.5 kg · 103 sessions: 4 steps, 19 rep climbs, 66 holds, 12 misses, 0 lowered, 2 own weight
   deadlift        1RM 130.0 → 146.2 (12.5%) · plan 110 → 120 kg · 103 sessions: 11 steps, 34 rep climbs, 51 holds, 4 misses, 1 lowered, 2 own weight
