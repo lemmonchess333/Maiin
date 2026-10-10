@@ -289,6 +289,63 @@ describe("DayActionSheet — planned run", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (2): names a long run that finishes at race pace, and says why", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time gives a long
+    // run of 12 km or more a race-pace finish (the launch's gate).
+    const renderLong = (targetTimeS?: number) => {
+      const profile = {
+        ...makeProfile([{ day: todayDow(), type: "run" }]),
+        runMode: "race_prep",
+        raceGoal: {
+          distance: "half",
+          targetDate: "2099-01-01",
+          ...(targetTimeS ? { targetTimeS } : {}),
+        },
+      } as UserProfile;
+      const programState = {
+        ...makeProgramState([
+          makeRunDay({
+            id: "runday_long",
+            dayIndex: todayDow(),
+            date: todayKey(),
+            weekKey: todayWeekKey(),
+            templateId: "long_15k",
+            type: "long",
+          }),
+        ]),
+        runPlan: {
+          mode: "race_prep",
+          currentWeek: 5,
+          totalWeeks: 10,
+          raceGoal: { distance: "half", targetDate: "2099-01-01" },
+        },
+      } as ProgramState;
+      return render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={profile}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+    };
+    const withTime = renderLong(6330);
+    expect(screen.getByText("Long 15K with race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    withTime.unmount();
+    renderLong();
+    expect(screen.getByText("Long 15K")).toBeInTheDocument();
+    expect(screen.queryByText(/with race pace/)).toBeNull();
+  });
+
   it("Run21 (3): says what the run is with no plan to give a reason", () => {
     const { profile, programState, callbacks } = setup();
     render(

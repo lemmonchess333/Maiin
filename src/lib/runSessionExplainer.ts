@@ -23,6 +23,9 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
+  /** A long run that finishes at race pace (`racePaceFinishFor`): in the
+   *  build, it's in the week to rehearse race day. */
+  racePaceFinish?: boolean;
 }
 
 /** Shared by Manage, Programme and Home: the explanation and real phase agree. */
@@ -107,8 +110,11 @@ export function runSessionExplainer(
 
   // Base / build.
   if (type === "long") {
-    return phase === "base"
-      ? "The week's anchor run — long-run volume ramps gradually through the base."
+    if (phase === "base") {
+      return "The week's anchor run — long-run volume ramps gradually through the base.";
+    }
+    return input.racePaceFinish
+      ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
       : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
   }
   if (type === "tempo") {

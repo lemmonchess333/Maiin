@@ -16,6 +16,8 @@ import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { racePaceFinishFor, type RacePaceFinish } from "@/lib/racePaceFinish";
+import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
 import {
@@ -82,6 +84,9 @@ export interface TodayRun {
   completed: boolean;
   /** A new person's first run. */
   isFirst: boolean;
+  /** A long run that finishes at race pace, which its name says
+   *  (Run21 (2), `racePaceFinishFor`). Absent reads as none. */
+  racePaceFinish?: RacePaceFinish | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -173,6 +178,11 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           runDay: resolved.run.runDay,
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
+          racePaceFinish: racePaceFinishFor(
+            templateOfRunDay(resolved.run.runDay),
+            profile,
+            programState?.runPlan
+          ),
         }
       : null,
     rest:
@@ -273,10 +283,12 @@ function tomorrowSession(
         ? localWeekKey(parseLocalDate(rd.date))
         : (rd.weekKey ?? currentWeekKey)) === nextWeekKey
   );
+  const runTemplate = templateOfRunDay(runDay);
   const runName = runDay
-    ? (RUN_TEMPLATES.find(
-        (t) => t.id === (runDay.userOverride ?? runDay.templateId)
-      )?.name ?? "Run")
+    ? runSessionName(
+        runTemplate,
+        racePaceFinishFor(runTemplate, profile, programState?.runPlan)
+      )
     : (next.scheduleType === "run" || next.scheduleType === "both") &&
         !nextWeekWritten
       ? "Run"
@@ -301,4 +313,13 @@ function muscleGroupsOf(workout: WorkoutDay | null): string {
   if (unique.length === 0) return "";
   if (unique.length <= 3) return unique.join(" · ");
   return unique.slice(0, 3).join(" · ") + " + more";
+}
+
+/** The session a run day holds, its override included. */
+function templateOfRunDay(runDay: ScheduledRunDay | null) {
+  return runDay
+    ? RUN_TEMPLATES.find(
+        (t) => t.id === (runDay.userOverride ?? runDay.templateId)
+      )
+    : undefined;
 }

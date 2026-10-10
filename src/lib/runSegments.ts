@@ -306,21 +306,6 @@ export function segmentsFromEasyWithStrides(
 }
 
 /**
- * A2 — race-pace block sizing for a build-phase long run (Pfitzinger's
- * marathon/half-marathon-pace long runs). One third of the run at goal
- * pace, whole kilometres, floored at 3K and capped per distance so the
- * dose stays conservative relative to the book prescriptions (Pfitzinger
- * runs up to ~16K at MP inside a 29K run; we stop well short of that).
- */
-export function racePaceBlockKm(
-  totalKm: number,
-  distance: "half" | "marathon"
-): number {
-  const cap = distance === "marathon" ? 12 : 8;
-  return Math.min(cap, Math.max(3, Math.round(totalKm / 3)));
-}
-
-/**
  * A2 — a long run finishing at goal race pace: easy majority, then the
  * final block at the user's own goal pace (finish-fast, per Pfitzinger's
  * race-pace long runs). Both segments are DISTANCE-based, so the player

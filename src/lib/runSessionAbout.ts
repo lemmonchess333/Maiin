@@ -10,6 +10,7 @@
  * depends on its distance. The register is the explainer's: what the session
  * is and how to run it, never a physiology measurement, readiness or safety.
  */
+import type { RacePaceFinish } from "./racePaceFinish";
 import {
   isRunWalkTemplateId,
   RUN_WALK_TEMPLATE_IDS,
@@ -28,8 +29,26 @@ export interface RunSessionAbout {
 /** Medium-long and longer easy runs: an hour or more (RUN-EV-11's rungs). */
 const LONGER_EASY_MINUTES = 60;
 
+/**
+ * A planned run's name (Run21 (2)): the template's, and a long run that
+ * finishes at race pace says so, in running-evidence Appendix B's words
+ * ("Long run with race pace"): "Long 18K with race pace". The finish is
+ * `racePaceFinishFor`'s, the launch's own gate.
+ */
+export function runSessionName(
+  template: Pick<RunTemplate, "name"> | null | undefined,
+  racePaceFinish?: RacePaceFinish | null,
+  fallback = "Run"
+): string {
+  if (!template) return fallback;
+  return racePaceFinish ? `${template.name} with race pace` : template.name;
+}
+
 export function runSessionAbout(
-  template: Pick<RunTemplate, "id" | "type" | "estimatedDuration" | "config">
+  template: Pick<RunTemplate, "id" | "type" | "estimatedDuration" | "config">,
+  /** A long run's race-pace finish (`racePaceFinishFor`): it changes what
+   *  the run is, how it feels and what to do when it won't come. */
+  { racePaceFinish }: { racePaceFinish?: RacePaceFinish | null } = {}
 ): RunSessionAbout {
   const { config } = template;
   if (template.type === "race") {
@@ -89,6 +108,14 @@ export function runSessionAbout(
       feel: "Comfortably hard: a few words at a time. Even from start to finish.",
       ifWrong:
         "Gasping, or slowing every minute? Ease off until you can say a few words. Flat all over? Run easy today and keep the tempo for another day.",
+    };
+  }
+  if (template.type === "long" && racePaceFinish) {
+    return {
+      what: "Your longest run of the week, finishing at your goal race pace.",
+      feel: "Easy until the final stretch, then strong and even at race pace.",
+      ifWrong:
+        "Race pace won't come today? Run the rest easy. Finishing the distance matters more than the pace.",
     };
   }
   if (template.type === "long") {

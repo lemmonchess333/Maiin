@@ -732,6 +732,54 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (2): today's long run names its race-pace finish, and says why", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time gives a long
+    // run of 12 km or more a race-pace finish (the launch's gate).
+    const renderLong = (targetTimeS?: number) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...commonProps()}
+          profile={makeProfile({
+            raceGoal: {
+              distance: "half",
+              targetDate: "2099-04-18",
+              ...(targetTimeS ? { targetTimeS } : {}),
+            },
+          } as Partial<UserProfile>)}
+          programState={makeProgramState(
+            [
+              makeRunDay({
+                templateId: "long_15k",
+                type: "long",
+                status: "planned",
+                date: TODAY_KEY,
+                dayIndex: TODAY_DOW,
+              }),
+            ],
+            {
+              runPlan: {
+                mode: "race_prep",
+                raceGoal: { distance: "half", targetDate: "2099-04-18" },
+                totalWeeks: 10,
+                currentWeek: 5,
+              },
+            } as Partial<ProgramState>
+          )}
+        />
+      );
+    const withTime = renderLong(6330);
+    expect(screen.getByText("Long 15K with race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    withTime.unmount();
+    renderLong();
+    expect(screen.getByText("Long 15K")).toBeInTheDocument();
+    expect(screen.queryByText(/with race pace/)).toBeNull();
+  });
+
   it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
     renderWith(
       <ProgrammeRunSection

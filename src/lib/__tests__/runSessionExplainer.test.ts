@@ -191,3 +191,27 @@ describe("shared run purpose presentation", () => {
     ).toBeNull();
   });
 });
+
+describe("a long run that finishes at race pace (Run21 (2))", () => {
+  // Half plan, 10 weeks: base w0-2, build w3-6.
+  const long = {
+    type: "long",
+    templateId: "long_15k",
+    totalWeeks: 10,
+    distance: "half",
+  };
+
+  it("is in the build's week to rehearse race day", () => {
+    expect(
+      runSessionExplainer({ ...long, currentWeek: 5, racePaceFinish: true })
+    ).toBe(
+      "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+    );
+  });
+
+  it("keeps the anchor run's reason without one", () => {
+    expect(runSessionExplainer({ ...long, currentWeek: 5 })).toMatch(
+      /^The week's anchor run/
+    );
+  });
+});

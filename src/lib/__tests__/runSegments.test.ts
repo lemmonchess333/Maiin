@@ -9,7 +9,6 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  racePaceBlockKm,
   segmentsFromEasyWithStrides,
   segmentsFromGuided,
   segmentsFromIntervals,
@@ -20,6 +19,7 @@ import {
   segmentTargetLabel,
   STRIDE_RECOVERY_SECONDS,
 } from "../runSegments";
+import { racePaceBlockKm } from "../racePaceFinish";
 import {
   RUN_TEMPLATES,
   RUN_WALK_TEMPLATE_IDS,

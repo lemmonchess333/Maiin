@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import type { RacePaceFinish } from "@/lib/racePaceFinish";
 import { runSessionAbout } from "@/lib/runSessionAbout";
 import { adjacentDemandingRuns } from "@/lib/runSpacing";
 import type { RunTemplate } from "@/lib/workoutTemplates";
@@ -10,19 +11,22 @@ import RunPurpose from "./RunPurpose";
 export default function RunPlanPurpose({
   purpose,
   template,
+  racePaceFinish,
   run,
   runDays,
 }: {
   purpose?: string | null;
   /** The session the day holds, override included: its own three lines. */
   template?: RunTemplate | null;
+  /** A long run's race-pace finish (`racePaceFinishFor`). */
+  racePaceFinish?: RacePaceFinish | null;
   run: ScheduledRunDay | null | undefined;
   runDays: readonly ScheduledRunDay[];
 }) {
   const neighbours = run ? adjacentDemandingRuns(run, runDays) : [];
   const timeLimit = !run?.userOverride ? run?.timeLimit : undefined;
   const trainingBasis = !run?.userOverride ? run?.trainingBasis : undefined;
-  const about = template ? runSessionAbout(template) : null;
+  const about = template ? runSessionAbout(template, { racePaceFinish }) : null;
   if (!about && !purpose && !neighbours.length && !timeLimit && !trainingBasis)
     return null;
   const days = [
