@@ -47,6 +47,7 @@ import {
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import type {
   BlockDurationWeeks,
   BlockPace,
@@ -251,7 +252,15 @@ export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   /**
-   * Run15 — how long the runner has been away, resolved once per session and
+   * Today, as the app sees it: it moves on while the app is open, and when
+   * a phone brings the app back (`useLocalDateKey`). The week rollovers and
+   * the race's rest days re-run on it, so a resumed app reaches the new
+   * week without a reload. On iOS the app is resumed far more often than it
+   * is started.
+   */
+  const today = useLocalDateKey();
+  /**
+   * Run15 — how long the runner has been away, resolved once per day and
    * consumed by every race-plan regen below.
    *
    * Held as state rather than fetched per regen because all seven regen sites
@@ -271,8 +280,10 @@ export function useProgram() {
    */
   const [layoffRead, setLayoffRead] = useState<{
     uid: string | null;
+    /** The day it was read for: a week's rollover waits for that day's. */
+    day: string | null;
     cls: LayoffClass;
-  }>({ uid: null, cls: "none" });
+  }>({ uid: null, day: null, cls: "none" });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const [loading, setLoading] = useState(true);
@@ -964,7 +975,11 @@ export function useProgram() {
     // every failure path settles as "none"), and re-run when it lands via
     // the layoffRead dep. Same pattern as the lift rollover's
     // wait-for-migration early-return.
-    if (user && layoffRead.uid !== user.uid) return;
+    // And for TODAY's read: an app resumed on a later day still holds the
+    // day it was opened on, and a runner who has been away since then would
+    // roll into a full week on the old answer.
+    if (user && (layoffRead.uid !== user.uid || layoffRead.day !== today))
+      return;
     if (finishOutstanding(user?.uid)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
@@ -1009,6 +1024,7 @@ export function useProgram() {
     mirrorReady,
     queuedWrites,
     openSessions,
+    today,
   ]);
 
   /**
@@ -1037,21 +1053,23 @@ export function useProgram() {
    * in the current week"): the archive says what actually happened, so the
    * adherence-sensitive readers downstream are not fed a lie.
    */
-  /* Resolve the layoff once the user is known. Bounded one-shot read — see
-     `fetchRecentLayoff` for why this is not a subscription. Race-prep only: a freeform runner has no plan for a layoff to
-     reshape, so the read is not worth making for them. */
+  /* Resolve the layoff once the user is known, and again on each new day
+     the app sees. Bounded one-shot read — see `fetchRecentLayoff` for why
+     this is not a subscription. Race-prep only: a freeform runner has no
+     plan for a layoff to reshape, so the read is not worth making for
+     them. */
   useEffect(() => {
     if (!user?.uid) return;
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void fetchRecentLayoff(uid, localDateString(new Date())).then((cls) => {
-      if (!cancelled) setLayoffRead({ uid, cls });
+    void fetchRecentLayoff(uid, today).then((cls) => {
+      if (!cancelled) setLayoffRead({ uid, day: today, cls });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode]);
+  }, [user?.uid, profile?.runMode, today]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1101,6 +1119,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    today,
   ]);
 
   /* The race's rest days (Lift4 (10)): from two days before a race, and on
@@ -1150,6 +1169,7 @@ export function useProgram() {
     queuedWrites,
     openSessions,
     runProgramCommand,
+    today,
   ]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
