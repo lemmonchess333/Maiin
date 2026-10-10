@@ -3,7 +3,8 @@
  * built, across seeds and both lifter model variants. A measurement, not a
  * gate: `TROPOS_SIM_MEASURE=20 npx vitest run
  * src/features/program/__tests__/sim/measuring.sim.test.ts` runs 20 seeds
- * of each and writes `test-results/sim/measuring.md` (uncommitted).
+ * of each and writes a markdown report to `test-results/sim/`
+ * (uncommitted).
  * Without the variable it skips, so the PR gate doesn't pay for it.
  *
  * The models are hypotheses (simulator.md, "What the simulator can and
