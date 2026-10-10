@@ -213,3 +213,86 @@ describe("useSessionPlayer", () => {
     expect(result.current.isComplete).toBe(false);
   });
 });
+
+/* Phase 5a: a session is judged by its work segments, not the whole run,
+   whose warm-up and cool-down read slow. The player knows where each
+   segment started, so it can say what the work covered. */
+describe("useSessionPlayer — the work portion", () => {
+  const tempo = segmentsFromTempo(
+    { warmupSec: 600, workSecs: [600, 600], floatSec: 120, cooldownSec: 300 },
+    "km",
+    300
+  );
+
+  /** Ticks to each total in turn, as the run page pushes them. */
+  function runTo(
+    player: { current: ReturnType<typeof useSessionPlayer> },
+    steps: [number, number][]
+  ) {
+    for (const [elapsed, distance] of steps)
+      act(() => player.current.tick(elapsed, distance));
+  }
+
+  it("covers the tempo blocks only: not the warm-up, the float or the cool-down", () => {
+    const { result } = renderHook(() => useSessionPlayer(tempo));
+    act(() => result.current.start());
+    runTo(result, [
+      [600, 1500], // warm-up done
+      [1200, 3500], // block 1: 600 s, 2000 m
+      [1320, 3800], // float
+      [1920, 5800], // block 2: 600 s, 2000 m
+      [2220, 6550], // cool-down
+    ]);
+    expect(result.current.isComplete).toBe(true);
+    expect(result.current.workPortion(2220, 6550)).toEqual({
+      seconds: 1200,
+      meters: 4000,
+    });
+  });
+
+  it("counts the block in progress up to now", () => {
+    const { result } = renderHook(() => useSessionPlayer(tempo));
+    act(() => result.current.start());
+    runTo(result, [
+      [600, 1500],
+      [900, 2500],
+    ]);
+    expect(result.current.workPortion(900, 2500)).toEqual({
+      seconds: 300,
+      meters: 1000,
+    });
+  });
+
+  it("has none before a work segment starts, or in a session without one", () => {
+    const { result } = renderHook(() => useSessionPlayer(tempo));
+    act(() => result.current.start());
+    runTo(result, [[300, 750]]);
+    expect(result.current.workPortion(300, 750)).toBeNull();
+
+    const easy = renderHook(() =>
+      useSessionPlayer([
+        {
+          type: "easy",
+          label: "Easy",
+          instruction: "Easy",
+          target: { kind: "duration", seconds: 1200 },
+        },
+      ])
+    );
+    act(() => easy.result.current.start());
+    act(() => easy.result.current.tick(1200, 3000));
+    expect(easy.result.current.workPortion(1200, 3000)).toBeNull();
+  });
+
+  it("ends a skipped block where it was skipped", () => {
+    const { result } = renderHook(() => useSessionPlayer(tempo));
+    act(() => result.current.start());
+    runTo(result, [[600, 1500]]);
+    act(() => result.current.skip(700, 1800));
+    expect(result.current.current?.type).toBe("recovery");
+    expect(result.current.workPortion(800, 2000)).toEqual({
+      seconds: 100,
+      meters: 300,
+    });
+  });
+});

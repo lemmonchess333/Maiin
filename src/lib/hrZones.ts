@@ -8,8 +8,10 @@
  * (later) the run HUD + post-run zone distribution.
  *
  * Five-zone %HRmax model (the common coaching split):
- *   Z1 Recovery 50–60 · Z2 Easy 60–70 · Z3 Aerobic 70–80 ·
- *   Z4 Threshold 80–90 · Z5 Max 90–100
+ *   Z1 Recovery 50–60 · Z2 Easy 60–70 · Z3 Steady 70–80 ·
+ *   Z4 Comfortably hard 80–90 · Z5 Hard 90–100
+ * Each zone is named by how it feels, in Run21 (1)'s effort words for runs,
+ * not by its physiology (it was Aerobic, Threshold and Max).
  */
 
 export type ZoneNumber = 1 | 2 | 3 | 4 | 5;
@@ -27,9 +29,9 @@ export interface HrZone {
 export const ZONE_NAMES: Record<ZoneNumber, string> = {
   1: "Recovery",
   2: "Easy",
-  3: "Aerobic",
-  4: "Threshold",
-  5: "Max",
+  3: "Steady",
+  4: "Comfortably hard",
+  5: "Hard",
 };
 
 const ZONE_PCT: Record<ZoneNumber, [number, number]> = {
@@ -87,9 +89,10 @@ export function zoneForHr(hr: number, maxHr: number): 0 | ZoneNumber {
  * `resolveSessionPaces` (runPaces.ts): "run easy in Zone 2", "tempo in Zone 4".
  * Mirrors the template intensity union (easy|tempo|intervals|long|race) plus
  * `recovery`. Conventional coaching mapping:
- *   recovery → Z1 · easy/long → Z2 · tempo → Z4 (threshold) · intervals → Z5 ·
- *   race → Z4 (a sustainable race-effort proxy; finer per-distance tuning can
- *   layer on later without changing callers).
+ *   recovery → Z1 · easy/long → Z2 · tempo → Z4 · intervals → Z5 ·
+ *   race → by its distance (Run21 (1)): a 5K or 10K is raced at 90% of max
+ *   heart rate or more, Z5, and a half or marathon at about 80–89%, Z4
+ *   (running-evidence §5.0b; Daniels). A race of no known distance keeps Z4.
  */
 export type RunIntensity =
   | "easy"
@@ -115,12 +118,26 @@ const ZONE_FOR_INTENSITY: Record<RunIntensity, ZoneNumber> = {
  */
 export function targetZoneForRun(
   type: RunIntensity,
-  maxHr: number
+  maxHr: number,
+  /** A race's distance, which sets its zone. */
+  raceDistanceKm?: number
 ): HrZone | null {
   if (!Number.isFinite(maxHr) || maxHr <= 0) return null;
-  const z = ZONE_FOR_INTENSITY[type];
+  const z =
+    type === "race" && raceDistanceKm && raceDistanceKm <= 10
+      ? 5
+      : ZONE_FOR_INTENSITY[type];
   if (!z) return null;
   return hrZones(maxHr).find((b) => b.zone === z) ?? null;
+}
+
+/**
+ * A run's target zone as a meta line's items, "Z2 · Easy · 111–129 bpm"
+ * (Run21 (1)): the zone, its name and its range, each its own item so a
+ * narrow line can wrap between them.
+ */
+export function zoneMetaItems(band: HrZone): string[] {
+  return [`Z${band.zone}`, band.name, `${band.minBpm}–${band.maxBpm} bpm`];
 }
 
 export interface ZoneShare {

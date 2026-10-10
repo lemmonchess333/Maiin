@@ -46,7 +46,12 @@ vi.mock("@/hooks/useHeartRate", () => ({
 }));
 vi.mock("@/hooks/useAudioCues", () => ({ useAudioCues: () => ({}) }));
 vi.mock("@/hooks/useSessionPlayer", () => ({
-  useSessionPlayer: () => ({ state: { index: 0 } }),
+  useSessionPlayer: () => ({
+    state: { index: 0 },
+    segments: [],
+    current: null,
+    workPortion: () => null,
+  }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/run/RouteSetupSection", () => ({ default: () => null }));

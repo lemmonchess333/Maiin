@@ -809,10 +809,10 @@ function templateToPrefill(
   } else if (tmpl.config.targetPace || paceTable) {
     // Adaptive Paces: resolve the prescribed pace from the user's fitness
     // (e.g. tempo → personalized threshold pace) when a pace table is
-    // available; otherwise fall back to the template's hardcoded pace —
-    // the exact pre-Adaptive-Paces value, so users without a benchmark see
-    // no change. (Interval work-pace + race pace flow through their own
-    // fields and are personalized in a later slice.)
+    // available; otherwise a template's own fixed pace, where it has one.
+    // The tempo templates have none: with no pace to prescribe, a tempo
+    // carries its effort, not a pace (Run20). (Interval work-pace + race
+    // pace flow through their own fields.)
     const resolved = resolveSessionPaces(tmpl.type, paceTable ?? null, {
       fallbackPace: tmpl.config.targetPace,
     });

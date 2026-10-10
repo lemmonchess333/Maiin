@@ -322,6 +322,30 @@ the run-side auto-rollover awaits the layoff read for the current uid
 declared in every regen dependency array. Regression constructs the
 real cache-paint-vs-network race and is mutation-checked.
 
+STATUS 2026-10-08 (training-engine pass, Phase 5a; the simulator's F22,
+running-engine-audit §2.3): the run summary judged a tempo by the whole
+run's average pace, warm-up and cool-down included, so a tempo held at its
+pace read slow: 27 of the 29 tempos the simulator's runners with an entered
+benchmark ran, 14 of them with the tempo pace held. The slow tones are
+saved with the run, and they feed the "Take this week easier?" nudge. Now
+the session player keeps where each segment started
+(`useSessionPlayer.workPortion`), and the summary judges a tempo by its
+work segments (`workPaceSeconds`). It needs at least 400 m and a minute of
+them; with less, or after a resumed run, it judges the whole run as
+before, because a resumed player starts again at the first segment. The
+saved run keeps the figures it was judged on (`workPortion`). A goal-pace
+tempo (A2, race build and taper) is judged against the goal pace its
+blocks pinned (`pinnedWorkPace`), not the threshold window: a marathon
+pace sits 9-27 s a km past that window's slow edge (VDOT 60 to 30), so
+for most marathoners a goal-pace tempo held exactly read slow too. Judged
+this way, the simulator's 29 entered-benchmark tempos read 28 on target
+and 1 slow, from a runner who couldn't hold the target; the 7 run on a
+derived benchmark (F17) still read fast. On the Run screen, the pace bar and the pace alerts judge
+a tempo or an interval session in its work segments only
+(`judgesPaceNow`), and the bar reads the last 30 seconds, as the alerts
+do. Any other run with a pace goal is judged throughout, as before; an
+interval session's summary still has no verdict.
+
 > **Two run-relevant issues are ledgered on the LIFT side.** The Performance
 > Index is hybrid — run load is half its `loadScore` — and the deload it
 > recommends now has a run half (#1930), but neither appears anywhere in this

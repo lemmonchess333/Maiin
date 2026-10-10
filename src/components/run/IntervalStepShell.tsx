@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
-import type { SessionSegment } from "@/lib/runSegments";
+import { stepEyebrow, type SessionSegment } from "@/lib/runSegments";
 import { paceBandLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -68,20 +68,6 @@ function headlineFor(
     return `${seg.effort} at ${paceBandLabel(band, unit)}`;
   }
   return seg.label;
-}
-
-function eyebrowFor(seg: SessionSegment): string {
-  if (seg.eyebrow) return seg.eyebrow;
-  if (seg.type === "hard" && seg.rep && seg.totalReps) {
-    return `REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "recovery" && seg.rep && seg.totalReps) {
-    return `AFTER REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "moderate" && seg.rep && seg.totalReps) {
-    return `BLOCK ${seg.rep}/${seg.totalReps}`;
-  }
-  return seg.type.toUpperCase();
 }
 
 export default function IntervalStepShell({
@@ -191,7 +177,7 @@ export default function IntervalStepShell({
               className="text-caption font-bold tracking-wider"
               style={{ color: TYPE_EYEBROW[current.type] }}
             >
-              {eyebrowFor(current)}
+              {stepEyebrow(current)}
             </p>
           )}
           <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
