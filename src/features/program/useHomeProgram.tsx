@@ -8,7 +8,7 @@ import {
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { localDateString } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { logger } from "@/lib/logger";
 import { homeProgramSnapshot } from "./homeProgramSnapshot";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
@@ -36,6 +36,16 @@ type Actions = Pick<
 export function useHomeProgram() {
   const { user, profile } = useAuth();
   const uid = user?.uid;
+  /**
+   * Today, as the app sees it, moving on while the app stays open and when
+   * a phone brings it back (`useLocalDateKey`). Whether the plan needs the
+   * engine depends on the day as much as on the document: a plan on last
+   * week needs its rollover, and only the engine rolls it. Asked only when
+   * the document changed, an app left open on Home over the weekend came
+   * back on Monday with last week's plan, and kept it until something else
+   * loaded the engine.
+   */
+  const today = useLocalDateKey();
   const [snapshot, setSnapshot] = useState<{
     uid: string;
     programState: ProgramState | null;
@@ -138,7 +148,8 @@ export function useHomeProgram() {
         if (!value.exists() && value.metadata.fromCache) return;
         const read = homeProgramSnapshot(
           value.exists() ? (value.data() as ProgramState) : null,
-          profile
+          profile,
+          today
         );
         setSnapshot({ uid, ...read });
         if (read.needsMaintenance)
@@ -158,17 +169,21 @@ export function useHomeProgram() {
       active = false;
       stop();
     };
-  }, [uid, profile, prepare]);
+    // On a new day the listener starts again, and its first snapshot asks
+    // the question on that day.
+  }, [uid, profile, prepare, today]);
   useEffect(() => {
     if (!uid || !profile?.runMode || profile.runMode === "freeform") return;
     let active = true;
-    void fetchRecentLayoff(uid, localDateString()).then((value) => {
+    // Read again for each new day, as the engine reads it: the fell-behind
+    // sheet's words have to match what its button will build.
+    void fetchRecentLayoff(uid, today).then((value) => {
       if (active) setLayoff({ uid, value });
     });
     return () => {
       active = false;
     };
-  }, [uid, profile?.runMode]);
+  }, [uid, profile?.runMode, today]);
 
   function action<K extends keyof Actions>(name: K) {
     return async (
