@@ -2,7 +2,7 @@ import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
-import { racePaceFinishFor } from "@/lib/racePaceFinish";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
@@ -313,12 +313,12 @@ export default function DayPeekCard({
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
   // Run21 (2): a long run that finishes at race pace says so, by the
   // launch's own gate.
-  const runRaceFinish = racePaceFinishFor(
+  const runRacePace = racePaceWorkFor(
     runTemplate,
     profile,
     programState?.runPlan
   );
-  const runName = runSessionName(runTemplate, runRaceFinish);
+  const runName = runSessionName(runTemplate, runRacePace);
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -329,7 +329,7 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
-          racePaceFinish: runRaceFinish !== null,
+          racePace: runRacePace?.kind,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -563,7 +563,7 @@ export default function DayPeekCard({
                   <RunPurpose>
                     <RunAbout
                       about={runSessionAbout(runTemplate, {
-                        racePaceFinish: runRaceFinish,
+                        racePace: runRacePace,
                       })}
                       why={runPurpose}
                     />

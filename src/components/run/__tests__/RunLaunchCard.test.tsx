@@ -87,7 +87,7 @@ describe("RunLaunchCard", () => {
         estimatedDuration: 85,
         config: { targetDistanceKm: 15 },
       },
-      racePaceFinish: { blockKm: 5, goalPaceS: 300 },
+      racePace: { kind: "finish" as const, blockKm: 5, goalPaceS: 300 },
       purpose:
         "It rehearses race day on tired legs: your pace, your fuelling and your focus.",
     });
@@ -104,6 +104,32 @@ describe("RunLaunchCard", () => {
       /What it is.*finishing at your goal race pace/
     );
     expect(why).toHaveTextContent(/If it feels wrong.*Run the rest easy/);
+  });
+
+  it("Run21 (3): names a tempo at the goal race pace, with its own lines", () => {
+    setup({
+      workout: {
+        id: "tempo_20",
+        name: "20 Min Tempo",
+        type: "tempo",
+        icon: "zap",
+        description: "Comfortably hard, sustained effort",
+        estimatedDuration: 30,
+        config: {
+          tempo: { warmupSec: 300, workSecs: [1200], cooldownSec: 300 },
+        },
+      },
+      prefill: { activityType: "tempo", target: { type: "pace", value: 300 } },
+      racePace: { kind: "tempo", goalPaceS: 300 },
+    });
+    expect(
+      screen.getByRole("heading", { name: "20 Min Tempo at race pace" })
+    ).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(/What it is.*a block at your goal race pace/);
+    expect(why).toHaveTextContent(/How it should feel.*Race pace: even/);
+    // A long run's finish line is a long run's.
+    expect(screen.queryByText(/^Last /)).toBeNull();
   });
 
   it("renders the workout name, distance metric and default eyebrow", () => {

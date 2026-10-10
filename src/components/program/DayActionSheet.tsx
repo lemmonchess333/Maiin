@@ -55,7 +55,7 @@ import {
 } from "@/lib/workoutTemplates";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { runSessionName } from "@/lib/runSessionAbout";
-import { racePaceFinishFor } from "@/lib/racePaceFinish";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -207,7 +207,7 @@ export default function DayActionSheet({
     : null;
   // Run21 (2): a long run that finishes at race pace says so, by the
   // launch's own gate.
-  const selectedRaceFinish = racePaceFinishFor(
+  const selectedRacePace = racePaceWorkFor(
     selectedRunTemplate,
     profile,
     programState?.runPlan
@@ -220,6 +220,14 @@ export default function DayActionSheet({
   const selectedRunPace: string | null = (() => {
     if (!selectedRunTemplate || isRunWalkTemplateId(selectedRunTemplate.id))
       return null;
+    // A2: a tempo at the goal pace shows that pace, the one the run will
+    // set, with or without a benchmark.
+    if (selectedRacePace?.kind === "tempo") {
+      return sessionPaceDisplay(
+        { targetPace: Math.round(selectedRacePace.goalPaceS) },
+        unit
+      );
+    }
     const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -266,7 +274,7 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
-      racePaceFinish: selectedRaceFinish !== null,
+      racePace: selectedRacePace?.kind,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
@@ -368,7 +376,7 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {runSessionName(selectedRunTemplate, selectedRaceFinish)}
+                  {runSessionName(selectedRunTemplate, selectedRacePace)}
                 </p>
                 {selectedRunTemplate?.description && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -378,7 +386,7 @@ export default function DayActionSheet({
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
                   template={selectedRunTemplate}
-                  racePaceFinish={selectedRaceFinish}
+                  racePace={selectedRacePace}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />

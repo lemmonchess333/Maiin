@@ -1,5 +1,5 @@
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
-import type { RacePaceFinish } from "@/lib/racePaceFinish";
+import type { RacePaceWork } from "@/lib/racePace";
 import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
 /**
@@ -34,9 +34,9 @@ import type { ProgramContextStrip } from "./RunSetupModal";
 
 interface RunLaunchCardProps {
   workout: RunTemplate;
-  /** The long run's race-pace finish, which its name and lines say
+  /** The run's work at the goal race pace, which its name and lines say
    *  (Run21 (2)). */
-  racePaceFinish?: RacePaceFinish | null;
+  racePace?: RacePaceWork | null;
   /** Resolved prefill — carries the pace/distance/interval target to display. */
   prefill: Partial<RunConfig>;
   /** Programme context (phase / week) — null for structured-today non-race. */
@@ -66,7 +66,7 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
 
 export default function RunLaunchCard({
   workout,
-  racePaceFinish = null,
+  racePace = null,
   prefill,
   strip,
   isExtra,
@@ -77,7 +77,7 @@ export default function RunLaunchCard({
   onBack,
   purpose,
 }: RunLaunchCardProps) {
-  const name = runSessionName(workout, racePaceFinish);
+  const name = runSessionName(workout, racePace);
   const unit = useDistanceUnit();
 
   const target = prefill.target;
@@ -98,14 +98,15 @@ export default function RunLaunchCard({
   /* Run21 (2): a long run's race-pace finish, which its name and lines
      only name, with its size and pace before the run starts. Labelled as
      the run's own segment is, in the reader's unit. */
-  const racePaceLine = racePaceFinish
-    ? `Last ${distanceIn(racePaceFinish.blockKm * 1000, unit)
-        .toFixed(1)
-        .replace(/\.0$/, "")} ${distanceUnitLabel(unit)} at ${paceMinSec(
-        Math.round(racePaceFinish.goalPaceS),
-        unit
-      )} ${paceUnitLabel(unit)}`
-    : null;
+  const racePaceLine =
+    racePace?.kind === "finish"
+      ? `Last ${distanceIn(racePace.blockKm * 1000, unit)
+          .toFixed(1)
+          .replace(/\.0$/, "")} ${distanceUnitLabel(unit)} at ${paceMinSec(
+          Math.round(racePace.goalPaceS),
+          unit
+        )} ${paceUnitLabel(unit)}`
+      : null;
 
   const eyebrow = isExtra
     ? "Extra run"
@@ -167,7 +168,7 @@ export default function RunLaunchCard({
           </p>
           <RunPurpose>
             <RunAbout
-              about={runSessionAbout(workout, { racePaceFinish })}
+              about={runSessionAbout(workout, { racePace })}
               why={purpose}
             />
           </RunPurpose>

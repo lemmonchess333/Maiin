@@ -1160,7 +1160,11 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
 describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", () => {
   // Half, 10 weeks: week 6 is the build, where a goal time gives a long run
   // of 12 km or more a race-pace finish (the launch's gate).
-  function renderLong(targetTimeS?: number) {
+  function renderLong(
+    targetTimeS?: number,
+    templateId = "long_15k",
+    type = "long"
+  ) {
     const date = dayOfThisWeek(2);
     const profile = {
       ...makeProfile(
@@ -1178,8 +1182,8 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
         dayIndex: 2,
         date,
         weekKey: localWeekKey(parseLocalDate(date)),
-        templateId: "long_15k",
-        type: "long",
+        templateId,
+        type,
       }),
     ]);
     program.runPlan = {
@@ -1212,6 +1216,15 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
     );
     expect(why).toHaveTextContent(/How it should feel.*Easy until the final/);
     expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+  });
+
+  it("names a tempo at the goal race pace, and why", () => {
+    renderLong(6330, "tempo_20", "tempo");
+    expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*what race pace feels like/
+    );
   });
 
   it("is a plain long run without a goal time", () => {

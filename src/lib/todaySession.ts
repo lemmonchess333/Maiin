@@ -16,7 +16,7 @@ import { nextUpIndex } from "@/features/program/nextUpCursor";
 import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { racePaceFinishFor, type RacePaceFinish } from "@/lib/racePaceFinish";
+import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
@@ -85,8 +85,8 @@ export interface TodayRun {
   /** A new person's first run. */
   isFirst: boolean;
   /** A long run that finishes at race pace, which its name says
-   *  (Run21 (2), `racePaceFinishFor`). Absent reads as none. */
-  racePaceFinish?: RacePaceFinish | null;
+   *  (Run21 (2), `racePaceWorkFor`). Absent reads as none. */
+  racePace?: RacePaceWork | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -178,7 +178,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           runDay: resolved.run.runDay,
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
-          racePaceFinish: racePaceFinishFor(
+          racePace: racePaceWorkFor(
             templateOfRunDay(resolved.run.runDay),
             profile,
             programState?.runPlan
@@ -287,7 +287,7 @@ function tomorrowSession(
   const runName = runDay
     ? runSessionName(
         runTemplate,
-        racePaceFinishFor(runTemplate, profile, programState?.runPlan)
+        racePaceWorkFor(runTemplate, profile, programState?.runPlan)
       )
     : (next.scheduleType === "run" || next.scheduleType === "both") &&
         !nextWeekWritten

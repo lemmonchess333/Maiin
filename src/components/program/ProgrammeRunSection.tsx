@@ -150,7 +150,7 @@ import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { runSessionName } from "@/lib/runSessionAbout";
-import { racePaceFinishFor } from "@/lib/racePaceFinish";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
@@ -778,12 +778,12 @@ export default function ProgrammeRunSection({
   const selectedIsRace = selectedTemplate?.type === "race";
   // Run21 (2): a long run that finishes at race pace says so, by the
   // launch's own gate.
-  const selectedRaceFinish = racePaceFinishFor(
+  const selectedRacePace = racePaceWorkFor(
     selectedTemplate,
     profile,
     programState?.runPlan
   );
-  const selectedName = runSessionName(selectedTemplate, selectedRaceFinish);
+  const selectedName = runSessionName(selectedTemplate, selectedRacePace);
   const selectedPurpose =
     selectedTemplate && selectedRun.runDay
       ? runSessionPresentation({
@@ -794,7 +794,7 @@ export default function ProgrammeRunSection({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
-          racePaceFinish: selectedRaceFinish !== null,
+          racePace: selectedRacePace?.kind,
         })
       : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
@@ -810,6 +810,14 @@ export default function ProgrammeRunSection({
   const selectedPaceLabel: string | null = (() => {
     if (!selectedTemplate || isRunWalkTemplateId(selectedTemplate.id))
       return null;
+    // A2: a tempo at the goal pace shows that pace, the one the run will
+    // set, with or without a benchmark.
+    if (selectedRacePace?.kind === "tempo") {
+      return sessionPaceDisplay(
+        { targetPace: Math.round(selectedRacePace.goalPaceS) },
+        unit
+      );
+    }
     const table = prescriptivePaceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -1565,7 +1573,7 @@ export default function ProgrammeRunSection({
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
                   template={selectedTemplate}
-                  racePaceFinish={selectedRaceFinish}
+                  racePace={selectedRacePace}
                   run={selectedRun.runDay}
                   runDays={runDays}
                 />

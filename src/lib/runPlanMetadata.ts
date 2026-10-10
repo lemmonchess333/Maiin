@@ -22,11 +22,11 @@ import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
 import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import {
-  longRunRacePaceFinish,
+  racePaceWork,
   resolveRaceEnrichment,
   type RaceEnrichment,
   type RaceTarget,
-} from "./racePaceFinish";
+} from "./racePace";
 import {
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
@@ -706,18 +706,12 @@ function templateToPrefill(
   seed: number = 0
 ): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
-  // A2 gating: tempo runs at goal pace through build AND taper (race
-  // rhythm is exactly what taper sharpening is for). A long run's
-  // race-pace block is `longRunRacePaceFinish`'s (racePaceFinish.ts), the
-  // gate the plan's surfaces read too, so a run named for its finish has
-  // one.
-  const tempoAtGoal =
-    race &&
-    tmpl.type === "tempo" &&
-    (race.phase === "build" || race.phase === "taper")
-      ? race
-      : null;
-  const raceFinish = longRunRacePaceFinish(tmpl, race);
+  // A2: a tempo at the goal pace through build and taper, a long run's
+  // race-pace finish in the build. `racePaceWork` (racePace.ts) is the gate
+  // the plan's surfaces read too, so a run named for its race pace has it.
+  const work = racePaceWork(tmpl, race);
+  const tempoAtGoal = work?.kind === "tempo" ? work : null;
+  const raceFinish = work?.kind === "finish" ? work : null;
   if (tmpl.config.targetDistanceKm) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
     // editing templates), but RunConfig.target.value is metres

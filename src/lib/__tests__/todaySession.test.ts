@@ -533,7 +533,7 @@ describe("todaySession — a long run that finishes at race pace (Run21 (2))", (
         programState: racePlan([runDay(WEDNESDAY, long15)]),
       })
     );
-    expect(session.run?.racePaceFinish?.blockKm).toBe(5);
+    expect(session.run?.racePace).toMatchObject({ kind: "finish", blockKm: 5 });
   });
 
   it("gives none without a goal time", () => {
@@ -543,7 +543,27 @@ describe("todaySession — a long run that finishes at race pace (Run21 (2))", (
         programState: racePlan([runDay(WEDNESDAY, long15)]),
       })
     );
-    expect(session.run?.racePaceFinish).toBeNull();
+    expect(session.run?.racePace).toBeNull();
+  });
+
+  it("gives a tempo at the goal pace its race pace, and names it so", () => {
+    const tempo = { templateId: "tempo_20", type: "tempo" };
+    const today = todaySession(
+      input({
+        profile: racer({ 3: "run" }, 6330),
+        programState: racePlan([runDay(WEDNESDAY, tempo)]),
+      })
+    );
+    expect(today.run?.racePace).toMatchObject({ kind: "tempo" });
+    const restDay = todaySession(
+      input({
+        profile: racer({ 4: "run" }, 6330),
+        programState: racePlan([runDay(THURSDAY, tempo)]),
+      })
+    );
+    expect(restDay.rest).toMatchObject({
+      tomorrow: { label: "20 Min Tempo at race pace" },
+    });
   });
 
   it("names it so on the rest day before it", () => {

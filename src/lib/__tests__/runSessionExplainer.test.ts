@@ -203,7 +203,7 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
 
   it("is in the build's week to rehearse race day", () => {
     expect(
-      runSessionExplainer({ ...long, currentWeek: 5, racePaceFinish: true })
+      runSessionExplainer({ ...long, currentWeek: 5, racePace: "finish" })
     ).toBe(
       "It rehearses race day on tired legs: your pace, your fuelling and your focus."
     );
@@ -212,6 +212,43 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
   it("keeps the anchor run's reason without one", () => {
     expect(runSessionExplainer({ ...long, currentWeek: 5 })).toMatch(
       /^The week's anchor run/
+    );
+  });
+});
+
+describe("a tempo at the goal race pace (Run21 (3))", () => {
+  // Half, 10 weeks: base w0-2, build w3-6, taper w7-8. The plain tempo's
+  // reason says its pace "comes from your fitness", which a goal-pace
+  // tempo's doesn't, and the taper's says "easy and short".
+  const tempo = {
+    type: "tempo",
+    templateId: "tempo_20",
+    totalWeeks: 10,
+    distance: "half",
+  };
+
+  it("practises the goal pace in the build", () => {
+    const why = runSessionExplainer({
+      ...tempo,
+      currentWeek: 5,
+      racePace: "tempo",
+    });
+    expect(why).toBe(
+      "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts."
+    );
+  });
+
+  it("keeps the rhythm sharp in the taper", () => {
+    expect(
+      runSessionExplainer({ ...tempo, currentWeek: 7, racePace: "tempo" })
+    ).toBe(
+      "Taper — a short block at race pace keeps the rhythm sharp while the volume drops."
+    );
+  });
+
+  it("keeps the tempo's own reasons without it", () => {
+    expect(runSessionExplainer({ ...tempo, currentWeek: 5 })).toMatch(
+      /^Tempo — /
     );
   });
 });

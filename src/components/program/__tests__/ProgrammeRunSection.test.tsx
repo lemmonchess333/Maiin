@@ -780,6 +780,55 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(screen.queryByText(/with race pace/)).toBeNull();
   });
 
+  it("Run21 (3): today's tempo at the goal race pace says so, with that pace", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time puts a tempo
+    // at the goal pace (A2), not the pace fitness would set.
+    const renderTempo = (targetTimeS?: number) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...commonProps()}
+          profile={makeProfile({
+            raceGoal: {
+              distance: "half",
+              targetDate: "2099-04-18",
+              ...(targetTimeS ? { targetTimeS } : {}),
+            },
+          } as Partial<UserProfile>)}
+          programState={makeProgramState(
+            [
+              makeRunDay({
+                templateId: "tempo_20",
+                type: "tempo",
+                status: "planned",
+                date: TODAY_KEY,
+                dayIndex: TODAY_DOW,
+              }),
+            ],
+            {
+              runPlan: {
+                mode: "race_prep",
+                raceGoal: { distance: "half", targetDate: "2099-04-18" },
+                totalWeeks: 10,
+                currentWeek: 5,
+              },
+            } as Partial<ProgramState>
+          )}
+        />
+      );
+    const withTime = renderTempo(6330);
+    expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
+    expect(document.body.textContent).toContain("5:00 /km");
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*what race pace feels like/
+    );
+    expect(why).not.toHaveTextContent(/comes from your fitness/);
+    withTime.unmount();
+    renderTempo();
+    expect(screen.getByText("20 Min Tempo")).toBeInTheDocument();
+    expect(screen.queryByText(/at race pace/)).toBeNull();
+  });
+
   it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
     renderWith(
       <ProgrammeRunSection

@@ -6,7 +6,7 @@ import RunTemplateIcon from "@/components/run/RunTemplateIcon";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import type { RacePaceFinish } from "@/lib/racePaceFinish";
+import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import {
@@ -25,7 +25,7 @@ import { cardClasses } from "@/components/ui/cardClasses";
  */
 export default function RunCTACard({
   todayRun,
-  racePaceFinish = null,
+  racePace = null,
   navigate,
   isFirst = false,
   eyebrowLabel,
@@ -34,7 +34,7 @@ export default function RunCTACard({
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
    *  (Run21 (2)). */
-  racePaceFinish?: RacePaceFinish | null;
+  racePace?: RacePaceWork | null;
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
@@ -50,7 +50,7 @@ export default function RunCTACard({
     : null;
   /* A run day with no planned run yet (a new plan, or a legacy schedule)
      is a free run, the name Train's Run tab gives the same choice. */
-  const runLabel = runSessionName(tmpl, racePaceFinish, "Free run");
+  const runLabel = runSessionName(tmpl, racePace, "Free run");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy

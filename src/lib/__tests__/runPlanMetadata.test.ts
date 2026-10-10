@@ -19,10 +19,10 @@ import {
   type RunPlanMetadata,
 } from "../runPlanMetadata";
 import {
-  racePaceFinishFor,
+  racePaceWorkFor,
   raceTargetFromProfile,
   type RaceTargetProfile,
-} from "../racePaceFinish";
+} from "../racePace";
 import { RUN_TEMPLATES } from "../workoutTemplates";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 
@@ -1399,43 +1399,73 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
     }).prefill.segments?.find((s) => s.eyebrow === "RACE PACE");
 
   it("finds a build-phase long run's finish: a third of it, at the goal pace", () => {
-    const finish = racePaceFinishFor(
-      template("long_15k"),
-      runner(),
-      halfPlan(5)
-    );
-    expect(finish?.blockKm).toBe(5);
+    const finish = racePaceWorkFor(template("long_15k"), runner(), halfPlan(5));
+    expect(finish).toMatchObject({ kind: "finish", blockKm: 5 });
     expect(finish?.goalPaceS).toBeCloseTo(300.04, 1);
   });
 
   it("finds none where the launch plays none", () => {
     const long15 = template("long_15k");
-    expect(racePaceFinishFor(long15, runner(), halfPlan(1))).toBeNull(); // base
-    expect(racePaceFinishFor(long15, runner(), halfPlan(7))).toBeNull(); // taper
+    expect(racePaceWorkFor(long15, runner(), halfPlan(1))).toBeNull(); // base
+    expect(racePaceWorkFor(long15, runner(), halfPlan(7))).toBeNull(); // taper
     expect(
-      racePaceFinishFor(template("long_10k"), runner(), halfPlan(5))
+      racePaceWorkFor(template("long_10k"), runner(), halfPlan(5))
     ).toBeNull(); // under 12 km
     expect(
-      racePaceFinishFor(template("tempo_20"), runner(), halfPlan(5))
-    ).toBeNull();
-    expect(
-      racePaceFinishFor(
+      racePaceWorkFor(
         long15,
         runner({ raceGoal: { distance: "half" } }),
         halfPlan(5)
       )
     ).toBeNull(); // no goal time
     expect(
-      racePaceFinishFor(
+      racePaceWorkFor(
         long15,
         runner({ raceGoal: { distance: "10k", targetTimeS: 2700 } }),
         halfPlan(5)
       )
     ).toBeNull();
     expect(
-      racePaceFinishFor(long15, runner({ runMode: "freeform" }), halfPlan(5))
+      racePaceWorkFor(long15, runner({ runMode: "freeform" }), halfPlan(5))
     ).toBeNull();
-    expect(racePaceFinishFor(null, runner(), halfPlan(5))).toBeNull();
+    expect(racePaceWorkFor(null, runner(), halfPlan(5))).toBeNull();
+  });
+
+  it("finds a tempo at the goal pace through the build and the taper", () => {
+    // A2: the goal pace in place of the one fitness would set.
+    const tempo = template("tempo_20");
+    expect(racePaceWorkFor(tempo, runner(), halfPlan(5))).toMatchObject({
+      kind: "tempo",
+    });
+    expect(racePaceWorkFor(tempo, runner(), halfPlan(7))).toMatchObject({
+      kind: "tempo",
+    });
+    expect(racePaceWorkFor(tempo, runner(), halfPlan(1))).toBeNull(); // base
+    expect(
+      racePaceWorkFor(tempo, runner({ runMode: "freeform" }), halfPlan(5))
+    ).toBeNull();
+  });
+
+  it("agrees with the launch for every tempo in every week", () => {
+    for (const t of RUN_TEMPLATES.filter((x) => x.type === "tempo")) {
+      for (let week = 0; week < 10; week++) {
+        const { prefill } = computePlanMetadata({
+          displayUnit: "km",
+          profileRunMode: "race_prep",
+          todayDayIndex: MONDAY,
+          runPlan: halfPlan(week),
+          runDays: [makeRunDay(MONDAY, t.id, "tempo")],
+          urlTemplateId: null,
+          urlType: null,
+          raceTarget: raceTargetFromProfile(runner()),
+        });
+        const atGoal = prefill.segments?.some((s) => s.pacePinned) ?? false;
+        const work = racePaceWorkFor(t, runner(), halfPlan(week));
+        expect(atGoal, `${t.id}, week ${week + 1}`).toBe(
+          work?.kind === "tempo"
+        );
+      }
+    }
   });
 
   it("agrees with the launch for every long run in every week", () => {
@@ -1443,14 +1473,15 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
     for (const t of longs) {
       for (let week = 0; week < 10; week++) {
         const block = launch(t.id, week, runner());
-        const finish = racePaceFinishFor(t, runner(), halfPlan(week));
+        const finish = racePaceWorkFor(t, runner(), halfPlan(week));
         expect(Boolean(block), `${t.id}, week ${week + 1}`).toBe(
           finish !== null
         );
         if (finish) {
+          expect(finish.kind).toBe("finish");
           expect(block?.target).toEqual({
             kind: "distance",
-            meters: finish.blockKm * 1000,
+            meters: finish.kind === "finish" ? finish.blockKm * 1000 : 0,
           });
         }
       }
@@ -1465,9 +1496,7 @@ describe("a long run's race-pace finish: the launch's gate, for the plan's surfa
         vdot: null,
       },
     });
-    expect(
-      racePaceFinishFor(template("long_15k"), slow, halfPlan(5))
-    ).toBeNull();
+    expect(racePaceWorkFor(template("long_15k"), slow, halfPlan(5))).toBeNull();
     expect(launch("long_15k", 5, slow)).toBeUndefined();
   });
 });

@@ -94,10 +94,7 @@ import {
   runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
-import {
-  racePaceFinishFor,
-  raceTargetFromProfile,
-} from "../lib/racePaceFinish";
+import { racePaceWorkFor, raceTargetFromProfile } from "../lib/racePace";
 import { logger } from "../lib/logger";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
@@ -624,9 +621,9 @@ export default function Run() {
   );
   // Run21 (2): the launch card names a race-pace finish, by the gate that
   // gave the prefill its block, on the same inputs.
-  const launchRaceFinish = useMemo(
+  const launchRacePace = useMemo(
     () =>
-      racePaceFinishFor(
+      racePaceWorkFor(
         launchWorkout,
         { runMode: profileRunMode, raceGoal, runFitness },
         programState?.runPlan
@@ -1299,7 +1296,7 @@ export default function Run() {
             // gesture so audio primes). Customize drops to the full modal.
             <RunLaunchCard
               workout={launchWorkout}
-              racePaceFinish={launchRaceFinish}
+              racePace={launchRacePace}
               purpose={
                 runSessionPresentation({
                   type: launchWorkout.type,
@@ -1309,7 +1306,7 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
-                  racePaceFinish: launchRaceFinish !== null,
+                  racePace: launchRacePace?.kind,
                 }).purpose
               }
               prefill={planDecision.prefill}

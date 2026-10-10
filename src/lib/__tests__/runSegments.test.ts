@@ -19,7 +19,7 @@ import {
   segmentTargetLabel,
   STRIDE_RECOVERY_SECONDS,
 } from "../runSegments";
-import { racePaceBlockKm } from "../racePaceFinish";
+import { racePaceBlockKm } from "../racePace";
 import {
   RUN_TEMPLATES,
   RUN_WALK_TEMPLATE_IDS,

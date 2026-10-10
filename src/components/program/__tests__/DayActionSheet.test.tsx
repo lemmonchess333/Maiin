@@ -346,6 +346,66 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.queryByText(/with race pace/)).toBeNull();
   });
 
+  it("Run21 (3): names a tempo at the goal race pace, gives that pace and says why", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time puts a tempo
+    // at the goal pace (A2), not the pace fitness would set.
+    const renderTempo = (targetTimeS?: number) => {
+      const profile = {
+        ...makeProfile([{ day: todayDow(), type: "run" }]),
+        runMode: "race_prep",
+        raceGoal: {
+          distance: "half",
+          targetDate: "2099-01-01",
+          ...(targetTimeS ? { targetTimeS } : {}),
+        },
+      } as UserProfile;
+      const programState = {
+        ...makeProgramState([
+          makeRunDay({
+            id: "runday_tempo",
+            dayIndex: todayDow(),
+            date: todayKey(),
+            weekKey: todayWeekKey(),
+            templateId: "tempo_20",
+            type: "tempo",
+          }),
+        ]),
+        runPlan: {
+          mode: "race_prep",
+          currentWeek: 5,
+          totalWeeks: 10,
+          raceGoal: { distance: "half", targetDate: "2099-01-01" },
+        },
+      } as ProgramState;
+      return render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={profile}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+    };
+    const withTime = renderTempo(6330);
+    expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
+    // The goal pace, 1:45:30 over a half, though there's no benchmark.
+    expect(document.body.textContent).toContain("5:00 /km");
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(/What it is.*a block at your goal race pace/);
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*what race pace feels like/
+    );
+    expect(why).not.toHaveTextContent(/comes from your fitness/);
+    withTime.unmount();
+    renderTempo();
+    expect(screen.getByText("20 Min Tempo")).toBeInTheDocument();
+    expect(screen.queryByText(/at race pace/)).toBeNull();
+  });
+
   it("Run21 (3): says what the run is with no plan to give a reason", () => {
     const { profile, programState, callbacks } = setup();
     render(

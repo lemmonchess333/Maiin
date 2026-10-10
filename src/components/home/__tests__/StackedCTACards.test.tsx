@@ -586,7 +586,7 @@ describe("today's run card names a race-pace finish (Run21 (2))", function () {
     renderCards(
       runDay({
         runDay: longDay,
-        racePaceFinish: { blockKm: 5, goalPaceS: 300 },
+        racePace: { kind: "finish" as const, blockKm: 5, goalPaceS: 300 },
       })
     );
     expect(title("Long 15K with race pace")).toBeInTheDocument();
@@ -598,7 +598,7 @@ describe("today's run card names a race-pace finish (Run21 (2))", function () {
   });
 
   it("is the plain long run without one", function () {
-    renderCards(runDay({ runDay: longDay, racePaceFinish: null }));
+    renderCards(runDay({ runDay: longDay, racePace: null }));
     expect(title("Long 15K")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Open Long 15K in Train" })
