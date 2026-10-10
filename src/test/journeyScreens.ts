@@ -12,13 +12,15 @@
  *   `RunSetupModal.journeyNames.test.tsx` (the run type and the treadmill),
  *   `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
  * - Welcome back's: `LiftReturnSheet.test.tsx`.
- * - Train's rows, its Start workout, Home's title and the tab bar:
- *   `journeyScreens.test.tsx`.
+ * - Train's rows, its Start workout, its two halves, the run week, the
+ *   lift week's banners and the recovery count, Home's title and the tab
+ *   bar: `journeyScreens.test.tsx`.
  */
 import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { formatRepTarget } from "@/features/program/repTarget";
 import { getExerciseById } from "@/lib/exercises";
+import { compactRunLabel } from "@/lib/runProgrammeViewModel";
 
 /** Setup's screens (`Onboarding`). */
 export const SETUP = {
@@ -118,6 +120,44 @@ export const STRIP = {
 export const HOME = {
   heading: "Today",
 } as const;
+
+/** Train's two halves (`Program`'s switch) and the run half's week
+ *  (`ProgrammeWeekSelector`). */
+export const TRAIN = {
+  mode: "Train mode",
+  lift: "Lift",
+  run: "Run",
+  runWeek: "Run week",
+} as const;
+
+/** A run's short name on Train's run week, from its template: the
+ *  function `ProgrammeRunSection` labels each day's cell with. */
+export const runWeekLabel = compactRunLabel;
+
+/** A day on Train's run week, by its name: the run's short label
+ *  (`runWeekLabel`), and whether the day is today or the run done. Until
+ *  its run is done its text is the date's day of the month, which tells
+ *  apart days whose runs share a name. */
+export function runWeekTabName(
+  label: string,
+  state?: "today" | "completed" | "skipped"
+): string {
+  return state ? `${label}, ${state}` : label;
+}
+
+/** The banner over Train's lift week in the weeks a race plan turns
+ *  (`DeloadBanner`, Lift4 (9) and (10)), each a region named by its
+ *  title. */
+export const LIFT_WEEK_BANNER = {
+  lighter: "Lighter week",
+  taper: "Taper",
+  race: "Race week",
+  recovery: "Recovery",
+} as const;
+
+/** Train's run half while the runner recovers from a race
+ *  (`ProgrammeRunSection`): its banner counts the days left. */
+export const RUN_RECOVERY = /^Recovering · \d+ days? left$/;
 
 /** The tab bar (`BottomNavigation`, with `Layout`'s tabs). */
 export const TABS = {
