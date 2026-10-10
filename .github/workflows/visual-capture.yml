@@ -53,10 +53,16 @@ jobs:
           key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Chromium for Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Install Chromium deps only (cache hit path)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        # Bounded and retried for the same reason as the step above.
+        timeout-minutes: 10
+        run: bash scripts/ci/install-playwright-chromium.sh install-deps 140
 
       - run: npm install -g firebase-tools
 
