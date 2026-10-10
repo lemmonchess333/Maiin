@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Performance & resilience', () => {
   test('initial bundle loads in under 3 seconds', async ({ page }) => {
     const start = Date.now();
-    await page.goto('/');
+    await page.goto('');
     await page.locator('#root').waitFor({ state: 'attached' });
     const childCount = await page.locator('#root').evaluate((el) => el.children.length);
     expect(childCount).toBeGreaterThan(0);
@@ -16,13 +16,13 @@ test.describe('Performance & resilience', () => {
       exceptions.push(err.message);
     });
 
-    await page.goto('/');
+    await page.goto('');
     await page.waitForTimeout(2000);
     expect(exceptions).toHaveLength(0);
   });
 
   test('404 route does not crash the app', async ({ page }) => {
-    await page.goto('/this-route-does-not-exist');
+    await page.goto('this-route-does-not-exist');
     await page.waitForTimeout(1000);
     const root = page.locator('#root');
     await expect(root).toBeAttached();
@@ -31,7 +31,7 @@ test.describe('Performance & resilience', () => {
   });
 
   test('skip-to-content link exists', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const skipLink = page.locator('a[href="#main-content"]');
     await expect(skipLink).toBeAttached();
   });
@@ -40,7 +40,7 @@ test.describe('Performance & resilience', () => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.goto('/');
+    await page.goto('');
     // The IIFE in <head> should run without throwing
     expect(errors).toHaveLength(0);
   });
@@ -58,7 +58,7 @@ test.describe('Performance & resilience', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
 
     expect(cdnRequests).toEqual([]);
@@ -71,7 +71,7 @@ test.describe('Performance & resilience', () => {
   });
 
   test('Open Graph meta tags are present', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content');
     const ogDesc = await page.locator('meta[property="og:description"]').getAttribute('content');
     const ogImage = await page.locator('meta[property="og:image"]').getAttribute('content');
@@ -81,7 +81,7 @@ test.describe('Performance & resilience', () => {
   });
 
   test('Twitter Card meta tags are present', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const twitterCard = await page.locator('meta[name="twitter:card"]').getAttribute('content');
     const twitterTitle = await page.locator('meta[name="twitter:title"]').getAttribute('content');
     expect(twitterCard).toBeTruthy();
