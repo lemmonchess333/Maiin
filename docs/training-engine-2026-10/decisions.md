@@ -833,6 +833,21 @@ tap away, and a change the person didn't make gets one line.
   showed the fitness band. **Built** as a correction under Run21 (3)
   (lemmonchess333/Maiin#2666): "20 Min Tempo at race pace", its own
   lines and reasons, and the goal pace on Train's card and the day sheet.
+- **Built, third part** (lemmonchess333/Maiin#2668): the one line under a
+  planned run's name is its feel line, effort word first ("Easy: you can
+  talk in full sentences. Slower is fine."), in the template description's
+  place, on Train's card, the day sheet, the launch card and Home's day
+  details. The day details are a detail surface; Home's today card, which
+  A6 covers, still shows none. "What it is" now gives the session's shape
+  from its template: the warm-up, the blocks or repeats and their rest, the
+  cool-down, a run-walk's runs and walks. "Coaches also call this" is the
+  last line of "Why this run": zone 2 for easy, medium-long and long runs,
+  a threshold run for a tempo, VO2 max intervals for 1K repeats. The
+  reasons, the template descriptions, Settings' pace bands (now Tempo and
+  Intervals) and a guided run lose their physiology words, each held by a
+  guard test. Left for its own PR: the Performance tab's run suggestion
+  ("rebuild aerobic base"), which the server writes into each week's
+  document.
 
 ### E3. "About this run", on every run surface
 
