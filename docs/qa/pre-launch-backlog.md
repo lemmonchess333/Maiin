@@ -475,9 +475,39 @@ what they cannot see is a phone.
       before the date and the page shows; there should be one mark at
       the end, never two.
 - [ ] **Reduce Motion on the phone:** the whole mark, then a fade.
+      (Since 2026-10-10: the chevron fades in where it stays, then the
+      fade; nothing breathes and nothing moves.)
 - [ ] **Light mode** (Settings → Units & appearance): the launch stays
       dark and Home is light as it shows, with no flash of either in
       between.
+
+### The launch animation's second pass (2026-10-10)
+
+Affects: `src/components/LaunchSplash.tsx`, `src/lib/launchSplash.ts`,
+`src/lib/nativeLaunchImage.ts`, `src/pages/Home.tsx` (`data-page-ready`),
+`capacitor.config.ts` (comment only). Filmed frame by frame in Chromium
+with the emulator rig, normal and at 4× CPU throttling; what the films
+cannot show is WKWebView and the native launch image.
+
+- [ ] **The rise is seen from its start.** Cold-start on a quick phone:
+      the native launch image now goes as soon as the web layer has drawn
+      the same frame, so the chevron should climb from low in the hexagon
+      in full view, never appear half-risen through the native image's
+      fade, and the hexagon's rounded rim should stay whole as it comes
+      up (the chevron is cut out only inside a CSS clip-path while it
+      moves). A visible change at the moment the native image goes means
+      the two frames differ (see the handover row above).
+- [ ] **No stutter while the app starts.** The rise, the breath and the
+      flight are compositor animations now (Web Animations API, transform
+      and opacity); none should hitch while the app loads underneath.
+      The framer version visibly stalled mid-flight in Chromium.
+- [ ] **A slow start breathes.** With a slow network (Developer →
+      Network Link Conditioner, or poor signal), the mark should breathe
+      gently while it waits, and still land on the header without a jump.
+- [ ] **The landing shows a loaded Home.** Signed in, the mark should
+      land on today's session card and the food ring, not their grey
+      placeholders. On a slow network it waits at most a second for them,
+      then lands on what Home has drawn.
 
 ## The Privacy Policy's claim about Google's retention (F3d pin 2)
 
