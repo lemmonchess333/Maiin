@@ -121,6 +121,21 @@ function raceProfile() {
   };
 }
 
+/** Waits until the hook has written `uid`'s first plan. Its week can hold
+ *  no runs: a plan made after the week's run days plans none before the
+ *  day it is made (Run19). */
+async function firstPlanWritten(uid: string): Promise<void> {
+  await waitFor(() =>
+    expect(
+      (
+        readDoc(`users/${uid}/programState/current`) as
+          | { runPlan?: unknown }
+          | undefined
+      )?.runPlan
+    ).toBeDefined()
+  );
+}
+
 /** Seed `uid`'s runs: a trained history ending `daysAgo` days back. */
 function seedRunHistory(uid: string, daysAgo: number, count = 10): void {
   const tree: Record<string, Record<string, unknown>> = {};
@@ -187,10 +202,28 @@ async function ageIntoMidBlock(uid: string, weekIndex: number): Promise<void> {
   const path = `users/${uid}/programState/current`;
   const doc = readDoc(path) as Record<string, unknown>;
   const staleKey = shift(String(localWeekKey()), -7);
+  // A first plan made after its week's run days holds none that week
+  // (Run19). The rollover moves on from the stored week's key, so the
+  // stale week is given a day to carry it.
+  const days = (doc.runDays as { weekKey: string }[] | undefined) ?? [];
   seedFirestore({
     [path]: {
       ...doc,
-      runDays: (doc.runDays as { weekKey: string }[]).map((d) => ({
+      runDays: (days.length
+        ? days
+        : [
+            {
+              id: `runday_${staleKey}_1_easy_30`,
+              dayIndex: 1,
+              templateId: "easy_30",
+              type: "easy",
+              completed: false,
+              status: "planned",
+              date: staleKey,
+              weekKey: staleKey,
+            },
+          ]
+      ).map((d) => ({
         ...d,
         weekKey: staleKey,
       })),
@@ -215,9 +248,7 @@ describe("the layoff reaches the plan the runner is given", () => {
   async function weekAfterRollover(daysAway: number) {
     seedRunHistory("userA", daysAway);
     const { rerender } = renderHook(() => useProgram());
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     await ageIntoMidBlock("userA", 9);
     rerender();
     await waitFor(() =>
@@ -245,9 +276,7 @@ describe("the layoff reaches the plan the runner is given", () => {
     mockProfile = { ...raceProfile(), runTimeLimits: limits };
     seedRunHistory("userA", 1);
     const { rerender } = renderHook(() => useProgram());
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     await ageIntoMidBlock("userA", 9);
     mockProfile = { ...raceProfile(), runTimeLimits: limits };
     rerender();
@@ -286,9 +315,7 @@ describe("the layoff reaches the plan the runner is given", () => {
     mockProfile = { ...raceProfile(), runningBaseline };
     seedRunHistory("userA", 1);
     const { rerender } = renderHook(() => useProgram());
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     await ageIntoMidBlock("userA", 9);
     mockProfile = { ...raceProfile(), runningBaseline };
     rerender();
@@ -374,9 +401,7 @@ describe("a layoff never crosses an account switch", () => {
     // ANCHOR: prove A really did get the re-entry week first. Without it the
     // switch assertion below would pass against a hook where the layoff never
     // applied to anybody.
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     await ageIntoMidBlock("userA", 9);
     rerender();
     await waitFor(() => expect(hardCount(persistedRunDays("userA"))).toBe(0));
@@ -396,9 +421,7 @@ describe("a layoff never crosses an account switch", () => {
 
     // B's FIRST plan still materializes while their layoff is unknown (the
     // load effect is not gated — week 0 is base-shaped either way)…
-    await waitFor(() =>
-      expect(persistedRunDays("userB").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userB");
     await ageIntoMidBlock("userB", 9);
     rerender();
     // RUN-EV-03 changed the mid-block contract here: the ROLLOVER now WAITS
@@ -429,9 +452,7 @@ describe("RUN-EV-03 — the layoff read is a declared regeneration dependency", 
     // the weekKey guard made it permanent for the week.
     seedRunHistory("userA", 70); // detrained
     const first = renderHook(() => useProgram());
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     first.unmount();
     await ageIntoMidBlock("userA", 9);
 
@@ -492,9 +513,7 @@ describe("what else a regenerated week is built from", () => {
     mockProfile = profile();
     seedRunHistory("userA", 1);
     const hook = renderHook(() => useProgram());
-    await waitFor(() =>
-      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
-    );
+    await firstPlanWritten("userA");
     await ageIntoMidBlock("userA", 9);
     mockProfile = profile();
     hook.rerender();
@@ -520,7 +539,22 @@ describe("what else a regenerated week is built from", () => {
 
   it("builds the week from the editor's tuning before the profile has it", async () => {
     // The run-plan editor saves new knobs and refreshes in the same tap, so
-    // the profile this hook holds is still the old one.
+    // the profile this hook holds is still the old one. On this week's
+    // Monday, so the refresh rebuilds the whole week: it keeps the days
+    // already gone as they were (Run19), and on a Sunday the long run can
+    // be one of them.
+    const monday = parseLocalDate(String(localWeekKey()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await editorTuningReachesTheWeek();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  async function editorTuningReachesTheWeek() {
     const { result } = await rolledOver(raceProfile);
     await waitFor(() =>
       expect(stored().runPlan?.currentWeek).toBeGreaterThan(9)
@@ -533,7 +567,7 @@ describe("what else a regenerated week is built from", () => {
       });
     });
     expect(longestKm(persistedRunDays("userA"))).toBeLessThan(standard);
-  });
+  }
 
   it("rolls a week that starts after the race into no runs, and leaves race week for the race's ending", async () => {
     // R3: the race is over, and the server has not yet ended race prep. The

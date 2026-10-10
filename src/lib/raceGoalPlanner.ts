@@ -7,9 +7,12 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  preserveEditedRunDays,
+  planWeekFromToday,
 } from "@/features/program/racePlanContinuation";
-import type { ProgramState } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 /**
  * Race Goal Planner — pure derivation of the pre-save preview shown in the
  * Programme Settings race-prep editor (see RaceGoalPlanner.tsx).
@@ -206,12 +209,18 @@ export function getRaceGoalPlannerState(
     easyPaceSPerKm: input.easyPaceSPerKm,
     planTotalWeeks: continued?.totalWeeks,
   });
-  if (continued && plan.weeks[0]) {
-    plan.weeks[0] = preserveEditedRunDays(
-      input.existingState?.runDays ?? [],
+  // The plan's weekly shape, before today's cut: what a week of it holds.
+  const shapeWeek = plan.weeks[0] ?? [];
+  if (plan.weeks[0]) {
+    plan.weeks[0] = planWeekFromToday(
       plan.weeks[0],
-      input.existingState?.manualCompletions,
-      currentDate
+      currentDate,
+      continued
+        ? {
+            runDays: input.existingState?.runDays ?? [],
+            manualCompletions: input.existingState?.manualCompletions,
+          }
+        : undefined
     );
   }
 
@@ -222,13 +231,16 @@ export function getRaceGoalPlannerState(
       ? "compressed"
       : "healthy";
 
-  const week0 = (plan.weeks[0] ?? []).filter((run) =>
+  const inThisWeek = (run: ScheduledRunDay) =>
     run.date
       ? localWeekKey(parseLocalDate(run.date)) === weekStart
-      : !run.weekKey || run.weekKey === weekStart
-  );
-  const recommendedRunDays = week0.length || weeklyRunDays;
-  const hardClashDays = week0.filter((rd) => rd.clashesWithLift).length;
+      : !run.weekKey || run.weekKey === weekStart;
+  // What is saved for this week (`planWeekFromToday`), and a week's shape:
+  // a plan made on a Thursday still runs three days a week.
+  const week0 = (plan.weeks[0] ?? []).filter(inThisWeek);
+  const shape = shapeWeek.filter(inThisWeek);
+  const recommendedRunDays = shape.length || weeklyRunDays;
+  const hardClashDays = shape.filter((rd) => rd.clashesWithLift).length;
   const blockWeeks = continuedBlockWeeks(plan.totalWeeks, continued);
   const firstWeekPhase = getRacePhaseLabel(
     blockWeeks - plan.totalWeeks,
