@@ -18,9 +18,8 @@ after a 5K, 10K, half or marathon.
 The decision tests and the emulator case cover the rule and its
 profile-only write; these need the deployed function.
 
-- [ ] **The deployed source.** The deploy's read-back lists
-      `dailyRaceReconciliationSweep`, and its source contains
-      `orphanedGoalCleared`.
+- [ ] **The deployed source.** The deploy's read-back prints
+      `Verified deployed source: dailyRaceReconciliationSweep`.
 - [ ] **The first sweep.** The 04:00 UTC log line after the deploy ends
       `orphanedGoalCleared=N`. Every stuck active account goes in that one
       sweep, so N may be more than one; most days after, 0. Open one
