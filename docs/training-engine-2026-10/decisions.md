@@ -141,12 +141,26 @@ correction Run19 recorded.
 ### Phase 3: the journeys
 
 lemmonchess333/Maiin#2676 holds the rig and the journeys as they pass:
-Get stronger for 16 weeks, and a planned run done on a treadmill. Making
-them work found two app defects (fixed in lemmonchess333/Maiin#2672: a
-resumed app kept last week's plan; a rollover on a copy the server had
-moved past carried last week's sessions into the new week) and one test
-rig defect (the Firestore emulator keeps every stream a page opens, which
-the journeys' clock jumps multiplied).
+Get stronger for 16 weeks, a planned run done on a treadmill, and a light
+trainer back after three weeks away. Making them work found three app
+defects, all fixed in lemmonchess333/Maiin#2672:
+
+- a resumed app kept last week's plan;
+- a rollover on a copy the server had moved past carried last week's
+  sessions into the new week;
+- Home, left open into a new week, never loaded the engine that rolls the
+  plan over: it asked whether the plan needed it only when the plan
+  document changed. A running-only race plan, which nothing else on Home
+  loads the engine for, stayed in its first week.
+
+It also found one test rig defect: the Firestore emulator keeps every
+stream a page opens, which the journeys' clock jumps multiplied.
+
+The runner with no benchmark is the journey that checks every explanation
+surface (E1, E2, E3, E6, E9 and R2). Each of those surfaces is changed by
+a Run21 or Run20 PR that is still open (lemmonchess333/Maiin#2643, #2656
+to #2661, #2663, #2665, #2666, #2668). Written against main, the journey
+would pin the copy those PRs replace, so it stacks on them instead.
 
 One observation is for the owner rather than a change: a planned long run
 done on a treadmill is not credited until the person taps "Mark scheduled
