@@ -20,6 +20,7 @@
  * fake (ADR-0009); the page's heavy children are stubbed.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { RUN } from "@/test/journeyScreens";
 import {
   cleanup,
   fireEvent,
@@ -211,8 +212,9 @@ describe("RunSummary — the off-plan prompt's stored dismissal", () => {
 describe("RunSummary — the off-plan prompt says only what happened", () => {
   it("marks the planned run complete when the writer did", async () => {
     renderSummary();
+    // The E2E journeys answer by this (src/test/journeyScreens.ts).
     fireEvent.click(
-      await screen.findByRole("button", { name: "Mark scheduled run complete" })
+      await screen.findByRole("button", { name: RUN.markPlannedDone })
     );
     expect(
       await screen.findByText("Scheduled run marked complete.")
@@ -329,9 +331,14 @@ describe("RunSummary — Save", () => {
 
   it("queues the run, then shows it saved", async () => {
     renderUnsaved();
-    fireEvent.click(await screen.findByRole("button", { name: "Save run" }));
+    // The E2E journeys read the summary and save and leave by these
+    // (src/test/journeyScreens.ts).
     expect(
-      await screen.findByRole("button", { name: "Done" })
+      await screen.findByRole("heading", { name: RUN.summary, level: 1 })
+    ).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
     ).toBeInTheDocument();
     expect(queued()).toHaveLength(1);
     expect(queued()[0].data).toMatchObject({

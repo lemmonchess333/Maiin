@@ -8,6 +8,9 @@
  * - The offer after setup: `Upgrade.test.tsx`.
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
+ * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
+ *   `RunSetupModal.journeyNames.test.tsx` (the run type and the treadmill),
+ *   `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
  * - Train's rows, its Start workout, Home's title and the tab bar:
  *   `journeyScreens.test.tsx`.
  */
@@ -77,6 +80,29 @@ export const WORKOUT = {
   markSet: "Mark set complete",
   save: "Save workout",
   done: "Done",
+} as const;
+
+/** A planned run done on a treadmill, from Home's card to the summary:
+ *  Home's run card, the Run page's launch card and its run-type sheet
+ *  (`RunLaunchCard`, `RunSetupModal`), the manual distance
+ *  (`TreadmillMode`, labelled by `Run`) and the summary (`RunSummary`). */
+export const RUN = {
+  homeStart: "Start run",
+  customise: "Customise",
+  runType: /^Selected run type/,
+  treadmill: /^Treadmill/,
+  startTreadmill: "Start Treadmill",
+  distance: "Distance from treadmill",
+  saveTreadmill: "Save Treadmill Run",
+  summary: "Nice run",
+  save: "Save run",
+  markPlannedDone: "Mark scheduled run complete",
+  done: "Done",
+} as const;
+
+/** Home's week strip: the words a day's label ends on (`WeekStrip`). */
+export const STRIP = {
+  runDone: "completed run",
 } as const;
 
 /** Home, where setup's offer lands (`Home`'s page title). */

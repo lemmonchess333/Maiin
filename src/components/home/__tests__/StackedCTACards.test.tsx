@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { RUN } from "@/test/journeyScreens";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -351,7 +352,8 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       }),
       navigate
     );
-    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    // The E2E journeys start a planned run by this (src/test/journeyScreens.ts).
+    fireEvent.click(screen.getByRole("button", { name: RUN.homeStart }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=run-2"
     );

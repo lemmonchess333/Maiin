@@ -437,6 +437,17 @@ export async function programme(uid: string): Promise<ProgramState> {
   return snapshot.data() as ProgramState;
 }
 
+/** Time passes with the app open: both clocks move on `minutes` (a run
+ *  on the treadmill, say), from wherever they are. */
+export async function passTime(page: Page, minutes: number): Promise<void> {
+  const jump = minutes * 60_000;
+  setNodeClock(Date.now() + jump);
+  await page.evaluate((by: number) => {
+    const clock = globalThis as unknown as { __journeyAt: number };
+    clock.__journeyAt += by;
+  }, jump);
+}
+
 /** A screen from the tab bar, as a person reaches it. */
 export async function openTab(page: Page, tab: TabName): Promise<void> {
   await page
