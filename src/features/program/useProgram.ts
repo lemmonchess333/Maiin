@@ -5,6 +5,7 @@ import {
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import {
+  raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
@@ -76,7 +77,7 @@ import {
   easeBackIn,
   shouldAdvanceWeek,
 } from "./programEngine";
-import { generateWeekPrescription, raceBlockWeek } from "./weekPrescription";
+import { generateWeekPrescription } from "./weekPrescription";
 import {
   nextRunWeek,
   regenerateRacePlan,
@@ -1431,7 +1432,7 @@ export function useProgram() {
         base,
         profile?.experience,
         localWeekKey(addLocalDays(new Date(), 7)),
-        raceBlockWeek(runs?.runPlan),
+        runs?.raceBlock ?? null,
         { raceLegTrim: profile?.raceLegTrim === true }
       );
       if (runs) {
@@ -2244,9 +2245,10 @@ export function useProgram() {
           // R3: don't regenerate a race-prep plan for a race that has already
           // passed. Recovery has ended here (else `inRecovery` is true), but the
           // server clears profile.raceGoal only at recoveryEndDate + 7d; in that
-          // window an elapsed race must fall through to freeform, NOT spawn a
-          // fresh plan dated in the past (regenerateRacePlan with a past target
-          // produced a 2-week phantom block). Local string compare = date compare.
+          // window an elapsed race must wait for its own ending (the next
+          // branch), NOT spawn a fresh plan dated in the past (regenerateRacePlan
+          // with a past target produced a 2-week phantom block). Local string
+          // compare = date compare.
           localDateString() <= profile.raceGoal.targetDate
         ) {
           // Refresh preserves currentWeek + totalWeeks so the user's
@@ -2272,6 +2274,13 @@ export function useProgram() {
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
+        } else if (
+          raceAwaitsItsEnding(base.runPlan, profile, localDateString())
+        ) {
+          // The race has passed: race prep is the race lifecycle's to end,
+          // from the plan and its race day, so both stay as they are.
+          runDays = base.runDays ?? [];
+          runPlan = base.runPlan;
         } else {
           // RUN-M: structured retired — a non-race state is freeform.
           runDays = [];
@@ -3137,7 +3146,7 @@ export function useProgram() {
     // R3: a race that has already passed (recovery ended, raceGoal not yet
     // server-cleared at recoveryEndDate + 7d) must not be realigned —
     // regenerating would produce a phantom plan dated in the past. Leave it for
-    // the freeform transition, same as refreshRunSchedule / the rollovers.
+    // the race's own ending, as refreshRunSchedule and the rollovers do.
     if (localDateString() > profile.raceGoal.targetDate) {
       return refuse("Your race date has passed.");
     }
