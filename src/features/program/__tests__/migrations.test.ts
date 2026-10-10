@@ -721,15 +721,31 @@ describe("migrateProgramState — deload decay repair", () => {
     }
   );
 
-  it("still lifts a current document's main off the 2-set floor", () => {
+  /* The set half is one-shot too: a plan fitted to a short session keeps
+     its mains at two sets (Lift4 (5)), so a current document's two-set
+     main is one the time fit put there. */
+  it("leaves a current document's two-set main where the time fit put it", () => {
+    const current = {
+      ...stateWith(decayedExercise({ baseSets: 2 })),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    const ex = migrateProgramState(current, "2026-08-04").workouts[0]
+      .exercises[0];
+    expect(ex.sets).toBe(2);
+    expect(ex.baseSets).toBe(2);
+    expect(ex.weight).toBe(42.5);
+  });
+
+  it("stamps a current document's missing anchor without moving a number", () => {
     const current = {
       ...stateWith(decayedExercise()),
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
     };
     const ex = migrateProgramState(current, "2026-08-04").workouts[0]
       .exercises[0];
-    expect(ex.baseSets).toBe(3);
-    expect(ex.weight).toBe(42.5); // the load half is the one-shot half
+    expect(ex.baseSets).toBe(2);
+    expect(ex.sets).toBe(2);
+    expect(ex.weight).toBe(42.5);
   });
 
   it("does not invent a load for a bodyweight/uncalibrated slot", () => {

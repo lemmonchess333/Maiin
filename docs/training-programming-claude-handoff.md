@@ -18,6 +18,23 @@
 > current tree carry dated STATUS notes in the two focused handoffs; rows
 > without one have NOT been re-verified since 2026-08-07 and must be
 > re-traced before acting.
+>
+> STATUS 2026-10-06 — a second evidence intake (powerlifting, hypertrophy,
+> powerbuilding, running sessions and progress rates, how other apps explain
+> training, the owner's coaching sources) and audits of the code at
+> `55c195a` live in `docs/training-engine-2026-10/`; read its README first.
+> That evidence was gathered with every primary source blocked, so none of it
+> joins the ledgers below until it is verified;
+> `docs/agents/training-engine-prompt.md` is the pass that verifies it.
+>
+> STATUS 2026-10-07 — that evidence has been read against its primary sources
+> (full text where open, otherwise the abstract, the book or the page) and
+> every claim re-marked: [VF] full text, [VA] abstract or page, [U]
+> identified but unchecked, [R] unidentified, [C] computed. Each evidence doc
+> opens with its main corrections and the load-bearing [U] and [R] claims
+> left. It still joins the ledgers below only in their intake format: the
+> training-engine prompt's Phase 0 promotes the verified, decision-relevant
+> rows and closes or carries what is still [U] or [R].
 
 ## Read order
 

@@ -209,18 +209,24 @@ function backfillMissingCoverage(workouts: WorkoutDay[]): WorkoutDay[] {
  *     3 and stamps that as `baseSets` so the lazy fallback can never
  *     re-capture a decayed value. Accessories legitimately sit at 2, so they
  *     keep whatever anchor they have. A full return to the generator's
- *     prescription needs a regenerate, which is the user's call.
+ *     prescription needs a regenerate, which is the user's call. Once per
+ *     document, like the load: a plan fitted to a short session keeps its
+ *     mains at two sets (Lift4 (5)), and run on every load the floor put
+ *     the third set back, so a 30-minute plan ran past 30 minutes and a
+ *     shorter session length chosen in Settings lasted until the next load.
+ *
+ *   An anchor-less lift has its anchor stamped on every load: it changes
+ *   no number.
  */
 function repairDeloadDecay(
   ex: ProgramExercise,
-  restoreLoad: boolean
+  repair: boolean
 ): ProgramExercise {
   const anchor = ex.baseSets ?? ex.sets;
   const isMain = ex.isAccessory !== true;
-  const repairedAnchor = isMain
-    ? Math.max(anchor, MAIN_SET_ANCHOR_FLOOR)
-    : anchor;
-  const repairedWeight = restoreLoad
+  const repairedAnchor =
+    repair && isMain ? Math.max(anchor, MAIN_SET_ANCHOR_FLOOR) : anchor;
+  const repairedWeight = repair
     ? Math.max(ex.weight ?? 0, ex.lastSuccessfulWeight ?? 0)
     : (ex.weight ?? 0);
 
@@ -463,10 +469,11 @@ export function migrateProgramState(
   // how we keep the returned reference === input when nothing
   // needs repair.
   const runDaysChanged = migratedRunDays.some((rd, i) => rd !== runDays[i]);
-  // The decay repair's load half is one-shot, like the coverage backfill
-  // below and for the same reason: run on every load it would fight every
-  // legitimate load below the last success (see `repairDeloadDecay`).
-  const restoreDecayedLoads = (state.programSchemaVersion ?? 1) < 3;
+  // The decay repair is one-shot, like the coverage backfill below and for
+  // the same reason: run on every load it would fight every legitimate load
+  // below the last success, and every main lift the time fit gave two sets
+  // (see `repairDeloadDecay`).
+  const repairDecay = (state.programSchemaVersion ?? 1) < 3;
   // One-shot for the same reason: run on every load, the first would take
   // away a load someone set on a swapped-in pull-up after the repair, the
   // second every miss counted since, and the third an odd weight someone
@@ -483,7 +490,7 @@ export function migrateProgramState(
         if (repUnit) next = { ...next, repUnit };
       }
 
-      next = repairDeloadDecay(next, restoreDecayedLoads);
+      next = repairDeloadDecay(next, repairDecay);
       if (lift4OneShots)
         next = roundOntoGrid(resetMissCount(repairSwappedBodyweightLoad(next)));
 

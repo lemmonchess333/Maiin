@@ -10,13 +10,20 @@
  *
  * These pin the invariants the Program.tsx render + handleDragEnd rely on.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   normalizeExercise,
   normalizeProgramState,
   generateInstanceId,
+  setInstanceIdSource,
 } from "../programTypes";
 import type { ProgramState } from "../programTypes";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
+import type { OnboardingDraft } from "@/lib/onboardingDraft";
+import {
+  sequentialInstanceIds,
+  useSequentialInstanceIds,
+} from "@/test/instanceIds";
 
 describe("instanceId — #1038", () => {
   it("assigns an instanceId when one is missing", () => {
@@ -75,6 +82,74 @@ describe("instanceId — #1038", () => {
       expect(twice.workouts[0].exercises.map((e) => e.instanceId)).toEqual(
         once.workouts[0].exercises.map((e) => e.instanceId)
       );
+    });
+  });
+});
+
+/* The simulator's determinism seam (training-engine prompt, Phase 1 item 4):
+   a plan built twice must come out identical, or a seeded persona's trace
+   can't be compared from one run to the next. Instance ids were the one
+   random part. */
+describe("the instance-id source", () => {
+  const draft: OnboardingDraft = {
+    step: 7,
+    primaryGoal: "hypertrophy",
+    daysPerWeek: 4,
+    equipment: "full_gym",
+    runFrequency: "none",
+    runMode: "freeform",
+    weeklyRunDays: 0,
+    raceDistance: "10k",
+    raceTargetDate: "",
+    injuries: ["none"],
+    gender: "male",
+    ageRange: "25-34",
+    heightCm: 175,
+    weightKg: 81.5,
+    heightUnit: "cm",
+    weightUnit: "kg",
+    trainingWhy: "",
+    experience: "intermediate",
+  };
+  const build = () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 7, 12));
+    const plan = buildOnboardingPlan(draft, "recomp", "2026-09-07");
+    vi.useRealTimers();
+    return plan;
+  };
+  const ids = (plan: ReturnType<typeof build>) =>
+    plan.programState.workouts.flatMap((day) =>
+      day.exercises.map((ex) => ex.instanceId)
+    );
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("draws from a swapped source, and its restore puts the random one back", () => {
+    const restore = setInstanceIdSource(sequentialInstanceIds("t"));
+    expect([generateInstanceId(), generateInstanceId()]).toEqual([
+      "t-1",
+      "t-2",
+    ]);
+    restore();
+    expect(generateInstanceId()).not.toMatch(/^t-/);
+  });
+
+  it("gives two builds of the same plan different ids by default", () => {
+    expect(ids(build())).not.toEqual(ids(build()));
+  });
+
+  describe("with sequential ids", () => {
+    useSequentialInstanceIds();
+
+    it("builds the same plan twice", () => {
+      const first = build();
+      setInstanceIdSource(sequentialInstanceIds());
+      const second = build();
+      expect(ids(first).every((id) => /^ex-\d+$/.test(id ?? ""))).toBe(true);
+      expect(JSON.stringify(second)).toBe(JSON.stringify(first));
     });
   });
 });

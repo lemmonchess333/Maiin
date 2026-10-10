@@ -16,6 +16,7 @@
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BAR_KG } from "./warmupRamp";
+import { equipmentGridFor } from "./loadSteps";
 
 import type {
   Experience,
@@ -248,8 +249,25 @@ export function startingWeightForExercise(
 
   const raw = repScaledSeed(base * factor, targetReps, repUnit);
   if (raw <= 0) return 0;
-  return Math.max(2.5, Math.round(raw / 2.5) * 2.5);
+  const rounded = Math.max(2.5, Math.round(raw / 2.5) * 2.5);
+  // Dumbbells and kettlebells come in their own weights (`loadSteps.ts`): a
+  // rack of dumbbells goes 7, 8 kg, so a 7.5 kg start is one nobody can pick
+  // up. A start the 2.5 kg step puts off the rack takes the rack's nearest
+  // weight instead; every other start is unchanged.
+  const equipment = exerciseId
+    ? getExerciseById(exerciseId)?.equipment
+    : undefined;
+  const rack =
+    equipment && RACKED.has(equipment)
+      ? equipmentGridFor(exerciseId, false)
+      : null;
+  if (rack && Math.abs(rack.nearest(rounded) - rounded) > 1e-9)
+    return rack.nearest(raw);
+  return rounded;
 }
+
+/** Equipment that comes in set weights rather than plates. */
+const RACKED: ReadonlySet<string> = new Set(["Dumbbells", "Kettlebell"]);
 
 /**
  * Safe working load when an exercise identity changes.
