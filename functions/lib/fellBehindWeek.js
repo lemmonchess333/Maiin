@@ -55,11 +55,12 @@ function _priorWeekUtcRange(nowMs) {
 
 /** Pure: the prior-week run-completion status against the user's
  *  weekly target, or `null` when the user has no prescriptive target
- *  (freeform / active recovery / target < 1). Single source of truth
+ *  (freeform / active recovery / a race plan graded on a week after its
+ *  race / target < 1). Single source of truth
  *  for "who's behind", shared by both `_decideFellBehindFlag` (the
  *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
  *  Monday-8am recap push) so the two can't drift. */
-function _fellBehindRatio(profile, programState, priorWeekRuns) {
+function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
   // Gate 1 — freeform users have no prescriptive target; skip.
   const runMode = profile && profile.runMode;
   if (!runMode || runMode === "freeform") {
@@ -72,6 +73,22 @@ function _fellBehindRatio(profile, programState, priorWeekRuns) {
   // missing those isn't fell-behind territory.
   const runPlan = (programState && programState.runPlan) || null;
   if (runPlan && runPlan.phase === "recovery") {
+    return null;
+  }
+
+  // Gate 2b — a race plan graded on a week that began after its race holds
+  // nothing to fall behind on. Race prep waits for the race's own ending
+  // (the no-show, the recovery exit and the return to free running), and
+  // until then the weekly check said "fell behind" every Monday.
+  const raceDate =
+    (runPlan && runPlan.raceGoal && runPlan.raceGoal.targetDate) ||
+    (profile && profile.raceGoal && profile.raceGoal.targetDate) ||
+    null;
+  if (
+    typeof priorWeekKey === "string" &&
+    typeof raceDate === "string" &&
+    raceDate < priorWeekKey
+  ) {
     return null;
   }
 
@@ -115,7 +132,12 @@ function _decideFellBehindFlag(
   priorWeekRuns,
   priorWeekKey
 ) {
-  const status = _fellBehindRatio(profile, programState, priorWeekRuns);
+  const status = _fellBehindRatio(
+    profile,
+    programState,
+    priorWeekRuns,
+    priorWeekKey
+  );
   // No prescriptive target (freeform / recovery / target<1) → nothing to do.
   if (!status) {
     return { action: "noop" };
@@ -161,7 +183,6 @@ function _decideFellBehindFlag(
   }
   return { action: "noop" };
 }
-
 
 module.exports = {
   FELL_BEHIND_THRESHOLD,
