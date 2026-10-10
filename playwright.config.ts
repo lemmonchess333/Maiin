@@ -51,6 +51,8 @@ export default defineConfig({
     {
       name: "auth-emulator",
       testMatch: [/auth\.spec\.ts/, /\.capture\.spec\.ts/],
+      // The journeys have their own project, below.
+      testIgnore: /journeys\//,
       /* Every spec in this project signs in as the SAME seeded account, so
          its tests share one Firestore document space. `fullyParallel` at
          the top level would run two of them against that space at once,
@@ -77,6 +79,26 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         bypassCSP: true,
+      },
+    },
+    {
+      /* A person through weeks of the app, against the emulators
+         (e2e/helpers/journey.ts). Each journey makes and deletes its own
+         account, so they could run side by side; they run one at a time
+         because each holds one of the runner's cores busy for minutes.
+         No retries anywhere: a journey that fails on a retry has failed. */
+      name: "journeys",
+      testMatch: /journeys\/.*\.auth\.spec\.ts/,
+      fullyParallel: false,
+      retries: 0,
+      use: {
+        ...devices["Desktop Chrome"],
+        bypassCSP: true,
+        viewport: { width: 393, height: 852 },
+        timezoneId: "UTC",
+        // A control that never comes fails the step in half a minute,
+        // not at the journey's own budget.
+        actionTimeout: 30_000,
       },
     },
   ],

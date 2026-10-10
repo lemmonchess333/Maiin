@@ -17,6 +17,7 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 const { complete, refresh } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
@@ -810,5 +811,107 @@ describe("choices with drawings", () => {
         )
       ).toHaveLength(solid);
     }
+  });
+});
+
+/* The E2E journeys walk setup by these names (`src/test/journeyScreens.ts`,
+   `setUpPlan` in e2e/helpers/journey.ts). Walked here the same way, with
+   every answer a journey can give looked for at its question, so a renamed
+   control fails in the unit suite rather than minutes into a journey. */
+describe("setup, by the names the journeys use", () => {
+  const button = (name: string) =>
+    screen.getByRole("button", { name: new RegExp(`^${name}`) });
+  const group = (name: string) => screen.getByRole("radiogroup", { name });
+  const next = () =>
+    fireEvent.click(screen.getByRole("button", { name: SETUP.continue }));
+
+  it("reaches Start my plan, with every answer the journeys give on its screen", () => {
+    open();
+    for (const aim of SETUP_OPTIONS.aims)
+      expect(button(aim)).toBeInTheDocument();
+    fireEvent.click(button("Get stronger"));
+    next();
+
+    for (const activity of SETUP_OPTIONS.activities)
+      expect(
+        within(group(SETUP.activities)).getByRole("radio", { name: activity })
+      ).toBeInTheDocument();
+    fireEvent.click(
+      within(group(SETUP.activities)).getByRole("radio", { name: "Both" })
+    );
+    for (const days of SETUP_OPTIONS.liftDays)
+      expect(
+        within(group(SETUP.liftDays)).getByRole("radio", { name: days })
+      ).toBeInTheDocument();
+    fireEvent.click(
+      within(group(SETUP.liftDays)).getByRole("radio", { name: "3" })
+    );
+    for (const minutes of SETUP_OPTIONS.liftMinutes)
+      expect(
+        within(group(SETUP.liftMinutes)).getByRole("radio", { name: minutes })
+      ).toBeInTheDocument();
+    fireEvent.click(
+      within(group(SETUP.liftMinutes)).getByRole("radio", { name: "60 min" })
+    );
+    next();
+
+    for (const runner of SETUP_OPTIONS.runners)
+      expect(button(runner)).toBeInTheDocument();
+    fireEvent.click(button("Regular runner"));
+    fireEvent.click(
+      within(group(SETUP.runningPlan)).getByRole("radio", {
+        name: SETUP.racePrep,
+      })
+    );
+    expect(
+      screen.getByRole("slider", { name: SETUP.runsPerWeek })
+    ).toBeInTheDocument();
+    for (const distance of SETUP_OPTIONS.raceDistances)
+      expect(
+        within(group(SETUP.raceDistance)).getByRole("radio", {
+          name: distance,
+        })
+      ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(SETUP.raceDate), {
+      target: { value: "2027-06-01" },
+    });
+    expect(
+      screen.getByRole("switch", { name: SETUP.legTrim })
+    ).toBeInTheDocument();
+    next();
+
+    for (const kit of SETUP_OPTIONS.equipment)
+      expect(button(kit)).toBeInTheDocument();
+    fireEvent.click(button("Full gym"));
+    for (const level of SETUP_OPTIONS.experience)
+      expect(button(level)).toBeInTheDocument();
+    fireEvent.click(button("Some experience"));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: SETUP.noInjuries }));
+    next();
+
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.weight }), {
+      target: { value: "80" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: SETUP.height }), {
+      target: { value: "178" },
+    });
+    for (const sex of SETUP_OPTIONS.sexes)
+      expect(
+        within(group(SETUP.sex)).getByRole("radio", { name: sex })
+      ).toBeInTheDocument();
+    fireEvent.click(
+      within(group(SETUP.sex)).getByRole("radio", { name: "Male" })
+    );
+    for (const age of SETUP_OPTIONS.ages)
+      expect(
+        within(group(SETUP.age)).getByRole("radio", { name: age })
+      ).toBeInTheDocument();
+    fireEvent.click(
+      within(group(SETUP.age)).getByRole("radio", { name: "25–34" })
+    );
+    next();
+
+    expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled();
   });
 });

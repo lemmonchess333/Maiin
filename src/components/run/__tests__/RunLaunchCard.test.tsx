@@ -5,6 +5,7 @@
  * Firestore/router path. See spec `spec-run-fast-launch.md` §4.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { RUN } from "@/test/journeyScreens";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RunLaunchCard from "../RunLaunchCard";
 import type { RunTemplate } from "@/lib/workoutTemplates";
@@ -78,7 +79,8 @@ describe("RunLaunchCard", () => {
 
   it("Customise fires onCustomize", () => {
     const { onCustomize } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /Customise/i }));
+    // The E2E journeys open the run's setup by this (src/test/journeyScreens.ts).
+    fireEvent.click(screen.getByRole("button", { name: RUN.customise }));
     expect(onCustomize).toHaveBeenCalledTimes(1);
   });
 
