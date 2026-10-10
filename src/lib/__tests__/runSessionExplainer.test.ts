@@ -251,4 +251,12 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
       /^Tempo — /
     );
   });
+
+  // Without a goal time, a tempo in the taper fell through to the easy
+  // runs' reason, "easy and short on purpose", for a comfortably hard run.
+  it("a plain tempo in the taper isn't called easy", () => {
+    expect(runSessionExplainer({ ...tempo, currentWeek: 7 })).toBe(
+      "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops."
+    );
+  });
 });
