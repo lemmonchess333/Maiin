@@ -9,16 +9,22 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  racePaceBlockKm,
   segmentsFromEasyWithStrides,
   segmentsFromGuided,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromRunWalk,
   segmentsFromTempo,
   segmentsDurationSeconds,
+  segmentTargetLabel,
   STRIDE_RECOVERY_SECONDS,
 } from "../runSegments";
-import { RUN_TEMPLATES } from "../workoutTemplates";
+import { racePaceBlockKm } from "../racePace";
+import {
+  RUN_TEMPLATES,
+  RUN_WALK_TEMPLATE_IDS,
+  type RunTemplate,
+} from "../workoutTemplates";
 import { GUIDED_WORKOUTS } from "../guidedRun";
 
 describe("segmentsFromIntervals", () => {
@@ -269,5 +275,128 @@ describe("cross-run cue rotation (seed)", () => {
       .map((s) => s.cue);
     expect(walkBacks.length).toBe(5);
     expect(new Set(walkBacks).size).toBe(5);
+  });
+});
+
+/* Run20 (5): a new runner's first six weeks run as run-walk, building to
+   continuous running (NHS Couch to 5K). */
+describe("segmentsFromRunWalk", () => {
+  const ladder = RUN_WALK_TEMPLATE_IDS.map(
+    (id) => RUN_TEMPLATES.find((t) => t.id === id)!
+  );
+  const shape = (t: RunTemplate) => t.config.runWalk!;
+  const minutes = (seconds: number[]) =>
+    seconds.reduce((a, b) => a + b, 0) / 60;
+
+  it("is a template for each of the six weeks, each conserving its stated time", () => {
+    expect(RUN_TEMPLATES.filter((t) => t.config.runWalk)).toEqual(ladder);
+    for (const t of ladder) {
+      expect(t.type, t.id).toBe("easy");
+      expect(t.config.targetDurationMinutes, t.id).toBe(t.estimatedDuration);
+      expect(segmentsDurationSeconds(segmentsFromRunWalk(shape(t))), t.id).toBe(
+        t.estimatedDuration * 60
+      );
+    }
+  });
+
+  it("starts at Couch to 5K's week 1 and builds to 20 minutes non-stop", () => {
+    // Week 1 as the NHS plan has it: a 5-minute walk, then 1 minute
+    // running and 90 seconds walking seven times, and a last minute.
+    expect(shape(ladder[0])).toMatchObject({
+      warmupWalkSec: 300,
+      runSecs: Array(8).fill(60),
+      walkSecs: Array(7).fill(90),
+    });
+    // Minutes of running near Couch to 5K's own for each week.
+    expect(ladder.map((t) => minutes(shape(t).runSecs))).toEqual([
+      8, 9, 9, 15, 18, 20,
+    ]);
+    const longest = ladder.map((t) => Math.max(...shape(t).runSecs) / 60);
+    expect(longest).toEqual([1, 1.5, 3, 5, 10, 20]);
+    // The longest run never more than doubles from one week to the next.
+    longest
+      .slice(1)
+      .forEach((m, i) => expect(m).toBeLessThanOrEqual(2 * longest[i]));
+    for (const t of ladder) {
+      expect(shape(t).walkSecs, t.id).toHaveLength(shape(t).runSecs.length - 1);
+    }
+  });
+
+  it("walks to warm up, runs and walks in turn, walks to finish, with no pace", () => {
+    const segs = segmentsFromRunWalk(shape(ladder[0]));
+    expect(segs.map((s) => s.label)).toEqual([
+      "Walk",
+      ...Array(7).fill(["Run", "Walk"]).flat(),
+      "Run",
+      "Walk",
+    ]);
+    expect(segs.map((s) => s.type)).toEqual([
+      "warmup",
+      ...Array(7).fill(["easy", "recovery"]).flat(),
+      "easy",
+      "cooldown",
+    ]);
+    expect(segs.map((s) => s.eyebrow).slice(0, 4)).toEqual([
+      "WARM-UP",
+      "RUN 1/8",
+      "WALK",
+      "RUN 2/8",
+    ]);
+    expect(segs.at(-1)?.eyebrow).toBe("COOL-DOWN");
+    for (const s of segs) {
+      expect(s.paceTarget).toBeUndefined();
+      expect(s.effort).toBeUndefined();
+    }
+  });
+
+  it("says something new at every step, past the numbers", () => {
+    // Phrase by phrase, whatever the case and punctuation: "1 minute, easy
+    // enough to talk." and a later "Easy enough to talk." are the same
+    // words twice. Short and numbered phrases ("Walk.", "90 seconds") are
+    // the steps' own names.
+    const phrases = (cue: string) =>
+      cue
+        .toLowerCase()
+        .split(/[.,]/)
+        .map((p) => p.trim())
+        .filter((p) => p && !/\d/.test(p) && p.split(/\s+/).length >= 3);
+    for (const t of ladder) {
+      for (const seed of [0, 1, 2, 3, 4, 5, 6, 7]) {
+        const said = segmentsFromRunWalk(shape(t), seed).flatMap((s) =>
+          phrases(s.cue!)
+        );
+        expect(said.length, `${t.id}`).toBeGreaterThan(0);
+        expect(
+          said.filter((p, i) => said.indexOf(p) !== i),
+          `${t.id} seed ${seed}`
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("makes a single run the whole session", () => {
+    const segs = segmentsFromRunWalk(shape(ladder[5]));
+    expect(segs.map((s) => s.label)).toEqual(["Walk", "Run", "Walk"]);
+    expect(segs[1]).toMatchObject({
+      eyebrow: "RUN",
+      target: { kind: "duration", seconds: 1200 },
+      cue: "Run for 20 minutes without a break. Easy enough to talk the whole way.",
+    });
+    expect(segs[1].rep).toBeUndefined();
+  });
+});
+
+describe("segmentTargetLabel", () => {
+  it("spells out a part minute rather than rounding it", () => {
+    const label = (seconds: number) =>
+      segmentTargetLabel({ kind: "duration", seconds });
+    expect(label(45)).toBe("45s");
+    expect(label(60)).toBe("1 min");
+    // A 90-second walk read "2 min", and so did an interval's 90s rest.
+    expect(label(90)).toBe("90s");
+    expect(label(150)).toBe("2 min 30s");
+    expect(label(330)).toBe("5 min 30s");
+    expect(label(1200)).toBe("20 min");
+    expect(segmentTargetLabel({ kind: "distance", meters: 1000 })).toBe("1K");
   });
 });

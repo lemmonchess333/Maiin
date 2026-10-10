@@ -130,3 +130,14 @@ describe("isScheduledRaceRunDay (RUN-RACE-GUARD-01)", () => {
     expect(isScheduledRaceRunDay({})).toBe(false);
   });
 });
+
+describe("descriptions in plain words (Run21 (2))", () => {
+  // A physiology word appears only as "Coaches also call this".
+  it("gives no run template a description with a physiology word", () => {
+    for (const t of RUN_TEMPLATES) {
+      expect(t.description, t.id).not.toMatch(
+        /aerobic|threshold|economy|VO2|lactate/i
+      );
+    }
+  });
+});

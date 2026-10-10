@@ -48,8 +48,14 @@ import {
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
+import {
+  RUN_TEMPLATES,
+  isRunWalkTemplateId,
+  isScheduledRaceRunDay,
+} from "@/lib/workoutTemplates";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -199,12 +205,29 @@ export default function DayActionSheet({
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
       )
     : null;
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const selectedRacePace = racePaceWorkFor(
+    selectedRunTemplate,
+    profile,
+    programState?.runPlan
+  );
   // Adaptive Paces: the user's personalised pace for this session, appended to
   // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
   // sessionPaceDisplay rule (the range is the honest coaching target; singles
-  // only for race pace). Null when there's no benchmark.
+  // only for race pace). Null when there's no benchmark, and for run-walk,
+  // which is run by feel (Run20 (5)).
   const selectedRunPace: string | null = (() => {
-    if (!selectedRunTemplate) return null;
+    if (!selectedRunTemplate || isRunWalkTemplateId(selectedRunTemplate.id))
+      return null;
+    // A2: a tempo at the goal pace shows that pace, the one the run will
+    // set, with or without a benchmark.
+    if (selectedRacePace?.kind === "tempo") {
+      return sessionPaceDisplay(
+        { targetPace: Math.round(selectedRacePace.goalPaceS) },
+        unit
+      );
+    }
     const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -251,6 +274,7 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
+      racePace: selectedRacePace?.kind,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
@@ -352,15 +376,23 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {selectedRunTemplate?.name ?? "Run"}
+                  {runSessionName(selectedRunTemplate, selectedRacePace)}
                 </p>
-                {selectedRunTemplate?.description && (
+                {/* Run21 (2): the session's one feel line. Its shape is
+                    "What it is", in "Why this run" below. */}
+                {selectedRunTemplate && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {selectedRunTemplate.description}
+                    {
+                      runSessionAbout(selectedRunTemplate, {
+                        racePace: selectedRacePace,
+                      }).feel
+                    }
                   </p>
                 )}
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
+                  template={selectedRunTemplate}
+                  racePace={selectedRacePace}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />

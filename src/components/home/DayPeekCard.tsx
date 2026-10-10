@@ -1,5 +1,8 @@
+import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
@@ -308,7 +311,17 @@ export default function DayPeekCard({
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
-  const runName = runTemplate?.name ?? "Run";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const runRacePace = racePaceWorkFor(
+    runTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const runName = runSessionName(runTemplate, runRacePace);
+  const runAbout = runTemplate
+    ? runSessionAbout(runTemplate, { racePace: runRacePace })
+    : null;
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -319,6 +332,7 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
+          racePace: runRacePace?.kind,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -546,10 +560,13 @@ export default function DayPeekCard({
                         ? `${runTemplate.config.targetDistanceKm} km`
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
+                    {/* Run21 (2): the session's one feel line. */}
                     {" · "}
-                    {runTemplate.description}
+                    {runAbout?.feel}
                   </p>
-                  <RunPurpose>{runPurpose}</RunPurpose>
+                  <RunPurpose>
+                    <RunAbout about={runAbout} why={runPurpose} />
+                  </RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

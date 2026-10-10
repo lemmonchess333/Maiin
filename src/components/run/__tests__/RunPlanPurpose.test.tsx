@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import RunPlanPurpose from "../RunPlanPurpose";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
 describe("current run planning explanation", () => {
@@ -49,6 +50,40 @@ describe("current run planning explanation", () => {
     );
     expect(screen.queryByText(/Another demanding run/)).toBeNull();
   });
+  it("Run21 (3): says what the session is, how it should feel, why and what to do", () => {
+    const tempo = RUN_TEMPLATES.find((t) => t.id === "tempo_20")!;
+    const { rerender } = render(
+      <RunPlanPurpose
+        purpose="Build sustained effort."
+        template={tempo}
+        run={source}
+        runDays={[source]}
+      />
+    );
+    fireEvent.click(screen.getByText("Why this run"));
+    const terms = screen.getAllByRole("term").map((el) => el.textContent);
+    expect(terms).toEqual([
+      "What it is",
+      "How it should feel",
+      "Why it's in your week",
+      "If it feels wrong",
+      "Coaches also call this",
+    ]);
+    expect(screen.getByText("A threshold run.")).toBeVisible();
+    expect(screen.getByText(/^Comfortably hard: a few words/)).toBeVisible();
+    expect(screen.getByText("Build sustained effort.")).toBeVisible();
+    // No plan to give a reason: the other three lines still show.
+    rerender(
+      <RunPlanPurpose template={tempo} run={source} runDays={[source]} />
+    );
+    expect(screen.getAllByRole("term").map((el) => el.textContent)).toEqual([
+      "What it is",
+      "How it should feel",
+      "If it feels wrong",
+      "Coaches also call this",
+    ]);
+  });
+
   it("does not render an empty disclosure", () => {
     render(<RunPlanPurpose run={undefined} runDays={[]} />);
     expect(screen.queryByText("Why this run")).toBeNull();

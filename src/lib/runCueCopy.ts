@@ -377,3 +377,105 @@ const FLOAT = [
 export function floatCue(variant: number): string {
   return pick(FLOAT, variant);
 }
+
+/* ── Run-walk (Run20 (5)) ─────────────────────────────────────────────
+ *
+ * A new runner's first weeks alternate short easy runs with walks. The
+ * walk is part of the session, never a failure of it, so the walk lines
+ * say so; the run lines keep the running easy. Pools are sized past the
+ * longest session's count (8 runs, 7 walks) for the reason REP_MIDDLE
+ * gives. Durations are spoken in full: "90 seconds", not "90s".
+ */
+
+/** "1 minute", "90 seconds", "2 and a half minutes", "20 minutes". */
+export function spokenDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m === 0) return `${s} seconds`;
+  if (s === 0) return m === 1 ? "1 minute" : `${m} minutes`;
+  if (m === 1) return `${seconds} seconds`;
+  if (s === 30) return `${m} and a half minutes`;
+  return `${m} minutes ${s} seconds`;
+}
+
+const RUN_WALK_WARMUP = [
+  "Brisk, but easy.",
+  "Let the legs wake up.",
+  "Nice and steady to start.",
+];
+
+/** `Walk for 5 minutes to warm up. Brisk, but easy.` */
+export function runWalkWarmupCue(seconds: number, variant: number): string {
+  return `Walk for ${spokenDuration(seconds)} to warm up. ${pick(RUN_WALK_WARMUP, variant)}`;
+}
+
+const RUN_WALK_RUN = [
+  "Easy and relaxed.",
+  "Light steps, easy breathing.",
+  "Slow is exactly right.",
+  "Relax the shoulders.",
+  "Short, easy strides.",
+  "Nice and steady.",
+  "Look ahead, not down.",
+  "Smooth and gentle.",
+];
+
+/**
+ * `Run 3 of 8. 1 minute. Light steps, easy breathing.`
+ *
+ * The first run says how easy, the last says it is the last, and a single
+ * run (the ladder's last week) is the whole point of the session.
+ */
+export function runWalkRunCue(
+  rep: number,
+  totalReps: number,
+  seconds: number,
+  variant: number
+): string {
+  const time = spokenDuration(seconds);
+  if (totalReps === 1) {
+    return `Run for ${time} without a break. Easy enough to talk the whole way.`;
+  }
+  if (rep === 1) {
+    return `Run 1 of ${totalReps}. ${time}, easy enough to talk.`;
+  }
+  if (rep >= totalReps) return `Last run. ${time}, easy to the end.`;
+  return `Run ${rep} of ${totalReps}. ${time}. ${pick(RUN_WALK_RUN, variant)}`;
+}
+
+const RUN_WALK_WALK = [
+  "Let your breathing settle.",
+  "Brisk walking. Keep moving.",
+  "Walking is part of the plan.",
+  "Shake out the arms.",
+  "Easy breaths, brisk steps.",
+  "Good. Walk it off.",
+  "Recover on the move.",
+];
+
+/**
+ * `Walk. 90 seconds. Let your breathing settle.`
+ *
+ * `rep` is the run just finished; the walk before the last run says so.
+ */
+export function runWalkWalkCue(
+  rep: number,
+  totalReps: number,
+  seconds: number,
+  variant: number
+): string {
+  const time = spokenDuration(seconds);
+  if (totalReps - rep === 1) return `Walk. ${time}. One more run after this.`;
+  return `Walk. ${time}. ${pick(RUN_WALK_WALK, variant)}`;
+}
+
+const RUN_WALK_COOLDOWN = [
+  "That's the running done.",
+  "All the runs done. Nicely done.",
+  "Running done for today. Good work.",
+];
+
+/** `That's the running done. Walk for 5 minutes to cool down.` */
+export function runWalkCooldownCue(seconds: number, variant: number): string {
+  return `${pick(RUN_WALK_COOLDOWN, variant)} Walk for ${spokenDuration(seconds)} to cool down.`;
+}

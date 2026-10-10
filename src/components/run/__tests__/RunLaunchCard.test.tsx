@@ -63,6 +63,107 @@ function setup(
 }
 
 describe("RunLaunchCard", () => {
+  it("Run21 (3): carries what the run is and how it should feel, closed", () => {
+    setup({ purpose: "Easy day — it makes the hard days work." });
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(
+      /What it is.*Relaxed running at a chatty pace/
+    );
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*it makes the hard days work/
+    );
+    expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
+  });
+
+  it("Run21 (2): gives the run one feel line above 'Why this run', in its description's place", () => {
+    setup();
+    const feel = screen
+      .getAllByText("Easy: you can talk in full sentences. Slower is fine.")
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
+  });
+
+  it("Run21 (2): a run with strides says its time includes them, after its feel line", () => {
+    setup({
+      workout: {
+        id: "easy_30_strides",
+        name: "Easy 30 + strides",
+        type: "easy",
+        icon: "person-standing",
+        description:
+          "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
+        estimatedDuration: 30,
+        config: { strides: { reps: 4, workSeconds: 20 } },
+      },
+      prefill: { activityType: "easy", target: { type: "time", value: 1800 } },
+    });
+    expect(
+      screen.getByText(
+        "Easy, then quick and relaxed on the strides: fast but smooth, never a sprint. 30 min in all, strides included."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("Run21 (2): names a long run's race-pace finish, on the card and its Start", () => {
+    setup({
+      workout: {
+        id: "long_15k",
+        name: "Long 15K",
+        type: "long",
+        icon: "mountain",
+        description: "Easy-to-moderate effort, time on feet",
+        estimatedDuration: 85,
+        config: { targetDistanceKm: 15 },
+      },
+      racePace: { kind: "finish" as const, blockKm: 5, goalPaceS: 300 },
+      purpose:
+        "It rehearses race day on tired legs: your pace, your fuelling and your focus.",
+    });
+    expect(
+      screen.getByRole("heading", { name: "Long 15K with race pace" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start Long 15K with race pace/ })
+    ).toBeInTheDocument();
+    // Its size and pace, which the name and lines leave out.
+    expect(screen.getByText("Last 5 km at 5:00 /km")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/If it feels wrong.*Run the rest easy/);
+  });
+
+  it("Run21 (3): names a tempo at the goal race pace, with its own lines", () => {
+    setup({
+      workout: {
+        id: "tempo_20",
+        name: "20 Min Tempo",
+        type: "tempo",
+        icon: "zap",
+        description: "Comfortably hard, sustained effort",
+        estimatedDuration: 30,
+        config: {
+          tempo: { warmupSec: 300, workSecs: [1200], cooldownSec: 300 },
+        },
+      },
+      prefill: { activityType: "tempo", target: { type: "pace", value: 300 } },
+      racePace: { kind: "tempo", goalPaceS: 300 },
+    });
+    expect(
+      screen.getByRole("heading", { name: "20 Min Tempo at race pace" })
+    ).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*20 minutes at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/How it should feel.*Race pace: even/);
+    // A long run's finish line is a long run's.
+    expect(screen.queryByText(/^Last /)).toBeNull();
+  });
+
   it("renders the workout name, distance metric and default eyebrow", () => {
     setup();
     expect(screen.getByText("Easy 30")).toBeInTheDocument();
