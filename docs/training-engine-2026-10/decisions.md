@@ -172,6 +172,17 @@ Two copy defects surfaced on the way, each fixed in its own PR:
 It shows R8's taper as built (no long run for three weeks) without
 changing it; R8 stays Measuring.
 
+It passes twice in a row on fresh emulators with nothing else running
+(6.5 and 5.9 minutes), and goes red at "the lighter week's sets" when
+the lifts' lighter weeks are moved one week off the run plan's step-backs.
+Two earlier runs failed with other work running beside them, on emulators
+that had held two hours of journeys (4.3 GB): one timed out in setup, and
+one stopped advancing in week 32. Neither came back on fresh emulators.
+The week-32 stop logged no failed save (a failed rollover save always
+logs), only a transaction that timed out on the emulator's lock in the
+week before, so it is recorded here rather than explained. CI runs each
+journey alone on fresh emulators.
+
 The runner with no benchmark is the journey that checks every explanation
 surface (E1, E2, E3, E6, E9 and R2). Each of those surfaces is changed by
 a Run21 or Run20 PR that is still open (lemmonchess333/Maiin#2643, #2656
