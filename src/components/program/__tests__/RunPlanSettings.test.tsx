@@ -9,7 +9,12 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -286,6 +291,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("saving a race goal commits ONE atomic payload with mode, goal and plan together", async () => {
+    // Saved on Monday, the first week holds runs to send.
+    await onThisWeeksMonday(saveRaceGoal);
+  });
+
+  async function saveRaceGoal() {
     const { refreshProfile } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
@@ -306,9 +316,30 @@ describe("RunPlanSettings", () => {
     expect(payload.programState.runDays?.length ?? 0).toBeGreaterThan(0);
     expect(payload.weekSchedule).toHaveLength(7);
     await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
-  });
+  }
+
+  /** Runs `body` with the clock at noon on this week's Monday, so the whole
+   *  week is ahead. A plan made later in the week plans no run before that
+   *  day (Run19): its first week holds fewer runs, and one made on a Sunday
+   *  after its run days holds none. */
+  async function onThisWeeksMonday(body: () => Promise<void>) {
+    const monday = parseLocalDate(localWeekKey(new Date()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await body();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
 
   it("RUN-EV-02: a 2→4 run-day change moves slots, rows and targets TOGETHER", async () => {
+    // The first week holds all four rows only if it is all ahead.
+    await onThisWeeksMonday(saveTwoToFour);
+  });
+
+  async function saveTwoToFour() {
     // Saved baseline says 2 run days; the draft raises it to 4.
     const profile = {
       ...baseProfile,
@@ -345,7 +376,7 @@ describe("RunPlanSettings", () => {
       (payload.programState.runDays ?? []).slice(0, 4).map((r) => r.date)
     );
     expect(firstWeekDates.size).toBe(4);
-  });
+  }
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
@@ -364,6 +395,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("previews, commits and restores recurring time limits", async () => {
+    // Saved on Monday, the first week holds runs to shorten.
+    await onThisWeeksMonday(saveTimeLimits);
+  });
+
+  async function saveTimeLimits() {
     const profile = {
       ...baseProfile,
       uid: "run-limit-user",
@@ -407,7 +443,7 @@ describe("RunPlanSettings", () => {
       screen.getByText(String(Math.round(total)), { selector: "span" })
     ).toBeInTheDocument();
     expect(rows.some((row) => row.timeLimit)).toBe(true);
-  });
+  }
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
     renderPage(baseProfile);
