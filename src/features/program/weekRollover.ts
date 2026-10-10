@@ -32,7 +32,7 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
-import { weekRolloverAnchor } from "./programMaintenance";
+import { raceAwaitsItsEnding, weekRolloverAnchor } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
   ManualCompletion,
@@ -48,7 +48,7 @@ import {
   scheduleRecoveryWeekV2,
   type RunTuning,
 } from "./runScheduler";
-import { raceBlockWeek } from "./weekPrescription";
+import { raceBlockWeek, type RaceBlockWeek } from "./weekPrescription";
 
 /**
  * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
@@ -251,19 +251,27 @@ export function regenerateRacePlan({
   return { runDays, runPlan, manualCompletions: carriedManualCompletions };
 }
 
+/** The run side of the week moved into (`nextRunWeek`). */
+export interface NextRunWeek extends Pick<ProgramState, "runDays" | "runPlan"> {
+  /** Where a race plan stands in that week, for the lift side to place a
+   *  race plan's lighter weeks and the race's own (`advanceWeek`): none once
+   *  its race has passed, whatever the plan kept for the race's ending. */
+  raceBlock: RaceBlockWeek | null;
+}
+
 /**
  * The run side of moving the programme into the next week, shared by the
  * Monday rollover and "Start next week". `current` is the programme in the
- * week being left, of which only the run plan is read; `next` is the week
- * moved into. Worked out before the lift side moves on, which reads the
- * result to place a race plan's lighter weeks.
+ * week being left, of which only the run plan and its days are read; `next`
+ * is the week moved into. Worked out before the lift side moves on, which
+ * reads the result to place a race plan's lighter weeks.
  */
 export function nextRunWeek(
   current: ProgramState,
   next: { weekStart: string; date: string },
   profile: UserProfile,
   recentLayoff: LayoffClass
-): Pick<ProgramState, "runDays" | "runPlan"> {
+): NextRunWeek {
   const weekSchedule = profile.weekSchedule ?? [];
   const runPlan = current.runPlan;
   // Asked about NEXT week's date, not today: the question is whether the
@@ -281,6 +289,7 @@ export function nextRunWeek(
         weekStart: next.weekStart,
       }),
       runPlan: { ...runPlan },
+      raceBlock: raceBlockWeek(runPlan),
     };
   }
   if (
@@ -288,7 +297,8 @@ export function nextRunWeek(
     profile.raceGoal &&
     // R3: same elapsed guard as refreshRunSchedule — a week rolling over
     // after an elapsed race (recovery ended, raceGoal not yet server-
-    // cleared) must go freeform, not regenerate a plan dated in the past.
+    // cleared) must not regenerate a plan dated in the past. It waits for
+    // the race's own ending, below.
     next.date <= profile.raceGoal.targetDate
   ) {
     const regenerated = regenerateRacePlan({
@@ -305,13 +315,30 @@ export function nextRunWeek(
         completedRaces: runPlan?.completedRaces,
       },
     });
-    return { runDays: regenerated.runDays, runPlan: regenerated.runPlan };
+    return {
+      runDays: regenerated.runDays,
+      runPlan: regenerated.runPlan,
+      raceBlock: raceBlockWeek(regenerated.runPlan),
+    };
+  }
+  if (raceAwaitsItsEnding(runPlan, profile, next.date)) {
+    // R3: nothing is planned after the race. Race prep is the race
+    // lifecycle's to end, from this plan and its race day, so the plan and
+    // its last run days stay where they are, on their own dates, until it
+    // does. The lifts take the calendar over (`weekRolloverAnchor`), into
+    // the week after the race: the plan kept still sits at its race week,
+    // which the lift side mustn't read as the week moved into.
+    return {
+      runDays: current.runDays ?? [],
+      runPlan: { ...runPlan! },
+      raceBlock: null,
+    };
   }
   // RUN-M: structured mode is retired (Run9a — the Run surface is two
   // states, freeform + race_prep), so a week that is neither recovering nor
   // racing is free running: no planned runs, no runPlan. Never resurrect a
   // structured week here.
-  return { runDays: [], runPlan: undefined };
+  return { runDays: [], runPlan: undefined, raceBlock: null };
 }
 
 /**
@@ -357,6 +384,18 @@ export function rollRunWeeks(
   while (weeks < MAX_ROLLOVER_WEEKS) {
     const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
     if (!currentRunWeekKey || currentRunWeekKey >= todayWeekKey) break;
+    const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
+    // A race plan with nothing left to plan after its race stays where it
+    // is for the race's own ending (`raceAwaitsItsEnding`); from here the
+    // lifts carry the calendar (`rollLiftWeeks`).
+    if (
+      raceAwaitsItsEnding(
+        rolling.runPlan,
+        profile,
+        localDateString(nextRunDate)
+      )
+    )
+      break;
 
     // Advance lift side (workouts, weekNumber, weekHistory).
     // Backlog #8: the deload recipe follows training age (Helms H4).
@@ -376,7 +415,6 @@ export function rollRunWeeks(
     // Advance run side: one week step from the current runDay week key.
     // First, so the lift side knows whether the week rolled into is the
     // run plan's step-back week, where a race plan puts the lighter week.
-    const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
     const runs = nextRunWeek(
       rolling,
       {
@@ -392,7 +430,7 @@ export function rollRunWeeks(
           rolling,
           profile.experience,
           nextLiftWeekKey,
-          raceBlockWeek(runs.runPlan),
+          runs.raceBlock,
           { raceLegTrim: profile.raceLegTrim === true }
         );
     advanced.runDays = runs.runDays;

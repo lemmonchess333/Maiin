@@ -502,8 +502,9 @@ describe("what else a regenerated week is built from", () => {
   const PROGRAM = "users/userA/programState/current";
   const stored = () =>
     readDoc(PROGRAM) as {
-      runDays?: unknown[];
-      runPlan?: { currentWeek?: number };
+      runDays?: { date: string }[];
+      runPlan?: { currentWeek?: number; raceGoal?: { targetDate?: string } };
+      liftWeekKey?: string;
     };
 
   /** Mount, let the first plan land and age it into mid-block, then hand
@@ -553,16 +554,51 @@ describe("what else a regenerated week is built from", () => {
     expect(longestKm(persistedRunDays("userA"))).toBeLessThan(standard);
   });
 
-  it("rolls a week that starts after the race into free running", async () => {
-    // R3: the race is over, recovery has ended, and the server has not yet
-    // cleared raceGoal. The week moved into is free running, never a race
-    // plan dated before it, and never last week's runs carried on.
-    const raceBeforeThisWeek = shift(String(localWeekKey()), -1);
-    await rolledOver(() => ({
+  it("rolls a week that starts after the race into no runs, and leaves race week for the race's ending", async () => {
+    // R3: the race is over, and the server has not yet ended race prep. The
+    // week moved into plans no runs, never a race plan dated before it, and
+    // none of race week's runs carry on into it. F6: race week stays where
+    // it is, on its own dates, with the plan; the server's ending of race
+    // prep reads them (the no-show, the return to free running, recovery
+    // for a race logged late). Dropping them kept the person in race prep.
+    const thisMonday = String(localWeekKey());
+    const lastWeek = (key: string) => shift(key, -7);
+    const sunday = shift(thisMonday, 6);
+    const racing = (targetDate: string) => ({
       ...raceProfile(),
-      raceGoal: { distance: "marathon", targetDate: raceBeforeThisWeek },
-    }));
-    await waitFor(() => expect(stored().runDays).toEqual([]));
-    expect(stored().runPlan).toBeUndefined();
+      raceGoal: { distance: "10k" as const, targetDate },
+    });
+    mockProfile = racing(sunday);
+    seedRunHistory("userA", 1);
+    const hook = renderHook(() => useProgram());
+    await waitFor(() =>
+      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
+    );
+    // A week on: race week was last week, and its race last Sunday.
+    const doc = readDoc(PROGRAM) as Record<string, unknown>;
+    seedFirestore({
+      [PROGRAM]: {
+        ...doc,
+        runDays: (doc.runDays as { date: string; weekKey: string }[]).map(
+          (d) => ({
+            ...d,
+            date: lastWeek(d.date),
+            weekKey: lastWeek(d.weekKey),
+          })
+        ),
+        liftWeekKey: lastWeek(thisMonday),
+        runPlan: {
+          ...(doc.runPlan as object),
+          raceGoal: { distance: "10k", targetDate: lastWeek(sunday) },
+        },
+      },
+    });
+    mockProfile = racing(lastWeek(sunday));
+    hook.rerender();
+    await waitFor(() => expect(stored().liftWeekKey).toBe(thisMonday));
+    const days = stored().runDays ?? [];
+    expect(days.some((d) => d.date === lastWeek(sunday))).toBe(true);
+    expect(days.every((d) => d.date < thisMonday)).toBe(true);
+    expect(stored().runPlan?.raceGoal?.targetDate).toBe(lastWeek(sunday));
   });
 });
