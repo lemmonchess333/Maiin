@@ -1135,7 +1135,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
-          description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
+          description="Easy 30-minute runs only until then, while your legs recover from the race."
           action={
             <button
               type="button"
