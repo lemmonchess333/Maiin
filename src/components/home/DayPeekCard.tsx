@@ -34,6 +34,8 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
@@ -557,7 +559,10 @@ export default function DayPeekCard({
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-mono tabular-nums">
                       {runTemplate.config.targetDistanceKm
-                        ? `${runTemplate.config.targetDistanceKm} km`
+                        ? runDoseLine(
+                            runTemplate,
+                            planningEasyPaceSPerKm(profile?.runFitness)
+                          )
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
                     {/* Run21 (2): the session's one feel line. */}

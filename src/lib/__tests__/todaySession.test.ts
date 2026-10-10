@@ -237,6 +237,70 @@ describe("todaySession — a run day", () => {
   });
 });
 
+/* Run21 (5): Home's card states the run's dose. A timed run states its
+   time; a long run its distance, and its minutes at the runner's own easy
+   pace once a benchmark is confirmed. The template's "about 80 min" for
+   15 km assumed 5:20 /km. */
+describe("todaySession — a run's dose", () => {
+  // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+  const confirmed = {
+    runFitness: {
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+    },
+  } as Partial<UserProfile>;
+  const dose = (templateId: string, extra: Partial<UserProfile> = {}) =>
+    todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, extra),
+        programState: programStateWith({
+          runDays: [runDay(WEDNESDAY, { templateId })],
+        }),
+      })
+    ).run?.dose;
+
+  it("is a timed run's own time", () => {
+    expect(dose("easy_40")).toBe("40 min");
+    expect(dose("easy_40", confirmed)).toBe("40 min");
+  });
+
+  it("is a long run's distance, and its minutes at a confirmed pace", () => {
+    expect(dose("long_15k")).toBe("15 km");
+    expect(dose("long_15k", confirmed)).toBe("15 km · about 100 min");
+  });
+
+  it("waits for a derived benchmark to be confirmed", () => {
+    expect(
+      dose("long_15k", {
+        runFitness: {
+          ...confirmed.runFitness!,
+          source: "derived",
+          pendingConfirmation: true,
+        },
+      } as Partial<UserProfile>)
+    ).toBe("15 km");
+  });
+
+  it("is the day's override when the person swapped the run", () => {
+    expect(
+      todaySession(
+        input({
+          profile: profileWith({ 3: "run" }),
+          programState: programStateWith({
+            runDays: [
+              runDay(WEDNESDAY, {
+                templateId: "long_15k",
+                userOverride: "easy_30",
+              }),
+            ],
+          }),
+        })
+      ).run?.dose
+    ).toBe("30 min");
+  });
+});
+
 describe("todaySession — a new person's first run", () => {
   const runDayInput = {
     profile: profileWith({ 3: "run" }),
