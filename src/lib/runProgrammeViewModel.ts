@@ -55,41 +55,57 @@ export function raceDistanceLabel(distance: string): string {
 }
 
 /**
- * Compact run label for the week-selector day cell. Full names truncate
- * badly in a 7-column grid, so each template collapses to a short,
- * glanceable token. The full name still appears in the DayCommandSheet.
- *
- *   Easy 30          → 30m
- *   20 Min Tempo     → Tempo
- *   5×1K Intervals   → 5×1K
- *   8×400m Speed     → 8×400
- *   Long 10K         → 10K
- *   Long 15K         → 15K
- *   Marathon Race    → Race
+ * A run's label on Train's week strip: the session's name (Run21 (2)), so
+ * an easy run, one with strides and a tempo read apart. The strip sets it
+ * on two lines (`runStripLines`); the full name is also the cell's tab
+ * label and the session card's title. It was a compact token ("30m",
+ * "15K"), which said neither what kind of run a day held nor that it had
+ * strides.
  */
-export function compactRunLabel(
+export function runStripLabel(
   template: RunTemplate | null | undefined
 ): string {
-  if (!template) return "Run";
-  switch (template.type) {
-    case "easy":
-      return `${template.estimatedDuration}m`;
-    case "tempo":
-      return "Tempo";
-    case "intervals":
-      // "5×1K Intervals" → "5×1K"; "8×400m Speed" → "8×400". Take the
-      // leading "N×D" token off the name (up to the first space) and drop a
-      // trailing metre unit so it fits the rail tile alongside "5×1K".
-      return (template.name.split(" ")[0] ?? "Intervals").replace(/m$/, "");
-    case "long": {
-      const km = template.config.targetDistanceKm;
-      return km ? `${km}K` : "Long";
+  return template?.name ?? "Run";
+}
+
+/**
+ * A run's name as the week strip's two lines, each of which ends in "…" on
+ * its own when it doesn't fit its cell. Left to wrap, a word wider than the
+ * cell was cut off bare ("Interva", "Marathor" at 393px) or, hyphenated,
+ * split mid-word; neither says the name goes on. The break goes between
+ * words, or after a hyphen ("Medium-" / "long 60"), wherever the two lines
+ * come out most even, the later break on a tie ("Half Marathon" / "Race");
+ * "+ strides" stays together. A one-word name keeps one line.
+ */
+export function runStripLines(name: string): string[] {
+  // Each token with what joins it to the one before: a space between
+  // words, nothing after a hyphen.
+  const tokens: { text: string; join: string }[] = [];
+  for (const word of name.trim().split(/\s+/)) {
+    if (!word) continue;
+    const last = tokens[tokens.length - 1];
+    if (last?.text === "+") {
+      last.text = `+ ${word}`;
+      continue;
     }
-    case "race":
-      return "Race";
-    default:
-      return template.name;
+    (word.match(/[^-]+-?|-/g) ?? [word]).forEach((part, i) =>
+      tokens.push({ text: part, join: i === 0 ? " " : "" })
+    );
   }
+  if (tokens.length < 2) return tokens.map((t) => t.text);
+  const join = (ts: typeof tokens) =>
+    ts.map((t, i) => (i === 0 ? t.text : t.join + t.text)).join("");
+  let best: string[] = [];
+  let bestLength = Infinity;
+  for (let k = 1; k < tokens.length; k++) {
+    const lines = [join(tokens.slice(0, k)), join(tokens.slice(k))];
+    const length = Math.max(...lines.map((l) => l.length));
+    if (length <= bestLength) {
+      best = lines;
+      bestLength = length;
+    }
+  }
+  return best;
 }
 
 /**
