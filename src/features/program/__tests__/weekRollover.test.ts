@@ -26,9 +26,11 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import { normalizeProgramState, type ProgramState } from "../programTypes";
 import { migrateProgramState } from "../migrations";
+import { advanceWeek } from "../programEngine";
 import type { LayoffClass } from "../layoffDetection";
 import {
   MAX_ROLLOVER_WEEKS,
+  nextRunWeek,
   rollLiftWeeks,
   rollRunWeeks,
   type RolledOver,
@@ -229,9 +231,11 @@ const cases: {
       raceTargetDate: shift(START, 2 * 7 + 6),
     },
     weeksBehind: 4,
+    // F6: the runs stop at race week and the plan stays, for the race's
+    // own ending; the lifts carry the calendar on, to the same place.
     expected: [
-      "run  moved 3 | week 4 deload | lifts 2026-09-28 | history 0 | sets 16 load 652.5 | runs -  | plan -",
-      "lift moved 1 | week 4 progression | lifts 2026-10-05 | history 0 | sets 28 load 1115.0 | runs -  | plan -",
+      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 16 load 547.5 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
+      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 28 load 1115.0 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
     ],
   },
   {
@@ -341,5 +345,128 @@ describe("the rollover functions", () => {
         withoutUpdatedAt(first)
       );
     }
+  });
+});
+
+/* F6 (the training-engine simulator): rolling into the week after race day
+   dropped the race plan and race week's days before the server could read
+   them. The server ends race prep from them (a no-show, the recovery exit,
+   the return to free running) and starts recovery for a race logged late,
+   so it never did: race prep went on for a race that was over, and the
+   Monday check said "fell behind" every week. */
+describe("after race day, the race plan waits for the race's own ending", () => {
+  const raceDay = shift(START, 13); // a Sunday
+  const mondayAfter = shift(START, 14);
+  const racer = () =>
+    build({
+      runFrequency: "regular",
+      runMode: "race_prep",
+      weeklyRunDays: 3,
+      raceDistance: "10k",
+      raceTargetDate: raceDay,
+    });
+
+  /** The plan in race week: its runs built for the week holding the race. */
+  const inRaceWeek = () => {
+    const { state, profile } = racer();
+    const raceWeek = onDay(shift(raceDay, -6), () =>
+      rollRunWeeks(state, profile, weekOf(raceDay), "none")
+    ).state;
+    return { state: raceWeek, profile };
+  };
+
+  it("keeps the race plan and its run days, and plans no new runs", () => {
+    const { state, profile } = racer();
+    expect(state.runPlan?.raceGoal?.targetDate).toBe(raceDay);
+    const next = onDay(mondayAfter, () =>
+      nextRunWeek(
+        state,
+        { weekStart: weekOf(mondayAfter), date: mondayAfter },
+        profile,
+        "none"
+      )
+    );
+    expect(next.runPlan?.raceGoal?.targetDate).toBe(raceDay);
+    expect(next.runDays).toEqual(state.runDays);
+  });
+
+  it("leaves race week where it is and lets the lifts carry the calendar", () => {
+    const { state, profile } = inRaceWeek();
+    expect(state.runDays?.some((rd) => rd.date === raceDay)).toBe(true);
+    const later = shift(mondayAfter, 14);
+    const runs = onDay(later, () =>
+      rollRunWeeks(state, profile, weekOf(later), "none")
+    );
+    expect(runs.weeks).toBe(0);
+    const lifts = onDay(later, () =>
+      rollLiftWeeks(state, profile, weekOf(later))
+    );
+    expect(lifts.weeks).toBe(3);
+    expect(lifts.state.liftWeekKey).toBe(weekOf(later));
+    expect(lifts.state.runDays).toEqual(state.runDays);
+    expect(lifts.state.runPlan?.raceGoal?.targetDate).toBe(raceDay);
+  });
+
+  it("moves the lifts into the week after the race, not into race week again", () => {
+    // "Start next week" moves the lifts with this step's race block. The
+    // plan kept for the race's ending still sits at its race week, which
+    // read as the week moved into made it race week again for the lifts.
+    const { state, profile } = inRaceWeek();
+    expect(state.raceWeek).toBe("race");
+    const next = onDay(shift(raceDay, -1), () =>
+      nextRunWeek(
+        state,
+        { weekStart: weekOf(mondayAfter), date: mondayAfter },
+        profile,
+        "none"
+      )
+    );
+    expect(next.runDays).toEqual(state.runDays);
+    expect(next.raceBlock).toBeNull();
+    const lifts = advanceWeek(
+      state,
+      profile.experience,
+      weekOf(mondayAfter),
+      next.raceBlock
+    );
+    expect(lifts.raceWeek).toBe("after");
+  });
+
+  it("keeps a recovery that has ended, for the server's recovery exit", () => {
+    const { state, profile } = racer();
+    const recovered: ProgramState = {
+      ...state,
+      runPlan: {
+        ...state.runPlan!,
+        phase: "recovery",
+        recoveryEndDate: shift(raceDay, 7),
+      },
+    };
+    const weekAfter = shift(mondayAfter, 7);
+    const next = onDay(weekAfter, () =>
+      nextRunWeek(
+        recovered,
+        { weekStart: weekOf(weekAfter), date: weekAfter },
+        profile,
+        "none"
+      )
+    );
+    expect(next.runPlan?.phase).toBe("recovery");
+    expect(next.runPlan?.recoveryEndDate).toBe(shift(raceDay, 7));
+  });
+
+  it("is free running once race prep has ended", () => {
+    const { state, profile } = racer();
+    const ended = { ...profile, runMode: "freeform" } as UserProfile;
+    const next = onDay(mondayAfter, () =>
+      nextRunWeek(
+        state,
+        { weekStart: weekOf(mondayAfter), date: mondayAfter },
+        ended,
+        "none"
+      )
+    );
+    expect(next.runPlan).toBeUndefined();
+    expect(next.runDays).toEqual([]);
   });
 });
