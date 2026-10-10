@@ -6,6 +6,37 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A finished race returns the runner to free running (2026-10-10)
+
+Affects: `dailyRaceReconciliationSweep` (`functions/lib/raceReconciliation.js`,
+the orphaned race goal). The first Monday after a race, or after recovery,
+the client's rollover deletes `runPlan`, which the sweep's other decisions
+read, so until this fix a finished race's goal and `race_prep` stayed on the
+profile for good. The sweep now returns such a profile to free running once
+the race is past both exits (day 15, 21, 28 or 35 for a 5K to a marathon).
+The decision and emulator tests and the training simulator cover the rule;
+these need the console.
+
+- [ ] **Deployed-source spot-check.** In the Console
+      (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`),
+      confirm the bundle's `lib/raceReconciliation.js` contains
+      `orphanedGoalCleared`. The deploy's read-back covers this file, so a
+      failed upload should already have failed the release.
+- [ ] **The first sweep clears the stuck profiles.** At the first 04:00 UTC
+      sweep after the deploy, the log's `done` line ends
+      `orphanedGoalCleared=N`, where N is every active account stuck in
+      `race_prep` on a finished race, and there's no `fatal error:` line.
+      Spot-check one: the profile reads `runMode: "freeform"`,
+      `raceGoal: null`, and its `programState` is unchanged.
+- [ ] **A successor race survives.** An account whose old race is past but
+      who has set a new race still ahead keeps `race_prep` and the new goal
+      through the sweep.
+- Note on the PR-L row below ("Spot-check one race-prep user whose race
+  date passed >3 days ago"): that no-show only appears for a race skipped
+  Monday to Thursday. For a weekend race the Monday rollover removes the
+  race day before the sweep's three days pass. Spot-check with a weekday
+  race.
+
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
