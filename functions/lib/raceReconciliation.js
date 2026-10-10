@@ -2,8 +2,8 @@
  * Race-day reconciliation decisions (PR-L L1–L4, and the orphaned race goal).
  *
  * PURE module — no Firestore, no firebase-functions. L1–L4 moved
- * verbatim from index.js; the orphaned race goal was added here
- * (2026-10-10). index.js runs them from two transports:
+ * verbatim from index.js; the orphaned race goal was written here.
+ * index.js runs them from two transports:
  *   - dailyRaceReconciliationSweep (daily 04:00 UTC): the race no-show
  *     (L1), the recovery exit (L3), the no-show return to freeform
  *     (L4) and the orphaned race goal's return to freeform, through
