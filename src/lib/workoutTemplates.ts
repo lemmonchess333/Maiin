@@ -201,7 +201,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "5 min warmup → 20 min tempo → 5 min cooldown",
     estimatedDuration: 30,
     config: {
-      targetPace: 270,
       tempo: { warmupSec: 300, workSecs: [1200], cooldownSec: 300 },
     },
   },
@@ -213,7 +212,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "10 min warmup → 30 min tempo → 5 min cooldown",
     estimatedDuration: 45,
     config: {
-      targetPace: 270,
       tempo: { warmupSec: 600, workSecs: [1800], cooldownSec: 300 },
     },
   },
@@ -225,7 +223,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "10 min warmup → 2×20 min tempo, 3 min float → 5 min cooldown",
     estimatedDuration: 58,
     config: {
-      targetPace: 270,
       tempo: {
         warmupSec: 600,
         workSecs: [1200, 1200],

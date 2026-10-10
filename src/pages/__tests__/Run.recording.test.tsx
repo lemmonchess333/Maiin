@@ -120,12 +120,14 @@ vi.mock("@/hooks/useAudioCues", () => ({
 vi.mock("@/hooks/useSessionPlayer", () => ({
   useSessionPlayer: () => ({
     state: { index: 0 },
+    segments: [],
     current: null,
     next: null,
     isComplete: false,
     start: () => {},
     tick: () => {},
     skip: () => {},
+    workPortion: () => null,
   }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
