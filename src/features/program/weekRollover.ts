@@ -40,6 +40,7 @@ import type {
   RunPlan,
   ScheduledRunDay,
 } from "./programTypes";
+import { planWeekFromToday } from "./racePlanContinuation";
 import { clampPlanWeek } from "./runPlanTiming";
 import {
   generateRacePlanV2,
@@ -112,6 +113,7 @@ export function regenerateRacePlan({
   tuning,
   carry,
   prior,
+  plannedFrom,
 }: {
   /** The runner. Pgm6's tuning (`runTuningFromProfile`), Run17's confirmed
    *  easy pace (`planningEasyPaceSPerKm`), the run time limits and the
@@ -160,6 +162,14 @@ export function regenerateRacePlan({
     runDays: ScheduledRunDay[];
     manualCompletions?: Record<string, ManualCompletion>;
   };
+  /** Run19: the first day the week may plan a run, today for a week built
+   *  partway through (the load-time rebuild of a stale race week, "Re-plan
+   *  from today", a plan made on this device). Runs generated before it are
+   *  cut, and this week's days in `prior` are laid over the rest as the
+   *  save lays them (`planWeekFromToday`): a done, moved, swapped or missed
+   *  run before it stays as it was. Without it, `prior` is carried onto the
+   *  whole rebuilt week by date. */
+  plannedFrom?: string;
 }): {
   runDays: ScheduledRunDay[];
   runPlan: RunPlan;
@@ -190,7 +200,21 @@ export function regenerateRacePlan({
   });
   let runDays = v2.weeks[0] ?? [];
   let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
-  if (prior) {
+  if (plannedFrom) {
+    runDays = planWeekFromToday(
+      runDays,
+      plannedFrom,
+      prior && {
+        // This week's days: a week the rollover left behind isn't this one.
+        runDays: prior.runDays.filter(
+          (day) => !day.date || day.date >= weekStart
+        ),
+        manualCompletions: prior.manualCompletions,
+      }
+    );
+    // The days kept keep their ids, so their completions stay keyed to them.
+    if (prior) carriedManualCompletions = prior.manualCompletions ?? {};
+  } else if (prior) {
     const carried = carryCompletionsAcrossRegen(
       prior.runDays,
       runDays,
