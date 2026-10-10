@@ -8,6 +8,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import ExpressSessionSheet from "../ExpressSessionSheet";
+// The E2E journeys pick the full session by this (src/test/journeyScreens.ts).
+import { WORKOUT } from "@/test/journeyScreens";
 import type {
   ProgramExercise,
   WorkoutDay,
@@ -69,7 +71,7 @@ describe("ExpressSessionSheet", () => {
   it("always offers Easier today, even when no express budget applies", () => {
     const { onStart } = setup();
     expect(
-      screen.getByRole("button", { name: /full session/i })
+      screen.getByRole("button", { name: WORKOUT.fullSession })
     ).toBeInTheDocument();
     const easier = screen.getByRole("button", { name: /easier today/i });
     expect(easier).toHaveTextContent(/one set less per lift, lighter loads/i);
