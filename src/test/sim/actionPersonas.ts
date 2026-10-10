@@ -106,10 +106,14 @@ export const HYBRID_LIGHTER_WEEK: LiftPersona = {
 };
 
 /** The half marathoner on three days who wants the long run on Sunday,
- *  skips the runs they miss, and says "Not now" to falling behind. */
+ *  skips the runs they miss, and says "Not now" to falling behind. They
+ *  miss week 8, in the build, so the Monday check has a week to flag:
+ *  until the race plan waited for its race to end (F6), its only flags
+ *  came after race day. */
 export const HALF_MOVES_LONG_RUN: LiftPersona = {
   ...HALF_ON_3_DAYS,
   name: "half-moves-long-run",
+  breaks: [8],
   actions: { longRunOn: 0, skipsRuns: 1, dismissesFellBehind: true },
 };
 

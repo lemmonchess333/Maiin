@@ -505,7 +505,7 @@ first, as the client's last write stored it.
 | Take a lighter week      | Train's menu, where `lighterWeekAllowed` offers it: `applyDeloadWeek`, with `planDeloadWeek`'s run swaps | lighter-after-misses (3 misses the week before), hybrid-lighter-week (2)  |
 | Move the long run        | `moveRunDay`, to a day `resolveRunMoveOptions` allows                                                    | half-moves-long-run: to Sunday each week                                  |
 | Skip a run               | `transitionRunDay` to skipped                                                                            | half-moves-long-run: each run they miss                                   |
-| Not now                  | the fell-behind sheet's `dismissFellBehindPrompt`                                                        | half-moves-long-run                                                       |
+| Not now                  | the fell-behind sheet's `dismissFellBehindPrompt`                                                        | half-moves-long-run, the Monday after the week it misses                  |
 
 The app's own race-rest skips (`raceRestSkips`, Lift4 (10)) run for
 everyone with a race: from two days out, each session not done is skipped
@@ -521,7 +521,9 @@ Rules added with them:
 | `run-day-card`     | a run planned for today, not a race, that Home's card doesn't show                                  |
 
 **Today:** the server accepted and could store all 73 commands: 42 lift
-skips, a replace, 13 lighter weeks, 11 moves, 4 run skips and 2 "Not now".
+skips, a replace, 13 lighter weeks, 11 moves, 5 run skips and a "Not now".
+The half marathoner misses week 8 so the Monday check flags a week: the
+only flags before came after the race, from F6.
 The 22 swaps and 32 easier sessions, which stay on the phone until Finish,
 saved as the plan's rules say. The actions' own findings are F20 and F21;
 the rest are their base personas'.
