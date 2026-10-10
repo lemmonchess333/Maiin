@@ -25,7 +25,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import {
   localDateString,
   localWeekKey,

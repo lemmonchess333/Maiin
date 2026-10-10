@@ -1,34 +1,48 @@
 /**
- * `isHardRun` — the shared "demanding run" predicate.
- *
- * The rest of this file tested the cross-discipline guidance narrative
- * (resolveHybridGuidance / fuelLineFor / the tone matrix). That narrative
- * was the Home "today" card, removed 2026-08-10 on the operator's call,
- * and its tests went with it rather than being left to test nothing.
- *
- * The predicate stays because it is genuinely shared: easierToday.ts and
- * the run surfaces both need the same answer to "was that a demanding
- * run?", and one definition is what stops them drifting.
+ * `isHardRun` — the one definition of a long or hard run for the lifting
+ * side (Pgm7 A5, 2026-10-07): the run plan's types decide, and a run with
+ * no planned type counts as long from 75 minutes.
  */
 import { describe, it, expect } from "vitest";
-import { isHardRun } from "../hybridGuidance";
+import { isHardRun, UNTYPED_LONG_RUN_SECONDS } from "../hybridGuidance";
+import { HARD_RUN_TYPES } from "@/features/program/programTypes";
 
-describe("isHardRun (shared predicate)", () => {
-  it("fires on long distance, long duration, or a quality template", () => {
-    expect(isHardRun({ distance: 8000, duration: 0 })).toBe(true);
-    expect(isHardRun({ distance: 0, duration: 2700 })).toBe(true);
-    expect(
-      isHardRun({ distance: 3000, duration: 1200, activityType: "tempo" })
-    ).toBe(true);
-    expect(
-      isHardRun({ distance: 3000, duration: 1200, activityType: "intervals" })
-    ).toBe(true);
+describe("isHardRun", () => {
+  it.each(["long", "tempo", "intervals", "race"])(
+    "counts a %s run, however short",
+    (activityType) => {
+      expect(isHardRun({ duration: 20 * 60, activityType })).toBe(true);
+    }
+  );
+
+  it("never counts an easy run, however long or far", () => {
+    expect(isHardRun({ duration: 110 * 60, activityType: "easy" })).toBe(false);
   });
 
-  it("stays quiet on an easy short run", () => {
-    expect(
-      isHardRun({ distance: 4000, duration: 1500, activityType: "free" })
-    ).toBe(false);
-    expect(isHardRun({ distance: 4000, duration: 1500 })).toBe(false);
+  it("judges a typed run by the run plan's own list", () => {
+    for (const type of ["easy", "tempo", "intervals", "long", "race"]) {
+      expect(isHardRun({ duration: 30 * 60, activityType: type })).toBe(
+        HARD_RUN_TYPES.has(type)
+      );
+    }
+  });
+
+  it.each([undefined, "freerun", "treadmill", "manual", "guided"])(
+    "counts an untyped run (%s) as long from 75 minutes",
+    (activityType) => {
+      expect(
+        isHardRun({ duration: UNTYPED_LONG_RUN_SECONDS - 1, activityType })
+      ).toBe(false);
+      expect(
+        isHardRun({ duration: UNTYPED_LONG_RUN_SECONDS, activityType })
+      ).toBe(true);
+    }
+  );
+
+  it("doesn't count an easy 50-minute run, which the old 8 km / 45 minute test did", () => {
+    expect(isHardRun({ duration: 50 * 60, activityType: "easy" })).toBe(false);
+    expect(isHardRun({ duration: 50 * 60, activityType: "freerun" })).toBe(
+      false
+    );
   });
 });

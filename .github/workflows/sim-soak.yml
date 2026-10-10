@@ -1,0 +1,63 @@
+name: Simulator soak
+
+# The training simulator's outcome suites over many seeds (training-engine
+# prompt, Phase 2: "a soak gated by TROPOS_SIM_SEEDS=500 runs on a
+# schedule, outside the PR gate"). In `unit` and its matrix jobs the same
+# suites run three seeds, enough to hold their plausibility bands; this run
+# gives the ranges docs/training-engine-2026-10/simulator.md reports. Each
+# suite writes a markdown report, uploaded with the run and copied into its
+# summary. Nothing is committed and nothing gates a merge.
+#
+# A persona's seasons run one after another inside its test, so each suite
+# gets its own job. Measured at 20 seeds on 2026-10-08: 74 s for the
+# lifting suite and 101 s for the running one (its year-out marathoner runs
+# 59 weeks), so 500 seeds is about 30 and 45 minutes.
+
+on:
+  schedule:
+    - cron: "37 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: Seeds of each model variant
+        default: "500"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sim-soak
+  cancel-in-progress: false
+
+jobs:
+  soak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [liftOutcomes, runOutcomes]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the ${{ matrix.suite }} suite
+        env:
+          TROPOS_SIM_SEEDS: ${{ inputs.seeds || '500' }}
+        run: npm run test -- --run src/features/program/__tests__/sim/${{ matrix.suite }}.sim.test.ts
+      - name: Copy the report into the run summary
+        if: always()
+        run: |
+          for f in test-results/sim/*.md; do
+            [ -f "$f" ] && cat "$f" >> "$GITHUB_STEP_SUMMARY"
+          done
+          true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: sim-soak-${{ matrix.suite }}
+          path: test-results/sim/
+          if-no-files-found: warn

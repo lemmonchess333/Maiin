@@ -13,6 +13,7 @@
 import { describe, it, expect } from "vitest";
 import { format } from "date-fns";
 import { computeStreakSpan } from "../useStreaks";
+import { mulberry32 } from "@/test/prng";
 
 const NOW = new Date("2026-05-15T12:00:00");
 const GRACE_MIN_SPACING_DAYS = 7; // mirror of the engine constant
@@ -20,17 +21,6 @@ const WINDOW = 45; // generate active days within the last 45 days
 
 const dayKey = (offset: number) =>
   format(new Date(NOW.getTime() - offset * 86400000), "yyyy-MM-dd");
-
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** A random active-date set: each of the last WINDOW days is active with prob p. */
 function genActiveSet(rnd: () => number, p: number): Set<string> {
