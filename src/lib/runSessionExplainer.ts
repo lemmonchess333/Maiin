@@ -11,6 +11,7 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -74,9 +75,22 @@ export function runSessionExplainer(
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 
+  // A new runner's run-walk (Run20 (5)) is that in any week, the taper's
+  // and race week's included. The last has one run, and no walks between.
+  // "Why this run" says what the session is in its own line (Run21 (3)), so
+  // these give the reason only.
+  if (isRunWalkTemplateId(templateId)) {
+    const runs =
+      RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
+        .length ?? 0;
+    return runs === 1
+      ? "The last run-walk — what the weeks before it built up to."
+      : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
+  }
+
   if (phase === "race") {
     if (type === "race") {
-      return "Race day. The whole block pointed here — trust the plan and start conservatively.";
+      return "Race day — the whole plan has led to this. Trust the training you've done.";
     }
     return "Race-week shakeout — short and conversational; there's nothing left to gain from more.";
   }

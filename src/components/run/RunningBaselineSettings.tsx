@@ -119,9 +119,9 @@ export default function RunningBaselineSettings({
                 !runningBaselineNeedsReview(value, today)
                   ? "Faster sessions can stay where the plan and your recent running allow them."
                   : "The plan will use easy running while you build consistency."}{" "}
-                Weekly time stays within what you've reported here, spread
-                across the sessions your week has room for. It won't increase on
-                its own.
+                {preview.runWalkWeeks
+                  ? "Your first weeks run as run-walk, whatever you report here. After them, weekly time stays within your report. It won't increase on its own."
+                  : "Weekly time stays within what you've reported here, spread across the sessions your week has room for. It won't increase on its own."}
               </p>
               {preview.status !== "empty" && preview.status !== "invalid" && (
                 <p>

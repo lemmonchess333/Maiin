@@ -518,6 +518,23 @@ describe("what else a regenerated week is built from", () => {
     expect(longestKm(week)).toBeLessThanOrEqual(12);
   });
 
+  it("gives a runner new to running no tempo or intervals in their first weeks", async () => {
+    // Run20 (5). The same rollover gives a trained runner a build week with
+    // quality ("a training runner rolls into a real build week").
+    const began = Date.now() - 14 * 24 * 60 * 60 * 1000;
+    await rolledOver(() => ({
+      ...raceProfile(),
+      runFrequency: "new",
+      createdAt: { toMillis: () => began },
+    }));
+    await waitFor(() =>
+      expect(stored().runPlan?.currentWeek).toBeGreaterThan(9)
+    );
+    const week = persistedRunDays("userA");
+    expect(week.length).toBeGreaterThan(0);
+    expect(hardCount(week)).toBe(0);
+  });
+
   it("builds the week from the editor's tuning before the profile has it", async () => {
     // The run-plan editor saves new knobs and refreshes in the same tap, so
     // the profile this hook holds is still the old one.

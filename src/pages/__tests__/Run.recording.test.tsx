@@ -25,6 +25,8 @@ import {
   type StoredRun,
 } from "@/lib/runResumeStorage";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
+import { segmentsFromRunWalk } from "@/lib/runSegments";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { GPSPoint } from "@/lib/gps";
 
 const h = vi.hoisted(() => ({
@@ -38,6 +40,8 @@ const h = vi.hoisted(() => ({
   timer: { isRunning: false },
   timerPause: vi.fn(),
   timerResume: vi.fn(),
+  distanceCue: vi.fn(),
+  timeCue: vi.fn(),
 }));
 
 /* Stable across renders, as the real hook's useCallbacks are: the page's
@@ -106,15 +110,23 @@ vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
     prime: () => {},
     speak: () => {},
-    checkDistanceCue: () => {},
-    checkTimeCue: () => {},
+    checkDistanceCue: h.distanceCue,
+    checkTimeCue: h.timeCue,
     checkPaceAlert: () => {},
     checkHalfway: () => {},
     checkFinal500: () => {},
   }),
 }));
 vi.mock("@/hooks/useSessionPlayer", () => ({
-  useSessionPlayer: () => ({ state: { index: 0 } }),
+  useSessionPlayer: () => ({
+    state: { index: 0 },
+    current: null,
+    next: null,
+    isComplete: false,
+    start: () => {},
+    tick: () => {},
+    skip: () => {},
+  }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/run/RunTilePicker", () => ({
@@ -161,7 +173,10 @@ function point(metresNorth: number, timestamp: number): GPSPoint {
 
 /** An interrupted outdoor run with auto-pause on, saved 2 s after its
  *  last fix. */
-function saveInterruptedRun(phase: "active" | "paused") {
+function saveInterruptedRun(
+  phase: "active" | "paused",
+  config: Partial<StoredRun["config"]> = {}
+) {
   const points = [point(0, T0 - 62_000), point(3, T0 - 61_000)];
   const snapshot: StoredRun = {
     v: RUN_RESUME_SCHEMA_VERSION,
@@ -175,6 +190,7 @@ function saveInterruptedRun(phase: "active" | "paused") {
       displayStats: ["pace", "distance", "time"],
       target: { type: "none" },
       planMetadata: freeformPlanMetadata("freeform"),
+      ...config,
     },
     startedAt: T0 - 700_000,
     lastWriteAt: T0 - 59_000,
@@ -210,8 +226,11 @@ function tree() {
   );
 }
 
-async function resumeFromSnapshot(phase: "active" | "paused") {
-  const snapshot = saveInterruptedRun(phase);
+async function resumeFromSnapshot(
+  phase: "active" | "paused",
+  config: Partial<StoredRun["config"]> = {}
+) {
+  const snapshot = saveInterruptedRun(phase, config);
   h.gps.points = snapshot.points;
   const view = render(tree());
   await act(async () => {
@@ -244,11 +263,59 @@ beforeEach(() => {
   h.timerResume.mockReset().mockImplementation(() => {
     h.timer.isRunning = true;
   });
+  h.distanceCue.mockReset();
+  h.timeCue.mockReset();
 });
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   localStorage.clear();
+});
+
+/* Run20 (5): a run-walk's pace is an average over its runs and its walks,
+   which is no one's running pace, and each step speaks its own line. A
+   split or a time cue read that pace out, and cut off the step's line. */
+describe("a run-walk's announcements", () => {
+  it("leave out the splits and the times", async () => {
+    const runWalk = RUN_TEMPLATES.find((t) => t.id === "run_walk_1")!;
+    await resumeFromSnapshot("active", {
+      target: { type: "time", value: 29 * 60 },
+      segments: segmentsFromRunWalk(runWalk.config.runWalk!),
+      planMetadata: {
+        ...freeformPlanMetadata("freeform"),
+        planSource: "url_template",
+        actualTemplateId: "run_walk_1",
+      },
+    });
+    expect(h.distanceCue).not.toHaveBeenCalled();
+    expect(h.timeCue).not.toHaveBeenCalled();
+  });
+
+  it("leave them out when the run type was changed and the steps still play", async () => {
+    // Free run picked on a run-walk day: the run-walk's steps stay, the
+    // started template is cleared, and the plan's is the run-walk (review
+    // of #2655).
+    const runWalk = RUN_TEMPLATES.find((t) => t.id === "run_walk_1")!;
+    await resumeFromSnapshot("active", {
+      activityType: "freerun",
+      segments: segmentsFromRunWalk(runWalk.config.runWalk!),
+      planMetadata: {
+        ...freeformPlanMetadata("race_prep"),
+        planSource: "today_plan",
+        plannedTemplateId: "run_walk_1",
+        plannedTemplateType: "easy",
+        actualTemplateId: null,
+      },
+    });
+    expect(h.distanceCue).not.toHaveBeenCalled();
+    expect(h.timeCue).not.toHaveBeenCalled();
+  });
+
+  it("are an easy run's as before", async () => {
+    await resumeFromSnapshot("active");
+    expect(h.distanceCue).toHaveBeenCalled();
+    expect(h.timeCue).toHaveBeenCalled();
+  });
 });
 
 describe("the trace's clock follows the run's", () => {

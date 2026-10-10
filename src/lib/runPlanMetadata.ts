@@ -31,6 +31,7 @@ import {
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromRunWalk,
   segmentsFromTempo,
   type SessionSegment,
 } from "./runSegments";
@@ -133,6 +134,20 @@ export interface RunPlanPrefill {
 }
 
 // ─── Default / freeform shape ───────────────────────────────────────
+
+/**
+ * The template a run was, as the saved-run reader reads it (`savedRuns.ts`):
+ * the one it was started from, else the plan's. A run started as something
+ * else on a planned day keeps the plan's, as its saved document will.
+ */
+export function runTemplateIdOf(
+  metadata:
+    | Pick<RunPlanMetadata, "actualTemplateId" | "plannedTemplateId">
+    | null
+    | undefined
+): string | undefined {
+  return metadata?.actualTemplateId ?? metadata?.plannedTemplateId ?? undefined;
+}
 
 /**
  * The metadata we write for a run that has no programme context —
@@ -859,6 +874,9 @@ function templateToPrefill(
       tmpl.config.strides,
       seed
     );
+  } else if (tmpl.config.runWalk) {
+    // Run20 (5): a timed target (above) and no pace anywhere in it.
+    prefill.segments = segmentsFromRunWalk(tmpl.config.runWalk, seed);
   } else if (tmpl.type === "easy" && tmpl.config.targetDurationMinutes) {
     // Use the same pause-corrected player, remaining-time display and finish
     // cue as every structured session. A completed target never auto-saves.

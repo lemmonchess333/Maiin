@@ -40,6 +40,7 @@ const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
   domAtRender: [] as string[],
   paceLoading: [] as boolean[],
+  paceRuns: [] as { id?: string; templateId?: string }[],
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
   track: vi.fn(),
@@ -61,8 +62,12 @@ vi.mock("@/features/program/useProgram", () => ({
   },
 }));
 vi.mock("@/hooks/usePaceInsight", () => ({
-  usePaceInsightFromRuns: (_runs: unknown, opts: { loading?: boolean }) => {
+  usePaceInsightFromRuns: (
+    runs: { id?: string; templateId?: string }[],
+    opts: { loading?: boolean }
+  ) => {
     h.paceLoading.push(opts.loading ?? false);
+    h.paceRuns = runs;
     return { insight: null, accept: vi.fn(), dismiss: vi.fn() };
   },
 }));
@@ -118,7 +123,9 @@ import {
   releaseAllReads,
   resetFirestore,
   resumeReads,
+  seedFirestore,
 } from "@/test/firestoreHarness";
+import { Timestamp } from "firebase/firestore";
 
 /** A valid outdoor run, already saved (the receipt), that didn't match
  *  today's planned tempo — the shape that raises the off-plan prompt. */
@@ -454,5 +461,110 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     ).toBe("4:30");
     expect(screen.getByRole("img", { name: /^Route pace/ })).toBeVisible();
     expect(h.mapProps.at(-1)?.paceColored).toBe(true);
+  });
+});
+
+/* Run20 (5): a run-walk is run by feel. Its average mixes runs and walks,
+   so no pace can judge it; an easy run that ran hot still hears so. */
+describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
+  const auth = h.auth as { profile: Record<string, unknown> };
+  const profile = auth.profile;
+  afterEach(() => {
+    auth.profile = profile;
+  });
+
+  function renderPlanned(templateId: string) {
+    const state = {
+      ...savedRun(),
+      runConfig: {
+        activityType: "easy",
+        planMetadata: {
+          planMode: "race_prep",
+          planSource: "today_plan",
+          plannedRunDayIndex: 2,
+          plannedTemplateId: templateId,
+          plannedTemplateType: "easy",
+          actualTemplateId: templateId,
+          matchedPlanExact: true,
+          matchedPlanType: true,
+          offPlan: false,
+          planWeekIndex: 0,
+          planTotalWeeks: 10,
+          scheduledRunId: "rd-1",
+        },
+      },
+    };
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("judges a planned easy run on pace, and a run-walk on nothing", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    // 5 km in 25 minutes: 5:00 /km, quicker than a 25-minute 5K's easy.
+    const easy = renderPlanned("easy_30");
+    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    expect(screen.getByText(/Keep the easy days easy/)).toBeInTheDocument();
+    easy.unmount();
+
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/easy days easy|on target|Quicker than|Slower than/)
+    ).toBeNull();
+  });
+
+  it("hands Pace Insight a run-walk as one, so it sets no benchmark", async () => {
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    expect(h.paceRuns.find((r) => r.id === "run-1")?.templateId).toBe(
+      "run_walk_1"
+    );
+  });
+
+  it("gives a run-walk no pace trend against runs", async () => {
+    // Eight 5 km runs at 5:30 /km: this 5:00 /km is a PR for a run, and
+    // nothing for a run-walk, whose pace includes its walks.
+    seedFirestore(
+      Object.fromEntries(
+        Array.from({ length: 8 }, (_, i) => [
+          `users/runner/runs/past-${i}`,
+          {
+            completedAt: Timestamp.fromMillis(
+              Date.now() - (i + 2) * 86_400_000
+            ),
+            distance: 5000,
+            duration: 1650,
+            avgPace: 330,
+            activityType: "freerun",
+          },
+        ])
+      )
+    );
+    const easy = renderPlanned("easy_30");
+    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    easy.unmount();
+
+    renderPlanned("run_walk_1");
+    expect(
+      await screen.findByText("Run-walk 1 complete ✓")
+    ).toBeInTheDocument();
+    // The history has been read and judged by the time the insight settles.
+    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("PR!")).toBeNull();
   });
 });

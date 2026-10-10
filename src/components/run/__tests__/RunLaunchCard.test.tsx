@@ -63,6 +63,19 @@ function setup(
 }
 
 describe("RunLaunchCard", () => {
+  it("Run21 (3): carries what the run is and how it should feel, closed", () => {
+    setup({ purpose: "Easy day — it makes the hard days work." });
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(
+      /What it is.*Relaxed running at a chatty pace/
+    );
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*it makes the hard days work/
+    );
+    expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
+  });
+
   it("renders the workout name, distance metric and default eyebrow", () => {
     setup();
     expect(screen.getByText("Easy 30")).toBeInTheDocument();

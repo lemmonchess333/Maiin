@@ -230,6 +230,12 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).not.toHaveAttribute("open");
     expect(why).toHaveTextContent(/relaxed 20-second accelerations/);
+    // Run21 (3): what it is, how it should feel and what to do, too.
+    expect(why).toHaveTextContent(
+      /What it is.*An easy run that ends with 4 strides/
+    );
+    expect(why).toHaveTextContent(/How it should feel.*Easy, then quick/);
+    expect(why).toHaveTextContent(/If it feels wrong.*Leave the strides out/);
   });
 
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
