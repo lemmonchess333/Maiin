@@ -35,7 +35,12 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import {
   APPLIED,
@@ -668,13 +673,59 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         {...props}
         profile={profile}
         programState={makeProgramState(
-          [makeRunDay({ status: "completed_exact", completed: true })],
+          [
+            makeRunDay({
+              status: "completed_exact",
+              completed: true,
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ],
           { runPlan: { mode: "structured" } }
         )}
       />
     );
     expect(screen.getByText(/All runs done this week/i)).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  it("past race week, race week's days kept for the race's ending aren't this week's runs done", () => {
+    // F6: once race week is over the plan keeps its days for the server's
+    // no-show and return to free running. The no-show banner reads the race
+    // day among them; "All runs done this week" doesn't count them, since
+    // nothing is planned this week.
+    const monday = localWeekKey(parseLocalDate(TODAY_KEY));
+    const raceDate = localDateString(addLocalDays(parseLocalDate(monday), -7));
+    renderWith(
+      <ProgrammeRunSection
+        {...raceProps("10k", raceDate)}
+        programState={makeProgramState(
+          [
+            makeRunDay({
+              id: `runday_${raceDate}_1_10k_race`,
+              date: raceDate,
+              weekKey: raceDate,
+              dayIndex: 1,
+              templateId: "10k_race",
+              type: "race",
+              status: "race_no_show",
+            }),
+          ],
+          {
+            runPlan: {
+              mode: "race_prep",
+              raceGoal: { distance: "10k", targetDate: raceDate },
+              totalWeeks: 12,
+              currentWeek: 11,
+            },
+          }
+        )}
+      />
+    );
+    expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/All runs done this week/i)
+    ).not.toBeInTheDocument();
   });
 
   it("Run9 ENG e: a claim-completed runDay still on 'planned' status is NOT promoted as Next", () => {
@@ -684,7 +735,11 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     // must treat it as complete.
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
-    const claimedDay = makeRunDay({ status: "planned", dayIndex: 3 });
+    const claimedDay = makeRunDay({
+      status: "planned",
+      date: TODAY_KEY,
+      dayIndex: TODAY_DOW,
+    });
     mockClaimMap = new Map([
       [
         claimedDay.id!,
