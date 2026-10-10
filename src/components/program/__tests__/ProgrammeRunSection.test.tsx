@@ -155,6 +155,20 @@ vi.mock("@/hooks/useRunningStats", () => ({
 // Mock it so the dismissal test runs without a mounted <Toaster>.
 const toastMock = vi.fn();
 const toastSuccessMock = vi.fn();
+// The adjust sheet as it is, with the props Train hands it kept.
+const adjustSheet = vi.hoisted(() => ({
+  props: [] as { newRunnerUntil?: string | null }[],
+}));
+vi.mock("../AdjustWeekSheet", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../AdjustWeekSheet")>();
+  return {
+    default: (props: Parameters<typeof real.default>[0]) => {
+      adjustSheet.props.push(props);
+      return real.default(props);
+    },
+  };
+});
+
 vi.mock("sonner", () => ({
   toast: Object.assign((...args: unknown[]) => toastMock(...args), {
     success: (...args: unknown[]) => toastSuccessMock(...args),
@@ -637,6 +651,208 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       screen.getByRole("button", { name: /View run/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  it("says a recovery week is easy runs, in words", () => {
+    // It named a template ("easy_30"), and a new runner's recovery week is
+    // run-walk or the build's easy runs (review of #2655).
+    const ends = new Date();
+    ends.setDate(ends.getDate() + 5);
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile()}
+        programState={makeProgramState([], {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+            phase: "recovery",
+            recoveryEndDate: localDateString(ends),
+          },
+        } as Partial<ProgramState>)}
+      />
+    );
+    expect(
+      screen.getByText("Easy runs until recovery ends.")
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/easy_30/);
+  });
+
+  it("Run20 (5): hands the adjust sheet a new runner's six weeks, for easing", () => {
+    // Easing in the weeks after run-walk takes the build's minutes
+    // (`planEasierWeek`), so the sheet needs the day they end.
+    adjustSheet.props.length = 0;
+    const began = new Date(2026, 8, 7, 9).getTime();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({
+          runFrequency: "new",
+          onboardingCompletedAt: { toMillis: () => began },
+        } as Partial<UserProfile>)}
+        programState={makeProgramState([])}
+      />
+    );
+    expect(adjustSheet.props.at(-1)?.newRunnerUntil).toBe("2026-10-19");
+  });
+
+  it("Run20 (5): today's run-walk card shows its time and no pace, where an easy run shows its pace", () => {
+    const props = commonProps();
+    const profile = makeProfile({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+        pendingConfirmation: false,
+      },
+    } as Partial<UserProfile>);
+    // The meta line sets each token in its own span; read it whole. It
+    // opens with the plan position ("Base · week 1 of 12").
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /· \d+ min\b/.test(text));
+    const renderToday = (templateId: string) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...props}
+          profile={profile}
+          programState={makeProgramState([
+            makeRunDay({
+              id: `runday_${templateId}`,
+              templateId,
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ])}
+        />
+      );
+    const easy = renderToday("easy_30");
+    expect(metaLine()).toMatch(/· 30 min · .*\/km/);
+    easy.unmount();
+    renderToday("run_walk_1");
+    expect(metaLine()).toMatch(/· 29 min · /);
+    expect(metaLine()).not.toMatch(/\/km/);
+  });
+
+  it("Run21 (2): today's long run names its race-pace finish, and says why", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time gives a long
+    // run of 12 km or more a race-pace finish (the launch's gate).
+    const renderLong = (targetTimeS?: number) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...commonProps()}
+          profile={makeProfile({
+            raceGoal: {
+              distance: "half",
+              targetDate: "2099-04-18",
+              ...(targetTimeS ? { targetTimeS } : {}),
+            },
+          } as Partial<UserProfile>)}
+          programState={makeProgramState(
+            [
+              makeRunDay({
+                templateId: "long_15k",
+                type: "long",
+                status: "planned",
+                date: TODAY_KEY,
+                dayIndex: TODAY_DOW,
+              }),
+            ],
+            {
+              runPlan: {
+                mode: "race_prep",
+                raceGoal: { distance: "half", targetDate: "2099-04-18" },
+                totalWeeks: 10,
+                currentWeek: 5,
+              },
+            } as Partial<ProgramState>
+          )}
+        />
+      );
+    const withTime = renderLong(6330);
+    expect(screen.getByText("Long 15K with race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+    withTime.unmount();
+    renderLong();
+    expect(screen.getByText("Long 15K")).toBeInTheDocument();
+    expect(screen.queryByText(/with race pace/)).toBeNull();
+  });
+
+  it("Run21 (3): today's tempo at the goal race pace says so, with that pace", () => {
+    // Half, 10 weeks: week 6 is the build, where a goal time puts a tempo
+    // at the goal pace (A2), not the pace fitness would set.
+    const renderTempo = (targetTimeS?: number) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...commonProps()}
+          profile={makeProfile({
+            raceGoal: {
+              distance: "half",
+              targetDate: "2099-04-18",
+              ...(targetTimeS ? { targetTimeS } : {}),
+            },
+          } as Partial<UserProfile>)}
+          programState={makeProgramState(
+            [
+              makeRunDay({
+                templateId: "tempo_20",
+                type: "tempo",
+                status: "planned",
+                date: TODAY_KEY,
+                dayIndex: TODAY_DOW,
+              }),
+            ],
+            {
+              runPlan: {
+                mode: "race_prep",
+                raceGoal: { distance: "half", targetDate: "2099-04-18" },
+                totalWeeks: 10,
+                currentWeek: 5,
+              },
+            } as Partial<ProgramState>
+          )}
+        />
+      );
+    const withTime = renderTempo(6330);
+    expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
+    expect(document.body.textContent).toContain("5:00 /km");
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*what race pace feels like/
+    );
+    expect(why).not.toHaveTextContent(/comes from your fitness/);
+    withTime.unmount();
+    renderTempo();
+    expect(screen.getByText("20 Min Tempo")).toBeInTheDocument();
+    expect(screen.queryByText(/at race pace/)).toBeNull();
+  });
+
+  it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            templateId: "tempo_20",
+            type: "tempo",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*How it should feel.*Comfortably hard.*Why it's in your week.*If it feels wrong/
+    );
   });
 
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {

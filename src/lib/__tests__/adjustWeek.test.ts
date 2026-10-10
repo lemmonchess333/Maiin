@@ -87,3 +87,44 @@ describe("planEasierWeek", () => {
     expect(swaps.map((s) => s.key)).toEqual([4]);
   });
 });
+
+/* Run20 (5): in the weeks after run-walk a new runner's runs are held to
+   the minutes the running has built to. Easing 8 × 400 (25 minutes) in the
+   first of them gave an easy 30: 30 minutes non-stop, where the longest so
+   far was 20 (review of #2655). */
+describe("planEasierWeek — a new runner", () => {
+  // The six weeks end on Monday 13 July; this week is the first after.
+  const until = "2026-07-13";
+  const firstWeekAfter = (templateId: string) =>
+    day({
+      id: "q",
+      templateId,
+      date: "2026-07-15",
+      weekKey: "2026-07-13",
+    });
+
+  it("eases to the longest easy run the week's minutes allow", () => {
+    const [swap] = planEasierWeek(
+      [firstWeekAfter("8x400")],
+      "2026-07-14",
+      until
+    );
+    expect(swap).toMatchObject({ toTemplateId: "easy_20", toName: "Easy 20" });
+  });
+
+  it("eases as before once the build has passed it, and for anyone else", () => {
+    const later = day({
+      id: "q",
+      templateId: "tempo_20",
+      date: "2026-09-02",
+      weekKey: "2026-08-31",
+    });
+    expect(planEasierWeek([later], "2026-09-01", until)[0].toTemplateId).toBe(
+      EASY_TEMPLATE_ID
+    );
+    expect(
+      planEasierWeek([firstWeekAfter("8x400")], "2026-07-14", null)[0]
+        .toTemplateId
+    ).toBe(EASY_TEMPLATE_ID);
+  });
+});
