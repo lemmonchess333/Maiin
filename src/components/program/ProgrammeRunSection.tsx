@@ -153,7 +153,7 @@ import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
-  compactRunLabel,
+  runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
@@ -715,7 +715,7 @@ export default function ProgrammeRunSection({
           // a fixed frame on both, so position disambiguates S/S and T/T.
           topLabel: format(date, "EEEEE"),
           center: String(date.getDate()),
-          bottomLabel: hasRun ? compactRunLabel(run.template) : "",
+          bottomLabel: hasRun ? runStripLabel(run.template) : "",
           status,
           isToday: d.dateKey === todayKeyDerivation,
         };

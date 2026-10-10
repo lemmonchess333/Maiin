@@ -221,7 +221,7 @@ test.describe("Monday migration on an existing account", () => {
             .evaluateAll((els) =>
               els.map((el) => el.getAttribute("aria-label")?.split(",")[0])
             )
-        ).toEqual(["7", "30m", "9", "10", "30m", "12", "13"]);
+        ).toEqual(["7", "Easy 30", "9", "10", "Easy 30", "12", "13"]);
         expect(
           await week
             .locator(":scope > div")

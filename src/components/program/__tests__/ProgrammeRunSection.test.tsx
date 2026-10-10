@@ -32,6 +32,7 @@ import {
   screen,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
@@ -313,6 +314,31 @@ describe("ProgrammeRunSection — runDay rendering", () => {
     expect(
       screen.queryByText(/Race completed separately/i)
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", () => {
+  it("says which session a day holds, strides included, not its minutes", () => {
+    const today = new Date();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            dayIndex: today.getDay(),
+            date: localDateString(today),
+            weekKey: localWeekKey(today),
+            templateId: "easy_30_strides",
+          }),
+        ])}
+      />
+    );
+    const strip = screen.getByRole("tablist", { name: "Run week" });
+    expect(
+      within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
+    ).toBeInTheDocument();
+    expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
   });
 });
 

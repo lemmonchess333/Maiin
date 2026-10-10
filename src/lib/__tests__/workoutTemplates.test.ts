@@ -88,6 +88,17 @@ describe("RUN_TEMPLATES", () => {
   });
 });
 
+describe("names: one family per kind of session (Run21 (2))", () => {
+  // "Easy 60" sat beside "Medium-long 75" and "Medium-long 90", though all
+  // three are the week's medium-long run (RUN-EV-11's rungs).
+  it("names every medium-long rung Medium-long", () => {
+    for (const id of ["easy_60", "easy_75", "easy_90"]) {
+      const t = RUN_TEMPLATES.find((x) => x.id === id)!;
+      expect(t.name, id).toBe(`Medium-long ${t.estimatedDuration}`);
+    }
+  });
+});
+
 describe("isRaceTemplateId (RUN-RACE-GUARD-01)", () => {
   it("is true for every real race template id, false otherwise", () => {
     for (const id of ["5k_race", "10k_race", "half_race", "marathon_race"]) {

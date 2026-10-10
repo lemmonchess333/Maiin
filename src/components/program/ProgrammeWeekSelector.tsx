@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
+import { runStripLines } from "@/lib/runProgrammeViewModel";
 
 /**
  * ProgrammeWeekSelector — the single day-selector primitive for the
@@ -31,7 +33,7 @@ export interface ProgrammeWeekSelectorCell {
   topLabel?: string;
   /** Circle content: session number (lift) or date-of-month number (run). */
   center: string;
-  /** Sub-label below the circle: split name (lift) or compact run label (run). */
+  /** Sub-label below the circle: split name (lift) or the run's name (run). */
   bottomLabel: string;
   /** Day state. "rest" = a run-scope day with nothing scheduled. */
   status: "completed" | "skipped" | "upcoming" | "rest";
@@ -235,15 +237,34 @@ export default function ProgrammeWeekSelector({
                 strip's height changed with the week's shape and a lone
                 "12K" under one day hung off a row nothing else occupied.
                 Home's indicator row has had a fixed height for the same
-                reason. It ends in "…" when it does not fit (at larger text
-                on the phone): clamped by line, a single word was cut off
-                bare ("Deadlif"), and wrapped it broke mid-word. The full
-                name is in the tab's label and on the session card. */}
+                reason. A lift's split name ends in "…" when it does not fit
+                (at larger text on the phone): clamped by line, a single
+                word was cut off bare ("Deadlif"), and wrapped it broke
+                mid-word. A run's name takes two lines (Run21 (2)): one held
+                "Easy 30" but cut "Easy 30 + strides" to "Easy 3…". Each
+                line ends in "…" on its own, for the same reason: wrapped
+                and clamped, "Intervals" was cut off bare in a narrow cell.
+                The lines may take half the gap on either side, 4px in all,
+                so "Medium-" fits a cell on a 390px phone; neighbouring
+                lines can meet but never overlap. Either way the full name
+                is in the tab's label and on the session card. */}
             <span
-              className="text-caption font-semibold text-center truncate leading-tight max-w-full mt-1 block min-h-4"
+              data-cell-label
+              className={cn(
+                "text-caption font-semibold text-center leading-tight mt-1 block",
+                sport === "run"
+                  ? "max-w-[calc(100%_+_0.25rem)] min-h-7"
+                  : "max-w-full truncate min-h-4"
+              )}
               style={{ color: labelColor }}
             >
-              {cell.bottomLabel}
+              {sport === "run"
+                ? runStripLines(cell.bottomLabel).map((line, i) => (
+                    <span key={i} className="block truncate">
+                      {line}
+                    </span>
+                  ))
+                : cell.bottomLabel}
             </span>
           </div>
         );

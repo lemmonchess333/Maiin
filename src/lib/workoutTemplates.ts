@@ -125,7 +125,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
   // assigned by the scheduler; also user-pickable like any easy tier.
   {
     id: "easy_60",
-    name: "Easy 60",
+    name: "Medium-long 60",
     type: "easy",
     icon: "person-standing",
     description: "Conversational pace — steady aerobic volume",

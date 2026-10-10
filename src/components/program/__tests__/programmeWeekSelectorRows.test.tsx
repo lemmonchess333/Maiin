@@ -42,7 +42,7 @@ function renderSelector() {
 }
 
 function bottomLabels(container: HTMLElement) {
-  return Array.from(container.querySelectorAll("span.min-h-4"));
+  return Array.from(container.querySelectorAll("span[data-cell-label]"));
 }
 
 describe("the bottom-label row", () => {
@@ -56,6 +56,62 @@ describe("the bottom-label row", () => {
     const { container } = renderSelector();
     const texts = bottomLabels(container).map((s) => s.textContent);
     expect(texts.filter(Boolean)).toEqual(["12K"]);
+  });
+});
+
+describe("a run's name on the strip (Run21 (2))", () => {
+  // The strip names the session. One line held "Easy 30" and cut "Easy 30 +
+  // strides" to "Easy 3…", so a run's name takes two lines. Each line ends
+  // in "…" on its own: wrapped and clamped, a word too wide for a narrow
+  // cell ("Intervals") was cut off bare, and hyphenated it split mid-word.
+  // A lift's split name keeps its one line.
+  function labelFor(sport: "run" | "lift", bottomLabel: string) {
+    const { container, unmount } = render(
+      <ProgrammeWeekSelector
+        sport={sport}
+        ariaLabel="Days"
+        cells={[{ ...cells[3], bottomLabel }]}
+        selectedKey={cells[3].key}
+        onSelect={vi.fn()}
+      />
+    );
+    const span = container.querySelector("span[data-cell-label]")!;
+    const tab = container.querySelector("[role=tab]")!;
+    const result = {
+      className: span.className,
+      text: span.textContent,
+      lines: Array.from(span.children).map((line) => ({
+        text: line.textContent,
+        className: line.className,
+      })),
+      tabName: tab.getAttribute("aria-label"),
+    };
+    unmount();
+    return result;
+  }
+
+  it("sets a run's name on two lines, each ending in '…' when it doesn't fit", () => {
+    const run = labelFor("run", "Easy 30 + strides");
+    expect(run.lines.map((l) => l.text)).toEqual(["Easy 30", "+ strides"]);
+    for (const line of run.lines) {
+      expect(line.className).toMatch(/\btruncate\b/);
+      expect(line.className).toMatch(/\bblock\b/);
+    }
+    // Neither hyphenated nor clamped by line: either cuts a word.
+    expect(run.className).not.toMatch(/hyphens|line-clamp/);
+    // Two lines' height, whatever the day holds.
+    expect(run.className).toMatch(/\bmin-h-7\b/);
+    // The tab's name is the whole name, whatever the strip shows.
+    expect(run.tabName).toBe("Easy 30 + strides");
+  });
+
+  it("keeps a lift's split name to one line", () => {
+    const lift = labelFor("lift", "Deadlift");
+    expect(lift.className).toMatch(/\btruncate\b/);
+    expect(lift.className).toMatch(/\bblock\b/);
+    expect(lift.className).toMatch(/\bmin-h-4\b/);
+    expect(lift.text).toBe("Deadlift");
+    expect(lift.lines).toEqual([]);
   });
 });
 
