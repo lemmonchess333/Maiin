@@ -761,7 +761,7 @@ describe("generatePlanAdjustments", () => {
     expect(adj.run[0]).toMatch(/drop one mid-week/i);
   });
 
-  it("low band with weak scores nudges progressive overload + aerobic base", () => {
+  it("low band with weak scores nudges progressive overload and an easy run", () => {
     const adj = generatePlanAdjustments({
       ...base,
       loadBand: "low",
@@ -769,7 +769,31 @@ describe("generatePlanAdjustments", () => {
       runLoadScore: 20,
     });
     expect(adj.lift[0]).toMatch(/progressive overload/i);
-    expect(adj.run[0]).toMatch(/aerobic base/i);
+    expect(adj.run[0]).toBe(
+      "Add one easy 20-minute run to build your running back up."
+    );
+  });
+
+  /* Run21 (2): a physiology name is said only under "Coaches also call
+     this", never in a suggestion. The Performance tab showed "rebuild
+     aerobic base". */
+  it("the run suggestions use no physiology words", () => {
+    const runs = [
+      { ...base, deloadRecommended: true },
+      { ...base, loadBand: "overreach" },
+      { ...base, loadBand: "low", liftLoadScore: 20, runLoadScore: 20 },
+      { ...base, loadBand: "deload", liftLoadScore: 20, runLoadScore: 20 },
+    ].flatMap(
+      (doc) =>
+        generatePlanAdjustments(
+          doc as Parameters<typeof generatePlanAdjustments>[0]
+        ).run
+    );
+    expect(runs.length).toBeGreaterThan(0);
+    for (const line of runs)
+      expect(line).not.toMatch(
+        /aerobic|anaerobic|lactate|threshold|VO2|zone \d/i
+      );
   });
 
   it("low band with healthy scores (>=30) gives no nudges", () => {

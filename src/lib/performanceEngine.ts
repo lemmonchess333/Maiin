@@ -423,7 +423,7 @@ export function generatePlanAdjustments(
         "Focus on progressive overload — small weight jumps or extra set."
       );
     if (doc.runLoadScore < 30)
-      run.push("Add one easy 20-min run to rebuild aerobic base.");
+      run.push("Add one easy 20-minute run to build your running back up.");
   }
 
   return { lift, run };
