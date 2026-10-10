@@ -429,6 +429,13 @@ cover the rules; these need a phone outside.
       the route quality "good" on the finish screen, not "poor".
 - [ ] **Climb on a known hill.** A run with a known climb should read
       close to it; a flat run should read a few metres, not hundreds.
+- [ ] **Route colours after a run** (2026-10-10). On a steady run the
+      route on the finish screen should be mostly amber, not speckled
+      green and coral. A surge, a hill or a walk should show as one green
+      or coral stretch where it happened. The colours are now measured
+      over 200 m of route (`routePaceRatios` in
+      `src/components/run/routePace.ts`); measured between each pair of
+      fixes, GPS wobble alone changed them.
 
 ## The new logo, icon and launch animation (2026-10-01)
 

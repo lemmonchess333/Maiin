@@ -43,7 +43,8 @@ describe("route pace colours (RunMap)", () => {
       resolve(dirname(fileURLToPath(import.meta.url)), "../RunMap.tsx"),
       "utf8"
     );
-    expect(src).toMatch(/routePaceColor\(segPace \/ avgPaceSecPerKm\)/);
+    expect(src).toMatch(/routePaceRatios\(visiblePoints, avgPaceSecPerKm\)/);
+    expect(src).toMatch(/routePaceColor\(ratio\)/);
     expect(src).not.toMatch(/THEME\.pace(Fast|OnTarget|Slow)/);
   });
 
