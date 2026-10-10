@@ -744,7 +744,9 @@ against Lift4 as built on the simulator before it comes here with an answer.
   rebuild this week from its Monday, keeping none of its days: a skip
   earlier in the week is lost and a run can be dated before today. A
   correction under Run19 too, in its own PR, since they carry the person's
-  swaps by weekday.
+  swaps by weekday. **Built** (lemmonchess333/Maiin#2670): both keep the
+  week's days before today as they were, and the rebuilt week runs from
+  today; from today on, the new layout decides the days as before.
 - **Also found:** two Settings save tests from lemmonchess333/Maiin#2636
   assumed a plan's first week holds runs, which one saved on a Sunday after
   its run days doesn't (Run19's own case). They now save on this week's
