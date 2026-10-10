@@ -118,6 +118,7 @@ const server = createRequire(import.meta.url)(
     noShowWritten: boolean;
     recoveryCleared: boolean;
     noShowCleared: boolean;
+    orphanedGoalCleared: boolean;
   };
   decideRecoveryEntry: (
     profile: unknown,
@@ -471,8 +472,8 @@ function begin({ runner, start, setClock }: SeasonOptions): Walk {
   };
 }
 
-/** 04:00 UTC: the race no-show, the end of recovery, and the return to
- *  free running after a no-show. */
+/** 04:00 UTC: the race no-show, the end of recovery, and the returns to
+ *  free running after a no-show and once the plan is gone. */
 function sweep(w: Walk, today: string) {
   const [y, m, d] = today.split("-").map(Number);
   const nowMs = Date.UTC(y, m - 1, d, 4);
@@ -508,6 +509,11 @@ function sweep(w: Walk, today: string) {
     w.events.push({
       date: today,
       what: `no-show cleared → ${w.profile.runMode}`,
+    });
+  if (decision.orphanedGoalCleared)
+    w.events.push({
+      date: today,
+      what: `race goal cleared → ${w.profile.runMode}`,
     });
 }
 

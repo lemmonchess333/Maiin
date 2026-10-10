@@ -1,11 +1,13 @@
 /**
- * Race-day reconciliation decisions (PR-L L1–L4).
+ * Race-day reconciliation decisions (PR-L L1–L4, and the orphaned race goal).
  *
- * PURE module — no Firestore, no firebase-functions. Moved verbatim
- * from index.js, which runs them from two transports:
+ * PURE module — no Firestore, no firebase-functions. L1–L4 moved
+ * verbatim from index.js; the orphaned race goal was added here
+ * (2026-10-10). index.js runs them from two transports:
  *   - dailyRaceReconciliationSweep (daily 04:00 UTC): the race no-show
- *     (L1), the recovery exit (L3) and the no-show return to freeform
- *     (L4), through `_runDailyRaceReconciliationForUser`;
+ *     (L1), the recovery exit (L3), the no-show return to freeform
+ *     (L4) and the orphaned race goal's return to freeform, through
+ *     `_runDailyRaceReconciliationForUser`;
  *   - onRunCreated: the recovery entry a saved race run triggers (L2),
  *     through `_maybeWriteRecoveryEntryForRun`.
  * index.js needs firebase-admin initialised to load, so a test outside
@@ -105,6 +107,7 @@ function _decideReconciliationActions(
   let noShowWritten = false;
   let recoveryCleared = false;
   let noShowCleared = false;
+  let orphanedGoalCleared = false;
 
   // ── L1 decision ────────────────────────────────────────────────
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
@@ -256,21 +259,68 @@ function _decideReconciliationActions(
     }
   }
 
-  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
+  // ── Orphaned race goal ─────────────────────────────────────────
+  // L1, L3 and L4 all read `runPlan`, and the client deletes it: the first
+  // Monday after the race, or after recovery, its rollover moves the week
+  // into free running (`nextRunWeek`) and commits the programme whole. From
+  // then on none of them can fire, and the profile kept `race_prep` and the
+  // finished race for good: measured by the training simulator for every
+  // distance, and for every race skipped on a Friday, Saturday or Sunday.
+  // So a race-prep profile whose plan is gone returns to free running here
+  // once its race is past both exits above would have taken: the no-show
+  // return (L4), and the end of the recovery a finished race would have had
+  // plus its grace (L3). A successor race is still ahead, so it is kept.
+  // No plan means L1, L3 and L4 have not fired: they all need one.
+  const goal = (profile && profile.raceGoal) || null;
+  if (
+    !runPlan &&
+    profile &&
+    profile.runMode === "race_prep" &&
+    goal &&
+    typeof goal.targetDate === "string"
+  ) {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const recoveryEnd = _recoveryEndDateForRace(goal);
+    const exitMs = Math.max(
+      _parseUtcDate(goal.targetDate).getTime() +
+        (NO_SHOW_EXIT_GRACE_DAYS + 1) * dayMs,
+      recoveryEnd
+        ? _parseUtcDate(recoveryEnd).getTime() +
+            RECOVERY_EXIT_GRACE_DAYS * dayMs
+        : 0
+    );
+    if (nowMs >= exitMs) {
+      profilePayload = resolveRecoveryExit({
+        currentRaceGoal: goal,
+        completedRaceGoal: goal,
+      });
+      orphanedGoalCleared = true;
+    }
+  }
+
+  if (
+    !noShowWritten &&
+    !recoveryCleared &&
+    !noShowCleared &&
+    !orphanedGoalCleared
+  ) {
     return {
       payload: null,
       profilePayload: null,
       noShowWritten,
       recoveryCleared,
       noShowCleared,
+      orphanedGoalCleared,
     };
   }
   return {
-    payload: updatePayload,
+    // The orphaned goal writes the profile alone: there is no plan to change.
+    payload: Object.keys(updatePayload).length > 0 ? updatePayload : null,
     profilePayload,
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   };
 }
 

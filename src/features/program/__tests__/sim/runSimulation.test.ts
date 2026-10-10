@@ -14,7 +14,15 @@
  *     easy running;
  *   - a race saved without its template still enters recovery: the
  *     untemplated race-morning save `raceDayCompletion.js` records fixing
- *     stays fixed.
+ *     stays fixed;
+ *   - every race plan ends: the runner is back in free running a week
+ *     after recovery would have ended and never sooner than two weeks
+ *     after the race (day 15, 21, 28 or 35 after a 5K to a marathon), and
+ *     two weeks after a skipped race. The sweep does it
+ *     by the race goal the plan left behind (the orphaned race goal,
+ *     `raceReconciliation.js`), because the plan itself is gone by then:
+ *     see 2. Before 2026-10-10 nothing ended one, and the goal and
+ *     `race_prep` outlived every race.
  *
  * What does not. Each is pinned below as the app behaves today, so a fix
  * turns its test red and the change is recorded here on purpose.
@@ -36,21 +44,19 @@
  *    cool-down carry the average over it for anyone whose easy running is
  *    slower than that, a 17:03 5K runner included: their tempo never ticks.
  *
- * 2. Nothing ends a race plan. The first Monday after the race, or after
- *    recovery, rolls the week into free running and deletes `runPlan`
- *    (`nextRunWeek`, whose result the rollover commits whole). The
- *    server's sweep reads `runPlan` for each of its race-day decisions, so
- *    after that Monday none of them can fire:
- *      - recovery never ends. The race goal stays set and the profile
- *        `race_prep`, for every distance. "Recovery complete. What's
- *        next?" shows only until that Monday; after it Train shows the
- *        "Race day has passed" banner its code calls a legacy fallback,
- *        dismissible a week at a time;
+ * 2. The Monday after a race takes the race's own screens with it. The
+ *    first Monday after the race, or after recovery, rolls the week into
+ *    free running and deletes `runPlan` (`nextRunWeek`, whose result the
+ *    rollover commits whole), and the sweep's no-show and the recovery
+ *    screens read it:
  *      - a race skipped on a Friday, Saturday or Sunday is never marked a
- *        no-show: the sweep waits three days, and the Monday comes first.
- *        One skipped Monday to Thursday is marked (for a runner on UTC)
- *        and never cleared: the return to free running two weeks on reads
- *        the plan that Monday deleted.
+ *        no-show, so its banner ("Log it now if you ran it") never shows:
+ *        the sweep waits three days, and the Monday comes first. One
+ *        skipped Monday to Thursday is marked (for a runner on UTC);
+ *      - "Recovery complete. What's next?" shows only until that Monday.
+ *        From then until the sweep returns the runner to free running,
+ *        Train shows the "Race day has passed" banner its code calls a
+ *        legacy fallback.
  *
  * 3. A run done a day late. A planned run can be claimed a day late, but a
  *    late run on a day with its own planned run is claimed by that day's,
@@ -62,7 +68,7 @@
  *    the distance) and enters no recovery (the server wants 95%). The two
  *    bars differ on purpose (`raceDayCompletion.js`); between them sits a
  *    race the app shows as run, and the next Monday the runner has no
- *    plan at all.
+ *    plan, until the sweep returns them to free running three weeks on.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
@@ -136,6 +142,34 @@ function racer(
   };
 }
 
+/** A 5K skipped on each day of one week, Monday 23 to Sunday 29 November,
+ *  walked a month past it. */
+function skippedRaces() {
+  return Array.from({ length: 7 }, (_, i) => {
+    const raceDate = shift("2026-11-23", i);
+    const weekday = parseLocalDate(raceDate).getDay();
+    const schedule: ScheduleDay[] = [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+      day,
+      type: [weekday, (weekday + 3) % 7, (weekday + 5) % 7].includes(day)
+        ? "run"
+        : "rest",
+    }));
+    const season = walk(
+      {
+        vdot: 45,
+        benchmarked: true,
+        weekSchedule: schedule,
+        raceGoal: { distance: "5k", targetDate: raceDate },
+        onPlannedRun: (run) =>
+          run.type === "race" ? { kind: "skip" } : { kind: "run" },
+      },
+      shift(raceDate, 30),
+      "2026-10-05"
+    );
+    return { raceDate, season };
+  });
+}
+
 const isQuality = (p: PlannedRunRecord) =>
   p.type === "tempo" || p.type === "intervals";
 
@@ -166,6 +200,34 @@ describe("a runner who does what they are told", () => {
     for (const week of season.weeks) {
       expect(week.runs.done).toBe(week.runs.planned);
       expect(week.ticked).toBe(week.runs.planned);
+    }
+  });
+
+  it("is back in free running a week after recovery would have ended", () => {
+    for (const [distance, day] of [
+      ["5k", 15],
+      ["10k", 21],
+      ["half", 28],
+      ["marathon", 35],
+    ] as const) {
+      const season = walk(racer(45, distance), shift(RACE, 8 * 7));
+      expect(season.events).toContainEqual({
+        date: shift(RACE, day),
+        what: "race goal cleared → freeform",
+      });
+      expect(season.profile.runMode).toBe("freeform");
+      expect(season.profile.raceGoal).toBeNull();
+    }
+  });
+
+  it("is back in free running two weeks after a skipped race, any weekday", () => {
+    for (const { raceDate, season } of skippedRaces()) {
+      expect(season.events).toContainEqual({
+        date: shift(raceDate, 15),
+        what: "race goal cleared → freeform",
+      });
+      expect(season.profile.runMode).toBe("freeform");
+      expect(season.profile.raceGoal).toBeNull();
     }
   });
 
@@ -256,54 +318,16 @@ describe("findings: the app as it behaves today", () => {
     expect(tempos.filter((p) => p.completion !== null)).toEqual([]);
   });
 
-  it("never ends recovery: the Monday after it deletes the plan the server reads", () => {
-    for (const distance of ["5k", "10k", "half", "marathon"] as const) {
-      const season = walk(racer(45, distance), shift(RACE, 8 * 7));
-      expect(season.events.map((e) => e.what)).not.toContain(
-        "recovery ended → freeform"
-      );
-      expect(season.programState.runPlan).toBeUndefined();
-      expect(season.programState.runDays).toEqual([]);
-      expect(season.profile.runMode).toBe("race_prep");
-      expect(season.profile.raceGoal).toEqual({
-        distance,
-        targetDate: RACE,
+  it("marks a skipped race a no-show only Monday to Thursday", () => {
+    const noShows = skippedRaces()
+      .filter(({ season }) => season.events.some((e) => e.what === "no-show"))
+      .map(({ raceDate, season }) => {
+        expect(season.events).toContainEqual({
+          date: shift(raceDate, 4),
+          what: "no-show",
+        });
+        return raceDate;
       });
-    }
-  });
-
-  it("marks a skipped race a no-show only Monday to Thursday, and never clears it", () => {
-    const noShows: string[] = [];
-    // Monday 23 November to Sunday 29 November.
-    for (let i = 0; i < 7; i++) {
-      const raceDate = shift("2026-11-23", i);
-      const weekday = parseLocalDate(raceDate).getDay();
-      const schedule: ScheduleDay[] = [0, 1, 2, 3, 4, 5, 6].map((day) => ({
-        day,
-        type: [weekday, (weekday + 3) % 7, (weekday + 5) % 7].includes(day)
-          ? "run"
-          : "rest",
-      }));
-      const season = walk(
-        {
-          vdot: 45,
-          benchmarked: true,
-          weekSchedule: schedule,
-          raceGoal: { distance: "5k", targetDate: raceDate },
-          onPlannedRun: (run) =>
-            run.type === "race" ? { kind: "skip" } : { kind: "run" },
-        },
-        shift(raceDate, 30),
-        "2026-10-05"
-      );
-      const noShow = season.events.find((e) => e.what === "no-show");
-      if (noShow) {
-        expect(noShow.date).toBe(shift(raceDate, 4));
-        noShows.push(raceDate);
-      }
-      expect(season.profile.runMode).toBe("race_prep");
-      expect(season.profile.raceGoal?.targetDate).toBe(raceDate);
-    }
     expect(noShows).toEqual([
       "2026-11-23",
       "2026-11-24",
@@ -340,12 +364,15 @@ describe("findings: the app as it behaves today", () => {
             ? { kind: "run", distanceScale: 0.94 }
             : { kind: "run" },
       }),
-      shift(RACE, 7)
+      shift(RACE, 21)
     );
     expect(season.planned.find((p) => p.date === RACE)?.completion).toBe(
       "real"
     );
-    expect(season.events.map((e) => e.what)).toEqual([]);
+    expect(season.planned.filter((p) => p.date > RACE)).toEqual([]);
+    expect(season.events).toEqual([
+      { date: shift(RACE, 21), what: "race goal cleared → freeform" },
+    ]);
     expect(season.programState.runPlan).toBeUndefined();
     expect(season.programState.runDays).toEqual([]);
   });
