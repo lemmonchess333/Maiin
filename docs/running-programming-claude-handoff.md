@@ -322,6 +322,22 @@ the run-side auto-rollover awaits the layoff read for the current uid
 declared in every regen dependency array. Regression constructs the
 real cache-paint-vs-network race and is mutation-checked.
 
+STATUS 2026-10-10 (the training simulator's running half,
+`src/features/program/__tests__/sim/`, findings pinned in
+`runSimulation.test.ts`): RUN-EV-07's interleaving is now driven, not
+hypothesised, and it fails. The first Monday after a race, or after
+recovery, `nextRunWeek` rolls into free running and the rollover's whole-
+document commit deletes `runPlan`, which all three sweep decisions read.
+So recovery never ends, a race skipped Friday to Sunday is never a no-show,
+a Monday-to-Thursday no-show is never cleared, and the race goal and
+`race_prep` outlive every race. Open: whether the client keeps the plan
+through that rollover or the sweep learns the deleted-plan state. RUN-EV-09
+is covered for generated completion, from launch to slot claim: easy, long
+and race days claim; quality days claim only under the claim map's 4:30/km
+whole-run average (VDOT 50 to 55 and up, never an unbenchmarked tempo); a
+day-late run is claimed by the next day's slot, or by nothing on a Monday.
+Custom and modified completion remain uncovered.
+
 > **Two run-relevant issues are ledgered on the LIFT side.** The Performance
 > Index is hybrid — run load is half its `loadScore` — and the deload it
 > recommends now has a run half (#1930), but neither appears anywhere in this

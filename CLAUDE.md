@@ -323,6 +323,10 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   198). A number nothing checks is a claim that rots; prefer describing the
   shape, or add a test that pins the number.
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
+- **Walk a season** for a change to a run plan across days (claims, the
+  Monday rollover, race day, recovery): `src/features/program/__tests__/sim/`
+  drives a runner through the app's own plan, launch, save, claim map and
+  server race-day rules. A single-call test cannot see an interleaving.
 
 **CI runs the same suite five ways, and knowing that changes what you
 write.** Each is a full run in `ci.yml`, and each exists because the
