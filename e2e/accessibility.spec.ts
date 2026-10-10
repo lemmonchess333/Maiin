@@ -26,42 +26,45 @@
  * No `>= 0` cargo-cult assertions.
  */
 import { test, expect, type Page } from '@playwright/test';
+import { openSignInForm } from './helpers/auth';
 
 test.describe('Accessibility — content invariants', () => {
   test('html has lang=en', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const lang = await page.locator('html').getAttribute('lang');
     expect(lang).toBe('en');
   });
 
   test('viewport meta enables responsive scaling', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
     expect(viewport).toContain('width=device-width');
     expect(viewport).toContain('initial-scale=1');
   });
 
   test('login page has an h1 (real heading-hierarchy assertion)', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     // Pre-Sprint-8 this was `expect(headings).toBeGreaterThanOrEqual(0)`
-    // which always passed. The login page renders the Tropos
-    // wordmark as an h1 (Login.tsx:86-88).
+    // which always passed. The first visit opens on the welcome screen,
+    // whose headline is the page's one h1; what it says is the welcome's
+    // to change, so only that there is one, and that it says something,
+    // is held here.
     const h1Count = await page.locator('h1').count();
     expect(h1Count, 'Login page must render exactly one h1').toBe(1);
     const h1Text = await page.locator('h1').first().textContent();
-    expect(h1Text?.trim()).toBe('Tropos');
+    expect(h1Text?.trim()).not.toBe('');
   });
 
   test('no images without alt text on login', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     const imgWithoutAlt = await page.locator('img:not([alt])').count();
     expect(imgWithoutAlt).toBe(0);
   });
 
   test('privacy page returns substantial content', async ({ page }) => {
-    await page.goto('/privacy');
+    await page.goto('privacy');
     await page.waitForLoadState('networkidle');
     const text = await page.locator('#root').textContent();
     expect(text?.length).toBeGreaterThan(100);
@@ -70,7 +73,7 @@ test.describe('Accessibility — content invariants', () => {
 
 test.describe('Accessibility — skip link contract (Sprint 5)', () => {
   test('exactly one skip-to-content link in the DOM', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     // Pre-Sprint-5 there were TWO: index.html:99 (loads before React)
     // and Layout.tsx:79 (rendered during React lifecycle). Each was
@@ -83,7 +86,7 @@ test.describe('Accessibility — skip link contract (Sprint 5)', () => {
   });
 
   test('first Tab focuses the skip link', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
@@ -94,7 +97,7 @@ test.describe('Accessibility — skip link contract (Sprint 5)', () => {
 
 test.describe('Accessibility — button names (Sprint 1 IconButton contract)', () => {
   test('every button on the login page has an accessible name', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     const buttons = page.locator('button');
     const count = await buttons.count();
@@ -116,7 +119,7 @@ test.describe('Accessibility — button names (Sprint 1 IconButton contract)', (
   });
 
   test('icon-only buttons (zero visible text) have a non-empty aria-label', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     const buttons = page.locator('button');
     const count = await buttons.count();
@@ -137,7 +140,7 @@ test.describe('Accessibility — button names (Sprint 1 IconButton contract)', (
 
 test.describe('Accessibility — anti-patterns', () => {
   test('no role="button" on non-button elements (use real <button>)', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     await page.waitForLoadState('networkidle');
     // Pre-Sprint-1 audit flagged this on Settings backdrop +
     // UserProfile backdrop. The fix is to wrap dismissal logic in a
@@ -166,16 +169,17 @@ async function tapSize(page: Page, selector: string): Promise<{ width: number; h
 
 test.describe('Accessibility — touch targets (iOS HIG 44pt floor, Sprint 1)', () => {
   test('login submit button is at least 44px tall', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('');
+    // The form is behind the welcome screen on a first visit.
+    await openSignInForm(page);
     const size = await tapSize(page, 'button[type="submit"]');
     expect(size, 'submit button must be rendered').not.toBeNull();
     expect(size!.height, `Login submit button height = ${size!.height}px (need >= 44)`).toBeGreaterThanOrEqual(44);
   });
 
   test('password show/hide toggle meets the IconButton size=sm floor (36px)', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('');
+    await openSignInForm(page);
     // The IconButton size=sm on the password eye toggle deliberately
     // accepts 36px (under the 44px HIG floor) because the parent row
     // provides additional tap area around it. The size=sm contract

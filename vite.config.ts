@@ -93,8 +93,12 @@ export default defineConfig(({ mode }) => ({
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
     chunkSizeWarningLimit: 1100,
 
-    // Inline assets smaller than 4KB, keep larger ones as separate files
-    assetsInlineLimit: 4096,
+    // Inline assets smaller than Vite's 4KB default, keep larger ones as
+    // separate files, and never inline a font: index.html's CSP takes fonts
+    // from 'self' only, so a font inlined as a data: URL is refused (Plus
+    // Jakarta Sans's extended-Cyrillic subset, 2.3KB, was). cspFonts.test.ts.
+    assetsInlineLimit: (file) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(file) ? false : undefined,
 
     rollupOptions: {
       output: {
