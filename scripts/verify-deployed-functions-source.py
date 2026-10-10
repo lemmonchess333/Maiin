@@ -78,6 +78,8 @@ def verify():
                                "lib/revenueCatEntitlement.js", "email/accountEmails.js"],
         "syncRevenueCatEntitlement": ["index.js", "revenueCat.js", "lib/revenueCatEntitlement.js",
                                       "lib/trialReminder.js"],
+        # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
+        "dailyRaceReconciliationSweep": ["index.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
     }
     for name, paths in targets.items():
         endpoint = (
