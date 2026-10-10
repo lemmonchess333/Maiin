@@ -417,6 +417,8 @@ export function useProgram() {
             weeklyRunDays: runTarget,
             currentDate: today,
             weekStart: thisWeek,
+            // Run19: no run before today; the week's own days stay.
+            plannedFrom: today,
             carry: next.runPlan
               ? {
                   currentWeek: next.runPlan.currentWeek,
@@ -501,14 +503,17 @@ export function useProgram() {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
+          const today = localDateString();
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
-            currentDate: localDateString(),
+            currentDate: today,
             weekStart,
+            // Run19: a plan made mid-week plans no run before today.
+            plannedFrom: today,
           }));
         }
 
@@ -3112,10 +3117,12 @@ export function useProgram() {
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
    *  below the taper-safe floor it yields the finish-safely shape (belowFloor).
-   *  Carries terminal status + re-keys manualCompletions (Slice A) so the
-   *  current week's completions survive the regen. Clears the server-written
-   *  fell-behind flag if present — but works WITHOUT it too, since the in-tab
-   *  Realign banner can be triggered any time the user feels behind.
+   *  Plans no run before today and keeps the week's own days before it, and
+   *  its done, moved and swapped days, as the save does (Run19,
+   *  `planWeekFromToday`), so the current week's completions survive the
+   *  regen. Clears the server-written fell-behind flag if present — but
+   *  works WITHOUT it too, since the in-tab Realign banner can be triggered
+   *  any time the user feels behind.
    *
    *  Returns what happened. When it landed, the timing + totalWeeks, so the
    *  caller can toast the right copy; a refusal is said here, once, and the
@@ -3154,7 +3161,8 @@ export function useProgram() {
     let saved: ProgramState | null;
     try {
       saved = await saveProgram((base) => {
-        if (isInRecoveryOn(base.runPlan, localDateString())) return null;
+        const today = localDateString();
+        if (isInRecoveryOn(base.runPlan, today)) return null;
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
           recentLayoff,
@@ -3162,8 +3170,11 @@ export function useProgram() {
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],
           weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-          currentDate: localDateString(),
+          currentDate: today,
           weekStart: localWeekKey(),
+          // Run19: re-planned from today, so no run before it; the week's
+          // own days before today stay as they were.
+          plannedFrom: today,
           carry: {
             currentWeek: prevRunPlan?.currentWeek,
             // Carried WITH currentWeek, as every other regen site does: the

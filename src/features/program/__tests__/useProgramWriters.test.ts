@@ -22,7 +22,7 @@ import { createRequire } from "node:module";
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- firebase mock surface needs any casts */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import { toCompletionSetLogs } from "../warmupRamp";
@@ -844,14 +844,16 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
 // ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
 
-describe("Run9 phase-3 — realign carries completions across regen", () => {
+describe("Run9 phase-3 — realign keeps completions across regen", () => {
   // The realign writer (Slice DE; formerly compress) regenerates the current
-  // week (new ids per day). The carry-aware regenerateRacePlan must persist a
-  // re-keyed manualCompletions map, never drop the user's record. The
-  // generator's exact output dates are clock-dependent, so this integration
-  // test pins the WIRING invariant (carry path runs → persists a map →
-  // preserves data); the deterministic re-key / drop / status-restamp logic is
-  // pinned in src/lib/__tests__/runCompletionCarry.test.ts.
+  // week (new ids per day). It must persist the manualCompletions map and
+  // never drop the user's record. Since Run19 (R21) it keeps the week's own
+  // days before today with their ids, as the save does
+  // (`planWeekFromToday`), so their completions stay keyed to them; the
+  // by-date re-keying it used before is pinned in
+  // src/lib/__tests__/runCompletionCarry.test.ts. The generator's exact
+  // output dates are clock-dependent, so this integration test pins the
+  // WIRING invariant (a map is persisted and keeps its data).
   it("persists a manualCompletions map and never drops an existing completion", async () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
     mockProfile = raceProfile(targetDate);
@@ -926,16 +928,163 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
     // asserted here.)
     expect(lastSave.runPlan?.totalWeeks).toBe(12);
     expect(lastSave.runPlan?.currentWeek).toBeLessThan(12);
-    // A manualCompletions map is persisted (pre-fix the writer kept the stale
-    // map via spread but never re-keyed; now the carry path owns it).
+    // A manualCompletions map is persisted.
     expect(lastSave.manualCompletions).toBeDefined();
     // The legacy-orphan completion is never silently dropped.
     expect(lastSave.manualCompletions!["legacy_orphan_key"]).toBeDefined();
-    // The seeded completion's VALUE survives somewhere in the map (under its
-    // original id if today's regen keeps that date, else dropped only if the
-    // date truly left the plan — but the orphan above guarantees the carry ran).
+    // The seeded completions' values survive in the map.
     const values = Object.values(lastSave.manualCompletions!);
     expect(values).toContainEqual({ completedAt: 1_699_000_000_000 });
+  });
+});
+
+describe("Run19 — a race week built partway through plans no run before today (R21)", () => {
+  // This week's Saturday, from the clock: a week built then has days behind
+  // it. Only Date is faked; the hook's waits still run on real timers.
+  beforeEach(() => {
+    const saturday = addLocalDays(parseLocalDate(localWeekKey()), 5);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(saturday.getTime() + 12 * 3600 * 1000);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Runs on Sunday, Monday, Wednesday and Friday; lifts between. */
+  const weekSchedule = [
+    { day: 0, type: "run" as const },
+    { day: 1, type: "run" as const },
+    { day: 2, type: "lift" as const },
+    { day: 3, type: "run" as const },
+    { day: 4, type: "lift" as const },
+    { day: 5, type: "run" as const },
+    { day: 6, type: "lift" as const },
+  ];
+  const runner = () =>
+    raceProfile(localDateString(addLocalDays(new Date(), 70)), {
+      weekSchedule,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 4,
+    });
+  const runPlanOf = (profile: MockProfile) => ({
+    mode: "race_prep" as const,
+    raceGoal: profile.raceGoal ?? undefined,
+    totalWeeks: 12,
+    currentWeek: 2,
+  });
+  const programDoc = (extra: Partial<ProgramState>) =>
+    ({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      ...extra,
+    }) as ProgramState;
+  const beforeToday = (state: ProgramState) =>
+    (state.runDays ?? []).filter((d) => (d.date ?? "") < localDateString());
+  const lastSaved = () =>
+    setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+
+  it("a first plan made on this device", async () => {
+    mockProfile = runner();
+    resetFirestore();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(lastSaved().runDays!.length).toBeGreaterThan(0);
+    expect(beforeToday(lastSaved())).toEqual([]);
+  });
+
+  it("the load that rebuilds a stale race week", async () => {
+    mockProfile = runner();
+    const week = localWeekKey();
+    // This week holds a race the plan doesn't (the race is ten weeks
+    // out), so the load rebuilds it. Monday's run is done.
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: localDateString(parseLocalDate(week)),
+      weekKey: week,
+    };
+    const strayRace: ScheduledRunDay = {
+      id: "runday_stray_race",
+      dayIndex: 0,
+      templateId: "10k_race",
+      type: "race",
+      completed: false,
+      status: "planned",
+      date: localDateString(addLocalDays(parseLocalDate(week), 6)),
+      weekKey: week,
+    };
+    seedProgram(
+      programDoc({
+        runDays: [done, strayRace],
+        runPlan: runPlanOf(mockProfile),
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    const saved = lastSaved();
+    expect(saved.runDays!.some((d) => d.id === strayRace.id)).toBe(false);
+    expect(beforeToday(saved)).toEqual([done]);
+  });
+
+  it("Re-plan from today, keeping the week's own days before today", async () => {
+    mockProfile = runner();
+    const week = localWeekKey();
+    const monday = localDateString(parseLocalDate(week));
+    const wednesday = localDateString(addLocalDays(parseLocalDate(week), 2));
+    // Monday's run done, Wednesday's missed, each on its own session.
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: monday,
+      weekKey: week,
+    };
+    const missed: ScheduledRunDay = {
+      id: "runday_missed",
+      dayIndex: 3,
+      templateId: "easy_20",
+      type: "easy",
+      completed: false,
+      status: "planned",
+      date: wednesday,
+      weekKey: week,
+    };
+    const manualCompletions = { runday_done: { completedAt: 1 } };
+    seedProgram(
+      programDoc({
+        runDays: [done, missed],
+        runPlan: runPlanOf(mockProfile),
+        manualCompletions,
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.realignRacePlan();
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, missed]);
+    expect(lastSaved().manualCompletions).toEqual(manualCompletions);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
   });
 });
 
