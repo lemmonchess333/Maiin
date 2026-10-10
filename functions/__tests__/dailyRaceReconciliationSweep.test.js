@@ -716,6 +716,94 @@ describe("_decideReconciliationActions — L4 no-show auto-return (#1109)", () =
   });
 });
 
+describe("_decideReconciliationActions — the orphaned race goal", () => {
+  /* A race-prep profile whose plan is gone: the state the client's rollover
+     left after every race until it began keeping the plan for the race's
+     own ending. L1, L3 and L4 all need the plan, so nothing else ends it. */
+  const orphaned = (distance, daysPast) =>
+    _decideReconciliationActions(
+      profile({ raceGoal: { distance, targetDate: nDaysAgo(daysPast) } }),
+      { runDays: [] },
+      [],
+      FIXED_NOW_MS
+    );
+
+  it("returns the profile to freeform once the race is past both exits", () => {
+    // The later of the no-show return (more than 14 days) and the end of
+    // the distance's recovery plus its 7-day grace.
+    for (const [distance, firstDay] of [
+      ["5k", 15],
+      ["10k", 21],
+      ["half", 28],
+      ["marathon", 35],
+    ]) {
+      const before = orphaned(distance, firstDay - 1);
+      expect(before.orphanedGoalCleared).toBe(false);
+      expect(before.profilePayload).toBeNull();
+
+      const result = orphaned(distance, firstDay);
+      expect(result.orphanedGoalCleared).toBe(true);
+      expect(result.profilePayload).toEqual({
+        runMode: "freeform",
+        raceGoal: null,
+      });
+      // There is no plan to write back.
+      expect(result.payload).toBeNull();
+    }
+  });
+
+  it("waits for the no-show exit alone when the distance has no recovery", () => {
+    expect(orphaned("ultra", 14).orphanedGoalCleared).toBe(false);
+    expect(orphaned("ultra", 15).orphanedGoalCleared).toBe(true);
+  });
+
+  it("keeps a successor race that is still ahead", () => {
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "half", targetDate: "2099-09-15" } }),
+      { runDays: [] },
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.orphanedGoalCleared).toBe(false);
+    expect(result.profilePayload).toBeNull();
+  });
+
+  it("leaves a plan that still exists to L1, L3 and L4", () => {
+    // A recovery still inside its grace: nothing to do yet, by any rule.
+    const raceDate = nDaysAgo(40);
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "marathon", targetDate: raceDate } }),
+      programState({
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "marathon", targetDate: raceDate },
+          phase: "recovery",
+          recoveryEndDate: nDaysAgo(5),
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.orphanedGoalCleared).toBe(false);
+    expect(result.payload).toBeNull();
+    expect(result.profilePayload).toBeNull();
+  });
+
+  it("writes nothing a second time", () => {
+    const first = orphaned("10k", 30);
+    const second = _decideReconciliationActions(
+      { ...profile(), ...first.profilePayload },
+      { runDays: [] },
+      [],
+      FIXED_NOW_MS
+    );
+    expect(second.orphanedGoalCleared).toBe(false);
+    expect(second.payload).toBeNull();
+    expect(second.profilePayload).toBeNull();
+  });
+});
+
 describe("_utcDateString", () => {
   it("formats a known instant as YYYY-MM-DD in UTC", () => {
     expect(_utcDateString(new Date("2026-05-19T15:30:00Z"))).toBe("2026-05-19");
