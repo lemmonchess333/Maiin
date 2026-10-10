@@ -1,5 +1,6 @@
 /**
- * A runner with no benchmark, through every surface that explains a run.
+ * A runner with no benchmark, through every surface that explains a planned
+ * run before it is run.
  *
  * A regular runner sets up a 10K thirteen weeks out and gives setup no
  * recent race time, so the app has no pace of theirs to work from. The
@@ -19,7 +20,9 @@
  *
  * Every line the journey expects comes from the function that writes it
  * (`runSessionName`, `runSessionAbout`, `runDoseLine`, `runWeekLabel`), on
- * the run the plan holds.
+ * the run the plan holds. The run summary's verdict (E9) has no pace to
+ * judge without a benchmark (`plannedRunVerdict`), so it stays with its own
+ * tests.
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
@@ -119,7 +122,7 @@ async function expectTrainExplains(
   await expect(page.getByText(PACE), "no pace on Train").toHaveCount(0);
 }
 
-test("a runner with no benchmark, through every surface that explains a run", async ({
+test("a runner with no benchmark, through every surface that explains a planned run", async ({
   page,
 }) => {
   test.skip(!emulatorActive, "needs the local emulators");
