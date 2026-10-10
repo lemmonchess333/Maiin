@@ -82,6 +82,7 @@ a draft PR with a red test first.
 | The rest-day card and the usual-meal row fit at large text                          | #2612's capture run       | lemmonchess333/Maiin#2631                                    |
 | Setup asks, optionally, for a recent 5K or 10K time                                 | R11; adaptive paces §10.2 | lemmonchess333/Maiin#2653                                    |
 | The plan moves on with the day while the app stays open                             | Found by the journeys     | lemmonchess333/Maiin#2672                                    |
+| Fonts are never inlined, so the CSP loads them                                      | Found wiring A11          | lemmonchess333/Maiin#2674                                    |
 
 The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 #2609, #2615, #2616 and #2618.
@@ -108,6 +109,7 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 | Train's week selector names each run; "Easy 60" is "Medium-long 60"    | E2, E5; Run21 (2), first part     | lemmonchess333/Maiin#2663                                  |
 | A long run that finishes at race pace says so                          | E2; Run21 (2), second part        | lemmonchess333/Maiin#2665                                  |
 | A tempo at the goal race pace says so, with its own reasons            | E3 (a correction); Run21 (2), (3) | lemmonchess333/Maiin#2666                                  |
+| The signed-out specs run in CI: three on every push, six nightly       | A11; Pgm7                         | lemmonchess333/Maiin#2675                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -135,6 +137,26 @@ correction Run19 recorded.
 | Race: "All-out…", and race HR in Z4 for every distance               | R12; E1 built (lemmonchess333/Maiin#2661) |
 | Phase chip "Build · week 9 of 52" with no definition                 | E3                                        |
 | HR zone "Z2 · 111–129 bpm" with no name                              | Built (lemmonchess333/Maiin#2661)         |
+
+### Phase 3: the journeys
+
+lemmonchess333/Maiin#2676 holds the rig and the journeys as they pass:
+Get stronger for 16 weeks, and a planned run done on a treadmill. Making
+them work found two app defects (fixed in lemmonchess333/Maiin#2672: a
+resumed app kept last week's plan; a rollover on a copy the server had
+moved past carried last week's sessions into the new week) and one test
+rig defect (the Firestore emulator keeps every stream a page opens, which
+the journeys' clock jumps multiplied).
+
+One observation is for the owner rather than a change: a planned long run
+done on a treadmill is not credited until the person taps "Mark scheduled
+run complete", because the run-type picker offers "Treadmill" as a type
+beside Easy, Tempo and Long rather than as a place to run any of them.
+In the reference apps indoors is a setting on the run rather than another
+session (Nike Run Club's indoor switch; Garmin runs a planned workout under
+its treadmill profile); Tropos's picker makes it a different session. Not
+measured with the simulator, and not changed: it is the run screen's
+design, so it goes to the owner with the final report.
 
 ---
 
