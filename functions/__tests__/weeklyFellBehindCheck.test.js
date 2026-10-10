@@ -244,6 +244,47 @@ describe("_decideFellBehindFlag — skip conditions", () => {
     ).toEqual({ action: "noop" });
   });
 
+  /* F6 (the training-engine simulator): after its race, a race plan holds
+     nothing to fall behind on, and race prep waits for the race's own
+     ending (the no-show, the recovery exit, the return to free running).
+     The Monday check said "fell behind" every week until then. */
+  it("a race plan graded on a week after its race → noop", () => {
+    expect(
+      _decideFellBehindFlag(
+        profile({
+          runMode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-17" },
+        }),
+        programState({
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2026-05-17" },
+          },
+        }),
+        [],
+        WEEK_KEY
+      )
+    ).toEqual({ action: "noop" });
+  });
+
+  it("the week holding the race is still graded", () => {
+    const decision = _decideFellBehindFlag(
+      profile({
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: WEEK_KEY },
+      }),
+      programState({
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: WEEK_KEY },
+        },
+      }),
+      [],
+      WEEK_KEY
+    );
+    expect(decision.action).toBe("set");
+  });
+
   it("weeklyTarget is 0 (malformed state) → noop", () => {
     expect(
       _decideFellBehindFlag(
