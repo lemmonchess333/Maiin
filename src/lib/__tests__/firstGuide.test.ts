@@ -40,7 +40,7 @@ const sessions: Record<TodayCard, TodaySession> = {
     type: "run",
     restContext: {},
     lift: null,
-    run: { runDay: null, completed: false, isFirst: true },
+    run: { runDay: null, completed: false, isFirst: true, dose: null },
     rest: null,
   },
   "first-workout": {

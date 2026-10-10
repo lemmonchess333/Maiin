@@ -54,6 +54,9 @@ import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
+import { newRunnerUntil } from "@/features/program/newRunner";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -434,6 +437,9 @@ export default function Onboarding() {
   );
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
+  // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
+  // plan itself uses.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -442,8 +448,16 @@ export default function Onboarding() {
         currentDate,
         liftDays: daysPerWeek,
         weeklyRunDays,
+        newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
       }),
-    [raceDistance, raceTargetDate, currentDate, daysPerWeek, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      currentDate,
+      daysPerWeek,
+      weeklyRunDays,
+      runFrequency,
+    ]
   );
   const displayNameValidation = validateDisplayName(displayName);
   /* A race with no date is not a race plan. Run9a lands a persisted
@@ -944,6 +958,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -1130,6 +1145,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -1281,6 +1297,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               </details>
             </div>
@@ -1482,7 +1499,7 @@ export default function Onboarding() {
                   <InlineNumerals>
                     {runningFirst
                       ? firstRunTemplate
-                        ? `${firstRunTemplate.estimatedDuration} min · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
+                        ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."
@@ -1525,6 +1542,7 @@ export default function Onboarding() {
                 workouts={plan.programState.workouts}
                 runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
+                easyPaceSPerKm={easyPaceSPerKm}
               />
               {effectiveRunMode === "race_prep" &&
                 (profile?.runTimeLimits?.sessionMinutes ||

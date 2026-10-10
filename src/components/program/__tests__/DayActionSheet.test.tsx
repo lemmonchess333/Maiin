@@ -243,6 +243,112 @@ describe("DayActionSheet — planned run", () => {
     return { profile, programState, callbacks, runDay };
   }
 
+  it("Run20 (5): a run-walk shows its time and no pace, where an easy run shows its pace", () => {
+    const renderRun = (templateId: string) => {
+      const { profile, callbacks } = setup();
+      const runDay = makeRunDay({
+        id: `runday_${templateId}`,
+        dayIndex: todayDow(),
+        date: todayKey(),
+        weekKey: todayWeekKey(),
+        templateId,
+        status: "planned",
+      });
+      return render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{
+            ...profile,
+            runFitness: {
+              benchmark: { distanceM: 5000, timeS: 25 * 60 },
+              vdot: 38.3,
+              source: "manual",
+              updatedAt: "2026-09-01T00:00:00.000Z",
+              pendingConfirmation: false,
+            },
+          }}
+          programState={makeProgramState([runDay])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...callbacks}
+        />
+      );
+    };
+    // The meta line sets each token in its own span; read it whole.
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /^\d+ min\b/.test(text));
+    const easy = renderRun("easy_30");
+    expect(metaLine()).toMatch(/^30 min · .*\/km/);
+    easy.unmount();
+    renderRun("run_walk_1");
+    expect(metaLine()).toMatch(/^29 min\b/);
+    expect(metaLine()).not.toMatch(/\/km/);
+  });
+
+  it("Run21 (5): a long run's minutes come from the runner's confirmed pace", () => {
+    const { profile, callbacks } = setup();
+    const runDay = makeRunDay({
+      id: "runday_long",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      templateId: "long_15k",
+      status: "planned",
+    });
+    const sheet = (runFitness?: UserProfile["runFitness"]) =>
+      render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, runFitness }}
+          programState={makeProgramState([runDay])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...callbacks}
+        />
+      );
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /^15 km\b/.test(text));
+    // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+    const confirmed = sheet({
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      pendingConfirmation: false,
+    });
+    expect(metaLine()).toMatch(/^15 km · about 100 min\b/);
+    confirmed.unmount();
+    sheet(undefined);
+    expect(metaLine()).not.toMatch(/min/);
+  });
+
+  it("Run21 (3): says what the run is with no plan to give a reason", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(/What it is.*Relaxed running/);
+    expect(why).not.toHaveTextContent(/Why it's in your week/);
+  });
+
   it("renders template select (enabled), Mark complete, and Skip this run", () => {
     const { profile, programState, callbacks } = setup();
     render(

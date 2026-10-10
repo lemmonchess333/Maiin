@@ -17,6 +17,11 @@ import {
 import * as planning from "@/lib/onboardingPlan";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 const { complete, refresh } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
@@ -487,6 +492,50 @@ describe("inspect the generated week", () => {
     expect(
       screen.getByRole("region", { name: "First lift preview" })
     ).toHaveTextContent(updated.exercises[0].name);
+    builder.mockRestore();
+  });
+});
+
+/* Run21 (5): a run states its time, and a long run its distance, with
+   minutes only at the runner's own confirmed pace. The first-run line said
+   "80 min" for a 15 km long run, the template's 5:20 /km. */
+describe("the first planned run's dose", () => {
+  it("states a long run's distance, not someone else's minutes", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "running",
+      trainingActivity: "running",
+    });
+    const build = planning.buildOnboardingPlan;
+    const builder = vi
+      .spyOn(planning, "buildOnboardingPlan")
+      .mockImplementation((...args) => {
+        const plan = build(...args);
+        const today = localDateString();
+        return {
+          ...plan,
+          programState: {
+            ...plan.programState,
+            runDays: [
+              {
+                id: "runday_first",
+                dayIndex: parseLocalDate(today).getDay(),
+                date: today,
+                weekKey: localWeekKey(parseLocalDate(today)),
+                templateId: "long_15k",
+                type: "long",
+                completed: false,
+                status: "planned",
+              },
+            ],
+          },
+        };
+      });
+    open();
+    const preview = screen.getByRole("region", { name: "First run preview" });
+    expect(preview).toHaveTextContent("Long 15K");
+    expect(preview).toHaveTextContent(/15 km · /);
+    expect(preview).not.toHaveTextContent(/\d+ min/);
     builder.mockRestore();
   });
 });

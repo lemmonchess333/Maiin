@@ -48,16 +48,22 @@ import {
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
+import {
+  RUN_TEMPLATES,
+  isRunWalkTemplateId,
+  isScheduledRaceRunDay,
+} from "@/lib/workoutTemplates";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
+import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import { format } from "date-fns";
 import {
@@ -202,9 +208,11 @@ export default function DayActionSheet({
   // Adaptive Paces: the user's personalised pace for this session, appended to
   // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
   // sessionPaceDisplay rule (the range is the honest coaching target; singles
-  // only for race pace). Null when there's no benchmark.
+  // only for race pace). Null when there's no benchmark, and for run-walk,
+  // which is run by feel (Run20 (5)).
   const selectedRunPace: string | null = (() => {
-    if (!selectedRunTemplate) return null;
+    if (!selectedRunTemplate || isRunWalkTemplateId(selectedRunTemplate.id))
+      return null;
     const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -218,9 +226,11 @@ export default function DayActionSheet({
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [
-        selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm} km`
-          : `${selectedRunTemplate.estimatedDuration} min`,
+        // Run21 (5): a long run's minutes at the runner's own pace.
+        runDoseLine(
+          selectedRunTemplate,
+          planningEasyPaceSPerKm(profile?.runFitness)
+        ),
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
     : null;
@@ -361,6 +371,7 @@ export default function DayActionSheet({
                 )}
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
+                  template={selectedRunTemplate}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />

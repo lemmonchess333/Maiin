@@ -1,5 +1,7 @@
+import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
+import { runSessionAbout } from "@/lib/runSessionAbout";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
@@ -31,6 +33,8 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
@@ -543,13 +547,21 @@ export default function DayPeekCard({
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-mono tabular-nums">
                       {runTemplate.config.targetDistanceKm
-                        ? `${runTemplate.config.targetDistanceKm} km`
+                        ? runDoseLine(
+                            runTemplate,
+                            planningEasyPaceSPerKm(profile?.runFitness)
+                          )
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
                     {" · "}
                     {runTemplate.description}
                   </p>
-                  <RunPurpose>{runPurpose}</RunPurpose>
+                  <RunPurpose>
+                    <RunAbout
+                      about={runSessionAbout(runTemplate)}
+                      why={runPurpose}
+                    />
+                  </RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

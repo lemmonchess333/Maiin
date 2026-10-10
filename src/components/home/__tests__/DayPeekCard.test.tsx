@@ -230,6 +230,62 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).not.toHaveAttribute("open");
     expect(why).toHaveTextContent(/relaxed 20-second accelerations/);
+    // Run21 (3): what it is, how it should feel and what to do, too.
+    expect(why).toHaveTextContent(
+      /What it is.*An easy run that ends with 4 strides/
+    );
+    expect(why).toHaveTextContent(/How it should feel.*Easy, then quick/);
+    expect(why).toHaveTextContent(/If it feels wrong.*Leave the strides out/);
+  });
+
+  /* Run21 (5): a long run's minutes come from the runner's own confirmed
+     easy pace, else the distance alone. */
+  it("gives a long run its minutes at a confirmed pace, and its distance without one", () => {
+    const date = dayOfThisWeek(6);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "run",
+    ]);
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: 6,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId: "long_15k",
+      }),
+    ]);
+    const card = (profile: UserProfile) =>
+      renderCard(
+        <DayPeekCard
+          todayKey={localDateString()}
+          dateKey={date}
+          profile={profile}
+          programState={program}
+          claimMap={emptyClaimMap}
+          extras={emptyExtras}
+          workouts={[]}
+          dailyTotals={emptyTotals()}
+          onClose={vi.fn()}
+        />
+      );
+    const unconfirmed = card(makeProfile(schedule));
+    expect(screen.getByText("15 km")).toBeInTheDocument();
+    unconfirmed.unmount();
+    card({
+      ...makeProfile(schedule),
+      // A 25-minute 5K: an easy pace of about 6:32 /km.
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+      },
+    } as UserProfile);
+    expect(screen.getByText("15 km · about 100 min")).toBeInTheDocument();
   });
 
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
