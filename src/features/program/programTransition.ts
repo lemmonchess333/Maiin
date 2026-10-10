@@ -43,15 +43,18 @@ export async function commitProgramTransition(
  *
  * The plain form above takes a proposal built from a `base` the caller
  * rendered and refuses when the store has moved on a key the proposal
- * changes. That is right for the rollover, whose effect recomputes on the
- * refreshed state and fires again, and for the loader, which commits what
- * it read. A user action is a closure over the state it was rendered
- * with, and between the tap and the commit that state can fall a write
- * behind the store: the rollover's own transaction, a server trigger, a
- * second device. Committed plain, the action was refused with "Your
- * programme changed while you were editing" for an edit the user never
- * made. Computed here, inside the transaction and from what the store
- * holds now, it lands on top of the change instead.
+ * changes. That is right for the loader, which commits what it read. A
+ * user action is a closure over the state it was rendered with, and
+ * between the tap and the commit that state can fall a write behind the
+ * store: the rollover's own transaction, a server trigger, a second
+ * device. Committed plain, the action was refused with "Your programme
+ * changed while you were editing" for an edit the user never made. The
+ * week's rollover is the same: an app back from the background can hold a
+ * plan the store has moved past, and a rollover that left a key alone
+ * took the store's copy of it, so last week's sessions, finished
+ * elsewhere, came into the new week as done. Computed here, inside the
+ * transaction and from what the store holds now, each lands on top of the
+ * change instead.
  *
  * A declined update writes nothing, the profile patch included, and
  * reports the store's current state so the caller can repaint from it.

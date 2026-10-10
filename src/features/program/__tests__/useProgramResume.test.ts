@@ -44,8 +44,13 @@ import {
   pendingReads,
   releaseRead,
   releaseAllReads,
+  setSnapshotMetadata,
+  failNextFirestore,
+  unfiredFailures,
 } from "@/test/firestoreHarness";
 import { savedRunDoc } from "@/test/sessionFixtures";
+import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 
 let mockProfile: Record<string, unknown> | null = null;
 // Stable, as the AuthProvider's are: a new function on each render would
@@ -93,8 +98,84 @@ const NEXT_MONDAY = shift(MONDAY, 7);
 
 function plan() {
   return readDoc(PLAN) as
-    | { liftWeekKey?: string; runDays?: { weekKey?: string }[] }
+    | {
+        liftWeekKey?: string;
+        runDays?: { weekKey?: string }[];
+        workouts?: { completed?: boolean }[];
+        weekHistory?: { workouts: { completed?: boolean }[] }[];
+      }
     | undefined;
+}
+
+/** A half marathon twelve weeks out, two lifts and four runs a week, for
+ *  a runner who trained right up to the plan: a layoff read says "none".
+ *  The app builds the week on its first load. */
+function seedRacePlan() {
+  seedFirestore(
+    Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [
+        `users/userA/runs/r${i}`,
+        savedRunDoc(shift(TUESDAY, -(1 + i * 3)), {
+          distance: 8000,
+          duration: 2700,
+        }),
+      ])
+    )
+  );
+  mockProfile = {
+    uid: "userA",
+    weekSchedule: generateSchedule(2, 4),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 2,
+    weeklyRunDaysTarget: 4,
+    runMode: "race_prep",
+    raceGoal: { distance: "half", targetDate: shift(MONDAY, 12 * 7 + 6) },
+    primaryGoal: "hypertrophy",
+    program: { goal: "recomp" },
+  };
+}
+
+/**
+ * While the app sits in the background, the week's first session is
+ * finished elsewhere (another device, a session that synced late), and
+ * this app's listener hasn't heard yet: it comes back holding the plan
+ * from before.
+ */
+function finishFirstSessionElsewhere() {
+  setSnapshotMetadata(PLAN, { fromCache: true });
+  const before = plan()!;
+  seedFirestore({
+    [PLAN]: {
+      ...before,
+      workouts: before.workouts!.map((day, index) =>
+        index === 0 ? { ...day, completed: true } : day
+      ),
+    },
+  });
+}
+
+/** A three-day strength plan, built on Tuesday as setup builds it. */
+function seedLifter() {
+  const built = buildPlan({
+    primaryGoal: "strength",
+    nutritionPhase: "recomp",
+    experience: "intermediate",
+    bodyweightKg: 80,
+    sex: "male",
+    liftDays: 3,
+    preferredSplit: "auto",
+    runMode: "freeform",
+    weeklyRunDays: 0,
+    equipment: "full_gym",
+    injuries: [],
+    currentDate: TUESDAY,
+    preserveHistory: false,
+  });
+  seedFirestore({
+    [PLAN]: built.programState as unknown as Record<string, unknown>,
+  });
+  // The profile as setup leaves it: the builder's half of the save.
+  mockProfile = { uid: "userA", ...built.profileUpdates };
 }
 
 /** The phone brings the app back: hidden, then visible again. */
@@ -121,6 +202,7 @@ async function settledOnTuesday() {
 
 beforeEach(() => {
   resetFirestore();
+  vi.clearAllMocks();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(`${TUESDAY}T12:00:00`));
 });
@@ -132,26 +214,7 @@ afterEach(() => {
 describe("a resumed app brings the plan up to today", () => {
   it("a lifter's plan, on Monday's return", async () => {
     // The plan setup builds on a Tuesday: its lift week is this one.
-    const built = buildPlan({
-      primaryGoal: "strength",
-      nutritionPhase: "recomp",
-      experience: "intermediate",
-      bodyweightKg: 80,
-      sex: "male",
-      liftDays: 3,
-      preferredSplit: "auto",
-      runMode: "freeform",
-      weeklyRunDays: 0,
-      equipment: "full_gym",
-      injuries: [],
-      currentDate: TUESDAY,
-      preserveHistory: false,
-    });
-    seedFirestore({
-      [PLAN]: built.programState as unknown as Record<string, unknown>,
-    });
-    // The profile as setup leaves it: the builder's half of the save.
-    mockProfile = { uid: "userA", ...built.profileUpdates };
+    seedLifter();
     await settledOnTuesday();
     expect(plan()?.liftWeekKey).toBe(MONDAY);
 
@@ -161,30 +224,62 @@ describe("a resumed app brings the plan up to today", () => {
     await waitFor(() => expect(plan()?.liftWeekKey).toBe(NEXT_MONDAY));
   });
 
-  it("a race plan's runs, with the runner's recent running read again for the new day", async () => {
-    // Trained right up to the plan: a layoff read today says "none".
-    seedFirestore(
-      Object.fromEntries(
-        Array.from({ length: 8 }, (_, i) => [
-          `users/userA/runs/r${i}`,
-          savedRunDoc(shift(TUESDAY, -(1 + i * 3)), {
-            distance: 8000,
-            duration: 2700,
-          }),
-        ])
+  it("a week the server moved while the app was away rolls over on the server's copy, quietly", async () => {
+    seedLifter();
+    await settledOnTuesday();
+
+    finishFirstSessionElsewhere();
+
+    // Monday's rollover, built on the copy from before, is refused, and
+    // goes again on the server's. Nobody edited anything, so nobody is
+    // told their programme changed while they were editing.
+    vi.setSystemTime(new Date(`${NEXT_MONDAY}T08:00:00`));
+    resume();
+    await waitFor(() => expect(plan()?.liftWeekKey).toBe(NEXT_MONDAY));
+    expect(plan()?.weekHistory?.at(-1)?.workouts[0]?.completed).toBe(true);
+    expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
+  });
+
+  it("a race plan's week the server moved rolls over on the server's copy too", async () => {
+    seedRacePlan();
+    await settledOnTuesday();
+    finishFirstSessionElsewhere();
+    const failures = vi.spyOn(logger, "error");
+
+    vi.setSystemTime(new Date(`${NEXT_MONDAY}T08:00:00`));
+    resume();
+    await waitFor(() =>
+      expect(plan()?.runDays?.every((run) => run.weekKey === NEXT_MONDAY)).toBe(
+        true
       )
     );
-    mockProfile = {
-      uid: "userA",
-      weekSchedule: generateSchedule(2, 4),
-      weekScheduleVersion: 1,
-      weeklyWorkoutsTarget: 2,
-      weeklyRunDaysTarget: 4,
-      runMode: "race_prep",
-      raceGoal: { distance: "half", targetDate: shift(MONDAY, 12 * 7 + 6) },
-      primaryGoal: "hypertrophy",
-      program: { goal: "recomp" },
-    };
+    expect(plan()?.weekHistory?.at(-1)?.workouts[0]?.completed).toBe(true);
+    expect(plan()?.workouts?.some((day) => day.completed)).toBe(false);
+    // Rolled from the store's copy the first time: no refusal on the way.
+    expect(
+      failures.mock.calls.filter(([what]) => what === "[Program] Save failed:")
+    ).toEqual([]);
+    expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
+  });
+
+  it("a rollover that can't save says nothing: nobody asked for it", async () => {
+    seedLifter();
+    await settledOnTuesday();
+
+    // Back on Monday with no connection: the week's save fails.
+    failNextFirestore("commit", { code: "unavailable" });
+    vi.setSystemTime(new Date(`${NEXT_MONDAY}T08:00:00`));
+    resume();
+    await waitFor(() => expect(unfiredFailures()).toEqual([]));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(plan()?.liftWeekKey).toBe(MONDAY);
+    expect(vi.mocked(toast.error)).not.toHaveBeenCalled();
+  });
+
+  it("a race plan's runs, with the runner's recent running read again for the new day", async () => {
+    seedRacePlan();
     await settledOnTuesday();
     expect(plan()?.runDays?.[0]?.weekKey).toBe(MONDAY);
     const RUNS = "users/userA/runs";
