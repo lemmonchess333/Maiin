@@ -81,6 +81,7 @@ a draft PR with a red test first.
 | The copy that was wrong today                                                       | R12                       | lemmonchess333/Maiin#2641                                    |
 | The rest-day card and the usual-meal row fit at large text                          | #2612's capture run       | lemmonchess333/Maiin#2631                                    |
 | Setup asks, optionally, for a recent 5K or 10K time                                 | R11; adaptive paces §10.2 | lemmonchess333/Maiin#2653                                    |
+| The plan moves on with the day while the app stays open                             | Found by the journeys     | lemmonchess333/Maiin#2672                                    |
 
 The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 #2609, #2615, #2616 and #2618.
