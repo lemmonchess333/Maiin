@@ -20,6 +20,8 @@
  *     (profilePayload null) — the successor race survives a real write.
  *   - L1 race_no_show status flips on the persisted runDay.
  *   - Idempotency against the post-write state (second sweep no-ops).
+ *   - The orphaned race goal: a PROFILE-only write (no programState
+ *     payload), for a race-prep profile whose plan is gone.
  *
  * Gated on FIRESTORE_EMULATOR_HOST so `npm test` from `functions/` still
  * passes outside the emulator (matches ./recoveryEntry.test.js).
@@ -234,6 +236,29 @@ suite("_runDailyRaceReconciliationForUser — emulator integration", () => {
     const profile = await readProfile();
     expect(profile.runMode).toBe("freeform");
     expect(profile.raceGoal).toBeNull();
+  });
+
+  it("orphaned race goal: returns a profile whose plan is gone to freeform", async () => {
+    // A plan the client dropped after its race, with the profile still on
+    // the finished race. A 10k exits 21 days on (two recovery weeks and the
+    // 7-day grace); 40 days on is past it.
+    const raceGoal = { distance: "10k", targetDate: daysAgo(40) };
+    await seed({
+      profile: { runMode: "race_prep", raceGoal },
+      programState: { runDays: [] },
+    });
+
+    const first = await _runDailyRaceReconciliationForUser(UID);
+    expect(first.orphanedGoalCleared).toBe(true);
+
+    const profile = await readProfile();
+    expect(profile.runMode).toBe("freeform");
+    expect(profile.raceGoal).toBeNull();
+    // No plan is written back.
+    expect((await programRef().get()).data().runPlan).toBeUndefined();
+
+    const second = await _runDailyRaceReconciliationForUser(UID);
+    expect(second.orphanedGoalCleared).toBe(false);
   });
 
   it("no-ops cleanly for a freeform user (no writes, no throw)", async () => {
