@@ -43,6 +43,7 @@ import {
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import type {
   BlockDurationWeeks,
   BlockPace,
@@ -247,7 +248,15 @@ export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   /**
-   * Run15 — how long the runner has been away, resolved once per session and
+   * Today, as the app sees it: it moves on while the app is open, and when
+   * a phone brings the app back (`useLocalDateKey`). The week rollovers and
+   * the race's rest days re-run on it, so a resumed app reaches the new
+   * week without a reload. On iOS the app is resumed far more often than it
+   * is started.
+   */
+  const today = useLocalDateKey();
+  /**
+   * Run15 — how long the runner has been away, resolved once per day and
    * consumed by every race-plan regen below.
    *
    * Held as state rather than fetched per regen because all seven regen sites
@@ -267,8 +276,10 @@ export function useProgram() {
    */
   const [layoffRead, setLayoffRead] = useState<{
     uid: string | null;
+    /** The day it was read for: a week's rollover waits for that day's. */
+    day: string | null;
     cls: LayoffClass;
-  }>({ uid: null, cls: "none" });
+  }>({ uid: null, day: null, cls: "none" });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const [loading, setLoading] = useState(true);
@@ -659,24 +670,29 @@ export function useProgram() {
   // Save program to Firestore.
   //
   // Two forms. A plain state is a proposal built from the `programState`
-  // the caller rendered, committed against it as the base: the form for
-  // the rollover effects, whose refusal refetches and whose effect then
-  // recomputes on the refreshed state and fires again. An updater is a
-  // proposal built INSIDE the transaction from what the store holds now:
-  // the form for a user action, which is a closure over the state it was
-  // rendered with and can be a write behind the store by the time it
-  // commits — the rollover's own transaction still in flight, a server
-  // trigger, a second device. Committed plain, such an action was refused
-  // with "Your programme changed while you were editing" for an edit the
-  // user never made; computed live, it lands on top of the change.
+  // the caller rendered, committed against it as the base, and refused
+  // when the store has moved on a key it changes: the form for a plan
+  // made from nothing. An updater is a proposal built INSIDE the
+  // transaction from what the store holds now: the form for a user action
+  // and for the week's rollovers. Each is computed from a copy that can be
+  // a write behind the store by the time it commits: the rollover's own
+  // transaction still in flight, a server trigger, a second device, an
+  // app back from the background before its listener has caught up.
+  // Committed plain, a user action was refused with "Your programme
+  // changed while you were editing" for an edit the user never made, and
+  // a rollover that left a key alone took the store's copy of it: last
+  // week's sessions, finished elsewhere, came into the new week as done.
+  // Computed live, each lands on top of the change.
   //
   // Resolves to the store's state afterwards, or null when the updater
   // declined and nothing was written — the caller decides what a decline
-  // means for its own toast.
+  // means for its own toast. `quiet` is for the saves nobody asked for
+  // (the rollovers): a failure is logged, never shown.
   const saveProgram = useCallback(
     async (
       proposal: ProgramState | ProgramUpdater,
-      profilePatch?: Partial<UserProfile>
+      profilePatch?: Partial<UserProfile>,
+      options?: { quiet?: boolean }
     ): Promise<ProgramState | null> => {
       if (!user) throw new Error("Sign in again to save your programme.");
       try {
@@ -717,11 +733,12 @@ export function useProgram() {
           if (auth.currentUser?.uid === user.uid && latest?.exists())
             setProgramState(latest.data() as ProgramState);
         }
-        toast.error(
-          error instanceof ProgrammeConflictError
-            ? error.message
-            : "Couldn't save your changes. Try again."
-        );
+        if (!options?.quiet)
+          toast.error(
+            error instanceof ProgrammeConflictError
+              ? error.message
+              : "Couldn't save your changes. Try again."
+          );
         throw error;
       }
     },
@@ -960,7 +977,11 @@ export function useProgram() {
     // every failure path settles as "none"), and re-run when it lands via
     // the layoffRead dep. Same pattern as the lift rollover's
     // wait-for-migration early-return.
-    if (user && layoffRead.uid !== user.uid) return;
+    // And for TODAY's read: an app resumed on a later day still holds the
+    // day it was opened on, and a runner who has been away since then would
+    // roll into a full week on the old answer.
+    if (user && (layoffRead.uid !== user.uid || layoffRead.day !== today))
+      return;
     if (finishOutstanding(user?.uid)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
@@ -989,10 +1010,21 @@ export function useProgram() {
     // names the week, and a count of the calendar weeks caught up is not the
     // programme's: a week with no training holds the week number.
     //
+    // Rolled again in the transaction, from the plan the store holds: this
+    // copy can be behind it (see saveProgram), and a decline repaints from
+    // the store, where the week has already moved.
+    //
     // saveProgram sets state only after its awaited write, never
     // synchronously: the rule counts any call that reaches a setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling).catch((err) => {
+    saveProgram(
+      (stored) => {
+        const rolled = rollRunWeeks(stored, profile, todayKeyG, recentLayoff);
+        return rolled.weeks === 0 ? null : rolled.state;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((err) => {
       logger.warn("[auto-rollover] save failed", err);
     });
   }, [
@@ -1005,6 +1037,7 @@ export function useProgram() {
     mirrorReady,
     queuedWrites,
     openSessions,
+    today,
   ]);
 
   /**
@@ -1033,21 +1066,23 @@ export function useProgram() {
    * in the current week"): the archive says what actually happened, so the
    * adherence-sensitive readers downstream are not fed a lie.
    */
-  /* Resolve the layoff once the user is known. Bounded one-shot read — see
-     `fetchRecentLayoff` for why this is not a subscription. Race-prep only: a freeform runner has no plan for a layoff to
-     reshape, so the read is not worth making for them. */
+  /* Resolve the layoff once the user is known, and again on each new day
+     the app sees. Bounded one-shot read — see `fetchRecentLayoff` for why
+     this is not a subscription. Race-prep only: a freeform runner has no
+     plan for a layoff to reshape, so the read is not worth making for
+     them. */
   useEffect(() => {
     if (!user?.uid) return;
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void fetchRecentLayoff(uid, localDateString(new Date())).then((cls) => {
-      if (!cancelled) setLayoffRead({ uid, cls });
+    void fetchRecentLayoff(uid, today).then((cls) => {
+      if (!cancelled) setLayoffRead({ uid, day: today, cls });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode]);
+  }, [user?.uid, profile?.runMode, today]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1083,10 +1118,17 @@ export function useProgram() {
       `[auto-rollover:lift] advanced ${weeks} week${weeks > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
     );
 
-    // As the run rollover above: silent, and saveProgram sets state after
-    // its await.
+    // As the run rollover above: silent, rolled again from the plan the
+    // store holds, and saveProgram sets state after its await.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling).catch((err) => {
+    saveProgram(
+      (stored) => {
+        const rolled = rollLiftWeeks(stored, profile, todayKey);
+        return rolled.weeks === 0 ? null : rolled.state;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((err) => {
       logger.warn("[auto-rollover:lift] save failed", err);
     });
   }, [
@@ -1097,6 +1139,7 @@ export function useProgram() {
     user,
     queuedWrites,
     openSessions,
+    today,
   ]);
 
   /* The race's rest days (Lift4 (10)): from two days before a race, and on
@@ -1146,6 +1189,7 @@ export function useProgram() {
     queuedWrites,
     openSessions,
     runProgramCommand,
+    today,
   ]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
