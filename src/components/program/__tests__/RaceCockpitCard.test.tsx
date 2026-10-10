@@ -144,13 +144,15 @@ describe("RaceCockpitCard", () => {
     expect(screen.queryByText(/Compressed plan/i)).not.toBeInTheDocument();
   });
 
-  it("promises no hard sessions, matching the realign toast", () => {
+  it("promises no quality sessions, matching the realign toast", () => {
     // The transient message and the persistent one have to agree — a user
-    // who realigns is told "all easy runs, no hard sessions", and the card
-    // is what they see every day afterwards.
+    // who realigns is told "all easy runs, no quality sessions", and the card
+    // is what they see every day afterwards. "Hard" is the effort word only
+    // (Run21 (4)), so the family is "quality sessions".
     renderCard({ compressed: true, belowFloor: true });
-    expect(screen.getByText(/no hard sessions/i)).toBeInTheDocument();
+    expect(screen.getByText(/no quality sessions/i)).toBeInTheDocument();
     expect(screen.getByText(/finish strong, not to PR/i)).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(/\bhard\b/i);
   });
 
   it("calls onEdit when the edit affordance is tapped", () => {

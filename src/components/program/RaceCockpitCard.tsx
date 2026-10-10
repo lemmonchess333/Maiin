@@ -218,8 +218,8 @@ export default function RaceCockpitCard({
       {belowFloor ? (
         <p className="text-xs text-muted-foreground">
           Mostly-easy plan — there aren&apos;t enough weeks for a full build at
-          this distance, so every session is easy running with no hard sessions.
-          Aim to finish strong, not to PR.
+          this distance, so every session is easy running, with no quality
+          sessions. Aim to finish strong, not to PR.
         </p>
       ) : (
         compressed && (

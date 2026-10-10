@@ -316,6 +316,60 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   });
 });
 
+describe("ProgrammeRunSection — why this run names only what the week holds", () => {
+  // An easy day in a race plan's build: a returning runner's week holds no
+  // tempo or intervals (Run15), so they can't be its reason (Run21 (3)).
+  function why(otherTemplateId: string) {
+    const today = new Date();
+    const weekKey = localWeekKey(today);
+    const later = new Date(today);
+    later.setDate(later.getDate() + 2);
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_today",
+          dayIndex: today.getDay(),
+          date: localDateString(today),
+          weekKey,
+          templateId: "easy_30",
+        }),
+        makeRunDay({
+          id: "runday_other",
+          dayIndex: later.getDay(),
+          date: localDateString(later),
+          weekKey,
+          templateId: otherTemplateId,
+          type: otherTemplateId.startsWith("tempo") ? "tempo" : "easy",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+          totalWeeks: 12,
+          currentWeek: 6,
+        },
+      } as Partial<ProgramState>
+    );
+    const { unmount } = renderWith(
+      <ProgrammeRunSection {...commonProps()} programState={programState} />
+    );
+    const text = document.body.textContent ?? "";
+    unmount();
+    return text;
+  }
+
+  it("names the quality sessions in a week that holds one", () => {
+    expect(why("tempo_20")).toMatch(/it makes the quality sessions work/);
+  });
+
+  it("gives a reason true of any week when it holds none", () => {
+    const text = why("easy_40");
+    expect(text).toMatch(/most of your running is easy/);
+    expect(text).not.toMatch(/quality sessions/);
+  });
+});
+
 describe("ProgrammeRunSection — the no-run card names the day it is on", () => {
   // Run-scope card, but the day has a type: Home's strip calls a lift-only
   // day a lift day, and this card said "Rest day" beside it. The type comes

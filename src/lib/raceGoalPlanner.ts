@@ -247,7 +247,7 @@ export function getRaceGoalPlannerState(
   } else if (status === "compressed") {
     statusTitle = "Short runway";
     statusDescription =
-      "Tropos will compress the plan — fewer hard sessions, a shorter long-run progression.";
+      "Tropos will compress the plan — fewer quality sessions, a shorter long-run progression.";
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
@@ -256,7 +256,7 @@ export function getRaceGoalPlannerState(
        "finish-safely" label implied a safety promise the product cannot
        make (the internal `finish_safely` state keys are unchanged;
        renaming persisted vocabulary buys no user value). */
-    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no hard sessions.`;
+    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no quality sessions.`;
     ctaLabel = "Save mostly-easy plan";
   }
 

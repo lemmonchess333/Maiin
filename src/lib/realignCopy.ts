@@ -34,7 +34,9 @@ export function realignResultMessage(input: {
       // Fixed honest below-floor message (locked 2026-05-29; label renamed
       // "mostly-easy" per RUN-EV-05 owner decision 2026-08-09 — the old
       // "finish-safely"/"train safely" phrasing implied a safety promise).
-      return `Not enough weeks for a full ${dist} build — switched to a mostly-easy plan: all easy runs, no hard sessions. Aim to finish strong, not to PR.`;
+      // "No quality sessions", not "no hard sessions": hard is the effort
+      // word only (Run21 (4)).
+      return `Not enough weeks for a full ${dist} build — switched to a mostly-easy plan: all easy runs, no quality sessions. Aim to finish strong, not to PR.`;
     case "compressible":
       return `Plan realigned — ${input.totalWeeks} weeks to your ${dist}. It's a tighter build, so expect fewer easy weeks.`;
     case "healthy":

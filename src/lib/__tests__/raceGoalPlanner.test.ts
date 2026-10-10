@@ -72,6 +72,10 @@ describe("getRaceGoalPlannerState", () => {
     expect(s.belowFloor).toBe(false);
     expect(s.ctaLabel).toBe("Save compressed plan");
     expect(s.statusTitle).toBe("Short runway");
+    // "Hard" is the effort word only (Run21 (4)): the family is "quality
+    // sessions".
+    expect(s.statusDescription).toMatch(/fewer quality sessions/);
+    expect(s.statusDescription).not.toMatch(/\bhard\b/i);
   });
 
   // ── State E — below floor / finish safely ──────────────────────────
@@ -84,6 +88,8 @@ describe("getRaceGoalPlannerState", () => {
     expect(s.ctaLabel).toBe("Save mostly-easy plan");
     expect(s.statusTitle).toBe("Very tight");
     expect(s.statusDescription).toContain("mostly-easy");
+    expect(s.statusDescription).toMatch(/no quality sessions/);
+    expect(s.statusDescription).not.toMatch(/\bhard\b/i);
   });
 
   // ── Distance-awareness: same window, different status by distance ──

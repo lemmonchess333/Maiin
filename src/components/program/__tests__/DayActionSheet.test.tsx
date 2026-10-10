@@ -263,6 +263,50 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
   });
 
+  it("names the quality sessions in the reason only when the run's week holds one (Run21 (3))", () => {
+    // An easy day in a race plan's build: a returning runner's week holds no
+    // tempo or intervals (Run15), so they can't be its reason.
+    const { profile, runDay } = setup();
+    const later = new Date();
+    later.setDate(later.getDate() + 2);
+    const why = (otherTemplateId: string) => {
+      const programState = makeProgramState([
+        runDay,
+        makeRunDay({
+          id: "runday_other",
+          dayIndex: later.getDay(),
+          date: `${later.getFullYear()}-${String(later.getMonth() + 1).padStart(2, "0")}-${String(later.getDate()).padStart(2, "0")}`,
+          weekKey: todayWeekKey(),
+          templateId: otherTemplateId,
+        }),
+      ]);
+      programState.runPlan = {
+        currentWeek: 9,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+      } as ProgramState["runPlan"];
+      const { unmount } = render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={profile}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(why("tempo_20")).toMatch(/it makes the quality sessions work/);
+    const easyWeek = why("easy_40");
+    expect(easyWeek).toMatch(/most of your running is easy/);
+    expect(easyWeek).not.toMatch(/quality sessions/);
+  });
+
   it("Mark complete calls markManualComplete with the runDay's id (PR-J Q2)", () => {
     const { profile, programState, callbacks, runDay } = setup();
     render(

@@ -12,6 +12,7 @@ import { getPhaseForWeek } from "@/features/program/runScheduler";
 import {
   runSessionExplainer,
   runSessionPresentation,
+  weekHoldsQuality,
 } from "../runSessionExplainer";
 
 const base = {
@@ -111,6 +112,95 @@ describe("runSessionExplainer", () => {
       expect(line).not.toMatch(/readiness|recovery score|safe(ly|ty)?\b/i);
       expect(line).not.toMatch(/VO2|lactate|MRV/i);
     }
+  });
+
+  it("calls tempo and intervals the quality sessions: hard is an effort, not a family (Run21 (4))", () => {
+    expect(
+      runSessionExplainer({
+        type: "easy",
+        templateId: "easy_30",
+        ...build,
+        weekHasQuality: true,
+      })
+    ).toMatch(/quality sessions/);
+    for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
+      for (const templateId of ["x", "easy_40_strides", "easy_90"]) {
+        for (const ctx of [base, build, taper, race]) {
+          const line = runSessionExplainer({ type, templateId, ...ctx }) ?? "";
+          expect(line, `${type} ${templateId}`).not.toMatch(
+            /\bhard (days|sessions|runs)\b/i
+          );
+        }
+      }
+    }
+  });
+});
+
+describe("the build names the quality sessions only in a week that holds one", () => {
+  // "Why this run" never gives an invented reason (Run21 (3)). A returning
+  // runner's weeks hold no tempo or intervals (Run15), nor does every other
+  // build week on the gentler setting, and a week nobody read isn't assumed
+  // to.
+  const easy = (weekHasQuality?: boolean) =>
+    runSessionExplainer({
+      type: "easy",
+      templateId: "easy_30",
+      ...build,
+      weekHasQuality,
+    });
+  const long = (weekHasQuality?: boolean) =>
+    runSessionExplainer({
+      type: "long",
+      templateId: "long_15k",
+      ...build,
+      weekHasQuality,
+    });
+
+  it("an easy day and the long run name them when the week holds one", () => {
+    expect(easy(true)).toMatch(/quality sessions/);
+    expect(long(true)).toMatch(/quality/);
+  });
+
+  it("and give a reason true of any week when it doesn't, or isn't known", () => {
+    for (const holds of [false, undefined]) {
+      expect(easy(holds)).toMatch(/^Easy day — /);
+      expect(easy(holds)).not.toMatch(/quality|hard days/);
+      expect(long(holds)).toMatch(/^The week's anchor run — /);
+      expect(long(holds)).not.toMatch(/quality/);
+    }
+  });
+
+  it("reads the week the run is in, the person's swaps included", () => {
+    const week = "2026-10-05";
+    const day = (
+      templateId: string,
+      weekKey = week,
+      userOverride?: string
+    ) => ({
+      templateId,
+      weekKey,
+      userOverride,
+    });
+    expect(weekHoldsQuality([day("easy_30"), day("tempo_20")], week)).toBe(
+      true
+    );
+    expect(weekHoldsQuality([day("easy_30"), day("8x400")], week)).toBe(true);
+    expect(weekHoldsQuality([day("easy_30"), day("long_10k")], week)).toBe(
+      false
+    );
+    // Another week's tempo isn't this week's.
+    expect(
+      weekHoldsQuality([day("easy_30"), day("tempo_20", "2026-10-12")], week)
+    ).toBe(false);
+    // A tempo swapped for an easy run is gone, and the other way it counts.
+    expect(weekHoldsQuality([day("tempo_20", week, "easy_30")], week)).toBe(
+      false
+    );
+    expect(weekHoldsQuality([day("easy_30", week, "tempo_20")], week)).toBe(
+      true
+    );
+    expect(weekHoldsQuality([day("tempo_20")], undefined)).toBe(false);
+    expect(weekHoldsQuality(undefined, week)).toBe(false);
   });
 });
 

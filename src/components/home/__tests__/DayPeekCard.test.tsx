@@ -232,6 +232,56 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(why).toHaveTextContent(/relaxed 20-second accelerations/);
   });
 
+  it("names the quality sessions only in a week that holds one (Run21 (3))", () => {
+    // An easy day in the build: a returning runner's week holds no tempo or
+    // intervals (Run15), and its reason can't be the sessions it doesn't have.
+    const date = dayOfThisWeek(2);
+    const weekKey = localWeekKey(parseLocalDate(date));
+    const profile = makeProfile(
+      makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
+    );
+    const withWeek = (otherTemplateId: string) => {
+      const program = makeProgramState([
+        makeRunDay({ dayIndex: 2, date, weekKey, templateId: "easy_30" }),
+        makeRunDay({
+          dayIndex: 4,
+          date: dayOfThisWeek(4),
+          weekKey,
+          templateId: otherTemplateId,
+        }),
+      ]);
+      program.runPlan = {
+        currentWeek: 9,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+      } as ProgramState["runPlan"];
+      return program;
+    };
+    const why = (program: ProgramState) => {
+      const { unmount } = renderCard(
+        <DayPeekCard
+          todayKey={localDateString()}
+          dateKey={date}
+          profile={profile}
+          programState={program}
+          claimMap={emptyClaimMap}
+          extras={emptyExtras}
+          workouts={[]}
+          dailyTotals={emptyTotals()}
+          onClose={vi.fn()}
+        />
+      );
+      const text =
+        screen.getByText("Why this run").closest("details")!.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(why(withWeek("tempo_20"))).toMatch(/quality sessions/);
+    const easyWeek = why(withWeek("easy_40"));
+    expect(easyWeek).toMatch(/most of your running is easy/);
+    expect(easyWeek).not.toMatch(/quality/);
+  });
+
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
     const tueKey = dayOfThisWeek(2);
     const schedule = makeSchedule([
