@@ -53,7 +53,10 @@ import {
   isRunWalkTemplateId,
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
@@ -282,6 +285,10 @@ export default function DayActionSheet({
         | "marathon"
         | undefined,
       racePace: selectedRacePace?.kind,
+      weekHasQuality: weekHoldsQuality(
+        programState?.runDays,
+        run.runDay.weekKey
+      ),
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.

@@ -27,6 +27,36 @@ export interface SessionExplainerInput {
    *  that finishes at it rehearses race day, and a tempo at it practises
    *  the pace, in place of the reasons for a tempo at fitness pace. */
   racePace?: "finish" | "tempo" | null;
+  /** Whether the run's week holds a tempo or intervals session
+   *  (`weekHoldsQuality`). The build's easy day and long run name the
+   *  quality sessions only when it does: a returning runner's weeks hold none
+   *  (Run15), nor does every other build week on the gentler setting. Left
+   *  out, the week isn't assumed to. */
+  weekHasQuality?: boolean;
+}
+
+/**
+ * Whether the week `weekKey` starts holds a tempo or intervals session, the
+ * person's swaps (`userOverride`) included.
+ */
+export function weekHoldsQuality(
+  runDays:
+    | ReadonlyArray<{
+        templateId: string;
+        userOverride?: string | null;
+        weekKey?: string;
+      }>
+    | null
+    | undefined,
+  weekKey: string | null | undefined
+): boolean {
+  if (!runDays || !weekKey) return false;
+  return runDays.some((day) => {
+    if (day.weekKey !== weekKey) return false;
+    const id = day.userOverride || day.templateId;
+    const type = RUN_TEMPLATES.find((t) => t.id === id)?.type;
+    return type === "tempo" || type === "intervals";
+  });
 }
 
 /** Shared by Manage, Programme and Home: the explanation and real phase agree. */
@@ -59,7 +89,14 @@ const MEDIUM_LONG_IDS = new Set(["easy_60", "easy_75", "easy_90"]);
 export function runSessionExplainer(
   input: SessionExplainerInput
 ): string | null {
-  const { type, templateId, currentWeek, totalWeeks, distance } = input;
+  const {
+    type,
+    templateId,
+    currentWeek,
+    totalWeeks,
+    distance,
+    weekHasQuality,
+  } = input;
   if (
     currentWeek == null ||
     totalWeeks == null ||
@@ -117,9 +154,11 @@ export function runSessionExplainer(
     if (phase === "base") {
       return "The week's anchor run — long-run volume ramps gradually through the base.";
     }
-    return input.racePace === "finish"
-      ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
-      : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
+    if (input.racePace === "finish")
+      return "It rehearses race day on tired legs: your pace, your fuelling and your focus.";
+    return weekHasQuality
+      ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
+      : "The week's anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo" && input.racePace === "tempo") {
     return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
@@ -137,7 +176,10 @@ export function runSessionExplainer(
   if (isStrides) {
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
   }
-  return phase === "base"
-    ? "Base phase — easy running now is the foundation everything later stands on."
-    : "Easy day — it makes the hard days work. If it feels too easy, it's right.";
+  if (phase === "base") {
+    return "Base phase — easy running now is the foundation everything later stands on.";
+  }
+  return weekHasQuality
+    ? "Easy day — it makes the quality sessions work. If it feels too easy, it's right."
+    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it's right.";
 }

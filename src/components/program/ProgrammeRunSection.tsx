@@ -150,7 +150,10 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
@@ -807,6 +810,7 @@ export default function ProgrammeRunSection({
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
           racePace: selectedRacePace?.kind,
+          weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
         })
       : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
