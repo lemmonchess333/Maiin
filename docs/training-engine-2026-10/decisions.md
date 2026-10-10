@@ -169,8 +169,8 @@ Two copy defects surfaced on the way, each fixed in its own PR:
   "rebuild aerobic base", left by E2c for its own PR
   (lemmonchess333/Maiin#2678).
 
-It shows R8's taper as built (no long run for three weeks) without
-changing it; R8 stays Measuring.
+It shows R8's taper as it was then (no long run for three weeks) without
+changing it; R8 was measured and built after (below).
 
 It passes twice in a row on fresh emulators with nothing else running
 (6.5 and 5.9 minutes), and goes red at "the lighter week's sets" when
@@ -721,6 +721,24 @@ against Lift4 as built on the simulator before it comes here with an answer.
   taper's length as built (the handoff's non-adoption of a source-derived
   duration or percentage stands). The taper's session (8 × 400 m) is a
   separate change, not measured here. To lock, owner-delegated, and build.
+- **Built** (Run22, locked in lemmonchess333/Maiin#2681; built in
+  lemmonchess333/Maiin#2682, stacked on #2644 and #2642): the long run at
+  75% and 60% of the build's longest, the easy runs at 75% and 60% of the
+  last build week's, each the plan's own size at most that share and the
+  easy runs never under 30 minutes. The medium-long steps with them (a
+  marathon's 90 minutes to 60, then 50), and keeps off the days beside the
+  long run and the session through #2644's fill order. A block with no
+  build (a plan made at or under the taper floor) keeps the taper it had,
+  as the measured variant did. A taper medium-long has its own reason line
+  in "Why this run". Re-measured on the build, 20 seeds: as built now equals
+  the stepped taper for every persona, the race at 2.8 times the month's
+  longest run for the marathons, the last long run 14–20 days out. The
+  first taper week lands at 0.54–0.68 of the last build week rather than
+  the variant's 0.50–0.60, because the build keeps the medium-long in every
+  first taper week, where the variant dropped it whenever its weekday took
+  the session. The simulator's `taper-cut` and `taper-long` stop firing
+  everywhere but the one-run-a-week new runner, who returns to the taper
+  detrained after skipping both 25 km runs; no new finding appears.
 
 ### R9. Demanding days back to back
 
@@ -857,7 +875,9 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Answer: Measuring** (year-out-marathon, sub-3-30 and new-runner-marathon:
   peaks, spikes, finish times) against Run17 as built.
 - **Not run yet (2026-10-10).** Next after the stepped taper (R8) is built,
-  since the peak's spike and the race's are read together.
+  since the peak's spike and the race's are read together. R8 is built in
+  lemmonchess333/Maiin#2682, still open, so this runs once that is on main,
+  with the option to compare against Run17 written first (none is yet).
 
 ### R18. The year-out marathon's shape
 
