@@ -63,6 +63,49 @@ function setup(
 }
 
 describe("RunLaunchCard", () => {
+  it("Run21 (3): carries what the run is and how it should feel, closed", () => {
+    setup({ purpose: "Easy day — it makes the hard days work." });
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(
+      /What it is.*Relaxed running at a chatty pace/
+    );
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*it makes the hard days work/
+    );
+    expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
+  });
+
+  it("Run21 (2): names a long run's race-pace finish, on the card and its Start", () => {
+    setup({
+      workout: {
+        id: "long_15k",
+        name: "Long 15K",
+        type: "long",
+        icon: "mountain",
+        description: "Easy-to-moderate effort, time on feet",
+        estimatedDuration: 85,
+        config: { targetDistanceKm: 15 },
+      },
+      racePaceFinish: { blockKm: 5, goalPaceS: 300 },
+      purpose:
+        "It rehearses race day on tired legs: your pace, your fuelling and your focus.",
+    });
+    expect(
+      screen.getByRole("heading", { name: "Long 15K with race pace" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start Long 15K with race pace/ })
+    ).toBeInTheDocument();
+    // Its size and pace, which the name and lines leave out.
+    expect(screen.getByText("Last 5 km at 5:00 /km")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/If it feels wrong.*Run the rest easy/);
+  });
+
   it("renders the workout name, distance metric and default eyebrow", () => {
     setup();
     expect(screen.getByText("Easy 30")).toBeInTheDocument();

@@ -18,6 +18,12 @@ import {
   getAdherenceLabel,
   type RunPlanMetadata,
 } from "../runPlanMetadata";
+import {
+  racePaceFinishFor,
+  raceTargetFromProfile,
+  type RaceTargetProfile,
+} from "../racePaceFinish";
+import { RUN_TEMPLATES } from "../workoutTemplates";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 
 // Pin a "today" so the tests don't drift across the calendar.
@@ -1062,6 +1068,28 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
     vdot: null,
   });
 
+  it("Run20 (5): a run-walk is a timed session of runs and walks, with no pace", () => {
+    // Even with a pace table: the running is by feel, and an average over
+    // runs and walks is no one's running pace.
+    const { prefill } = computePlanMetadata({
+      displayUnit: "km",
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: [makeRunDay(MONDAY, "run_walk_1", "easy")],
+      urlTemplateId: null,
+      urlType: null,
+      paceTable: fastTable,
+    });
+    expect(prefill.activityType).toBe("easy");
+    expect(prefill.target).toEqual({ type: "time", value: 29 * 60 });
+    expect(prefill.intervals).toBeUndefined();
+    const segs = prefill.segments!;
+    expect(segs.filter((seg) => seg.label === "Run")).toHaveLength(8);
+    expect(segs.filter((seg) => seg.label === "Walk")).toHaveLength(9);
+    expect(segs.some((seg) => seg.paceTarget !== undefined)).toBe(false);
+  });
+
   it("personalizes a tempo target pace from the user's pace table", () => {
     const { prefill } = computePlanMetadata({
       displayUnit: "km",
@@ -1335,6 +1363,112 @@ describe("A2 — the goal time turns into training", () => {
     // 20K → 7K block (round(20/3)).
     expect(segs[1].target).toEqual({ kind: "distance", meters: 7000 });
     expect(segs[0].target).toEqual({ kind: "distance", meters: 13000 });
+  });
+});
+
+describe("a long run's race-pace finish: the launch's gate, for the plan's surfaces (Run21 (2))", () => {
+  // The A2 block above, read by the surfaces that name a run before it
+  // starts. Half plan, 10 weeks: base w0-2, build w3-6, taper w7-8.
+  const halfPlan = (currentWeek: number): RunPlan => ({
+    mode: "race_prep",
+    raceGoal: { distance: "half", targetDate: farFutureDate(70) },
+    totalWeeks: 10,
+    currentWeek,
+  });
+  const runner = (
+    over: Partial<RaceTargetProfile> = {}
+  ): RaceTargetProfile => ({
+    runMode: "race_prep",
+    // 1:45:30 → about 300 s/km.
+    raceGoal: { distance: "half", targetTimeS: 6330 },
+    runFitness: null,
+    ...over,
+  });
+  const template = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
+  const launch = (id: string, week: number, profile: RaceTargetProfile) =>
+    computePlanMetadata({
+      displayUnit: "km",
+      profileRunMode:
+        profile.runMode === "race_prep" ? "race_prep" : "freeform",
+      todayDayIndex: MONDAY,
+      runPlan: halfPlan(week),
+      runDays: [makeRunDay(MONDAY, id, template(id).type)],
+      urlTemplateId: null,
+      urlType: null,
+      raceTarget: raceTargetFromProfile(profile),
+    }).prefill.segments?.find((s) => s.eyebrow === "RACE PACE");
+
+  it("finds a build-phase long run's finish: a third of it, at the goal pace", () => {
+    const finish = racePaceFinishFor(
+      template("long_15k"),
+      runner(),
+      halfPlan(5)
+    );
+    expect(finish?.blockKm).toBe(5);
+    expect(finish?.goalPaceS).toBeCloseTo(300.04, 1);
+  });
+
+  it("finds none where the launch plays none", () => {
+    const long15 = template("long_15k");
+    expect(racePaceFinishFor(long15, runner(), halfPlan(1))).toBeNull(); // base
+    expect(racePaceFinishFor(long15, runner(), halfPlan(7))).toBeNull(); // taper
+    expect(
+      racePaceFinishFor(template("long_10k"), runner(), halfPlan(5))
+    ).toBeNull(); // under 12 km
+    expect(
+      racePaceFinishFor(template("tempo_20"), runner(), halfPlan(5))
+    ).toBeNull();
+    expect(
+      racePaceFinishFor(
+        long15,
+        runner({ raceGoal: { distance: "half" } }),
+        halfPlan(5)
+      )
+    ).toBeNull(); // no goal time
+    expect(
+      racePaceFinishFor(
+        long15,
+        runner({ raceGoal: { distance: "10k", targetTimeS: 2700 } }),
+        halfPlan(5)
+      )
+    ).toBeNull();
+    expect(
+      racePaceFinishFor(long15, runner({ runMode: "freeform" }), halfPlan(5))
+    ).toBeNull();
+    expect(racePaceFinishFor(null, runner(), halfPlan(5))).toBeNull();
+  });
+
+  it("agrees with the launch for every long run in every week", () => {
+    const longs = RUN_TEMPLATES.filter((t) => t.type === "long");
+    for (const t of longs) {
+      for (let week = 0; week < 10; week++) {
+        const block = launch(t.id, week, runner());
+        const finish = racePaceFinishFor(t, runner(), halfPlan(week));
+        expect(Boolean(block), `${t.id}, week ${week + 1}`).toBe(
+          finish !== null
+        );
+        if (finish) {
+          expect(block?.target).toEqual({
+            kind: "distance",
+            meters: finish.blockKm * 1000,
+          });
+        }
+      }
+    }
+  });
+
+  it("finds none for a long-shot goal, as the launch does", () => {
+    // A 35-minute 5K is far from a 1:45 half: the goal sets no paces.
+    const slow = runner({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 35 * 60 },
+        vdot: null,
+      },
+    });
+    expect(
+      racePaceFinishFor(template("long_15k"), slow, halfPlan(5))
+    ).toBeNull();
+    expect(launch("long_15k", 5, slow)).toBeUndefined();
   });
 });
 

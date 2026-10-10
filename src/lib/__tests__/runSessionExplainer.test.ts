@@ -99,6 +99,37 @@ describe("runSessionExplainer", () => {
     expect(strides).toMatch(/not a hard session/i);
   });
 
+  it("a run-walk says what it is, in every phase (Run20 (5))", () => {
+    // A 5K six weeks out is all run-walk, its taper and race week too, and
+    // there a run-walk was "Taper — easy and short on purpose" and a
+    // "Race-week shakeout".
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_2",
+        ...ctx,
+      });
+      expect(line).toMatch(/^Run-walk/);
+      expect(line).toMatch(/walks are part of the method/);
+      expect(line).not.toMatch(/readiness|safe|VO2/i);
+    }
+  });
+
+  it("the last run-walk is the one the weeks before built to, with no walks between", () => {
+    // Run-walk 6 is a walk, 20 minutes of running and a walk (review of
+    // #2655). What it is, "Why this run" says in its own line (Run21 (3)),
+    // so this is the reason only.
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_6",
+        ...ctx,
+      });
+      expect(line).toMatch(/^The last run-walk — what the weeks before/);
+      expect(line).not.toMatch(/walks between/);
+    }
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
@@ -158,5 +189,29 @@ describe("shared run purpose presentation", () => {
         templateId: "easy_30",
       }).purpose
     ).toBeNull();
+  });
+});
+
+describe("a long run that finishes at race pace (Run21 (2))", () => {
+  // Half plan, 10 weeks: base w0-2, build w3-6.
+  const long = {
+    type: "long",
+    templateId: "long_15k",
+    totalWeeks: 10,
+    distance: "half",
+  };
+
+  it("is in the build's week to rehearse race day", () => {
+    expect(
+      runSessionExplainer({ ...long, currentWeek: 5, racePaceFinish: true })
+    ).toBe(
+      "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+    );
+  });
+
+  it("keeps the anchor run's reason without one", () => {
+    expect(runSessionExplainer({ ...long, currentWeek: 5 })).toMatch(
+      /^The week's anchor run/
+    );
   });
 });

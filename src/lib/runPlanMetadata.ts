@@ -20,25 +20,22 @@
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
+import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import {
-  raceTargetBand,
-  resolveSessionPaces,
-  vdotFromRace,
-  type PaceTable,
-} from "./runPaces";
+  longRunRacePaceFinish,
+  resolveRaceEnrichment,
+  type RaceEnrichment,
+  type RaceTarget,
+} from "./racePaceFinish";
 import {
-  racePaceBlockKm,
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromRunWalk,
   segmentsFromTempo,
   type SessionSegment,
 } from "./runSegments";
-import { getPhaseForWeek } from "@/features/program/runPlanTiming";
-import {
-  type ScheduledRunDay,
-  type RunPlan,
-} from "@/features/program/runScheduler";
+import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -133,6 +130,20 @@ export interface RunPlanPrefill {
 }
 
 // ─── Default / freeform shape ───────────────────────────────────────
+
+/**
+ * The template a run was, as the saved-run reader reads it (`savedRuns.ts`):
+ * the one it was started from, else the plan's. A run started as something
+ * else on a planned day keeps the plan's, as its saved document will.
+ */
+export function runTemplateIdOf(
+  metadata:
+    | Pick<RunPlanMetadata, "actualTemplateId" | "plannedTemplateId">
+    | null
+    | undefined
+): string | undefined {
+  return metadata?.actualTemplateId ?? metadata?.plannedTemplateId ?? undefined;
+}
 
 /**
  * The metadata we write for a run that has no programme context —
@@ -243,29 +254,14 @@ export interface ComputePlanInputs {
    */
   urlType: string | null;
   /**
-   * A2 — the user's race goal WITH a target time, from
-   * `profile.raceGoal`. When present (and the plan is race-prep,
-   * half/marathon, in the right phase), the prefill turns the goal
-   * time into training: race-pace blocks closing build-phase long
-   * runs, and tempo sessions run at goal pace through build + taper.
-   * Absent / no targetTimeS → the pre-A2 prefill, unchanged.
+   * A2 — the user's race goal WITH a target time (`RaceTarget`, read
+   * from the profile by `raceTargetFromProfile`). When present (and the
+   * plan is race-prep, half/marathon, in the right phase), the prefill
+   * turns the goal time into training: race-pace blocks closing
+   * build-phase long runs, and tempo sessions run at goal pace through
+   * build + taper. Absent / no targetTimeS → the pre-A2 prefill, unchanged.
    */
-  raceTarget?: {
-    distance: "5k" | "10k" | "half" | "marathon";
-    targetTimeS: number;
-    /**
-     * A2 feasibility gate — the runner's current VDOT from the FULL
-     * fitness read (`paceTableFromFitness(...)?.vdot`), the same tier the
-     * verdict surface uses, so the verdict's "long shot" and this gate's
-     * "decline the pace" can never disagree for the same user. When the
-     * gap lands `long_shot` on the shared band scale, enrichment is
-     * withheld entirely (Daniels: train from current fitness, not
-     * aspiration — Garmin Coach refuses such targets outright). Null /
-     * absent = no benchmark = nothing to judge the goal against, so the
-     * goal pace stands (Runna's cold-start behaviour).
-     */
-    currentVdot?: number | null;
-  } | null;
+  raceTarget?: RaceTarget | null;
   /**
    * P0-6: `?scheduledRunId=` URL param value, if present. When set,
    * we look up THAT runDay by id instead of inferring from
@@ -304,7 +300,11 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
   const planTotalWeeks = inputs.runPlan?.totalWeeks ?? null;
   // A2: resolved once; both templateToPrefill call sites receive it so a
   // URL-launched planned template enriches the same as the today_plan path.
-  const race = resolveRaceEnrichment(planMode, inputs);
+  const race = resolveRaceEnrichment(
+    planMode,
+    inputs.raceTarget,
+    inputs.runPlan
+  );
 
   // P0-6: when `?scheduledRunId=<id>` is on the URL, it pins WHICH
   // runDay we treat as the planned context — even if the id refers
@@ -682,69 +682,6 @@ function isRacePlanElapsed(runPlan: RunPlan | undefined): boolean {
   return false;
 }
 
-/**
- * A2 — the resolved "train at your goal pace" context. Non-null only when
- * ALL of these hold: race-prep mode, a half/marathon goal with a target
- * time, a live plan (not recovery), and week/total counts to place the
- * phase. 5k/10k goals never enrich — their goal pace is faster than
- * threshold, so it belongs in interval work (Daniels), not in tempo
- * sessions or long-run blocks; prescribing it there would be wrong in
- * both directions.
- *
- * Consent note (RUN-EV-08): the goal pace derives from the USER'S OWN
- * declared target time, not from an auto-derived benchmark — consented
- * by construction, so no `pendingConfirmation` gate applies here.
- */
-interface RaceEnrichment {
-  distance: "half" | "marathon";
-  /** s/km — targetTimeS spread over the race distance. */
-  goalPaceS: number;
-  phase: "base" | "build" | "taper" | "race";
-}
-
-/** Physical race distances, km. Mirrors raceGoalPlanner's DISTANCE_METERS —
- *  physical constants, not business logic; only the enriching distances. */
-const RACE_GOAL_KM = { half: 21.0975, marathon: 42.195 } as const;
-
-function resolveRaceEnrichment(
-  planMode: PlanMode,
-  inputs: ComputePlanInputs
-): RaceEnrichment | null {
-  const target = inputs.raceTarget;
-  const plan = inputs.runPlan;
-  if (planMode !== "race_prep" || !target || !plan) return null;
-  if (plan.phase === "recovery") return null;
-  if (target.distance !== "half" && target.distance !== "marathon") {
-    return null;
-  }
-  if (!target.targetTimeS || target.targetTimeS <= 0) return null;
-  if (
-    typeof plan.currentWeek !== "number" ||
-    typeof plan.totalWeeks !== "number" ||
-    plan.totalWeeks <= 0
-  ) {
-    return null;
-  }
-  // Feasibility gate (see the `currentVdot` doc above): a long-shot goal
-  // must not set training paces. Sessions fall back to their
-  // fitness-derived / template paces; the verdict line in the race-plan
-  // editor tells the user this is happening.
-  if (typeof target.currentVdot === "number" && target.currentVdot > 0) {
-    const targetVdot = vdotFromRace(
-      RACE_GOAL_KM[target.distance] * 1000,
-      target.targetTimeS
-    );
-    if (raceTargetBand(targetVdot - target.currentVdot) === "long_shot") {
-      return null;
-    }
-  }
-  return {
-    distance: target.distance,
-    goalPaceS: target.targetTimeS / RACE_GOAL_KM[target.distance],
-    phase: getPhaseForWeek(plan.currentWeek, plan.totalWeeks, target.distance),
-  };
-}
-
 /** Deterministic cue-rotation seed from run identity. The builders'
  *  variation pools rotate on it, so the same session on a DIFFERENT day
  *  (or plan week) opens with different lines while staying reproducible
@@ -770,23 +707,17 @@ function templateToPrefill(
 ): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
   // A2 gating: tempo runs at goal pace through build AND taper (race
-  // rhythm is exactly what taper sharpening is for); long runs carry a
-  // race-pace block in BUILD only (taper long runs stay easy — taper
-  // reduces load) and only once the run is long enough to hold an easy
-  // majority plus a meaningful block.
+  // rhythm is exactly what taper sharpening is for). A long run's
+  // race-pace block is `longRunRacePaceFinish`'s (racePaceFinish.ts), the
+  // gate the plan's surfaces read too, so a run named for its finish has
+  // one.
   const tempoAtGoal =
     race &&
     tmpl.type === "tempo" &&
     (race.phase === "build" || race.phase === "taper")
       ? race
       : null;
-  const longAtRacePace =
-    race &&
-    tmpl.type === "long" &&
-    race.phase === "build" &&
-    (tmpl.config.targetDistanceKm ?? 0) >= 12
-      ? race
-      : null;
+  const raceFinish = longRunRacePaceFinish(tmpl, race);
   if (tmpl.config.targetDistanceKm) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
     // editing templates), but RunConfig.target.value is metres
@@ -859,6 +790,9 @@ function templateToPrefill(
       tmpl.config.strides,
       seed
     );
+  } else if (tmpl.config.runWalk) {
+    // Run20 (5): a timed target (above) and no pace anywhere in it.
+    prefill.segments = segmentsFromRunWalk(tmpl.config.runWalk, seed);
   } else if (tmpl.type === "easy" && tmpl.config.targetDurationMinutes) {
     // Use the same pause-corrected player, remaining-time display and finish
     // cue as every structured session. A completed target never auto-saves.
@@ -874,12 +808,11 @@ function templateToPrefill(
         cue: `Easy running for ${tmpl.config.targetDurationMinutes} minutes. Keep it conversational.`,
       },
     ];
-  } else if (longAtRacePace && tmpl.config.targetDistanceKm) {
-    const km = tmpl.config.targetDistanceKm;
+  } else if (raceFinish && tmpl.config.targetDistanceKm) {
     prefill.segments = segmentsFromLongWithRacePace(
-      km,
-      racePaceBlockKm(km, longAtRacePace.distance),
-      longAtRacePace.goalPaceS,
+      tmpl.config.targetDistanceKm,
+      raceFinish.blockKm,
+      raceFinish.goalPaceS,
       unit
     );
   }
