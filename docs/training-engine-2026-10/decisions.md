@@ -253,17 +253,25 @@ design, so it goes to the owner with the final report.
   analysis (MODERATE at best). Strength coaching trains squat and bench
   2–3 times a week and the deadlift 1–2 (CONVENTION; lifting-evidence L5,
   "SHORT for strength athletes").
-- **Simulation:** to run. The 4-day Get stronger plan as built against the
-  same plan with bench leading both upper days and squat both lower days,
-  for intermediate-man, powerbuilder-strength and advanced-man, 20 seeds of
-  each variant. The lifter model's frequency term comes from Pelland, so the
-  run shows the size of the effect the assumption implies, not new evidence.
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** the 4-day Get
+  stronger plan as built against (b), 26 weeks, 20 seeds of each model
+  variant, for intermediate-man and powerbuilder-strength (advanced-man
+  trains 5 days, not the upper/lower plan). Median true-1RM gain, as built
+  against (b): squat 7.5 and 7.4 against 7.6 and 7.5%, bench 6.1 and 5.9
+  against 6.3 and 6.1, deadlift 7.4 and 7.3 against 7.0 and 6.9, overhead
+  press 6.3 and 6.1 against 6.2 and 5.9, each inside a 10th–90th spread
+  about 5 points wide; misses per 100 sessions 1–6 lower under (b). Two
+  limits: the lifter model counts strength by movement family, so the hack
+  squat and the dumbbell bench already count as each family's second
+  session and (b) changes load and sets, not frequency; and (b) wasn't
+  re-fitted to the session's length, so its Upper B ran 63–64 minutes of 60.
 - **Options:** (a) keep; (b) on Get stronger, bench and squat lead both of
   their days, with the deadlift once; (c) a frequency floor per main lift for
   every goal (the prompt's 4c strength track).
-- **Answer: Measuring.** If the run shows a gain beyond the model's noise,
-  (b) is answered for new Get stronger plans by rule 1; it reverses nothing
-  locked. (c) waits for the 4c design.
+- **Answer: Kept** (rule 2; it was Measuring). The gains land within each
+  other's noise, so the app keeps its plan. The model can't test Pelland's
+  frequency effect here (both plans train every family twice), so this
+  settles (b) only as far as the model reaches; (c) waits for the 4c design.
 - **Existing plans:** untouched (Pgm5); a plan picks it up when rebuilt.
 
 ### L3. Heavier and lighter days turn Get stronger's "4 × 5" into 4 × 3 and 4 × 7
@@ -326,6 +334,9 @@ design, so it goes to the owner with the final report.
 - **Answer: Measuring** (F8: `over-time` count and sets per muscle under (b)
   and (c)). Supersets for 30- and 45-minute plans are a new structure the
   person would see: they wait for the 4c design.
+- **Not run yet (2026-10-10).** (b) and (c) change how the time fit prices a
+  session and when it re-fits; the simulator's plan variants change a plan's
+  lifts, not the app's estimator, so they wait for the fit to take one.
 
 ### L6. Bodyweight main lifts with added load
 
@@ -355,10 +366,19 @@ design, so it goes to the owner with the final report.
 - **Evidence:** novice programmes pull 1 × 5 to 3 × 5 once or twice a week
   (CONVENTION). Lift4 (5) sets beginners' mains at 3 × 8 for Build muscle and
   General fitness, and the table is a ceiling.
-- **Answer: Measuring.** The ceiling breach is a defect against Lift4 (5)
-  (the reconciler can't cut a main); the sim compares the deadlift as a main
-  once a week, with a hinge accessory on the other day, against as built, for
-  the novice personas (misses and drops on the deadlift, hamstring sets).
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** the deadlift a main
+  once a week, its other slot the hinge accessory the variation bank gives a
+  beginner, against as built, 26 weeks, 20 seeds of each model variant, for
+  the five beginners who deadlift. Median deadlift gain 0.2–1.9 points lower
+  (novice-man 33.4 against 35.3%, each inside a 10th–90th spread about 20
+  points wide); misses per 100 sessions within 2 either way; hamstring sets
+  in a full week 15 under both, as the app's volume model counts them.
+- **Answer: Kept** for how often the deadlift comes round (rule 2; it was
+  Measuring): once or twice makes no difference the model can see. The swap
+  doesn't touch the ceiling breach, because the accessory is a hinge too and
+  the hamstrings keep their 15 sets. That breach stays a defect against
+  Lift4 (5), open: its fix takes sets off the hinge work, not the deadlift
+  off a day.
 
 ### L8. Curls fill the push/pull balance
 
@@ -385,6 +405,8 @@ design, so it goes to the owner with the final report.
 - **Answer: Measuring**, by A1's procedure. The growth half of A1's check
   (does direct work for triceps, biceps, hamstrings and chest fall behind)
   needs a size model the simulator doesn't have yet.
+- **Not run yet (2026-10-10).** The growth half needs a size model, which
+  the simulator doesn't have.
 
 ### L10. The same lift in two slots drifts apart
 
@@ -398,9 +420,15 @@ design, so it goes to the owner with the final report.
 - **Options:** (a) keep; (b) new plans give the second slot a variation of
   the pattern (incline or dumbbell bench; front squat or leg press);
   (c) the same lift in two slots shares one rule and one weight.
-- **Answer: Measuring** (effective sets and gains for the novice personas
-  under each). Either (b) or (c) is a generator choice for new plans and
-  reverses nothing locked.
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** (b) against as
+  built, 26 weeks, 20 seeds of each model variant, the beginners: a compound
+  lift in a second slot takes the variation the bank gives a beginner.
+  Median bench gain −0.7 to +1.6 points (novice-man 23.1 against 21.5%,
+  novice-woman 22.4 against 23.1), squat and deadlift within 0.6, effective
+  push and squat sets a week within one, all inside spreads about 15 points
+  wide. (c) changes the engine and wasn't run.
+- **Answer: Kept** (rule 2; it was Measuring): (b) lands within the noise of
+  as built. (c) stays open as a design, unmeasured.
 
 ### L11. Light lifts that never step on their own
 
@@ -421,11 +449,19 @@ design, so it goes to the owner with the final report.
   block makes 5 of the final 6 weeks lighter (S7).
 - **Locked today:** Lift4 (10) and its 2026-10-06 STATUS: two lighter weeks
   whatever the taper; "together they replace the calendar lighter week".
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** the hybrids and
+  the year-out marathoner, 20 seeds of each model variant. In the six weeks
+  up to and including race week the lifts are lighter in 3 (the marathon,
+  the 10K) or 4 (the 16-week half) weeks: 3 are the race's own (the two
+  before it and race week), and the half's fourth is the run plan's
+  step-back in its week 12, two weeks before them. No step-back falls inside
+  the race's weeks, which the taper replaces, and the week after the race is
+  always light. The audit's "5 of the final 6" counted that week after.
 - **Answer:** the trim's floor is **Kept**: two sets is Lift4 (5)'s floor
-  for main lifts. The 5-of-6 count is **Measuring**: whether a run plan
-  step-back week inside the final stretch also lightens the lifts, which
-  "replace the calendar lighter week" says it shouldn't. If so, it is a
-  correction.
+  for main lifts. The count is **Kept** too (it was Measuring): it is the
+  lock's own, a step-back week (Lift4 (9)) plus the race's weeks
+  (Lift4 (10)), and no step-back inside the race's stretch adds one, so
+  there is nothing to correct.
 
 ### L13. Support my running
 
@@ -438,6 +474,8 @@ design, so it goes to the owner with the final report.
 - **Answer: Measuring**, as part of 4c's hybrid design. The simulator has no
   economy model, so plyometrics against heavy legs is decided on the evidence
   and the session time it costs.
+- **Not run yet (2026-10-10).** No economy model; it goes with the 4c
+  hybrid design.
 
 ### L14. Rest, and conservative first weights
 
@@ -485,8 +523,16 @@ design, so it goes to the owner with the final report.
 
 ### L18. A leg miss after a hard run counts half (A9)
 
-- **Answer:** kept and labelled an assumption (Pgm7). **Measuring** what A9
-  asks: how often it changes a drop, from the hybrid personas' sessions.
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** the hybrids and
+  the year-out marathoner, 20 seeds of each model variant, with A9 as built
+  and with the miss counted in full. A season holds 17–127 leg lifts within
+  a day after a long or hard run (median), 1–18 of them missed. Counting
+  those misses half spares 0–3 lowerings a season: the year-out marathoner
+  13 against 15, the 3+4 hybrids 9–10 against 12–13, the 2+3 hybrids 5–6
+  against 6. Squat gains are the same to 0.2 points.
+- **Answer: Kept** (it was Measuring): A9 stays as built, still labelled an
+  assumption (Pgm7). It changes a few lowerings a season, for the people who
+  run long, and nothing the model sees in strength.
 
 ### L19. The 4c designs
 
@@ -496,6 +542,8 @@ back-offs, heavy singles and an optional dated test), the hypertrophy track
 powerbuilding as a dial, lift targets answered with a forecast range, and an
 e1RM trend. **Measuring**: each is designed under the quiet rule and compared
 against Lift4 as built on the simulator before it comes here with an answer.
+
+- **Not run yet (2026-10-10).** Each design is written first; none is.
 
 ---
 
@@ -584,6 +632,13 @@ against Lift4 as built on the simulator before it comes here with an answer.
   starting from it, against as built, on the run personas: dose in weeks
   2–5, spikes, injuries and VDOT. The planning foundations' "never grows on
   its own" stays: a person-confirmed step up is the growth path (R6).
+- **Not run yet (2026-10-10).** The report already exists in the code as
+  `runningBaseline`: a ceiling on the plan, which after 28 days without a
+  review turns every hard session easy (`runningBaselineNeedsReview`). So
+  the comparison depends on what the person confirms each month, and the
+  simulator doesn't run the review prompt. Measured without it, it would
+  compare plans in an app nobody re-confirms in. R5 and R6 are one
+  measurement, after the review is modelled.
 
 ### R6. The running baseline only ratchets down
 
@@ -617,6 +672,10 @@ against Lift4 as built on the simulator before it comes here with an answer.
   number belongs. Fewer injuries follow from fewer spikes by construction,
   so the check reports spikes, not injuries. The new runner's own spike is
   built out by R14's build after run-walk (lemmonchess333/Maiin#2655).
+- **Measured so far (2026-10-10):** the race's spike, through R8's stepped
+  taper (below): a marathon from 6.8–10.4 times the month's longest run to
+  2.8. The first long run's spike waits on R5, and the step-back rebound
+  isn't run.
 
 ### R8. The taper
 
@@ -639,6 +698,29 @@ against Lift4 as built on the simulator before it comes here with an answer.
   labelled as such. The model prices a taper low (+0.5% against the 2.6% the
   evidence expects), so the simulation can show spikes and the long-run gap,
   not which taper races faster.
+- **Simulation (2026-10-10, lemmonchess333/Maiin#2680):** a stepped taper
+  against as built, on the six half and marathon personas, 20 seeds of each
+  model variant. The stepped taper keeps a long run at 75% of the build's
+  longest three weeks before race week and 60% two weeks before, with the
+  easy runs at 75% and 60% of the last build week's; the week before race
+  week and race week stay as built; the taper's session is as built. Medians:
+  - the race against the month's longest run: sub-3-30 6.8 to 2.8,
+    new-runner-marathon 10.4 to 2.8; the year-out marathoner 2.1 either way
+    (its 90th percentile 7.1 to 2.8); the half and the hybrids 1.1 either way;
+  - days from the last long run to the race: 28–34 to 14–20 for the
+    marathons (the new runner's 34–48 to 20–27), 21–27 to 14–20 for the halves;
+  - the first taper week against the last build week: 0.16–0.42 to 0.50–0.60,
+    the cut in steps;
+  - other spikes: unchanged (1–4 a season, the build's own);
+  - finish times 0–6 minutes faster, which the model can't separate.
+- **Answer: Answered** (rule 1; it was Measuring): the stepped taper, for
+  new race plans and for plans as their taper weeks are built. It takes the
+  marathon's month without a long run out and makes the cut progressive, as
+  Bosquet and the coaching sources do, and adds no spike. Its shares (75%
+  and 60%) are Tropos heuristics, labelled as such in the code, with the
+  taper's length as built (the handoff's non-adoption of a source-derived
+  duration or percentage stands). The taper's session (8 × 400 m) is a
+  separate change, not measured here. To lock, owner-delegated, and build.
 
 ### R9. Demanding days back to back
 
@@ -774,6 +856,8 @@ against Lift4 as built on the simulator before it comes here with an answer.
   Hansons at about 26.
 - **Answer: Measuring** (year-out-marathon, sub-3-30 and new-runner-marathon:
   peaks, spikes, finish times) against Run17 as built.
+- **Not run yet (2026-10-10).** Next after the stepped taper (R8) is built,
+  since the peak's spike and the race's are read together.
 
 ### R18. The year-out marathon's shape
 
@@ -783,6 +867,8 @@ against Lift4 as built on the simulator before it comes here with an answer.
   +2–5 and 3:45–3:50 expected.
 - **Answer: Measuring**, after R5, R8 and R13 are settled: the year re-run
   with them, then with strides and hills in base and a tune-up half.
+- **Not run yet (2026-10-10).** Its own rule puts it after R5, R8 and R13;
+  R5 waits on the review being modelled.
 
 ### R19. Strides once a week; threshold as steady tempo
 
@@ -875,6 +961,7 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Answer: Measuring**, with L13 and the 4c design: build early, maintain in
   the marathon-specific block, heavy legs placed by the person's stated
   priority. Lift4 (10)'s race weeks are built and stay.
+- **Not run yet (2026-10-10).** With L13 and the 4c design.
 
 ---
 
