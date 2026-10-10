@@ -224,9 +224,13 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     );
     expect(screen.getByText("30 min total")).toBeInTheDocument();
     expect(screen.getByText("30 min total").closest("details")).toBeNull();
-    expect(
-      screen.getByText(/Conversational pace; finish with 4/)
-    ).toBeInTheDocument();
+    // Run21 (2): the session's one feel line, in its description's place.
+    const feel = screen
+      .getAllByText(/Easy, then quick and relaxed on the strides/)
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    expect(feel[0]).toHaveTextContent(/^30 min total · Easy, then quick/);
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).not.toHaveAttribute("open");
     expect(why).toHaveTextContent(/relaxed 20-second accelerations/);

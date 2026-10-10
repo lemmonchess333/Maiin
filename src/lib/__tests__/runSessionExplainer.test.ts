@@ -8,6 +8,7 @@
  * no physiology-measurement claims, no safety promises.
  */
 import { describe, it, expect } from "vitest";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getPhaseForWeek } from "@/features/program/runScheduler";
 import {
   runSessionExplainer,
@@ -250,5 +251,28 @@ describe("a tempo at the goal race pace (Run21 (3))", () => {
     expect(runSessionExplainer({ ...tempo, currentWeek: 5 })).toMatch(
       /^Tempo — /
     );
+  });
+});
+
+describe("physiology words stay out of the reasons (Run21 (2))", () => {
+  // They appear only as "Coaches also call this" (runSessionAbout).
+  it("gives no reason that names one, in any week", () => {
+    for (const t of RUN_TEMPLATES) {
+      for (let week = 0; week < 16; week++) {
+        for (const racePace of [null, "finish", "tempo"] as const) {
+          const why = runSessionExplainer({
+            type: t.type,
+            templateId: t.id,
+            currentWeek: week,
+            totalWeeks: 16,
+            distance: "marathon",
+            racePace,
+          });
+          expect(why ?? "", `${t.id}, week ${week + 1}`).not.toMatch(
+            /aerobic|threshold|economy|VO2|lactate/i
+          );
+        }
+      }
+    }
   });
 });

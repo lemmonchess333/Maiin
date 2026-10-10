@@ -45,6 +45,20 @@ describe("GUIDED_WORKOUTS", () => {
     }
   });
 
+  it("describes each run in plain words (Run21 (2))", () => {
+    // A physiology word appears only as "Coaches also call this".
+    for (const w of GUIDED_WORKOUTS) {
+      for (const text of [
+        w.description,
+        ...w.segments.map((s) => s.instruction),
+      ]) {
+        expect(text, w.id).not.toMatch(
+          /aerobic|threshold|economy|VO2|lactate/i
+        );
+      }
+    }
+  });
+
   it("passes a strict metadata integrity audit", () => {
     const issues = auditGuidedWorkouts(GUIDED_WORKOUTS);
     expect(issues).toEqual([]);

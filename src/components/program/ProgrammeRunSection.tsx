@@ -149,7 +149,7 @@ import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
-import { runSessionName } from "@/lib/runSessionAbout";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
@@ -1551,7 +1551,15 @@ export default function ProgrammeRunSection({
                   icon={runTemplateIcon(selectedTemplate?.icon)}
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedName}
-                  description={selectedTemplate?.description}
+                  /* Run21 (2): the session's one feel line. Its shape
+                     is "What it is", in "Why this run" below. */
+                  description={
+                    selectedTemplate
+                      ? runSessionAbout(selectedTemplate, {
+                          racePace: selectedRacePace,
+                        }).feel
+                      : undefined
+                  }
                   meta={[
                     ...(selectedPurpose.weekLabel
                       ? [selectedPurpose.weekLabel]

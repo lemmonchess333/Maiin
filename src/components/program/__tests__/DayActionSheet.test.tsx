@@ -395,7 +395,9 @@ describe("DayActionSheet — planned run", () => {
     // The goal pace, 1:45:30 over a half, though there's no benchmark.
     expect(document.body.textContent).toContain("5:00 /km");
     const why = screen.getByText("Why this run").closest("details")!;
-    expect(why).toHaveTextContent(/What it is.*a block at your goal race pace/);
+    expect(why).toHaveTextContent(
+      /What it is.*20 minutes at your goal race pace/
+    );
     expect(why).toHaveTextContent(
       /Why it's in your week.*what race pace feels like/
     );
@@ -423,6 +425,34 @@ describe("DayActionSheet — planned run", () => {
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).toHaveTextContent(/What it is.*Relaxed running/);
     expect(why).not.toHaveTextContent(/Why it's in your week/);
+  });
+
+  it("Run21 (2): gives the run one feel line, outside 'Why this run'", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    const feel = screen
+      .getAllByText("Easy: you can talk in full sentences. Slower is fine.")
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    // It takes the template's description's place.
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
+    // The physiology name shows only under "Coaches also call this".
+    const zone = screen.getAllByText(/Zone 2/);
+    expect(zone).toHaveLength(1);
+    expect(zone[0].closest("details")).toHaveTextContent(
+      /Coaches also call this.*Zone 2, or aerobic running\./
+    );
   });
 
   it("renders template select (enabled), Mark complete, and Skip this run", () => {

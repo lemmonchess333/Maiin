@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6133813,
+  "total": 6138853,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2561,
@@ -190,6 +190,7 @@
     "raceBrowse": 461,
     "raceEventOverrides": 3301,
     "raceGoalPlanner": 3756,
+    "racePace": 1273,
     "raceRest": 324,
     "RangeInput": 489,
     "realignCopy": 673,
@@ -221,7 +222,7 @@
     "runSpacing": 6468,
     "RunSummary": 34921,
     "RunTemplateIcon": 221,
-    "runTemplateIcons": 6630,
+    "runTemplateIcons": 10397,
     "savedRoutines": 1810,
     "SavedRunKudos": 4031,
     "savedRuns": 5608,

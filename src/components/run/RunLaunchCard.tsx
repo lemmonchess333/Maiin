@@ -78,6 +78,7 @@ export default function RunLaunchCard({
   purpose,
 }: RunLaunchCardProps) {
   const name = runSessionName(workout, racePace);
+  const about = runSessionAbout(workout, { racePace });
   const unit = useDistanceUnit();
 
   const target = prefill.target;
@@ -162,15 +163,13 @@ export default function RunLaunchCard({
             </p>
           )}
           <p className="text-sm text-muted-foreground mt-2">
-            {workout.description}
+            {/* Run21 (2): the session's one feel line. */}
+            {about.feel}
             {workout.config.strides &&
-              ` · ${workout.estimatedDuration} min total, including strides`}
+              ` ${workout.estimatedDuration} min in all, strides included.`}
           </p>
           <RunPurpose>
-            <RunAbout
-              about={runSessionAbout(workout, { racePace })}
-              why={purpose}
-            />
+            <RunAbout about={about} why={purpose} />
           </RunPurpose>
         </div>
 

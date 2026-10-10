@@ -54,7 +54,7 @@ import {
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
-import { runSessionName } from "@/lib/runSessionAbout";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
@@ -378,9 +378,15 @@ export default function DayActionSheet({
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
                   {runSessionName(selectedRunTemplate, selectedRacePace)}
                 </p>
-                {selectedRunTemplate?.description && (
+                {/* Run21 (2): the session's one feel line. Its shape is
+                    "What it is", in "Why this run" below. */}
+                {selectedRunTemplate && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {selectedRunTemplate.description}
+                    {
+                      runSessionAbout(selectedRunTemplate, {
+                        racePace: selectedRacePace,
+                      }).feel
+                    }
                   </p>
                 )}
                 <RunPlanPurpose

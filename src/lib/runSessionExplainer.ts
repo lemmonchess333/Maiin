@@ -125,10 +125,10 @@ export function runSessionExplainer(
     return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
   }
   if (type === "tempo") {
-    return "Tempo — grows how long you can hold your threshold pace. The pace itself comes from your fitness, so the session ramps volume, not speed.";
+    return "Tempo — it stretches how long you can hold a strong pace. Its pace comes from your fitness, so the sessions grow longer, not faster.";
   }
   if (type === "intervals") {
-    return "Intervals — short fast repeats for top-end economy. The recovery between reps is part of the session, not a failure of it.";
+    return "Intervals — short, fast repeats raise the pace you can race at. The recovery between reps is part of the session, not a failure of it.";
   }
   // Easy family.
   if (isMediumLong) {
@@ -138,6 +138,6 @@ export function runSessionExplainer(
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
   }
   return phase === "base"
-    ? "Base phase — easy aerobic volume is the foundation everything later stands on."
+    ? "Base phase — easy running now is the foundation everything later stands on."
     : "Easy day — it makes the hard days work. If it feels too easy, it's right.";
 }

@@ -319,6 +319,9 @@ export default function DayPeekCard({
     programState?.runPlan
   );
   const runName = runSessionName(runTemplate, runRacePace);
+  const runAbout = runTemplate
+    ? runSessionAbout(runTemplate, { racePace: runRacePace })
+    : null;
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -557,16 +560,12 @@ export default function DayPeekCard({
                         ? `${runTemplate.config.targetDistanceKm} km`
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
+                    {/* Run21 (2): the session's one feel line. */}
                     {" · "}
-                    {runTemplate.description}
+                    {runAbout?.feel}
                   </p>
                   <RunPurpose>
-                    <RunAbout
-                      about={runSessionAbout(runTemplate, {
-                        racePace: runRacePace,
-                      })}
-                      why={runPurpose}
-                    />
+                    <RunAbout about={runAbout} why={runPurpose} />
                   </RunPurpose>
                 </div>
               )}

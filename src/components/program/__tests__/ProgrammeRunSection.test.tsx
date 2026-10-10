@@ -850,6 +850,34 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     );
   });
 
+  it("Run21 (2): today's run card gives one feel line, outside 'Why this run'", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            templateId: "easy_30",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    const feel = screen
+      .getAllByText("Easy: you can talk in full sentences. Slower is fine.")
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    // It takes the template's description's place.
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
+    // The physiology name shows only under "Coaches also call this".
+    const zone = screen.getAllByText(/Zone 2/);
+    expect(zone).toHaveLength(1);
+    expect(zone[0].closest("details")).toHaveTextContent(
+      /Coaches also call this.*Zone 2, or aerobic running\./
+    );
+  });
+
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
