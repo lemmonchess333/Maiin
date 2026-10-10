@@ -33,6 +33,14 @@ The code is in `src/test/sim/`, and the suites are in
   `test-results/sim/running-outcomes.md`. `sim-soak.yml` runs both at 500
   seeds each Monday, outside the PR gate, and uploads the reports with the
   run (about 30 and 45 minutes; each suite's timeout grows with the seeds).
+- The measurements: `TROPOS_SIM_MEASURE=20 npx vitest run
+src/features/program/__tests__/sim/measuring.sim.test.ts` runs the
+  comparisons decisions.md marks "Measuring" (each option against the plan
+  as built, both lifter model variants) and writes
+  `test-results/sim/measuring.md`, uncommitted. Without the variable the
+  suite skips. An option the app doesn't build is a `PlanVariant`
+  (`liftSeason.ts`): applied to the plan setup makes and again after each
+  day's rollover, so the weeks the app builds later get it too.
 
 ## What runs
 
