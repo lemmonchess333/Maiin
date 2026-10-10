@@ -6,6 +6,29 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Race plans the rollover dropped end on the server (2026-10-10)
+
+Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
+`_decideReconciliationActions` (`functions/index.js`). A profile left in
+`race_prep` on a finished race after the rollover dropped its plan (before
+the plan was kept until its race ends) returns to free running once the
+race is past both exits the sweep would have taken: day 15, 21, 28 or 35
+after a 5K, 10K, half or marathon.
+
+The decision tests and the emulator case cover the rule and its
+profile-only write; these need the deployed function.
+
+- [ ] **The deployed source.** The deploy's read-back prints
+      `Verified deployed source: dailyRaceReconciliationSweep`.
+- [ ] **The first sweep.** The 04:00 UTC log line after the deploy ends
+      `orphanedGoalCleared=N`. Every stuck active account goes in that one
+      sweep, so N may be more than one; most days after, 0. Open one
+      profile it counted: `runMode` is `freeform`, `raceGoal` is gone, and
+      Train shows free running, not "Race day has passed".
+- [ ] **A race ahead stays.** A race-prep account whose race is still
+      ahead, or whose plan is still there, is not counted and keeps its
+      race.
+
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,

@@ -3161,7 +3161,12 @@ async function maybeSendWeeklyRecap(uid, now) {
     }
   }
   const status = ctx
-    ? _fellBehindRatio(ctx.profile, ctx.programState, priorWeekRuns)
+    ? _fellBehindRatio(
+        ctx.profile,
+        ctx.programState,
+        priorWeekRuns,
+        range.weekKey
+      )
     : null;
   const behind = !!(status && status.fellBehind);
 
@@ -3536,6 +3541,7 @@ function _decideReconciliationActions(
   let noShowWritten = false;
   let recoveryCleared = false;
   let noShowCleared = false;
+  let orphanedGoalCleared = false;
 
   // ── L1 decision ────────────────────────────────────────────────
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
@@ -3687,21 +3693,66 @@ function _decideReconciliationActions(
     }
   }
 
-  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
+  // ── Orphaned race goal ─────────────────────────────────────────
+  // L1, L3 and L4 all read `runPlan`. The client's rollover keeps a race's
+  // plan until they end it, but the plans it dropped before it kept them
+  // are gone, and their profiles kept `race_prep` and the finished race with
+  // nothing left to end them. So a race-prep profile with no plan returns
+  // to free running here, once its race is past both exits above would have
+  // taken: the no-show return (L4), and the end of the recovery a finished
+  // race would have had plus its grace (L3). A successor race is still
+  // ahead, so it is kept. No plan means L1, L3 and L4 have not fired: they
+  // all need one.
+  const goal = (profile && profile.raceGoal) || null;
+  if (
+    !runPlan &&
+    profile &&
+    profile.runMode === "race_prep" &&
+    goal &&
+    typeof goal.targetDate === "string"
+  ) {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const recoveryEnd = _recoveryEndDateForRace(goal);
+    const exitMs = Math.max(
+      _parseUtcDate(goal.targetDate).getTime() +
+        (NO_SHOW_EXIT_GRACE_DAYS + 1) * dayMs,
+      recoveryEnd
+        ? _parseUtcDate(recoveryEnd).getTime() +
+            RECOVERY_EXIT_GRACE_DAYS * dayMs
+        : 0
+    );
+    if (nowMs >= exitMs) {
+      profilePayload = resolveRecoveryExit({
+        currentRaceGoal: goal,
+        completedRaceGoal: goal,
+      });
+      orphanedGoalCleared = true;
+    }
+  }
+
+  if (
+    !noShowWritten &&
+    !recoveryCleared &&
+    !noShowCleared &&
+    !orphanedGoalCleared
+  ) {
     return {
       payload: null,
       profilePayload: null,
       noShowWritten,
       recoveryCleared,
       noShowCleared,
+      orphanedGoalCleared,
     };
   }
   return {
-    payload: updatePayload,
+    // The orphaned goal writes the profile alone: there is no plan to change.
+    payload: Object.keys(updatePayload).length > 0 ? updatePayload : null,
     profilePayload,
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   };
 }
 
@@ -3732,6 +3783,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   const { userRef, programRef, profile, programState, programUpdateTime } = ctx;
@@ -3763,6 +3815,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   } = _decideReconciliationActions(
     profile,
     programState,
@@ -3771,7 +3824,12 @@ async function _runDailyRaceReconciliationForUser(uid) {
   );
 
   if (!payload && !profilePayload) {
-    return { noShowWritten, recoveryCleared, noShowCleared };
+    return {
+      noShowWritten,
+      recoveryCleared,
+      noShowCleared,
+      orphanedGoalCleared,
+    };
   }
 
   // R1A: tombstone guard immediately before the write — per spec
@@ -3789,6 +3847,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
@@ -3828,11 +3887,13 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Include noShowCleared so the sweep's observability counter increments when
   // an L4 clear actually writes (the early no-write return above already did).
-  return { noShowWritten, recoveryCleared, noShowCleared };
+  // An orphaned goal writes no programState (`programWritten` starts true).
+  return { noShowWritten, recoveryCleared, noShowCleared, orphanedGoalCleared };
 }
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
@@ -3847,21 +3908,28 @@ exports.dailyRaceReconciliationSweep = functions
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
       let totalNoShowCleared = 0;
+      let totalOrphanedGoalCleared = 0;
       await sweepActiveUsers({
         name: "dailyRaceReconciliationSweep",
         cutoffDays: 30,
         perUser: async (uid) => {
-          const { noShowWritten, recoveryCleared, noShowCleared } =
-            await _runDailyRaceReconciliationForUser(uid);
+          const {
+            noShowWritten,
+            recoveryCleared,
+            noShowCleared,
+            orphanedGoalCleared,
+          } = await _runDailyRaceReconciliationForUser(uid);
           if (noShowWritten) totalNoShow += 1;
           if (recoveryCleared) totalRecoveryCleared += 1;
           if (noShowCleared) totalNoShowCleared += 1;
+          if (orphanedGoalCleared) totalOrphanedGoalCleared += 1;
         },
       });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
           `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
-          `noShowCleared=${totalNoShowCleared}`
+          `noShowCleared=${totalNoShowCleared}, ` +
+          `orphanedGoalCleared=${totalOrphanedGoalCleared}`
       );
     } catch (err) {
       console.error("dailyRaceReconciliationSweep: fatal error:", {
