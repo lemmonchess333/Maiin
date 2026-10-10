@@ -99,6 +99,36 @@ describe("runSessionExplainer", () => {
     expect(strides).toMatch(/not a hard session/i);
   });
 
+  it("a run-walk says what it is, in every phase (Run20 (5))", () => {
+    // A 5K six weeks out is all run-walk, its taper and race week too, and
+    // there a run-walk was "Taper — easy and short on purpose" and a
+    // "Race-week shakeout".
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_2",
+        ...ctx,
+      });
+      expect(line).toMatch(/^Run-walk/);
+      expect(line).toMatch(/walks are part of the method/);
+      expect(line).not.toMatch(/readiness|safe|VO2/i);
+    }
+  });
+
+  it("the last run-walk is one run without stopping, with no walks between", () => {
+    // Run-walk 6 is a walk, 20 minutes of running and a walk (review of
+    // #2655).
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_6",
+        ...ctx,
+      });
+      expect(line).toMatch(/without stopping/);
+      expect(line).not.toMatch(/walks between/);
+    }
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {

@@ -1062,6 +1062,28 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
     vdot: null,
   });
 
+  it("Run20 (5): a run-walk is a timed session of runs and walks, with no pace", () => {
+    // Even with a pace table: the running is by feel, and an average over
+    // runs and walks is no one's running pace.
+    const { prefill } = computePlanMetadata({
+      displayUnit: "km",
+      profileRunMode: "race_prep",
+      todayDayIndex: MONDAY,
+      runPlan: racePlan,
+      runDays: [makeRunDay(MONDAY, "run_walk_1", "easy")],
+      urlTemplateId: null,
+      urlType: null,
+      paceTable: fastTable,
+    });
+    expect(prefill.activityType).toBe("easy");
+    expect(prefill.target).toEqual({ type: "time", value: 29 * 60 });
+    expect(prefill.intervals).toBeUndefined();
+    const segs = prefill.segments!;
+    expect(segs.filter((seg) => seg.label === "Run")).toHaveLength(8);
+    expect(segs.filter((seg) => seg.label === "Walk")).toHaveLength(9);
+    expect(segs.some((seg) => seg.paceTarget !== undefined)).toBe(false);
+  });
+
   it("personalizes a tempo target pace from the user's pace table", () => {
     const { prefill } = computePlanMetadata({
       displayUnit: "km",
