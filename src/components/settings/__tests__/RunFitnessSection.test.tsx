@@ -52,7 +52,10 @@ describe("RunFitnessSection", () => {
       },
     });
     expect(screen.getByText("Personalised paces")).toBeInTheDocument();
-    expect(screen.getByText("Threshold")).toBeInTheDocument();
+    // Named for the sessions run at them (Run21 (2)).
+    expect(screen.getByText("Tempo")).toBeInTheDocument();
+    expect(screen.getByText("Intervals")).toBeInTheDocument();
+    expect(screen.queryByText("Threshold")).toBeNull();
     expect(screen.getByText(/VDOT/)).toBeInTheDocument();
   });
 });

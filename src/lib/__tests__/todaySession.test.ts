@@ -498,3 +498,83 @@ describe("todaySession — one day", () => {
     });
   });
 });
+
+describe("todaySession — a long run that finishes at race pace (Run21 (2))", () => {
+  // Half, 10 weeks: week 6 is the build, where a goal time gives a long run
+  // of 12 km or more a race-pace finish (the launch's gate).
+  const racePlan = (runDays: unknown[]) =>
+    programStateWith({
+      runDays,
+      runPlan: {
+        mode: "race_prep",
+        currentWeek: 5,
+        totalWeeks: 10,
+        raceGoal: { distance: "half", targetDate: "2099-01-01" },
+      },
+    });
+  const racer = (
+    types: Partial<Record<number, DayType>>,
+    targetTimeS?: number
+  ) =>
+    profileWith(types, {
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "half",
+        targetDate: "2099-01-01",
+        ...(targetTimeS ? { targetTimeS } : {}),
+      },
+    });
+  const long15 = { templateId: "long_15k", type: "long" };
+
+  it("gives today's run card the finish its name says", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 3: "run" }, 6330),
+        programState: racePlan([runDay(WEDNESDAY, long15)]),
+      })
+    );
+    expect(session.run?.racePace).toMatchObject({ kind: "finish", blockKm: 5 });
+  });
+
+  it("gives none without a goal time", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 3: "run" }),
+        programState: racePlan([runDay(WEDNESDAY, long15)]),
+      })
+    );
+    expect(session.run?.racePace).toBeNull();
+  });
+
+  it("gives a tempo at the goal pace its race pace, and names it so", () => {
+    const tempo = { templateId: "tempo_20", type: "tempo" };
+    const today = todaySession(
+      input({
+        profile: racer({ 3: "run" }, 6330),
+        programState: racePlan([runDay(WEDNESDAY, tempo)]),
+      })
+    );
+    expect(today.run?.racePace).toMatchObject({ kind: "tempo" });
+    const restDay = todaySession(
+      input({
+        profile: racer({ 4: "run" }, 6330),
+        programState: racePlan([runDay(THURSDAY, tempo)]),
+      })
+    );
+    expect(restDay.rest).toMatchObject({
+      tomorrow: { label: "20 Min Tempo at race pace" },
+    });
+  });
+
+  it("names it so on the rest day before it", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 4: "run" }, 6330),
+        programState: racePlan([runDay(THURSDAY, long15)]),
+      })
+    );
+    expect(session.rest).toMatchObject({
+      tomorrow: { label: "Long 15K with race pace" },
+    });
+  });
+});

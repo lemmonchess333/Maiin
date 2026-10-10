@@ -224,12 +224,22 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     );
     expect(screen.getByText("30 min total")).toBeInTheDocument();
     expect(screen.getByText("30 min total").closest("details")).toBeNull();
-    expect(
-      screen.getByText(/Conversational pace; finish with 4/)
-    ).toBeInTheDocument();
+    // Run21 (2): the session's one feel line, in its description's place.
+    const feel = screen
+      .getAllByText(/Easy, then quick and relaxed on the strides/)
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    expect(feel[0]).toHaveTextContent(/^30 min total · Easy, then quick/);
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
     const why = screen.getByText("Why this run").closest("details")!;
     expect(why).not.toHaveAttribute("open");
     expect(why).toHaveTextContent(/relaxed 20-second accelerations/);
+    // Run21 (3): what it is, how it should feel and what to do, too.
+    expect(why).toHaveTextContent(
+      /What it is.*An easy run that ends with 4 strides/
+    );
+    expect(why).toHaveTextContent(/How it should feel.*Easy, then quick/);
+    expect(why).toHaveTextContent(/If it feels wrong.*Leave the strides out/);
   });
 
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
@@ -1148,5 +1158,82 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
         new RegExp(`${groupTextRe(1850)} ${CALORIE_UNIT} · 140g protein`)
       )
     ).toBeInTheDocument();
+  });
+});
+
+describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", () => {
+  // Half, 10 weeks: week 6 is the build, where a goal time gives a long run
+  // of 12 km or more a race-pace finish (the launch's gate).
+  function renderLong(
+    targetTimeS?: number,
+    templateId = "long_15k",
+    type = "long"
+  ) {
+    const date = dayOfThisWeek(2);
+    const profile = {
+      ...makeProfile(
+        makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+      ),
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "half",
+        targetDate: "2099-01-01",
+        ...(targetTimeS ? { targetTimeS } : {}),
+      },
+    } as UserProfile;
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: 2,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId,
+        type,
+      }),
+    ]);
+    program.runPlan = {
+      mode: "race_prep",
+      currentWeek: 5,
+      totalWeeks: 10,
+      raceGoal: { distance: "half", targetDate: "2099-01-01" },
+    } as ProgramState["runPlan"];
+    return renderCard(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("names it and says why it's in the week", () => {
+    renderLong(6330);
+    expect(screen.getByText("Long 15K with race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /What it is.*finishing at your goal race pace/
+    );
+    expect(why).toHaveTextContent(/How it should feel.*Easy until the final/);
+    expect(why).toHaveTextContent(/Why it's in your week.*rehearses race day/);
+  });
+
+  it("names a tempo at the goal race pace, and why", () => {
+    renderLong(6330, "tempo_20", "tempo");
+    expect(screen.getByText("20 Min Tempo at race pace")).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).toHaveTextContent(
+      /Why it's in your week.*what race pace feels like/
+    );
+  });
+
+  it("is a plain long run without a goal time", () => {
+    renderLong();
+    expect(screen.getByText("Long 15K")).toBeInTheDocument();
+    expect(screen.queryByText(/race pace/)).toBeNull();
   });
 });

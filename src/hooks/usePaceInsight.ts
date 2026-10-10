@@ -5,6 +5,7 @@ import { auth } from "@/lib/firebase";
 import { useSubscription } from "@/lib/subscription";
 import { useRunningStats } from "./useRunningStats";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import {
   resolvePaceInsight,
   vdotFromRace,
@@ -37,6 +38,8 @@ export interface PaceInsightRun {
   activityType?: string;
   isInvalid?: boolean;
   savedAnyway?: boolean;
+  /** The template the run was, when it was one. */
+  templateId?: string;
 }
 
 export interface PaceInsightController {
@@ -110,7 +113,9 @@ export function usePaceInsightFromRuns(
           run.completedAt instanceof Date &&
           Number.isFinite(run.completedAt.getTime()) &&
           run.completedAt.getTime() >= cutoffMs &&
-          isPaceEligible(run)
+          isPaceEligible(run) &&
+          // A run-walk's time includes its walks (Run20 (5)).
+          !isRunWalkTemplateId(run.templateId)
       )
       .map((run) => ({
         distanceM: run.distance,

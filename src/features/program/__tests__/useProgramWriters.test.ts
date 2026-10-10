@@ -25,6 +25,7 @@ import { createRequire } from "node:module";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import { toCompletionSetLogs } from "../warmupRamp";
 import {
   localWeekKey,
@@ -170,6 +171,8 @@ type MockProfile = {
   primaryGoal?: string;
   program?: { goal?: string };
   raceLegTrim?: boolean;
+  runFrequency?: string;
+  onboardingCompletedAt?: { toMillis: () => number };
 };
 
 let mockProfile: MockProfile | null = null;
@@ -1329,6 +1332,80 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     }
     // Phase preserved (we're still in recovery).
     expect(lastWrite.runPlan?.phase).toBe("recovery");
+  });
+
+  /* Run20 (5): a new runner's race can come in their first weeks, and the
+     recovery week after it was easy 30s, 30 minutes non-stop. Both writers
+     of a recovery week give it that week's run-walk. */
+  describe("a new runner's recovery week", () => {
+    const seedRecovery = () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const future = localDateString(d);
+      // Set up a week ago: well inside the six weeks, next week too.
+      mockProfile = raceProfile("2099-09-15", {
+        runFrequency: "new",
+        onboardingCompletedAt: {
+          toMillis: () => Date.now() - 7 * 24 * 60 * 60 * 1000,
+        },
+      });
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 1,
+        splitType: "ppl",
+        workouts: [],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, smallPlates: false },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+          phase: "recovery",
+          recoveryEndDate: future,
+        },
+      } as ProgramState);
+    };
+    const expectRunWalk = () => {
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan?.phase).toBe("recovery");
+      expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+      for (const rd of lastWrite.runDays!)
+        expect(isRunWalkTemplateId(rd.templateId), rd.templateId).toBe(true);
+    };
+
+    it("when the schedule is refreshed", async () => {
+      seedRecovery();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.refreshRunSchedule({
+          weekSchedule: generateSchedule(0, 4),
+          weeklyRunDaysTarget: 4,
+        });
+      });
+      expectRunWalk();
+    });
+
+    it("when the week moves on", async () => {
+      seedRecovery();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.advanceToNextWeek();
+      });
+      expectRunWalk();
+    });
   });
 
   it("Lift4 (10) — advanceToNextWeek into race week makes it race week, and says so", async () => {

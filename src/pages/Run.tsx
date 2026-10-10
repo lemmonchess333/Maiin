@@ -31,7 +31,6 @@ import {
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import {
-  paceTableFromFitness,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
 } from "../lib/runPaces";
@@ -78,7 +77,7 @@ import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
-import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
   requiresManualDistance,
@@ -92,8 +91,10 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
+import { racePaceWorkFor, raceTargetFromProfile } from "../lib/racePace";
 import { logger } from "../lib/logger";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
@@ -440,6 +441,12 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
+  // A run-walk session (Run20 (5)) is running its steps. A run type picked
+  // on a run-walk day leaves the steps playing, so this reads the template
+  // as the saved run will, the plan's when none was started from.
+  const runWalkSession =
+    !!runConfig?.segments?.length &&
+    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -499,16 +506,9 @@ export default function Run() {
       paceTable: prescriptivePaceTableFromFitness(runFitness ?? null),
       // A2: the user's own goal time turns into training (race-pace long
       // run blocks, goal-pace tempo) — gating lives in the pure helper.
-      raceTarget: raceGoal?.targetTimeS
-        ? {
-            distance: raceGoal.distance,
-            targetTimeS: raceGoal.targetTimeS,
-            // Feasibility gate reads the FULL fitness (the verdict's tier,
-            // deliberately not the consent-gated prescriptive table) — see
-            // the field doc in runPlanMetadata.
-            currentVdot: paceTableFromFitness(runFitness ?? null)?.vdot ?? null,
-          }
-        : null,
+      // The plan's surfaces read the same target, so a run they name for
+      // its race-pace finish has one here.
+      raceTarget: raceTargetFromProfile({ raceGoal, runFitness }),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -618,6 +618,17 @@ export default function Run() {
           ) ?? null)
         : null,
     [planDecision.metadata.actualTemplateId]
+  );
+  // Run21 (2): the launch card names a race-pace finish, by the gate that
+  // gave the prefill its block, on the same inputs.
+  const launchRacePace = useMemo(
+    () =>
+      racePaceWorkFor(
+        launchWorkout,
+        { runMode: profileRunMode, raceGoal, runFitness },
+        programState?.runPlan
+      ),
+    [launchWorkout, profileRunMode, raceGoal, runFitness, programState?.runPlan]
   );
   const canFastLaunch =
     !forceModal &&
@@ -859,8 +870,12 @@ export default function Run() {
        `calculatePace(gps.distance, timer.elapsed)` — the whole-run average
        — and then announced it as that kilometre's pace. Same mistake the
        pace alert below already documents, on the other cue. */
-    audioCues.checkDistanceCue(gps.distance, timer.elapsed);
-    audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    // Run20 (5): not on a run-walk, whose pace is an average over its runs
+    // and its walks, and whose every step speaks its own line.
+    if (!runWalkSession) {
+      audioCues.checkDistanceCue(gps.distance, timer.elapsed);
+      audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    }
 
     // Pace zone alerts for tempo/interval runs.
     //
@@ -896,7 +911,15 @@ export default function Run() {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }
-  }, [gps.distance, gps.points, timer.elapsed, phase, audioCues, runConfig]);
+  }, [
+    gps.distance,
+    gps.points,
+    timer.elapsed,
+    phase,
+    audioCues,
+    runConfig,
+    runWalkSession,
+  ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
   // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
@@ -1273,6 +1296,7 @@ export default function Run() {
             // gesture so audio primes). Customize drops to the full modal.
             <RunLaunchCard
               workout={launchWorkout}
+              racePace={launchRacePace}
               purpose={
                 runSessionPresentation({
                   type: launchWorkout.type,
@@ -1282,6 +1306,7 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
+                  racePace: launchRacePace?.kind,
                 }).purpose
               }
               prefill={planDecision.prefill}

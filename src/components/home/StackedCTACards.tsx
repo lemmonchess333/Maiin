@@ -92,6 +92,7 @@ export default function StackedCTACards({
         <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
           <RunCTACard
             todayRun={run.runDay}
+            racePace={run.racePace}
             completed={run.completed}
             navigate={navigate}
             isFirst={run.isFirst}

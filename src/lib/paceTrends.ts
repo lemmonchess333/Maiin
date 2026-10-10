@@ -11,6 +11,7 @@
 
 import type { ActivityType } from "@/types/run";
 import { isPaceTrendEligible } from "./runStatsEligibility";
+import { isRunWalkTemplateId } from "./workoutTemplates";
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
 
@@ -61,7 +62,14 @@ interface RunForTrend {
   activityType?: ActivityType | string;
   isInvalid?: boolean;
   savedAnyway?: boolean;
+  /** The template the run was, when it was one. */
+  templateId?: string;
 }
+
+/** A run-walk (Run20 (5)) averages its runs and its walks: no one's running
+ *  pace, so it has no trend and sets none. */
+const trendable = (run: RunForTrend) =>
+  isPaceTrendEligible(run) && !isRunWalkTemplateId(run.templateId);
 
 const MIN_COMPARABLE_RUNS = 8;
 const DISTANCE_TOLERANCE = 0.2; // 20%
@@ -72,7 +80,7 @@ export function calculatePaceTrend(
   currentRun: RunForTrend,
   allRuns: RunForTrend[]
 ): PaceTrendResult {
-  if (!isPaceTrendEligible(currentRun)) {
+  if (!trendable(currentRun)) {
     return { trend: "no-data", label: "", className: "" };
   }
 
@@ -83,7 +91,7 @@ export function calculatePaceTrend(
     if (currentRun.id !== undefined && r.id === currentRun.id) return false;
     if (r.completedAt.getTime() === currentRun.completedAt.getTime())
       return false;
-    if (!isPaceTrendEligible(r)) return false;
+    if (!trendable(r)) return false;
     const ratio = r.distance / currentRun.distance;
     return ratio >= 1 - DISTANCE_TOLERANCE && ratio <= 1 + DISTANCE_TOLERANCE;
   });

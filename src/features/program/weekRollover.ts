@@ -32,6 +32,7 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
+import { profileNewRunnerUntil } from "./newRunner";
 import { raceAwaitsItsEnding, weekRolloverAnchor } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
@@ -97,9 +98,9 @@ function makeRunPlanRecord(
  * Callers pass what varies per site — which week, schedule and target
  * (load uses today, week-advance uses next-week start, editor-apply uses
  * an overridden schedule). What does not vary — the runner's tuning, easy
- * pace, time limits and running baseline — is read off the profile here,
- * so no site can leave one out. They were required arguments, written out
- * the same way at all seven sites.
+ * pace, time limits, running baseline and a new runner's first weeks — is
+ * read off the profile here, so no site can leave one out. They were
+ * required arguments, written out the same way at all seven sites.
  */
 export function regenerateRacePlan({
   profile,
@@ -178,6 +179,7 @@ export function regenerateRacePlan({
     easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
     runningBaseline: profile.runningBaseline ?? null,
     runTimeLimits: profile.runTimeLimits ?? null,
+    newRunnerUntil: profileNewRunnerUntil(profile),
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -263,6 +265,7 @@ export function nextRunWeek(
       runDays: scheduleRecoveryWeekV2({
         weekSchedule,
         weekStart: next.weekStart,
+        newRunnerUntil: profileNewRunnerUntil(profile),
       }),
       runPlan: { ...runPlan },
       raceBlock: raceBlockWeek(runPlan),

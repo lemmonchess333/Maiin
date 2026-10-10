@@ -1,4 +1,8 @@
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  RUN_TEMPLATES,
+  type RunTemplate,
+} from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "./programTypes";
 
 /** Recurring availability, chosen by the runner. Null means no extra limit. */
@@ -68,9 +72,11 @@ export function fitRunToTimeLimit(
     original.type === "long" ? limits.longRunMinutes : limits.sessionMinutes;
   if (limit === null || plannedRunMinutes(original, easyPaceSPerKm) <= limit)
     return run;
+  // A run-walk session is a new runner's (Run20 (5)), never a shorter run.
   const candidates = RUN_TEMPLATES.filter(
     (template) =>
       template.type === original.type &&
+      !isRunWalkTemplateId(template.id) &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
       plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
       plannedRunMinutes(template, easyPaceSPerKm) <

@@ -1,3 +1,6 @@
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import type { RacePaceWork } from "@/lib/racePace";
+import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
@@ -20,13 +23,20 @@ import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
 import { paceMinSec } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { paceUnitLabel } from "@/lib/distanceUnits";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  paceUnitLabel,
+} from "@/lib/distanceUnits";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import type { RunConfig } from "./runConfigDefaults";
 import type { ProgramContextStrip } from "./RunSetupModal";
 
 interface RunLaunchCardProps {
   workout: RunTemplate;
+  /** The run's work at the goal race pace, which its name and lines say
+   *  (Run21 (2)). */
+  racePace?: RacePaceWork | null;
   /** Resolved prefill — carries the pace/distance/interval target to display. */
   prefill: Partial<RunConfig>;
   /** Programme context (phase / week) — null for structured-today non-race. */
@@ -56,6 +66,7 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
 
 export default function RunLaunchCard({
   workout,
+  racePace = null,
   prefill,
   strip,
   isExtra,
@@ -66,6 +77,8 @@ export default function RunLaunchCard({
   onBack,
   purpose,
 }: RunLaunchCardProps) {
+  const name = runSessionName(workout, racePace);
+  const about = runSessionAbout(workout, { racePace });
   const unit = useDistanceUnit();
 
   const target = prefill.target;
@@ -83,6 +96,18 @@ export default function RunLaunchCard({
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
+  /* Run21 (2): a long run's race-pace finish, which its name and lines
+     only name, with its size and pace before the run starts. Labelled as
+     the run's own segment is, in the reader's unit. */
+  const racePaceLine =
+    racePace?.kind === "finish"
+      ? `Last ${distanceIn(racePace.blockKm * 1000, unit)
+          .toFixed(1)
+          .replace(/\.0$/, "")} ${distanceUnitLabel(unit)} at ${paceMinSec(
+          Math.round(racePace.goalPaceS),
+          unit
+        )} ${paceUnitLabel(unit)}`
+      : null;
 
   const eyebrow = isExtra
     ? "Extra run"
@@ -115,7 +140,7 @@ export default function RunLaunchCard({
                 {eyebrow}
               </p>
               <div className="flex items-baseline gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold truncate">{workout.name}</h1>
+                <h1 className="text-2xl font-bold truncate">{name}</h1>
                 {distanceKm != null && (
                   <span className="text-xl font-bold font-mono tabular-nums text-running">
                     {distanceKm} km
@@ -130,17 +155,22 @@ export default function RunLaunchCard({
             </div>
           </div>
 
-          {(paceLabel || intervals) && (
+          {(paceLabel || intervals || racePaceLine) && (
             <p className="text-sm font-mono tabular-nums text-muted-foreground mt-3">
-              {[intervals, paceLabel].filter(Boolean).join("  ·  ")}
+              {[intervals, paceLabel, racePaceLine]
+                .filter(Boolean)
+                .join("  ·  ")}
             </p>
           )}
           <p className="text-sm text-muted-foreground mt-2">
-            {workout.description}
+            {/* Run21 (2): the session's one feel line. */}
+            {about.feel}
             {workout.config.strides &&
-              ` · ${workout.estimatedDuration} min total, including strides`}
+              ` ${workout.estimatedDuration} min in all, strides included.`}
           </p>
-          <RunPurpose>{purpose}</RunPurpose>
+          <RunPurpose>
+            <RunAbout about={about} why={purpose} />
+          </RunPurpose>
         </div>
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />
@@ -156,7 +186,7 @@ export default function RunLaunchCard({
           className="btn-start-run-pulse text-lg"
           data-guide-anchor="first-run"
         >
-          Start {workout.name}
+          Start {name}
         </Button>
         <Button variant="ghost" fullWidth onClick={onCustomize}>
           Customise

@@ -486,6 +486,46 @@ suite("completeOnboarding — emulator integration", () => {
     expect(psData.runDays[0].status).toBe("planned");
   });
 
+  /* A new runner's first weeks count from the day setup finished
+     (`profileNewRunnerUntil`), and setup can finish weeks after sign-up:
+     the profile keeps both days. */
+  it("stamps the day setup finished, and keeps the day the account began", async () => {
+    const signedUp = admin.firestore.Timestamp.fromMillis(
+      Date.now() - 14 * 24 * 60 * 60 * 1000
+    );
+    await db
+      .collection("users")
+      .doc(TEST_UID)
+      .set({ uid: TEST_UID, onboardingComplete: false, createdAt: signedUp });
+    const before = Date.now();
+    await completeOnboarding.run(
+      {
+        profileData: {
+          ...validProfileUpdates(),
+          weightKg: 72,
+          heightCm: 180,
+          age: 28,
+          sex: "male",
+          activityLevel: "active",
+        },
+        programState: validProgramState(),
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    const userData = (
+      await getDocSettled(db.collection("users").doc(TEST_UID))
+    ).data();
+    expect(userData.createdAt.toMillis()).toBe(signedUp.toMillis());
+    expect(userData.onboardingCompletedAt).toBeInstanceOf(
+      admin.firestore.Timestamp
+    );
+    // Within a minute of the call: the emulator's clock is this machine's.
+    expect(
+      Math.abs(userData.onboardingCompletedAt.toMillis() - before)
+    ).toBeLessThan(60_000);
+  });
+
   it("rejects a tombstoned account with account-deleted and recreates NOTHING", async () => {
     await seedCompletedDeletionTombstone(TEST_UID);
     await expect(

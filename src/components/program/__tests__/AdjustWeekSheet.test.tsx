@@ -18,7 +18,7 @@ import {
 } from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
 import { getEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
-import { localWeekKey } from "@/lib/dateHelpers";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import type { RealignOutcome } from "@/features/program/programOutcome";
 
 vi.mock("@/lib/toast", () => ({
@@ -660,5 +660,48 @@ describe("AdjustWeekSheet — preview safety", () => {
       expect.objectContaining({ key: "rd-1" }),
       expect.objectContaining({ key: "rd-2" }),
     ]);
+  });
+});
+
+/* Run20 (5): in the weeks after run-walk a new runner's runs are held to
+   the minutes the running has built to, and easing one keeps to them. */
+describe("AdjustWeekSheet — a new runner's week", () => {
+  it("eases to the easy run the week's minutes allow", async () => {
+    const applyEaseWeek = vi.fn(async () => 1);
+    const weekKey = localWeekKey(new Date());
+    render(
+      <AdjustWeekSheet
+        open
+        onClose={vi.fn()}
+        runDays={[
+          {
+            id: "rd-q",
+            dayIndex: new Date().getDay(),
+            date: localDateString(),
+            weekKey,
+            templateId: "8x400",
+            type: "intervals",
+            completed: false,
+            status: "planned",
+          },
+        ]}
+        raceGoal={{ distance: "5k", targetDate: "2999-10-17" }}
+        applyEaseWeek={applyEaseWeek}
+        revertEaseWeek={vi.fn(async () => ({ ok: true }))}
+        uid={UID}
+        realignRacePlan={vi.fn()}
+        // The six weeks ended as this week began: the first week after.
+        newRunnerUntil={weekKey}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    await vi.waitFor(() =>
+      expect(applyEaseWeek).toHaveBeenCalledWith([
+        expect.objectContaining({ key: "rd-q", toTemplateId: "easy_20" }),
+      ])
+    );
   });
 });

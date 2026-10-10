@@ -97,4 +97,69 @@ describe("useRunFitnessAutoDerive — the write (RUN-EV-08 two-tier consent)", (
     vi.doUnmock("@/lib/runStatsEligibility");
     vi.resetModules();
   });
+
+  /* Run20 (5): a run-walk's time includes its walks, so it measures no
+     one's running. A new runner's first weeks are all run-walk, and three
+     of them made a benchmark of their walking pace. */
+  describe("leaves out a run-walk", () => {
+    const run = (i: number, duration: number, templateId?: string) => ({
+      id: `run-${i}`,
+      distance: 5000,
+      duration,
+      avgPace: duration / 5,
+      elevationGain: 0,
+      calories: 0,
+      activityType: "freerun",
+      completedAt: new Date(`2026-08-0${i + 1}T08:00:00Z`),
+      isOutdoor: true,
+      ...(templateId ? { templateId } : {}),
+    });
+    const derive = async (runs: ReturnType<typeof run>[]) => {
+      vi.resetModules();
+      const updateProfile = vi.fn().mockResolvedValue({ ok: true });
+      vi.doMock("@/lib/auth", () => ({
+        useAuth: () => ({
+          profile: { uid: "u-1", runFitness: undefined },
+          updateProfile,
+        }),
+      }));
+      vi.doMock("../useRunningStats", () => ({
+        useRunningStats: () => ({ loading: false, runs }),
+      }));
+      const { useRunFitnessAutoDerive: hook } =
+        await import("../useRunFitnessAutoDerive");
+      const { renderHook, act } = await import("@testing-library/react");
+      renderHook(() => hook());
+      await act(async () => {});
+      vi.doUnmock("@/lib/auth");
+      vi.doUnmock("../useRunningStats");
+      vi.resetModules();
+      return updateProfile;
+    };
+
+    it("deriving from the runs around it", async () => {
+      const updateProfile = await derive([
+        run(0, 1500),
+        run(1, 1100, "run_walk_4"),
+        run(2, 1400),
+        run(3, 1450),
+      ]);
+      expect(updateProfile).toHaveBeenCalledTimes(1);
+      expect(updateProfile.mock.calls[0][0]).toMatchObject({
+        runFitness: {
+          benchmark: { distanceM: 5000, timeS: 1400 },
+          sourceRunId: "run-2",
+        },
+      });
+    });
+
+    it("deriving nothing from run-walks alone", async () => {
+      const updateProfile = await derive([
+        run(0, 2100, "run_walk_1"),
+        run(1, 2000, "run_walk_2"),
+        run(2, 1900, "run_walk_3"),
+      ]);
+      expect(updateProfile).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -12,6 +12,7 @@ import {
   addLocalDays,
   dateForDayOfWeek,
   generateScheduledRunId,
+  localDateString,
   localWeekKey,
   parseLocalDate,
   startOfLocalWeek,
@@ -21,6 +22,7 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
+import { newRunnerTemplate } from "./newRunner";
 import { chooseQualityRunSlots } from "./runPlacement";
 import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 
@@ -818,6 +820,8 @@ export function scheduleStructuredWeekV2(
 export function scheduleRecoveryWeekV2(input: {
   weekSchedule: ScheduleDay[];
   weekStart: string;
+  /** Run20 (5): as the race plan takes it (`RacePlanV2Input`). */
+  newRunnerUntil?: string | null;
 }): ScheduledRunDay[] {
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -825,11 +829,19 @@ export function scheduleRecoveryWeekV2(input: {
   if (runEligibleSlots.length === 0) return [];
 
   const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
+  // A new runner's recovery week is that week's run-walk, or the runs the
+  // running has built to, as the race plan's weeks are.
+  const templateId =
+    newRunnerTemplate(
+      "easy_30",
+      localDateString(weekStart),
+      input.newRunnerUntil
+    )?.id ?? "easy_30";
   return runEligibleSlots
     .map((dayIndex) =>
       buildRunDayV2({
         dayIndex,
-        templateId: "easy_30",
+        templateId,
         type: "easy",
         weekStart,
       })
@@ -932,6 +944,15 @@ export interface RacePlanV2Input {
    * to the nominal ceiling on the weekly refresh.
    */
   easyPaceSPerKm?: number | null;
+  /**
+   * Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`). A
+   * week that starts before it gets no tempo or intervals, in build or
+   * taper, and every run in it but the race is the week's run-walk session
+   * (`runWalkTemplateIdForWeek`). Null/omitted → no new runner's weeks,
+   * byte-identical to before. Every live path threads it, from the profile
+   * (`profileNewRunnerUntil`) or, at setup, from the answer just given.
+   */
+  newRunnerUntil?: string | null;
 }
 
 export interface RacePlanV2Output {
@@ -1031,6 +1052,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     const weekStart = addLocalDays(weekStartDate, offset * 7);
     const week: ScheduledRunDay[] = [];
+    // Run20 (5): a new runner's first weeks hold no tempo or intervals.
+    const newRunnerWeek =
+      !!input.newRunnerUntil &&
+      localDateString(weekStart) < input.newRunnerUntil;
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
@@ -1251,7 +1276,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         );
       } else if (phase === "build") {
         const allowQuality = !hardCapApplies || w % 2 === 0;
-        if (allowQuality && !skipQualityEntirely && !detrainedSkipsQuality) {
+        if (
+          allowQuality &&
+          !skipQualityEntirely &&
+          !detrainedSkipsQuality &&
+          !newRunnerWeek
+        ) {
           // 1 quality + rest easy (or all easy if compressed and
           // the long run already consumed the week's quality budget).
           // Gentler forces the quality to tempo — no intervals.
@@ -1352,7 +1382,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it too (freshness over sharpening); a detrained runner drops
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
-        if (!compressed && !gentler && !detrainedSkipsQuality) {
+        if (
+          !compressed &&
+          !gentler &&
+          !detrainedSkipsQuality &&
+          !newRunnerWeek
+        ) {
           week.push(
             buildRunDayV2({
               dayIndex: remaining[0],
@@ -1414,7 +1449,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
   const flaggedWeeks = weeks.map((week) => {
-    const limited = week.map((row) =>
+    // Run20 (5): every run but the race in a new runner's first weeks is
+    // that week's run-walk session, and after them each run is held to the
+    // minutes the running has built to (`newRunnerTemplate`). Applied before
+    // the fits, which leave a run-walk session as it is: each fits in 30
+    // minutes, the shortest time limit there is, and the running baseline
+    // fits continuous runs. Both fits only ever shorten a run.
+    const walked = week.map((row) => {
+      const next =
+        row.type === "race"
+          ? null
+          : newRunnerTemplate(
+              row.templateId,
+              row.weekKey ?? "",
+              input.newRunnerUntil,
+              input.easyPaceSPerKm
+            );
+      return next ? { ...row, templateId: next.id, type: next.type } : row;
+    });
+    const limited = walked.map((row) =>
       fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
     );
     const fitted = fitWeekToRunningBaseline(

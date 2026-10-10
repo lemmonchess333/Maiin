@@ -221,8 +221,11 @@ export default function RunFitnessSection({
                 dash where one row is too narrow for it. Wide-first. */}
             <div className="grid grid-cols-2 @max-[10em]:grid-cols-1 gap-2">
               <PaceRow label="Easy" band={paceTable.easy} />
-              <PaceRow label="Threshold" band={paceTable.threshold} />
-              <PaceRow label="Interval" band={paceTable.interval} />
+              {/* Named for the sessions run at them (Run21 (2)): the
+                  physiology names, threshold and VO2 max, are the "Coaches
+                  also call this" line in each run's "Why this run". */}
+              <PaceRow label="Tempo" band={paceTable.threshold} />
+              <PaceRow label="Intervals" band={paceTable.interval} />
               <PaceRow label="10K race" value={paceTable.race["10k"]} />
             </div>
           </>

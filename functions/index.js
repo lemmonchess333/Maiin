@@ -834,6 +834,12 @@ exports.completeOnboarding = functions
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
+      // The day setup finished, which a new runner's first weeks count from
+      // (`profileNewRunnerUntil`). Setup's own plan counts from that day, so
+      // a plan made later has to as well: `createdAt` is sign-up, and setup
+      // can finish weeks after it. Server time, and not client-writable.
+      profileData.onboardingCompletedAt =
+        admin.firestore.FieldValue.serverTimestamp();
 
       const db = admin.firestore();
 
