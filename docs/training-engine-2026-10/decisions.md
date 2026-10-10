@@ -156,11 +156,32 @@ defects, all fixed in lemmonchess333/Maiin#2672:
 It also found one test rig defect: the Firestore emulator keeps every
 stream a page opens, which the journeys' clock jumps multiplied.
 
+The year-out marathon with lifting runs the whole block: every planned run
+and lift done, and Train read at the first build week, a step-back week,
+the taper, race week and the week after. Its lifts' lighter weeks fall on
+the run plan's step-back weeks, race week rests the lifts before the race,
+and the race run starts the race's recovery through the server's own step.
+Two copy defects surfaced on the way, each fixed in its own PR:
+
+- the week after the race, Train's recovery banner said "Templates
+  auto-set to easy_30 until recovery ends" (lemmonchess333/Maiin#2677);
+- the Performance tab's run suggestion, which the server writes, said
+  "rebuild aerobic base", left by E2c for its own PR
+  (lemmonchess333/Maiin#2678).
+
+It shows R8's taper as built (no long run for three weeks) without
+changing it; R8 stays Measuring.
+
 The runner with no benchmark is the journey that checks every explanation
 surface (E1, E2, E3, E6, E9 and R2). Each of those surfaces is changed by
 a Run21 or Run20 PR that is still open (lemmonchess333/Maiin#2643, #2656
 to #2661, #2663, #2665, #2666, #2668). Written against main, the journey
 would pin the copy those PRs replace, so it stacks on them instead.
+Building that stack found the PRs' one real interaction: with R2's effort
+words (#2643) and E2c's feel line (#2668) both in, the Run page's launch
+card says how a quality session should feel twice, in two lines. E2c's
+lock gives a session one feel line, so R2's own line goes in whichever of
+the two merges second.
 
 One observation is for the owner rather than a change: a planned long run
 done on a treadmill is not credited until the person taps "Mark scheduled
@@ -819,8 +840,18 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Evidence:** Riegel is optimistic by about 10 minutes for half of
   recreational marathoners; Vickers & Vertosick's Model 1 corrects for
   weekly mileage (running-evidence §6.7 item 7).
-- **Answer: Answered.** A predicted finish is a range, corrected for the
-  runner's mileage. To lock and build with E3.
+- **Held back by the running handoff:** "a new source-derived … race
+  predictor" is an explicit non-adoption, and its "do not encode" column
+  lists "a race prediction presented as certainty"
+  (`docs/running-programming-claude-handoff.md`).
+- **Answer: Owner's** (corrected 2026-10-10; this said "Answered, to lock
+  and build", which missed the handoff). Showing the prediction as a range
+  is what the handoff asks for, but every way of setting the range's width
+  found so far is a source-derived predictor: Vickers & Vertosick's
+  mileage model, or a Riegel-is-optimistic margin taken from it. Whether
+  to adopt one is a change to the handoff's own rule, so it goes to the
+  owner, with the evidence above. Until then the predictions card stays as
+  built: a today-snapshot of the runner's own benchmark, labelled as one.
 
 ### R25. Lifting through a race year (phase-aware hybrids)
 
