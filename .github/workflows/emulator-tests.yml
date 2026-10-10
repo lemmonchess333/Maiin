@@ -394,13 +394,16 @@ jobs:
   # screen and in Firestore as the weeks go.
   #
   # Its own job: a journey runs for minutes, and the emulator-tests job
-  # above already spends most of its 15. Retries are 0 in the project, so
-  # a journey that fails has failed; CI's `retries: 2` would also triple a
-  # failing one. TZ is UTC because the journeys read days in this
-  # process and in the browser, and both must be the same days.
+  # above already spends most of its 15. The year-out marathon alone runs
+  # about 7 minutes on a 4-core machine; 40 leaves room for it, the other
+  # journeys and a cold Chromium install (13 at most).
+  # Retries are 0 in the project, so a journey that fails has failed; CI's
+  # `retries: 2` would also triple a failing one. TZ is UTC because the
+  # journeys read days in this process and in the browser, and both must
+  # be the same days.
   journeys:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 

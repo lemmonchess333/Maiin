@@ -1,6 +1,8 @@
 /**
  * The journeys' screen names (`src/test/journeyScreens.ts`) against the
- * components that draw them: Train's exercise lines and the tab bar here;
+ * components that draw them: Train's exercise lines, its two halves, the
+ * run week, the lift week's banners and the recovery count, and the tab
+ * bar here;
  * setup's names in `Onboarding.test.tsx`, the offer's in `Upgrade.test.tsx`
  * and the workout screen's in `WorkoutSessionCompletion.test.tsx`.
  *
@@ -15,9 +17,21 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import BottomNavigation from "@/components/BottomNavigation";
 import { HomeTabIcon } from "@/components/icons/TabIcons";
+import DeloadBanner from "@/components/program/DeloadBanner";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
-import { HOME, TABS, WORKOUT, trainRowText } from "../journeyScreens";
+import {
+  HOME,
+  LIFT_WEEK_BANNER,
+  RUN_RECOVERY,
+  TABS,
+  TRAIN,
+  WORKOUT,
+  runWeekLabel,
+  runWeekTabName,
+  trainRowText,
+} from "../journeyScreens";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/preloadTab", () => ({ preloadTab: vi.fn() }));
@@ -175,5 +189,90 @@ describe("Home, where setup lands", () => {
       "utf8"
     );
     expect(home).toContain(`title="${HOME.heading}"`);
+  });
+});
+
+/** A file under `src/`, as written. */
+function source(path: string): string {
+  return readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../..", path),
+    "utf8"
+  );
+}
+
+describe("Train's two halves and the run week", () => {
+  it("the switch between lifting and running", () => {
+    const program = source("pages/Program.tsx");
+    expect(program).toContain(`ariaLabel="${TRAIN.mode}"`);
+    expect(program).toContain(`<span>${TRAIN.lift}</span>`);
+    expect(program).toContain(`<span>${TRAIN.run}</span>`);
+  });
+
+  it("labels each day's run with the function the journeys read it by", () => {
+    expect(source("components/program/ProgrammeRunSection.tsx")).toContain(
+      `bottomLabel: hasRun ? ${runWeekLabel.name}(run.template) : ""`
+    );
+  });
+
+  it("names each day of the run week by its run, and today and done", () => {
+    const cell = (
+      key: string,
+      bottomLabel: string,
+      status: "upcoming" | "completed",
+      isToday = false
+    ) => ({ key, center: key, bottomLabel, status, isToday });
+    render(
+      <ProgrammeWeekSelector
+        sport="run"
+        cells={[
+          cell("1", "Tempo", "upcoming", true),
+          cell("2", "15K", "completed"),
+          cell("3", "20K", "upcoming"),
+        ]}
+        selectedKey="1"
+        onSelect={() => {}}
+      />
+    );
+    const week = screen.getByRole("tablist", { name: TRAIN.runWeek });
+    // A day still to run shows its day of the month; a done one, a check.
+    for (const [name, day] of [
+      [runWeekTabName("Tempo", "today"), "1"],
+      [runWeekTabName("20K"), "3"],
+    ])
+      expect(within(week).getByRole("tab", { name })).toHaveTextContent(
+        new RegExp(`^${day}$`)
+      );
+    expect(
+      within(week).getByRole("tab", {
+        name: runWeekTabName("15K", "completed"),
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("counts a race's recovery down in the run half's banner", () => {
+    expect(source("components/program/ProgrammeRunSection.tsx")).toContain(
+      'title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}'
+    );
+    expect("Recovering · 27 days left").toMatch(RUN_RECOVERY);
+    expect("Recovering · 1 day left").toMatch(RUN_RECOVERY);
+  });
+});
+
+describe("the lift week's banner in the weeks a race plan turns", () => {
+  it.each([
+    [undefined, LIFT_WEEK_BANNER.lighter],
+    ["taper", LIFT_WEEK_BANNER.taper],
+    ["race", LIFT_WEEK_BANNER.race],
+    ["after", LIFT_WEEK_BANNER.recovery],
+  ] as const)("raceWeek %s: a region named %s", (raceWeek, name) => {
+    render(
+      <DeloadBanner
+        visible
+        weekKey="2027-02-01"
+        deloadActive
+        raceWeek={raceWeek}
+      />
+    );
+    expect(screen.getByRole("region", { name })).toBeInTheDocument();
   });
 });
