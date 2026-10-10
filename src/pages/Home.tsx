@@ -743,6 +743,14 @@ export default function Home() {
 
   return (
     <PageShell
+      /* The launch animation waits for this before it sets its mark down
+         on the header's, so it reveals today's session and food and not
+         their loading placeholders (LaunchSplash, bounded by its
+         CONTENT_WAIT_MS). Meals and the programme are the moment the
+         Home2 render timing above calls real content; the counts further
+         down (homeSettled) came in about 0.7 s after them when the launch
+         was filmed on the emulator, and are not waited for. */
+      data-page-ready={!mealsLoading && !programLoading ? "" : undefined}
       /* DS3: Home names the day, as every other page names itself. The
          TROPOS wordmark it replaced is already on the launch icon and the
          splash; here the date and "Today" say what the page is about.

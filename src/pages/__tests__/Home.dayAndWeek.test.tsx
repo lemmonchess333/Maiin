@@ -31,6 +31,7 @@ const h = vi.hoisted(() => ({
   meals: [] as Array<{ id: string; date: string; calories?: number }>,
   mealsLoading: false,
   mealsError: null as string | null,
+  programLoading: false,
   dayMap: new Map<
     string,
     { workouts: number; meals: number; caloriesHit: boolean }
@@ -136,7 +137,7 @@ vi.mock("@/hooks/useLifetimeRunStats", () => ({
 vi.mock("@/features/program/useHomeProgram", () => ({
   useHomeProgram: () => ({
     programState: h.programState,
-    loading: false,
+    loading: h.programLoading,
     recentLayoff: "none",
     controller: null,
     overrideRunDay: vi.fn(),
@@ -370,6 +371,7 @@ beforeEach(() => {
   h.meals = [];
   h.mealsLoading = false;
   h.mealsError = null;
+  h.programLoading = false;
   h.dayMap = new Map();
   h.claimMap = new Map();
   h.unclaimedByDate = new Map();
@@ -379,6 +381,29 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+});
+
+describe("Home — tells the launch animation when its content is in", () => {
+  // LaunchSplash sets its mark down on Home's header only once this is
+  // there, so it reveals today's session and food, not their placeholders.
+  const ready = () => document.querySelector("[data-page-ready]");
+
+  it("once the meals and the programme have loaded", () => {
+    renderHome();
+    expect(ready()).not.toBeNull();
+  });
+
+  it("not while the meals are loading", () => {
+    h.mealsLoading = true;
+    renderHome();
+    expect(ready()).toBeNull();
+  });
+
+  it("not while the programme is loading", () => {
+    h.programLoading = true;
+    renderHome();
+    expect(ready()).toBeNull();
+  });
 });
 
 describe("Home — the date follows the clock", () => {
