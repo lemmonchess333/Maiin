@@ -25,7 +25,11 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install browser for JavaScript organiser pages
-        run: npx playwright install --with-deps chromium
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:

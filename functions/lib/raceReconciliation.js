@@ -105,6 +105,7 @@ function _decideReconciliationActions(
   let noShowWritten = false;
   let recoveryCleared = false;
   let noShowCleared = false;
+  let orphanedGoalCleared = false;
 
   // ── L1 decision ────────────────────────────────────────────────
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
@@ -256,21 +257,66 @@ function _decideReconciliationActions(
     }
   }
 
-  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
+  // ── Orphaned race goal ─────────────────────────────────────────
+  // L1, L3 and L4 all read `runPlan`. The client's rollover keeps a race's
+  // plan until they end it, but the plans it dropped before it kept them
+  // are gone, and their profiles kept `race_prep` and the finished race with
+  // nothing left to end them. So a race-prep profile with no plan returns
+  // to free running here, once its race is past both exits above would have
+  // taken: the no-show return (L4), and the end of the recovery a finished
+  // race would have had plus its grace (L3). A successor race is still
+  // ahead, so it is kept. No plan means L1, L3 and L4 have not fired: they
+  // all need one.
+  const goal = (profile && profile.raceGoal) || null;
+  if (
+    !runPlan &&
+    profile &&
+    profile.runMode === "race_prep" &&
+    goal &&
+    typeof goal.targetDate === "string"
+  ) {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const recoveryEnd = _recoveryEndDateForRace(goal);
+    const exitMs = Math.max(
+      _parseUtcDate(goal.targetDate).getTime() +
+        (NO_SHOW_EXIT_GRACE_DAYS + 1) * dayMs,
+      recoveryEnd
+        ? _parseUtcDate(recoveryEnd).getTime() +
+            RECOVERY_EXIT_GRACE_DAYS * dayMs
+        : 0
+    );
+    if (nowMs >= exitMs) {
+      profilePayload = resolveRecoveryExit({
+        currentRaceGoal: goal,
+        completedRaceGoal: goal,
+      });
+      orphanedGoalCleared = true;
+    }
+  }
+
+  if (
+    !noShowWritten &&
+    !recoveryCleared &&
+    !noShowCleared &&
+    !orphanedGoalCleared
+  ) {
     return {
       payload: null,
       profilePayload: null,
       noShowWritten,
       recoveryCleared,
       noShowCleared,
+      orphanedGoalCleared,
     };
   }
   return {
-    payload: updatePayload,
+    // The orphaned goal writes the profile alone: there is no plan to change.
+    payload: Object.keys(updatePayload).length > 0 ? updatePayload : null,
     profilePayload,
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   };
 }
 
