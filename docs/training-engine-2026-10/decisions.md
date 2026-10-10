@@ -87,24 +87,26 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 
 ### Answered, locked and built
 
-| What                                                                   | Answer                        | PR                                                         |
-| ---------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
-| A tempo and intervals say how they feel until there's a pace to give   | R2; Run20 (1)                 | lemmonchess333/Maiin#2643                                  |
-| A medium-long run of an hour or more isn't put beside a hard day       | R9; Run20 (3)                 | lemmonchess333/Maiin#2644                                  |
-| The quality ladder starts at its first rung                            | R13; Run20 (4)                | lemmonchess333/Maiin#2645                                  |
-| After race day, the race plan waits for the race's own ending          | R22 (F6)                      | lemmonchess333/Maiin#2646                                  |
-| A new plan's week runs on the weekend, and the long run goes there     | R4; Run20 (2)                 | lemmonchess333/Maiin#2647                                  |
-| A new runner's first six weeks hold no tempo or intervals              | R14; Run20 (5), first half    | lemmonchess333/Maiin#2648                                  |
-| A new runner's first six weeks run as run-walk, then build from 20 min | R14; Run20 (5), second half   | lemmonchess333/Maiin#2655                                  |
-| The push/pull balance weighs presses against pulls                     | L8; Lift6                     | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
-| The Monday check grades a first week against what it planned           | R20 (F16b)                    | lemmonchess333/Maiin#2651                                  |
-| "Why this run" says what it is, how it should feel and what to do      | E3; Run21 (3)                 | lemmonchess333/Maiin#2656                                  |
-| The run summary speaks only when a run didn't match its type           | E9; Run21 (6)                 | lemmonchess333/Maiin#2657                                  |
-| Tempo and intervals are the quality sessions; "hard" is an effort      | E4; Run21 (4)                 | lemmonchess333/Maiin#2658                                  |
-| "Why this run" names the quality sessions only when the week holds one | E3 (a correction)             | lemmonchess333/Maiin#2660                                  |
-| A run states its own minutes: its time, or a long run's at its pace    | E6; Run21 (5)                 | lemmonchess333/Maiin#2659                                  |
-| One effort language on the run screen, and in heart-rate zones         | E1; Run21 (1)                 | lemmonchess333/Maiin#2661                                  |
-| Train's week selector names each run; "Easy 60" is "Medium-long 60"    | E2, E5; Run21 (2), first part | lemmonchess333/Maiin#2663                                  |
+| What                                                                   | Answer                            | PR                                                         |
+| ---------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| A tempo and intervals say how they feel until there's a pace to give   | R2; Run20 (1)                     | lemmonchess333/Maiin#2643                                  |
+| A medium-long run of an hour or more isn't put beside a hard day       | R9; Run20 (3)                     | lemmonchess333/Maiin#2644                                  |
+| The quality ladder starts at its first rung                            | R13; Run20 (4)                    | lemmonchess333/Maiin#2645                                  |
+| After race day, the race plan waits for the race's own ending          | R22 (F6)                          | lemmonchess333/Maiin#2646                                  |
+| A new plan's week runs on the weekend, and the long run goes there     | R4; Run20 (2)                     | lemmonchess333/Maiin#2647                                  |
+| A new runner's first six weeks hold no tempo or intervals              | R14; Run20 (5), first half        | lemmonchess333/Maiin#2648                                  |
+| A new runner's first six weeks run as run-walk, then build from 20 min | R14; Run20 (5), second half       | lemmonchess333/Maiin#2655                                  |
+| The push/pull balance weighs presses against pulls                     | L8; Lift6                         | lemmonchess333/Maiin#2650 (lock lemmonchess333/Maiin#2649) |
+| The Monday check grades a first week against what it planned           | R20 (F16b)                        | lemmonchess333/Maiin#2651                                  |
+| "Why this run" says what it is, how it should feel and what to do      | E3; Run21 (3)                     | lemmonchess333/Maiin#2656                                  |
+| The run summary speaks only when a run didn't match its type           | E9; Run21 (6)                     | lemmonchess333/Maiin#2657                                  |
+| Tempo and intervals are the quality sessions; "hard" is an effort      | E4; Run21 (4)                     | lemmonchess333/Maiin#2658                                  |
+| "Why this run" names the quality sessions only when the week holds one | E3 (a correction)                 | lemmonchess333/Maiin#2660                                  |
+| A run states its own minutes: its time, or a long run's at its pace    | E6; Run21 (5)                     | lemmonchess333/Maiin#2659                                  |
+| One effort language on the run screen, and in heart-rate zones         | E1; Run21 (1)                     | lemmonchess333/Maiin#2661                                  |
+| Train's week selector names each run; "Easy 60" is "Medium-long 60"    | E2, E5; Run21 (2), first part     | lemmonchess333/Maiin#2663                                  |
+| A long run that finishes at race pace says so                          | E2; Run21 (2), second part        | lemmonchess333/Maiin#2665                                  |
+| A tempo at the goal race pace says so, with its own reasons            | E3 (a correction); Run21 (2), (3) | lemmonchess333/Maiin#2666                                  |
 
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
@@ -128,7 +130,7 @@ correction Run19 recorded.
 | 8×400: the interval band, not repetition pace                        | R8                                        |
 | Long: Home's "about 80 min" from nominal minutes                     | Built (lemmonchess333/Maiin#2659)         |
 | Long: "Steady, controlled effort" while judged against the easy band | R12                                       |
-| Long with a race-pace finish: the peek doesn't mention the block     | E2                                        |
+| Long with a race-pace finish: the peek doesn't mention the block     | Built (lemmonchess333/Maiin#2665)         |
 | Race: "All-out…", and race HR in Z4 for every distance               | R12; E1 built (lemmonchess333/Maiin#2661) |
 | Phase chip "Build · week 9 of 52" with no definition                 | E3                                        |
 | HR zone "Z2 · 111–129 bpm" with no name                              | Built (lemmonchess333/Maiin#2661)         |
@@ -819,8 +821,18 @@ tap away, and a change the person didn't make gets one line.
 - **Built, first part** as Run21 (2) (lemmonchess333/Maiin#2663): Train's
   week selector names each run on two lines ("Easy 30 + strides", "20 Min
   Tempo"), each line ending in "…" when it doesn't fit, and "Easy 60" is
-  "Medium-long 60", one family with 75 and 90. Still to build: the
-  race-pace finish, the feel lines and "Coaches also call this…".
+  "Medium-long 60", one family with 75 and 90.
+- **Built, second part** (lemmonchess333/Maiin#2665): a long run that
+  finishes at race pace is "Long 15K with race pace" on every surface that
+  names it, with its own four lines, and the launch card gives the block's
+  size and pace. One gate (`racePaceWorkFor`) serves the launch and the
+  surfaces. Still to build: the feel lines and "Coaches also call this…".
+- **Found (2026-10-10):** a tempo in a half or marathon plan's build and
+  taper runs at the goal pace (A2), but its reason said the pace "comes
+  from your fitness", the taper's said "easy and short", and Train's card
+  showed the fitness band. **Built** as a correction under Run21 (3)
+  (lemmonchess333/Maiin#2666): "20 Min Tempo at race pace", its own
+  lines and reasons, and the goal pace on Train's card and the day sheet.
 
 ### E3. "About this run", on every run surface
 
