@@ -29,6 +29,70 @@ profile-only write; these need the deployed function.
       ahead, or whose plan is still there, is not counted and keeps its
       race.
 
+## The run screen in the training-engine pass (2026-10-08)
+
+Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
+session, which now judge only the work segments
+(lemmonchess333/Maiin#2633), a planned easy run's time target, countdown and
+finish cue (lemmonchess333/Maiin#2639), a tempo or intervals with no pace
+to give (lemmonchess333/Maiin#2643), and a new runner's run-walk sessions
+(lemmonchess333/Maiin#2655). The unit tests cover which segment is judged
+and what each run is set for; these need a phone's speaker and screen.
+
+- [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
+      tempo: no pace alert in the warm-up; the pace bar appears with the
+      first tempo block and goes in the float and the cool-down; alerts speak
+      only in a block.
+- [ ] **An interval session.** The same for reps and recoveries: the bar and
+      the alerts in the reps only.
+- [ ] **A planned easy run.** Start a planned Easy 40: the screen counts down
+      from 40 minutes, says "Easy running for 40 minutes. Keep it
+      conversational." as it starts, and marks the 40 minutes without saving
+      the run by itself.
+- [ ] **A tempo with no pace yet.** On an account with no benchmark, open a
+      planned tempo: the launch card says "Comfortably hard" where a pace
+      would be, and the run shows no pace bar and speaks no pace alert.
+- [ ] **A run-walk.** On a new runner's account with a race, start the
+      week's planned run-walk and lock the screen: each walk and run is
+      announced as it starts ("Run 1 of 8. 1 minute, easy enough to talk."),
+      on time, for the whole 29 minutes, with no pace bar or pace alert; the
+      summary says nothing about pace.
+
+## After race day, the race's own ending (F6, 2026-10-08)
+
+Affects: the client's rollover after race day, which now leaves the run plan
+and race week's days for the race's own ending, and `weeklyFellBehindCheck`'s
+skip of a week that began after the race (`functions/lib/fellBehindWeek.js`),
+both in lemmonchess333/Maiin#2646. The unit tests cover the rollover and the
+skip; these need the deployed functions and a test account a week past its
+race.
+
+- [ ] **No "fell behind" after the race.** After the deploy, a test account
+      whose race was the week before gets no fell-behind flag from the next
+      Monday's `weeklyFellBehindCheck`, and no recap push saying so.
+- [ ] **A no-show ends race prep.** A test account that skips its race: the
+      Run tab shows the no-show banner from the fourth day, without "All
+      runs done this week", and `dailyRaceReconciliationSweep` returns it to
+      free running after the fourteenth.
+- [ ] **A first week begun on a Thursday** (F16b,
+      lemmonchess333/Maiin#2651). A test account made on a Thursday with
+      runs on Tuesday, Thursday and Saturday, one of them done: no
+      fell-behind flag on its first Monday.
+
+## Setup's recent race (R11, 2026-10-08)
+
+Affects: setup's optional recent 5K or 10K, typed as minutes and seconds,
+and the typed-time reader it shares with Settings → Your running fitness
+(lemmonchess333/Maiin#2653). The unit tests cover the reading and the save;
+these need a phone's keyboard.
+
+- [ ] **The number pad.** On an iPhone, setup's minutes and seconds boxes
+      bring up the number pad, and a time typed there is on the review.
+- [ ] **A colon on the number pad.** On an iPhone, Settings → Your running
+      fitness's finish time and the run plan editor's goal time are one box
+      each that asks for the number pad. Check whether "22:30" can be typed
+      in either; if not, they need setup's minutes-and-seconds boxes.
+
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
 Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,

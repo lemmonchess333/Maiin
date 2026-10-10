@@ -1,0 +1,237 @@
+/**
+ * Feasibility probe (scratch, not for the repo): can a signed-in emulator
+ * journey move the browser clock forward week by week, finish a lift and a
+ * run through the real UI at the shifted date, and watch the client-side
+ * rollover advance the programme? Logs timings for the design report.
+ */
+import { test, expect, type Page } from "@playwright/test";
+import { initializeApp, deleteApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
+import { signInAsTestUser } from "/home/user/Maiin/e2e/helpers/auth";
+import { emulatorActive } from "/home/user/Maiin/e2e/helpers/emulator";
+import { buildPlan } from "/home/user/Maiin/src/features/program/planBuilder";
+import { stripUndefined } from "/home/user/Maiin/src/lib/firestoreGuards";
+import { localDateString, localWeekKey } from "/home/user/Maiin/src/lib/dateHelpers";
+
+test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
+
+const DAY = 86_400_000;
+const log = (...a: unknown[]) => console.log("[probe]", ...a);
+
+function planFor(currentDate: string, raceDate: string) {
+  return buildPlan({
+    primaryGoal: "strength",
+    nutritionPhase: "recomp",
+    experience: "intermediate",
+    bodyweightKg: 82,
+    sex: "male",
+    liftDays: 3,
+    preferredSplit: "auto",
+    runMode: "race_prep",
+    weeklyRunDays: 3,
+    raceGoal: { distance: "marathon", targetDate: raceDate },
+    equipment: "full_gym",
+    injuries: [],
+    currentDate,
+    preserveHistory: false,
+  } as Parameters<typeof buildPlan>[0]);
+}
+
+async function finishLift(page: Page) {
+  await page.goto("program");
+  const start = page.getByRole("button", { name: "Start workout", exact: true });
+  await expect(start).toBeVisible({ timeout: 30_000 });
+  await start.click();
+  try {
+    await page
+      .getByRole("button", { name: /^Full session/ })
+      .click({ timeout: 4_000 });
+  } catch {
+    /* no chooser */
+  }
+  await expect(page.getByLabel("Close workout")).toBeVisible({
+    timeout: 15_000,
+  });
+  const complete = page.getByRole("button", {
+    name: "Mark set complete",
+    exact: true,
+  });
+  const endRest = page.getByRole("button", { name: "End rest", exact: true });
+  const save = page.getByRole("button", { name: "Save workout", exact: true });
+  let clicks = 0;
+  for (let i = 0; i < 400; i++) {
+    if (await save.isVisible()) break;
+    if (await endRest.isVisible()) {
+      await endRest.click();
+      continue;
+    }
+    if ((await complete.count()) === 0) {
+      await page.waitForTimeout(200);
+      continue;
+    }
+    await complete.first().click();
+    clicks++;
+  }
+  await save.click();
+  await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible(
+    { timeout: 20_000 }
+  );
+  return clicks;
+}
+
+async function saveSyntheticRun(page: Page, km: number, minutes: number) {
+  await page.evaluate(
+    ({ km, minutes }) => {
+      history.pushState(
+        {
+          usr: {
+            points: [],
+            distance: km * 1000,
+            elapsed: minutes * 60,
+            splits: [],
+            elevationGain: 0,
+            runConfig: { activityType: "easy" },
+          },
+          key: `probe-${Date.now()}`,
+          idx: (history.state?.idx ?? 0) + 1,
+        },
+        "",
+        "/Maiin/run-summary"
+      );
+      window.dispatchEvent(new PopStateEvent("popstate", { state: history.state }));
+    },
+    { km, minutes }
+  );
+  await page.getByRole("button", { name: "Save run" }).click({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible(
+    { timeout: 20_000 }
+  );
+}
+
+test("clock-shifted lift, run and weekly rollover", async ({ page }) => {
+  test.skip(!emulatorActive, "emulator only");
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  const app = initializeApp({ projectId: "demo-tropos" }, `probe-${Date.now()}`);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const email = `probe-${Date.now()}@tropos.test`;
+  const user = await auth.createUser({
+    email,
+    password: "test-password-123",
+    emailVerified: true,
+  });
+  const root = db.doc(`users/${user.uid}`);
+  const programme = root.collection("programState").doc("current");
+  try {
+    // Pick T0: the next day (from tomorrow) that the plan lifts on, 09:00 UTC.
+    const real = new Date();
+    const probe = planFor(localDateString(real), localDateString(new Date(real.getTime() + 364 * DAY)));
+    const liftDays = probe.weekSchedule
+      .filter((d: { type: string }) => d.type === "lift" || d.type === "both")
+      .map((d: { day: number }) => d.day);
+    log("weekSchedule", JSON.stringify(probe.weekSchedule));
+    let t0 = Date.UTC(real.getUTCFullYear(), real.getUTCMonth(), real.getUTCDate() + 1, 9);
+    while (!liftDays.includes(new Date(t0).getUTCDay())) t0 += DAY;
+    const T0 = new Date(t0);
+    const plan = planFor(localDateString(T0), localDateString(new Date(t0 + 364 * DAY)));
+    await root.set(
+      stripUndefined({
+        uid: user.uid,
+        email,
+        displayName: "Clock Probe",
+        photoURL: null,
+        athleteType: "Hybrid",
+        weightKg: 82,
+        heightCm: 180,
+        age: 30,
+        sex: "male",
+        weeklyMealsTarget: 10,
+        preferredWeightUnit: "kg",
+        preferredHeightUnit: "cm",
+        darkMode: false,
+        onboardingComplete: true,
+        subscriptionTier: "free",
+        currentStreak: 0,
+        longestStreak: 0,
+        lastLogDate: null,
+        adjustCaloriesForTraining: true,
+        targetCalories: 2600,
+        targetProtein: 160,
+        ...plan.profileUpdates,
+      })
+    );
+    await programme.set(stripUndefined(plan.programState));
+    const before = (await programme.get()).data()!;
+    log("T0", T0.toISOString(), "weekNumber", before.weekNumber, "liftWeekKey", before.liftWeekKey,
+      "runDays", (before.runDays ?? []).map((r: { date: string; templateId: string }) => `${r.date}:${r.templateId}`).join(","));
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        const s = document.createElement("style");
+        s.textContent = ".firebase-emulator-warning{display:none !important}";
+        document.head.appendChild(s);
+      });
+    });
+    let t = Date.now();
+    await page.clock.setFixedTime(T0);
+    await signInAsTestUser(page, { email, password: "test-password-123" });
+    log(`sign-in at T0 took ${Date.now() - t} ms`);
+
+    t = Date.now();
+    const clicks = await finishLift(page);
+    const workouts = (await root.collection("workouts").get()).docs.map((d) => d.data());
+    log(`lift via UI took ${Date.now() - t} ms (${clicks} set clicks); saved dates`, workouts.map((w) => w.date),
+      "expected", localDateString(T0));
+    const afterLift = (await programme.get()).data()!;
+    log("after lift: workouts[0].completed", afterLift.workouts?.[0]?.completed,
+      "first exercise weight before/after", before.workouts?.[0]?.exercises?.[0]?.weight, afterLift.workouts?.[0]?.exercises?.[0]?.weight);
+
+    t = Date.now();
+    await saveSyntheticRun(page, 8, 48);
+    const doneAt = Date.now() - t;
+    await expect
+      .poll(async () => (await root.collection("runs").get()).size, { timeout: 30_000 })
+      .toBeGreaterThan(0);
+    const runs = (await root.collection("runs").get()).docs.map((d) => d.data());
+    log(`run via RunSummary state: Done after ${doneAt} ms, on server after ${Date.now() - t} ms; saved`, runs.map((r) => `${r.date} ${r.distance}m sched=${r.scheduledRunId ?? null} planned=${r.plannedTemplateId ?? null} offPlan=${r.offPlan} source=${r.planSource}`));
+
+    for (const weeks of [1, 2, 16]) {
+      if (weeks === 16) {
+        // A second lift, two weeks in, to see progression continue at a shifted clock.
+        t = Date.now();
+        const clicks2 = await finishLift(page);
+        const ws = (await root.collection("workouts").get()).docs.map((d) => d.data().date).sort();
+        log(`second lift at +2w took ${Date.now() - t} ms (${clicks2} clicks); workout dates ${ws.join(",")}`);
+      }
+      t = Date.now();
+      const at = new Date(t0 + weeks * 7 * DAY);
+      await page.clock.setFixedTime(at);
+      await page.goto("program");
+      const wantRunWeek = localWeekKey(at);
+      await expect
+        .poll(async () => (await programme.get()).data()?.runDays?.[0]?.weekKey, { timeout: 90_000 })
+        .toBe(wantRunWeek);
+      const caughtUp = Date.now() - t;
+      // Let both rollovers settle.
+      await page.waitForTimeout(3_000);
+      log(`  run week caught up to ${wantRunWeek} after ${caughtUp} ms`);
+      const s = (await programme.get()).data()!;
+      const homeOk = await page.getByRole("button", { name: "Start workout", exact: true }).isVisible().catch(() => false);
+      log(`+${weeks}w (${at.toISOString().slice(0, 10)}): took ${Date.now() - t} ms; weekNumber ${s.weekNumber} liftWeekKey ${s.liftWeekKey} runPlan.currentWeek ${s.runPlan?.currentWeek} phase ${s.currentPhase} runDays ${(s.runDays ?? []).map((r: { date: string; templateId: string }) => `${r.date}:${r.templateId}`).join(",")} startVisible=${homeOk}`);
+    }
+    t = Date.now();
+    await page.goto("history");
+    await expect(page.locator("h1", { hasText: "Analytics" })).toBeVisible({ timeout: 20_000 });
+    await page.goto("/Maiin/");
+    await expect(page.locator("nav").first()).toBeVisible();
+    log(`history+home at +16w took ${Date.now() - t} ms; page errors: ${JSON.stringify(errors)}`);
+  } finally {
+    await page.close();
+    await db.recursiveDelete(root);
+    await auth.deleteUser(user.uid);
+    await deleteApp(app);
+  }
+});

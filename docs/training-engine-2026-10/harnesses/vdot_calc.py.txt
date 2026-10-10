@@ -1,0 +1,71 @@
+import math, sys
+
+def vo2_cost(v):  # v in m/min -> mL/kg/min (Daniels & Gilbert 1979)
+    return -4.60 + 0.182258*v + 0.000104*v*v
+
+def frac_max(t):  # t in minutes -> fraction of VO2max sustainable
+    return 0.8 + 0.1894393*math.exp(-0.012778*t) + 0.2989558*math.exp(-0.1932605*t)
+
+def vdot(dist_m, t_min):
+    v = dist_m / t_min
+    return vo2_cost(v) / frac_max(t_min)
+
+def race_time(vd, dist_m):
+    lo, hi = 1.0, 2000.0
+    for _ in range(200):
+        mid = (lo+hi)/2
+        if vdot(dist_m, mid) > vd: lo = mid  # too fast -> needs more time
+        else: hi = mid
+    return (lo+hi)/2
+
+def v_at_vo2(target):
+    # solve vo2_cost(v)=target
+    a, b, c = 0.000104, 0.182258, -4.60 - target
+    return (-b + math.sqrt(b*b - 4*a*c)) / (2*a)
+
+def fmt(t_min):
+    s = int(round(t_min*60)); h, r = divmod(s, 3600); m, s = divmod(r, 60)
+    return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
+def pace(v):  # m/min -> min:sec per km
+    p = 1000.0/v; m = int(p); s = int(round((p-m)*60))
+    if s == 60: m, s = m+1, 0
+    return f"{m}:{s:02d}/km"
+
+D = {"5K":5000, "10K":10000, "HM":21097.5, "M":42195}
+
+def table(vd):
+    out = {k: race_time(vd, d) for k, d in D.items()}
+    return out
+
+if __name__ == "__main__":
+    print("== VDOT from anchors ==")
+    for label, d, t in [("10K 50:00", 10000, 50.0), ("M 3:45:00", 42195, 225.0), ("M 3:30:00", 42195, 210.0),
+                        ("M 3:29:59", 42195, 209.98), ("5K 30:00", 5000, 30.0), ("5K 35:00", 5000, 35.0), ("5K 40:00", 5000, 40.0),
+                        ("5K 25:00",5000,25.0)]:
+        print(f"{label}: VDOT {vdot(d,t):.1f}")
+    print("\n== Equivalent race times by VDOT ==")
+    for vd in [25, 28, 30, 33, 35, 38, 40, 41, 42, 43, 44, 44.5, 45, 46, 48, 50]:
+        t = table(vd)
+        print(f"VDOT {vd:>4}: 5K {fmt(t['5K'])}  10K {fmt(t['10K'])}  HM {fmt(t['HM'])}  M {fmt(t['M'])}")
+    print("\n== Riegel (1.06) from 10K 50:00 ==")
+    for k, d in D.items():
+        print(k, fmt(50.0*(d/10000)**1.06))
+    print("\n== Illustrative training paces (fractions of VDOT) ==")
+    for vd in [30, 40, 50]:
+        mt = race_time(vd, 42195)
+        row = []
+        for name, f in [("E-slow(0.62)",0.62),("E-fast(0.74)",0.74),("T(0.88)",0.88),("I(0.975)",0.975),("R(1.06)",1.06)]:
+            row.append(f"{name} {pace(v_at_vo2(f*vd))}")
+        row.insert(2, f"M {pace(42195/mt)}")
+        print(f"VDOT {vd}: " + " | ".join(row))
+    print("\n== Tanda 2011 marathon pace from training (K km/wk, P s/km) ==")
+    for K, P in [(30, 390), (45, 375), (50, 360), (55, 360), (60, 350), (65, 350), (70, 340), (80, 330)]:
+        pm = 17.1 + 140.0*math.exp(-0.0053*K) + 0.55*P
+        print(f"K={K} km/wk, P={P//60}:{P%60:02d}/km -> {int(pm//60)}:{int(round(pm%60)):02d}/km, marathon {fmt(pm*42.195/60)}")
+    print("\n== Banister single-impulse timing ==")
+    for t1, t2, ratio in [(42,7,1.5),(42,7,2.0),(42,7,3.0),(45,15,2.0),(50,11,2.0),(38,9,2.0),(30,5,2.0),(60,10,2.0)]:
+        c = t1*t2/(t1-t2)
+        tn = c*math.log(ratio) if ratio > 1 else 0.0
+        tp = c*math.log(ratio*t1/t2)
+        print(f"tau1={t1} tau2={t2} k2/k1={ratio}: net-positive after {tn:.1f} d, peak net effect at {tp:.1f} d")
