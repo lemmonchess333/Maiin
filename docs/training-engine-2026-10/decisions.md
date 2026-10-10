@@ -183,16 +183,22 @@ logs), only a transaction that timed out on the emulator's lock in the
 week before, so it is recorded here rather than explained. CI runs each
 journey alone on fresh emulators.
 
-The runner with no benchmark is the journey that checks every explanation
-surface (E1, E2, E3, E6, E9 and R2). Each of those surfaces is changed by
-a Run21 or Run20 PR that is still open (lemmonchess333/Maiin#2643, #2656
-to #2661, #2663, #2665, #2666, #2668). Written against main, the journey
-would pin the copy those PRs replace, so it stacks on them instead.
-Building that stack found the PRs' one real interaction: with R2's effort
-words (#2643) and E2c's feel line (#2668) both in, the Run page's launch
-card says how a quality session should feel twice, in two lines. E2c's
-lock gives a session one feel line, so R2's own line goes in whichever of
-the two merges second.
+The runner with no benchmark is the journey that checks how a planned run
+is explained before it is run (E1, E2, E3, E6 and R2). Each of those
+surfaces is changed by a Run21 or Run20 PR that is still open
+(lemmonchess333/Maiin#2643, #2656 to #2661, #2663, #2665, #2666, #2668).
+Written against main, the journey would pin the copy those PRs replace, so
+it stacks on them instead. Building that stack found the PRs' one real
+interaction: with R2's effort words (#2643) and E2c's feel line (#2668)
+both in, the Run page's launch card says how a quality session should feel
+twice, in two lines. E2c's lock gives a session one feel line, so R2's own
+line goes in whichever of the two merges second.
+
+The journey (lemmonchess333/Maiin#2679, stacked) passes twice in a row on the stack
+(22.7 and 22.4 s) and goes red when the launch card's second line comes
+back. The other four journeys pass on the stack too. The run summary's
+verdict (E9) isn't in it: with no benchmark there is no pace to judge
+(`plannedRunVerdict` returns nothing), so E9 stays with its own tests.
 
 One observation is for the owner rather than a change: a planned long run
 done on a treadmill is not credited until the person taps "Mark scheduled
