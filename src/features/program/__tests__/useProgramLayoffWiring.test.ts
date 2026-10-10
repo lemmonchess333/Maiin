@@ -474,8 +474,8 @@ describe("RUN-EV-03 — the layoff read is a declared regeneration dependency", 
  * The rest of what a regenerated week is built from. The rollover, "Start
  * next week" and the run-plan editor each built the race plan's inputs
  * themselves until they shared one recipe (`regenerateRacePlan` and
- * `nextRunWeek` in useProgram.ts); these pin what that recipe must keep
- * doing, through the real hook.
+ * `nextRunWeek`, now in runPlanRegen.ts); these pin what that recipe must
+ * keep doing, through the real hook.
  */
 describe("what else a regenerated week is built from", () => {
   const PROGRAM = "users/userA/programState/current";
