@@ -76,14 +76,13 @@ w14 2026-06-08  recovery, plan week 12 of 12  counted 3/3  plan 90 min, long 0.0
 w15 2026-06-15  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 35.09 · fitness 96 min
+  · 2026-06-21: server ended recovery
 w16 2026-06-22  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 34.49 · fitness 81 min
-  · 2026-06-22: server flagged the week of 2026-06-15 as fallen behind
 w17 2026-06-29  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 33.96 · fitness 69 min
-  · 2026-06-29: server flagged the week of 2026-06-22 as fallen behind
 
 runs 39 · counted 33 of the 39 planned · injuries 0 · VDOT 36.0 → 33.96
 race 2026-05-31 10k_race 53:39 at VDOT 35.99
@@ -200,6 +199,7 @@ w15 2026-06-15  plan week 18 progression  2/2 sessions  57–59 min
   deadlift        plan 75 × 8 × 3  1RM 100.3 logged 101.8  70×[10,10] reps | 82.5×[7,5,3] LOWERED
   overhead-press  plan 30 × 8 × 3  1RM 36.7 logged 36.8  32.5×[4,1] 25×[8] LOWERED
   sets/days: Chest 6/2 · FrontDelts 6/2 · RearDelts 4/2 · Triceps 6/2 · Lats 4/2 · UpperBack 7/2 · LowerBack 5/2 · Biceps 6/2 · Quads 5/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 4/2 · Abs 2/1
+  · 2026-06-21: server ended recovery
 
 w16 2026-06-22  plan week 19 progression  2/2 sessions  57–59 min
   squat           plan 60 × 8 × 3  1RM 75.4 logged 73.3  57.5×[8,8,8] step | 55×[10,10] reps
@@ -207,7 +207,6 @@ w16 2026-06-22  plan week 19 progression  2/2 sessions  57–59 min
   deadlift        plan 77.5 × 8 × 3  1RM 101.2 logged 95.7  70×[11,11] reps | 75×[8,8,8] step
   overhead-press  plan 32.5 × 8 × 3  1RM 37.0 logged 38.0  30×[8,8] 25×[8] step
   sets/days: Chest 6/2 · FrontDelts 6/2 · RearDelts 4/2 · Triceps 6/2 · Lats 4/2 · UpperBack 7/2 · LowerBack 5/2 · Biceps 6/2 · Quads 5/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 4/2 · Abs 2/1
-  · 2026-06-22: server flagged the week of 2026-06-15 as fallen behind
 
 w17 2026-06-29  plan week 20 progression  2/2 sessions  57–59 min
   squat           plan 62.5 × 8 × 3  1RM 76.3 logged 76.0  60×[8,8,8] step | 55×[11,11] reps
@@ -215,10 +214,9 @@ w17 2026-06-29  plan week 20 progression  2/2 sessions  57–59 min
   deadlift        plan 80 × 8 × 3  1RM 102.2 logged 98.2  70×[12,12] step | 77.5×[8,8,8] step
   overhead-press  plan 32.5 × 8 × 3  1RM 37.3 logged 40.1  32.5×[7,6] 25×[8] miss
   sets/days: Chest 6/2 · FrontDelts 6/2 · RearDelts 4/2 · Triceps 6/2 · Lats 4/2 · UpperBack 7/2 · LowerBack 5/2 · Biceps 6/2 · Quads 5/2 · Hamstrings 10/2 · Glutes 10/2 · Calves 4/2 · Abs 2/1
-  · 2026-06-29: server flagged the week of 2026-06-22 as fallen behind
 
 summary
-  sessions 27/33 · lighter weeks 4 · rule failures below-bar 17, not-counted 6, race-day-card 1, race-unresolved 1
+  sessions 27/33 · lighter weeks 4 · rule failures below-bar 17, not-counted 6, race-day-card 1
   squat           1RM 60.0 → 76.3 (27.1%) · plan 55 → 62.5 kg · 27 sessions: 7 steps, 4 rep climbs, 12 holds, 2 misses, 2 lowered, 0 own weight
   bench-press     1RM 50.0 → 57.7 (15.3%) · plan 37.5 → 50 kg · 14 sessions: 8 steps, 0 rep climbs, 3 holds, 2 misses, 1 lowered, 0 own weight
   deadlift        1RM 80.0 → 102.2 (27.7%) · plan 67.5 → 80 kg · 27 sessions: 10 steps, 8 rep climbs, 5 holds, 3 misses, 1 lowered, 0 own weight

@@ -68,18 +68,16 @@ w12 2026-05-25  recovery, plan week 11 of 11  counted 2/3  plan 90 min, long 0.0
 w13 2026-06-01  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 26.60 · fitness 74 min
+  · 2026-06-07: server ended recovery
 w14 2026-06-08  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 26.10 · fitness 63 min
-  · 2026-06-08: server flagged the week of 2026-06-01 as fallen behind
 w15 2026-06-15  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 25.66 · fitness 53 min
-  · 2026-06-15: server flagged the week of 2026-06-08 as fallen behind
 w16 2026-06-22  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 25.48 · fitness 49 min
-  · 2026-06-22: server flagged the week of 2026-06-15 as fallen behind
 
 runs 30 · counted 24 of the 30 planned · injuries 1 · VDOT 24.0 → 25.48
 race 2026-05-24 5k_race 32:57 at VDOT 27.18

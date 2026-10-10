@@ -101,14 +101,13 @@ w19 2026-07-13  recovery, plan week 16 of 16  counted 4/4  plan 120 min, long 0.
 w20 2026-07-20  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 38.40 · fitness 129 min
+  · 2026-07-26: server ended recovery
 w21 2026-07-27  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 37.69 · fitness 109 min
-  · 2026-07-27: server flagged the week of 2026-07-20 as fallen behind
 w22 2026-08-03  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   week    0 min · 0.0 km · easy -% · longest ×0.00 the month's
   runner  VDOT 37.04 · fitness 92 min
-  · 2026-08-03: server flagged the week of 2026-07-27 as fallen behind
 
 runs 69 · counted 60 of the 69 planned · injuries 1 · VDOT 40.0 → 37.04
 race 2026-06-28 half_race 1:50:52 at VDOT 39.32
@@ -270,6 +269,7 @@ w20 2026-07-20  plan week 23 progression  3/3 sessions  53–61 min
   deadlift        plan 112.5 × 9 × 3  1RM 141.7 logged 150.3  110×[11,11,9] hold | 112.5×[8,8,8] reps
   overhead-press  plan 42.5 × 10 × 3  1RM 52.7 logged 56.7  42.5×[10,8,7] hold
   sets/days: Chest 9/3 · FrontDelts 9/3 · SideDelts 2/1 · RearDelts 8/3 · Triceps 9/3 · Lats 8/3 · UpperBack 11/2 · LowerBack 6/2 · Biceps 10/3 · Quads 8/3 · Hamstrings 14/3 · Glutes 14/3 · Calves 4/2 · Abs 4/2
+  · 2026-07-26: server ended recovery
 
 w21 2026-07-27  plan week 24 deload  3/3 sessions  40–45 min
   squat           plan 90 × 8 × 2  1RM 109.3 logged 116.2  85×[11,11] hold | 90×[8,8] hold
@@ -277,7 +277,6 @@ w21 2026-07-27  plan week 24 deload  3/3 sessions  40–45 min
   deadlift        plan 112.5 × 9 × 2  1RM 142.0 logged 150.3  110×[11,11] hold | 112.5×[9,9] hold
   overhead-press  plan 42.5 × 10 × 2  1RM 52.8 logged 56.7  42.5×[10,10] hold
   sets/days: Chest 6/3 · FrontDelts 6/3 · SideDelts 1/1 · RearDelts 5/3 · Triceps 6/3 · Lats 5/3 · UpperBack 7/2 · LowerBack 4/2 · Biceps 6/3 · Quads 5/3 · Hamstrings 9/3 · Glutes 9/3 · Calves 2/2 · Abs 2/2
-  · 2026-07-27: server flagged the week of 2026-07-20 as fallen behind
 
 w22 2026-08-03  plan week 25 progression  3/3 sessions  53–61 min
   squat           plan 90 × 9 × 3  1RM 109.6 logged 116.2  85×[11,11,11] reps | 90×[8,8,8] reps
@@ -285,10 +284,9 @@ w22 2026-08-03  plan week 25 progression  3/3 sessions  53–61 min
   deadlift        plan 112.5 × 10 × 3  1RM 142.3 logged 150.3  110×[11,11,11] reps | 112.5×[9,9,9] reps
   overhead-press  plan 42.5 × 11 × 3  1RM 52.9 logged 56.7  42.5×[10,10,10] reps
   sets/days: Chest 9/3 · FrontDelts 9/3 · SideDelts 2/1 · RearDelts 8/3 · Triceps 9/3 · Lats 8/3 · UpperBack 11/2 · LowerBack 6/2 · Biceps 10/3 · Quads 8/3 · Hamstrings 14/3 · Glutes 14/3 · Calves 4/2 · Abs 4/2
-  · 2026-08-03: server flagged the week of 2026-07-27 as fallen behind
 
 summary
-  sessions 56/64 · lighter weeks 8 · rule failures below-bar 22, over-time 9, not-counted 9, race-unresolved 1
+  sessions 56/64 · lighter weeks 8 · rule failures below-bar 22, over-time 9, not-counted 9
   squat           1RM 100.0 → 109.6 (9.6%) · plan 87.5 → 90 kg · 38 sessions: 4 steps, 10 rep climbs, 19 holds, 3 misses, 1 lowered, 1 own weight
   bench-press     1RM 80.0 → 86.2 (7.7%) · plan 67.5 → 70 kg · 38 sessions: 1 steps, 10 rep climbs, 23 holds, 2 misses, 0 lowered, 2 own weight
   deadlift        1RM 130.0 → 142.3 (9.5%) · plan 110 → 112.5 kg · 36 sessions: 5 steps, 10 rep climbs, 17 holds, 1 misses, 1 lowered, 2 own weight
