@@ -733,6 +733,22 @@ against Lift4 as built on the simulator before it comes here with an answer.
   they regenerate the week with completions carried by date.
 - **Answer: Answered** as a correction under Run19: neither plans a run
   before today.
+- **Built** (lemmonchess333/Maiin#2669): both, and a first plan made on
+  the device, build the week as the save does (`planWeekFromToday`): no
+  run is generated before today, and the week's own days are kept as they
+  were, so a done, moved, swapped or missed run stays. Before, a re-plan
+  on a Saturday dated runs on days already gone, and a done or missed run
+  took whatever session the rebuild put on its date.
+- **Found on the way (2026-10-10):** the weekly layout editor's save
+  (`refreshRunSchedule`) and its restructure (`regenerateProgram`) also
+  rebuild this week from its Monday, keeping none of its days: a skip
+  earlier in the week is lost and a run can be dated before today. A
+  correction under Run19 too, in its own PR, since they carry the person's
+  swaps by weekday.
+- **Also found:** two Settings save tests from lemmonchess333/Maiin#2636
+  assumed a plan's first week holds runs, which one saved on a Sunday after
+  its run days doesn't (Run19's own case). They now save on this week's
+  Monday.
 
 ### R22. The race plan after race day (F6)
 
