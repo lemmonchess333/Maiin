@@ -68,31 +68,16 @@ jobs:
           key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Chromium for Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        # A stalled apt mirror hangs apt-get with no error, and on 2026-10-07
-        # that cost two whole jobs (14.5 and 30 min) before a test ran. Each
-        # attempt gets a bound; `timeout` kills the whole process group, and
-        # `dpkg --configure -a` repairs a dpkg it interrupted mid-install.
-        timeout-minutes: 11
-        run: |
-          for i in 1 2 3; do
-            timeout --kill-after=10 200 npx playwright install --with-deps chromium && exit 0
-            echo "::warning::'npx playwright install --with-deps chromium' attempt $i failed or stalled; retrying"
-            sudo dpkg --configure -a || true
-            sleep 10
-          done
-          exit 1
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Install Chromium deps only (cache hit path)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         # Bounded and retried for the same reason as the step above.
-        timeout-minutes: 8
-        run: |
-          for i in 1 2 3; do
-            timeout --kill-after=10 140 npx playwright install-deps chromium && exit 0
-            echo "::warning::'npx playwright install-deps chromium' attempt $i failed or stalled; retrying"
-            sudo dpkg --configure -a || true
-            sleep 10
-          done
-          exit 1
+        timeout-minutes: 10
+        run: bash scripts/ci/install-playwright-chromium.sh install-deps 140
 
       - run: npm install -g firebase-tools
 
