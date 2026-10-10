@@ -84,3 +84,27 @@ export function planWeekFromToday(
       )
     : fromToday;
 }
+
+/**
+ * A week rebuilt by a change to its layout (Run19): the days already gone
+ * stay as they were, and the rebuilt week runs from today. Unlike the
+ * plan's save (`planWeekFromToday`), nothing from today on is kept: the new
+ * layout decides those days, and the person's swaps follow them by weekday.
+ * A day from an earlier week isn't this week's.
+ */
+export function rebuiltWeekFromToday(
+  previous: readonly ScheduledRunDay[],
+  rebuilt: readonly ScheduledRunDay[],
+  today: string,
+  weekStart: string
+): ScheduledRunDay[] {
+  return [
+    ...previous.filter(
+      (run) => run.date && run.date >= weekStart && run.date < today
+    ),
+    ...rebuilt.filter((run) => !run.date || run.date >= today),
+  ].sort(
+    (a, b) =>
+      (a.date ?? "").localeCompare(b.date ?? "") || a.dayIndex - b.dayIndex
+  );
+}

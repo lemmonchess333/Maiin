@@ -538,7 +538,22 @@ describe("what else a regenerated week is built from", () => {
 
   it("builds the week from the editor's tuning before the profile has it", async () => {
     // The run-plan editor saves new knobs and refreshes in the same tap, so
-    // the profile this hook holds is still the old one.
+    // the profile this hook holds is still the old one. On this week's
+    // Monday, so the refresh rebuilds the whole week: it keeps the days
+    // already gone as they were (Run19), and on a Sunday the long run can
+    // be one of them.
+    const monday = parseLocalDate(String(localWeekKey()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await editorTuningReachesTheWeek();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  async function editorTuningReachesTheWeek() {
     const { result } = await rolledOver(raceProfile);
     await waitFor(() =>
       expect(stored().runPlan?.currentWeek).toBeGreaterThan(9)
@@ -551,7 +566,7 @@ describe("what else a regenerated week is built from", () => {
       });
     });
     expect(longestKm(persistedRunDays("userA"))).toBeLessThan(standard);
-  });
+  }
 
   it("rolls a week that starts after the race into free running", async () => {
     // R3: the race is over, recovery has ended, and the server has not yet
