@@ -11,9 +11,9 @@ described in `simulator.md` on its branch (lemmonchess333/Maiin#2619).
 
 - **74 PRs** (numbers here are lemmonchess333/Maiin's). 3 are merged; 71
   are open as drafts for the owner to merge.
-- **CI.** On 2026-10-10 at 23:05 UTC, 67 of the 71 open heads were fully
-  green and none conflicted with main. The other 4 (#2601, #2675, #2680,
-  #2682) had been pushed that evening and were still running.
+- **CI.** By 23:41 UTC on 2026-10-10, every check was green on all 71
+  open heads, and none conflicted with main. The last four (#2601, #2675,
+  #2680, #2682) were pushed that evening.
 - **Two PRs went red on 2026-10-10, and both are fixed.** In
   lemmonchess333/Maiin#2680, a comment named the report the measuring suite
   writes. That file exists only where the suite has run, so the dead-path
