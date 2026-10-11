@@ -6,6 +6,35 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The plan moves on with the day while the app stays open (2026-10-10)
+
+Affects: `useProgram` (`src/features/program/useProgram.ts`) and Home's
+`useHomeProgram`. The lift and run weeks' rollover, the runner's
+recent-running read and the race's rest days now re-run when the day
+changes (`useLocalDateKey`: a check every 30 seconds, and on focus and
+`visibilitychange`), not only on a reload. Home loads that engine only when
+its plan needs it, and now asks again on each new day. On a phone the app
+is resumed far more often than it is started, so before this a plan stayed
+on last week until the app was killed and reopened.
+
+The hook tests (`useProgramResume.test.ts`, `useHomeProgram.test.tsx`) fire
+the resume in jsdom. WKWebView's own resume events need a device.
+
+- [ ] **Monday, from the background.** On Sunday evening open Train, then
+      leave the app in the background (don't close it). Open it again on
+      Monday morning: within a few seconds Train shows the new week, its
+      sessions not done and the week number one on, and Home's week strip
+      and today's card agree with it. No relaunch, no pull to refresh.
+- [ ] **Monday, from the background, on Home.** The same with a
+      running-only race plan, left on Home rather than Train: on Monday's
+      return Home's run card and week strip show the new week's runs
+      without a visit to Train.
+- [ ] **Race week's rest days.** On a race-prep account with the race on a
+      Saturday and a lift session not done that week, leave the app in
+      the background from Wednesday to Thursday. On Thursday's return the
+      session shows as skipped, under the "Race week" banner ("No lifting
+      in the two days before your race…").
+
 ## Race plans the rollover dropped end on the server (2026-10-10)
 
 Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
