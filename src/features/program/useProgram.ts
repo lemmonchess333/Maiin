@@ -409,7 +409,9 @@ export function useProgram() {
           profile.raceGoal &&
           // Earlier weeks belong to auto-rollover, which archives their
           // history. Only this week's runs are built here, inline with load,
-          // so a second effect cannot race the rollover writer.
+          // so a second effect cannot race the rollover writer, or next
+          // week's when none of this week's run days is left (Run19,
+          // `raceWeekFromToday`).
           raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
