@@ -92,7 +92,7 @@ describe("the race plan in a new runner's first weeks", () => {
     week.filter((run) => run.type === "tempo" || run.type === "intervals");
   const until = newRunnerUntil("new", start);
 
-  it("holds no tempo or intervals before they end, and the plan as before after", () => {
+  it("holds no tempo or intervals before they end, then each ladder starts at its first rung", () => {
     // A 10K ten weeks out builds from week 5: tempo, then 6 × 1K, inside
     // the first six weeks.
     const regular = plan("10k", 10, null);
@@ -100,10 +100,20 @@ describe("the race plan in a new runner's first weeks", () => {
     expect(regular.weeks.slice(0, 6).flatMap(quality).length).toBeGreaterThan(
       0
     );
+    // After the six weeks the days and runs are the plan's as before; only
+    // a quality session's size differs, as none came before it (Run20 (4)).
+    const shape = (week: ScheduledRunDay[]) =>
+      week.map((run) =>
+        run.type === "tempo" || run.type === "intervals"
+          ? { dayIndex: run.dayIndex, type: run.type }
+          : run
+      );
     fresh.weeks.forEach((week, i) => {
       if (i < NEW_RUNNER_WEEKS) expect(quality(week), `week ${i}`).toEqual([]);
-      else expect(week, `week ${i}`).toEqual(regular.weeks[i]);
+      else expect(shape(week), `week ${i}`).toEqual(shape(regular.weeks[i]));
     });
+    const firstTempo = fresh.weeks.flat().find((run) => run.type === "tempo");
+    expect(firstTempo?.templateId).toBe("tempo_20");
   });
 
   it("drops the taper's session too, and keeps the strides", () => {

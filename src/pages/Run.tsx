@@ -23,7 +23,6 @@ import { useRunVisibility } from "../hooks/useRunVisibility";
 import {
   calculateSplits,
   movingClockMs,
-  paceAsNumber,
   rollingPaceSeconds,
   totalDistance,
   totalElevationGain,
@@ -64,7 +63,12 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
-import { segmentsFromGuided, segmentsFromIntervals } from "../lib/runSegments";
+import {
+  judgesPaceNow,
+  livePaceTarget,
+  segmentsFromGuided,
+  segmentsFromIntervals,
+} from "../lib/runSegments";
 import { sessionCompleteCue } from "../lib/runCueCopy";
 import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
@@ -307,6 +311,11 @@ export default function Run() {
   // (Resume / Start new / Discard) flip it back to null and either
   // rehydrate the run or proceed to the normal setup flow.
   const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
+  // Set on Resume. The snapshot doesn't keep the session player's place,
+  // so a resumed session starts again at its first segment and its
+  // segments no longer line up with what was run: the summary judges
+  // such a run by the whole run, as before work segments were kept.
+  const resumedRef = useRef(false);
   // Fast-launch arc: `forceModal` is the "Customize" / "More options" escape
   // hatch that drops from the launch card / tile picker into the full config
   // modal. `launchShoeId` is the shoe chosen inline on either fast surface.
@@ -440,6 +449,15 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
+  // The pace bar and the pace alerts judge a tempo or an interval session
+  // in its work segments only (`judgesPaceNow`).
+  const judgingPace = judgesPaceNow(
+    runConfig?.activityType,
+    player.segments,
+    player.current
+  );
+  // The bar's pace: none until the run has one to judge (Run20).
+  const barPace = runConfig ? livePaceTarget(runConfig) : null;
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -740,6 +758,7 @@ export default function Run() {
     if (!resumePrompt) return;
     audioCues.prime();
     await wakeLock.request();
+    resumedRef.current = true;
     setRunConfig(resumePrompt.config);
     startedAtRef.current = resumePrompt.startedAt;
     timer.rehydrate({
@@ -874,7 +893,11 @@ export default function Run() {
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
-    if (runConfig?.target?.type === "pace" && runConfig.target.value) {
+    if (
+      judgingPace &&
+      runConfig?.target?.type === "pace" &&
+      runConfig.target.value
+    ) {
       const currentPaceSec = rollingPaceSeconds(gps.points, 30);
       if (currentPaceSec !== null) {
         audioCues.checkPaceAlert(
@@ -896,7 +919,15 @@ export default function Run() {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }
-  }, [gps.distance, gps.points, timer.elapsed, phase, audioCues, runConfig]);
+  }, [
+    gps.distance,
+    gps.points,
+    timer.elapsed,
+    phase,
+    audioCues,
+    runConfig,
+    judgingPace,
+  ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
   // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
@@ -1108,6 +1139,13 @@ export default function Run() {
             ? runConfig.intervals
             : undefined,
         routeQuality,
+        // What the session's work segments covered, which the summary
+        // judges the session by. On the distance the player was ticked
+        // with, the run's own, not a hand-entered total; none after a
+        // resume (`resumedRef`).
+        workPortion: resumedRef.current
+          ? null
+          : player.workPortion(timer.elapsed, gps.distance),
       },
     });
   };
@@ -1612,19 +1650,19 @@ export default function Run() {
             </div>
 
             {(runConfig?.activityType === "tempo" ||
-              runConfig?.activityType === "intervals") && (
-              <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
-                <PaceZoneBar
-                  currentPace={paceAsNumber(currentDistance, timer.elapsed)}
-                  targetPace={
-                    runConfig.intervals?.workPace ||
-                    runConfig.target.value ||
-                    300
-                  }
-                  tolerance={15}
-                />
-              </div>
-            )}
+              runConfig?.activityType === "intervals") &&
+              judgingPace &&
+              barPace !== null && (
+                <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
+                  <PaceZoneBar
+                    /* The last 30 seconds, as the alerts read it: the whole
+                     run's average carries the warm-up into every reading. */
+                    currentPace={rollingPaceSeconds(gps.points, 30) ?? 0}
+                    targetPace={barPace}
+                    tolerance={15}
+                  />
+                </div>
+              )}
 
             <RunMap
               points={gps.points}

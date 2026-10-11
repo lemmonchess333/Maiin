@@ -113,29 +113,29 @@ describe("balancePushPull (D-LIFT-3)", () => {
   it("grows pull accessories until pull ≥ push when push-dominant", () => {
     const out = balancePushPull([
       day([
-        // push: bench main 5 + triceps accessory 3 = 8 push
+        // push: bench main 5 + overhead press accessory 3 = 8 push
         ex({
           movementCategory: "horizontal_push",
           sets: 5,
           isAccessory: false,
         }),
-        ex({ movementCategory: "arms_triceps", sets: 3, isAccessory: true }),
-        // pull: row main 4 = 4 pull (under push)
+        ex({ movementCategory: "vertical_push", sets: 3, isAccessory: true }),
+        // pull: row main 4 + pull-down accessory 2 = 6 pull (under push)
         ex({
           movementCategory: "horizontal_pull",
           sets: 4,
           isAccessory: false,
         }),
         // pull accessory to grow
-        ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true }),
+        ex({ movementCategory: "vertical_pull", sets: 2, isAccessory: true }),
       ]),
     ]);
     const sets = (cat: string) =>
       out[0].exercises
         .filter((e) => e.movementCategory === cat)
         .reduce((s, e) => s + e.sets, 0);
-    const push = sets("horizontal_push") + sets("arms_triceps");
-    const pull = sets("horizontal_pull") + sets("arms_biceps");
+    const push = sets("horizontal_push") + sets("vertical_push");
+    const pull = sets("horizontal_pull") + sets("vertical_pull");
     expect(pull).toBeGreaterThanOrEqual(push);
     // mains untouched
     expect(
@@ -143,6 +143,50 @@ describe("balancePushPull (D-LIFT-3)", () => {
         (e) => e.movementCategory === "horizontal_pull" && !e.isAccessory
       )?.sets
     ).toBe(4);
+  });
+
+  /* Lift6: the balance is about the shoulders, so it weighs pressing against
+     rows and pull-downs. It counted triceps as push and biceps as pull, and
+     the pull it grew was often a curl: a beginner got a 4-set barbell curl. */
+  it("counts arm work on neither side, and never grows a curl", () => {
+    const curl = () =>
+      ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true });
+    // Presses 5 against rows 5: balanced once the triceps sets don't count.
+    const balanced = balancePushPull([
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 5,
+          isAccessory: false,
+        }),
+        ex({ movementCategory: "arms_triceps", sets: 3, isAccessory: true }),
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 5,
+          isAccessory: false,
+        }),
+        curl(),
+      ]),
+    ]);
+    expect(balanced[0].exercises[3].sets).toBe(2);
+    // Presses 8 against rows 4, with a curl the only pull accessory: there
+    // is no row or pull-down to grow, so nothing grows.
+    const pressHeavy = balancePushPull([
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 8,
+          isAccessory: false,
+        }),
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 4,
+          isAccessory: false,
+        }),
+        curl(),
+      ]),
+    ]);
+    expect(pressHeavy[0].exercises[2].sets).toBe(2);
   });
 
   it("does nothing when pull already ≥ push", () => {
@@ -194,7 +238,7 @@ describe("balancePushPull (D-LIFT-3)", () => {
     expect(input[0].exercises[1].sets).toBe(2);
   });
 
-  // A push-heavy day whose one pull accessory is a curl: Biceps 2 sets.
+  // A push-heavy day whose one pull accessory is a pull-down: 2 sets.
   const pushHeavy = (pushSets: number) => [
     day([
       ex({
@@ -203,8 +247,8 @@ describe("balancePushPull (D-LIFT-3)", () => {
         isAccessory: false,
       }),
       ex({
-        exerciseId: "custom-curl",
-        movementCategory: "arms_biceps",
+        exerciseId: "custom-pulldown",
+        movementCategory: "vertical_pull",
         sets: 2,
         isAccessory: true,
       }),
@@ -214,7 +258,7 @@ describe("balancePushPull (D-LIFT-3)", () => {
   it("declines an add whose cost lands on a muscle at its ceiling", () => {
     // The add-only balancers had no ceiling at all once, so chasing one goal
     // pushed the muscles sharing the exercise past MRV. With a ceiling of 3,
-    // the curl grows once (Biceps 3) and stops, pull still under push.
+    // the pull-down grows once (3 sets) and stops, pull still under push.
     const out = balancePushPull(pushHeavy(8), { mv: 0, low: 0, high: 3 });
     expect(out[0].exercises[1].sets).toBe(3);
   });
