@@ -3,7 +3,7 @@ import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  preserveEditedRunDays,
+  planWeekFromToday,
 } from "./racePlanContinuation";
 /**
  * planBuilder · P0-C · spec v7.
@@ -608,14 +608,16 @@ function buildRunPlan(
     });
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
     return {
-      runDays: continued
-        ? preserveEditedRunDays(
-            input.existingState?.runDays ?? [],
-            racePlan.weeks[0] ?? [],
-            input.existingState?.manualCompletions,
-            input.currentDate
-          )
-        : (racePlan.weeks[0] ?? []),
+      runDays: planWeekFromToday(
+        racePlan.weeks[0] ?? [],
+        input.currentDate,
+        continued
+          ? {
+              runDays: input.existingState?.runDays ?? [],
+              manualCompletions: input.existingState?.manualCompletions,
+            }
+          : undefined
+      ),
       runPlan: {
         ...continued,
         mode: "race_prep",
@@ -634,11 +636,14 @@ function buildRunPlan(
 
   // structured
   return {
-    runDays: scheduleStructuredWeekV2({
-      weekSchedule,
-      weekNumber: input.existingState?.weekNumber ?? 1,
-      weekStart,
-    }),
+    runDays: planWeekFromToday(
+      scheduleStructuredWeekV2({
+        weekSchedule,
+        weekNumber: input.existingState?.weekNumber ?? 1,
+        weekStart,
+      }),
+      input.currentDate
+    ),
     runPlan: { mode: "structured" },
   };
 }
