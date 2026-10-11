@@ -220,26 +220,27 @@ are model outputs:
 - none passes twice §4.2's 80% upper bound for the level.
 
 At 20 seeds of each variant (`TROPOS_SIM_SEEDS=20`, a minute), every
-persona passes. The 26-week medians are below, as the base model's median
+persona passes; the lifting fixes moved no median by more than half a
+point. The 26-week medians are below, as the base model's median
 and the harsh model's, against §4.2's central value for the level. A lift
 the persona doesn't do shows as -.
 
 | Persona               | Squat       | Bench       | Deadlift    | Press       | §4.2 (lower / upper) |
 | --------------------- | ----------- | ----------- | ----------- | ----------- | -------------------- |
-| novice-man            | 39.2 / 32.7 | 24.7 / 20.2 | 39.3 / 32.6 | 19.8 / 14.7 | 38 / 30              |
-| novice-woman          | 37.5 / 31.9 | 26.5 / 21.1 | 38.3 / 31.8 | 17.4 / 14.8 | 38 / 30              |
-| light-trainer         | 23.6 / 18.3 | 16.0 / 11.9 | 25.3 / 18.0 | 17.8 / 12.8 | 38 / 30              |
-| off-sick              | 31.8 / 24.6 | 19.7 / 15.1 | 31.6 / 24.7 | 14.6 / 10.1 | 38 / 30              |
-| over-55               | 37.0 / 31.1 | 26.1 / 20.8 | 37.7 / 31.2 | 16.0 / 0.2  | 38 / 30              |
-| intermediate-man      | 9.0 / 6.3   | 7.5 / 5.0   | 9.0 / 6.2   | 7.7 / 5.2   | 9 / 8                |
+| novice-man            | 39.1 / 32.5 | 24.3 / 19.9 | 39.3 / 32.4 | 19.8 / 14.6 | 38 / 30              |
+| novice-woman          | 37.5 / 31.7 | 26.2 / 21.0 | 38.5 / 31.8 | 17.4 / 14.9 | 38 / 30              |
+| light-trainer         | 23.6 / 18.3 | 16.0 / 12.0 | 25.3 / 18.1 | 17.8 / 12.9 | 38 / 30              |
+| off-sick              | 31.6 / 25.0 | 19.7 / 15.1 | 31.6 / 24.9 | 14.6 / 10.0 | 38 / 30              |
+| over-55               | 36.7 / 30.9 | 26.0 / 20.7 | 37.8 / 31.4 | 16.0 / 0.1  | 38 / 30              |
+| intermediate-man      | 9.0 / 6.3   | 7.5 / 5.0   | 9.0 / 6.3   | 7.7 / 5.2   | 9 / 8                |
 | intermediate-woman    | 8.9 / 6.3   | 7.4 / 5.0   | 8.9 / 6.2   | 7.6 / 5.2   | 9 / 8                |
 | powerbuilder-size     | 8.8 / 6.1   | 7.3 / 4.9   | 8.7 / 6.0   | 7.4 / 5.0   | 9 / 8                |
-| powerbuilder-strength | 8.8 / 6.2   | 7.3 / 4.9   | 8.8 / 6.1   | 7.5 / 5.1   | 9 / 8                |
+| powerbuilder-strength | 8.8 / 6.1   | 7.3 / 4.9   | 8.8 / 6.1   | 7.5 / 5.1   | 9 / 8                |
 | layoff-eases-back     | 8.5 / 5.5   | 6.5 / 4.0   | 8.4 / 5.3   | 5.1 / 3.1   | 9 / 8                |
-| layoff-keeps-weights  | 8.6 / 5.7   | 6.6 / 4.1   | 8.5 / 5.7   | 5.2 / 3.2   | 9 / 8                |
-| holidays              | 8.4 / 5.6   | 6.8 / 4.5   | 8.3 / 5.5   | 7.0 / 4.5   | 9 / 8                |
-| cutting               | 9.3 / 6.5   | 7.1 / 4.7   | 9.3 / 6.6   | 5.5 / 3.1   | 9 / 8                |
-| advanced-man          | 3.9 / 2.4   | 3.0 / 1.7   | 3.8 / 2.3   | 3.0 / 1.8   | 4 / 3                |
+| layoff-keeps-weights  | 8.6 / 5.7   | 6.6 / 4.2   | 8.5 / 5.7   | 5.2 / 3.2   | 9 / 8                |
+| holidays              | 8.4 / 5.7   | 6.8 / 4.4   | 8.3 / 5.6   | 7.0 / 4.6   | 9 / 8                |
+| cutting               | 9.3 / 6.6   | 7.1 / 4.7   | 9.3 / 6.6   | 5.5 / 3.1   | 9 / 8                |
+| advanced-man          | 3.9 / 2.4   | 3.0 / 1.8   | 3.8 / 2.3   | 3.0 / 1.8   | 4 / 3                |
 
 The dumbbell beginner's lifts are a goblet squat 19.4 / 15.5, a dumbbell
 RDL 19.3 / 15.6, a dumbbell bench 16.7 / 11.9 and a dumbbell press
@@ -254,7 +255,7 @@ What the table says:
 - **Novice upper body falls short:** a bench of about 25 against 30, and a
   press of 17–20. The 3-day plans train the bench twice a week and the
   press once, and the press moves in 2.5 kg steps on a 30–40 kg lift (F2,
-  F4). Misses on the novice presses run from 22 to 55 of every 100
+  F4). Misses on the novice presses run from 24 to 55 of every 100
   sessions.
 - **The 2-day, 30-minute dumbbell beginner gets about half of §4.2:**
   two short days, then F9's waits from about week 8.
@@ -430,46 +431,51 @@ The change in true VDOT by race morning, the finish, the share of seasons
 with an injury and the share of planned runs Home counted, across seeds
 and the three variants. Asserted only as broad plausibility: the median
 change between −4 and +6, and a median race no slower than twice its
-start-of-season equivalent. At 20 seeds of each:
+start-of-season equivalent. At 20 seeds of each, with the running fixes
+in (lemmonchess333/Maiin#2633 to lemmonchess333/Maiin#2682):
 
 | Persona              | VDOT change (base / harsh / intensity) | Finish (median [10th–90th]) | Injured | Counted | Expected (§6.1, §6.5)                     |
 | -------------------- | -------------------------------------- | --------------------------- | ------- | ------- | ----------------------------------------- |
-| couch-to-5k          | +2.9 / +2.1 / +3.4                     | 33:57 [31:50–35:37]         | 42%     | 82%     | first 5K 30–40 min; 10–25% injured        |
-| half-3-days          | −1.1 / −0.9 / −0.6                     | 1:46:25 [1:44:23–1:49:04]   | 20%     | 84%     | +1.5–3 VDOT                               |
-| sub-3-30             | −1.6 / −1.5 / −0.9                     | 3:48:36 [3:44:36–3:58:38]   | 47%     | 90%     | +1.5–3; sub-3:30 for 10–25%               |
-| sick-six-weeks       | −2.6 / −1.9 / −2.3                     | 48:20 [47:03–50:14]         | 25%     | 93%     | −7% to −16% VO2max off, rebuilt in ~6 wks |
-| new-runner-marathon  | +0.8 / +0.4 / +0.8                     | 5:11:42 [5:04:11–5:18:40]   | 80%     | 99%     | none                                      |
+| couch-to-5k          | +1.9 / +1.5 / +2.2                     | 34:55 [33:31–36:36]         | 30%     | 100%    | first 5K 30–40 min; 10–25% injured        |
+| half-3-days          | −0.9 / −0.7 / −0.4                     | 1:46:06 [1:44:05–1:48:10]   | 25%     | 100%    | +1.5–3 VDOT                               |
+| sub-3-30             | −1.3 / −1.1 / −0.6                     | 3:47:55 [3:43:07–3:54:31]   | 50%     | 100%    | +1.5–3; sub-3:30 for 10–25%               |
+| sick-six-weeks       | −2.7 / −1.9 / −2.3                     | 48:22 [46:53–49:26]         | 25%     | 100%    | −7% to −16% VO2max off, rebuilt in ~6 wks |
+| new-runner-marathon  | +2.1 / +1.5 / +2.7                     | 5:01:12 [4:49:38–5:09:21]   | 40%     | 100%    | none                                      |
 | freeform-runner      | +0.2 / +0.2 / +0.2                     | no race                     | 50%     | -       | little change                             |
-| year-out-marathon    | −0.4 / −0.6 / −0.1                     | 4:10:31 [4:04:44–4:17:55]   | 55%     | 87%     | +2 to +5; 3:45–3:50, 80% 3:35–4:10        |
-| hybrid-3-4-(no-)trim | −0.3 / −0.3 / +0.1                     | 1:49:21 [1:47:09–1:51:59]   | 27%     | 88%     | +1.5–3                                    |
-| hybrid-2-3-(no-)trim | −0.2 / −0.2 / +0.2                     | 54:15 [53:06–55:41]         | 15%     | 83%     | +1–3                                      |
+| year-out-marathon    | −0.2 / −0.3 / +0.3                     | 4:07:20 [4:02:17–4:16:16]   | 55%     | 100%    | +2 to +5; 3:45–3:50, 80% 3:35–4:10        |
+| hybrid-3-4-(no-)trim | −0.1 / −0.2 / +0.3                     | 1:49:17 [1:47:12–1:51:37]   | 27%     | 100%    | +1.5–3                                    |
+| hybrid-2-3-(no-)trim | −0.3 / −0.2 / +0.2                     | 54:32 [53:19–55:25]         | 20%     | 100%    | +1–3                                      |
+
+Before those fixes, couch-to-5k gained +2.9 and was injured in 42% of
+seasons, the new marathoner in 80%, and Home counted 82–99% of planned
+runs.
 
 What the table says, with the model's limits in view:
 
-- **The beginner gains as §6.5 A expects:** +2.9 VDOT, and a first 5K of
-  34 minutes, inside 30–40. But 42% of seasons have an injury against
-  10–25%: the plan gives about two hours of continuous running a week
-  from week 1, not Couch to 5K's run-walk (F15, F18).
-- **Recreational runners lose fitness by race day:** −0.3 to −1.6 VDOT on
-  the base model against §6.1's +1.5–3, and −0.9 to +0.2 crediting quality
-  sessions at their top weight. The plan's dose is most of it, and the
-  dose is the plan's, not the model's: weeks 2–5 average 57–75% of what
-  the running-only runners already ran (F15), and the taper cuts the week by about 60% in
-  one step (F18). The model also prices a taper low (+0.5% where §6.7
-  expects about 2.6%), so race-morning VDOT understates what the taper
-  adds.
-- **No sub-3:30:** a median 3:48:36 and no seed under 3:30, against §6.5
+- **The beginner gains less, and is hurt less:** +1.9 VDOT, and a first
+  5K of 35 minutes, inside §6.5 A's 30–40. The six run-walk weeks
+  (lemmonchess333/Maiin#2655) bring the injured seasons from 42% to 30%,
+  still above the 10–25% the evidence gives; the plan still starts at
+  more minutes than the runner ran (F15), and the weeks after the
+  run-walk ones jump (F18).
+- **Recreational runners still lose a little by race day:** −0.1 to −1.3
+  VDOT on the base model against §6.1's +1.5–3, and −0.6 to +0.3 crediting
+  quality sessions at their top weight. The plan's dose is most of it,
+  and the dose is the plan's, not the model's: weeks 2–5 average 57–75%
+  of what the running-only runners already ran (F15). The model also
+  prices a taper low (+0.5% where §6.7 expects about 2.6%), so race-morning
+  VDOT understates what the stepped taper adds.
+- **No sub-3:30:** a median 3:47:55 and no seed under 3:30, against §6.5
   C's 10–25%.
-- **The year-out marathoner gets −0.4 VDOT for the year and a 4:10,** the
-  slow end of §6.5 B's 80% range. The plan's peak is 353 minutes in the
-  last build weeks, after 20 weeks of base below the runner's 195.
-- **One run a week to a marathon injures 80% of seasons,** on single runs
-  up to ten times the month's longest.
-- **Home counts 82–99% of planned runs done;** every miss is a quality
-  session (F13).
+- **The year-out marathoner gets −0.2 VDOT for the year and a 4:07,** the
+  slow end of §6.5 B's 80% range.
+- **A new runner's marathon now injures 40% of seasons, not 80%:** two run
+  days for a race (lemmonchess333/Maiin#2638) took away the one-run week,
+  though single runs still reach 3.5 times the month's longest (F18).
+- **Home counts every planned run done** (F13 and F14, fixed).
 - **The leg trim changes only the lifting.** Both hybrid pairs run the
   same plan; the trim's fewer leg sets bring a 3-day hybrid's sessions in
-  under their length more often (`over-time` 2 times against 6).
+  under their length more often (`over-time` 5 times against 9).
 
 ### Calibration status
 
