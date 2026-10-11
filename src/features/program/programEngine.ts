@@ -29,8 +29,11 @@ import {
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
   balancePushPull,
+  hingeAccessoryPastCeiling,
   judgementLandmark,
   reconcileToLandmarks,
+  weeklyVolumeByJudgementMuscle,
+  type JudgementMuscle,
 } from "./volumeModel";
 import { fitSessionsToTime, sessionFits } from "./sessionFit";
 import {
@@ -38,7 +41,11 @@ import {
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
-import { extraPastCeiling, twiceWeeklyAdditions } from "./weeklyFrequency";
+import {
+  extraPastCeiling,
+  keepsWeeklyFrequency,
+  twiceWeeklyAdditions,
+} from "./weeklyFrequency";
 import {
   seedStartingLoads,
   weightAfterExerciseSwap,
@@ -1666,6 +1673,41 @@ function applyOverlapCaps(
   return out;
 }
 
+/** The week without one lift (by `instanceId`). */
+function withoutLift(workouts: WorkoutDay[], instanceId: string): WorkoutDay[] {
+  return workouts.map((d) => ({
+    ...d,
+    exercises: d.exercises.filter((ex) => ex.instanceId !== instanceId),
+  }));
+}
+
+/**
+ * Whether a week that has let a hinge accessory go (L7), fitted and
+ * balanced again, is the one to keep: its hamstrings come down, no muscle
+ * ends further over its ceiling (the time the lift held can bring back sets
+ * that take another one over), and every muscle keeps its two days a week.
+ */
+function hingeDropHolds(
+  before: WorkoutDay[],
+  after: WorkoutDay[],
+  ceiling: (muscle: JudgementMuscle) => number
+): boolean {
+  const overBy = (week: WorkoutDay[]) =>
+    new Map(
+      weeklyVolumeByJudgementMuscle(week).map((v) => [
+        v.muscle,
+        Math.max(0, v.sets - ceiling(v.muscle)),
+      ])
+    );
+  const was = overBy(before);
+  const now = overBy(after);
+  return (
+    (now.get("Hamstrings") ?? 0) < (was.get("Hamstrings") ?? 0) &&
+    [...now].every(([muscle, by]) => by <= (was.get(muscle) ?? 0)) &&
+    keepsWeeklyFrequency(before, after)
+  );
+}
+
 export function generateProgram(
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
@@ -1972,24 +2014,43 @@ export function generateProgram(
   // Lift4 (5): time decides the volume. Each session is cut to the minutes
   // the person has (`sessionFit.ts`), then the week is balanced inside them.
   const minutes = sessionMinutes ?? Number.POSITIVE_INFINITY;
-  let fitted = fitSessionsToTime(workouts, minutes, twiceWeekly.extras);
-  // A lift added for the two days a week that leaves a muscle over its
-  // ceiling once the week is balanced goes, and the week is balanced again
-  // without it, so nothing is trimmed to make room for a lift that isn't
-  // there.
+  const ceiling = (m: JudgementMuscle) =>
+    judgementLandmark(primaryGoal, m, toExperience(experience)).high;
+  const settle = (week: WorkoutDay[]): WorkoutDay[] => {
+    let fitted = fitSessionsToTime(week, minutes, twiceWeekly.extras);
+    // A lift added for the two days a week that leaves a muscle over its
+    // ceiling once the week is balanced goes, and the week is balanced
+    // again without it, so nothing is trimmed to make room for a lift that
+    // isn't there.
+    for (;;) {
+      const balanced = balanceWeekVolume(
+        fitted,
+        primaryGoal,
+        experience,
+        minutes
+      );
+      const past = extraPastCeiling(balanced, twiceWeekly.extras, ceiling);
+      if (past === undefined) return balanced;
+      fitted = withoutLift(fitted, past);
+    }
+  };
+  // L7: the hinge work keeps the hamstrings within their ceiling, never the
+  // deadlift off a day. While they sit over it once the week is balanced, a
+  // hinge accessory comes out (`hingeAccessoryPastCeiling`) and the week is
+  // fitted and balanced again without it, so the time it held goes back to
+  // its day. It stays out only when that week is the better one
+  // (`hingeDropHolds`); otherwise the week stays as it was.
+  let settled = settle(workouts);
   for (;;) {
-    workouts = balanceWeekVolume(fitted, primaryGoal, experience, minutes);
-    const past = extraPastCeiling(
-      workouts,
-      twiceWeekly.extras,
-      (m) => judgementLandmark(primaryGoal, m, toExperience(experience)).high
-    );
-    if (past === undefined) break;
-    fitted = fitted.map((d) => ({
-      ...d,
-      exercises: d.exercises.filter((ex) => ex.instanceId !== past),
-    }));
+    const hinge = hingeAccessoryPastCeiling(settled, ceiling);
+    if (hinge === undefined) break;
+    const without = withoutLift(workouts, hinge);
+    const next = settle(without);
+    if (!hingeDropHolds(settled, next, ceiling)) break;
+    workouts = without;
+    settled = next;
   }
+  workouts = settled;
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
