@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
-import { resolveTrainingWindow } from "@/lib/trainingResolver";
+import {
+  dayTypeFor,
+  resolveTrainingWindow,
+  runsWrittenForWeek,
+} from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
 import { beforeStart } from "@/lib/startDay";
@@ -200,11 +204,19 @@ export default function WeekStrip({
       claimMap,
       todayKey,
     });
+    // One week, so one answer: are its runs written? A run then sits on
+    // the date the plan holds it, whatever the weekday (`dayTypeFor`).
+    const weekKey = localWeekKey(weekStart);
+    const runsWritten = runsWrittenForWeek(
+      programState?.runDays,
+      weekKey,
+      weekKey
+    );
     return resolved.map((r) => {
       const data = dayMap.get(r.dateKey);
       const day: StripDay = {
         key: r.dateKey,
-        sType: r.scheduleType,
+        sType: dayTypeFor(r, runsWritten),
         liftCompleted: r.lift.status === "completed",
         liftSkipped: r.lift.status === "skipped",
         liftLogged: loggedLiftDates?.has(r.dateKey) ?? false,

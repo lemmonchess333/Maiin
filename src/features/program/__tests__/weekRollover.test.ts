@@ -28,9 +28,11 @@ import { normalizeProgramState, type ProgramState } from "../programTypes";
 import { migrateProgramState } from "../migrations";
 import { advanceWeek } from "../programEngine";
 import type { LayoffClass } from "../layoffDetection";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import {
   MAX_ROLLOVER_WEEKS,
   nextRunWeek,
+  regenerateRacePlan,
   rollLiftWeeks,
   rollRunWeeks,
   type RolledOver,
@@ -183,8 +185,8 @@ const cases: {
     answers: { daysPerWeek: 3, experience: "beginner", primaryGoal: "general" },
     weeksBehind: 20,
     expected: [
-      "lift moved 12 | week 1 progression | lifts 2026-11-30 | history 0 | sets 37 load 1570.0 | runs -  | plan -",
-      "lift moved 8 | week 1 progression | lifts 2027-01-25 | history 0 | sets 37 load 1570.0 | runs -  | plan -",
+      "lift moved 12 | week 1 progression | lifts 2026-11-30 | history 0 | sets 39 load 1642.5 | runs -  | plan -",
+      "lift moved 8 | week 1 progression | lifts 2027-01-25 | history 0 | sets 39 load 1642.5 | runs -  | plan -",
     ],
   },
   {
@@ -234,8 +236,8 @@ const cases: {
     // F6: the runs stop at race week and the plan stays, for the race's
     // own ending; the lifts carry the calendar on, to the same place.
     expected: [
-      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 16 load 547.5 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
-      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 28 load 1115.0 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
+      "run  moved 2 | week 1 deload | lifts 2026-09-21 | history 0 | sets 17 load 585.0 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
+      "lift moved 2 | week 4 progression | lifts 2026-10-05 | history 0 | sets 29 load 1152.5 | runs 2026-09-21 easy_30,easy_30,easy_30,half_race | plan race_prep 2/3",
     ],
   },
   {
@@ -345,6 +347,79 @@ describe("the rollover functions", () => {
         withoutUpdatedAt(first)
       );
     }
+  });
+});
+
+describe("a race week built mid-week (Run19, R21)", () => {
+  /* The load-time rebuild of a stale race week and "Re-plan from today"
+     rebuild this week through regenerateRacePlan. Built from the week's
+     Monday, a rebuild on Saturday dated runs on days already gone, which
+     then read as missed. */
+  const saturday = shift(START, 5);
+  const runner = () => build(race10k);
+  const rebuild = (
+    plan: ReturnType<typeof runner>,
+    extra: Partial<Parameters<typeof regenerateRacePlan>[0]> = {}
+  ) =>
+    onDay(saturday, () =>
+      regenerateRacePlan({
+        profile: plan.profile,
+        raceGoal: plan.profile.raceGoal!,
+        weekSchedule: plan.profile.weekSchedule ?? [],
+        weeklyRunDays: getWeeklyRunTarget(plan.profile) || 3,
+        currentDate: saturday,
+        weekStart: weekOf(saturday),
+        recentLayoff: "none",
+        ...extra,
+      })
+    );
+
+  it("plans no run before the day it is built", () => {
+    const plan = runner();
+    // From the week's Monday, the week holds runs before Saturday.
+    const fromMonday = rebuild(plan).runDays;
+    expect(fromMonday.some((d) => (d.date ?? "") < saturday)).toBe(true);
+    const fromToday = rebuild(plan, { plannedFrom: saturday }).runDays;
+    expect(fromToday.filter((d) => (d.date ?? "") < saturday)).toEqual([]);
+    // From today on, the week is the one built from Monday.
+    expect(fromToday).toEqual(
+      fromMonday.filter((d) => (d.date ?? "") >= saturday)
+    );
+  });
+
+  it("keeps the plan's own days before today as they were", () => {
+    const plan = runner();
+    const week = rebuild(plan).runDays;
+    const [first, second] = week.filter((d) => (d.date ?? "") < saturday);
+    expect(second).toBeDefined();
+    // The plan's own days differ from what a rebuild would make there: a
+    // run done and a run missed, each on its own session.
+    const doneDay = {
+      ...first,
+      id: "runday_done",
+      templateId: "easy_20",
+      status: "completed_exact" as const,
+    };
+    const missedDay = { ...second, id: "runday_missed", templateId: "easy_20" };
+    const lastWeek = {
+      ...second,
+      id: "runday_last_week",
+      date: shift(START, -3),
+      weekKey: weekOf(shift(START, -3)),
+    };
+    const manualCompletions = { [doneDay.id]: { completedAt: 1 } };
+    const rebuilt = rebuild(plan, {
+      plannedFrom: saturday,
+      prior: { runDays: [lastWeek, doneDay, missedDay], manualCompletions },
+    });
+    // The days already gone are the plan's: the done run and the missed
+    // one, as they were. Last week's day isn't this week's.
+    expect(rebuilt.runDays.filter((d) => (d.date ?? "") < saturday)).toEqual([
+      doneDay,
+      missedDay,
+    ]);
+    expect(rebuilt.runDays.some((d) => d.id === lastWeek.id)).toBe(false);
+    expect(rebuilt.manualCompletions).toEqual(manualCompletions);
   });
 });
 

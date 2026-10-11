@@ -1129,6 +1129,72 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
     expect(lastTime()).toBeDisabled();
   });
 
+  it("on a programme day, starts each lift from the last session in its slot", async () => {
+    /* One squat in two slots: 3×5 heavy, 2×9 light. Read by the exercise,
+       the heavy day opened with the light day's lighter set at 9 reps. */
+    h.user = { uid: "prev-user" };
+    const squat = (
+      slot: string,
+      sets: { reps: number; weightKg: number }[]
+    ) => ({
+      exercises: [{ exerciseId: "squat", exerciseName: "Barbell Squat", sets }],
+      programmeCompletion: {
+        context: {
+          progression: {
+            prescription: {
+              exercises: [{ exerciseId: "squat", instanceId: slot }],
+            },
+          },
+        },
+      },
+    });
+    seedFirestore({
+      "users/prev-user/workouts/light": {
+        date: "2026-09-03",
+        ...squat("light", [
+          { reps: 9, weightKg: 70 },
+          { reps: 9, weightKg: 65 },
+        ]),
+      },
+      "users/prev-user/workouts/heavy": {
+        date: "2026-09-01",
+        ...squat("heavy", [
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 80 },
+        ]),
+      },
+    });
+    await act(async () =>
+      openSession(
+        writer(),
+        vi.fn(),
+        {
+          exerciseId: "squat",
+          instanceId: "heavy",
+          name: "Barbell Squat",
+          reps: 5,
+          weight: 87.5,
+        },
+        {
+          planLifts: [
+            { exerciseId: "squat", instanceId: "heavy" },
+            { exerciseId: "squat", instanceId: "light" },
+          ],
+        }
+      )
+    );
+    expect(
+      screen.getByRole("button", { name: "Last time 85 × 5. Use it for set 2" })
+    ).toBeInTheDocument();
+    // The plan's step for the sets lifted at 85, the lighter last set as
+    // lifted: never the light day's 65 × 9.
+    expect(screen.getByLabelText("Set 2 weight")).toHaveValue(87.5);
+    expect(screen.getByLabelText("Set 2 reps")).toHaveValue(5);
+    expect(screen.getByLabelText("Set 3 weight")).toHaveValue(80);
+    expect(screen.getByLabelText("Set 3 reps")).toHaveValue(5);
+  });
+
   it("gives a warm-up no previous figure", async () => {
     /* Captioned with a working set, every ramp row read "100 × 5" on a
        100 kg squat, and a tap loaded the top set as the first warm-up. */
