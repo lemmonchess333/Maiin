@@ -11,6 +11,18 @@
  * pace from the runner's fitness (`resolveSessionPaces`): its window when it
  * has one, otherwise its single pace. `resolvePaceVerdict` decides the tone
  * and the words.
+ *
+ * A tempo is judged by its work segments, the tempo blocks, when the run
+ * recorded them (`workPortion`): the whole run's average carries the
+ * warm-up and cool-down, so a tempo held at its pace read slow, and the
+ * slow tones fed the "Take this week easier?" nudge. Every other session,
+ * and a tempo with no record of its blocks, is judged by the whole run, as
+ * before: an easy run's strides are not what it is judged on.
+ *
+ * A goal-pace tempo (race build and taper) is judged against the goal pace
+ * its blocks pinned, not the threshold window: a marathon pace sits 9-27 s
+ * a km past that window's slow edge (VDOT 60 to 30), so a goal-pace tempo
+ * held exactly read slow for most marathoners.
  */
 import type { DistanceUnit } from "./distanceUnits";
 import { resolvePaceVerdict, type PaceVerdict } from "./paceVerdict";
@@ -22,10 +34,32 @@ import {
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
 import { RUN_TEMPLATES } from "./workoutTemplates";
 
+/** The least a run's work segments must cover to be judged on: a few
+ *  hundred metres and a minute, so a block cut short isn't read as one. */
+const MIN_WORK_METERS = 400;
+const MIN_WORK_SECONDS = 60;
+
+/** The pace over a run's work segments, seconds per km, or null where
+ *  they covered too little to judge (or the run recorded none). */
+export function workPaceSeconds(
+  work: { seconds: number; meters: number } | null | undefined
+): number | null {
+  if (!work) return null;
+  if (!(work.meters >= MIN_WORK_METERS) || !(work.seconds >= MIN_WORK_SECONDS))
+    return null;
+  return (work.seconds / work.meters) * 1000;
+}
+
 export function plannedRunVerdict(args: {
   planMetadata: RunPlanMetadata | null | undefined;
   /** The whole run's average pace, seconds per km. */
   avgPaceSeconds: number;
+  /** The pace over the session's work segments (`workPaceSeconds`), which
+   *  a tempo is judged by when the run has one. */
+  workPaceSeconds?: number | null;
+  /** The pace the session pinned as its prescription (`pinnedWorkPace`):
+   *  a goal-pace tempo is judged against it. */
+  pinnedPaceSeconds?: number | null;
   /** Metres. */
   distance: number;
   runFitness: Parameters<typeof paceTableFromFitness>[0];
@@ -47,13 +81,23 @@ export function plannedRunVerdict(args: {
     paces.workPace ??
     (paces.band ? (paces.band[0] + paces.band[1]) / 2 : undefined);
   if (!target) return null;
+  const tempo = tmpl.type === "tempo";
+  const judged =
+    tempo && args.workPaceSeconds && args.workPaceSeconds > 0
+      ? args.workPaceSeconds
+      : avgPaceSeconds;
+  const pinned =
+    tempo && args.pinnedPaceSeconds && args.pinnedPaceSeconds > 0
+      ? args.pinnedPaceSeconds
+      : null;
   return resolvePaceVerdict({
     templateType: tmpl.type,
-    actualPaceS: avgPaceSeconds,
-    targetPaceS: target,
+    actualPaceS: judged,
+    targetPaceS: pinned ?? target,
     // Band-aware verdict (Runna teardown #2): anywhere inside the session's
-    // pace window is on-target, and the copy speaks the range.
-    targetBandS: paces.band,
+    // pace window is on-target, and the copy speaks the range. A pinned
+    // goal pace has no window.
+    targetBandS: pinned ? undefined : paces.band,
     unit: args.unit,
   });
 }
