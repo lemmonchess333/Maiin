@@ -265,25 +265,23 @@ function generateInsight(doc) {
 
 // ── Plan adjustments ─────────────────────────
 
+/**
+ * Running only (Lift4 (3): no lifting suggestion cards). `lift` stays,
+ * empty, because older app versions read its length. Mirror of
+ * `generatePlanAdjustments` in `src/lib/performanceEngine.ts`, which says why.
+ */
 function generatePlanAdjustments(doc) {
-  const lift = [];
   const run = [];
 
   if (doc.deloadRecommended) {
-    lift.push("Reduce working sets by 30–40% or drop accessory work.");
     run.push("Cap runs at easy pace. Replace one session with active recovery.");
-    return { lift, run };
-  }
-
-  if (doc.loadBand === "overreach") {
-    lift.push("Maintain intensity but consider reducing total volume 10–15%.");
+  } else if (doc.loadBand === "overreach") {
     run.push("Keep long run but drop one mid-week session if fatigued.");
-  } else if (doc.loadBand === "low" || doc.loadBand === "deload") {
-    if (doc.liftLoadScore < 30) lift.push("Focus on progressive overload — small weight jumps or extra set.");
-    if (doc.runLoadScore < 30) run.push("Add one easy 20-min run to rebuild aerobic base.");
+  } else if ((doc.loadBand === "low" || doc.loadBand === "deload") && doc.runLoadScore < 30) {
+    run.push("Add one easy 20-min run to rebuild aerobic base.");
   }
 
-  return { lift, run };
+  return { lift: [], run };
 }
 
 // ── Post-baseline scoring (the parity seam) ──
