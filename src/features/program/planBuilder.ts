@@ -390,7 +390,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
   // regeneration path (generateProgram ignores both; the preserve branch keeps
   // whatever was there). Injuries first (safety), then equipment — the
-  // equipment picker is injury-aware, so a swap never reintroduces a risk.
+  // equipment picker is injury-aware, so a swap never reintroduces a risk,
+  // and neither swap gives a lift a third day in the week.
   // Both deep-clone (the pure builder never aliases existingState) and are
   // no-ops for healthy / full-gym users.
   //

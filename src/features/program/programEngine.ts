@@ -1968,7 +1968,10 @@ export function generateProgram(
   workouts = twiceWeekly.workouts;
   // Lift4 (11): injuries first (safety), then equipment, whose picker is
   // injury-aware; both keep a slot's place, so what the passes above
-  // settled, the added lifts included, stays where it is.
+  // settled, the added lifts included, stays where it is. Both keep the
+  // repeat cap too, as `capRepeatedLifts` can't run again after them (its
+  // picker doesn't know the kit or the injuries): a swap doesn't give a
+  // lift a third day in the week.
   if (limits) {
     const injuries = [...(limits.injuries ?? [])];
     workouts = applyInjuryFiltersToWorkouts(

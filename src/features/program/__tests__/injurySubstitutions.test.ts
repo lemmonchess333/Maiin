@@ -20,8 +20,12 @@
  *      InjuryCategory union (e.g. "ankle", "neck") are dropped
  *      from the relevance check so they don't accidentally
  *      block a swap.
+ *   5. A preference below equipment — the injury filter's way of
+ *      keeping a lift to two days a week. It reorders, never
+ *      excludes, and a lift the person's kit has comes first.
  */
 import { describe, it, expect } from "vitest";
+import { getExerciseById } from "@/lib/exercises";
 import {
   CONTRAINDICATED,
   INJURY_SUBSTITUTIONS,
@@ -112,6 +116,50 @@ describe("findSafeSubstitute — guards", () => {
     /* "ankle" is dropped; lower_back remains; the swap proceeds
        normally rather than failing because of the noise input. */
     const result = findSafeSubstitute("deadlift", ["ankle", "lower_back"]);
+    expect(result?.id).toBe("trap-bar-deadlift");
+  });
+});
+
+describe("findSafeSubstitute — a preference below equipment (the week's cap)", () => {
+  const homeGym = (id: string) =>
+    ["Dumbbells", "Bodyweight", "Kettlebell"].includes(
+      getExerciseById(id)?.equipment ?? ""
+    );
+
+  it("takes the first safe substitute the preference accepts", () => {
+    /* The injury filter prefers a lift the week has fewer than twice:
+       with the trap bar deadlift on two days already, the rack pull. */
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      undefined,
+      (id) => id !== "trap-bar-deadlift"
+    );
+    expect(result?.id).toBe("rack-pull");
+  });
+
+  it("ranks below equipment: a lift the person can do beats one under the cap", () => {
+    /* At home the glute bridge is the only deadlift substitute the kit
+       has; refused by the preference, it is still the one. */
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      homeGym,
+      (id) => id !== "glute-bridge"
+    );
+    expect(result?.id).toBe("glute-bridge");
+  });
+
+  it("is never a filter: accepting none, it gives the first", () => {
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      undefined,
+      () => false
+    );
     expect(result?.id).toBe("trap-bar-deadlift");
   });
 });

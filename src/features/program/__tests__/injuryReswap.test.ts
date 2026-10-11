@@ -110,3 +110,55 @@ describe("applyInjuryFiltersToWorkouts", () => {
     );
   });
 });
+
+describe("applyInjuryFiltersToWorkouts — no lift a third day in the week", () => {
+  /** A week of one-lift days. */
+  const week = (...lifts: ProgramExercise[]): WorkoutDay[] =>
+    lifts.map((lift, i) => ({ ...day([lift]), dayName: `Day ${i + 1}` }));
+  const liftsOf = (workouts: WorkoutDay[]) =>
+    workouts.flatMap((d) => d.exercises.map((e) => e.exerciseId));
+  const press = (exerciseId: string, name: string, isAccessory = false) =>
+    ex(exerciseId, name, { movementCategory: "horizontal_push", isAccessory });
+
+  it("two swaps don't land on a lift the week can take once more", () => {
+    // A sore knee: both squats become Bulgarian split squats, so the leg
+    // press takes the next lift that spares the knee, the hip thrust.
+    const out = applyInjuryFiltersToWorkouts(
+      week(
+        ex("squat", "Barbell Squat"),
+        ex("squat", "Barbell Squat", { isAccessory: true }),
+        ex("leg-press", "Leg Press", { isAccessory: true })
+      ),
+      ["knee"]
+    );
+    expect(liftsOf(out)).toEqual([
+      "bulgarian-split",
+      "bulgarian-split",
+      "hip-thrust",
+    ]);
+  });
+
+  it("ranks the person's kit above the cap", () => {
+    // A sore shoulder at home: the incline dumbbell press is the one
+    // press both safe for the shoulder and in a home gym, so the third
+    // bench press takes it again rather than the barbell floor press.
+    // (The overhead press takes it while the week has room; push-ups,
+    // further down its list, would have left room for the bench press.)
+    const out = applyInjuryFiltersToWorkouts(
+      week(
+        press("bench-press", "Bench Press"),
+        ex("overhead-press", "Overhead Press", {
+          movementCategory: "vertical_push",
+        }),
+        press("bench-press", "Bench Press", true)
+      ),
+      ["shoulder"],
+      "home_gym"
+    );
+    expect(liftsOf(out)).toEqual([
+      "incline-db-press",
+      "incline-db-press",
+      "incline-db-press",
+    ]);
+  });
+});

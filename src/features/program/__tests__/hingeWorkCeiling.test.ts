@@ -129,10 +129,11 @@ describe("the hinge work gives way, never the deadlift off a day (L7)", () => {
       liftsOf(twoDays).map((day) => day.filter((l) => /^deadlift/.test(l)))
     ).toEqual([["deadlift~"], ["deadlift"]]);
 
-    // A home gym with a barbell: the equipment swap gives the squat day a
-    // supporting deadlift as well, and it stays.
+    // A home gym with a barbell used to get a third deadlift from the
+    // equipment swap, which no longer gives a lift a third day
+    // (`swapTwiceAWeek.test.ts`): the deadlift keeps its two.
     const home = workoutsFor({ equipment: "home_gym", barbellAtHome: true });
-    expect(daysWith(home, "deadlift")).toBe(3);
+    expect(daysWith(home, "deadlift")).toBe(2);
   });
 
   it("leaves a hinge accessory that is a muscle's second day", () => {

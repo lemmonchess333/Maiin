@@ -16,6 +16,68 @@ import {
   weightAfterExerciseSwap,
   type StartingLoadContext,
 } from "./startingLoads";
+import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
+
+/**
+ * How many times the week has each lift, kept as a filter swaps them, so a
+ * swap doesn't give a lift a third day (`MAX_WEEKLY_LIFT_EXPOSURES`) and two
+ * swaps in one pass can't both land on the same lift.
+ *
+ * The filters run after `capRepeatedLifts`, and its picker knows nothing of
+ * the person's kit or injuries, so running it again would hand back lifts
+ * they can't do. The filters' pickers keep the cap themselves instead: of
+ * the lifts they would choose from, they take the first the week has fewer
+ * than twice. What they choose from doesn't change: the person's kit, their
+ * injuries and, for the equipment picker, their level all rank above the
+ * cap.
+ *
+ * When every lift a slot may take is in the week twice already, it takes
+ * the one it took before, and the week has that lift three times. Measured
+ * over 14,400 plans (five focuses, 1–6 days, five kits, four session
+ * lengths, three levels, with no injury and with seven sets of them), that
+ * happens only with an injury, in three-day plans at home or with minimal
+ * kit and no barbell, where the bank has too few lifts that are safe and in
+ * the kit: a sore shoulder's incline dumbbell press, a sore back's Bulgarian
+ * split squat and, for a beginner, its glute bridge (the Nordic curl is
+ * above their level). For a sore shoulder alone it is a greedy choice: the
+ * overhead press takes the incline press while the week has room, though
+ * push-ups were on its list, and the bench press that comes after has
+ * nothing else. With a sore wrist as well, push-ups are out too.
+ */
+function weekLifts(workouts: readonly WorkoutDay[]) {
+  const times = new Map<string, number>();
+  for (const ex of workouts.flatMap((d) => d.exercises)) {
+    times.set(ex.exerciseId, (times.get(ex.exerciseId) ?? 0) + 1);
+  }
+  return {
+    underCap: (id: string): boolean =>
+      (times.get(id) ?? 0) < MAX_WEEKLY_LIFT_EXPOSURES,
+    swapped(from: string, to: string): void {
+      times.set(from, (times.get(from) ?? 1) - 1);
+      times.set(to, (times.get(to) ?? 0) + 1);
+    },
+  };
+}
+
+/**
+ * The order a filter swaps a week's slots in, as `[day, slot]`: main lifts
+ * first, then the earlier day, then the earlier slot, which is the order
+ * `capRepeatedLifts` keeps a lift in. When the week can take a lift only
+ * once more, a main lift gets it and a supporting slot takes the next one.
+ * In a beginner's three days at home, both deadlift days keep the dumbbell
+ * RDL as their main, and the squat day's supporting hinge becomes a glute
+ * bridge.
+ */
+function swapOrder(workouts: readonly WorkoutDay[]): Array<[number, number]> {
+  return workouts
+    .flatMap((day, d) =>
+      day.exercises.map((ex, e) => ({ d, e, main: ex.isAccessory !== true }))
+    )
+    .sort((a, b) =>
+      a.main !== b.main ? (a.main ? -1 : 1) : a.d - b.d || a.e - b.e
+    )
+    .map(({ d, e }) => [d, e]);
+}
 
 function replaceExercise(
   ex: ProgramExercise,
@@ -151,53 +213,63 @@ export function applyInjuryFiltersToWorkouts(
   const unsafe = Object.keys(CONTRAINDICATED).filter(
     (id) => contraindicatedFor(id, injuries).length > 0
   );
-
-  return workouts.map((day) => {
-    // Seed the day's used-ids with every exercise that is NOT being swapped,
-    // so a swap can't land on one already present on the day.
-    const usedIds = new Set<string>();
-    for (const ex of day.exercises) {
-      if (contraindicatedFor(ex.exerciseId, injuries).length === 0)
-        usedIds.add(ex.exerciseId);
-    }
-
-    const exercises: ProgramExercise[] = day.exercises.map((ex) => {
-      const relevant = contraindicatedFor(ex.exerciseId, injuries);
-      if (relevant.length === 0) return { ...ex };
-
-      const allowedEq = ownedKit(equipment, barbellAtHome);
-      const safe = findSafeSubstitute(
-        ex.exerciseId,
-        relevant,
-        new Set([...usedIds, ...unsafe]),
-        allowedEq
-          ? (id) => {
-              const eq = getExerciseById(id)?.equipment;
-              return eq === undefined || allowedEq.has(eq);
-            }
-          : undefined
-      );
-      if (safe) {
-        usedIds.add(safe.id);
-        return replaceExercise(
-          ex,
-          safe.id,
-          safe.name,
-          loadCtx,
-          `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`
-        );
+  const allowedEq = ownedKit(equipment, barbellAtHome);
+  const isAvailable = allowedEq
+    ? (id: string) => {
+        const eq = getExerciseById(id)?.equipment;
+        return eq === undefined || allowedEq.has(eq);
       }
-      // No safe substitute — keep the exercise but flag it (tier 4).
-      return {
-        ...ex,
-        notes:
-          `No safe substitute for ${ex.name} given your ${relevant.join(" + ")} ` +
-          `limitation — consider replacing it manually or reducing load.`,
-      };
-    });
+    : undefined;
 
-    return { ...day, exercises };
-  });
+  const out = workouts.map(cloneDay);
+  const week = weekLifts(out);
+  // Seed each day's used-ids with every exercise that is NOT being swapped,
+  // so a swap can't land on one already present on the day.
+  const usedByDay = out.map(
+    (day) =>
+      new Set(
+        day.exercises
+          .filter(
+            (ex) => contraindicatedFor(ex.exerciseId, injuries).length === 0
+          )
+          .map((ex) => ex.exerciseId)
+      )
+  );
+
+  for (const [d, e] of swapOrder(out)) {
+    const ex = out[d].exercises[e];
+    const relevant = contraindicatedFor(ex.exerciseId, injuries);
+    if (relevant.length === 0) continue;
+
+    const usedIds = usedByDay[d];
+    const safe = findSafeSubstitute(
+      ex.exerciseId,
+      relevant,
+      new Set([...usedIds, ...unsafe]),
+      isAvailable,
+      week.underCap
+    );
+    if (safe) {
+      usedIds.add(safe.id);
+      week.swapped(ex.exerciseId, safe.id);
+      out[d].exercises[e] = replaceExercise(
+        ex,
+        safe.id,
+        safe.name,
+        loadCtx,
+        `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`
+      );
+      continue;
+    }
+    // No safe substitute — keep the exercise but flag it (tier 4).
+    out[d].exercises[e] = {
+      ...ex,
+      notes:
+        `No safe substitute for ${ex.name} given your ${relevant.join(" + ")} ` +
+        `limitation — consider replacing it manually or reducing load.`,
+    };
+  }
+  return out;
 }
 
 /**
@@ -272,122 +344,131 @@ export function applyEquipmentFilterToWorkouts(
     return eq === undefined || allowed.has(eq);
   };
 
-  return workouts.map((day) => {
-    const usedIds = new Set(day.exercises.map((e) => e.exerciseId));
-    const exercises: ProgramExercise[] = day.exercises.map((ex) => {
-      if (isAvailable(ex.exerciseId)) return { ...ex };
-      // Catalogue-pinned slots (direct calf work): their bank category pool
-      // is squat-pattern lifts, so the generic swap below would replace the
-      // programme's only calf coverage with a fourth quad slot — and, by
-      // draining the pool, push LATER slots onto technical variations a
-      // beginner shouldn't get (measured: home_gym/2d handed a beginner a
-      // Bulgarian split squat). These re-point to their own bodyweight
-      // fallback instead, so a calf raise stays a calf raise at every
-      // equipment tier. Falls through to the generic swap only if the
-      // fallback is itself unusable, keeping the equipment promise absolute.
-      const pinnedFallback = PINNED_EQUIPMENT_FALLBACK[ex.exerciseId];
-      if (
-        CATALOGUE_PINNED_ACCESSORY_IDS.has(ex.exerciseId) &&
-        pinnedFallback &&
-        isAvailable(pinnedFallback) &&
-        !usedIds.has(pinnedFallback) &&
-        !isInjuryContra(pinnedFallback)
-      ) {
-        usedIds.delete(ex.exerciseId);
-        usedIds.add(pinnedFallback);
-        return replaceExercise(
-          ex,
-          pinnedFallback,
-          exerciseDisplayName(pinnedFallback),
-          loadCtx,
-          `Swapped from ${ex.name} — not available with your equipment.`
-        );
-      }
+  const out = workouts.map(cloneDay);
+  const week = weekLifts(out);
+  const usedByDay = out.map(
+    (day) => new Set(day.exercises.map((e) => e.exerciseId))
+  );
 
-      const options = exerciseBank[ex.movementCategory] ?? [];
-      // NOT complexity-gated, and that is a measured decision rather than an
-      // oversight (2026-07-28). Adding `allowsComplexity` to this predicate
-      // was tried twice and neither form helps:
-      //
-      //   AND-ed into the find  → complexity violations 603 → 315, but
-      //                           equipment violations 462 → 798. It does not
-      //                           find simpler movements; it finds NOTHING and
-      //                           leaves the slot holding a barbell the user
-      //                           does not own. Strictly worse.
-      //   preferred, then fall  → identical to no gate at all on both counts
-      //   back to any available   (603 / 462), because in every failing case
-      //                           there IS no simple, equipment-available
-      //                           option in that category.
-      //
-      // The residue is exercise-BANK COVERAGE, not filter logic: on
-      // `home_gym`/`minimal`, `knee_dominant` has exactly one non-primary the
-      // user owns and it is `bulgarian-split` (technical) — front squat is a
-      // barbell, leg press and hack squat are machines. No predicate can
-      // conjure an option that is not in the bank. See the backlog entry.
-      const eligible = (o: (typeof options)[number]) =>
-        o.id !== ex.exerciseId &&
-        !usedIds.has(o.id) &&
-        isAvailable(o.id) &&
-        !isInjuryContra(o.id);
-      // Preferred pick honours `offerableTo` (complexity + the beginner
-      // bodyweight-floor rule): without the floor half, a beginner at
-      // home/minimal whose gated lat pulldown lost its cable would be handed
-      // straight back the pull-up the gate just removed.
-      let pick =
-        options.find((o) => eligible(o) && offerableTo(experience, o)) ??
-        undefined;
-      // Vertical-pull coverage floor: at home/minimal every pull a beginner
-      // may be offered is a cable (pulldowns), and every pull an elbow
-      // injury leaves is one too, so nothing survives the equipment check;
-      // for a beginner the ungated fallback below would restore the
-      // pull-up. The honest coaching answer at that tier is the inverted
-      // row — bodyweight, difficulty scaled by foot position, THE reference
-      // novice pull regression, and a neutral-grip pull that spares the
-      // elbow. It is a horizontal_pull by category (which is why it cannot
-      // live in the vertical_pull pool), so it re-points here the same way
-      // the pinned calf fallback does, and the slot's category follows the
-      // movement honestly.
-      const invertedRowFits =
-        ex.movementCategory === "vertical_pull" &&
-        isAvailable("inverted-row") &&
-        !usedIds.has("inverted-row") &&
-        !isInjuryContra("inverted-row");
-      if (
-        invertedRowFits &&
-        (toExperience(experience) === "beginner"
-          ? !pick
-          : !pick && !options.some(eligible))
-      ) {
-        usedIds.delete(ex.exerciseId);
-        usedIds.add("inverted-row");
-        return replaceExercise(
-          ex,
-          "inverted-row",
-          exerciseDisplayName("inverted-row"),
-          loadCtx,
-          `Swapped from ${ex.name} — not available with your equipment.`
-        );
-      }
-      pick = pick ?? options.find(eligible);
-      if (pick) {
-        usedIds.delete(ex.exerciseId);
-        usedIds.add(pick.id);
-        return replaceExercise(
-          ex,
-          pick.id,
-          exerciseDisplayName(pick.id),
-          loadCtx,
-          `Swapped from ${ex.name} — not available with your equipment.`
-        );
-      }
-      // No fitting alternative — keep but flag.
-      return {
-        ...ex,
-        notes:
-          `${ex.name} needs equipment you don't have — replace it manually ` +
-          `or use a bodyweight variation.`,
-      };
-    });
-    return { ...day, exercises };
-  });
+  const swapFor = (
+    ex: ProgramExercise,
+    usedIds: Set<string>
+  ): ProgramExercise => {
+    const swapTo = (id: string): ProgramExercise => {
+      usedIds.delete(ex.exerciseId);
+      usedIds.add(id);
+      week.swapped(ex.exerciseId, id);
+      return replaceExercise(
+        ex,
+        id,
+        exerciseDisplayName(id),
+        loadCtx,
+        `Swapped from ${ex.name} — not available with your equipment.`
+      );
+    };
+    // Catalogue-pinned slots (direct calf work): their bank category pool
+    // is squat-pattern lifts, so the generic swap below would replace the
+    // programme's only calf coverage with a fourth quad slot — and, by
+    // draining the pool, push LATER slots onto technical variations a
+    // beginner shouldn't get (measured: home_gym/2d handed a beginner a
+    // Bulgarian split squat). These re-point to their own bodyweight
+    // fallback instead, so a calf raise stays a calf raise at every
+    // equipment tier. Falls through to the generic swap only if the
+    // fallback is itself unusable, keeping the equipment promise absolute.
+    // The week's cap doesn't move it either: the only other choice is a
+    // squat in the calf raise's place.
+    const pinnedFallback = PINNED_EQUIPMENT_FALLBACK[ex.exerciseId];
+    if (
+      CATALOGUE_PINNED_ACCESSORY_IDS.has(ex.exerciseId) &&
+      pinnedFallback &&
+      isAvailable(pinnedFallback) &&
+      !usedIds.has(pinnedFallback) &&
+      !isInjuryContra(pinnedFallback)
+    ) {
+      return swapTo(pinnedFallback);
+    }
+
+    const options = exerciseBank[ex.movementCategory] ?? [];
+    // NOT complexity-gated, and that is a measured decision rather than an
+    // oversight (2026-07-28). Adding `allowsComplexity` to this predicate
+    // was tried twice and neither form helps:
+    //
+    //   AND-ed into the find  → complexity violations 603 → 315, but
+    //                           equipment violations 462 → 798. It does not
+    //                           find simpler movements; it finds NOTHING and
+    //                           leaves the slot holding a barbell the user
+    //                           does not own. Strictly worse.
+    //   preferred, then fall  → identical to no gate at all on both counts
+    //   back to any available   (603 / 462), because in every failing case
+    //                           there IS no simple, equipment-available
+    //                           option in that category.
+    //
+    // The residue is exercise-BANK COVERAGE, not filter logic: on
+    // `home_gym`/`minimal`, `knee_dominant` has exactly one non-primary the
+    // user owns and it is `bulgarian-split` (technical) — front squat is a
+    // barbell, leg press and hack squat are machines. No predicate can
+    // conjure an option that is not in the bank. See the backlog entry.
+    const eligible = (o: (typeof options)[number]) =>
+      o.id !== ex.exerciseId &&
+      !usedIds.has(o.id) &&
+      isAvailable(o.id) &&
+      !isInjuryContra(o.id);
+    // No lift more than twice a week (`weekLifts`): of the options a pick
+    // chooses from, the first the week has fewer than twice, and the first
+    // only when the week has every one of them twice. The level gate ranks
+    // above the cap: a beginner isn't given a technical lift to keep it.
+    const firstUnderCap = (
+      pool: typeof options
+    ): (typeof options)[number] | undefined =>
+      pool.find((o) => week.underCap(o.id)) ?? pool[0];
+    // Preferred pick honours `offerableTo` (complexity + the beginner
+    // bodyweight-floor rule): without the floor half, a beginner at
+    // home/minimal whose gated lat pulldown lost its cable would be handed
+    // straight back the pull-up the gate just removed.
+    let pick = firstUnderCap(
+      options.filter((o) => eligible(o) && offerableTo(experience, o))
+    );
+    // Vertical-pull coverage floor: at home/minimal every pull a beginner
+    // may be offered is a cable (pulldowns), and every pull an elbow
+    // injury leaves is one too, so nothing survives the equipment check;
+    // for a beginner the ungated fallback below would restore the
+    // pull-up. The honest coaching answer at that tier is the inverted
+    // row — bodyweight, difficulty scaled by foot position, THE reference
+    // novice pull regression, and a neutral-grip pull that spares the
+    // elbow. It is a horizontal_pull by category (which is why it cannot
+    // live in the vertical_pull pool), so it re-points here the same way
+    // the pinned calf fallback does, and the slot's category follows the
+    // movement honestly. Like the calf raise, it holds even when the week
+    // has it twice: a beginner's other choice is the pull-up, and anyone
+    // else reaches it only when nothing else fits.
+    const invertedRowFits =
+      ex.movementCategory === "vertical_pull" &&
+      isAvailable("inverted-row") &&
+      !usedIds.has("inverted-row") &&
+      !isInjuryContra("inverted-row");
+    if (
+      invertedRowFits &&
+      (toExperience(experience) === "beginner"
+        ? !pick
+        : !pick && !options.some(eligible))
+    ) {
+      return swapTo("inverted-row");
+    }
+    pick = pick ?? firstUnderCap(options.filter(eligible));
+    if (pick) return swapTo(pick.id);
+    // No fitting alternative — keep but flag.
+    return {
+      ...ex,
+      notes:
+        `${ex.name} needs equipment you don't have — replace it manually ` +
+        `or use a bodyweight variation.`,
+    };
+  };
+
+  for (const [d, e] of swapOrder(out)) {
+    const ex = out[d].exercises[e];
+    if (isAvailable(ex.exerciseId)) continue;
+    out[d].exercises[e] = swapFor(ex, usedByDay[d]);
+  }
+  return out;
 }
