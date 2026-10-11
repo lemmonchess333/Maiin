@@ -72,6 +72,7 @@ import { resolveRecoveryExit } from "./runModeResolution";
 import { rebuiltWeekFromToday } from "./racePlanContinuation";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
+import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
 import {
   migrateProgramState,
@@ -2275,7 +2276,11 @@ export function useProgram() {
         const inRecovery = isInRecoveryOn(base.runPlan, localDateString());
 
         if (inRecovery) {
-          runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+          runDays = scheduleRecoveryWeekV2({
+            weekSchedule,
+            weekStart,
+            newRunnerUntil: profileNewRunnerUntil(profile),
+          });
           runPlan = { ...base.runPlan! };
         } else if (
           profile.runMode === "race_prep" &&

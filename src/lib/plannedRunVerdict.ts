@@ -7,7 +7,8 @@
  * Only a run that did its planned session is judged: a custom or extra run
  * has no honest target. Intervals are not judged either, because the
  * session's average mixes work and rest (the same reason the summary's
- * primary stat swaps to the work sets for them). The target is the session's
+ * primary stat swaps to the work sets for them), nor is a run-walk session
+ * (Run20 (5)), whose average mixes runs and walks. The target is the session's
  * pace from the runner's fitness (`resolveSessionPaces`): its window when it
  * has one, otherwise its single pace. `resolvePaceVerdict` decides the tone
  * and the words.
@@ -32,7 +33,7 @@ import {
   resolveSessionPaces,
 } from "./runPaces";
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
-import { RUN_TEMPLATES } from "./workoutTemplates";
+import { RUN_TEMPLATES, isRunWalkTemplateId } from "./workoutTemplates";
 
 /** The least a run's work segments must cover to be judged on: a few
  *  hundred metres and a minute, so a block cut short isn't read as one. */
@@ -69,7 +70,8 @@ export function plannedRunVerdict(args: {
   if (getAdherenceLabel(pm) !== "Planned") return null;
   const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
   const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-  if (!tmpl || tmpl.type === "intervals") return null;
+  if (!tmpl || tmpl.type === "intervals" || isRunWalkTemplateId(tmpl.id))
+    return null;
   if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
   const table = paceTableFromFitness(args.runFitness ?? null);
   if (!table) return null;

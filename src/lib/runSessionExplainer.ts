@@ -11,6 +11,7 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -73,6 +74,17 @@ export function runSessionExplainer(
   const phase = getPhaseForWeek(currentWeek, totalWeeks, distance);
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
+
+  // A new runner's run-walk (Run20 (5)) is that in any week, the taper's
+  // and race week's included. The last has one run, and no walks between.
+  if (isRunWalkTemplateId(templateId)) {
+    const runs =
+      RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
+        .length ?? 0;
+    return runs === 1
+      ? "The last run-walk — one easy run without stopping, between a walk to warm up and a walk to finish."
+      : "Run-walk — easy running in short runs, with walks between. The runs grow each week until you run without stopping; the walks are part of the method, not giving up.";
+  }
 
   if (phase === "race") {
     if (type === "race") {

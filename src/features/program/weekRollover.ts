@@ -289,6 +289,7 @@ export function nextRunWeek(
       runDays: scheduleRecoveryWeekV2({
         weekSchedule,
         weekStart: next.weekStart,
+        newRunnerUntil: profileNewRunnerUntil(profile),
       }),
       runPlan: { ...runPlan },
       raceBlock: raceBlockWeek(runPlan),
