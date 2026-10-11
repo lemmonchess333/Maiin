@@ -15,6 +15,7 @@ import {
   BLOCK_AMNESTY_WEEKS,
   represcribeWorkouts,
   scaleLoadForReps,
+  withRoleNumbers,
 } from "../represcribe";
 import { makeBlockId } from "../trainingBlock";
 import type { PrimaryGoal, WorkoutDay } from "../programTypes";
@@ -61,6 +62,14 @@ const cf = require("../../../../functions/lib/represcribe") as {
     experience: string | undefined
   ) => WorkoutDay[];
   scaleLoadForReps: (w: number, from: number, to: number) => number;
+  withRoleNumbers: (
+    workouts: unknown,
+    dayIndex: number,
+    instanceId: string,
+    goal: string,
+    experience: string | undefined,
+    maxSets?: number
+  ) => WorkoutDay[];
   toExperience: (v: string | undefined) => string;
   usesUndulation: (e: string | undefined) => boolean;
 };
@@ -337,6 +346,42 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             `goal=${goal} exp=${experience} days=${days}`
           ).toEqual(represcribeWorkouts(rotated, goal, experience));
         }
+      }
+    }
+  });
+
+  it("withRoleNumbers agrees on every slot, goal and level, capped or not (Lift5)", () => {
+    for (const goal of GOALS) {
+      for (const experience of EXPERIENCES) {
+        const roles = assignDayRoles(4);
+        const kept = week(4).map((day, i) => ({ ...day, dayRole: roles[i] }));
+        const ws = [...kept.slice(1), kept[0]];
+        ws.forEach((day, d) => {
+          for (const ex of day.exercises) {
+            for (const maxSets of [undefined, 2]) {
+              expect(
+                cf.withRoleNumbers(
+                  ws,
+                  d,
+                  ex.instanceId!,
+                  goal,
+                  experience,
+                  maxSets
+                ),
+                `goal=${goal} exp=${experience} day=${d} ${ex.instanceId} cap=${String(maxSets)}`
+              ).toEqual(
+                withRoleNumbers(
+                  ws,
+                  d,
+                  ex.instanceId!,
+                  goal,
+                  experience,
+                  maxSets
+                )
+              );
+            }
+          }
+        });
       }
     }
   });

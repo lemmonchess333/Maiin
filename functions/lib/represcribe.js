@@ -21,6 +21,7 @@
  *   repDeltaForRole, repFloorFor, repRangeMaxFor  → programEngine.ts
  *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
+ *   withRoleNumbers                               → represcribe.ts
  *   BLOCK_AMNESTY_WEEKS                           → represcribe.ts
  *   makeBlockId                                   → trainingBlock.ts
  *
@@ -280,6 +281,39 @@ function represcribeWorkouts(workouts, goal, experience) {
   }));
 }
 
+/**
+ * Mirror of represcribe.ts withRoleNumbers: a lift a person puts into a
+ * plan takes its role's numbers (Lift5), with its session's shift and its
+ * role's sets, no more than `maxSets` when it replaces a slot.
+ */
+function withRoleNumbers(workouts, dayIndex, instanceId, goal, experience, maxSets) {
+  const list = Array.isArray(workouts) ? workouts : [];
+  const freshDay = represcribeWorkouts(list, goal, experience)[dayIndex];
+  const fresh =
+    freshDay && freshDay.exercises.find((ex) => ex && ex.instanceId === instanceId);
+  if (!fresh) return list.slice();
+  return list.map((day, d) =>
+    d !== dayIndex
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!ex || ex.instanceId !== instanceId || ex.repUnit === "seconds") {
+              return ex;
+            }
+            const roleSets = roleRepsFor(goal, ex, experience).sets;
+            const sets =
+              maxSets === undefined ? roleSets : Math.min(maxSets, roleSets);
+            return {
+              ...fresh,
+              sets,
+              ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+            };
+          }),
+        }
+  );
+}
+
 module.exports = {
   BLOCK_AMNESTY_WEEKS,
   GOAL_PROFILES,
@@ -299,4 +333,5 @@ module.exports = {
   toExperience,
   undulationDeltaFor,
   usesUndulation,
+  withRoleNumbers,
 };
