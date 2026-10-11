@@ -316,6 +316,11 @@ test.describe("large text", () => {
         .fill(
           new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10)
         );
+      // The widest a recent race's time gets: a 10K in 1:45:59.
+      const recentRace = page.getByRole("region", { name: "Recent race" });
+      await recentRace.getByRole("radio", { name: "10K" }).click();
+      await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
+      await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();
