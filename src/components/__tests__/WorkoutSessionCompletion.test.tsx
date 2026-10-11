@@ -1843,6 +1843,28 @@ describe("the session's target (Lift4 (3))", () => {
       "Target: 3×8–12 @ 60 kg"
     );
   });
+
+  it("names a bodyweight lift's load as weight added to it (Pgm8 L6)", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 10,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight + 10 kg"
+    );
+  });
+
+  it("names a bodyweight lift done with none as bodyweight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 0,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight"
+    );
+  });
 });
 
 describe("the plate hint (Lift4 (6))", () => {

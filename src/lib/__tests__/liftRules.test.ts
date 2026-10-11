@@ -48,9 +48,27 @@ describe("liftRules", () => {
 
   it("says a bodyweight lift climbs in reps", () => {
     // A fixed target met on every set climbs a rep, a range climbs to its
-    // top (bodyweightFixedTarget.test.ts); neither adds weight.
+    // top (bodyweightFixedTarget.test.ts); with no weight added, neither
+    // adds any.
     expect(rule(intermediate, "climb")).toContain(
       "A bodyweight lift, such as pull-ups, climbs in reps instead."
+    );
+  });
+
+  it("says a bodyweight lift with weight added goes up as any lift does, a plate at a time (Pgm8 L6)", () => {
+    // The plan follows the weight on the belt and steps it a plate
+    // (progressionUserLoad.test.ts), small plates included.
+    expect(rule(intermediate, "climb")).toContain(
+      `With weight added, on a belt or a vest, it goes up like any other lift, ${BARBELL_STEP_KG} kg at a time.`
+    );
+    const small = liftRules({
+      experience: "intermediate",
+      liftDays: 3,
+      smallPlates: true,
+      racing: false,
+    });
+    expect(rule(small, "climb")).toContain(
+      `like any other lift, ${SMALL_PLATES_STEP_KG} kg at a time.`
     );
   });
 

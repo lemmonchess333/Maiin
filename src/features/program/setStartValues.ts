@@ -1,3 +1,5 @@
+import { isBodyweightExerciseId } from "@/lib/exercises";
+import { loweringOf, type LoweredBy } from "./programTypes";
 import { followedWeight, sameWeight } from "./sessionSets";
 
 /**
@@ -10,22 +12,36 @@ import { followedWeight, sameWeight } from "./sessionSets";
  * `last` is last time's counted sets in order (`lastSetsByExercise`), the
  * sets Train's "Last:" line lists. A plan with no weight yet (an
  * uncalibrated lift, or a bodyweight one) takes each set's weight from last
- * time, and a set with none from last time's first, as it always has.
+ * time, and a set with none from last time's first, as it always has. A
+ * bodyweight lift the plan lowered to none itself, from the lightest plate
+ * on the belt (Pgm8 L6), has a weight, none: it starts from the plan as any
+ * lowered weight does, or last time's plate would undo the drop.
  */
 export function startingSetRows<
   T extends { type?: string; weight: number; reps: number },
 >(
   rows: readonly T[],
-  plan: { weight: number; reps: number },
+  plan: {
+    weight: number;
+    reps: number;
+    exerciseId?: string;
+    lowered?: LoweredBy;
+  },
   last: readonly { weight: number; reps: number }[] | undefined
 ): T[] {
   if (!last?.length) return [...rows];
   const followed = followedWeight(last);
+  const droppedToNone =
+    plan.exerciseId !== undefined &&
+    isBodyweightExerciseId(plan.exerciseId) &&
+    loweringOf({ exerciseId: plan.exerciseId, lowered: plan.lowered })?.unit ===
+      "kg";
+  const noWeightYet = plan.weight === 0 && !droppedToNone;
   let ordinal = 0;
   return rows.map((row) => {
     if (row.type === "warmup") return row;
     const own = last[ordinal++];
-    if (plan.weight === 0) {
+    if (noWeightYet) {
       const prior = own ?? last[0];
       return { ...row, weight: prior.weight, reps: row.reps || prior.reps };
     }

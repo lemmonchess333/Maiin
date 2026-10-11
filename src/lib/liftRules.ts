@@ -88,7 +88,9 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     {
       id: "climb",
       title: "Adding weight",
-      body: "When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom. A bodyweight lift, such as pull-ups, climbs in reps instead.",
+      // Pgm8 L6: the plan follows the weight added to a bodyweight lift and
+      // steps it a plate on a belt (`loadGridFor`), always taken.
+      body: `When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom. A bodyweight lift, such as pull-ups, climbs in reps instead. With weight added, on a belt or a vest, it goes up like any other lift, ${step} kg at a time.`,
     },
     {
       id: "steps",

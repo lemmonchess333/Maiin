@@ -182,6 +182,19 @@ function previousLabel(
   return bodyweight ? `BW × ${prev.reps}` : null;
 }
 
+/** The load on the target line: " @ 60 kg", " @ Bodyweight", or a
+ *  bodyweight lift's load added, which the plan follows, as
+ *  " @ Bodyweight + 10 kg" (Pgm8 L6). */
+function targetLoad(
+  exercise: Pick<ProgramExercise, "exerciseId" | "weight">
+): string {
+  const bodyweight =
+    getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
+  if (exercise.weight > 0)
+    return ` @ ${bodyweight ? "Bodyweight + " : ""}${exercise.weight} kg`;
+  return bodyweight ? " @ Bodyweight" : "";
+}
+
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 /** How long a new best stays on screen: past the undo window (4 s), so
@@ -2270,12 +2283,7 @@ export default function WorkoutSession({
           <p className="text-xs text-muted-foreground text-center">
             Target: {currentExercise.sets}&times;
             {formatRepTarget(currentExercise)}
-            {currentExercise.weight > 0
-              ? ` @ ${currentExercise.weight} kg`
-              : getExerciseById(currentExercise.exerciseId)?.equipment ===
-                  "Bodyweight"
-                ? " @ Bodyweight"
-                : ""}
+            {targetLoad(currentExercise)}
           </p>
         )}
         {currentExercise && (

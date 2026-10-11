@@ -11,6 +11,7 @@ import {
   applySessionSets,
   liftedLoad,
   PERFORMANCE_HISTORY_CAP,
+  withoutAddLoadPrompt,
 } from "./programEngine";
 import { readSessionSets, recordedReps } from "./sessionSets";
 import { keptSwap, type SessionSwap } from "./sessionSwap";
@@ -255,17 +256,19 @@ export function applySessionProgression(
               // An easier session's weights are lighter by design, and a
               // lighter week's sessions are easy by design: either can move
               // a weight up, never down, and says nothing else (Lift4 (8)).
+              // A bodyweight lift's load added moves the same way (Pgm8 L6),
+              // and the rep climb's prompt to add some goes with it.
               if (
                 session.sessionVariant === "easier_today" ||
                 state.currentPhase === "deload"
               ) {
                 const lifted = liftedLoad(start.exerciseId, read.weight);
                 if (lifted !== null && lifted > start.weight)
-                  return {
+                  return withoutAddLoadPrompt({
                     ...start,
                     weight: lifted,
                     lastAttemptedWeight: lifted,
-                  };
+                  });
                 return legacy || swap ? start : afterItsLine(stored);
               }
               const reps = recordedReps(read);
@@ -288,7 +291,8 @@ export function applySessionProgression(
                 // session. With auto-progression off there is no step and no
                 // success or failure accounting, but the plan still carries
                 // the load lifted (`liftedLoad`): following the person's own
-                // load is not auto-progression.
+                // load is not auto-progression. A bodyweight lift's load is
+                // the load added to it, none included (Pgm8 L6).
                 const lifted = held
                   ? null
                   : liftedLoad(start.exerciseId, read.weight);
@@ -317,7 +321,9 @@ export function applySessionProgression(
                     : {}),
                 };
               }
-              return next;
+              // Load added to a bodyweight lift answers the rep climb's
+              // prompt to add some, which goes (Pgm8 L6).
+              return withoutAddLoadPrompt(next);
             }),
           }
     ),

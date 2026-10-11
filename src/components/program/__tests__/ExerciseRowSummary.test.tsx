@@ -136,23 +136,48 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent("Last: 77.5 kg × 8");
   });
 
-  it("never prints a bodyweight lift's stored load as if it were lifted", () => {
-    // Chin-ups read "3 sets x 13 reps" over "Last: 35 kg x 12" before the
-    // bodyweight case came first.
+  it("prints a bodyweight lift's load as weight added to it (Pgm8 L6)", () => {
+    // Chin-ups once read "Last: 35 kg x 12", a load a swap had handed them
+    // printed as the lift's own (repaired since, `migrations.ts`). The row
+    // then left a bodyweight lift's load out, but the plan now follows the
+    // weight on the belt, so the row says it, as weight added to the body.
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise({
           exerciseId: "pull-ups",
           name: "Pull-Ups",
-          reps: 13,
-          weight: 35,
+          reps: 9,
+          weight: 10,
         })}
-        lastSets={[{ weightKg: 35, reps: 12 }]}
+        lastSets={[
+          { weightKg: 10, reps: 8 },
+          { weightKg: 10, reps: 8 },
+          { weightKg: 10, reps: 8 },
+        ]}
       />
     );
-    expect(container).toHaveTextContent("3 sets × 13 reps");
-    expect(container).toHaveTextContent("Last: BW × 12");
-    expect(container).not.toHaveTextContent("35 kg");
+    expect(container).toHaveTextContent("3 sets × 9 reps · +10 kg");
+    expect(container).toHaveTextContent("Last: +10 kg × 8, 8, 8");
+  });
+
+  it("names each load a bodyweight lift's sets were done at, and none as BW", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "pull-ups",
+          name: "Pull-Ups",
+          reps: 8,
+          weight: 0,
+        })}
+        lastSets={[
+          { weightKg: 5, reps: 8 },
+          { weightKg: 0, reps: 12 },
+          { weightKg: 0, reps: 11 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: +5 kg × 8 · BW × 12, 11");
+    expect(container).not.toHaveTextContent("· +0");
   });
 
   it("gives a timed exercise its seconds", () => {
