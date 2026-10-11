@@ -728,7 +728,9 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       />
     );
     expect(
-      screen.getByText("Easy runs until recovery ends.")
+      screen.getByText(
+        "Easy runs only until then, while your legs recover from the race."
+      )
     ).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/easy_30/);
   });
@@ -1248,6 +1250,41 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       />
     );
     expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+  });
+
+  /* The banner said "Templates auto-set to easy_30 until recovery ends.":
+     an internal template id, on Train, the week after a marathon. The E2E
+     marathon journey read it there. */
+  it("the recovery banner says what the weeks hold, in words", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: {
+          distance: "marathon",
+          targetDate: localDateString(addLocalDays(new Date(), -1)),
+        },
+        phase: "recovery",
+        recoveryEndDate: localDateString(addLocalDays(new Date(), 27)),
+        totalWeeks: 17,
+        currentWeek: 16,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    const banner = screen
+      .getByText("Recovering · 27 days left")
+      .closest("[role='status']")!;
+    expect(banner).toHaveTextContent(
+      "Easy runs only until then, while your legs recover from the race."
+    );
+    expect(banner).not.toHaveTextContent(/easy_30|Templates/);
   });
 
   it("recovery-complete prompt renders when the recovery window has elapsed", () => {
