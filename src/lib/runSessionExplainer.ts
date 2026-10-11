@@ -140,6 +140,10 @@ export function runSessionExplainer(
     if (type === "tempo" && input.racePace === "tempo") {
       return "Taper — a short block at race pace keeps the rhythm sharp while the volume drops.";
     }
+    // Not the easy runs' reason: a tempo is comfortably hard (Run21 (1)).
+    if (type === "tempo") {
+      return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
+    }
     if (type === "intervals") {
       return "Taper sharpener — fast but small, keeping the legs quick while the volume drops.";
     }
