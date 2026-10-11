@@ -120,6 +120,46 @@ export interface ResolvedTrainingDay {
 }
 
 /**
+ * Whether the plan's runs for the week of `weekKey` are written: a run day
+ * dated in that week, or an undated one keyed to it (or to no week, read as
+ * the current one, as the resolver reads it). Free running writes none.
+ */
+export function runsWrittenForWeek(
+  runDays: readonly ScheduledRunDay[] | undefined,
+  weekKey: string,
+  currentWeekKey: string
+): boolean {
+  return (runDays ?? []).some(
+    (rd) =>
+      (rd.date
+        ? localWeekKey(parseLocalDate(rd.date))
+        : (rd.weekKey ?? currentWeekKey)) === weekKey
+  );
+}
+
+/**
+ * What a day holds, by ADR-0002's split: a run when the plan holds one on
+ * its date, whatever the weekday, and a lift on the pattern's lifting
+ * weekdays. Once a week's runs are written, a run weekday with none on it
+ * has had its run moved to another date and holds no run. Before they are
+ * (free running, or a week not yet rolled over), the pattern says.
+ * `DayPeekCard` names the day this way too.
+ */
+export function dayTypeFor(
+  resolved: Pick<ResolvedTrainingDay, "scheduleType" | "run">,
+  runsWritten: boolean
+): DayType {
+  const pattern = resolved.scheduleType;
+  const lifting = pattern === "lift" || pattern === "both";
+  const running =
+    resolved.run.runDay !== null ||
+    (!runsWritten && (pattern === "run" || pattern === "both"));
+  if (lifting && running) return "both";
+  if (lifting) return "lift";
+  return running ? "run" : "rest";
+}
+
+/**
  * Pick the right `ScheduledRunDay` for a calendar date. Date/weekKey-
  * aware, with a legacy fallback gated by the current generated
  * week so a future strip Monday never matches this-Monday's runDay.
