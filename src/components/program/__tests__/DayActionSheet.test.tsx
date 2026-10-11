@@ -369,6 +369,38 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
   });
 
+  it("names the heart-rate zone, and a race's follows its distance (Run21 (1))", () => {
+    const { profile, runDay } = setup();
+    const zoneLine = (templateId: string) => {
+      const { unmount } = render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, maxHeartRate: 200 }}
+          programState={makeProgramState([
+            {
+              ...runDay,
+              templateId,
+              type: templateId.endsWith("race") ? "race" : "easy",
+            },
+          ])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(zoneLine("easy_30")).toContain("Z2 · Easy · 120–140 bpm");
+    expect(zoneLine("5k_race")).toContain("Z5 · Hard · 180–200 bpm");
+    expect(zoneLine("marathon_race")).toContain(
+      "Z4 · Comfortably hard · 160–180 bpm"
+    );
+  });
+
   it("names the quality sessions in the reason only when the run's week holds one (Run21 (3))", () => {
     // An easy day in a race plan's build: a returning runner's week holds no
     // tempo or intervals (Run15), so they can't be its reason.
