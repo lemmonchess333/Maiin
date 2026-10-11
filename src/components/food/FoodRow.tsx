@@ -313,17 +313,23 @@ export default function FoodRow({
     <span
       aria-hidden="true"
       data-slot-tile={slot}
-      className="flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground"
+      className="flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground @max-[11em]:hidden"
     >
       <SlotIcon className="size-5" strokeWidth={1.75} />
     </span>
   ) : null;
 
+  /* Under 11em of row (larger text, a narrow phone) the column takes the
+     name's room: the photo goes above the name, and the slot's tile, which
+     is only there to line names up, gives way. Beside it, the names broke
+     mid-word at double text on a 320 px phone. */
   const rowInner = leading ? (
-    <div className="flex flex-1 min-w-0 items-center gap-3">
-      {leading}
-      <div className="flex flex-1 min-w-0 flex-wrap items-center justify-between gap-y-1">
-        {rowBody}
+    <div className="@container flex-1 min-w-0">
+      <div className="flex items-center gap-3 @max-[11em]:flex-col @max-[11em]:items-start @max-[11em]:gap-2">
+        {leading}
+        <div className="flex w-full flex-1 min-w-0 flex-wrap items-center justify-between gap-y-1">
+          {rowBody}
+        </div>
       </div>
     </div>
   ) : (
