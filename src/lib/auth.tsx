@@ -141,6 +141,13 @@ export interface UserProfileCore {
    * to a Timestamp. Read for the #972 cold-start activation window.
    */
   createdAt?: Timestamp | FieldValue;
+  /**
+   * When setup last finished, stamped by `completeOnboarding` (server time; a
+   * client can't write it). A new runner's first weeks count from it
+   * (`profileNewRunnerUntil`), as setup's own plan does. Absent on a profile
+   * set up before it was kept.
+   */
+  onboardingCompletedAt?: Timestamp | FieldValue;
 }
 
 /** Physical attributes and fitness metrics */
