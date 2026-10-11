@@ -55,8 +55,8 @@ const FOCUS_LABELS: Record<string, string> = {
   hypertrophy: "Build muscle",
   strength: "Get stronger",
   fat_loss: "Lose fat",
-  general: "Stay fit",
-  running: "Running support",
+  general: "General fitness",
+  running: "Support my running",
 };
 
 const NUTRITION_LABELS: Record<string, string> = {
@@ -326,6 +326,9 @@ export function programmePreservationNote(args: {
   /** The new session length, when the save changes it (Lift4 (5)): the
    *  plan the person has is re-fitted, sets only. */
   sessionMinutesTo?: number;
+  /** Whether the save changes the level (Lift4 (12)): the main lifts take
+   *  the new level's targets (`represcribeMainLifts`). */
+  levelChanged?: boolean;
 }): string {
   const week =
     typeof args.weekNumber === "number" && args.weekNumber > 0
@@ -342,5 +345,8 @@ export function programmePreservationNote(args: {
             ? "75 minutes or more"
             : `${args.sessionMinutesTo} minutes`
         }.`;
-  return `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised.${refit} ${week}, your history, and logged sessions stay.`;
+  const level = args.levelChanged
+    ? " Your main lifts take the targets for your new level."
+    : "";
+  return `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised.${refit}${level} ${week}, your history, and logged sessions stay.`;
 }

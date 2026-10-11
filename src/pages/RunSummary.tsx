@@ -61,12 +61,9 @@ import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
 import { getAdherenceLabel } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
-import {
-  paceTableFromFitness,
-  resolveSessionPaces,
-  raceDistanceKeyFromKm,
-} from "../lib/runPaces";
-import { resolvePaceVerdict } from "../lib/paceVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
+import { pinnedWorkPace } from "../lib/runSegments";
+import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -353,6 +350,9 @@ interface RunData {
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
+  /** The time and distance in the session's work segments
+   *  (`useSessionPlayer`), null for a run with none. */
+  workPortion?: WorkPortion | null;
 }
 
 export default function RunSummary() {
@@ -775,39 +775,18 @@ export default function RunSummary() {
     return "Nice run";
   })();
 
-  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): for a
-  // PLANNED session with a resolvable per-session pace target, say how the
-  // run compared — including the "keep the easy days easy" nudge when an easy
-  // session ran hot. Only planned runs are judged (custom/extra have no honest
-  // target), and intervals are excluded (session avg mixes work + rest — the
-  // same reason the primary stat swaps to the work-set summary for them).
-  const paceVerdict = (() => {
-    if (adherenceLabel !== "Planned") return null;
-    const pm = runConfig?.planMetadata;
-    const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
-    const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-    if (!tmpl || tmpl.type === "intervals") return null;
-    if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
-    if (!table) return null;
-    const paces = resolveSessionPaces(tmpl.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistanceKm),
-    });
-    const target =
-      paces.targetPace ??
-      paces.workPace ??
-      (paces.band ? (paces.band[0] + paces.band[1]) / 2 : undefined);
-    if (!target) return null;
-    return resolvePaceVerdict({
-      templateType: tmpl.type,
-      actualPaceS: avgPaceSeconds,
-      targetPaceS: target,
-      // Band-aware verdict (Runna teardown #2): anywhere inside the session's
-      // pace window is on-target, and the copy speaks the range.
-      targetBandS: paces.band,
-      unit,
-    });
-  })();
+  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
+  // PLANNED session's pace compared with its target, including the "keep
+  // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
+  const paceVerdict = plannedRunVerdict({
+    planMetadata: runConfig?.planMetadata,
+    avgPaceSeconds,
+    workPaceSeconds: workPaceSeconds(state.workPortion),
+    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
+    distance,
+    runFitness: profile?.runFitness,
+    unit,
+  });
 
   // The context-aware primary stat, a card above the stats card of four.
   // Intervals get a work-set summary ("N × distance @ pace") instead of
@@ -990,6 +969,7 @@ export default function RunSummary() {
           isInvalid,
           invalidReason: invalidReason ?? null,
           routeQuality: state.routeQuality ?? null,
+          workPortion: state.workPortion ?? null,
           shoeId: effectiveShoeId,
           bestEfforts,
         },

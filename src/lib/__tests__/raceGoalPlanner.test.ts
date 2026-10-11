@@ -154,6 +154,28 @@ describe("getRaceGoalPlannerState", () => {
   });
 });
 
+/* Run19: the preview shows what the save keeps. A plan made on a Thursday
+   saves no run before the Thursday, so the first week's minutes are the
+   remaining days' (the save's own), while the run days a week stay the
+   plan's shape. */
+describe("getRaceGoalPlannerState — a plan made mid-week", () => {
+  const input = (currentDate: string) => ({
+    ...base,
+    distance: "10k" as const,
+    currentDate,
+    weeklyRunDays: 4,
+    targetDate: "2026-09-01",
+  });
+
+  it("keeps the run days a week, and counts only the minutes from today", () => {
+    const monday = getRaceGoalPlannerState(input(TODAY));
+    const thursday = getRaceGoalPlannerState(input("2026-06-04"));
+    expect(thursday.recommendedRunDays).toBe(monday.recommendedRunDays);
+    expect(thursday.firstWeekMinutes).toBeLessThan(monday.firstWeekMinutes);
+    expect(thursday.firstWeekMinutes).toBeGreaterThan(0);
+  });
+});
+
 /* Pgm7 A7: a race plan needs at least two run days a week, and a
    marathon's setup recommends three. */
 describe("raceRunDaysNote", () => {
