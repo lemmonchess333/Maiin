@@ -219,9 +219,15 @@ describe("RunLaunchCard", () => {
       config: {},
     };
 
-    it("a tempo says comfortably hard", () => {
+    // Run21 (2): the one feel line says it, its effort word first; R2's own
+    // line beside it said the same thing twice. ("Why this run" repeats it
+    // under "How it should feel", one tap away.)
+    it("a tempo says comfortably hard, once", () => {
       setup({ workout: tempo, prefill: { activityType: "tempo" } });
-      expect(screen.getByText("Comfortably hard")).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/^Comfortably hard/, { selector: "p" })
+      ).toHaveLength(1);
+      expect(screen.queryByText(/\/km/)).not.toBeInTheDocument();
     });
 
     it("an interval session says hard, and even", () => {
@@ -240,11 +246,11 @@ describe("RunLaunchCard", () => {
       });
       expect(screen.getByText("5 × 1K")).toBeInTheDocument();
       expect(
-        screen.getByText("Hard, and even across every rep")
-      ).toBeInTheDocument();
+        screen.getAllByText(/^Hard, and even/, { selector: "p" })
+      ).toHaveLength(1);
     });
 
-    it("a tempo with a pace shows the pace, not the words", () => {
+    it("a tempo with a pace shows the pace, and the one feel line", () => {
       setup({
         workout: tempo,
         prefill: {
@@ -253,7 +259,9 @@ describe("RunLaunchCard", () => {
         },
       });
       expect(screen.getByText("5:20 /km")).toBeInTheDocument();
-      expect(screen.queryByText("Comfortably hard")).not.toBeInTheDocument();
+      expect(
+        screen.getAllByText(/^Comfortably hard/, { selector: "p" })
+      ).toHaveLength(1);
     });
   });
 });
