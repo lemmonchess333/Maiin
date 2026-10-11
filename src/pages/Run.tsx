@@ -65,6 +65,7 @@ import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
 import {
   judgesPaceNow,
+  livePaceTarget,
   segmentsFromGuided,
   segmentsFromIntervals,
 } from "../lib/runSegments";
@@ -455,6 +456,8 @@ export default function Run() {
     player.segments,
     player.current
   );
+  // The bar's pace: none until the run has one to judge (Run20).
+  const barPace = runConfig ? livePaceTarget(runConfig) : null;
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -1648,17 +1651,14 @@ export default function Run() {
 
             {(runConfig?.activityType === "tempo" ||
               runConfig?.activityType === "intervals") &&
-              judgingPace && (
+              judgingPace &&
+              barPace !== null && (
                 <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
                   <PaceZoneBar
                     /* The last 30 seconds, as the alerts read it: the whole
                      run's average carries the warm-up into every reading. */
                     currentPace={rollingPaceSeconds(gps.points, 30) ?? 0}
-                    targetPace={
-                      runConfig.intervals?.workPace ||
-                      runConfig.target.value ||
-                      300
-                    }
+                    targetPace={barPace}
                     tolerance={15}
                   />
                 </div>
