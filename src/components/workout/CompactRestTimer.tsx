@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/cardClasses";
 import { cn } from "@/lib/utils";
 
 /** Circumference of the countdown ring (r = 15 in a 36-unit box). */
@@ -10,13 +11,16 @@ function clock(total: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/** A stable header row: resting never changes the set action's label.
+/** The rest card, docked above the workout's bottom bar (Pol1): resting
+ * never changes the set action's label, and nothing above the card moves
+ * when it arrives.
  *
- * DS3: the time left is the row's one big thing, in the numeral font,
+ * DS3: the time left is the card's one big thing, in the numeral font,
  * beside a ring that empties as the rest runs down. When the rest is over
  * the ring is drawn whole again, in green (green is status): an emptied
- * ring has no arc left to colour. Its motion is a stroke offset stepping
- * once a second, so there is nothing to animate for Reduce Motion. */
+ * ring has no arc left to colour. The arc sweeps through each second
+ * rather than stepping once a second, a one-second linear transition on
+ * its offset that the global Reduce Motion rule takes back to a step. */
 export default function CompactRestTimer({
   seconds,
   target,
@@ -34,7 +38,10 @@ export default function CompactRestTimer({
   const elapsed = target > 0 ? Math.min(1, seconds / target) : 1;
   return (
     <div
-      className="border-b border-border/50 px-4 py-2 flex items-center gap-3"
+      className={cardClasses({
+        size: "compact",
+        className: "flex items-center gap-3",
+      })}
       role="group"
       aria-label="Rest timer"
     >
@@ -64,7 +71,10 @@ export default function CompactRestTimer({
           strokeLinecap="round"
           strokeDasharray={RING}
           strokeDashoffset={done ? 0 : RING * elapsed}
-          className={done ? "stroke-success" : "stroke-primary"}
+          className={cn(
+            "transition-[stroke-dashoffset] duration-1000 ease-linear",
+            done ? "stroke-success" : "stroke-primary"
+          )}
         />
       </svg>
       <p className="min-w-0 flex-1 leading-tight">
