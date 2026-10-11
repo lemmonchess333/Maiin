@@ -68,6 +68,7 @@ import {
   transitionStatus,
 } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { rebuiltWeekFromToday } from "./racePlanContinuation";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
@@ -2080,15 +2081,24 @@ export function useProgram() {
             overrides?.weekSchedule ?? profile.weekSchedule ?? [];
           const weekStart = localWeekKey();
           if (profile.runMode === "race_prep" && profile.raceGoal) {
+            const today = localDateString();
             ({ runDays, runPlan } = regenerateRacePlan({
               recentLayoff,
               profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
               weeklyRunDays: runTarget,
-              currentDate: localDateString(),
+              currentDate: today,
               weekStart,
             }));
+            // Run19: the week's days already gone stay as they were, and
+            // none is planned before today.
+            runDays = rebuiltWeekFromToday(
+              base?.runDays ?? [],
+              runDays,
+              today,
+              weekStart
+            );
           } else {
             // RUN-M: structured retired — a non-race state is freeform.
             runDays = [];
@@ -2284,6 +2294,16 @@ export function useProgram() {
             ? { ...rd, userOverride: preserved, templateId: preserved }
             : rd;
         });
+        // Run19: the layout changes the week from today. Its days already
+        // gone stay as they were, and none is planned before today.
+        if (runPlan) {
+          runDays = rebuiltWeekFromToday(
+            base.runDays ?? [],
+            runDays,
+            localDateString(),
+            weekStart
+          );
+        }
 
         return { ...base, runDays, runPlan };
       }, overrides?.profileUpdates);

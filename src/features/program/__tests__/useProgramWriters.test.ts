@@ -1042,6 +1042,112 @@ describe("Run19 — a race week built partway through plans no run before today 
     expect(beforeToday(saved)).toEqual([done]);
   });
 
+  /** This week's Monday run done and Wednesday's skipped, each on its own
+   *  session, as the layout tests below seed them. */
+  function seededWeek() {
+    const week = localWeekKey();
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: localDateString(parseLocalDate(week)),
+      weekKey: week,
+    };
+    const skipped: ScheduledRunDay = {
+      id: "runday_skipped",
+      dayIndex: 3,
+      templateId: "easy_20",
+      type: "easy",
+      completed: false,
+      status: "skipped",
+      date: localDateString(addLocalDays(parseLocalDate(week), 2)),
+      weekKey: week,
+    };
+    return { done, skipped };
+  }
+  /** The new layout: runs on Tuesday, Thursday, Saturday and Sunday. */
+  const newLayout = [
+    { day: 0, type: "run" as const },
+    { day: 1, type: "lift" as const },
+    { day: 2, type: "run" as const },
+    { day: 3, type: "lift" as const },
+    { day: 4, type: "run" as const },
+    { day: 5, type: "lift" as const },
+    { day: 6, type: "run" as const },
+  ];
+
+  it("the weekly layout's save keeps the week's own days before today", async () => {
+    mockProfile = runner();
+    const { done, skipped } = seededWeek();
+    seedProgram(
+      programDoc({ runDays: [done, skipped], runPlan: runPlanOf(mockProfile) })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, skipped]);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
+  });
+
+  it("the weekly layout's save keeps a recovery week's days before today", async () => {
+    mockProfile = runner();
+    const { done } = seededWeek();
+    const recoveryEndDate = localDateString(addLocalDays(new Date(), 10));
+    seedProgram(
+      programDoc({
+        runDays: [done],
+        runPlan: {
+          ...runPlanOf(mockProfile),
+          phase: "recovery",
+          recoveryEndDate,
+        },
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done]);
+    const fromToday = lastSaved().runDays!.filter(
+      (d) => (d.date ?? "") >= localDateString()
+    );
+    expect(fromToday.length).toBeGreaterThan(0);
+    expect(fromToday.every((d) => d.templateId === "easy_30")).toBe(true);
+  });
+
+  it("the weekly layout's restructure keeps the week's own days before today", async () => {
+    mockProfile = runner();
+    const { done, skipped } = seededWeek();
+    seedProgram(
+      programDoc({ runDays: [done, skipped], runPlan: runPlanOf(mockProfile) })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.regenerateProgram(undefined, 3, {
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, skipped]);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
+  });
+
   it("Re-plan from today, keeping the week's own days before today", async () => {
     mockProfile = runner();
     const week = localWeekKey();
@@ -1423,6 +1529,21 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
   // slots emit `easy_30` regardless of week position.
 
   it("scheduleRecoveryWeekV2 emits easy_30 for every scheduled run/both slot", async () => {
+    // On this week's Monday, so the refresh rebuilds the whole week: it
+    // keeps the days already gone as they were (Run19), and later in the
+    // week they can be all of its run days.
+    const monday = parseLocalDate(localWeekKey());
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await recoveryWeekIsEasy30();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  async function recoveryWeekIsEasy30() {
     // Set up: race_prep user in recovery phase. Schedule has 4
     // run slots (Mon/Tue/Thu/Sat). recoveryEndDate is in the
     // future so refreshRunSchedule's `inRecovery` check fires.
@@ -1478,7 +1599,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     }
     // Phase preserved (we're still in recovery).
     expect(lastWrite.runPlan?.phase).toBe("recovery");
-  });
+  }
 
   it("Lift4 (10) — advanceToNextWeek into race week makes it race week, and says so", async () => {
     const targetDate = raceDateThreeWeeksOut();
