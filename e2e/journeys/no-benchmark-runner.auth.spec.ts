@@ -133,7 +133,7 @@ test("a runner with no benchmark, through every surface that explains a planned 
     await openJourney(page, start);
     account = await signUp(page, "nobench");
     await setUpPlan(page, {
-      aim: "Improve running",
+      aim: "Support my running",
       activity: "Running",
       runner: "Regular runner",
       race: {
