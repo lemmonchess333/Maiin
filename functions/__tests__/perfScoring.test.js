@@ -189,3 +189,17 @@ describe("perfScoring.scorePerformance — goal-aware composition", () => {
     }
   });
 });
+
+describe("perfScoring.generatePlanAdjustments — the run suggestion's words", () => {
+  it("asks for an easy run in plain words (Run21 (2): no physiology names)", () => {
+    const adj = generatePlanAdjustments({
+      loadBand: "low",
+      liftLoadScore: 20,
+      runLoadScore: 20,
+      deloadRecommended: false,
+    });
+    expect(adj.run).toEqual([
+      "Add one easy 20-minute run to build your running back up.",
+    ]);
+  });
+});

@@ -278,7 +278,7 @@ function generatePlanAdjustments(doc) {
   } else if (doc.loadBand === "overreach") {
     run.push("Keep long run but drop one mid-week session if fatigued.");
   } else if ((doc.loadBand === "low" || doc.loadBand === "deload") && doc.runLoadScore < 30) {
-    run.push("Add one easy 20-min run to rebuild aerobic base.");
+    run.push("Add one easy 20-minute run to build your running back up.");
   }
 
   return { lift: [], run };
