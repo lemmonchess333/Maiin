@@ -157,7 +157,6 @@ w20 2026-07-20  plan week 20 deload  4/4 sessions  37–45 min
   deadlift        plan 175 × 8 × 2  1RM 207.1 logged 210.0  170×[7,7] hold | 175×[6,5] hold
   overhead-press  plan 60 × 7 × 2  1RM 70.0 logged 74.0  60×[7,7] hold | 57.5×[8,8] hold
   sets/days: Chest 8/2 · FrontDelts 8/2 · SideDelts 2/2 · RearDelts 4/2 · Triceps 10/2 · Lats 4/2 · UpperBack 8/4 · LowerBack 4/2 · Biceps 6/2 · Quads 6/2 · Hamstrings 8/2 · Glutes 10/2 · Calves 5/2 · Abs 3/2
-  · 2026-07-24: picked up 15 kg for lateral-raise (plan 12.5 × 21)
 
 w21 2026-07-27  plan week 21 progression  4/4 sessions  48–60 min
   squat           plan 140 × 7 × 3  1RM 164.0 logged 172.7  140×[7,6,4] hold
@@ -165,14 +164,12 @@ w21 2026-07-27  plan week 21 progression  4/4 sessions  48–60 min
   deadlift        plan 175 × 8 × 3  1RM 207.5 logged 221.7  170×[7,7,7] reps | 175×[8,6,5] hold
   overhead-press  plan 60 × 7 × 3  1RM 70.1 logged 74.0  60×[7,7,5] hold | 57.5×[8,8,8] reps
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 6/2 · Triceps 15/2 · Lats 6/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 9/2 · Quads 9/2 · Hamstrings 12/2 · Glutes 15/2 · Calves 8/2 · Abs 5/2
-  · 2026-07-31: picked up 17.5 kg for lateral-raise (plan 15 × 21)
-  · 2026-07-31: took lateral-raise down to 10 kg (plan 15 × 21)
 
 w22 2026-08-03  plan week 22 progression  4/4 sessions  48–60 min
   squat           plan 140 × 7 × 3  1RM 164.3 logged 172.7  140×[7,6,4] hold
   bench-press     plan 97.5 × 8 × 3  1RM 118.8 logged 120.3  97.5×[7,5,4] hold
   deadlift        plan 175 × 8 × 3  1RM 208.0 logged 221.7  170×[8,8,8] reps | 175×[8,6,5] hold
-  overhead-press  plan 60 × 7 × 3  1RM 70.2 logged 72.8  60×[6,5,2] hold | 57.5×[8,6,4] miss
+  overhead-press  plan 60 × 7 × 3  1RM 70.2 logged 72.8  60×[6,5,1] hold | 57.5×[8,6,4] miss
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 6/2 · Triceps 15/2 · Lats 6/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 9/2 · Quads 9/2 · Hamstrings 12/2 · Glutes 15/2 · Calves 8/2 · Abs 5/2
 
 w23 2026-08-10  plan week 23 progression  3/4 sessions  48–55 min
@@ -202,11 +199,10 @@ w26 2026-08-31  plan week 26 progression  4/4 sessions  51–60 min
   deadlift        plan 177.5 × 5 × 3  1RM 209.2 logged 226.7  177.5×[5,5,2] hold | 170×[10,10,10] step
   overhead-press  plan 60 × 8 × 3  1RM 70.6 logged 76.7  60×[8,6,5] hold | 57.5×[10,10,8] hold
   sets/days: Chest 12/2 · FrontDelts 12/2 · SideDelts 4/2 · RearDelts 6/2 · Triceps 15/2 · Lats 6/2 · UpperBack 13/4 · LowerBack 6/2 · Biceps 9/2 · Quads 9/2 · Hamstrings 12/2 · Glutes 15/2 · Calves 8/2 · Abs 5/2
-  · 2026-09-02: took lateral-raise down to 12.5 kg (plan 17.5 × 14)
 
 summary
   sessions 92/104 · lighter weeks 6 · rule failures below-bar 26
   squat           1RM 150.0 → 165.3 (10.2%) · plan 137.5 → 140 kg · 23 sessions: 1 steps, 7 rep climbs, 14 holds, 0 misses, 0 lowered, 1 own weight
   bench-press     1RM 110.0 → 119.3 (8.5%) · plan 97.5 → 100 kg · 23 sessions: 1 steps, 4 rep climbs, 17 holds, 0 misses, 0 lowered, 1 own weight
   deadlift        1RM 190.0 → 209.2 (10.1%) · plan 175 → 177.5 kg · 46 sessions: 3 steps, 13 rep climbs, 24 holds, 4 misses, 0 lowered, 2 own weight
-  overhead-press  1RM 65.0 → 70.6 (8.6%) · plan 60 → 60 kg · 46 sessions: 3 steps, 10 rep climbs, 26 holds, 4 misses, 1 lowered, 2 own weight
+  overhead-press  1RM 65.0 → 70.6 (8.5%) · plan 60 → 60 kg · 46 sessions: 3 steps, 10 rep climbs, 26 holds, 4 misses, 1 lowered, 2 own weight
