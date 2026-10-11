@@ -22,6 +22,12 @@ as Pgm7 in lemmonchess333/Maiin#2604):
 
 Money, privacy and medical or safety claims stay the owner's too.
 
+**2026-10-11: the hand-back questions too.** The owner then delegated the
+questions this file had handed back ("make decisions on the rest") and asked
+for every open PR of the pass to be merged. The answers are locked as Pgm8
+(lemmonchess333/Maiin#2683); the table at the end of this file says how each
+one is being built.
+
 **Status words.**
 
 - **Built**: answered and built, in the PR named.
@@ -1171,6 +1177,25 @@ tap away, and a change the person didn't make gets one line.
 
 ## Handed back to the owner
 
+Answered 2026-10-11 under the owner's delegation, each as its row
+recommends, and locked as Pgm8 (lemmonchess333/Maiin#2683). How each one
+stands:
+
+- **Built, PR to follow once the merges land:** E8 (the hot-day line,
+  `claude/run-heat-by-feel`), R14c (the race-too-soon line at setup,
+  `claude/run-new-runner-race-too-soon`), the treadmill as a place
+  (`claude/run-treadmill-is-a-place`), and A3, which L11 keeps
+  (`claude/lift-stretched-range-line`: the ceiling read from Nuzzo 2024's
+  table, then the one line).
+- **Being built:** L15, R1, and L7's hamstring ceiling (Kept above, its
+  defect fixed on the hinge work).
+- **Next:** L6 (after A3, which shares `applyProgression`), R23, and L4
+  once its simulation is run.
+- **Kept as they are, by the answer:** L3, R24, E3a and E3b.
+
+The questions the merges and builds raised are under "Open after Pgm8"
+below.
+
 | #    | Question                                            | Why it's theirs                                                  | Recommendation                                                                                     |
 | ---- | --------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | L3   | 4 × 3 and 4 × 7 on Get stronger                     | Lift4 (5)'s heavier and lighter days                             | Keep; or undulate by load at a fixed 5                                                             |
@@ -1185,3 +1210,30 @@ tap away, and a change the person didn't make gets one line.
 | E3a  | Phase names on run surfaces                         | Run9f keeps base, build and peak internal                        | Define the names only where they already show                                                      |
 | E3b  | A sheet for runs, not the "Why this run" disclosure | The design guide's note on Lift4 (3)                             | Keep the disclosure, with E3's four lines inside it                                                |
 | R14c | A race too soon for someone new to running          | A claim about readiness                                          | Say so at setup, and suggest run-walking it or a later date                                        |
+
+## Open after Pgm8
+
+Found while merging the pass and building its answers. Each is the owner's,
+because it touches a Lift4 call or a copy decision.
+
+- **F23: a set taken lighter stays lighter.** The workout screen starts each
+  set from what it did last time in that slot (`startingSetRows`, Lift4: "a
+  top set, its back-offs and a lighter last set stay as lifted"). A set
+  someone drops after a miss comes back at the lighter weight, and the plan
+  can't step while any set is under its weight. In the simulator the
+  intermediate man's 5-rep deadlift ran its last two sets at 132.5 kg under
+  a 155 kg plan in three of six sessions, March to June. Options: start a
+  lighter last set from the plan after a miss (a set the person chose to
+  drop stays a choice they make again), or judge the step on the sets at
+  the plan's weight. Recommendation: the first.
+- **Ranges that wait at their top with nothing said.** With A3's ceiling
+  read from Nuzzo 2024, a 12–20 isolation only climbs past its top on a
+  step of 32% or more, and a 10–15 one on 18.2% or more. A 10 → 12.5 kg
+  lateral raise now holds at 20, so A3's line ("first climbs past its
+  range") never shows for it. Options: a line for a range held at its top
+  too, or leave it. Recommendation: the same line at the top, once.
+- **The treadmill's two neighbours.** "Track without GPS" still replaces a
+  planned run's type with "manual", so a planned tempo recorded that way
+  isn't counted as the tempo; and an unplanned run with the treadmill
+  switch on starts as an easy run. Recommendation: make "Track without GPS"
+  a place as the treadmill now is, and leave the default.
