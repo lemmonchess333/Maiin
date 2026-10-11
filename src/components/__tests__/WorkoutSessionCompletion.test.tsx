@@ -85,6 +85,7 @@ vi.mock("@/lib/restTimerNotification", () => ({
   cancelRestEndNotification: vi.fn(),
 }));
 import WorkoutSession from "../WorkoutSession";
+import { WORKOUT } from "@/test/journeyScreens";
 
 /**
  * What a writer hands back (`completeLift`): saved now, or, given the
@@ -162,6 +163,26 @@ afterEach(() => {
   vi.useRealTimers();
   cleanup();
   vi.unstubAllGlobals();
+});
+
+/* The E2E journeys finish a session on this screen by these names
+   (src/test/journeyScreens.ts, `finishLiftViaUi`). Finished here the same
+   way, so a renamed control fails in the unit suite, not in a journey. */
+it("finishes a session by the names the journeys use", async () => {
+  const log = openSession();
+  expect(screen.getByRole("button", { name: WORKOUT.close })).toBeVisible();
+  for (let set = 0; set < 3; set++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: WORKOUT.markSet })[0]
+    );
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.save })).toBeVisible()
+  );
+  fireEvent.click(screen.getByRole("button", { name: WORKOUT.save }));
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.done })).toBeVisible()
+  );
+  expect(log).toHaveBeenCalledTimes(1);
 });
 
 describe("set completion through row controls", () => {

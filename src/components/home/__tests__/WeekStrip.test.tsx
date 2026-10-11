@@ -24,6 +24,7 @@ import type {
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { addLocalDays, localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { STRIP } from "@/test/journeyScreens";
 
 const emptyClaimMap: Map<string, ClaimState> = new Map();
 
@@ -217,6 +218,12 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     );
 
     expect(todayCircle(container).getAttribute("data-state")).toBe("run-done");
+    // The words the E2E journeys find the day by (src/test/journeyScreens.ts).
+    expect(
+      container
+        .querySelector('[aria-current="date"]')
+        ?.getAttribute("aria-label")
+    ).toContain(`, ${STRIP.runDone}`);
   });
 
   it("anchors every strip day on ONE week key, so none can borrow another week's runDay", () => {
