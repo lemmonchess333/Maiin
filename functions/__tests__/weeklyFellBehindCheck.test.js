@@ -375,6 +375,92 @@ describe("_decideFellBehindFlag — set / no-set decisions", () => {
   });
 });
 
+/* F16b: a plan made partway through a week plans no run before that day
+   (Run19), but the Monday check measured that first week against the full
+   weekly target, so a Thursday start read as behind on its first Monday. */
+describe("_fellBehindRatio — a first week is graded against what it planned", () => {
+  const MONDAY = "2026-09-28";
+  const THURSDAY = "2026-10-01";
+  const SATURDAY = "2026-10-03";
+  // Runs Tuesday, Thursday and Saturday.
+  const weekSchedule = [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+    day,
+    type: [2, 4, 6].includes(day) ? "run" : "rest",
+  }));
+  const began = (date) => ({
+    toMillis: () => Date.parse(`${date}T09:00:00Z`),
+  });
+  const runner = (overrides = {}) =>
+    profile({
+      runMode: "race_prep",
+      weeklyRunDaysTarget: 3,
+      weekSchedule,
+      timezone: "Europe/London",
+      createdAt: began(THURSDAY),
+      ...overrides,
+    });
+  const day = (date) => ({ date, weekKey: MONDAY, status: "planned" });
+  const oneRun = [realRun({ date: SATURDAY })];
+
+  it("counts the runs the plan still holds for that week, from the day it began", () => {
+    // Run19's first week: Thursday and Saturday. One run is half of it.
+    const status = _fellBehindRatio(
+      runner(),
+      programState({ runDays: [day(THURSDAY), day(SATURDAY)] }),
+      oneRun,
+      MONDAY
+    );
+    expect(status.weeklyTarget).toBe(2);
+    expect(status.fellBehind).toBe(false);
+    // A plan that still dated a Tuesday before the account began counts
+    // from the day it began too.
+    expect(
+      _fellBehindRatio(
+        runner(),
+        programState({
+          runDays: [day("2026-09-29"), day(THURSDAY), day(SATURDAY)],
+        }),
+        oneRun,
+        MONDAY
+      ).weeklyTarget
+    ).toBe(2);
+  });
+
+  it("counts the schedule's run days from that day once the plan has moved on", () => {
+    const thisWeek = { date: "2026-10-06", weekKey: "2026-10-05" };
+    const status = _fellBehindRatio(
+      runner(),
+      programState({ runDays: [thisWeek] }),
+      oneRun,
+      MONDAY
+    );
+    expect(status.weeklyTarget).toBe(2);
+    expect(status.fellBehind).toBe(false);
+  });
+
+  it("doesn't grade a week begun after its last run day", () => {
+    expect(
+      _decideFellBehindFlag(
+        runner({ createdAt: began("2026-10-04") }),
+        programState(),
+        [],
+        MONDAY
+      ).action
+    ).toBe("noop");
+  });
+
+  it("grades a full week against the weekly target, as before", () => {
+    const status = _fellBehindRatio(
+      runner({ createdAt: began("2026-08-03") }),
+      programState(),
+      oneRun,
+      MONDAY
+    );
+    expect(status.weeklyTarget).toBe(3);
+    expect(status.fellBehind).toBe(true);
+  });
+});
+
 describe("_decideFellBehindFlag — idempotency + clear path", () => {
   it("re-firing on the same week with the same ratio → noop", () => {
     const programWithFlag = programState({
