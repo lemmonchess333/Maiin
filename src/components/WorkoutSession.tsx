@@ -1,5 +1,6 @@
 import {
-  withoutSessionProgression,
+  sessionExercise,
+  sessionPrescription,
   type SessionPrescription,
 } from "@/features/program/sessionCompletion";
 import type { CompletedSessionData } from "@/features/program/useProgram";
@@ -162,24 +163,6 @@ interface WorkoutDay {
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
-/** A planned exercise as this session sets it out: at the weight and reps
- *  its progression started from, should an older draft have moved it. */
-function sessionExercise(
-  ex: ProgramExercise,
-  completionId: string
-): ProgramExercise {
-  const baseline = withoutSessionProgression(
-    ex.sessionProgression?.id === completionId
-      ? ex.sessionProgression.baseline
-      : ex
-  );
-  return {
-    ...withoutSessionProgression(ex),
-    weight: baseline.weight,
-    reps: baseline.reps,
-  };
-}
-
 /** Last session's set as the Previous column shows it. */
 function previousLabel(
   prev: { weight: number; reps: number } | undefined,
@@ -302,28 +285,11 @@ export default function WorkoutSession({
   const completionCommandIdRef = useRef(
     initialDraft?.completionCommandId ?? initialCompletionId
   );
-  const [prescription, setPrescription] = useState<SessionPrescription>(() => {
-    if (initialDraft?.prescription) return initialDraft.prescription;
-    const baseline = (ex: ProgramExercise) =>
-      withoutSessionProgression(
-        ex.sessionProgression?.id === initialCompletionId
-          ? ex.sessionProgression.baseline
-          : ex
-      );
-    return structuredClone({
-      dayName: initialDay.dayName,
-      exercises: initialDay.exercises.map((ex) =>
-        sessionExercise(ex, initialCompletionId)
-      ),
-      progressionBaseline: initialDay.exercises.map((ex) =>
-        baseline(
-          progressionBaseline?.find(
-            (candidate) => candidate.instanceId === ex.instanceId
-          ) ?? ex
-        )
-      ),
-    });
-  });
+  const [prescription, setPrescription] = useState<SessionPrescription>(
+    () =>
+      initialDraft?.prescription ??
+      sessionPrescription(initialDay, initialCompletionId, progressionBaseline)
+  );
   const [sessionProgrammeContext] = useState(
     initialDraft?.programmeContext ?? programmeContext
   );

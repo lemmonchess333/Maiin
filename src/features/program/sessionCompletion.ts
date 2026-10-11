@@ -44,6 +44,81 @@ export function withoutSessionProgression(
   return baseline;
 }
 
+/** A planned exercise as this session sets it out: at the weight and reps
+ *  its progression started from, should an older draft have moved it. */
+export function sessionExercise(
+  ex: ProgramExercise,
+  completionId: string
+): ProgramExercise {
+  const baseline = withoutSessionProgression(
+    ex.sessionProgression?.id === completionId
+      ? ex.sessionProgression.baseline
+      : ex
+  );
+  return {
+    ...withoutSessionProgression(ex),
+    weight: baseline.weight,
+    reps: baseline.reps,
+  };
+}
+
+/**
+ * What a session sets out to do, fixed as it starts (the workout screen
+ * holds it from there): the day's lifts as `sessionExercise` sets them out,
+ * and the baseline its progression is judged against. The baseline is
+ * Train's `progressionBaseline` for a lift where Train passes one (matched
+ * by instance id), else the lift as planned, with any older draft's
+ * provisional progression undone.
+ */
+export function sessionPrescription(
+  day: { dayName: string; exercises: ProgramExercise[] },
+  completionId: string,
+  progressionBaseline?: ProgramExercise[]
+): SessionPrescription {
+  const baseline = (ex: ProgramExercise) =>
+    withoutSessionProgression(
+      ex.sessionProgression?.id === completionId
+        ? ex.sessionProgression.baseline
+        : ex
+    );
+  return structuredClone({
+    dayName: day.dayName,
+    exercises: day.exercises.map((ex) => sessionExercise(ex, completionId)),
+    progressionBaseline: day.exercises.map((ex) =>
+      baseline(
+        progressionBaseline?.find(
+          (candidate) => candidate.instanceId === ex.instanceId
+        ) ?? ex
+      )
+    ),
+  });
+}
+
+/**
+ * What a finished session hands the plan, from what the workout screen
+ * saved: nothing without a prescription (a day marked done with no session
+ * behind it moves no lift). `date` is the session's own day
+ * (`liftSessionDay` of its start, Lift3).
+ */
+export function toSessionProgression(session: {
+  completionId: string;
+  date: string;
+  prescription?: SessionPrescription;
+  setLogs: LoggedSet[][];
+  sessionVariant?: SessionProgression["sessionVariant"];
+  afterHardRun?: boolean;
+}): SessionProgression | undefined {
+  if (!session.prescription) return undefined;
+  return {
+    completionId: session.completionId,
+    date: session.date,
+    prescription: session.prescription,
+    setLogs: session.setLogs,
+    sessionVariant: session.sessionVariant,
+    ...(session.afterHardRun ? { afterHardRun: true } : {}),
+  };
+}
+
 /** Called only within the transaction that creates this session's workout. */
 export function applySessionProgression(
   state: ProgramState,
