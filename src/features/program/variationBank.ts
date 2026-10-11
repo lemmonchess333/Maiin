@@ -3,6 +3,7 @@ import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 import type { MovementCategory } from "./programTypes";
 import {
   allowsComplexity,
+  offerableTo,
   type Experience,
   type MovementComplexity,
 } from "./experienceModel";
@@ -715,4 +716,37 @@ export function pickAccessory(
   const pool = lengthened.length > 0 ? lengthened : options;
   const pick = pool[0] ?? exerciseBank[category][0];
   return picked(pick);
+}
+
+/**
+ * A lift's dumbbell version (Pgm8 L15): what a new plan builds a barbell
+ * lift as when its first weight would be under the bar.
+ *
+ * The bank keeps no pairs. Its answer is the one the equipment swap already
+ * gives someone without a barbell (`applyEquipmentFilterToWorkouts`): the
+ * first dumbbell lift in the same category, in the bank's order, that the
+ * person's level is offered (`offerableTo`). For the lifts new plans started
+ * under the bar that is the dumbbell curl, the overhead extension for skull
+ * crushers, the dumbbell shoulder press, bench and row. Each is the same
+ * movement with the same mechanic, so it keeps the slot's role and numbers
+ * (`exerciseRole`).
+ *
+ * `usable` passes over what the caller can't use: what the day already
+ * holds, what the week holds twice, what an injury rules out. Undefined for
+ * a lift outside the bank, or when none is left.
+ */
+export function dumbbellVersion(
+  exerciseId: string,
+  experience: Experience | undefined,
+  usable: (id: string) => boolean = () => true
+): string | undefined {
+  const category = movementCategoryForExerciseId(exerciseId);
+  if (!category) return undefined;
+  return exerciseBank[category].find(
+    (option) =>
+      option.id !== exerciseId &&
+      getExerciseById(option.id)?.equipment === "Dumbbells" &&
+      offerableTo(experience, option) &&
+      usable(option.id)
+  )?.id;
 }

@@ -1960,11 +1960,14 @@ export function generateProgram(
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it
   // calibrates whatever the caps above re-pointed, and before the time fit,
-  // which prices each lift's warm-up from its load.
+  // which prices each lift's warm-up from its load. Pgm8 L15: a lift this
+  // build adds never starts under the bar; the saved plan's lifts are the
+  // person's own and keep theirs.
   workouts = seedStartingLoads(
     workouts,
     loadCtx,
-    mainRepAnchor(primaryGoal, experience)
+    mainRepAnchor(primaryGoal, experience),
+    { building: { kept: existingWorkouts, injuries: limits?.injuries } }
   );
   // Lift4 (5): time decides the volume. Each session is cut to the minutes
   // the person has (`sessionFit.ts`), then the week is balanced inside them.

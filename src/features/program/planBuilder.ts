@@ -483,7 +483,22 @@ function buildLiftProgram(input: PlanBuilderInput): {
     // 8-rep weight — the exact "tested copy vs running copy" shape, with
     // both copies in the same feature directory.
     mainRepAnchor(input.primaryGoal, toExperience(input.experience)),
-    { unloadedOnly: !loadCtx }
+    {
+      unloadedOnly: !loadCtx,
+      // Pgm8 L15, as generateProgram built the week, or this pass would put
+      // a lift it started at the bar back under it. The week is fitted, so
+      // nothing new is built here. A save that keeps the week builds
+      // nothing at all: existing plans keep their lifts.
+      ...(!preserve
+        ? {
+            building: {
+              kept: existing,
+              injuries: input.injuries,
+              fitted: true,
+            },
+          }
+        : {}),
+    }
   );
   return {
     splitType: base.splitType,
