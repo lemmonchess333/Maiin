@@ -19,6 +19,7 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 import { SETUP, SETUP_OPTIONS } from "@/test/journeyScreens";
 import {
+  addLocalDays,
   localDateString,
   localWeekKey,
   parseLocalDate,
@@ -846,6 +847,42 @@ describe("new runners", () => {
     expect(
       screen.getByText(/A marathon plan works best on three runs a week/)
     ).toBeInTheDocument();
+  });
+
+  /* Pgm8 (R14c): when someone new to running picks a race the plan can't
+     build to, setup says so under the date and suggests run-walking it or
+     a later date. It never holds the step. Dates count from the clock: a
+     half twelve weeks out is too soon from any day, and a 5K eight weeks
+     out never is. */
+  const pickRace = (tier: RegExp, distance: string, daysOut: number) => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: tier }));
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: distance }));
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: localDateString(addLocalDays(new Date(), daysOut)) },
+    });
+  };
+
+  it("says so when the plan can't build to the race, and still goes on (R14c)", () => {
+    pickRace(/New to running/, "Half", 84);
+    expect(
+      screen.getByText(/You can run-walk it, or choose a later date\./)
+    ).toHaveTextContent(
+      /^Your plan builds to about \d+ min of running by then, and a half marathon takes about 2 h 30 min\. You can run-walk it, or choose a later date\.$/
+    );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("says nothing of a race the plan builds to, or to someone who runs already", () => {
+    pickRace(/New to running/, "5K", 56);
+    expect(screen.getByText("Good runway")).toBeInTheDocument();
+    expect(screen.queryByText(/You can run-walk it/)).not.toBeInTheDocument();
+    pickRace(/Occasional runner/, "Half", 84);
+    expect(screen.getByText("Good runway")).toBeInTheDocument();
+    expect(screen.queryByText(/You can run-walk it/)).not.toBeInTheDocument();
   });
 
   it("leaves the existing tiers where they were", () => {

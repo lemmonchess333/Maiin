@@ -4,7 +4,10 @@ import {
   type RunTimeLimits,
 } from "@/features/program/runTimeLimits";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { runWalkTemplateIdForWeek } from "@/features/program/newRunner";
+import {
+  newRunnerLongestRunMinutes,
+  runWalkTemplateIdForWeek,
+} from "@/features/program/newRunner";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
@@ -35,7 +38,12 @@ import type {
  * No medical warnings, no performance promises (Run9 / design system).
  */
 import { planWeekSchedule, type ScheduleDay } from "./scheduleUtils";
-import { localWeekKey, parseLocalDate } from "./dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "./dateHelpers";
 import {
   getRaceMinWeeks,
   getRaceFloorWeeks,
@@ -59,6 +67,13 @@ import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
+const DISTANCE_METERS: Record<RaceDistance, number> = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+};
+
 /** Pgm7 A7: a race plan needs at least two run days a week. A plan that
  *  already has fewer keeps them (Pgm5: no silent rebuild); a new one starts
  *  at two. */
@@ -80,6 +95,77 @@ export function raceRunDaysNote(
   if (distance === "marathon" && runDays < MARATHON_RUN_DAYS)
     return "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date.";
   return null;
+}
+
+/**
+ * Pgm8 (R14c): the pace a new runner's race is timed at, seconds per km.
+ * 7:00 /km is the middle of the 30 to 40 minutes a first 5K usually takes
+ * (running-evidence §6.5 A). A Tropos heuristic. The templates' own minutes
+ * assume about 5:36 /km, a pace for runners in general (`runDose.ts` says
+ * why a slower runner can't be told them), so a new runner's race isn't
+ * timed from them. One pace for every distance times the longer races a
+ * little short, so the note below errs towards saying nothing.
+ */
+const NEW_RUNNER_RACE_PACE_S_PER_KM = 420;
+
+/** A race's name inside a sentence, as the Realign toast has them. */
+const RACE_IN_A_SENTENCE: Record<RaceDistance, string> = {
+  "5k": "5K",
+  "10k": "10K",
+  half: "half marathon",
+  marathon: "marathon",
+};
+
+/** A span of minutes to the nearest five: "35 min", "2 h", "2 h 30 min". */
+function aboutTime(minutes: number): string {
+  const rounded = Math.round(minutes / 5) * 5;
+  const hours = Math.floor(rounded / 60);
+  const rest = rounded % 60;
+  if (!hours) return `${rest} min`;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
+/**
+ * Pgm8 (R14c): the line under a race date when someone new to running has
+ * picked a race their plan can't build to, or null. Can't build to is a
+ * Tropos heuristic: the race would take them more than twice the longest
+ * run the plan reaches before race week. That run is the build's, the most
+ * a new runner's run can be (`newRunnerLongestRunMinutes`): it only rises,
+ * so the week before race week holds it, or this week when the race is
+ * this week and no week comes before it. Each of the plan's runs is the
+ * longest of its kind within it, and a taper week's sit below it. The race
+ * is timed at `NEW_RUNNER_RACE_PACE_S_PER_KM`. The line suggests
+ * run-walking the race or a later date. It never holds up the plan.
+ *
+ * Null for anyone who isn't new to running (`newRunnerUntil` null), and
+ * without a race date of today or later.
+ */
+export function newRunnerRaceNote(input: {
+  distance: RaceDistance;
+  /** Local "YYYY-MM-DD"; "" when no date chosen yet. */
+  targetDate: string;
+  /** Local "YYYY-MM-DD", today. */
+  currentDate: string;
+  /** The day a new runner's first weeks end (`newRunnerUntil`). */
+  newRunnerUntil?: string | null;
+}): string | null {
+  const { distance, targetDate, currentDate } = input;
+  const until = input.newRunnerUntil;
+  if (!until || !targetDate || targetDate < currentDate) return null;
+  const raceWeek = localWeekKey(parseLocalDate(targetDate));
+  const weekBefore = localDateString(
+    addLocalDays(parseLocalDate(raceWeek), -7)
+  );
+  const thisWeek = localWeekKey(parseLocalDate(currentDate));
+  const week = weekBefore > thisWeek ? weekBefore : thisWeek;
+  const longestRun = newRunnerLongestRunMinutes(week, until) ?? 0;
+  const raceMinutes =
+    (DISTANCE_METERS[distance] / 1000) * (NEW_RUNNER_RACE_PACE_S_PER_KM / 60);
+  if (raceMinutes <= 2 * longestRun) return null;
+  const plan = runWalkTemplateIdForWeek(week, until)
+    ? "Your plan is still run-walk by then"
+    : `Your plan builds to about ${aboutTime(longestRun)} of running by then`;
+  return `${plan}, and a ${RACE_IN_A_SENTENCE[distance]} takes about ${aboutTime(raceMinutes)}. You can run-walk it, or choose a later date.`;
 }
 
 /**
@@ -143,6 +229,9 @@ export interface RaceGoalPlannerState {
   /** The first week runs as run-walk: a new runner's first weeks (Run20
    *  (5)), which no fit shortens. */
   runWalkWeeks: boolean;
+  /** Pgm8 (R14c): for a new runner whose plan can't build to the race, the
+   *  line that says so (`newRunnerRaceNote`); null otherwise. */
+  newRunnerNote: string | null;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -183,6 +272,7 @@ export function getRaceGoalPlannerState(
     timeLimitedRuns: 0,
     firstWeekMinutes: 0,
     runWalkWeeks: false,
+    newRunnerNote: null,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -334,6 +424,7 @@ export function getRaceGoalPlannerState(
     // From the six weeks, not this week's runs: a week can have none left.
     runWalkWeeks:
       runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
+    newRunnerNote: newRunnerRaceNote(input),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,
@@ -366,13 +457,6 @@ export interface RaceTargetVerdict {
   /** One honest sentence for the planner preview. */
   line: string;
 }
-
-const DISTANCE_METERS: Record<RaceDistance, number> = {
-  "5k": 5000,
-  "10k": 10000,
-  half: 21097.5,
-  marathon: 42195,
-};
 
 export function raceTargetVerdict(input: {
   distance: RaceDistance;
