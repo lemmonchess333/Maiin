@@ -46,10 +46,15 @@ import {
 } from "@/lib/runPlanMetadata";
 import { parseSavedRun, type SavedRun } from "@/lib/savedRuns";
 import type { PaceVerdict } from "@/lib/paceVerdict";
-import { plannedRunVerdict } from "@/lib/plannedRunVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
+import { pinnedWorkPace } from "@/lib/runSegments";
 import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  RUN_TEMPLATES,
+  type RunTemplate,
+} from "@/lib/workoutTemplates";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
 import { resolveAutoDeriveBenchmark } from "@/hooks/useRunFitnessAutoDerive";
 import {
@@ -285,6 +290,19 @@ export function plannedRunMinutes(
   return template.estimatedDuration;
 }
 
+/**
+ * The longest stretch of running a planned session asks for, minutes: a
+ * run-walk session's longest run between its walks, else the whole session.
+ */
+export function longestRunMinutes(
+  templateId: string,
+  easyPace: number
+): number {
+  const runWalk = templateOf(templateId)?.config.runWalk;
+  if (runWalk) return Math.max(0, ...runWalk.runSecs) / 60;
+  return plannedRunMinutes(templateId, easyPace);
+}
+
 /** A session's type, from the catalogue. */
 export const runTypeOf = (templateId: string) =>
   templateOf(templateId)?.type ?? "free";
@@ -501,7 +519,11 @@ export class RunSide {
     const since = parseLocalDate(day(date, -90)).getTime();
     const eligible = this.saved
       .filter(
-        (run) => run.completedAt.getTime() >= since && isPaceEligible(run)
+        (run) =>
+          run.completedAt.getTime() >= since &&
+          isPaceEligible(run) &&
+          // as `useRunFitnessAutoDerive`: a run-walk's time includes its walks
+          !isRunWalkTemplateId(run.templateId)
       )
       .map((run) => ({
         distanceM: run.distance,
@@ -615,10 +637,17 @@ export class RunSide {
       (prefill.activityType ??
         DEFAULT_CONFIG.activityType) as typeof DEFAULT_CONFIG.activityType
     );
-    // The summary's verdict, saved with the run (RunSummary.tsx).
+    // The summary's verdict, saved with the run (RunSummary.tsx): a tempo
+    // by its work segments (F22), a goal-pace tempo against the pace its
+    // blocks pinned.
     const verdict = plannedRunVerdict({
       planMetadata,
       avgPaceSeconds: done.pace,
+      workPaceSeconds: workPaceSeconds({
+        seconds: done.qualityMinutes * 60,
+        meters: done.qualityKm * 1000,
+      }),
+      pinnedPaceSeconds: pinnedWorkPace(prefill.segments),
       distance: done.km * 1000,
       runFitness: profile.runFitness,
       unit: "km",
