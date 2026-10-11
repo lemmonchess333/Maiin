@@ -297,6 +297,11 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
+  "functions/lib/raceReconciliation.js":
+    "server-only race-day decisions, moved verbatim out of index.js: its 'mirror' " +
+    "lines name the client effects these replaced, which PR-L L5 deleted (no client " +
+    "write path remains, useProgram.ts says), and the rule it calls in " +
+    "runModeResolution.js, which is pinned in its own right",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */
