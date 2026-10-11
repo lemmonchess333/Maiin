@@ -67,6 +67,8 @@ import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
   getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
@@ -234,8 +236,15 @@ export default function RunPlanSettings({
   const [runMode, setRunMode] = useState<RunMode>(
     deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    storedDraft?.weeklyRunDays ?? saved.weeklyRunDays
+  /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
+     already on fewer keeps them (Pgm5: no silent rebuild), so its own count
+     is its floor; anything new starts at two. */
+  const minRunDays =
+    saved.runMode === "race_prep"
+      ? Math.min(MIN_RACE_RUN_DAYS, saved.weeklyRunDays)
+      : MIN_RACE_RUN_DAYS;
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(() =>
+    Math.max(minRunDays, storedDraft?.weeklyRunDays ?? saved.weeklyRunDays)
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
@@ -656,6 +665,8 @@ export default function RunPlanSettings({
                 onClick={() => {
                   haptic();
                   setRunMode(opt.id);
+                  if (opt.id === "race_prep")
+                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
                 }}
                 className={cn(
                   "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
@@ -777,6 +788,11 @@ export default function RunPlanSettings({
                 run — some days combine both.
               </p>
             )}
+            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {raceRunDaysNote(raceDistance, weeklyRunDays)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -784,9 +800,9 @@ export default function RunPlanSettings({
               aria-label="Decrease run days"
               onClick={() => {
                 haptic();
-                setWeeklyRunDays((n) => Math.max(1, n - 1));
+                setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
-              disabled={weeklyRunDays <= 1}
+              disabled={weeklyRunDays <= minRunDays}
               className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
