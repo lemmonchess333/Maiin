@@ -73,6 +73,26 @@ describe("onboarding preview and commit plan", () => {
       expect(plan.profileUpdates.weeklyRunsTarget).toBe(0);
     }
   );
+  it("plans a race on at least two run days, whatever an older draft held (A7)", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        runFrequency: "new",
+        runMode: "race_prep",
+        weeklyRunDays: 1,
+        raceTargetDate: "2026-12-06",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.profileUpdates.runMode).toBe("race_prep");
+    expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(2);
+    expect(
+      plan.weekSchedule.filter(
+        (day) => day.type === "run" || day.type === "both"
+      )
+    ).toHaveLength(2);
+  });
   it.each([
     "hypertrophy",
     "fat_loss",

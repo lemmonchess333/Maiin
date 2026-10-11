@@ -9,8 +9,9 @@
  * index.js keeps thin `_`-prefixed aliases + test-surface exports, so
  * every existing call site and test import is unchanged.
  */
-const { utcDateString } = require("./dateUtils");
+const { parseUtcDate, utcDateString } = require("./dateUtils");
 const { isVolumeEligibleRun } = require("./runEligibility");
+const { localDateKeyInTz } = require("./streakNudge");
 
 const _utcDateString = utcDateString;
 const _isVolumeEligibleRun = isVolumeEligibleRun;
@@ -53,13 +54,65 @@ function _priorWeekUtcRange(nowMs) {
   };
 }
 
+/** The day an account began, as its owner's local date key (UTC when no
+ *  timezone is stored), or null when `createdAt` isn't a timestamp. */
+function _accountStartKey(profile) {
+  const createdAt = profile && profile.createdAt;
+  if (!createdAt || typeof createdAt.toMillis !== "function") return null;
+  const began = new Date(createdAt.toMillis());
+  if (!Number.isFinite(began.getTime())) return null;
+  return localDateKeyInTz(began, profile.timezone) || utcDateString(began);
+}
+
+/** Pure: the runs a week planned, counted from the day the account began
+ *  when it began that week (F16b). A plan made partway through a week plans
+ *  no run before that day (Run19), so the full weekly target read a
+ *  Thursday start as behind on its first Monday. The week's run days, while
+ *  the plan still holds them; for an account that began that week, the
+ *  schedule's run days from then if not; null otherwise, and the weekly
+ *  target stands. */
+function _plannedRunsInWeek(profile, programState, weekKey) {
+  if (typeof weekKey !== "string") return null;
+  const weekStart = parseUtcDate(weekKey);
+  const dayOf = (i) => {
+    const d = new Date(weekStart.getTime());
+    d.setUTCDate(d.getUTCDate() + i);
+    return d;
+  };
+  const weekEnd = utcDateString(dayOf(6));
+  const start = _accountStartKey(profile);
+  const from = start && start > weekKey && start <= weekEnd ? start : weekKey;
+  const runDays = (programState && programState.runDays) || [];
+  const planned = runDays.filter(
+    (rd) =>
+      rd &&
+      typeof rd.date === "string" &&
+      rd.date >= weekKey &&
+      rd.date <= weekEnd
+  );
+  if (planned.length > 0) return planned.filter((rd) => rd.date >= from).length;
+  if (from === weekKey) return null;
+  const schedule = Array.isArray(profile && profile.weekSchedule)
+    ? profile.weekSchedule
+    : [];
+  let count = 0;
+  for (let i = 0; i < 7; i++) {
+    const day = dayOf(i);
+    const slot = schedule.find((s) => s && s.day === day.getUTCDay());
+    const runs = slot && (slot.type === "run" || slot.type === "both");
+    if (runs && utcDateString(day) >= from) count += 1;
+  }
+  return count;
+}
+
 /** Pure: the prior-week run-completion status against the user's
  *  weekly target, or `null` when the user has no prescriptive target
- *  (freeform / active recovery / target < 1). Single source of truth
+ *  (freeform / active recovery / a race plan graded on a week after its
+ *  race / target < 1). Single source of truth
  *  for "who's behind", shared by both `_decideFellBehindFlag` (the
  *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
  *  Monday-8am recap push) so the two can't drift. */
-function _fellBehindRatio(profile, programState, priorWeekRuns) {
+function _fellBehindRatio(profile, programState, priorWeekRuns, priorWeekKey) {
   // Gate 1 — freeform users have no prescriptive target; skip.
   const runMode = profile && profile.runMode;
   if (!runMode || runMode === "freeform") {
@@ -72,6 +125,22 @@ function _fellBehindRatio(profile, programState, priorWeekRuns) {
   // missing those isn't fell-behind territory.
   const runPlan = (programState && programState.runPlan) || null;
   if (runPlan && runPlan.phase === "recovery") {
+    return null;
+  }
+
+  // Gate 2b — a race plan graded on a week that began after its race holds
+  // nothing to fall behind on. Race prep waits for the race's own ending
+  // (the no-show, the recovery exit and the return to free running), and
+  // until then the weekly check said "fell behind" every Monday.
+  const raceDate =
+    (runPlan && runPlan.raceGoal && runPlan.raceGoal.targetDate) ||
+    (profile && profile.raceGoal && profile.raceGoal.targetDate) ||
+    null;
+  if (
+    typeof priorWeekKey === "string" &&
+    typeof raceDate === "string" &&
+    raceDate < priorWeekKey
+  ) {
     return null;
   }
 
@@ -89,14 +158,23 @@ function _fellBehindRatio(profile, programState, priorWeekRuns) {
     return null;
   }
 
+  // Gate 3b — a week is graded against what it planned (F16b): a first week
+  // begun partway through has fewer runs than the weekly target, and one
+  // begun after its last run day has none to fall behind on.
+  const plannedTarget = _plannedRunsInWeek(profile, programState, priorWeekKey);
+  const target = plannedTarget ?? weeklyTarget;
+  if (target < 1) {
+    return null;
+  }
+
   // Count volume-eligible runs in the prior week.
   const realRunCount = (priorWeekRuns || []).filter(
     _isVolumeEligibleRun
   ).length;
-  const completedRatio = realRunCount / weeklyTarget;
+  const completedRatio = realRunCount / target;
   return {
     realRunCount,
-    weeklyTarget,
+    weeklyTarget: target,
     completedRatio,
     fellBehind: completedRatio < FELL_BEHIND_THRESHOLD,
   };
@@ -115,7 +193,12 @@ function _decideFellBehindFlag(
   priorWeekRuns,
   priorWeekKey
 ) {
-  const status = _fellBehindRatio(profile, programState, priorWeekRuns);
+  const status = _fellBehindRatio(
+    profile,
+    programState,
+    priorWeekRuns,
+    priorWeekKey
+  );
   // No prescriptive target (freeform / recovery / target<1) → nothing to do.
   if (!status) {
     return { action: "noop" };
@@ -162,10 +245,10 @@ function _decideFellBehindFlag(
   return { action: "noop" };
 }
 
-
 module.exports = {
   FELL_BEHIND_THRESHOLD,
   priorWeekUtcRange: _priorWeekUtcRange,
+  plannedRunsInWeek: _plannedRunsInWeek,
   fellBehindRatio: _fellBehindRatio,
   decideFellBehindFlag: _decideFellBehindFlag,
 };
