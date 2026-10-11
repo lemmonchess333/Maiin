@@ -213,10 +213,13 @@ const LONG_RUN_TIERS: ReadonlyArray<{
 ];
 
 /**
- * Daniels' explicit ceiling: a long run is capped at the LESSER of 150
- * minutes and ~25-30% of weekly volume. The time half is the one a scheduler
- * can enforce without knowing the athlete's pace, and it is what stops the
- * marathon ramp handing a 4-day-a-week runner a 170-minute session.
+ * Daniels caps a long run at 30% of weekly mileage below 64 km a week, and
+ * from 64 km a week at the lesser of 25% or 150 minutes. This is the time
+ * half of that rule, applied at every volume: the half a scheduler can
+ * enforce without knowing the athlete's weekly mileage, and what stops the
+ * marathon ramp handing a 4-day-a-week runner a 170-minute session. Below
+ * 64 km a week the 150 minutes is Tropos's extension of the rule, not
+ * Daniels'.
  *
  * `long_30k` therefore stays in the registry — a user can pick it in the day
  * sheet — but the scheduler never prescribes it. That exclusion is asserted,
