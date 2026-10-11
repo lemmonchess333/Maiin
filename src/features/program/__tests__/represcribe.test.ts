@@ -266,6 +266,22 @@ describe("represcribeWorkouts — what it must not touch", () => {
     expect("lowered" in o).toBe(false);
   });
 
+  it("drops a stretched target's record, whose ceiling was the retired range's (Pgm7 A3)", () => {
+    const stretched = ex({
+      weight: 10,
+      reps: 9,
+      stretched: {
+        exerciseId: "bench-press",
+        weight: 10,
+        next: 12.5,
+        ceiling: 16,
+      },
+    });
+    const o = represcribeWorkouts([day([stretched])], "strength", "beginner")[0]
+      .exercises[0];
+    expect("stretched" in o).toBe(false);
+  });
+
   it("preserves day structure and does not mutate the input", () => {
     const input = [day([ex()], "Upper"), day([ex()], "Lower")];
     const snapshot = JSON.parse(JSON.stringify(input));

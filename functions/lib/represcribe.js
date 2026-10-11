@@ -274,8 +274,11 @@ function represcribeWorkouts(workouts, goal, experience) {
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;
       // A lowered lift's way back is a weight for the old target, and its
-      // line names that target (Lift4); neither holds for the new one.
+      // line names that target (Lift4); neither holds for the new one. A
+      // stretched target's line names the old range's ceiling (Pgm7 A3),
+      // and the new target starts inside the new range.
       delete out.lowered;
+      delete out.stretched;
       return out;
     }),
   }));

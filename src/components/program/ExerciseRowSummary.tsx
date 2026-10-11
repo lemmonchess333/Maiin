@@ -6,6 +6,7 @@ import { formatRepTarget } from "@/features/program/repTarget";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
 import LoweredLine from "./LoweredLine";
+import StretchedLine from "./StretchedLine";
 
 /**
  * One exercise on Train's day list: its picture, its name, the
@@ -39,6 +40,7 @@ export default function ExerciseRowSummary({
     | "weight"
     | "notes"
     | "lowered"
+    | "stretched"
   >;
   /** Every set of the last session with this exercise that the plan reads
    *  (`lastSetsByExercise`), so a held or raised weight explains itself. */
@@ -88,6 +90,10 @@ export default function ExerciseRowSummary({
           </p>
         )}
         <LoweredLine
+          exercise={exercise}
+          className="text-xs mt-0.5 text-muted-foreground"
+        />
+        <StretchedLine
           exercise={exercise}
           className="text-xs mt-0.5 text-muted-foreground"
         />

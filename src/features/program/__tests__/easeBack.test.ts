@@ -124,6 +124,26 @@ describe("easeBackIn — what the plan comes down to", () => {
     expect(out.rdl.lowered).toBeUndefined();
   });
 
+  it("drops a stretched target's line: the person chose the lighter weight (Pgm7 A3)", () => {
+    const raise = ex({
+      name: "Lateral Raise",
+      exerciseId: "lateral-raise",
+      instanceId: "raise",
+      weight: 10,
+      reps: 16,
+      stretched: {
+        exerciseId: "lateral-raise",
+        weight: 10,
+        next: 12.5,
+        ceiling: 19,
+      },
+    });
+    const out = lifts(easeBackIn(state({ workouts: [day([raise])] }), 0.1));
+    expect(out.raise.weight).toBe(9);
+    expect(out.raise.reps).toBe(16);
+    expect(out.raise.stretched).toBeUndefined();
+  });
+
   it("takes a set off this week and starts the miss counts again", () => {
     const out = easeBackIn(state(), 0.1);
     for (const lift of out.workouts[0].exercises) {

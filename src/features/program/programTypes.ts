@@ -226,6 +226,14 @@ export interface ProgramExercise {
    */
   lowered?: LoweredBy;
   /**
+   * Pgm7 A3: the plan stretched this lift's target past its range, because
+   * the next weight is too big a step to take on its own (Lift4 (6)). Set by
+   * the session where the target first climbs past the range's top at this
+   * weight, for one line on the next session, whose finish drops it
+   * (`stretchOf` reads it).
+   */
+  stretched?: StretchedBy;
+  /**
    * Lift4 (11): the lift an equipment or injury swap put this one in place
    * of, so a save that lifts the limitation brings it back
    * (`restoreSwappedLifts`).
@@ -257,6 +265,32 @@ export function loweringOf(
 ): LoweredBy | undefined {
   return exercise.lowered?.exerciseId === exercise.exerciseId
     ? exercise.lowered
+    : undefined;
+}
+
+/** How far the plan stretched a lift's target, and why: the weight it
+ *  climbs at, and the next one, too big a step to take on its own. The
+ *  next session's line reads "Up to 19 reps on 10 kg: 12.5 kg is a big
+ *  jump". */
+export interface StretchedBy {
+  /** The exercise it stretched. A swap to another leaves this behind, and
+   *  nothing reads it there (`stretchOf`). */
+  exerciseId: string;
+  /** The weight the target climbs at. */
+  weight: number;
+  /** The next weight up, more than about 15% heavier (`automaticStepUp`). */
+  next: number;
+  /** The reps the target climbs to at `weight`: the same effort as the
+   *  range's bottom at `next` (`stretchedRepCeiling`). */
+  ceiling: number;
+}
+
+/** The plan's own stretch of this lift's target, if it was this lift's. */
+export function stretchOf(
+  exercise: Pick<ProgramExercise, "exerciseId" | "stretched">
+): StretchedBy | undefined {
+  return exercise.stretched?.exerciseId === exercise.exerciseId
+    ? exercise.stretched
     : undefined;
 }
 
@@ -1084,6 +1118,7 @@ export function normalizeExercise(
       : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
+    ...(ex.stretched !== undefined ? { stretched: ex.stretched } : {}),
     ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
   };
 }
