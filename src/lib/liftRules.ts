@@ -88,7 +88,7 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     {
       id: "climb",
       title: "Adding weight",
-      body: "When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom.",
+      body: "When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom. A bodyweight lift, such as pull-ups, climbs in reps instead.",
     },
     {
       id: "steps",

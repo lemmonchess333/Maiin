@@ -55,3 +55,32 @@ export function preserveEditedRunDays(
       (a.date ?? "").localeCompare(b.date ?? "") || a.dayIndex - b.dayIndex
   );
 }
+
+/**
+ * The run days a plan saves for the week it is made in (Run19): the
+ * generated week from today on, over a continuing plan's kept days
+ * (`preserveEditedRunDays`). A plan made mid-week plans no run before the
+ * day it is made. The days already gone weren't planned, and dating a run
+ * on one wrote history the person never had: a missed run on Home and
+ * Train, and a week's count they were behind on from the start. The save
+ * and the Settings preview both build the week here, so the preview shows
+ * what is saved.
+ */
+export function planWeekFromToday(
+  generated: readonly ScheduledRunDay[],
+  today: string,
+  kept?: {
+    runDays: readonly ScheduledRunDay[];
+    manualCompletions?: Record<string, ManualCompletion>;
+  }
+): ScheduledRunDay[] {
+  const fromToday = generated.filter((run) => !run.date || run.date >= today);
+  return kept
+    ? preserveEditedRunDays(
+        kept.runDays,
+        fromToday,
+        kept.manualCompletions,
+        today
+      )
+    : fromToday;
+}
