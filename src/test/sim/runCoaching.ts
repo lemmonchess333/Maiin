@@ -32,6 +32,8 @@
  *   runner's own (it reads an easy run as a race).
  * - `nag-after-race`: the server telling the runner they fell behind after
  *   their race.
+ * - `easy-nag`: the run summary telling the runner to slow down
+ *   (`easy-too-fast`) on most of their easy and long runs.
  */
 import {
   addLocalDays,
@@ -166,6 +168,16 @@ export function runCoachingFindings(
       0.8 * habits.runner.weeklyMinutes
   )
     found.add("under-dose");
+
+  const easyRuns = season.runs.filter(
+    (r) => (r.type === "easy" || r.type === "long") && r.verdict !== null
+  );
+  if (
+    easyRuns.length > 0 &&
+    easyRuns.filter((r) => r.verdict === "easy-too-fast").length >
+      easyRuns.length / 2
+  )
+    found.add("easy-nag");
 
   for (const e of season.events) {
     const derived =

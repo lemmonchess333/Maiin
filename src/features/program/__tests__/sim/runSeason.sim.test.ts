@@ -51,17 +51,30 @@ const TIMEOUT = 60_000;
  *   Home shows a run only on a run day, so race day reads as a rest day.
  * - F16 `before-plan`: a plan made on a Thursday writes that week's Monday
  *   and Wednesday runs.
+ * - F22 `verdict-slow`: the run summary judges a tempo on the whole run's
+ *   average, warm-up and cool-down included, so one run at its tempo pace
+ *   reads slow (Phase 5a).
  * - F8 `over-time` and F10 `below-bar`: the lifting side's, on a hybrid.
  */
 const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
   "couch-to-5k": ["before-plan", "not-counted", "race-day-card"],
-  "half-3-days": ["not-counted", "race-day-card"],
-  "sub-3-30": ["not-counted", "race-day-card"],
+  "half-3-days": ["not-counted", "race-day-card", "verdict-slow"],
+  "sub-3-30": ["not-counted", "race-day-card", "verdict-slow"],
   "sick-six-weeks": ["not-counted", "race-day-card"],
   "new-runner-marathon": ["race-day-card"],
-  "year-out-marathon": ["below-bar", "not-counted", "over-time"],
-  "hybrid-3-4-trim": ["below-bar", "not-counted", "over-time"],
-  "hybrid-3-4-no-trim": ["below-bar", "not-counted", "over-time"],
+  "year-out-marathon": [
+    "below-bar",
+    "not-counted",
+    "over-time",
+    "verdict-slow",
+  ],
+  "hybrid-3-4-trim": ["below-bar", "not-counted", "over-time", "verdict-slow"],
+  "hybrid-3-4-no-trim": [
+    "below-bar",
+    "not-counted",
+    "over-time",
+    "verdict-slow",
+  ],
   "hybrid-2-3-trim": ["below-bar", "not-counted", "race-day-card"],
   "hybrid-2-3-no-trim": ["below-bar", "not-counted", "race-day-card"],
 };
@@ -73,7 +86,9 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  * - F15 `under-dose`: setup never asks how much someone runs, so the plan
  *   starts a runner on 175–280 minutes a week at 57–75% of it.
  * - F17 `derived-low`: the benchmark the app derives reads the best of the
- *   first easy runs as a race, 7–10 VDOT under the runner.
+ *   first easy runs as a race, 7–10 VDOT under the runner; `easy-nag`: the
+ *   run summary, which reads it at once, then tells the runner to slow down
+ *   on most easy and long runs.
  * - F18, the plan's shape (running-engine-audit §7): long runs that step
  *   past the single-run guard (`spike`), weeks that jump (`volume-jump`),
  *   demanding days back to back, a one-step taper with no long run
@@ -86,6 +101,7 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "couch-to-5k": [
     "derived-low",
+    "easy-nag",
     "novice-quality",
     "run-walk",
     "spike",
@@ -110,6 +126,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "sick-six-weeks": ["back-to-back", "spike", "under-dose", "volume-jump"],
   "new-runner-marathon": [
     "derived-low",
+    "easy-nag",
     "long-share",
     "one-run-week",
     "run-walk",
@@ -143,6 +160,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "hybrid-2-3-trim": [
     "back-to-back",
     "derived-low",
+    "easy-nag",
     "lift:misses:overhead-press",
     "spike",
     "taper-cut",
@@ -151,6 +169,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "hybrid-2-3-no-trim": [
     "back-to-back",
     "derived-low",
+    "easy-nag",
     "lift:misses:overhead-press",
     "spike",
     "taper-cut",
