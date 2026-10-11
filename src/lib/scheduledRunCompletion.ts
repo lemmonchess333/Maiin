@@ -38,6 +38,9 @@ export interface SavedRunLike {
   distance?: number;
   avgPace?: number;
   templateId?: string;
+  /** The session the run was set up as (`RunConfig.activityType`): what
+   *  was run, where `templateId` falls back to what was planned. */
+  activityType?: string;
   createdAt?: { seconds?: number } | Date | number;
 }
 
@@ -56,6 +59,12 @@ export interface CompletionDeps {
    * about. It is also the bug this predicate replaces.
    */
   isRaceTemplate?: (templateId: string | undefined) => boolean;
+  /**
+   * Was this saved run itself a quality session (a tempo, intervals or a
+   * race)? Pgm7 A5: a hard run is the plan's kind of session, not a pace.
+   * Supplied for the same reason as `isRaceTemplate`.
+   */
+  isQualityRun?: (saved: SavedRunLike) => boolean;
 }
 
 function dateKey(dateStr: string | undefined): number | null {
@@ -158,6 +167,15 @@ function distanceAndBucketOk(
     ) {
       return true;
     }
+    /* A run done as a quality session is one, whatever its average pace
+       (PR-J-Q1's STATUS line, under Pgm7 A5). A tempo's or an
+       interval session's warm-up and cool-down put the whole run's
+       average over the pace bar below for nearly every runner: none of
+       the 86 such sessions the training-engine simulator ran counted
+       (F13). The bar stays for a run with no session type, freeform or
+       from Health. */
+    const isQualityRun = deps && deps.isQualityRun;
+    if (isQualityRun && isQualityRun(saved)) return true;
     const paceBucketFor = deps && deps.paceBucketFor;
     if (!paceBucketFor) return false;
     if (paceBucketFor(saved) !== "quality") return false;

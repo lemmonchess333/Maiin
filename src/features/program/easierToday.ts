@@ -19,9 +19,10 @@
  *      (`isAccessory !== true` — the undefined-legacy rule matches
  *      expressSession: ambiguity protects) and
  *      {@link EASIER_ACCESSORY_MIN_SETS} for accessories.
- *   3. Non-zero suggested loads come down to 85%, rounded to the nearest
- *      2.5 kg ({@link deloadWeight}). Bodyweight/uncalibrated zero loads
- *      stay 0 — the set reduction is the whole signal.
+ *   3. Non-zero suggested loads come down to 85%, on the weights the
+ *      lift's equipment comes in, and a barbell lift never under the bar
+ *      ({@link easierWeight}). Bodyweight/uncalibrated zero loads stay 0 —
+ *      the set reduction is the whole signal.
  *   4. Recommendation ({@link easierTodayRecommendation}) is pure and
  *      deterministic, and fires for one reason only: a hard run
  *      yesterday before a session that loads the same legs (Lift4 (3)).
@@ -35,22 +36,40 @@
  * social posts, notifications or analytics events.
  */
 
+import { getExerciseById } from "@/lib/exercises";
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 import { estimateSessionMinutes, type ExpressPlan } from "./expressSession";
+import { loadGridFor } from "./loadSteps";
 import type { RestContext } from "./restTime";
+import { BAR_KG } from "./warmupRamp";
 
 /** A primary/compound never goes below 2 sets on an easier day. */
 export const EASIER_PRIMARY_MIN_SETS = 2;
 /** An accessory never goes below 1 set (it is never dropped). */
 export const EASIER_ACCESSORY_MIN_SETS = 1;
 
+/** An easier session lifts this share of each planned weight. */
+export const EASIER_LOAD_SHARE = 0.85;
+
 /**
- * An easier session's weight: 85%, to the nearest 2.5 kg plate; zero stays
- * zero. A lighter week keeps its weights (`applyDeload`), so this is the
- * easier session's alone.
+ * An easier session's weight: 85% of the plan's, to the nearest weight the
+ * lift's equipment comes in (`loadGridFor`: the rack's dumbbells, the next
+ * bell, a barbell's plates, small ones for someone who has them), and a
+ * barbell lift never under the bar, unless the plan's own weight already
+ * is. Zero stays zero. A lighter week keeps its weights (`applyDeload`), so
+ * this is the easier session's alone.
  */
-export function deloadWeight(weight: number): number {
-  return weight === 0 ? 0 : Math.round((weight * 0.85) / 2.5) * 2.5;
+export function easierWeight(
+  ex: Pick<ProgramExercise, "exerciseId" | "weight">,
+  smallPlates: boolean
+): number {
+  if (!(ex.weight > 0)) return ex.weight;
+  const easier = loadGridFor(ex.exerciseId, smallPlates).nearest(
+    ex.weight * EASIER_LOAD_SHARE
+  );
+  return getExerciseById(ex.exerciseId)?.equipment === "Barbell"
+    ? Math.max(easier, Math.min(ex.weight, BAR_KG))
+    : easier;
 }
 
 export interface EasierAdjustments {
@@ -73,7 +92,9 @@ export interface EasierPlan extends Omit<ExpressPlan, "trim"> {
 export function buildEasierSession(
   day: WorkoutDay,
   /** Prices the estimate as the session's timer will rest. */
-  rest: RestContext = {}
+  rest: RestContext = {},
+  /** The plan's "I have small plates" (`settings.smallPlates`). */
+  options: { smallPlates?: boolean } = {}
 ): EasierPlan {
   const adjustments: EasierAdjustments = { setsReduced: 0, loadsReduced: 0 };
   const exercises: ProgramExercise[] = day.exercises.map((ex) => {
@@ -82,7 +103,7 @@ export function buildEasierSession(
         ? EASIER_ACCESSORY_MIN_SETS
         : EASIER_PRIMARY_MIN_SETS;
     const sets = Math.max(floor, ex.sets - 1);
-    const weight = deloadWeight(ex.weight);
+    const weight = easierWeight(ex, options.smallPlates === true);
     if (sets !== ex.sets) adjustments.setsReduced += 1;
     if (weight !== ex.weight) adjustments.loadsReduced += 1;
     return { ...ex, sets, weight };

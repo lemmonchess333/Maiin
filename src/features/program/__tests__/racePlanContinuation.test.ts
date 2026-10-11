@@ -4,7 +4,11 @@ import { generateRacePlanV2 } from "../runScheduler";
 import { dateForDayOfWeek } from "@/lib/dateHelpers";
 import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { continuedBlockWeeks } from "../racePlanContinuation";
+import {
+  continuedBlockWeeks,
+  rebuiltWeekFromToday,
+} from "../racePlanContinuation";
+import type { ScheduledRunDay } from "../programTypes";
 
 const goal = { distance: "marathon" as const, targetDate: "2026-11-29" };
 const base: PlanBuilderInput = {
@@ -211,6 +215,54 @@ describe("same-race plan edits", () => {
     expect(saved.programState.runPlan?.currentWeek).toBe(0);
     expect(continuedBlockWeeks(8, { mode: "race_prep", totalWeeks: NaN })).toBe(
       8
+    );
+  });
+});
+
+describe("a week rebuilt by a change to its layout (Run19)", () => {
+  const monday = "2026-10-05";
+  const saturday = "2026-10-10";
+  const day = (
+    date: string,
+    id: string,
+    extra: Partial<ScheduledRunDay> = {}
+  ): ScheduledRunDay => ({
+    id,
+    dayIndex: 0,
+    templateId: "easy_30",
+    type: "easy",
+    completed: false,
+    status: "planned",
+    date,
+    weekKey: monday,
+    ...extra,
+  });
+
+  it("keeps the days already gone as they were, and the rebuilt week from today", () => {
+    const done = day("2026-10-05", "done", { status: "completed_exact" });
+    const skipped = day("2026-10-07", "skipped", { status: "skipped" });
+    const missed = day("2026-10-09", "missed", { templateId: "tempo_20" });
+    const sundayBefore = day("2026-10-11", "sunday-before");
+    const rebuilt = [
+      day("2026-10-06", "tuesday-new"),
+      day("2026-10-10", "saturday-new"),
+      day("2026-10-11", "sunday-new"),
+    ];
+    expect(
+      rebuiltWeekFromToday(
+        [done, skipped, missed, sundayBefore],
+        rebuilt,
+        saturday,
+        monday
+      )
+    ).toEqual([done, skipped, missed, rebuilt[1], rebuilt[2]]);
+  });
+
+  it("keeps no day from an earlier week", () => {
+    const lastWeek = day("2026-10-01", "last-week", { weekKey: "2026-09-28" });
+    const rebuilt = [day("2026-10-11", "sunday-new")];
+    expect(rebuiltWeekFromToday([lastWeek], rebuilt, saturday, monday)).toEqual(
+      rebuilt
     );
   });
 });

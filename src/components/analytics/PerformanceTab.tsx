@@ -19,7 +19,7 @@ import {
   resolveDeloadRecommended,
   isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
-import { ChevronDown, Dumbbell, Footprints, Info } from "lucide-react";
+import { ChevronDown, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
 
@@ -396,9 +396,9 @@ export default function PerformanceTab({
     distanceUnit,
     establishing,
   });
-  const planAdj = (
-    currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }
-  ).planAdjustments;
+  const runSuggestions =
+    (currentWeek as { planAdjustments?: { run?: string[] } }).planAdjustments
+      ?.run ?? [];
 
   return (
     <div className="space-y-4">
@@ -575,52 +575,29 @@ export default function PerformanceTab({
                   writes as a constant 0) are gone: the breakdown above
                   states both weeks' figures, which the ratios were made
                   from. */}
-              {/* Plan adjustments from engine */}
-              {planAdj &&
-                (planAdj.lift.length > 0 || planAdj.run.length > 0) && (
-                  <div className="space-y-3">
-                    {planAdj.lift.length > 0 && (
-                      <div className="p-4 rounded-2xl bg-lifting/8">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Dumbbell className="size-4 text-lifting" />
-                          <h3 className="text-sm font-semibold text-lifting-strong">
-                            Lifting suggestions
-                          </h3>
-                        </div>
-                        <ul className="space-y-1">
-                          {planAdj.lift.map((s, i) => (
-                            <li
-                              key={i}
-                              className="text-xs text-muted-foreground leading-relaxed"
-                            >
-                              {s}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {planAdj.run.length > 0 && (
-                      <div className="p-4 rounded-2xl bg-running/8">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Footprints className="size-4 text-running" />
-                          <h3 className="text-sm font-semibold text-running-strong">
-                            Running suggestions
-                          </h3>
-                        </div>
-                        <ul className="space-y-1">
-                          {planAdj.run.map((s, i) => (
-                            <li
-                              key={i}
-                              className="text-xs text-muted-foreground leading-relaxed"
-                            >
-                              {s}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+              {/* The engine's running suggestions. Its lifting ones are
+                  gone (Lift4 (3): no suggestion cards), and a week stored
+                  before that still carries them, so they're not read. */}
+              {runSuggestions.length > 0 && (
+                <div className="p-4 rounded-2xl bg-running/8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Footprints className="size-4 text-running" />
+                    <h3 className="text-sm font-semibold text-running-strong">
+                      Running suggestions
+                    </h3>
                   </div>
-                )}
+                  <ul className="space-y-1">
+                    {runSuggestions.map((s, i) => (
+                      <li
+                        key={i}
+                        className="text-xs text-muted-foreground leading-relaxed"
+                      >
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
