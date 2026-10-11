@@ -1237,3 +1237,14 @@ because it touches a Lift4 call or a copy decision.
   isn't counted as the tempo; and an unplanned run with the treadmill
   switch on starts as an easy run. Recommendation: make "Track without GPS"
   a place as the treadmill now is, and leave the default.
+- **A third deadlift on a 3-day home plan.** The plan builder limits a lift to
+  two days a week (`capRepeatedLifts`) before the equipment filter swaps
+  lifts the kit can't do, so a swap can bring the deadlift (or, with no bar,
+  a dumbbell RDL) back on a third day. Found while building L7: it is most
+  of the 30 beginner plans whose hamstrings stay over Lift4 (5)'s ceiling.
+  A defect against the twice-a-week rule. Recommendation: cap after the
+  filter.
+- **Removing a derived benchmark doesn't stick.** Settings → Run fitness's
+  Remove clears a pending benchmark, and the next visit to Train derives it
+  again from the same effort. True before R1 and after it. Recommendation:
+  remember a removed benchmark's source run and don't derive from it again.
