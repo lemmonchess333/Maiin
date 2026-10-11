@@ -3,6 +3,7 @@ import {
   applyProgression,
   applyDeload,
   advanceWeek,
+  assignDayRoles,
   generateProgram,
   expectedDayCount,
   goalProfileFor,
@@ -191,11 +192,16 @@ describe("applyProgression — bodyweight exercises", () => {
     expect(result.reps).toBe(4); // can't go below 4
   });
 
+  /* This pinned the legacy arm on the linear path (10 done at a target of 8
+     gave 9) while a fixed target met exactly stayed put for good. A fixed
+     target now takes the range-less ceiling too, so the linear path
+     follows the same contract as the double (bodyweightFixedTarget.test.ts). */
   it("also works for linear progression type", () => {
     const ex = makeBodyweightExercise({ progressionType: "linear", reps: 8 });
     const result = applyProgression(ex, 10, 0, false);
     expect(result.weight).toBe(0);
-    expect(result.reps).toBe(9);
+    expect(result.reps).toBe(11);
+    expect(applyProgression(ex, 8, 0, false).reps).toBe(9);
   });
 });
 
@@ -604,6 +610,21 @@ describe("advanceWeek — the week opens with the session not reached", () => {
     expect(next.workouts.every((d) => !d.completed && !d.skipped)).toBe(true);
   });
 
+  it("carries each session's heavier or lighter role with it", () => {
+    const next = advanceWeek(
+      week([
+        { ...day("A", { completed: true }), dayRole: "heavy" },
+        { ...day("B"), dayRole: "moderate" },
+        { ...day("C"), dayRole: "pump" },
+      ])
+    );
+    expect(next.workouts.map((d) => [d.dayName, d.dayRole])).toEqual([
+      ["B", "moderate"],
+      ["C", "pump"],
+      ["A", "heavy"],
+    ]);
+  });
+
   it("passes over a skipped session, as Train's Up next does", () => {
     const next = advanceWeek(
       week([
@@ -872,6 +893,27 @@ describe("day roles (backlog #3)", () => {
   const mainRepsOf = (w: {
     exercises: { isAccessory?: boolean; reps: number }[];
   }) => w.exercises.filter((e) => e.isAccessory !== true).map((e) => e.reps);
+
+  it("keeps each session's role on the day, at every level", () => {
+    // A beginner's reps don't shift by role, but a level change can bring
+    // the shifts in, on the sessions the plan was built with.
+    for (const experience of ["beginner", "intermediate"] as const) {
+      for (const days of [1, 2, 3, 4, 5, 6]) {
+        const { workouts } = generateProgram(
+          days,
+          undefined,
+          "hypertrophy",
+          undefined,
+          undefined,
+          experience
+        );
+        expect(
+          workouts.map((d) => d.dayRole),
+          `${experience}, ${String(days)} days`
+        ).toEqual(assignDayRoles(workouts.length));
+      }
+    }
+  });
 
   it("single-day weeks stay at the table's numbers", () => {
     const one = generateProgram(
@@ -1363,6 +1405,78 @@ describe("lighter weeks (Lift4 (9))", () => {
     const full = advanceWeek(trained(lighter), "intermediate");
     expect(full.weekHistory?.at(-1)).not.toHaveProperty("lighter");
     expect(lighterWeekAllowed(full)).toBe(true);
+  });
+
+  it("restarts the calendar's count when the person takes one", () => {
+    // A lighter week taken from Train counts as the calendar's and
+    // restarts its count (Lift4 (9), and the lifting handoff's lighter-week
+    // precedence table): the next comes four trained weeks later.
+    const takenIn = (weekNumber: number) =>
+      atWeek3(3, {
+        weekNumber,
+        currentPhase: "deload",
+        deloadSnapshot: {
+          weekNumber,
+          workouts: [],
+          runDays: [],
+          currentPhase: "progression",
+          fatigueScore: 0,
+          appliedAt: 0,
+        },
+      });
+    /** Which of the next six trained weeks are lighter, 1 = the one after. */
+    const lighterAfter = (state: ProgramState) => {
+      const out: number[] = [];
+      let st = state;
+      for (let k = 1; k <= 6; k++) {
+        st = advanceWeek(trained(st), "intermediate");
+        if (st.currentPhase === "deload") out.push(k);
+      }
+      return out;
+    };
+    // Taken in week 2: the next is four weeks on, in week 6.
+    expect(lighterAfter(takenIn(2))).toEqual([4]);
+    // Taken in week 3: week 4 is a full week, and the next comes in week 7.
+    expect(lighterAfter(takenIn(3))).toEqual([4]);
+    // The calendar's own lighter week runs on as it did: week 4, then 8.
+    const calendar = advanceWeek(trained(atWeek3(3)), "intermediate");
+    expect(calendar.currentPhase).toBe("deload");
+    expect(lighterAfter(calendar)).toEqual([4]);
+  });
+
+  it("leaves the count alone for a lighter week taken but not trained", () => {
+    const untrained = atWeek3(3, {
+      weekNumber: 2,
+      currentPhase: "deload",
+      deloadSnapshot: {
+        weekNumber: 2,
+        workouts: [],
+        runDays: [],
+        currentPhase: "progression",
+        fatigueScore: 0,
+        appliedAt: 0,
+      },
+    });
+    // An untrained week holds the number, as any week does.
+    expect(advanceWeek(untrained, "intermediate").weekNumber).toBe(2);
+  });
+
+  it("leaves the number to run on where the calendar brings none", () => {
+    // A beginner's plan has no calendar lighter weeks to restart, and its
+    // counter reads "Week 7", so the number carries on.
+    const beginner = atWeek3(3, {
+      weekNumber: 6,
+      currentPhase: "deload",
+      deloadSnapshot: {
+        weekNumber: 6,
+        workouts: [],
+        runDays: [],
+        currentPhase: "progression",
+        fatigueScore: 0,
+        appliedAt: 0,
+      },
+    });
+    expect(advanceWeek(trained(beginner), "beginner").weekNumber).toBe(7);
   });
 
   it("is taken one at a time", () => {
