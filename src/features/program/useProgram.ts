@@ -10,7 +10,10 @@ import {
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
-import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
+import {
+  markDayDone,
+  type ProgrammeCompletionContext,
+} from "@/lib/workoutCompletion";
 import {
   completeLift,
   liftSessionDay,
@@ -18,6 +21,7 @@ import {
 } from "@/lib/liftCompletion";
 import {
   applySessionProgression,
+  toSessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
 import {
@@ -55,7 +59,8 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { represcribeWorkouts } from "./represcribe";
+import { represcribeWorkouts, withRoleNumbers } from "./represcribe";
+import { exerciseRole } from "./exerciseRole";
 import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
 import {
   DEFAULT_PROGRAM_SETTINGS,
@@ -63,6 +68,7 @@ import {
   transitionStatus,
 } from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { rebuiltWeekFromToday } from "./racePlanContinuation";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
@@ -417,6 +423,8 @@ export function useProgram() {
             weeklyRunDays: runTarget,
             currentDate: today,
             weekStart: thisWeek,
+            // Run19: no run before today; the week's own days stay.
+            plannedFrom: today,
             carry: next.runPlan
               ? {
                   currentWeek: next.runPlan.currentWeek,
@@ -501,14 +509,17 @@ export function useProgram() {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
+          const today = localDateString();
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
-            currentDate: localDateString(),
+            currentDate: today,
             weekStart,
+            // Run19: a plan made mid-week plans no run before today.
+            plannedFrom: today,
           }));
         }
 
@@ -1173,23 +1184,6 @@ export function useProgram() {
       }
 
       const workoutId = liftWorkoutId("programme", sessionData.completionId);
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex
-            ? {
-                ...d,
-                completed: true,
-                skipped: false,
-                completedWorkoutId: workoutId,
-              }
-            : d
-        ),
-        // Clear next-workout override if completing the overridden day
-        ...(programState.nextWorkoutOverride === dayIndex && {
-          nextWorkoutOverride: undefined,
-        }),
-      };
 
       // The exercises the session ran: its prescription, or (a day marked
       // done without one) the day's, at the baseline this completion's
@@ -1213,22 +1207,12 @@ export function useProgram() {
               trainingBlockId: programState.trainingBlock?.id,
             }
           : undefined);
+      const progression = toSessionProgression({
+        ...sessionData,
+        date: liftSessionDay(sessionData.startedAt),
+      });
       const completionContext = savedContext
-        ? {
-            ...savedContext,
-            ...(sessionData.prescription
-              ? {
-                  progression: {
-                    completionId: sessionData.completionId,
-                    date: liftSessionDay(sessionData.startedAt),
-                    prescription: sessionData.prescription,
-                    setLogs: sessionData.setLogs,
-                    sessionVariant: sessionData.sessionVariant,
-                    ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
-                  },
-                }
-              : {}),
-          }
+        ? { ...savedContext, ...(progression ? { progression } : {}) }
         : undefined;
       const matchesCurrentDay =
         completionContext?.weekNumber === programState.weekNumber &&
@@ -1236,15 +1220,21 @@ export function useProgram() {
         completionContext.dayIdentity === dayIdentity &&
         completionContext.trainingBlockId === programState.trainingBlock?.id &&
         !(day.completed && day.completedWorkoutId !== workoutId);
+      // The plan as the save's transaction leaves it: the session's
+      // progression, then the day marked done.
       let committedState: ProgramState | null = matchesCurrentDay
-        ? updated
+        ? markDayDone(
+            completionContext?.progression
+              ? applySessionProgression(
+                  programState,
+                  dayIndex,
+                  completionContext.progression
+                )
+              : programState,
+            dayIndex,
+            workoutId
+          )
         : programState;
-      if (matchesCurrentDay && completionContext?.progression)
-        committedState = applySessionProgression(
-          updated,
-          dayIndex,
-          completionContext.progression
-        );
 
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
@@ -2091,15 +2081,24 @@ export function useProgram() {
             overrides?.weekSchedule ?? profile.weekSchedule ?? [];
           const weekStart = localWeekKey();
           if (profile.runMode === "race_prep" && profile.raceGoal) {
+            const today = localDateString();
             ({ runDays, runPlan } = regenerateRacePlan({
               recentLayoff,
               profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
               weeklyRunDays: runTarget,
-              currentDate: localDateString(),
+              currentDate: today,
               weekStart,
             }));
+            // Run19: the week's days already gone stay as they were, and
+            // none is planned before today.
+            runDays = rebuiltWeekFromToday(
+              base?.runDays ?? [],
+              runDays,
+              today,
+              weekStart
+            );
           } else {
             // RUN-M: structured retired — a non-race state is freeform.
             runDays = [];
@@ -2295,6 +2294,16 @@ export function useProgram() {
             ? { ...rd, userOverride: preserved, templateId: preserved }
             : rd;
         });
+        // Run19: the layout changes the week from today. Its days already
+        // gone stay as they were, and none is planned before today.
+        if (runPlan) {
+          runDays = rebuiltWeekFromToday(
+            base.runDays ?? [],
+            runDays,
+            localDateString(),
+            weekStart
+          );
+        }
 
         return { ...base, runDays, runPlan };
       }, overrides?.profileUpdates);
@@ -2557,9 +2566,8 @@ export function useProgram() {
           ...precondition,
           exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const added = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2583,13 +2591,29 @@ export function useProgram() {
                   ],
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: each added lift takes its role's numbers, as the reducer
+          // gives them.
+          return {
+            ...state,
+            workouts: exerciseIds.reduce(
+              (workouts, _id, n) =>
+                withRoleNumbers(
+                  workouts,
+                  dayIndex,
+                  `cmd-${commandId}-${n}`,
+                  state.primaryGoal ?? "general",
+                  toExperience(profile?.experience)
+                ),
+              added
+            ),
+          };
+        },
         "Couldn't add that."
       );
       return changeStands(outcome);
     },
-    [programState, runProgramCommand]
+    [programState, profile, runProgramCommand]
   );
 
   /**
@@ -2681,9 +2705,8 @@ export function useProgram() {
           replacementExerciseId,
           replacementWeight: calibrated.weight,
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const replaced = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2725,8 +2748,27 @@ export function useProgram() {
                   ),
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: within a role the slot's numbers stay; across one the
+          // replacement takes its role's, no more sets than the slot had.
+          const replacement = replaced[dayIndex].exercises.find(
+            (ex) => ex.instanceId === `cmd-${commandId}`
+          );
+          return {
+            ...state,
+            workouts:
+              replacement && exerciseRole(old) !== exerciseRole(replacement)
+                ? withRoleNumbers(
+                    replaced,
+                    dayIndex,
+                    `cmd-${commandId}`,
+                    state.primaryGoal ?? "general",
+                    toExperience(profile?.experience),
+                    old.sets
+                  )
+                : replaced,
+          };
+        },
         "Couldn't swap that."
       );
       return changeStands(outcome);
@@ -3112,10 +3154,12 @@ export function useProgram() {
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
    *  below the taper-safe floor it yields the finish-safely shape (belowFloor).
-   *  Carries terminal status + re-keys manualCompletions (Slice A) so the
-   *  current week's completions survive the regen. Clears the server-written
-   *  fell-behind flag if present — but works WITHOUT it too, since the in-tab
-   *  Realign banner can be triggered any time the user feels behind.
+   *  Plans no run before today and keeps the week's own days before it, and
+   *  its done, moved and swapped days, as the save does (Run19,
+   *  `planWeekFromToday`), so the current week's completions survive the
+   *  regen. Clears the server-written fell-behind flag if present — but
+   *  works WITHOUT it too, since the in-tab Realign banner can be triggered
+   *  any time the user feels behind.
    *
    *  Returns what happened. When it landed, the timing + totalWeeks, so the
    *  caller can toast the right copy; a refusal is said here, once, and the
@@ -3154,7 +3198,8 @@ export function useProgram() {
     let saved: ProgramState | null;
     try {
       saved = await saveProgram((base) => {
-        if (isInRecoveryOn(base.runPlan, localDateString())) return null;
+        const today = localDateString();
+        if (isInRecoveryOn(base.runPlan, today)) return null;
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
           recentLayoff,
@@ -3162,8 +3207,11 @@ export function useProgram() {
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],
           weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-          currentDate: localDateString(),
+          currentDate: today,
           weekStart: localWeekKey(),
+          // Run19: re-planned from today, so no run before it; the week's
+          // own days before today stay as they were.
+          plannedFrom: today,
           carry: {
             currentWeek: prevRunPlan?.currentWeek,
             // Carried WITH currentWeek, as every other regen site does: the
