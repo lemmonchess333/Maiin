@@ -91,6 +91,7 @@ const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
   runDay: null,
   completed: false,
   isFirst: false,
+  dose: null,
   ...extra,
 });
 
@@ -355,6 +356,26 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=run-2"
     );
+  });
+
+  /* Run21 (5): the card draws the dose `todaySession` decided, and works
+     out none of its own. */
+  it("states the run's dose as the session gives it", function () {
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-3",
+          dayIndex: 3,
+          templateId: "long_15k",
+          type: "long",
+          status: "planned",
+        } as any,
+        dose: "15 km · about 100 min",
+      }),
+      vi.fn()
+    );
+    expect(document.body.textContent).toContain("15 km · about 100 min");
+    expect(document.body.textContent).not.toContain("about 80 min");
   });
 
   it("tapping a startable run's card previews it in Train instead of starting it", function () {

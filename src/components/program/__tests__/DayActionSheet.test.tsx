@@ -289,6 +289,47 @@ describe("DayActionSheet — planned run", () => {
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
+  it("Run21 (5): a long run's minutes come from the runner's confirmed pace", () => {
+    const { profile, callbacks } = setup();
+    const runDay = makeRunDay({
+      id: "runday_long",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      templateId: "long_15k",
+      status: "planned",
+    });
+    const sheet = (runFitness?: UserProfile["runFitness"]) =>
+      render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, runFitness }}
+          programState={makeProgramState([runDay])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...callbacks}
+        />
+      );
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /^15 km\b/.test(text));
+    // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+    const confirmed = sheet({
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      pendingConfirmation: false,
+    });
+    expect(metaLine()).toMatch(/^15 km · about 100 min\b/);
+    confirmed.unmount();
+    sheet(undefined);
+    expect(metaLine()).not.toMatch(/min/);
+  });
+
   it("Run21 (3): says what the run is with no plan to give a reason", () => {
     const { profile, programState, callbacks } = setup();
     render(
