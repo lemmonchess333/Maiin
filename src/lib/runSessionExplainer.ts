@@ -98,7 +98,7 @@ export function runSessionExplainer(
       : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
   }
   if (type === "tempo") {
-    return "Tempo — grows how long you can hold your threshold pace. The pace itself comes from your fitness, so the session ramps volume, not speed.";
+    return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
   }
   if (type === "intervals") {
     return "Intervals — short fast repeats for top-end economy. The recovery between reps is part of the session, not a failure of it.";
