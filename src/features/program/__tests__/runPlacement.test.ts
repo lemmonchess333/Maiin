@@ -52,6 +52,37 @@ describe("quality placement within the actual available week", () => {
     ]);
   });
 
+  /* RUN-EV-10: the taper's session went on the first free day of the week
+     (`remaining[0]`), so after a Sunday long run it landed on the Monday,
+     on a lift day or not. It goes through the same placement as every
+     quality session. */
+  describe("the taper's session", () => {
+    const taperSessions = (both: number[] = []) => {
+      const plan = generateRacePlanV2({
+        weekSchedule: schedule([0, 1, 3, 5], both),
+        raceGoal: { distance: "half", targetDate: "2027-01-03" },
+        weeklyRunDays: 4,
+        currentDate: "2026-09-07",
+        weekStart: "2026-09-07",
+        recentLayoff: "none",
+        tuning: { difficulty: "standard", volume: "standard" },
+      });
+      return plan.weeks.flat().filter((d) => d.templateId === "8x400");
+    };
+
+    it("isn't the day after the weekend's long-run slot", () => {
+      const sessions = taperSessions();
+      expect(sessions.length).toBeGreaterThan(0);
+      for (const d of sessions) expect(adjacent(d.dayIndex, 0)).toBe(false);
+    });
+
+    it("isn't on a lifting day when a running-only day is free", () => {
+      const sessions = taperSessions([3]);
+      expect(sessions.length).toBeGreaterThan(0);
+      for (const d of sessions) expect(d.dayIndex).toBe(5);
+    });
+  });
+
   it("avoids consecutive demanding days whenever a feasible pair exists", () => {
     for (let longDay = 0; longDay < 7; longDay++) {
       for (let mask = 1; mask < 128; mask++) {
