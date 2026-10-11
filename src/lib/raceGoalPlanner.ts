@@ -7,9 +7,12 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  preserveEditedRunDays,
+  raceWeekFromToday,
 } from "@/features/program/racePlanContinuation";
-import type { ProgramState } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 /**
  * Race Goal Planner — pure derivation of the pre-save preview shown in the
  * Programme Settings race-prep editor (see RaceGoalPlanner.tsx).
@@ -54,6 +57,29 @@ import { paceMinSec } from "./runLabels";
 import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
+
+/** Pgm7 A7: a race plan needs at least two run days a week. A plan that
+ *  already has fewer keeps them (Pgm5: no silent rebuild); a new one starts
+ *  at two. */
+export const MIN_RACE_RUN_DAYS = 2;
+/** Pgm7 A7: a marathon's setup recommends three. */
+export const MARATHON_RUN_DAYS = 3;
+
+/**
+ * The line under a race plan's run-days control, or null when the count
+ * suits the race. Fewer days are offered more days, a shorter race or a
+ * later date (A7).
+ */
+export function raceRunDaysNote(
+  distance: RaceDistance,
+  runDays: number
+): string | null {
+  if (runDays < MIN_RACE_RUN_DAYS)
+    return "A race plan needs at least two runs a week. Add a day when you can.";
+  if (distance === "marathon" && runDays < MARATHON_RUN_DAYS)
+    return "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date.";
+  return null;
+}
 
 /**
  * Five states, not four. `below-floor` (finish-safely) is DISTINCT from
@@ -186,34 +212,46 @@ export function getRaceGoalPlannerState(
     weeklyRunDays,
     input.weekSchedule
   );
-  const weekStart = localWeekKey(now);
   const continued = continuingRacePlan(input.existingState?.runPlan, {
     distance,
     targetDate,
   });
-  const plan = generateRacePlanV2({
-    // Settings preview the same returning-runner guard used by the save.
-    // Calendar-only callers deliberately retain the no-history fallback.
-    recentLayoff: input.recentLayoff ?? "none",
-    weekSchedule,
-    raceGoal: { distance, targetDate },
-    weeklyRunDays,
-    currentDate,
+  // The week the save plans (Run19): from today, over a continuing plan's
+  // kept days, or next week's runs when none of this week's run days is
+  // left (`raceWeekFromToday`).
+  const {
+    plan,
+    runDays: firstWeek,
     weekStart,
-    tuning: input.tuning,
-    runningBaseline: input.runningBaseline,
-    runTimeLimits: input.runTimeLimits,
-    easyPaceSPerKm: input.easyPaceSPerKm,
-    planTotalWeeks: continued?.totalWeeks,
-  });
-  if (continued && plan.weeks[0]) {
-    plan.weeks[0] = preserveEditedRunDays(
-      input.existingState?.runDays ?? [],
-      plan.weeks[0],
-      input.existingState?.manualCompletions,
-      currentDate
-    );
-  }
+  } = raceWeekFromToday(
+    (from) =>
+      generateRacePlanV2({
+        // Settings preview the same returning-runner guard used by the save.
+        // Calendar-only callers deliberately retain the no-history fallback.
+        recentLayoff: input.recentLayoff ?? "none",
+        weekSchedule,
+        raceGoal: { distance, targetDate },
+        weeklyRunDays,
+        currentDate: from.currentDate,
+        weekStart: from.weekStart,
+        tuning: input.tuning,
+        runningBaseline: input.runningBaseline,
+        runTimeLimits: input.runTimeLimits,
+        easyPaceSPerKm: input.easyPaceSPerKm,
+        planTotalWeeks: continued?.totalWeeks,
+      }),
+    { currentDate, weekStart: localWeekKey(now) },
+    currentDate,
+    continued
+      ? {
+          runDays: input.existingState?.runDays ?? [],
+          manualCompletions: input.existingState?.manualCompletions,
+        }
+      : undefined
+  );
+  // The plan's weekly shape, before today's cut: what a week of it holds.
+  const shapeWeek = plan.weeks[0] ?? [];
+  if (plan.weeks[0]) plan.weeks[0] = firstWeek;
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
   const status: RacePlannerStatus = plan.belowFloor
@@ -222,13 +260,16 @@ export function getRaceGoalPlannerState(
       ? "compressed"
       : "healthy";
 
-  const week0 = (plan.weeks[0] ?? []).filter((run) =>
+  const inThisWeek = (run: ScheduledRunDay) =>
     run.date
       ? localWeekKey(parseLocalDate(run.date)) === weekStart
-      : !run.weekKey || run.weekKey === weekStart
-  );
-  const recommendedRunDays = week0.length || weeklyRunDays;
-  const hardClashDays = week0.filter((rd) => rd.clashesWithLift).length;
+      : !run.weekKey || run.weekKey === weekStart;
+  // What is saved for the plan's first week (`raceWeekFromToday`), and a
+  // week's shape: a plan made on a Thursday still runs three days a week.
+  const week0 = (plan.weeks[0] ?? []).filter(inThisWeek);
+  const shape = shapeWeek.filter(inThisWeek);
+  const recommendedRunDays = shape.length || weeklyRunDays;
+  const hardClashDays = shape.filter((rd) => rd.clashesWithLift).length;
   const blockWeeks = continuedBlockWeeks(plan.totalWeeks, continued);
   const firstWeekPhase = getRacePhaseLabel(
     blockWeeks - plan.totalWeeks,
@@ -247,7 +288,7 @@ export function getRaceGoalPlannerState(
   } else if (status === "compressed") {
     statusTitle = "Short runway";
     statusDescription =
-      "Tropos will compress the plan — fewer hard sessions, a shorter long-run progression.";
+      "Tropos will compress the plan — less interval work, and the long runs build in fewer weeks, with bigger jumps between them.";
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
