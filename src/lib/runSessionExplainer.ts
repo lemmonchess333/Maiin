@@ -100,6 +100,10 @@ export function runSessionExplainer(
     if (type === "long") {
       return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
     }
+    // Run22: the first taper weeks keep a shorter medium-long.
+    if (isMediumLong) {
+      return "Taper medium-long — shorter on purpose: the volume comes down in steps, so you arrive fresh without losing your rhythm.";
+    }
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
 
