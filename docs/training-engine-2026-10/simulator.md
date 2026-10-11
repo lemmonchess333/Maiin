@@ -40,7 +40,12 @@ src/features/program/__tests__/sim/measuring.sim.test.ts` runs the
   `test-results/sim/measuring.md`, uncommitted. Without the variable the
   suite skips. An option the app doesn't build is a `PlanVariant`
   (`liftSeason.ts`): applied to the plan setup makes and again after each
-  day's rollover, so the weeks the app builds later get it too.
+  day's rollover, so the weeks the app builds later get it too. A
+  progression rule is a `ProgressionVariant`, applied at Finish to each
+  lift from where the app's own rules left it (`sawtooth.ts`, L4); a
+  different price for the time fit's warm-ups goes through the fit's
+  `setWarmupPricing` seam (`timeFit.ts`, L5). `-t` picks sections, and
+  the report holds the ones run: `measuring-l4-l5.md` is L4's and L5's.
 
 ## What runs
 

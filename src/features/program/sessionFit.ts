@@ -99,30 +99,58 @@ const ESTABLISHED: StartingLoadContext = {
   experience: "intermediate",
 };
 
+/** The weight a loaded lift's warm-up is priced at: the heavier of its load
+ *  and the established lifter's (`ESTABLISHED`). */
+function establishedWeight(ex: ProgramExercise): number {
+  return Math.max(
+    ex.weight,
+    startingWeightForExercise(
+      ex.exerciseId,
+      ex.movementCategory,
+      ESTABLISHED,
+      ex.isAccessory === true,
+      undefined,
+      ex.repUnit
+    )
+  );
+}
+
+/** Given a loaded lift and the weight the fit prices its warm-up at, the
+ *  weight to price it at instead. */
+export type WarmupPricing = (ex: ProgramExercise, priced: number) => number;
+
+let warmupPricing: WarmupPricing | null = null;
+
+/**
+ * A measurement seam, which the app never sets: the training simulator
+ * prices warm-ups another way to compare it with this one (decisions.md
+ * L5, F8). Returns the function that puts the fit's own pricing back.
+ *
+ * @oracle — test-only by design, permanently: the simulator's measuring
+ * suite is its one caller. The app always prices with the fit's own.
+ */
+export function setWarmupPricing(pricing: WarmupPricing | null): () => void {
+  const previous = warmupPricing;
+  warmupPricing = pricing;
+  return () => {
+    warmupPricing = previous;
+  };
+}
+
 /** A session's seconds as the plan prices it. */
 function plannedSeconds(
   exercises: readonly ProgramExercise[],
   minutes: number
 ): number {
   return estimateSessionSeconds(
-    exercises.map((ex) =>
-      ex.weight > 0
-        ? {
-            ...ex,
-            weight: Math.max(
-              ex.weight,
-              startingWeightForExercise(
-                ex.exerciseId,
-                ex.movementCategory,
-                ESTABLISHED,
-                ex.isAccessory === true,
-                undefined,
-                ex.repUnit
-              )
-            ),
-          }
-        : ex
-    ),
+    exercises.map((ex) => {
+      if (!(ex.weight > 0)) return ex;
+      const priced = establishedWeight(ex);
+      return {
+        ...ex,
+        weight: warmupPricing ? warmupPricing(ex, priced) : priced,
+      };
+    }),
     { sessionMinutes: minutes }
   );
 }
