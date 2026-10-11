@@ -43,6 +43,7 @@ import {
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
+import { exerciseRole } from "./exerciseRole";
 import { roleReps, roleRepsFor } from "./roleTable";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
@@ -158,6 +159,39 @@ export function represcribeWorkouts(
       // line names that target (Lift4); neither holds for the new one.
       delete out.lowered;
       return out;
+    }),
+  }));
+}
+
+/**
+ * A level change (Lift4 (12)): it sets how the main lifts progress. Each
+ * main lift takes the new level's numbers from the role table (a
+ * beginner's one target, or everyone else's range) with its session's
+ * heavier or lighter shift where the level brings one, as the plan's own
+ * generator gives a lifter at that level. A main lift whose numbers stay
+ * the same keeps everything, its climb included, and nothing else moves:
+ * the other lifts, every lift's sets, and the exercises themselves. A level
+ * change never rebuilds or swaps (Pgm5's content-edit rule); whether
+ * lighter weeks come, and what a plan built later picks, read the level
+ * where they're used.
+ */
+export function represcribeMainLifts(
+  workouts: readonly WorkoutDay[],
+  goal: PrimaryGoal,
+  experience: Experience | undefined
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience);
+  return fresh.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      const before = workouts[d].exercises[e];
+      if (exerciseRole(before) !== "main" || before.repUnit === "seconds")
+        return before;
+      const same =
+        (before.baseReps ?? before.reps) === ex.baseReps &&
+        before.repRangeMax === ex.repRangeMax &&
+        before.progressionType === ex.progressionType;
+      return same ? before : ex;
     }),
   }));
 }
@@ -405,11 +439,11 @@ export function blockConsequence(input: {
 
   // Same focus: the prescription is untouched, so the block's whole value is
   // the window and the pace. Naming the focus keeps it concrete.
-  const kept = focusLabel(currentFocus).toLowerCase();
   if (pace === "full") {
-    // "gives 8 weeks of stay fit a shape" read as a sentence with a verb
-    // phrase wedged into it; the focus goes at the end, as the thing kept.
-    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line, with the same ${kept} focus.`;
+    // The focus's name is the person's own goal ("Support my running"),
+    // so it goes in whole, as the thing kept, not lowercased into the
+    // sentence.
+    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line. Your focus stays ${focusLabel(currentFocus)}.`;
   }
   if (pace === "lighter") {
     return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;
