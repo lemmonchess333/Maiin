@@ -49,6 +49,9 @@ export interface InsightRun {
   /** Seconds per kilometre. */
   avgPace: number;
   activityType: string;
+  /** "treadmill" for a run on one (Pgm8): kept out of the paces, which are
+   *  outdoor GPS only (`isPaceEligible`), whatever its type. */
+  place?: string | null;
   completedAt: Date;
   date?: string;
   isInvalid?: boolean;

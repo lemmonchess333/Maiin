@@ -54,6 +54,9 @@ export interface EffortRun {
   /** Seconds a kilometre. */
   avgPace: number;
   activityType?: string;
+  /** "treadmill" for a run on one (Pgm8): its distance was typed, not
+   *  measured, so it is never an effort (`isPaceEligible`). */
+  place?: string | null;
   isInvalid?: boolean;
   savedAnyway?: boolean;
   completedAt?: Date | null;

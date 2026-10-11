@@ -7,9 +7,10 @@ interface TreadmillModeProps {
   formatTime: (s: number) => string;
   onSave: (distance: number) => void;
   onDiscard: () => void;
-  /* The same component renders for both `activityType: 'treadmill'`
-     (user picked Treadmill in the setup modal) and `'manual'` (GPS
-     never locked outdoors and the user chose "Track without GPS").
+  /* The same component renders for both a treadmill run (the setup's
+     "On a treadmill" switch, `place: 'treadmill'`, whatever the run's
+     type, Pgm8) and `activityType: 'manual'` (GPS never locked outdoors
+     and the user chose "Track without GPS").
      Branch only the user-visible copy — the input id stays
      `treadmill-distance` to keep accessibility selectors stable. */
   mode?: "treadmill" | "manual";

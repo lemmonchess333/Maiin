@@ -24,6 +24,13 @@
  * its blocks pinned, not the threshold window: a marathon pace sits 9-27 s
  * a km past that window's slow edge (VDOT 60 to 30), so a goal-pace tempo
  * held exactly read slow for most marathoners.
+ *
+ * A run on the treadmill is not judged either. Since Pgm8 it is the planned
+ * run, but its distance is typed in at the end: with no distance while it
+ * ran, there is no record of its work segments, so a treadmill tempo would
+ * be judged on an average carrying its warm-up and cool-down, read slow and
+ * feed the "Take this week easier?" nudge (A6). A typed distance sets no
+ * pace record either (`isPaceEligible`).
  */
 import type { DistanceUnit } from "./distanceUnits";
 import { resolvePaceVerdict, type PaceVerdict } from "./paceVerdict";
@@ -34,6 +41,7 @@ import {
 } from "./runPaces";
 import { getAdherenceLabel, type RunPlanMetadata } from "./runPlanMetadata";
 import { RUN_TEMPLATES, isRunWalkTemplateId } from "./workoutTemplates";
+import { isTreadmillRun } from "./runGuards";
 
 /** The least a run's work segments must cover to be judged on: a few
  *  hundred metres and a minute, so a block cut short isn't read as one. */
@@ -53,6 +61,9 @@ export function workPaceSeconds(
 
 export function plannedRunVerdict(args: {
   planMetadata: RunPlanMetadata | null | undefined;
+  /** Where the run was done (`RunConfig.place`): none is judged on a
+   *  treadmill. */
+  place?: string | null;
   /** The whole run's average pace, seconds per km. */
   avgPaceSeconds: number;
   /** The pace over the session's work segments (`workPaceSeconds`), which
@@ -68,6 +79,7 @@ export function plannedRunVerdict(args: {
 }): PaceVerdict | null {
   const { planMetadata: pm, avgPaceSeconds, distance } = args;
   if (getAdherenceLabel(pm) !== "Planned") return null;
+  if (isTreadmillRun({ place: args.place })) return null;
   const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
   const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
   if (!tmpl || tmpl.type === "intervals" || isRunWalkTemplateId(tmpl.id))
