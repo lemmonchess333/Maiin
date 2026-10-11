@@ -25,7 +25,8 @@
  *   weeks that have one (audit §7 item 2; Daniels' 25–30%).
  * - `one-run-week`: race preparation on one run a week (audit §7 item 11).
  * - `run-walk`: a new runner's first week asking for more than 20 minutes
- *   of running at a time (§6.5 A: Couch to 5K starts with one-minute runs).
+ *   of running at a time, a run-walk session's longest run between its
+ *   walks (§6.5 A: Couch to 5K starts with one-minute runs).
  * - `under-dose`: the plan's first full month averaging under 80% of the
  *   minutes the runner already ran, which setup never asks.
  * - `derived-low`: a benchmark the app derived three or more VDOT under the
@@ -40,7 +41,7 @@ import {
 } from "@/lib/dateHelpers";
 import { trainingBands } from "@/lib/runPaces";
 import type { LiftPersona, Season } from "./liftSeason";
-import { plannedRunMinutes, runTypeOf } from "./runSeason";
+import { longestRunMinutes, plannedRunMinutes, runTypeOf } from "./runSeason";
 
 /** A week planning this much more than the one before is a jump. */
 const JUMP = 1.25;
@@ -153,7 +154,7 @@ export function runCoachingFindings(
     if (
       first?.planned.some(
         (entry) =>
-          plannedRunMinutes(entry.slice(entry.indexOf(":") + 1), easyPace) > 20
+          longestRunMinutes(entry.slice(entry.indexOf(":") + 1), easyPace) > 20
       )
     )
       found.add("run-walk");
