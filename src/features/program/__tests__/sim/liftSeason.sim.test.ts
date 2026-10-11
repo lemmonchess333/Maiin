@@ -72,14 +72,12 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  * - F9 `stall`: a light lift whose next weight is more than 15% heavier
  *   waits at a stretched rep target for the person to pick it up, with
  *   reps to spare (a 10 kg leg curl at 20 reps, dumbbells from 10 kg).
- * - F11 `stall:squat`: one exercise on two days pre-fills each day's sets
- *   from the other day's last session.
  * - F4 `misses`: the plan's steps outrun a lifter who gains slowly or
  *   trains half the planned sessions.
  * - F12 `acsm-size:quads`: size plans give the quads 9 sets a week.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
-  "novice-man": ["stall:barbell-curl", "stall:squat"],
+  "novice-man": ["stall:barbell-curl"],
   "novice-woman": [
     "stall:overhead-press",
     "stall:seated-calf-raise",
