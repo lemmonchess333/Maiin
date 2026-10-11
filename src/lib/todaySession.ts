@@ -20,7 +20,7 @@ import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
-import { racePaceFinishFor, type RacePaceFinish } from "@/lib/racePaceFinish";
+import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
@@ -93,8 +93,8 @@ export interface TodayRun {
    *  planned run. */
   dose: string | null;
   /** A long run that finishes at race pace, which its name says
-   *  (Run21 (2), `racePaceFinishFor`). Absent reads as none. */
-  racePaceFinish?: RacePaceFinish | null;
+   *  (Run21 (2), `racePaceWorkFor`). Absent reads as none. */
+  racePace?: RacePaceWork | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -192,7 +192,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
           dose: runDose(resolved.run.runDay, profile),
-          racePaceFinish: racePaceFinishFor(
+          racePace: racePaceWorkFor(
             templateOfRunDay(resolved.run.runDay),
             profile,
             programState?.runPlan
@@ -299,7 +299,7 @@ function tomorrowSession(
   const runName = runDay
     ? runSessionName(
         runTemplate,
-        racePaceFinishFor(runTemplate, profile, programState?.runPlan)
+        racePaceWorkFor(runTemplate, profile, programState?.runPlan)
       )
     : (next.scheduleType === "run" || next.scheduleType === "both") &&
         !nextWeekWritten
