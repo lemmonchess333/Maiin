@@ -57,6 +57,8 @@ import {
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
+import { runSessionName } from "@/lib/runSessionAbout";
+import { racePaceFinishFor } from "@/lib/racePaceFinish";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -208,6 +210,13 @@ export default function DayActionSheet({
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
       )
     : null;
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const selectedRaceFinish = racePaceFinishFor(
+    selectedRunTemplate,
+    profile,
+    programState?.runPlan
+  );
   // Adaptive Paces: the user's personalised pace for this session, appended to
   // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
   // sessionPaceDisplay rule (the range is the honest coaching target; singles
@@ -271,6 +280,7 @@ export default function DayActionSheet({
         programState?.runDays,
         run.runDay.weekKey
       ),
+      racePaceFinish: selectedRaceFinish !== null,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
@@ -372,7 +382,7 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {selectedRunTemplate?.name ?? "Run"}
+                  {runSessionName(selectedRunTemplate, selectedRaceFinish)}
                 </p>
                 {selectedRunTemplate?.description && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -382,6 +392,7 @@ export default function DayActionSheet({
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
                   template={selectedRunTemplate}
+                  racePaceFinish={selectedRaceFinish}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />

@@ -29,6 +29,9 @@ export interface SessionExplainerInput {
    *  (Run15), nor does every other build week on the gentler setting. Left
    *  out, the week isn't assumed to. */
   weekHasQuality?: boolean;
+  /** A long run that finishes at race pace (`racePaceFinishFor`): in the
+   *  build, it's in the week to rehearse race day. */
+  racePaceFinish?: boolean;
 }
 
 /**
@@ -151,9 +154,11 @@ export function runSessionExplainer(
     if (phase === "base") {
       return "The week's anchor run — long-run volume ramps gradually through the base.";
     }
-    return weekHasQuality
-      ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
-      : "The week's anchor run — it builds the endurance the race needs.";
+    return input.racePaceFinish
+      ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+      : weekHasQuality
+        ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
+        : "The week's anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo") {
     return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";

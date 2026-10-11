@@ -154,6 +154,8 @@ import {
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
+import { runSessionName } from "@/lib/runSessionAbout";
+import { racePaceFinishFor } from "@/lib/racePaceFinish";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
@@ -789,6 +791,14 @@ export default function ProgrammeRunSection({
   };
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const selectedRaceFinish = racePaceFinishFor(
+    selectedTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const selectedName = runSessionName(selectedTemplate, selectedRaceFinish);
   const selectedPurpose =
     selectedTemplate && selectedRun.runDay
       ? runSessionPresentation({
@@ -800,6 +810,7 @@ export default function ProgrammeRunSection({
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
           weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
+          racePaceFinish: selectedRaceFinish !== null,
         })
       : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
@@ -1551,7 +1562,7 @@ export default function ProgrammeRunSection({
                   sport="run"
                   icon={runTemplateIcon(selectedTemplate?.icon)}
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
-                  title={selectedTemplate?.name ?? "Run"}
+                  title={selectedName}
                   description={selectedTemplate?.description}
                   meta={[
                     ...(selectedPurpose.weekLabel
@@ -1574,6 +1585,7 @@ export default function ProgrammeRunSection({
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
                   template={selectedTemplate}
+                  racePaceFinish={selectedRaceFinish}
                   run={selectedRun.runDay}
                   runDays={runDays}
                 />
@@ -1596,9 +1608,9 @@ export default function ProgrammeRunSection({
                 <SectionLabel>{selectedDateLabel}</SectionLabel>
                 <p className="text-sm font-bold text-foreground mt-0.5">
                   {selectedRun.isCompleted
-                    ? `${selectedTemplate?.name ?? "Run"} · done`
+                    ? `${selectedName} · done`
                     : selectedRun.status === "skipped"
-                      ? `${selectedTemplate?.name ?? "Run"} · skipped`
+                      ? `${selectedName} · skipped`
                       : "No run scheduled"}
                 </p>
                 <p className="text-micro text-muted-foreground mt-0.5">
