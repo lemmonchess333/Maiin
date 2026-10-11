@@ -114,7 +114,12 @@ vi.mock("@/hooks/useAudioCues", () => ({
   }),
 }));
 vi.mock("@/hooks/useSessionPlayer", () => ({
-  useSessionPlayer: () => ({ state: { index: 0 } }),
+  useSessionPlayer: () => ({
+    state: { index: 0 },
+    segments: [],
+    current: null,
+    workPortion: () => null,
+  }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/run/RunTilePicker", () => ({

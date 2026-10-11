@@ -25,19 +25,11 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install browser for JavaScript organiser pages
-        # A stalled apt mirror hangs apt-get with no error, and on 2026-10-07
-        # that cost two whole jobs (14.5 and 30 min) before a test ran. Each
-        # attempt gets a bound; `timeout` kills the whole process group, and
-        # `dpkg --configure -a` repairs a dpkg it interrupted mid-install.
-        timeout-minutes: 11
-        run: |
-          for i in 1 2 3; do
-            timeout --kill-after=10 200 npx playwright install --with-deps chromium && exit 0
-            echo "::warning::'npx playwright install --with-deps chromium' attempt $i failed or stalled; retrying"
-            sudo dpkg --configure -a || true
-            sleep 10
-          done
-          exit 1
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:

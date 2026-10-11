@@ -50,6 +50,9 @@ export interface FinishedRun {
   isInvalid: boolean;
   invalidReason: string | null;
   routeQuality: RouteQuality | null;
+  /** The time and distance in the session's work segments, which a tempo
+   *  is judged by (`plannedRunVerdict`); null for a run with none. */
+  workPortion?: { seconds: number; meters: number } | null;
   /** The shoe the run's distance goes on: the one picked at the start,
    *  else the default. */
   shoeId: string | null;
@@ -108,6 +111,9 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     invalidReason: run.invalidReason,
     savedAnyway: run.isInvalid,
     routeQuality: run.routeQuality,
+    // Null, not absent, for a run with no work segments, as the verdict's
+    // tone is.
+    workPortion: run.workPortion ?? null,
     // Phase B1: plan adherence at the top level, the field adherence
     // queries filter on. P0-6: `scheduledRunId` names the planned run it
     // was.

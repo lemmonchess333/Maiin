@@ -3090,6 +3090,38 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     expect(setDocCalls().filter((_, i) => i >= writeMark).length).toBe(0);
   });
 
+  it("catches a lifter twenty weeks behind up in two writes", async () => {
+    // MAX_ROLLOVER_WEEKS caps one pass, not the catch-up: the effect runs
+    // again on the plan it saved and moves the rest.
+    mockProfile = lifterProfile();
+    resetFirestore();
+    const twentyBack = localWeekKey(
+      addLocalDays(parseLocalDate(localWeekKey()), -140)
+    );
+    seedProgram(frozenLifter(twentyBack));
+
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    await waitFor(
+      () => {
+        const writes = setDocCalls();
+        const last = writes[writes.length - 1]?.data as ProgramState;
+        expect(last?.liftWeekKey).toBe(localWeekKey());
+      },
+      { timeout: 4000 }
+    );
+
+    const moves = setDocCalls()
+      .map((w) => (w.data as ProgramState).liftWeekKey)
+      .filter((key) => key !== twentyBack);
+    expect(moves).toEqual([
+      localWeekKey(addLocalDays(parseLocalDate(twentyBack), 12 * 7)),
+      localWeekKey(),
+    ]);
+  });
+
   it("does nothing for a pre-D1 doc with no anchor (migration seeds it first)", async () => {
     // Absent must never read as "stale since the epoch" — that would roll a
     // returning user forward by the whole iteration cap on first open.
