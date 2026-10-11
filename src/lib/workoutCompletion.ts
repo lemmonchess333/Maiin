@@ -129,6 +129,36 @@ export function planWithoutSession(
   };
 }
 
+/**
+ * The plan with a day marked done by the session saved as `workoutId`: done
+ * and not skipped, and no longer the session chosen to come next. The save's
+ * transaction and the app's copy before the save lands both mark it here,
+ * each after the session's progression (`applySessionProgression`), which
+ * changes only the day's lifts. Deleting the session undoes the day
+ * (`planWithoutSession`).
+ */
+export function markDayDone(
+  state: ProgramState,
+  dayIndex: number,
+  workoutId: string
+): ProgramState {
+  const next: ProgramState = {
+    ...state,
+    workouts: state.workouts.map((row, index) =>
+      index === dayIndex
+        ? {
+            ...row,
+            completed: true,
+            skipped: false,
+            completedWorkoutId: workoutId,
+          }
+        : row
+    ),
+  };
+  if (next.nextWorkoutOverride === dayIndex) delete next.nextWorkoutOverride;
+  return next;
+}
+
 export function workoutCompletionDayIdentity(day: unknown): string | null {
   if (!day || typeof day !== "object") return null;
   const value = day as {
@@ -211,21 +241,9 @@ export async function commitWorkoutCompletion(
             ),
           };
         next = {
-          ...progressed,
+          ...markDayDone(progressed, completion.dayIndex, workoutId),
           updatedAt: Date.now(),
-          workouts: progressed.workouts.map((row, index) =>
-            index === completion.dayIndex
-              ? {
-                  ...row,
-                  completed: true,
-                  skipped: false,
-                  completedWorkoutId: workoutId,
-                }
-              : row
-          ),
         };
-        if (next.nextWorkoutOverride === completion.dayIndex)
-          delete next.nextWorkoutOverride;
       }
     }
     assertOwner();
