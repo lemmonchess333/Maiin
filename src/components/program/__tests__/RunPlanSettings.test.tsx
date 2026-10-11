@@ -182,6 +182,56 @@ describe("RunPlanSettings", () => {
     localStorage.clear();
   });
 
+  /* Pgm7 A7: a race plan needs at least two run days a week; one already
+     on fewer keeps them (Pgm5). */
+  it("starts a new race plan at two run days and goes no lower (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "new-race-two-days",
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less).toBeDisabled();
+    expect(less.parentElement).toHaveTextContent("2");
+  });
+
+  it("keeps an existing race plan's one run day, and says what it needs (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "one-day-race-plan",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less.parentElement).toHaveTextContent("1");
+    expect(less).toBeDisabled();
+    expect(
+      screen.getByText(/A race plan needs at least two runs a week/)
+    ).toBeInTheDocument();
+  });
+
+  it("recommends three run days for a marathon (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "two-day-marathon",
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: MARATHON_TARGET_DATE },
+      weeklyRunDaysTarget: 2,
+      weeklyRunsTarget: 2,
+    } as unknown as UserProfile);
+    expect(
+      screen.getByText(/A marathon plan works best on three runs a week/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Increase run days/i }));
+    expect(
+      screen.queryByText(/A marathon plan works best on three runs a week/)
+    ).not.toBeInTheDocument();
+  });
+
   it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
     renderPage({ ...baseProfile, uid: "goal-owner" });
     fireEvent.change(
@@ -474,6 +524,12 @@ describe("RunPlanSettings", () => {
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
+    // Pgm6's knob scales the race's own peak (runScheduler's
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Lighter peaks about a quarter lower/)
+    ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });

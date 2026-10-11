@@ -10,7 +10,10 @@ import {
   weekRolloverAnchor,
 } from "./programMaintenance";
 import { raceRestSkips } from "./raceRest";
-import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
+import {
+  markDayDone,
+  type ProgrammeCompletionContext,
+} from "@/lib/workoutCompletion";
 import {
   completeLift,
   liftSessionDay,
@@ -18,6 +21,7 @@ import {
 } from "@/lib/liftCompletion";
 import {
   applySessionProgression,
+  toSessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
 import {
@@ -55,7 +59,8 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { represcribeWorkouts } from "./represcribe";
+import { represcribeWorkouts, withRoleNumbers } from "./represcribe";
+import { exerciseRole } from "./exerciseRole";
 import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
 import {
   DEFAULT_PROGRAM_SETTINGS,
@@ -1179,23 +1184,6 @@ export function useProgram() {
       }
 
       const workoutId = liftWorkoutId("programme", sessionData.completionId);
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex
-            ? {
-                ...d,
-                completed: true,
-                skipped: false,
-                completedWorkoutId: workoutId,
-              }
-            : d
-        ),
-        // Clear next-workout override if completing the overridden day
-        ...(programState.nextWorkoutOverride === dayIndex && {
-          nextWorkoutOverride: undefined,
-        }),
-      };
 
       // The exercises the session ran: its prescription, or (a day marked
       // done without one) the day's, at the baseline this completion's
@@ -1219,22 +1207,12 @@ export function useProgram() {
               trainingBlockId: programState.trainingBlock?.id,
             }
           : undefined);
+      const progression = toSessionProgression({
+        ...sessionData,
+        date: liftSessionDay(sessionData.startedAt),
+      });
       const completionContext = savedContext
-        ? {
-            ...savedContext,
-            ...(sessionData.prescription
-              ? {
-                  progression: {
-                    completionId: sessionData.completionId,
-                    date: liftSessionDay(sessionData.startedAt),
-                    prescription: sessionData.prescription,
-                    setLogs: sessionData.setLogs,
-                    sessionVariant: sessionData.sessionVariant,
-                    ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
-                  },
-                }
-              : {}),
-          }
+        ? { ...savedContext, ...(progression ? { progression } : {}) }
         : undefined;
       const matchesCurrentDay =
         completionContext?.weekNumber === programState.weekNumber &&
@@ -1242,15 +1220,21 @@ export function useProgram() {
         completionContext.dayIdentity === dayIdentity &&
         completionContext.trainingBlockId === programState.trainingBlock?.id &&
         !(day.completed && day.completedWorkoutId !== workoutId);
+      // The plan as the save's transaction leaves it: the session's
+      // progression, then the day marked done.
       let committedState: ProgramState | null = matchesCurrentDay
-        ? updated
+        ? markDayDone(
+            completionContext?.progression
+              ? applySessionProgression(
+                  programState,
+                  dayIndex,
+                  completionContext.progression
+                )
+              : programState,
+            dayIndex,
+            workoutId
+          )
         : programState;
-      if (matchesCurrentDay && completionContext?.progression)
-        committedState = applySessionProgression(
-          updated,
-          dayIndex,
-          completionContext.progression
-        );
 
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
@@ -2582,9 +2566,8 @@ export function useProgram() {
           ...precondition,
           exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const added = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2608,13 +2591,29 @@ export function useProgram() {
                   ],
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: each added lift takes its role's numbers, as the reducer
+          // gives them.
+          return {
+            ...state,
+            workouts: exerciseIds.reduce(
+              (workouts, _id, n) =>
+                withRoleNumbers(
+                  workouts,
+                  dayIndex,
+                  `cmd-${commandId}-${n}`,
+                  state.primaryGoal ?? "general",
+                  toExperience(profile?.experience)
+                ),
+              added
+            ),
+          };
+        },
         "Couldn't add that."
       );
       return changeStands(outcome);
     },
-    [programState, runProgramCommand]
+    [programState, profile, runProgramCommand]
   );
 
   /**
@@ -2706,9 +2705,8 @@ export function useProgram() {
           replacementExerciseId,
           replacementWeight: calibrated.weight,
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const replaced = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2750,8 +2748,27 @@ export function useProgram() {
                   ),
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: within a role the slot's numbers stay; across one the
+          // replacement takes its role's, no more sets than the slot had.
+          const replacement = replaced[dayIndex].exercises.find(
+            (ex) => ex.instanceId === `cmd-${commandId}`
+          );
+          return {
+            ...state,
+            workouts:
+              replacement && exerciseRole(old) !== exerciseRole(replacement)
+                ? withRoleNumbers(
+                    replaced,
+                    dayIndex,
+                    `cmd-${commandId}`,
+                    state.primaryGoal ?? "general",
+                    toExperience(profile?.experience),
+                    old.sets
+                  )
+                : replaced,
+          };
+        },
         "Couldn't swap that."
       );
       return changeStands(outcome);
