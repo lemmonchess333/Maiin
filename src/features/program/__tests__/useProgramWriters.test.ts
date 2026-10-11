@@ -306,6 +306,17 @@ function raceProfile(
   };
 }
 
+/**
+ * A race half a year out, for the tests that roll a race plan's week. Each
+ * roll builds the plan through to its race, once to decide and again in the
+ * transaction (`useProgram`'s run rollover), so a race in 2099, some 3,800
+ * weeks of plan, took a two-week roll past the 5 s test timeout on a loaded
+ * CI runner. From the clock, so it is half a year out on every CI clock.
+ */
+function raceHalfAYearOut(): string {
+  return localDateString(addLocalDays(new Date(), 26 * 7));
+}
+
 // V2 runDays carry id / date / weekKey / status. Assert all four
 // in one helper.
 function expectV2Shape(rd: ScheduledRunDay) {
@@ -2007,7 +2018,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     })();
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -2033,7 +2045,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
 
@@ -2140,7 +2152,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     // Monday on its own dates; the lift side must not roll with it.
     const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
     function hybrid(liftWeekKey: string) {
-      mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+      const raceDate = raceHalfAYearOut();
+      mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
       seedProgram({
         goal: "recomp",
         currentPhase: "progression",
@@ -2170,7 +2183,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         ],
         runPlan: {
           mode: "race_prep",
-          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+          raceGoal: { distance: "10k", targetDate: raceDate },
         },
       } as ProgramState);
     }
@@ -3586,7 +3599,8 @@ describe("the week rollover waits for a finish (Lift4)", () => {
 
   it("holds the race-plan rollover the same way", async () => {
     const stale = lastWeek();
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     resetFirestore();
     seedProgram({
       goal: "recomp",
@@ -3613,7 +3627,7 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
     const { openLiftSession } = await import("../openLiftSession");
