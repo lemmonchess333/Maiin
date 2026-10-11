@@ -128,11 +128,18 @@ export function getWeatherIcon(code: number): string {
  * every branch here earns its line by telling you to do something
  * differently.
  *
- * Returning null rather than a pleasantry follows `heatPaceAdjustment`, which
- * is quiet in cool weather for the same reason. Note the two are
- * complementary: 27°C sits below the 28°C "Warm" threshold, so on that exact
- * day the only line with content is the heat check, and the fallback was
+ * Returning null rather than a pleasantry follows `heatLine`
+ * (heatAdjustment.ts), which is quiet below hot for the same reason. On a hot
+ * 27°C day the heat line is the only line with content, and the fallback was
  * crowding it.
+ *
+ * Heat is never a tip. On a hot day the heat line says to run by feel, and
+ * below hot nothing speaks about heat (Pgm8 (E8)), so the "Hot & humid",
+ * "Very hot" and "Warm" tips went: one heat line, not two. Every day the
+ * first two fired on (30°C and over at 60% humidity and over) is hot by the
+ * heat line's rule, and the "Warm" tip's days that are not (28°C and over,
+ * dry) would have been a second rule about heat where the decided one is
+ * quiet.
  */
 export function getRunningTip(
   weather: WeatherData,
@@ -155,18 +162,6 @@ export function getRunningTip(
   // Thunderstorm
   if (weatherCode >= 95) {
     return "Thunderstorm — consider postponing or using a treadmill";
-  }
-
-  // Hot + humid
-  if (temperature >= 30 && humidity >= 60) {
-    return activityType === "long"
-      ? "Hot & humid — carry water, add walk breaks every 3 km"
-      : "Very hot — hydrate well before, go easy on pace";
-  }
-
-  // Hot
-  if (temperature >= 28) {
-    return "Warm — start slower than usual, stay hydrated";
   }
 
   // Windy

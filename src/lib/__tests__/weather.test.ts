@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getWeatherIcon, getRunningTip, type WeatherData } from "../weather";
+import { heatLine } from "../heatAdjustment";
 
 function makeWeather(overrides: Partial<WeatherData> = {}): WeatherData {
   return {
@@ -73,9 +74,10 @@ describe("getRunningTip", () => {
   it("says nothing when there is nothing actionable to say", () => {
     /* The regression this closes: the fallback returned
        "27°C, clear sky — enjoy your run" while the card directly above it
-       already read "27°C (feels 26°) · Clear sky". 27°C is the exact gap
-       case — below the 28°C "Warm" threshold, above the 10-18°C "great
-       conditions" band — so it fell through on a real device. */
+       already read "27°C (feels 26°) · Clear sky". 27°C was the exact gap
+       case — below the 28°C "Warm" tip the function had then, above the
+       10-18°C "great conditions" band — so it fell through on a real
+       device. */
     const w = makeWeather({
       temperature: 27,
       humidity: 40,
@@ -89,8 +91,8 @@ describe("getRunningTip", () => {
   it("still speaks up whenever the conditions call for it", () => {
     // The other half of the control: a helper that returned null for
     // EVERYTHING would satisfy the assertion above while silencing every
-    // real warning.
-    expect(getRunningTip(makeWeather({ temperature: 29 }))).toBeTruthy();
+    // real warning. Heat is not on this list: it is the heat line's
+    // (below).
     expect(getRunningTip(makeWeather({ temperature: 0 }))).toBeTruthy();
     expect(getRunningTip(makeWeather({ windSpeed: 35 }))).toBeTruthy();
     expect(getRunningTip(makeWeather({ weatherCode: 63 }))).toBeTruthy();
@@ -125,21 +127,6 @@ describe("getRunningTip", () => {
   it("suggests treadmill for thunderstorm", () => {
     const w = makeWeather({ weatherCode: 95 });
     expect(getRunningTip(w)).toMatch(/thunderstorm/i);
-  });
-
-  it("warns about hot and humid conditions", () => {
-    const w = makeWeather({ temperature: 32, humidity: 70 });
-    expect(getRunningTip(w)).toMatch(/hot/i);
-  });
-
-  it("gives long-run specific heat tip", () => {
-    const w = makeWeather({ temperature: 32, humidity: 70 });
-    expect(getRunningTip(w, "long")).toMatch(/carry water/i);
-  });
-
-  it("warns about warm weather (28+)", () => {
-    const w = makeWeather({ temperature: 29, humidity: 40 });
-    expect(getRunningTip(w)).toMatch(/warm/i);
   });
 
   it("warns about very windy conditions (30+)", () => {
@@ -181,5 +168,84 @@ describe("getRunningTip", () => {
       description: "Partly cloudy",
     });
     expect(getRunningTip(w)).toBeNull();
+  });
+});
+
+describe("getRunningTip leaves heat to the heat line (Pgm8 (E8))", () => {
+  /* One heat line, not two. On a hot day the heat line says to run by
+     feel (`heatLine`, heatAdjustment.ts), and below hot nothing speaks
+     about heat, so the tip never does. Its "Hot & humid", "Very hot" and
+     "Warm" tips went with that decision. */
+
+  it("says nothing about heat on the days its heat tips used to fire", () => {
+    // Both days are hot by the heat line's rule, so they get that line.
+    const humid = makeWeather({ temperature: 32, humidity: 70 }); // 168°F
+    const warm = makeWeather({ temperature: 29, humidity: 40 }); // 141°F
+    expect(heatLine(humid)).not.toBeNull();
+    expect(heatLine(warm)).not.toBeNull();
+    // Were "Very hot — hydrate well before, go easy on pace" and, on a
+    // long run, "Hot & humid — carry water, add walk breaks every 3 km".
+    expect(getRunningTip(humid)).toBeNull();
+    expect(getRunningTip(humid, "long")).toBeNull();
+    // Was "Warm — start slower than usual, stay hydrated".
+    expect(getRunningTip(warm)).toBeNull();
+  });
+
+  it("keeps its other tips on a hot day", () => {
+    const hot = { temperature: 32, humidity: 70 };
+    expect(getRunningTip(makeWeather({ ...hot, weatherCode: 63 }))).toMatch(
+      /rainy/i
+    );
+    expect(getRunningTip(makeWeather({ ...hot, weatherCode: 95 }))).toMatch(
+      /thunderstorm/i
+    );
+    expect(getRunningTip(makeWeather({ ...hot, windSpeed: 35 }))).toMatch(
+      /very windy/i
+    );
+  });
+
+  it("says nothing about heat below hot either", () => {
+    /* 30°C at 20% humidity sums to 126°F, the T+DP table's 2% band: not
+       hot, so there is no heat line. The "Warm" tip fired here (28°C and
+       up) and would now be a second rule about heat, speaking where the
+       decided one is quiet. The wind tip it used to crowd out speaks. */
+    const warmDry = makeWeather({ temperature: 30, humidity: 20 });
+    expect(heatLine(warmDry)).toBeNull();
+    expect(getRunningTip(warmDry)).toBeNull();
+    expect(getRunningTip({ ...warmDry, windSpeed: 25 })).toMatch(/^Windy/);
+  });
+
+  it("gives no heat line of its own on any day", () => {
+    /* From 6°C up, so the cold tips' "warm up" never fires here. Also
+       checks the good-conditions line never sits beside the heat line. */
+    const heatWords = /\b(hot|heat|humid|hydrat\w*|water|warm)\b/i;
+    const offenders: string[] = [];
+    for (let temperature = 6; temperature <= 45; temperature++) {
+      for (let humidity = 5; humidity <= 100; humidity += 5) {
+        for (const windSpeed of [5, 25, 35]) {
+          for (const weatherCode of [0, 3, 63, 95]) {
+            const w = makeWeather({
+              temperature,
+              humidity,
+              windSpeed,
+              weatherCode,
+            });
+            for (const activity of [undefined, "easy", "long", "intervals"]) {
+              const tip = getRunningTip(w, activity);
+              if (!tip) continue;
+              if (
+                heatWords.test(tip) ||
+                (heatLine(w) && /no adjust/i.test(tip))
+              )
+                offenders.push(
+                  `${temperature}°C ${humidity}% ${windSpeed} km/h ` +
+                    `code ${weatherCode} ${activity}: ${tip}`
+                );
+            }
+          }
+        }
+      }
+    }
+    expect(offenders.length, offenders.slice(0, 5).join("\n")).toBe(0);
   });
 });

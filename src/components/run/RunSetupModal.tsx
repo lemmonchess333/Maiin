@@ -53,7 +53,7 @@ import {
   DISTANCE_TARGET_MAX_M,
 } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
+import { heatLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
@@ -450,7 +450,7 @@ export default function RunSetupModal({
               </p>
               {(() => {
                 // Null when conditions warrant no advice — the card then
-                // shows its headline and (if it fires) the heat check, with
+                // shows its headline and (if it fires) the heat line, with
                 // no filler line restating the temperature between them.
                 const tip = getRunningTip(weather, config.activityType);
                 if (!tip) return null;
@@ -466,23 +466,14 @@ export default function RunSetupModal({
                   </motion.p>
                 );
               })()}
-              {/* B2 (heat half): the equal-effort pace equivalent for
-                  today's conditions — display + explanation only, the
-                  prescription is stated as unchanged. Quiet in cool
-                  weather (the helper returns null). */}
+              {/* Pgm8 (E8): on a hot day, one line to run by feel, with no
+                  number in it; nothing below hot. It never touches the
+                  plan's paces, and the tip above leaves heat to it. */}
               {(() => {
-                const adj = heatPaceAdjustment(weather);
-                if (!adj) return null;
+                const line = heatLine(weather);
+                if (!line) return null;
                 return (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {heatAdjustmentLine(
-                      adj,
-                      unit,
-                      config.target?.type === "pace"
-                        ? config.target.value
-                        : undefined
-                    )}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{line}</p>
                 );
               })()}
               {/* MET Norway's licence (CC BY 4.0) asks for this wherever
