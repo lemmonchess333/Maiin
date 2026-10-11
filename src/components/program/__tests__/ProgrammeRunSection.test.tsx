@@ -43,6 +43,8 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
+import { generateSchedule } from "@/lib/scheduleUtils";
+import { formatDayMonth } from "@/utils/formatters";
 import {
   APPLIED,
   type RealignOutcome,
@@ -51,6 +53,7 @@ import type {
   ProgramState,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
+import type { LayoffClass } from "@/features/program/layoffDetection";
 
 // The Run-week selector is date-pinned and its selected-day command card
 // defaults to TODAY, so a planned run only surfaces in the default card when
@@ -151,6 +154,19 @@ vi.mock("@/hooks/useRunningStats", () => ({
     loading: mockRunsLoading,
   }),
 }));
+
+// Every test starts with no claims and no recent runs. These are module
+// state, and only two describes reset them (`beforeEachReset`), so a test
+// that seeded a claim leaked it into whichever test ran next: under
+// `--sequence.shuffle --sequence.seed=23` the "Run9 ENG e" claim test ran
+// just before "marks a skipped run", whose run (the same default id) then
+// read as done.
+beforeEach(() => {
+  mockClaimMap = new Map();
+  mockRecentRuns = [];
+  mockWeeklyData = [];
+  mockRunsLoading = false;
+});
 
 // Run9 (l): the race-recent hero's "I didn't race" tap fires a sonner toast.
 // Mock it so the dismissal test runs without a mounted <Toaster>.
@@ -259,6 +275,9 @@ function commonProps() {
       })
     ),
     dismissFellBehindPrompt: vi.fn(async () => APPLIED),
+    // R23: the race plan's weeks ahead are built with today's layoff
+    // reading, as the rollover builds next week.
+    recentLayoff: "none" as LayoffClass,
   };
 }
 
@@ -1894,5 +1913,79 @@ describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", ()
       within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
     ).toBeInTheDocument();
     expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — a race plan's weeks ahead (R23)", () => {
+  /* The outline sits on the race plan's card, which a free runner never
+     has (Run9). Asserted through the SECTION, where the wiring is: the
+     card's `belowFloor` once stopped a hop short of it (above). */
+  const monday = localWeekKey(new Date());
+  const raceDate = localDateString(
+    addLocalDays(parseLocalDate(monday), 6 * 7 + 6)
+  );
+
+  function raceSection(recentLayoff: "none" | "detrained" = "none") {
+    const profile = makeProfile({
+      raceGoal: { distance: "10k", targetDate: raceDate },
+      weekSchedule: generateSchedule(3, 4),
+    } as Partial<UserProfile>);
+    const programState = makeProgramState(
+      [makeRunDay({ date: monday, weekKey: monday, dayIndex: 1 })],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: raceDate },
+          totalWeeks: 7,
+          currentWeek: 0,
+        },
+      }
+    );
+    renderSection({ ...commonProps(), profile, recentLayoff }, programState);
+    return screen.getByRole("region", { name: "Race plan" });
+  }
+
+  async function openWeeksAhead(card: HTMLElement) {
+    fireEvent.click(within(card).getByText("The weeks ahead"));
+    return within(
+      await within(card).findByRole("list", {
+        name: "The weeks ahead",
+      })
+    ).getAllByRole("listitem");
+  }
+
+  it("offers them on the race plan's card, a row a week to the race", async () => {
+    const rows = await openWeeksAhead(raceSection());
+    expect(rows).toHaveLength(6);
+    expect(rows[0]).toHaveTextContent(
+      `Week of ${formatDayMonth(addLocalDays(parseLocalDate(monday), 7))}`
+    );
+    expect(rows.at(-1)).toHaveTextContent("10K Race");
+    expect(
+      rows.some((row) => /Tempo|Intervals/.test(row.textContent ?? ""))
+    ).toBe(true);
+  });
+
+  it("builds them with today's layoff reading, as the rollover would", async () => {
+    // A returning runner's plan holds no quality sessions (Run15), and the
+    // outline says so rather than promising the ones it holds back.
+    const rows = await openWeeksAhead(raceSection("detrained"));
+    expect(rows).toHaveLength(6);
+    expect(
+      rows.some((row) => /Tempo|Intervals|Speed/.test(row.textContent ?? ""))
+    ).toBe(false);
+  });
+
+  it("are not there for a free runner", () => {
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ runMode: "freeform", raceGoal: undefined })}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(screen.getByText(/Start a run/i)).toBeInTheDocument();
+    expect(screen.queryByText("The weeks ahead")).not.toBeInTheDocument();
   });
 });

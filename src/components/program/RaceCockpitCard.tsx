@@ -16,6 +16,7 @@
  * highlight always corresponds to a phase the scheduler can emit.
  */
 
+import type { ReactNode } from "react";
 import { ChevronRight, Flag, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -50,6 +51,9 @@ interface RaceCockpitCardProps {
    *  known race space, the card offers a quiet "Race community" link.
    *  Manual goals lack the binding and render no row. */
   raceSpaceId?: string;
+  /** The plan's coming weeks (`RaceWeeksAhead`, R23), under the phase
+   *  rail: where the plan is, then what is ahead of it. */
+  weeksAhead?: ReactNode;
   onEdit: () => void;
 }
 
@@ -65,6 +69,7 @@ export default function RaceCockpitCard({
   compressed,
   belowFloor = false,
   raceSpaceId,
+  weeksAhead,
   onEdit,
 }: RaceCockpitCardProps) {
   const navigate = useNavigate();
@@ -158,6 +163,8 @@ export default function RaceCockpitCard({
           <PhaseRail activePhase={phaseLabel} />
         </div>
       )}
+
+      {weeksAhead}
 
       {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the race plan off to a
           Circle. Running non-critical action → sport-tinted (coral).
