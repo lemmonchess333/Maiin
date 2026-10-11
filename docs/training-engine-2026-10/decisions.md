@@ -326,6 +326,13 @@ design, so it goes to the owner with the final report.
   below its best.
 - **Answer: Owner.** Every option changes Lift4 (6) or owner call (1). The
   simulation goes to the owner with them.
+- **Measured (2026-10-11, `measuring-l4-l5.md`):** none of the options cuts
+  misses and drops without costing gains, so by Pgm8's rule Lift4 (6) and
+  owner call (1) stand (Pgm8's STATUS). The weekly step never bites (a
+  slot's sessions come round a week apart); a 5% drop adds misses and drops;
+  an e1RM trend cuts misses but about doubles drops and the sessions below a
+  lift's best. Oreb's waves weren't run: they need a per-lift max and logged
+  effort the model doesn't have.
 
 ### L5. Short Build muscle sessions hold few working sets, and fitted sessions run over
 
@@ -349,6 +356,16 @@ design, so it goes to the owner with the final report.
 - **Not run yet (2026-10-10).** (b) and (c) change how the time fit prices a
   session and when it re-fits; the simulator's plan variants change a plan's
   lifts, not the app's estimator, so they wait for the fit to take one.
+- **Measured (2026-10-11, `measuring-l4-l5.md`):** (c), a re-fit when a
+  lift's ramp grows, at the next rollover, removes every over-time session
+  in the five personas that had them, for about one set a week on one lift,
+  and touches no other plan. (b) mostly misses: people load their own
+  heavier weights from the first sessions, which a block's projection can't
+  foresee. **Answer: (c)**, to lock and build. Found on the way: the re-fit
+  for a new session length (`refitSessionsToTime`, then
+  `balanceWeekVolume`) gives 5 of 15 personas' new plans one set more than
+  the generator's own fit, where `balanceWeekVolume`'s comment says the two
+  agree.
 
 ### L6. Bodyweight main lifts with added load
 
@@ -890,6 +907,17 @@ against Lift4 as built on the simulator before it comes here with an answer.
   since the peak's spike and the race's are read together. R8 is built in
   lemmonchess333/Maiin#2682, still open, so this runs once that is on main,
   with the option to compare against Run17 written first (none is yet).
+- **Measured (2026-10-11, `measuring-r17.md`):** no option gives the slower
+  runner a longer long run inside 150 minutes, or reaches the new runner,
+  whose long run the new-runner build sets (12 km, whatever the peak).
+  Hansons' 25 km gains the 3:45 marathoner 1.8 minutes but runs a 6:22 /km
+  runner 2 h 35 and anyone slower than 6:00 /km past 150 minutes; 30 km more
+  so; Daniels' share shortens every long run in the app's small weeks and
+  costs every race 2–7 minutes. **Answer: Kept** (Run17). Found on the way:
+  the stepped taper takes its 75% and 60% of the ladder's peak, not of the
+  build's own longest run, so a new runner's taper long run (15 km) is
+  longer than any run in their build (12 km). A defect against R8's own
+  text, to fix once lemmonchess333/Maiin#2682 is on main.
 
 ### R18. The year-out marathon's shape
 
@@ -1276,6 +1304,12 @@ because it touches a Lift4 call or a copy decision.
   when the plan is made, is gone when that week is built. The same kind of
   defect the plan-length fix corrected elsewhere. Recommendation: count the
   plan's own weeks there too.
+- **A second level gate after the filters.** `buildLiftProgram` runs the
+  level gate again on the generator's output, after the injury and equipment
+  filters, ignoring injuries and the twice-a-week cap: a sore-back beginner
+  can get a third leg press, 38 of 12,600 injured plans. Found while
+  building the twice-a-week fix. Recommendation: one gate, before the
+  filters.
 - **The race cockpit at large text.** Its heading, the Week and Phase tiles
   and the phase rail overflow at 2× text, and the large-text capture spec
   never opens the cockpit. Recommendation: let them wrap, and add the
