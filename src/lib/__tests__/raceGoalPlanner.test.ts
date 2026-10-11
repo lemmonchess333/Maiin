@@ -182,6 +182,37 @@ describe("getRaceGoalPlannerState — a plan made mid-week", () => {
   });
 });
 
+/* Run19: a plan made after its week's last run day starts on next week's
+   runs, and the preview shows that week. */
+describe("getRaceGoalPlannerState — a plan made after the week's last run", () => {
+  const TUE_WED_SAT_RUNS = [
+    { day: 0, type: "rest" as const },
+    { day: 1, type: "lift" as const },
+    { day: 2, type: "run" as const },
+    { day: 3, type: "run" as const },
+    { day: 4, type: "lift" as const },
+    { day: 5, type: "lift" as const },
+    { day: 6, type: "run" as const },
+  ];
+  const input = (currentDate: string): RaceGoalPlannerInput => ({
+    ...base,
+    distance: "10k",
+    currentDate,
+    weeklyRunDays: 3,
+    targetDate: "2026-09-01",
+    weekSchedule: TUE_WED_SAT_RUNS,
+  });
+
+  it("previews next week's runs, as a plan made that Monday", () => {
+    const sunday = getRaceGoalPlannerState(input("2026-06-07"));
+    const monday = getRaceGoalPlannerState(input("2026-06-08"));
+    expect(sunday.firstWeekMinutes).toBeGreaterThan(0);
+    expect(sunday.firstWeekMinutes).toBe(monday.firstWeekMinutes);
+    expect(sunday.firstWeekPhase).toBe(monday.firstWeekPhase);
+    expect(sunday.recommendedRunDays).toBe(3);
+  });
+});
+
 /* Pgm7 A7: a race plan needs at least two run days a week, and a
    marathon's setup recommends three. */
 describe("raceRunDaysNote", () => {

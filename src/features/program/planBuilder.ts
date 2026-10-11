@@ -4,6 +4,7 @@ import {
   continuingRacePlan,
   continuedBlockWeeks,
   planWeekFromToday,
+  raceWeekFromToday,
 } from "./racePlanContinuation";
 /**
  * planBuilder · P0-C · spec v7.
@@ -591,33 +592,38 @@ function buildRunPlan(
         runPlan: continued,
       };
     }
-    const racePlan = generateRacePlanV2({
-      weekSchedule,
-      // New plans have no prior layoff read; settings pass the same
-      // account-scoped evidence as the live weekly generator.
-      recentLayoff: input.recentLayoff ?? "none",
-      raceGoal: input.raceGoal,
-      weeklyRunDays: input.weeklyRunDays,
-      currentDate: input.currentDate,
-      weekStart,
-      tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
-      easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
-      runningBaseline: input.runningBaseline,
-      runTimeLimits: input.runTimeLimits,
-      planTotalWeeks: continued?.totalWeeks,
-    });
+    const raceGoal = input.raceGoal;
+    // Run19: the week from today, or next week's when none of its run days
+    // is left (`raceWeekFromToday`).
+    const { plan: racePlan, runDays } = raceWeekFromToday(
+      (from) =>
+        generateRacePlanV2({
+          weekSchedule,
+          // New plans have no prior layoff read; settings pass the same
+          // account-scoped evidence as the live weekly generator.
+          recentLayoff: input.recentLayoff ?? "none",
+          raceGoal,
+          weeklyRunDays: input.weeklyRunDays,
+          currentDate: from.currentDate,
+          weekStart: from.weekStart,
+          tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
+          easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+          runningBaseline: input.runningBaseline,
+          runTimeLimits: input.runTimeLimits,
+          planTotalWeeks: continued?.totalWeeks,
+        }),
+      { currentDate: input.currentDate, weekStart },
+      input.currentDate,
+      continued
+        ? {
+            runDays: input.existingState?.runDays ?? [],
+            manualCompletions: input.existingState?.manualCompletions,
+          }
+        : undefined
+    );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
     return {
-      runDays: planWeekFromToday(
-        racePlan.weeks[0] ?? [],
-        input.currentDate,
-        continued
-          ? {
-              runDays: input.existingState?.runDays ?? [],
-              manualCompletions: input.existingState?.manualCompletions,
-            }
-          : undefined
-      ),
+      runDays,
       runPlan: {
         ...continued,
         mode: "race_prep",
