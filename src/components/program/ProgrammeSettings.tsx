@@ -263,7 +263,7 @@ function SettingsOptionCard({
 
 // Each focus card gets a distinct GLYPH for scannability, but all keep the
 // purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Running support" is lifting that
+// drives the lift split's rep ranges; "Support my running" is lifting that
 // complements runs, NOT run scheduling). So per sport-coding, purple is
 // correct; only the icon varies. Do not recolour these to coral.
 const FOCUS_OPTIONS: {
@@ -295,13 +295,13 @@ const FOCUS_OPTIONS: {
   },
   {
     id: "general",
-    label: "Stay fit",
+    label: "General fitness",
     desc: "Balanced general training",
     icon: <Heart size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "running",
-    label: "Running support",
+    label: "Support my running",
     desc: "Lifting that complements your runs",
     icon: <Footprints size={18} style={{ color: THEME.brand }} />,
   },

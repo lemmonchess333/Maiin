@@ -117,7 +117,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // same solid hexagon as Home's header mark, an ICON (3:1 non-text).
   // 2026-10-05: 19 → 18. The workout screen's "try X kg" chip went, and
   // its trend icon with it (Lift4).
-  lifting: 18, // Redesign consolidates onboarding option icons.
+  // 2026-10-08: 18 → 17. The Performance tab's "Lifting suggestions" card
+  // went, and its dumbbell icon with it (Lift4 (3)).
+  lifting: 17, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
