@@ -1563,6 +1563,7 @@ export default function ProgrammeRunSection({
                 />
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
+                  template={selectedTemplate}
                   run={selectedRun.runDay}
                   runDays={runDays}
                 />
