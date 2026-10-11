@@ -444,7 +444,10 @@ export function rollRunWeeks(
           profile.experience,
           nextLiftWeekKey,
           runs.raceBlock,
-          { raceLegTrim: profile.raceLegTrim === true }
+          {
+            raceLegTrim: profile.raceLegTrim === true,
+            primaryGoal: profile.primaryGoal,
+          }
         );
     advanced.runDays = runs.runDays;
     advanced.runPlan = runs.runPlan;
@@ -476,7 +479,9 @@ export function rollLiftWeeks(
     const current = rolling.liftWeekKey;
     if (!current || current >= todayWeekKey) break;
     const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
-    rolling = advanceWeek(rolling, profile.experience, nextKey);
+    rolling = advanceWeek(rolling, profile.experience, nextKey, undefined, {
+      primaryGoal: profile.primaryGoal,
+    });
     weeks++;
   }
   return { state: rolling, weeks };

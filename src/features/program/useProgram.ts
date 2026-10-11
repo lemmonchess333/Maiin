@@ -1469,7 +1469,10 @@ export function useProgram() {
         profile?.experience,
         localWeekKey(addLocalDays(new Date(), 7)),
         runs?.raceBlock ?? null,
-        { raceLegTrim: profile?.raceLegTrim === true }
+        {
+          raceLegTrim: profile?.raceLegTrim === true,
+          primaryGoal: profile?.primaryGoal,
+        }
       );
       if (runs) {
         advanced.runDays = runs.runDays;
