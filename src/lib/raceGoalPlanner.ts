@@ -7,7 +7,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  planWeekFromToday,
+  raceWeekFromToday,
 } from "@/features/program/racePlanContinuation";
 import type {
   ProgramState,
@@ -215,41 +215,47 @@ export function getRaceGoalPlannerState(
     weeklyRunDays,
     input.weekSchedule
   );
-  const weekStart = localWeekKey(now);
   const continued = continuingRacePlan(input.existingState?.runPlan, {
     distance,
     targetDate,
   });
-  const plan = generateRacePlanV2({
-    // Settings preview the same returning-runner guard used by the save.
-    // Calendar-only callers deliberately retain the no-history fallback.
-    recentLayoff: input.recentLayoff ?? "none",
-    weekSchedule,
-    raceGoal: { distance, targetDate },
-    weeklyRunDays,
-    currentDate,
+  // The week the save plans (Run19): from today, over a continuing plan's
+  // kept days, or next week's runs when none of this week's run days is
+  // left (`raceWeekFromToday`).
+  const {
+    plan,
+    runDays: firstWeek,
     weekStart,
-    tuning: input.tuning,
-    runningBaseline: input.runningBaseline,
-    runTimeLimits: input.runTimeLimits,
-    easyPaceSPerKm: input.easyPaceSPerKm,
-    newRunnerUntil: input.newRunnerUntil,
-    planTotalWeeks: continued?.totalWeeks,
-  });
+  } = raceWeekFromToday(
+    (from) =>
+      generateRacePlanV2({
+        // Settings preview the same returning-runner guard used by the save.
+        // Calendar-only callers deliberately retain the no-history fallback.
+        recentLayoff: input.recentLayoff ?? "none",
+        weekSchedule,
+        raceGoal: { distance, targetDate },
+        weeklyRunDays,
+        currentDate: from.currentDate,
+        weekStart: from.weekStart,
+        tuning: input.tuning,
+        runningBaseline: input.runningBaseline,
+        runTimeLimits: input.runTimeLimits,
+        easyPaceSPerKm: input.easyPaceSPerKm,
+        newRunnerUntil: input.newRunnerUntil,
+        planTotalWeeks: continued?.totalWeeks,
+      }),
+    { currentDate, weekStart: localWeekKey(now) },
+    currentDate,
+    continued
+      ? {
+          runDays: input.existingState?.runDays ?? [],
+          manualCompletions: input.existingState?.manualCompletions,
+        }
+      : undefined
+  );
   // The plan's weekly shape, before today's cut: what a week of it holds.
   const shapeWeek = plan.weeks[0] ?? [];
-  if (plan.weeks[0]) {
-    plan.weeks[0] = planWeekFromToday(
-      plan.weeks[0],
-      currentDate,
-      continued
-        ? {
-            runDays: input.existingState?.runDays ?? [],
-            manualCompletions: input.existingState?.manualCompletions,
-          }
-        : undefined
-    );
-  }
+  if (plan.weeks[0]) plan.weeks[0] = firstWeek;
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
   const status: RacePlannerStatus = plan.belowFloor
@@ -262,8 +268,8 @@ export function getRaceGoalPlannerState(
     run.date
       ? localWeekKey(parseLocalDate(run.date)) === weekStart
       : !run.weekKey || run.weekKey === weekStart;
-  // What is saved for this week (`planWeekFromToday`), and a week's shape:
-  // a plan made on a Thursday still runs three days a week.
+  // What is saved for the plan's first week (`raceWeekFromToday`), and a
+  // week's shape: a plan made on a Thursday still runs three days a week.
   const week0 = (plan.weeks[0] ?? []).filter(inThisWeek);
   const shape = shapeWeek.filter(inThisWeek);
   const recommendedRunDays = shape.length || weeklyRunDays;

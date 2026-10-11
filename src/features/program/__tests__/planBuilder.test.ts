@@ -35,6 +35,19 @@ import { roleRepsFor } from "../roleTable";
 import { exerciseRole } from "../exerciseRole";
 import { represcribeWorkouts } from "../represcribe";
 import { getExerciseById } from "@/lib/exercises";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+
+/** Lifts Monday, Thursday and Friday; runs Tuesday, Wednesday and Saturday
+ *  (day 0 is Sunday). */
+const TUE_WED_SAT_RUNS: ScheduleDay[] = [
+  { day: 0, type: "rest" },
+  { day: 1, type: "lift" },
+  { day: 2, type: "run" },
+  { day: 3, type: "run" },
+  { day: 4, type: "lift" },
+  { day: 5, type: "lift" },
+  { day: 6, type: "run" },
+];
 
 function makeInput(
   overrides: Partial<PlanBuilderInput> = {}
@@ -404,6 +417,34 @@ describe("buildPlan · a plan made mid-week plans no run before that day (Run19)
       })
     );
     expect(saved.filter((run) => run.date! < thursday)).toEqual(before);
+  });
+
+  it("starts on next week's runs when no run day is left in this one", () => {
+    // Runs on Tuesday, Wednesday and Saturday, the plan made on the Sunday
+    // after. Saved with an empty week, it left the rollover, which moves on
+    // from its runs' week, nothing to move on from, and its runs never came.
+    const sunday = "2026-05-17";
+    const nextMonday = "2026-05-18";
+    const made = (currentDate: string) =>
+      buildPlan({
+        ...raceInput(currentDate),
+        liftDays: 3,
+        weeklyRunDays: 3,
+        weekSchedule: TUE_WED_SAT_RUNS,
+      });
+    const runs = runsOf(made(sunday));
+    expect(runs.map((run) => run.date)).toEqual([
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-23",
+    ]);
+    expect(runs.every((run) => run.weekKey === nextMonday)).toBe(true);
+    // The plan a save on that Monday makes: the same runs and race block.
+    const monday = made(nextMonday).programState;
+    expect(runs.map((run) => [run.date, run.templateId])).toEqual(
+      (monday.runDays ?? []).map((run) => [run.date, run.templateId])
+    );
+    expect(made(sunday).programState.runPlan).toEqual(monday.runPlan);
   });
 
   it("plans a structured week from that day too", () => {

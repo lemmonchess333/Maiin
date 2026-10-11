@@ -4,6 +4,11 @@ import type {
   ScheduledRunDay,
 } from "./programTypes";
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 /** Availability and tuning edits do not start a new block for the same race. */
 export function continuingRacePlan(
@@ -83,6 +88,47 @@ export function planWeekFromToday(
         today
       )
     : fromToday;
+}
+
+/** Where a race plan's week is built from: the day its runs are planned
+ *  from, and the Monday of its week. */
+export interface RaceWeekStart {
+  currentDate: string;
+  weekStart: string;
+}
+
+/**
+ * A race plan's week from today (Run19), built by `generate`, the
+ * generator as the caller runs it: the plan as from `week`, its first week
+ * cut to the days from `today` over any days `kept` (`planWeekFromToday`).
+ *
+ * When no run day is left in the week (a plan made on the Sunday after a
+ * Saturday long run), the plan starts on next week's runs instead, as a
+ * plan made that Monday has them. A week saved with no runs gave the
+ * rollover, which moves a race plan on from its runs' week
+ * (`weekRolloverAnchor`), nothing to move on from, and the plan never
+ * planned a run again. The lifts are on a long first week meanwhile: the
+ * rollover moves them with the runs, from the Monday after.
+ */
+export function raceWeekFromToday<P extends { weeks: ScheduledRunDay[][] }>(
+  generate: (from: RaceWeekStart) => P,
+  week: RaceWeekStart,
+  today: string,
+  kept?: {
+    runDays: readonly ScheduledRunDay[];
+    manualCompletions?: Record<string, ManualCompletion>;
+  }
+): { plan: P; runDays: ScheduledRunDay[]; weekStart: string } {
+  const plan = generate(week);
+  const generated = plan.weeks[0] ?? [];
+  const runDays = planWeekFromToday(generated, today, kept);
+  if (runDays.length > 0 || generated.length === 0)
+    return { plan, runDays, weekStart: week.weekStart };
+  const nextWeek = localDateString(
+    addLocalDays(parseLocalDate(week.weekStart), 7)
+  );
+  const next = generate({ currentDate: nextWeek, weekStart: nextWeek });
+  return { plan: next, runDays: next.weeks[0] ?? [], weekStart: nextWeek };
 }
 
 /**
