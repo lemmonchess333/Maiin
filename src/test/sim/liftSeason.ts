@@ -88,7 +88,12 @@ import {
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
 import { EASING_BACK_WEEKS } from "@/features/program/weekPrescription";
+import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import { isLowerBodyDay } from "@/features/program/easierToday";
+import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
 import { rollLiftWeeks, rollRunWeeks } from "@/features/program/weekRollover";
+import { raceWeekNeedsBuilding } from "@/features/program/programMaintenance";
+import type { LayoffClass } from "@/features/program/layoffDetection";
 import { sequentialInstanceIds } from "@/test/instanceIds";
 import {
   BASE_VARIANT,
@@ -96,6 +101,16 @@ import {
   type LifterSetup,
   type LifterVariant,
 } from "./lifter";
+import type { RunnerVariant } from "./runner";
+import {
+  plannedRunMinutes,
+  runKmOf,
+  runTypeOf,
+  RunSide,
+  type RunHabits,
+  type RunRecord,
+} from "./runSeason";
+import { trainingBands } from "@/lib/runPaces";
 
 /** A person, as the simulator puts them through the plan. */
 export interface LiftPersona {
@@ -125,12 +140,17 @@ export interface LiftPersona {
   start?: string;
   /** Exercise ids the weekly record follows. */
   tracked: readonly string[];
+  /** How they run, for someone who does. */
+  running?: RunHabits;
+  /** They run before they lift on a day with both. */
+  runsFirst?: boolean;
 }
 
 export interface SeasonOptions {
   weeks: number;
   seed: number;
   variant?: LifterVariant;
+  runnerVariant?: RunnerVariant;
   /** Overrides the persona's start. */
   start?: string;
 }
@@ -188,6 +208,33 @@ export interface Prescription {
   sets: number;
 }
 
+/** A week of the run plan: what it set, and what Home counted. */
+export interface RunWeekPlan {
+  week: number;
+  weekStart: string;
+  /** The plan's week, phase and length. */
+  planWeek: number | null;
+  totalWeeks: number | null;
+  phase: string | null;
+  /** Each planned run as weekday:template, in date order. */
+  planned: string[];
+  /** Their dates, in the same order. */
+  plannedDates: string[];
+  /** The plan's minutes for the runner (`plannedRunMinutes`), its long
+   *  run, km, and its quality sessions (tempo, intervals). */
+  plannedMinutes: number;
+  longKm: number;
+  longMinutes: number;
+  quality: number;
+  /** Planned runs Home's card offered as today's. */
+  offered: number;
+  /** Planned runs Home counted, by a run or a mark by hand. */
+  counted: number;
+  /** The runner's state at the week's end. */
+  trueVdot: number;
+  fitnessMinutes: number;
+}
+
 export interface WeekDone {
   /** 1-based simulated week. */
   week: number;
@@ -227,7 +274,19 @@ export type Rule =
   | "not-landed"
   /** A lift's numbers changed in a way the rules sheet doesn't allow
    *  (`liftRules.ts`). */
-  | "unexplained";
+  | "unexplained"
+  /** A planned run dated before the plan was made. */
+  | "before-plan"
+  /** A planned run after race day, outside recovery. */
+  | "after-race"
+  /** Race day, and Home's card shows no run. */
+  | "race-day-card"
+  /** A planned run done on its day that Home doesn't count. */
+  | "not-counted"
+  /** Two weeks after race day the plan is still preparing for it. */
+  | "race-unresolved"
+  /** After the rollover, this week's race runs need building again. */
+  | "race-week-stale";
 
 export interface RuleFailure {
   rule: Rule;
@@ -247,6 +306,10 @@ export interface Season {
   events: string[];
   /** Every break of a rule of the app's own code. */
   failures: RuleFailure[];
+  /** Every run, in order. */
+  runs: RunRecord[];
+  /** The plan's runs for each simulated week, as Home counted them. */
+  runWeeks: RunWeekPlan[];
 }
 
 /** A failure as a line a test prints: who, which seed and model, when. */
@@ -284,6 +347,7 @@ const slotOf = (ex: ProgramExercise) => ex.instanceId ?? ex.exerciseId;
 
 const day = (date: string, n: number) =>
   localDateString(addLocalDays(parseLocalDate(date), n));
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const weekOf = (date: string) => localWeekKey(parseLocalDate(date));
 
 /** The clock at local noon on `date`. */
@@ -314,10 +378,11 @@ function rollOver(
   state: ProgramState,
   profile: UserProfile,
   todayKey: string,
-  failures: RuleFailure[]
+  failures: RuleFailure[],
+  layoff: LayoffClass
 ): ProgramState {
   for (let pass = 0; pass < 20; pass++) {
-    const run = rollRunWeeks(state, profile, todayKey, "none");
+    const run = rollRunWeeks(state, profile, todayKey, layoff);
     if (run.weeks > 0) {
       state = { ...run.state, updatedAt: Date.now() };
       continue;
@@ -528,13 +593,20 @@ export function simulateLiftSeason(
       normalizeProgramState(plan.programState),
       weekOf(start)
     );
-    const profile = {
+    let profile = {
       uid: `sim-${persona.name}`,
       onboardingComplete: true,
       ...plan.profileUpdates,
       experience: answers.experience,
       weightKg: answers.weightKg,
       gender: answers.gender,
+      // Setup's own answer (Onboarding.tsx): what they train.
+      athleteType:
+        answers.trainingActivity === "running"
+          ? "Runner"
+          : answers.trainingActivity === "both"
+            ? "Hybrid"
+            : "Lifter",
     } as unknown as UserProfile;
     const createdAtMs = Date.now();
 
@@ -552,22 +624,60 @@ export function simulateLiftSeason(
       weeks: [],
       events: [],
       failures: [],
+      runs: [],
+      runWeeks: [],
     };
     const fail = (rule: Rule, at: string, detail: string) =>
       season.failures.push({ rule, at, detail });
+    const running = persona.running;
+    const runSide = running
+      ? new RunSide(persona.name, running, options.seed, options.runnerVariant)
+      : null;
+    if (runSide) profile = runSide.settings(profile, start);
+    for (const rd of state.runDays ?? [])
+      if (rd.date && rd.date < start)
+        fail(
+          "before-plan",
+          start,
+          `${rd.date} ${rd.templateId}, in a plan made ${start}`
+        );
+    /** Days a lift session loaded the legs (`isLowerBodyDay`). */
+    const legDays: string[] = [];
+    let runsOffered = 0;
     let offered = 0;
     let done = 0;
     let opened: string | null = null;
 
+    // Weeks are the app's, Monday to Sunday: a season that starts mid-week
+    // has a short first week.
+    let week = 1;
+    let weekFrom = start;
     for (let d = 0; d < options.weeks * 7; d++) {
       const date = day(start, d);
-      const week = Math.floor(d / 7) + 1;
       const resting = persona.breaks?.includes(week) ?? false;
       atNoon(date);
 
+      // The server's morning comes whether or not the app is opened; on
+      // the first day the account is made at noon, after it.
+      if (runSide && d > 0)
+        ({ state, profile } = runSide.serverMorning(state, profile, date));
+
       if (!(resting && persona.awayFromApp)) {
         // Opening the app: the rollover, and a new week's first look.
-        state = rollOver(state, profile, weekOf(date), season.failures);
+        state = rollOver(
+          state,
+          profile,
+          weekOf(date),
+          season.failures,
+          runSide?.layoff(date) ?? "none"
+        );
+        if (runSide && raceWeekNeedsBuilding(state, profile, date))
+          fail(
+            "race-week-stale",
+            date,
+            "this week's race runs no longer match the race"
+          );
+        if (runSide) profile = runSide.deriveBenchmark(profile, date);
         if (opened === null || weekOf(opened) !== weekOf(date))
           season.failures.push(...weekStartFailures(state, date));
         opened = date;
@@ -602,13 +712,81 @@ export function simulateLiftSeason(
           today: date,
           profile,
           programState: state,
-          claimMap: new Map(),
+          claimMap: runSide?.claims(state, date) ?? new Map(),
           workouts: saved,
           createdAtMs,
           nowMs: Date.now(),
-          lifetimeRuns: 0,
+          lifetimeRuns: runSide?.saved.length ?? 0,
           lifetimeMeals: 0,
         });
+        const raceDate = state.runPlan?.raceGoal?.targetDate;
+        if (
+          runSide &&
+          profile.runMode === "race_prep" &&
+          raceDate === date &&
+          state.runPlan?.phase !== "recovery" &&
+          !card.run?.runDay
+        )
+          fail(
+            "race-day-card",
+            date,
+            `Home's card is a ${card.type} day's, with no run on race day`
+          );
+
+        // The run Home's card starts, or a free run on their own days. On
+        // race day they race, from Train when Home's card has no run.
+        const runToday = () => {
+          if (!runSide || !running) return;
+          const able = !resting && runSide.runner.today().kind !== "stopped";
+          const afterHeavyLegs = legDays.some(
+            (d) => d >= day(date, -2) && d <= date
+          );
+          const race = (state.runDays ?? []).find(
+            (rd) =>
+              rd.date === date &&
+              rd.type === "race" &&
+              getScheduledRunStatus(rd) === "planned"
+          );
+          const offeredRun =
+            card.run?.runDay &&
+            !card.run.completed &&
+            getScheduledRunStatus(card.run.runDay) === "planned"
+              ? card.run.runDay
+              : null;
+          if (offeredRun) runsOffered++;
+          const planned = race ?? offeredRun;
+          if (planned) {
+            const goes =
+              able &&
+              (planned === race || runSide.runner.chance(running.runShare));
+            if (!goes) return;
+            const result = runSide.run(state, profile, date, planned, {
+              afterHeavyLegs,
+            });
+            state = result.state;
+            season.runs.push(result.record);
+            if (planned.date === date && !result.record.counted)
+              fail(
+                "not-counted",
+                date,
+                `${result.record.templateId}: ${result.record.done.km.toFixed(1)} km at ${String(Math.round(result.record.done.pace))} s/km`
+              );
+            return;
+          }
+          const free = running.freeRuns?.find(
+            (f) => f.day === parseLocalDate(date).getDay()
+          );
+          if (free && able) {
+            const result = runSide.run(state, profile, date, null, {
+              afterHeavyLegs,
+              freeMinutes: free.minutes,
+            });
+            state = result.state;
+            season.runs.push(result.record);
+          }
+        };
+        if (persona.runsFirst) runToday();
+
         const lift = card.lift;
         if (lift && lift.status === "planned" && lift.index !== null) {
           offered++;
@@ -630,18 +808,25 @@ export function simulateLiftSeason(
             if (result.session) {
               season.sessions.push(result.session);
               done++;
+              if (
+                isLowerBodyDay(state.workouts[lift.index] ?? { exercises: [] })
+              )
+                legDays.push(date);
             }
           }
         }
+        if (!persona.runsFirst) runToday();
       }
 
+      runSide?.runner.endDay();
       lifter.endDay();
-      if (d % 7 === 6) {
+      const lastDay = d === options.weeks * 7 - 1;
+      if (parseLocalDate(date).getDay() === 0 || lastDay) {
         lifter.endWeek();
         season.failures.push(...planFailures(state, `week ${String(week)}`));
         season.weeks.push({
           week,
-          weekStart: day(start, d - 6),
+          weekStart: weekFrom,
           weekNumber: state.weekNumber,
           phase: state.currentPhase,
           offered,
@@ -655,9 +840,106 @@ export function simulateLiftSeason(
         });
         offered = 0;
         done = 0;
+        if (runSide) season.runWeeks.push(runWeek(week, weekFrom, date));
+        runsOffered = 0;
+        week++;
+        weekFrom = day(date, 1);
       }
     }
+    if (runSide) {
+      // A race two weeks gone that the plan still prepares for.
+      const goal = profile.raceGoal;
+      const last = day(start, options.weeks * 7 - 1);
+      if (
+        profile.runMode === "race_prep" &&
+        goal?.targetDate &&
+        goal.targetDate < day(last, -14) &&
+        state.runPlan?.phase !== "recovery"
+      )
+        fail(
+          "race-unresolved",
+          last,
+          `still preparing for the ${goal.distance} on ${goal.targetDate}`
+        );
+      season.events.push(...runSide.events);
+      season.events.sort();
+    }
     return season;
+
+    /** The plan's runs in a week, what Home counted, and the runner then. */
+    function runWeek(week: number, from: string, to: string): RunWeekPlan {
+      const side = runSide!;
+      const claims = side.claims(state, to);
+      const days = (state.runDays ?? [])
+        .filter((rd) => rd.date && rd.date >= from && rd.date <= to)
+        .sort((a, b) => (a.date! < b.date! ? -1 : a.date! > b.date! ? 1 : 0));
+      const plan = state.runPlan;
+      const raceDate = plan?.raceGoal?.targetDate;
+      if (raceDate && plan?.phase !== "recovery")
+        for (const rd of days)
+          if (rd.date! > raceDate)
+            fail(
+              "after-race",
+              rd.date!,
+              `${rd.templateId}, after the race on ${raceDate}`
+            );
+      const distance = plan?.raceGoal?.distance;
+      const [fast, slow] = trainingBands(side.runner.trueVdot()).easy;
+      const easyPace = (fast + slow) / 2;
+      const longs = days
+        .map((rd) => rd.userOverride || rd.templateId)
+        .filter((id) => runTypeOf(id) === "long");
+      return {
+        week,
+        weekStart: from,
+        planWeek: plan?.currentWeek ?? null,
+        totalWeeks: plan?.totalWeeks ?? null,
+        phase:
+          plan?.phase === "recovery"
+            ? "recovery"
+            : plan?.currentWeek !== undefined &&
+                plan.totalWeeks !== undefined &&
+                distance
+              ? getPhaseForWeek(
+                  plan.currentWeek,
+                  plan.totalWeeks,
+                  distance as "5k" | "10k" | "half" | "marathon"
+                )
+              : null,
+        offered: runsOffered,
+        plannedDates: days.map((rd) => rd.date!),
+        plannedMinutes: days.reduce(
+          (n, rd) =>
+            n + plannedRunMinutes(rd.userOverride || rd.templateId, easyPace),
+          0
+        ),
+        longKm: Math.max(0, ...longs.map((id) => runKmOf(id))),
+        longMinutes: Math.max(
+          0,
+          ...longs.map((id) => plannedRunMinutes(id, easyPace))
+        ),
+        quality: days.filter((rd) =>
+          ["tempo", "intervals"].includes(
+            runTypeOf(rd.userOverride || rd.templateId)
+          )
+        ).length,
+        planned: days.map(
+          (rd) =>
+            `${DAY_NAMES[parseLocalDate(rd.date!).getDay()]}:${rd.userOverride || rd.templateId}`
+        ),
+        counted: days.filter((rd) => {
+          const claim = rd.id ? claims.get(rd.id) : undefined;
+          return (
+            !!claim &&
+            (!!claim.claimedSavedRunId ||
+              claim.manualCompleted ||
+              claim.legacyCompleted)
+          );
+        }).length,
+        trueVdot: side.runner.trueVdot(),
+        fitnessMinutes: side.runner.fitnessMinutes(),
+      };
+    }
 
     /** One session, from Train's start to the saved workout. */
     function runSession(
@@ -818,11 +1100,14 @@ export function simulateLiftSeason(
 
       // Finish.
       const completionLogs = toCompletionSetLogs(setLogs);
+      // A long or hard run in the 24 hours before the start
+      // (`useHardRunBefore`) rides the finish (Lift4 (14)).
       const progression = toSessionProgression({
         completionId,
         date,
         prescription,
         setLogs: completionLogs,
+        ...(runSide?.hardRunBefore(Date.now()) ? { afterHardRun: true } : {}),
       });
       const current = before.workouts[dayIndex];
       const lands =
