@@ -1264,3 +1264,19 @@ because it touches a Lift4 call or a copy decision.
   beginner's press: 20 kg against 12.5–15 kg). 169 of 38,978 barbell lifts
   in a scan of 4,860 setups. Recommendation: the bank's next dumbbell
   variation instead.
+- **A race plan saved after its week's last run day never planned a run.**
+  Found by R23's build: Run19 let such a plan save an empty week, and the
+  rollover moves a race plan on from its runs' week, so it never moved.
+  Fixed rather than handed back, since the pass's own Run19 build caused
+  it: the plan starts on next week's runs, and a week saved empty is built
+  on load (Run19's STATUS, lemmonchess333/Maiin#2686).
+- **A compressed plan loses its last build week's tempo as the race nears.**
+  The generator's quality cut-off counts the weeks left, not the plan's
+  length, so a compressed marathon's tempo in its last build week, there
+  when the plan is made, is gone when that week is built. The same kind of
+  defect the plan-length fix corrected elsewhere. Recommendation: count the
+  plan's own weeks there too.
+- **The race cockpit at large text.** Its heading, the Week and Phase tiles
+  and the phase rail overflow at 2× text, and the large-text capture spec
+  never opens the cockpit. Recommendation: let them wrap, and add the
+  cockpit to the spec.
