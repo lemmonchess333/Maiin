@@ -147,7 +147,7 @@ w21 2026-07-27  plan week 15 progression  3/3 sessions  52–54 min
 
 w22 2026-08-03  plan week 16 progression  2/3 sessions  52–55 min
   squat           plan 62.5 × 8 × 3  1RM 78.1 logged 76.7  60×[8] 42.5×[8] 60×[8] step | 57.5×[10,10] reps
-  bench-press     plan 50 × 8 × 3  1RM 59.8 logged 61.7  50×[7,6,4] miss
+  bench-press     plan 50 × 8 × 3  1RM 59.8 logged 63.3  50×[8,6,4] miss
   deadlift        plan 87.5 × 8 × 3  1RM 105.7 logged 110.8  87.5×[8,8,6] miss
   overhead-press  plan 32.5 × 8 × 3  1RM 36.8 logged 39.0  32.5×[6,5] 25×[8] miss
   sets/days: Chest 6/2 · FrontDelts 6/2 · RearDelts 6/2 · Triceps 6/2 · Lats 6/2 · UpperBack 6/1 · LowerBack 3/1 · Biceps 8/2 · Quads 5/2 · Hamstrings 10/2 · Glutes 8/2 · Calves 2/1 · Abs 2/1

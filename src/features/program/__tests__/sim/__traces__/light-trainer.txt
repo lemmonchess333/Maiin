@@ -174,7 +174,7 @@ w24 2026-08-17  plan week 23 progression  3/4 sessions  46–53 min
 
 w25 2026-08-24  plan week 24 progression  3/4 sessions  51–53 min
   squat           plan 62.5 × 8 × 3  1RM 84.8 logged 88.7  70×[8,6,5] LOWERED
-  bench-press     plan 55 × 8 × 3  1RM 67.4 logged 66.0  55×[6,5,4] miss
+  bench-press     plan 55 × 8 × 3  1RM 67.4 logged 67.8  55×[7,5,4] miss
   deadlift        plan 95 × 8 × 3  1RM 113.7 logged 117.2  92.5×[8,6,5] LOWERED
   overhead-press  plan 40 × 8 × 3  1RM 44.1 logged 47.5  37.5×[6,4] 30×[8] miss | 40×[3] 37.5×[8,8] step
   sets/days: Chest 11/2 · FrontDelts 11/2 · SideDelts 2/1 · RearDelts 6/2 · Triceps 15/2 · Lats 6/2 · UpperBack 8/3 · LowerBack 3/1 · Biceps 10/2 · Quads 5/1 · Hamstrings 6/1 · Glutes 8/1 · Calves 2/1 · Abs 2/1

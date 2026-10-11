@@ -82,6 +82,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "hybrid-lighter-week": ["back-to-back", "spike", "volume-jump"],
   "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
   "barbell-easier-days": ["stall:overhead-press"],
+  "dumbbell-easier-days": ["stall:db-curl"],
 };
 
 const seasons = new Map<string, Season>();
