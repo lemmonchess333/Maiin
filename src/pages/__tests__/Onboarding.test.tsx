@@ -753,10 +753,36 @@ describe("new runners", () => {
     builder.mockRestore();
   });
 
-  it("starts them at a reachable weekly target", () => {
-    // One is reachable; two is what "occasional" already means, so a
-    // beginner tier that also meant two would be a label and nothing else.
-    expect(targetAfterPicking(/New to running/)).toBe(1);
+  it("starts them at two runs a week, a race plan's least (Pgm7 A7)", () => {
+    // This was one, on the reading that a beginner tier meaning two would
+    // be a label and nothing else. The owner's answer A7 settles it: a race
+    // plan needs at least two run days, and "New to running" with a race
+    // set defaults to two, not one. The tier still describes the person.
+    expect(targetAfterPicking(/New to running/)).toBe(2);
+  });
+
+  it("lets a race plan's runs per week go no lower than two", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    expect(screen.getByLabelText("Runs per week")).toHaveAttribute("min", "2");
+  });
+
+  it("recommends three runs a week for a marathon", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    expect(
+      screen.queryByText(/A marathon plan works best on three runs a week/)
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Full" }));
+    expect(
+      screen.getByText(/A marathon plan works best on three runs a week/)
+    ).toBeInTheDocument();
   });
 
   it("leaves the existing tiers where they were", () => {
