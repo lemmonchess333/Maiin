@@ -191,11 +191,16 @@ describe("applyProgression — bodyweight exercises", () => {
     expect(result.reps).toBe(4); // can't go below 4
   });
 
+  /* This pinned the legacy arm on the linear path (10 done at a target of 8
+     gave 9) while a fixed target met exactly stayed put for good. A fixed
+     target now takes the range-less ceiling too, so the linear path
+     follows the same contract as the double (bodyweightFixedTarget.test.ts). */
   it("also works for linear progression type", () => {
     const ex = makeBodyweightExercise({ progressionType: "linear", reps: 8 });
     const result = applyProgression(ex, 10, 0, false);
     expect(result.weight).toBe(0);
-    expect(result.reps).toBe(9);
+    expect(result.reps).toBe(11);
+    expect(applyProgression(ex, 8, 0, false).reps).toBe(9);
   });
 });
 
