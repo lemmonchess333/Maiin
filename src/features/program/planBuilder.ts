@@ -84,7 +84,7 @@ import {
   raceBlockWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
-import { represcribeSwapped } from "./represcribe";
+import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
   loadContextFrom,
@@ -328,8 +328,9 @@ function buildLiftProgram(input: PlanBuilderInput): {
     existing.length === expectedDayCount(input.liftDays);
   // A level change is a content edit like any other (Lift4, restoring
   // Pgm5's rule): it never rebuilds the week and never swaps an exercise.
-  // The level reaches the plan through what reads it — whether lighter
-  // weeks come and the RPE row now, the exercises a plan built later picks.
+  // It sets how the main lifts progress (below); the rest of the level
+  // reaches the plan through what reads it — whether lighter weeks come and
+  // the RPE row now, the exercises a plan built later picks.
   const preserve = sameDayCount && !!input.existingState;
 
   const base =
@@ -443,6 +444,23 @@ function buildLiftProgram(input: PlanBuilderInput): {
     : refit
       ? sessionMinutesFor(input.sessionMinutes)
       : input.existingState?.sessionMinutes;
+  // Lift4 (12): a level change sets how the main lifts progress, on the
+  // plan the person has (`represcribeMainLifts`), for the focus its
+  // sessions are set for: the plan's own, which is a block's while one
+  // runs. A focus changed in the same save with the sessions kept leaves
+  // them on the old focus; one with the sessions updated re-prescribes
+  // every lift afterwards anyway.
+  const relevel =
+    preserve &&
+    input.previousExperience !== undefined &&
+    toExperience(input.previousExperience) !== toExperience(input.experience);
+  const levelledMains = relevel
+    ? represcribeMainLifts(
+        fitted,
+        input.existingState?.primaryGoal ?? input.primaryGoal,
+        toExperience(input.experience)
+      )
+    : fitted;
   // Template-seeded onboarding takes the preserve branch above. Those rows
   // historically arrived at 0 kg and therefore never passed through
   // generateProgram's cold-start seeding. Run the idempotent seeder across
@@ -450,7 +468,7 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // With no bodyweight, a lift with no load starts from the bar (Lift4 (5));
   // the loads a plan already shows stay.
   const workouts = seedStartingLoads(
-    fitted,
+    levelledMains,
     loadCtx,
     // Must carry the SAME rep anchor generateProgram used, or this pass
     // silently undoes it: this seeder runs last and is the one that

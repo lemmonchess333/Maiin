@@ -849,6 +849,7 @@ export default function ProgrammeSettings({
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          levelChanged: experience !== saved.experience,
                           ...(sessionMinutesChanged
                             ? { sessionMinutesTo: sessionMinutes }
                             : {}),
