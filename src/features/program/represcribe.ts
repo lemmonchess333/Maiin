@@ -36,6 +36,7 @@
 
 import {
   assignDayRoles,
+  dayRoleOf,
   prescribedRepCeiling,
   undulationDeltaFor,
   repFloorFor,
@@ -100,13 +101,18 @@ export function represcribeWorkouts(
   goal: PrimaryGoal,
   experience: Experience | undefined
 ): WorkoutDay[] {
-  // Undulation is applied per DAY INDEX, so the roles have to be computed
-  // over the whole week before any slot is touched.
-  const roles = assignDayRoles(workouts.length);
+  // Undulation follows each session's own role, kept with it as the week's
+  // order carries over (`dayRoleOf`). An older plan keeps none, so its roles
+  // come from the days' positions, over the whole week before any slot is
+  // touched, and are kept from here: a block's end then finds the roles its
+  // start used, whatever the order has done since.
+  const byPosition = assignDayRoles(workouts.length);
+  const roles = workouts.map((day, i) => dayRoleOf(day, byPosition[i]));
   const undulates = usesUndulation(experience);
 
   return workouts.map((day, dayIndex) => ({
     ...day,
+    dayRole: roles[dayIndex],
     exercises: day.exercises.map((ex) => {
       // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. `prescribedRepCeiling` already returns Infinity for
@@ -358,11 +364,11 @@ export function blockConsequence(input: {
 
   // Same focus: the prescription is untouched, so the block's whole value is
   // the window and the pace. Naming the focus keeps it concrete.
-  const kept = focusLabel(currentFocus).toLowerCase();
   if (pace === "full") {
-    // "gives 8 weeks of stay fit a shape" read as a sentence with a verb
-    // phrase wedged into it; the focus goes at the end, as the thing kept.
-    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line, with the same ${kept} focus.`;
+    // The focus's name is the person's own goal ("Support my running"),
+    // so it goes in whole, as the thing kept, not lowercased into the
+    // sentence.
+    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line. Your focus stays ${focusLabel(currentFocus)}.`;
   }
   if (pace === "lighter") {
     return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;

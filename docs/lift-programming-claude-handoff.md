@@ -216,6 +216,17 @@ the reps start from the bottom again. Off-grid weights round once (schema v5),
 and the server's settings validator takes `smallPlates` while still accepting
 an older app's `microloading`.
 
+STATUS 2026-10-08 (Lift4 (6), bodyweight lifts on a fixed target): every set
+at a fixed target is a step for a bodyweight lift too, and its step is a rep,
+the axis (7) lowers it on. A fixed target climbed only on a 2-rep overshoot,
+and then by one rep, so pull-ups as a Get stronger or Support my running main
+lift stayed at their first target for a lifter doing what the plan asked. A
+fixed bodyweight target now takes the ceiling a range-less one already climbs
+to (`impliedDoubleRangeMax`): one past the weakest set, up to 20 reps, where
+the plan asks for added load. Holds keep their own step. The rules sheet says
+a bodyweight lift climbs in reps. Added load on a bodyweight lift is still not
+followed (`liftedLoad`).
+
 STATUS 2026-10-05 (Lift4 (3) and (7), build step 3, fourth release): ranges
 are shown. A lift that climbs reps before it adds weight reads as its range
 ("3 sets × 8–12 reps", "30–45s"), on Train, in the session and in
@@ -244,6 +255,18 @@ Lose fat, so a block between them changes nothing and says so. A lift an
 equipment or injury swap brings in still keeps its slot's numbers; giving it
 its own role's numbers, and fitting the plan to the session length, are the
 next parts of step 4.
+
+STATUS 2026-10-08 (Lift4 (5), (11) and (12), the day roles): each session
+keeps its heavier or lighter role. The roles were read from the days'
+positions, and the week's order carries over by moving whole days, so a
+block started after a carried-over week shifted the reps by another
+session's role (the training-engine audit measured a heavier upper day's
+bench going from 3 × 3 to 3 × 7), and the block's end didn't put back what
+its start replaced. A plan's days now keep their role (`WorkoutDay.dayRole`,
+given by `withDayRoles` when the plan is built, at every level, so a later
+level change lands on the same sessions), and both copies of
+`represcribeWorkouts` read it. A plan built before has none: its roles come
+from the positions, as before, and are kept from its first block.
 
 STATUS 2026-10-05 (Lift4 (5), build step 4, second part): plans fit the
 session length. A new plan's sessions are cut to the minutes the person has
@@ -607,6 +630,19 @@ it), so no new writer bypasses the command boundary (ADR-0011), and each
 session is tried once, so a refusal can't loop. Train's banner says why
 ("No lifting in the two days before your race, or on the day, so your legs
 are fresh for it."), and the rules sheet's race rule says so.
+
+STATUS 2026-10-08 (Lift4 (7), "after a return"): the miss counts start
+again with the first session back after two weeks or more away, however
+the person came back. "Ease back in" reset them already; "Keep my old
+weights", or closing the Welcome back sheet, left them, so one miss back
+lowered a lift 10% at once. The session's save now resets every lift's
+count, not only its own lifts' (`applySessionProgression`), when it comes
+two weeks or more (`WELCOME_BACK_DAYS`) after the plan's last session. It
+counts the plan's sessions by its lifts' records, not all lifting, since a
+miss count is the plan lift's; the save already writes the plan, so no new
+writer (ADR-0011). Sessions that keep no record (Easier today, a lighter
+week's) count as time away, which can only put a drop off, never bring one
+on.
 
 ### Contemporary evidence checkpoints
 

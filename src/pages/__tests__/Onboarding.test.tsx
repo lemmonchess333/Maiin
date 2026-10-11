@@ -345,7 +345,7 @@ describe("the legs while the runs build (Lift4 (10))", () => {
 describe("activity-relevant setup", () => {
   it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByRole("radio", { name: "Running" })).toHaveAttribute(
       "aria-checked",
@@ -563,7 +563,7 @@ describe("answers the user has not given", () => {
 describe("a race needs a date", () => {
   const reachRunningPlan = () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
@@ -690,7 +690,7 @@ describe("where the draft week is worth showing", () => {
 describe("new runners", () => {
   const reachRunStep = () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   };
@@ -786,7 +786,7 @@ describe("choices with drawings", () => {
     expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
     expect(artOf("Lose fat").kind).toBe("muscles");
     expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
-    expect(artOf("Improve running").kind).toBe("route");
+    expect(artOf("Support my running").kind).toBe("route");
   });
 
   it("draws the kit each setup means, and experience as a level", () => {
