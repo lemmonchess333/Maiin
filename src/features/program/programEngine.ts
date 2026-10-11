@@ -1998,11 +1998,14 @@ export function applyProgression(
   actualRpe?: number,
   /** How much a miss here counts: half for a leg lift within a day after a
    *  long or hard run (Lift4 (7)), one otherwise. */
-  missCounts = 1
+  missCounts = 1,
+  /** The session's local date (yyyy-MM-dd) for its history record, so the
+   *  record belongs to the day the session started (Lift3) and the engine
+   *  reads no clock. Today when absent. */
+  date: string = format(new Date(), "yyyy-MM-dd")
 ): ProgramExercise {
-  const today = format(new Date(), "yyyy-MM-dd");
   const record = {
-    date: today,
+    date,
     weight: actualWeight,
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
@@ -2318,7 +2321,9 @@ export function applySessionSets(
   read: SessionRead,
   smallPlates: boolean,
   /** How much a miss counts (`applyProgression`). */
-  missCounts = 1
+  missCounts = 1,
+  /** The session's local date for its history record (`applyProgression`). */
+  date: string = format(new Date(), "yyyy-MM-dd")
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2336,7 +2341,8 @@ export function applySessionSets(
         read.weight,
         smallPlates,
         hardestEffort(read),
-        missCounts
+        missCounts,
+        date
       ),
       reps
     );
@@ -2366,7 +2372,8 @@ export function applySessionSets(
         weight < lowering.from ? climbing : base,
         read,
         reps,
-        outcome === "step"
+        outcome === "step",
+        date
       ),
       weight,
       ...(outcome === "step" ? { lastSuccessfulWeight: read.weight } : {}),
@@ -2376,7 +2383,7 @@ export function applySessionSets(
   if (uncalibrated || outcome !== "hold") return progressed(base);
   const heavier = lifted !== null && lifted > exercise.weight + 0.01;
   return {
-    ...recorded(base, read, reps, false),
+    ...recorded(base, read, reps, false, date),
     ...(lifted === null ? {} : { weight: lifted }),
     ...(heavier && base.baseReps !== undefined ? { reps: base.baseReps } : {}),
   };
@@ -2401,7 +2408,8 @@ function recorded(
   exercise: ProgramExercise,
   read: SessionRead,
   reps: number,
-  completed: boolean
+  completed: boolean,
+  date: string
 ): ProgramExercise {
   return {
     ...exercise,
@@ -2409,7 +2417,7 @@ function recorded(
     performanceHistory: [
       ...(exercise.performanceHistory || []),
       {
-        date: format(new Date(), "yyyy-MM-dd"),
+        date,
         weight: read.weight,
         repsCompleted: reps,
         repsTarget: exercise.reps,
