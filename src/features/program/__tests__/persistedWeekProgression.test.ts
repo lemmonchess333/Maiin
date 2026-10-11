@@ -86,7 +86,7 @@ function walkSeason(args: {
       weekStart: localWeekKey(parseLocalDate(currentDate)),
       planTotalWeeks: carryBlockLength ? blockWeeks : undefined,
     });
-    // `useProgram.makeRunPlanRecord`: `totalWeeks: carry.totalWeeks ?? v2.totalWeeks`
+    // `makeRunPlanRecord` (weekRollover.ts): `totalWeeks: carry.totalWeeks ?? v2.totalWeeks`
     // — the block length is fixed at creation and carried thereafter.
     if (blockWeeks === undefined) blockWeeks = plan.totalWeeks;
 
