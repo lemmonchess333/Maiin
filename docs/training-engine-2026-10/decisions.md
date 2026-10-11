@@ -1248,3 +1248,19 @@ because it touches a Lift4 call or a copy decision.
   Remove clears a pending benchmark, and the next visit to Train derives it
   again from the same effort. True before R1 and after it. Recommendation:
   remember a removed benchmark's source run and don't derive from it again.
+- **Warm-ups on a light dumbbell isolation.** N7 gives the first loaded
+  lift for each muscle a warm-up ramp, and L15's dumbbell versions are
+  loaded where the barbell lifts under the bar had none: a 6 kg curl gets
+  two warm-up sets, which the time fit prices, so some full sessions give
+  back a lateral raise or an extra curl. Recommendation: no ramp for a
+  dumbbell isolation whose first warm-up step would be the rack's lightest
+  weight.
+- **Lowered under the bar.** The lowering after two misses has no floor at
+  the bar, so a barbell lift started at 20 kg can be lowered to 17.5 kg,
+  which a barbell can't hold. Recommendation: hold it at the bar and lower
+  the reps instead.
+- **A lift whose dumbbell version is already in its day.** L15 starts such a
+  lift at the bar, which can be heavier than the person's estimate (a 45 kg
+  beginner's press: 20 kg against 12.5–15 kg). 169 of 38,978 barbell lifts
+  in a scan of 4,860 setups. Recommendation: the bank's next dumbbell
+  variation instead.
