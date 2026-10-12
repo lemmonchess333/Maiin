@@ -1640,9 +1640,9 @@ export default function WorkoutSession({
             total={totalSetsTotal}
           />
         </div>
-        {/* Finish sits by Close, as Hevy and Strong put it (owner,
-            2026-10-12): under the set action it took a row from the list
-            on every set after the first. Offered once a working set is
+        {/* Finish sits by Close, as Hevy and Strong put it (an owner
+            call, DESIGN_GUIDE §8): under the set action it took a row
+            from the list on every set after the first. Offered once a working set is
             done and while sets remain; when none remain, the bar's own
             "Finish workout" takes over, so there is one Finish at a
             time. */}
@@ -1779,9 +1779,9 @@ export default function WorkoutSession({
         ref={contentRef}
         className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
       >
-        {/* Exercise name + set counter, at the head of the list (owner,
-            2026-10-12): fixed above it, they took about 110 px of a phone
-            from the sets for the whole session. They scroll away as the
+        {/* Exercise name + set counter, at the head of the list (an
+            owner call, DESIGN_GUIDE §8): fixed above it, they took about
+            110 px of a phone from the sets for the whole session. They scroll away as the
             sets below are reached, and an exercise change brings them
             back. DS3: the exercise's drawing beside its name, where a bare
             dumbbell icon sat. Under 16em of row (larger text on the phone)
