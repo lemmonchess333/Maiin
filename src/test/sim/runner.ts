@@ -111,6 +111,9 @@ export interface RunDone {
   quality: boolean;
   /** Minutes run above easy. */
   qualityMinutes: number;
+  /** Km run above easy: with `qualityMinutes`, the pace of a session's
+   *  work segments, which the summary judges a tempo by. */
+  qualityKm: number;
   /** Effort-minutes it added to the runner's load. */
   load: number;
   /** A target pace the runner couldn't hold. */
@@ -247,6 +250,7 @@ export class VirtualRunner {
     let load = 0;
     let quality = false;
     let qualityMinutes = 0;
+    let qualityKm = 0;
     let tooFast = false;
     for (const seg of segments) {
       const [fastest, slowest] = bands[seg.intensity];
@@ -264,7 +268,10 @@ export class VirtualRunner {
       minutes += segMinutes;
       km += segKm;
       quality ||= isQuality;
-      if (isQuality) qualityMinutes += segMinutes;
+      if (isQuality) {
+        qualityMinutes += segMinutes;
+        qualityKm += segKm;
+      }
       load +=
         segMinutes *
         (isQuality ? this.variant.qualityLoadFactor : 1) *
@@ -281,6 +288,7 @@ export class VirtualRunner {
       pace: km > 0 ? (minutes * 60) / km : 0,
       quality,
       qualityMinutes,
+      qualityKm,
       load,
       tooFast,
       injury,

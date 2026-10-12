@@ -5,7 +5,8 @@
  *   - execution CLONE: identity + order preserved, nothing dropped,
  *     input day never mutated, deterministic
  *   - every exercise loses one set (primary floor 2, accessory floor 1)
- *   - non-zero loads come down to 85%, to the nearest 2.5 kg; zero
+ *   - non-zero loads come down to 85%, to the nearest weight the lift's
+ *     equipment comes in, a barbell's never under the bar; zero
  *     (bodyweight/uncalibrated) stays zero
  *   - recommendation: only a hard run yesterday before a session that
  *     loads the same legs (Lift4 (3)), ONE factual reason, no readiness
@@ -15,7 +16,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildEasierSession,
-  deloadWeight,
+  easierWeight,
   easierTodayRecommendation,
   isLowerBodyDay,
   summarizeEasier,
@@ -119,10 +120,50 @@ describe("buildEasierSession", () => {
     expect(plan.exercises[1].weight).toBe(0);
   });
 
-  it("deloadWeight takes 85% to the nearest 2.5 kg and leaves 0 alone", () => {
-    expect([0, 60, 80, 100, 140].map(deloadWeight)).toEqual([
-      0, 50, 67.5, 85, 120,
+  it("takes 85% to the nearest weight on a stack and leaves 0 alone", () => {
+    expect(
+      [0, 60, 80, 100, 140].map((weight) =>
+        easierWeight({ exerciseId: "chest-press-machine", weight }, false)
+      )
+    ).toEqual([0, 50, 67.5, 85, 120]);
+    // 63.75 kg is halfway between steps: an easier session takes the
+    // lighter one, as every grid does.
+    expect(
+      easierWeight({ exerciseId: "chest-press-machine", weight: 75 }, false)
+    ).toBe(62.5);
+  });
+
+  it("sets out weights the lift's own equipment comes in", () => {
+    const plan = buildEasierSession(
+      day([
+        ex("DB Bench", 2, 8, { exerciseId: "db-bench" }), // 6.8 → 7, not 7.5
+        ex("DB Curl", 2, 3, { exerciseId: "db-curl", isAccessory: true }), // 2.55 → 3, not 2.5
+        ex("Swing", 2, 16, { exerciseId: "kettlebell-swing" }), // 13.6 → 14, not 12.5
+      ])
+    );
+    expect(plan.exercises.map((e) => e.weight)).toEqual([7, 3, 14]);
+  });
+
+  it("never takes a barbell lift under the bar, unless the plan's weight is", () => {
+    const plan = buildEasierSession(
+      day([
+        ex("Bench Press", 3, 20, { exerciseId: "bench-press" }), // 17 → 20
+        ex("Row", 3, 22.5, { exerciseId: "barbell-row" }), // 19.1 → 20
+        ex("Press", 3, 15, { exerciseId: "overhead-press" }), // stays 15
+      ])
+    );
+    expect(plan.exercises.map((e) => e.weight)).toEqual([20, 20, 15]);
+  });
+
+  it("goes down in small plates' steps for someone who has them", () => {
+    const bench = day([
+      ex("Bench Press", 3, 45, { exerciseId: "bench-press" }),
     ]);
+    // 38.25 kg: 37.5 on plain plates, 38.75 with 1.25 kg ones.
+    expect(buildEasierSession(bench).exercises[0].weight).toBe(37.5);
+    expect(
+      buildEasierSession(bench, {}, { smallPlates: true }).exercises[0].weight
+    ).toBe(38.75);
   });
 
   it("summarizes factually", () => {
