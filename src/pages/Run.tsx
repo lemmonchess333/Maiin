@@ -1,5 +1,8 @@
 import { localDateString } from "@/lib/dateHelpers";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import {
   useState,
   useEffect,
@@ -82,7 +85,7 @@ import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
-import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
   requiresManualDistance,
@@ -96,6 +99,7 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
@@ -458,6 +462,12 @@ export default function Run() {
   );
   // The bar's pace: none until the run has one to judge (Run20).
   const barPace = runConfig ? livePaceTarget(runConfig) : null;
+  // A run-walk session (Run20 (5)) is running its steps. A run type picked
+  // on a run-walk day leaves the steps playing, so this reads the template
+  // as the saved run will, the plan's when none was started from.
+  const runWalkSession =
+    !!runConfig?.segments?.length &&
+    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -651,6 +661,13 @@ export default function Run() {
     if (!id) return false;
     const day = programState?.runDays?.find((d) => d.id === id);
     return day ? isScheduledRunTerminal(getScheduledRunStatus(day)) : false;
+  }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Whether the pinned run's week holds a tempo or intervals session, for
+  // "Why this run" (an easy day's reason names them only then).
+  const launchWeekHasQuality = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return weekHoldsQuality(programState?.runDays, day?.weekKey);
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
@@ -878,8 +895,12 @@ export default function Run() {
        `calculatePace(gps.distance, timer.elapsed)` — the whole-run average
        — and then announced it as that kilometre's pace. Same mistake the
        pace alert below already documents, on the other cue. */
-    audioCues.checkDistanceCue(gps.distance, timer.elapsed);
-    audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    // Run20 (5): not on a run-walk, whose pace is an average over its runs
+    // and its walks, and whose every step speaks its own line.
+    if (!runWalkSession) {
+      audioCues.checkDistanceCue(gps.distance, timer.elapsed);
+      audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    }
 
     // Pace zone alerts for tempo/interval runs.
     //
@@ -927,6 +948,7 @@ export default function Run() {
     audioCues,
     runConfig,
     judgingPace,
+    runWalkSession,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1320,6 +1342,7 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
+                  weekHasQuality: launchWeekHasQuality,
                 }).purpose
               }
               prefill={planDecision.prefill}

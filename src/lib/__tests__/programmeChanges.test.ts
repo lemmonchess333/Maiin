@@ -42,6 +42,21 @@ describe("programmePreservationNote (D5 — Pgm5 made visible)", () => {
     ).toMatch(/about 75 minutes or more/);
   });
 
+  it("says the main lifts change when the level does (Lift4 (12))", () => {
+    const note = programmePreservationNote({
+      liftDaysChanged: false,
+      weekNumber: 4,
+      levelChanged: true,
+    });
+    expect(note).toMatch(
+      /Your main lifts take the targets for your new level\./
+    );
+    expect(note).toMatch(/keep your current workouts/);
+    expect(
+      programmePreservationNote({ liftDaysChanged: false, weekNumber: 4 })
+    ).not.toMatch(/main lifts/);
+  });
+
   it("falls back to 'Your current week' when weekNumber is missing/zero", () => {
     expect(programmePreservationNote({ liftDaysChanged: false })).toMatch(
       /Your current week/

@@ -59,7 +59,7 @@ import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import { getAdherenceLabel } from "../lib/runPlanMetadata";
+import { getAdherenceLabel, runTemplateIdOf } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
 import { pinnedWorkPace } from "../lib/runSegments";
@@ -533,6 +533,7 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
@@ -565,6 +566,7 @@ export default function RunSummary() {
       activityType: state.runConfig?.activityType ?? "freerun",
       isInvalid: false,
       savedAnyway: false,
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 
@@ -1201,8 +1203,9 @@ export default function RunSummary() {
               })}
             </p>
             {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). */}
-            {paceVerdict && (
+                calm register (never shames a slow day). It speaks only
+                when the run didn't match its type (Run21 (6)). */}
+            {paceVerdict?.speaks && (
               <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
               </p>

@@ -174,8 +174,8 @@ async function main() {
   // wall-clock times so the diary timeline orders like a real day.
   //
   // Two of today's meals carry a `photoUrl` so the diary timeline's
-  // photo cards ("photos big, text compact") show up in design-review
-  // captures. Production photoUrl is a Storage download URL (see
+  // photo thumbnails (Pol1), and the slot tiles that line the other rows
+  // up with them, show up in design-review captures. Production photoUrl is a Storage download URL (see
   // src/lib/foodPhotoStore.ts); the emulator set here has no Storage,
   // so the seed uses a small inline-SVG plate illustration — clearly a
   // placeholder, but exercises the exact same render path.

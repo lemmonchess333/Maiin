@@ -30,8 +30,20 @@ import { localDateString } from "@/lib/dateHelpers";
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
+  // The weight sheet keeps the day it opened on, and these tests read the
+  // log back by today's date when they finish, so a test that ran across
+  // midnight looked for the next day's log and found none (unit-locale,
+  // a run started at 23:59:15). Each test runs at noon of today instead:
+  // only Date is faked, and today is whatever day the run's clock says.
+  const noon = new Date();
+  noon.setHours(12, 0, 0, 0);
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(noon);
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 describe("everyday entry sheets", () => {
   it("keeps precise kilograms when the pound display is untouched", async () => {
     const close = vi.fn();

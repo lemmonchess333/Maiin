@@ -2,7 +2,9 @@ import { Activity, TrendingDown, TrendingUp } from "lucide-react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { Skeleton } from "@/components/LoadingSkeleton";
+import { PerformanceCardSkeleton } from "@/components/LoadingSkeleton";
+import ArrivalFade from "@/components/ui/ArrivalFade";
+import { useArrivedAfterLoading } from "@/hooks/useArrivedAfterLoading";
 import Sparkline from "@/components/analytics/Sparkline";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import {
@@ -45,6 +47,7 @@ export default function PerformanceOverviewCard({
 }) {
   const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
     usePerformanceWeeks(WEEKS_SHOWN);
+  const arrival = useArrivedAfterLoading(loading);
 
   const details = (
     <button
@@ -59,14 +62,15 @@ export default function PerformanceOverviewCard({
     </button>
   );
 
+  /* While the week loads, the heading is already the loaded one, Details
+     and all, and the card holds the loaded card's shape (Pol1), so the
+     score arriving moves nothing under it: a shorter placeholder without
+     Details dropped the range pills and the rest about 70 px. */
   if (loading) {
     return (
       <section aria-label="Performance" className="space-y-2">
-        <SectionHeading>Performance</SectionHeading>
-        <Card className="space-y-3">
-          <Skeleton className="h-12 w-20" />
-          <Skeleton className="h-10 w-full" />
-        </Card>
+        <SectionHeading action={details}>Performance</SectionHeading>
+        <PerformanceCardSkeleton />
       </section>
     );
   }
@@ -76,20 +80,22 @@ export default function PerformanceOverviewCard({
     return (
       <section aria-label="Performance" className="space-y-2">
         <SectionHeading>Performance</SectionHeading>
-        <Card padded={false}>
-          <EmptyState
-            compact
-            icon={Activity}
-            accent={THEME.brand}
-            headline={copy.headline}
-            sub={copy.sub}
-            action={
-              copy.showAction
-                ? { label: "Start a workout", href: "/program" }
-                : undefined
-            }
-          />
-        </Card>
+        <ArrivalFade {...arrival}>
+          <Card padded={false}>
+            <EmptyState
+              compact
+              icon={Activity}
+              accent={THEME.brand}
+              headline={copy.headline}
+              sub={copy.sub}
+              action={
+                copy.showAction
+                  ? { label: "Start a workout", href: "/program" }
+                  : undefined
+              }
+            />
+          </Card>
+        </ArrivalFade>
       </section>
     );
   }
@@ -127,66 +133,68 @@ export default function PerformanceOverviewCard({
   return (
     <section aria-label="Performance" className="space-y-2">
       <SectionHeading action={details}>Performance</SectionHeading>
-      <Card className="space-y-3">
-        {/* The words keep at least 9em and go under the score when they
+      <ArrivalFade {...arrival}>
+        <Card className="space-y-3">
+          {/* The words keep at least 9em and go under the score when they
             cannot, rather than one word to a line at larger text. */}
-        <div className="flex flex-wrap items-start gap-3">
-          <p className="text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
-            <span className="sr-only">Performance Index </span>
-            {pi}
-          </p>
-          <div className="min-w-[min(100%,9em)] flex-1 space-y-1 pt-0.5">
-            {showDelta && (
-              <span
-                className={
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                  (delta! > 0
-                    ? "bg-success/10 text-success-strong"
-                    : "bg-running/10 text-running-strong")
-                }
-              >
-                {delta! > 0 ? (
-                  <TrendingUp className="size-3" aria-hidden="true" />
-                ) : (
-                  <TrendingDown className="size-3" aria-hidden="true" />
-                )}
-                <span aria-hidden="true">
-                  {delta! > 0 ? "+" : ""}
-                  {delta}
-                </span>
-                <span className="sr-only">
-                  {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on last week`}
-                </span>
-              </span>
-            )}
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold" style={{ color: textHue }}>
-                {verb.label}
-              </span>
-              {". "}
-              {line}
+          <div className="flex flex-wrap items-start gap-3">
+            <p className="text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+              <span className="sr-only">Performance Index </span>
+              {pi}
             </p>
-          </div>
-        </div>
-        {series.length >= 2 && (
-          <div>
-            <Sparkline
-              values={series}
-              color={hue}
-              width={300}
-              height={44}
-              fluid
-              endDot
-            />
-            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-              <span>{formatDayMonth(firstDate)}</span>
-              <span>
-                {lastIsThisWeek ? "This week" : formatDayMonth(lastDate)}
-              </span>
+            <div className="min-w-[min(100%,9em)] flex-1 space-y-1 pt-0.5">
+              {showDelta && (
+                <span
+                  className={
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
+                    (delta! > 0
+                      ? "bg-success/10 text-success-strong"
+                      : "bg-running/10 text-running-strong")
+                  }
+                >
+                  {delta! > 0 ? (
+                    <TrendingUp className="size-3" aria-hidden="true" />
+                  ) : (
+                    <TrendingDown className="size-3" aria-hidden="true" />
+                  )}
+                  <span aria-hidden="true">
+                    {delta! > 0 ? "+" : ""}
+                    {delta}
+                  </span>
+                  <span className="sr-only">
+                    {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on last week`}
+                  </span>
+                </span>
+              )}
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold" style={{ color: textHue }}>
+                  {verb.label}
+                </span>
+                {". "}
+                {line}
+              </p>
             </div>
           </div>
-        )}
-      </Card>
+          {series.length >= 2 && (
+            <div>
+              <Sparkline
+                values={series}
+                color={hue}
+                width={300}
+                height={44}
+                fluid
+                endDot
+              />
+              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                <span>{formatDayMonth(firstDate)}</span>
+                <span>
+                  {lastIsThisWeek ? "This week" : formatDayMonth(lastDate)}
+                </span>
+              </div>
+            </div>
+          )}
+        </Card>
+      </ArrivalFade>
     </section>
   );
 }
