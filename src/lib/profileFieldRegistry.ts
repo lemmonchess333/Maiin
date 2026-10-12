@@ -161,6 +161,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // in createNotification.
   { field: "notificationPreferences", sanitized: false },
   { field: "onboardingComplete", sanitized: false },
+  // Stamped by `completeOnboarding` alone: the day setup finished, which a
+  // new runner's first weeks count from.
+  { field: "onboardingCompletedAt", sanitized: false, serverOnly: true },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },

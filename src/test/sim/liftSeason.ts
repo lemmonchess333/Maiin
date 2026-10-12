@@ -55,7 +55,14 @@ import {
 } from "@/lib/workoutCompletion";
 import type { WorkoutExercise } from "@/lib/savedWorkouts";
 import { estimateSessionMinutes } from "@/features/program/expressSession";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import {
+  lastSetsByExercise,
+  lastSetsBySlot,
+} from "@/features/program/lastSets";
+import {
+  storeSessionProgression,
+  type SavedProgrammeCompletion,
+} from "@/lib/workoutCompletion";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import {
   automaticStepUp,
@@ -87,7 +94,10 @@ import {
   buildInitialSetLogs,
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
-import { EASING_BACK_WEEKS } from "@/features/program/weekPrescription";
+import {
+  EASING_BACK_WEEKS,
+  lighterWeeksScheduled,
+} from "@/features/program/weekPrescription";
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 import { isLowerBodyDay } from "@/features/program/easierToday";
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
@@ -451,14 +461,19 @@ const isBarbell = (exerciseId: string) =>
   getExerciseById(exerciseId)?.equipment === "Barbell";
 
 /** The week number after `weeks` rolled weeks, the first of them trained
- *  or not: an untrained week holds it, and it goes round after 52. */
+ *  or not: an untrained week holds it, and it goes round after 52. A
+ *  lighter week the person took, trained, ends its four-week cycle (Lift4
+ *  (9), Pgm7 A4): the next week starts the next cycle, so the calendar's
+ *  next lighter week comes four trained weeks later. */
 function expectedWeekNumber(
   from: number,
   trained: boolean,
-  weeks: number
+  weeks: number,
+  tookLighterWeek = false
 ): number {
   if (weeks === 0 || !trained) return from;
-  return from >= 52 ? 1 : from + 1;
+  const next = tookLighterWeek ? Math.ceil(from / 4) * 4 + 1 : from + 1;
+  return next > 52 ? 1 : next;
 }
 
 /** The rollover as the app runs it each time it opens: the run-side effect,
@@ -480,10 +495,17 @@ function rollOver(
     const lift = rollLiftWeeks(state, profile, todayKey);
     if (lift.weeks > 0) {
       const trained = state.workouts.some((d) => d.completed);
+      // A lighter week taken from Train: the command's snapshot of this
+      // week, where the calendar brings lighter weeks.
+      const tookLighterWeek =
+        state.currentPhase === "deload" &&
+        state.deloadSnapshot?.weekNumber === state.weekNumber &&
+        lighterWeeksScheduled(profile.experience, state.workouts.length);
       const expected = expectedWeekNumber(
         state.weekNumber,
         trained,
-        lift.weeks
+        lift.weeks,
+        tookLighterWeek
       );
       if (!state.runPlan && lift.state.weekNumber !== expected)
         failures.push({
@@ -755,13 +777,23 @@ export function simulateLiftSeason(
     );
     const varyPlan = options.planVariant?.start();
     if (varyPlan) state = varyPlan(state, start);
+    // The day the account began and setup finished, as the server stamps
+    // them (`createdAt`, and `completeOnboarding`'s `onboardingCompletedAt`):
+    // a new runner's first weeks count from it (`profileNewRunnerUntil`).
+    const createdAtMs = Date.now();
+    const stamp = { toMillis: () => createdAtMs };
     let profile = {
       uid: `sim-${persona.name}`,
       onboardingComplete: true,
+      createdAt: stamp,
+      onboardingCompletedAt: stamp,
       ...plan.profileUpdates,
       experience: answers.experience,
       weightKg: answers.weightKg,
       gender: answers.gender,
+      // Setup saves it with the plan (Onboarding.tsx): a new runner's first
+      // weeks read it when a plan is rebuilt (`profileNewRunnerUntil`).
+      runFrequency: answers.runFrequency,
       // Setup's own answer (Onboarding.tsx): what they train.
       athleteType:
         answers.trainingActivity === "running"
@@ -770,11 +802,14 @@ export function simulateLiftSeason(
             ? "Hybrid"
             : "Lifter",
     } as unknown as UserProfile;
-    const createdAtMs = Date.now();
 
     const lifter = new VirtualLifter(persona.lifter, options.seed, variant);
-    const saved: { id: string; date: string; exercises: WorkoutExercise[] }[] =
-      [];
+    const saved: {
+      id: string;
+      date: string;
+      exercises: WorkoutExercise[];
+      programmeCompletion?: SavedProgrammeCompletion;
+    }[] = [];
     const met = new Set<string>();
     const handledReturns = new Set<string>();
     const season: Season = {
@@ -1415,14 +1450,20 @@ export function simulateLiftSeason(
           `${stored.dayName}: ${String(minutes)} minutes of ${String(season.sessionMinutes)}`
         );
       // The workout screen's rows: the plan's, then where each set started
-      // last time (WorkoutSession, written out: it is inline there).
-      const last = lastSetsByExercise(saved);
+      // last time in that lift's slot (WorkoutSession, written out: it is
+      // inline there; Train passes the plan's lifts, so it reads
+      // `lastSetsBySlot`).
+      const lastOf = lastSetsBySlot(
+        saved,
+        before.workouts.flatMap((d) => d.exercises)
+      );
       const rows = buildInitialSetLogs(prescription.exercises).map(
         (exRows, i) => {
           const ex = prescription.exercises[i];
-          const prior = last
-            .get(ex.exerciseId)
-            ?.map((s) => ({ weight: s.weightKg, reps: s.reps }));
+          const prior = lastOf(ex)?.map((s) => ({
+            weight: s.weightKg,
+            reps: s.reps,
+          }));
           return startingSetRows(exRows, ex, prior);
         }
       );
@@ -1626,6 +1667,24 @@ export function simulateLiftSeason(
         id: workoutId,
         date,
         exercises: liftWorkoutExercises(prescription.exercises, completionLogs),
+        // The completion the save records (`saveProgrammeCompletion`): the
+        // slot each lift filled, which `lastSetsBySlot` reads.
+        ...(progression
+          ? {
+              programmeCompletion: {
+                context: {
+                  ...context,
+                  progression: storeSessionProgression(progression),
+                },
+                policy: {
+                  goal: before.goal,
+                  settings: before.settings,
+                  trainingBlock: before.trainingBlock,
+                },
+                committedExercises: [],
+              } as SavedProgrammeCompletion,
+            }
+          : {}),
       });
       const was = new Map(stored.exercises.map((ex) => [slotOf(ex), ex]));
       const next = new Map(

@@ -69,7 +69,7 @@ export interface Meal {
    *  written by the pre-Food9 background upload. NOTHING WRITES THIS ANY
    *  MORE: captures now live on the device (`src/lib/foodPhotoStore.ts`)
    *  and no photo field is persisted at all. It stays parsed so docs
-   *  written before the swap keep rendering their photo card, and it
+   *  written before the swap keep rendering their photo, and it
    *  drains on its own as those meals fall out of the diary's 90-day
    *  tap-back window. Do not add new writers.
    *

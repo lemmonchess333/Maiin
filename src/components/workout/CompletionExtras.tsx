@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Toggle } from "@/components/ui/Toggle";
 import { useStreakReminder } from "@/hooks/RemindersProvider";
-import { useStreaks } from "@/features/streaks/useStreaks";
-import { BadgeEarnedContent } from "@/features/streaks/BadgeEarnedModal";
 import { toast } from "@/lib/toast";
+import SessionBadge from "@/components/workout/SessionBadge";
 import SessionShareRow from "@/components/workout/SessionShareRow";
 import type { SessionShareAction } from "@/lib/sessionPost";
 
@@ -11,12 +10,15 @@ import type { SessionShareAction } from "@/lib/sessionPost";
  *  asks inline, once, and after that posts without one (SessionShareRow). */
 export default function CompletionExtras({
   share,
+  badge = true,
 }: {
   share?: SessionShareAction;
+  /** Show the session's badge here, first. The workout's finish screen
+   *  shows it with its new bests instead (Pol1). */
+  badge?: boolean;
 }) {
   const { prefs, loading, updatePrefs, requestPermission } =
     useStreakReminder();
-  const { newBadge, dismissNewBadge } = useStreaks();
   const [pending, setPending] = useState(false);
   const changeReminder = async () => {
     if (pending) return;
@@ -32,14 +34,7 @@ export default function CompletionExtras({
   };
   return (
     <div className="space-y-4">
-      {newBadge && (
-        <BadgeEarnedContent
-          key={newBadge.id}
-          badge={newBadge}
-          onDismiss={dismissNewBadge}
-          inline
-        />
-      )}
+      {badge && <SessionBadge />}
       {share && (
         // Keyed by session: a different session starts from its own state.
         <SessionShareRow

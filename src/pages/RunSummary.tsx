@@ -59,9 +59,11 @@ import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import { getAdherenceLabel } from "../lib/runPlanMetadata";
+import { getAdherenceLabel, runTemplateIdOf } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
-import { plannedRunVerdict } from "../lib/plannedRunVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
+import { pinnedWorkPace } from "../lib/runSegments";
+import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -348,6 +350,9 @@ interface RunData {
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
+  /** The time and distance in the session's work segments
+   *  (`useSessionPlayer`), null for a run with none. */
+  workPortion?: WorkPortion | null;
 }
 
 export default function RunSummary() {
@@ -528,6 +533,7 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
@@ -560,6 +566,7 @@ export default function RunSummary() {
       activityType: state.runConfig?.activityType ?? "freerun",
       isInvalid: false,
       savedAnyway: false,
+      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 
@@ -776,6 +783,8 @@ export default function RunSummary() {
   const paceVerdict = plannedRunVerdict({
     planMetadata: runConfig?.planMetadata,
     avgPaceSeconds,
+    workPaceSeconds: workPaceSeconds(state.workPortion),
+    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
     distance,
     runFitness: profile?.runFitness,
     unit,
@@ -962,6 +971,7 @@ export default function RunSummary() {
           isInvalid,
           invalidReason: invalidReason ?? null,
           routeQuality: state.routeQuality ?? null,
+          workPortion: state.workPortion ?? null,
           shoeId: effectiveShoeId,
           bestEfforts,
         },

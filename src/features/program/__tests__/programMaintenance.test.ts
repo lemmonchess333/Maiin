@@ -82,6 +82,30 @@ describe("raceWeekNeedsBuilding", () => {
     expect(raceWeekNeedsBuilding({}, profile(), TODAY)).toBe(true);
   });
 
+  it("builds a race plan whose week holds no runs", () => {
+    // Saved after its week's last run day, the week was empty, and the
+    // rollover, which moves on from its runs' week, never moved it.
+    expect(raceWeekNeedsBuilding({ runDays: [] }, profile(), TODAY)).toBe(true);
+  });
+
+  it("leaves an empty week in a recovery phase alone, past its end date too", () => {
+    // The server ends a recovery phase; a rebuild here would drop it.
+    expect(
+      raceWeekNeedsBuilding(
+        {
+          runDays: [],
+          runPlan: {
+            mode: "race_prep",
+            phase: "recovery",
+            recoveryEndDate: "2026-09-28",
+          } as ProgramState["runPlan"],
+        },
+        profile(),
+        TODAY
+      )
+    ).toBe(false);
+  });
+
   it("rebuilds this week when its runs no longer match the race", () => {
     expect(raceWeekNeedsBuilding(raceThisWeek, profile(), TODAY)).toBe(true);
   });

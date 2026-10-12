@@ -22,9 +22,10 @@ import { createRequire } from "node:module";
  */
 /* eslint-disable @typescript-eslint/no-explicit-any -- firebase mock surface needs any casts */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import { toCompletionSetLogs } from "../warmupRamp";
 import {
   localWeekKey,
@@ -170,6 +171,8 @@ type MockProfile = {
   primaryGoal?: string;
   program?: { goal?: string };
   raceLegTrim?: boolean;
+  runFrequency?: string;
+  onboardingCompletedAt?: { toMillis: () => number };
 };
 
 let mockProfile: MockProfile | null = null;
@@ -304,6 +307,19 @@ function raceProfile(
     raceGoal: { distance: "10k", targetDate },
     ...overrides,
   };
+}
+
+/**
+ * A race half a year out, for the tests that build a race plan more than
+ * once. Each build runs through to the race, and each week a rollover moves
+ * builds it twice, once to decide and again in the transaction
+ * (`useProgram`'s run rollover), so a race in 2099, some 3,800 weeks of
+ * plan, took a two-week roll past the 5 s test timeout on a loaded CI
+ * runner, and a regeneration's tests to 1.5 s on an idle one. From the
+ * clock, so it is half a year out on every CI clock.
+ */
+function raceHalfAYearOut(): string {
+  return localDateString(addLocalDays(new Date(), 26 * 7));
 }
 
 // V2 runDays carry id / date / weekKey / status. Assert all four
@@ -601,7 +617,8 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Run9: structured retired, so the override-threading contract is now
     // exercised via a race plan (the surviving runDays-generating mode). The
     // staleness concern is mode-agnostic.
-    mockProfile = raceProfile("2099-09-15", { weekSchedule: staleSchedule });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weekSchedule: staleSchedule });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -616,7 +633,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runDays: [],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
 
@@ -651,7 +668,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // load-time wipe therefore never actually removed `runPlan`, and
     // regenerate still saw `mode: "structured"`. Under a fake that honours
     // replace-vs-merge the wipe lands, and the assertion had no subject.
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -711,7 +728,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       createdAt: 1,
       schemaVersion: 1 as const,
     };
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -744,7 +761,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
 
   // The other direction, so the carry can't be "always write something".
   it("regenerateProgram writes no block when there was none", async () => {
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -844,14 +861,16 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
 // ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
 
-describe("Run9 phase-3 — realign carries completions across regen", () => {
+describe("Run9 phase-3 — realign keeps completions across regen", () => {
   // The realign writer (Slice DE; formerly compress) regenerates the current
-  // week (new ids per day). The carry-aware regenerateRacePlan must persist a
-  // re-keyed manualCompletions map, never drop the user's record. The
-  // generator's exact output dates are clock-dependent, so this integration
-  // test pins the WIRING invariant (carry path runs → persists a map →
-  // preserves data); the deterministic re-key / drop / status-restamp logic is
-  // pinned in src/lib/__tests__/runCompletionCarry.test.ts.
+  // week (new ids per day). It must persist the manualCompletions map and
+  // never drop the user's record. Since Run19 (R21) it keeps the week's own
+  // days before today with their ids, as the save does
+  // (`planWeekFromToday`), so their completions stay keyed to them; the
+  // by-date re-keying it used before is pinned in
+  // src/lib/__tests__/runCompletionCarry.test.ts. The generator's exact
+  // output dates are clock-dependent, so this integration test pins the
+  // WIRING invariant (a map is persisted and keeps its data).
   it("persists a manualCompletions map and never drops an existing completion", async () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
     mockProfile = raceProfile(targetDate);
@@ -926,16 +945,269 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
     // asserted here.)
     expect(lastSave.runPlan?.totalWeeks).toBe(12);
     expect(lastSave.runPlan?.currentWeek).toBeLessThan(12);
-    // A manualCompletions map is persisted (pre-fix the writer kept the stale
-    // map via spread but never re-keyed; now the carry path owns it).
+    // A manualCompletions map is persisted.
     expect(lastSave.manualCompletions).toBeDefined();
     // The legacy-orphan completion is never silently dropped.
     expect(lastSave.manualCompletions!["legacy_orphan_key"]).toBeDefined();
-    // The seeded completion's VALUE survives somewhere in the map (under its
-    // original id if today's regen keeps that date, else dropped only if the
-    // date truly left the plan — but the orphan above guarantees the carry ran).
+    // The seeded completions' values survive in the map.
     const values = Object.values(lastSave.manualCompletions!);
     expect(values).toContainEqual({ completedAt: 1_699_000_000_000 });
+  });
+});
+
+describe("Run19 — a race week built partway through plans no run before today (R21)", () => {
+  // This week's Saturday, from the clock: a week built then has days behind
+  // it. Only Date is faked; the hook's waits still run on real timers.
+  beforeEach(() => {
+    const saturday = addLocalDays(parseLocalDate(localWeekKey()), 5);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(saturday.getTime() + 12 * 3600 * 1000);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Runs on Sunday, Monday, Wednesday and Friday; lifts between. */
+  const weekSchedule = [
+    { day: 0, type: "run" as const },
+    { day: 1, type: "run" as const },
+    { day: 2, type: "lift" as const },
+    { day: 3, type: "run" as const },
+    { day: 4, type: "lift" as const },
+    { day: 5, type: "run" as const },
+    { day: 6, type: "lift" as const },
+  ];
+  const runner = () =>
+    raceProfile(localDateString(addLocalDays(new Date(), 70)), {
+      weekSchedule,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 4,
+    });
+  const runPlanOf = (profile: MockProfile) => ({
+    mode: "race_prep" as const,
+    raceGoal: profile.raceGoal ?? undefined,
+    totalWeeks: 12,
+    currentWeek: 2,
+  });
+  const programDoc = (extra: Partial<ProgramState>) =>
+    ({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      ...extra,
+    }) as ProgramState;
+  const beforeToday = (state: ProgramState) =>
+    (state.runDays ?? []).filter((d) => (d.date ?? "") < localDateString());
+  const lastSaved = () =>
+    setDocCalls()[setDocCalls().length - 1].data as ProgramState;
+
+  it("a first plan made on this device", async () => {
+    mockProfile = runner();
+    resetFirestore();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(lastSaved().runDays!.length).toBeGreaterThan(0);
+    expect(beforeToday(lastSaved())).toEqual([]);
+  });
+
+  it("the load that rebuilds a stale race week", async () => {
+    mockProfile = runner();
+    const week = localWeekKey();
+    // This week holds a race the plan doesn't (the race is ten weeks
+    // out), so the load rebuilds it. Monday's run is done.
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: localDateString(parseLocalDate(week)),
+      weekKey: week,
+    };
+    const strayRace: ScheduledRunDay = {
+      id: "runday_stray_race",
+      dayIndex: 0,
+      templateId: "10k_race",
+      type: "race",
+      completed: false,
+      status: "planned",
+      date: localDateString(addLocalDays(parseLocalDate(week), 6)),
+      weekKey: week,
+    };
+    seedProgram(
+      programDoc({
+        runDays: [done, strayRace],
+        runPlan: runPlanOf(mockProfile),
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    const saved = lastSaved();
+    expect(saved.runDays!.some((d) => d.id === strayRace.id)).toBe(false);
+    expect(beforeToday(saved)).toEqual([done]);
+  });
+
+  /** This week's Monday run done and Wednesday's skipped, each on its own
+   *  session, as the layout tests below seed them. */
+  function seededWeek() {
+    const week = localWeekKey();
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: localDateString(parseLocalDate(week)),
+      weekKey: week,
+    };
+    const skipped: ScheduledRunDay = {
+      id: "runday_skipped",
+      dayIndex: 3,
+      templateId: "easy_20",
+      type: "easy",
+      completed: false,
+      status: "skipped",
+      date: localDateString(addLocalDays(parseLocalDate(week), 2)),
+      weekKey: week,
+    };
+    return { done, skipped };
+  }
+  /** The new layout: runs on Tuesday, Thursday, Saturday and Sunday. */
+  const newLayout = [
+    { day: 0, type: "run" as const },
+    { day: 1, type: "lift" as const },
+    { day: 2, type: "run" as const },
+    { day: 3, type: "lift" as const },
+    { day: 4, type: "run" as const },
+    { day: 5, type: "lift" as const },
+    { day: 6, type: "run" as const },
+  ];
+
+  it("the weekly layout's save keeps the week's own days before today", async () => {
+    mockProfile = runner();
+    const { done, skipped } = seededWeek();
+    seedProgram(
+      programDoc({ runDays: [done, skipped], runPlan: runPlanOf(mockProfile) })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, skipped]);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
+  });
+
+  it("the weekly layout's save keeps a recovery week's days before today", async () => {
+    mockProfile = runner();
+    const { done } = seededWeek();
+    const recoveryEndDate = localDateString(addLocalDays(new Date(), 10));
+    seedProgram(
+      programDoc({
+        runDays: [done],
+        runPlan: {
+          ...runPlanOf(mockProfile),
+          phase: "recovery",
+          recoveryEndDate,
+        },
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done]);
+    const fromToday = lastSaved().runDays!.filter(
+      (d) => (d.date ?? "") >= localDateString()
+    );
+    expect(fromToday.length).toBeGreaterThan(0);
+    expect(fromToday.every((d) => d.templateId === "easy_30")).toBe(true);
+  });
+
+  it("the weekly layout's restructure keeps the week's own days before today", async () => {
+    mockProfile = runner();
+    const { done, skipped } = seededWeek();
+    seedProgram(
+      programDoc({ runDays: [done, skipped], runPlan: runPlanOf(mockProfile) })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.regenerateProgram(undefined, 3, {
+        weekSchedule: newLayout,
+        weeklyRunDaysTarget: 4,
+      });
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, skipped]);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
+  });
+
+  it("Re-plan from today, keeping the week's own days before today", async () => {
+    mockProfile = runner();
+    const week = localWeekKey();
+    const monday = localDateString(parseLocalDate(week));
+    const wednesday = localDateString(addLocalDays(parseLocalDate(week), 2));
+    // Monday's run done, Wednesday's missed, each on its own session.
+    const done: ScheduledRunDay = {
+      id: "runday_done",
+      dayIndex: 1,
+      templateId: "easy_20",
+      type: "easy",
+      completed: true,
+      status: "completed_exact",
+      date: monday,
+      weekKey: week,
+    };
+    const missed: ScheduledRunDay = {
+      id: "runday_missed",
+      dayIndex: 3,
+      templateId: "easy_20",
+      type: "easy",
+      completed: false,
+      status: "planned",
+      date: wednesday,
+      weekKey: week,
+    };
+    const manualCompletions = { runday_done: { completedAt: 1 } };
+    seedProgram(
+      programDoc({
+        runDays: [done, missed],
+        runPlan: runPlanOf(mockProfile),
+        manualCompletions,
+      })
+    );
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    markWrites();
+    await act(async () => {
+      await result.current.realignRacePlan();
+    });
+    expect(beforeToday(lastSaved())).toEqual([done, missed]);
+    expect(lastSaved().manualCompletions).toEqual(manualCompletions);
+    expect(lastSaved().runDays!.length).toBeGreaterThan(2);
   });
 });
 
@@ -1135,7 +1407,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     // baseline. Same replace-not-merge contract; if we ever
     // regress to merging, structured easy_30 entries would leak
     // into race-period weeks.
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 3 });
+    mockProfile = raceProfile(raceHalfAYearOut(), { weeklyRunDaysTarget: 3 });
 
     const structuredPeriodRunDays: ScheduledRunDay[] = [
       {
@@ -1274,6 +1546,21 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
   // slots emit `easy_30` regardless of week position.
 
   it("scheduleRecoveryWeekV2 emits easy_30 for every scheduled run/both slot", async () => {
+    // On this week's Monday, so the refresh rebuilds the whole week: it
+    // keeps the days already gone as they were (Run19), and later in the
+    // week they can be all of its run days.
+    const monday = parseLocalDate(localWeekKey());
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await recoveryWeekIsEasy30();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  async function recoveryWeekIsEasy30() {
     // Set up: race_prep user in recovery phase. Schedule has 4
     // run slots (Mon/Tue/Thu/Sat). recoveryEndDate is in the
     // future so refreshRunSchedule's `inRecovery` check fires.
@@ -1329,6 +1616,91 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     }
     // Phase preserved (we're still in recovery).
     expect(lastWrite.runPlan?.phase).toBe("recovery");
+  }
+
+  /* Run20 (5): a new runner's race can come in their first weeks, and the
+     recovery week after it was easy 30s, 30 minutes non-stop. Both writers
+     of a recovery week give it that week's run-walk. */
+  describe("a new runner's recovery week", () => {
+    const seedRecovery = () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const future = localDateString(d);
+      // Set up a week ago: well inside the six weeks, next week too.
+      mockProfile = raceProfile("2099-09-15", {
+        runFrequency: "new",
+        onboardingCompletedAt: {
+          toMillis: () => Date.now() - 7 * 24 * 60 * 60 * 1000,
+        },
+      });
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 1,
+        splitType: "ppl",
+        workouts: [],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, smallPlates: false },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+          phase: "recovery",
+          recoveryEndDate: future,
+        },
+      } as ProgramState);
+    };
+    const expectRunWalk = () => {
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runPlan?.phase).toBe("recovery");
+      expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+      for (const rd of lastWrite.runDays!)
+        expect(isRunWalkTemplateId(rd.templateId), rd.templateId).toBe(true);
+    };
+
+    it("when the schedule is refreshed", async () => {
+      // On this week's Monday, so the refresh rebuilds the whole week: it
+      // keeps the days already gone as they were (Run19), and on a Sunday
+      // they are all of its run days.
+      const monday = parseLocalDate(localWeekKey());
+      monday.setHours(12);
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(monday);
+      try {
+        seedRecovery();
+        const { result } = mountProgram();
+        await waitFor(() => expect(result.current.loading).toBe(false), {
+          timeout: 2000,
+        });
+        markWrites();
+        await act(async () => {
+          await result.current.refreshRunSchedule({
+            weekSchedule: generateSchedule(0, 4),
+            weeklyRunDaysTarget: 4,
+          });
+        });
+        expectRunWalk();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("when the week moves on", async () => {
+      seedRecovery();
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites();
+      await act(async () => {
+        await result.current.advanceToNextWeek();
+      });
+      expectRunWalk();
+    });
   });
 
   it("Lift4 (10) — advanceToNextWeek into race week makes it race week, and says so", async () => {
@@ -1737,7 +2109,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     })();
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -1763,7 +2136,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
 
@@ -1870,7 +2243,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     // Monday on its own dates; the lift side must not roll with it.
     const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
     function hybrid(liftWeekKey: string) {
-      mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+      const raceDate = raceHalfAYearOut();
+      mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
       seedProgram({
         goal: "recomp",
         currentPhase: "progression",
@@ -1900,7 +2274,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         ],
         runPlan: {
           mode: "race_prep",
-          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+          raceGoal: { distance: "10k", targetDate: raceDate },
         },
       } as ProgramState);
     }
@@ -3316,7 +3690,8 @@ describe("the week rollover waits for a finish (Lift4)", () => {
 
   it("holds the race-plan rollover the same way", async () => {
     const stale = lastWeek();
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     resetFirestore();
     seedProgram({
       goal: "recomp",
@@ -3343,7 +3718,7 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
     const { openLiftSession } = await import("../openLiftSession");

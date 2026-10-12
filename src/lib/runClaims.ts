@@ -37,6 +37,13 @@ export interface SavedRunDoc extends SavedRunLike {
   type?: string;
 }
 
+/** The session types that are quality: tempo, intervals and a race. */
+const QUALITY_TYPES: ReadonlySet<string> = new Set([
+  "tempo",
+  "intervals",
+  "race",
+]);
+
 /**
  * Pre-computed template-quality lookup. Keyed by `RUN_TEMPLATES[i].id`.
  * `tempo` / `intervals` / `race` are quality; everything else is easy.
@@ -46,13 +53,19 @@ export interface SavedRunDoc extends SavedRunLike {
 const TEMPLATE_QUALITY_BUCKET: Record<string, "quality" | "easy"> = (() => {
   const map: Record<string, "quality" | "easy"> = {};
   for (const t of RUN_TEMPLATES) {
-    map[t.id] =
-      t.type === "tempo" || t.type === "intervals" || t.type === "race"
-        ? "quality"
-        : "easy";
+    map[t.id] = QUALITY_TYPES.has(t.type) ? "quality" : "easy";
   }
   return map;
 })();
+
+/** A run set up as a quality session: its own session type, not the
+ *  day's plan, which `templateId` falls back to. */
+function defaultIsQualityRun(saved: SavedRunLike): boolean {
+  return (
+    typeof saved.activityType === "string" &&
+    QUALITY_TYPES.has(saved.activityType)
+  );
+}
 
 /**
  * Race-template ids, by TYPE. Same construction as the quality lookup
@@ -134,6 +147,7 @@ const DEFAULT_DEPS: CompletionDeps = {
   templateQualityBucket: TEMPLATE_QUALITY_BUCKET,
   plannedDistanceFor: defaultPlannedDistanceFor,
   isRaceTemplate: defaultIsRaceTemplate,
+  isQualityRun: defaultIsQualityRun,
 };
 
 /**
@@ -149,6 +163,7 @@ function toSavedRunDoc(run: SavedRun): SavedRunDoc {
     distance: run.distance,
     avgPace: run.avgPace,
     templateId: run.templateId,
+    activityType: run.activityType,
     createdAt: { seconds: run.savedAtSeconds },
     duration: run.duration,
     type: run.type,
