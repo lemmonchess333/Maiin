@@ -185,6 +185,29 @@ describe("SegmentedControl", () => {
     expect(unselected.className).not.toContain("bg-card");
   });
 
+  it("eases the press rather than snapping it", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Lift days"
+      />
+    );
+    const classes = screen
+      .getByRole("radio", { name: "3" })
+      .className.split(" ");
+    expect(classes).toContain("active:scale-[0.97]");
+    // The press sets `scale`: the transition has to list it, which
+    // transition-colors (and a list naming only `transform`) does not.
+    const transition = classes.find((c) =>
+      /^(motion-safe:)?transition/.test(c)
+    );
+    expect(transition).toMatch(
+      /^(motion-safe:)?transition(-all|-transform|-\[[^\]]*\bscale\b[^\]]*\])?$/
+    );
+  });
+
   it("running tone tints the selected label coral", () => {
     render(
       <SegmentedControl
