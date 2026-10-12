@@ -764,3 +764,47 @@ describe("a count of a food eaten in pieces counts pieces", () => {
     expect(parseFoodText("100g chicken wing")[0].calories).toBe(290);
   });
 });
+
+/* Everyday foods the table lacked. Typed in the Food pass, "2 scrambled
+   eggs on toast and a flat white" counted the eggs alone: there was no
+   flat white, nor honey, sourdough, a jacket potato or the plated dishes
+   people type by name, so each logged nothing. */
+describe("parseFoodText — everyday foods", () => {
+  it("counts the coffee in a cafe breakfast", () => {
+    const result = parseFoodText("2 scrambled eggs on toast and a flat white");
+    expect(result.map((r) => r.name)).toEqual([
+      "Scrambled eggs (x2)",
+      "Toast",
+      "Flat white",
+    ]);
+    expect(result[2].calories).toBeGreaterThan(0);
+  });
+
+  it("knows the cafe coffees, honey and sourdough", () => {
+    for (const food of ["an americano", "a mocha", "honey", "sourdough"]) {
+      expect(parseFoodText(food)[0].calories, food).toBeGreaterThan(0);
+    }
+  });
+
+  it("logs a plated dish by its name, as one meal", () => {
+    for (const dish of [
+      "spaghetti bolognese",
+      "lasagne",
+      "lasagna",
+      "chilli con carne",
+      "mac and cheese",
+      "macaroni cheese",
+      "bangers and mash",
+      "jacket potato",
+    ]) {
+      const result = parseFoodText(dish);
+      expect(result, dish).toHaveLength(1);
+      expect(result[0].calories, dish).toBeGreaterThan(200);
+    }
+  });
+
+  it("merges the two spellings of one dish", () => {
+    expect(parseFoodText("lasagne, lasagna")).toHaveLength(1);
+    expect(parseFoodText("mac and cheese, macaroni cheese")).toHaveLength(1);
+  });
+});
