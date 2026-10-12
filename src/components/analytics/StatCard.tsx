@@ -58,7 +58,7 @@ export default function StatCard({
     <Container
       {...(onClick ? { type: "button" as const } : {})}
       onClick={onClick}
-      className={`p-4 rounded-2xl bg-card text-left w-full card-shadow${onClick ? " motion-safe:active:scale-[0.98]" : ""}`}
+      className={`p-4 rounded-2xl bg-card text-left w-full card-shadow${onClick ? " transition-transform motion-safe:active:scale-[0.98]" : ""}`}
     >
       <SectionLabel className="mb-2">{label}</SectionLabel>
 

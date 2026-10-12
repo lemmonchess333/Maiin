@@ -1185,7 +1185,7 @@ export default function ProgrammeRunSection({
             <button
               type="button"
               onClick={handleSkipRecoveryEarly}
-              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95 text-running-strong"
+              className="inline-flex items-center gap-0.5 text-xs font-semibold transition-transform motion-safe:active:scale-95 text-running-strong"
             >
               Skip recovery early &rsaquo;
             </button>
@@ -1620,7 +1620,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.99]"
+                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground transition motion-safe:active:scale-[0.99]"
                 >
                   Start free run instead
                 </button>

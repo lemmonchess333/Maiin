@@ -208,7 +208,7 @@ export default function IntervalStepShell({
           <button
             type="button"
             onClick={onSkip}
-            className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 active:scale-[0.97]"
+            className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
             aria-label="Skip to the next step"
           >
             Skip step

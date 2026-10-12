@@ -205,7 +205,7 @@ export default function SaveRoutineSheet({
             type="button"
             onClick={onClose}
             disabled={saving || saved}
-            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
+            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             Cancel
           </button>
@@ -214,7 +214,7 @@ export default function SaveRoutineSheet({
             onClick={handleSave}
             disabled={saving || saved || !name.trim()}
             aria-live="polite"
-            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition-colors flex items-center justify-center gap-1.5"
+            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5"
             style={{
               backgroundColor: saved ? THEME.success : THEME.brandStrong,
             }}
