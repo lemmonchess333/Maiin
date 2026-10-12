@@ -418,9 +418,11 @@ describe("race plans — the compressed band doubles the long run", () => {
     // Run17: the curve now aims at the schedulable ceiling (25 km on the
     // nominal table, plus the 10% hold) instead of the 32 km config peak,
     // so the block spends three weeks at 25 km rather than five, and the
-    // early weeks climb from base more gradually.
+    // early weeks climb from base more gradually. Run22: the taper keeps a
+    // long run three and two weeks before race week, 75% and 60% of the
+    // 25 km in the plan's own sizes at most that share — 15 km both times.
     expect(longs).toEqual([
-      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25,
+      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25, 15, 15,
     ]);
     // No step past a third, and the sequence genuinely steps back down.
     for (let i = 1; i < longs.length; i++) {
