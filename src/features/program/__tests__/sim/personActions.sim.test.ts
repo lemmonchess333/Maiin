@@ -31,18 +31,15 @@ const TIMEOUT = 60_000;
 /**
  * Rules each persona breaks today, by the finding that explains them
  * (docs/training-engine-2026-10/simulator.md). Take an entry out with its
- * fix. What is left is the base persona's own: F8 `over-time` and F10
- * `below-bar`. The actions' own (F20 `session-off-grid`, F21
- * `run-day-card`) are fixed, with the running side's.
+ * fix. What is left is the base persona's own: F8 `over-time`, on the
+ * intermediate man's plan. F10 `below-bar` went with Pgm8 L15, and the
+ * hybrid's F8 with it (its base persona's, in runSeason.sim.test.ts). The
+ * actions' own (F20 `session-off-grid`, F21 `run-day-card`) are fixed,
+ * with the running side's.
  */
 const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "light-trainer-skips": ["below-bar"],
   "swaps-bench-keeps": ["over-time"],
-  "swaps-squat-today": ["below-bar"],
-  "replaces-row": ["below-bar"],
-  "barbell-easier-days": ["below-bar"],
   "lighter-after-misses": ["over-time"],
-  "hybrid-lighter-week": ["below-bar", "over-time"],
 };
 
 /**
@@ -57,31 +54,32 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *   last time's weight, and the app never moves it (Lift4 (11)).
  *
  * `acsm-heavy:seated-row` is the replacing row, tracked for the trace: an
- * accessory climbing 6–10 reps, never heavy. Two more:
+ * accessory climbing 6–10 reps, never heavy. One more:
  *
- * - `stall:overhead-press` on the easier days: F9's light press under the
- *   bar (F10). An easier session keeps a plan under the bar where it is,
- *   and holds it, so the press sits at its stretched top longer; a new
- *   plan builds it as dumbbells (Pgm8 L15).
  * - `stall:deadlift` after misses: F23. After one session's last two sets
  *   came down to 132.5 kg, the 5-rep slot starts them there again, under
  *   its 155 kg, and doesn't step until all four go at 155: misses (F4) and
  *   lighter weeks between, March to June.
+ *
+ * The easier days' `stall:overhead-press` (F9 on a press under the bar,
+ * which an easier session held where it was) went with Pgm8 L15: the
+ * press is a 5 kg dumbbell press now, and an easier session takes it to
+ * 4 kg, so its plan numbers never sit still for the check's eight
+ * sessions, although it still waits at 15 reps.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer-skips": [
     "misses:overhead-press",
-    "stall:barbell-curl",
     "stall:db-bench",
+    "stall:db-curl",
     "stall:rope-tricep-pushdown",
   ],
   "swaps-bench-keeps": ["acsm-heavy:bench-press"],
   "swaps-squat-today": ["acsm-size:quads", "stall:leg-press"],
-  "replaces-row": ["acsm-heavy:seated-row", "stall:barbell-curl"],
+  "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
   "lighter-after-misses": ["stall:deadlift", "stall:hack-squat"],
   "hybrid-lighter-week": ["back-to-back", "spike", "volume-jump"],
   "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
-  "barbell-easier-days": ["stall:overhead-press"],
   "dumbbell-easier-days": ["stall:db-curl"],
 };
 

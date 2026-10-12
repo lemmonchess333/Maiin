@@ -8,6 +8,14 @@
 import type { LiftPersona } from "./liftSeason";
 
 const BIG_FOUR = ["squat", "bench-press", "deadlift", "overhead-press"];
+/** The big four for someone whose barbell press would start under the bar:
+ *  a new plan builds it as a dumbbell press (Pgm8 L15). */
+const BIG_FOUR_DUMBBELL_PRESS = [
+  "squat",
+  "bench-press",
+  "deadlift",
+  "db-shoulder-press",
+];
 
 export const NOVICE_MAN: LiftPersona = {
   name: "novice-man",
@@ -51,7 +59,7 @@ export const NOVICE_WOMAN: LiftPersona = {
   },
   sessionShare: 0.95,
   calibrates: false,
-  tracked: BIG_FOUR,
+  tracked: BIG_FOUR_DUMBBELL_PRESS,
 };
 
 /** Benches 100 kg and wants +10 kg in 16 weeks (§4.5). Knows their lifts. */
@@ -348,7 +356,7 @@ export const OVER_55: LiftPersona = {
   sessionShare: 0.9,
   calibrates: false,
   start: "2026-07-13",
-  tracked: BIG_FOUR,
+  tracked: BIG_FOUR_DUMBBELL_PRESS,
 };
 
 export const LIFT_PERSONAS: readonly LiftPersona[] = [

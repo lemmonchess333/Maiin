@@ -45,24 +45,21 @@ const TIMEOUT = 30_000;
  *
  * - F8 `over-time`: the time fit prices a light barbell lift's warm-ups at
  *   its starting weight, and it gains warm-up sets as it grows, so a
- *   60-minute session drifts to 61–63.
- * - F10 `below-bar`: barbell curls, skull crushers and a weak lifter's
- *   press planned lighter than the 20 kg bar.
+ *   60-minute session drifts to 61–62. The intermediate man's arms day
+ *   runs over as well now: his press passes 50 kg there, and the dumbbell
+ *   curl's warm-up set takes the minute the barbell curl left.
+ *
+ * F10 `below-bar` is gone: Pgm8 L15 builds a new plan's barbell lift whose
+ * first weight would be under the 20 kg bar as its dumbbell version (the
+ * curls, skull crushers and weak lifters' presses it found). F8 went with
+ * it for the powerbuilder on Get stronger and both layoff personas: the
+ * dumbbell curl's warm-ups are priced when the plan is built, so the day
+ * gave a set back then (a pull-up or squat set), and has room for what its
+ * lifts gain.
  */
 const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "novice-man": ["below-bar"],
-  "novice-woman": ["below-bar"],
   "intermediate-man": ["over-time"],
-  "intermediate-woman": ["below-bar"],
-  "advanced-man": ["below-bar"],
-  "powerbuilder-size": ["below-bar"],
-  "powerbuilder-strength": ["over-time"],
-  "light-trainer": ["below-bar"],
-  "layoff-eases-back": ["below-bar", "over-time"],
-  "layoff-keeps-weights": ["below-bar", "over-time"],
-  "off-sick": ["below-bar"],
-  holidays: ["below-bar", "over-time"],
-  "over-55": ["below-bar"],
+  holidays: ["over-time"],
 };
 
 /**
@@ -74,15 +71,19 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *   reps to spare (a 10 kg leg curl at 17 reps, dumbbells from 10 kg).
  *   The ceiling from Nuzzo 2024's means (Pgm7 A3) is a few reps under
  *   Epley's, so the wait starts sooner, and shows in lifts Epley's let
- *   climb on: a 10 kg curl or pushdown at 17 reps, not 20.
+ *   climb on: a light curl or pushdown at 17 reps, not 20. The dumbbell
+ *   curls and presses Pgm8 L15 builds wait the same way (5 kg to 6 kg is
+ *   20%), as the barbell ones under the bar did (F2).
  * - F4 `misses`: the plan's steps outrun a lifter who gains slowly or
- *   trains half the planned sessions.
+ *   trains half the planned sessions. The over-55's press is no longer
+ *   one: a 15 kg barbell press at her 15 kg 1RM, it is a 5 kg dumbbell
+ *   press now (L15).
  * - F12 `acsm-size:quads`: size plans give the quads 9 sets a week.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
-  "novice-man": ["stall:barbell-curl"],
+  "novice-man": ["stall:db-curl"],
   "novice-woman": [
-    "stall:overhead-press",
+    "stall:db-shoulder-press",
     "stall:seated-calf-raise",
     "stall:seated-leg-curl",
   ],
@@ -91,8 +92,8 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "light-trainer": [
     "misses:overhead-press",
     "misses:squat",
-    "stall:barbell-curl",
     "stall:db-bench",
+    "stall:db-curl",
     "stall:rope-tricep-pushdown",
   ],
   "dumbbell-beginner": [
@@ -102,12 +103,12 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "stall:db-shoulder-press",
     "stall:goblet-squat",
   ],
-  "off-sick": ["misses:overhead-press", "stall:barbell-curl"],
+  "off-sick": ["misses:overhead-press", "stall:db-curl"],
   holidays: ["acsm-size:quads"],
   "over-55": [
     "misses:bench-press",
     "misses:deadlift",
-    "misses:overhead-press",
+    "stall:db-shoulder-press",
     "stall:seated-calf-raise",
     "stall:seated-leg-curl",
   ],

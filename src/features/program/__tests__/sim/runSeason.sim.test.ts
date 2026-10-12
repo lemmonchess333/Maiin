@@ -43,18 +43,13 @@ const TIMEOUT = 60_000;
 /**
  * Rules each persona breaks today, by the finding that explains them (the
  * doc has each). Take an entry out with its fix. The running side's
- * (F13, F14, F16, F22) are fixed; what is left is the lifting side's, on a
- * hybrid:
- *
- * - F8 `over-time` and F10 `below-bar`.
+ * (F13, F14, F16, F22) are fixed, and so is what was left of the lifting
+ * side's on a hybrid: F10 `below-bar` with Pgm8 L15, which builds the
+ * hybrids' 10–15 kg barbell curls as dumbbell curls, and F8 `over-time`
+ * with it, as the time fit prices the dumbbell curl's warm-ups when the
+ * plan is built and gives the day's squat a set back.
  */
-const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "year-out-marathon": ["below-bar", "over-time"],
-  "hybrid-3-4-trim": ["below-bar", "over-time"],
-  "hybrid-3-4-no-trim": ["below-bar", "over-time"],
-  "hybrid-2-3-trim": ["below-bar"],
-  "hybrid-2-3-no-trim": ["below-bar"],
-};
+const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
 
 /**
  * Coaching findings each persona has today; a hybrid's lifting ones carry
