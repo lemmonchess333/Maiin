@@ -145,6 +145,9 @@ interface RunSetupModalProps {
   savedPreferences?: Partial<RunConfig>;
   /** Read-only context-strip data. Null when no strip should render. */
   programContext?: ProgramContextStrip | null;
+  /** The planned session's name, as its launch card and Home give it
+   *  ("Easy 30"), when the setup opened on a planned run. */
+  sessionName?: string;
 }
 
 /**
@@ -196,6 +199,7 @@ export default function RunSetupModal({
   onCancel,
   savedPreferences,
   programContext,
+  sessionName,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
@@ -1229,6 +1233,16 @@ export default function RunSetupModal({
             ACTIVITY_TYPES.find((a) => a.type === config.activityType) ??
             ACTIVITY_TYPES[1];
           const Icon = onTreadmill ? Dumbbell : Footprints;
+          /* The planned session keeps the name its card gave it ("Start
+             Easy 30") until the run stops being it: another type, target
+             or set of intervals starts as its type ("Start Tempo Run"). */
+          const isPlannedSession =
+            sessionName !== undefined &&
+            config.activityType === savedPreferences?.activityType &&
+            JSON.stringify(config.target) ===
+              JSON.stringify(savedPreferences?.target) &&
+            JSON.stringify(config.intervals) ===
+              JSON.stringify(savedPreferences?.intervals);
           return (
             <button
               type="button"
@@ -1247,7 +1261,7 @@ export default function RunSetupModal({
               <Icon className="inline size-5 mr-1" />{" "}
               {onTreadmill
                 ? "Start on the treadmill"
-                : `Start ${selected.name}`}
+                : `Start ${isPlannedSession ? sessionName : selected.name}`}
             </button>
           );
         })()}
