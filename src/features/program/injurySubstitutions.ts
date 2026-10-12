@@ -1255,7 +1255,15 @@ export function findSafeSubstitute(
    * order and no other — the same precedence the equipment filter uses in
    * reverse.
    */
-  isAvailable?: (exerciseId: string) => boolean
+  isAvailable?: (exerciseId: string) => boolean,
+  /**
+   * Optional preference that ranks below equipment: among the substitutes
+   * the equipment preference leaves, the first this accepts, else the first
+   * of them. The injury filter passes the week's cap on one lift
+   * (`MAX_WEEKLY_LIFT_EXPOSURES`), so a swap prefers a lift the week has
+   * fewer than twice. Never a filter: it can't leave an injury unswapped.
+   */
+  isPreferred?: (exerciseId: string) => boolean
 ): SafeSubstitute | null {
   const candidates = INJURY_SUBSTITUTIONS[originalId];
   if (!candidates || candidates.length === 0) return null;
@@ -1283,5 +1291,9 @@ export function findSafeSubstitute(
   if (safe.length === 0) return null;
   // Prefer one the user can actually perform; fall back to the safest
   // available option regardless of equipment.
-  return safe.find((c) => !isAvailable || isAvailable(c.id)) ?? safe[0];
+  const performable = isAvailable
+    ? safe.filter((c) => isAvailable(c.id))
+    : safe;
+  const pool = performable.length > 0 ? performable : safe;
+  return pool.find((c) => isPreferred?.(c.id)) ?? pool[0];
 }
