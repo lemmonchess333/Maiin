@@ -44,6 +44,7 @@ import {
 } from "@/lib/nutritionConsistency";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { Collapse } from "@/components/ui/Collapse";
 
 /** Compact segment labels — the card copy above carries the "logging
  *  focus" context, so the control itself stays glanceable at 375px. */
@@ -199,7 +200,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
             </p>
           </div>
         </button>
-        {picking && (
+        <Collapse open={picking}>
           <div className="space-y-2">
             <SegmentedControl
               options={INTENT_OPTIONS.map((o) => ({
@@ -221,7 +222,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
               Set focus
             </Button>
           </div>
-        )}
+        </Collapse>
       </div>
     );
   }

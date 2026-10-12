@@ -41,6 +41,7 @@ import {
 import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
+import { Collapse } from "@/components/ui/Collapse";
 
 const DISTANCE_OPTIONS: { value: RaceDistance; label: string }[] = [
   { value: "5k", label: "5K" },
@@ -130,7 +131,7 @@ function UpcomingRacePicker({
         />
       </button>
 
-      {open && (
+      <Collapse open={open}>
         <div className="mt-3 space-y-2">
           <RaceFilters value={filters} onChange={setFilters} trainingOnly />
           {raceDays.length === 0 ? (
@@ -227,7 +228,7 @@ function UpcomingRacePicker({
             </div>
           )}
         </div>
-      )}
+      </Collapse>
     </div>
   );
 }

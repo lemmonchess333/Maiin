@@ -87,6 +87,7 @@ import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
+import { Collapse } from "@/components/ui/Collapse";
 
 interface DayActionSheetProps {
   open: boolean;
@@ -661,64 +662,66 @@ export default function DayActionSheet({
                           />
                           Move to another day
                         </button>
-                        {showMovePicker && (
-                          <div
-                            className="grid grid-cols-7 gap-1.5 pt-1"
-                            role="group"
-                            aria-label="Move to which day"
-                          >
-                            {resolveRunMoveOptions({
-                              source: run.runDay,
-                              runDays: programState?.runDays ?? [],
-                              weekSchedule: profile?.weekSchedule ?? [],
-                              todayKey: localDateString(new Date()),
-                            }).map((opt) => {
-                              const label = [
-                                "Sun",
-                                "Mon",
-                                "Tue",
-                                "Wed",
-                                "Thu",
-                                "Fri",
-                                "Sat",
-                              ][opt.dayIndex].slice(0, 1);
-                              return (
-                                <button
-                                  key={opt.dayIndex}
-                                  type="button"
-                                  disabled={!opt.available}
-                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
-                                  onClick={async () => {
-                                    await moveRunDay(
-                                      run.runDay!.id ?? run.runDay!.dayIndex,
-                                      opt.dayIndex
-                                    );
-                                    onClose();
-                                  }}
-                                  className={cn(
-                                    "min-h-[44px] rounded-lg text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-transform",
-                                    opt.available
-                                      ? "bg-background border border-border active:scale-[0.95]"
-                                      : "bg-muted/40 text-muted-foreground cursor-not-allowed"
-                                  )}
-                                  style={
-                                    opt.warning
-                                      ? { borderColor: THEME.warning }
-                                      : undefined
-                                  }
-                                >
-                                  <span>{label}</span>
-                                  {opt.warning && (
-                                    <TriangleAlert
-                                      className="size-3"
-                                      style={{ color: THEME.warning }}
-                                    />
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
+                        <Collapse open={showMovePicker}>
+                          {() => (
+                            <div
+                              className="grid grid-cols-7 gap-1.5 pt-1"
+                              role="group"
+                              aria-label="Move to which day"
+                            >
+                              {resolveRunMoveOptions({
+                                source: run.runDay!,
+                                runDays: programState?.runDays ?? [],
+                                weekSchedule: profile?.weekSchedule ?? [],
+                                todayKey: localDateString(new Date()),
+                              }).map((opt) => {
+                                const label = [
+                                  "Sun",
+                                  "Mon",
+                                  "Tue",
+                                  "Wed",
+                                  "Thu",
+                                  "Fri",
+                                  "Sat",
+                                ][opt.dayIndex].slice(0, 1);
+                                return (
+                                  <button
+                                    key={opt.dayIndex}
+                                    type="button"
+                                    disabled={!opt.available}
+                                    aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
+                                    onClick={async () => {
+                                      await moveRunDay(
+                                        run.runDay!.id ?? run.runDay!.dayIndex,
+                                        opt.dayIndex
+                                      );
+                                      onClose();
+                                    }}
+                                    className={cn(
+                                      "min-h-[44px] rounded-lg text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-transform",
+                                      opt.available
+                                        ? "bg-background border border-border active:scale-[0.95]"
+                                        : "bg-muted/40 text-muted-foreground cursor-not-allowed"
+                                    )}
+                                    style={
+                                      opt.warning
+                                        ? { borderColor: THEME.warning }
+                                        : undefined
+                                    }
+                                  >
+                                    <span>{label}</span>
+                                    {opt.warning && (
+                                      <TriangleAlert
+                                        className="size-3"
+                                        style={{ color: THEME.warning }}
+                                      />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </Collapse>
                       </>
                     )}
                   </div>
