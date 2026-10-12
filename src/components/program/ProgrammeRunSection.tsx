@@ -129,7 +129,7 @@ import {
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -829,11 +829,15 @@ export default function ProgrammeRunSection({
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when
   // neither, so the card just shows pace/type as before.
-  const selectedHrLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+  const selectedHrItems: string[] = (() => {
+    if (!selectedTemplate) return [];
     const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
-    const band = targetZoneForRun(selectedTemplate.type, maxHr);
-    return band ? `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm` : null;
+    const band = targetZoneForRun(
+      selectedTemplate.type,
+      maxHr,
+      selectedTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
 
   // Meta line for the selected run (distance/duration · pace · HR zone · type).
@@ -845,11 +849,12 @@ export default function ProgrammeRunSection({
       runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
     );
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
-    if (selectedHrLabel) meta.push(selectedHrLabel);
-    meta.push(
+    meta.push(...selectedHrItems);
+    // The zone's name says "Easy" already for an easy run (Run21 (1)).
+    const typeWord =
       selectedTemplate.type.charAt(0).toUpperCase() +
-        selectedTemplate.type.slice(1)
-    );
+      selectedTemplate.type.slice(1);
+    if (!meta.includes(typeWord)) meta.push(typeWord);
     return meta;
   })();
   // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).
