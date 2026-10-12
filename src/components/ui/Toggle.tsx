@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface ToggleProps {
@@ -30,6 +31,26 @@ interface ToggleProps {
  * duplicated across settings/run surfaces (each rendering a sub-44px
  * 40×24 tap target).
  */
+
+/* The knob's travel when the switch is tapped: a move between two places
+   on screen, so the strong ease-in-out, inside a control's 200ms. */
+const KNOB_SLIDE: KeyframeAnimationOptions = {
+  duration: 200,
+  easing: "cubic-bezier(0.77, 0, 0.175, 1)",
+};
+
+/** How long after a tap a change of `checked` is still that tap's. A switch
+ *  whose call site asks first (a permission, a consent sheet) flips after
+ *  the question, where the knob just shows its new place. */
+const TAP_WINDOW_MS = 1000;
+
+/** The knob's left edge from the track's, as drawn (a running slide
+ *  included). */
+function knobX(track: HTMLElement | null, knob: HTMLElement | null) {
+  if (!track || !knob) return null;
+  return knob.getBoundingClientRect().left - track.getBoundingClientRect().left;
+}
+
 export function Toggle({
   checked,
   onChange,
@@ -37,6 +58,31 @@ export function Toggle({
   disabled,
   className,
 }: ToggleProps) {
+  const trackRef = useRef<HTMLSpanElement>(null);
+  const knobRef = useRef<HTMLSpanElement>(null);
+  /* Where the knob was on screen when the switch was tapped, if it was. */
+  const tap = useRef<{ x: number; at: number } | null>(null);
+  const slide = useRef<Animation | null>(null);
+
+  /* A tap's change slides the knob from where it was to its new place; a
+     state that arrives with the page, or after a question the call site
+     asked, just shows (Pol1). Measured on screen, so a second tap mid-slide
+     carries on from where the knob is. */
+  useLayoutEffect(() => {
+    const from = tap.current;
+    tap.current = null;
+    const knob = knobRef.current;
+    if (!from || !knob || typeof knob.animate !== "function") return;
+    if (performance.now() - from.at > TAP_WINDOW_MS) return;
+    slide.current?.cancel();
+    const to = knobX(trackRef.current, knob);
+    if (to === null || to === from.x) return;
+    slide.current = knob.animate(
+      [{ transform: `translateX(${from.x - to}px)` }, { transform: "none" }],
+      KNOB_SLIDE
+    );
+  }, [checked]);
+
   return (
     <button
       type="button"
@@ -44,7 +90,14 @@ export function Toggle({
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      onClick={onChange}
+      onClick={() => {
+        const x = knobX(trackRef.current, knobRef.current);
+        const still = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        ).matches;
+        tap.current = x === null || still ? null : { x, at: performance.now() };
+        onChange();
+      }}
       className={cn(
         "size-[44px] -my-[10px] shrink-0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed",
         className
@@ -55,16 +108,21 @@ export function Toggle({
           transform-based thumb rendered 2× its intended travel on real
           devices (thumb fully outside the track — reported three times),
           so the geometry is now containment-by-construction: a flow child
-          physically cannot leave its padded container, in any engine. */}
+          physically cannot leave its padded container, in any engine.
+          The slide above keeps that: it is a transform only while the
+          knob moves, ending at none, so a still knob is placed by the
+          flex row alone. The track's colour takes the slide's 200ms. */}
       <span
+        ref={trackRef}
         className={cn(
-          "w-[40px] h-[24px] rounded-full transition-colors flex items-center px-[4px]",
+          "w-[40px] h-[24px] rounded-full transition-colors duration-200 flex items-center px-[4px]",
           checked
             ? "bg-primary justify-end"
             : "bg-muted border border-border justify-start"
         )}
       >
         <span
+          ref={knobRef}
           // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
           className="size-[16px] rounded-full bg-white shadow-sm"
         />
