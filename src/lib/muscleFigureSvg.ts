@@ -16,7 +16,14 @@
 import { ANTERIOR, POSTERIOR } from "@/lib/bodyModelData";
 import { THEME } from "@/lib/theme";
 
-const BODY = "#B6BDC3"; // react-body-highlighter's default body grey
+/* The body is drawn as the released drawings are: light, with a fine dark
+   outline. 88 of the 152 exercises have no drawing and take this figure,
+   so a session's strip mixes the two; at react-body-highlighter's grey and
+   30% it was a dark ghost beside the white drawings on the dark tile, and
+   a faint one on the light. Read when a figure is drawn, as the purple
+   is, not when the module loads. */
+const body = () => THEME.neutral[200];
+const outline = () => THEME.elevated;
 
 const CATEGORY_FIGURE: Record<
   string,
@@ -55,12 +62,12 @@ export function categoryFigureUri(category: string): string | null {
   const polys = data
     .map((p) => {
       const hitPoly = tinted.has(p.muscle);
-      const fill = hitPoly ? THEME.lifting : BODY;
-      const opacity = hitPoly ? "0.95" : p.muscle === "head" ? "0.5" : "0.3";
+      const fill = hitPoly ? THEME.lifting : body();
+      const opacity = hitPoly ? "0.95" : "1";
       const points = (p.points as [number, number][])
         .map(([x, y]) => `${x},${y}`)
         .join(" ");
-      return `<polygon points="${points}" fill="${fill}" fill-opacity="${opacity}"/>`;
+      return `<polygon points="${points}" fill="${fill}" fill-opacity="${opacity}" stroke="${outline()}" stroke-opacity="0.55" stroke-width="0.6" stroke-linejoin="round"/>`;
     })
     .join("");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">${polys}</svg>`;
