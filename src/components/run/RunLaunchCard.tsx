@@ -163,7 +163,10 @@ export default function RunLaunchCard({
             </p>
           )}
           <p className="text-sm text-muted-foreground mt-2">
-            {/* Run21 (2): the session's one feel line. */}
+            {/* Run21 (2): the session's one feel line, its effort word first.
+                With no pace to prescribe (Run20 (1)) it is how a quality
+                session is held; a second effort line beside it said the same
+                thing twice. */}
             {about.feel}
             {workout.config.strides &&
               ` ${workout.estimatedDuration} min in all, strides included.`}

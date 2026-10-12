@@ -693,6 +693,23 @@ function cueSeed(id: string, weekIndex: number | null): number {
   return h;
 }
 
+/** The minutes a run is set for when nothing else measures it: its own
+ *  timed prescription, or for a plain easy run (no distance, no strides) its
+ *  length. An easy run has no pace target to displace; the strides session's
+ *  segments carry its minutes between them. */
+function timedMinutes(tmpl: RunTemplate): number | undefined {
+  if (tmpl.config.targetDurationMinutes)
+    return tmpl.config.targetDurationMinutes;
+  if (
+    tmpl.type === "easy" &&
+    !tmpl.config.targetDistanceKm &&
+    !tmpl.config.strides
+  ) {
+    return tmpl.estimatedDuration;
+  }
+  return undefined;
+}
+
 function templateToPrefill(
   tmpl: RunTemplate,
   /* Segment LABELS and spoken CUES are authored here, so plan generation
@@ -706,6 +723,7 @@ function templateToPrefill(
   seed: number = 0
 ): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
+  const minutes = timedMinutes(tmpl);
   // A2: a tempo at the goal pace through build and taper, a long run's
   // race-pace finish in the build. `racePaceWork` (racePace.ts) is the gate
   // the plan's surfaces read too, so a run named for its race pace has it.
@@ -724,20 +742,18 @@ function templateToPrefill(
       type: "distance",
       value: tmpl.config.targetDistanceKm * 1000,
     };
-  } else if (tmpl.config.targetDurationMinutes) {
-    // An explicit timed prescription owns the target. An estimated duration
-    // alone must not displace the existing templates' personalized pace.
-    prefill.target = {
-      type: "time",
-      value: tmpl.config.targetDurationMinutes * 60,
-    };
+  } else if (minutes) {
+    // A timed run owns its target. An estimated duration alone must not
+    // displace a tempo's personalized pace, so only an easy run falls back
+    // to its length (`timedMinutes`).
+    prefill.target = { type: "time", value: minutes * 60 };
   } else if (tmpl.config.targetPace || paceTable) {
     // Adaptive Paces: resolve the prescribed pace from the user's fitness
     // (e.g. tempo → personalized threshold pace) when a pace table is
-    // available; otherwise fall back to the template's hardcoded pace —
-    // the exact pre-Adaptive-Paces value, so users without a benchmark see
-    // no change. (Interval work-pace + race pace flow through their own
-    // fields and are personalized in a later slice.)
+    // available; otherwise a template's own fixed pace, where it has one.
+    // The tempo templates have none: with no pace to prescribe, a tempo
+    // carries its effort, not a pace (Run20). (Interval work-pace + race
+    // pace flow through their own fields.)
     const resolved = resolveSessionPaces(tmpl.type, paceTable ?? null, {
       fallbackPace: tmpl.config.targetPace,
     });
@@ -787,19 +803,16 @@ function templateToPrefill(
   } else if (tmpl.config.runWalk) {
     // Run20 (5): a timed target (above) and no pace anywhere in it.
     prefill.segments = segmentsFromRunWalk(tmpl.config.runWalk, seed);
-  } else if (tmpl.type === "easy" && tmpl.config.targetDurationMinutes) {
+  } else if (tmpl.type === "easy" && minutes) {
     // Use the same pause-corrected player, remaining-time display and finish
     // cue as every structured session. A completed target never auto-saves.
     prefill.segments = [
       {
         type: "easy",
-        label: `Easy ${tmpl.config.targetDurationMinutes} min`,
+        label: `Easy ${minutes} min`,
         instruction: "Conversational pace",
-        target: {
-          kind: "duration",
-          seconds: tmpl.config.targetDurationMinutes * 60,
-        },
-        cue: `Easy running for ${tmpl.config.targetDurationMinutes} minutes. Keep it conversational.`,
+        target: { kind: "duration", seconds: minutes * 60 },
+        cue: `Easy running for ${minutes} minutes. Keep it conversational.`,
       },
     ];
   } else if (raceFinish && tmpl.config.targetDistanceKm) {

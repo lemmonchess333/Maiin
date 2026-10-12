@@ -76,7 +76,11 @@ export function weekRolloverAnchor(
  * Whether loading the plan has to build this week's race runs: a race plan
  * with no run days yet, or this week's runs no longer matching the race
  * (its goal or the schedule changed elsewhere) while the race is ahead and
- * recovery is not running. Earlier weeks are the rollover's.
+ * recovery is not running. Earlier weeks are the rollover's. A week that
+ * holds no runs at all is built too: a plan saved after its week's last run
+ * day, before such a plan started on next week's runs (Run19), was saved
+ * with one, and the rollover, which moves a race plan on from its runs'
+ * week (`weekRolloverAnchor`), has nothing to move on from there.
  */
 export function raceWeekNeedsBuilding(
   state: Pick<ProgramState, "runDays" | "runPlan">,
@@ -85,9 +89,19 @@ export function raceWeekNeedsBuilding(
 ): boolean {
   if (profile.runMode !== "race_prep" || !profile.raceGoal) return false;
   if (!state.runDays) return true;
-  return (
+  const raceAhead =
     raceIsInFuture(profile.raceGoal, today) &&
-    !isInRecoveryOn(state.runPlan, today) &&
+    !isInRecoveryOn(state.runPlan, today);
+  // A recovery phase is the server's to end (`dailyRaceReconciliationSweep`),
+  // however far past its end date, and a rebuild here would drop it.
+  if (
+    raceAhead &&
+    state.runDays.length === 0 &&
+    state.runPlan?.phase !== "recovery"
+  )
+    return true;
+  return (
+    raceAhead &&
     state.runDays[0]?.weekKey === localWeekKey(parseLocalDate(today)) &&
     areRaceRunDaysStale({
       runDays: state.runDays,

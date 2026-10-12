@@ -42,7 +42,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import { APPLIED } from "@/features/program/programOutcome";
 
 /* These components read the display unit, which resolves from the auth
@@ -408,6 +408,47 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.queryByText(/at race pace/)).toBeNull();
   });
 
+  it("Run21 (5): a long run's minutes come from the runner's confirmed pace", () => {
+    const { profile, callbacks } = setup();
+    const runDay = makeRunDay({
+      id: "runday_long",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      templateId: "long_15k",
+      status: "planned",
+    });
+    const sheet = (runFitness?: UserProfile["runFitness"]) =>
+      render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, runFitness }}
+          programState={makeProgramState([runDay])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...callbacks}
+        />
+      );
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /^15 km\b/.test(text));
+    // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+    const confirmed = sheet({
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      pendingConfirmation: false,
+    });
+    expect(metaLine()).toMatch(/^15 km · about 100 min\b/);
+    confirmed.unmount();
+    sheet(undefined);
+    expect(metaLine()).not.toMatch(/min/);
+  });
+
   it("Run21 (3): says what the run is with no plan to give a reason", () => {
     const { profile, programState, callbacks } = setup();
     render(
@@ -473,6 +514,82 @@ describe("DayActionSheet — planned run", () => {
     expect(select.disabled).toBe(false);
     expect(screen.getByText(/Mark as done/i)).toBeInTheDocument();
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+  });
+
+  it("names the heart-rate zone, and a race's follows its distance (Run21 (1))", () => {
+    const { profile, runDay } = setup();
+    const zoneLine = (templateId: string) => {
+      const { unmount } = render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{ ...profile, maxHeartRate: 200 }}
+          programState={makeProgramState([
+            {
+              ...runDay,
+              templateId,
+              type: templateId.endsWith("race") ? "race" : "easy",
+            },
+          ])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(zoneLine("easy_30")).toContain("Z2 · Easy · 120–140 bpm");
+    expect(zoneLine("5k_race")).toContain("Z5 · Hard · 180–200 bpm");
+    expect(zoneLine("marathon_race")).toContain(
+      "Z4 · Comfortably hard · 160–180 bpm"
+    );
+  });
+
+  it("names the quality sessions in the reason only when the run's week holds one (Run21 (3))", () => {
+    // An easy day in a race plan's build: a returning runner's week holds no
+    // tempo or intervals (Run15), so they can't be its reason.
+    const { profile, runDay } = setup();
+    const later = new Date();
+    later.setDate(later.getDate() + 2);
+    const why = (otherTemplateId: string) => {
+      const programState = makeProgramState([
+        runDay,
+        makeRunDay({
+          id: "runday_other",
+          dayIndex: later.getDay(),
+          date: `${later.getFullYear()}-${String(later.getMonth() + 1).padStart(2, "0")}-${String(later.getDate()).padStart(2, "0")}`,
+          weekKey: todayWeekKey(),
+          templateId: otherTemplateId,
+        }),
+      ]);
+      programState.runPlan = {
+        currentWeek: 9,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+      } as ProgramState["runPlan"];
+      const { unmount } = render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={profile}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...commonCallbacks()}
+        />
+      );
+      const text = document.body.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(why("tempo_20")).toMatch(/it makes the quality sessions work/);
+    const easyWeek = why("easy_40");
+    expect(easyWeek).toMatch(/most of your running is easy/);
+    expect(easyWeek).not.toMatch(/quality sessions/);
   });
 
   it("Mark complete calls markManualComplete with the runDay's id (PR-J Q2)", () => {

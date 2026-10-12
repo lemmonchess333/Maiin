@@ -372,7 +372,7 @@ describe("a new runner's runs after the run-walk weeks", () => {
     expect(plan("half", 16, null).weeks[6].map((r) => r.templateId)).toEqual([
       "long_15k",
       "easy_50",
-      "tempo_30",
+      "tempo_20",
     ]);
   });
 });

@@ -120,9 +120,11 @@ vi.mock("@/hooks/useAudioCues", () => ({
 vi.mock("@/hooks/useSessionPlayer", () => ({
   useSessionPlayer: () => ({
     state: { index: 0 },
+    segments: [],
     current: null,
     next: null,
     isComplete: false,
+    workPortion: () => null,
     start: () => {},
     tick: () => {},
     skip: () => {},

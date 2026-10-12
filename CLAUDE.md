@@ -606,12 +606,15 @@ from, its version and the local changes to carry into the next update are in
 
 ### Reusable prompts
 
-Two paste-ready session prompts live in `docs/agents/`, each carrying the
-measured baseline and the pre-decided calls its last run earned:
-`visual-pass-prompt.md` for the pixels-only visual pass, and
+Three paste-ready session prompts live in `docs/agents/`, each carrying its
+measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
-de-slop, front-end, design). Re-verify their cited lines before acting; the
-citations are starting points, not a to-do list.
+de-slop, front-end, design), and `training-engine-prompt.md` for lifting and
+running (a simulator on the real engine, end-to-end journeys, owner
+decisions; its inputs, checked against their sources on 2026-10-07, are in
+`docs/training-engine-2026-10/`). The first two
+also carry the calls their last run earned. Re-verify their cited lines
+before acting; the citations are starting points, not a to-do list.
 `app-improvement-pass-2026-09-05.md` is that prompt's first run: what
 shipped, what was declined and why, the operator checklist, the open owner
 calls with both options measured, and the ratchet baselines it left.

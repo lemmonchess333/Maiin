@@ -237,6 +237,132 @@ describe("todaySession — a run day", () => {
   });
 });
 
+/* F14 and F21 (the training-engine simulator): runs are pinned to dates
+   and lifts to the week's pattern (ADR-0002), but the card asked the
+   weekday whether there was a run. A Sunday race read as a rest day for 7
+   of the 10 race personas, and a run moved to another weekday showed rest
+   there, 11 times of 11. */
+describe("todaySession — a run sits on its date, whatever the weekday", () => {
+  it("offers a race on a Sunday the week leaves to rest", () => {
+    const session = todaySession(
+      input({
+        today: SUNDAY,
+        profile: profileWith({ 2: "run", 4: "run" }),
+        programState: programStateWith({
+          runDays: [runDay(SUNDAY, { templateId: "half_race", type: "race" })],
+        }),
+      })
+    );
+    expect(session.type).toBe("run");
+    expect(session.run?.runDay?.id).toBe(`rd-${SUNDAY}`);
+    expect(session.rest).toBeNull();
+  });
+
+  it("offers a run moved to a lifting day, with the lift", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 4: "run" }),
+        programState: programStateWith({
+          workouts: [PUSH],
+          runDays: [runDay(WEDNESDAY, { movedFromDate: THURSDAY })],
+        }),
+      })
+    );
+    expect(session.type).toBe("both");
+    expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
+    expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
+  });
+
+  it("offers no run on the weekday a run moved from, once the week's runs are written", () => {
+    const session = todaySession(
+      input({
+        today: THURSDAY,
+        profile: profileWith({ 4: "run" }),
+        programState: programStateWith({
+          runDays: [runDay(FRIDAY, { movedFromDate: THURSDAY })],
+        }),
+      })
+    );
+    expect(session.type).toBe("rest");
+    expect(session.run).toBeNull();
+  });
+
+  it("still offers a run on a free runner's run weekday, where no runs are written", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, { runMode: "freeform" }),
+        programState: programStateWith({ runDays: [] }),
+      })
+    );
+    expect(session.type).toBe("run");
+    expect(session.run?.runDay).toBeNull();
+  });
+});
+
+/* Run21 (5): Home's card states the run's dose. A timed run states its
+   time; a long run its distance, and its minutes at the runner's own easy
+   pace once a benchmark is confirmed. The template's "about 80 min" for
+   15 km assumed 5:20 /km. */
+describe("todaySession — a run's dose", () => {
+  // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+  const confirmed = {
+    runFitness: {
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+    },
+  } as Partial<UserProfile>;
+  const dose = (templateId: string, extra: Partial<UserProfile> = {}) =>
+    todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, extra),
+        programState: programStateWith({
+          runDays: [runDay(WEDNESDAY, { templateId })],
+        }),
+      })
+    ).run?.dose;
+
+  it("is a timed run's own time", () => {
+    expect(dose("easy_40")).toBe("40 min");
+    expect(dose("easy_40", confirmed)).toBe("40 min");
+  });
+
+  it("is a long run's distance, and its minutes at a confirmed pace", () => {
+    expect(dose("long_15k")).toBe("15 km");
+    expect(dose("long_15k", confirmed)).toBe("15 km · about 100 min");
+  });
+
+  it("waits for a derived benchmark to be confirmed", () => {
+    expect(
+      dose("long_15k", {
+        runFitness: {
+          ...confirmed.runFitness!,
+          source: "derived",
+          pendingConfirmation: true,
+        },
+      } as Partial<UserProfile>)
+    ).toBe("15 km");
+  });
+
+  it("is the day's override when the person swapped the run", () => {
+    expect(
+      todaySession(
+        input({
+          profile: profileWith({ 3: "run" }),
+          programState: programStateWith({
+            runDays: [
+              runDay(WEDNESDAY, {
+                templateId: "long_15k",
+                userOverride: "easy_30",
+              }),
+            ],
+          }),
+        })
+      ).run?.dose
+    ).toBe("30 min");
+  });
+});
+
 describe("todaySession — a new person's first run", () => {
   const runDayInput = {
     profile: profileWith({ 3: "run" }),

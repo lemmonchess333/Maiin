@@ -196,7 +196,7 @@ const PINNED: Record<string, string> = {
   "functions/lib/workoutBurn.js":
     "src/features/program/__tests__/workoutBurn.cross.test.ts",
   // PROGRAM-DELOAD-01 — CF deload transform mirrors programEngine.ts
-  // applyDeload (and the easierToday.deloadWeight weight rule).
+  // applyDeload.
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
   // One-off run move — the copy inside the command transaction is the one
@@ -297,6 +297,11 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
+  "functions/lib/raceReconciliation.js":
+    "server-only race-day decisions, moved verbatim out of index.js: its 'mirror' " +
+    "lines name the client effects these replaced, which PR-L L5 deleted (no client " +
+    "write path remains, useProgram.ts says), and the rule it calls in " +
+    "runModeResolution.js, which is pinned in its own right",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */

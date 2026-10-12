@@ -131,6 +131,46 @@ describe("PerformanceOverviewCard", () => {
     expect(overviewVerbs).toEqual(homeVerbs);
   });
 
+  it("keeps the heading and its Details while the week loads, over a card-shaped placeholder (Pol1)", () => {
+    // It was a shorter card with no Details beside the heading, so the
+    // score landing dropped everything under it about 70 px.
+    const onOpenDetails = vi.fn();
+    serve([], true);
+    const { container } = renderCard(onOpenDetails);
+    const section = screen.getByRole("region", { name: "Performance" });
+    expect(
+      within(section).getByRole("heading", { name: "Performance" })
+    ).toBeInTheDocument();
+    fireEvent.click(within(section).getByRole("button", { name: "Details" }));
+    expect(onOpenDetails).toHaveBeenCalledTimes(1);
+    expect(
+      container.querySelector('[data-skeleton="performance-card"]')
+    ).not.toBeNull();
+  });
+
+  it("fades the card in where its placeholder was, and not when the week was already there (Pol1)", () => {
+    /* framer writes a fade's starting opacity inline as it mounts. */
+    const fadesIn = () =>
+      (
+        screen.getByText("72").closest("[style]")?.getAttribute("style") ?? ""
+      ).includes("opacity: 0");
+    serve([], true);
+    const view = renderCard();
+    serve(history(72, "high"));
+    view.rerender(
+      <MemoryRouter>
+        <PerformanceOverviewCard hasLoggedSession onOpenDetails={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(fadesIn()).toBe(true);
+    cleanup();
+
+    serve(history(72, "high"));
+    renderCard();
+    expect(screen.getByText("72")).toBeInTheDocument();
+    expect(fadesIn()).toBe(false);
+  });
+
   it("says the deload advice once, in its line", () => {
     serve(history(82, "high", true));
     renderCard();
