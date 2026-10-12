@@ -1,3 +1,5 @@
+import { runSessionAbout } from "@/lib/runSessionAbout";
+import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
@@ -155,7 +157,9 @@ export default function RunLaunchCard({
             {workout.config.strides &&
               ` · ${workout.estimatedDuration} min total, including strides`}
           </p>
-          <RunPurpose>{purpose}</RunPurpose>
+          <RunPurpose>
+            <RunAbout about={runSessionAbout(workout)} why={purpose} />
+          </RunPurpose>
         </div>
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />

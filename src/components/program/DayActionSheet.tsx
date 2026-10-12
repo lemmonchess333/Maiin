@@ -367,6 +367,7 @@ export default function DayActionSheet({
                 )}
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
+                  template={selectedRunTemplate}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />
