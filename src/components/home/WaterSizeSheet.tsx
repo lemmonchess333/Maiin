@@ -15,6 +15,7 @@ import {
 } from "@/lib/waterUnits";
 import type { WaterDrink } from "@/lib/waterActions";
 import { formatTimeOfDay } from "@/utils/formatters";
+import { Collapse } from "@/components/ui/Collapse";
 
 export default function WaterSizeSheet({
   open,
@@ -116,13 +117,13 @@ export default function WaterSizeSheet({
             onClick={() => setCustomOpen((current) => !current)}
             rightIcon={
               <ChevronDown
-                className={`size-4 text-muted-foreground ${customOpen ? "rotate-180" : ""}`}
+                className={`size-4 text-muted-foreground motion-safe:transition-transform duration-200 ${customOpen ? "rotate-180" : ""}`}
               />
             }
           >
             Other amount
           </Button>
-          {customOpen && (
+          <Collapse open={customOpen}>
             <form
               id={`${amountId}-custom`}
               className="pt-2 space-y-2"
@@ -179,7 +180,7 @@ export default function WaterSizeSheet({
                 </p>
               )}
             </form>
-          )}
+          </Collapse>
         </div>
         {/* The day's log. Each drink is its own record in the water
             document (`waterReceipts`), so a row takes back exactly the

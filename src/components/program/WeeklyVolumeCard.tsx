@@ -17,6 +17,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import Card from "@/components/ui/Card";
+import { Collapse } from "@/components/ui/Collapse";
 
 /**
  * Weekly sets-per-muscle summary (D-LIFT-1, read-only). Surfaces the hard-set
@@ -143,7 +144,7 @@ export default function WeeklyVolumeCard({
           aria-hidden="true"
         />
       </button>
-      {expanded && (
+      <Collapse open={expanded}>
         <div className="space-y-2">
           {rows.map(({ muscle, sets, landmark, status }) => {
             // Bar fills relative to the top of the band (high), capped at 100%.
@@ -175,7 +176,7 @@ export default function WeeklyVolumeCard({
             );
           })}
         </div>
-      )}
+      </Collapse>
     </Card>
   );
 }

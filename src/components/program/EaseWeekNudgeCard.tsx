@@ -9,6 +9,7 @@ import { parseLocalDate } from "@/lib/dateHelpers";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { EaseWeekNudgeResult } from "@/lib/easeWeekNudge";
 import { SHORT_TARGET_RATIO } from "@/lib/easeWeekNudge";
+import { Collapse } from "@/components/ui/Collapse";
 
 type ShortSessions = Extract<
   EaseWeekNudgeResult,
@@ -91,40 +92,42 @@ export default function EaseWeekNudgeCard({
           </Button>
         ) : null}
       </div>
-      {expanded && evidence?.length ? (
-        <div className="mt-2 border-t border-running/20 pt-2">
-          <p className="text-xs text-muted-foreground">
-            Recorded less than{" "}
-            <span className="font-mono tabular-nums">
-              {Math.round(SHORT_TARGET_RATIO * 100)}%
-            </span>{" "}
-            of the saved target. Tap a run to check its details.
-          </p>
-          <ul className="mt-1">
-            {evidence.map((run) => {
-              const amount = (value: number) =>
-                run.target.unit === "seconds"
-                  ? durationLabel(value)
-                  : distanceLabel(value, unit);
-              return (
-                <li key={run.id}>
-                  <Link
-                    to={`/run/${encodeURIComponent(run.id)}`}
-                    className="flex flex-wrap justify-between items-center gap-2 min-h-11 rounded-lg px-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    <span className="text-foreground">
-                      {formatDayMonth(parseLocalDate(run.date))}
-                    </span>
-                    <span className="font-mono tabular-nums text-muted-foreground">
-                      {amount(run.actual)} / {amount(run.target.value)}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
+      <Collapse open={expanded && Boolean(evidence?.length)}>
+        {() => (
+          <div className="mt-2 border-t border-running/20 pt-2">
+            <p className="text-xs text-muted-foreground">
+              Recorded less than{" "}
+              <span className="font-mono tabular-nums">
+                {Math.round(SHORT_TARGET_RATIO * 100)}%
+              </span>{" "}
+              of the saved target. Tap a run to check its details.
+            </p>
+            <ul className="mt-1">
+              {(evidence ?? []).map((run) => {
+                const amount = (value: number) =>
+                  run.target.unit === "seconds"
+                    ? durationLabel(value)
+                    : distanceLabel(value, unit);
+                return (
+                  <li key={run.id}>
+                    <Link
+                      to={`/run/${encodeURIComponent(run.id)}`}
+                      className="flex flex-wrap justify-between items-center gap-2 min-h-11 rounded-lg px-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <span className="text-foreground">
+                        {formatDayMonth(parseLocalDate(run.date))}
+                      </span>
+                      <span className="font-mono tabular-nums text-muted-foreground">
+                        {amount(run.actual)} / {amount(run.target.value)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </Collapse>
     </div>
   );
 }

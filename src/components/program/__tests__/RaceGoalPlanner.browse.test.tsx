@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import RaceGoalPlanner from "../RaceGoalPlanner";
 import { upcomingRaceSpaceDefs, spaceDef } from "@/features/spaces/spaceDefs";
@@ -102,7 +102,7 @@ describe("race picker browsing", () => {
       screen.getByRole("option", { name: /London Marathon 25 Apr 2027/ })
     ).toBeInTheDocument();
   });
-  it("starts in the selected race's country and preserves the goal through empty filters", () => {
+  it("starts in the selected race's country and preserves the goal through empty filters", async () => {
     const handlers = callbacks();
     render(<RaceGoalPlanner {...base} {...handlers} />);
     fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
@@ -126,7 +126,10 @@ describe("race picker browsing", () => {
     expect(handlers.onPickRace).toHaveBeenCalledWith(
       spaceDef("paris-marathon")
     );
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    // The picker closes the way it opened (Collapse), then is gone.
+    await waitFor(() =>
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument()
+    );
     expect(handlers.onDistanceChange).not.toHaveBeenCalled();
   });
   it("keeps manual entry available when the country and distance have no catalogue races", () => {
