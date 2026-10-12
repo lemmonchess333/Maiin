@@ -130,12 +130,14 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     await page.getByRole("button", { name: RUN.done, exact: true }).click();
 
     // Home's week: today's run, done.
+    // Home reads the week from its listeners, which the emulators can take
+    // seconds to fill once earlier journeys have loaded them.
     await openTab(page, TABS.home);
     await expect(
       page.getByRole("button", {
         name: new RegExp(`^${stripDay(planned!.date!)}, ${STRIP.runDone}`),
       })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 20_000 });
     expect(pageErrors(page), "no error on the page").toEqual([]);
   } finally {
     resetNodeClock();
