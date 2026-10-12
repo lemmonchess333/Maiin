@@ -2035,3 +2035,31 @@ describe("the stretched line (Pgm7 A3)", () => {
     );
   });
 });
+
+describe("WorkoutSession — the rest after a warm-up", () => {
+  /* A warm-up is light, so it is briefly rested: the plan's session length
+     counts a minute for one, reps and rest. A working set's full rest after
+     each warm-up put minutes on every main lift that the plan never
+     counted. */
+  const restLabel = () =>
+    screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
+
+  it("rests 45 seconds after a warm-up and the lift's full rest after a working set", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes between working sets.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 1. Change set type" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("0:45");
+
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
+  });
+});

@@ -41,6 +41,15 @@ export interface RestContext {
 }
 
 /**
+ * Rest after a warm-up set. A warm-up is light, so it is briefly rested:
+ * the session-length estimate prices one at a minute, the reps and this
+ * rest together (`expressSession.ts`), and the timer runs what it prices.
+ * A working set's full rest after each of four warm-ups put ten minutes on
+ * a main lift that the plan never counted.
+ */
+export const WARMUP_REST_SECONDS = 45;
+
+/**
  * The rest a set gets: the one the person fixed in Workout preferences, or,
  * where they left it to the plan, the plan's suggestion.
  */
@@ -51,4 +60,12 @@ export function restSecondsFor(
   return fixedRest !== undefined && fixedRest > 0
     ? fixedRest
     : suggestedRestSeconds(exercise, sessionMinutes);
+}
+
+/** The rest after a warm-up: short, and never longer than the lift's own. */
+export function warmupRestSecondsFor(
+  exercise: Parameters<typeof suggestedRestSeconds>[0],
+  context: RestContext = {}
+): number {
+  return Math.min(WARMUP_REST_SECONDS, restSecondsFor(exercise, context));
 }
