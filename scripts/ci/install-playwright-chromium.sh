@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Installs Playwright's Chromium for a CI job, in up to three bounded attempts.
 #
-#   scripts/ci/install-playwright-chromium.sh install SECONDS
+#   scripts/ci/install-playwright-chromium.sh install SECONDS [BROWSER...]
 #     npx playwright install --with-deps chromium (no browser in the cache)
-#   scripts/ci/install-playwright-chromium.sh install-deps SECONDS
+#   scripts/ci/install-playwright-chromium.sh install-deps SECONDS [BROWSER...]
 #     npx playwright install-deps chromium (browser restored from the cache)
+#
+# A job that needs other browsers names them (chromium, webkit, firefox),
+# and those are installed instead.
 #
 # SECONDS bounds one attempt: a stalled apt mirror hangs apt-get with no
 # error, and unbounded that cost whole jobs before a test ran.
@@ -62,20 +65,30 @@ release_dpkg() {
   sudo dpkg --configure -a || true
 }
 
+usage() {
+  echo "usage: $0 install|install-deps SECONDS [chromium|webkit|firefox ...]" >&2
+}
+
 main() {
-  local cmd
-  case "${1:-}" in
-    install) cmd=(npx playwright install --with-deps chromium) ;;
-    install-deps) cmd=(npx playwright install-deps chromium) ;;
-    *)
-      echo "usage: $0 install|install-deps SECONDS" >&2
-      return 2
-      ;;
-  esac
-  local seconds=${2:-}
-  if ! [[ $seconds =~ ^[1-9][0-9]*$ ]]; then
-    echo "usage: $0 install|install-deps SECONDS" >&2
+  local mode=${1:-} seconds=${2:-}
+  if [[ $mode != install && $mode != install-deps ]] ||
+    ! [[ $seconds =~ ^[1-9][0-9]*$ ]]; then
+    usage
     return 2
+  fi
+  shift 2
+  local browsers=("${@:-chromium}") browser
+  for browser in "${browsers[@]}"; do
+    if ! [[ $browser =~ ^(chromium|webkit|firefox)$ ]]; then
+      usage
+      return 2
+    fi
+  done
+  local cmd
+  if [[ $mode == install ]]; then
+    cmd=(npx playwright install --with-deps "${browsers[@]}")
+  else
+    cmd=(npx playwright install-deps "${browsers[@]}")
   fi
   local i
   for i in 1 2 3; do

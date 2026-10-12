@@ -13,6 +13,7 @@ import { test, expect } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import {
   deleteAccount,
+  moveDay,
   nextWeekday,
   openJourney,
   openTab,
@@ -49,7 +50,7 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     await openJourney(page, start);
     account = await signUp(page, "treadmill");
     await setUpPlan(page, {
-      aim: "Improve running",
+      aim: "Support my running",
       activity: "Running",
       runner: "Regular runner",
       race: {
@@ -62,10 +63,13 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       sex: "Female",
       age: "25–34",
     });
-    const planned = (await programme(account.uid)).runDays?.find(
-      (run) => run.date === start
-    );
-    expect(planned, "the plan has a run today").toBeTruthy();
+    // The plan's first run. Setup's default week (Run20 (2)) need not hold
+    // one on the day the plan is made, so the journey moves to its day.
+    const planned = (await programme(account.uid)).runDays
+      ?.filter((run) => run.date !== undefined && run.date >= start)
+      .sort((a, b) => a.date!.localeCompare(b.date!))[0];
+    expect(planned, "the plan has a run this week").toBeTruthy();
+    await moveDay(page, planned!.date!);
 
     // Today's run, started from Home's card: the Run page opens on it.
     await page
@@ -126,12 +130,14 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     await page.getByRole("button", { name: RUN.done, exact: true }).click();
 
     // Home's week: today's run, done.
+    // Home reads the week from its listeners, which the emulators can take
+    // seconds to fill once earlier journeys have loaded them.
     await openTab(page, TABS.home);
     await expect(
       page.getByRole("button", {
-        name: new RegExp(`^${stripDay(start)}, ${STRIP.runDone}`),
+        name: new RegExp(`^${stripDay(planned!.date!)}, ${STRIP.runDone}`),
       })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 20_000 });
     expect(pageErrors(page), "no error on the page").toEqual([]);
   } finally {
     resetNodeClock();

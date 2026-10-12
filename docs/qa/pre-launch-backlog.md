@@ -35,6 +35,38 @@ the resume in jsdom. WKWebView's own resume events need a device.
       session shows as skipped, under the "Race week" banner ("No lifting
       in the two days before your race…").
 
+## The polish round on a phone (Pol1, 2026-10-11)
+
+Affects: the workout screen's rest timer and set ticks
+(`WorkoutSession.tsx`, `CompactRestTimer.tsx`, `SetCheck.tsx`), the
+finish screen (`SessionCompleteScreen.tsx`, `SessionBadge.tsx`), the Food
+diary's rows (`FoodRow.tsx`, `FoodTimeline.tsx`), the Pro scan demo's
+diary (`ScanDemo.tsx`) and Analytics while it loads (`HistorySkeleton`,
+`PerformanceCardSkeleton`, `PeriodSummarySkeleton`). The unit tests and
+the emulator captures cover order, placement and the fallbacks; these
+need an iPhone.
+
+- [ ] **The rest card by the thumb.** Tick a working set: nothing above
+      the set table moves, the rest card rises above Complete set and the
+      home indicator, and its ring sweeps rather than stepping. A set
+      that is also a new best shows the gold card above the rest card.
+- [ ] **The tick.** A tick pops its box and draws its check once; going
+      back to an earlier exercise does not replay it. With Reduce Motion
+      on, neither moves.
+- [ ] **Done in thumb reach.** Save a workout whose finish screen
+      scrolls (a new best, a badge, the sharing question): Done stays
+      pinned above the home indicator while the page scrolls under it,
+      and comes last at the end. With VoiceOver, saving lands focus on
+      Done.
+- [ ] **Meal photos as thumbnails.** On a day with a scanned meal, its
+      photo is a 52 px thumbnail read from the device, the other rows
+      carry their slot's tile, and swiping a photo row to delete folds it
+      away. A photo past the 90-day sweep falls back to the tile.
+- [ ] **Analytics on a cold open.** Open Analytics first after a fresh
+      launch on a slow connection: the placeholder is the page's shape,
+      and nothing moves as the score and the range card arrive, at the
+      default text size and at a larger one.
+
 ## Race plans the rollover dropped end on the server (2026-10-10)
 
 Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
@@ -47,8 +79,9 @@ after a 5K, 10K, half or marathon.
 The decision tests and the emulator case cover the rule and its
 profile-only write; these need the deployed function.
 
-- [ ] **The deployed source.** The deploy's read-back prints
-      `Verified deployed source: dailyRaceReconciliationSweep`.
+- [x] **The deployed source.** The deploy's read-back prints
+      `Verified deployed source: dailyRaceReconciliationSweep`. Deploy
+      production run 253 (2026-10-10, #2667) printed it, version 183.
 - [ ] **The first sweep.** The 04:00 UTC log line after the deploy ends
       `orphanedGoalCleared=N`. Every stuck active account goes in that one
       sweep, so N may be more than one; most days after, 0. Open one
@@ -481,6 +514,13 @@ cover the rules; these need a phone outside.
       the route quality "good" on the finish screen, not "poor".
 - [ ] **Climb on a known hill.** A run with a known climb should read
       close to it; a flat run should read a few metres, not hundreds.
+- [ ] **Route colours after a run** (2026-10-10). On a steady run the
+      route on the finish screen should be mostly amber, not speckled
+      green and coral. A surge, a hill or a walk should show as one green
+      or coral stretch where it happened. The colours are now measured
+      over 200 m of route (`routePaceRatios` in
+      `src/components/run/routePace.ts`); measured between each pair of
+      fixes, GPS wobble alone changed them.
 
 ## The new logo, icon and launch animation (2026-10-01)
 

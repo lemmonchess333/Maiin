@@ -7,10 +7,11 @@ import { haptic } from "@/lib/haptic";
 import { paceBandLabel, paceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  benchmarkFromRaceTime,
+  manualRunFitness,
   paceTableFromFitness,
-  vdotFromRace,
-  parseRaceTimeToSeconds,
   type RaceDistanceKey,
+  type RaceTimeError,
 } from "@/lib/runPaces";
 import { usePaceInsight } from "@/hooks/usePaceInsight";
 import PaceInsightCard from "@/components/run/PaceInsightCard";
@@ -31,16 +32,17 @@ import type { UserProfile } from "@/lib/auth";
  * canonical contracts.
  */
 
-const RACE_OPTIONS: {
-  value: RaceDistanceKey;
-  label: string;
-  meters: number;
-}[] = [
-  { value: "5k", label: "5K", meters: 5000 },
-  { value: "10k", label: "10K", meters: 10000 },
-  { value: "half", label: "Half", meters: 21097.5 },
-  { value: "marathon", label: "Marathon", meters: 42195 },
+const RACE_OPTIONS: { value: RaceDistanceKey; label: string }[] = [
+  { value: "5k", label: "5K" },
+  { value: "10k", label: "10K" },
+  { value: "half", label: "Half" },
+  { value: "marathon", label: "Marathon" },
 ];
+
+const RACE_TIME_ERRORS: Record<RaceTimeError, string> = {
+  format: "Enter a time like 22:30 (or 1:45:00 for longer races).",
+  implausible: "That time doesn't look right. Check it and try again.",
+};
 
 export default function RunFitnessSection({
   profile,
@@ -97,32 +99,16 @@ export default function RunFitnessSection({
   }
 
   async function handleSave() {
-    const seconds = parseRaceTimeToSeconds(timeStr);
-    if (seconds === null) {
-      setError("Enter a time like 22:30 (or 1:45:00 for longer races).");
-      return;
-    }
-    const meters = RACE_OPTIONS.find((o) => o.value === distance)!.meters;
-    const vdot = vdotFromRace(meters, seconds);
-    if (vdot <= 0) {
-      setError("That time doesn't look right. Check it and try again.");
+    const entry = benchmarkFromRaceTime(distance, timeStr);
+    if ("error" in entry) {
+      setError(RACE_TIME_ERRORS[entry.error]);
       return;
     }
     setError(null);
     setSaving(true);
     try {
       await updateProfile(
-        {
-          runFitness: {
-            benchmark: { distanceM: meters, timeS: seconds },
-            vdot: Math.round(vdot * 10) / 10,
-            source: "manual",
-            updatedAt: new Date().toISOString(),
-            // RUN-EV-08: a manual entry is consented by definition; literal
-            // false so a prior pending auto-derive can't survive the merge.
-            pendingConfirmation: false,
-          },
-        },
+        { runFitness: manualRunFitness(entry, new Date()) },
         { throwOnError: true }
       );
       haptic("success");

@@ -453,12 +453,6 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
-  // A run-walk session (Run20 (5)) is running its steps. A run type picked
-  // on a run-walk day leaves the steps playing, so this reads the template
-  // as the saved run will, the plan's when none was started from.
-  const runWalkSession =
-    !!runConfig?.segments?.length &&
-    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
   const judgingPace = judgesPaceNow(
@@ -468,6 +462,12 @@ export default function Run() {
   );
   // The bar's pace: none until the run has one to judge (Run20).
   const barPace = runConfig ? livePaceTarget(runConfig) : null;
+  // A run-walk session (Run20 (5)) is running its steps. A run type picked
+  // on a run-walk day leaves the steps playing, so this reads the template
+  // as the saved run will, the plan's when none was started from.
+  const runWalkSession =
+    !!runConfig?.segments?.length &&
+    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -951,8 +951,8 @@ export default function Run() {
     phase,
     audioCues,
     runConfig,
-    runWalkSession,
     judgingPace,
+    runWalkSession,
   ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
@@ -1347,8 +1347,8 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
-                  racePace: launchRacePace?.kind,
                   weekHasQuality: launchWeekHasQuality,
+                  racePace: launchRacePace?.kind,
                 }).purpose
               }
               prefill={planDecision.prefill}

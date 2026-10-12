@@ -365,8 +365,10 @@ export async function setUpPlan(
       const runs = page.getByRole("slider", { name: SETUP.runsPerWeek });
       await runs.fill(String(answers.race.runsPerWeek));
       await expect(runs).toHaveValue(String(answers.race.runsPerWeek));
+      // Exact: setup's optional recent race time has its own "Recent race
+      // distance" group, with a 5K and a 10K of its own.
       await page
-        .getByRole("radiogroup", { name: SETUP.raceDistance })
+        .getByRole("radiogroup", { name: SETUP.raceDistance, exact: true })
         .getByRole("radio", { name: answers.race.distance, exact: true })
         .click();
       await page

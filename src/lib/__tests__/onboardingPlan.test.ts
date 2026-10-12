@@ -73,6 +73,26 @@ describe("onboarding preview and commit plan", () => {
       expect(plan.profileUpdates.weeklyRunsTarget).toBe(0);
     }
   );
+  it("plans a race on at least two run days, whatever an older draft held (A7)", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        runFrequency: "new",
+        runMode: "race_prep",
+        weeklyRunDays: 1,
+        raceTargetDate: "2026-12-06",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.profileUpdates.runMode).toBe("race_prep");
+    expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(2);
+    expect(
+      plan.weekSchedule.filter(
+        (day) => day.type === "run" || day.type === "both"
+      )
+    ).toHaveLength(2);
+  });
   it.each([
     "hypertrophy",
     "fat_loss",
@@ -162,6 +182,25 @@ describe("supported running-only plans", () => {
       );
     }
   );
+  /* Run20 (2): setup's week gives the runs a weekend day and the long run
+     takes it. Mon, Wed, Fri put a runner-only plan's long run on Monday. */
+  it("puts a runner-only race plan's long run on Sunday", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        primaryGoal: "running",
+        daysPerWeek: 0,
+        runMode: "race_prep",
+        raceTargetDate: "2026-12-13",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.weekSchedule[0].type).toBe("run");
+    const long = plan.programState.runDays?.find((rd) => rd.type === "long");
+    expect(long?.dayIndex).toBe(0);
+  });
+
   it("derives activity from older drafts without changing their week", () => {
     expect(onboardingActivity(draft)).toBe("both");
     expect(onboardingActivity({ ...draft, runFrequency: "none" })).toBe(

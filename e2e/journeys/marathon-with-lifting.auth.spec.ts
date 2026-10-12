@@ -170,7 +170,7 @@ test("a marathon a year out, with lifting", async ({ page }) => {
     await openJourney(page, start);
     account = await signUp(page, "marathon");
     await setUpPlan(page, {
-      aim: "Improve running",
+      aim: "Support my running",
       activity: "Both",
       liftDays: "3",
       liftMinutes: "45 min",

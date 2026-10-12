@@ -1,0 +1,377 @@
+/* Scratch PoC: drive the app's REAL lift engine week by week for a synthetic
+   lifter. Uses only pure code the app runs:
+     buildOnboardingPlan (onboarding) -> normalizeProgramState (read path)
+     -> per session: nextUpIndex (Train's "Up next"), buildInitialSetLogs
+        (WorkoutSession's rows), toCompletionSetLogs (warm-ups stripped),
+        applySessionProgression (the finish transaction's progression),
+        then the day marked done exactly as commitWorkoutCompletion does
+     -> advanceWeek(state, experience, nextWeekKey) as the lift-only rollover
+        effect in useProgram calls it.
+   Lifter model: per-instance "true" e1RM (Epley) growing g%/week; does the
+   prefilled reps when able, else what capacity allows (fatigue: -1 rep per
+   2 sets); never more than the target. */
+import { it, vi } from "vitest";
+import { writeFileSync } from "fs";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
+import {
+  normalizeProgramState,
+  type ProgramExercise,
+  type ProgramState,
+} from "../programTypes";
+import { nextUpIndex } from "../nextUpCursor";
+import { buildInitialSetLogs, toCompletionSetLogs } from "../warmupRamp";
+import { applySessionProgression } from "../sessionCompletion";
+import { advanceWeek, easeBackIn } from "../programEngine";
+import { readSessionSets, sessionOutcome } from "../sessionSets";
+import { loadGridFor } from "../loadSteps";
+import { isBodyweightExerciseId } from "@/lib/exercises";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+
+const OUT =
+  (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+const epley1RM = (w: number, reps: number) => w * (1 + reps / 30);
+const repsAt = (e1rm: number, w: number) =>
+  w <= 0 ? 99 : Math.floor(30 * (e1rm / w - 1) + 1e-9);
+
+interface Persona {
+  name: string;
+  draft: Record<string, unknown>;
+  weeklyGrowth: number; // e.g. 0.005
+  /** true 1RMs for named lifts; others derived from the seed */
+  trueMax: Record<string, number>;
+  /** first exposure: lift the real working weight (RIR 2) instead of the seed */
+  calibrate: boolean;
+  /** pick up the heavier weight when the target has stretched past the range */
+  picksUpHeavier: boolean;
+  /** derive unnamed lifts' e1RM as seed*(1+(reps+seedRir)/30) */
+  seedRir: number;
+  weeks: number;
+  /** trained weeks pattern: return false to skip the whole week */
+  trainsWeek?: (w: number) => boolean;
+  /** sessions per week the lifter manages (default all) */
+  sessionsPerWeek?: number;
+  /** weekly capacity loss in an untrained week */
+  detrain?: number;
+  /** weeks at whose start the person taps "Ease back in" (share) */
+  easeBackAt?: Record<number, number>;
+  /** a race block the lift side follows (advanceWeek's raceBlockWeek) */
+  race?: { totalWeeks: number; distance: "5k" | "10k" | "half" | "marathon"; legTrim: boolean };
+  track: string[];
+}
+
+interface Row {
+  week: number;
+  wn: number;
+  phase: string;
+  lifts: Record<string, string>;
+}
+
+function simulate(p: Persona) {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  const start = "2026-03-09"; // Monday
+  vi.setSystemTime(parseLocalDate(start));
+  const plan = buildOnboardingPlan(
+    p.draft as never,
+    "recomp",
+    start
+  );
+  let state: ProgramState = normalizeProgramState(plan.programState);
+  const experience = p.draft.experience as string;
+  // true capacity per instance
+  const e1 = new Map<string, number>();
+  const bwReps = new Map<string, number>();
+  for (const d of state.workouts)
+    for (const ex of d.exercises) {
+      const key = ex.instanceId!;
+      if (isBodyweightExerciseId(ex.exerciseId)) {
+        bwReps.set(key, (ex.reps ?? 8) + 3);
+        continue;
+      }
+      const named = p.trueMax[ex.exerciseId];
+      e1.set(
+        key,
+        named ?? epley1RM(ex.weight || 20, (ex.baseReps ?? ex.reps) + p.seedRir)
+      );
+    }
+  const seen = new Set<string>();
+  const rows: Row[] = [];
+  const events: string[] = [];
+  let weekStart = parseLocalDate(start);
+  let growth = 1;
+  for (let week = 1; week <= p.weeks; week++) {
+    const trains = p.trainsWeek ? p.trainsWeek(week) : true;
+    if (week > 1) growth *= trains ? 1 + p.weeklyGrowth : 1 - (p.detrain ?? 0);
+    if (p.easeBackAt?.[week]) {
+      state = easeBackIn(state, p.easeBackAt[week]);
+      events.push(`week ${week}: EASE BACK IN ${p.easeBackAt[week] * 100}% (easingBack=${JSON.stringify(state.easingBack)})`);
+    }
+    const row: Row = {
+      week,
+      wn: state.weekNumber,
+      phase: state.currentPhase,
+      lifts: {},
+    };
+    const quota = p.sessionsPerWeek ?? state.workouts.length;
+    let done = 0;
+    while (trains && done < quota) {
+      const idx = nextUpIndex(state);
+      if (idx < 0) break;
+      const day = state.workouts[idx];
+      const date = localDateString(addLocalDays(weekStart, Math.min(6, done * 2)));
+      vi.setSystemTime(parseLocalDate(date));
+      const exercises = day.exercises;
+      const rowsInit = buildInitialSetLogs(exercises);
+      const setLogs = rowsInit.map((sets, i) => {
+        const ex = exercises[i];
+        const key = ex.instanceId!;
+        let weight = ex.weight;
+        const bw = isBodyweightExerciseId(ex.exerciseId);
+        const cap = (w: number) =>
+          bw
+            ? Math.floor((bwReps.get(key) ?? 10) * (1 + (growth - 1) * 2))
+            : repsAt((e1.get(key) ?? 100) * growth, w);
+        const grid = loadGridFor(ex.exerciseId, state.settings?.smallPlates === true);
+        if (!bw && p.calibrate && !seen.has(key) && ex.reps > 0) {
+          // first exposure: the heaviest grid weight with RIR 2 at target reps
+          let w = grid.nearest(Math.max(2.5, ex.weight));
+          while (cap(grid.above(w)) >= ex.reps + 2) w = grid.above(w);
+          while (w > grid.below(w) && grid.below(w) > 0 && cap(w) < ex.reps + 2) w = grid.below(w);
+          weight = w;
+        }
+        // stretched past the range: pick up the heavier weight if able
+        const top = ex.repRangeMax ?? ex.baseReps ?? ex.reps;
+        if (
+          !bw &&
+          p.picksUpHeavier &&
+          ex.reps > top &&
+          cap(grid.above(weight)) >= (ex.baseReps ?? ex.reps)
+        ) {
+          weight = grid.above(weight);
+        }
+        seen.add(key);
+        let k = 0;
+        return sets.map((s) => {
+          if (s.type === "warmup") return { ...s, completed: true };
+          const target =
+            weight !== ex.weight && ex.reps > top ? (ex.baseReps ?? ex.reps) : s.reps;
+          const capacity = cap(weight) - Math.floor(k / 2);
+          k++;
+          return {
+            ...s,
+            weight,
+            reps: Math.max(0, Math.min(target, capacity)),
+            completed: true,
+          };
+        });
+      });
+      const logs = toCompletionSetLogs(setLogs);
+      // outcome per tracked lift for the log (pure reads, as the engine does)
+      for (const [i, ex] of exercises.entries()) {
+        const label = `${ex.exerciseId} [${day.dayName.replace(/ —.*/, "")}#${ex.instanceId!.slice(-4)}]`;
+        if (!p.track.includes(ex.exerciseId)) continue;
+        const read = readSessionSets(logs[i], ex.sets);
+        const outcome = read
+          ? sessionOutcome(read, ex, isBodyweightExerciseId(ex.exerciseId))
+          : "none";
+        const repsDone = logs[i].map((s) => s.reps).join(",");
+        const best = Math.max(...logs[i].map((s) => epley1RM(s.weight, s.reps)));
+        row.lifts[label] =
+          `${ex.sets}×${ex.reps}${ex.repRangeMax ? `(${ex.baseReps}-${ex.repRangeMax})` : ""}@${ex.weight}→[${repsDone}]@${logs[i][0]?.weight} ${outcome} e1=${best.toFixed(0)}/true=${((e1.get(ex.instanceId!) ?? 0) * growth).toFixed(0)}`;
+      }
+      const completionId = `w${week}-d${idx}`;
+      const progressed = applySessionProgression(state, idx, {
+        completionId,
+        date,
+        prescription: {
+          dayName: day.dayName,
+          exercises,
+          progressionBaseline: exercises,
+        },
+        setLogs: logs,
+      });
+      // commitWorkoutCompletion's day mark, verbatim in effect
+      state = {
+        ...progressed,
+        workouts: progressed.workouts.map((r, i) =>
+          i === idx
+            ? { ...r, completed: true, skipped: false, completedWorkoutId: `programme-${completionId}` }
+            : r
+        ),
+      };
+      if (state.nextWorkoutOverride === idx) delete state.nextWorkoutOverride;
+      for (const ex of state.workouts[idx].exercises)
+        if (ex.lowered && !ex.lowered.shown && p.track.includes(ex.exerciseId) && ex.lowered.from > ex.weight)
+          events.push(
+            `week ${week}: ${ex.exerciseId} [${state.workouts[idx].dayName.replace(/ —.*/, "")}] LOWERED from ${ex.lowered.from} to ${ex.weight} (target ${ex.lowered.target})`
+          );
+      done++;
+    }
+    rows.push(row);
+    // the lift-only rollover
+    weekStart = addLocalDays(weekStart, 7);
+    vi.setSystemTime(weekStart);
+    const nextRace =
+      p.race && week < p.race.totalWeeks
+        ? { weekIndex: week, totalWeeks: p.race.totalWeeks, distance: p.race.distance }
+        : null;
+    state = advanceWeek(state, experience as never, localWeekKey(weekStart), nextRace, {
+      raceLegTrim: p.race?.legTrim === true,
+    });
+    if (p.race) events.push(`after week ${week}: weekNumber ${state.weekNumber} phase ${state.currentPhase} raceWeek ${state.raceWeek ?? "-"} skipped ${state.workouts.filter((d) => d.skipped).length}`);
+  }
+  vi.useRealTimers();
+  // trajectories of tracked main instances
+  const traj: string[] = [];
+  return { rows, events, traj, final: state };
+}
+
+function render(p: Persona, r: ReturnType<typeof simulate>) {
+  const out: string[] = [`\n## ${p.name}`];
+  const labels = [...new Set(r.rows.flatMap((x) => Object.keys(x.lifts)))].sort();
+  for (const label of labels) {
+    out.push(`\n### ${label}`);
+    out.push(`| wk | wkNo | phase | prescription → logged | `);
+    out.push(`|---|---|---|---|`);
+    for (const row of r.rows) {
+      const v = row.lifts[label];
+      if (v) out.push(`| ${row.week} | ${row.wn} | ${row.phase} | ${v} |`);
+    }
+  }
+  out.push(`\nEvents:\n${r.events.join("\n") || "(none)"}`);
+  return out.join("\n");
+}
+
+function summary(p: Persona, r: ReturnType<typeof simulate>) {
+  // working weight of each tracked main instance at weeks 1, 4, 8, 12, 16, 26, 52
+  const pick = [1, 3, 7, 10, 15, 19, 25, 30, 39, 51].filter((w) => w <= p.weeks);
+  const labels = [...new Set(r.rows.flatMap((x) => Object.keys(x.lifts)))].sort();
+  const lines = [`\n### Summary — ${p.name}`, `| lift | ${pick.map((w) => `wk${w}`).join(" | ")} |`, `|---|${pick.map(() => "---").join("|")}|`];
+  for (const label of labels) {
+    const cells = pick.map((w) => {
+      const v = r.rows.find((x) => x.week === w)?.lifts[label];
+      if (!v) return "-";
+      const m = v.match(/^(\d+)×(\d+)(?:\([^)]*\))?@([\d.]+)→\[([^\]]*)\]@([\d.]+) (\w+) e1=(\d+)\/true=(\d+)/);
+      return m ? `${m[1]}×${m[2]}@${m[5]} ${m[6]} (${m[7]}/${m[8]})` : v;
+    });
+    lines.push(`| ${label} | ${cells.join(" | ")} |`);
+  }
+  return lines.join("\n");
+}
+
+const base = {
+  gender: "male",
+  weightKg: 80,
+  runFrequency: "none",
+  runMode: "freeform",
+  weeklyRunDays: 0,
+  raceDistance: "half",
+  raceTargetDate: "",
+  injuries: [],
+  equipment: "full_gym",
+  barbellAtHome: false,
+  smallPlates: false,
+};
+
+const PERSONAS: Persona[] = [
+  {
+    name: "S1 intermediate 4d Get stronger 60min, calibrated start, e1RM +0.5%/wk, 52 wk",
+    draft: { ...base, primaryGoal: "strength", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60 },
+    weeklyGrowth: 0.005,
+    trueMax: { "bench-press": 100, squat: 140, deadlift: 170, "overhead-press": 62.5, "barbell-row": 90 },
+    calibrate: true,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 52,
+    track: ["bench-press", "squat", "deadlift", "overhead-press"],
+  },
+  {
+    name: "S2 intermediate 4d Build muscle 60min, calibrated start, e1RM +0.5%/wk, 52 wk",
+    draft: { ...base, primaryGoal: "hypertrophy", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60 },
+    weeklyGrowth: 0.005,
+    trueMax: { "bench-press": 100, squat: 140, deadlift: 170, "overhead-press": 62.5, "barbell-row": 90 },
+    calibrate: true,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 52,
+    track: ["bench-press", "squat", "deadlift", "lateral-raise", "barbell-curl"],
+  },
+  {
+    name: "S3 beginner 3d Build muscle 60min, compliant (lifts the seed), e1RM +1.5%/wk, 26 wk",
+    draft: { ...base, primaryGoal: "hypertrophy", daysPerWeek: 3, experience: "beginner", sessionMinutes: 60 },
+    weeklyGrowth: 0.015,
+    trueMax: { "bench-press": 60, squat: 80, deadlift: 100, "overhead-press": 40 },
+    calibrate: false,
+    picksUpHeavier: true,
+    seedRir: 3,
+    weeks: 26,
+    track: ["bench-press", "squat", "deadlift", "overhead-press"],
+  },
+  {
+    name: "S4 intermediate 4d Get stronger 60min, compliant (lifts the seed), e1RM +0.5%/wk, 26 wk",
+    draft: { ...base, primaryGoal: "strength", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60 },
+    weeklyGrowth: 0.005,
+    trueMax: { "bench-press": 100, squat: 140, deadlift: 170, "overhead-press": 62.5, "barbell-row": 90 },
+    calibrate: false,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 26,
+    track: ["bench-press", "squat", "deadlift"],
+  },
+  {
+    name: "S5 intermediate 4d Get stronger, light trainer: 2 sessions/week, calibrated, 26 wk",
+    draft: { ...base, primaryGoal: "strength", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60 },
+    weeklyGrowth: 0.005,
+    trueMax: { "bench-press": 100, squat: 140, deadlift: 170, "overhead-press": 62.5, "barbell-row": 90 },
+    calibrate: true,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 26,
+    sessionsPerWeek: 2,
+    track: ["bench-press", "squat", "deadlift"],
+  },
+  {
+    name: "S6 intermediate 4d Build muscle 60min, 4-week layoff (wk 11-14, -1%/wk), Ease back in 10% at wk 15, 30 wk",
+    draft: { ...base, primaryGoal: "hypertrophy", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60 },
+    weeklyGrowth: 0.005,
+    detrain: 0.01,
+    trueMax: { "bench-press": 100, squat: 140, deadlift: 170, "overhead-press": 62.5, "barbell-row": 90 },
+    calibrate: true,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 30,
+    trainsWeek: (w) => w < 11 || w > 14,
+    easeBackAt: { 15: 0.1 },
+    track: ["bench-press", "squat"],
+  },
+  {
+    name: "S7 intermediate 3d Support my running 45min + 16-wk half-marathon block (leg trim yes), calibrated, 20 wk",
+    draft: { ...base, primaryGoal: "running", daysPerWeek: 3, experience: "intermediate", sessionMinutes: 45 },
+    weeklyGrowth: 0.003,
+    trueMax: { "bench-press": 90, squat: 120, deadlift: 150, "overhead-press": 55 },
+    calibrate: true,
+    picksUpHeavier: true,
+    seedRir: 4,
+    weeks: 20,
+    race: { totalWeeks: 16, distance: "half", legTrim: true },
+    track: ["squat", "deadlift", "bench-press", "front-squat"],
+  },
+];
+
+it("simulates", () => {
+  const all: string[] = [];
+  const sums: string[] = [];
+  for (const p of PERSONAS) {
+    const r = simulate(p);
+    all.push(render(p, r));
+    sums.push(summary(p, r));
+    sums.push(`events: ${r.events.length} lowerings; final weekNumber ${r.final.weekNumber}, phase ${r.final.currentPhase}, weekHistory ${r.final.weekHistory?.length}`);
+  }
+  writeFileSync(`${OUT}/sim-detail.md`, all.join("\n"));
+  writeFileSync(`${OUT}/sim-summary.md`, sums.join("\n"));
+});

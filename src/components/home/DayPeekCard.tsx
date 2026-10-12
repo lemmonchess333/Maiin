@@ -29,7 +29,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
@@ -337,11 +337,11 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
-          racePace: runRacePace?.kind,
           weekHasQuality: weekHoldsQuality(
             programState?.runDays,
             resolved.run.runDay?.weekKey
           ),
+          racePace: runRacePace?.kind,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)

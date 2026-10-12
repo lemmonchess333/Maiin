@@ -23,16 +23,16 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
-  /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
-   *  that finishes at it rehearses race day, and a tempo at it practises
-   *  the pace, in place of the reasons for a tempo at fitness pace. */
-  racePace?: "finish" | "tempo" | null;
   /** Whether the run's week holds a tempo or intervals session
    *  (`weekHoldsQuality`). The build's easy day and long run name the
    *  quality sessions only when it does: a returning runner's weeks hold none
    *  (Run15), nor does every other build week on the gentler setting. Left
    *  out, the week isn't assumed to. */
   weekHasQuality?: boolean;
+  /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
+   *  that finishes at it rehearses race day, and a tempo at it practises
+   *  the pace, in place of the reasons for a tempo at fitness pace. */
+  racePace?: "finish" | "tempo" | null;
 }
 
 /**
@@ -140,11 +140,19 @@ export function runSessionExplainer(
     if (type === "tempo" && input.racePace === "tempo") {
       return "Taper — a short block at race pace keeps the rhythm sharp while the volume drops.";
     }
+    // Not the easy runs' reason: a tempo is comfortably hard (Run21 (1)).
+    if (type === "tempo") {
+      return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
+    }
     if (type === "intervals") {
       return "Taper sharpener — fast but small, keeping the legs quick while the volume drops.";
     }
     if (type === "long") {
       return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
+    }
+    // Run22: the first taper weeks keep a shorter medium-long.
+    if (isMediumLong) {
+      return "Taper medium-long — shorter on purpose: the volume comes down in steps, so you arrive fresh without losing your rhythm.";
     }
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
@@ -154,17 +162,17 @@ export function runSessionExplainer(
     if (phase === "base") {
       return "The week's anchor run — long-run volume ramps gradually through the base.";
     }
-    if (input.racePace === "finish")
-      return "It rehearses race day on tired legs: your pace, your fuelling and your focus.";
-    return weekHasQuality
-      ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
-      : "The week's anchor run — it builds the endurance the race needs.";
+    return input.racePace === "finish"
+      ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+      : weekHasQuality
+        ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
+        : "The week's anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo" && input.racePace === "tempo") {
     return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
   }
   if (type === "tempo") {
-    return "Tempo — it stretches how long you can hold a strong pace. Its pace comes from your fitness, so the sessions grow longer, not faster.";
+    return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
   }
   if (type === "intervals") {
     return "Intervals — short, fast repeats raise the pace you can race at. The recovery between reps is part of the session, not a failure of it.";

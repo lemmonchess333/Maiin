@@ -83,7 +83,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
@@ -284,11 +284,11 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
-      racePace: selectedRacePace?.kind,
       weekHasQuality: weekHoldsQuality(
         programState?.runDays,
         run.runDay.weekKey
       ),
+      racePace: selectedRacePace?.kind,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.

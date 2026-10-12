@@ -124,10 +124,10 @@ vi.mock("@/hooks/useSessionPlayer", () => ({
     current: null,
     next: null,
     isComplete: false,
+    workPortion: () => null,
     start: () => {},
     tick: () => {},
     skip: () => {},
-    workPortion: () => null,
   }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));

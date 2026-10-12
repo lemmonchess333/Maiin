@@ -5,10 +5,10 @@
  * runs (ADR-0008).
  *
  * Only a run that did its planned session is judged: a custom or extra run
- * has no honest target. Intervals and run-walk are not judged either,
- * because the session's average mixes work and rest, or runs and walks (the
- * same reason the summary's primary stat swaps to the work sets for
- * intervals). The target is the session's
+ * has no honest target. Intervals are not judged either, because the
+ * session's average mixes work and rest (the same reason the summary's
+ * primary stat swaps to the work sets for them), nor is a run-walk session
+ * (Run20 (5)), whose average mixes runs and walks. The target is the session's
  * pace from the runner's fitness (`resolveSessionPaces`): its window when it
  * has one, otherwise its single pace. `resolvePaceVerdict` decides the tone
  * and the words.

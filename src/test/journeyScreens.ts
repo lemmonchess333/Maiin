@@ -52,7 +52,7 @@ export const SETUP_OPTIONS = {
     "Get stronger",
     "Lose fat",
     "General fitness",
-    "Improve running",
+    "Support my running",
   ],
   activities: ["Lifting", "Running", "Both"],
   liftDays: ["2", "3", "4", "5", "6"],
