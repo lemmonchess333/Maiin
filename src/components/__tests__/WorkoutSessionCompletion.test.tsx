@@ -1930,6 +1930,32 @@ describe("the plate hint (Lift4 (6))", () => {
   });
 });
 
+describe("the plan's lines caption the set table", () => {
+  /* Centred at the bottom of the list, under Up next, the target and the
+     plates read as loose notes. They sit right under the table, in one
+     block, before the note field, and the RPE switch is in the table's
+     own foot beside Add set. */
+  it("puts the target and plates under the table, before the note", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 62.5,
+    });
+    const target = screen.getByText(/^Target:/);
+    const plates = screen.getByText(/Per side:/);
+    const note = screen.getByRole("textbox", { name: "Exercise notes" });
+    expect(target.parentElement).toBe(plates.parentElement);
+    expect(
+      target.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const addSet = screen.getByRole("button", { name: "Add set" });
+    expect(screen.getByRole("button", { name: "Show RPE" }).parentElement).toBe(
+      addSet.parentElement
+    );
+    expect(note).toHaveAttribute("placeholder", "Add a note for next time");
+  });
+});
+
 describe("the stretched line (Pgm7 A3)", () => {
   it("says under the target how far the reps go before the next weight", () => {
     openSession(writer(), vi.fn(), {
