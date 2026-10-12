@@ -128,6 +128,10 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       )
       .toBeTruthy();
     await page.getByRole("button", { name: RUN.done, exact: true }).click();
+    // Done goes to Train, which writes the day it shows into its URL once
+    // its plan loads. A tab tapped before that write is overtaken by it, so
+    // Home waits for the day.
+    await expect(page).toHaveURL(/\/program\?.*\bday=\d/);
 
     // Home's week: today's run, done.
     // Home reads the week from its listeners, which the emulators can take
