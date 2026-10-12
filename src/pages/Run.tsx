@@ -33,7 +33,6 @@ import {
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import {
-  paceTableFromFitness,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
 } from "../lib/runPaces";
@@ -102,6 +101,10 @@ import {
   runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
+import {
+  racePaceFinishFor,
+  raceTargetFromProfile,
+} from "../lib/racePaceFinish";
 import { logger } from "../lib/logger";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
@@ -527,16 +530,9 @@ export default function Run() {
       paceTable: prescriptivePaceTableFromFitness(runFitness ?? null),
       // A2: the user's own goal time turns into training (race-pace long
       // run blocks, goal-pace tempo) — gating lives in the pure helper.
-      raceTarget: raceGoal?.targetTimeS
-        ? {
-            distance: raceGoal.distance,
-            targetTimeS: raceGoal.targetTimeS,
-            // Feasibility gate reads the FULL fitness (the verdict's tier,
-            // deliberately not the consent-gated prescriptive table) — see
-            // the field doc in runPlanMetadata.
-            currentVdot: paceTableFromFitness(runFitness ?? null)?.vdot ?? null,
-          }
-        : null,
+      // The plan's surfaces read the same target, so a run they name for
+      // its race-pace finish has one here.
+      raceTarget: raceTargetFromProfile({ raceGoal, runFitness }),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -646,6 +642,17 @@ export default function Run() {
           ) ?? null)
         : null,
     [planDecision.metadata.actualTemplateId]
+  );
+  // Run21 (2): the launch card names a race-pace finish, by the gate that
+  // gave the prefill its block, on the same inputs.
+  const launchRaceFinish = useMemo(
+    () =>
+      racePaceFinishFor(
+        launchWorkout,
+        { runMode: profileRunMode, raceGoal, runFitness },
+        programState?.runPlan
+      ),
+    [launchWorkout, profileRunMode, raceGoal, runFitness, programState?.runPlan]
   );
   const canFastLaunch =
     !forceModal &&
@@ -1333,6 +1340,7 @@ export default function Run() {
             // gesture so audio primes). Customize drops to the full modal.
             <RunLaunchCard
               workout={launchWorkout}
+              racePaceFinish={launchRaceFinish}
               purpose={
                 runSessionPresentation({
                   type: launchWorkout.type,
@@ -1343,6 +1351,7 @@ export default function Run() {
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
                   weekHasQuality: launchWeekHasQuality,
+                  racePaceFinish: launchRaceFinish !== null,
                 }).purpose
               }
               prefill={planDecision.prefill}

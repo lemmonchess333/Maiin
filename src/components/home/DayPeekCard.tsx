@@ -1,7 +1,8 @@
 import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import { runSessionAbout } from "@/lib/runSessionAbout";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceFinishFor } from "@/lib/racePaceFinish";
 import {
   runSessionPresentation,
   weekHoldsQuality,
@@ -315,7 +316,14 @@ export default function DayPeekCard({
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
-  const runName = runTemplate?.name ?? "Run";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const runRaceFinish = racePaceFinishFor(
+    runTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const runName = runSessionName(runTemplate, runRaceFinish);
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -330,6 +338,7 @@ export default function DayPeekCard({
             programState?.runDays,
             resolved.run.runDay?.weekKey
           ),
+          racePaceFinish: runRaceFinish !== null,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -565,7 +574,9 @@ export default function DayPeekCard({
                   </p>
                   <RunPurpose>
                     <RunAbout
-                      about={runSessionAbout(runTemplate)}
+                      about={runSessionAbout(runTemplate, {
+                        racePaceFinish: runRaceFinish,
+                      })}
                       why={runPurpose}
                     />
                   </RunPurpose>
