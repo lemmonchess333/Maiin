@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -145,6 +145,10 @@ interface RunSetupModalProps {
   savedPreferences?: Partial<RunConfig>;
   /** Read-only context-strip data. Null when no strip should render. */
   programContext?: ProgramContextStrip | null;
+  /** The route actions: plan one, follow one, or the route being
+   *  followed. They sit under the title and scroll with the page, so the
+   *  screen opens on its own Back and heading. */
+  routeSection?: ReactNode;
 }
 
 /**
@@ -196,6 +200,7 @@ export default function RunSetupModal({
   onCancel,
   savedPreferences,
   programContext,
+  routeSection,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
@@ -337,6 +342,8 @@ export default function RunSetupModal({
             day, completed day, elapsed race-prep). Freeform users get
             no strip — the surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
+
+        {routeSection}
 
         {/* Selected-run card. Replaces the underlined "Change type"
             link with a tappable native-feeling control showing the

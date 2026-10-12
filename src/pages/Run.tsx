@@ -1363,26 +1363,27 @@ export default function Run() {
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-              {/* Follow-a-route entry on the setup screen: import a GPX or pick
-                  a saved route, or (when a route is loaded — incl. arriving via
-                  RunDetail's "Re-run this route") show Following + Save/Clear.
-                  The route overlays the normal run config — start as usual. */}
-              <div className="px-4 pt-3">
-                <RouteSetupSection
-                  targetRoute={targetRoute}
-                  routeSource={routeSource}
-                  currentPosition={gps.currentPoint}
-                  onLoadRoute={(points, source) => {
-                    setTargetRoute(points);
-                    setRouteSource(source);
-                  }}
-                  onClearRoute={() => {
-                    setTargetRoute(null);
-                    setRouteSource(null);
-                  }}
-                />
-              </div>
               <RunSetupModal
+                /* Follow-a-route entry: import a GPX or pick a saved route,
+                   or (when a route is loaded — incl. arriving via
+                   RunDetail's "Re-run this route") show Following +
+                   Save/Clear. The route overlays the normal run config —
+                   start as usual. */
+                routeSection={
+                  <RouteSetupSection
+                    targetRoute={targetRoute}
+                    routeSource={routeSource}
+                    currentPosition={gps.currentPoint}
+                    onLoadRoute={(points, source) => {
+                      setTargetRoute(points);
+                      setRouteSource(source);
+                    }}
+                    onClearRoute={() => {
+                      setTargetRoute(null);
+                      setRouteSource(null);
+                    }}
+                  />
+                }
                 onStart={handleStart}
                 /* Back goes back ONE step. This branch is reached two
                    ways: `forceModal`, set by "More options" on the tile
