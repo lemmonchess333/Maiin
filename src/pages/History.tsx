@@ -85,7 +85,13 @@ import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
+import {
+  Skeleton,
+  ChartSkeleton,
+  PeriodSummarySkeleton,
+} from "@/components/LoadingSkeleton";
+import ArrivalFade from "@/components/ui/ArrivalFade";
+import { useArrivedAfterLoading } from "@/hooks/useArrivedAfterLoading";
 import {
   formatVolume,
   formatDistance,
@@ -590,6 +596,8 @@ export default function History() {
    */
   const dataLoading =
     runsLoading || workoutsLoading || mealsLoading || rangeMealsLoading;
+  // The overview fades in where its placeholder was (Pol1).
+  const overviewArrival = useArrivedAfterLoading(dataLoading);
 
   /* Names whichever reads are still outstanding after 15s. Purely
      diagnostic — it never cancels or fakes a result, because a slow read
@@ -1149,15 +1157,10 @@ export default function History() {
                 Splitting the three states keeps them mutually exclusive and
                 exhaustive: loading → skeleton, then cold-start → card, else
                 → overview. */}
+            {/* The range card's own shape (Pol1), so the chart arriving
+                moves nothing under it. */}
             {filter === "analytics" && view === "overview" && dataLoading && (
-              <div className="p-4 rounded-2xl bg-card space-y-3">
-                <Skeleton className="h-3 w-20" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                </div>
-              </div>
+              <PeriodSummarySkeleton />
             )}
 
             {/*
@@ -1203,20 +1206,22 @@ export default function History() {
               view === "overview" &&
               !dataLoading &&
               isAnalyticsColdStart && (
-                <EmptyState
-                  icon={LineChart}
-                  accent={THEME.brand}
-                  headline="No analytics yet"
-                  sub="Log a workout, run or meal and your trends will show up here."
-                  action={{ label: "Start a workout", href: "/program" }}
-                />
+                <ArrivalFade {...overviewArrival}>
+                  <EmptyState
+                    icon={LineChart}
+                    accent={THEME.brand}
+                    headline="No analytics yet"
+                    sub="Log a workout, run or meal and your trends will show up here."
+                    action={{ label: "Start a workout", href: "/program" }}
+                  />
+                </ArrivalFade>
               )}
 
             {filter === "analytics" &&
               view === "overview" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
-                <>
+                <ArrivalFade {...overviewArrival} className="space-y-4">
                   <SectionErrorBoundary sectionName="period-summary">
                     <PeriodSummaryCard
                       title={rollingRangeLabel(timeRange)}
@@ -1253,13 +1258,15 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
-                </>
+                </ArrivalFade>
               )}
 
             {/* The way into the four pages. Shown in cold start too: the
                 Body page holds a weight chart that needs no session. */}
             {filter === "analytics" && view === "overview" && !dataLoading && (
-              <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              <ArrivalFade {...overviewArrival}>
+                <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              </ArrivalFade>
             )}
 
             {/* On its own page a section renders whatever its data: each

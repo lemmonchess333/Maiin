@@ -301,3 +301,65 @@ describe("FoodRow — swipe branch (motion path)", function () {
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("FoodRow — the thumbnail column (Pol1)", function () {
+  function row(props: Partial<Parameters<typeof FoodRow>[0]> = {}) {
+    return render(
+      <FoodRow
+        group={baseGroup}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+        onEdit={vi.fn()}
+        slot="breakfast"
+        {...props}
+      />
+    );
+  }
+
+  it("shows a photo meal's picture as a thumbnail at the start of its row", function () {
+    // It was a 176 px photo card above the row.
+    const { container } = row({
+      photoUrl: "data:image/jpeg;base64,AAAA",
+      thumbnailColumn: true,
+    });
+    const img = container.querySelector("img")!;
+    expect(img).toHaveClass("size-[52px]", "rounded-xl");
+    expect(img).not.toHaveClass("h-44");
+    // The name is beside it: the picture is not read out.
+    expect(img).toHaveAttribute("alt", "");
+    expect(
+      img.compareDocumentPosition(screen.getByText("Chicken salad")) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("gives a row without a photo its slot's tile on a day with photos", function () {
+    const { container } = row({ thumbnailColumn: true });
+    expect(
+      container.querySelector('[data-slot-tile="breakfast"]')
+    ).not.toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("keeps a row without a photo compact on a day without photos", function () {
+    const { container } = row({ thumbnailColumn: false });
+    expect(screen.getByText("Chicken salad")).toBeInTheDocument();
+    expect(container.querySelector("[data-slot-tile]")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("falls back to the slot's tile when the photo cannot be read", function () {
+    // Photos are device-local and age out at 90 days; a legacy Storage
+    // URL can 404.
+    const { container } = row({
+      photoUrl: "data:image/jpeg;base64,AAAA",
+      thumbnailColumn: true,
+    });
+    fireEvent.error(container.querySelector("img")!);
+    expect(container.querySelector("img")).toBeNull();
+    expect(
+      container.querySelector('[data-slot-tile="breakfast"]')
+    ).not.toBeNull();
+  });
+});

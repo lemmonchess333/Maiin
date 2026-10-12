@@ -9,16 +9,26 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  isWorkSegment,
+  judgesPaceNow,
+  livePaceTarget,
+  pinnedWorkPace,
   racePaceBlockKm,
   segmentsFromEasyWithStrides,
   segmentsFromGuided,
   segmentsFromIntervals,
   segmentsFromLongWithRacePace,
+  segmentsFromRunWalk,
   segmentsFromTempo,
   segmentsDurationSeconds,
+  segmentTargetLabel,
   STRIDE_RECOVERY_SECONDS,
 } from "../runSegments";
-import { RUN_TEMPLATES } from "../workoutTemplates";
+import {
+  RUN_TEMPLATES,
+  RUN_WALK_TEMPLATE_IDS,
+  type RunTemplate,
+} from "../workoutTemplates";
 import { GUIDED_WORKOUTS } from "../guidedRun";
 
 describe("segmentsFromIntervals", () => {
@@ -145,7 +155,8 @@ describe("A2 — segmentsFromTempo at goal pace", () => {
     for (const b of blocks) {
       expect(b.paceTarget).toBe(300);
       expect(b.pacePinned).toBe(true);
-      expect(b.label).toContain("@ goal pace");
+      // One "@", as a tempo block reads ("20 min tempo @ 5:20 /km").
+      expect(b.label).toBe("20 min goal pace @ 5:00 /km");
       expect(b.cue).toMatch(/goal race pace/i);
     }
     // Warmup/cooldown stay unpinned.
@@ -204,6 +215,105 @@ describe("A2 — segmentsFromLongWithRacePace", () => {
     expect(block.cue).toMatch(/race-pace block/i);
     // The easy lead-in tells the runner what's coming.
     expect(segs[0].cue).toMatch(/race-pace block comes at the end/i);
+  });
+});
+
+describe("step headings in Run21's effort words (E1)", () => {
+  // The Run screen's step shell heads each step with its effort: Easy,
+  // Comfortably hard, Hard, or Quick and relaxed (Run21 (1)), with its
+  // place in the session where it has one. The type keys ("WARMUP",
+  // "MODERATE", "COOLDOWN") were what it showed before.
+  const eyebrows = (segs: { eyebrow?: string }[]) => segs.map((s) => s.eyebrow);
+
+  it("intervals: easy around hard repeats, or quick and relaxed short ones", () => {
+    const shape = {
+      reps: 2,
+      restDuration: 90,
+      warmupDuration: 600,
+      cooldownDuration: 300,
+    };
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDistance: 1000 }, "km"))
+    ).toEqual([
+      "EASY",
+      "HARD · REP 1/2",
+      "EASY · AFTER REP 1/2",
+      "HARD · REP 2/2",
+      "EASY",
+    ]);
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDistance: 400 }, "km"))[1]
+    ).toBe("QUICK AND RELAXED · REP 1/2");
+    expect(
+      eyebrows(segmentsFromIntervals({ ...shape, workDuration: 180 }, "km"))[1]
+    ).toBe("HARD · REP 1/2");
+  });
+
+  it("tempo: comfortably hard blocks, or race pace at a goal pace", () => {
+    const one = RUN_TEMPLATES.find((x) => x.id === "tempo_20")!;
+    const two = RUN_TEMPLATES.find((x) => x.id === "tempo_40")!;
+    expect(eyebrows(segmentsFromTempo(one.config.tempo!, "km"))).toEqual([
+      "EASY",
+      "COMFORTABLY HARD",
+      "EASY",
+    ]);
+    expect(eyebrows(segmentsFromTempo(two.config.tempo!, "km"))).toEqual([
+      "EASY",
+      "COMFORTABLY HARD · BLOCK 1/2",
+      "EASY",
+      "COMFORTABLY HARD · BLOCK 2/2",
+      "EASY",
+    ]);
+    expect(
+      eyebrows(
+        segmentsFromTempo(two.config.tempo!, "km", 330, { atGoalPace: true })
+      )[1]
+    ).toBe("RACE PACE · BLOCK 1/2");
+  });
+
+  it("strides: quick and relaxed, with a walk back", () => {
+    expect(
+      eyebrows(segmentsFromEasyWithStrides(30, { reps: 2, workSeconds: 20 }))
+    ).toEqual([
+      "EASY",
+      "QUICK AND RELAXED",
+      "WALK",
+      "QUICK AND RELAXED",
+      "WALK",
+    ]);
+  });
+
+  it("a long run's easy part before its race-pace block", () => {
+    expect(eyebrows(segmentsFromLongWithRacePace(18, 6, 330, "km"))).toEqual([
+      "EASY",
+      "RACE PACE",
+    ]);
+  });
+
+  it("no step is headed by its type key", () => {
+    const all = [
+      ...segmentsFromIntervals(
+        {
+          reps: 3,
+          workDistance: 1000,
+          restDuration: 90,
+          warmupDuration: 600,
+          cooldownDuration: 300,
+        },
+        "km"
+      ),
+      ...RUN_TEMPLATES.filter((t) => t.config.tempo).flatMap((t) =>
+        segmentsFromTempo(t.config.tempo!, "km")
+      ),
+      ...segmentsFromEasyWithStrides(30, { reps: 4, workSeconds: 20 }),
+      ...segmentsFromLongWithRacePace(18, 6, 330, "km"),
+    ];
+    for (const seg of all) {
+      expect(seg.eyebrow, seg.label).toBeTruthy();
+      expect(seg.eyebrow, seg.label).not.toMatch(
+        /WARMUP|MODERATE|COOLDOWN|RECOVERY/
+      );
+    }
   });
 });
 
@@ -269,5 +379,276 @@ describe("cross-run cue rotation (seed)", () => {
       .map((s) => s.cue);
     expect(walkBacks.length).toBe(5);
     expect(new Set(walkBacks).size).toBe(5);
+  });
+});
+
+describe("isWorkSegment — where a session's pace is judged", () => {
+  it("is a tempo block or an interval rep, never the easy parts around them", () => {
+    const tempo = segmentsFromTempo(
+      { warmupSec: 600, workSecs: [600, 600], floatSec: 120, cooldownSec: 300 },
+      "km"
+    );
+    expect(tempo.map((s) => isWorkSegment(s))).toEqual([
+      false, // warm-up
+      true,
+      false, // float
+      true,
+      false, // cool-down
+    ]);
+    const reps = segmentsFromIntervals(
+      {
+        reps: 2,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 300,
+        cooldownDuration: 120,
+      },
+      "km"
+    );
+    expect(reps.filter((s) => isWorkSegment(s))).toHaveLength(2);
+    expect(isWorkSegment(null)).toBe(false);
+  });
+});
+
+/* Run20 (1): the live pace bar showed with no pace to judge against, at a
+   5:00 /km it made up (and, for a session whose target was a distance, read
+   the metres as a pace). It shows only for a real pace. */
+describe("livePaceTarget — the pace the Run screen's bar judges against", () => {
+  it("an interval session's work pace", () => {
+    expect(
+      livePaceTarget({
+        intervals: {
+          reps: 5,
+          workDistance: 1000,
+          restDuration: 90,
+          workPace: 285,
+        },
+        target: { type: "none" },
+      })
+    ).toBe(285);
+  });
+
+  it("a pace target", () => {
+    expect(livePaceTarget({ target: { type: "pace", value: 320 } })).toBe(320);
+  });
+
+  it("none with no pace: no 5:00, and never a distance or a time read as one", () => {
+    expect(livePaceTarget({ target: { type: "none" } })).toBeNull();
+    expect(
+      livePaceTarget({
+        intervals: { reps: 5, workDistance: 1000, restDuration: 90 },
+        target: { type: "none" },
+      })
+    ).toBeNull();
+    expect(
+      livePaceTarget({ target: { type: "distance", value: 5000 } })
+    ).toBeNull();
+    expect(
+      livePaceTarget({ target: { type: "time", value: 1800 } })
+    ).toBeNull();
+    expect(livePaceTarget({})).toBeNull();
+  });
+});
+
+describe("judgesPaceNow — where the Run screen judges a pace target", () => {
+  const tempo = segmentsFromTempo(
+    { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+    "km",
+    270
+  );
+  const easyWithStrides = segmentsFromEasyWithStrides(30, {
+    reps: 4,
+    workSeconds: 20,
+  });
+
+  it("judges a tempo in its blocks only, never its warm-up or cool-down", () => {
+    expect(tempo.map((s) => judgesPaceNow("tempo", tempo, s))).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    // Past the cool-down's end, the session is over.
+    expect(judgesPaceNow("tempo", tempo, null)).toBe(false);
+  });
+
+  it("judges an interval session in its reps only", () => {
+    const reps = segmentsFromIntervals(
+      {
+        reps: 2,
+        workDistance: 400,
+        restDuration: 60,
+        warmupDuration: 300,
+        cooldownDuration: 120,
+      },
+      "km"
+    );
+    expect(
+      reps.filter((s) => judgesPaceNow("intervals", reps, s)).map((s) => s.type)
+    ).toEqual(["hard", "hard"]);
+  });
+
+  it("judges any other run's pace goal throughout, its strides included", () => {
+    for (const s of easyWithStrides)
+      expect(judgesPaceNow("easy", easyWithStrides, s)).toBe(true);
+    expect(judgesPaceNow("long", [], null)).toBe(true);
+  });
+
+  it("judges a tempo with no structure throughout", () => {
+    expect(judgesPaceNow("tempo", [], null)).toBe(true);
+  });
+});
+
+describe("pinnedWorkPace — the goal pace a session prescribes", () => {
+  it("is the goal pace of a goal-pace tempo or a race-pace block", () => {
+    expect(
+      pinnedWorkPace(
+        segmentsFromTempo(
+          { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+          "km",
+          330,
+          { atGoalPace: true }
+        )
+      )
+    ).toBe(330);
+    expect(pinnedWorkPace(segmentsFromLongWithRacePace(16, 5, 330, "km"))).toBe(
+      330
+    );
+  });
+
+  it("is none for a threshold tempo, or a run with no segments", () => {
+    expect(
+      pinnedWorkPace(
+        segmentsFromTempo(
+          { warmupSec: 600, workSecs: [1200], cooldownSec: 300 },
+          "km",
+          300
+        )
+      )
+    ).toBeNull();
+    expect(pinnedWorkPace(undefined)).toBeNull();
+    expect(pinnedWorkPace([])).toBeNull();
+  });
+});
+
+/* Run20 (5): a new runner's first six weeks run as run-walk, building to
+   continuous running (NHS Couch to 5K). */
+describe("segmentsFromRunWalk", () => {
+  const ladder = RUN_WALK_TEMPLATE_IDS.map(
+    (id) => RUN_TEMPLATES.find((t) => t.id === id)!
+  );
+  const shape = (t: RunTemplate) => t.config.runWalk!;
+  const minutes = (seconds: number[]) =>
+    seconds.reduce((a, b) => a + b, 0) / 60;
+
+  it("is a template for each of the six weeks, each conserving its stated time", () => {
+    expect(RUN_TEMPLATES.filter((t) => t.config.runWalk)).toEqual(ladder);
+    for (const t of ladder) {
+      expect(t.type, t.id).toBe("easy");
+      expect(t.config.targetDurationMinutes, t.id).toBe(t.estimatedDuration);
+      expect(segmentsDurationSeconds(segmentsFromRunWalk(shape(t))), t.id).toBe(
+        t.estimatedDuration * 60
+      );
+    }
+  });
+
+  it("starts at Couch to 5K's week 1 and builds to 20 minutes non-stop", () => {
+    // Week 1 as the NHS plan has it: a 5-minute walk, then 1 minute
+    // running and 90 seconds walking seven times, and a last minute.
+    expect(shape(ladder[0])).toMatchObject({
+      warmupWalkSec: 300,
+      runSecs: Array(8).fill(60),
+      walkSecs: Array(7).fill(90),
+    });
+    // Minutes of running near Couch to 5K's own for each week.
+    expect(ladder.map((t) => minutes(shape(t).runSecs))).toEqual([
+      8, 9, 9, 15, 18, 20,
+    ]);
+    const longest = ladder.map((t) => Math.max(...shape(t).runSecs) / 60);
+    expect(longest).toEqual([1, 1.5, 3, 5, 10, 20]);
+    // The longest run never more than doubles from one week to the next.
+    longest
+      .slice(1)
+      .forEach((m, i) => expect(m).toBeLessThanOrEqual(2 * longest[i]));
+    for (const t of ladder) {
+      expect(shape(t).walkSecs, t.id).toHaveLength(shape(t).runSecs.length - 1);
+    }
+  });
+
+  it("walks to warm up, runs and walks in turn, walks to finish, with no pace", () => {
+    const segs = segmentsFromRunWalk(shape(ladder[0]));
+    expect(segs.map((s) => s.label)).toEqual([
+      "Walk",
+      ...Array(7).fill(["Run", "Walk"]).flat(),
+      "Run",
+      "Walk",
+    ]);
+    expect(segs.map((s) => s.type)).toEqual([
+      "warmup",
+      ...Array(7).fill(["easy", "recovery"]).flat(),
+      "easy",
+      "cooldown",
+    ]);
+    expect(segs.map((s) => s.eyebrow).slice(0, 4)).toEqual([
+      "WARM-UP",
+      "RUN 1/8",
+      "WALK",
+      "RUN 2/8",
+    ]);
+    expect(segs.at(-1)?.eyebrow).toBe("COOL-DOWN");
+    for (const s of segs) {
+      expect(s.paceTarget).toBeUndefined();
+      expect(s.effort).toBeUndefined();
+    }
+  });
+
+  it("says something new at every step, past the numbers", () => {
+    // Phrase by phrase, whatever the case and punctuation: "1 minute, easy
+    // enough to talk." and a later "Easy enough to talk." are the same
+    // words twice. Short and numbered phrases ("Walk.", "90 seconds") are
+    // the steps' own names.
+    const phrases = (cue: string) =>
+      cue
+        .toLowerCase()
+        .split(/[.,]/)
+        .map((p) => p.trim())
+        .filter((p) => p && !/\d/.test(p) && p.split(/\s+/).length >= 3);
+    for (const t of ladder) {
+      for (const seed of [0, 1, 2, 3, 4, 5, 6, 7]) {
+        const said = segmentsFromRunWalk(shape(t), seed).flatMap((s) =>
+          phrases(s.cue!)
+        );
+        expect(said.length, `${t.id}`).toBeGreaterThan(0);
+        expect(
+          said.filter((p, i) => said.indexOf(p) !== i),
+          `${t.id} seed ${seed}`
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("makes a single run the whole session", () => {
+    const segs = segmentsFromRunWalk(shape(ladder[5]));
+    expect(segs.map((s) => s.label)).toEqual(["Walk", "Run", "Walk"]);
+    expect(segs[1]).toMatchObject({
+      eyebrow: "RUN",
+      target: { kind: "duration", seconds: 1200 },
+      cue: "Run for 20 minutes without a break. Easy enough to talk the whole way.",
+    });
+    expect(segs[1].rep).toBeUndefined();
+  });
+});
+
+describe("segmentTargetLabel", () => {
+  it("spells out a part minute rather than rounding it", () => {
+    const label = (seconds: number) =>
+      segmentTargetLabel({ kind: "duration", seconds });
+    expect(label(45)).toBe("45s");
+    expect(label(60)).toBe("1 min");
+    // A 90-second walk read "2 min", and so did an interval's 90s rest.
+    expect(label(90)).toBe("90s");
+    expect(label(150)).toBe("2 min 30s");
+    expect(label(330)).toBe("5 min 30s");
+    expect(label(1200)).toBe("20 min");
+    expect(segmentTargetLabel({ kind: "distance", meters: 1000 })).toBe("1K");
   });
 });

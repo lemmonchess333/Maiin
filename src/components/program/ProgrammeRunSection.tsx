@@ -123,11 +123,13 @@ import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { runDoseLine } from "@/lib/runDose";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -143,11 +145,16 @@ import {
   getEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek } from "@/lib/adjustWeek";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
@@ -568,6 +575,8 @@ export default function ProgrammeRunSection({
   );
   const coachingReady =
     !runsLoading && !runsFailed && runsEvidenceReady !== false;
+  // Run20 (5): the day a new runner's first weeks end, for easing a week.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
   const easeNudge = useMemo(
     () =>
       evaluateEaseWeekNudge({
@@ -583,7 +592,8 @@ export default function ProgrammeRunSection({
         // Nothing left to ease this week ⇒ already eased (or no quality
         // runs remain) — no persisted flag needed.
         weekAlreadyEased:
-          planEasierWeek(runDays, todayKeyDerivation).length === 0,
+          planEasierWeek(runDays, todayKeyDerivation, newRunnerUntil).length ===
+          0,
         fellBehindPending: contextualPrompt === "fell-behind",
         dismissedWeekKey: getDismissedWeekKey(profile.uid),
         lastShownAt: getLastShownAt(profile.uid),
@@ -599,6 +609,7 @@ export default function ProgrammeRunSection({
       recoveryEnded,
       raceCockpitVM?.phaseLabel,
       runDays,
+      newRunnerUntil,
       contextualPrompt,
       profile.uid,
     ]
@@ -788,6 +799,7 @@ export default function ProgrammeRunSection({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
         })
       : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
@@ -798,9 +810,11 @@ export default function ProgrammeRunSection({
   // surfaced on the command card so the "made for you" pace is visible where
   // the run is started — not just in Settings. Band-first via the shared
   // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no
-  // benchmark (the run then shows distance/type only, as before).
+  // benchmark (the run then shows distance/type only, as before), and for
+  // run-walk, which is run by feel (Run20 (5)).
   const selectedPaceLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+    if (!selectedTemplate || isRunWalkTemplateId(selectedTemplate.id))
+      return null;
     const table = prescriptivePaceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -815,28 +829,32 @@ export default function ProgrammeRunSection({
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when
   // neither, so the card just shows pace/type as before.
-  const selectedHrLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+  const selectedHrItems: string[] = (() => {
+    if (!selectedTemplate) return [];
     const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
-    const band = targetZoneForRun(selectedTemplate.type, maxHr);
-    return band ? `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm` : null;
+    const band = targetZoneForRun(
+      selectedTemplate.type,
+      maxHr,
+      selectedTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
 
   // Meta line for the selected run (distance/duration · pace · HR zone · type).
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
-    if (selectedTemplate.config.targetDistanceKm) {
-      meta.push(`${selectedTemplate.config.targetDistanceKm} km`);
-    } else if (selectedTemplate.estimatedDuration) {
-      meta.push(`${selectedTemplate.estimatedDuration} min`);
-    }
-    if (selectedPaceLabel) meta.push(selectedPaceLabel);
-    if (selectedHrLabel) meta.push(selectedHrLabel);
+    // Run21 (5): a long run's minutes at the runner's own pace.
     meta.push(
-      selectedTemplate.type.charAt(0).toUpperCase() +
-        selectedTemplate.type.slice(1)
+      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
     );
+    if (selectedPaceLabel) meta.push(selectedPaceLabel);
+    meta.push(...selectedHrItems);
+    // The zone's name says "Easy" already for an easy run (Run21 (1)).
+    const typeWord =
+      selectedTemplate.type.charAt(0).toUpperCase() +
+      selectedTemplate.type.slice(1);
+    if (!meta.includes(typeWord)) meta.push(typeWord);
     return meta;
   })();
   // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).
@@ -1135,7 +1153,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
-          description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
+          description="Easy runs until recovery ends."
           action={
             <button
               type="button"
@@ -1555,6 +1573,7 @@ export default function ProgrammeRunSection({
                 />
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
+                  template={selectedTemplate}
                   run={selectedRun.runDay}
                   runDays={runDays}
                 />
@@ -1815,6 +1834,7 @@ export default function ProgrammeRunSection({
         <AdjustWeekSheet
           open={adjustOpen}
           onClose={() => setAdjustOpen(false)}
+          newRunnerUntil={newRunnerUntil}
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{

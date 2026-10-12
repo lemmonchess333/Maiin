@@ -21,6 +21,24 @@ import {
   isScheduledRaceRunDay,
 } from "../workoutTemplates";
 
+/* The run summary judges a long run against the easy band, so every long
+   run's description says easy; and a race's says how to pace it, not
+   "all-out", which a half or a marathon run that way can't hold
+   (running-engine-audit §7 item 10). */
+describe("RUN_TEMPLATES — what the descriptions tell the runner", () => {
+  it("every long run is an easy effort", () => {
+    const long = RUN_TEMPLATES.filter((t) => t.type === "long");
+    expect(long.length).toBeGreaterThan(0);
+    for (const t of long) expect(t.description, t.id).toMatch(/^Easy effort/);
+  });
+
+  it("no race is described as all-out", () => {
+    const races = RUN_TEMPLATES.filter((t) => t.type === "race");
+    expect(races.length).toBe(4);
+    for (const t of races) expect(t.description, t.id).not.toMatch(/all-out/i);
+  });
+});
+
 describe("RUN_TEMPLATES", () => {
   it("is a non-empty array", () => {
     expect(Array.isArray(RUN_TEMPLATES)).toBe(true);
@@ -63,10 +81,15 @@ describe("RUN_TEMPLATES", () => {
     }
   });
 
-  it("tempo templates have target pace", () => {
+  /* Run20 (1): a fixed 4:30 /km was faster than a 25:00 5K runner's race
+     pace. A tempo's pace is the runner's own, given when the plan is
+     personalised; the template carries the blocks. */
+  it("tempo templates carry their blocks and no fixed pace", () => {
     const tempoTemplates = RUN_TEMPLATES.filter((t) => t.type === "tempo");
+    expect(tempoTemplates.length).toBeGreaterThan(0);
     for (const t of tempoTemplates) {
-      expect(t.config.targetPace).toBeGreaterThan(0);
+      expect(t.config.targetPace).toBeUndefined();
+      expect(t.config.tempo?.workSecs.length).toBeGreaterThan(0);
     }
   });
 

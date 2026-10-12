@@ -31,8 +31,45 @@ export interface RunTemplate {
       floatSec?: number;
       cooldownSec: number;
     };
+    /** Run20 (5): a run-walk session — a walk, easy runs with walks between
+     *  them, a walk to finish. `walkSecs[i]` follows `runSecs[i]`, so there
+     *  is one fewer walk than runs. Segment sums equal estimatedDuration. */
+    runWalk?: {
+      warmupWalkSec: number;
+      runSecs: number[];
+      walkSecs: number[];
+      cooldownWalkSec: number;
+    };
   };
 }
+
+/**
+ * Run20 (5): the run-walk ladder, one session for each of a new runner's
+ * first six weeks (`newRunner.ts`), in order. Weeks 1 to 3 are NHS Couch to
+ * 5K's weeks 1 to 3 (week 1 as its plan has it today, with a cool-down walk
+ * that rounds the session to whole minutes). After that, the minutes of
+ * running in a session stay near Couch to 5K's average for the same week
+ * (15, 18 and 20 here, against its 16, 17 and 21), and the longest run never
+ * more than doubles from one week to the next: Couch to 5K doubles it from
+ * its week 2 to its week 3, but inside its week 5 goes from 8-minute runs to
+ * 20 minutes non-stop. The ladder ends at 20 minutes of continuous running.
+ * Its order and the doubling rule are a Tropos heuristic.
+ */
+export const RUN_WALK_TEMPLATE_IDS = [
+  "run_walk_1",
+  "run_walk_2",
+  "run_walk_3",
+  "run_walk_4",
+  "run_walk_5",
+  "run_walk_6",
+] as const;
+
+export function isRunWalkTemplateId(id: string | null | undefined): boolean {
+  return (RUN_WALK_TEMPLATE_IDS as readonly string[]).includes(id ?? "");
+}
+
+const repeat = (seconds: number, times: number) =>
+  Array.from({ length: times }, () => seconds);
 
 export const RUN_TEMPLATES: RunTemplate[] = [
   {
@@ -164,7 +201,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "5 min warmup → 20 min tempo → 5 min cooldown",
     estimatedDuration: 30,
     config: {
-      targetPace: 270,
       tempo: { warmupSec: 300, workSecs: [1200], cooldownSec: 300 },
     },
   },
@@ -176,7 +212,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "10 min warmup → 30 min tempo → 5 min cooldown",
     estimatedDuration: 45,
     config: {
-      targetPace: 270,
       tempo: { warmupSec: 600, workSecs: [1800], cooldownSec: 300 },
     },
   },
@@ -188,7 +223,6 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     description: "10 min warmup → 2×20 min tempo, 3 min float → 5 min cooldown",
     estimatedDuration: 58,
     config: {
-      targetPace: 270,
       tempo: {
         warmupSec: 600,
         workSecs: [1200, 1200],
@@ -292,7 +326,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 10K",
     type: "long",
     icon: "route",
-    description: "Easy-to-moderate effort, time on feet",
+    description: "Easy effort, time on feet",
     estimatedDuration: 55,
     config: { targetDistanceKm: 10 },
   },
@@ -301,7 +335,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 12K",
     type: "long",
     icon: "route",
-    description: "Easy-to-moderate effort, time on feet",
+    description: "Easy effort, time on feet",
     estimatedDuration: 65,
     config: { targetDistanceKm: 12 },
   },
@@ -310,7 +344,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 15K",
     type: "long",
     icon: "route",
-    description: "Steady, controlled effort",
+    description: "Easy effort, time on feet",
     estimatedDuration: 80,
     config: { targetDistanceKm: 15 },
   },
@@ -319,7 +353,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 20K",
     type: "long",
     icon: "route",
-    description: "Extended aerobic effort — half-marathon specific",
+    description: "Easy effort, close to half-marathon distance",
     estimatedDuration: 110,
     config: { targetDistanceKm: 20 },
   },
@@ -328,7 +362,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 25K",
     type: "long",
     icon: "route",
-    description: "Long aerobic effort — marathon build",
+    description: "Easy effort, a marathon build's long run",
     estimatedDuration: 140,
     config: { targetDistanceKm: 25 },
   },
@@ -337,16 +371,120 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Long 30K",
     type: "long",
     icon: "route",
-    description: "Peak marathon long run — time on feet",
+    description: "Easy effort, the marathon build's longest run",
     estimatedDuration: 170,
     config: { targetDistanceKm: 30 },
+  },
+  // Run-walk ladder (Run20 (5)), see RUN_WALK_TEMPLATE_IDS. Type "easy": the
+  // running is easy, by feel, and no pace is set for any of it.
+  {
+    id: "run_walk_1",
+    name: "Run-walk 1",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 1 min and walk 90s, 8 runs in all",
+    estimatedDuration: 29,
+    config: {
+      targetDurationMinutes: 29,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: repeat(60, 8),
+        walkSecs: repeat(90, 7),
+        cooldownWalkSec: 330,
+      },
+    },
+  },
+  {
+    id: "run_walk_2",
+    name: "Run-walk 2",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 90s and walk 2 min, 6 runs in all",
+    estimatedDuration: 29,
+    config: {
+      targetDurationMinutes: 29,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: repeat(90, 6),
+        walkSecs: repeat(120, 5),
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_walk_3",
+    name: "Run-walk 3",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then runs of 90s and 3 min, twice, walks between",
+    estimatedDuration: 25,
+    config: {
+      targetDurationMinutes: 25,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [90, 180, 90, 180],
+        walkSecs: [90, 180, 90],
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_walk_4",
+    name: "Run-walk 4",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then 3 runs of 5 min with 2 min 30s walks",
+    estimatedDuration: 30,
+    config: {
+      targetDurationMinutes: 30,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: repeat(300, 3),
+        walkSecs: repeat(150, 2),
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_walk_5",
+    name: "Run-walk 5",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 10 min, walk 2 min, run 8 min",
+    estimatedDuration: 30,
+    config: {
+      targetDurationMinutes: 30,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [600, 480],
+        walkSecs: [120],
+        cooldownWalkSec: 300,
+      },
+    },
+  },
+  {
+    id: "run_walk_6",
+    name: "Run-walk 6",
+    type: "easy",
+    icon: "person-standing",
+    description: "Walk 5 min, then run 20 min without a break",
+    estimatedDuration: 30,
+    config: {
+      targetDurationMinutes: 30,
+      runWalk: {
+        warmupWalkSec: 300,
+        runSecs: [1200],
+        walkSecs: [],
+        cooldownWalkSec: 300,
+      },
+    },
   },
   {
     id: "5k_race",
     name: "5K Race",
     type: "race",
     icon: "flag",
-    description: "All-out 5 km effort",
+    description: "Race effort: even, then all you have left at the end",
     estimatedDuration: 25,
     config: { targetDistanceKm: 5 },
   },
@@ -355,7 +493,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "10K Race",
     type: "race",
     icon: "flag",
-    description: "All-out 10 km effort",
+    description: "Race effort: even, then all you have left at the end",
     estimatedDuration: 50,
     config: { targetDistanceKm: 10 },
   },
@@ -364,7 +502,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Half Marathon Race",
     type: "race",
     icon: "flag",
-    description: "All-out half-marathon effort",
+    description: "Race effort: start steady, finish strong",
     estimatedDuration: 110,
     config: { targetDistanceKm: 21.1 },
   },
@@ -373,7 +511,7 @@ export const RUN_TEMPLATES: RunTemplate[] = [
     name: "Marathon Race",
     type: "race",
     icon: "flag",
-    description: "All-out marathon effort",
+    description: "Race effort: start steady, finish strong",
     estimatedDuration: 240,
     config: { targetDistanceKm: 42.2 },
   },
