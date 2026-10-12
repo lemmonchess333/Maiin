@@ -1,5 +1,6 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import {
   useState,
   useEffect,
@@ -1203,9 +1204,15 @@ export default function RunSummary() {
             </h1>
             {/* The distance is the page's one big number, in the reader's
                 unit. It was a tile reading km whatever the unit setting
-                said, beside a pace that also ignored it. */}
+                said, beside a pace that also ignored it. It counts up as
+                the finish screen's figures do on a lift (StatFigure's
+                0.6s); a corrected distance counts from the one shown. */}
             <p className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
-              {distanceValue(distance, unit, 2)}{" "}
+              <AnimatedNumber
+                value={distance}
+                format={(metres) => distanceValue(metres, unit, 2)}
+                duration={0.6}
+              />{" "}
               <span className="font-sans text-h3 font-bold text-muted-foreground">
                 {distanceUnitLabel(unit)}
               </span>
