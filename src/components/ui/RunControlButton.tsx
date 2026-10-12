@@ -23,9 +23,8 @@
  *     required TypeScript prop.
  *
  * Variants encode the run screen's existing colour vocabulary:
- *   - neutral   translucent white surface (lock, pause)
+ *   - neutral   translucent white surface (lock, pause, stop)
  *   - primary   THEME.running filled (resume — go-action)
- *   - danger    red translucent + red icon (stop)
  *
  * The optional visible label below the button (e.g. "LOCK", "PAUSE")
  * is rendered when `label` is provided. The button's aria-label is
@@ -37,7 +36,7 @@ import { HUD_CAPTION } from "@/components/run/runHudTypography";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
-export type RunControlVariant = "neutral" | "primary" | "danger";
+export type RunControlVariant = "neutral" | "primary";
 export type RunControlSize = "sm" | "lg";
 
 type RunControlButtonProps = Omit<
@@ -105,14 +104,6 @@ function variantStyle(
         boxShadow: glow
           ? `0 0 32px ${THEME.running}66, 0 8px 24px rgba(0, 0, 0, 0.4)`
           : "0 8px 24px rgba(0, 0, 0, 0.4)",
-      };
-    case "danger":
-      // Translucent red surface + red border. Used on Stop in the
-      // paused state. The danger glyph caller supplies the inner
-      // square / icon.
-      return {
-        background: "rgba(239, 68, 68, 0.12)",
-        border: "2.5px solid #EF4444",
       };
     case "neutral":
     default:

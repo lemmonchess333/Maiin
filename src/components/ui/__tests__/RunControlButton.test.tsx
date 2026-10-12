@@ -76,14 +76,6 @@ describe("RunControlButton — variants", () => {
     expect(style).toContain("rgb(212, 99, 122)");
   });
 
-  it("danger variant applies the red border via inline style", () => {
-    render(
-      <RunControlButton aria-label="Stop" icon={<svg />} variant="danger" />
-    );
-    const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(239, 68, 68)");
-  });
-
   it("neutral (default) variant has translucent white background", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} />);
     const style = screen.getByRole("button").getAttribute("style") || "";
@@ -91,7 +83,7 @@ describe("RunControlButton — variants", () => {
   });
 
   it("glow prop is opt-in for variants other than primary", () => {
-    // primary has glow always on; neutral/danger respect the prop
+    // primary has glow always on; neutral respects the prop
     render(
       <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
     );
