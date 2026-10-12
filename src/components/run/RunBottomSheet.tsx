@@ -9,7 +9,11 @@ import {
 import { motion, useMotionValue, animate } from "framer-motion";
 import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
-import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
+import {
+  HUD_CAPTION,
+  HUD_DESTRUCTIVE,
+  HUD_SECONDARY,
+} from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
@@ -1124,8 +1128,10 @@ export default function RunBottomSheet({
                   setShowStopConfirm(false);
                   onStop();
                 }}
+                /* Ending keeps the run, so it is the run's own button;
+                   red belongs to Discard, which deletes it. */
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: "hsl(var(--destructive))" }}
+                style={{ background: "hsl(var(--running-fill))" }}
               >
                 End run
               </button>
@@ -1138,8 +1144,8 @@ export default function RunBottomSheet({
                   }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm"
                   style={{
-                    color: "rgba(255,255,255,0.6)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: HUD_DESTRUCTIVE,
+                    border: `1px solid ${HUD_DESTRUCTIVE}4D`,
                   }}
                 >
                   Discard run
