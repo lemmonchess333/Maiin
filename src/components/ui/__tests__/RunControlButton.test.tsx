@@ -68,12 +68,12 @@ describe("RunControlButton — sizes", () => {
 });
 
 describe("RunControlButton — variants", () => {
-  it("primary variant applies the teal background via inline style", () => {
+  it("primary variant applies the run's coral background via inline style", () => {
     render(
       <RunControlButton aria-label="Resume" icon={<svg />} variant="primary" />
     );
     const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(82, 163, 189)");
+    expect(style).toContain("rgb(212, 99, 122)");
   });
 
   it("danger variant applies the red border via inline style", () => {
@@ -96,8 +96,8 @@ describe("RunControlButton — variants", () => {
       <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
     );
     const styleNoGlow = screen.getByRole("button").getAttribute("style") || "";
-    // neutral always has a drop-shadow but no teal-tinted glow
-    expect(styleNoGlow).not.toMatch(/rgba\(82,\s*163,\s*189/);
+    // neutral always has a drop-shadow but no coral-tinted glow
+    expect(styleNoGlow).not.toMatch(/rgba\(212,\s*99,\s*122/);
   });
 });
 

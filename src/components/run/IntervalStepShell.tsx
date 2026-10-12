@@ -20,28 +20,27 @@ import { THEME } from "@/lib/theme";
  *  - big countdown / metres-left, "Up next", a step-complete flash,
  *    a manual "Skip step" override, and a terminal all-steps-done state
  *
- * Colour: the active-run cockpit's own language (see the original header
- * note) — TEAL family, work full-strength, easier segments half voltage,
- * recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
+ * Colour: the run's coral (DESIGN_GUIDE §14, the live run screen), work
+ * full-strength, easier segments half voltage, recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
  * opacity/width only (WKWebView-safe); reduced motion gets settled states.
  */
 
-const TEAL = THEME.teal;
+const RUN = THEME.running;
 const TYPE_COLOR: Record<string, string> = {
-  warmup: `${TEAL}73`,
-  easy: `${TEAL}73`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}73`,
+  easy: `${RUN}73`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.35)",
-  cooldown: `${TEAL}73`,
+  cooldown: `${RUN}73`,
 };
 const TYPE_EYEBROW: Record<string, string> = {
-  warmup: `${TEAL}CC`,
-  easy: `${TEAL}CC`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}CC`,
+  easy: `${RUN}CC`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.6)",
-  cooldown: `${TEAL}CC`,
+  cooldown: `${RUN}CC`,
 };
 
 /** A countdown shows 0:01 until it reaches zero — ceil before formatting. */

@@ -1472,14 +1472,14 @@ export default function Run() {
                 <div
                   className="absolute inset-0 rounded-full border-2 motion-safe:animate-ping"
                   style={{
-                    borderColor: `${THEME.teal}30`,
+                    borderColor: `${THEME.running}30`,
                     animationDuration: "2s",
                   }}
                 />
                 <div
                   className="absolute inset-3 rounded-full border-2 motion-safe:animate-ping"
                   style={{
-                    borderColor: `${THEME.teal}40`,
+                    borderColor: `${THEME.running}40`,
                     animationDuration: "2s",
                     animationDelay: "0.4s",
                   }}
@@ -1487,7 +1487,7 @@ export default function Run() {
                 <div
                   className="absolute inset-6 rounded-full border-2 motion-safe:animate-ping"
                   style={{
-                    borderColor: `${THEME.teal}50`,
+                    borderColor: `${THEME.running}50`,
                     animationDuration: "2s",
                     animationDelay: "0.8s",
                   }}
@@ -1495,8 +1495,8 @@ export default function Run() {
                 <div
                   className="size-14 rounded-full flex items-center justify-center"
                   style={{
-                    background: `${THEME.teal}1F`,
-                    border: `2px solid ${THEME.teal}`,
+                    background: `${THEME.running}1F`,
+                    border: `2px solid ${THEME.running}`,
                   }}
                 >
                   <svg
@@ -1504,7 +1504,7 @@ export default function Run() {
                     height="24"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke={THEME.teal}
+                    stroke={THEME.running}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1576,7 +1576,7 @@ export default function Run() {
                       onClick={handleSwitchToManual}
                       className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
                       style={{
-                        background: THEME.teal,
+                        background: THEME.running,
                         color: "hsl(var(--stage))",
                       }}
                     >
