@@ -278,21 +278,22 @@ function KmProgress({
   const progress = (distance % lap) / lap;
   const next = kmDone + 1;
   const u = distanceUnitLabel(unit);
+  /* `w-full`: the expanded sheet centres its column, which sizes a row
+     to its content, and the bar's `flex-1` then had no width at all —
+     the two labels sat side by side with nothing between them. */
   return (
-    <div className="flex items-center gap-2 px-1">
+    <div className="flex w-full items-center gap-2 px-1">
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          /* Room for "100 km" at 11px tabular (~39px), so the bar does not
+             move as the count gains a digit. */
+          width: 44,
           textAlign: "right",
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {kmDone}
-        {u}
+        {`${kmDone} ${u}`}
       </p>
       <div
         className="flex-1 h-1 rounded-full overflow-hidden"
@@ -309,15 +310,11 @@ function KmProgress({
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          width: 44,
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {next}
-        {u}
+        {`${next} ${u}`}
       </p>
     </div>
   );
