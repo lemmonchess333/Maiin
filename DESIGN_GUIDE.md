@@ -729,6 +729,11 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
+  Under the rail sits a closed disclosure, "The weeks ahead"
+  (`RaceWeeksAhead`, R23 in Pgm8, 2026-10-11): one row a week to race
+  week, each week's long run and quality sessions by name and "Lighter
+  week" on a step-back week, with no days, no easy runs and no base, build
+  or peak (E3a). It is worked out when opened.
 - **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
   title (the card's one big line, H2) + one quiet meta line + a single
   primary action (its own control, NOT the whole card) + an overflow that

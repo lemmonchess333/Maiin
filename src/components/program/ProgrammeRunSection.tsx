@@ -149,6 +149,8 @@ import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
+import RaceWeeksAhead from "./RaceWeeksAhead";
+import type { LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
 import {
   runSessionPresentation,
@@ -228,6 +230,11 @@ interface ProgrammeRunSectionProps {
   /** Clears `pendingFellBehindPrompt` without a plan change — used by the
    *  in-tab "My race moved →" path before routing to the date editor. */
   dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
+  /** Today's layoff reading (`useProgram`'s): the race plan's weeks ahead
+   *  are built with it, as the rollover builds next week (R23). Required,
+   *  as on every regen site: left out, a returning runner's outline would
+   *  show the quality sessions their plan holds back. */
+  recentLayoff: LayoffClass;
 }
 
 export default function ProgrammeRunSection({
@@ -246,6 +253,7 @@ export default function ProgrammeRunSection({
   skipRecoveryEarly,
   realignRacePlan,
   dismissFellBehindPrompt,
+  recentLayoff,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -1702,6 +1710,15 @@ export default function ProgrammeRunSection({
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */
                 raceSpaceId={profile.raceGoal?.eventSpaceId}
+                /* R23: the plan's coming weeks, a week a row. */
+                weeksAhead={
+                  <RaceWeeksAhead
+                    profile={profile}
+                    programState={programState}
+                    recentLayoff={recentLayoff}
+                    today={todayKeyDerivation}
+                  />
+                }
                 onEdit={() => {
                   haptic();
                   navigate("/settings/run-plan");

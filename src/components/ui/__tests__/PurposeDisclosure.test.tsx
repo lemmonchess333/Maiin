@@ -1,11 +1,11 @@
 /**
- * "Why this run" and "Why this session" are one control. It opens closed,
- * and with nothing to say it is not there at all: an empty "Why this run"
- * is a promise with nothing behind it, and Home's day details hand it a
- * run's reason that is null for a free runner.
+ * "Why this run", "Why this session" and a race plan's "The weeks ahead"
+ * are one control. It opens closed, and with nothing to say it is not there
+ * at all: an empty "Why this run" is a promise with nothing behind it, and
+ * Home's day details hand it a run's reason that is null for a free runner.
  */
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PurposeDisclosure from "../PurposeDisclosure";
 import RunPurpose from "@/components/run/RunPurpose";
 
@@ -33,6 +33,21 @@ describe("PurposeDisclosure", () => {
     const why = screen.getByText("Why this session").closest("details")!;
     expect(why).not.toHaveAttribute("open");
     expect(why).toHaveTextContent("A lighter week.");
+  });
+
+  it("tells its owner when it opens and closes", async () => {
+    // The race plan's weeks ahead are worked out only once asked for.
+    const onToggle = vi.fn();
+    render(
+      <PurposeDisclosure label="The weeks ahead" onToggle={onToggle}>
+        Two weeks.
+      </PurposeDisclosure>
+    );
+    fireEvent.click(screen.getByText("The weeks ahead"));
+    await waitFor(() => expect(onToggle).toHaveBeenLastCalledWith(true));
+    fireEvent.click(screen.getByText("The weeks ahead"));
+    await waitFor(() => expect(onToggle).toHaveBeenLastCalledWith(false));
+    expect(onToggle).toHaveBeenCalledTimes(2);
   });
 
   it("keeps the run's own name", () => {
