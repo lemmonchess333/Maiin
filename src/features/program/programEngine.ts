@@ -281,15 +281,27 @@ export function prescribedRepCeiling(ex: {
  * `MAX_HOLD_SECONDS`, so `resetReps + 2` would mean two seconds — the same
  * rep-shaped reasoning LIFT-EV-01 took out of the hold deload. Holds keep
  * today's behaviour until the time axis is looked at on its own terms.
+ *
+ * "Bodyweight" here is a lift that climbs in reps alone (`climbsInReps`): a
+ * bodyweight lift with load added takes the weighted ceiling (Pgm8 L6).
  */
 function impliedDoubleRangeMax(
   resetReps: number,
-  isBodyweight: boolean,
+  repsOnly: boolean,
   isTimed: boolean
 ): number | undefined {
   if (isTimed) return undefined;
-  const ceiling = isBodyweight ? MAX_BODYWEIGHT_REPS : resetReps + 2;
+  const ceiling = repsOnly ? MAX_BODYWEIGHT_REPS : resetReps + 2;
   return ceiling > resetReps ? ceiling : undefined;
+}
+
+/**
+ * Whether a lift at this load climbs in reps alone: a bodyweight lift with
+ * no load added (D-LIFT-11, Lift4 (6)). With load added it
+ * climbs and steps as any loaded lift does (Pgm8 L6).
+ */
+function climbsInReps(exerciseId: string | undefined, load: number): boolean {
+  return isBodyweightExerciseId(exerciseId) && !(load > 0);
 }
 
 /**
@@ -297,13 +309,18 @@ function impliedDoubleRangeMax(
  * a lift that climbs reps before it adds weight ("8–12"), the target alone
  * for a fixed one ("5"). The range runs from the bottom the reps return to
  * after a step to the top that earns one, or past it where the next weight
- * is too big a step and the target has climbed on (`loadSteps.ts`).
+ * is too big a step and the target has climbed on (`loadSteps.ts`). A
+ * range-less bodyweight lift's top depends on whether it carries load
+ * (`climbsInReps`); with no weight given, it carries none.
  */
 export function prescribedRepRange(
   ex: Pick<
     ProgramExercise,
     "exerciseId" | "reps" | "baseReps" | "repRangeMax" | "repUnit"
-  > & { progressionType?: ProgramExercise["progressionType"] }
+  > & {
+    progressionType?: ProgramExercise["progressionType"];
+    weight?: number;
+  }
 ): { bottom: number; top: number } {
   const base = ex.baseReps ?? ex.reps;
   const top =
@@ -311,7 +328,7 @@ export function prescribedRepRange(
       ? (ex.repRangeMax ??
         impliedDoubleRangeMax(
           base,
-          isBodyweightExerciseId(ex.exerciseId),
+          climbsInReps(ex.exerciseId, ex.weight ?? 0),
           ex.repUnit === "seconds"
         ))
       : undefined;
@@ -2009,17 +2026,38 @@ export function generateProgram(
  * to what was lifted, so a seed that is too light or too heavy is put right
  * by the first session rather than typed over in every session after it.
  *
- * `null` when there is no load to follow: a bodyweight movement, whose axis
- * is reps, or a set saved with no load (a cleared weight field saves 0).
+ * A bodyweight movement's load is the load added to it, which the plan
+ * follows like any other weight (Pgm8 L6), and none is a load too: the body
+ * alone, from which the lift climbs in reps. `null` only when a loaded lift
+ * has no load to follow: a set saved with none (a cleared weight field
+ * saves 0).
  */
 export function liftedLoad(
   exerciseId: string | undefined,
   actualWeight: number
 ): number | null {
-  if (isBodyweightExerciseId(exerciseId)) return null;
-  return Number.isFinite(actualWeight) && actualWeight > 0
-    ? actualWeight
-    : null;
+  const loaded = Number.isFinite(actualWeight) && actualWeight > 0;
+  if (isBodyweightExerciseId(exerciseId)) return loaded ? actualWeight : 0;
+  return loaded ? actualWeight : null;
+}
+
+/** The end of the prompt the rep climb leaves at its top (D-LIFT-11). */
+const ADD_LOAD_PROMPT =
+  " — add load (weighted vest / band) to keep progressing.";
+
+/**
+ * A lift without the prompt the rep climb left at its top ("Hitting 12+
+ * reps — add load…"), once the plan carries load added to it: the prompt
+ * has been acted on, and the plan follows that load (Pgm8 L6). Any other
+ * note stays, and so does the prompt while there is no load.
+ */
+export function withoutAddLoadPrompt(
+  exercise: ProgramExercise
+): ProgramExercise {
+  if (!(exercise.weight > 0) || !exercise.notes?.endsWith(ADD_LOAD_PROMPT))
+    return exercise;
+  const { notes: _prompt, ...rest } = exercise;
+  return rest;
 }
 
 export function applyProgression(
@@ -2100,16 +2138,16 @@ export function applyProgression(
   // moves to the load lifted and the miss counts, and two in a row lower the
   // lift (`countMiss`). No load logged: nothing to follow, so the session is
   // recorded and the prescription and its failure count stay as they were.
-  // Bodyweight movements are untouched: they progress by reps, and success
-  // still asks for any load the plan adds. No note is written — `notes` is
-  // the injury-warning slot.
-  const lifted = liftedLoad(exercise.exerciseId, actualWeight);
-  if (!isBodyweight && lifted === null) return updated;
-  const anchor = lifted ?? exercise.weight;
+  // A bodyweight movement's load is the load added to it, followed the same
+  // way (Pgm8 L6): done with some, it climbs, steps and comes down as any
+  // loaded lift does; done with none, the plan follows it to none and the
+  // lift climbs in reps (`climbsInReps`). No note is written beyond the rep
+  // climb's prompt at its top — `notes` is the injury-warning slot.
+  const anchor = liftedLoad(exercise.exerciseId, actualWeight);
+  if (anchor === null) return updated;
   updated.weight = anchor;
-  const completed =
-    actualReps >= exercise.reps &&
-    (!isBodyweight || actualWeight >= exercise.weight);
+  const repsOnly = climbsInReps(exercise.exerciseId, anchor);
+  const completed = actualReps >= exercise.reps;
   // Lift4 (6): the weight steps on its equipment's grid (`loadSteps.ts`),
   // and a step of more than about 15% is never taken on its own: the target
   // climbs a rep past what was done instead, as far as the next weight's
@@ -2119,9 +2157,15 @@ export function applyProgression(
   // first climbs past it at this weight leaves the record for the next
   // session's one line (`stretched`, Pgm7 A3); a target already past it
   // at this weight, climbing on, leaves none.
+  //
+  // A bodyweight lift's plate is always taken (Pgm8 L6): the weight it moves
+  // is the person as well as the belt, and a 2.5 kg plate is 15% only of
+  // 16.7 kg, so its target never stretches.
   const grid = loadGridFor(exercise.exerciseId, smallPlates);
   const stepOrStretch = (top: number) => {
-    const next = automaticStepUp(grid, anchor);
+    const next = isBodyweight
+      ? grid.above(anchor)
+      : automaticStepUp(grid, anchor);
     if (next !== null) {
       updated.weight = next;
       updated.reps = resetReps;
@@ -2153,8 +2197,7 @@ export function applyProgression(
     if (isTimed) {
       const ceiling = exercise.repRangeMax ?? MAX_HOLD_SECONDS;
       if (exercise.reps >= ceiling) {
-        updated.notes =
-          "Holding this long already — add load (weighted vest / band) to keep progressing.";
+        updated.notes = `Holding this long already${ADD_LOAD_PROMPT}`;
       } else {
         updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
       }
@@ -2162,7 +2205,7 @@ export function applyProgression(
     }
     const ceiling = exercise.repRangeMax ?? MAX_BODYWEIGHT_REPS;
     if (exercise.reps >= ceiling) {
-      updated.notes = `Hitting ${ceiling}+ reps — add load (weighted vest / band) to keep progressing.`;
+      updated.notes = `Hitting ${ceiling}+ reps${ADD_LOAD_PROMPT}`;
     } else {
       updated.reps = Math.min(ceiling, exercise.reps + 1);
     }
@@ -2175,8 +2218,8 @@ export function applyProgression(
       // never progresses at all for a lifter who hits the prescription.
       const rangeMax =
         exercise.repRangeMax ??
-        impliedDoubleRangeMax(resetReps, isBodyweight, isTimed);
-      if (isBodyweight && rangeMax != null && rangeMax > resetReps) {
+        impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
+      if (repsOnly && rangeMax != null && rangeMax > resetReps) {
         // Range-aware BODYWEIGHT progression. This branch did not exist:
         // the range-aware arm below was gated `!isBodyweight`, so a
         // bodyweight main fell through to the legacy +2-overshoot arm —
@@ -2191,17 +2234,18 @@ export function applyProgression(
         // the top of the range prompts ADDING LOAD instead of silently
         // adding weight the movement doesn't have. Timed holds keep their
         // 5-second step via bumpBodyweightReps — a +1 target move means
-        // one second, which is noise, not progression.
+        // one second, which is noise, not progression. Load added, the
+        // plan follows it and the weighted arm takes over (Pgm8 L6).
         if (rpeOk) {
           if (isTimed) {
             bumpBodyweightReps();
           } else if (actualReps >= rangeMax) {
-            updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+            updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
           } else {
             updated.reps = Math.min(rangeMax, actualReps + 1);
           }
         }
-      } else if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
+      } else if (!repsOnly && rangeMax != null && rangeMax > resetReps) {
         // Range-aware double progression (P1, training-book backlog): the
         // rep TARGET climbs through [baseReps, repRangeMax] as targets are
         // completed; load rises only once the top of the range is reached,
@@ -2221,7 +2265,7 @@ export function applyProgression(
       } else if (actualReps >= exercise.reps + 2 && rpeOk) {
         // Legacy double progression (no authored range): accumulate reps
         // until a 2-rep overshoot, then increase weight
-        if (isBodyweight) {
+        if (repsOnly) {
           // Bodyweight: progress via rep target increase (capped)
           bumpBodyweightReps();
         } else {
@@ -2230,32 +2274,27 @@ export function applyProgression(
           stepOrStretch(resetReps);
         }
       }
-      // Otherwise: success recorded but reps still accumulating toward ceiling
-      updated.lastSuccessfulWeight = actualWeight;
+      // Otherwise: success recorded but reps still accumulating toward ceiling.
+      // The success is at the load followed, which is the weight lifted, or
+      // 0 for a bodyweight lift done with none (`liftedLoad`).
+      updated.lastSuccessfulWeight = anchor;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(
-        updated,
-        exercise,
-        anchor,
-        isBodyweight,
-        isTimed,
-        grid,
-        missCounts
-      );
+      countMiss(updated, exercise, anchor, repsOnly, isTimed, grid, missCounts);
     }
   } else {
     if (completed) {
-      if (isBodyweight) {
+      if (repsOnly) {
         // A fixed target has no range, so it takes the ceiling a range-less
         // double does (`impliedDoubleRangeMax`): every set at the target is
         // a step, and a bodyweight lift's step is a rep (Lift4 (6), on the
         // axis (7) lowers it on). Without it a pull-up main on a fixed
         // target climbed only on a 2-rep overshoot, and then a single rep.
+        // With load added, its step is a plate, below (Pgm8 L6).
         const rangeMax =
           exercise.repRangeMax ??
-          impliedDoubleRangeMax(resetReps, isBodyweight, isTimed);
+          impliedDoubleRangeMax(resetReps, repsOnly, isTimed);
         if (rangeMax != null && rangeMax > resetReps) {
           // Range-aware bodyweight climb on the LINEAR path too — a
           // running-goal pull-up main (4-6, linear) was frozen for a
@@ -2265,7 +2304,7 @@ export function applyProgression(
             if (isTimed) {
               bumpBodyweightReps();
             } else if (actualReps >= rangeMax) {
-              updated.notes = `Hitting ${rangeMax}+ reps — add load (weighted vest / band) to keep progressing.`;
+              updated.notes = `Hitting ${rangeMax}+ reps${ADD_LOAD_PROMPT}`;
             } else {
               updated.reps = Math.min(rangeMax, actualReps + 1);
             }
@@ -2280,19 +2319,11 @@ export function applyProgression(
         // A fixed target met on every set: the weight goes up a step.
         stepOrStretch(resetReps);
       }
-      updated.lastSuccessfulWeight = actualWeight;
+      updated.lastSuccessfulWeight = anchor;
       updated.consecutiveFailures = 0;
       updated.plateauCount = 0;
     } else {
-      countMiss(
-        updated,
-        exercise,
-        anchor,
-        isBodyweight,
-        isTimed,
-        grid,
-        missCounts
-      );
+      countMiss(updated, exercise, anchor, repsOnly, isTimed, grid, missCounts);
     }
   }
 
@@ -2308,16 +2339,18 @@ export function applyProgression(
  * down 10% on its grid, by at least one step (`loweredLoad`), with the rep
  * target kept,
  * and climbs back to the weight it came from (`applySessionSets`). A
- * bodyweight lift comes down a rep, and a hold five seconds (LIFT-EV-01: a
- * rep-sized step walked a plank down one second at a time). Either way the
- * record (`lowered`) gives the next session its one line, and
- * `plateauCount` records the stall.
+ * bodyweight lift done with no load added comes down a rep, and a hold five
+ * seconds (LIFT-EV-01: a rep-sized step walked a plank down one second at a
+ * time); done with load added, its load comes down as any other weight does
+ * (Pgm8 L6), to none from the lightest plate. Either way the record
+ * (`lowered`) gives the next session its one line, and `plateauCount`
+ * records the stall.
  */
 function countMiss(
   updated: ProgramExercise,
   exercise: ProgramExercise,
   anchor: number,
-  isBodyweight: boolean,
+  repsOnly: boolean,
   isTimed: boolean,
   grid: LoadGrid,
   missCounts: number
@@ -2325,7 +2358,7 @@ function countMiss(
   updated.consecutiveFailures =
     (exercise.consecutiveFailures || 0) + missCounts;
   if (updated.consecutiveFailures < MISSES_BEFORE_LOWERING) return;
-  if (isBodyweight) {
+  if (repsOnly) {
     updated.reps = isTimed
       ? Math.max(MIN_HOLD_SECONDS, exercise.reps - HOLD_STEP_SECONDS)
       : Math.max(4, exercise.reps - 1);
@@ -2386,7 +2419,7 @@ export function applySessionSets(
   const reps = recordedReps(read);
   const weakest = Math.min(...read.counted.map((set) => set.reps));
   const lifted = liftedLoad(exercise.exerciseId, read.weight);
-  const outcome = sessionOutcome(read, exercise, isBodyweight);
+  const outcome = sessionOutcome(read, exercise);
   const uncalibrated =
     !isBodyweight && (exercise.weight === 0 || lifted === null);
 
@@ -2893,12 +2926,15 @@ export function raceWeekSession(
  * back a step a session to the weight it came down from (`lowered`,
  * already marked shown: the person chose this, so no line explains it, and
  * a stretched target's line goes for the same reason, Pgm7 A3).
- * A bodyweight lift or a hold comes down as much in reps or seconds and
- * climbs back by the usual rules; a lift with no weight yet keeps it. This
- * week has one set fewer on every lift, the miss counts start again, and
- * the return's two weeks begin (`easingBack`, which `advanceWeek` counts
- * down). A lighter week already has fewer sets and wins (the precedence
- * table in the lifting handoff), so in one the sets stay as they are.
+ * A bodyweight lift with load added comes down the same way, on its belt,
+ * by at least a plate, the lightest plate to none (Pgm8 L6, as two misses
+ * lower it). A bodyweight lift or hold with none comes down as much in reps
+ * or seconds and climbs back by the usual rules; a loaded lift with no
+ * weight yet keeps it. This week has one set fewer on every lift, the miss
+ * counts start again, and the return's two weeks begin (`easingBack`,
+ * which `advanceWeek` counts down). A lighter week already has fewer sets
+ * and wins (the precedence table in the lifting handoff), so in one the
+ * sets stay as they are.
  */
 export function easeBackIn(state: ProgramState, share: number): ProgramState {
   const smallPlates = state.settings?.smallPlates === true;
@@ -2924,7 +2960,7 @@ function easedBack(
   share: number,
   smallPlates: boolean
 ): ProgramExercise {
-  if (isBodyweightExerciseId(ex.exerciseId)) {
+  if (climbsInReps(ex.exerciseId, ex.weight)) {
     const timed = ex.repUnit === "seconds";
     const step = timed ? HOLD_STEP_SECONDS : 1;
     const floor = Math.min(timed ? MIN_HOLD_SECONDS : 4, ex.reps);
@@ -2932,6 +2968,9 @@ function easedBack(
     return { ...ex, reps: Math.max(floor, ex.reps - cut) };
   }
   if (!(ex.weight > 0)) return ex;
+  // A loaded lift with nothing lighter to go to keeps its weight; a
+  // bodyweight lift's load comes down to none, the body alone (Pgm8 L6).
+  const toNone = isBodyweightExerciseId(ex.exerciseId);
   const grid = loadGridFor(ex.exerciseId, smallPlates);
   const climbing = loweringOf(ex);
   const { stretched: _line, ...lift } = ex;
@@ -2940,7 +2979,7 @@ function easedBack(
   const stash = ex.preDeloadWeight;
   if (typeof stash === "number" && stash > ex.weight) {
     const back = lighterBy(grid, stash, share);
-    if (!(back > 0)) return ex;
+    if (!(back > 0) && !toNone) return ex;
     return {
       ...lift,
       preDeloadWeight: Math.max(back, ex.weight),
@@ -2954,7 +2993,7 @@ function easedBack(
     };
   }
   const weight = lighterBy(grid, ex.weight, share);
-  if (!(weight > 0)) return ex;
+  if (!(weight > 0) && !toNone) return ex;
   return {
     ...lift,
     weight,

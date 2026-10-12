@@ -109,6 +109,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
+import { SMALL_PLATES_HINT } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -1277,7 +1278,7 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                {SMALL_PLATES_HINT}
               </p>
             </div>
             <Toggle

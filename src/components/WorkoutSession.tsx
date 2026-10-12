@@ -170,7 +170,9 @@ interface WorkoutDay {
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
-/** Last session's set as the Previous column shows it. */
+/** Last session's set as the Previous column shows it: "60 × 8", and on a
+ *  bodyweight lift "+10 × 8" for load added (Pgm8 L6, as Train's "+10 kg")
+ *  or "BW × 12" for none. */
 function previousLabel(
   prev: { weight: number; reps: number } | undefined,
   timed: boolean,
@@ -178,8 +180,22 @@ function previousLabel(
 ): string | null {
   if (!prev) return null;
   if (timed) return `${prev.reps} s`;
-  if (prev.weight > 0) return `${prev.weight} × ${prev.reps}`;
+  if (prev.weight > 0)
+    return `${bodyweight ? "+" : ""}${prev.weight} × ${prev.reps}`;
   return bodyweight ? `BW × ${prev.reps}` : null;
+}
+
+/** The load on the target line: " @ 60 kg", " @ Bodyweight", or a
+ *  bodyweight lift's load added, which the plan follows, as
+ *  " @ Bodyweight + 10 kg" (Pgm8 L6). */
+function targetLoad(
+  exercise: Pick<ProgramExercise, "exerciseId" | "weight">
+): string {
+  const bodyweight =
+    getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
+  if (exercise.weight > 0)
+    return ` @ ${bodyweight ? "Bodyweight + " : ""}${exercise.weight} kg`;
+  return bodyweight ? " @ Bodyweight" : "";
 }
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
@@ -2270,12 +2286,7 @@ export default function WorkoutSession({
           <p className="text-xs text-muted-foreground text-center">
             Target: {currentExercise.sets}&times;
             {formatRepTarget(currentExercise)}
-            {currentExercise.weight > 0
-              ? ` @ ${currentExercise.weight} kg`
-              : getExerciseById(currentExercise.exerciseId)?.equipment ===
-                  "Bodyweight"
-                ? " @ Bodyweight"
-                : ""}
+            {targetLoad(currentExercise)}
           </p>
         )}
         {currentExercise && (

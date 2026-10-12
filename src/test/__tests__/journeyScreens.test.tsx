@@ -96,6 +96,16 @@ describe("Train's line for each exercise, as the journeys read it", () => {
       "3 sets × 8 reps",
     ],
     [
+      "a bodyweight lift with weight added (Pgm8 L6)",
+      exercise({
+        exerciseId: "pull-ups",
+        name: "Pull-ups",
+        reps: 8,
+        weight: 10,
+      }),
+      "3 sets × 8 reps · +10 kg",
+    ],
+    [
       "a timed hold",
       exercise({
         exerciseId: "plank",

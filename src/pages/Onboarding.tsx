@@ -62,6 +62,7 @@ import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
+import { SMALL_PLATES_HINT } from "@/lib/liftRules";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
@@ -1359,7 +1360,7 @@ export default function Onboarding() {
                     <div>
                       <p className="text-sm text-foreground">Small plates</p>
                       <p className="text-xs text-muted-foreground">
-                        Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                        {SMALL_PLATES_HINT}
                       </p>
                     </div>
                     <Toggle

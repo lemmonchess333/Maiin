@@ -329,8 +329,9 @@ export interface WorkoutDay {
 export interface ProgramSettings {
   autoProgression: boolean;
   /**
-   * Lift4 (6): "I have small plates", so a barbell steps 1.25 kg instead of
-   * 2.5 kg (`loadSteps.ts`). Off until the person turns it on. It replaced
+   * Lift4 (6): "I have small plates", so a barbell, and the belt on a
+   * bodyweight lift (Pgm8 L6), step 1.25 kg instead of 2.5 kg
+   * (`loadSteps.ts`). Off until the person turns it on. It replaced
    * Microloading, whose `microloading` key older documents still carry and
    * nothing reads.
    */

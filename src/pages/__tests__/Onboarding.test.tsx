@@ -290,6 +290,12 @@ describe("what do you have? (Lift4 (11))", () => {
       screen.queryByRole("switch", { name: "A barbell and a rack" })
     ).toBeNull();
     fireEvent.click(screen.getByRole("switch", { name: "Small plates" }));
+    // They step a belt too (Pgm8 L6), and the line under the switch says so.
+    expect(
+      screen.getByText(
+        "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+      )
+    ).toBeInTheDocument();
     expect(builder.mock.calls.at(-1)![0].smallPlates).toBe(true);
     expect(
       builder.mock.results.at(-1)!.value.programState.settings.smallPlates

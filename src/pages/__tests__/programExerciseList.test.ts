@@ -103,7 +103,7 @@ describe("the page reads top to bottom", () => {
   });
 });
 
-describe("a bodyweight lift's last set is not a load", () => {
+describe("a bodyweight lift's load reads as weight added to it", () => {
   /* Both row renderings, the tappable rows and the drag-to-reorder rows,
      used to carry their own copy of the `Last:` chain, and the copies
      drifted. The prescription line already read `!isBW && ex.weight > 0`,
@@ -113,7 +113,10 @@ describe("a bodyweight lift's last set is not a load", () => {
      also said "BW x 12" where the other said "12 reps".
 
      DS3 draws both renderings through one `ExerciseRowSummary`, so the
-     chain exists once and the two cannot disagree. */
+     chain exists once and the two cannot disagree. It then left a
+     bodyweight lift's load out altogether, as no load. Pgm8 L6 made it
+     one: the plan follows the weight on the belt, so the row says it,
+     marked as added ("+10 kg"), never as the lift's own ("10 kg"). */
   const summary = strip(
     readFileSync(
       resolve(repoRoot, "src/components/program/ExerciseRowSummary.tsx"),
@@ -131,14 +134,15 @@ describe("a bodyweight lift's last set is not a load", () => {
     expect(code).not.toMatch(/Last:\{" "\}/);
   });
 
-  it("asks isBW before it asks about weight", () => {
+  it("marks a bodyweight lift's load as added, in the last sets and the prescription alike", () => {
     expect(summary).toMatch(/bodyweight=\{isBW\}/);
     const line = summary.slice(summary.indexOf("function LastSetsLine"));
-    const bw = line.indexOf("if (bodyweight)");
-    const weight = line.indexOf("group.weightKg > 0");
-    expect(bw).toBeGreaterThan(-1);
-    expect(weight).toBeGreaterThan(-1);
-    expect(bw).toBeLessThan(weight);
+    expect(line).toMatch(
+      /bodyweight \? `\+\$\{group\.weightKg\}` : group\.weightKg/
+    );
+    expect(summary).toMatch(
+      /isBW \? `\+\$\{exercise\.weight\}` : exercise\.weight/
+    );
   });
 
   it("is what both renderings draw, so drag mode is not its own dialect", () => {

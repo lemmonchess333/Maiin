@@ -4,10 +4,16 @@
  * changed in the code changes here or fails.
  */
 import { describe, expect, it } from "vitest";
-import { liftRules, liftRulesContext, type LiftRule } from "../liftRules";
+import {
+  liftRules,
+  liftRulesContext,
+  SMALL_PLATES_HINT,
+  type LiftRule,
+} from "../liftRules";
 import {
   AUTOMATIC_STEP_SHARE,
   BARBELL_STEP_KG,
+  loadGridFor,
   LOWERED_SHARE,
   MISSES_BEFORE_LOWERING,
   SMALL_PLATES_STEP_KG,
@@ -48,10 +54,41 @@ describe("liftRules", () => {
 
   it("says a bodyweight lift climbs in reps", () => {
     // A fixed target met on every set climbs a rep, a range climbs to its
-    // top (bodyweightFixedTarget.test.ts); neither adds weight.
+    // top (bodyweightFixedTarget.test.ts); with no weight added, neither
+    // adds any.
     expect(rule(intermediate, "climb")).toContain(
       "A bodyweight lift, such as pull-ups, climbs in reps instead."
     );
+  });
+
+  it("says a bodyweight lift with weight added goes up as any lift does, a plate at a time (Pgm8 L6)", () => {
+    // The plan follows the weight on the belt and steps it a plate
+    // (progressionUserLoad.test.ts), small plates included.
+    expect(rule(intermediate, "climb")).toContain(
+      `With weight added, on a belt or a vest, it goes up like any other lift, ${BARBELL_STEP_KG} kg at a time.`
+    );
+    const small = liftRules({
+      experience: "intermediate",
+      liftDays: 3,
+      smallPlates: true,
+      racing: false,
+    });
+    expect(rule(small, "climb")).toContain(
+      `like any other lift, ${SMALL_PLATES_STEP_KG} kg at a time.`
+    );
+  });
+
+  it("says what small plates change: a barbell's step and a belt's (Pgm8 L6)", () => {
+    // Under the switch in setup and in Programme settings. It said
+    // "Barbell lifts" alone, and the setting now steps a belt too.
+    expect(SMALL_PLATES_HINT).toBe(
+      "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+    );
+    // The two numbers are the steps the engine takes, on both.
+    for (const lift of ["bench-press", "pull-ups"]) {
+      expect(loadGridFor(lift, true).above(10) - 10).toBe(SMALL_PLATES_STEP_KG);
+      expect(loadGridFor(lift, false).above(10) - 10).toBe(BARBELL_STEP_KG);
+    }
   });
 
   it("states the miss rule", () => {

@@ -34,6 +34,16 @@ describe("loadGridFor — steps follow the equipment (Lift4 (6))", () => {
     expect(kettlebell.above(32)).toBe(36);
   });
 
+  it("steps a bodyweight lift's added load a plate on a belt: 2.5 kg, 1.25 kg with small plates (Pgm8 L6)", () => {
+    // One plate hangs from a dip belt, and "I have small plates" means a
+    // 1.25 kg step wherever plates go, a barbell's or a belt's.
+    expect(loadGridFor("pull-ups", false).above(10)).toBe(12.5);
+    expect(loadGridFor("pull-ups", true).above(10)).toBe(11.25);
+    expect(loadGridFor("weighted-chest-dip", true).below(2.5)).toBe(1.25);
+    expect(loadGridFor("pull-ups", false).nearest(7)).toBe(7.5);
+    expect(loadGridFor("pull-ups", false).below(2.5)).toBe(0); // none: the body
+  });
+
   it("steps a lift the catalogue doesn't know as a stack", () => {
     expect(loadGridFor("my-own-lift", false).above(30)).toBe(32.5);
     expect(loadGridFor(undefined, true).above(30)).toBe(32.5);

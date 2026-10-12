@@ -184,8 +184,9 @@ export type TabName = (typeof TABS)[Exclude<keyof typeof TABS, "navigation">];
 
 /**
  * An exercise's line on Train (`ExerciseRowSummary`), as a person reads it:
- * "3 sets × 5 reps · 100 kg", "3 sets × 8–12 reps", "3 sets × 30s". No
- * weight for a bodyweight lift or an unloaded one.
+ * "3 sets × 5 reps · 100 kg", "3 sets × 8–12 reps", "3 sets × 30s", and
+ * "3 sets × 8 reps · +10 kg" for a bodyweight lift with load added (Pgm8
+ * L6). No weight for a bodyweight lift with none, or an unloaded lift.
  */
 export function trainRowText(
   exercise: Pick<
@@ -198,6 +199,8 @@ export function trainRowText(
     getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
   const unit = exercise.repUnit === "seconds" ? "" : " reps";
   const weight =
-    !bodyweight && exercise.weight > 0 ? ` · ${exercise.weight} kg` : "";
+    exercise.weight > 0
+      ? ` · ${bodyweight ? "+" : ""}${exercise.weight} kg`
+      : "";
   return `${exercise.sets} sets × ${formatRepTarget(exercise)}${unit}${weight}`;
 }

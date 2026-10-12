@@ -74,6 +74,52 @@ describe("startingSetRows — each set starts from what it did last time (Lift4)
     expect(values(out)).toEqual(["40x10", "40x10", "40x10"]);
   });
 
+  it("starts from none where the plan's own drop took a bodyweight lift's load to none (Pgm8 L6)", () => {
+    // Two misses at 2.5 kg on the belt lower it a plate, to none. Last
+    // time's 2.5 kg is the load the plan came down from: the rows start
+    // where it came down to, as a lowered weight's do. Logged as filled,
+    // the 2.5 kg would undo the drop.
+    const pullUps = {
+      exerciseId: "pull-ups",
+      weight: 0,
+      reps: 8,
+      lowered: {
+        exerciseId: "pull-ups",
+        from: 2.5,
+        unit: "kg" as const,
+        target: 8,
+      },
+    };
+    const last = [
+      { weight: 2.5, reps: 6 },
+      { weight: 2.5, reps: 5 },
+      { weight: 2.5, reps: 5 },
+    ];
+    expect(values(startingSetRows(rows(0, 8), pullUps, last))).toEqual([
+      "0x8",
+      "0x8",
+      "0x8",
+    ]);
+    // A record a swap left on another lift says nothing about this one.
+    const swapped = { ...pullUps, exerciseId: "chin-ups" };
+    expect(values(startingSetRows(rows(0, 8), swapped, last))).toEqual([
+      "2.5x8",
+      "2.5x8",
+      "2.5x8",
+    ]);
+    // A loaded lift at 0 kg has no weight yet, whatever brought it there.
+    const pulldown = {
+      ...pullUps,
+      exerciseId: "lat-pulldown",
+      lowered: { ...pullUps.lowered, exerciseId: "lat-pulldown" },
+    };
+    expect(values(startingSetRows(rows(0, 8), pulldown, last))).toEqual([
+      "2.5x8",
+      "2.5x8",
+      "2.5x8",
+    ]);
+  });
+
   it("is the plan's rows when there was no last time", () => {
     expect(
       values(startingSetRows(rows(60, 8), { weight: 60, reps: 8 }, undefined))

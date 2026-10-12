@@ -16,10 +16,11 @@ import StretchedLine from "./StretchedLine";
  * rows, draw through this one component. They used to carry a copy each,
  * and the copies drifted: one said "BW x 12" for a bodyweight lift's last
  * set and the other printed the engine's stored load as if it had been
- * lifted ("Last: 35 kg x 12" under a chin-up).
+ * lifted ("Last: 35 kg x 12" under a chin-up, a load a swap had handed it).
  *
- * A bodyweight lift is asked about first, before any weight, in the
- * prescription and in the last set alike: its stored load is not a load.
+ * A bodyweight lift is asked about first, in the prescription and in the
+ * last sets alike: its weight is the load added to it, which the plan
+ * follows (Pgm8 L6), so it reads "+10 kg", and a set with none reads "BW".
  */
 export default function ExerciseRowSummary({
   exercise,
@@ -71,10 +72,12 @@ export default function ExerciseRowSummary({
             {formatRepTarget(exercise)}
           </span>{" "}
           {exercise.repUnit === "seconds" ? "" : "reps"}
-          {!isBW && exercise.weight > 0 ? (
+          {exercise.weight > 0 ? (
             <>
               {" · "}
-              <span className="font-mono tabular-nums">{exercise.weight}</span>
+              <span className="font-mono tabular-nums">
+                {isBW ? `+${exercise.weight}` : exercise.weight}
+              </span>
               {" kg"}
             </>
           ) : null}
@@ -109,7 +112,8 @@ export default function ExerciseRowSummary({
 }
 
 /** "60 kg × 12, 12, 10"; "100 kg × 5 · 90 kg × 5, 5" where the weight
- *  changed; "BW × 12, 10" for a bodyweight lift; "45s, 40s" for a hold. */
+ *  changed; "BW × 12, 10" for a bodyweight lift, and "+10 kg × 8, 8" for
+ *  one with load added; "45s, 40s" for a hold. */
 function LastSetsLine({
   sets,
   timed,
@@ -121,19 +125,18 @@ function LastSetsLine({
 }) {
   const reps = sets.map((set) => set.reps);
   if (timed) return <Numbers values={reps} unit="s" />;
-  if (bodyweight)
-    return (
-      <>
-        BW × <Numbers values={reps} />
-      </>
-    );
   return groupLastSets(sets).map((group, index) => (
     <Fragment key={index}>
       {index > 0 ? " · " : null}
       {group.weightKg > 0 ? (
         <>
-          <span className="font-mono tabular-nums">{group.weightKg}</span> kg
+          <span className="font-mono tabular-nums">
+            {bodyweight ? `+${group.weightKg}` : group.weightKg}
+          </span>{" "}
+          kg
         </>
+      ) : bodyweight ? (
+        "BW"
       ) : (
         "—"
       )}{" "}

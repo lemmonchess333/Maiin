@@ -1,4 +1,4 @@
-import { getExerciseById } from "@/lib/exercises";
+import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
 
 /**
  * How a loaded lift's weight moves (Lift4 (6)): by the equipment it is lifted
@@ -10,13 +10,17 @@ import { getExerciseById } from "@/lib/exercises";
  *   machine or
  *   cable stack 2.5 kg, the finest common stack step
  *   kettlebell  the next bell: 2 kg steps to 32 kg, then 4 kg
+ *   belt        a bodyweight lift's added load (Pgm8 L6), one plate at a
+ *               time: 2.5 kg; 1.25 kg with small plates
  *
  * A lift the catalogue doesn't know steps as a stack does. A step of more
  * than about 15% of the weight is never taken on its own
  * (`automaticStepUp`): a 2.5 kg jump is 1.5% of a squat but 25% of a 10 kg
  * dumbbell, so a light lift's target climbs in reps instead
  * (`stretchedRepCeiling`), and the plan follows the heavier weight once the
- * person picks it up.
+ * person picks it up. A plate on a belt is always taken: the weight a
+ * bodyweight lift moves is the person as well as the belt
+ * (`applyProgression`).
  */
 export interface LoadGrid {
   /** The next weight up from this one, on or off the grid. */
@@ -95,7 +99,9 @@ const PLATES = uniform(BARBELL_STEP_KG);
 const SMALL_PLATES = uniform(SMALL_PLATES_STEP_KG);
 const STACK = uniform(2.5);
 
-/** The grid of a lift whose equipment the catalogue names, or null. */
+/** The grid of a lift whose equipment the catalogue names, or null. A
+ *  bodyweight lift has none of its own: its load goes on a belt
+ *  (`loadGridFor`). */
 export function equipmentGridFor(
   exerciseId: string | undefined,
   smallPlates: boolean
@@ -115,12 +121,21 @@ export function equipmentGridFor(
   }
 }
 
-/** The grid a lift's weight moves on. */
+/**
+ * The grid a lift's weight moves on. A bodyweight lift's weight is the load
+ * added to it (Pgm8 L6), as plates hung from a belt one at a time: a 2.5 kg
+ * plate, or 1.25 kg with small plates, which mean a 1.25 kg step wherever
+ * plates go.
+ */
 export function loadGridFor(
   exerciseId: string | undefined,
   smallPlates: boolean
 ): LoadGrid {
-  return equipmentGridFor(exerciseId, smallPlates) ?? STACK;
+  const grid = equipmentGridFor(exerciseId, smallPlates);
+  if (grid) return grid;
+  if (isBodyweightExerciseId(exerciseId))
+    return smallPlates ? SMALL_PLATES : PLATES;
+  return STACK;
 }
 
 /** The next weight up, when it is no more than about 15% heavier. */
