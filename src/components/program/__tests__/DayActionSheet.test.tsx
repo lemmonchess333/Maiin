@@ -42,7 +42,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import { APPLIED } from "@/features/program/programOutcome";
 
 /* These components read the display unit, which resolves from the auth
@@ -242,6 +242,52 @@ describe("DayActionSheet — planned run", () => {
     const callbacks = commonCallbacks();
     return { profile, programState, callbacks, runDay };
   }
+
+  it("Run20 (5): a run-walk shows its time and no pace, where an easy run shows its pace", () => {
+    const renderRun = (templateId: string) => {
+      const { profile, callbacks } = setup();
+      const runDay = makeRunDay({
+        id: `runday_${templateId}`,
+        dayIndex: todayDow(),
+        date: todayKey(),
+        weekKey: todayWeekKey(),
+        templateId,
+        status: "planned",
+      });
+      return render(
+        <DayActionSheet
+          open={true}
+          onClose={() => {}}
+          dateKey={todayKey()}
+          profile={{
+            ...profile,
+            runFitness: {
+              benchmark: { distanceM: 5000, timeS: 25 * 60 },
+              vdot: 38.3,
+              source: "manual",
+              updatedAt: "2026-09-01T00:00:00.000Z",
+              pendingConfirmation: false,
+            },
+          }}
+          programState={makeProgramState([runDay])}
+          claimMap={emptyClaimMap}
+          unclaimedByDate={emptyUnclaimed}
+          {...callbacks}
+        />
+      );
+    };
+    // The meta line sets each token in its own span; read it whole.
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /^\d+ min\b/.test(text));
+    const easy = renderRun("easy_30");
+    expect(metaLine()).toMatch(/^30 min · .*\/km/);
+    easy.unmount();
+    renderRun("run_walk_1");
+    expect(metaLine()).toMatch(/^29 min\b/);
+    expect(metaLine()).not.toMatch(/\/km/);
+  });
 
   it("renders template select (enabled), Mark complete, and Skip this run", () => {
     const { profile, programState, callbacks } = setup();

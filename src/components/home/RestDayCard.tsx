@@ -26,7 +26,7 @@ export default function RestDayCard({
   return (
     <div
       className={cardClasses({
-        className: "space-y-3",
+        className: "@container space-y-3",
       })}
     >
       <div className="flex items-start gap-4">
@@ -47,7 +47,11 @@ export default function RestDayCard({
             )}
           </p>
         </div>
-        <div className="size-12 shrink-0 rounded-2xl flex items-center justify-center bg-lifting/10">
+        {/* The leaf gives the words the card's width once the card is under
+            10em (larger text on the phone): beside it, "Recover today" and
+            tomorrow's session ran past the card at double size on a 320px
+            screen. */}
+        <div className="size-12 shrink-0 rounded-2xl flex @max-[10em]:hidden items-center justify-center bg-lifting/10">
           <Leaf className="size-6 text-lifting-strong" aria-hidden="true" />
         </div>
       </div>

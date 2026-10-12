@@ -17,9 +17,11 @@
  * ── What is mirrored, and from where ─────────────────────────────────────
  *
  *   GOAL_PROFILES, goalProfileFor, prescribedRepCeiling, assignDayRoles,
+ *   dayRoleOf,
  *   repDeltaForRole, repFloorFor, repRangeMaxFor  → programEngine.ts
  *   usesUndulation                                → experienceModel.ts
  *   scaleLoadForReps, represcribeWorkouts         → represcribe.ts
+ *   withRoleNumbers                               → represcribe.ts
  *   BLOCK_AMNESTY_WEEKS                           → represcribe.ts
  *   makeBlockId                                   → trainingBlock.ts
  *
@@ -150,6 +152,16 @@ function assignDayRoles(count) {
   });
 }
 
+const DAY_ROLES = new Set(["heavy", "moderate", "pump"]);
+
+/** Mirror of programEngine.ts dayRoleOf: the session's kept role, or on an
+ *  older plan that keeps none, its position's. */
+function dayRoleOf(day, byPosition) {
+  return day && typeof day.dayRole === "string" && DAY_ROLES.has(day.dayRole)
+    ? day.dayRole
+    : byPosition;
+}
+
 /** Mirror of programEngine.ts repDeltaForRole. */
 function repDeltaForRole(role) {
   return role === "heavy" ? -2 : role === "pump" ? 2 : 0;
@@ -213,13 +225,16 @@ function makeBlockId(startDate, createdAt) {
  */
 function represcribeWorkouts(workouts, goal, experience) {
   const list = Array.isArray(workouts) ? workouts : [];
-  // Undulation is applied per DAY INDEX, so the roles have to be computed
-  // over the whole week before any slot is touched.
-  const roles = assignDayRoles(list.length);
+  // Undulation follows each session's own role, kept with it as the week's
+  // order carries over; an older plan's come from the days' positions and
+  // are kept from here (the client copy says why).
+  const byPosition = assignDayRoles(list.length);
+  const roles = list.map((day, i) => dayRoleOf(day, byPosition[i]));
   const undulates = usesUndulation(experience);
 
   return list.map((day, dayIndex) => ({
     ...day,
+    dayRole: roles[dayIndex],
     exercises: (Array.isArray(day.exercises) ? day.exercises : []).map((ex) => {
       // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. The honest handling is to leave them entirely alone.
@@ -266,6 +281,39 @@ function represcribeWorkouts(workouts, goal, experience) {
   }));
 }
 
+/**
+ * Mirror of represcribe.ts withRoleNumbers: a lift a person puts into a
+ * plan takes its role's numbers (Lift5), with its session's shift and its
+ * role's sets, no more than `maxSets` when it replaces a slot.
+ */
+function withRoleNumbers(workouts, dayIndex, instanceId, goal, experience, maxSets) {
+  const list = Array.isArray(workouts) ? workouts : [];
+  const freshDay = represcribeWorkouts(list, goal, experience)[dayIndex];
+  const fresh =
+    freshDay && freshDay.exercises.find((ex) => ex && ex.instanceId === instanceId);
+  if (!fresh) return list.slice();
+  return list.map((day, d) =>
+    d !== dayIndex
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (!ex || ex.instanceId !== instanceId || ex.repUnit === "seconds") {
+              return ex;
+            }
+            const roleSets = roleRepsFor(goal, ex, experience).sets;
+            const sets =
+              maxSets === undefined ? roleSets : Math.min(maxSets, roleSets);
+            return {
+              ...fresh,
+              sets,
+              ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+            };
+          }),
+        }
+  );
+}
+
 module.exports = {
   BLOCK_AMNESTY_WEEKS,
   GOAL_PROFILES,
@@ -273,6 +321,7 @@ module.exports = {
   MAX_PRESCRIBED_REPS,
   PRIMARY_GOALS,
   assignDayRoles,
+  dayRoleOf,
   goalProfileFor,
   makeBlockId,
   prescribedRepCeiling,
@@ -284,4 +333,5 @@ module.exports = {
   toExperience,
   undulationDeltaFor,
   usesUndulation,
+  withRoleNumbers,
 };

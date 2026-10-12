@@ -193,18 +193,54 @@ describe.skipIf(!canStage)("attempts", () => {
 });
 
 describe("usage", () => {
-  it.each([[["nope", "60"]], [["install-deps"]], [["install", "0"]]])(
-    "refuses %j",
-    (args) => {
-      const result = spawnSync("bash", [script, ...args], { encoding: "utf8" });
-      expect(result.status).toBe(2);
-      expect(result.stderr).toContain("usage:");
-    }
-  );
+  it.each([
+    [["nope", "60"]],
+    [["install-deps"]],
+    [["install", "0"]],
+    [["install", "60", "safari"]],
+  ])("refuses %j", (args) => {
+    const result = spawnSync("bash", [script, ...args], { encoding: "utf8" });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("usage:");
+  });
+});
+
+describe("browsers", () => {
+  /** Runs the script with `npx` replaced by a stand-in that says what it
+   *  was asked to run. */
+  const run = (args: string[]) => {
+    const dir = mkdtempSync(join(tmpdir(), "pw-browsers-"));
+    writeFileSync(join(dir, "npx"), '#!/usr/bin/env bash\necho "npx $*"\n');
+    chmodSync(join(dir, "npx"), 0o755);
+    const result = spawnSync("bash", [script, ...args], {
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
+    });
+    rmSync(dir, { recursive: true, force: true });
+    return result;
+  };
+
+  it("are Chromium when a job names none", () => {
+    expect(run(["install", "60"]).stdout).toBe(
+      "npx playwright install --with-deps chromium\n"
+    );
+    expect(run(["install-deps", "60"]).stdout).toBe(
+      "npx playwright install-deps chromium\n"
+    );
+  });
+
+  it("are the ones a job names", () => {
+    expect(run(["install", "60", "chromium", "webkit"]).stdout).toBe(
+      "npx playwright install --with-deps chromium webkit\n"
+    );
+    expect(run(["install-deps", "60", "webkit"]).stdout).toBe(
+      "npx playwright install-deps webkit\n"
+    );
+  });
 });
 
 /**
- * Every workflow installs Playwright's Chromium through the script, so the
+ * Every workflow installs Playwright through the script, so the
  * fix holds everywhere, and each step's own limit covers the script's
  * worst case: three stalled attempts of SECONDS plus 10 to kill each, and
  * two clear-ups, each the script's waits plus 15 s to repair dpkg.

@@ -32,6 +32,7 @@ import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import type { LayoffClass } from "./layoffDetection";
+import { profileNewRunnerUntil } from "./newRunner";
 import { raceAwaitsItsEnding, weekRolloverAnchor } from "./programMaintenance";
 import { advanceWeek } from "./programEngine";
 import type {
@@ -40,6 +41,7 @@ import type {
   RunPlan,
   ScheduledRunDay,
 } from "./programTypes";
+import { raceWeekFromToday, type RaceWeekStart } from "./racePlanContinuation";
 import { clampPlanWeek } from "./runPlanTiming";
 import {
   generateRacePlanV2,
@@ -97,9 +99,9 @@ function makeRunPlanRecord(
  * Callers pass what varies per site — which week, schedule and target
  * (load uses today, week-advance uses next-week start, editor-apply uses
  * an overridden schedule). What does not vary — the runner's tuning, easy
- * pace, time limits and running baseline — is read off the profile here,
- * so no site can leave one out. They were required arguments, written out
- * the same way at all seven sites.
+ * pace, time limits, running baseline and a new runner's first weeks — is
+ * read off the profile here, so no site can leave one out. They were
+ * required arguments, written out the same way at all seven sites.
  */
 export function regenerateRacePlan({
   profile,
@@ -112,6 +114,7 @@ export function regenerateRacePlan({
   tuning,
   carry,
   prior,
+  plannedFrom,
 }: {
   /** The runner. Pgm6's tuning (`runTuningFromProfile`), Run17's confirmed
    *  easy pace (`planningEasyPaceSPerKm`), the run time limits and the
@@ -160,6 +163,15 @@ export function regenerateRacePlan({
     runDays: ScheduledRunDay[];
     manualCompletions?: Record<string, ManualCompletion>;
   };
+  /** Run19: the first day the week may plan a run, today for a week built
+   *  partway through (the load-time rebuild of a stale race week, "Re-plan
+   *  from today", a plan made on this device). Runs generated before it are
+   *  cut, and this week's days in `prior` are laid over the rest as the
+   *  save lays them (`planWeekFromToday`): a done, moved, swapped or missed
+   *  run before it stays as it was. A week with none of its run days left
+   *  starts on next week's runs instead (`raceWeekFromToday`). Without it,
+   *  `prior` is carried onto the whole rebuilt week by date. */
+  plannedFrom?: string;
 }): {
   runDays: ScheduledRunDay[];
   runPlan: RunPlan;
@@ -167,37 +179,61 @@ export function regenerateRacePlan({
    *  `prior` must persist this in place of the stale programState map. */
   manualCompletions?: Record<string, ManualCompletion>;
 } {
-  const v2 = generateRacePlanV2({
-    raceGoal,
-    weekSchedule,
-    weeklyRunDays,
-    currentDate,
-    weekStart,
-    tuning: tuning ?? runTuningFromProfile(profile),
-    recentLayoff,
-    easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
-    runningBaseline: profile.runningBaseline ?? null,
-    runTimeLimits: profile.runTimeLimits ?? null,
-    // The block's original length, so the generator emits the week for where
-    // the runner actually IS rather than week 0 of a fresh block. Without it
-    // `weeks[0]` — the only week any caller persists — is always a base week,
-    // and
-    // the ramp lives in `weeks[1..n]` where nothing reads it. See the
-    // `planTotalWeeks` doc comment in runScheduler.ts for the measurement.
-    // Absent on fresh-creation sites, which is the correct fallback: a new
-    // plan genuinely is at position 0.
-    planTotalWeeks: carry?.totalWeeks,
-  });
-  let runDays = v2.weeks[0] ?? [];
+  const generate = (from: RaceWeekStart) =>
+    generateRacePlanV2({
+      raceGoal,
+      weekSchedule,
+      weeklyRunDays,
+      currentDate: from.currentDate,
+      weekStart: from.weekStart,
+      tuning: tuning ?? runTuningFromProfile(profile),
+      recentLayoff,
+      easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+      runningBaseline: profile.runningBaseline ?? null,
+      runTimeLimits: profile.runTimeLimits ?? null,
+      newRunnerUntil: profileNewRunnerUntil(profile),
+      // The block's original length, so the generator emits the week for
+      // where the runner actually IS rather than week 0 of a fresh block.
+      // Without it `weeks[0]` — the only week any caller persists — is
+      // always a base week, and the ramp lives in `weeks[1..n]` where
+      // nothing reads it. See the `planTotalWeeks` doc comment in
+      // runScheduler.ts for the measurement. Absent on fresh-creation
+      // sites, which is the correct fallback: a new plan genuinely is at
+      // position 0.
+      planTotalWeeks: carry?.totalWeeks,
+    });
+  let v2: ReturnType<typeof generate>;
+  let runDays: ScheduledRunDay[];
   let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
-  if (prior) {
-    const carried = carryCompletionsAcrossRegen(
-      prior.runDays,
-      runDays,
-      prior.manualCompletions
-    );
-    runDays = carried.runDays;
-    carriedManualCompletions = carried.manualCompletions;
+  if (plannedFrom) {
+    // Run19: the week from today, over its own days, or next week's runs
+    // when none of its run days is left (`raceWeekFromToday`).
+    ({ plan: v2, runDays } = raceWeekFromToday(
+      generate,
+      { currentDate, weekStart },
+      plannedFrom,
+      prior && {
+        // This week's days: a week the rollover left behind isn't this one.
+        runDays: prior.runDays.filter(
+          (day) => !day.date || day.date >= weekStart
+        ),
+        manualCompletions: prior.manualCompletions,
+      }
+    ));
+    // The days kept keep their ids, so their completions stay keyed to them.
+    if (prior) carriedManualCompletions = prior.manualCompletions ?? {};
+  } else {
+    v2 = generate({ currentDate, weekStart });
+    runDays = v2.weeks[0] ?? [];
+    if (prior) {
+      const carried = carryCompletionsAcrossRegen(
+        prior.runDays,
+        runDays,
+        prior.manualCompletions
+      );
+      runDays = carried.runDays;
+      carriedManualCompletions = carried.manualCompletions;
+    }
   }
   const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
   if (carry?.completedRaces) {
@@ -263,6 +299,7 @@ export function nextRunWeek(
       runDays: scheduleRecoveryWeekV2({
         weekSchedule,
         weekStart: next.weekStart,
+        newRunnerUntil: profileNewRunnerUntil(profile),
       }),
       runPlan: { ...runPlan },
       raceBlock: raceBlockWeek(runPlan),
