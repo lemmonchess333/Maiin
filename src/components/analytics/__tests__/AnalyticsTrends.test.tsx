@@ -21,7 +21,7 @@ const ROWS: TrendRow[] = [
   {
     key: "10k",
     label: "10K prediction",
-    detail: "From your best recent run",
+    detail: "From a race, time trial or tempo you ran",
     value: "55:41",
     color: "hsl(var(--running))",
     page: "running",

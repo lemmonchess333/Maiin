@@ -41,7 +41,7 @@ const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
   domAtRender: [] as string[],
   paceLoading: [] as boolean[],
-  paceRuns: [] as { id?: string; templateId?: string }[],
+  paceRuns: [] as { id?: string }[],
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
   track: vi.fn(),
@@ -64,7 +64,7 @@ vi.mock("@/features/program/useProgram", () => ({
 }));
 vi.mock("@/hooks/usePaceInsight", () => ({
   usePaceInsightFromRuns: (
-    runs: { id?: string; templateId?: string }[],
+    runs: { id?: string }[],
     opts: { loading?: boolean }
   ) => {
     h.paceLoading.push(opts.loading ?? false);
@@ -117,6 +117,7 @@ vi.mock("@/components/WeekPulseView", () => ({ default: () => null }));
 vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";
+import { benchmarkEffortOf, type EffortRun } from "@/lib/benchmarkEfforts";
 import { writeString } from "@/lib/localStore";
 import { pendingDocumentWrites } from "@/lib/offlineQueue";
 import {
@@ -480,17 +481,27 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     auth.profile = profile;
   });
 
-  function renderPlanned(templateId: string) {
+  function renderPlanned(
+    templateId: string,
+    run: {
+      activityType?: string;
+      segments?: Record<string, unknown>[];
+      workPortion?: { seconds: number; meters: number };
+    } = {}
+  ) {
+    const activityType = run.activityType ?? "easy";
     const state = {
       ...savedRun(),
+      ...(run.workPortion ? { workPortion: run.workPortion } : {}),
       runConfig: {
-        activityType: "easy",
+        activityType,
+        ...(run.segments ? { segments: run.segments } : {}),
         planMetadata: {
           planMode: "race_prep",
           planSource: "today_plan",
           plannedRunDayIndex: 2,
           plannedTemplateId: templateId,
-          plannedTemplateType: "easy",
+          plannedTemplateType: activityType,
           actualTemplateId: templateId,
           matchedPlanExact: true,
           matchedPlanType: true,
@@ -535,14 +546,56 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     ).toBeNull();
   });
 
-  it("hands Pace Insight a run-walk as one, so it sets no benchmark", async () => {
+  /* Pgm8 R1: Pace Insight reads efforts only. The summary hands over the
+     run it just saved with what decides that: its type, and a tempo's
+     work, the part a benchmark comes from. */
+  it("hands Pace Insight a run-walk as the easy run it is, so it sets no benchmark", async () => {
     renderPlanned("run_walk_1");
     expect(
       await screen.findByText("Run-walk 1 complete ✓")
     ).toBeInTheDocument();
-    expect(h.paceRuns.find((r) => r.id === "run-1")?.templateId).toBe(
-      "run_walk_1"
-    );
+    const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(handed).toMatchObject({ activityType: "easy" });
+    expect(benchmarkEffortOf(handed)).toBeNull();
+  });
+
+  it("hands Pace Insight a tempo with its work, which a benchmark comes from", async () => {
+    const block = (pinned: boolean) => [
+      { type: "warmup", target: { kind: "duration", seconds: 300 } },
+      {
+        type: "moderate",
+        target: { kind: "duration", seconds: 1200 },
+        ...(pinned ? { paceTarget: 300, pacePinned: true } : {}),
+      },
+      { type: "cooldown", target: { kind: "duration", seconds: 300 } },
+    ];
+    const workPortion = { seconds: 1200, meters: 4000 };
+    const tempo = renderPlanned("tempo_20", {
+      activityType: "tempo",
+      segments: block(false),
+      workPortion,
+    });
+    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    const handed = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(handed).toMatchObject({ workPortion, workPacePinned: false });
+    expect(benchmarkEffortOf(handed)).toMatchObject({
+      kind: "tempo",
+      distanceM: 4000,
+      timeS: 1200,
+    });
+    tempo.unmount();
+
+    // A goal-pace tempo's blocks were run at the race goal, not the
+    // runner's threshold.
+    renderPlanned("tempo_20", {
+      activityType: "tempo",
+      segments: block(true),
+      workPortion,
+    });
+    expect(await screen.findByText("20 Min Tempo complete ✓")).toBeVisible();
+    const pinned = h.paceRuns.find((r) => r.id === "run-1") as EffortRun;
+    expect(pinned.workPacePinned).toBe(true);
+    expect(benchmarkEffortOf(pinned)).toBeNull();
   });
 
   it("gives a run-walk no pace trend against runs", async () => {

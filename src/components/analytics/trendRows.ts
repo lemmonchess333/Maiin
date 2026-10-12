@@ -28,9 +28,10 @@ export interface TrendRow {
   page: AnalyticsPage;
 }
 
-/** How a race prediction's benchmark was set, as the row's second line. */
+/** How a race prediction's benchmark was set, as the row's second line. A
+ *  derived one comes from an effort (Pgm8 R1). */
 const PREDICTION_SOURCE: Record<string, string> = {
-  derived: "From your best recent run",
+  derived: "From a race, time trial or tempo you ran",
   manual: "From a time you set",
   race: "From a race result",
   estimate: "Estimated",

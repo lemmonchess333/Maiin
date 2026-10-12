@@ -9,7 +9,6 @@ w2 2026-03-16  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   ran     Tue free 6.0 km/40 min 6:37 · Thu free 6.1 km/40 min 6:35 · Sun free 11.2 km/75 min 6:43
   week    155 min · 23.3 km · easy 100% · longest ×0.98 the month's
   runner  VDOT 38.08 · fitness 152 min · easy own 6:15–7:02, prescribed none
-  · 2026-03-16: the app derived a benchmark, 11.4 km in 75:00 (VDOT 29.2, true 38.0)
 w3 2026-03-23  no plan  counted 0/0  plan 0 min, long 0.0 km, quality 0
   ran     Tue free 6.0 km/40 min 6:40 · Thu free 6.1 km/40 min 6:33 · Sun free 11.4 km/75 min 6:35
   week    155 min · 23.5 km · easy 100% · longest ×1.00 the month's

@@ -566,7 +566,10 @@ export default function RunSummary() {
       activityType: state.runConfig?.activityType ?? "freerun",
       isInvalid: false,
       savedAnyway: false,
-      templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      // What decides whether it was an effort (Pgm8 R1): a tempo by its
+      // work segments, unless they were pinned to a goal pace.
+      workPortion: state.workPortion ?? null,
+      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 

@@ -145,4 +145,20 @@ describe("RunFitnessSection — pending auto-derive (RUN-EV-08)", () => {
     renderWith({ runFitness: pending });
     expect(screen.getByText(/From your run on/i)).toBeInTheDocument();
   });
+
+  /* Pgm8 R1: the app derives a benchmark from efforts only. */
+  it("says the benchmark came from a race, time trial or tempo", () => {
+    renderWith({ runFitness: pending });
+    expect(
+      screen.getByText(/from a race, time trial or tempo you ran/i)
+    ).toBeInTheDocument();
+  });
+
+  it("shows paces for one derived from a tempo, which stores no race result", () => {
+    renderWith({ runFitness: { ...pending, benchmark: null, vdot: 41.4 } });
+    expect(screen.getByText("41.4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Use for pace targets/i })
+    ).toBeInTheDocument();
+  });
 });

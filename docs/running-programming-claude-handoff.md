@@ -346,6 +346,19 @@ a tempo or an interval session in its work segments only
 do. Any other run with a pace goal is judged throughout, as before; an
 interval session's summary still has no verdict.
 
+STATUS 2026-10-11 (Pgm8 R1, owner-delegated; the simulator's F17): the
+benchmark the app derives, and Pace Insight's suggestion, come from efforts
+only: a race or a time trial (a run started as a Race) read whole, and a
+tempo's work segments read as threshold pace (`vdotFromTempoPace`, the
+inverse of the tempo pace a VDOT prescribes; Daniels' T is about the pace
+one could race for an hour). Never easy, long, run-walk, interval or free
+runs, a tempo with no recorded work, or a goal-pace tempo. One effort is
+enough, since what is derived lands pending. RUN-EV-08's two-tier gate
+stands: a pending benchmark the old rule set from an easy run, or from a
+tempo read whole, is re-derived from the efforts (or cleared) when its run
+is in the 90-day window; an accepted one is left alone. Selector:
+`src/lib/benchmarkEfforts.ts`, shared with the simulator.
+
 > **Two run-relevant issues are ledgered on the LIFT side.** The Performance
 > Index is hybrid — run load is half its `loadScore` — and the deload it
 > recommends now has a run half (#1930), but neither appears anywhere in this

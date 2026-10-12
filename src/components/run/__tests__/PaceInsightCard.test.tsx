@@ -31,7 +31,7 @@ vi.mock("@/lib/toast", () => ({
 const insight = (direction: "faster" | "slower"): PaceInsight => ({
   currentVdot: 42,
   suggestedVdot: 45,
-  suggestedBenchmark: { distanceM: 5000, timeS: 1200 },
+  suggested: { benchmark: { distanceM: 5000, timeS: 1200 }, vdot: 45 },
   direction,
 });
 
@@ -59,7 +59,7 @@ describe("PaceInsightCard", () => {
       />
     );
     expect(
-      screen.getByText(/recent runs support faster targets/i)
+      screen.getByText(/a recent race or tempo supports faster targets/i)
     ).toBeInTheDocument();
     rerender(
       <PaceInsightCard

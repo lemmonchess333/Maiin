@@ -24,8 +24,9 @@ import type { UserProfile } from "@/lib/auth";
  * Lets the user set a benchmark (a recent race / time-trial) from which all
  * training paces are derived, and shows the resulting personalised paces. The
  * benchmark is the locked-decision "ask" capture path (§10); the silent-derive
- * path lives in useRunFitnessAutoDerive. Free tier (paces are free; only the
- * adaptive Pace-Insights loop is Pro).
+ * path lives in useRunFitnessAutoDerive, and since Pgm8 R1 derives only from
+ * a race, a time trial or a tempo, which the pending note says. Free tier
+ * (paces are free; only the adaptive Pace-Insights loop is Pro).
  *
  * Writes `profile.runFitness` through `updateProfile` (guarded write chain +
  * allow-list fixed in Phase 0). Distances in metres, paces in sec/km — the
@@ -178,9 +179,9 @@ export default function RunFitnessSection({
             {fitness?.pendingConfirmation && (
               <div className="rounded-lg bg-muted/60 p-3 space-y-2">
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Set automatically from your recent running. It shapes
-                  predictions now — accept it to also drive your session pace
-                  targets, or remove it to stay on standard paces.
+                  Set automatically from a race, time trial or tempo you ran. It
+                  shapes predictions now — accept it to also drive your session
+                  pace targets, or remove it to stay on standard paces.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button

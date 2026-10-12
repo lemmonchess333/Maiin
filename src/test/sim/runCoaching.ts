@@ -30,7 +30,7 @@
  * - `under-dose`: the plan's first full month averaging under 80% of the
  *   minutes the runner already ran, which setup never asks.
  * - `derived-low`: a benchmark the app derived three or more VDOT under the
- *   runner's own (it reads an easy run as a race).
+ *   runner's own (F17: before Pgm8 R1 it read an easy run as a race).
  * - `nag-after-race`: the server telling the runner they fell behind after
  *   their race.
  * - `easy-nag`: the run summary telling the runner to slow down

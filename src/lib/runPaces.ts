@@ -455,11 +455,16 @@ export function raceDistanceKeyFromKm(
 
 /**
  * Pace Insights (Phase 2, Pro) — the adaptive recalibration signal. Compares
- * the VDOT the user's recent runs IMPLY against their stored benchmark; when
- * the best recent effort diverges by a meaningful margin, returns a suggestion
- * to recalibrate (the user approves — we never silently change the benchmark).
+ * the VDOT the user's recent efforts IMPLY against their stored benchmark;
+ * when the best recent effort diverges by a meaningful margin, returns a
+ * suggestion to recalibrate (the user approves — we never silently change
+ * the benchmark).
  *
- * Pure. `recentRuns` are caller-filtered to eligible outdoor efforts.
+ * Pure. `efforts` are the caller's recent ones (`benchmarkEfforts`): since
+ * Pgm8 R1 a race, a time trial or a tempo's work, as for the benchmark the
+ * app derives. Read as races, a base phase's easy runs told a fit runner
+ * their paces were too quick every week (running-engine-audit §3). One
+ * effort is enough, as it is for the derive: the person decides.
  * `direction` is relative to the stored benchmark: "faster" = improved (best
  * recent effort implies a higher VDOT); "slower" = even the best recent effort
  * is well below the stored mark (detrained / stale benchmark).
@@ -467,20 +472,15 @@ export function raceDistanceKeyFromKm(
 export interface PaceInsight {
   currentVdot: number;
   suggestedVdot: number;
-  suggestedBenchmark: {
-    distanceM: number;
-    timeS: number;
-    sourceRunId?: string;
-    sourceRunAt?: string;
-  };
+  /** What accepting it stores: the best effort's benchmark. */
+  suggested: DerivedFitness;
   direction: "faster" | "slower";
 }
 
 export function resolvePaceInsight(
   fitness: RunFitnessInput | null | undefined,
-  recentRuns: { distanceM: number; durationS: number }[],
-  minDeltaVdot = 1.5,
-  minRuns = 3
+  efforts: readonly BenchmarkEffort[],
+  minDeltaVdot = 1.5
 ): PaceInsight | null {
   if (!fitness) return null;
   const currentVdot =
@@ -490,71 +490,112 @@ export function resolvePaceInsight(
         ? vdotFromRace(fitness.benchmark.distanceM, fitness.benchmark.timeS)
         : 0;
   if (currentVdot <= 0) return null;
-  if (recentRuns.length < minRuns) return null;
 
-  const best = deriveBenchmarkFromRuns(recentRuns);
+  const best = bestEffort(efforts);
   if (!best) return null;
-  const bestVdot = vdotFromRace(best.distanceM, best.timeS);
-  if (bestVdot <= 0) return null;
-  if (Math.abs(bestVdot - currentVdot) < minDeltaVdot) return null;
+  if (Math.abs(best.vdot - currentVdot) < minDeltaVdot) return null;
 
+  const suggested = derivedFitness(best);
   return {
     currentVdot: Math.round(currentVdot * 10) / 10,
-    suggestedVdot: Math.round(bestVdot * 10) / 10,
-    suggestedBenchmark: best,
-    direction: bestVdot > currentVdot ? "faster" : "slower",
+    suggestedVdot: suggested.vdot,
+    suggested,
+    direction: best.vdot > currentVdot ? "faster" : "slower",
   };
 }
 
+/** The middle of the threshold band as a fraction of VO2max: where a tempo
+ *  is prescribed (`resolveSessionPaces("tempo")` sets the band's middle). */
+const TEMPO_PCT = (INTENSITY_PCT.threshold[0] + INTENSITY_PCT.threshold[1]) / 2;
+
 /**
- * Derive a fitness benchmark from a runner's history (the silent-derive path,
- * locked decision §10). Picks the effort implying the HIGHEST VDOT among
- * representative runs (≥ 2 km, finite positive pace). Caller passes
- * already-eligibility-filtered runs (`isVolumeEligible`). Returns `null` when
- * nothing qualifies → warmup / template fallback.
+ * Pgm8 R1 — the VDOT a tempo held at `paceSPerKm` implies. A tempo is a
+ * threshold effort, not a race: Daniels' T pace is "comfortably hard", about
+ * the pace a runner could race for an hour, run as a 20-minute tempo
+ * (docs/training-engine-2026-10/running-evidence.md §3, and its verification
+ * pass: the computed T pace matches Daniels' table). The app asks a tempo
+ * for exactly that, "Comfortably hard — hold the rhythm", or with a
+ * benchmark the threshold band. So the pace is read at the band's middle,
+ * and the VDOT is the one whose tempo pace it is: a tempo run at the pace a
+ * VDOT prescribes gives that VDOT back. Read as a race of its own length
+ * instead, a 20-minute tempo sits at a 20-minute race's 95% of VO2max
+ * against threshold's 86–88%, about 3 VDOT under a VDOT-40 runner. That the
+ * runner ran it at threshold is the session's instruction, not something
+ * measured: a tempo run harder reads as more fitness than the runner has.
  */
-export function deriveBenchmarkFromRuns(
-  runs: {
-    distanceM: number;
-    durationS: number;
-    /** RUN-EV-08 provenance: the winning run's id/date are echoed back so
-     *  the write site can record WHICH run set the benchmark. Optional —
-     *  callers without ids get the pre-provenance behaviour. */
-    id?: string;
-    completedAt?: Date;
-  }[]
-): {
+export function vdotFromTempoPace(paceSPerKm: number): number {
+  if (!Number.isFinite(paceSPerKm) || paceSPerKm <= 0) return 0;
+  const vo2 = vo2AtVelocity(60000 / paceSPerKm);
+  return vo2 > 0 ? vo2 / TEMPO_PCT : 0;
+}
+
+/**
+ * Pgm8 R1 — an effort a benchmark may be derived from (`benchmarkEfforts.ts`
+ * picks them from the saved runs): a race or time trial, whole, or a tempo's
+ * work segments, its blocks without the warm-up and cool-down.
+ */
+export interface BenchmarkEffort {
+  kind: "race" | "tempo";
+  /** Metres: the race, or the tempo's work segments. */
   distanceM: number;
+  /** Seconds, over the same stretch. */
   timeS: number;
-  sourceRunId?: string;
-  sourceRunAt?: string;
-} | null {
-  let best: {
-    distanceM: number;
-    timeS: number;
-    sourceRunId?: string;
-    sourceRunAt?: string;
-  } | null = null;
-  let bestVdot = 0;
-  for (const r of runs) {
-    if (
-      !Number.isFinite(r.distanceM) ||
-      !Number.isFinite(r.durationS) ||
-      r.distanceM < 2000 ||
-      r.durationS <= 0
-    ) {
-      continue;
-    }
-    const v = vdotFromRace(r.distanceM, r.durationS);
-    if (v > bestVdot) {
-      bestVdot = v;
-      best = {
-        distanceM: r.distanceM,
-        timeS: r.durationS,
-        ...(r.id ? { sourceRunId: r.id } : {}),
-        ...(r.completedAt ? { sourceRunAt: r.completedAt.toISOString() } : {}),
-      };
-    }
+  /** RUN-EV-08 provenance: the run it came from. */
+  id?: string;
+  completedAt?: Date;
+}
+
+/** The VDOT an effort implies: a race by its finish, a tempo by its pace. */
+export function effortVdot(effort: BenchmarkEffort): number {
+  if (!(effort.distanceM > 0) || !(effort.timeS > 0)) return 0;
+  return effort.kind === "race"
+    ? vdotFromRace(effort.distanceM, effort.timeS)
+    : vdotFromTempoPace((effort.timeS / effort.distanceM) * 1000);
+}
+
+/**
+ * The effort implying the highest VDOT, with that VDOT, or null when there
+ * is none. A VDOT no one has run (over 90, which a typed entry is refused
+ * for) is a bad recording, not an effort, and is passed over.
+ */
+export function bestEffort(
+  efforts: readonly BenchmarkEffort[]
+): { effort: BenchmarkEffort; vdot: number } | null {
+  let best: { effort: BenchmarkEffort; vdot: number } | null = null;
+  for (const effort of efforts) {
+    const vdot = effortVdot(effort);
+    if (vdot > (best?.vdot ?? 0) && vdot <= MAX_PLAUSIBLE_VDOT)
+      best = { effort, vdot };
   }
   return best;
+}
+
+/** A benchmark derived from an effort, in `runFitness`'s own fields. */
+export interface DerivedFitness {
+  /** The race as run; null for a tempo, whose work was no race result
+   *  (its VDOT carries it, and race predictions come from that). */
+  benchmark: { distanceM: number; timeS: number } | null;
+  /** To one decimal, as every writer stores it. */
+  vdot: number;
+  sourceRunId?: string;
+  sourceRunAt?: string;
+}
+
+/** What the best effort stores as a benchmark (`bestEffort`). */
+export function derivedFitness(best: {
+  effort: BenchmarkEffort;
+  vdot: number;
+}): DerivedFitness {
+  const { effort } = best;
+  return {
+    benchmark:
+      effort.kind === "race"
+        ? { distanceM: effort.distanceM, timeS: effort.timeS }
+        : null,
+    vdot: Math.round(best.vdot * 10) / 10,
+    ...(effort.id ? { sourceRunId: effort.id } : {}),
+    ...(effort.completedAt
+      ? { sourceRunAt: effort.completedAt.toISOString() }
+      : {}),
+  };
 }
