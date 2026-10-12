@@ -1886,9 +1886,10 @@ export default function WorkoutSession({
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
             done set says so with its green tick, on the card's own colour,
-            and the row being logged is the table's one tinted row (owner,
-            2026-10-12: a table of green rows was the loudest thing on the
-            screen, and done sets are the least of what it asks for).
+            and the row being logged is the table's one tinted row (an
+            owner call, in DESIGN_GUIDE's set-table note: a table of green
+            rows was the loudest thing on the screen, and done sets are the
+            least of what it asks for).
 
             Under 19em of card (larger text on the phone, and a 320px phone
             already at the designed size) the five columns do not fit:
