@@ -191,8 +191,9 @@ function ProgramInner() {
   useEffect(() => {
     programStateRef.current = programState;
   }, [programState]);
-  // Adaptive Paces: silently derive a fitness benchmark from recent runs when
-  // the user hasn't set one (the "derive" half of the capture decision).
+  // Adaptive Paces: silently derive a fitness benchmark from a recent race,
+  // time trial or tempo when the user hasn't set one (the "derive" half of
+  // the capture decision, narrowed to efforts by Pgm8 R1).
   useRunFitnessAutoDerive();
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
   // server-side performance rollup; the `deloadRecommended` flag on

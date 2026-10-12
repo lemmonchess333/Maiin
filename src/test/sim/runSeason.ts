@@ -11,8 +11,9 @@
  *   with Run.tsx's inputs, `finalisePlanMetadata` at Start) → the virtual
  *   runner → the saved run (`runDocument`, read back by `parseSavedRun`) →
  *   the server's recovery entry on the new run (`decideRecoveryEntry`). A
- *   benchmark the app derives from the runs (`resolveAutoDeriveBenchmark`)
- *   lands pending, as the Programme page saves it.
+ *   benchmark the app derives from a race or a tempo's work (Pgm8 R1,
+ *   `resolveAutoDerive`, the Programme page's own policy) lands pending, as
+ *   that page saves it.
  *
  * Where the app does a step inline (the run screen, the server's workers),
  * it is written out here and named. The server's sweep runs in the morning
@@ -35,6 +36,7 @@ import {
   prescriptivePaceTableFromFitness,
   trainingBands,
   vdotFromRace,
+  type BenchmarkEffort,
   type PaceBand,
   type RunIntensity,
 } from "@/lib/runPaces";
@@ -47,16 +49,12 @@ import {
 import { parseSavedRun, type SavedRun } from "@/lib/savedRuns";
 import type { PaceVerdict } from "@/lib/paceVerdict";
 import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
-import { pinnedWorkPace } from "@/lib/runSegments";
-import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
+import { isWorkSegment, pinnedWorkPace } from "@/lib/runSegments";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import {
-  isRunWalkTemplateId,
-  RUN_TEMPLATES,
-  type RunTemplate,
-} from "@/lib/workoutTemplates";
+import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
-import { resolveAutoDeriveBenchmark } from "@/hooks/useRunFitnessAutoDerive";
+import { resolveAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 import {
   layoffFromRuns,
   type LayoffClass,
@@ -319,7 +317,8 @@ function finishedRun(
   done: RunDone,
   prefill: RunPlanPrefill,
   planMetadata: RunPlanMetadata,
-  verdict: PaceVerdict | null
+  verdict: PaceVerdict | null,
+  workPortion: FinishedRun["workPortion"]
 ): FinishedRun {
   return {
     points: [],
@@ -350,9 +349,17 @@ function finishedRun(
     isInvalid: false,
     invalidReason: null,
     routeQuality: null,
+    workPortion,
     shoeId: null,
     bestEfforts: [],
   };
+}
+
+/** A derived benchmark's effort, for the trace. */
+function effortText(effort: BenchmarkEffort): string {
+  return effort.kind === "race"
+    ? `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`
+    : `a tempo's work, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distanceM) * 1000)} /km`;
 }
 
 type RunDoc = ReturnType<typeof runDocument>;
@@ -498,58 +505,32 @@ export class RunSide {
   }
 
   /**
-   * The benchmark the Programme page derives when the person has none
-   * (`useRunFitnessAutoDerive`): from the pace-eligible runs of the last 90
-   * days, saved pending. A person who accepts it confirms it in Settings.
+   * The benchmark the Programme page derives (`useRunFitnessAutoDerive`),
+   * through its own policy (`resolveAutoDerive`): from a race or a tempo's
+   * work among the runs of the last 90 days (Pgm8 R1), saved pending. A
+   * person who accepts it confirms it in Settings.
    */
   deriveBenchmark(profile: UserProfile, date: string): UserProfile {
-    if (profile.runFitness) {
-      if (
-        profile.runFitness.pendingConfirmation &&
-        this.habits.acceptsDerived
-      ) {
-        this.events.push(`${date}: accepted the derived benchmark`);
-        return {
-          ...profile,
-          runFitness: { ...profile.runFitness, pendingConfirmation: false },
-        };
-      }
-      return profile;
+    if (profile.runFitness?.pendingConfirmation && this.habits.acceptsDerived) {
+      this.events.push(`${date}: accepted the derived benchmark`);
+      return {
+        ...profile,
+        runFitness: { ...profile.runFitness, pendingConfirmation: false },
+      };
     }
     const since = parseLocalDate(day(date, -90)).getTime();
-    const eligible = this.saved
-      .filter(
-        (run) =>
-          run.completedAt.getTime() >= since &&
-          isPaceEligible(run) &&
-          // as `useRunFitnessAutoDerive`: a run-walk's time includes its walks
-          !isRunWalkTemplateId(run.templateId)
-      )
-      .map((run) => ({
-        distanceM: run.distance,
-        durationS: run.duration,
-        id: run.id,
-        completedAt: run.completedAt,
-      }));
-    const derived = resolveAutoDeriveBenchmark(false, eligible);
-    if (!derived) return profile;
-    const { sourceRunId, sourceRunAt, ...benchmark } = derived;
-    const vdot = vdotFromRace(benchmark.distanceM, benchmark.timeS);
-    this.events.push(
-      `${date}: the app derived a benchmark, ${(benchmark.distanceM / 1000).toFixed(1)} km in ${paceText(benchmark.timeS)} (VDOT ${vdot.toFixed(1)}, true ${this.runner.trueVdot().toFixed(1)})`
+    const next = resolveAutoDerive(
+      profile.runFitness,
+      this.saved.filter((run) => run.completedAt.getTime() >= since),
+      new Date(`${date}T12:00:00.000Z`)
     );
-    return {
-      ...profile,
-      runFitness: {
-        benchmark,
-        vdot: Math.round(vdot * 10) / 10,
-        source: "derived",
-        updatedAt: `${date}T12:00:00.000Z`,
-        pendingConfirmation: true,
-        ...(sourceRunId ? { sourceRunId } : {}),
-        ...(sourceRunAt ? { sourceRunAt } : {}),
-      },
-    };
+    if (!next) return profile;
+    this.events.push(
+      next.effort && next.runFitness
+        ? `${date}: the app derived a benchmark from ${effortText(next.effort)} (VDOT ${(next.runFitness.vdot ?? 0).toFixed(1)}, true ${this.runner.trueVdot().toFixed(1)})`
+        : `${date}: the app cleared a benchmark no effort supports`
+    );
+    return { ...profile, runFitness: next.runFitness };
   }
 
   /** Whether a long or hard run finished in the 24 hours before `startMs`
@@ -637,23 +618,26 @@ export class RunSide {
       (prefill.activityType ??
         DEFAULT_CONFIG.activityType) as typeof DEFAULT_CONFIG.activityType
     );
+    // The time and distance in the session's work segments, as the run
+    // screen records them (`useSessionPlayer.workPortion`): none for a
+    // session without work segments, a race among them.
+    const workPortion = prefill.segments?.some(isWorkSegment)
+      ? { seconds: done.qualityMinutes * 60, meters: done.qualityKm * 1000 }
+      : null;
     // The summary's verdict, saved with the run (RunSummary.tsx): a tempo
     // by its work segments (F22), a goal-pace tempo against the pace its
     // blocks pinned.
     const verdict = plannedRunVerdict({
       planMetadata,
       avgPaceSeconds: done.pace,
-      workPaceSeconds: workPaceSeconds({
-        seconds: done.qualityMinutes * 60,
-        meters: done.qualityKm * 1000,
-      }),
+      workPaceSeconds: workPaceSeconds(workPortion),
       pinnedPaceSeconds: pinnedWorkPace(prefill.segments),
       distance: done.km * 1000,
       runFitness: profile.runFitness,
       unit: "km",
     });
     const doc = runDocument(
-      finishedRun(done, prefill, planMetadata, verdict),
+      finishedRun(done, prefill, planMetadata, verdict, workPortion),
       new Date()
     );
     const id = `run-${this.name}-${date}-${String(++this.count)}`;

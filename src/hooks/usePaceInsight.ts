@@ -4,21 +4,18 @@ import { readString, scopedKey, writeString } from "@/lib/localStore";
 import { auth } from "@/lib/firebase";
 import { useSubscription } from "@/lib/subscription";
 import { useRunningStats } from "./useRunningStats";
-import { isPaceEligible } from "@/lib/runStatsEligibility";
-import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
-import {
-  resolvePaceInsight,
-  vdotFromRace,
-  type PaceInsight,
-} from "@/lib/runPaces";
+import { benchmarkEfforts, type EffortRun } from "@/lib/benchmarkEfforts";
+import { resolvePaceInsight, type PaceInsight } from "@/lib/runPaces";
 import { logger } from "@/lib/logger";
 
 /**
  * Adaptive Paces — Pace Insights (Phase 2, PRO). The adaptive recalibration
- * loop: when a Pro user's recent runs imply a meaningfully different fitness
- * than their stored benchmark, surface a suggestion they can accept (recompute
- * the benchmark) or dismiss. Mirrors the Adaptive TDEE measure→suggest→approve
- * pattern; we never silently change the benchmark.
+ * loop: when a Pro user's recent efforts imply a meaningfully different
+ * fitness than their stored benchmark, surface a suggestion they can accept
+ * (recompute the benchmark) or dismiss. Mirrors the Adaptive TDEE
+ * measure→suggest→approve pattern; we never silently change the benchmark.
+ * Since Pgm8 R1 the efforts are a race, a time trial or a tempo's work, read
+ * by `benchmarkEfforts` as for the benchmark the app derives.
  *
  * PRO-gated per the locked decision (§10): personalized paces are free, the
  * adaptive loop is Pro. Free users get `insight: null`.
@@ -29,17 +26,10 @@ import { logger } from "@/lib/logger";
  * is the standalone form that fetches its own 90-day window.
  */
 
-export interface PaceInsightRun {
-  id?: string;
-  distance: number;
-  duration: number;
-  avgPace: number;
+/** A run as the insight reads it: what decides whether it was an effort
+ *  (`EffortRun`; a `SavedRun` carries it all), and when it was run. */
+export interface PaceInsightRun extends EffortRun {
   completedAt: Date | null;
-  activityType?: string;
-  isInvalid?: boolean;
-  savedAnyway?: boolean;
-  /** The template the run was, when it was one. */
-  templateId?: string;
 }
 
 export interface PaceInsightController {
@@ -107,24 +97,18 @@ export function usePaceInsightFromRuns(
     }
 
     const cutoffMs = mountedAtMs - NINETY_DAYS_MS;
-    const eligible = runs
-      .filter(
+    // A race, a time trial or a tempo's work (Pgm8 R1); never an easy run,
+    // a long run or a run-walk, whose time includes its walks (Run20 (5)).
+    const efforts = benchmarkEfforts(
+      runs.filter(
         (run) =>
           run.completedAt instanceof Date &&
           Number.isFinite(run.completedAt.getTime()) &&
-          run.completedAt.getTime() >= cutoffMs &&
-          isPaceEligible(run) &&
-          // A run-walk's time includes its walks (Run20 (5)).
-          !isRunWalkTemplateId(run.templateId)
+          run.completedAt.getTime() >= cutoffMs
       )
-      .map((run) => ({
-        distanceM: run.distance,
-        durationS: run.duration,
-        id: run.id,
-        completedAt: run.completedAt,
-      }));
+    );
 
-    const next = resolvePaceInsight(runFitness, eligible);
+    const next = resolvePaceInsight(runFitness, efforts);
     if (!next) return null;
     return dismissedVdot !== null &&
       Math.round(next.suggestedVdot) === Math.round(dismissedVdot)
@@ -144,9 +128,7 @@ export function usePaceInsightFromRuns(
   const accept = useCallback(async (): Promise<PaceInsightAcceptResult> => {
     if (!insight || !user) return "failure";
     const writeUid = user.uid;
-    const { distanceM, timeS, sourceRunId, sourceRunAt } =
-      insight.suggestedBenchmark;
-    const vdot = vdotFromRace(distanceM, timeS);
+    const { benchmark, vdot, sourceRunId, sourceRunAt } = insight.suggested;
 
     try {
       // throwOnError so a failed persistence is a real failure, not a silent
@@ -154,8 +136,9 @@ export function usePaceInsightFromRuns(
       await updateProfile(
         {
           runFitness: {
-            benchmark: { distanceM, timeS },
-            vdot: Math.round(vdot * 10) / 10,
+            // A tempo's suggestion stores no race result (`DerivedFitness`).
+            benchmark,
+            vdot,
             source: "derived",
             updatedAt: new Date().toISOString(),
             // RUN-EV-08: this path IS the explicit acceptance — the flag is

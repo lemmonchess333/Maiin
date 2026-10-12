@@ -65,7 +65,9 @@ describe("RacePredictionsCard", () => {
       source: "derived",
       updatedAt: "2026-07-04T00:00:00Z",
     });
-    expect(screen.getByText(/derived from your best run/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/from a race or time trial you ran/)
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/independent of the selected range/i)
     ).toBeInTheDocument();
@@ -75,10 +77,29 @@ describe("RacePredictionsCard", () => {
     );
   });
 
+  /* Pgm8 R1: a benchmark derived from a tempo stores no race result, only
+     the VDOT the tempo implies, and the card predicts from that. */
+  it("predicts from a tempo's VDOT, naming no race it never was", () => {
+    renderCard({
+      benchmark: null,
+      vdot: 41.4,
+      source: "derived",
+      updatedAt: "2026-10-11T00:00:00Z",
+    });
+    expect(screen.getByText("Marathon")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Based on your current fitness level/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/from a race or time trial/)).toBeNull();
+  });
+
   it("cold start renders the how-to-get-predictions explainer with a settings deep-link", () => {
     renderCard(null);
     expect(
-      screen.getByText(/Race predictions appear after a few runs/)
+      screen.getByText(/Race predictions appear after a race or tempo/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Run a race, time trial or tempo outdoors/)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /set a race time/i })

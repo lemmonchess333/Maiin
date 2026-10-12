@@ -53,14 +53,13 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
 
 /**
  * Coaching findings each persona has today; a hybrid's lifting ones carry
- * `lift:`. Take an entry out with its fix.
+ * `lift:`. Take an entry out with its fix. F17's `derived-low` and
+ * `easy-nag` came out with Pgm8 R1: the benchmark the app derives comes from
+ * a race or a tempo's work, never easy runs, and at seed 1 lands within a
+ * VDOT of the runner, so the run summary stopped telling them to slow down.
  *
  * - F15 `under-dose`: setup never asks how much someone runs, so the plan
  *   starts a runner on 175–280 minutes a week at 57–75% of it.
- * - F17 `derived-low`: the benchmark the app derives reads the best of the
- *   first easy runs as a race, 7–10 VDOT under the runner; `easy-nag`: the
- *   run summary, which reads it at once, then tells the runner to slow down
- *   on most easy and long runs.
  * - F18, the plan's shape (running-engine-audit §7): long runs that step
  *   past the single-run guard (`spike`), weeks that jump (`volume-jump`),
  *   long runs over half the week (`long-share`), demanding days back to
@@ -71,32 +70,21 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
-  "couch-to-5k": ["derived-low", "easy-nag", "spike", "volume-jump"],
+  "couch-to-5k": ["spike", "volume-jump"],
   "half-3-days": ["long-share", "spike", "under-dose", "volume-jump"],
   "sub-3-30": ["spike", "under-dose", "volume-jump"],
   "sick-six-weeks": ["spike", "under-dose", "volume-jump"],
-  "new-runner-marathon": [
-    "derived-low",
-    "easy-nag",
-    "long-share",
-    "spike",
-    "volume-jump",
-  ],
-  "freeform-runner": ["derived-low"],
+  "new-runner-marathon": ["long-share", "spike", "volume-jump"],
   "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-2-3-trim": [
-    "derived-low",
-    "easy-nag",
     "lift:misses:overhead-press",
     "spike",
     "taper-cut",
     "volume-jump",
   ],
   "hybrid-2-3-no-trim": [
-    "derived-low",
-    "easy-nag",
     "lift:misses:overhead-press",
     "spike",
     "taper-cut",
