@@ -75,6 +75,7 @@ import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
@@ -316,6 +317,8 @@ export default function RunPlanSettings({
 
   const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
+  // Run20 (5): a new runner's first weeks, for the preview and the save.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
@@ -333,6 +336,7 @@ export default function RunPlanSettings({
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
       }),
     [
@@ -348,6 +352,7 @@ export default function RunPlanSettings({
       profile.runFitness,
       programState,
       recentLayoff,
+      newRunnerUntil,
       profile.weekSchedule,
     ]
   );
@@ -483,6 +488,7 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,

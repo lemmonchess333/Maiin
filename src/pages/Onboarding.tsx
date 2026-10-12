@@ -60,6 +60,7 @@ import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
+import { newRunnerUntil } from "@/features/program/newRunner";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -487,8 +488,16 @@ export default function Onboarding() {
         currentDate,
         liftDays: daysPerWeek,
         weeklyRunDays,
+        newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
       }),
-    [raceDistance, raceTargetDate, currentDate, daysPerWeek, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      currentDate,
+      daysPerWeek,
+      weeklyRunDays,
+      runFrequency,
+    ]
   );
   const displayNameValidation = validateDisplayName(displayName);
   /* A race with no date is not a race plan. Run9a lands a persisted

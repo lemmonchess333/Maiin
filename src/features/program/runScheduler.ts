@@ -12,6 +12,7 @@ import {
   addLocalDays,
   dateForDayOfWeek,
   generateScheduledRunId,
+  localDateString,
   localWeekKey,
   parseLocalDate,
   startOfLocalWeek,
@@ -967,6 +968,14 @@ export interface RacePlanV2Input {
    * to the nominal ceiling on the weekly refresh.
    */
   easyPaceSPerKm?: number | null;
+  /**
+   * Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`). A
+   * week that starts before it gets no tempo or intervals, in build or
+   * taper; strides stay. Null/omitted → no new runner's weeks,
+   * byte-identical to before. Every live path threads it, from the profile
+   * (`profileNewRunnerUntil`) or, at setup, from the answer just given.
+   */
+  newRunnerUntil?: string | null;
 }
 
 export interface RacePlanV2Output {
@@ -1062,11 +1071,21 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // coincide exactly when startIndex is 0, i.e. on a fresh plan. The block
   // is sized from the week's first day, so the final week IS the race's
   // calendar week — no re-keying of the race phase is needed.
+  /* Run20 (5): whether a week of the block, by its index, starts before a
+     new runner's first weeks end. The build's ladder walk asks it of the
+     block's earlier weeks too, so a ladder starts at its first rung when the
+     six weeks are over (Run20 (4)). */
+  const isNewRunnerWeek = (blockWeek: number) =>
+    !!input.newRunnerUntil &&
+    localDateString(addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)) <
+      input.newRunnerUntil;
   for (let offset = 0; offset < totalWeeks; offset++) {
     const w = startIndex + offset;
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
     const weekStart = addLocalDays(weekStartDate, offset * 7);
     const week: ScheduledRunDay[] = [];
+    // Run20 (5): a new runner's first weeks hold no tempo or intervals.
+    const newRunnerWeek = isNewRunnerWeek(w);
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
@@ -1322,6 +1341,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               weekIndex: k,
               phase: getPhaseForWeek(k, blockWeeks, input.raceGoal.distance),
               ...rules,
+              // Run20 (5): a new runner's week held none.
+              skipQuality: rules.skipQuality || isNewRunnerWeek(k),
             });
             if (!held.includes(flavour)) continue;
             const id = qualityTemplateId({
@@ -1341,6 +1362,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           weekIndex: w,
           phase,
           ...rules,
+          skipQuality: rules.skipQuality || newRunnerWeek,
         });
         if (flavours.length > 0) {
           const qualityType = flavours[0];
@@ -1438,7 +1460,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         // it too (freshness over sharpening); a detrained runner drops
         // it because there is no base to sharpen. Harder does NOT add
         // taper work — taper is about arriving fresh.
-        if (!compressed && !gentler && !detrainedSkipsQuality) {
+        if (
+          !compressed &&
+          !gentler &&
+          !detrainedSkipsQuality &&
+          !newRunnerWeek
+        ) {
           // Placed like every quality session (RUN-EV-10): away from the
           // long-run slot and off a lifting day where the week allows.
           const [taperDay] = chooseQualityRunSlots({

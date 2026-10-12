@@ -180,6 +180,10 @@ export interface PlanBuilderInput {
   runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   recentLayoff?: import("./layoffDetection").LayoffClass;
+  /** Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`),
+   *  from setup's answer or the profile (`profileNewRunnerUntil`). Omitted →
+   *  no new runner's weeks. */
+  newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -610,6 +614,7 @@ function buildRunPlan(
           easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
           runningBaseline: input.runningBaseline,
           runTimeLimits: input.runTimeLimits,
+          newRunnerUntil: input.newRunnerUntil,
           planTotalWeeks: continued?.totalWeeks,
         }),
       { currentDate: input.currentDate, weekStart },

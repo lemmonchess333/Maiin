@@ -70,6 +70,7 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
@@ -671,6 +672,7 @@ export default function ProgrammeSettings({
         runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
+        newRunnerUntil: profileNewRunnerUntil(profile),
         weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
           ? {
