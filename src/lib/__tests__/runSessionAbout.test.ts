@@ -65,7 +65,7 @@ describe("runSessionAbout", () => {
       "half_race",
     ].map((id) => about(id).what);
     expect(new Set(kinds).size).toBe(kinds.length);
-    expect(about("tempo_40").what).toMatch(/two blocks/);
+    expect(about("tempo_40").what).toMatch(/two 20-minute blocks/);
     expect(about("easy_40_strides").what).toMatch(
       /4 strides: 20 seconds of quick, smooth running/
     );
@@ -74,10 +74,14 @@ describe("runSessionAbout", () => {
   it("says the last run-walk is one run, and the first has no week before it", () => {
     // Run-walk 6 is one 20-minute run between the walks (Run20 (5)).
     const last = about("run_walk_6");
-    expect(last.what).toMatch(/^One easy run without stopping/);
+    expect(last.what).toBe(
+      "A 5-minute walk, then 20 minutes of easy running without a break, then a walk to finish."
+    );
     expect(last.what).not.toMatch(/walks between/);
     expect(last.feel).toMatch(/^Easy on the run: /);
-    expect(about("run_walk_5").what).toMatch(/walks between/);
+    expect(about("run_walk_5").what).toMatch(
+      /easy runs of 10 minutes and 8 minutes with a 2-minute walk between/
+    );
     // Run-walk 1 is the first week's: there is no last week's to swap in.
     expect(about("run_walk_1").ifWrong).not.toMatch(/last week/);
     expect(about("run_walk_1").ifWrong).toMatch(/start the walk early/);
@@ -211,12 +215,12 @@ describe("a tempo at the goal race pace (Run21 (2), Run21 (3))", () => {
   it("says it runs at your goal race pace, in one block or two", () => {
     const one = runSessionAbout(tempo("tempo_20"), { racePace: TEMPO });
     expect(one.what).toBe(
-      "A warm-up, then a block at your goal race pace, then a cool-down."
+      "A 5-minute warm-up, 20 minutes at your goal race pace, then a 5-minute cool-down."
     );
     expect(one.feel).toMatch(/^Race pace: even and controlled/);
     expect(one.ifWrong).toMatch(/change your goal time/);
     const two = runSessionAbout(tempo("tempo_40"), { racePace: TEMPO });
-    expect(two.what).toMatch(/goal race pace in two blocks/);
+    expect(two.what).toMatch(/two 20-minute blocks at your goal race pace/);
     for (const line of [one.what, one.feel, two.what]) {
       expect(line).not.toMatch(/comfortably hard/i);
     }
@@ -232,5 +236,60 @@ describe("a tempo at the goal race pace (Run21 (2), Run21 (3))", () => {
     expect(runSessionName(tempo("tempo_20"), TEMPO)).toBe(
       "20 Min Tempo at race pace"
     );
+  });
+});
+
+describe("each session's shape, and the name coaches give it (Run21 (2))", () => {
+  // The card's line is the feel line, so "What it is" carries the shape the
+  // template's description gave: a tempo's minutes, the repeats and their
+  // rest, a run-walk's pattern.
+  it("gives a tempo, intervals and run-walk their shape from the template", () => {
+    expect(about("tempo_20").what).toBe(
+      "A 5-minute warm-up, 20 minutes comfortably hard, then a 5-minute cool-down."
+    );
+    expect(about("4x1k").what).toBe(
+      "A 5-minute warm-up, then 4 repeats of 1K, hard, with 90 seconds of easy jogging or walking between, then a 5-minute cool-down."
+    );
+    expect(about("8x400").what).toMatch(
+      /8 repeats of 400 m, quick and relaxed, with 1 minute of easy jogging/
+    );
+    expect(about("run_walk_1").what).toBe(
+      "A 5-minute walk, then 8 easy runs of 1 minute with 90-second walks between, then a walk to finish."
+    );
+    expect(about("run_walk_4").what).toMatch(
+      /3 easy runs of 5 minutes with 2½-minute walks between/
+    );
+  });
+
+  it("names a session's physiology only as 'Coaches also call this'", () => {
+    expect(about("easy_30").alsoCalled).toBe("Zone 2, or aerobic running.");
+    expect(about("easy_75").alsoCalled).toBe("Zone 2, or aerobic running.");
+    expect(about("long_15k").alsoCalled).toBe("Zone 2, or aerobic running.");
+    expect(about("tempo_20").alsoCalled).toBe("A threshold run.");
+    expect(about("5x1k").alsoCalled).toBe("VO2 max intervals.");
+    // None where coaches have no physiology name for it.
+    for (const id of ["easy_30_strides", "8x400", "run_walk_2", "half_race"]) {
+      expect(about(id).alsoCalled, id).toBeUndefined();
+    }
+    const find = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
+    expect(
+      runSessionAbout(find("tempo_20"), { racePace: TEMPO }).alsoCalled
+    ).toBeUndefined();
+    expect(
+      runSessionAbout(find("long_15k"), { racePace: FINISH }).alsoCalled
+    ).toBeUndefined();
+  });
+
+  it("keeps physiology words out of the other lines", () => {
+    for (const t of RUN_TEMPLATES) {
+      for (const racePace of [null, FINISH, TEMPO]) {
+        const { what, feel, ifWrong } = runSessionAbout(t, { racePace });
+        for (const line of [what, feel, ifWrong]) {
+          expect(line, t.id).not.toMatch(
+            /aerobic|threshold|economy|VO2|lactate|zone/i
+          );
+        }
+      }
+    }
   });
 });

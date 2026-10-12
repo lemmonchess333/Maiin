@@ -78,6 +78,7 @@ export default function RunLaunchCard({
   purpose,
 }: RunLaunchCardProps) {
   const name = runSessionName(workout, racePace);
+  const about = runSessionAbout(workout, { racePace });
   const unit = useDistanceUnit();
 
   const target = prefill.target;
@@ -95,16 +96,6 @@ export default function RunLaunchCard({
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
-  // With no pace to prescribe (Run20), a quality session says how it should
-  // feel where the pace would be.
-  const effortLabel =
-    paceLabel || prefill.intervals?.workPace
-      ? null
-      : workout.type === "tempo"
-        ? "Comfortably hard"
-        : workout.type === "intervals"
-          ? "Hard, and even across every rep"
-          : null;
   /* Run21 (2): a long run's race-pace finish, which its name and lines
      only name, with its size and pace before the run starts. Labelled as
      the run's own segment is, in the reader's unit. */
@@ -171,21 +162,17 @@ export default function RunLaunchCard({
                 .join("  ·  ")}
             </p>
           )}
-          {effortLabel && (
-            <p className="text-sm font-medium text-foreground mt-3">
-              {effortLabel}
-            </p>
-          )}
           <p className="text-sm text-muted-foreground mt-2">
-            {workout.description}
+            {/* Run21 (2): the session's one feel line, its effort word first.
+                With no pace to prescribe (Run20 (1)) it is how a quality
+                session is held; a second effort line beside it said the same
+                thing twice. */}
+            {about.feel}
             {workout.config.strides &&
-              ` · ${workout.estimatedDuration} min total, including strides`}
+              ` ${workout.estimatedDuration} min in all, strides included.`}
           </p>
           <RunPurpose>
-            <RunAbout
-              about={runSessionAbout(workout, { racePace })}
-              why={purpose}
-            />
+            <RunAbout about={about} why={purpose} />
           </RunPurpose>
         </div>
 

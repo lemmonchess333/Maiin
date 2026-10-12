@@ -76,6 +76,36 @@ describe("RunLaunchCard", () => {
     expect(why).toHaveTextContent(/If it feels wrong.*Slow down/);
   });
 
+  it("Run21 (2): gives the run one feel line above 'Why this run', in its description's place", () => {
+    setup();
+    const feel = screen
+      .getAllByText("Easy: you can talk in full sentences. Slower is fine.")
+      .filter((el) => el.closest("details") === null);
+    expect(feel).toHaveLength(1);
+    expect(screen.queryByText(/Conversational pace/)).toBeNull();
+  });
+
+  it("Run21 (2): a run with strides says its time includes them, after its feel line", () => {
+    setup({
+      workout: {
+        id: "easy_30_strides",
+        name: "Easy 30 + strides",
+        type: "easy",
+        icon: "person-standing",
+        description:
+          "Conversational pace; finish with 4 \u00d7 20s strides \u2014 relaxed fast, walk back between",
+        estimatedDuration: 30,
+        config: { strides: { reps: 4, workSeconds: 20 } },
+      },
+      prefill: { activityType: "easy", target: { type: "time", value: 1800 } },
+    });
+    expect(
+      screen.getByText(
+        "Easy, then quick and relaxed on the strides: fast but smooth, never a sprint. 30 min in all, strides included."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("Run21 (2): names a long run's race-pace finish, on the card and its Start", () => {
     setup({
       workout: {
@@ -126,7 +156,9 @@ describe("RunLaunchCard", () => {
       screen.getByRole("heading", { name: "20 Min Tempo at race pace" })
     ).toBeInTheDocument();
     const why = screen.getByText("Why this run").closest("details")!;
-    expect(why).toHaveTextContent(/What it is.*a block at your goal race pace/);
+    expect(why).toHaveTextContent(
+      /What it is.*20 minutes at your goal race pace/
+    );
     expect(why).toHaveTextContent(/How it should feel.*Race pace: even/);
     // A long run's finish line is a long run's.
     expect(screen.queryByText(/^Last /)).toBeNull();
@@ -185,9 +217,15 @@ describe("RunLaunchCard", () => {
       config: {},
     };
 
-    it("a tempo says comfortably hard", () => {
+    // Run21 (2): the one feel line says it, its effort word first; R2's own
+    // line beside it said the same thing twice. ("Why this run" repeats it
+    // under "How it should feel", one tap away.)
+    it("a tempo says comfortably hard, once", () => {
       setup({ workout: tempo, prefill: { activityType: "tempo" } });
-      expect(screen.getByText("Comfortably hard")).toBeInTheDocument();
+      expect(
+        screen.getAllByText(/^Comfortably hard/, { selector: "p" })
+      ).toHaveLength(1);
+      expect(screen.queryByText(/\/km/)).not.toBeInTheDocument();
     });
 
     it("an interval session says hard, and even", () => {
@@ -206,11 +244,11 @@ describe("RunLaunchCard", () => {
       });
       expect(screen.getByText("5 × 1K")).toBeInTheDocument();
       expect(
-        screen.getByText("Hard, and even across every rep")
-      ).toBeInTheDocument();
+        screen.getAllByText(/^Hard, and even/, { selector: "p" })
+      ).toHaveLength(1);
     });
 
-    it("a tempo with a pace shows the pace, not the words", () => {
+    it("a tempo with a pace shows the pace, and the one feel line", () => {
       setup({
         workout: tempo,
         prefill: {
@@ -219,7 +257,9 @@ describe("RunLaunchCard", () => {
         },
       });
       expect(screen.getByText("5:20 /km")).toBeInTheDocument();
-      expect(screen.queryByText("Comfortably hard")).not.toBeInTheDocument();
+      expect(
+        screen.getAllByText(/^Comfortably hard/, { selector: "p" })
+      ).toHaveLength(1);
     });
   });
 });

@@ -67,7 +67,9 @@ describe("current run planning explanation", () => {
       "How it should feel",
       "Why it's in your week",
       "If it feels wrong",
+      "Coaches also call this",
     ]);
+    expect(screen.getByText("A threshold run.")).toBeVisible();
     expect(screen.getByText(/^Comfortably hard: a few words/)).toBeVisible();
     expect(screen.getByText("Build sustained effort.")).toBeVisible();
     // No plan to give a reason: the other three lines still show.
@@ -78,6 +80,7 @@ describe("current run planning explanation", () => {
       "What it is",
       "How it should feel",
       "If it feels wrong",
+      "Coaches also call this",
     ]);
   });
 
