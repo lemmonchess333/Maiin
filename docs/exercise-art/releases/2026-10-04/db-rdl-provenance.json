@@ -1,0 +1,209 @@
+{
+  "generator": "Built-in imagegen master and poses; authorized whole-scene translation, common crop/padding and stationary sole copies",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "master": "2adb341b-9cd2-41b8-809e-b6481583dd06",
+    "middle": "d797b17b-3984-4afa-b6d1-7ebf66f4647e",
+    "bottom": "57733603-3833-4458-b573-b97942cf31c8"
+  },
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "fe59a9cfbfa53c1222fb140109c908ef69b2e013772d8da14e839537d73ff3d7"
+    },
+    {
+      "file": "originals/2-middle.png",
+      "sha256": "8b5048ef0120cf12d674df2967ba32da7d4def5ea4a5e96b0992a4ee3bd43a0f"
+    },
+    {
+      "file": "originals/3-bottom.png",
+      "sha256": "f1cb595cf8546b211305b0586b43cd0235399f4d148a050f57ef746764d6f201"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "891b797bcbea7da831879b168c92878be2e9f30e62dd502a6dc5449e89906b15"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "9857121e7bc8d44d389e457412eb8c63612ff5d46f356e48a5c9555968d2a681"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "19a3a8743fb45f2d6ac0e81c974b3e9c6503a2a36bbadbadba88ea4da41ebddf"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "19a3a8743fb45f2d6ac0e81c974b3e9c6503a2a36bbadbadba88ea4da41ebddf"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "9857121e7bc8d44d389e457412eb8c63612ff5d46f356e48a5c9555968d2a681"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "891b797bcbea7da831879b168c92878be2e9f30e62dd502a6dc5449e89906b15"
+    }
+  ],
+  "framing": {
+    "files": ["1-master.png", "2-middle.png", "3-bottom.png"],
+    "wholeSceneY": [0, 64, 32],
+    "evidence": "Sole bottoms master1379/1438;middle1315/1374;bottom1347/1406. Equal32/64px shifts in both independent soles.",
+    "sequence": [1, 2, 3, 3, 2, 1],
+    "contacts": [
+      {
+        "left": 275,
+        "top": 1310,
+        "width": 230,
+        "height": 80
+      },
+      {
+        "left": 480,
+        "top": 1350,
+        "width": 200,
+        "height": 100
+      }
+    ],
+    "contactTopFade": 20,
+    "crop": {
+      "left": 140,
+      "top": 0,
+      "width": 700,
+      "height": 1472
+    },
+    "padding": {
+      "left": 24,
+      "right": 24,
+      "top": 32,
+      "bottom": 0
+    },
+    "scope": "Whole-scene translation/crop plus authorized stationary shoe copies only; no moving anatomy transformation."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "891b797bcbea7da831879b168c92878be2e9f30e62dd502a6dc5449e89906b15"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "9857121e7bc8d44d389e457412eb8c63612ff5d46f356e48a5c9555968d2a681"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "19a3a8743fb45f2d6ac0e81c974b3e9c6503a2a36bbadbadba88ea4da41ebddf"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "19a3a8743fb45f2d6ac0e81c974b3e9c6503a2a36bbadbadba88ea4da41ebddf"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "9857121e7bc8d44d389e457412eb8c63612ff5d46f356e48a5c9555968d2a681"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      },
+      "sha256": "891b797bcbea7da831879b168c92878be2e9f30e62dd502a6dc5449e89906b15"
+    }
+  ],
+  "stationaryCopies": [
+    {
+      "left": 275,
+      "top": 1310,
+      "width": 230,
+      "height": 80
+    },
+    {
+      "left": 480,
+      "top": 1350,
+      "width": 200,
+      "height": 100
+    }
+  ],
+  "losslessPixelsVerified": true
+}

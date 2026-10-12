@@ -1,0 +1,318 @@
+{
+  "exerciseId": "muscle-ups",
+  "version": "anatomy-v3-2026-10-11-four-pose-v1",
+  "width": 800,
+  "height": 1408,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T22:13:54.179215+00:00",
+  "reference": {
+    "path": "form-frames/muscle-ups/1.webp",
+    "sha256": "0cc41e4b1e2fd4657c729269470eb5e91081d2113f0167a0ef660608ef1526d3"
+  },
+  "cueSha256": "0d109fb27c88c697ba7265ffc4909e124b8a62a7dd466849f24f277c5dbc0999",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Four built-in generated central-region poses, each edit attaching canonical anatomy-v3. Bald faceless lean white athlete, low-profile white trainers, smooth neutral pelvis and fine grey contours. Existing larger hanging actor replaced once with a matching hang for coherent new four-pose proportions. Qualitative native identity review, not exact 3D certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed original three-quarter front rig. Generated whole central outputs uniformly normalized to the documented 512px native crop width and translated vertically to the stationary bar; positions and factors in composite-measurements.json. No independent limb transforms, anatomical fitting or grafts. Final common crop112,64,912,1472 gives800x1408 without further scaling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Straight-arm hang, high lower-chest pull, bent-arm turnover and straight-arm support, then reverse return. Four final poses reviewed natively. Modest contour/shading variations accepted under revised standard. Initial ordinary chin-up corrected once to a higher pull; source retained for provenance."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Original fixed rig retained byte-identically outside central columns256..767: both uprights, bases and outer bar attachments. Original outer bar span587px, diameter13px and left rig height961px remain exact. Central bar is generated with each moving region, aligned to original y519 within0.5px; joins visually continuous, not claimed pixel-identical."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Actual official CrossFit video o69WaY_7k2c inspected at25seconds for high pull and turnover. Both grips remain visibly connected while wrists roll over the bar. Feet remain suspended. Contact measurements contain pose-dependent bright silhouette samples, explicitly not exact palm centres. Fixed rig anchors independently pixel-exact."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "High pull precedes wrist turnover, chest comes over bar before press into straight-arm support; reverse path returns to hang. No detached hands, foot support, extra chicken-wing phase or rig movement. Four poses reused for six beats under revised authorization."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Existing mapping: visible upper back/lats primary #7B72E9; chest/triceps/core secondary #9590E0. Source muscle fields recoloured in named editable layers; inherited neutral shading outside fields preserved, source-derived fine contours #777777. No new gradients."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Hang, Pull, Turn, Support, Lower, Return cues match the movement and each has at most7words. Six distinct file paths reuse pose order1,2,3,4,3,2; not six separately authored poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All four native final poses and800x1408 six-beat playback inspected. Native trace records all six at natural size. Rig stays fixed; return reverses turnover and pull into hanging start."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light theme, all six decoded frames and6to1 closure; athlete and full rig visible, readable key/cues/controls. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same component390x844 dark, all six decoded frames andclosure; pause/manual6to1 observed, empty console. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/muscle-ups/1.webp",
+      "sha256": "0cc41e4b1e2fd4657c729269470eb5e91081d2113f0167a0ef660608ef1526d3",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 1,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [374, 505, 415, 532],
+            "sampleCentreX": 394.5
+          },
+          "right": {
+            "sampleBounds": [573, 505, 610, 532],
+            "sampleCentreX": 591.5
+          }
+        }
+      }
+    },
+    {
+      "path": "form-frames/muscle-ups/2.webp",
+      "sha256": "2cdb7de1b5e8d8e579e16c5dc20b395fc69230056309f51dc901e81dfc33868d",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 2,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [373, 505, 429, 532],
+            "sampleCentreX": 401.0
+          },
+          "right": {
+            "sampleBounds": [575, 505, 629, 532],
+            "sampleCentreX": 602.0
+          }
+        }
+      }
+    },
+    {
+      "path": "form-frames/muscle-ups/3.webp",
+      "sha256": "693622c20e651beceb9164035cfcc3907e3f2ae62357b9627d627425f7894c2e",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 3,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [376, 505, 416, 532],
+            "sampleCentreX": 396.0
+          },
+          "right": {
+            "sampleBounds": [579, 505, 620, 528],
+            "sampleCentreX": 599.5
+          }
+        }
+      }
+    },
+    {
+      "path": "form-frames/muscle-ups/4.webp",
+      "sha256": "640530ea8c016455e8eee36e373b15ac5536cdb3a9cf6f20aa693aa979417738",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 4,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [375, 505, 414, 532],
+            "sampleCentreX": 394.5
+          },
+          "right": {
+            "sampleBounds": [573, 505, 612, 529],
+            "sampleCentreX": 592.5
+          }
+        }
+      }
+    },
+    {
+      "path": "form-frames/muscle-ups/5.webp",
+      "sha256": "693622c20e651beceb9164035cfcc3907e3f2ae62357b9627d627425f7894c2e",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 3,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [376, 505, 416, 532],
+            "sampleCentreX": 396.0
+          },
+          "right": {
+            "sampleBounds": [579, 505, 620, 528],
+            "sampleCentreX": 599.5
+          }
+        }
+      }
+    },
+    {
+      "path": "form-frames/muscle-ups/6.webp",
+      "sha256": "2cdb7de1b5e8d8e579e16c5dc20b395fc69230056309f51dc901e81dfc33868d",
+      "anchors": {
+        "leftBarPostIntersection": {
+          "x": 105,
+          "y": 455
+        },
+        "rightBarPostIntersection": {
+          "x": 692,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "outerBarSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961
+      },
+      "observedContacts": {
+        "pose": 2,
+        "fixedPostsExact": true,
+        "leftPostSha256": "ad254387ef1d1b9aca0f9f46030246c8b71ab96060dc54b9005ee761a62e7182",
+        "rightPostSha256": "c5527aabab392afb3c39806ab52d2a57043693d8ac48fec960b466c29b827069",
+        "nativeBarIntersections": [
+          [217, 519],
+          [804, 519]
+        ],
+        "barSpan": 587,
+        "outerBarDiameter": 13,
+        "leftRigHeight": 961,
+        "gripBrightSamples": {
+          "left": {
+            "sampleBounds": [373, 505, 429, 532],
+            "sampleCentreX": 401.0
+          },
+          "right": {
+            "sampleBounds": [575, 505, 629, 532],
+            "sampleCentreX": 602.0
+          }
+        }
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered390x844 mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in fixed-rig-production/final-verification.json; no new failure headings. Full suite remains failing."
+}

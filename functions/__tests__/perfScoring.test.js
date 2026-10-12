@@ -178,9 +178,24 @@ describe("perfScoring.scorePerformance — goal-aware composition", () => {
     // Lift4 (3): no lifting suggestion cards. Older apps read
     // `planAdjustments.lift.length`, so the list stays, empty.
     const weeks = [
-      { loadBand: "moderate", liftLoadScore: 50, runLoadScore: 50, deloadRecommended: true },
-      { loadBand: "overreach", liftLoadScore: 50, runLoadScore: 50, deloadRecommended: false },
-      { loadBand: "low", liftLoadScore: 10, runLoadScore: 10, deloadRecommended: false },
+      {
+        loadBand: "moderate",
+        liftLoadScore: 50,
+        runLoadScore: 50,
+        deloadRecommended: true,
+      },
+      {
+        loadBand: "overreach",
+        liftLoadScore: 50,
+        runLoadScore: 50,
+        deloadRecommended: false,
+      },
+      {
+        loadBand: "low",
+        liftLoadScore: 10,
+        runLoadScore: 10,
+        deloadRecommended: false,
+      },
     ];
     for (const week of weeks) {
       const adj = generatePlanAdjustments(week);

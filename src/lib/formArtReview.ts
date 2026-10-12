@@ -117,13 +117,6 @@ export function validateArtworkReview(
     expected.frames.length !== 6
   )
     return [...errors, "Review must cover exactly six frames."];
-  const first = object(review.frames[0]);
-  const anchors = object(first.anchors);
-  const dimensions = object(first.invariantDimensions);
-  if (Object.keys(anchors).length < 2)
-    errors.push("Measure at least two genuinely fixed scene anchors.");
-  if (Object.keys(dimensions).length < 2)
-    errors.push("Measure at least two invariant dimensions.");
   review.frames.forEach((value, i) => {
     const frame = object(value);
     if (
@@ -132,7 +125,19 @@ export function validateArtworkReview(
       frame.sha256 !== expected.frames[i].sha256
     )
       errors.push(`Frame ${i + 1}: asset changed since review.`);
-    for (const [key, master] of Object.entries(anchors)) {
+  });
+  const frames = review.frames.map(object);
+  const measure = (
+    frameIndex: number,
+    referenceIndex: number,
+    anchorNames: string[],
+    dimensionNames: string[]
+  ) => {
+    const frame = frames[frameIndex];
+    const reference = frames[referenceIndex];
+    const i = frameIndex;
+    for (const key of anchorNames) {
+      const master = object(reference.anchors)[key];
       const point = object(object(frame.anchors)[key]);
       const base = object(master);
       for (const axis of ["x", "y"] as const) {
@@ -149,7 +154,8 @@ export function validateArtworkReview(
           errors.push(`Frame ${i + 1}: fixed anchor ${key}.${axis} drift.`);
       }
     }
-    for (const [key, base] of Object.entries(dimensions)) {
+    for (const key of dimensionNames) {
+      const base = object(reference.invariantDimensions)[key];
       const size = object(frame.invariantDimensions)[key];
       if (
         !number(size) ||
@@ -160,6 +166,91 @@ export function validateArtworkReview(
       )
         errors.push(`Frame ${i + 1}: invariant ${key} drift.`);
     }
-  });
+  };
+  if (
+    review.contactPhases === undefined &&
+    review.airborneFrames === undefined
+  ) {
+    // Existing records retain the same all-frame geometry requirements.
+    const anchors = Object.keys(object(frames[0].anchors));
+    const dimensions = Object.keys(object(frames[0].invariantDimensions));
+    if (anchors.length < 2)
+      errors.push("Measure at least two genuinely fixed scene anchors.");
+    if (dimensions.length < 2)
+      errors.push("Measure at least two invariant dimensions.");
+    frames.forEach((_, i) => measure(i, 0, anchors, dimensions));
+  } else {
+    // A jump cannot keep planted contacts. Measure each real contact phase
+    // against one of its own frames, and explicitly review flight and landing.
+    const frameNumber = (n: unknown): n is number =>
+      number(n) && Number.isInteger(n) && n >= 1 && n <= frames.length;
+    const names = (value: unknown): value is string[] =>
+      Array.isArray(value) &&
+      value.length >= 2 &&
+      value.every(text) &&
+      new Set(value).size === value.length;
+    const grounded = new Set<number>();
+    if (!Array.isArray(review.contactPhases) || !review.contactPhases.length)
+      errors.push("Contact phases require measured grounded frames.");
+    else
+      for (const value of review.contactPhases) {
+        const phase = object(value);
+        if (
+          !text(phase.name) ||
+          !text(phase.evidence) ||
+          !Array.isArray(phase.frames) ||
+          phase.frames.length < 2 ||
+          !phase.frames.every(frameNumber) ||
+          new Set(phase.frames).size !== phase.frames.length ||
+          !frameNumber(phase.referenceFrame) ||
+          !phase.frames.includes(phase.referenceFrame) ||
+          !names(phase.anchorNames) ||
+          !names(phase.dimensionNames)
+        ) {
+          errors.push(
+            "Contact phase requires named measurements and at least two distinct frames including its reference."
+          );
+          continue;
+        }
+        for (const n of phase.frames) {
+          grounded.add(n);
+          measure(
+            n - 1,
+            phase.referenceFrame - 1,
+            phase.anchorNames,
+            phase.dimensionNames
+          );
+        }
+      }
+    const airborne = new Set<number>();
+    if (!Array.isArray(review.airborneFrames))
+      errors.push(
+        "Contact phase review requires an explicit airborne-frame list."
+      );
+    else
+      for (const value of review.airborneFrames) {
+        const flight = object(value);
+        if (
+          !frameNumber(flight.frame) ||
+          airborne.has(flight.frame) ||
+          grounded.has(flight.frame) ||
+          !frameNumber(flight.takeoffFrame) ||
+          !frameNumber(flight.landingFrame) ||
+          !grounded.has(flight.takeoffFrame) ||
+          !grounded.has(flight.landingFrame) ||
+          !text(flight.evidence)
+        ) {
+          errors.push(
+            "Airborne frame requires unique flight evidence and measured takeoff and landing frames."
+          );
+          continue;
+        }
+        airborne.add(flight.frame);
+      }
+    frames.forEach((_, i) => {
+      if (!grounded.has(i + 1) && !airborne.has(i + 1))
+        errors.push(`Frame ${i + 1}: no contact-phase or airborne evidence.`);
+    });
+  }
   return errors;
 }

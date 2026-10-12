@@ -1,0 +1,175 @@
+{
+  "exerciseId": "trap-bar-deadlift",
+  "version": "anatomy-v3-2026-10-12-reviewed-trap-bar-deadlift-v1",
+  "width": 688,
+  "height": 576,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T14:50:27.835065+00:00",
+  "reference": {
+    "path": "form-frames/trap-bar-deadlift/1.webp",
+    "sha256": "47e537513a4e2a02f0df77d94bca798c4fe10ef18fbc3f114edf9e3e9c9df267"
+  },
+  "cueSha256": "f54112c4cdb730a4943e97e2bbb4425aae8edac868b4c2ce2c1ba0b98943ebd1",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 is the sole identity/style reference. Accepted floor master accompanies adjacent pose edits with the canonical model. Bald faceless lean white anatomical figure, smooth featureless pelvis, white trainers and fine inherited grey contours. No anatomy warps, grafts or independently fitted parts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter front view. Complete original floor and standing scenes padded/translated per endpoint-framing.json. Middle uniformly scaled by1376/1370 then translated as one entire scene per middle-framing.json. No independent body or equipment fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Floor, middle and standing poses inspected at native688x576 and actual390x844. Hip and knee extension progresses coherently with straight arms; standing head and torso remain upright without lean-back. Small outline variations accepted under the owner revised standard. No calibrated3D bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same grey six-sided loaded hex frame with two raised neutral grips and one modest plate per loaded side. Native motion review confirms connected hands, coherent handles/sleeves and no apparent change of apparatus. Minor plate/frame contour variation retained. The rising horizontal ring becomes shallower in projection, consistent with perspective; this is not a calibrated3D rigidity certification."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both planted heel regions remain steady; sampled final heel-sole y differs at most1native pixel. Projected horizontal/diagonal stance dimensions are correlated measurements, explicitly not independent proof of body/equipment rigidity. See measurement-method.json. Minor toe/sole outlines vary and the floor bar partly occludes shoes; no distracting step or slide in native/mobile motion."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Brace inside the hex frame, drive through both feet with coordinated hip/knee extension and straight arms, stand tall, then hinge and bend knees to lower the plates. Neutral grips stay closed around the handles throughout. Reference technique checked against University of Sussex trap-bar-deadlift.pdf. The former depth-only rejection incorrectly assumed a rising3D ring must translate rigidly in2D; historical hold is preserved."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible glute field uses primary#7B72E9. Quads/hamstrings/core/traps use secondary#9590E0 where visible. Grey inherited contours retained. Deterministic colour-only layers leave all originally neutral anatomy/equipment pixels unchanged, verified byte-for-byte; no new gradient or geometry change."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Drive/Stand/Hold/Lower/Reset matches three real poses in1,2,3,3,2,1 order. Six separate paths support the preloader; hold and return reuse is disclosed. Every cue has seven words or fewer."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Final688x576 sequence inspected in native playback including6to1 and stepped pose views; native-trace.json. Three1376x1152 ORAs reopen to the exact merged scene; six lossless WebP exports match native PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light: all six decoded, full figure/equipment, caption, muscle key and cue list readable;6to1 reviewed. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 dark: all six decoded and6to1 reviewed. Pause and manual6to1 verified, with no console errors. staged-dark.png, staged-trace.json and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/trap-bar-deadlift/1.webp",
+      "sha256": "47e537513a4e2a02f0df77d94bca798c4fe10ef18fbc3f114edf9e3e9c9df267",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 512
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.68767828015137
+      }
+    },
+    {
+      "path": "form-frames/trap-bar-deadlift/2.webp",
+      "sha256": "398f1076b74ff00a84e9d1754e4867c99e2fee3a1c6fbdd9f8e381fe8e930b32",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 511
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.48529270389177
+      }
+    },
+    {
+      "path": "form-frames/trap-bar-deadlift/3.webp",
+      "sha256": "bb546a4dc038438d180dab08bf57f92fb4b1546ffbff91ba51af12b9f050c648",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 511
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.48529270389177
+      }
+    },
+    {
+      "path": "form-frames/trap-bar-deadlift/4.webp",
+      "sha256": "bb546a4dc038438d180dab08bf57f92fb4b1546ffbff91ba51af12b9f050c648",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 511
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.48529270389177
+      }
+    },
+    {
+      "path": "form-frames/trap-bar-deadlift/5.webp",
+      "sha256": "398f1076b74ff00a84e9d1754e4867c99e2fee3a1c6fbdd9f8e381fe8e930b32",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 511
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.48529270389177
+      }
+    },
+    {
+      "path": "form-frames/trap-bar-deadlift/6.webp",
+      "sha256": "47e537513a4e2a02f0df77d94bca798c4fe10ef18fbc3f114edf9e3e9c9df267",
+      "anchors": {
+        "farHeelSole": {
+          "x": 330,
+          "y": 496
+        },
+        "nearHeelSole": {
+          "x": 405,
+          "y": 512
+        }
+      },
+      "invariantDimensions": {
+        "projectedHeelHorizontalSeparation": 75,
+        "projectedHeelDiagonalSeparation": 76.68767828015137
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "Small toe/shoe-outline and equipment-contour differences remain. The floor frame occludes part of both shoes. Heel contact y differs at most1native pixel. Native and mobile review finds a steady stance and coherent lift; cosmetic variation is accepted under the owner revised standard. No anatomy warps, grafts, separate limb fitting or geometric equipment reconstruction.",
+  "integrationValidation": "Complete: native and final registered390x844 light/dark/card/pause/manual6to1 reviewed; three editable ORAs and six lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full tests compared with fresh same-HEAD baseline; no unresolved additional failures. See reviewed-perspective-production/final-verification.json."
+}

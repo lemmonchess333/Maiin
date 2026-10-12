@@ -1,0 +1,71 @@
+{
+  "status": "Prepared outside app; release/checks pending",
+  "frames": [
+    {
+      "frame": 1,
+      "source": "frame1-rigid-equipment-v6-draft.png",
+      "sourceSha256": "e353e031f406d4491382cba0da2abd02ce577f65d7128b62ed91a20f7f12144a",
+      "file": "1.webp",
+      "sha256": "5588051491e3a4e00a37e2e084a559c449b80a5aed7109962c812e8c6b44891e",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 545770
+    },
+    {
+      "frame": 2,
+      "source": "frame2-rigid-equipment-v3-draft.png",
+      "sourceSha256": "b16d193d74303a5950790c60625d984dfa96488cde27b3845b9a665c9f3e374b",
+      "file": "2.webp",
+      "sha256": "ef30e0d16044d3a81bd3a2d2c29e7b5c38599dfb4c10332ddff73551247ca89b",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 444792
+    },
+    {
+      "frame": 3,
+      "source": "frame3-rigid-equipment-v3-draft.png",
+      "sourceSha256": "cae4ae2ba12480824f9ee584cb9c6e8c7e393ac2d834d4876202e02c19bda575",
+      "file": "3.webp",
+      "sha256": "b2915cc313d8e8a95ff6cef1bc1e77a60809370b8c84b3d703902591fafd697b",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 675226
+    },
+    {
+      "frame": 4,
+      "source": "frame4-rigid-equipment-v2-draft.png",
+      "sourceSha256": "343697038b09d34114e82ec17e268670bc90596f9757f31b18b2d53fbb891d81",
+      "file": "4.webp",
+      "sha256": "9b704d4f8bbc1dae30656371b75b4e212705bd26402a22f2a82292b7b58abcdc",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 636654
+    },
+    {
+      "frame": 5,
+      "source": "frame5-rigid-equipment-v3-draft.png",
+      "sourceSha256": "284aa4c4f6eba9543df45633c0c4d9f7ec7461dfd4d6f5c965111bd641532371",
+      "file": "5.webp",
+      "sha256": "5ea61ab9e18c501cc2abb210de120ef06c6ae562a37a60d84d48a46040bdaeec",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 435820
+    },
+    {
+      "frame": 6,
+      "source": "frame6-rigid-equipment-v2-draft.png",
+      "sourceSha256": "290787facc5b08a7d98e4179a592c71ef977b569b8525f59979684ab8a40504b",
+      "file": "6.webp",
+      "sha256": "72cbbc28adfbb226f3f9265596162bdc0395be4d1759344e3e7882b16885cbda",
+      "width": 1024,
+      "height": 1536,
+      "decodedRgbaExact": true,
+      "bytes": 634582
+    }
+  ]
+}

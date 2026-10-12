@@ -1,0 +1,263 @@
+{
+  "exerciseId": "zottman-curl",
+  "reviewedAt": "2026-10-08",
+  "result": "passed",
+  "implementation": "Real ExerciseFormContent/ExerciseFormFrames and project styles, actual production registration, public WebPs and placard key/cues. No artwork/key override.",
+  "url": "http://localhost:8769/mobile-review.html",
+  "viewport": [390, 844],
+  "nativeDimensions": [1024, 1536],
+  "screenshots": [
+    {
+      "file": "integrated-mobile-dark-frame1.jpg",
+      "sha256": "e63151ad366cccfe02c2595a93773ae3ab204c1e7294d2fda78dd4453bf4f12a",
+      "theme": "dark",
+      "frame": 1
+    },
+    {
+      "file": "integrated-mobile-dark-frame2.jpg",
+      "sha256": "0460299693491375700020a6022f9e30a6a7c9d9bb69c7ab72cd99e302a57442",
+      "theme": "dark",
+      "frame": 2
+    },
+    {
+      "file": "integrated-mobile-dark-frame3.jpg",
+      "sha256": "b554b7048686b3b70b773258c57b682bd9c9a309161adf74d4c8a85bc864c2c3",
+      "theme": "dark",
+      "frame": 3
+    },
+    {
+      "file": "integrated-mobile-dark-frame4.jpg",
+      "sha256": "cd3530027d14ed335e3daa46e851b971fa5cf5810a378d89e104ccd02fb0992a",
+      "theme": "dark",
+      "frame": 4
+    },
+    {
+      "file": "integrated-mobile-dark-frame5.jpg",
+      "sha256": "d1c274c9c91eb7b90dd3ebff1d9b2bb5b43fc5fef61d7fedfeff5fe5721f4176",
+      "theme": "dark",
+      "frame": 5
+    },
+    {
+      "file": "integrated-mobile-dark-frame6.jpg",
+      "sha256": "442fe59ddd217afbe09c2ff2d891abd59da48bd956f48322353906d5697945ed",
+      "theme": "dark",
+      "frame": 6
+    },
+    {
+      "file": "integrated-mobile-light-frame1.jpg",
+      "sha256": "2ace42e4a846bdd5c5a8e59e0b3c2c21874f1c16a4638a9c0d035fb2245d0b20",
+      "theme": "light",
+      "frame": 1
+    },
+    {
+      "file": "integrated-mobile-light-frame2.jpg",
+      "sha256": "202accbc4dd76d9f6b6c219ba7242cfc07526cab64c166e5d0d3d91ec13e6c0b",
+      "theme": "light",
+      "frame": 2
+    },
+    {
+      "file": "integrated-mobile-light-frame3.jpg",
+      "sha256": "429419882642c65d98a6df084e9f70b1d27834202625264c6e38f9d8b2acfd56",
+      "theme": "light",
+      "frame": 3
+    },
+    {
+      "file": "integrated-mobile-light-frame4.jpg",
+      "sha256": "376deb5331035bcc26eda75639db5257a0c8ee2bbb3726fd8a1ff6918ee55544",
+      "theme": "light",
+      "frame": 4
+    },
+    {
+      "file": "integrated-mobile-light-frame5.jpg",
+      "sha256": "98d13d8ff0afced84eb6559be010e1f131937480b54e1a08ad74eb0e5a9d5822",
+      "theme": "light",
+      "frame": 5
+    },
+    {
+      "file": "integrated-mobile-light-frame6.jpg",
+      "sha256": "9a22867185e152dff76821fac03070f33f2a001ec97da239eff829a7bc856703",
+      "theme": "light",
+      "frame": 6
+    }
+  ],
+  "cycles": {
+    "dark": {
+      "frames": [1, 2, 3, 4, 5, 6, 1],
+      "intervalMs": [1206, 1206, 1206, 1206, 1210, 1209],
+      "events": [
+        {
+          "ms": 60465,
+          "src": "/form-frames/zottman-curl/1.webp",
+          "alt": "Zottman Curl, Palms forward",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 61671,
+          "src": "/form-frames/zottman-curl/2.webp",
+          "alt": "Zottman Curl, Curl palms up",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 62877,
+          "src": "/form-frames/zottman-curl/3.webp",
+          "alt": "Zottman Curl, Top palms up",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 64083,
+          "src": "/form-frames/zottman-curl/4.webp",
+          "alt": "Zottman Curl, Rotate grip",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 65289,
+          "src": "/form-frames/zottman-curl/5.webp",
+          "alt": "Zottman Curl, Lower palms down",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 66499,
+          "src": "/form-frames/zottman-curl/6.webp",
+          "alt": "Zottman Curl, Bottom pronated",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 67708,
+          "src": "/form-frames/zottman-curl/1.webp",
+          "alt": "Zottman Curl, Palms forward",
+          "playing": true,
+          "theme": "dark",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        }
+      ]
+    },
+    "light": {
+      "frames": [1, 2, 3, 4, 5, 6, 1],
+      "intervalMs": [1211, 1220, 1214, 1222, 1203, 1208],
+      "events": [
+        {
+          "ms": 45308,
+          "src": "/form-frames/zottman-curl/1.webp",
+          "alt": "Zottman Curl, Palms forward",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 46519,
+          "src": "/form-frames/zottman-curl/2.webp",
+          "alt": "Zottman Curl, Curl palms up",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 47739,
+          "src": "/form-frames/zottman-curl/3.webp",
+          "alt": "Zottman Curl, Top palms up",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 48953,
+          "src": "/form-frames/zottman-curl/4.webp",
+          "alt": "Zottman Curl, Rotate grip",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 50175,
+          "src": "/form-frames/zottman-curl/5.webp",
+          "alt": "Zottman Curl, Lower palms down",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 51378,
+          "src": "/form-frames/zottman-curl/6.webp",
+          "alt": "Zottman Curl, Bottom pronated",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        },
+        {
+          "ms": 52586,
+          "src": "/form-frames/zottman-curl/1.webp",
+          "alt": "Zottman Curl, Palms forward",
+          "playing": true,
+          "theme": "light",
+          "documentHidden": false,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "viewport": [390, 844]
+        }
+      ]
+    }
+  },
+  "visualReview": "All12 screenshots directly viewed: full athlete and gear, approved identity/palette/contours, six different poses, captions and primary Biceps/Forearms key. All figures and controls remain within mobile width.",
+  "overflow": {
+    "innerWidth": 390,
+    "clientWidth": 380,
+    "scrollWidth": 380
+  },
+  "browserErrors": [],
+  "playPause": "Play changes to Pause and starts actual loaded-image transitions. Pause changes to Play and holds frame3 across subsequent DOM observations.",
+  "limitations": [
+    "Local review harness uses real app components; authenticated app navigation was not exercised.",
+    "Full-page screenshots include content beyond the844px viewport; actual viewport and scroll width independently observed."
+  ]
+}

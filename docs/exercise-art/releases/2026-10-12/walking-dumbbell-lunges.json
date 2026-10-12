@@ -1,0 +1,193 @@
+{
+  "exerciseId": "walking-dumbbell-lunges",
+  "version": "anatomy-v3-2026-10-12-reviewed-walking-four-pose-v1",
+  "width": 720,
+  "height": 770,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T12:23:32.893703+00:00",
+  "reference": {
+    "path": "form-frames/walking-dumbbell-lunges/1.webp",
+    "sha256": "8f387bf3408656094bb5f86a78c98ebc7596a277b0823c998dae588de0f65412"
+  },
+  "cueSha256": "814fcd65f03da5be8f7ef72feb49f86a8c091ef17b1b474b73c20808d72672b8",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 attached to every generation, with this exercise master and adjacent references. Bald faceless lean white anatomical figure, featureless neutral pelvis, white trainers and inherited fine contours. Small head/torso angle variations accepted after native and mobile playback under revised standard; no anatomy transforms or grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique left-facing view. Isolated-gait convention follows horizontal forward travel only between strides; planted low-to-rise phases retain their support shoe. Complete source crop enlarged2x for authoring, returned uniformly to720x770. Full-image scale/translation records are retained, with no independent anatomy fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Four coherent physical poses: far-leg-leading low, near-leg forward pass over planted far support, near-leg-leading low, and rise/early far-leg toe-off over planted near support. Both low states show bent knees, rear knee above floor and upright torso. Minor contours and natural torso/head rotation remain; no calibrated 3D bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two constant neutral grey hex dumbbells. Final equipment uses a hand-traced generated head, fixed near/far template dimensions, closed original grips and unchanged protected body pixels. Near/far projected size differs modestly with depth; it remains fixed within the sequence. Failed threshold-mask pilots are excluded. Both handles remain attached; natural far-head occlusion retained."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Measured interior planted-outsole columns205/210 stay within1px in each low/hold/rise contact phase. Support shoe widths117/117 and120/120 pixels. Independently measured near dumbbell head height also remains within1percent. Far and near feet retain separate depth-dependent floor levels. Swing feet are airborne, but the body always has one support foot."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Catalogue Walking Dumbbell Lunges: step forward, bend both knees with rear knee hovering, then drive through the leading foot into the next stride with the opposite leg. There is no backwards reset. Horizontal camera tracking between strides keeps the isolated athlete in frame. Pose4 begins the next swing and does not falsely show a completed forward pass."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9, secondary Glutes/Hamstrings #9590E0. Exact colour layers preserve inherited neutral shading and fine grey contours. No calf/arm/core highlights or new gradients."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Lower/Hold/Step through/Alternate/Steady/Advance corresponds to four physical poses reused as1,1,2,3,3,4 across six separate paths. Hold states are disclosed duplicates. Advance says rise forward and begin the next stride, matching early toe-off."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Final native720x770 sequence reviewed in sequential playback including6to1. Four independently reopened1440x1540 authoring ORAs match exactly, and their complete-image downsampled native exports match all six lossless WebP files."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light theme: all six decoded and6to1; complete figure and equipment, captions, colour key and cues visible. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark theme: all six decoded and6to1; pause and manual6to1 checked. No console errors. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/walking-dumbbell-lunges/1.webp",
+      "sha256": "8f387bf3408656094bb5f86a78c98ebc7596a277b0823c998dae588de0f65412",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 715
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 715
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 117,
+        "nearDumbbellHeadHeight": 46
+      }
+    },
+    {
+      "path": "form-frames/walking-dumbbell-lunges/2.webp",
+      "sha256": "8f387bf3408656094bb5f86a78c98ebc7596a277b0823c998dae588de0f65412",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 715
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 715
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 117,
+        "nearDumbbellHeadHeight": 46
+      }
+    },
+    {
+      "path": "form-frames/walking-dumbbell-lunges/3.webp",
+      "sha256": "dd1fe5f694b6d79da9866b45b2514089af9ac9e641003c8d72a0197b5652cb0c",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 715
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 715
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 117,
+        "nearDumbbellHeadHeight": 46
+      }
+    },
+    {
+      "path": "form-frames/walking-dumbbell-lunges/4.webp",
+      "sha256": "4bc5ecea8dea89f30f73163bdeea199db7ae2cfed13f4af66a5fd97ba1774186",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 727
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 727
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 120,
+        "nearDumbbellHeadHeight": 46
+      }
+    },
+    {
+      "path": "form-frames/walking-dumbbell-lunges/5.webp",
+      "sha256": "4bc5ecea8dea89f30f73163bdeea199db7ae2cfed13f4af66a5fd97ba1774186",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 727
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 727
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 120,
+        "nearDumbbellHeadHeight": 46
+      }
+    },
+    {
+      "path": "form-frames/walking-dumbbell-lunges/6.webp",
+      "sha256": "57d82559783ea892b9c21d272059840d197993e9a3708e6be8997b8d291a3135",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 205,
+          "y": 728
+        },
+        "supportForefootOuter": {
+          "x": 210,
+          "y": 728
+        }
+      },
+      "invariantDimensions": {
+        "supportShoeWidth": 120,
+        "nearDumbbellHeadHeight": 46
+      }
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Far front foot supporting first low and forward rise",
+      "frames": [1, 2, 3],
+      "referenceFrame": 1,
+      "anchorNames": ["supportForefootInner", "supportForefootOuter"],
+      "dimensionNames": ["supportShoeWidth", "nearDumbbellHeadHeight"],
+      "evidence": "Two actual outsole contact columns persist while the far leg extends and near foot swings forward. Whole-image registration only."
+    },
+    {
+      "name": "Near front foot supporting alternate low and next rise",
+      "frames": [4, 5, 6],
+      "referenceFrame": 4,
+      "anchorNames": ["supportForefootInner", "supportForefootOuter"],
+      "dimensionNames": ["supportShoeWidth", "nearDumbbellHeadHeight"],
+      "evidence": "Near shoe stays planted during the alternate low/hold/rise. Far foot releases and starts swinging. Camera advances horizontally between these support phases, consistent with isolated walking convention."
+    }
+  ],
+  "airborneFrames": [],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 1, 2, 3, 3, 4],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and actual registered390x844 light/dark/card/pause/manual6to1, four editable ORAs and six lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full unit suite comparison has no unresolved additional failures versus fresh same-HEAD baseline. See reviewed-stride-production/final-verification.json."
+}

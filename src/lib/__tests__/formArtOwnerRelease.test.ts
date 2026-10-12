@@ -63,7 +63,7 @@ describe("owner-authorized artwork activation", () => {
     }
   }, 30_000);
   it("keeps incomplete pilots inactive", () => {
-    for (const id of ["lat-pulldown", "deadlift", "incline-db-bench"])
+    for (const id of ["deadlift", "incline-db-bench"])
       expect(getReleasedFormArtwork(id), id).toBeNull();
   });
   /* Every approved set, not a hand-kept list of them: a list that each

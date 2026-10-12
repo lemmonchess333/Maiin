@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
 /* PR F regression guard. Sweeps the unauthenticated entry surface
  * across iPhone SE (1st gen 320px → smallest viewport we still
@@ -25,17 +25,17 @@ import { test, expect } from '@playwright/test';
  * `test.use`. */
 
 const VIEWPORTS = [
-  { name: 'iPhone SE (320×568)', width: 320, height: 568 },
-  { name: 'iPhone 14 (390×844)', width: 390, height: 844 },
-  { name: 'iPhone 14 Pro Max (430×932)', width: 430, height: 932 },
+  { name: "iPhone SE (320×568)", width: 320, height: 568 },
+  { name: "iPhone 14 (390×844)", width: 390, height: 844 },
+  { name: "iPhone 14 Pro Max (430×932)", width: 430, height: 932 },
 ];
 
-test.describe('Responsive — unauthenticated surfaces sweep', () => {
+test.describe("Responsive — unauthenticated surfaces sweep", () => {
   for (const vp of VIEWPORTS) {
     test(`no horizontal scroll on / at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto('');
-      await page.waitForLoadState('domcontentloaded');
+      await page.goto("");
+      await page.waitForLoadState("domcontentloaded");
       const overflow = await page.evaluate(() => {
         return {
           body: document.body.scrollWidth,
@@ -50,8 +50,8 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
 
     test(`no horizontal scroll on /privacy at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto('privacy');
-      await page.waitForLoadState('domcontentloaded');
+      await page.goto("privacy");
+      await page.waitForLoadState("domcontentloaded");
       const overflow = await page.evaluate(() => ({
         body: document.body.scrollWidth,
         viewport: window.innerWidth,
@@ -60,15 +60,17 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
     });
   }
 
-  test('CSS bundle includes the --primary-strong token (PR D)', async ({ page }) => {
-    await page.goto('');
+  test("CSS bundle includes the --primary-strong token (PR D)", async ({
+    page,
+  }) => {
+    await page.goto("");
     /* The token has to land somewhere in the active stylesheet for
        bg-primary-strong / THEME.brandStrong to resolve at runtime. We
        don't depend on the Social page being reachable to validate
        this — the property either exists on :root or it doesn't. */
     const value = await page.evaluate(() => {
       const root = getComputedStyle(document.documentElement);
-      return root.getPropertyValue('--primary-strong').trim();
+      return root.getPropertyValue("--primary-strong").trim();
     });
     expect(value.length).toBeGreaterThan(0);
   });

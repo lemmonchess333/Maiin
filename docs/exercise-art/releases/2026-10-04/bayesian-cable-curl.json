@@ -1,0 +1,211 @@
+{
+  "exerciseId": "bayesian-cable-curl",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 990,
+  "height": 1056,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T11:26:26.688Z",
+  "reference": {
+    "path": "form-frames/bayesian-cable-curl/1.webp",
+    "sha256": "4a48ad2a7e7609980f5bea77055b64e98f13a337c9e7b1b4d630ed24354a18e4"
+  },
+  "cueSha256": "e1e3d66ea2bb18369f5c646e6382796b1dd1650f33cbf926f0d2c46591080f53",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 athlete preserved, moving anatomy imagegen authored."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side/front three-quarter view shows working elbow behind torso, grip and complete equipment. Common crop50,0,990,1024plus32top padding."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native setup/middle/top and final frames reviewed. Working elbow remains posterior to torso, natural curl toward shoulder, staggered stance, no lean/shrug. Rejected forward-elbow drafts."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single Dhandle continuously gripped, consistent36px connector. Exact four selected plate pixels reused; thirteen stationary bottom plates. No calibrated3D handle-span claim."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Fixed planted soles and tower contacts measured with invariant widths;20px upper fade on stationary shoe copies, native joins inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "New coplanar1:1 circular tangent+wrap route. Selected rises0,246,309px; total variable cable length conserved within0.5px integer residual. Constant36px connector follows cable tangent. No prior perspective calibration claim."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working biceps purple and forearm lilac, resting arm and other anatomy neutral across six."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues <=7words agree with Set,Curl,Top,Hold,Lower,Return."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6and6to1 reviewed, seq1,2,3,3,2,1. Autoplay advanced Set1toReturn6."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844light all6and6to1 after final edits. Full equipment and athlete, readable cues, stable contacts and taut cable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844dark all6and6to1 after final edits; no clipping, stable contacts, route visible."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing Bayesian curl with staggered soles and tower",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "towerBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "towerBaseWidth"],
+      "evidence": "Pixel-derived sole/tower contacts and widths; independent tangent-path and selected-block pixel checks, plus native grips/arms review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/bayesian-cable-curl/1.webp",
+      "sha256": "4a48ad2a7e7609980f5bea77055b64e98f13a337c9e7b1b4d630ed24354a18e4",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    },
+    {
+      "path": "form-frames/bayesian-cable-curl/2.webp",
+      "sha256": "1fee004debae2ed4b075debe62e034685c062cf9d556e075aa1fa8536bb7de16",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    },
+    {
+      "path": "form-frames/bayesian-cable-curl/3.webp",
+      "sha256": "36d9648ef887855ba30f216c8d1f2fc1cd7de721fd8a9b8b0138406e79e078fa",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    },
+    {
+      "path": "form-frames/bayesian-cable-curl/4.webp",
+      "sha256": "36d9648ef887855ba30f216c8d1f2fc1cd7de721fd8a9b8b0138406e79e078fa",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    },
+    {
+      "path": "form-frames/bayesian-cable-curl/5.webp",
+      "sha256": "1fee004debae2ed4b075debe62e034685c062cf9d556e075aa1fa8536bb7de16",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    },
+    {
+      "path": "form-frames/bayesian-cable-curl/6.webp",
+      "sha256": "4a48ad2a7e7609980f5bea77055b64e98f13a337c9e7b1b4d630ed24354a18e4",
+      "anchors": {
+        "leftSole": {
+          "x": 693,
+          "y": 999
+        },
+        "rightSole": {
+          "x": 894,
+          "y": 959
+        },
+        "towerBase": {
+          "x": 143,
+          "y": 983
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 127,
+        "rightShoeWidth": 141,
+        "towerBaseWidth": 318
+      }
+    }
+  ]
+}

@@ -67,6 +67,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "6b0c887d9d7b07db7cb1820faa1e5a22567ac6d3f0aedc46882eefd8107ca554",
     sha256: "ba729705dee43819b3ce12c321b91e29abf454433ea125d00b5ce08ce574501d",
   },
+  "barbell-step-ups": {
+    src: "form-art/barbell-step-ups.webp",
+    width: 408,
+    height: 480,
+    keyed: true,
+    source: "form-frames/barbell-step-ups/1.webp",
+    sourceSha256:
+      "94c19c8d513d353fa5a6bad9db4ca8543b6c1261438fe0a1b07eba584996c2c5",
+    sha256: "774f17729142b6b63b792149bca5bfbcdf7b474db0e804860cb2d62b56a2d362",
+  },
   "barbell-upright-row": {
     src: "form-art/barbell-upright-row.webp",
     width: 416,
@@ -76,6 +86,26 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "a0c2d040ea999078cc2ad37d8fccb37577a70f3849bf4a60fb4e7f6fc9aa634f",
     sha256: "b6f830ff75247d29c6e125a2b76743f1815dfbb2300354e7b64622362bcbbcf6",
+  },
+  "battle-ropes": {
+    src: "form-art/battle-ropes.webp",
+    width: 480,
+    height: 305,
+    keyed: true,
+    source: "form-frames/battle-ropes/1.webp",
+    sourceSha256:
+      "80c9779b804c9a3ccb4b3c7d14232dd37860eacbd4f92fc92aae2929e94c018d",
+    sha256: "be6e0cd3cb342a739e6af7d5091eb228c2bb7508be127047c6369754bc38c34b",
+  },
+  "bayesian-cable-curl": {
+    src: "form-art/bayesian-cable-curl.webp",
+    width: 459,
+    height: 480,
+    keyed: true,
+    source: "form-frames/bayesian-cable-curl/1.webp",
+    sourceSha256:
+      "4a48ad2a7e7609980f5bea77055b64e98f13a337c9e7b1b4d630ed24354a18e4",
+    sha256: "7a939215510b8562676d382a6020b85c246434792194cb006cdf524e9f5f8d72",
   },
   "bench-dips": {
     src: "form-art/bench-dips.webp",
@@ -107,6 +137,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
     sha256: "0754b36b79cfa413b81c194c38bd79f12e75f01041b3232e1b9aa6b32bd435db",
   },
+  "bodyweight-lunge": {
+    src: "form-art/bodyweight-lunge.webp",
+    width: 443,
+    height: 480,
+    keyed: false,
+    source: "form-frames/bodyweight-lunge/3.webp",
+    sourceSha256:
+      "0d878c4e11da8ae75626ff721fd3bc57b5d63d89e19c885348ff071a62f975e5",
+    sha256: "0fd7f522e0c8a4caa8be28ec6dbf188f3ba5d34353e94d39710e1cf98d29a2e3",
+  },
   "bodyweight-squat": {
     src: "form-art/bodyweight-squat.webp",
     width: 243,
@@ -116,6 +156,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00",
     sha256: "62ca3976d9beff700eef308f8a74185ca9925b91c7b46fbbf21788e72acdb9be",
+  },
+  "box-jumps": {
+    src: "form-art/box-jumps.webp",
+    width: 470,
+    height: 480,
+    keyed: true,
+    source: "form-frames/box-jumps/1.webp",
+    sourceSha256:
+      "6e7e7789bb01c3b4ff01ff56aac1fd5f516351972f6298ae0f4bb742066661bd",
+    sha256: "80df33fb3bcbb60ee8ad63841e53798e9ace4b94af1d631a4442d766f6f74edf",
+  },
+  "bulgarian-split": {
+    src: "form-art/bulgarian-split.webp",
+    width: 480,
+    height: 461,
+    keyed: true,
+    source: "form-frames/bulgarian-split/1.webp",
+    sourceSha256:
+      "8a125abea6728367c3a4e978c319e544b4bbca149300ec4ef665a247b01b87a5",
+    sha256: "683dc899bf22370c60f6de6a2cad6e1493eaf770f6f3e3753f06cdb4c91eef78",
+  },
+  burpees: {
+    src: "form-art/burpees.webp",
+    width: 126,
+    height: 480,
+    keyed: true,
+    source: "form-frames/burpees/6.webp",
+    sourceSha256:
+      "9d379bf3783ae5ee5fbacba9c6cce563c40a4918f31d018e7bfc977c38baa952",
+    sha256: "8cbc3410d72e2dcad2f46da880531f792c2dd72d0296a2f25c06cb3d42d2f51e",
   },
   "cable-crossover": {
     src: "form-art/cable-crossover.webp",
@@ -136,6 +206,46 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
     sha256: "30c9c8049207090bc2c03785b89df6907b7096088c56b433eeb15de9bc563b55",
+  },
+  "cable-curl": {
+    src: "form-art/cable-curl.webp",
+    width: 403,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-curl/1.webp",
+    sourceSha256:
+      "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d",
+    sha256: "0256252af7e2954b64be78a15a254368554234749830a898bfc73079cb8d6dd0",
+  },
+  "cable-fly": {
+    src: "form-art/cable-fly.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/cable-fly/1.webp",
+    sourceSha256:
+      "4beafb43116d6e7d8838011248812f8a8500aa08a3bb7aa3f95033fa82d7acae",
+    sha256: "c4483c8910e0b545927b2adfeead19c5873b300da9e9c33cab4fb3d2536abe62",
+  },
+  "cable-glute-kickback": {
+    src: "form-art/cable-glute-kickback.webp",
+    width: 432,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-glute-kickback/1.webp",
+    sourceSha256:
+      "eee19276afe8c0be6eb978a86c9d801832926e81d699ec52ac97f7cdbe4363b0",
+    sha256: "3f570de43aa720f7a2d9fd5ad55cd9eb8712a51750670b166e51e683f1507c5a",
+  },
+  "cable-lateral-raise": {
+    src: "form-art/cable-lateral-raise.webp",
+    width: 289,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cable-lateral-raise/1.webp",
+    sourceSha256:
+      "0f05f5b9eec002dad72ba96e0f53df638d73021facbeb3d51d97f4b0479898c9",
+    sha256: "8811851f825458efda7242a193058380b2e81b242443ac5b9ce5e35254404362",
   },
   "cable-woodchopper": {
     src: "form-art/cable-woodchopper.webp",
@@ -167,6 +277,26 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30",
     sha256: "743de2f9a7c0585e3d4c3f1c68eac55a21363e5857757ece539ea975133772ed",
   },
+  "chest-supported-db-row": {
+    src: "form-art/chest-supported-db-row.webp",
+    width: 480,
+    height: 428,
+    keyed: true,
+    source: "form-frames/chest-supported-db-row/1.webp",
+    sourceSha256:
+      "b39c06f92e5dbc0b27af65c66cf47b2e493ab46bd673066a8a26c7da75e5451e",
+    sha256: "beb4222028105ad646fe4da80eecc0f6facb25de5071fdfd03d106cc092f2e4b",
+  },
+  "chin-ups": {
+    src: "form-art/chin-ups.webp",
+    width: 475,
+    height: 480,
+    keyed: true,
+    source: "form-frames/chin-ups/1.webp",
+    sourceSha256:
+      "d3c763a25808cf0c13f4512ba828c143f01c1745c15cae4c367b2404ecf153b7",
+    sha256: "1f50239978ff79798f4293326f714ec5f2d4d9a9a951566bf84fd93db68e818e",
+  },
   "clean-and-press": {
     src: "form-art/clean-and-press.webp",
     width: 480,
@@ -176,6 +306,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
     sha256: "afc9212ee093ad435cf415fa70b75eabf51a03d8f7be5f89004239171753372f",
+  },
+  "close-grip-bench": {
+    src: "form-art/close-grip-bench.webp",
+    width: 382,
+    height: 480,
+    keyed: true,
+    source: "form-frames/close-grip-bench/1.webp",
+    sourceSha256:
+      "397eb2e0f8ca59b32245e83c46cde33931baf25b13bcda73868817b08085d17d",
+    sha256: "ec38ede2f8eeaaceaecefbe9e478f67ffff1e6b665f0383d2461c406f6e35802",
   },
   "concentration-curl": {
     src: "form-art/concentration-curl.webp",
@@ -207,15 +347,25 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c",
     sha256: "2768e5755abce242d27df458ec804023c760435cade478b8dbf175e3ea7f150f",
   },
+  "cuban-press": {
+    src: "form-art/cuban-press.webp",
+    width: 181,
+    height: 480,
+    keyed: true,
+    source: "form-frames/cuban-press/1.webp",
+    sourceSha256:
+      "8b18ad96b233bf2435842db651cc18761263c054416d50167917528eb40da8d5",
+    sha256: "4961b7483531eb9ee3046a61db256fd58eaaefc3d7bf875be4bc981fae217927",
+  },
   "db-bench": {
     src: "form-art/db-bench.webp",
-    width: 480,
-    height: 409,
+    width: 449,
+    height: 480,
     keyed: true,
-    source: "form-frames/db-bench/1.webp",
+    source: "form-frames/db-bench/4.webp",
     sourceSha256:
-      "5a77b37330ccaf552f8f869a301f8bb8a6353982b60300a1464246499517bb9d",
-    sha256: "cb0cd7a14d4a4087f0336387053bb5a4758a5dba1baf64f82b6ec47f580db6b8",
+      "150bbff0cb320df808d8910c7e744c30519f1693c53b835374b31001d58e100d",
+    sha256: "8d4867dbbfa9e8fb784604d72c0bc6946c73fd9a0282700b58e5d59a6758be5a",
   },
   "db-curl": {
     src: "form-art/db-curl.webp",
@@ -236,6 +386,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "8566b8132276a66d97589e7b723667e364c494c7e273b50156c69cc09029d2a9",
     sha256: "9eac4364bffb20d6e981907e4fbc646568efac8b3d097b80c388bbacbb051983",
+  },
+  "db-rdl": {
+    src: "form-art/db-rdl.webp",
+    width: 179,
+    height: 480,
+    keyed: true,
+    source: "form-frames/db-rdl/1.webp",
+    sourceSha256:
+      "4b329271ee315758964a439fd263d4b47fd296e82506619e3b46b581da63d885",
+    sha256: "49a2a78461238f4c5155d5b5cf84ddfa8520fc25e89925033217dd2f82e2a175",
+  },
+  "db-row": {
+    src: "form-art/db-row.webp",
+    width: 447,
+    height: 480,
+    keyed: true,
+    source: "form-frames/db-row/1.webp",
+    sourceSha256:
+      "704cac23c4723207f194bf30ad6498778c83aa66da4475be39af2ad582dc916d",
+    sha256: "319d1015de16d7fdae76d571da77cd07e832b9906fa41fa6524f02bf88268ca1",
+  },
+  "db-shoulder-press": {
+    src: "form-art/db-shoulder-press.webp",
+    width: 348,
+    height: 480,
+    keyed: true,
+    source: "form-frames/db-shoulder-press/1.webp",
+    sourceSha256:
+      "e781962f2356c334fd5fbd4293cbc727ac008c424dd4e0d42d0298f960dfcd8f",
+    sha256: "7f477de9dfb7716d9241dfe712556ce7941f3ea529ebc87cccc276367d952332",
   },
   "dead-bug": {
     src: "form-art/dead-bug.webp",
@@ -327,6 +507,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "4812ee408e88da86a1fda7f80b03f0acd1c709d8ab6e49e4a43fa80878dca6e2",
     sha256: "39bd1d274b1c767d188867b23e4dfe77004783b58c7ea524fe16417780d15ffe",
   },
+  "farmers-carry": {
+    src: "form-art/farmers-carry.webp",
+    width: 204,
+    height: 480,
+    keyed: true,
+    source: "form-frames/farmers-carry/1.webp",
+    sourceSha256:
+      "ce1331be36dbb8adfd355acc8ce61136280aaed1c6c1b6e17d137f878118b89b",
+    sha256: "d005b01e2d6c7973c12849f428d9f6f7e7ed2f5ad6026b3bbc454116274daaf4",
+  },
   "front-raise": {
     src: "form-art/front-raise.webp",
     width: 181,
@@ -347,6 +537,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "112bef9306be5708cbe718940077ca5f3e75c313ae42ee708975e10d1edc0c87",
     sha256: "90eb6cd307a3824ace8dfe44138d7b89318ad1f35843fd3428ce9e194de5b877",
   },
+  "glute-ham-raise": {
+    src: "form-art/glute-ham-raise.webp",
+    width: 427,
+    height: 480,
+    keyed: true,
+    source: "form-frames/glute-ham-raise/1.webp",
+    sourceSha256:
+      "aeafe26f5de0596f2f7e1924a6d0739d8913f3fe90ef7eda8cb314e4406c1df0",
+    sha256: "8e2304ea99de3f8711c57df246933612d7026608f865482aa67efc7a84a2f3d3",
+  },
   "goblet-squat": {
     src: "form-art/goblet-squat.webp",
     width: 177,
@@ -356,6 +556,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "18f7baa2fe3e599ff375db4140a0eeb5e015a5e945c35b85542d3503974d824a",
     sha256: "b6916ac7813c024fa7d102b18670fb9b8b3c87819082e7a7f97f9d52fc5adb17",
+  },
+  "hack-squat": {
+    src: "form-art/hack-squat.webp",
+    width: 480,
+    height: 348,
+    keyed: true,
+    source: "form-frames/hack-squat/1.webp",
+    sourceSha256:
+      "91e370e41c54c7ea8a786c99444b1ea1edf17862bc7408e56effe31236bfd655",
+    sha256: "eba28a129d5baefc823f511c4059fe9ef8a323ca4cfc233e94efc532315a9fda",
   },
   "hammer-curl": {
     src: "form-art/hammer-curl.webp",
@@ -367,6 +577,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
     sha256: "17e58c8d8529b533bdd5b520c649e5baf621119465676b5bcb4a4add233b3ea8",
   },
+  "hip-abduction-machine": {
+    src: "form-art/hip-abduction-machine.webp",
+    width: 480,
+    height: 397,
+    keyed: true,
+    source: "form-frames/hip-abduction-machine/1.webp",
+    sourceSha256:
+      "bd8bf803551bf870570373bd99c5beb0ab7b5f787ebc94aa1e032343fd360762",
+    sha256: "ffadfcf4583358d9732738f1853f91707e6d61b77bb5f4b6333dcfb6ee134807",
+  },
+  "hip-adduction-machine": {
+    src: "form-art/hip-adduction-machine.webp",
+    width: 480,
+    height: 429,
+    keyed: true,
+    source: "form-frames/hip-adduction-machine/1.webp",
+    sourceSha256:
+      "41f33486badb636550846805c1719f8e687704f2abea31642b5315b104351aee",
+    sha256: "7afb81357370a581eb5b7e8226ec6db88e4ec060826b2a76c4615382e4a9b3de",
+  },
+  "hip-thrust": {
+    src: "form-art/hip-thrust.webp",
+    width: 480,
+    height: 318,
+    keyed: true,
+    source: "form-frames/hip-thrust/1.webp",
+    sourceSha256:
+      "dcbcf30c416f422dd7cb1baa61924037fcac8efa69559ab50eb55d57f971b070",
+    sha256: "04e5c77c52eb9b8894d916c2e7b3b41f97b8e4542458c2bfd818fde2da4f430d",
+  },
   "incline-bench": {
     src: "form-art/incline-bench.webp",
     width: 480,
@@ -377,6 +617,46 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
     sha256: "dfbee104ef125836012cf0e3d4aa0fb078d30c875d914f940e69a6433f19f1ee",
   },
+  "incline-db-press": {
+    src: "form-art/incline-db-press.webp",
+    width: 480,
+    height: 381,
+    keyed: true,
+    source: "form-frames/incline-db-press/1.webp",
+    sourceSha256:
+      "28548491fc4d2d730c6a241d64fd2bfef9e9538e3d702049851a28b722f1f884",
+    sha256: "362c28b460fc11f9a3cf81f12d06a5c831179a00b1a4a010fbcddd183d6d22ab",
+  },
+  "incline-treadmill-walk": {
+    src: "form-art/incline-treadmill-walk.webp",
+    width: 480,
+    height: 361,
+    keyed: true,
+    source: "form-frames/incline-treadmill-walk/1.webp",
+    sourceSha256:
+      "b3dff293c1af2fb00942c3bc50f2effbc2a17e1981848dfff5368d947282f473",
+    sha256: "6382fdca540ab0d3dd39057a008d38759e24a40d189d63b2e6f8f0b8ed625c8a",
+  },
+  "inverted-row": {
+    src: "form-art/inverted-row.webp",
+    width: 480,
+    height: 295,
+    keyed: true,
+    source: "form-frames/inverted-row/1.webp",
+    sourceSha256:
+      "fcf24678e1f96464374b8b05133d896fe2ceaf51800683c461e06bf88d76d713",
+    sha256: "5c2cb012d3c80a1b96a7387a9f6b91c31612e9d23836f5b48f39da21994ce0fb",
+  },
+  "jump-rope": {
+    src: "form-art/jump-rope.webp",
+    width: 190,
+    height: 480,
+    keyed: true,
+    source: "form-frames/jump-rope/1.webp",
+    sourceSha256:
+      "2a89a4ddcf0c5b1e68194b1c0211b50f2360e82f5f012ed11d10fac30672b30d",
+    sha256: "43805f2f056236e0c86b4f693a2d0e25d26ae672b23e86645128e6d8ac2c48de",
+  },
   "l-sit": {
     src: "form-art/l-sit.webp",
     width: 480,
@@ -386,6 +666,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
     sha256: "30467c90d658f42adf21b958a3a517c70119c94004c6422d0597e144fbb0bb6b",
+  },
+  "landmine-press": {
+    src: "form-art/landmine-press.webp",
+    width: 480,
+    height: 325,
+    keyed: true,
+    source: "form-frames/landmine-press/1.webp",
+    sourceSha256:
+      "c76621e4876c525be4ae86366fd63b2cddab2af9d43796e800c10e7d1a30a9ab",
+    sha256: "89d0a94a4ff455fcaca07631b069682bd671716b8faf7f4d2234e618f1d239c8",
+  },
+  "landmine-squat": {
+    src: "form-art/landmine-squat.webp",
+    width: 480,
+    height: 369,
+    keyed: true,
+    source: "form-frames/landmine-squat/1.webp",
+    sourceSha256:
+      "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da",
+    sha256: "b9848234c2e5e92b2dd0d5223d5a13e5a2de06a987d0d5ce4a4f15e3406560e0",
+  },
+  "lat-pulldown": {
+    src: "form-art/lat-pulldown.webp",
+    width: 331,
+    height: 480,
+    keyed: true,
+    source: "form-frames/lat-pulldown/4.webp",
+    sourceSha256:
+      "70d3b715d1803b634964f0602e614926e2dbab9358c3846bb40db657e4a867bc",
+    sha256: "3eb4a445b2f680cb698542d36d729e13ad456f48efa81dfce8d8f3f1f6a8024f",
   },
   "lateral-raise": {
     src: "form-art/lateral-raise.webp",
@@ -417,6 +727,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "424e07fb859cdc11275a169e4580a70ddcd9258d73499720cd8ecaf4b83f97cd",
     sha256: "ee4d9efb683965eeef530ff81a4b70037ae1abc8e5a426a58f27a5a29e4e681f",
   },
+  lunges: {
+    src: "form-art/lunges.webp",
+    width: 445,
+    height: 480,
+    keyed: true,
+    source: "form-frames/lunges/3.webp",
+    sourceSha256:
+      "fa01b53176f6e7bd83cdc8486373161114e3333025593a170f5528f987cbd0d5",
+    sha256: "19df5e9ceae7c2a8f9ffbb0d59a21691774a83cccf5e0e42e6235a9a3b510750",
+  },
   "machine-chest-fly": {
     src: "form-art/machine-chest-fly.webp",
     width: 380,
@@ -426,6 +746,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "b65f8b2e86ae81d78e972dab8398475892abde4aa409a24c326f3b0a659883ed",
     sha256: "28111ec20e951bb03db6bf0eae9985337abd95b3dbcf7a0068b452bd36b6546c",
+  },
+  "man-maker": {
+    src: "form-art/man-maker.webp",
+    width: 181,
+    height: 480,
+    keyed: true,
+    source: "form-frames/man-maker/5.webp",
+    sourceSha256:
+      "3687c5ce5f0be552655dc3b05c8436fb55a23bf5afe7b82bb350ae98070d9c4d",
+    sha256: "4dbd9de9be413a45d8a7b2dcfa80df530cf8c937eafe0da0be133d357cc2f0c8",
   },
   "meadows-row": {
     src: "form-art/meadows-row.webp",
@@ -446,6 +776,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c",
     sha256: "508dc646f5dce35a3daae73029a5b4175479b8a744733d2a06bf79fd60a33909",
+  },
+  "muscle-ups": {
+    src: "form-art/muscle-ups.webp",
+    width: 371,
+    height: 480,
+    keyed: true,
+    source: "form-frames/muscle-ups/1.webp",
+    sourceSha256:
+      "0cc41e4b1e2fd4657c729269470eb5e91081d2113f0167a0ef660608ef1526d3",
+    sha256: "6594be32a2d1d891deae9de2b0be970fc22741a154c1e2d310a1911be9532456",
+  },
+  "nordic-hamstring-curl": {
+    src: "form-art/nordic-hamstring-curl.webp",
+    width: 480,
+    height: 370,
+    keyed: true,
+    source: "form-frames/nordic-hamstring-curl/4.webp",
+    sourceSha256:
+      "a674752071ff90b1e3551be4c5665a3ae1323ead54babace248d157eb3df7571",
+    sha256: "6f685768420049463fbf65c0617eb0ff9923924cb9acdf13946265f5298d92dc",
+  },
+  "overhead-cable-tricep-extension": {
+    src: "form-art/overhead-cable-tricep-extension.webp",
+    width: 480,
+    height: 474,
+    keyed: true,
+    source: "form-frames/overhead-cable-tricep-extension/1.webp",
+    sourceSha256:
+      "2923ff62ea4a576013067b7a5c41aad39a7fbf7f75f272302c97445f6799f3e4",
+    sha256: "822e472add01297cfcf64e9cca96049b98c360b97ba1e2a353147667b8e251f8",
   },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
@@ -507,6 +867,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
     sha256: "7e2474605d406042b52a190190a523df21055d2fa07a5d0df491b7ab2315f8ae",
   },
+  "preacher-curl": {
+    src: "form-art/preacher-curl.webp",
+    width: 381,
+    height: 480,
+    keyed: true,
+    source: "form-frames/preacher-curl/1.webp",
+    sourceSha256:
+      "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21",
+    sha256: "4b6ef2c7fbc68f2f2ce175cc68b8971a5ba4f2a1e58c87bc5b9c979daf709166",
+  },
   "push-ups": {
     src: "form-art/push-ups.webp",
     width: 480,
@@ -517,6 +887,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "5639a5655874f8e6378faebe5b928e102fc11cdb42bb72a56c2aa22e5c39dbb6",
     sha256: "3cafc7d77f0a2bd0a005734221616079c020eb63a347f5769c5f0ecb420787c7",
   },
+  "rack-pull": {
+    src: "form-art/rack-pull.webp",
+    width: 367,
+    height: 480,
+    keyed: true,
+    source: "form-frames/rack-pull/1.webp",
+    sourceSha256:
+      "a05a116bae33ce082c180a385ec8da776dbda9072685af1aa17d9cf7da438387",
+    sha256: "7a20c1c57d3cc4ce325a24f7fb61552b5015ce46ccbaa44b67f51d312e7915b0",
+  },
   "reverse-barbell-curl": {
     src: "form-art/reverse-barbell-curl.webp",
     width: 315,
@@ -526,6 +906,46 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "529b0144bb430c610bf0c55281ce32df417e3a62bbddad887a8fda5c9b9ffcfb",
     sha256: "78ead36685afc28603ae7c2057a7566ddbbc9a13c0302fc79677f33af636632f",
+  },
+  "reverse-flyes": {
+    src: "form-art/reverse-flyes.webp",
+    width: 480,
+    height: 438,
+    keyed: true,
+    source: "form-frames/reverse-flyes/4.webp",
+    sourceSha256:
+      "4d097e57ff7c13e09a45821010cfeefba437cdd5b5dcfd44ce4f2f8c74f717b5",
+    sha256: "5d06d7e95ab42a35f1885d15563fa17a4eb1c1b52fe1f526079da27d1cc0a2b2",
+  },
+  "reverse-grip-cable-pushdown": {
+    src: "form-art/reverse-grip-cable-pushdown.webp",
+    width: 273,
+    height: 480,
+    keyed: true,
+    source: "form-frames/reverse-grip-cable-pushdown/3.webp",
+    sourceSha256:
+      "2248a7621576793a4b4c1457540d325a1e6bbf6f53f350fd2c0279a26ae146ca",
+    sha256: "8d30b1d7f9349490f0b809ec570abae711ebb9586063906550779553aaecdfe0",
+  },
+  "reverse-pec-deck": {
+    src: "form-art/reverse-pec-deck.webp",
+    width: 350,
+    height: 480,
+    keyed: true,
+    source: "form-frames/reverse-pec-deck/1.webp",
+    sourceSha256:
+      "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+    sha256: "0d95f217fc02eb026bce9a970e475f4f4e48f74a8c8116c06e67d4e416a7581d",
+  },
+  "romanian-deadlift": {
+    src: "form-art/romanian-deadlift.webp",
+    width: 470,
+    height: 480,
+    keyed: true,
+    source: "form-frames/romanian-deadlift/3.webp",
+    sourceSha256:
+      "12bb355c8198b02185c742a7c07a605d978b07122187ec383d2aa983cd9cc126",
+    sha256: "d8eac26e8538184cd59c4f5b6892b8e7f23d2df1a528fe6ae14ef28e8d75a16e",
   },
   "rope-tricep-pushdown": {
     src: "form-art/rope-tricep-pushdown.webp",
@@ -547,6 +967,26 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
     sha256: "f14c2f0a93d6e57f82ca4535c347a57479599d316229df0b716ff28ce0006c23",
   },
+  "seated-leg-curl": {
+    src: "form-art/seated-leg-curl.webp",
+    width: 416,
+    height: 480,
+    keyed: true,
+    source: "form-frames/seated-leg-curl/1.webp",
+    sourceSha256:
+      "e2808ed49b6f64ebcedb29a3454746aa2bdc9e00490c9646bf5f6a101bef5e9b",
+    sha256: "e59a050cef379f7353133cb80020a4ae8062edaa79e5a9252f4e373fd3d6e04d",
+  },
+  "shoulder-press-machine": {
+    src: "form-art/shoulder-press-machine.webp",
+    width: 288,
+    height: 480,
+    keyed: true,
+    source: "form-frames/shoulder-press-machine/1.webp",
+    sourceSha256:
+      "cca40a9911d691e35bf53c5cded011d4c0a697ac2b3ccb867de4a81b66e0a5a8",
+    sha256: "bc9bc8a7e3fbe7669f106bef92ea6cfe41bfaeae22b7fd202c551557b70128c7",
+  },
   shrugs: {
     src: "form-art/shrugs.webp",
     width: 200,
@@ -557,6 +997,46 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
     sha256: "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
   },
+  "single-arm-cable-pushdown": {
+    src: "form-art/single-arm-cable-pushdown.webp",
+    width: 445,
+    height: 480,
+    keyed: true,
+    source: "form-frames/single-arm-cable-pushdown/1.webp",
+    sourceSha256:
+      "30521899255dc3eba56d47a8e96e2acdc802c17beea2758c932bf604d4971425",
+    sha256: "cbce486ef3268a30912c974ed932bb216d04c8a1a67c4b1cecb9e6ef73e2d179",
+  },
+  "single-arm-lat-pulldown": {
+    src: "form-art/single-arm-lat-pulldown.webp",
+    width: 339,
+    height: 480,
+    keyed: true,
+    source: "form-frames/single-arm-lat-pulldown/1.webp",
+    sourceSha256:
+      "d4efe89d65991bc136941a9de73182f239c5590724df055b54987bef12905f56",
+    sha256: "3534ebf9751a0052a608daec6d5344f9d13262ac66a12688f6fc0b4241613409",
+  },
+  "sissy-squat": {
+    src: "form-art/sissy-squat.webp",
+    width: 240,
+    height: 480,
+    keyed: true,
+    source: "form-frames/sissy-squat/1.webp",
+    sourceSha256:
+      "449d7eee392a4bfe47ed5db95a4790eae989fa26ca353ef90f3456eeb041a151",
+    sha256: "8cca8c56559adfa799f5add568b14ebfe625a736abb6b6e260a8a37274dc1f49",
+  },
+  "ski-erg": {
+    src: "form-art/ski-erg.webp",
+    width: 350,
+    height: 480,
+    keyed: true,
+    source: "form-frames/ski-erg/1.webp",
+    sourceSha256:
+      "85eacaf747ad96a8f7055092353abc3efa9788605b5ac7590e4586060c6a48e3",
+    sha256: "e3aa87290c3fdc5d625afe06bc8d3e72a8a1e24cb36cfb2cbc1d12d473f39597",
+  },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
     width: 480,
@@ -566,6 +1046,46 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "b5e8eb9e7c552413d557c53f61aa9948f8674ae1debdcf987f5aeaa696b7fcfa",
     sha256: "2a48e80837ebeba858632f2d37fddd055ddd891888dedf6105b2c2bfe9c5930a",
+  },
+  "sled-push-pull": {
+    src: "form-art/sled-push-pull.webp",
+    width: 480,
+    height: 222,
+    keyed: true,
+    source: "form-frames/sled-push-pull/1.webp",
+    sourceSha256:
+      "d530b0e3469628bc623d32a5b3007a79570fee0ce684622c935b45bc1006c58e",
+    sha256: "4ebfc8afc5e1d59050be42933a2ed5ee152080bb418520a8c9e70cc56506a5c2",
+  },
+  "smith-bench-press": {
+    src: "form-art/smith-bench-press.webp",
+    width: 418,
+    height: 480,
+    keyed: true,
+    source: "form-frames/smith-bench-press/1.webp",
+    sourceSha256:
+      "51d91ad64bd7576c13f5e41070a809a0db7f40efc63a18b1e0ed476521a8aa81",
+    sha256: "3568ed767fc340dfe3526f3b741f84824e2e7e1dfedc611b8cb6d46a268c5453",
+  },
+  "smith-machine-squat": {
+    src: "form-art/smith-machine-squat.webp",
+    width: 337,
+    height: 480,
+    keyed: true,
+    source: "form-frames/smith-machine-squat/1.webp",
+    sourceSha256:
+      "15677b926110ad665191c20234dfefc3c90da5d43f692056af9e93a7e35f592e",
+    sha256: "c7c5f3daeef84f2361e71b0895ce1696bfed4ecc9a1d4684c39d9490cd45bb26",
+  },
+  "smith-shoulder-press": {
+    src: "form-art/smith-shoulder-press.webp",
+    width: 360,
+    height: 480,
+    keyed: true,
+    source: "form-frames/smith-shoulder-press/1.webp",
+    sourceSha256:
+      "3af45223db1b3e22e6879fbbc77ed7383dd3446ae4d3ca6cc7181cdb7bb1071e",
+    sha256: "8dbb2d492b4ab91d3eecd85d130dbfe1f80f881013ebd0eb4e6af7596a04042f",
   },
   "spider-db-curl": {
     src: "form-art/spider-db-curl.webp",
@@ -597,6 +1117,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
     sha256: "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
   },
+  "sumo-deadlift": {
+    src: "form-art/sumo-deadlift.webp",
+    width: 480,
+    height: 339,
+    keyed: true,
+    source: "form-frames/sumo-deadlift/1.webp",
+    sourceSha256:
+      "c2279037deb0e786baca44a9d2e61e2dbb686219e30405910af0ff3246c6e6bb",
+    sha256: "fad0be2dcf70ed632457b02f6c7e58fe8916e3c544785f7458f094e20a6440f2",
+  },
   "superman-hold": {
     src: "form-art/superman-hold.webp",
     width: 480,
@@ -606,6 +1136,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
     sha256: "b9d0f02faf0f20f0b749814f395699fd73586d9ac16ee06b5c76198bdf78717b",
+  },
+  thrusters: {
+    src: "form-art/thrusters.webp",
+    width: 329,
+    height: 480,
+    keyed: true,
+    source: "form-frames/thrusters/5.webp",
+    sourceSha256:
+      "b9ab2e02e2701596250e53b7d777037d3e3cf0bd4e51034a3597a199fde39102",
+    sha256: "ce2b31e33ad07a2c83fcaf59432cf18a9abea6286d3dce73e224404035bc7d80",
   },
   "toe-touches": {
     src: "form-art/toe-touches.webp",
@@ -617,6 +1157,36 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793",
     sha256: "469cc238ac34dbaa628d867ab8c6f2bbfb40881d4e1454f15371fa0889a9c998",
   },
+  "trap-bar-deadlift": {
+    src: "form-art/trap-bar-deadlift.webp",
+    width: 468,
+    height: 420,
+    keyed: true,
+    source: "form-frames/trap-bar-deadlift/1.webp",
+    sourceSha256:
+      "47e537513a4e2a02f0df77d94bca798c4fe10ef18fbc3f114edf9e3e9c9df267",
+    sha256: "7ff4fc0cdc2cfc781c248a2adb085915bf026bdcc72dd95d3b95ee8329d914f3",
+  },
+  treadmill: {
+    src: "form-art/treadmill.webp",
+    width: 480,
+    height: 335,
+    keyed: true,
+    source: "form-frames/treadmill/1.webp",
+    sourceSha256:
+      "1356b4d578933822a3a9751b5fb4acf546f3b9274527d0dddc59725eb582de4f",
+    sha256: "faa3332757b19376ef55584a508418a6d25964e76da7a3babd622a027eb02fa4",
+  },
+  "tricep-dips": {
+    src: "form-art/tricep-dips.webp",
+    width: 308,
+    height: 480,
+    keyed: true,
+    source: "form-frames/tricep-dips/1.webp",
+    sourceSha256:
+      "dea0f54d89d6177ecbfa72fc907ba9e33bfddddc5073f6718caf85f36b94ea5b",
+    sha256: "91d341c857b145fde10795b6afef14ca274919f386dc5e11e2983835d7c11d29",
+  },
   "tricep-kickback": {
     src: "form-art/tricep-kickback.webp",
     width: 480,
@@ -626,6 +1196,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "4a040d5f7ad81019320c56eb16496e6b0ddc43111da97c67e672509d22d67cb4",
     sha256: "0793176a293774f3aa56e6e285a8edf6632b3915b8085204d52681c735cda6e0",
+  },
+  "walking-dumbbell-lunges": {
+    src: "form-art/walking-dumbbell-lunges.webp",
+    width: 445,
+    height: 480,
+    keyed: true,
+    source: "form-frames/walking-dumbbell-lunges/1.webp",
+    sourceSha256:
+      "8f387bf3408656094bb5f86a78c98ebc7596a277b0823c998dae588de0f65412",
+    sha256: "73fc0a63e0af73ef2cbe1340d22db83c59934e1fb4195cb8e0bb1a7112f144c5",
   },
   "weighted-chest-dip": {
     src: "form-art/weighted-chest-dip.webp",
@@ -637,6 +1217,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8",
     sha256: "e4e27d65259672a0317a3c0d316a7f19365dfbf233d8cc529f0bf7084ac24dd6",
   },
+  "weighted-plank": {
+    src: "form-art/weighted-plank.webp",
+    width: 480,
+    height: 196,
+    keyed: true,
+    source: "form-frames/weighted-plank/1.webp",
+    sourceSha256:
+      "e1f6fcef4730ba3942f851208847441d9d8a16d1a94a1506e7399c9517ad825b",
+    sha256: "dc878e1989e91c4e5d7612a866845371d5561fa092eb23213b4493f36d747f97",
+  },
   "weighted-push-ups": {
     src: "form-art/weighted-push-ups.webp",
     width: 480,
@@ -647,14 +1237,24 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "621f3efee49e900e99a31fb5d3a9c4d8ab08f93bb4479d00c03427781f41b9d7",
     sha256: "03ed2e2e5e8ae6f8e6a938dc9750488fce7c42ad810cabeebf2dcdf44553ec65",
   },
+  "zercher-squat": {
+    src: "form-art/zercher-squat.webp",
+    width: 320,
+    height: 480,
+    keyed: true,
+    source: "form-frames/zercher-squat/1.webp",
+    sourceSha256:
+      "fda4ef1d143012254dbc83b1f52c1798d6a3d0dd3de8a20efef4f73da676333a",
+    sha256: "c014a7aef09db96557f0d5cefdf6e5c9ba268d0f7295214e1e0d40dcf97bfa25",
+  },
   "zottman-curl": {
     src: "form-art/zottman-curl.webp",
-    width: 220,
+    width: 217,
     height: 480,
     keyed: true,
     source: "form-frames/zottman-curl/1.webp",
     sourceSha256:
-      "fec9ddba08bf82cc35bd798db84c03fbcd850dcc42ddfbb0f430a07621e1d7ae",
-    sha256: "459c8838248ffaeba5f7ef80fa831674290a26dbb69f64ceceae5d8045138659",
+      "5588051491e3a4e00a37e2e084a559c449b80a5aed7109962c812e8c6b44891e",
+    sha256: "e0c5dd08c3dd61932bd72584c8c5f2ba21d9bdcba91ee9469af5a9d5fc2c57b9",
   },
 };

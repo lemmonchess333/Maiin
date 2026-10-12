@@ -1,0 +1,183 @@
+{
+  "exerciseId": "nordic-hamstring-curl",
+  "version": "anatomy-v3-2026-10-09-nordic-hamstring-curl-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and actual mobile artwork review",
+  "reviewedAt": "2026-10-09T10:56:49.62356+01:00",
+  "reference": {
+    "path": "form-frames/nordic-hamstring-curl/4.webp",
+    "sha256": "a674752071ff90b1e3551be4c5665a3ae1323ead54babace248d157eb3df7571"
+  },
+  "cueSha256": "1978365cbdb5b3301b1a11511f17a6f7e8e9fd26f28c3f223b9747c7e75827b0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete attached to pose generation; six native palette-authored-v2 images reviewed. Canonical physique, faceless head, neutral pelvis and white trainers retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same1536x1024 scene and view. Sources1 and6 use verified whole-frame integer translations only; no anatomical fitting or resampling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six distinct native poses reviewed with straight hip extension and controlled kneeling body inclination. No anatomical warping or grafts."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Grey knee pad and ankle restraint remain in place. Raw anchor width67-68px variation retained in fixed-dimensions-v3.json as a minor raster edge finding."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pad and ankle support lower outlines measured from delivered pixels at two fixed x coordinates. Knee support and ankle restraint visually reviewed throughout."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Controlled forward lean about supported knees followed by return; source order1,6,5,4,3,2 follows increasing then decreasing inclination. Static illustrations do not claim calibrated3D joint measurements."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Hamstrings primary#7B72E9 and calves secondary#9590E0, flat authored fields with#777777 new contours. Inherited neutral contours preserved per direct human choice. Exact layer recomposition and lossless WebP checked."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Final draft-beats-v2 cues match the reviewed reordered poses; seven words or fewer."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "native-trace-v3 captures all six at natural and rendered1536x1024 including6to1 closure. Native motion and final smaller-lean return inspected."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual registered publicURL all-six playback at390x844 in light theme; integrated-light-trace.json and integrated-light.png. Card and final cues inspected; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual registered publicURL all-six playback at390x844 in dark theme; integrated-dark-trace.json and integrated-dark.png. Card and final cues inspected; no console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/nordic-hamstring-curl/1.webp",
+      "sha256": "373a16412d1f23be805c72e7205537a31d5278db645b195fcc46f971a7db1530",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 857
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 178,
+        "fixedSceneSpanAtRow850": 451
+      }
+    },
+    {
+      "path": "form-frames/nordic-hamstring-curl/2.webp",
+      "sha256": "9a30b5527a496914c6dbb695059f88503e3f07eb8332b646d7a6dd2dbd130c10",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 859
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 178,
+        "fixedSceneSpanAtRow850": 450
+      }
+    },
+    {
+      "path": "form-frames/nordic-hamstring-curl/3.webp",
+      "sha256": "1ba587f8e02264ba67bf982024d23d26b31efc5a0fef55454e39ea758517f0d1",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 858
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 178,
+        "fixedSceneSpanAtRow850": 451
+      }
+    },
+    {
+      "path": "form-frames/nordic-hamstring-curl/4.webp",
+      "sha256": "a674752071ff90b1e3551be4c5665a3ae1323ead54babace248d157eb3df7571",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 858
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 178,
+        "fixedSceneSpanAtRow850": 451
+      }
+    },
+    {
+      "path": "form-frames/nordic-hamstring-curl/5.webp",
+      "sha256": "675f88e34dde6f8effb5e24f701fa42396f288add6bdbda3eed8eed000b88fa2",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 858
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 178,
+        "fixedSceneSpanAtRow850": 451
+      }
+    },
+    {
+      "path": "form-frames/nordic-hamstring-curl/6.webp",
+      "sha256": "064175f19d4521cd94bf9f4c8ed9eb444202dfb7282d8f43d3da0592e5b60877",
+      "anchors": {
+        "padLowerSurfaceAt775": {
+          "x": 775,
+          "y": 863
+        },
+        "anchorLowerSurfaceAt1160": {
+          "x": 1160,
+          "y": 857
+        }
+      },
+      "invariantDimensions": {
+        "padWidthAtRow850": 179,
+        "fixedSceneSpanAtRow850": 452
+      }
+    }
+  ],
+  "measurementScope": "Image-plane fixed equipment geometry only; pad width and overall pad-to-anchor span are not skeletal length measurements. Raw small anchor width variation is retained in work evidence, not omitted from visual assessment.",
+  "integrationValidation": "Locally complete: exact registered hashes; native/loop and actual390x844 publicURL light/dark all-six/card/cue review passed. Lint/art/drafts/typecheck/build/stamp passed. Full units48failed/11230passed/367skipped; no new failure headings versus measured sameHEAD baseline. Full suite is not green; project findings retained.",
+  "contactPhases": [
+    {
+      "name": "Continuous supported kneeling phase",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 4,
+      "anchorNames": ["padLowerSurfaceAt775", "anchorLowerSurfaceAt1160"],
+      "dimensionNames": ["padWidthAtRow850", "fixedSceneSpanAtRow850"],
+      "evidence": "All six poses retain knee and ankle support. Compare to accepted lowered master frame4: ankle lower surface858px, delivered frames857-859px. Raw2px full range retained; each endpoint is within1px of the actual master. Dimensions measured on delivered pixels, not source estimates."
+    }
+  ],
+  "airborneFrames": []
+}

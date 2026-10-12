@@ -1,0 +1,377 @@
+{
+  "generator": "Built-in imagegen; authorized stationary contact/equipment repair and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "exerciseMasterGenerationId": "39486b4b-2f64-4d0c-a8ce-c99660ec952c",
+  "selectedGenerationIds": [
+    "d561fb7b-4a9c-430a-b177-8f70f3120b27",
+    "08a72493-ea14-4416-8bff-1bc4ddda6baf",
+    "2687d620-176c-435a-9168-c69eca9a0a40",
+    "cb486938-15c6-48b3-b3b2-3254697ac1b4"
+  ],
+  "poseParents": [
+    "39486b4b-2f64-4d0c-a8ce-c99660ec952c",
+    "896668d1-89ca-4d4a-ba3b-d5da9e92b786",
+    "eb63c6ac-32e9-429a-bb2e-4f650c4959c6",
+    "2557067a-bfb7-475a-a15e-b09049f081bc"
+  ],
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "polishedSources": [
+    {
+      "file": "polished/1-polished.png",
+      "sha256": "18bab6f40d0bd20112dfe896977036c94cf9c77119142a09fea849835c845529"
+    },
+    {
+      "file": "polished/2-polished.png",
+      "sha256": "225e5ebfb6e2717dee4b7dffcc21fda43ff67161fb06504c329418571e291e21"
+    },
+    {
+      "file": "polished/3-polished.png",
+      "sha256": "a046bef8094262e77a3f14daee22cc13e34bd0961c189986bfe8ea7046df406e"
+    },
+    {
+      "file": "polished/4-polished.png",
+      "sha256": "fb17f76267e6d2de66105fc8d30fda66346b2b0fcb40714ae6e2aea566699355"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "4f8ca474abe35614796479645281a18afe25cf3f2d0a7bec8581016cfa34a0eb"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "8cf69ea3f554fc7e8fc8481152c694b177001a8c4ad560635fc04c69309e967c"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "16699b7072413a6dd3dcb1b9ec343a6c5e4c142a2c2bb916c12eba7015d0ac75"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "b66c41bbe9c1b57a81d2334230932f77655c718208727a8b3cb1b99c05abdc4e"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "16699b7072413a6dd3dcb1b9ec343a6c5e4c142a2c2bb916c12eba7015d0ac75"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "8cf69ea3f554fc7e8fc8481152c694b177001a8c4ad560635fc04c69309e967c"
+    }
+  ],
+  "framing": {
+    "crop": {
+      "left": 315,
+      "top": 30,
+      "width": 930,
+      "height": 925
+    },
+    "regions": [
+      {
+        "left": 330,
+        "top": 675,
+        "width": 320,
+        "height": 140
+      },
+      {
+        "left": 665,
+        "top": 795,
+        "width": 165,
+        "height": 90
+      },
+      {
+        "left": 830,
+        "top": 790,
+        "width": 175,
+        "height": 135
+      },
+      {
+        "left": 1030,
+        "top": 737,
+        "width": 200,
+        "height": 115
+      }
+    ],
+    "method": "Exact master-copy stationary bench supports and planted shoe contact regions; no moving arm anatomy touched. Common crop without scale changes.",
+    "evidence": [
+      {
+        "frame": 1,
+        "source": "1-polished.png",
+        "sourceSha256": "18bab6f40d0bd20112dfe896977036c94cf9c77119142a09fea849835c845529",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 2,
+        "source": "2-polished.png",
+        "sourceSha256": "225e5ebfb6e2717dee4b7dffcc21fda43ff67161fb06504c329418571e291e21",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 3,
+        "source": "3-polished.png",
+        "sourceSha256": "a046bef8094262e77a3f14daee22cc13e34bd0961c189986bfe8ea7046df406e",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 4,
+        "source": "4-polished.png",
+        "sourceSha256": "fb17f76267e6d2de66105fc8d30fda66346b2b0fcb40714ae6e2aea566699355",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 5,
+        "source": "3-polished.png",
+        "sourceSha256": "a046bef8094262e77a3f14daee22cc13e34bd0961c189986bfe8ea7046df406e",
+        "outsideVisiblePixels": 0
+      },
+      {
+        "frame": 6,
+        "source": "2-polished.png",
+        "sourceSha256": "225e5ebfb6e2717dee4b7dffcc21fda43ff67161fb06504c329418571e291e21",
+        "outsideVisiblePixels": 0
+      }
+    ]
+  },
+  "equipmentPreparation": {
+    "approved": false,
+    "method": "Equipment-only fixed-size SVG head silhouettes and rigid handle guides, plus stationary head-contact restoration. These rough intermediates were not approved: subsequent imagegen cleanup supplied the final anatomy/contact edges and equipment shading. No moving anatomy was translated or scaled by code.",
+    "audit": [
+      {
+        "frame": 1,
+        "fixedRegions": [],
+        "preservedBright": 5276,
+        "modifiedPixels": 14998,
+        "headTranslations": [
+          [0, 0],
+          [0, 0]
+        ]
+      },
+      {
+        "frame": 2,
+        "fixedRegions": [
+          {
+            "left": 420,
+            "top": 200,
+            "width": 215,
+            "height": 94
+          },
+          {
+            "left": 420,
+            "top": 294,
+            "width": 124,
+            "height": 6
+          }
+        ],
+        "preservedBright": 5285,
+        "modifiedPixels": 34532,
+        "headTranslations": [
+          [36, -51],
+          [10, -16]
+        ]
+      },
+      {
+        "frame": 3,
+        "fixedRegions": [],
+        "preservedBright": 3379,
+        "modifiedPixels": 22134,
+        "headTranslations": [
+          [60, -175],
+          [-18, -123]
+        ]
+      },
+      {
+        "frame": 4,
+        "fixedRegions": [],
+        "preservedBright": 3397,
+        "modifiedPixels": 19994,
+        "headTranslations": [
+          [80, -293],
+          [-75, -241]
+        ]
+      }
+    ]
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "rearBenchContact": {
+          "x": 64,
+          "y": 753
+        },
+        "frontBenchContact": {
+          "x": 401,
+          "y": 835
+        },
+        "nearSole": {
+          "x": 606,
+          "y": 883
+        },
+        "farSole": {
+          "x": 844,
+          "y": 811
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportSpan": 346.8328127498896,
+        "nearShoeWidth": 156,
+        "farShoeWidth": 181
+      }
+    }
+  ],
+  "losslessPixelsVerified": true,
+  "exportBackground": "PNG alpha flattened onto authored black before lossless WebP export; exact decoded RGB comparison.",
+  "exerciseMasterSha256": "1a9d7e1d9539655c05aff08b89ec5cf113335960154573310948cf4fc714983d",
+  "cleanupInputHashes": [
+    {
+      "file": "rigid-1.png",
+      "sha256": "e357d67afdae2c65b8caccece67127ee1446de7c2a6a7bc4130315b020676e49",
+      "status": "unapproved intermediate supplied to imagegen cleanup"
+    },
+    {
+      "file": "rigid-2.png",
+      "sha256": "d492c35f2ee7752f78b97d2c0ba37e09da8f6c389e74623462c50eef6c5d50d6",
+      "status": "unapproved intermediate supplied to imagegen cleanup"
+    },
+    {
+      "file": "rigid-3.png",
+      "sha256": "571a8ae2815b486e3916d824c883a2bef41e34f0e31e2d3dd35cd3e1dc68d3d7",
+      "status": "unapproved intermediate supplied to imagegen cleanup"
+    },
+    {
+      "file": "rigid-4.png",
+      "sha256": "011fb9d6b499dcd0cd55bba380cfd4a74eb074265ebde10de6f318c2b9cc4a6d",
+      "status": "unapproved intermediate supplied to imagegen cleanup"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "status": "Native-reviewed working equipment candidate; set-wide review pending",
+  "accepted": false,
+  "source": "1-editable-layers-zottman-frame2-v2-draft.png",
+  "output": "frame2-rigid-equipment-v3-draft.png",
+  "sha256": "b16d193d74303a5950790c60625d984dfa96488cde27b3845b9a665c9f3e374b",
+  "method": "Complete old-gear component coverage, with a one-pixel background join and excluding actual editable arm-layer alpha; observed clean same-scene frame3 body/background replaces only that coverage; complete source hands restored. No anatomy warp.",
+  "limitations": [
+    "Hand boundary and central-body patch require actual review.",
+    "No release or acceptance inherited from prior mobile reviews."
+  ],
+  "nativeReview": {
+    "fullFrame": "frame2-rigid-equipment-v3-draft.png",
+    "enlargedGrips": "frame2-rigid-v3-grip-review.png",
+    "observedBackground": "frame2-clean-background-source-review.png",
+    "findings": [
+      "All fingers remain in front of shafts; no obvious plate remnants or hanging-hand ghosts in enlarged review.",
+      "Enlarged review retains complete neutral hands, original flat-purple arms and continuous plate outlines; full native review pending.",
+      "Original body cast shadows remain; whole-set lighting consistency remains to be reviewed.",
+      "Full final native frame actually reviewed, then all six compared together; authoritative whole-set visual decision is release-candidate/zottman-curl.visual-review.json."
+    ],
+    "limits": [
+      "This is observed same-athlete frame3 background, not pixel-identical canonical body.",
+      "Fixed 2D equipment construction is not calibrated physical millimetres.",
+      "No new six-frame/mobile/release approval."
+    ],
+    "fullFrameActuallyViewed": true,
+    "enlargedGripsActuallyViewed": true
+  },
+  "verification": {
+    "changedPixels": 38557,
+    "outsideComposedCoverageChanges": 0,
+    "alphaChanges": 0,
+    "sourceExactPrimaryPixelsChanged": 1322,
+    "namedSourceCropsExact": {
+      "head": true,
+      "upperTorso": true,
+      "feet": true
+    },
+    "oraRecompositionExact": true,
+    "primarySourceChangesOutsideNewGear": 0,
+    "primarySourceChangesUnderNewGear": 1322,
+    "purplePixelsOnOpaqueEquipment": 0
+  },
+  "backgroundSourceSha256": "b0bdb83401c44e21a82a799573b69e40b513d93be53d0372fa06114153427887",
+  "frame": 2,
+  "nativeWorkingCandidateAccepted": true,
+  "releaseAccepted": false
+}

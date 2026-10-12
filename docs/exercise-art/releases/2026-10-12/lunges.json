@@ -1,0 +1,193 @@
+{
+  "exerciseId": "lunges",
+  "version": "anatomy-v3-2026-10-12-reviewed-three-pose-v1",
+  "width": 590,
+  "height": 770,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T11:04:08.777226+00:00",
+  "reference": {
+    "path": "form-frames/lunges/3.webp",
+    "sha256": "fa01b53176f6e7bd83cdc8486373161114e3333025593a170f5528f987cbd0d5"
+  },
+  "cueSha256": "04ea66942bcf9e95b75a377eb208f9596832ebf12027c32358742f4f262cb94f",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 plus exercise weighted master attached to each movement edit. Bald faceless lean white anatomical athlete, smooth featureless pelvis, same low-profile trainers and inherited neutral shading. Native and mobile review passed under the revised standard."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Whole standing image normalized by one uniform0.8226779 scale and translation144,141, supported by independent head/trainer/crown-to-sole ratios. Step and low edits use complete-athlete2x crop targets, normalized uniformly to documented crop coordinates. Low receives one common5px vertical registration. No individual anatomy transforms, grafts, independent limb fitting or rotation. Common crop380,170,970,940 gives590x770."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three coherent physical states: standing, far-leg forward airborne step, and low lunge. Near/support leg remains grounded through step. Low front shin near vertical, both knees bent, rear knee above floor, upright torso. Native head width80/81/80px; cosmetic one-pixel contour variation does not visibly change proportions. Generated whole poses are used; rejected rectangular leg composites are excluded."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest grey hex dumbbells, neutral closed grips at the sides, both visible in the low pose. The far forearm passes behind the front thigh while its hand and weight show below. Far inner weight end is naturally partly occluded in upright states. Small contour/hand-position variations retained under revised standard; no broken grip, changing load class or implausible geometry in native playback."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Supporting forefoot edge sampled at two interior contact columns825/835; standing and step differ at most1px vertically. Crown-to-support-sole681/682px and support shoe width115/115px remain within1percent. Low/hold share front/rear contacts. Cross-phase rear forefoot area remains continuous around825..835; raised heel changes the silhouette. Lead foot travels while airborne and plants forward. No whole-body airborne state."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Catalogue Lunges with dumbbells at sides: forward long step, both knees bend near90degrees, back knee hovers, push back and reset; alternate next repetition. Reviewed Bodyweight Lunge trajectory provides the same leg mechanics and source positions. No planted front-foot slide or artificial support."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9 and secondary Glutes/Hamstrings #9590E0 on both legs, exact flat fields with inherited fine #777777 contours. Neutral anatomy/equipment pixels outside colour masks unchanged. No added gradients."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Ready/Step/Lower/Hold/Return/Reset matches three physical poses reused as1,2,3,3,2,1 across six distinct playback paths. Ready explicitly cues dumbbells at sides; reset cues alternate legs next repetition."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats decoded and reviewed at native590x770, including controlled return and6to1. Three-pose stepped playback, with no in-between interpolation claimed. All three independently reopened ORAs recomposed exactly; six lossless frame exports match."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light theme, all six frames and6to1 decoded. Complete body, weights, captions and cues visible. staged-light.png/staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark theme, all six frames and6to1 decoded. Pause/manual6to1 verified and no console errors. staged-dark.png/staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/lunges/1.webp",
+      "sha256": "a8c5a7a4ebac6411739ac66d9e234a1ec1bece1d03ab757821b1ac301b78764e",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 445,
+          "y": 728
+        },
+        "supportForefootOuter": {
+          "x": 455,
+          "y": 728
+        }
+      },
+      "invariantDimensions": {
+        "crownToSupportSole": 681,
+        "supportShoeWidth": 115
+      }
+    },
+    {
+      "path": "form-frames/lunges/2.webp",
+      "sha256": "fa158d19d5c03cd9cda53aa4b18144ad817fc8f4e5d2fc9f7437cdb8ae593014",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 445,
+          "y": 729
+        },
+        "supportForefootOuter": {
+          "x": 455,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "crownToSupportSole": 682,
+        "supportShoeWidth": 115
+      }
+    },
+    {
+      "path": "form-frames/lunges/3.webp",
+      "sha256": "fa01b53176f6e7bd83cdc8486373161114e3333025593a170f5528f987cbd0d5",
+      "anchors": {
+        "front": {
+          "x": 68,
+          "y": 715
+        },
+        "rear": {
+          "x": 445,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 80,
+        "frontShoeWidth": 117
+      }
+    },
+    {
+      "path": "form-frames/lunges/4.webp",
+      "sha256": "fa01b53176f6e7bd83cdc8486373161114e3333025593a170f5528f987cbd0d5",
+      "anchors": {
+        "front": {
+          "x": 68,
+          "y": 715
+        },
+        "rear": {
+          "x": 445,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 80,
+        "frontShoeWidth": 117
+      }
+    },
+    {
+      "path": "form-frames/lunges/5.webp",
+      "sha256": "fa158d19d5c03cd9cda53aa4b18144ad817fc8f4e5d2fc9f7437cdb8ae593014",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 445,
+          "y": 729
+        },
+        "supportForefootOuter": {
+          "x": 455,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "crownToSupportSole": 682,
+        "supportShoeWidth": 115
+      }
+    },
+    {
+      "path": "form-frames/lunges/6.webp",
+      "sha256": "a8c5a7a4ebac6411739ac66d9e234a1ec1bece1d03ab757821b1ac301b78764e",
+      "anchors": {
+        "supportForefootInner": {
+          "x": 445,
+          "y": 728
+        },
+        "supportForefootOuter": {
+          "x": 455,
+          "y": 728
+        }
+      },
+      "invariantDimensions": {
+        "crownToSupportSole": 681,
+        "supportShoeWidth": 115
+      }
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Supporting forefoot during standing and step",
+      "frames": [1, 2, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["supportForefootInner", "supportForefootOuter"],
+      "dimensionNames": ["crownToSupportSole", "supportShoeWidth"],
+      "evidence": "Two real foreground outsole contact pixels at825/835 inside the shared forefoot contact interval. Lowest-row silhouette endpoints vary with minor contour shading; the interior support region remains within1px. No head/trainer graft or body-part fitting."
+    },
+    {
+      "name": "Planted low lunge and hold",
+      "frames": [3, 4],
+      "referenceFrame": 3,
+      "anchorNames": ["front", "rear"],
+      "dimensionNames": ["headWidth", "frontShoeWidth"],
+      "evidence": "Front heel down and rear forefoot supporting heel lift. Identical low/hold physical state."
+    }
+  ],
+  "airborneFrames": [],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered 390x844 light/dark/card/pause/manual6to1, editable ORAs and lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full unit suite remains failing; fresh same-HEAD baseline comparison has no unresolved additional failures. See reviewed-leg-motion-production/final-verification.json."
+}

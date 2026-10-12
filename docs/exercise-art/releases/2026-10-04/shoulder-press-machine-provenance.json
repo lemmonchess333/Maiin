@@ -1,0 +1,244 @@
+{
+  "generator": "Built-in imagegen; authorized rigid equipment source copies, stationary contact repair and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "master": "94ae3e12-cfc7-470c-8c3b-2117ba8403ab",
+    "early": "f7d107c7-5eae-402a-9426-1f9e6ba1a0a7",
+    "middle": "e662397c-ece2-472f-9803-896a8f8ccbed",
+    "top": "6f11d3e7-89c0-4277-828c-dd799cd33014"
+  },
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "originals": [
+    {
+      "file": "originals/1-clean-rail-master.png",
+      "sha256": "2bd5ac02a47369c9d597e1ed6e03a9ed0ad3878d19e9445db11568349a861526"
+    },
+    {
+      "file": "originals/2-clean-early-candidate.png",
+      "sha256": "1c4cd4c2cd9c90b27f533c93f4b40a8503a9d5ef979de22449891c74ce4e556b"
+    },
+    {
+      "file": "originals/3-clean-mid-candidate.png",
+      "sha256": "f7f4bd6e2bba79b031d700acf8425083745faef1af99a773f351584bf59276b8"
+    },
+    {
+      "file": "originals/4-clean-top-candidate.png",
+      "sha256": "1af75dc347cfd28148f2cb61de1e96a31ae68755d229ef5c84997160fa61267e"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "14c977f179224cbf3b263a8611c05132862e59c47a8adfe61dd21b8ebc824191"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "9bdc6c0f4402241babea176af5e62717e9260c28d4de1e69ca58003a367baea3"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "fdf76963929fd373f29744eadce0b11e11828321bbe3afec5ce442ea7a3fa184"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "7c35d021ef7360fe7c1f94b2d0928198e0af5e176b61bbeb1d0294e3ce303173"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "fdf76963929fd373f29744eadce0b11e11828321bbe3afec5ce442ea7a3fa184"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "9bdc6c0f4402241babea176af5e62717e9260c28d4de1e69ca58003a367baea3"
+    }
+  ],
+  "framing": {
+    "left": 40,
+    "top": 15,
+    "width": 900,
+    "height": 1500
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "14c977f179224cbf3b263a8611c05132862e59c47a8adfe61dd21b8ebc824191"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "9bdc6c0f4402241babea176af5e62717e9260c28d4de1e69ca58003a367baea3"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "fdf76963929fd373f29744eadce0b11e11828321bbe3afec5ce442ea7a3fa184"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "7c35d021ef7360fe7c1f94b2d0928198e0af5e176b61bbeb1d0294e3ce303173"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "fdf76963929fd373f29744eadce0b11e11828321bbe3afec5ce442ea7a3fa184"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      },
+      "sha256": "9bdc6c0f4402241babea176af5e62717e9260c28d4de1e69ca58003a367baea3"
+    }
+  ],
+  "equipment": {
+    "files": [
+      "1-clean-rail-master.png",
+      "2-clean-early-candidate.png",
+      "3-clean-mid-candidate.png",
+      "4-clean-top-candidate.png"
+    ],
+    "rises": [0, 48, 137, 295],
+    "paths": [
+      "M124 423 Q126 420 132 421 L168 421 Q179 423 181 430 L181 479 L171 490 L171 552 Q170 574 161 578 L117 578 Q105 577 104 551 L96 551 Q91 549 91 537 L92 526 Q93 516 97 514 L105 514 L106 501 L124 480 Z",
+      "M796 423 Q798 420 809 421 L844 421 Q852 422 853 429 L853 480 L869 499 L872 514 L879 514 Q884 520 884 536 Q884 548 878 551 L872 551 Q872 577 861 578 L817 578 Q806 577 805 552 L805 490 L796 480 Z",
+      "M154 518 L211 518 L211 550 L156 550 Q147 544 148 534 Q148 524 154 518 Z",
+      "M282 518 L310 518 Q316 514 323 516 Q329 521 329 534 Q329 546 323 550 L314 550 L310 548 L282 548 Z",
+      "M649 534 Q649 521 655 516 L664 516 L668 518 L696 518 L696 548 L667 548 Q660 552 655 550 Q649 547 649 534 Z",
+      "M766 518 L820 518 Q829 524 829 534 Q829 546 821 550 L766 550 Z"
+    ],
+    "method": "Stationary straight rail profiles constructed from one master row. Original rigid equipment alpha silhouettes translated vertically; no moving anatomy transformations. Early bridge copied only in unoccluded fixed regions. Candidate, pending review."
+  },
+  "stationaryCopies": {
+    "source": "equipment-v2-1.png",
+    "regions": [
+      {
+        "left": 240,
+        "top": 1350,
+        "width": 155,
+        "height": 155
+      },
+      {
+        "left": 585,
+        "top": 1350,
+        "width": 155,
+        "height": 155
+      },
+      {
+        "left": 445,
+        "top": 1300,
+        "width": 90,
+        "height": 95
+      }
+    ],
+    "scope": "Exact stationary shoes and machine front base only; no moving anatomy"
+  },
+  "losslessPixelsVerified": true
+}

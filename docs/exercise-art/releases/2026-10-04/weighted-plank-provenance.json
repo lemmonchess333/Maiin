@@ -1,0 +1,226 @@
+{
+  "generator": "Built-in imagegen anatomy/plate and removal-only unweighted pose; common framing and authorized stationary contacts",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "pilot": "7fa7f13e-5ddd-46bf-b20f-1a7e4db12c98",
+    "masterCleanup": "ddd37ad9-7a93-4975-9fcc-a19e6c4edf2b",
+    "unloaded": "bbf674c8-975f-4fb4-9b30-42626c8121ef"
+  },
+  "sequence": [1, 2, 2, 2, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-unloaded.png",
+      "sha256": "54e29e5e9f1c869dadc866e2b7806a5afc710ca92845e05b05f809db25b2d56e"
+    },
+    {
+      "file": "originals/2-master.png",
+      "sha256": "55d4f1fa137d3bb06f4a8a04c7cc71b5f835af9dc1b41057c66b4f49ec12fbfb"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "1d3414f043d5818b81342970ad8ac2e8a87c18fc057ee37fa801430906d57b35"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "1d3414f043d5818b81342970ad8ac2e8a87c18fc057ee37fa801430906d57b35"
+    }
+  ],
+  "framing": {
+    "files": ["1-unloaded.png", "2-master.png"],
+    "sequence": [1, 2, 2, 2, 2, 1],
+    "contacts": [
+      {
+        "left": 40,
+        "top": 615,
+        "width": 480,
+        "height": 135
+      },
+      {
+        "left": 1245,
+        "top": 490,
+        "width": 250,
+        "height": 220
+      }
+    ],
+    "crop": {
+      "left": 20,
+      "top": 190,
+      "width": 1480,
+      "height": 575
+    },
+    "padding": {
+      "left": 24,
+      "right": 24,
+      "top": 32,
+      "bottom": 24
+    },
+    "scope": "Common crop/padding and authorized stationary forearm/hand and toe/shoe contact copies only. No moving anatomy transformations. Plate presence authored by imagegen."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "1d3414f043d5818b81342970ad8ac2e8a87c18fc057ee37fa801430906d57b35"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "af147f763b3bba7310a544d2358498cf156088a997b9dadfefe98478f369d43a"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      },
+      "sha256": "1d3414f043d5818b81342970ad8ac2e8a87c18fc057ee37fa801430906d57b35"
+    }
+  ],
+  "stationaryCopies": [
+    {
+      "left": 40,
+      "top": 615,
+      "width": 480,
+      "height": 135
+    },
+    {
+      "left": 1245,
+      "top": 490,
+      "width": 250,
+      "height": 220
+    }
+  ],
+  "losslessPixelsVerified": true
+}

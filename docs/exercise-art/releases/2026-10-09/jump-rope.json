@@ -1,0 +1,165 @@
+{
+  "exerciseId": "jump-rope",
+  "version": "anatomy-v3-2026-10-09-jump-rope-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native and actual mobile artwork review",
+  "reviewedAt": "2026-10-09T09:20:37.095179+00:00",
+  "reference": {
+    "path": "form-frames/jump-rope/1.webp",
+    "sha256": "2a89a4ddcf0c5b1e68194b1c0211b50f2360e82f5f012ed11d10fac30672b30d"
+  },
+  "cueSha256": "476015762c10137870c6a204ba256bf3ad5d58334dd2aed1165dd7025e67715e",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete and accepted master attached to image edits; six-staged-review-v2 and updated aligned-review-v3 retain model identity. Canonical inherited contours preserved under explicit human choice."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Six1024x1536 sources retain same three-quarter view. Land complete frame shifted down2px under direct session approval; no component fitting or resampling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six distinct beats retain neutral pelvis, white trainers and natural soft-knee hop. No anatomical warps or grafts. Native six-frame review retained and changed Land inspected at native size."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two restrained grey handles remain gripped; one continuous cord. Authoring model maintains constant virtual rope length; 4px cord stroke retained. This is an illustration model, not calibrated3D anatomy."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Grounded frames1,5,6 forefoot outline intersections atx440,x520 arey1401,y1414. Land integer alignment verified pixel-exact with exact ORA recomposition. Frames2,3,4 are airborne."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Low bounce follows forward rope revolution: overhead, takeoff, clearance, descent, forefoot landing, rebound. Earlier native all-six review retained; corrected landing and rebound inspected."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Calves primary#7B72E9; shoulders secondary#9590E0; opaque fields flat. Canonical neutral contour appearance preserved by direct user instruction; authored compartment contours#777777."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six registered cues inspected in actual mobile interface; max7words, landing cue describes forefoot contact."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "native-loop-trace-v3 confirms6,1,2,3,4,5 atnative1024x1536; changed Land and rebound inspected. Rope phase metadata follows authored angles and continues forward across6to1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual registered publicURLs all six played at390x844 in light theme. integrated-light-trace.json and integrated-card-light.png; final cutout and cues inspected."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual registered publicURLs all six played at390x844 in dark theme. integrated-dark-trace.json and integrated-card-dark.png; final cutout and cues inspected."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/jump-rope/1.webp",
+      "sha256": "2a89a4ddcf0c5b1e68194b1c0211b50f2360e82f5f012ed11d10fac30672b30d",
+      "anchors": {
+        "farForefootContact": {
+          "x": 440,
+          "y": 1401
+        },
+        "nearForefootContact": {
+          "x": 520,
+          "y": 1414
+        }
+      },
+      "invariantDimensions": {
+        "skullWidth70pxBelowCrown": 135,
+        "authoredCordStrokePx": 4
+      }
+    },
+    {
+      "path": "form-frames/jump-rope/2.webp",
+      "sha256": "6670c409873c0b54e0e63c549d90dce57abe37d435f785e5977e170287e8455c",
+      "anchors": {},
+      "invariantDimensions": {}
+    },
+    {
+      "path": "form-frames/jump-rope/3.webp",
+      "sha256": "0902540161f6bd44dc0e7fdf9c7bc757a978e50a8d5c5eab9ec416833d3f07fb",
+      "anchors": {},
+      "invariantDimensions": {}
+    },
+    {
+      "path": "form-frames/jump-rope/4.webp",
+      "sha256": "9d90fb547904b2520a9ce25291ff52b9c1d2aa3e1c778e88e3ebddb3649b0ca5",
+      "anchors": {},
+      "invariantDimensions": {}
+    },
+    {
+      "path": "form-frames/jump-rope/5.webp",
+      "sha256": "d61ffc2a38f8a1e3671e9ce643f447a07961d6c453190de1141a78d1446b3d87",
+      "anchors": {
+        "farForefootContact": {
+          "x": 440,
+          "y": 1401
+        },
+        "nearForefootContact": {
+          "x": 520,
+          "y": 1414
+        }
+      },
+      "invariantDimensions": {
+        "skullWidth70pxBelowCrown": 136,
+        "authoredCordStrokePx": 4
+      }
+    },
+    {
+      "path": "form-frames/jump-rope/6.webp",
+      "sha256": "e965ebbeefa661d76e1d642a31e7c41edd8a2dd43449ed5d8062499fa1552cd4",
+      "anchors": {
+        "farForefootContact": {
+          "x": 440,
+          "y": 1401
+        },
+        "nearForefootContact": {
+          "x": 520,
+          "y": 1414
+        }
+      },
+      "invariantDimensions": {
+        "skullWidth70pxBelowCrown": 135,
+        "authoredCordStrokePx": 4
+      }
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Grounded forefoot contact",
+      "frames": [1, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["farForefootContact", "nearForefootContact"],
+      "dimensionNames": ["skullWidth70pxBelowCrown", "authoredCordStrokePx"],
+      "evidence": "Forefoot outline sampled at two fixed image-plane x coordinates on occupied contact surfaces; skull transverse width diagnostic from cord-free sources. Cord stroke measured from authored geometry, not physical rope diameter."
+    }
+  ],
+  "airborneFrames": [
+    {
+      "frame": 2,
+      "takeoffFrame": 1,
+      "landingFrame": 5,
+      "evidence": "Both forefoot outlines clear grounded baseline; soft knees and single cord move through low airborne phase. Native review retained in six-staged-review-v2."
+    },
+    {
+      "frame": 3,
+      "takeoffFrame": 1,
+      "landingFrame": 5,
+      "evidence": "Both forefoot outlines clear grounded baseline; soft knees and single cord move through low airborne phase. Native review retained in six-staged-review-v2."
+    },
+    {
+      "frame": 4,
+      "takeoffFrame": 1,
+      "landingFrame": 5,
+      "evidence": "Both forefoot outlines clear grounded baseline; soft knees and single cord move through low airborne phase. Native review retained in six-staged-review-v2."
+    }
+  ],
+  "integrationValidation": "Locally complete: exact registered frame hashes; native/loop and actual390x844 light/dark allsix/card/cues reviewed. Lint/art/drafts/typecheck/build/stamp pass. Full suite49failed/11227passed/367skipped; no integrated-only failure headings versus measured sameHEAD baseline. Project-wide findings retained, not full-suite-green."
+}

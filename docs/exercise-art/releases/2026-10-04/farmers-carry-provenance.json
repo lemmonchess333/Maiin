@@ -1,0 +1,79 @@
+{
+  "generator": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "1ad2a49fe1dc07561769d2fc7da32f11269d66769382061fe5dcec2b1cd26966",
+  "selected": [
+    {
+      "file": "1-lead-candidate.png",
+      "sha256": "0455d3be32f7bc31552436dc5866df2c586bd789c60e6a5ef1158a73cf1a3b1c"
+    },
+    {
+      "file": "2-near-support-candidate.png",
+      "sha256": "bc05ff64529f22021fc9f47648d185d6e1db9fa6e66ac0437419625c4ca92479"
+    },
+    {
+      "file": "3-far-lead-candidate.png",
+      "sha256": "6e58962104c6055ebc02f2ecf106dec26975279b9714ef601a52a37cbcfb4d94"
+    },
+    {
+      "file": "4-far-support-candidate.png",
+      "sha256": "403721c2e70f6c44f4241a7e72b195def75ea4abec23ea26d88ba2164b04aa3e"
+    },
+    {
+      "file": "5-next-step-candidate.png",
+      "sha256": "587190ff8462728b6e767842eded68f1ce63015e7c8766d7d52a40c820f0e431"
+    }
+  ],
+  "generationIds": [
+    "45b4ccc1-249b-4bd5-abe0-c6987d26748d",
+    "49ee1732-c754-4f57-91d5-0fcc4adb8ab3",
+    "4150b2e1-b6a9-420b-bd92-30be22e7ee88",
+    "eb9231c0-1974-4c4b-9363-bf4c90196012",
+    "daa4f9c9-f2bd-4365-aa44-4503e80033b6"
+  ],
+  "framing": {
+    "crop": {
+      "left": 128,
+      "top": 0,
+      "width": 768,
+      "height": 1536
+    },
+    "paddingTopBottom": 32,
+    "scale": 1,
+    "frames": [
+      {
+        "frame": 1,
+        "source": "1-lead-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 2,
+        "source": "2-near-support-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 3,
+        "source": "3-far-lead-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 4,
+        "source": "4-far-support-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 5,
+        "source": "5-next-step-candidate.png",
+        "excludedBrightPixels": 0
+      },
+      {
+        "frame": 6,
+        "source": "1-lead-candidate.png",
+        "excludedBrightPixels": 0
+      }
+    ]
+  },
+  "anatomyEdits": "All anatomy and poses from built-in imagegen. Only one common crop/padding operation; no deterministic anatomy or equipment repairs.",
+  "measurementNote": "Far grip right edge is occluded by adjacent thigh in one pose, so it is not used. Far grip left edge and both near grip edges are visible in all frames. Complete near-dumbbell span and visible far-plate width are measured equipment dimensions.",
+  "losslessPixelsVerified": true
+}

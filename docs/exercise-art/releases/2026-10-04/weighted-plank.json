@@ -1,0 +1,205 @@
+{
+  "exerciseId": "weighted-plank",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1528,
+  "height": 631,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-07T16:13:39.108Z",
+  "reference": {
+    "path": "form-frames/weighted-plank/1.webp",
+    "sha256": "e1f6fcef4730ba3942f851208847441d9d8a16d1a94a1506e7399c9517ad825b"
+  },
+  "cueSha256": "70bb2fb38d6a2d5a1e383e7f0f916bc55a7242cf09d0889a6636c7c38f5754c5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 athlete, neutral featureless pelvic centre; imagegen anatomy, same proportions and smooth contours."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front-side oblique, common20,190,1480,575 crop and24side/32top/24bottom padding,1528x631."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native all six and loop reviewed. Same rigid forearm plank with straight shoulder/hip/knee/ankle alignment, neutral neck and natural grounded forearms/toes throughout timed hold."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest round rigid plate lies flat over upper-back shoulder blades for Load/Brace/Hold/Breathe; absent Set/Finish. No hovering or spine sliding, no plate over neck/lumbar area."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived forearmFloor, nearToe, farToe anchors and forearm contour width/height pass all six. Exact stationary forearm/hand and toe/shoe contact copies only."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Isometric hold has matching body state across frames, plate presence changes by off-camera partner assistance. Cues teach partner upper-back placement and removal, no unassisted self-loading or invented hip dips."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Core primary purple, Shoulders/Glutes secondary lilac, other muscles neutral; abdominal rendering corrected to flatter continuous shallow segmentation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Distinct Set, Load, Brace, Hold, Breathe, Finish; cues at most seven words, final loading cue explicitly shoulder blades."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native and actual390x844 all six and6-to1 reviewed after final cue change,1,2,2,2,2,1. Autoplay Load2 to Brace3 observed with Pause visible; pause restored Play."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light final all six and6-to1 reviewed, full plate/body/contacts and readable cues."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844 dark final all six and6-to1 reviewed, same containment/visibility and clear controls."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Rigid plank with forearm and toe contacts",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["forearmFloor", "nearToe", "farToe"],
+      "dimensionNames": ["forearmContourWidth", "forearmContourHeight"],
+      "evidence": "Pixel-derived stationary forearm and toe contacts, plus native rigid plank and plate placement/removal review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/weighted-plank/1.webp",
+      "sha256": "e1f6fcef4730ba3942f851208847441d9d8a16d1a94a1506e7399c9517ad825b",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    },
+    {
+      "path": "form-frames/weighted-plank/2.webp",
+      "sha256": "419eeeb2d0223892ba9ce1a762030af81cd971aea993db4ff65187ce88c1d60c",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    },
+    {
+      "path": "form-frames/weighted-plank/3.webp",
+      "sha256": "419eeeb2d0223892ba9ce1a762030af81cd971aea993db4ff65187ce88c1d60c",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    },
+    {
+      "path": "form-frames/weighted-plank/4.webp",
+      "sha256": "419eeeb2d0223892ba9ce1a762030af81cd971aea993db4ff65187ce88c1d60c",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    },
+    {
+      "path": "form-frames/weighted-plank/5.webp",
+      "sha256": "419eeeb2d0223892ba9ce1a762030af81cd971aea993db4ff65187ce88c1d60c",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    },
+    {
+      "path": "form-frames/weighted-plank/6.webp",
+      "sha256": "e1f6fcef4730ba3942f851208847441d9d8a16d1a94a1506e7399c9517ad825b",
+      "anchors": {
+        "forearmFloor": {
+          "x": 142,
+          "y": 586
+        },
+        "nearToe": {
+          "x": 1371,
+          "y": 541
+        },
+        "farToe": {
+          "x": 1307,
+          "y": 521
+        }
+      },
+      "invariantDimensions": {
+        "forearmContourWidth": 471,
+        "forearmContourHeight": 130
+      }
+    }
+  ]
+}

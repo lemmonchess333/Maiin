@@ -1,0 +1,23 @@
+# Cuban Press artwork production
+
+# Cuban Press continuation plan
+
+Exact catalogue: standing light dumbbell upright row to chest height, elbows lead; external rotation to forearms upright; press overhead, reverse each segment. Primary Shoulders/deltoids; secondary Rotator Cuff and Traps.
+Recovered earlier canonical pilot has four native poses and six-frame plan. Current native inspection confirms top pose has enlarged weights and visibly elongated arms compared with setup/rotation. Recover setup,row,rotation as working candidates, not release approval. Replace endpoint from rotation plus master/canonical rather than warp old endpoint.
+Six beats: Set(thighs),Row(elbows lead,weights below),Rotate(forearms upright,elbows fixed),Press(full comfortable extension),Lower(reuseRotate),Reverse(reuseRow,then6to1lowers tothighs). Sequence1,2,3,4,3,2. Fixed slight3quartercamera, both soles, head/torso/hip geometry and overhead clearance. Light matching DBs; no code anatomy reposing. Native joint/equipment consistency and actual mobilelight/dark loop required. Internal rotator-cuff muscles need not be falsely painted on chest; qualitative visible deltoid/trap map remains stable.
+
+# Cuban Press visual review — passed
+
+Final520x1240six-frame candidates reviewed2026-10-05. Native setup,row,rotation,new guided endpoint and final shoe/crop joins inspected. Stable head/torso, planted feet, closed small-dumbbell grips, full comfortable endpoint without back arch; master arm proportions retained visually. Strong purple deltoids and subtle lilac traps. No code moving anatomy transform.
+Historic enlarged/elongated endpoint4-recovered and halo/body-shift endpoint16b2a6f8 are rejected. Only guided7b6b9c1f-7115-4d70-ae10-d39f131e7a06 used at frame4; cyan guides fully absent. Qualitative equipment review: matching small light dumbbells, stable plate count and connected grips. Modest orientation/projection changes are not treated as calibrated3D scale changes; no exact dumbbell pixel dimension claim.
+Sequence Set,Row,Rotate,Press,Lower,Reverse uses1,2,3,4,3,2. Reverse rotation6to1 then completes lowering to thighs. Actual ExerciseFormFrames390x844all6and6to1 inspected in light and dark after final shoe repair/common crop. Cues and controls readable, no clipping or planted-contact jump. Autoplay observed Set1/6 to Lower5/6. All cues at most7words.
+Pixel-derived sole anchors139,1175and306,1209and widths151,126match across6frames after exact stationary shoe copies. No visible patch boundary; measurements cover fixed soles, not moving joints or calibrated equipment dimensions. Review invalidated by any image/cue change.
+Provenance/reproduction, integration and full verification remain required before completion.
+
+## 4-guided-prompt.txt
+
+Precise anatomical pose edit for Cuban press endpoint. Image1 is edit target with cyan positioning annotations; image2 exercise master and image3 canonical identity. Preserve all head, torso, hip, leg, shoe and black-background pixels from image1. Redraw only both arms/hands and move their same light dumbbells: put the new hands exactly inside the two CYAN CIRCLES, extending arms along the cyan axes from shoulders to circles with straight comfortable elbows. Keep normal unchanged arm segment lengths; do not reach higher than the circles. The cyan outline encloses the fixed head; do not move or resize it. Same small dumbbells with closed grips, same plate sizes. Same purple deltoids and light lilac upper traps. Remove every cyan mark and annotation completely. Preserve fine contours and pure solid black background exactly: no halo, glow, light aura or new shadows. Full original framing and scale. One image.
+
+## 4-new-endpoint-prompt.txt
+
+Scientific exercise illustration adjacent edit. Image1 is the ROTATED Cuban Press pose to edit; image2 is the starting exercise master; image3 the canonical athlete. Press the SAME SMALL LIGHT DUMBBELLS overhead, extending both elbows comfortably. Keep natural arm segment lengths EXACTLY consistent with the starting master: upper arms and forearms are not elongated. On this1024x1536canvas the finished hand centers should be aroundy300, slightly outside head width, NOT near the top edge. This is only about175pixels above their current rotated hand position. Full straight arms with no shrug or back arch; shoulders settle naturally, ribs down. Head, torso, hips, legs, both planted shoes, camera, scale and lighting unchanged. Keep the identical small dumbbell plate diameter and short handles; closed grips throughout. Strong purple deltoids, subtle lilac upper traps, white-grey anatomical athlete, smooth neutral featureless pelvis, white trainers. Pure black background. No text, no guides. One image.

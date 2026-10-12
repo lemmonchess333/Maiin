@@ -1,0 +1,252 @@
+{
+  "exerciseId": "sissy-squat",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 800,
+  "height": 1440,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T22:42:03.072776+00:00",
+  "reference": {
+    "path": "form-frames/sissy-squat/1.webp",
+    "sha256": "449d7eee392a4bfe47ed5db95a4790eae989fa26ca353ef90f3456eeb041a151"
+  },
+  "cueSha256": "f7c4c2551fe50d5f7184b4243daeafd1d7f13acd983a3a71ca9c8143288c33f7",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 attached to the earlier profile endpoints and new upright-first early pose d6e54fea-eb93-41f4-a399-492befa74027. Bald faceless lean white athlete, white trainers, smooth neutral pelvis and fine contours. Three final poses reviewed natively; qualitative identity and segment-proportion review, not exact 3D certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same side-oblique left-facing camera. Earlier upright generated948x1659 and uniformly normalized to1024x1792 as recorded in profile-production/upright-inspection.json. All poses use the same256px top-padding removal, then common crop64,32,864,1472 to800x1440. New early image was already1024x1536. No independent body-part transforms or fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Standing, modest knee-forward initial lowering and deeper hips-extended lean. Knees bend forward as heels rise; shoulders-hips-knees remain a long line without sitting hips backward. Support arm bends/reaches naturally, relaxed near arm follows body. Minor contour variations retained under revised standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One gray fixed support post with bolted round base. Same-coordinate original upright gear regions80,0,260,320 and80,500,260,1450 restore a2px cap/1px base variation; both regions pixel-identical in all finished poses. No hand/body pixels restored. Fixed cap-to-base height1247px, shaft45px and base141px. Grip-area pole shading outside restored boxes remains source-derived."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both forefeet remain visibly grounded while shoes roll and heels rise. Near forefoot silhouette samples at x460/480 vary at most3px across1024px source width; front toe-tip contour changes with roll. Small cosmetic variance is disclosed, not claimed exact foot equality. Support hand remains visibly closed on post at consistent height; bright sample bounds include changing wrist/forearm contour and are not exact grip centres. Feet unchanged by all finishing operations."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Actual Muscle & Strength publisher-embedded Vimeo877881940 inspected at approximately9/14/19seconds for standing, early toe-rise and deeper supported lean. Knees travel forward, hips remain extended, support and floor stay fixed, return reverses the same path. No load, heel block, floating feet or body warping. Illustrated controlled depth is less than demonstrator's maximal depth; catalogue requires deep stretch without a numeric angle."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Exact catalogue primary Quads #7B72E9 and secondary Hip Flexors #9590E0. Source muscle fields flattened in named editable layers with fine source-derived #777777 contours; inherited neutral shading outside fields preserved. Legacy bodyRig's abs approximation is superseded for this release by the catalogue's Hip Flexors key. No unrelated external muscle list used."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Stand, Begin, Lean, Hold, Rise and Return cues each contain at most7words and describe the displayed movement. Three physical poses reused across six distinct playback paths1,2,3,3,2,1 under the revised user standard; not six separately authored poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All three finished poses inspected natively and actual800x1440 playback observed. Native trace records six decoded beats. Controlled descent through early bend, deeper hold, return and standing reset; no distracting support movement."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light theme reviewed for all six decoded frames and6to1closure, full athlete/support visibility and readable cues/key/controls. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same component390x844 dark, full six-beat loop andclosure, pause/manual6to1 observed; console empty. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/sissy-squat/1.webp",
+      "sha256": "449d7eee392a4bfe47ed5db95a4790eae989fa26ca353ef90f3456eeb041a151",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 1,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 362, 239, 450],
+        "feetPixelsUnaltered": true
+      }
+    },
+    {
+      "path": "form-frames/sissy-squat/2.webp",
+      "sha256": "fdf5dc215e0fa48028986959b421990eb696d62a552c50fccaa97235887b9fce",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 2,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 350, 239, 449],
+        "feetPixelsUnaltered": true
+      }
+    },
+    {
+      "path": "form-frames/sissy-squat/3.webp",
+      "sha256": "65a9cb81676dbc24fae511a6a75f246b93daeffea64103ec28c86890b6fcac45",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 3,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 364, 239, 450],
+        "feetPixelsUnaltered": true
+      }
+    },
+    {
+      "path": "form-frames/sissy-squat/4.webp",
+      "sha256": "65a9cb81676dbc24fae511a6a75f246b93daeffea64103ec28c86890b6fcac45",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 3,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 364, 239, 450],
+        "feetPixelsUnaltered": true
+      }
+    },
+    {
+      "path": "form-frames/sissy-squat/5.webp",
+      "sha256": "fdf5dc215e0fa48028986959b421990eb696d62a552c50fccaa97235887b9fce",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 2,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 350, 239, 449],
+        "feetPixelsUnaltered": true
+      }
+    },
+    {
+      "path": "form-frames/sissy-squat/6.webp",
+      "sha256": "449d7eee392a4bfe47ed5db95a4790eae989fa26ca353ef90f3456eeb041a151",
+      "anchors": {
+        "postCapCentre": {
+          "x": 116,
+          "y": 90
+        },
+        "postBaseBottomCentre": {
+          "x": 116,
+          "y": 1337
+        }
+      },
+      "invariantDimensions": {
+        "postCapToBaseHeight": 1247,
+        "postShaftWidth": 45,
+        "postBaseWidth": 141
+      },
+      "observedContacts": {
+        "pose": 1,
+        "postRestoredRegionsPixelExact": true,
+        "postCapCentre": [180, 122],
+        "postBaseBottomCentre": [180, 1369],
+        "postCapToBaseHeight": 1247,
+        "shaftWidth": 45,
+        "baseWidth": 141,
+        "lowerRigSha256": "d956a7a331e3cdb71638fc4335f0470894d6e05b9acbdf1785a1b4d762e0ac3d",
+        "supportHandBrightBounds": [146, 362, 239, 450],
+        "feetPixelsUnaltered": true
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered390x844 mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in upright-first-production/final-verification.json; no new failure headings. Full suite remains failing."
+}

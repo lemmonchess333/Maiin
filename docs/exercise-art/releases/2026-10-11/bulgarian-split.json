@@ -1,0 +1,234 @@
+{
+  "exerciseId": "bulgarian-split",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 1096,
+  "height": 1072,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T21:39:47.639939+00:00",
+  "reference": {
+    "path": "form-frames/bulgarian-split/1.webp",
+    "sha256": "8a125abea6728367c3a4e978c319e544b4bbca149300ec4ef665a247b01b87a5"
+  },
+  "cueSha256": "f5cbb62a14cf68cfe1edf0be76bc0a65e9a14a75be0dbeff3f8e531551cb240a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Saved provisional standing source 5aa6486f, SHA in draft-audit; new built-in adjacent edits 9fc4d657 and53a6ab0b each attach canonical anatomy-v3. Same bald faceless white lean athlete, white trainers, smooth neutral pelvis. Native poses reviewed. Head width at60px below crown103/102/103px, qualitative proportions stable; not a3D certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same fixed side-three-quarter scene. No translations, rescaling, anatomical warps or grafts. Common empty-margin crop320..1416 and48px top black padding produces1096x1072 without scaling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Standing, moderate lowering and front-thigh-near-level bottom, torso upright and braced, natural front hip/knee flexion and rear knee lowering. Same working leg throughout. Minor outline variation retained under revised standard. No fitting individual limbs."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same neutral-grey modest hex dumbbells and full bench. No altered mechanics or equipment composites. Left bench base sampled span182px allposes, rear base end stable; minor1px silhouette changes accepted. Both weights remain at sides; no floating or bent implements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Front sole samples show1px horizontal and2px vertical maximum variation. Rear instep atnativey638 samples949..988,949..988,948..987; rear toe ends994/993/993, bottom642/643/643. Both foot contacts retained; far hand becomes naturally occluded behind front thigh atbottom, near hand visibly wraps handle. Detailed2D samples in contact-measurements.json, not exact3D contact certification. Release anchors now use actual silhouette points at sourcex550 heel andx1363 bench edge, rather than a synthetic bounding-box corner; separate complete toe/instep variation remains disclosed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Dumbbells descend with straight hanging arms and braced torso while front knee bends, rear knee drops, feet remain in place. Front thigh reaches approximatelylevel. Return reverses same poses. No stepping, visible foot sliding or added body transformations. Mechanics checked against Sussex Sport and Equinox instruction texts; no new video observation claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Quads #7B72E9; secondary Glutes/Hamstrings #9590E0. Editable solid colour layers selected only within source muscle chroma, source-derived fine#777contours. All neutral shading outside changed colour fields remains byte-identical; no new gradients."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, Lower, Bottom, Control, Drive, Stand describe the visible motion, each at most7words. Three poses reused across six distinct paths1,2,3,3,2,1 per revised user standard; not six independently authored poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All three final native poses inspected plus1096x1072 six-beat native playback, trace covers all6. Bottom andtop holds, return reverses movement with stable bench andfoot contacts. Native trace records renderedsizes equal natural."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844, all6decoded and6to1closure, complete athlete andbench visible, musclekey andcues readable. staged-light.png andstaged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same component at390x844 dark, all6decoded and6to1closure. Pause/manualStand6toSet1 verified, no consoleerrors. staged-dark.png andstaged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bulgarian-split/1.webp",
+      "sha256": "8a125abea6728367c3a4e978c319e544b4bbca149300ec4ef665a247b01b87a5",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 957
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 920
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 1,
+        "headCrownY": 24,
+        "headWidthAt60BelowCrown": [543, 645],
+        "frontSoleSampleBounds": [451, 890, 606, 919],
+        "rearToeSampleBounds": [950, 585, 994, 642],
+        "rearInstepContactRow638": [949, 988],
+        "leftBenchBaseBounds": [803, 810, 984, 851],
+        "rightBenchBaseBounds": [1188, 837, 1363, 916]
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/2.webp",
+      "sha256": "b43c62e0f5aae0dc9c52e69e3f246f0a67b1ddc0f4c6348cb0a29b43c0efd9b4",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 958
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 920
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 2,
+        "headCrownY": 128,
+        "headWidthAt60BelowCrown": [540, 641],
+        "frontSoleSampleBounds": [450, 890, 605, 920],
+        "rearToeSampleBounds": [950, 585, 993, 643],
+        "rearInstepContactRow638": [949, 988],
+        "leftBenchBaseBounds": [802, 810, 983, 851],
+        "rightBenchBaseBounds": [1188, 837, 1363, 916]
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/3.webp",
+      "sha256": "930252649f033885118a68e4c337fa49317c2bb89125660a9c44b67fdd75ea2c",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 958
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 919
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 3,
+        "headCrownY": 220,
+        "headWidthAt60BelowCrown": [539, 641],
+        "frontSoleSampleBounds": [450, 890, 605, 921],
+        "rearToeSampleBounds": [950, 585, 993, 643],
+        "rearInstepContactRow638": [948, 987],
+        "leftBenchBaseBounds": [802, 810, 983, 851],
+        "rightBenchBaseBounds": [1189, 837, 1363, 916]
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/4.webp",
+      "sha256": "930252649f033885118a68e4c337fa49317c2bb89125660a9c44b67fdd75ea2c",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 958
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 919
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 3,
+        "headCrownY": 220,
+        "headWidthAt60BelowCrown": [539, 641],
+        "frontSoleSampleBounds": [450, 890, 605, 921],
+        "rearToeSampleBounds": [950, 585, 993, 643],
+        "rearInstepContactRow638": [948, 987],
+        "leftBenchBaseBounds": [802, 810, 983, 851],
+        "rightBenchBaseBounds": [1189, 837, 1363, 916]
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/5.webp",
+      "sha256": "b43c62e0f5aae0dc9c52e69e3f246f0a67b1ddc0f4c6348cb0a29b43c0efd9b4",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 958
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 920
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 2,
+        "headCrownY": 128,
+        "headWidthAt60BelowCrown": [540, 641],
+        "frontSoleSampleBounds": [450, 890, 605, 920],
+        "rearToeSampleBounds": [950, 585, 993, 643],
+        "rearInstepContactRow638": [949, 988],
+        "leftBenchBaseBounds": [802, 810, 983, 851],
+        "rightBenchBaseBounds": [1188, 837, 1363, 916]
+      }
+    },
+    {
+      "path": "form-frames/bulgarian-split/6.webp",
+      "sha256": "8a125abea6728367c3a4e978c319e544b4bbca149300ec4ef665a247b01b87a5",
+      "anchors": {
+        "frontHeelSoleSample": {
+          "x": 230,
+          "y": 957
+        },
+        "rightBenchOuterEdge": {
+          "x": 1043,
+          "y": 920
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchBaseSpan": 182,
+        "frontSoleSampleSpan": 156
+      },
+      "observedContacts": {
+        "pose": 1,
+        "headCrownY": 24,
+        "headWidthAt60BelowCrown": [543, 645],
+        "frontSoleSampleBounds": [451, 890, 606, 919],
+        "rearToeSampleBounds": [950, 585, 994, 642],
+        "rearInstepContactRow638": [949, 988],
+        "leftBenchBaseBounds": [803, 810, 984, 851],
+        "rightBenchBaseBounds": [1188, 837, 1363, 916]
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full-suite result and measured same-HEAD baseline comparison in incremental-production/final-verification.json; no new failure headings. Full suite remains failing."
+}

@@ -1,0 +1,229 @@
+{
+  "exerciseId": "preacher-curl",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1120,
+  "height": 1360,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T10:27:06.493Z",
+  "reference": {
+    "path": "form-frames/preacher-curl/1.webp",
+    "sha256": "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21"
+  },
+  "cueSha256": "67e1e4fa7600273722069d53a3b81ae6b6e62cf9e0f76a8cc96945bd10a8dc48",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 bald faceless white-grey athlete, white trainers and neutral pelvis preserved. No moving anatomy transforms."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed near-frontal view shows both supported upper arms and grips. Common1024x1360 crop plus48px side margins, final1120x1360."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native setup, middle and top inspected: natural elbow flexion and forearm foreshortening, stable head/torso, no shrug, supported upper arms."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate each end. Exact master outer plate/collar/shaft pieces translated vertically0,300,387px. Both plate heights224pixels throughout; continuous horizontal shaft and connected shoulder-width underhand grips inspected."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Exact stationary shoe/base copies with25px upper alpha fade. Three pixel-derived fixed anchors and shoe/base widths identical; native boundaries inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Supported preacher curl with soft elbows at bottom, controlled elbow flexion toward shoulders, brief top hold and reversed lowering. No shoulder swing or code-reposed anatomy."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple biceps primary, lilac forearms secondary consistently retained; other muscles neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words match Set,Curl,Top,Hold,Lower,Return. Underhand grip and soft bottom taught by artwork and cues."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected in actual ExerciseFormFrames. Matching configurations reused1,2,3,3,2,1; bottom/top holds deliberate. Autoplay Set1toTop3 observed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6and6to1 reviewed390x844light after final equipment/contact/crop edits. Full scene visible, readable cues, stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6and6to1 reviewed390x844dark after final edits. No clipping or contact jump; readable captions/cues."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Seated preacher curl with planted soles and bench",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "benchBase"],
+      "dimensionNames": [
+        "leftShoeWidth",
+        "rightShoeWidth",
+        "benchBaseWidth",
+        "leftPlateHeight",
+        "rightPlateHeight"
+      ],
+      "evidence": "Pixel-derived stationary soles/base and shoe/base widths plus plate heights. Both moving grips and elbows independently reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/preacher-curl/1.webp",
+      "sha256": "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    },
+    {
+      "path": "form-frames/preacher-curl/2.webp",
+      "sha256": "687cbf49da9bde57442d96a8cc02d435769aefcd52bcefc32740f7e328ad9dc5",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    },
+    {
+      "path": "form-frames/preacher-curl/3.webp",
+      "sha256": "f6ba961323a21f88363d6da2db8ca5f6aa91b08b17fe210d18f55f45bb5edb0e",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    },
+    {
+      "path": "form-frames/preacher-curl/4.webp",
+      "sha256": "f6ba961323a21f88363d6da2db8ca5f6aa91b08b17fe210d18f55f45bb5edb0e",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    },
+    {
+      "path": "form-frames/preacher-curl/5.webp",
+      "sha256": "687cbf49da9bde57442d96a8cc02d435769aefcd52bcefc32740f7e328ad9dc5",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    },
+    {
+      "path": "form-frames/preacher-curl/6.webp",
+      "sha256": "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21",
+      "anchors": {
+        "leftSole": {
+          "x": 334,
+          "y": 1317
+        },
+        "rightSole": {
+          "x": 763,
+          "y": 1317
+        },
+        "benchBase": {
+          "x": 524,
+          "y": 1282
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 148,
+        "rightShoeWidth": 145,
+        "benchBaseWidth": 72,
+        "leftPlateHeight": 224,
+        "rightPlateHeight": 224
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test';
+import { test, expect, devices } from "@playwright/test";
 
 /* Safari-standalone (PWA-ish) regression guard.
  *
@@ -16,23 +16,25 @@ import { test, expect, devices } from '@playwright/test';
  * renders meaningful content against an iPhone-shaped UA + small
  * viewport + webkit engine — covers the path real iOS users hit
  * when they install the app from Safari. */
-test.use({ ...devices['iPhone 14'] });
+test.use({ ...devices["iPhone 14"] });
 
-test('privacy page renders meaningful content on iPhone-shaped UA', async ({ page }) => {
-  await page.goto('privacy');
-  await expect(page.locator('#root')).toBeAttached();
+test("privacy page renders meaningful content on iPhone-shaped UA", async ({
+  page,
+}) => {
+  await page.goto("privacy");
+  await expect(page.locator("#root")).toBeAttached();
 
   // Privacy page must render real content, not just a shell. >100
   // chars catches an empty-app crash; the explicit "privacy"
   // substring assertion catches a route that loaded the wrong page
   // (e.g. caught by the SPA's fallback and showed Home / Login).
-  const text = (await page.locator('#root').textContent()) ?? '';
+  const text = (await page.locator("#root").textContent()) ?? "";
   expect(text.length).toBeGreaterThan(100);
-  expect(text.toLowerCase()).toContain('privacy');
+  expect(text.toLowerCase()).toContain("privacy");
 });
 
-test('iOS Safari user agent is detected by the page', async ({ page }) => {
-  await page.goto('');
+test("iOS Safari user agent is detected by the page", async ({ page }) => {
+  await page.goto("");
   // The whole point of running under devices['iPhone 14'] is to
   // exercise the webkit + iOS UA code path. Sanity-check the UA
   // string actually shows iPhone — if Playwright ever drops device

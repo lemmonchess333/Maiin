@@ -1,0 +1,198 @@
+{
+  "exerciseId": "glute-ham-raise",
+  "version": "anatomy-v3-2026-10-11-four-pose-v1",
+  "width": 1188,
+  "height": 1072,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T21:20:09.067468+00:00",
+  "reference": {
+    "path": "form-frames/glute-ham-raise/1.webp",
+    "sha256": "aeafe26f5de0596f2f7e1924a6d0739d8913f3fe90ef7eda8cb314e4406c1df0"
+  },
+  "cueSha256": "fda949db410dbc06afa8d0a10b68dd02673bab3c5e402d7e5a629e2544c3d4b0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Existing upright source plus three built-in edits c1e0d8f2,8a7e1eab and2c8af365, each attaching canonical anatomy-v3. Bald faceless lean white athlete, white trainers, smooth neutral pelvis and fine grey contours. Four finished poses reviewed natively; qualitative identity/proportion review, not exact3D certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same three-quarter side GHD scene. Long output required whole-scene+32px y, supported independently by base/post template matches. No rescale, body warps or grafts. Common near-black side crop230..1418 and48px top padding produce1188x1072."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Upright, early and later lowering, then corrected almost-horizontal endpoint. Arms crossed, hips extended, knee/thigh support maintained. No independent limb fitting. Minor contour changes accepted under revised standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Stationary rounded split thigh pad, paired ankle rollers, footplate and full grey GHD. Source middle erased lower frame members: user-authorized same-coordinate master equipment restoration belowy650 recovers them; same lower region restored in long pose. Entire fixed lower frame byte-identical across poses, bounding span855/height339. Upper pad/footplate contours vary slightly, approximately1-3px after alignment; disclosed cosmetic variation, not exact upper-rig equality. Two genuinely fixed base-foot outer edge anchors independently measured in all four final poses; coordinates identical. See scene-anchor-measurements.json."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Actual CrossFit demonstration w_7UaXfsbaw inspected at55/60/65/66seconds. Ankles stay between paired rollers, shoes against footplate, lower thighs roll on rounded pad. Native shoe bright-region boundary samples vary at most3px vertically and2px horizontally. Qualitative support check; no calibrated3D measurements."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Forward lowering comes through knee extension with hips held extended, then return reverses it. Apparatus stays fixed. Source scene margins provide room for whole body without clipping. No hip-hinge substitution or transformed anatomy."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Hamstrings #7B72E9, secondary Glutes/Calves #9590E0, solid editable fields intersect existing source muscle regions. Inherited neutral shading preserved; new fine source-derived contours #777. No new gradients or added highlights on other muscles."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, Lower, Extend, Long, Curl, Rise cues match the four-pose movement and contain at most7words. Six distinct playback paths reuse1,2,3,4,3,2 under revised user standard; not six independently authored poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All four native final poses and1188x1072 six-beat playback inspected. Native trace records all6; deliberate lower hold and reverse return. No distracting base movement."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light theme, all six decoded beats and6to1closure; athlete/machine visible, controls/key/cues readable. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual same component390x844 dark, all six beats andclosure; pause/manual6to1observed, console empty. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/glute-ham-raise/1.webp",
+      "sha256": "aeafe26f5de0596f2f7e1924a6d0739d8913f3fe90ef7eda8cb314e4406c1df0",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 513, 1171, 640],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    },
+    {
+      "path": "form-frames/glute-ham-raise/2.webp",
+      "sha256": "3923e3e7ef9c854f96b27f6c03c7395da3a795c9b1ac0cd76a73991a62369983",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 512, 1171, 637],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    },
+    {
+      "path": "form-frames/glute-ham-raise/3.webp",
+      "sha256": "25460d71f128fbe650039ebc08cf2abf7fddc706ffd5c3428c96673ab1f22dea",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 513, 1172, 637],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    },
+    {
+      "path": "form-frames/glute-ham-raise/4.webp",
+      "sha256": "7f8192aaf1d743090745ce1fd3458c3fe3db3e2951f18c86a0b16cf5991889b7",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 513, 1173, 637],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    },
+    {
+      "path": "form-frames/glute-ham-raise/5.webp",
+      "sha256": "25460d71f128fbe650039ebc08cf2abf7fddc706ffd5c3428c96673ab1f22dea",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 513, 1172, 637],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    },
+    {
+      "path": "form-frames/glute-ham-raise/6.webp",
+      "sha256": "3923e3e7ef9c854f96b27f6c03c7395da3a795c9b1ac0cd76a73991a62369983",
+      "invariantDimensions": {
+        "fixedLowerFrameSpan": 855,
+        "fixedLowerFrameHeight": 339
+      },
+      "observedContacts": {
+        "nativeShoeBrightRegionBounds": [1134, 512, 1171, 637],
+        "fixedLowerFrameSha256": "230cb2240db90e4e50d5d24fe0894a8fa6d38960edc592897fdf028f3a60fdb5"
+      },
+      "anchors": {
+        "leftBaseFootOuterEdge": {
+          "x": 289,
+          "y": 967
+        },
+        "rightBaseFootOuterEdge": {
+          "x": 1143,
+          "y": 946
+        }
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in incremental-production/final-verification.json; no new failure headings. Full suite remains failing."
+}

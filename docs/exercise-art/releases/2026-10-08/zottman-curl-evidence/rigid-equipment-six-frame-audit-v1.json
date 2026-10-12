@@ -1,0 +1,353 @@
+{
+  "status": "Native-reviewed six-frame equipment candidates; not released",
+  "files": [
+    "frame1-rigid-equipment-v6-draft.png",
+    "frame2-rigid-equipment-v3-draft.png",
+    "frame3-rigid-equipment-v3-draft.png",
+    "frame4-rigid-equipment-v2-draft.png",
+    "frame5-rigid-equipment-v3-draft.png",
+    "frame6-rigid-equipment-v2-draft.png"
+  ],
+  "equipmentSource": "rigid-equipment-source-v1.json",
+  "method": "Rebuild every equipment layer from the exact same immutable near/far asset and recorded translation/rotation. Compare decoded RGBA to actual compositing layers. Measure unchanged fixed landmarks from final PNGs.",
+  "limits": [
+    "These are image-space source invariants, not manufacturer dimensions or calibrated physical measurements.",
+    "Native whole-sequence elbow/limb-proportion/contact/physics review is still required.",
+    "Previous mobile review belongs to original working frames, not these equipment candidates."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "file": "frame1-rigid-equipment-v6-draft.png",
+      "sha256": "e353e031f406d4491382cba0da2abd02ce577f65d7128b62ed91a20f7f12144a",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [295, 734, 4],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [654, 744, 0],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [405, 12, 574, 214],
+          "width": 170,
+          "height": 203
+        },
+        "crown": [491.0, 12],
+        "far_shoe": {
+          "bbox": [269, 1290, 492, 1418],
+          "width": 224,
+          "height": 129
+        },
+        "far_shoe_toe": [269, 1397.5],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1460.0]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 0,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [0.0, 0.0],
+        "far_shoe_toe": [0.0, 0.0],
+        "near_shoe_toe": [0.0, 0.0]
+      },
+      "frameSpecificEvidence": "frame1-rigid-equipment-v6-review.json"
+    },
+    {
+      "frame": 2,
+      "file": "frame2-rigid-equipment-v3-draft.png",
+      "sha256": "b16d193d74303a5950790c60625d984dfa96488cde27b3845b9a665c9f3e374b",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [270, 552, 8],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [558, 582, 5.5],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [405, 12, 574, 214],
+          "width": 170,
+          "height": 203
+        },
+        "crown": [491.0, 12],
+        "far_shoe": {
+          "bbox": [270, 1290, 492, 1418],
+          "width": 223,
+          "height": 129
+        },
+        "far_shoe_toe": [270, 1397.0],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1460.5]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 1322,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [0.0, 0.0],
+        "far_shoe_toe": [1.0, -0.5],
+        "near_shoe_toe": [0.0, 0.5]
+      },
+      "frameSpecificEvidence": "frame2-rigid-equipment-v3-review.json"
+    },
+    {
+      "frame": 3,
+      "file": "frame3-rigid-equipment-v3-draft.png",
+      "sha256": "cae4ae2ba12480824f9ee584cb9c6e8c7e393ac2d834d4876202e02c19bda575",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [294, 330, 7],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [560, 345, 3.6],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [404, 11, 574, 214],
+          "width": 171,
+          "height": 204
+        },
+        "crown": [492.0, 11],
+        "far_shoe": {
+          "bbox": [269, 1290, 492, 1419],
+          "width": 224,
+          "height": 130
+        },
+        "far_shoe_toe": [269, 1398.0],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1461.0]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 122,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [1.0, -1.0],
+        "far_shoe_toe": [0.0, 0.5],
+        "near_shoe_toe": [0.0, 1.0]
+      },
+      "frameSpecificEvidence": "frame3-rigid-equipment-v3-review.json"
+    },
+    {
+      "frame": 4,
+      "file": "frame4-rigid-equipment-v2-draft.png",
+      "sha256": "343697038b09d34114e82ec17e268670bc90596f9757f31b18b2d53fbb891d81",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [290, 328, 2],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [565, 339, 2],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [405, 12, 574, 214],
+          "width": 170,
+          "height": 203
+        },
+        "crown": [491.0, 12],
+        "far_shoe": {
+          "bbox": [269, 1290, 492, 1418],
+          "width": 224,
+          "height": 129
+        },
+        "far_shoe_toe": [269, 1398.0],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1460.5]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 72,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [0.0, 0.0],
+        "far_shoe_toe": [0.0, 0.5],
+        "near_shoe_toe": [0.0, 0.5]
+      },
+      "frameSpecificEvidence": "frame4-rigid-equipment-v2-review.json"
+    },
+    {
+      "frame": 5,
+      "file": "frame5-rigid-equipment-v3-draft.png",
+      "sha256": "284aa4c4f6eba9543df45633c0c4d9f7ec7461dfd4d6f5c965111bd641532371",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [267, 603, 1],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [546, 603, 0],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [404, 12, 573, 214],
+          "width": 170,
+          "height": 203
+        },
+        "crown": [491.0, 12],
+        "far_shoe": {
+          "bbox": [269, 1290, 492, 1418],
+          "width": 224,
+          "height": 129
+        },
+        "far_shoe_toe": [269, 1397.5],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1460.5]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 872,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [0.0, 0.0],
+        "far_shoe_toe": [0.0, 0.0],
+        "near_shoe_toe": [0.0, 0.5]
+      },
+      "frameSpecificEvidence": "frame5-rigid-equipment-v3-review.json"
+    },
+    {
+      "frame": 6,
+      "file": "frame6-rigid-equipment-v2-draft.png",
+      "sha256": "290787facc5b08a7d98e4179a592c71ef977b569b8525f59979684ab8a40504b",
+      "equipment": {
+        "far": {
+          "asset": "rigid-far-dumbbell-v1.png",
+          "assetSha256": "a7acee91595db3a7c3e09f312e0d20a3097593699fe01d8850c9c09df49ac219",
+          "rasterSize": [245, 170],
+          "pivot": [121.5576923076923, 84.05555555555556],
+          "pose": [308, 755, 3],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        },
+        "near": {
+          "asset": "rigid-near-dumbbell-v1.png",
+          "assetSha256": "9d0a38bf79992238957ca0be16b87fd9aad8aeaa73ea65f99bf474f03ff9f709",
+          "rasterSize": [260, 180],
+          "pivot": [129, 89],
+          "pose": [658, 765, -0.8],
+          "decodedLayerMatchesRebuiltRigidAsset": true
+        }
+      },
+      "fixedLandmarks": {
+        "head": {
+          "bbox": [404, 12, 574, 214],
+          "width": 171,
+          "height": 203
+        },
+        "crown": [491.0, 12],
+        "far_shoe": {
+          "bbox": [269, 1290, 492, 1418],
+          "width": 224,
+          "height": 129
+        },
+        "far_shoe_toe": [269, 1397.5],
+        "near_shoe": {
+          "bbox": [506, 1335, 689, 1478],
+          "width": 184,
+          "height": 144
+        },
+        "near_shoe_toe": [506, 1460.5]
+      },
+      "primarySourcePixelsChangedOutsideNewEquipment": 0,
+      "primarySourcePixelsCoveredByNewEquipment": 0,
+      "purplePixelsOnOpaqueEquipment": 0,
+      "nativeFullFrameReviewed": true,
+      "nativeEnlargedGripsReviewed": true,
+      "releaseAccepted": false,
+      "anchorDriftFromFrame1": {
+        "crown": [0.0, 0.0],
+        "far_shoe_toe": [0.0, 0.0],
+        "near_shoe_toe": [0.0, 0.5]
+      },
+      "frameSpecificEvidence": "frame6-rigid-equipment-v2-review.json"
+    }
+  ],
+  "allEquipmentLayersMatchImmutableSource": true,
+  "allPrimaryChangesAreEquipmentOcclusion": true,
+  "uniqueFinalDecodedFrames": 6
+}

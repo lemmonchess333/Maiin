@@ -1,0 +1,222 @@
+{
+  "exerciseId": "tricep-dips",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 1024,
+  "height": 1664,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T20:02:17.617609+00:00",
+  "reference": {
+    "path": "form-frames/tricep-dips/1.webp",
+    "sha256": "dea0f54d89d6177ecbfa72fc907ba9e33bfddddc5073f6718caf85f36b94ea5b"
+  },
+  "cueSha256": "98d92784f9e088d9214e8214df61b5692303e96accf7a65a361f8015d4e2115d",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 referenced in every generation. Same lean bald faceless white athlete, neutral pelvis, white trainers and grey anatomy contours. Full prompts and sources in side-production/provenance.json."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All three generated poses normalized by exact uniform128/123 to1024x1664. Entire scenes translated vertically-12/0/-1px to register the stationary rail ends; no local anatomical transforms. Camera remains three-quarter front/side."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All three final native images reviewed: upright support, partially flexed elbows, upper arms near horizontal at bottom. Knees remain bent and feet suspended. Modest trunk/head and lower-leg angle variation accepted under revised standard; no frozen-leg or exact3D claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same neutral grey parallel dip stand. The fixed base belowy1250 restored from middle scene, where all anatomy is above the cut. Independent shoe-lowest samples1231/1112/1088 establish clearance. No body or shoe grafts. Source rail/contact geometry retained."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Far hand bottom sampley839 throughout, near855plus/minus1px. Rail end samples within1px. Fixed-base anchors and dimensions exact in decoded images. Both closed grips visible throughout; unsupported feet remain off the stand/floor."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Body lowers between fixed grips through elbow flexion, then rises to straight-arm support. Bottom upper arms approximately horizontal, torso largely upright as required by Tricep Dips catalogue. Suspended lower legs change angle naturally; no planted foot requirement."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue tricep-dips specifies primary Triceps and secondary Chest/Front Delts. Exact#7B72E9 and#9590E0 interiors, fine#777 contours recovered, neutral inherited shading retained. Colour masks do not transform anatomy; all sources/layers and script saved. Shared chest-dip alias geometry is not used to invert the Tricep Dips catalogue muscle map."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues describe straight-arm support, controlled lower, near-horizontal upper arms, suspended hold, press and reset. Three poses reused3,2,1,1,2,3 across six unique paths under revised standard."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native1024x1664 trace covers six beats. Full native poses inspected, actual phone motion checked. Return repeats intentional; not six separately authored physical poses."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent at390x844 light theme: all six decoded beats and6to1 closure, full athlete/stand visible and key/cues readable. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real component at390x844 dark: six decoded beats/closure, pause and manual6to1 verified, no console errors. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/tricep-dips/1.webp",
+      "sha256": "dea0f54d89d6177ecbfa72fc907ba9e33bfddddc5073f6718caf85f36b94ea5b",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [815, 848],
+        "farRailCapAt160": [813, 849],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 854,
+        "headTop": 141,
+        "shoeLowestInRearRegion": 1088
+      }
+    },
+    {
+      "path": "form-frames/tricep-dips/2.webp",
+      "sha256": "5d4b6f562eaeb1aac1697ef54898d682c6d075729ff4aa586bec6b047375aaab",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [815, 848],
+        "farRailCapAt160": [813, 849],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 855,
+        "headTop": 226,
+        "shoeLowestInRearRegion": 1112
+      }
+    },
+    {
+      "path": "form-frames/tricep-dips/3.webp",
+      "sha256": "ccb52224d581f5fca83156dd2ea1c812a12ad22d012baa4faa2d550e2752dcdc",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [814, 848],
+        "farRailCapAt160": [813, 850],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 856,
+        "headTop": 388,
+        "shoeLowestInRearRegion": 1231
+      }
+    },
+    {
+      "path": "form-frames/tricep-dips/4.webp",
+      "sha256": "ccb52224d581f5fca83156dd2ea1c812a12ad22d012baa4faa2d550e2752dcdc",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [814, 848],
+        "farRailCapAt160": [813, 850],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 856,
+        "headTop": 388,
+        "shoeLowestInRearRegion": 1231
+      }
+    },
+    {
+      "path": "form-frames/tricep-dips/5.webp",
+      "sha256": "5d4b6f562eaeb1aac1697ef54898d682c6d075729ff4aa586bec6b047375aaab",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [815, 848],
+        "farRailCapAt160": [813, 849],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 855,
+        "headTop": 226,
+        "shoeLowestInRearRegion": 1112
+      }
+    },
+    {
+      "path": "form-frames/tricep-dips/6.webp",
+      "sha256": "dea0f54d89d6177ecbfa72fc907ba9e33bfddddc5073f6718caf85f36b94ea5b",
+      "anchors": {
+        "leftBase": {
+          "x": 110,
+          "y": 1400
+        },
+        "frontBase": {
+          "x": 640,
+          "y": 1482
+        }
+      },
+      "invariantDimensions": {
+        "leftBaseVerticalSpan": 42,
+        "frontBaseVerticalSpan": 182
+      },
+      "observedContacts": {
+        "farRailCapAt155": [815, 848],
+        "farRailCapAt160": [813, 849],
+        "farHandBottomSample": 839,
+        "nearHandBottomSample": 854,
+        "headTop": 141,
+        "shoeLowestInRearRegion": 1088
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [3, 2, 1, 1, 2, 3],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full tests: 50 failed,11246 passed,367 skipped. One additional RunPlanSettings timeout versus measured same-HEAD baseline; unchanged focused rerun passed all28 tests. See side-production/final-verification.json. Full suite is not green."
+}

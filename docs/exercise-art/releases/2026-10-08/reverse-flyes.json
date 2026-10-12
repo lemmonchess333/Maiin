@@ -1,0 +1,205 @@
+{
+  "exerciseId": "reverse-flyes",
+  "version": "anatomy-v3-2026-10-08-reverse-flyes-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and actual mobile artwork review",
+  "reviewedAt": "2026-10-08T22:28:54.215765+00:00",
+  "reference": {
+    "path": "form-frames/reverse-flyes/4.webp",
+    "sha256": "4d097e57ff7c13e09a45821010cfeefba437cdd5b5dcfd44ce4f2f8c74f717b5"
+  },
+  "cueSha256": "5d72ba508dfeab945e1e8cb4ac7509e875342ab28377dc5c42d95cb90c8e7950",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical reference used for master and every pose. Native six-frame review preserves bald faceless athlete, physique, neutral pelvis and trainers. User explicitly chose preserved canonical contour appearance on2026-10-08."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Six1536x1024 sources retain three-quarter camera, hinge and framing. Native fullframe browser captures1..6 reviewed."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six distinct poses show controlled bilateral opening and lowering with soft elbows; no anatomical scaling, warping or grafts."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two grey hex dumbbells retained in native sequence; handles remain gripped and weights follow hands. Qualitative projected geometry review, not calibrated3D dimensions."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both grips closed and trainers planted. Fixed bright shoe bounds measured across six sources within1pixel; source geometry unchanged by palette edits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both arms open outward/up through1..4 then return inward/down through5,6,1. No visible inverted beat, detachment or torso lift. Full native browser sequence inspected."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Rear delts primary#7B72E9, traps/rhomboids secondary#9590E0. v5 layered palette/edge repair and lossless delivery audit retained. Canonical neutral contour appearance preserved under direct human choice."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six concise captions map to hang, initiate, spread, open, lower, return; max7words. Final shortened captions retain reviewed movement meaning; integrated display recheck pending."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native full1536x1024 browser sequence and wraparound reviewed, autoplay trace confirms all six; saved native-motion1..6 and native-loop-trace-final.json."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent staged finalv5 files at390x844; six loaded and autoplayed in light theme. mobile-light.png/mobile-playback.json. Final publicURL recheck pending."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent staged finalv5 files at390x844; six loaded and autoplayed in dark theme. mobile-dark.png/mobile-playback.json. Final publicURL recheck pending."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/reverse-flyes/1.webp",
+      "sha256": "62bbda12e33e43592459a4c61f3945f811e1289462787dc7d77b70273396f56a",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 643,
+          "y": 860
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 946
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 192,
+        "rightShoeProjectedWidth": 190
+      }
+    },
+    {
+      "path": "form-frames/reverse-flyes/2.webp",
+      "sha256": "374bdf614e3dc9be4b77f7ac5fb2470fc7768267c2784c5d0b410d362dbd4c50",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 643,
+          "y": 859
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 192,
+        "rightShoeProjectedWidth": 190
+      }
+    },
+    {
+      "path": "form-frames/reverse-flyes/3.webp",
+      "sha256": "a06f0a7cee3204030fadd349a5965ffd5bf7ff1c6b784ab45e3d588a97a409bd",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 644,
+          "y": 860
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 946
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 191,
+        "rightShoeProjectedWidth": 191
+      }
+    },
+    {
+      "path": "form-frames/reverse-flyes/4.webp",
+      "sha256": "4d097e57ff7c13e09a45821010cfeefba437cdd5b5dcfd44ce4f2f8c74f717b5",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 644,
+          "y": 859
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 191,
+        "rightShoeProjectedWidth": 190
+      }
+    },
+    {
+      "path": "form-frames/reverse-flyes/5.webp",
+      "sha256": "0a4fb0580738f16b932335aeb449ffbdd6851c3f4573ff1cb8d90f7a22ebb9e5",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 643,
+          "y": 860
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 192,
+        "rightShoeProjectedWidth": 190
+      }
+    },
+    {
+      "path": "form-frames/reverse-flyes/6.webp",
+      "sha256": "573ac9abb3a4fb0bf8590fdcd654f2156605a6a4691e964bb455a2b9c4053541",
+      "anchors": {
+        "leftShoeLowerOuterBound": {
+          "x": 643,
+          "y": 859
+        },
+        "rightShoeLowerOuterBound": {
+          "x": 805,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeProjectedWidth": 192,
+        "rightShoeProjectedWidth": 190
+      }
+    }
+  ],
+  "contourDecision": {
+    "date": "2026-10-08",
+    "userReply": "yeah preserve",
+    "decision": "Preserve the approved canonical model existing contour and neutral shading appearance. Do not enforce exact #777777 on inherited darker contour pixels. Primary #7B72E9 and secondary #9590E0 remain required.",
+    "source": "Direct human reply in this conversation"
+  },
+  "integrationValidation": "Artwork locally complete: all visual, mobile, card, exact-file and targeted art contracts pass. Required full verification executed;55failureentries reproduced oncleanHEAD, integrated-only metadatafailurefixed,2hooktimeouts passed isolated37testsrerun. Full suite NOT green; see final-verification.json.",
+  "evidenceRoot": "work/reverse-flyes/forward-production",
+  "integratedReview": {
+    "visualPassed": true,
+    "allSixPublicURLs": true,
+    "viewport": [390, 844],
+    "themes": ["light", "dark"],
+    "cutoutPublicURL": "/form-art/reverse-flyes.webp",
+    "cutoutDimensions": [480, 438],
+    "draftMiddleware": false,
+    "cueTransform": false,
+    "evidence": [
+      "integrated-playback.json",
+      "integrated-light.png",
+      "integrated-dark.png",
+      "integrated-card-light.png",
+      "integrated-card-dark.png",
+      "integrated-console.json"
+    ],
+    "notes": "All six public frames and cutout reviewed in both themes. Concise captions reviewed. Movement scalar corrected to match poses and282art/looptests pass.",
+    "fullSuiteGreen": false,
+    "projectVerification": "work/reverse-flyes/forward-production/final-verification.json"
+  },
+  "movementMetadataCorrection": {
+    "before": [0, 0.2, 0.4, 0.6, 0.8, 1],
+    "after": [0, 0.35, 0.75, 1, 0.8, 0.4],
+    "reason": "t denotes joint excursion, not elapsed time. Opening reaches1 then lowering returns toward0; frame6 partialreturn at.4 is visually farther out than frame2. No image, label or cue changes.",
+    "verification": "4 artwork/loop contract suites passed,282tests, integrated-art-tests-corrected.log"
+  }
+}

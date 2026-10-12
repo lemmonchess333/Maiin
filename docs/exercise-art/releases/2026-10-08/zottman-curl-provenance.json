@@ -1,0 +1,49 @@
+{
+  "exerciseId": "zottman-curl",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativePngSources": [
+    {
+      "file": "frame1-rigid-equipment-v6-draft.png",
+      "sha256": "e353e031f406d4491382cba0da2abd02ce577f65d7128b62ed91a20f7f12144a"
+    },
+    {
+      "file": "frame2-rigid-equipment-v3-draft.png",
+      "sha256": "b16d193d74303a5950790c60625d984dfa96488cde27b3845b9a665c9f3e374b"
+    },
+    {
+      "file": "frame3-rigid-equipment-v3-draft.png",
+      "sha256": "cae4ae2ba12480824f9ee584cb9c6e8c7e393ac2d834d4876202e02c19bda575"
+    },
+    {
+      "file": "frame4-rigid-equipment-v2-draft.png",
+      "sha256": "343697038b09d34114e82ec17e268670bc90596f9757f31b18b2d53fbb891d81"
+    },
+    {
+      "file": "frame5-rigid-equipment-v3-draft.png",
+      "sha256": "284aa4c4f6eba9543df45633c0c4d9f7ec7461dfd4d6f5c965111bd641532371"
+    },
+    {
+      "file": "frame6-rigid-equipment-v2-draft.png",
+      "sha256": "290787facc5b08a7d98e4179a592c71ef977b569b8525f59979684ab8a40504b"
+    }
+  ],
+  "editableSources": [
+    "work/zottman-curl/frame1-rigid-equipment-v6.ora",
+    "work/zottman-curl/frame2-rigid-equipment-v3.ora",
+    "work/zottman-curl/frame3-rigid-equipment-v3.ora",
+    "work/zottman-curl/frame4-rigid-equipment-v2.ora",
+    "work/zottman-curl/frame5-rigid-equipment-v3.ora",
+    "work/zottman-curl/frame6-rigid-equipment-v2.ora"
+  ],
+  "method": "Canonical-attached exercise master and subsequent frames, independently traced exact-palette muscle layers, original complete hand surfaces, immutable source equipment layers with translation/rotation only. Observed static body background restores old gear coverage; no anatomy warp. Lossless WebP decoded RGBA exactly matches reviewed final PNGs.",
+  "originalProductionBackup": "work/zottman-curl/prior-production-2026-09-24",
+  "canonicalGeneratorReferencePolicy": "Original working sequence generation attached canonical and accepted exercise master; adjacent frame was additional. Deterministic repairs preserve those sources; rejected candidates never identity seeds.",
+  "limitations": [
+    "Source intrinsic image dimensions are not calibrated3D or manufacturer millimetres.",
+    "Review harness imported real Form components; authenticated app navigation was not part of artwork review.",
+    "Project baseline contains measured failures; compare post-change exact failures before release handback."
+  ]
+}
