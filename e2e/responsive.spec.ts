@@ -34,7 +34,7 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
   for (const vp of VIEWPORTS) {
     test(`no horizontal scroll on / at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto('/');
+      await page.goto('');
       await page.waitForLoadState('domcontentloaded');
       const overflow = await page.evaluate(() => {
         return {
@@ -50,7 +50,7 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
 
     test(`no horizontal scroll on /privacy at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto('/privacy');
+      await page.goto('privacy');
       await page.waitForLoadState('domcontentloaded');
       const overflow = await page.evaluate(() => ({
         body: document.body.scrollWidth,
@@ -61,7 +61,7 @@ test.describe('Responsive — unauthenticated surfaces sweep', () => {
   }
 
   test('CSS bundle includes the --primary-strong token (PR D)', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     /* The token has to land somewhere in the active stylesheet for
        bg-primary-strong / THEME.brandStrong to resolve at runtime. We
        don't depend on the Social page being reachable to validate

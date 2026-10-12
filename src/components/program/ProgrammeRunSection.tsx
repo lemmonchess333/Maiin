@@ -123,11 +123,13 @@ import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { runDoseLine } from "@/lib/runDose";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -148,7 +150,10 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { racePaceFinishFor } from "@/lib/racePaceFinish";
 import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
@@ -157,7 +162,7 @@ import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
-  compactRunLabel,
+  runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
@@ -723,7 +728,7 @@ export default function ProgrammeRunSection({
           // a fixed frame on both, so position disambiguates S/S and T/T.
           topLabel: format(date, "EEEEE"),
           center: String(date.getDate()),
-          bottomLabel: hasRun ? compactRunLabel(run.template) : "",
+          bottomLabel: hasRun ? runStripLabel(run.template) : "",
           status,
           isToday: d.dateKey === todayKeyDerivation,
         };
@@ -804,6 +809,7 @@ export default function ProgrammeRunSection({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
           racePaceFinish: selectedRaceFinish !== null,
         })
       : { purpose: null, weekLabel: null };
@@ -834,28 +840,32 @@ export default function ProgrammeRunSection({
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when
   // neither, so the card just shows pace/type as before.
-  const selectedHrLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+  const selectedHrItems: string[] = (() => {
+    if (!selectedTemplate) return [];
     const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
-    const band = targetZoneForRun(selectedTemplate.type, maxHr);
-    return band ? `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm` : null;
+    const band = targetZoneForRun(
+      selectedTemplate.type,
+      maxHr,
+      selectedTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
 
   // Meta line for the selected run (distance/duration · pace · HR zone · type).
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
-    if (selectedTemplate.config.targetDistanceKm) {
-      meta.push(`${selectedTemplate.config.targetDistanceKm} km`);
-    } else if (selectedTemplate.estimatedDuration) {
-      meta.push(`${selectedTemplate.estimatedDuration} min`);
-    }
-    if (selectedPaceLabel) meta.push(selectedPaceLabel);
-    if (selectedHrLabel) meta.push(selectedHrLabel);
+    // Run21 (5): a long run's minutes at the runner's own pace.
     meta.push(
-      selectedTemplate.type.charAt(0).toUpperCase() +
-        selectedTemplate.type.slice(1)
+      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
     );
+    if (selectedPaceLabel) meta.push(selectedPaceLabel);
+    meta.push(...selectedHrItems);
+    // The zone's name says "Easy" already for an easy run (Run21 (1)).
+    const typeWord =
+      selectedTemplate.type.charAt(0).toUpperCase() +
+      selectedTemplate.type.slice(1);
+    if (!meta.includes(typeWord)) meta.push(typeWord);
     return meta;
   })();
   // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).

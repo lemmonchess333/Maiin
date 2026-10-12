@@ -32,6 +32,7 @@ import {
   screen,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
@@ -327,6 +328,60 @@ describe("ProgrammeRunSection — runDay rendering", () => {
     expect(
       screen.queryByText(/Race completed separately/i)
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — why this run names only what the week holds", () => {
+  // An easy day in a race plan's build: a returning runner's week holds no
+  // tempo or intervals (Run15), so they can't be its reason (Run21 (3)).
+  function why(otherTemplateId: string) {
+    const today = new Date();
+    const weekKey = localWeekKey(today);
+    const later = new Date(today);
+    later.setDate(later.getDate() + 2);
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_today",
+          dayIndex: today.getDay(),
+          date: localDateString(today),
+          weekKey,
+          templateId: "easy_30",
+        }),
+        makeRunDay({
+          id: "runday_other",
+          dayIndex: later.getDay(),
+          date: localDateString(later),
+          weekKey,
+          templateId: otherTemplateId,
+          type: otherTemplateId.startsWith("tempo") ? "tempo" : "easy",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+          totalWeeks: 12,
+          currentWeek: 6,
+        },
+      } as Partial<ProgramState>
+    );
+    const { unmount } = renderWith(
+      <ProgrammeRunSection {...commonProps()} programState={programState} />
+    );
+    const text = document.body.textContent ?? "";
+    unmount();
+    return text;
+  }
+
+  it("names the quality sessions in a week that holds one", () => {
+    expect(why("tempo_20")).toMatch(/it makes the quality sessions work/);
+  });
+
+  it("gives a reason true of any week when it holds none", () => {
+    const text = why("easy_40");
+    expect(text).toMatch(/most of your running is easy/);
+    expect(text).not.toMatch(/quality sessions/);
   });
 });
 
@@ -783,6 +838,44 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
     expect(screen.queryByText(/with race pace/)).toBeNull();
+  });
+
+  it("Run21 (5): today's long run states its minutes at the runner's confirmed pace", () => {
+    const props = commonProps();
+    const metaLine = () =>
+      Array.from(document.querySelectorAll("p"))
+        .map((el) => el.textContent ?? "")
+        .find((text) => /· 15 km\b/.test(text));
+    const renderToday = (extra: Partial<UserProfile>) =>
+      renderWith(
+        <ProgrammeRunSection
+          {...props}
+          profile={makeProfile(extra)}
+          programState={makeProgramState([
+            makeRunDay({
+              id: "runday_long",
+              templateId: "long_15k",
+              status: "planned",
+              date: TODAY_KEY,
+              dayIndex: TODAY_DOW,
+            }),
+          ])}
+        />
+      );
+    const confirmed = renderToday({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+        updatedAt: "2026-09-01T00:00:00.000Z",
+        pendingConfirmation: false,
+      },
+    } as Partial<UserProfile>);
+    expect(metaLine()).toMatch(/· 15 km · about 100 min\b/);
+    confirmed.unmount();
+    renderToday({});
+    expect(metaLine()).toMatch(/· 15 km\b/);
+    expect(metaLine()).not.toMatch(/about \d+ min/);
   });
 
   it("Run21 (3): today's run card says what it is, how it should feel, why and what to do", () => {
@@ -1636,5 +1729,56 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
       "aria-selected",
       "true"
     );
+  });
+});
+
+describe("ProgrammeRunSection — the heart-rate zone carries its name", () => {
+  // Run21 (1): "Z2 · Easy", not "Z2" alone; the run's own type word isn't
+  // said twice beside it.
+  it("names the zone on the selected run's line", () => {
+    const today = new Date();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ maxHeartRate: 200 })}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            dayIndex: today.getDay(),
+            date: localDateString(today),
+            weekKey: localWeekKey(today),
+            templateId: "easy_30",
+          }),
+        ])}
+      />
+    );
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Z2 · Easy · 120–140 bpm");
+    expect(text).not.toContain("120–140 bpm · Easy");
+  });
+});
+
+describe("ProgrammeRunSection — the week strip names each run (Run21 (2))", () => {
+  it("says which session a day holds, strides included, not its minutes", () => {
+    const today = new Date();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_today",
+            dayIndex: today.getDay(),
+            date: localDateString(today),
+            weekKey: localWeekKey(today),
+            templateId: "easy_30_strides",
+          }),
+        ])}
+      />
+    );
+    const strip = screen.getByRole("tablist", { name: "Run week" });
+    expect(
+      within(strip).getByRole("tab", { name: "Easy 30 + strides, today" })
+    ).toBeInTheDocument();
+    expect(within(strip).queryByText("30m")).not.toBeInTheDocument();
   });
 });

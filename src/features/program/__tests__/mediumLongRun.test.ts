@@ -112,13 +112,19 @@ describe("the medium-long in generated plans", () => {
     }
   });
 
-  it("taper weeks never carry a medium-long", () => {
+  it("the taper steps the medium-long down, and the week before race week carries none (Run22)", () => {
+    // Before Run22 no taper week carried one. Now three weeks before race
+    // week it is 75% of the last build week's, two weeks before 60%, each
+    // the plan's own size at most that share.
     const p = plan("marathon", 20, 4);
-    const taperWeeks = p.weeks.slice(-3, -1); // last weeks before race week
-    for (const wk of taperWeeks) {
-      for (const id of easies(wk)) {
-        expect(minutes(id)).toBeLessThanOrEqual(30);
-      }
+    const out = (weeks: number) => p.weeks[p.weeks.length - 1 - weeks];
+    const longestEasy = (weeks: number) =>
+      Math.max(...easies(out(weeks)).map(minutes));
+    expect(longestEasy(4)).toBe(90); // the last build week
+    expect(longestEasy(3)).toBe(60); // 67.5
+    expect(longestEasy(2)).toBe(50); // 54
+    for (const id of easies(out(1))) {
+      expect(minutes(id)).toBeLessThanOrEqual(30);
     }
   });
 

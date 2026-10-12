@@ -25,7 +25,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import {
   localDateString,
   localWeekKey,
@@ -236,6 +236,106 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     );
     expect(why).toHaveTextContent(/How it should feel.*Easy, then quick/);
     expect(why).toHaveTextContent(/If it feels wrong.*Leave the strides out/);
+  });
+
+  /* Run21 (5): a long run's minutes come from the runner's own confirmed
+     easy pace, else the distance alone. */
+  it("gives a long run its minutes at a confirmed pace, and its distance without one", () => {
+    const date = dayOfThisWeek(6);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "run",
+    ]);
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: 6,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId: "long_15k",
+      }),
+    ]);
+    const card = (profile: UserProfile) =>
+      renderCard(
+        <DayPeekCard
+          todayKey={localDateString()}
+          dateKey={date}
+          profile={profile}
+          programState={program}
+          claimMap={emptyClaimMap}
+          extras={emptyExtras}
+          workouts={[]}
+          dailyTotals={emptyTotals()}
+          onClose={vi.fn()}
+        />
+      );
+    const unconfirmed = card(makeProfile(schedule));
+    expect(screen.getByText("15 km")).toBeInTheDocument();
+    unconfirmed.unmount();
+    card({
+      ...makeProfile(schedule),
+      // A 25-minute 5K: an easy pace of about 6:32 /km.
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+        source: "manual",
+      },
+    } as UserProfile);
+    expect(screen.getByText("15 km · about 100 min")).toBeInTheDocument();
+  });
+
+  it("names the quality sessions only in a week that holds one (Run21 (3))", () => {
+    // An easy day in the build: a returning runner's week holds no tempo or
+    // intervals (Run15), and its reason can't be the sessions it doesn't have.
+    const date = dayOfThisWeek(2);
+    const weekKey = localWeekKey(parseLocalDate(date));
+    const profile = makeProfile(
+      makeSchedule(["rest", "rest", "run", "rest", "run", "rest", "rest"])
+    );
+    const withWeek = (otherTemplateId: string) => {
+      const program = makeProgramState([
+        makeRunDay({ dayIndex: 2, date, weekKey, templateId: "easy_30" }),
+        makeRunDay({
+          dayIndex: 4,
+          date: dayOfThisWeek(4),
+          weekKey,
+          templateId: otherTemplateId,
+        }),
+      ]);
+      program.runPlan = {
+        currentWeek: 9,
+        totalWeeks: 16,
+        raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+      } as ProgramState["runPlan"];
+      return program;
+    };
+    const why = (program: ProgramState) => {
+      const { unmount } = renderCard(
+        <DayPeekCard
+          todayKey={localDateString()}
+          dateKey={date}
+          profile={profile}
+          programState={program}
+          claimMap={emptyClaimMap}
+          extras={emptyExtras}
+          workouts={[]}
+          dailyTotals={emptyTotals()}
+          onClose={vi.fn()}
+        />
+      );
+      const text =
+        screen.getByText("Why this run").closest("details")!.textContent ?? "";
+      unmount();
+      return text;
+    };
+    expect(why(withWeek("tempo_20"))).toMatch(/quality sessions/);
+    const easyWeek = why(withWeek("easy_40"));
+    expect(easyWeek).toMatch(/most of your running is easy/);
+    expect(easyWeek).not.toMatch(/quality/);
   });
 
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {

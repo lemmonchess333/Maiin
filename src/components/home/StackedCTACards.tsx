@@ -96,6 +96,7 @@ export default function StackedCTACards({
             completed={run.completed}
             navigate={navigate}
             isFirst={run.isFirst}
+            dose={run.dose}
           />
         </motion.div>
       )}
