@@ -2,7 +2,10 @@ import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionAbout } from "@/lib/runSessionAbout";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -323,6 +326,10 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(
+            programState?.runDays,
+            resolved.run.runDay?.weekKey
+          ),
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)

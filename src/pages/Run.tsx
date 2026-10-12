@@ -1,5 +1,8 @@
 import { localDateString } from "@/lib/dateHelpers";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import {
   useState,
   useEffect,
@@ -658,6 +661,13 @@ export default function Run() {
     if (!id) return false;
     const day = programState?.runDays?.find((d) => d.id === id);
     return day ? isScheduledRunTerminal(getScheduledRunStatus(day)) : false;
+  }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Whether the pinned run's week holds a tempo or intervals session, for
+  // "Why this run" (an easy day's reason names them only then).
+  const launchWeekHasQuality = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return weekHoldsQuality(programState?.runDays, day?.weekKey);
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
@@ -1332,6 +1342,7 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
+                  weekHasQuality: launchWeekHasQuality,
                 }).purpose
               }
               prefill={planDecision.prefill}

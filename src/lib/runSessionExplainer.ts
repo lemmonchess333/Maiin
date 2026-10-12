@@ -23,6 +23,36 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
+  /** Whether the run's week holds a tempo or intervals session
+   *  (`weekHoldsQuality`). The build's easy day and long run name the
+   *  quality sessions only when it does: a returning runner's weeks hold none
+   *  (Run15), nor does every other build week on the gentler setting. Left
+   *  out, the week isn't assumed to. */
+  weekHasQuality?: boolean;
+}
+
+/**
+ * Whether the week `weekKey` starts holds a tempo or intervals session, the
+ * person's swaps (`userOverride`) included.
+ */
+export function weekHoldsQuality(
+  runDays:
+    | ReadonlyArray<{
+        templateId: string;
+        userOverride?: string | null;
+        weekKey?: string;
+      }>
+    | null
+    | undefined,
+  weekKey: string | null | undefined
+): boolean {
+  if (!runDays || !weekKey) return false;
+  return runDays.some((day) => {
+    if (day.weekKey !== weekKey) return false;
+    const id = day.userOverride || day.templateId;
+    const type = RUN_TEMPLATES.find((t) => t.id === id)?.type;
+    return type === "tempo" || type === "intervals";
+  });
 }
 
 /** Shared by Manage, Programme and Home: the explanation and real phase agree. */
@@ -55,7 +85,14 @@ const MEDIUM_LONG_IDS = new Set(["easy_60", "easy_75", "easy_90"]);
 export function runSessionExplainer(
   input: SessionExplainerInput
 ): string | null {
-  const { type, templateId, currentWeek, totalWeeks, distance } = input;
+  const {
+    type,
+    templateId,
+    currentWeek,
+    totalWeeks,
+    distance,
+    weekHasQuality,
+  } = input;
   if (
     currentWeek == null ||
     totalWeeks == null ||
@@ -111,9 +148,12 @@ export function runSessionExplainer(
 
   // Base / build.
   if (type === "long") {
-    return phase === "base"
-      ? "The week's anchor run — long-run volume ramps gradually through the base."
-      : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
+    if (phase === "base") {
+      return "The week's anchor run — long-run volume ramps gradually through the base.";
+    }
+    return weekHasQuality
+      ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
+      : "The week's anchor run — it builds the endurance the race needs.";
   }
   if (type === "tempo") {
     return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
@@ -128,7 +168,10 @@ export function runSessionExplainer(
   if (isStrides) {
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
   }
-  return phase === "base"
-    ? "Base phase — easy aerobic volume is the foundation everything later stands on."
-    : "Easy day — it makes the quality sessions work. If it feels too easy, it's right.";
+  if (phase === "base") {
+    return "Base phase — easy aerobic volume is the foundation everything later stands on.";
+  }
+  return weekHasQuality
+    ? "Easy day — it makes the quality sessions work. If it feels too easy, it's right."
+    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it's right.";
 }
