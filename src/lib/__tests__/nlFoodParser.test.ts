@@ -326,14 +326,16 @@ describe("parseFoodText — conjunctions", () => {
   });
 
   it("logs every food in a meal that names one the table lacks", () => {
-    /* Typed in the Food pass: one row of this whole name with the eggs'
+    /* Typed in the Food pass, before the table had a flat white: one row
+       named "Scrambled eggs on toast and a flat white (x2)" with the eggs'
        182 kcal, the toast and the coffee in the name and in nothing else,
-       and no warning. */
-    const result = parseFoodText("2 scrambled eggs on toast and a flat white");
+       and no warning. The unknown food here is made up, so the case holds
+       whatever the table learns. */
+    const result = parseFoodText("2 scrambled eggs on toast and a vlorpcake");
     expect(result.map((r) => r.name)).toEqual([
       "Scrambled eggs (x2)",
       "Toast",
-      "Flat white",
+      "Vlorpcake",
     ]);
     expect(result[0].calories).toBe(
       parseFoodText("2 scrambled eggs")[0].calories
