@@ -2158,25 +2158,65 @@ export default function WorkoutSession({
             );
           })()}
 
-          <div className="border-t border-border/40 p-3">
+          {/* The table's two controls share its foot: a set to add, and
+              the RPE row under each set. They wrap rather than squeeze a
+              label at larger text sizes. */}
+          <div className="flex flex-wrap gap-2 border-t border-border/40 p-3">
             <Button
               variant="secondary"
               size="sm"
-              fullWidth
+              className="min-w-fit flex-1"
               leftIcon={<Plus className="size-4" aria-hidden="true" />}
               onClick={() => addSet(currentExIndex)}
             >
               Add set
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-muted-foreground"
+              onClick={() => setShowRPE(!showRPE)}
+            >
+              {showRPE ? "Hide RPE" : "Show RPE"}
+            </Button>
           </div>
         </Card>
+
+        {/* What the plan asks of this exercise, as the table's caption:
+            under it, at its left edge, in one block. Centred at the
+            bottom of the list, under Up next, these lines read as loose
+            notes rather than the numbers for the sets above. */}
+        {currentExercise && (
+          <div className="-mt-2 space-y-0.5 px-1 text-xs text-muted-foreground">
+            <p>
+              Target: {currentExercise.sets}&times;
+              {formatRepTarget(currentExercise)}
+              {targetLoad(currentExercise)}
+            </p>
+            <LoweredLine exercise={currentExercise} />
+            <StretchedLine exercise={currentExercise} />
+            {/* #985 — plate breakdown per side (barbell only). */}
+            {plateLoad && plateLoad.perSide.length > 0 && (
+              <p className="font-mono tabular-nums">
+                Per side:{" "}
+                {plateLoad.perSide
+                  .flatMap(({ plateKg, count }) =>
+                    Array<number>(count).fill(plateKg)
+                  )
+                  .join(" + ")}
+                {plateLoad.remainderKg > 0 &&
+                  ` · ${plateLoad.remainderKg} kg short`}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Today's note, under the sets (DS3): an empty field above the
             table pushed the last set below the fold on a small phone. */}
         <input
           ref={notesInputRef}
           type="text"
-          placeholder="Notes (e.g. Level 8, 6.0 incline)"
+          placeholder="Add a note for next time"
           aria-label="Exercise notes"
           value={exerciseNotes[currentExIndex] || ""}
           onChange={(e) =>
@@ -2306,53 +2346,6 @@ export default function WorkoutSession({
             <SectionLabel>Up next</SectionLabel>
             <ExerciseRowSummary exercise={upNext} thumbSize="sm" />
           </Card>
-        )}
-
-        {/* RPE toggle — through the primitive for its 44px floor; the
-            hand-rolled pill was 28px tall. */}
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            className="text-muted-foreground"
-            onClick={() => setShowRPE(!showRPE)}
-          >
-            {showRPE ? "Hide RPE" : "Show RPE"}
-          </Button>
-        </div>
-
-        {/* Prescription hint */}
-        {currentExercise && (
-          <p className="text-xs text-muted-foreground text-center">
-            Target: {currentExercise.sets}&times;
-            {formatRepTarget(currentExercise)}
-            {targetLoad(currentExercise)}
-          </p>
-        )}
-        {currentExercise && (
-          <LoweredLine
-            exercise={currentExercise}
-            className="text-xs text-muted-foreground text-center"
-          />
-        )}
-        {currentExercise && (
-          <StretchedLine
-            exercise={currentExercise}
-            className="text-xs text-muted-foreground text-center"
-          />
-        )}
-
-        {/* #985 — plate breakdown per side (barbell only). */}
-        {plateLoad && plateLoad.perSide.length > 0 && (
-          <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
-            Per side:{" "}
-            {plateLoad.perSide
-              .flatMap(({ plateKg, count }) =>
-                Array<number>(count).fill(plateKg)
-              )
-              .join(" + ")}
-            {plateLoad.remainderKg > 0 &&
-              ` · ${plateLoad.remainderKg} kg short`}
-          </p>
         )}
       </div>
 
