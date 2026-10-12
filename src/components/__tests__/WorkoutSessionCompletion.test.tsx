@@ -222,6 +222,23 @@ describe("set completion through row controls", () => {
     ).toBeDisabled();
   });
 
+  /* Quieter colours (owner, 2026-10-12): a done row keeps the card's
+     colour and says done with its green tick; the row being logged is the
+     table's one tinted row. */
+  it("tints only the row being logged, not the done ones", async () => {
+    openSession();
+    const row = (index: number) =>
+      document.querySelector(`[data-set-row="${index}"] > div`)!;
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(row(1).className.split(" ")).toContain("bg-primary/10")
+    );
+    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+  });
+
   it("offers undo for a valid out-of-order set", () => {
     openSession();
     fireEvent.click(
@@ -256,23 +273,6 @@ describe("set completion through row controls", () => {
     await vi.waitFor(() =>
       expect(rowCalls().at(-1)).toEqual(["1", { block: "nearest" }])
     );
-  });
-
-  /* Quieter colours (owner, 2026-10-12): a done row keeps the card's
-     colour and says done with its green tick; the row being logged is the
-     table's one tinted row. */
-  it("tints only the row being logged, not the done ones", async () => {
-    openSession();
-    const row = (index: number) =>
-      document.querySelector(`[data-set-row="${index}"] > div`)!;
-    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
-    await vi.waitFor(() =>
-      expect(row(1).className.split(" ")).toContain("bg-primary/10")
-    );
-    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
-    expect(
-      screen.getByRole("button", { name: "Edit completed set 1" })
-    ).toBeInTheDocument();
   });
 
   it("keeps completed exercises in the draft until the workout is saved", async () => {
