@@ -65,7 +65,7 @@ export default function RunBackgroundGrantNote({
             /* `running-fill`, for the same reason `primary` uses
                `--primary-strong`: the coral identity is 3.58:1 under
                white, which its own token comment says out loud. */
-            className="mt-2 inline-flex min-h-[44px] items-center rounded-xl px-4 text-sm font-semibold active:scale-[0.97] bg-running-fill text-white"
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-xl px-4 text-sm font-semibold transition-transform active:scale-[0.97] bg-running-fill text-white"
           >
             Open settings
           </button>
@@ -74,7 +74,7 @@ export default function RunBackgroundGrantNote({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss location note"
-          className="flex size-11 flex-shrink-0 items-center justify-center rounded-lg active:scale-[0.97]"
+          className="flex size-11 flex-shrink-0 items-center justify-center rounded-lg transition-transform active:scale-[0.97]"
           style={{ color: "rgba(255,255,255,0.6)" }}
         >
           <X className="size-4" aria-hidden="true" />

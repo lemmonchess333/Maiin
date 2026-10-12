@@ -809,7 +809,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
               disabled={weeklyRunDays <= minRunDays}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -824,7 +824,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.min(7, n + 1));
               }}
               disabled={weeklyRunDays >= 7}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>

@@ -597,7 +597,7 @@ export default function DayPeekCard({
                   type="button"
                   onClick={() => setExtrasSheetOpen(true)}
                   aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open all`}
-                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md active:scale-[0.97]"
+                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md transition active:scale-[0.97]"
                 >
                   <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
                   <span>
@@ -632,7 +632,7 @@ export default function DayPeekCard({
                 <button
                   type="button"
                   onClick={() => onManage(dateKey)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg active:scale-[0.97]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg transition-transform active:scale-[0.97]"
                 >
                   <Settings2 className="size-3.5" />
                   Manage day
@@ -688,7 +688,7 @@ function ExtraRunRow({
       type="button"
       onClick={onTap}
       aria-label={`Extra run: ${distanceText} ${bucketText}, tap to open`}
-      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
       <span className="text-muted-foreground">

@@ -344,7 +344,7 @@ export default function DayActionSheet({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-2 -m-2 rounded-lg text-muted-foreground active:scale-95"
+            className="p-2 -m-2 rounded-lg text-muted-foreground transition-transform active:scale-95"
           >
             <X className="size-4" />
           </button>

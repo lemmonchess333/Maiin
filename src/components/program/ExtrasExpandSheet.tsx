@@ -154,7 +154,7 @@ function ExtraRunListItem({
         "bg-card border border-border/60",
         "flex items-center gap-3",
         "min-h-[44px]",
-        "motion-safe:transition-colors motion-safe:active:scale-[0.98]",
+        "motion-safe:transition motion-safe:active:scale-[0.98]",
         "hover:border-border"
       )}
     >

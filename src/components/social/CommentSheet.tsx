@@ -477,7 +477,7 @@ export default function CommentSheet({
                     type="button"
                     key={chip}
                     onClick={() => setText(chip)}
-                    className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-lifting-strong"
+                    className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition active:scale-95 bg-primary/10 text-lifting-strong"
                   >
                     {chip}
                   </button>
