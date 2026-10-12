@@ -1134,6 +1134,44 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
     }
   });
 
+  it("marks a bodyweight lift's load as added, and a set with none as BW (Pgm8 L6)", async () => {
+    // "10 × 8" read as a 10 kg pull-up; the plan follows the load on the
+    // belt, as Train's row does ("+10 kg").
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "pull-ups",
+            exerciseName: "Pull-Ups",
+            sets: [
+              { reps: 8, weightKg: 10, type: "working" },
+              { reps: 12, weightKg: 0, type: "working" },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () =>
+      openSession(writer(), vi.fn(), {
+        exerciseId: "pull-ups",
+        name: "Pull-Ups",
+        weight: 10,
+      })
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Last time +10 × 8. Use it for set 1",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Last time BW × 12. Use it for set 2",
+      })
+    ).toBeInTheDocument();
+  });
+
   it("fills a set from last time on a tap, until the set is done", async () => {
     h.user = { uid: "prev-user" };
     seedFirestore({

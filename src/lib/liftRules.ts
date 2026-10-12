@@ -59,6 +59,13 @@ const WORDS = [
   "ten",
 ];
 
+/**
+ * The line under "I have small plates", in setup and in Programme settings:
+ * the step it changes wherever plates go, a barbell's and a belt's on a
+ * bodyweight lift (`loadGridFor`, Pgm8 L6), from the engine's own steps.
+ */
+export const SMALL_PLATES_HINT = `Barbell lifts and weight on a belt go up ${SMALL_PLATES_STEP_KG} kg at a time instead of ${BARBELL_STEP_KG} kg.`;
+
 const word = (n: number) => WORDS[n] ?? String(n);
 const capitalised = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1);

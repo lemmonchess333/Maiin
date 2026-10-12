@@ -170,7 +170,9 @@ interface WorkoutDay {
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
-/** Last session's set as the Previous column shows it. */
+/** Last session's set as the Previous column shows it: "60 × 8", and on a
+ *  bodyweight lift "+10 × 8" for load added (Pgm8 L6, as Train's "+10 kg")
+ *  or "BW × 12" for none. */
 function previousLabel(
   prev: { weight: number; reps: number } | undefined,
   timed: boolean,
@@ -178,7 +180,8 @@ function previousLabel(
 ): string | null {
   if (!prev) return null;
   if (timed) return `${prev.reps} s`;
-  if (prev.weight > 0) return `${prev.weight} × ${prev.reps}`;
+  if (prev.weight > 0)
+    return `${bodyweight ? "+" : ""}${prev.weight} × ${prev.reps}`;
   return bodyweight ? `BW × ${prev.reps}` : null;
 }
 

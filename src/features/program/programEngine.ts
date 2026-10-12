@@ -2926,12 +2926,15 @@ export function raceWeekSession(
  * back a step a session to the weight it came down from (`lowered`,
  * already marked shown: the person chose this, so no line explains it, and
  * a stretched target's line goes for the same reason, Pgm7 A3).
- * A bodyweight lift or a hold comes down as much in reps or seconds and
- * climbs back by the usual rules; a lift with no weight yet keeps it. This
- * week has one set fewer on every lift, the miss counts start again, and
- * the return's two weeks begin (`easingBack`, which `advanceWeek` counts
- * down). A lighter week already has fewer sets and wins (the precedence
- * table in the lifting handoff), so in one the sets stay as they are.
+ * A bodyweight lift with load added comes down the same way, on its belt,
+ * by at least a plate, the lightest plate to none (Pgm8 L6, as two misses
+ * lower it). A bodyweight lift or hold with none comes down as much in reps
+ * or seconds and climbs back by the usual rules; a loaded lift with no
+ * weight yet keeps it. This week has one set fewer on every lift, the miss
+ * counts start again, and the return's two weeks begin (`easingBack`,
+ * which `advanceWeek` counts down). A lighter week already has fewer sets
+ * and wins (the precedence table in the lifting handoff), so in one the
+ * sets stay as they are.
  */
 export function easeBackIn(state: ProgramState, share: number): ProgramState {
   const smallPlates = state.settings?.smallPlates === true;
@@ -2957,7 +2960,7 @@ function easedBack(
   share: number,
   smallPlates: boolean
 ): ProgramExercise {
-  if (isBodyweightExerciseId(ex.exerciseId)) {
+  if (climbsInReps(ex.exerciseId, ex.weight)) {
     const timed = ex.repUnit === "seconds";
     const step = timed ? HOLD_STEP_SECONDS : 1;
     const floor = Math.min(timed ? MIN_HOLD_SECONDS : 4, ex.reps);
@@ -2965,6 +2968,9 @@ function easedBack(
     return { ...ex, reps: Math.max(floor, ex.reps - cut) };
   }
   if (!(ex.weight > 0)) return ex;
+  // A loaded lift with nothing lighter to go to keeps its weight; a
+  // bodyweight lift's load comes down to none, the body alone (Pgm8 L6).
+  const toNone = isBodyweightExerciseId(ex.exerciseId);
   const grid = loadGridFor(ex.exerciseId, smallPlates);
   const climbing = loweringOf(ex);
   const { stretched: _line, ...lift } = ex;
@@ -2973,7 +2979,7 @@ function easedBack(
   const stash = ex.preDeloadWeight;
   if (typeof stash === "number" && stash > ex.weight) {
     const back = lighterBy(grid, stash, share);
-    if (!(back > 0)) return ex;
+    if (!(back > 0) && !toNone) return ex;
     return {
       ...lift,
       preDeloadWeight: Math.max(back, ex.weight),
@@ -2987,7 +2993,7 @@ function easedBack(
     };
   }
   const weight = lighterBy(grid, ex.weight, share);
-  if (!(weight > 0)) return ex;
+  if (!(weight > 0) && !toNone) return ex;
   return {
     ...lift,
     weight,
