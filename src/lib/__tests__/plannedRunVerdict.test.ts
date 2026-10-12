@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
 import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import type { RunPlanMetadata } from "@/lib/runPlanMetadata";
+import { RUN_WALK_TEMPLATE_IDS } from "@/lib/workoutTemplates";
 
 /** A 25-minute 5K. */
 const FITNESS = {
@@ -74,6 +75,13 @@ describe("plannedRunVerdict", () => {
 
   it("leaves intervals unjudged: their average mixes work and rest", () => {
     expect(verdict(planned("4x1k"), 300)).toBeNull();
+  });
+
+  it("leaves a run-walk session unjudged: its average mixes runs and walks", () => {
+    // Run20 (5). Its template is an easy run, so it would otherwise be
+    // read against the easy window and called slow for its walks.
+    for (const id of RUN_WALK_TEMPLATE_IDS)
+      expect(verdict(planned(id), easy[1] + 120), id).toBeNull();
   });
 
   it("says nothing without a pace to judge against or a run to judge", () => {
