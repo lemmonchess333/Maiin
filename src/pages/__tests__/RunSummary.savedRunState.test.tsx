@@ -456,6 +456,31 @@ describe("RunSummary — splits, best efforts and the route key", () => {
     expect(screen.queryByText("Average")).toBeNull();
   });
 
+  it("counts the distance up to the run's, as a lift's finish counts its figures", async () => {
+    renderFinished({
+      points: [],
+      distance: 3200,
+      elapsed: 1150,
+      splits: [lap(1, 372), lap(2, 364), lap(3, 352)],
+    });
+    // Every figure it shows from the first paint, however fast the machine.
+    const figure = document.querySelector(".text-display") as HTMLElement;
+    expect(figure).not.toBeNull();
+    const shown = [figure.textContent ?? ""];
+    const observer = new MutationObserver(() =>
+      shown.push(figure.textContent ?? "")
+    );
+    observer.observe(figure, {
+      characterData: true,
+      childList: true,
+      subtree: true,
+    });
+    await waitFor(() => expect(figure.textContent).toMatch(/^3\.20\s*km$/));
+    observer.disconnect();
+    const values = shown.map((text) => Number.parseFloat(text));
+    expect(Math.min(...values)).toBeLessThan(3.2);
+  });
+
   it("lists best efforts from the track and keys the pace-coloured route", async () => {
     const points = track(13, 30);
     renderFinished({
