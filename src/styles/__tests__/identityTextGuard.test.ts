@@ -169,7 +169,11 @@ const EXPECTED_INLINE_USES = {
   // brand-coloured Double beside them.
   // 2026-10-01: 17 → 15. The Social pass retired the feed's recap card
   // (its run figure) and the solo feed's share card.
-  "THEME.running": 15,
+  // 2026-10-12: 15 → 17. The live run screen took the run's coral for
+  // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
+  // 22px bold distance, both large text, on a sheet that is dark in both
+  // themes, where the coral measures about 5:1.
+  "THEME.running": 17,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
