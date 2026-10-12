@@ -6,11 +6,11 @@
  * would notice one coming back: a new fixed width, a row that cannot
  * wrap, a picture that never gives way all pass every other test.
  *
- * The screens: Home, Train, History's five pages, Food and its manual
- * entry and edit sheets, Settings and every section of it, Train's
- * exercise menu, a workout, a run before, during and after, the
- * exercise, run and workout detail pages, the Weekly review, sign-up,
- * setup and the Pro page.
+ * The screens: Home, Train, History's five pages (and its charts again
+ * on a Monday), Food and its manual entry and edit sheets, Settings and
+ * every section of it, Train's exercise menu, a workout, a run before,
+ * during and after, the exercise, run and workout detail pages, the
+ * Weekly review, sign-up, setup and the Pro page.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -202,6 +202,51 @@ test.describe("large text", () => {
       await page.goto("settings");
       await ready(page, nav);
       await measure(page, "settings", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    /* How many bars a History chart draws depends on the day: the 30 days
+       up to a Monday begin on a Sunday and touch six weeks, every other
+       day's touch five, and a card that holds five weeks' labels need not
+       hold six (binAxis.ts). So History is measured on a Monday whatever
+       day this runs, at each range whose chart names every bar: a week's
+       days, a month's weeks, six months. */
+    test(`History's charts on a Monday at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      // The coming Monday, so everything seeded is in the past.
+      const monday = new Date();
+      monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7));
+      monday.setHours(12, 0, 0, 0);
+      await page.clock.setFixedTime(monday);
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const nav = page.getByRole("navigation").first();
+
+      for (const [range, views] of [
+        ["1W", [""]],
+        ["1M", ["", "lifting", "running"]],
+        ["6M", ["", "lifting", "running"]],
+      ] as const) {
+        for (const view of views) {
+          await page.goto(
+            `history?${view ? `view=${view}&` : ""}range=${range}`
+          );
+          await ready(page, nav);
+          // The chart is what this measures: a page without it would pass.
+          await page
+            .getByTestId("axis-ends")
+            .first()
+            .waitFor({ state: "attached", timeout: 20_000 });
+          await measure(
+            page,
+            `history${view ? `-${view}` : ""}-${range}-monday`,
+            width,
+            found
+          );
+        }
+      }
 
       expect(found).toEqual([]);
     });
