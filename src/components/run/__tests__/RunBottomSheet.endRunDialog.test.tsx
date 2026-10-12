@@ -20,6 +20,7 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import RunBottomSheet from "../RunBottomSheet";
+import { HUD_DESTRUCTIVE } from "../runHudTypography";
 
 afterEach(() => cleanup());
 
@@ -59,5 +60,17 @@ describe("RunBottomSheet — the End-run dialog's pace", () => {
     const dialog = openEndRunDialog("km");
     const pace = within(dialog).getByText("5:52");
     expect(pace.nextElementSibling?.textContent).toBe("/KM");
+  });
+});
+
+describe("RunBottomSheet — the End-run dialog's buttons", () => {
+  it("gives End run the run's own fill and keeps red for Discard", () => {
+    const dialog = openEndRunDialog("km");
+    const end = within(dialog).getByRole("button", { name: "End run" });
+    expect(end.getAttribute("style")).toContain("--running-fill");
+    expect(end.getAttribute("style")).not.toContain("--destructive");
+    expect(
+      within(dialog).getByRole("button", { name: "Discard run" })
+    ).toHaveStyle({ color: HUD_DESTRUCTIVE });
   });
 });
