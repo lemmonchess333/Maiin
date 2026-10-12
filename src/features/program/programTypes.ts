@@ -264,6 +264,10 @@ export function loweringOf(
    WORKOUT DAY
 ================================ */
 
+/** A session's place in the week's heavier and lighter days (backlog #3,
+ *  N9; Lift4 (5) keeps them for intermediates, unlabelled). */
+export type DayRole = "heavy" | "moderate" | "pump";
+
 export interface WorkoutDay {
   /** Exact saved session for this completed programme day. */
   completedWorkoutId?: string;
@@ -273,6 +277,15 @@ export interface WorkoutDay {
   completed: boolean;
   isCustom?: boolean;
   skipped?: boolean;
+  /**
+   * The session's day role, set when the plan is built (`withDayRoles`).
+   * It stays with the session: the week's order carries over by moving
+   * whole days (Lift4 (11)), so a role read from a day's position would
+   * pass to another session, and a block's start or end, which shifts the
+   * reps by role (`represcribeWorkouts`), would make a lighter session
+   * heavy. Older plans have none until a block re-prescribes them.
+   */
+  dayRole?: DayRole;
 }
 
 /* ================================

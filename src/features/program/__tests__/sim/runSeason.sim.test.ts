@@ -42,41 +42,18 @@ const TIMEOUT = 60_000;
 
 /**
  * Rules each persona breaks today, by the finding that explains them (the
- * doc has each). Take an entry out with its fix.
+ * doc has each). Take an entry out with its fix. The running side's
+ * (F13, F14, F16, F22) are fixed; what is left is the lifting side's, on a
+ * hybrid:
  *
- * - F13 `not-counted`: Home counts a tempo or interval day only when the
- *   whole run averaged under 4:30/km, so a recreational runner's quality
- *   sessions never count.
- * - F14 `race-day-card`: setup's week schedules never run on a Sunday, and
- *   Home shows a run only on a run day, so race day reads as a rest day.
- * - F16 `before-plan`: a plan made on a Thursday writes that week's Monday
- *   and Wednesday runs.
- * - F22 `verdict-slow`: the run summary judges a tempo on the whole run's
- *   average, warm-up and cool-down included, so one run at its tempo pace
- *   reads slow (Phase 5a).
- * - F8 `over-time` and F10 `below-bar`: the lifting side's, on a hybrid.
+ * - F8 `over-time` and F10 `below-bar`.
  */
 const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "couch-to-5k": ["before-plan", "not-counted", "race-day-card"],
-  "half-3-days": ["not-counted", "race-day-card", "verdict-slow"],
-  "sub-3-30": ["not-counted", "race-day-card", "verdict-slow"],
-  "sick-six-weeks": ["not-counted", "race-day-card"],
-  "new-runner-marathon": ["race-day-card"],
-  "year-out-marathon": [
-    "below-bar",
-    "not-counted",
-    "over-time",
-    "verdict-slow",
-  ],
-  "hybrid-3-4-trim": ["below-bar", "not-counted", "over-time", "verdict-slow"],
-  "hybrid-3-4-no-trim": [
-    "below-bar",
-    "not-counted",
-    "over-time",
-    "verdict-slow",
-  ],
-  "hybrid-2-3-trim": ["below-bar", "not-counted", "race-day-card"],
-  "hybrid-2-3-no-trim": ["below-bar", "not-counted", "race-day-card"],
+  "year-out-marathon": ["below-bar", "over-time"],
+  "hybrid-3-4-trim": ["below-bar", "over-time"],
+  "hybrid-3-4-no-trim": ["below-bar", "over-time"],
+  "hybrid-2-3-trim": ["below-bar"],
+  "hybrid-2-3-no-trim": ["below-bar"],
 };
 
 /**
@@ -91,74 +68,30 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *   on most easy and long runs.
  * - F18, the plan's shape (running-engine-audit §7): long runs that step
  *   past the single-run guard (`spike`), weeks that jump (`volume-jump`),
- *   demanding days back to back, a one-step taper with no long run
- *   (`taper-cut`, `taper-long`), long runs over half the week
- *   (`long-share`), and for a new runner, continuous runs from week 1
- *   (`run-walk`), quality from week 5 (`novice-quality`) and a marathon on
- *   one run a week (`one-run-week`).
+ *   long runs over half the week (`long-share`), demanding days back to
+ *   back on the longer plans (`back-to-back`), and a 10K's taper that
+ *   still cuts over half in one step (`taper-cut`). A new runner's
+ *   run-walk weeks, the stepped taper with its long run, the spacing and
+ *   two run days for a race took out the rest.
  * - F4 `lift:misses`: the lifting side's, on a hybrid.
  */
 const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
-  "couch-to-5k": [
-    "derived-low",
-    "easy-nag",
-    "novice-quality",
-    "run-walk",
-    "spike",
-    "volume-jump",
-  ],
-  "half-3-days": [
-    "long-share",
-    "spike",
-    "taper-cut",
-    "taper-long",
-    "under-dose",
-    "volume-jump",
-  ],
-  "sub-3-30": [
-    "back-to-back",
-    "spike",
-    "taper-cut",
-    "taper-long",
-    "under-dose",
-    "volume-jump",
-  ],
-  "sick-six-weeks": ["back-to-back", "spike", "under-dose", "volume-jump"],
+  "couch-to-5k": ["derived-low", "easy-nag", "spike", "volume-jump"],
+  "half-3-days": ["long-share", "spike", "under-dose", "volume-jump"],
+  "sub-3-30": ["spike", "under-dose", "volume-jump"],
+  "sick-six-weeks": ["spike", "under-dose", "volume-jump"],
   "new-runner-marathon": [
     "derived-low",
     "easy-nag",
     "long-share",
-    "one-run-week",
-    "run-walk",
     "spike",
-    "taper-cut",
-    "taper-long",
     "volume-jump",
   ],
   "freeform-runner": ["derived-low"],
-  "year-out-marathon": [
-    "back-to-back",
-    "spike",
-    "taper-cut",
-    "taper-long",
-    "volume-jump",
-  ],
-  "hybrid-3-4-trim": [
-    "back-to-back",
-    "spike",
-    "taper-cut",
-    "taper-long",
-    "volume-jump",
-  ],
-  "hybrid-3-4-no-trim": [
-    "back-to-back",
-    "spike",
-    "taper-cut",
-    "taper-long",
-    "volume-jump",
-  ],
+  "year-out-marathon": ["back-to-back", "spike", "volume-jump"],
+  "hybrid-3-4-trim": ["back-to-back", "spike", "volume-jump"],
+  "hybrid-3-4-no-trim": ["back-to-back", "spike", "volume-jump"],
   "hybrid-2-3-trim": [
-    "back-to-back",
     "derived-low",
     "easy-nag",
     "lift:misses:overhead-press",
@@ -167,7 +100,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "volume-jump",
   ],
   "hybrid-2-3-no-trim": [
-    "back-to-back",
     "derived-low",
     "easy-nag",
     "lift:misses:overhead-press",

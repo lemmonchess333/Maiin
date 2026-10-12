@@ -57,7 +57,7 @@ export default function RunCTACard({
 
   // Key metric = the planned distance, read from the template config (the
   // source of truth) rather than regex-parsed out of the prose description.
-  // Descriptions are coaching-led now ("Steady, controlled effort"), so the
+  // Descriptions are coaching-led now ("Easy effort, time on feet"), so the
   // distance no longer lives in the text; reading config also makes the metric
   // work for race templates whose descriptions carry no distance.
   const runKeyMetric = tmpl?.config.targetDistanceKm
