@@ -239,6 +239,26 @@ describe("set completion through row controls", () => {
     ).toBeInTheDocument();
   });
 
+  it("draws Previous in grey, still a tap to fill", () => {
+    openSession(writer(), vi.fn(), {
+      weight: 60,
+      lastPerformance: { sets: 3, reps: 8, weight: 60, completed: true },
+    });
+    const cells = screen.getAllByRole("button", { name: /^Last time / });
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) {
+      expect(cell.className.split(" ")).toContain("text-muted-foreground");
+      expect(cell.className).not.toMatch(/text-lifting/);
+    }
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
+      target: { value: "5" },
+    });
+    fireEvent.click(cells[0]);
+    expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(
+      8
+    );
+  });
+
   it("offers undo for a valid out-of-order set", () => {
     openSession();
     fireEvent.click(

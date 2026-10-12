@@ -2041,9 +2041,10 @@ export default function WorkoutSession({
                               "min-h-[44px] w-full truncate text-center text-small font-mono tabular-nums",
                               // Its own line under the weight and reps.
                               "@max-[19em]:col-span-2 @max-[19em]:col-start-2 @max-[19em]:row-start-2 @max-[19em]:min-h-[32px] @max-[19em]:text-left",
-                              canFill && !set.completed
-                                ? "text-lifting-strong active:opacity-70"
-                                : "text-muted-foreground"
+                              // Grey like the rest of the row's history, not
+                              // a column of purple: still a tap to fill.
+                              "text-muted-foreground",
+                              canFill && !set.completed && "active:opacity-70"
                             )}
                           >
                             <span className="hidden @max-[19em]:inline font-sans">
