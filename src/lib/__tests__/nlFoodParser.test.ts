@@ -315,11 +315,35 @@ describe("parseFoodText — conjunctions", () => {
     expect(names).toEqual(["Toast with butter", "Eggs (x2)"]);
   });
 
-  it("does not split when a part is unrecognised", () => {
-    // "xqzv" resolves to nothing, so the phrase stays whole and takes the
-    // pre-existing single-phrase path rather than inventing a second row.
+  it("an unrecognised food after and is a row of its own", () => {
+    /* Kept whole, the phrase went to the longest key found inside it and
+       took that key's macros under the whole phrase's name. A part nobody
+       recognises is its own row now, with no macros, which the composer's
+       "Couldn't find macros for" warning names. */
     const result = parseFoodText("coffee and xqzvblorp");
-    expect(result).toHaveLength(1);
+    expect(result.map((r) => r.name)).toEqual(["Coffee", "Xqzvblorp"]);
+    expect(result[1]).toMatchObject({ calories: 0, unrecognized: true });
+  });
+
+  it("logs every food in a meal that names one the table lacks", () => {
+    /* Typed in the Food pass: one row of this whole name with the eggs'
+       182 kcal, the toast and the coffee in the name and in nothing else,
+       and no warning. */
+    const result = parseFoodText("2 scrambled eggs on toast and a flat white");
+    expect(result.map((r) => r.name)).toEqual([
+      "Scrambled eggs (x2)",
+      "Toast",
+      "Flat white",
+    ]);
+    expect(result[0].calories).toBe(
+      parseFoodText("2 scrambled eggs")[0].calories
+    );
+    expect(result[1].calories).toBe(parseFoodText("toast")[0].calories);
+    expect(result[2]).toMatchObject({ calories: 0, unrecognized: true });
+  });
+
+  it("a phrase with no food in it stays whole", () => {
+    expect(parseFoodText("xqzv and blorp")).toHaveLength(1);
   });
 
   it("commas still separate, and the two rules compose", () => {

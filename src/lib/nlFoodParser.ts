@@ -1996,17 +1996,28 @@ function mergeByCanonicalKey(rows: ParsedFood[]): ParsedFood[] {
  *
  * Rules, deliberately narrow:
  *   - Whole-phrase keys stay whole ("fish and chips" is one dish).
- *   - The phrase splits only when EVERY part resolves on its own (a single
- *     food, a `with` compound, or a compound-word match). A part nobody
- *     recognises keeps the phrase whole, so the existing path decides.
+ *   - A part is a food when it resolves on its own (a single food, a
+ *     `with` compound, or a compound-word match).
+ *   - "and", "&" and "+" split whenever at least one part is a food. A part
+ *     nobody recognises is then its own row, with no macros, which the
+ *     composer names in its "Couldn't find macros for" warning. Keeping the
+ *     phrase whole instead handed it to the longest key found anywhere in
+ *     it, so "2 scrambled eggs on toast and a flat white" logged one row of
+ *     that name with the eggs' 182 kcal: the toast and the coffee were in
+ *     the name and in nothing else, and nothing said so (Food pass).
+ *   - A phrase with no food in it at all stays whole, so the existing path
+ *     decides.
  *   - A quantity belongs to the part it was written in: "2 eggs and toast"
  *     is two eggs and one toast.
- *   - "on" joins two foods as "and" does: "beans on toast" is beans and
- *     toast, where the longest name alone logged a slice of toast.
+ *   - "on" joins two foods as "and" does, but only when both sides are
+ *     foods: "beans on toast" is beans and toast, where the longest name
+ *     alone logged a slice of toast, and "chicken on the bone" is chicken.
  *   - "&" reads as "and", so "fish & chips" and "cheese & onion crisps"
  *     find their rows (see `andForAmpersand`).
  */
 const CONJUNCTION_SPLIT_RE = /\s+(?:and|&|\+|on)\s+/i;
+const AND_SPLIT_RE = /\s+(?:and|&|\+)\s+/i;
+const ON_SPLIT_RE = /\s+on\s+/i;
 const CONJUNCTION_KEYS = Object.keys(FOOD_DB).filter((k) =>
   /\s(?:and|&|on)\s/.test(k)
 );
@@ -2031,11 +2042,19 @@ function splitConjunctions(segment: string): string[] {
     );
     if (re.test(lower)) return [segment];
   }
+  const splitOn = (part: string): string[] => {
+    const sides = part
+      .split(ON_SPLIT_RE)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return sides.length > 1 && sides.every(partResolves) ? sides : [part];
+  };
   const parts = segment
-    .split(CONJUNCTION_SPLIT_RE)
+    .split(AND_SPLIT_RE)
     .map((s) => s.trim())
-    .filter(Boolean);
-  if (parts.length < 2 || !parts.every(partResolves)) return [segment];
+    .filter(Boolean)
+    .flatMap(splitOn);
+  if (parts.length < 2 || !parts.some(partResolves)) return [segment];
   return parts;
 }
 
