@@ -460,6 +460,12 @@ behaviour.
 - **Transient workout cards dock above the bottom bar** (Pol1): the rest
   timer and the new-best moment take their room from the bottom of the
   list, so nothing above them moves under the thumb that ticked the set.
+- **The workout screen fixes only its top bar and exercise strip** (owner,
+  2026-10-12). Finish sits by Close in the top bar, as Hevy and Strong put
+  it, and the exercise's name, set count and effort cue head the list and
+  scroll away with it; another exercise opens at its head. Fixed, they
+  took about 290 px of a 715 px phone, and the set being logged went out
+  of sight.
 
 ---
 

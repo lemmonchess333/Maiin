@@ -233,7 +233,7 @@ for (const budget of [null, 30] as const) {
       })
     ).toHaveValue("6");
     await page
-      .getByRole("button", { name: "Finish early", exact: true })
+      .getByRole("button", { name: "Finish workout", exact: true })
       .click();
     await page.getByRole("button", { name: "Finish", exact: true }).click();
     await expect(
