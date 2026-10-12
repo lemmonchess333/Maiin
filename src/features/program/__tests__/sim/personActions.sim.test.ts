@@ -31,16 +31,11 @@ const TIMEOUT = 60_000;
 /**
  * Rules each persona breaks today, by the finding that explains them
  * (docs/training-engine-2026-10/simulator.md). Take an entry out with its
- * fix. What is left is the base persona's own: F8 `over-time`, on the
- * intermediate man's plan. F10 `below-bar` went with Pgm8 L15, and the
- * hybrid's F8 with it (its base persona's, in runSeason.sim.test.ts). The
- * actions' own (F20 `session-off-grid`, F21 `run-day-card`) are fixed,
- * with the running side's.
+ * fix. None is broken today: F10 `below-bar` went with Pgm8 L15 and F8
+ * `over-time` with Lift7, and the actions' own (F20 `session-off-grid`,
+ * F21 `run-day-card`) are fixed, with the running side's.
  */
-const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "swaps-bench-keeps": ["over-time"],
-  "lighter-after-misses": ["over-time"],
-};
+const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
 
 /**
  * Coaching findings each persona has today; a runner's lifting ones carry

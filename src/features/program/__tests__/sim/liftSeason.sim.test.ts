@@ -43,24 +43,13 @@ const TIMEOUT = 30_000;
  * Rules each persona breaks today, by the finding that explains them (the
  * doc has each). Take an entry out with its fix.
  *
- * - F8 `over-time`: the time fit prices a light barbell lift's warm-ups at
- *   its starting weight, and it gains warm-up sets as it grows, so a
- *   60-minute session drifts to 61–62. The intermediate man's arms day
- *   runs over as well now: his press passes 50 kg there, and the dumbbell
- *   curl's warm-up set takes the minute the barbell curl left.
- *
- * F10 `below-bar` is gone: Pgm8 L15 builds a new plan's barbell lift whose
- * first weight would be under the 20 kg bar as its dumbbell version (the
- * curls, skull crushers and weak lifters' presses it found). F8 went with
- * it for the powerbuilder on Get stronger and both layoff personas: the
- * dumbbell curl's warm-ups are priced when the plan is built, so the day
- * gave a set back then (a pull-up or squat set), and has room for what its
- * lifts gain.
+ * None is broken today. F10 `below-bar` went with Pgm8 L15, which builds a
+ * new plan's barbell lift whose first weight would be under the 20 kg bar
+ * as its dumbbell version (the curls, skull crushers and weak lifters'
+ * presses it found). F8 `over-time` went with Lift7: a day whose lifts'
+ * warm-ups grew past its length is re-fitted when the week moves on.
  */
-const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
-  "intermediate-man": ["over-time"],
-  holidays: ["over-time"],
-};
+const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
 
 /**
  * Coaching findings each persona has today. Take an entry out with its

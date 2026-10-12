@@ -35,7 +35,13 @@ import {
   weeklyVolumeByJudgementMuscle,
   type JudgementMuscle,
 } from "./volumeModel";
-import { fitSessionsToTime, sessionFits } from "./sessionFit";
+import {
+  fitSessionsToTime,
+  refitSessionsToTime,
+  sessionFits,
+  sessionMinutesFor,
+  warmupsOutgrewFit,
+} from "./sessionFit";
 import {
   applyEquipmentFilterToWorkouts,
   applyInjuryFiltersToWorkouts,
@@ -2679,6 +2685,53 @@ export function resetToBaseSets(workouts: WorkoutDay[]): WorkoutDay[] {
   }));
 }
 
+/**
+ * Lift7 (decisions.md L5, F8): the plan prices each loaded lift's warm-up at
+ * the heavier of its weight and an established lifter's (`sessionFit.ts`), so
+ * a lift loaded past that gains warm-up sets the fit never priced, and a
+ * fitted day comes to run over its length. Such a day (`warmupsOutgrewFit`)
+ * is re-fitted as a plan the person has is re-fitted to a new length
+ * (`refitSessionsToTime`, then `balanceWeekVolume`, as a settings save does)
+ * and keeps only that re-fit's cuts: sets come off in the fit's order, a main
+ * lift keeps at least two, no lift is dropped, added or swapped, and none
+ * gains a set (the re-fit path gives some slots a set the generator's fit
+ * doesn't). A cut lift's `baseSets` moves with its sets, so the weeks after
+ * start from them. Every other day comes back as it was, and a week with no
+ * day to re-fit comes back whole.
+ */
+export function refitOutgrownSessions(
+  workouts: WorkoutDay[],
+  goal: PrimaryGoal | undefined,
+  experience: Experience | undefined,
+  minutes: number
+): WorkoutDay[] {
+  const outgrown = workouts.map((day) =>
+    warmupsOutgrewFit(day.exercises, minutes)
+  );
+  if (!outgrown.includes(true)) return workouts;
+  const refitted = balanceWeekVolume(
+    refitSessionsToTime(workouts, goal, experience, minutes),
+    goal,
+    experience,
+    minutes
+  );
+  return workouts.map((day, d) => {
+    if (!outgrown[d]) return day;
+    // The re-fit moves sets only, so each lift is where it was in the day.
+    const fitted = refitted[d].exercises;
+    let cut = false;
+    const exercises = day.exercises.map((ex, e) => {
+      const same =
+        fitted[e]?.exerciseId === ex.exerciseId &&
+        fitted[e]?.instanceId === ex.instanceId;
+      if (!same || !(fitted[e].sets < ex.sets)) return ex;
+      cut = true;
+      return { ...ex, sets: fitted[e].sets, baseSets: fitted[e].sets };
+    });
+    return cut ? { ...day, exercises } : day;
+  });
+}
+
 export function advanceWeek(
   state: ProgramState,
   experience?: Experience,
@@ -2701,10 +2754,17 @@ export function advanceWeek(
    * (Lift4 (10)). Absent, lighter weeks come every 4th trained week.
    */
   nextRaceWeek?: RaceBlockWeek | null,
-  /** The answer at race setup (`raceLegTrim` on the profile): yes trims
-   *  the leg lifts from the run plan's build weeks until the two lighter
-   *  weeks before the race (Lift4 (10), `isRaceBuildWeek`). */
-  options: { raceLegTrim?: boolean } = {}
+  options: {
+    /** The answer at race setup (`raceLegTrim` on the profile): yes trims
+     *  the leg lifts from the run plan's build weeks until the two lighter
+     *  weeks before the race (Lift4 (10), `isRaceBuildWeek`). */
+    raceLegTrim?: boolean;
+    /** The person's own focus (`primaryGoal` on the profile), whose role
+     *  sets the plan's are: Lift7's re-fit starts from them, as a settings
+     *  save's re-fit for a new length does. A block's focus moves reps,
+     *  never sets, so it isn't this. */
+    primaryGoal?: PrimaryGoal;
+  } = {}
 ): ProgramState {
   /* Did the week being rolled OUT of actually happen?
      `liftWeekKey` tracks where the user is in TIME; `weekNumber` tracks where
@@ -2851,6 +2911,24 @@ export function advanceWeek(
     easingLeft < EASING_BACK_WEEKS &&
     isRaceBuildWeek(nextRaceWeek);
   if (legTrim) workouts = withRaceLegTrim(workouts, true);
+
+  /* Lift7: an ordinary week starts from the plan's own sets, so a day its
+     warm-ups outgrew is re-fitted here, to the length the plan was fitted
+     to (`refitOutgrownSessions`). Not in a lighter week, a race week (a
+     build week's leg trim included) or a return's weeks after a break,
+     which start from fewer sets than the plan's own or from loads brought
+     down to climb back: the next ordinary week re-fits. A plan built before
+     plans were fitted to time has no length to keep to. */
+  const ordinary =
+    !applyDeloadThisWeek && raceWeek === null && !legTrim && easingLeft <= 0;
+  if (ordinary && state.sessionMinutes !== undefined) {
+    workouts = refitOutgrownSessions(
+      workouts,
+      options.primaryGoal,
+      experience,
+      sessionMinutesFor(state.sessionMinutes)
+    );
+  }
 
   /* Lift4: the week opens with the session the last one didn't reach.
      Lifts run in order, not by weekday (ADR-0002), so the session that was
