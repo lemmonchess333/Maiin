@@ -1,3 +1,5 @@
+import { runSessionAbout } from "@/lib/runSessionAbout";
+import RunAbout from "./RunAbout";
 import RunPurpose from "./RunPurpose";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
@@ -83,6 +85,16 @@ export default function RunLaunchCard({
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
+  // With no pace to prescribe (Run20), a quality session says how it should
+  // feel where the pace would be.
+  const effortLabel =
+    paceLabel || prefill.intervals?.workPace
+      ? null
+      : workout.type === "tempo"
+        ? "Comfortably hard"
+        : workout.type === "intervals"
+          ? "Hard, and even across every rep"
+          : null;
 
   const eyebrow = isExtra
     ? "Extra run"
@@ -135,12 +147,19 @@ export default function RunLaunchCard({
               {[intervals, paceLabel].filter(Boolean).join("  ·  ")}
             </p>
           )}
+          {effortLabel && (
+            <p className="text-sm font-medium text-foreground mt-3">
+              {effortLabel}
+            </p>
+          )}
           <p className="text-sm text-muted-foreground mt-2">
             {workout.description}
             {workout.config.strides &&
               ` · ${workout.estimatedDuration} min total, including strides`}
           </p>
-          <RunPurpose>{purpose}</RunPurpose>
+          <RunPurpose>
+            <RunAbout about={runSessionAbout(workout)} why={purpose} />
+          </RunPurpose>
         </div>
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />

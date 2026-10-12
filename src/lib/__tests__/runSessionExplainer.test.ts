@@ -57,6 +57,7 @@ describe("runSessionExplainer", () => {
       ["tempo", "tempo_30", build],
       ["intervals", "5x1k", build],
       ["easy", "easy_30", taper],
+      ["easy", "easy_60", taper],
       ["intervals", "8x400", taper],
       ["long", "long_10k", taper],
       ["race", "marathon_race", race],
@@ -67,6 +68,21 @@ describe("runSessionExplainer", () => {
       expect(line, `${type}/${templateId} @ wk${ctx.currentWeek}`).toBeTruthy();
       expect(line!.length).toBeGreaterThan(20);
     }
+  });
+
+  /* A tempo's pace comes from the benchmark, from the goal race pace in
+     build and taper (A2), or from the template when there is neither, so
+     the line can't say where it comes from, nor how hard it feels: a
+     marathon's goal pace is steadier than threshold. The session's own
+     segments say both. */
+  it("the tempo line says what a tempo does, not where its pace comes from", () => {
+    const line = runSessionExplainer({
+      type: "tempo",
+      templateId: "tempo_30",
+      ...build,
+    });
+    expect(line).not.toMatch(/fitness/);
+    expect(line).toMatch(/blocks get longer/);
   });
 
   it("phase drives the copy: same template reads differently in build vs taper", () => {
@@ -98,6 +114,50 @@ describe("runSessionExplainer", () => {
     expect(mlr).toMatch(/medium-long/i);
     expect(strides).toMatch(/strides/i);
     expect(strides).toMatch(/not a hard session/i);
+  });
+
+  it("a run-walk says what it is, in every phase (Run20 (5))", () => {
+    // A 5K six weeks out is all run-walk, its taper and race week too, and
+    // there a run-walk was "Taper — easy and short on purpose" and a
+    // "Race-week shakeout".
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_2",
+        ...ctx,
+      });
+      expect(line).toMatch(/^Run-walk/);
+      expect(line).toMatch(/walks are part of the method/);
+      expect(line).not.toMatch(/readiness|safe|VO2/i);
+    }
+  });
+
+  it("the last run-walk is the one the weeks before built to, with no walks between", () => {
+    // Run-walk 6 is a walk, 20 minutes of running and a walk (review of
+    // #2655). What it is, "Why this run" says in its own line (Run21 (3)),
+    // so this is the reason only.
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_6",
+        ...ctx,
+      });
+      expect(line).toMatch(/^The last run-walk — what the weeks before/);
+      expect(line).not.toMatch(/walks between/);
+    }
+  });
+
+  it("a taper medium-long says it is shorter on purpose (Run22), not short", () => {
+    const line = runSessionExplainer({
+      type: "easy",
+      templateId: "easy_60",
+      ...taper,
+    });
+    expect(line).toMatch(/^Taper medium-long/);
+    expect(line).toMatch(/shorter on purpose/);
+    expect(line).not.toBe(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...taper })
+    );
   });
 
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
