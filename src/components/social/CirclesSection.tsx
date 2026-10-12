@@ -1035,7 +1035,7 @@ export default function CirclesSection({
                 setGoalPrechosen(true); // goal chosen here — skip the re-pick
                 setShowCreate(true);
               }}
-              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
             >
               <p className="text-sm font-semibold text-foreground">{t.label}</p>
               <p className="text-xs text-muted-foreground">{t.description}</p>
@@ -1048,7 +1048,7 @@ export default function CirclesSection({
               setChooserOpen(false);
               navigate("/review");
             }}
-            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
           >
             <p className="text-sm font-semibold text-foreground">
               Private progress
@@ -1132,7 +1132,7 @@ export default function CirclesSection({
                     setTemplate(t.type);
                   }}
                   className={cn(
-                    "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                    "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     template === t.type
                       ? "bg-primary/10 border border-primary/40"
                       : "bg-muted border border-transparent"

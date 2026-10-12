@@ -23,7 +23,7 @@ export default function WeeklyReviewRow() {
         haptic("light");
         navigate("/review");
       }}
-      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition-colors active:scale-[0.98] min-h-[44px]"
+      className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 text-left hover:bg-muted transition active:scale-[0.98] min-h-[44px]"
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
         <CalendarCheck className="size-4 text-primary" aria-hidden="true" />

@@ -162,7 +162,7 @@ export default function ExerciseCompareSheet({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98]"
+          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98]"
         >
           Close
         </button>

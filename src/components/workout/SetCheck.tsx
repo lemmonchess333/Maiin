@@ -55,7 +55,7 @@ export default function SetCheck({
         aria-label="Mark set complete"
         data-guide-anchor={guideAnchor}
         onClick={onComplete}
-        className="group mx-auto flex size-[44px] items-center justify-center active:scale-90"
+        className="group mx-auto flex size-[44px] items-center justify-center transition-transform active:scale-90"
       >
         <span className="size-[32px] rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
       </button>

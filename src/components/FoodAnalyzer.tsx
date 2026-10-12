@@ -1184,7 +1184,7 @@ export default function FoodAnalyzer({
                             aria-label={`Restore ${item.name}`}
                             /* 16px of text, reaching 14px past it each
                                side: a 44px tap area. */
-                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
+                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
                           >
                             <RotateCcw className="size-3" />
                             Restore
