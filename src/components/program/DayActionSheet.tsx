@@ -53,18 +53,23 @@ import {
   isRunWalkTemplateId,
   isScheduledRaceRunDay,
 } from "@/lib/workoutTemplates";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { runDoseLine } from "@/lib/runDose";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import { format } from "date-fns";
 import {
   parseLocalDate,
@@ -78,7 +83,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
@@ -241,21 +246,26 @@ export default function DayActionSheet({
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [
-        selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm} km`
-          : `${selectedRunTemplate.estimatedDuration} min`,
+        // Run21 (5): a long run's minutes at the runner's own pace.
+        runDoseLine(
+          selectedRunTemplate,
+          planningEasyPaceSPerKm(profile?.runFitness)
+        ),
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
     : null;
   // Target HR zone — the HR analogue of the pace target ("run easy in Zone 2").
   // Uses the measured max HR, else the age estimate; null when neither exists
   // (then we just don't show the pill — the pace pill still stands alone).
-  const selectedRunHr: string | null = (() => {
-    if (!selectedRunTemplate) return null;
+  const selectedRunHr: string[] = (() => {
+    if (!selectedRunTemplate) return [];
     const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profile?.age ?? 0);
-    const band = targetZoneForRun(selectedRunTemplate.type, maxHr);
-    if (!band) return null;
-    return `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm`;
+    const band = targetZoneForRun(
+      selectedRunTemplate.type,
+      maxHr,
+      selectedRunTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
   // WAVE1-EXPLAIN (roadmap A5): one honest "why this session" sentence,
   // derived from the plan's REAL phase — null for freeform/extras, and the
@@ -274,6 +284,10 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
+      weekHasQuality: weekHoldsQuality(
+        programState?.runDays,
+        run.runDay.weekKey
+      ),
       racePace: selectedRacePace?.kind,
     }).purpose;
   })();
@@ -400,16 +414,17 @@ export default function DayActionSheet({
                       )}
                     </p>
                   )}
-                {(selectedRunMeta || selectedRunHr) && (
+                {(selectedRunMeta || selectedRunHr.length > 0) && (
                   /* Distance/duration and the HR zone are facts about the
                      session, so they read as one line — the same MetaLine
                      the command card uses — not as two pills. */
                   <MetaLine
                     size="xs"
                     className="mt-2"
-                    items={[selectedRunMeta, selectedRunHr].filter(
-                      (s): s is string => Boolean(s)
-                    )}
+                    items={[
+                      ...(selectedRunMeta ? [selectedRunMeta] : []),
+                      ...selectedRunHr,
+                    ]}
                   />
                 )}
               </div>

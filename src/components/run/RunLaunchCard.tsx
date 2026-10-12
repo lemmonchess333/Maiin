@@ -95,6 +95,16 @@ export default function RunLaunchCard({
       ? `${paceMinSec(target.value, unit)} ${paceUnitLabel(unit)}`
       : null;
   const intervals = intervalSummary(prefill.intervals);
+  // With no pace to prescribe (Run20), a quality session says how it should
+  // feel where the pace would be.
+  const effortLabel =
+    paceLabel || prefill.intervals?.workPace
+      ? null
+      : workout.type === "tempo"
+        ? "Comfortably hard"
+        : workout.type === "intervals"
+          ? "Hard, and even across every rep"
+          : null;
   /* Run21 (2): a long run's race-pace finish, which its name and lines
      only name, with its size and pace before the run starts. Labelled as
      the run's own segment is, in the reader's unit. */
@@ -159,6 +169,11 @@ export default function RunLaunchCard({
               {[intervals, paceLabel, racePaceLine]
                 .filter(Boolean)
                 .join("  ·  ")}
+            </p>
+          )}
+          {effortLabel && (
+            <p className="text-sm font-medium text-foreground mt-3">
+              {effortLabel}
             </p>
           )}
           <p className="text-sm text-muted-foreground mt-2">

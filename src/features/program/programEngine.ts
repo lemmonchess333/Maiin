@@ -1,4 +1,5 @@
 import type {
+  DayRole,
   Experience,
   GoalProfile,
   MovementCategory,
@@ -12,6 +13,7 @@ import { generateInstanceId, loweringOf } from "./programTypes";
 import {
   calendarLighterWeek,
   EASING_BACK_WEEKS,
+  LIGHTER_WEEK_EVERY,
   lighterWeeksScheduled,
   isRaceBuildWeek,
   raceLiftWeek,
@@ -1297,7 +1299,7 @@ export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
    DAY ROLES (backlog #3 — N9 daily undulating periodization)
 ================================ */
 
-export type DayRole = "heavy" | "moderate" | "pump";
+export type { DayRole };
 
 /** Rep shift a day role applies on top of the goal profile's base. */
 export function repDeltaForRole(role: DayRole): number {
@@ -1376,6 +1378,35 @@ export function assignDayRoles(count: number): DayRole[] {
   });
 }
 
+const DAY_ROLES: ReadonlySet<string> = new Set(["heavy", "moderate", "pump"]);
+
+/**
+ * The role a session takes: the one it was given when the plan was built
+ * (`withDayRoles`), or, on an older plan that keeps none, its position's,
+ * as every role was read before they were kept.
+ */
+export function dayRoleOf(
+  day: Pick<WorkoutDay, "dayRole">,
+  byPosition: DayRole
+): DayRole {
+  return typeof day.dayRole === "string" && DAY_ROLES.has(day.dayRole)
+    ? day.dayRole
+    : byPosition;
+}
+
+/**
+ * Gives each session its role by its place in the week the builders made,
+ * and the session keeps it (`WorkoutDay.dayRole`): the week's order carries
+ * over by moving whole days (Lift4 (11)), so the position stops saying
+ * which session was the heavier one. Every level gets one. A beginner's
+ * reps don't shift by role (`usesUndulation`), but a level change can bring
+ * the shifts in, and they should land on the same sessions.
+ */
+export function withDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
+  const roles = assignDayRoles(workouts.length);
+  return workouts.map((day, i) => ({ ...day, dayRole: roles[i] }));
+}
+
 /**
  * Backlog #3 (training-book backlog; N9): put the first rep variation
  * into a Tropos week. Every source converged on varying what the week
@@ -1397,7 +1428,7 @@ function applyDayRoles(
   if (!usesUndulation(experience)) return workouts;
   const roles = assignDayRoles(workouts.length);
   return workouts.map((day, i) => {
-    const role = roles[i];
+    const role = dayRoleOf(day, roles[i]);
     if (role === "moderate") return day;
     return {
       ...day,
@@ -1906,7 +1937,7 @@ export function generateProgram(
   // (`roleTable.ts`), once the identity passes have settled who is where;
   // then backlog #3's day roles shift the reps, see applyDayRoles above.
   workouts = applyRoleTable(workouts, primaryGoal, experience);
-  workouts = applyDayRoles(workouts, experience);
+  workouts = applyDayRoles(withDayRoles(workouts), experience);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
   // (lifts with logged history keep theirs; with no bodyweight, the plan
   // starts from the bar). After every pass that settles who is where, so it
@@ -1998,11 +2029,14 @@ export function applyProgression(
   actualRpe?: number,
   /** How much a miss here counts: half for a leg lift within a day after a
    *  long or hard run (Lift4 (7)), one otherwise. */
-  missCounts = 1
+  missCounts = 1,
+  /** The session's local date (yyyy-MM-dd) for its history record, so the
+   *  record belongs to the day the session started (Lift3) and the engine
+   *  reads no clock. Today when absent. */
+  date: string = format(new Date(), "yyyy-MM-dd")
 ): ProgramExercise {
-  const today = format(new Date(), "yyyy-MM-dd");
   const record = {
-    date: today,
+    date,
     weight: actualWeight,
     repsCompleted: actualReps,
     repsTarget: exercise.reps,
@@ -2197,7 +2231,14 @@ export function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        const rangeMax = exercise.repRangeMax;
+        // A fixed target has no range, so it takes the ceiling a range-less
+        // double does (`impliedDoubleRangeMax`): every set at the target is
+        // a step, and a bodyweight lift's step is a rep (Lift4 (6), on the
+        // axis (7) lowers it on). Without it a pull-up main on a fixed
+        // target climbed only on a 2-rep overshoot, and then a single rep.
+        const rangeMax =
+          exercise.repRangeMax ??
+          impliedDoubleRangeMax(resetReps, isBodyweight, isTimed);
         if (rangeMax != null && rangeMax > resetReps) {
           // Range-aware bodyweight climb on the LINEAR path too — a
           // running-goal pull-up main (4-6, linear) was frozen for a
@@ -2213,7 +2254,9 @@ export function applyProgression(
             }
           }
         } else if (actualReps >= exercise.reps + 2 && rpeOk) {
-          // Legacy: no authored range — climb on a 2-rep overshoot (capped)
+          // No ceiling to climb to: a timed hold, whose time axis
+          // `impliedDoubleRangeMax` leaves as it was, or a target already
+          // at the cap. Climb on a 2-rep overshoot (capped), as before.
           bumpBodyweightReps();
         }
       } else if (rpeOk) {
@@ -2318,7 +2361,9 @@ export function applySessionSets(
   read: SessionRead,
   smallPlates: boolean,
   /** How much a miss counts (`applyProgression`). */
-  missCounts = 1
+  missCounts = 1,
+  /** The session's local date for its history record (`applyProgression`). */
+  date: string = format(new Date(), "yyyy-MM-dd")
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2336,7 +2381,8 @@ export function applySessionSets(
         read.weight,
         smallPlates,
         hardestEffort(read),
-        missCounts
+        missCounts,
+        date
       ),
       reps
     );
@@ -2366,7 +2412,8 @@ export function applySessionSets(
         weight < lowering.from ? climbing : base,
         read,
         reps,
-        outcome === "step"
+        outcome === "step",
+        date
       ),
       weight,
       ...(outcome === "step" ? { lastSuccessfulWeight: read.weight } : {}),
@@ -2376,7 +2423,7 @@ export function applySessionSets(
   if (uncalibrated || outcome !== "hold") return progressed(base);
   const heavier = lifted !== null && lifted > exercise.weight + 0.01;
   return {
-    ...recorded(base, read, reps, false),
+    ...recorded(base, read, reps, false, date),
     ...(lifted === null ? {} : { weight: lifted }),
     ...(heavier && base.baseReps !== undefined ? { reps: base.baseReps } : {}),
   };
@@ -2401,7 +2448,8 @@ function recorded(
   exercise: ProgramExercise,
   read: SessionRead,
   reps: number,
-  completed: boolean
+  completed: boolean,
+  date: string
 ): ProgramExercise {
   return {
     ...exercise,
@@ -2409,7 +2457,7 @@ function recorded(
     performanceHistory: [
       ...(exercise.performanceHistory || []),
       {
-        date: format(new Date(), "yyyy-MM-dd"),
+        date,
         weight: read.weight,
         repsCompleted: reps,
         repsTarget: exercise.reps,
@@ -2551,10 +2599,31 @@ export function advanceWeek(
       ? 1
       : state.weekNumber + 1;
   /* Lift4 (10): the race's final weeks (`raceLiftWeek`). The week after
-     the race ends a cycle, so the calendar's count starts again after it. */
+     the race ends a cycle, so the calendar's count starts again after it.
+     A lighter week the person took (the `applyDeloadWeek` command's
+     snapshot of this week) ends one too, where the calendar brings lighter
+     weeks: it counts as the calendar's, so the next comes four trained
+     weeks later (Lift4 (9), and the lifting handoff's lighter-week
+     precedence table). An untrained one holds the number, as any week
+     does. Without a calendar cycle, or with a race plan placing the
+     lighter weeks, the number carries on. */
   const raceWeek = raceLiftWeek(nextRaceWeek, state.raceWeek);
+  const takenLighter =
+    weekWasTrained &&
+    state.currentPhase === "deload" &&
+    state.deloadSnapshot?.weekNumber === state.weekNumber &&
+    !nextRaceWeek &&
+    lighterWeeksScheduled(experience, state.workouts.length);
+  const cycleEnd =
+    Math.ceil(state.weekNumber / LIGHTER_WEEK_EVERY) * LIGHTER_WEEK_EVERY;
   const nextWeek =
-    raceWeek === "after" ? Math.ceil(heldOrNext / 4) * 4 : heldOrNext;
+    raceWeek === "after"
+      ? Math.ceil(heldOrNext / 4) * 4
+      : takenLighter && cycleEnd !== state.weekNumber
+        ? cycleEnd >= 52
+          ? 1
+          : cycleEnd + 1
+        : heldOrNext;
 
   /* Archive only weeks that happened. `weekHistory` is capped at 8, so
      archiving absent weeks would let a 12-week catch-up evict every real

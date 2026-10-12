@@ -6,7 +6,8 @@
 import { describe, it, expect } from "vitest";
 import {
   raceDistanceLabel,
-  compactRunLabel,
+  runStripLabel,
+  runStripLines,
   buildRaceCockpitViewModel,
   resolveRunPlanSurface,
   hasHybridInterference,
@@ -28,18 +29,61 @@ describe("raceDistanceLabel", () => {
   });
 });
 
-describe("compactRunLabel", () => {
-  it("collapses templates to short tile tokens (not full truncated names)", () => {
-    expect(compactRunLabel(tmpl("easy_30"))).toBe("30m");
-    expect(compactRunLabel(tmpl("tempo_20"))).toBe("Tempo");
-    expect(compactRunLabel(tmpl("5x1k"))).toBe("5×1K");
-    expect(compactRunLabel(tmpl("8x400"))).toBe("8×400");
-    expect(compactRunLabel(tmpl("long_15k"))).toBe("15K");
-    expect(compactRunLabel(tmpl("long_10k"))).toBe("10K");
-    expect(compactRunLabel(tmpl("marathon_race"))).toBe("Race");
+describe("runStripLabel", () => {
+  // Run21 (2): the week strip names the session. "30m" said neither that a
+  // run was easy nor that it ended with strides.
+  it("names the session, so an easy run and one with strides read apart", () => {
+    expect(runStripLabel(tmpl("easy_30"))).toBe("Easy 30");
+    expect(runStripLabel(tmpl("easy_30_strides"))).toBe("Easy 30 + strides");
+    expect(runStripLabel(tmpl("tempo_20"))).toBe("20 Min Tempo");
+    expect(runStripLabel(tmpl("5x1k"))).toBe("5×1K Intervals");
+    expect(runStripLabel(tmpl("long_15k"))).toBe("Long 15K");
+    expect(runStripLabel(tmpl("marathon_race"))).toBe("Marathon Race");
   });
   it("falls back to 'Run' when no template", () => {
-    expect(compactRunLabel(null)).toBe("Run");
+    expect(runStripLabel(null)).toBe("Run");
+  });
+});
+
+describe("runStripLines", () => {
+  // The strip sets a run's name on two lines, each ending in "…" on its own
+  // when it doesn't fit, so where the break goes decides what a narrow cell
+  // keeps.
+  it("breaks where the two lines come out most even", () => {
+    expect(runStripLines("Easy 30")).toEqual(["Easy", "30"]);
+    expect(runStripLines("20 Min Tempo")).toEqual(["20 Min", "Tempo"]);
+    expect(runStripLines("4×1K Intervals")).toEqual(["4×1K", "Intervals"]);
+    expect(runStripLines("Long 15K")).toEqual(["Long", "15K"]);
+  });
+  it("keeps '+ strides' together", () => {
+    expect(runStripLines("Easy 30 + strides")).toEqual([
+      "Easy 30",
+      "+ strides",
+    ]);
+  });
+  it("breaks a hyphenated word after its hyphen", () => {
+    expect(runStripLines("Medium-long 60")).toEqual(["Medium-", "long 60"]);
+  });
+  it("takes the later break on a tie, so a race keeps its own line", () => {
+    expect(runStripLines("Half Marathon Race")).toEqual([
+      "Half Marathon",
+      "Race",
+    ]);
+  });
+  it("keeps a one-word name on one line, and an empty one on none", () => {
+    expect(runStripLines("Run")).toEqual(["Run"]);
+    expect(runStripLines("")).toEqual([]);
+  });
+  it("loses nothing of any run's name", () => {
+    for (const t of RUN_TEMPLATES) {
+      const lines = runStripLines(t.name);
+      expect(lines.length, t.name).toBeGreaterThan(0);
+      expect(lines.length, t.name).toBeLessThanOrEqual(2);
+      const [a, b] = lines;
+      const rejoined =
+        b === undefined ? a : a.endsWith("-") ? a + b : `${a} ${b}`;
+      expect(rejoined).toBe(t.name);
+    }
   });
 });
 

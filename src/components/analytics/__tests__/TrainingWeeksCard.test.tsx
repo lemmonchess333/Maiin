@@ -288,6 +288,25 @@ describe("months from last year", () => {
   });
 });
 
+describe("the labels under the chart", () => {
+  it("take more card to name all six of a Monday's weeks than four", () => {
+    const { unmount } = renderRuns();
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[11em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[11em]:flex");
+    unmount();
+    // The 30 days up to a Monday draw six weeks (binAxis).
+    renderRuns("km", {
+      bins: [
+        bin("2026-08-17", { runs: 2, distanceM: 12_000 }),
+        bin("2026-08-24", { runs: 1, distanceM: 6_000 }),
+        ...RUN_WEEKS,
+      ],
+    });
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[12em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[12em]:flex");
+  });
+});
+
 describe("the reader's unit", () => {
   it("reads miles on the figures, the bars and the average for a mile runner", () => {
     renderRuns("mi");

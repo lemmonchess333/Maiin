@@ -34,6 +34,7 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [12, 13, 14]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: true,
           loadFromRunning: true,
           currentWeek,
@@ -50,6 +51,7 @@ describe("shouldSuggestDeload", () => {
     // lifting" is the worst possible advice the week of a marathon.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
         loadFromRunning: true,
         currentWeek: 15,
@@ -65,6 +67,7 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [0, 5, 11]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: true,
           loadFromRunning: true,
           currentWeek,
@@ -80,6 +83,7 @@ describe("shouldSuggestDeload", () => {
     // This is the majority case and the guard must be inert for it.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
         loadFromRunning: true,
         currentWeek: undefined,
@@ -95,6 +99,7 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [0, 11, 13, 15]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: false,
           loadFromRunning: true,
           currentWeek,
@@ -104,6 +109,7 @@ describe("shouldSuggestDeload", () => {
     }
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: false,
         loadFromRunning: true,
         currentWeek: undefined,
@@ -119,6 +125,7 @@ describe("shouldSuggestDeload", () => {
     // half-written plan is not evidence of a taper.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
         loadFromRunning: true,
         currentWeek: 13,
@@ -128,6 +135,7 @@ describe("shouldSuggestDeload", () => {
     ).toBe(true);
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
         loadFromRunning: true,
         currentWeek: 13,
@@ -144,11 +152,29 @@ describe("the suggestion speaks for running only (Lift4 (9))", () => {
     // calendar, or when the person takes one.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
         loadFromRunning: false,
         currentWeek: undefined,
         totalWeeks: undefined,
         distance: undefined,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("the suggestion is one Train's menu can carry out (Lift4 (9))", () => {
+  it("is not offered when no lighter week can be taken", () => {
+    // Its button sends the menu's command (`applyDeloadWeek`), which the
+    // server refuses on a lighter week, the week straight after one and a
+    // first week back: the person was told no to the app's own suggestion.
+    expect(
+      shouldSuggestDeload({
+        lighterWeekAllowed: false,
+        deloadRecommended: true,
+        loadFromRunning: true,
+        currentWeek: 5,
+        ...MARATHON,
       })
     ).toBe(false);
   });

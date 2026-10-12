@@ -16,6 +16,7 @@ import type { BinReading, TrainingFigure } from "@/lib/trainingWeeks";
 import { T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
+import { binAxis } from "@/components/analytics/binAxis";
 
 /** Drawing units; the SVG scales to the card's width. */
 const CHART_W = 300;
@@ -128,7 +129,10 @@ export default function TrainingWeeksCard({
   const slot = CHART_W / Math.max(bins.length, 1);
   const barW = Math.min(24, slot * 0.6);
   const scale = (CHART_H - 2) / peak;
-  const every = bins.length <= 7 ? 1 : Math.ceil(bins.length / 4);
+  /* Which bars are named under the chart, and the card it takes to name
+     them (`binAxis`). */
+  const axis = binAxis(bins.length, granularity);
+  const { every } = axis;
   const averageY = showAverage ? CHART_H - (average ?? 0) * scale : 0;
   const averageLabel =
     granularity === "monthly" ? "Monthly average" : "Weekly average";
@@ -330,7 +334,7 @@ export default function TrainingWeeksCard({
             </div>
           </div>
           <div
-            className="mt-1 grid @max-[11em]:hidden text-xs text-muted-foreground"
+            className={`mt-1 grid ${axis.labels} text-xs text-muted-foreground`}
             data-testid="axis-labels"
             style={{
               gridTemplateColumns: `repeat(${bins.length}, minmax(0, 1fr))`,
@@ -344,9 +348,10 @@ export default function TrainingWeeksCard({
                 <span
                   key={b.key}
                   /* As in PeriodSummaryCard: a label wraps within its bar's
-                     slot, and under 11em of card the row below takes over.
-                     Held to one line, the dates ran past the card and the
-                     page scrolled sideways at larger text. */
+                     slot, and where a slot is narrower than the longest
+                     word the row below takes over. Held to one line, the
+                     dates ran past the card and the page scrolled sideways
+                     at larger text. */
                   className={cn(
                     "min-w-0 text-center leading-tight",
                     b.key === selected.key && "font-semibold text-foreground",
@@ -360,11 +365,12 @@ export default function TrainingWeeksCard({
               );
             })}
           </div>
-          {/* Under 11em of card only the two ends are named, at the
-              chart's edges: even wrapped, "Sept" was wider than a bar's
-              slot at double size. Wide-first. */}
+          {/* Where a bar's slot cannot hold its label's longest word,
+              only the two ends are named, at the chart's edges. More bars
+              need more card before each is named (`binAxis`): six weeks,
+              on a Monday, need more than five. Wide-first. */}
           <div
-            className="mt-1 hidden @max-[11em]:flex justify-between gap-2 text-xs leading-tight text-muted-foreground"
+            className={`mt-1 hidden ${axis.ends} justify-between gap-2 text-xs leading-tight text-muted-foreground`}
             data-testid="axis-ends"
             aria-hidden="true"
           >
