@@ -6,7 +6,8 @@ import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
 import {
   LIFT_DAY_STATUS_LABEL,
@@ -145,7 +146,7 @@ export default function Program() {
 
 function ProgramInner() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = usePageSearchParams();
   const {
     programState,
     prescription,
