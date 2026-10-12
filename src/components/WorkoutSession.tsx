@@ -1,5 +1,6 @@
 import {
-  withoutSessionProgression,
+  sessionExercise,
+  sessionPrescription,
   type SessionPrescription,
 } from "@/features/program/sessionCompletion";
 import type { CompletedSessionData } from "@/features/program/useProgram";
@@ -48,7 +49,11 @@ import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import {
+  lastSetsByExercise,
+  lastSetsBySlot,
+  type LastSet,
+} from "@/features/program/lastSets";
 import { startingSetRows } from "@/features/program/setStartValues";
 import { swappedForToday } from "@/features/program/sessionSwap";
 import { followedWeight } from "@/features/program/sessionSets";
@@ -128,6 +133,8 @@ import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
+import SetCheck from "@/components/workout/SetCheck";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import NewBestMoment, {
   type NewBest,
 } from "@/components/workout/NewBestMoment";
@@ -161,24 +168,6 @@ interface WorkoutDay {
 /** "Set 2" → "set 2", for the middle of a sentence. */
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
-
-/** A planned exercise as this session sets it out: at the weight and reps
- *  its progression started from, should an older draft have moved it. */
-function sessionExercise(
-  ex: ProgramExercise,
-  completionId: string
-): ProgramExercise {
-  const baseline = withoutSessionProgression(
-    ex.sessionProgression?.id === completionId
-      ? ex.sessionProgression.baseline
-      : ex
-  );
-  return {
-    ...withoutSessionProgression(ex),
-    weight: baseline.weight,
-    reps: baseline.reps,
-  };
-}
 
 /** Last session's set as the Previous column shows it. */
 function previousLabel(
@@ -230,6 +219,10 @@ interface Props {
    *  (`programState.sessionMinutes`): a 30-minute plan rests less. */
   sessionMinutes?: number;
   progressionBaseline?: ProgramExercise[];
+  /** Every lift of the plan, each in its slot: a lift starts from the last
+   *  session that ran its slot (`lastSetsBySlot`). Train passes it; a saved
+   *  routine's lifts start from their exercise's last session. */
+  planLifts?: readonly { exerciseId: string; instanceId?: string }[];
   programmeContext?: ProgrammeCompletionContext;
   /** Saves the session (`completeLift`) and hands back its receipt. */
   onCompleteDay: (
@@ -256,6 +249,7 @@ export default function WorkoutSession({
   deloadWeek = false,
   sessionMinutes,
   progressionBaseline,
+  planLifts,
   programmeContext,
   onCompleteDay,
   onClose,
@@ -302,28 +296,11 @@ export default function WorkoutSession({
   const completionCommandIdRef = useRef(
     initialDraft?.completionCommandId ?? initialCompletionId
   );
-  const [prescription, setPrescription] = useState<SessionPrescription>(() => {
-    if (initialDraft?.prescription) return initialDraft.prescription;
-    const baseline = (ex: ProgramExercise) =>
-      withoutSessionProgression(
-        ex.sessionProgression?.id === initialCompletionId
-          ? ex.sessionProgression.baseline
-          : ex
-      );
-    return structuredClone({
-      dayName: initialDay.dayName,
-      exercises: initialDay.exercises.map((ex) =>
-        sessionExercise(ex, initialCompletionId)
-      ),
-      progressionBaseline: initialDay.exercises.map((ex) =>
-        baseline(
-          progressionBaseline?.find(
-            (candidate) => candidate.instanceId === ex.instanceId
-          ) ?? ex
-        )
-      ),
-    });
-  });
+  const [prescription, setPrescription] = useState<SessionPrescription>(
+    () =>
+      initialDraft?.prescription ??
+      sessionPrescription(initialDay, initialCompletionId, progressionBaseline)
+  );
   const [sessionProgrammeContext] = useState(
     initialDraft?.programmeContext ?? programmeContext
   );
@@ -374,8 +351,8 @@ export default function WorkoutSession({
     open: boolean;
     swaps: SwapToKeep[];
   }>({ open: false, swaps: [] });
-  /** Last time's counted sets by exercise id, read with the Previous
-   *  column, so a swapped-in exercise starts from its own. */
+  /** Last time's counted sets by exercise id, on any day, so a
+   *  swapped-in exercise starts from its own. */
   const lastSetsById = useRef(
     new Map<string, { weight: number; reps: number }[]>()
   );
@@ -495,27 +472,27 @@ export default function WorkoutSession({
         });
       });
       setPreviousNotes(notes);
+      const done = recent.filter(
+        (data) => data.completionId !== completionIdRef.current
+      );
+      const asRows = (sets: readonly LastSet[]) =>
+        sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps }));
+      const byExercise = lastSetsByExercise(done);
+      lastSetsById.current = new Map(
+        [...byExercise].map(([id, sets]) => [id, asRows(sets)])
+      );
       // Last time's counted sets, as Train's "Last:" line lists them: the
       // Previous column and where each row starts both read these.
-      const lastSets = new Map(
-        [
-          ...lastSetsByExercise(
-            recent.filter(
-              (data) => data.completionId !== completionIdRef.current
-            )
-          ),
-        ].map(([id, sets]) => [
-          id,
-          sets.map(({ weightKg, reps }) => ({ weight: weightKg, reps })),
-        ])
-      );
-      lastSetsById.current = lastSets;
+      const lastOf = planLifts
+        ? lastSetsBySlot(done, planLifts)
+        : (ex: { exerciseId: string }) => byExercise.get(ex.exerciseId);
+      const lastSets = day.exercises.map((ex) => {
+        const sets = lastOf(ex);
+        return sets && asRows(sets);
+      });
       setPreviousSets(
         Object.fromEntries(
-          day.exercises.flatMap((ex, i) => {
-            const sets = lastSets.get(ex.exerciseId);
-            return sets ? [[i, sets]] : [];
-          })
+          lastSets.flatMap((sets, i) => (sets ? [[i, sets]] : []))
         )
       );
 
@@ -528,7 +505,7 @@ export default function WorkoutSession({
           prev.map((rows, i) => {
             const ex = day.exercises[i];
             if (!ex || rows.some((set) => set.completed)) return rows;
-            return startingSetRows(rows, ex, lastSets.get(ex.exerciseId));
+            return startingSetRows(rows, ex, lastSets[i]);
           })
         );
       }
@@ -550,7 +527,7 @@ export default function WorkoutSession({
     };
 
     fetchPreviousWeights();
-  }, [user?.uid, day.exercises]);
+  }, [user?.uid, day.exercises, planLifts]);
 
   // Save on meaningful edits. Read elapsed time at the save itself, so a
   // draft stays accurate even when the phone has suspended display ticks.
@@ -604,6 +581,7 @@ export default function WorkoutSession({
   } | null>(null);
   const restSequence = useRef(0);
   const isResting = rest !== null;
+  const reduceMotion = useReducedMotion();
   // D-LIFT-16: the Settings → "Auto-start rest timer" toggle existed but was
   // never read here — the same dead-setting class PR E fixed for
   // defaultRestSeconds. Default ON (unset/legacy profiles keep today's
@@ -1609,16 +1587,6 @@ export default function WorkoutSession({
         />
       </div>
 
-      {rest && (
-        <WorkoutRestTimer
-          key={rest.id}
-          startedAt={rest.startedAt}
-          initialTarget={rest.target}
-          exerciseName={day.exercises[currentExIndex]?.name}
-          onStop={stopRest}
-        />
-      )}
-
       {/* Progress bar */}
       <div className="h-1 bg-muted">
         <div
@@ -1866,24 +1834,6 @@ export default function WorkoutSession({
           </div>
         )}
 
-        {/* D-LIFT-16: with auto-start off, rests are opt-in — offer the
-            manual start where the ring appears, once there's a completed
-            set to rest from. */}
-        {!isResting && !autoRest && currentSets.some((st) => st.completed) && (
-          <div className="flex justify-center">
-            <Button
-              variant="secondary"
-              leftIcon={<Timer className="size-4" aria-hidden="true" />}
-              onClick={() => {
-                haptic("light");
-                startRest(day.exercises[currentExIndex]);
-              }}
-            >
-              Start rest timer
-            </Button>
-          </div>
-        )}
-
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
@@ -2085,49 +2035,30 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
                         />
-                        {set.completed ? (
-                          <button
-                            type="button"
-                            aria-label={`Edit completed ${lowerFirst(name)}`}
-                            onClick={() => {
-                              haptic();
-                              setEditingSet({
-                                exIdx: currentExIndex,
-                                setIdx,
-                              });
-                            }}
-                            className="mx-auto flex min-h-[44px] w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl transition-transform active:scale-95"
-                          >
-                            <span className="flex size-[32px] items-center justify-center rounded-lg bg-success text-success-foreground">
-                              <Check
-                                className="size-4"
-                                strokeWidth={3}
-                                aria-hidden="true"
-                              />
-                            </span>
-                            {isBest && (
-                              <span className="text-caption font-semibold leading-none text-achievement-strong">
-                                PR
-                              </span>
-                            )}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            aria-label="Mark set complete"
-                            data-guide-anchor={
-                              firstWorkout &&
-                              currentExIndex === 0 &&
-                              setIdx === currentSetIndex
-                                ? "first-set"
-                                : undefined
-                            }
-                            onClick={() => void completeSet(setIdx)}
-                            className="group mx-auto flex size-[44px] items-center justify-center active:scale-90"
-                          >
-                            <span className="size-[32px] rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
-                          </button>
-                        )}
+                        {/* Keyed by exercise as well as set: a return to an
+                            earlier exercise remounts its checks, so only a
+                            set ticked on screen pops (Pol1). */}
+                        <SetCheck
+                          key={`${currentExIndex}:${setIdx}`}
+                          completed={set.completed}
+                          editLabel={`Edit completed ${lowerFirst(name)}`}
+                          best={isBest}
+                          guideAnchor={
+                            firstWorkout &&
+                            currentExIndex === 0 &&
+                            setIdx === currentSetIndex
+                              ? "first-set"
+                              : undefined
+                          }
+                          onComplete={() => void completeSet(setIdx)}
+                          onEdit={() => {
+                            haptic();
+                            setEditingSet({
+                              exIdx: currentExIndex,
+                              setIdx,
+                            });
+                          }}
+                        />
                       </div>
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
@@ -2383,6 +2314,48 @@ export default function WorkoutSession({
         }
         className="mx-4 mb-3"
       />
+
+      {/* The rest timer docks here too, under the new best when a set
+          earns one (Pol1). A row in the header would push the exercise strip
+          and the set table down 61 px the moment a set is ticked. One key
+          for every rest, so a set completed during a rest swaps the
+          countdown inside the card rather than sending one card out as
+          another comes in. With auto-start off (D-LIFT-16) the manual
+          start waits in the same place, so starting a rest moves nothing
+          either. */}
+      <AnimatePresence initial={false}>
+        {rest ? (
+          <motion.div
+            key="rest"
+            initial={reduceMotion ? false : { opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: 12 }}
+            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            className="mx-4 mb-3 shrink-0"
+          >
+            <WorkoutRestTimer
+              key={rest.id}
+              startedAt={rest.startedAt}
+              initialTarget={rest.target}
+              exerciseName={day.exercises[currentExIndex]?.name}
+              onStop={stopRest}
+            />
+          </motion.div>
+        ) : !autoRest && currentSets.some((st) => st.completed) ? (
+          <div key="start-rest" className="mx-4 mb-3 flex justify-center">
+            <Button
+              variant="secondary"
+              leftIcon={<Timer className="size-4" aria-hidden="true" />}
+              onClick={() => {
+                haptic("light");
+                startRest(day.exercises[currentExIndex]);
+              }}
+            >
+              Start rest timer
+            </Button>
+          </div>
+        ) : null}
+      </AnimatePresence>
 
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">

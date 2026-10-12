@@ -180,6 +180,66 @@ describe("quality sessions progress", () => {
   });
 });
 
+/* Run20 (4): the ladder was indexed on the block's position, so a runner's
+   first quality session started wherever the block had got to: a year-out
+   marathon's first tempo was tempo_30 and its first intervals 5 × 1K, and a
+   short plan's first intervals were 6 × 1K (running-engine-audit §7 item 4).
+   Now the first session of each kind is its first rung, and each one climbs
+   at most a rung; the block's position still caps it. */
+describe("the ladder starts at its first rung", () => {
+  const firstAndSteps = (
+    distance: Distance,
+    daysAhead: number,
+    flavour: "tempo" | "intervals"
+  ) => {
+    const sizes = plan({ distance, daysAhead })
+      .weeks.flat()
+      .map((d) =>
+        flavour === "tempo"
+          ? TEMPO_WORK[d.templateId]
+          : INTERVAL_REPS.get(d.templateId)
+      )
+      .filter((n): n is number => typeof n === "number");
+    return { sizes, first: sizes[0] };
+  };
+
+  it("a year-out marathon's first tempo and first intervals are the first rungs", () => {
+    expect(firstAndSteps("marathon", 364, "tempo").first).toBe(20);
+    expect(firstAndSteps("marathon", 364, "intervals").first).toBe(4);
+  });
+
+  it("a short plan's first intervals are 4 × 1K, for every distance", () => {
+    for (const distance of DISTANCES) {
+      const { first } = firstAndSteps(distance, 70, "intervals");
+      if (first !== undefined) expect(first, distance).toBe(4);
+    }
+  });
+
+  it("climbs at most one rung past the highest before it", () => {
+    // A cutback eases a session and the next returns to the ladder, so the
+    // step is measured from the highest rung reached, not the last one.
+    const tempoRung = [20, 30, 40];
+    const intervalRung = [4, 5, 6];
+    for (const distance of DISTANCES) {
+      for (const daysAhead of [70, 112, 200, 364]) {
+        for (const flavour of ["tempo", "intervals"] as const) {
+          const rungs = flavour === "tempo" ? tempoRung : intervalRung;
+          const { sizes } = firstAndSteps(distance, daysAhead, flavour);
+          let highest = -1;
+          for (const size of sizes) {
+            const rung = rungs.indexOf(size);
+            expect(
+              rung - highest,
+              `${distance} ${daysAhead}d ${flavour}: ${sizes.join(",")}`
+            ).toBeLessThanOrEqual(1);
+            highest = Math.max(highest, rung);
+          }
+        }
+      }
+    }
+  });
+});
+
 describe("the knobs still win", () => {
   it("gentler holds quality at the base rung", () => {
     // `gentler` already halves quality frequency and drops intervals; letting

@@ -89,7 +89,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   complete.mockResolvedValue({ data: {} });
 });
-afterEach(cleanup);
+// A spy left on `buildOnboardingPlan` would be the real builder the next
+// test's own spy calls through, so that spy would call itself.
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 describe("onboarding chapters and commit", () => {
   it("requires goal, running intent and limitations, preserving explicit choices on reload", () => {
     open();
@@ -146,6 +151,8 @@ describe("onboarding chapters and commit", () => {
     expect(payload.programState).toBe(preview.programState);
     expect(payload.weekSchedule).toBe(preview.weekSchedule);
     expect(payload.profileData.weeklyRunDaysTarget).toBe(0);
+    // No recent race was given, so no benchmark is written.
+    expect(payload.profileData).not.toHaveProperty("runFitness");
     expect(payload.profileData.goalWeightKg).toBe(81.5);
     expect(payload.profileData.weeklyRateKg).toBe(0);
     // The plan's `program` is merged in, not assigned over the map: the
@@ -350,7 +357,7 @@ describe("the legs while the runs build (Lift4 (10))", () => {
 describe("activity-relevant setup", () => {
   it("creates a genuine free-running-only plan, skips lift setup and goes on to Home after the offer", async () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByRole("radio", { name: "Running" })).toHaveAttribute(
       "aria-checked",
@@ -612,7 +619,7 @@ describe("answers the user has not given", () => {
 describe("a race needs a date", () => {
   const reachRunningPlan = () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
@@ -739,7 +746,7 @@ describe("where the draft week is worth showing", () => {
 describe("new runners", () => {
   const reachRunStep = () => {
     open();
-    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Support my running/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
   };
@@ -802,15 +809,134 @@ describe("new runners", () => {
     builder.mockRestore();
   });
 
-  it("starts them at a reachable weekly target", () => {
-    // One is reachable; two is what "occasional" already means, so a
-    // beginner tier that also meant two would be a label and nothing else.
-    expect(targetAfterPicking(/New to running/)).toBe(1);
+  it("starts them at two runs a week, a race plan's least (Pgm7 A7)", () => {
+    // This was one, on the reading that a beginner tier meaning two would
+    // be a label and nothing else. The owner's answer A7 settles it: a race
+    // plan needs at least two run days, and "New to running" with a race
+    // set defaults to two, not one. The tier still describes the person.
+    expect(targetAfterPicking(/New to running/)).toBe(2);
+  });
+
+  it("lets a race plan's runs per week go no lower than two", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    expect(screen.getByLabelText("Runs per week")).toHaveAttribute("min", "2");
+  });
+
+  it("recommends three runs a week for a marathon", () => {
+    cleanup();
+    localStorage.clear();
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    expect(
+      screen.queryByText(/A marathon plan works best on three runs a week/)
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Full" }));
+    expect(
+      screen.getByText(/A marathon plan works best on three runs a week/)
+    ).toBeInTheDocument();
   });
 
   it("leaves the existing tiers where they were", () => {
     expect(targetAfterPicking(/Regular runner/)).toBe(3);
     expect(targetAfterPicking(/Occasional runner/)).toBe(2);
+  });
+});
+
+/* Adaptive paces §10.2: an optional recent 5K or 10K at setup, typed in
+   minutes and seconds because a phone's number pad has no colon. It is the
+   person's own benchmark, so their paces come from it from the first run. */
+describe("a recent race at setup", () => {
+  const recentRace = () =>
+    screen.queryByRole("region", { name: "Recent race" });
+  const field = (name: "Minutes" | "Seconds") =>
+    within(recentRace()!).getByRole("textbox", { name });
+  const type = (name: "Minutes" | "Seconds", value: string) =>
+    fireEvent.change(field(name), { target: { value } });
+  const back = () => screen.getByRole("button", { name: "Back to review" });
+
+  it("sets the plan's paces and is saved as the person's own benchmark", () => {
+    saveOnboardingDraft("setup-test", draft);
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    fireEvent.click(within(recentRace()!).getByRole("radio", { name: "10K" }));
+    type("Minutes", "48");
+    expect(builder.mock.calls.at(-1)![3]?.runFitness).toEqual({
+      benchmark: { distanceM: 10000, timeS: 2880 },
+      vdot: 42,
+    });
+    fireEvent.click(back());
+    expect(screen.getByText(/recent 10K in 48:00/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0][0].profileData.runFitness).toEqual({
+      benchmark: { distanceM: 10000, timeS: 2880 },
+      vdot: 42,
+      source: "manual",
+      updatedAt: expect.any(String),
+      pendingConfirmation: false,
+    });
+    builder.mockRestore();
+  });
+
+  it("holds the step while the time can't be read, until it's corrected or cleared", () => {
+    saveOnboardingDraft("setup-test", draft);
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    type("Minutes", "2a2");
+    expect(field("Minutes")).toHaveValue("22");
+    type("Seconds", "75");
+    expect(within(recentRace()!).getByRole("alert")).toHaveTextContent(
+      "Seconds go up to 59."
+    );
+    expect(back()).toBeDisabled();
+    type("Seconds", "");
+    expect(back()).toBeEnabled();
+    // Nobody has run a 5K in nine minutes.
+    type("Minutes", "9");
+    expect(within(recentRace()!).getByRole("alert")).toHaveTextContent(
+      "That time doesn't look right."
+    );
+    expect(back()).toBeDisabled();
+    type("Minutes", "");
+    expect(back()).toBeEnabled();
+    expect(within(recentRace()!).queryByRole("alert")).toBeNull();
+  });
+
+  it("comes back with a resumed setup", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      recentRaceMinutes: "22",
+      recentRaceSeconds: "30",
+    });
+    open();
+    expect(screen.getByText(/recent 5K in 22:30/)).toBeInTheDocument();
+  });
+
+  it("isn't asked of someone new to running, and an earlier answer isn't saved", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      runFrequency: "new",
+      recentRaceMinutes: "22",
+      recentRaceSeconds: "30",
+    });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
+    expect(
+      screen.getByRole("button", { name: /New to running/ })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(recentRace()).toBeNull();
+    fireEvent.click(back());
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    expect(complete).toHaveBeenCalledTimes(1);
+    const { profileData } = complete.mock.calls[0][0];
+    expect(profileData.runFrequency).toBe("new");
+    expect(profileData).not.toHaveProperty("runFitness");
   });
 });
 
@@ -835,7 +961,7 @@ describe("choices with drawings", () => {
     expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
     expect(artOf("Lose fat").kind).toBe("muscles");
     expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
-    expect(artOf("Improve running").kind).toBe("route");
+    expect(artOf("Support my running").kind).toBe("route");
   });
 
   it("draws the kit each setup means, and experience as a level", () => {

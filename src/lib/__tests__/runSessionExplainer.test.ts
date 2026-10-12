@@ -56,6 +56,7 @@ describe("runSessionExplainer", () => {
       ["tempo", "tempo_30", build],
       ["intervals", "5x1k", build],
       ["easy", "easy_30", taper],
+      ["easy", "easy_60", taper],
       ["intervals", "8x400", taper],
       ["long", "long_10k", taper],
       ["race", "marathon_race", race],
@@ -66,6 +67,21 @@ describe("runSessionExplainer", () => {
       expect(line, `${type}/${templateId} @ wk${ctx.currentWeek}`).toBeTruthy();
       expect(line!.length).toBeGreaterThan(20);
     }
+  });
+
+  /* A tempo's pace comes from the benchmark, from the goal race pace in
+     build and taper (A2), or from the template when there is neither, so
+     the line can't say where it comes from, nor how hard it feels: a
+     marathon's goal pace is steadier than threshold. The session's own
+     segments say both. */
+  it("the tempo line says what a tempo does, not where its pace comes from", () => {
+    const line = runSessionExplainer({
+      type: "tempo",
+      templateId: "tempo_30",
+      ...build,
+    });
+    expect(line).not.toMatch(/fitness/);
+    expect(line).toMatch(/blocks get longer/);
   });
 
   it("phase drives the copy: same template reads differently in build vs taper", () => {
@@ -130,6 +146,19 @@ describe("runSessionExplainer", () => {
     }
   });
 
+  it("a taper medium-long says it is shorter on purpose (Run22), not short", () => {
+    const line = runSessionExplainer({
+      type: "easy",
+      templateId: "easy_60",
+      ...taper,
+    });
+    expect(line).toMatch(/^Taper medium-long/);
+    expect(line).toMatch(/shorter on purpose/);
+    expect(line).not.toBe(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...taper })
+    );
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
@@ -141,6 +170,22 @@ describe("runSessionExplainer", () => {
     for (const line of all) {
       expect(line).not.toMatch(/readiness|recovery score|safe(ly|ty)?\b/i);
       expect(line).not.toMatch(/VO2|lactate|MRV/i);
+    }
+  });
+
+  it("calls tempo and intervals the quality sessions: hard is an effort, not a family (Run21 (4))", () => {
+    expect(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...build })
+    ).toMatch(/quality sessions/);
+    for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
+      for (const templateId of ["x", "easy_40_strides", "easy_90"]) {
+        for (const ctx of [base, build, taper, race]) {
+          const line = runSessionExplainer({ type, templateId, ...ctx }) ?? "";
+          expect(line, `${type} ${templateId}`).not.toMatch(
+            /\bhard (days|sessions|runs)\b/i
+          );
+        }
+      }
     }
   });
 });

@@ -41,7 +41,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * explicit commit (you're picking a date), and the RaceGoalPlanner CTA
  * carries the honest runway label (Save race plan / compressed /
  * mostly-easy). Preview ≡ commit: the planner preview and buildPlan derive
- * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
+ * the week from the same `planWeekSchedule(liftDays, weeklyRunDays, …)`
  * derivation, so what the runway preview shows is what the save writes.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -67,6 +67,8 @@ import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
   getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
@@ -235,8 +237,15 @@ export default function RunPlanSettings({
   const [runMode, setRunMode] = useState<RunMode>(
     deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    storedDraft?.weeklyRunDays ?? saved.weeklyRunDays
+  /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
+     already on fewer keeps them (Pgm5: no silent rebuild), so its own count
+     is its floor; anything new starts at two. */
+  const minRunDays =
+    saved.runMode === "race_prep"
+      ? Math.min(MIN_RACE_RUN_DAYS, saved.weeklyRunDays)
+      : MIN_RACE_RUN_DAYS;
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(() =>
+    Math.max(minRunDays, storedDraft?.weeklyRunDays ?? saved.weeklyRunDays)
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
@@ -458,8 +467,8 @@ export default function RunPlanSettings({
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
-      // effective weekSchedule (the same generateSchedule(liftDays,
-      // weeklyRunDays) derivation the planner preview uses), run targets,
+      // effective weekSchedule (the same planWeekSchedule(liftDays,
+      // weeklyRunDays, …) derivation the planner preview uses), run targets,
       // goal, mode, tuning, runDays and plan — so none of them can
       // disagree. The lift slice threads unchanged from the saved profile
       // with preserveHistory: true (run edits never rebuild lifting).
@@ -662,6 +671,8 @@ export default function RunPlanSettings({
                 onClick={() => {
                   haptic();
                   setRunMode(opt.id);
+                  if (opt.id === "race_prep")
+                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
                 }}
                 className={cn(
                   "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
@@ -783,6 +794,11 @@ export default function RunPlanSettings({
                 run — some days combine both.
               </p>
             )}
+            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {raceRunDaysNote(raceDistance, weeklyRunDays)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -790,9 +806,9 @@ export default function RunPlanSettings({
               aria-label="Decrease run days"
               onClick={() => {
                 haptic();
-                setWeeklyRunDays((n) => Math.max(1, n - 1));
+                setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
-              disabled={weeklyRunDays <= 1}
+              disabled={weeklyRunDays <= minRunDays}
               className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
@@ -852,7 +868,8 @@ export default function RunPlanSettings({
               Long-run volume
             </p>
             <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter caps them at 10K.
+              How big your long runs build — Lighter peaks about a quarter
+              lower, Bigger about a quarter higher.
             </p>
             <SegmentedControl
               options={[
