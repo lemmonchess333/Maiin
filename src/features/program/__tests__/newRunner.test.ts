@@ -314,12 +314,13 @@ describe("a new runner's runs after the run-walk weeks", () => {
         const most = 20 + 5 * (i - NEW_RUNNER_WEEKS + 1);
         week.forEach((run, j) => {
           const own = regular.weeks[i][j];
-          // Run22: a taper week's long run is its share of the build's
-          // longest, and a new runner's build held shorter long runs than
-          // the plan's own (`taperInSteps.test.ts`).
+          // Run22: a taper week's long run and easy runs are its shares of
+          // what the build held, and a new runner's build held shorter runs
+          // than the plan's own (`taperInSteps.test.ts`).
           if (
-            own.type === "long" &&
-            i >= weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance]
+            (own.type === "long" || own.type === "easy") &&
+            i >= weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance] &&
+            i < weeks - 1
           ) {
             expect(
               minutes(run),
