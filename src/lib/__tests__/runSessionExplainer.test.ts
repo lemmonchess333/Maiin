@@ -56,6 +56,7 @@ describe("runSessionExplainer", () => {
       ["tempo", "tempo_30", build],
       ["intervals", "5x1k", build],
       ["easy", "easy_30", taper],
+      ["easy", "easy_60", taper],
       ["intervals", "8x400", taper],
       ["long", "long_10k", taper],
       ["race", "marathon_race", race],
@@ -142,6 +143,19 @@ describe("runSessionExplainer", () => {
       expect(line).toMatch(/without stopping/);
       expect(line).not.toMatch(/walks between/);
     }
+  });
+
+  it("a taper medium-long says it is shorter on purpose (Run22), not short", () => {
+    const line = runSessionExplainer({
+      type: "easy",
+      templateId: "easy_60",
+      ...taper,
+    });
+    expect(line).toMatch(/^Taper medium-long/);
+    expect(line).toMatch(/shorter on purpose/);
+    expect(line).not.toBe(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...taper })
+    );
   });
 
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
