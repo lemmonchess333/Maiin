@@ -467,6 +467,17 @@ export default function RunSummary() {
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
+  /* Done replaces Save run, pinned last (Pol1). The button that had focus
+     goes with the save, so focus moves to Done, unless something else on
+     the screen already holds it. */
+  const doneRef = useRef<HTMLButtonElement>(null);
+  const doneShown = canShowDone({ saveStatus });
+  useEffect(() => {
+    if (!doneShown) return;
+    const active = document.activeElement;
+    if (!active || active === document.body)
+      doneRef.current?.focus({ preventScroll: true });
+  }, [doneShown]);
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   // The historical run list, reused for BOTH the pace-trend badge and the
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
@@ -1113,6 +1124,63 @@ export default function RunSummary() {
        the same words as RunDetail's Export GPX. */
     void shareGpx(gpx, `tropos-run-${Date.now()}.gpx`).then(announceRouteShare);
   };
+
+  /* Races plan PR4: a saved race-type run whose goal is bound to a real
+     race space can be posted there. Navigation only (?compose=1 opens the
+     space composer once membership allows): nothing is posted without an
+     explicit write in the space. */
+  const raceSpace =
+    activityType === "race" && profile?.raceGoal?.eventSpaceId
+      ? spaceDef(profile.raceGoal.eventSpaceId)
+      : undefined;
+  const raceCommunity = raceSpace?.kind === "race" ? raceSpace : undefined;
+  /* Treadmill runs have no track to export. */
+  const showGpx = canExportGpx({
+    isInvalid: false,
+    isOutdoorGpsRun: outdoorGps,
+    saveStatus,
+  });
+  const shareExtras =
+    (isPlannedSession && user) || raceCommunity || showGpx ? (
+      <>
+        {isPlannedSession && user && (
+          /* CIRCLE-SESSION-01: a summary-only share for planned runs. The
+             sheet publishes just the `session_completed` event
+             (privacy-fenced), never distance, pace, route or any number. */
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setShareOpen(false);
+              setCircleShareOpen(true);
+            }}
+          >
+            Share to circle
+          </Button>
+        )}
+        {raceCommunity && (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => navigate(`/space/${raceCommunity.id}?compose=1`)}
+          >
+            Post in {raceCommunity.name} community
+          </Button>
+        )}
+        {showGpx && (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setShareOpen(false);
+              handleExportGPX();
+            }}
+          >
+            Export GPX
+          </Button>
+        )}
+      </>
+    ) : undefined;
 
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);
@@ -1781,26 +1849,7 @@ export default function RunSummary() {
               </Button>
             )}
 
-            {canShowDone({ saveStatus }) && (
-              /* Replaces the removed auto-navigation timeouts. Sits in the
-             same primary-action slot as Save run so the user's eye
-             doesn't move when the state transitions saved → saved. */
-              <button
-                type="button"
-                onClick={() => navigate("/program?tab=run")}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-                style={{
-                  background: `${THEME.success}20`,
-                  color: THEME.success,
-                  border: `1px solid ${THEME.success}4d`,
-                }}
-              >
-                <CheckCircle size={16} aria-hidden="true" />
-                Done
-              </button>
-            )}
-
-            {canShowDone({ saveStatus }) && (
+            {doneShown && (
               /* FOOD-02: post-run → Food handoff, at the moment the runner
                  has refuel intent. Secondary and skippable — routes into
                  the EXISTING composer flow with a narrow context param
@@ -1816,81 +1865,18 @@ export default function RunSummary() {
               </button>
             )}
 
-            {canShowDone({ saveStatus }) && isPlannedSession && user && (
-              /* CIRCLE-SESSION-01 — explicit summary-only Circle share
-                 for PLANNED runs only. The sheet publishes just the
-                 `session_completed` event (privacy-fenced) — never
-                 distance, pace, route or any other number. */
-              <Button
-                variant="sport-tinted"
-                fullWidth
-                onClick={() => setCircleShareOpen(true)}
+            {/* One Share: the card, and under it the run's other ways out
+                (its Circle, its race's community, its GPX file), which
+                were three more buttons here. */}
+            {canShowShare({ isInvalid: false, saveStatus }) && (
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
               >
-                Share to circle
-              </Button>
+                Share
+              </button>
             )}
-
-            {(() => {
-              /* Races plan PR4 — post-race share into the race's
-                 community space. Offered ONLY for a saved race-type
-                 run when the user's goal carries a catalogue binding
-                 that resolves to a real race space. Navigation only
-                 (?compose=1 opens the space composer once membership
-                 allows) — nothing is posted without an explicit
-                 write in the space. */
-              if (!canShowDone({ saveStatus }) || activityType !== "race")
-                return null;
-              const raceSpace = profile?.raceGoal?.eventSpaceId
-                ? spaceDef(profile.raceGoal.eventSpaceId)
-                : undefined;
-              if (raceSpace?.kind !== "race") return null;
-              return (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/space/${raceSpace.id}?compose=1`)}
-                  className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                >
-                  Post in {raceSpace.name} community
-                </button>
-              );
-            })()}
-
-            {(() => {
-              /* Share + Export GPX gated together so the wrapping flex row
-             collapses to nothing when neither is renderable (e.g. a
-             treadmill run pre-save → both hidden). Treadmill never
-             shows GPX (no track to export); both only show after
-             saveStatus === 'saved'. */
-              const showShare = canShowShare({ isInvalid: false, saveStatus });
-              const showGpx = canExportGpx({
-                isInvalid: false,
-                isOutdoorGpsRun: outdoorGps,
-                saveStatus,
-              });
-              if (!showShare && !showGpx) return null;
-              return (
-                <div className="flex gap-2">
-                  {showGpx && (
-                    <button
-                      type="button"
-                      onClick={handleExportGPX}
-                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                    >
-                      Export GPX
-                    </button>
-                  )}
-                  {showShare && (
-                    <button
-                      type="button"
-                      onClick={handleShare}
-                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                    >
-                      Share
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
             {canShowDiscard({ saveStatus }) && (
               <button
                 type="button"
@@ -1901,6 +1887,23 @@ export default function RunSummary() {
               </button>
             )}
           </div>
+
+          {/* Saved, Done comes last and stays in thumb reach, as on the
+              lift's finish (Pol1): pinned to the bottom of the screen
+              while the page scrolls under it. */}
+          {doneShown && (
+            <div className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
+              <Button
+                ref={doneRef}
+                variant="sport"
+                size="lg"
+                fullWidth
+                onClick={() => navigate("/program?tab=run")}
+              >
+                Done
+              </Button>
+            </div>
+          )}
         </>
       )}
 
@@ -1918,6 +1921,7 @@ export default function RunSummary() {
       <ShareCardSheet
         open={shareOpen}
         onOpenChange={setShareOpen}
+        extras={shareExtras}
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",

@@ -15,6 +15,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -68,10 +69,13 @@ vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/ElevationProfile", () => ({
   default: () => null,
 }));
-vi.mock("@/components/share/ShareCardSheet", () => ({
-  default: () => null,
-  ShareCardSheet: () => null,
-}));
+/* The sheet's own card is not under test: only the other ways out it
+   carries under it, where Export GPX lives. */
+vi.mock("@/components/share/ShareCardSheet", () => {
+  const Sheet = ({ open, extras }: { open: boolean; extras?: ReactNode }) =>
+    open ? <div role="dialog">{extras}</div> : null;
+  return { default: Sheet, ShareCardSheet: Sheet };
+});
 vi.mock("@/components/social/CircleShareSheet", () => ({
   default: () => null,
 }));
@@ -134,11 +138,17 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+/** Export GPX, as a runner reaches it: under the summary's one Share. */
+async function exportGpx() {
+  fireEvent.click(await screen.findByRole("button", { name: "Share" }));
+  fireEvent.click(screen.getByRole("button", { name: "Export GPX" }));
+}
+
 describe("RunSummary — Export GPX", () => {
   it("hands the run over as a .gpx file", async () => {
     h.shareFile.mockResolvedValue("shared");
     renderSummary();
-    fireEvent.click(await screen.findByRole("button", { name: "Export GPX" }));
+    await exportGpx();
     await waitFor(() => expect(h.shareFile).toHaveBeenCalledOnce());
     const file = h.shareFile.mock.calls[0][0] as File;
     expect(file.name).toMatch(/^tropos-run-\d+\.gpx$/);
@@ -151,7 +161,7 @@ describe("RunSummary — Export GPX", () => {
   it("confirms a download, as RunDetail does", async () => {
     h.shareFile.mockResolvedValue("downloaded");
     renderSummary();
-    fireEvent.click(await screen.findByRole("button", { name: "Export GPX" }));
+    await exportGpx();
     await waitFor(() =>
       expect(h.toast.success).toHaveBeenCalledWith("Route downloaded")
     );
@@ -160,7 +170,7 @@ describe("RunSummary — Export GPX", () => {
   it("says so when the run could not be handed over", async () => {
     h.shareFile.mockResolvedValue("failed");
     renderSummary();
-    fireEvent.click(await screen.findByRole("button", { name: "Export GPX" }));
+    await exportGpx();
     await waitFor(() =>
       expect(h.toast.error).toHaveBeenCalledWith("Couldn't share route")
     );
@@ -170,11 +180,32 @@ describe("RunSummary — Export GPX", () => {
   it("says nothing after a share or a dismissed sheet", async () => {
     h.shareFile.mockResolvedValue("cancelled");
     renderSummary();
-    fireEvent.click(await screen.findByRole("button", { name: "Export GPX" }));
+    await exportGpx();
     await waitFor(() => expect(h.shareFile).toHaveBeenCalledOnce());
     // Let the handover's continuation run before reading the toasts.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(h.toast.success).not.toHaveBeenCalled();
     expect(h.toast.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("RunSummary — saved, Done comes last", () => {
+  it("pins Done after every other action, in thumb reach, with focus", async () => {
+    renderSummary();
+    const done = await screen.findByRole("button", { name: "Done" });
+    expect(screen.getAllByRole("button").at(-1)).toBe(done);
+    expect(done.closest(".sticky")).not.toBeNull();
+    expect(document.activeElement).toBe(done);
+  });
+
+  it("offers one Share, with the run's GPX under its card", async () => {
+    renderSummary();
+    await screen.findByRole("button", { name: "Done" });
+    expect(screen.getAllByRole("button", { name: "Share" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Export GPX" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    expect(
+      screen.getByRole("button", { name: "Export GPX" })
+    ).toBeInTheDocument();
   });
 });
