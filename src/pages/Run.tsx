@@ -3,6 +3,7 @@ import {
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
+import { runSessionName } from "@/lib/runSessionAbout";
 import {
   useState,
   useEffect,
@@ -1401,6 +1402,11 @@ export default function Run() {
                     : navigate("/program?tab=run")
                 }
                 programContext={planDecision.strip}
+                sessionName={
+                  launchWorkout
+                    ? runSessionName(launchWorkout, launchRacePace)
+                    : undefined
+                }
                 savedPreferences={{
                   autoPause: true,
                   audioCues: profile?.audioCues !== false,
