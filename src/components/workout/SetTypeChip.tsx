@@ -7,7 +7,10 @@ import type { SetType } from "@/features/program/setLabels";
    chip, so a drop set reads as "D" in the same colour on all three. */
 const SET_TYPE_CHIP: Record<SetType, string> = {
   working: "bg-muted text-foreground",
-  warmup: "bg-warning/10 text-warning-strong",
+  /* Grey, not amber (owner, 2026-10-12): amber is a status colour (DS3),
+     and every exercise opens on three or four of these. The letter says
+     what the row is; a warm-up is the quiet row of the table. */
+  warmup: "bg-muted text-muted-foreground",
   dropset: "bg-primary/10 text-primary-strong",
   failure: "bg-destructive/10 text-destructive-strong",
 };

@@ -1885,7 +1885,10 @@ export default function WorkoutSession({
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
-            done set's row turns green, as the tick it carries.
+            done set says so with its green tick, on the card's own colour,
+            and the row being logged is the table's one tinted row (owner,
+            2026-10-12: a table of green rows was the loudest thing on the
+            screen, and done sets are the least of what it asks for).
 
             Under 19em of card (larger text on the phone, and a 320px phone
             already at the designed size) the five columns do not fit:
@@ -1978,9 +1981,9 @@ export default function WorkoutSession({
                         className={cn(
                           columns,
                           "border-t border-border/40 px-3 py-1.5 transition-colors",
-                          set.completed
-                            ? "bg-success/10"
-                            : setIdx === currentSetIndex && "bg-primary/10"
+                          !set.completed &&
+                            setIdx === currentSetIndex &&
+                            "bg-primary/10"
                         )}
                       >
                         <button

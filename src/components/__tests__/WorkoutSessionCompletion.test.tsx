@@ -258,6 +258,23 @@ describe("set completion through row controls", () => {
     );
   });
 
+  /* Quieter colours (owner, 2026-10-12): a done row keeps the card's
+     colour and says done with its green tick; the row being logged is the
+     table's one tinted row. */
+  it("tints only the row being logged, not the done ones", async () => {
+    openSession();
+    const row = (index: number) =>
+      document.querySelector(`[data-set-row="${index}"] > div`)!;
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(row(1).className.split(" ")).toContain("bg-primary/10")
+    );
+    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+  });
+
   it("keeps completed exercises in the draft until the workout is saved", async () => {
     const log = openSession();
     // Cursor remains at set 1; completing set 3 must not finish the exercise.
