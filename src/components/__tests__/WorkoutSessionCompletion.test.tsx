@@ -236,6 +236,28 @@ describe("set completion through row controls", () => {
     ).toBeEnabled();
   });
 
+  /* The set being logged stays on screen: each move of the current set
+     asks its row into view, only as far as it needs (nearest). The
+     first placement is instant (Pol1); later ones pass no behavior, so
+     the list's scroll-behavior decides, as Reduce Motion needs. */
+  it("brings the set being logged into view, instantly on arrival", async () => {
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    openSession();
+    const rowCalls = () =>
+      scroll.mock.contexts.flatMap((el, i) =>
+        el instanceof Element && el.hasAttribute("data-set-row")
+          ? [[el.getAttribute("data-set-row"), scroll.mock.calls[i][0]]]
+          : []
+      );
+    expect(rowCalls()).toEqual([
+      ["0", { block: "nearest", behavior: "instant" }],
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(rowCalls().at(-1)).toEqual(["1", { block: "nearest" }])
+    );
+  });
+
   it("keeps completed exercises in the draft until the workout is saved", async () => {
     const log = openSession();
     // Cursor remains at set 1; completing set 3 must not finish the exercise.
