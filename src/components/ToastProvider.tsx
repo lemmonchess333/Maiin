@@ -1,5 +1,9 @@
 import { Toaster } from "sonner";
 
+/** Clears the bottom tab bar (~64px) plus a small gap, so a toast never
+ *  sits on the bar or takes its taps. */
+const ABOVE_TAB_BAR = "calc(env(safe-area-inset-bottom, 0px) + 80px)";
+
 export function ToastProvider() {
   return (
     <>
@@ -30,13 +34,24 @@ export function ToastProvider() {
           flex: 1 1 60% !important;
           min-width: 0;
         }
+        /* The close button has a gutter of its own at the right edge.
+           Centred there with nothing reserved, it sat on the action
+           button: the × covered the right of "Undo" on a deleted meal and
+           of "Retry" on the failed food search, so a tap there closed the
+           toast instead. It is the 44px target every control gets, with
+           its small glyph centred in it. */
+        [data-sonner-toast] {
+          padding-right: 48px !important;
+        }
         [data-sonner-toast] [data-close-button] {
           color: hsl(var(--muted-foreground)) !important;
           background: transparent !important;
           border: 0 !important;
           left: auto !important;
-          right: 8px !important;
+          right: 2px !important;
           top: 50% !important;
+          width: 44px !important;
+          height: 44px !important;
           transform: translateY(-50%) !important;
         }
         /* Status icons keep their semantic colour. */
@@ -84,13 +99,18 @@ export function ToastProvider() {
         // Offset clears the bottom tab bar (~64px) plus a small gap so
         // the toast doesn't visually merge with it.
         position="bottom-center"
-        offset="calc(env(safe-area-inset-bottom, 0px) + 80px)"
+        // The bottom only. sonner reads a single value as all four sides,
+        // so the 80px meant to clear the tab bar was also each side's
+        // margin: on a 393px phone every toast was 233px wide, its title
+        // wrapping and its action pushed onto a line of its own. The sides
+        // keep sonner's own margins (16px on a phone, 24px wider).
+        offset={{ bottom: ABOVE_TAB_BAR }}
         // CRITICAL: sonner only applies `offset` on viewports ≥600px; phones
         // use `mobileOffset`, which DEFAULTS TO 16px. Without this mirror,
         // every toast on a phone rendered on top of the bottom tab bar and
         // intercepted its taps — an infinite-duration toast (the old SW
         // update prompt) made the whole nav permanently untappable on iOS.
-        mobileOffset="calc(env(safe-area-inset-bottom, 0px) + 80px)"
+        mobileOffset={{ bottom: ABOVE_TAB_BAR }}
         aria-live="polite"
         // 1500ms matches the convention across the apps audited; Sonner's
         // 4000ms default reads as slow/lingering on a fitness surface
