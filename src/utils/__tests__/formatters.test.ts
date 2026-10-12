@@ -40,6 +40,13 @@ describe("formatVolume", () => {
   it("formats large volumes", () => {
     expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
   });
+
+  it("formats a lifetime's volume in millions, never as thousands of k", () => {
+    expect(formatVolume(999_900)).toEqual({ value: "999.9k", unit: "kg" });
+    expect(formatVolume(999_960)).toEqual({ value: "1.0M", unit: "kg" });
+    expect(formatVolume(1_500_000)).toEqual({ value: "1.5M", unit: "kg" });
+    expect(formatVolume(12_345_600)).toEqual({ value: "12.3M", unit: "kg" });
+  });
 });
 
 describe("formatDistance", () => {
