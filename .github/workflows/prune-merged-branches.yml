@@ -1,0 +1,68 @@
+# One-off clean-up: deletes the branches listed in
+# .github/prune-merged-branches.txt, each one whose pull request merged.
+#
+# Run it by hand from the Actions tab. A branch is deleted only while it
+# still points at the commit its PR merged and no open PR uses it, so a
+# branch someone has pushed to since, or reopened a PR from, is skipped
+# and named in the run summary. A deleted branch can be restored from its
+# merged PR's page.
+#
+# Remove this file and the list once it has run.
+name: Prune merged branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what would be deleted, delete nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Delete the listed branches that are still where they merged
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/contents/.github/prune-merged-branches.txt?ref=${GITHUB_REF_NAME}" \
+            --jq .content | base64 -d > list.txt
+          deleted=0; skipped=0
+          verb=Deleted
+          echo "## Prune merged branches" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DRY_RUN" = "true" ]; then
+            verb="Would delete"
+            printf '\nDry run: nothing was deleted.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo >> "$GITHUB_STEP_SUMMARY"
+          while read -r branch sha; do
+            case "$branch" in ''|'#'*) continue ;; esac
+            current=$(gh api "repos/$REPO/git/ref/heads/$branch" --jq .object.sha 2>/dev/null || true)
+            if [ -z "$current" ]; then
+              echo "- \`$branch\`: already gone" >> "$GITHUB_STEP_SUMMARY"; continue
+            fi
+            if [ "$current" != "$sha" ]; then
+              echo "- \`$branch\`: kept, it has moved since it merged" >> "$GITHUB_STEP_SUMMARY"
+              skipped=$((skipped + 1)); continue
+            fi
+            open=$(gh api "repos/$REPO/pulls?state=open&head=${REPO%%/*}:$branch" --jq length)
+            if [ "$open" != "0" ]; then
+              echo "- \`$branch\`: kept, an open PR uses it" >> "$GITHUB_STEP_SUMMARY"
+              skipped=$((skipped + 1)); continue
+            fi
+            if [ "$DRY_RUN" != "true" ]; then
+              gh api -X DELETE "repos/$REPO/git/refs/heads/$branch"
+            fi
+            deleted=$((deleted + 1))
+          done < list.txt
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo "**$verb: $deleted. Kept: $skipped.**" >> "$GITHUB_STEP_SUMMARY"
