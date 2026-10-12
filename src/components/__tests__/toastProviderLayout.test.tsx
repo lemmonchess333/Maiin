@@ -35,4 +35,34 @@ describe("ToastProvider — two-action toast layout", () => {
     expect(content.some((b) => /flex:\s*1 1 60%/.test(b))).toBe(true);
     expect(content.some((b) => /min-width:\s*0/.test(b))).toBe(true);
   });
+
+  /* The × sat on the action button: centred at the right edge with no
+     room kept for it, it covered the right of "Undo" on a deleted meal
+     and of "Retry" on the failed food search (Food pass, 393px, both
+     themes), so a tap there closed the toast. The toast's right padding
+     has to hold the whole button. */
+  it("keeps the close button in a gutter of its own, at 44px", () => {
+    const { container } = render(<ToastProvider />);
+    const css = (container.querySelector("style")?.textContent ?? "").replace(
+      /\/\*[\s\S]*?\*\//g,
+      ""
+    );
+    const last = (selector: string, property: string) =>
+      [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+        .filter((m) => m[1].trim() === selector)
+        .flatMap((m) => [
+          ...m[2].matchAll(
+            new RegExp(`(?:^|;)\\s*${property}:\\s*([\\d.]+)px`, "g")
+          ),
+        ])
+        .map((m) => Number(m[1]))
+        .at(-1);
+    const gutter = last("[data-sonner-toast]", "padding-right");
+    const right = last("[data-sonner-toast] [data-close-button]", "right");
+    const width = last("[data-sonner-toast] [data-close-button]", "width");
+    const height = last("[data-sonner-toast] [data-close-button]", "height");
+    expect(width).toBeGreaterThanOrEqual(44);
+    expect(height).toBeGreaterThanOrEqual(44);
+    expect(gutter).toBeGreaterThanOrEqual((right ?? 0) + (width ?? 20));
+  });
 });
