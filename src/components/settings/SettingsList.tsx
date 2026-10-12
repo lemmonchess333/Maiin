@@ -175,7 +175,7 @@ export function SettingsRow({
           }}
           className={cn(
             rowClass,
-            "hover:bg-muted/30 motion-safe:transition-colors motion-safe:active:scale-[0.99] disabled:opacity-50"
+            "hover:bg-muted/30 motion-safe:transition motion-safe:active:scale-[0.99] disabled:opacity-50"
           )}
         >
           {body}

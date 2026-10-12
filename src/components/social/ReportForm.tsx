@@ -320,7 +320,7 @@ function ActionCheckbox({
       onClick={() => onChange(!checked)}
       className={cn(
         "w-full flex items-start gap-3 px-3 py-2.5 rounded-lg border text-left",
-        "motion-safe:transition-colors motion-safe:active:scale-[0.99]",
+        "motion-safe:transition motion-safe:active:scale-[0.99]",
         checked
           ? "border-primary/30 bg-primary/5"
           : "border-border/50 bg-card hover:bg-muted/30"

@@ -503,7 +503,7 @@ function EditServingsSheet({
             }}
             disabled={target <= 1 || saving}
             aria-label="Decrease servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
           >
             −
           </button>
@@ -526,7 +526,7 @@ function EditServingsSheet({
             }}
             disabled={saving}
             aria-label="Increase servings"
-            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
           >
             +
           </button>
@@ -587,7 +587,7 @@ function EditServingsSheet({
               onDelete();
             }}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive-strong active:scale-[0.98] disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive-strong transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             <Trash2 className="size-4" aria-hidden="true" />
             Delete

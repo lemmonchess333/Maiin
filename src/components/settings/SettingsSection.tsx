@@ -74,7 +74,7 @@ export default function SettingsSection({
           navigate(backTo);
         }}
         aria-label={`Back to ${backLabel.toLowerCase()}`}
-        className="inline-flex items-center gap-1 -ml-2 p-2 min-h-[44px] rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95"
+        className="inline-flex items-center gap-1 -ml-2 p-2 min-h-[44px] rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition motion-safe:active:scale-95"
       >
         <ChevronLeft className="size-5" />
         <span>{backLabel}</span>

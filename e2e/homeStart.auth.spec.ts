@@ -140,10 +140,11 @@ test.describe("Home's Today card", () => {
       await training.getByRole("button", { name: "Start workout" }).click();
       const close = page.getByLabel("Close workout");
       await expect(close).toBeVisible({ timeout: 15_000 });
-      // The session header names its day beside the close control. Train's
-      // own page for day 1 sits underneath, so a bare "Bench Press" anywhere on
-      // screen would pass whichever day the session had opened.
-      await expect(close.locator("..")).toContainText("Session 1");
+      // The session's top bar names its day; Close sits at its end, grouped
+      // with Finish. Train's own page for day 1 sits underneath, so a bare
+      // "Bench Press" anywhere on screen would pass whichever day the session
+      // had opened.
+      await expect(close.locator("../..")).toContainText("Session 1");
       // The link is consumed, so a refresh or Back lands on the day.
       await expect(page).toHaveURL(/\/program\?day=0$/);
 

@@ -9,7 +9,11 @@ import {
 import { motion, useMotionValue, animate } from "framer-motion";
 import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
-import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
+import {
+  HUD_CAPTION,
+  HUD_DESTRUCTIVE,
+  HUD_SECONDARY,
+} from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
@@ -278,21 +282,22 @@ function KmProgress({
   const progress = (distance % lap) / lap;
   const next = kmDone + 1;
   const u = distanceUnitLabel(unit);
+  /* `w-full`: the expanded sheet centres its column, which sizes a row
+     to its content, and the bar's `flex-1` then had no width at all —
+     the two labels sat side by side with nothing between them. */
   return (
-    <div className="flex items-center gap-2 px-1">
+    <div className="flex w-full items-center gap-2 px-1">
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          /* Room for "100 km" at 11px tabular (~39px), so the bar does not
+             move as the count gains a digit. */
+          width: 44,
           textAlign: "right",
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {kmDone}
-        {u}
+        {`${kmDone} ${u}`}
       </p>
       <div
         className="flex-1 h-1 rounded-full overflow-hidden"
@@ -309,15 +314,11 @@ function KmProgress({
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          width: 44,
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {next}
-        {u}
+        {`${next} ${u}`}
       </p>
     </div>
   );
@@ -1124,8 +1125,10 @@ export default function RunBottomSheet({
                   setShowStopConfirm(false);
                   onStop();
                 }}
+                /* Ending keeps the run, so it is the run's own button;
+                   red belongs to Discard, which deletes it. */
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: "hsl(var(--destructive))" }}
+                style={{ background: "hsl(var(--running-fill))" }}
               >
                 End run
               </button>
@@ -1138,8 +1141,8 @@ export default function RunBottomSheet({
                   }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm"
                   style={{
-                    color: "rgba(255,255,255,0.6)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: HUD_DESTRUCTIVE,
+                    border: `1px solid ${HUD_DESTRUCTIVE}4D`,
                   }}
                 >
                   Discard run

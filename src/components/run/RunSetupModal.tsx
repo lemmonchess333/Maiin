@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -72,7 +72,7 @@ import { formatDayMonthYear, formatClock } from "@/utils/formatters";
    closed palette. */
 function presetChipClass(selected: boolean): string {
   return cn(
-    "min-h-11 px-4 rounded-full text-xs font-medium border transition-colors active:scale-[0.97]",
+    "min-h-11 px-4 rounded-full text-xs font-medium border transition active:scale-[0.97]",
     selected
       ? "bg-running/12 text-running-strong border-running/30"
       : "bg-muted text-muted-foreground border-border/50"
@@ -145,6 +145,10 @@ interface RunSetupModalProps {
   savedPreferences?: Partial<RunConfig>;
   /** Read-only context-strip data. Null when no strip should render. */
   programContext?: ProgramContextStrip | null;
+  /** The route actions: plan one, follow one, or the route being
+   *  followed. They sit under the title and scroll with the page, so the
+   *  screen opens on its own Back and heading. */
+  routeSection?: ReactNode;
   /** The planned session's name, as its launch card and Home give it
    *  ("Easy 30"), when the setup opened on a planned run. */
   sessionName?: string;
@@ -199,6 +203,7 @@ export default function RunSetupModal({
   onCancel,
   savedPreferences,
   programContext,
+  routeSection,
   sessionName,
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
@@ -341,6 +346,8 @@ export default function RunSetupModal({
             day, completed day, elapsed race-prep). Freeform users get
             no strip — the surface stays clean. */}
         {programContext && <ProgramContextStripView ctx={programContext} />}
+
+        {routeSection}
 
         {/* Selected-run card. Replaces the underlined "Change type"
             link with a tappable native-feeling control showing the
@@ -1256,7 +1263,7 @@ export default function RunSetupModal({
               // (THEME.running) — matches the Programme Run section's
               // Next · Pending Start button + Pgm3 Start CTA discipline.
               // The pulse animation stays via btn-start-run-pulse.
-              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
+              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg transition-transform active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
             >
               <Icon className="inline size-5 mr-1" />{" "}
               {onTreadmill
@@ -1332,7 +1339,7 @@ export default function RunSetupModal({
                       // checkmark, replacing the legacy purple-tinted
                       // selected state. Brand purple stays reserved for
                       // lifting / Save buttons.
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left motion-safe:transition-colors motion-safe:active:scale-[0.98]${isActive ? " bg-running/10" : ""}`}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left motion-safe:transition motion-safe:active:scale-[0.98]${isActive ? " bg-running/10" : ""}`}
                     >
                       <div
                         className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${isActive ? "bg-running/18" : "bg-muted"}`}

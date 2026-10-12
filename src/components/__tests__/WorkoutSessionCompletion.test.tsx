@@ -222,6 +222,43 @@ describe("set completion through row controls", () => {
     ).toBeDisabled();
   });
 
+  /* Quieter colours (owner, 2026-10-12): a done row keeps the card's
+     colour and says done with its green tick; the row being logged is the
+     table's one tinted row. */
+  it("tints only the row being logged, not the done ones", async () => {
+    openSession();
+    const row = (index: number) =>
+      document.querySelector(`[data-set-row="${index}"] > div`)!;
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(row(1).className.split(" ")).toContain("bg-primary/10")
+    );
+    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+  });
+
+  it("draws Previous in grey, still a tap to fill", () => {
+    openSession(writer(), vi.fn(), {
+      weight: 60,
+      lastPerformance: { sets: 3, reps: 8, weight: 60, completed: true },
+    });
+    const cells = screen.getAllByRole("button", { name: /^Last time / });
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) {
+      expect(cell.className.split(" ")).toContain("text-muted-foreground");
+      expect(cell.className).not.toMatch(/text-lifting/);
+    }
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
+      target: { value: "5" },
+    });
+    fireEvent.click(cells[0]);
+    expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(
+      8
+    );
+  });
+
   it("offers undo for a valid out-of-order set", () => {
     openSession();
     fireEvent.click(
@@ -256,6 +293,71 @@ describe("set completion through row controls", () => {
     await vi.waitFor(() =>
       expect(rowCalls().at(-1)).toEqual(["1", { block: "nearest" }])
     );
+  });
+
+  /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
+     a working set is done and while sets remain; under the set action it
+     took a row from the list on every set after the first. */
+  it("offers Finish in the top bar once a set is done, asking first", async () => {
+    openSession();
+    const finish = () =>
+      screen.queryByRole("button", { name: "Finish workout" });
+    expect(finish()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() => expect(finish()).toBeVisible());
+    expect(finish()).toHaveTextContent("Finish");
+    expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
+    fireEvent.click(finish()!);
+    expect(
+      screen.getByRole("alertdialog", { name: "Finish early?" })
+    ).toBeInTheDocument();
+  });
+
+  /* The exercise's name and set count head the list rather than sit fixed
+     above it, so another exercise starts at its head. */
+  it("brings another exercise's head into view when it opens", () => {
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Test lift",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "test",
+              name: "First lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+            {
+              exerciseId: "test-2",
+              name: "Second lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={writer()}
+        onClose={vi.fn()}
+      />
+    );
+    scroll.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Second lift" }));
+    const header = screen
+      .getByRole("heading", { level: 2, name: "Second lift" })
+      .closest("[class*='@container']");
+    const call = scroll.mock.contexts.findIndex((el) => el === header);
+    expect(call).toBeGreaterThanOrEqual(0);
+    expect(scroll.mock.calls[call][0]).toEqual({
+      block: "start",
+      behavior: "instant",
+    });
   });
 
   it("keeps completed exercises in the draft until the workout is saved", async () => {
@@ -1678,7 +1780,7 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Finish early" }));
+  fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
   fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
@@ -1996,5 +2098,33 @@ describe("the stretched line (Pgm7 A3)", () => {
     expect(screen.getByText(/^Up to/)).toHaveTextContent(
       "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
     );
+  });
+});
+
+describe("WorkoutSession — the rest after a warm-up", () => {
+  /* A warm-up is light, so it is briefly rested: the plan's session length
+     counts a minute for one, reps and rest. A working set's full rest after
+     each warm-up put minutes on every main lift that the plan never
+     counted. */
+  const restLabel = () =>
+    screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
+
+  it("rests 45 seconds after a warm-up and the lift's full rest after a working set", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes between working sets.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 1. Change set type" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("0:45");
+
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
   });
 });

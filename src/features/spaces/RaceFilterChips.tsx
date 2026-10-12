@@ -40,7 +40,7 @@ function countryFlag(code: string): string {
 
 const chip = (selected: boolean) =>
   cn(
-    "inline-flex shrink-0 items-center gap-1.5 min-h-11 rounded-full px-4 text-sm font-semibold text-foreground transition-colors active:scale-[0.97]",
+    "inline-flex shrink-0 items-center gap-1.5 min-h-11 rounded-full px-4 text-sm font-semibold text-foreground transition active:scale-[0.97]",
     selected
       ? "bg-primary/10 border border-primary/40"
       : "bg-muted border border-transparent"
@@ -145,7 +145,7 @@ export default function RaceFilterChips({
                   });
                 }}
                 className={cn(
-                  "w-full min-h-[44px] p-3 rounded-xl text-left text-sm font-semibold text-foreground transition-colors active:scale-[0.97]",
+                  "w-full min-h-[44px] p-3 rounded-xl text-left text-sm font-semibold text-foreground transition active:scale-[0.97]",
                   value.country === code
                     ? "bg-primary/10 border border-primary/40"
                     : "bg-muted border border-transparent"

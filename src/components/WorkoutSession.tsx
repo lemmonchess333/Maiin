@@ -73,7 +73,10 @@ import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy"
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
-import { restSecondsFor } from "@/features/program/restTime";
+import {
+  restSecondsFor,
+  warmupRestSecondsFor,
+} from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   exercisesForLiftBadges,
@@ -773,6 +776,12 @@ export default function WorkoutSession({
   const countedInSession = countedSets(setLogs.flat());
   const totalSetsCompleted = countedInSession.filter((s) => s.completed).length;
   const totalSetsTotal = countedInSession.length;
+  // Finishing early: once a working set is done, while sets remain.
+  const finishEarlyOffered =
+    nextIncompleteSet(setLogs) !== null &&
+    setLogs.some((sets) =>
+      sets.some((set) => set.completed && set.type !== "warmup")
+    );
 
   /* The exercise after this one that still has sets left (DS3 "Up next"):
      session order from the next exercise, wrapping, so one skipped earlier
@@ -790,13 +799,17 @@ export default function WorkoutSession({
      prior inline `navigator.vibrate(pattern)` was a no-op on iOS
      Safari — the Vibrate API has never shipped there. */
 
+  /* A warm-up is briefly rested (`WARMUP_REST_SECONDS`), as the plan's
+     session length counts it; a working set gets the lift's full rest. */
   const startRest = useCallback(
-    (exercise: ProgramExercise | undefined) => {
+    (exercise: ProgramExercise | undefined, afterWarmup = false) => {
       setRest({
         id: ++restSequence.current,
         startedAt: Date.now(),
         target: exercise
-          ? restSecondsFor(exercise, { fixedRest, sessionMinutes })
+          ? afterWarmup
+            ? warmupRestSecondsFor(exercise, { fixedRest, sessionMinutes })
+            : restSecondsFor(exercise, { fixedRest, sessionMinutes })
           : fixedRest && fixedRest > 0
             ? fixedRest
             : DEFAULT_REST_SECONDS,
@@ -817,23 +830,33 @@ export default function WorkoutSession({
      list around it, and set 1 brings the table's head. Instant on the
      first render (Pol1: what is there on arrival does not move); after
      that no `behavior`, so it takes the list's `scroll-behavior`, smooth
-     unless Reduce Motion, as the exercise strip's scroll does. */
+     unless Reduce Motion, as the exercise strip's scroll does. Another
+     exercise starts at its head, its name and set count in the list
+     above its sets, at once: the whole list has changed under it. */
   const contentRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const placedOnce = useRef(false);
-  const restDocked = rest !== null;
+  const shownExercise = useRef(currentExIndex);
   const bestDocked = newBest?.setKey ?? null;
   useLayoutEffect(() => {
     const row = contentRef.current?.querySelector<HTMLElement>(
       `[data-set-row="${currentSetIndex}"]`
     );
     if (!row) return;
+    if (shownExercise.current !== currentExIndex) {
+      shownExercise.current = currentExIndex;
+      headerRef.current?.scrollIntoView({
+        block: "start",
+        behavior: "instant",
+      });
+    }
     row.scrollIntoView(
       placedOnce.current
         ? { block: "nearest" }
         : { block: "nearest", behavior: "instant" }
     );
     placedOnce.current = true;
-  }, [currentExIndex, currentSetIndex, restDocked, bestDocked]);
+  }, [currentExIndex, currentSetIndex, isResting, bestDocked]);
 
   /* A set's type can change after it is done, as in Hevy: a set logged as
      working and meant as a warm-up is corrected here rather than by undoing
@@ -1121,12 +1144,14 @@ export default function WorkoutSession({
       } else {
         setCurrentExIndex(next.exerciseIndex);
         setCurrentSetIndex(next.setIndex);
-        if (autoRest) startRest(day.exercises[currentExIndex]);
+        if (autoRest)
+          startRest(day.exercises[currentExIndex], set.type === "warmup");
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
-      if (autoRest) startRest(day.exercises[currentExIndex]);
+      if (autoRest)
+        startRest(day.exercises[currentExIndex], set.type === "warmup");
     }
   };
 
@@ -1624,12 +1649,29 @@ export default function WorkoutSession({
             total={totalSetsTotal}
           />
         </div>
-        <IconButton
-          variant="ghost"
-          aria-label="Close workout"
-          onClick={onClose}
-          icon={<X className="size-5 text-muted-foreground" />}
-        />
+        {/* Finish sits by Close, as Hevy and Strong put it (an owner
+            call, DESIGN_GUIDE §8): under the set action it took a row
+            from the list on every set after the first. Offered once a working set is
+            done and while sets remain; when none remain, the bar's own
+            "Finish workout" takes over, so there is one Finish at a
+            time. */}
+        <div className="flex shrink-0 items-center gap-1">
+          {finishEarlyOffered && (
+            <Button
+              variant="secondary"
+              aria-label="Finish workout"
+              onClick={() => setShowFinishEarly(true)}
+            >
+              Finish
+            </Button>
+          )}
+          <IconButton
+            variant="ghost"
+            aria-label="Close workout"
+            onClick={onClose}
+            icon={<X className="size-5 text-muted-foreground" />}
+          />
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -1642,8 +1684,9 @@ export default function WorkoutSession({
         />
       </div>
 
-      {/* Exercise navigation pills */}
-      <div className="relative">
+      {/* Exercise navigation pills: the last of the fixed part, so its
+          edge is where the list scrolls under. */}
+      <div className="relative border-b border-border/30">
         <div
           ref={tabsRef}
           data-no-page-swipe
@@ -1740,115 +1783,122 @@ export default function WorkoutSession({
         />
       </div>
 
-      {/* Exercise name + set counter — always visible above scroll. DS3:
-          the exercise's drawing beside its name, where a bare dumbbell
-          icon sat. Under 16em of row (larger text on the phone) the drawing
-          gives its room to the name, which beside it pushed the form
-          guide's button off the screen, and the name's two buttons drop
-          under it when beside it they would squeeze a word ("Bench" at 2x
-          on a 320px phone) out of its box. Wide-first. */}
-      <div className="@container flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
-        {currentExercise && (
-          <ExerciseThumb
-            exerciseId={currentExercise.exerciseId}
-            size="lg"
-            className="@max-[16em]:hidden"
-          />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
-            <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
-              {currentExercise?.name}
-            </h2>
-            {currentExercise?.name && (
-              <div className="flex shrink-0 items-center gap-1">
-                <IconButton
-                  aria-label={`How to do ${currentExercise.name}`}
-                  variant="ghost"
-                  size="sm"
-                  icon={<Info className="size-5 text-muted-foreground" />}
-                  onClick={() => {
-                    haptic("light");
-                    setShowFormGuide(true);
-                  }}
-                />
-                <IconButton
-                  aria-label={`More for ${currentExercise.name}`}
-                  variant="ghost"
-                  size="sm"
-                  icon={
-                    <MoreHorizontal className="size-5 text-muted-foreground" />
-                  }
-                  onClick={() => {
-                    haptic("light");
-                    setMenuFor(safeExIndex);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-          {skippedRows[safeExIndex] !== undefined && (
-            <p className="text-sm text-muted-foreground">Skipped today</p>
-          )}
-          {currentSets[currentSetIndex] &&
-            (() => {
-              /* Counted within its kind: "Warm-up 2 of 3" during the ramp,
-                 then "Set 1 of 3", not "Set 4 of 6". */
-              const counts = setCounts(currentSets, currentSetIndex);
-              const warm = currentSets[currentSetIndex].type === "warmup";
-              return (
-                <p className="text-sm text-muted-foreground">
-                  {warm ? "Warm-up" : "Set"}{" "}
-                  <span className="font-mono tabular-nums">
-                    {setOrdinal(currentSets, currentSetIndex)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-mono tabular-nums">{counts.total}</span>{" "}
-                  ·{" "}
-                  <span className="font-mono tabular-nums">{counts.done}</span>{" "}
-                  done
-                </p>
-              );
-            })()}
-          {/* Backlog #4 — effort cue as words (operator-approved copy set).
-            Reserve cue expands via Tooltip; push/deload cues are plain
-            lines. Guidance lives BEFORE the set, never as a verdict after
-            it (voice doc: never shame). */}
-          {(() => {
-            if (!currentExercise) return null;
-            const lastCounted = currentSets.reduce(
-              (last, set, i) => (set.type !== "warmup" ? i : last),
-              -1
-            );
-            const cue = effortCueFor(currentExercise, {
-              isLastSet: currentSetIndex >= lastCounted,
-              deloadWeek,
-            });
-            if (!cue) return null;
-            if (cue.tooltip) {
-              return (
-                <Tooltip content={<p>{cue.tooltip}</p>}>
-                  <button
-                    type="button"
-                    className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
-                  >
-                    {cue.text}
-                  </button>
-                </Tooltip>
-              );
-            }
-            return (
-              <p className="mt-1 text-xs text-muted-foreground">{cue.text}</p>
-            );
-          })()}
-        </div>
-      </div>
-
       {/* Main content area */}
       <div
         ref={contentRef}
         className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
       >
+        {/* Exercise name + set counter, at the head of the list (an
+            owner call, DESIGN_GUIDE §8): fixed above it, they took about
+            110 px of a phone from the sets for the whole session. They scroll away as the
+            sets below are reached, and an exercise change brings them
+            back. DS3: the exercise's drawing beside its name, where a bare
+            dumbbell icon sat. Under 16em of row (larger text on the phone)
+            the drawing gives its room to the name, which beside it pushed
+            the form guide's button off the screen, and the name's two
+            buttons drop under it when beside it they would squeeze a word
+            ("Bench" at 2x on a 320px phone) out of its box. Wide-first. */}
+        <div ref={headerRef} className="@container flex items-start gap-3 pt-3">
+          {currentExercise && (
+            <ExerciseThumb
+              exerciseId={currentExercise.exerciseId}
+              size="lg"
+              className="@max-[16em]:hidden"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1 @max-[16em]:flex-wrap">
+              <h2 className="min-w-0 text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
+                {currentExercise?.name}
+              </h2>
+              {currentExercise?.name && (
+                <div className="flex shrink-0 items-center gap-1">
+                  <IconButton
+                    aria-label={`How to do ${currentExercise.name}`}
+                    variant="ghost"
+                    size="sm"
+                    icon={<Info className="size-5 text-muted-foreground" />}
+                    onClick={() => {
+                      haptic("light");
+                      setShowFormGuide(true);
+                    }}
+                  />
+                  <IconButton
+                    aria-label={`More for ${currentExercise.name}`}
+                    variant="ghost"
+                    size="sm"
+                    icon={
+                      <MoreHorizontal className="size-5 text-muted-foreground" />
+                    }
+                    onClick={() => {
+                      haptic("light");
+                      setMenuFor(safeExIndex);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            {skippedRows[safeExIndex] !== undefined && (
+              <p className="text-sm text-muted-foreground">Skipped today</p>
+            )}
+            {currentSets[currentSetIndex] &&
+              (() => {
+                /* Counted within its kind: "Warm-up 2 of 3" during the ramp,
+                   then "Set 1 of 3", not "Set 4 of 6". */
+                const counts = setCounts(currentSets, currentSetIndex);
+                const warm = currentSets[currentSetIndex].type === "warmup";
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    {warm ? "Warm-up" : "Set"}{" "}
+                    <span className="font-mono tabular-nums">
+                      {setOrdinal(currentSets, currentSetIndex)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-mono tabular-nums">
+                      {counts.total}
+                    </span>{" "}
+                    ·{" "}
+                    <span className="font-mono tabular-nums">
+                      {counts.done}
+                    </span>{" "}
+                    done
+                  </p>
+                );
+              })()}
+            {/* Backlog #4 — effort cue as words (operator-approved copy set).
+              Reserve cue expands via Tooltip; push/deload cues are plain
+              lines. Guidance lives BEFORE the set, never as a verdict after
+              it (voice doc: never shame). */}
+            {(() => {
+              if (!currentExercise) return null;
+              const lastCounted = currentSets.reduce(
+                (last, set, i) => (set.type !== "warmup" ? i : last),
+                -1
+              );
+              const cue = effortCueFor(currentExercise, {
+                isLastSet: currentSetIndex >= lastCounted,
+                deloadWeek,
+              });
+              if (!cue) return null;
+              if (cue.tooltip) {
+                return (
+                  <Tooltip content={<p>{cue.tooltip}</p>}>
+                    <button
+                      type="button"
+                      className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                    >
+                      {cue.text}
+                    </button>
+                  </Tooltip>
+                );
+              }
+              return (
+                <p className="mt-1 text-xs text-muted-foreground">{cue.text}</p>
+              );
+            })()}
+          </div>
+        </div>
+
         {/* The last note on this exercise stays above the sets: it is
             usually a setting to read before lifting ("Level 8, 6.0
             incline"). Today's note is written under the sets. */}
@@ -1885,7 +1935,11 @@ export default function WorkoutSession({
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
-            done set's row turns green, as the tick it carries.
+            done set says so with its green tick, on the card's own colour,
+            and the row being logged is the table's one tinted row (an
+            owner call, in DESIGN_GUIDE's set-table note: a table of green
+            rows was the loudest thing on the screen, and done sets are the
+            least of what it asks for).
 
             Under 19em of card (larger text on the phone, and a 320px phone
             already at the designed size) the five columns do not fit:
@@ -1978,9 +2032,9 @@ export default function WorkoutSession({
                         className={cn(
                           columns,
                           "border-t border-border/40 px-3 py-1.5 transition-colors",
-                          set.completed
-                            ? "bg-success/10"
-                            : setIdx === currentSetIndex && "bg-primary/10"
+                          !set.completed &&
+                            setIdx === currentSetIndex &&
+                            "bg-primary/10"
                         )}
                       >
                         <button
@@ -2037,9 +2091,10 @@ export default function WorkoutSession({
                               "min-h-[44px] w-full truncate text-center text-small font-mono tabular-nums",
                               // Its own line under the weight and reps.
                               "@max-[19em]:col-span-2 @max-[19em]:col-start-2 @max-[19em]:row-start-2 @max-[19em]:min-h-[32px] @max-[19em]:text-left",
-                              canFill && !set.completed
-                                ? "text-lifting-strong active:opacity-70"
-                                : "text-muted-foreground"
+                              // Grey like the rest of the row's history, not
+                              // a column of purple: still a tap to fill.
+                              "text-muted-foreground",
+                              canFill && !set.completed && "active:opacity-70"
                             )}
                           >
                             <span className="hidden @max-[19em]:inline font-sans">
@@ -2398,7 +2453,14 @@ export default function WorkoutSession({
               leftIcon={<Timer className="size-4" aria-hidden="true" />}
               onClick={() => {
                 haptic("light");
-                startRest(day.exercises[currentExIndex]);
+                // The rest after the set just done: the last ticked row.
+                const lastDone = [...currentSets]
+                  .reverse()
+                  .find((st) => st.completed);
+                startRest(
+                  day.exercises[currentExIndex],
+                  lastDone?.type === "warmup"
+                );
               }}
             >
               Start rest timer
@@ -2483,19 +2545,6 @@ export default function WorkoutSession({
             </Button>
           );
         })()}
-        {!isResting &&
-          nextIncompleteSet(setLogs) &&
-          setLogs.some((sets) =>
-            sets.some((set) => set.completed && set.type !== "warmup")
-          ) && (
-            <Button
-              variant="ghost"
-              fullWidth
-              onClick={() => setShowFinishEarly(true)}
-            >
-              Finish early
-            </Button>
-          )}
       </div>
 
       <ConfirmDialog

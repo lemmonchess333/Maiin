@@ -47,6 +47,7 @@ const h = vi.hoisted(() => ({
   skipRunDay: vi.fn(),
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
+  runPlan: undefined as { currentWeek: number; totalWeeks: number } | undefined,
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -59,7 +60,10 @@ vi.mock("@/features/program/useProgram", () => ({
     return {
       markManualComplete: h.markManualComplete,
       skipRunDay: h.skipRunDay,
-      programState: { runDays: [{ id: "rd-1", status: "planned" }] },
+      programState: {
+        runDays: [{ id: "rd-1", status: "planned" }],
+        runPlan: h.runPlan,
+      },
     };
   },
 }));
@@ -293,26 +297,34 @@ describe("RunSummary — pace history loading follows its inputs", () => {
   });
 });
 
-describe("RunSummary — the plan row counts the week the card counts", () => {
-  it("shows the week's runs against the plan's, from the one read", async () => {
+describe("RunSummary — the week's runs are counted once", () => {
+  afterEach(() => {
+    h.runPlan = undefined;
+    delete (h.auth.profile as Record<string, unknown>).runMode;
+  });
+
+  it("leaves the week's runs to the card, with no second count", async () => {
     week.pulse = {
       lifts: null,
       runs: { count: 2, km: 9.5, planned: 3 },
       streak: null,
     };
     renderSummary();
-    const label = await screen.findByText("runs this week");
-    expect(label.parentElement?.textContent).toMatch(/^2of3runs this week/);
+    expect(await screen.findByText("Run saved")).toBeInTheDocument();
+    expect(screen.queryByText("runs this week")).toBeNull();
+    expect(screen.queryByText(/2\s*of\s*3/)).toBeNull();
   });
 
-  it("has no plan row for a week the plan has no runs in", async () => {
+  it("names a race plan's week", async () => {
+    (h.auth.profile as Record<string, unknown>).runMode = "race_prep";
+    h.runPlan = { currentWeek: 2, totalWeeks: 12 };
     week.pulse = {
       lifts: null,
-      runs: { count: 2, km: 9.5, planned: null },
+      runs: { count: 2, km: 9.5, planned: 3 },
       streak: null,
     };
     renderSummary();
-    expect(await screen.findByText("Run saved")).toBeInTheDocument();
+    expect(await screen.findByText("Week 3 of 12")).toBeInTheDocument();
     expect(screen.queryByText("runs this week")).toBeNull();
   });
 });

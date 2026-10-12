@@ -426,7 +426,7 @@ export default function TrainingBlockCard({
                     setFocus(g);
                   }}
                   className={cn(
-                    "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition-colors active:scale-[0.97]",
+                    "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition active:scale-[0.97]",
                     focus === g
                       ? "bg-primary/10 border border-primary/40"
                       : "bg-muted border border-transparent"
@@ -501,7 +501,7 @@ export default function TrainingBlockCard({
                       setPace(p.value);
                     }}
                     className={cn(
-                      "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                      "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                       pace === p.value
                         ? "bg-primary/10 border border-primary/40"
                         : "bg-muted border border-transparent"

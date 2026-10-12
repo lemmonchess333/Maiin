@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
 import {
   HUD_CAPTION,
+  HUD_DESTRUCTIVE,
   HUD_SECONDARY,
   HUD_MIN_FONT_PX,
 } from "../runHudTypography";
@@ -112,6 +113,16 @@ describe("run HUD typography — D18 floors", () => {
           `run sheet. The four treatments this replaced ran 2.15-2.50:1.`
       ).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("the sheet's red clears WCAG AA against its ground", () => {
+    const hex = HUD_DESTRUCTIVE.slice(1);
+    const red = [0, 2, 4].map((i) =>
+      Number.parseInt(hex.slice(i, i + 2), 16)
+    ) as [number, number, number];
+    const l1 = Math.max(luminance(red), luminance(SHEET_GROUND)) + 0.05;
+    const l2 = Math.min(luminance(red), luminance(SHEET_GROUND)) + 0.05;
+    expect(l1 / l2).toBeGreaterThanOrEqual(4.5);
   });
 
   it("secondary data reads at least as strongly as a caption", () => {
