@@ -157,6 +157,10 @@ export default function Onboarding() {
           : (draft?.step ?? 0);
     return flow.includes(storedStep) ? storedStep : 1;
   });
+  /* Which way the last step change went: forward on Continue, back on Back
+     and on an edit from the review. A step shown when setup opens (a fresh
+     account, a resumed draft) has none, and just shows (Pol1). */
+  const [stepMove, setStepMove] = useState<-1 | 0 | 1>(0);
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
@@ -550,9 +554,21 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* A step's heading and questions are new elements on each step (keyed
+     below), so a step reached by Continue comes in from the right and one
+     reached by Back from the left: CSS @starting-style, the browser
+     animating a new element from its starting style. Only the new step
+     moves; the old one goes at once, so Continue never waits. */
+  const stepEnters = cn(
+    stepMove !== 0 &&
+      "transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] starting:opacity-0",
+    stepMove > 0 && "starting:[transform:translateX(16px)]",
+    stepMove < 0 && "starting:[transform:translateX(-16px)]"
+  );
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
+    setStepMove(-1);
     setStep(next);
   };
   const advance = () => {
@@ -565,6 +581,7 @@ export default function Onboarding() {
       void handleFinish();
       return;
     }
+    setStepMove(1);
     setStep(returnToReview ? 7 : flow[flow.indexOf(step) + 1]);
     setReturnToReview(false);
   };
@@ -874,11 +891,19 @@ export default function Onboarding() {
               key={name}
               aria-current={chapter === index ? "step" : undefined}
               aria-label={`${name}${index < chapter ? ", completed" : ""}`}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                index <= chapter ? "bg-primary" : "bg-muted"
-              )}
-            />
+              className="h-1 flex-1 overflow-hidden rounded-full bg-muted"
+            >
+              {/* A chapter reached fills from the left, the way setup
+                  reads; going back empties it the same way. */}
+              <span
+                className={cn(
+                  "block h-full origin-left bg-primary transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
+                  index <= chapter
+                    ? "[transform:scaleX(1)]"
+                    : "[transform:scaleX(0)]"
+                )}
+              />
+            </li>
           ))}
         </ol>
       </header>
@@ -886,7 +911,7 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div className="space-y-3">
+        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
           {((step === 1 && trainingActivity !== "lifting") ||
             step === 3 ||
             step === 2 ||
@@ -908,7 +933,11 @@ export default function Onboarding() {
               : STEP_META[step][1]}
           </p>
         </div>
-        <fieldset disabled={saving} className="min-w-0 space-y-5">
+        <fieldset
+          key={`questions-${step}`}
+          disabled={saving}
+          className={cn("min-w-0 space-y-5", stepEnters)}
+        >
           <legend className="sr-only">{chapters[chapter]}</legend>
           {step === 0 && (
             <div className="space-y-3">
@@ -1865,6 +1894,7 @@ export default function Onboarding() {
               leftIcon={<ArrowLeft className="size-4" />}
               onClick={() => {
                 setSaveError("");
+                setStepMove(-1);
                 setStep(
                   returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
                 );
