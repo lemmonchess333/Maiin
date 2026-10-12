@@ -118,6 +118,9 @@ export interface RunDone {
   load: number;
   /** A target pace the runner couldn't hold. */
   tooFast: boolean;
+  /** The injury hazard the run carried (expected injuries, before the
+   *  draw): the model's injury-risk signal, smoother than the draws. */
+  hazard: number;
   /** An injury from this run. */
   injury: InjuryKind | null;
 }
@@ -279,7 +282,8 @@ export class VirtualRunner {
     }
     if (this.setup.lifts && this.weeksRunning < NOVICE_EASE_WEEKS)
       load *= R.concurrentNovice.value;
-    const injury = this.injuryFrom(km, minutes);
+    const hazard = this.hazardOf(km, minutes);
+    const injury = this.injuryFrom(hazard);
     this.recent.push({ day: this.day, km });
     this.todayLoad += load;
     return {
@@ -291,12 +295,13 @@ export class VirtualRunner {
       qualityKm,
       load,
       tooFast,
+      hazard,
       injury,
     };
   }
 
-  /** The hazard for a run of `km` over `minutes`, and the draw. */
-  private injuryFrom(km: number, minutes: number): InjuryKind | null {
+  /** The hazard for a run of `km` over `minutes`. */
+  private hazardOf(km: number, minutes: number): number {
     const novice = Math.max(
       0,
       Math.min(1, 1 - this.weeksRunning / NOVICE_EASE_WEEKS)
@@ -319,7 +324,11 @@ export class VirtualRunner {
       this.lastInjuryDay !== null && this.day - this.lastInjuryDay < 365
         ? R.priorInjury.value
         : 1;
-    const hazard = (perThousand * spike * prior * (minutes / 60)) / 1000;
+    return (perThousand * spike * prior * (minutes / 60)) / 1000;
+  }
+
+  /** The draw on a run's hazard. */
+  private injuryFrom(hazard: number): InjuryKind | null {
     if (!(this.rand() < 1 - Math.exp(-hazard))) return null;
     this.lastInjuryDay = this.day;
     const kind = this.rand();

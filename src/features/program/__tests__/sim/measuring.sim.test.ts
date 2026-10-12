@@ -1,10 +1,10 @@
 /**
  * The comparisons decisions.md marks "Measuring", each against the plan as
- * built, across seeds and both lifter model variants. A measurement, not a
- * gate: `TROPOS_SIM_MEASURE=20 npx vitest run
+ * built, across seeds and both lifter model variants (R17: the runner's
+ * three). A measurement, not a gate: `TROPOS_SIM_MEASURE=20 npx vitest run
  * src/features/program/__tests__/sim/measuring.sim.test.ts` runs 20 seeds
  * of each and writes a markdown report to `test-results/sim/`
- * (uncommitted).
+ * (uncommitted); `-t R17` runs one comparison.
  * Without the variable it skips, so the PR gate doesn't pay for it.
  *
  * The models are hypotheses (simulator.md, "What the simulator can and
@@ -23,29 +23,57 @@ import {
   weeklyVolumeByJudgementMuscle,
   type VolumeDay,
 } from "@/features/program/volumeModel";
-import type {
-  ProgramExercise,
-  ProgramState,
+import {
+  HARD_RUN_TYPES,
+  type ProgramExercise,
+  type ProgramState,
+  type ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { setWarmupPricing } from "@/features/program/sessionFit";
 import { pickAccessory } from "@/features/program/variationBank";
 import {
   getPhaseForWeek,
+  lastRampWeekOf,
   TAPER_WEEKS_BY_DISTANCE,
 } from "@/features/program/runPlanTiming";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  generateRacePlanV2,
+  LONG_RUN_MAX_MINUTES,
+  maxSchedulableLongKm,
+  runTuningFromProfile,
+} from "@/features/program/runScheduler";
+import {
+  newRunnerTemplate,
+  profileNewRunnerUntil,
+} from "@/features/program/newRunner";
+import {
+  fitRunToTimeLimit,
+  plannedRunMinutes as appRunMinutes,
+} from "@/features/program/runTimeLimits";
+import {
+  addLocalDays,
+  generateScheduledRunId,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { planningEasyPaceSPerKm, vdotFromRace } from "@/lib/runPaces";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
 import {
   simulateLiftSeason,
   type LiftPersona,
   type PlanVariant,
+  type RunWeekPlan,
   type Season,
   type SeasonOptions,
 } from "@/test/sim/liftSeason";
 import { BASE_VARIANT, HARSH_VARIANT } from "@/test/sim/lifter";
 import { LIFT_PERSONAS } from "@/test/sim/liftPersonas";
-import { runTypeOf } from "@/test/sim/runSeason";
+import { BASE_RUNNER, HARSH_RUNNER, INTENSITY_RUNNER } from "@/test/sim/runner";
+import { raceTimeS, runTypeOf, type RunRecord } from "@/test/sim/runSeason";
 import { RUN_PERSONAS } from "@/test/sim/runPersonas";
+import { clock } from "@/test/sim/runTrace";
 import {
   dropScaledByLevel,
   e1rmTrendLoads,
@@ -74,7 +102,7 @@ const VARIANTS = [BASE_VARIANT, HARSH_VARIANT] as const;
 const report: string[] = [
   "# Measuring: decisions.md's open comparisons",
   "",
-  `${String(SEEDS)} seeds of each lifter model variant (base, harsh) per persona and option.`,
+  `${String(SEEDS)} seeds of each lifter model variant (base, harsh) per persona and option, unless a section says otherwise.`,
 ];
 
 const quantile = (values: number[], q: number) => {
@@ -435,6 +463,502 @@ describe.skipIf(!SEEDS)("R8: the taper", () => {
       }
     },
     TIMEOUT
+  );
+});
+
+/** The runner model's variants, as the running outcomes suite runs them. A
+ *  running question turns on the runner's model, not the lifter's: the
+ *  year-out marathoner lifts on the base lifter throughout. */
+const RUNNER_VARIANTS = [BASE_RUNNER, HARSH_RUNNER, INTENSITY_RUNNER] as const;
+
+/** Every seed of each runner model variant, in that order: the same index
+ *  is the same runner, with the same draws, under every option. */
+function runnerSeasons(
+  persona: LiftPersona,
+  weeks: number,
+  options: Omit<SeasonOptions, "weeks" | "seed" | "runnerVariant"> = {}
+): Season[] {
+  return RUNNER_VARIANTS.flatMap((runnerVariant) =>
+    Array.from({ length: SEEDS }, (_, i) =>
+      simulateLiftSeason(persona, {
+        ...options,
+        weeks,
+        seed: i + 1,
+        runnerVariant,
+      })
+    )
+  );
+}
+
+/** The generator's long-run day (`pickLongRunSlot`, written out: it isn't
+ *  exported): a weekend day without lifting, else any day without, else a
+ *  weekend day shared with lifting, else any run day. */
+function longRunDay(
+  weekSchedule: readonly { day: number; type: string }[]
+): number | undefined {
+  const slots = weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  const runOnly = slots.filter((d) => weekSchedule[d]?.type === "run");
+  const both = slots.filter((d) => weekSchedule[d]?.type === "both");
+  const weekend = (d: number) => d === 0 || d === 6;
+  return (
+    runOnly.find(weekend) ??
+    runOnly[0] ??
+    both.find(weekend) ??
+    both[0] ??
+    slots[0]
+  );
+}
+
+/** The plan's long-run sizes, shortest first: `long_6k` to `long_30k`. */
+const LONG_TIERS = RUN_TEMPLATES.filter((t) => /^long_\d+k$/.test(t.id)).sort(
+  (a, b) => (a.config.targetDistanceKm ?? 0) - (b.config.targetDistanceKm ?? 0)
+);
+
+/** What a peak rule is given: what the app knows when it plans. */
+interface PeakContext {
+  /** The planning easy pace (`planningEasyPaceSPerKm`), s/km: null without
+   *  a confirmed benchmark, when a tier takes its nominal minutes. */
+  pace: number | null;
+  /** The peak week's planned minutes besides its long run, as the app
+   *  plans them (`plannedRunMinutes`). */
+  otherMinutes: number;
+}
+
+/** The pace the tiers' nominal minutes assume (`tierMinutesForRunner`'s
+ *  "roughly 5:36/km"), for a week's kilometres without a benchmark. */
+const NOMINAL_PACE_S_PER_KM = 336;
+
+/**
+ * Daniels: the long run 30% of the week under 64 km a week; from 64 km,
+ * the lesser of 25% of the week and 150 minutes. The week includes the
+ * long run, so 30% of it is 3/7 of the rest, and 25% a third. The longest
+ * tier inside that, in the app's minutes for the runner, or the shortest
+ * tier, which the plan always allows.
+ */
+function danielsPeakKm({ pace, otherMinutes }: PeakContext): number {
+  let most = (0.3 / 0.7) * otherMinutes;
+  const weekKm = ((otherMinutes + most) * 60) / (pace ?? NOMINAL_PACE_S_PER_KM);
+  if (weekKm >= 64) most = Math.min(otherMinutes / 3, LONG_RUN_MAX_MINUTES);
+  const fits = LONG_TIERS.filter((t) => appRunMinutes(t, pace) <= most);
+  return (fits.at(-1) ?? LONG_TIERS[0]).config.targetDistanceKm ?? 0;
+}
+
+/** What a peak variant did across its seasons, for the report's check. */
+interface PeakTally {
+  /** The peaks it set, km. */
+  caps: Set<number>;
+  /** The peak week's other minutes it read, rounded. */
+  otherMinutes: Set<number>;
+  /** Weeks whose long run was, at its first look, the generator's as this
+   *  replays it; of them, a returning runner's (Run15: a detrained
+   *  runner's long run builds toward the base); and weeks it was neither,
+   *  left as built. */
+  matched: number;
+  returning: number;
+  unmatched: number;
+}
+
+const newTally = (): PeakTally => ({
+  caps: new Set(),
+  otherMinutes: new Set(),
+  matched: 0,
+  returning: 0,
+  unmatched: 0,
+});
+
+/**
+ * R17's options (decisions.md): the marathon long run's peak set by
+ * `peakKm`, one of the plan's sizes, in place of Run17's ceiling, and
+ * nothing else changed. Each week the generator (`generateRacePlanV2`)
+ * builds the long run again with its 150-minute ceiling read at the pace
+ * that admits exactly the sizes up to that peak, so its own ramp, step-back
+ * weeks, peak hold and stepped taper (Run22) build to it; a new runner's
+ * build and a run time limit then fit it at the runner's own pace, as the
+ * generator does. The rest of the week is the app's. The week's long run is
+ * replayed as the plan has it, for a runner coming back from a layoff too
+ * (Run15), and one that is neither replay (a run moved or swapped) is left
+ * as it is.
+ */
+function longRunPeak(
+  name: string,
+  peakKm: (context: PeakContext) => number,
+  tally: PeakTally
+): PlanVariant {
+  return {
+    name,
+    start: () => {
+      let cap: number | null = null;
+      const byWeek = new Map<
+        string,
+        { from: ScheduledRunDay | null; to: ScheduledRunDay | null }
+      >();
+      return (state, _date, profile) => {
+        const plan = state.runPlan;
+        const goal = profile?.raceGoal;
+        const runs = state.runDays ?? [];
+        const weekKey = runs[0]?.weekKey;
+        if (
+          !profile ||
+          !goal ||
+          goal.distance !== "marathon" ||
+          plan?.mode !== "race_prep" ||
+          plan.phase === "recovery" ||
+          plan.totalWeeks == null ||
+          !weekKey ||
+          // The running baseline fits the whole week, which this doesn't
+          // replay.
+          profile.runningBaseline
+        )
+          return state;
+        const weekSchedule = profile.weekSchedule ?? [];
+        const slot = longRunDay(weekSchedule);
+        if (slot === undefined) return state;
+        const pace = planningEasyPaceSPerKm(profile.runFitness);
+        const until = profileNewRunnerUntil(profile);
+        const limits = profile.runTimeLimits ?? null;
+        // The week as the rollover regenerates it (`regenerateRacePlan`).
+        const input = {
+          raceGoal: { distance: goal.distance, targetDate: goal.targetDate },
+          weekSchedule,
+          weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+          currentDate: weekKey,
+          weekStart: weekKey,
+          tuning: runTuningFromProfile(profile),
+          planTotalWeeks: plan.totalWeeks,
+          runningBaseline: null,
+        };
+        if (cap === null) {
+          // The peak week, the build's last, as the app plans it.
+          const full = generateRacePlanV2({
+            ...input,
+            recentLayoff: "none",
+            easyPaceSPerKm: pace,
+            newRunnerUntil: until,
+            runTimeLimits: limits,
+          });
+          const blockWeeks = Math.max(plan.totalWeeks, full.totalWeeks);
+          const peakWeek =
+            full.weeks[
+              lastRampWeekOf(blockWeeks, TAPER_WEEKS_BY_DISTANCE.marathon) -
+                (blockWeeks - full.totalWeeks)
+            ];
+          if (!peakWeek) return state;
+          const otherMinutes = peakWeek
+            .filter((rd) => rd.dayIndex !== slot)
+            .reduce((n, rd) => {
+              const t = templateById(rd.templateId);
+              return n + (t ? appRunMinutes(t, pace) : 0);
+            }, 0);
+          cap = peakKm({ pace, otherMinutes });
+          tally.caps.add(cap);
+          tally.otherMinutes.add(Math.round(otherMinutes));
+        }
+        let week = byWeek.get(weekKey);
+        if (!week) {
+          const longRun = (
+            easyPaceSPerKm: number | null,
+            recentLayoff: "none" | "detrained"
+          ) => {
+            const raw =
+              generateRacePlanV2({
+                ...input,
+                recentLayoff,
+                easyPaceSPerKm,
+                newRunnerUntil: null,
+                runTimeLimits: null,
+              }).weeks[0]?.find((rd) => rd.dayIndex === slot) ?? null;
+            if (!raw || raw.type === "race") return raw;
+            const walked = newRunnerTemplate(
+              raw.templateId,
+              weekKey,
+              until,
+              pace
+            );
+            return fitRunToTimeLimit(
+              walked
+                ? { ...raw, templateId: walked.id, type: walked.type }
+                : raw,
+              limits,
+              pace
+            );
+          };
+          const capPace = (LONG_RUN_MAX_MINUTES * 60) / cap;
+          const held = runs.find(
+            (rd) => rd.weekKey === weekKey && rd.dayIndex === slot
+          );
+          const replays = (layoff: "none" | "detrained") =>
+            held &&
+            !held.userOverride &&
+            held.templateId === longRun(pace, layoff)?.templateId;
+          if (replays("none")) {
+            week = { from: held ?? null, to: longRun(capPace, "none") };
+            tally.matched++;
+          } else if (replays("detrained")) {
+            week = { from: held ?? null, to: longRun(capPace, "detrained") };
+            tally.matched++;
+            tally.returning++;
+          } else {
+            week = { from: null, to: null };
+            tally.unmatched++;
+          }
+          byWeek.set(weekKey, week);
+        }
+        const { from, to } = week;
+        if (!from || !to || from.templateId === to.templateId) return state;
+        let changed = false;
+        const runDays = runs.map((rd) => {
+          if (
+            rd.weekKey !== weekKey ||
+            rd.dayIndex !== slot ||
+            rd.userOverride ||
+            rd.completed ||
+            (rd.status && rd.status !== "planned") ||
+            rd.templateId !== from.templateId
+          )
+            return rd;
+          changed = true;
+          const { clashesWithLift: _clash, ...row } = rd;
+          return {
+            ...row,
+            templateId: to.templateId,
+            type: to.type,
+            id: generateScheduledRunId(
+              { dayIndex: rd.dayIndex, templateId: to.templateId },
+              weekKey
+            ),
+            ...(HARD_RUN_TYPES.has(to.type) &&
+            weekSchedule[slot]?.type === "both"
+              ? { clashesWithLift: true }
+              : {}),
+          };
+        });
+        return changed ? { ...state, runDays } : state;
+      };
+    },
+  };
+}
+
+/** A marathon season's long run and race, from the plan and the runs. */
+function peakOutcome(season: Season, raceDate: string) {
+  const raceWeek = localWeekKey(parseLocalDate(raceDate));
+  const build = season.runWeeks.filter((w) => w.weekStart < raceWeek);
+  // The plan's longest long run before race week, the last week it holds it.
+  const peak = build.reduce<RunWeekPlan | null>(
+    (top, w) => (w.longKm > 0 && (!top || w.longKm >= top.longKm) ? w : top),
+    null
+  );
+  const longest = (phase: string) =>
+    Math.max(0, ...build.filter((w) => w.phase === phase).map((w) => w.longKm));
+  const rises = build
+    .slice(1)
+    .map((w, i) =>
+      build[i].plannedMinutes > 0
+        ? w.plannedMinutes / build[i].plannedMinutes
+        : NaN
+    )
+    .filter(Number.isFinite);
+  const before = season.runs.filter((r) => r.date < raceDate);
+  // Against the longest run of the 30 days before (the single-run guard's
+  // yardstick, Frandsen 2025).
+  const ratio = (r: RunRecord) =>
+    r.longestBefore > 0 ? r.done.km / r.longestBefore : NaN;
+  const ratios = before.map(ratio).filter(Number.isFinite);
+  // The chance the model's hazard gives the run an injury.
+  const risk = (r: RunRecord) => 1 - Math.exp(-r.done.hazard);
+  const race = season.runs.find((r) => r.type === "race");
+  // An injury that only reduces running halves the race as well.
+  const full = race !== undefined && race.done.km >= 42.19;
+  // The weekly kilometres the race-day correction reads (`weeklyKm`).
+  const from = localDateString(addLocalDays(parseLocalDate(raceDate), -56));
+  const weeklyKm =
+    season.runs
+      .filter((r) => r.date >= from && r.date < raceDate)
+      .reduce((n, r) => n + r.done.km, 0) / 8;
+  return {
+    peakKm: peak?.longKm ?? NaN,
+    peakMinutes: peak?.longMinutes ?? NaN,
+    peakShare:
+      peak && peak.plannedMinutes > 0
+        ? peak.longMinutes / peak.plannedMinutes
+        : NaN,
+    // The stepped taper's long runs are shares of the build's longest.
+    taperOverBuild:
+      longest("taper") > Math.max(longest("base"), longest("build")),
+    rise: rises.length > 0 ? Math.max(...rises) : NaN,
+    spike: ratios.length > 0 ? Math.max(...ratios) : NaN,
+    spikes: ratios.filter((x) => x > 1.1).length,
+    raceRatio: race ? ratio(race) : NaN,
+    longOver150: before.filter(
+      (r) => r.type === "long" && r.done.minutes >= 150
+    ).length,
+    injured: before.some((r) => r.done.injury !== null),
+    expected: before.reduce((n, r) => n + risk(r), 0),
+    raceRisk: race ? risk(race) : NaN,
+    started: race !== undefined,
+    full,
+    finishS: full ? (race.raceTimeS ?? NaN) : NaN,
+    vdot: full ? race.trueVdot : NaN,
+    weeklyKm,
+  };
+}
+
+/** R17's options, against Run17 as built (decisions.md). */
+const PEAK_OPTIONS: readonly {
+  name: string;
+  peakKm: ((context: PeakContext) => number) | null;
+}[] = [
+  { name: "as built (Run17)", peakKm: null },
+  { name: "Daniels", peakKm: danielsPeakKm },
+  { name: "30 km", peakKm: () => 30 },
+  { name: "Hansons, 25 km", peakKm: () => 25 },
+];
+
+const MARATHONS = RUN_PERSONAS.filter(
+  ({ persona }) =>
+    persona.answers.raceDistance === "marathon" &&
+    persona.answers.runMode === "race_prep"
+);
+
+/** Four options, three runner variants, a year's season about two
+ *  seconds: a persona's options at 20 seeds run some minutes. */
+const PEAK_TIMEOUT = Math.max(300_000, SEEDS * 90_000);
+
+const pct = (share: number) =>
+  Number.isFinite(share) ? `${String(Math.round(share * 100))}%` : "-";
+const signed = (n: number, digits = 1) =>
+  Number.isFinite(n)
+    ? `${n > 0 ? "+" : n < 0 ? "−" : "±"}${Math.abs(n).toFixed(digits)}`
+    : "-";
+const signedRange = (values: number[], digits = 1) =>
+  values.length === 0
+    ? "-"
+    : `${signed(median(values), digits)} [${signed(quantile(values, 0.1), digits)} to ${signed(quantile(values, 0.9), digits)}]`;
+const clockRange = (seconds: number[]) =>
+  seconds.length === 0
+    ? "-"
+    : `${clock(median(seconds))} [${clock(quantile(seconds, 0.1))}–${clock(quantile(seconds, 0.9))}]`;
+
+const r17 = {
+  plan: [] as string[],
+  outcomes: [] as string[],
+  terms: [] as string[],
+  checks: [] as string[],
+};
+
+describe.skipIf(!SEEDS)("R17: the marathon long run's peak", () => {
+  afterAll(() => {
+    report.push(
+      "",
+      "## R17: the marathon long run's peak",
+      "",
+      `${String(SEEDS)} seeds of each runner model variant (base, harsh, intensity): ${String(3 * SEEDS)} seasons per persona and option, the same seed and variant being the same runner under each option. The year-out marathoner lifts on the base lifter.`,
+      "",
+      "As built (Run17), the long run climbs the plan's sizes (6, 8, 10, 12, 15, 20, 25 and 30 km) to the longest one inside 150 minutes at the runner's confirmed easy pace, or inside the sizes' nominal minutes without a benchmark (25 km). Each option sets that peak and changes nothing else: the generator builds each week's long run again to it, with its own ramp, step-back weeks, peak hold and stepped taper (Run22: 75% and 60% of the ladder's peak), and a new runner's build and any run time limit then fit it at the pace the app plans with, as they do as built. Daniels: the long run 30% of the week under 64 km a week, the lesser of 25% and 150 minutes from 64 km, read once from the peak week (the build's last) as the app plans it, the week including the long run (3/7 of the week's other planned minutes), the longest size inside that, at the pace the app plans with, or the 6 km floor; reading the week with the long run as built in it gives the same sizes here. 30 km: the middle of the novice plans' 29–32 km, the plan's top size, whatever the pace. Hansons: 25 km, the plan's size nearest Hansons' 16 miles (25.7 km), whatever the pace.",
+      "",
+      "### The plan",
+      "",
+      "Per season, median [10th–90th]. Peak allowed: the longest size the option lets this runner's plan reach. Peak long run: the plan's longest before race week; its minutes at the runner's own easy pace that week, and its share of that week's planned minutes. Taper over build: the share of seasons whose taper plans a longer long run than the base and build did (Run22 means the taper's long runs to be 75% and 60% of the build's longest). Biggest weekly rise: the largest rise in planned minutes from one week to the next before race week. Single runs: the longest before the race against the longest of the 30 days before it (the single-run guard's yardstick, Frandsen 2025), the runs over 1.1 times it, and the race's.",
+      "",
+      "| persona | option | peak allowed | peak long run, km | its minutes | its share of the week | taper over build | biggest weekly rise | biggest run ÷ month's longest | runs past 1.1× | race ÷ month's longest |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+      ...r17.plan,
+      "",
+      "### The runner",
+      "",
+      "Long runs of 2½ hours or more: run before race day, per season. Injured: the share of seasons with an injury before race day. Expected injuries: the model's injury hazard summed over the runs before race day (each run's chance, 1 − e^−hazard), median [10th–90th]; the race's own: its chance in the race. The three runner variants share each seed's draws, so a seed's injuries tend to come in all three. Reached the start: the share of seasons that raced; the finish is over full races (a reduced-running injury halves the race too). VDOT on race morning and the weekly kilometres of the eight weeks before it are the two inputs to the model's race time.",
+      "",
+      "| persona | option | long runs of 2½ h+ | injured | expected injuries | the race's own | reached the start | finish | VDOT on race morning | km a week, last 8 weeks |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+      ...r17.outcomes,
+      "",
+      "### What carries the finish",
+      "",
+      "Each option's finish against the same runner's as built (both full races), minutes, median [10th–90th]; then the median of each model term's part of it: VDOT on race morning (fitness from minutes run, and any injury's lost weeks), the weekly kilometres the race-day correction reads (Vickers & Vertosick), and the day (freshness or fatigue, and the day's noise), each the model's race time with that input changed alone.",
+      "",
+      "| persona | option | pairs | finish vs as built | VDOT | weekly km | the day |",
+      "| --- | --- | --- | --- | --- | --- | --- |",
+      ...r17.terms,
+      "",
+      `Check: each week the variant first replays the generator's long run for the week as the plan holds it, a returning runner's (Run15) included, and changes only a long run it replays. ${r17.checks.join("; ")}.`
+    );
+  });
+
+  it.each(MARATHONS.map((p) => [p.persona.name, p] as const))(
+    "%s: each peak against Run17 as built",
+    (_name, { persona, weeks }) => {
+      const raceDate = persona.answers.raceTargetDate ?? "";
+      const benchmark = persona.running?.benchmark;
+      const appPace = benchmark
+        ? planningEasyPaceSPerKm({
+            benchmark,
+            vdot:
+              Math.round(
+                vdotFromRace(benchmark.distanceM, benchmark.timeS) * 10
+              ) / 10,
+          })
+        : null;
+      const runs = PEAK_OPTIONS.map((option) => {
+        const tally = newTally();
+        const list = option.peakKm
+          ? runnerSeasons(persona, weeks, {
+              planVariant: longRunPeak(option.name, option.peakKm, tally),
+            })
+          : runnerSeasons(persona, weeks);
+        return {
+          option,
+          tally,
+          out: list.map((season) => peakOutcome(season, raceDate)),
+        };
+      });
+      const asBuilt = runs[0].out;
+      for (const { option, tally, out } of runs) {
+        const col = (pick: (o: (typeof out)[number]) => number, digits = 1) =>
+          range(out.map(pick).filter(Number.isFinite), digits);
+        const share = (pick: (o: (typeof out)[number]) => boolean) =>
+          pct(out.filter(pick).length / out.length);
+        const allowed = option.peakKm
+          ? [...tally.caps].map((km) => `${String(km)} km`).join(", ")
+          : `${String(maxSchedulableLongKm(appPace))} km (${appPace ? `150 min at ${clock(appPace)} /km` : "nominal minutes"})`;
+        r17.plan.push(
+          `| ${persona.name} | ${option.name} | ${allowed} | ${col((o) => o.peakKm, 0)} | ${col((o) => o.peakMinutes, 0)} | ${pct(median(out.map((o) => o.peakShare).filter(Number.isFinite)))} | ${share((o) => o.taperOverBuild)} | ${col((o) => o.rise, 2)} | ${col((o) => o.spike, 2)} | ${col((o) => o.spikes, 0)} | ${col((o) => o.raceRatio, 2)} |`
+        );
+        const finishes = out.map((o) => o.finishS).filter(Number.isFinite);
+        // The faster runner's goal (§6.5 C), as the running outcomes say it.
+        const goal = persona.running?.goalTimeS;
+        const underGoal = goal
+          ? ` · under ${clock(goal + 1)} in ${pct(finishes.filter((t) => t <= goal).length / Math.max(1, finishes.length))}`
+          : "";
+        r17.outcomes.push(
+          `| ${persona.name} | ${option.name} | ${col((o) => o.longOver150, 0)} | ${share((o) => o.injured)} | ${col((o) => o.expected, 2)} | ${col((o) => o.raceRisk, 3)} | ${share((o) => o.started)} | ${clockRange(finishes)}${underGoal} | ${col((o) => o.vdot)} | ${col((o) => o.weeklyKm)} |`
+        );
+        if (option.peakKm) {
+          // The same runner as built, both races run in full.
+          const pairs = out
+            .map((o, i) => [asBuilt[i], o] as const)
+            .filter(([b, o]) => b.full && o.full);
+          const at = (vdot: number, km: number) =>
+            raceTimeS(vdot, 42195, km) / 60;
+          const gap = pairs.map(([b, o]) => (o.finishS - b.finishS) / 60);
+          const vdotPart = pairs.map(
+            ([b, o]) => at(o.vdot, b.weeklyKm) - at(b.vdot, b.weeklyKm)
+          );
+          const kmPart = pairs.map(
+            ([b, o]) => at(o.vdot, o.weeklyKm) - at(o.vdot, b.weeklyKm)
+          );
+          const dayPart = gap.map((g, i) => g - vdotPart[i] - kmPart[i]);
+          r17.terms.push(
+            `| ${persona.name} | ${option.name} | ${String(pairs.length)} | ${signedRange(gap)} | ${signed(median(vdotPart))} | ${signed(median(kmPart))} | ${signed(median(dayPart))} |`
+          );
+          r17.checks.push(
+            `${persona.name}, ${option.name}: ${String(tally.matched)} of ${String(tally.matched + tally.unmatched)} weeks replayed, ${String(tally.returning)} of them a returning runner's${tally.otherMinutes.size > 0 && option.peakKm === danielsPeakKm ? ` (the peak week's other runs ${[...tally.otherMinutes].join(", ")} min)` : ""}`
+          );
+        }
+        expect(out.length).toBe(3 * SEEDS);
+      }
+    },
+    PEAK_TIMEOUT
   );
 });
 

@@ -230,10 +230,17 @@ export interface SeasonOptions {
 
 /** A plan the app doesn't build, for a measured comparison. `start`
  *  begins a season's copy of it, which may remember what it has seen (the
- *  build's long run, say) from one day to the next. */
+ *  build's long run, say) from one day to the next. After each day's
+ *  rollover it is given the profile as the app holds it then (the runner's
+ *  benchmark, week schedule and race), which a run-plan variant reads as
+ *  the generator does; on the plan setup makes there is none yet. */
 export interface PlanVariant {
   name: string;
-  start: () => (state: ProgramState, date: string) => ProgramState;
+  start: () => (
+    state: ProgramState,
+    date: string,
+    profile?: UserProfile
+  ) => ProgramState;
 }
 
 /**
@@ -942,7 +949,7 @@ export function simulateLiftSeason(
           season.failures,
           runSide?.layoff(date) ?? "none"
         );
-        if (varyPlan) state = varyPlan(state, date);
+        if (varyPlan) state = varyPlan(state, date, profile);
         if (runSide && raceWeekNeedsBuilding(state, profile, date))
           fail(
             "race-week-stale",
