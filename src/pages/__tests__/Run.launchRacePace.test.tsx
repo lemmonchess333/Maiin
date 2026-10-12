@@ -53,14 +53,16 @@ vi.mock("@/components/run/RouteSetupSection", () => ({ default: () => null }));
 vi.mock("@/components/run/RunLaunchCard", () => ({
   default: ({
     purpose,
-    racePaceFinish,
+    racePace,
   }: {
     purpose?: string | null;
-    racePaceFinish?: { blockKm: number } | null;
+    racePace?: { kind: string; blockKm?: number } | null;
   }) => (
     <div>
       <p data-testid="finish">
-        {racePaceFinish ? `${racePaceFinish.blockKm} km` : "none"}
+        {racePace?.kind === "finish"
+          ? `${racePace.blockKm} km`
+          : (racePace?.kind ?? "none")}
       </p>
       <p data-testid="purpose">{purpose}</p>
     </div>
@@ -73,8 +75,12 @@ afterEach(() => {
   localStorage.clear();
 });
 
-/** Today's long run, in week 6 of a 10-week half plan: the build. */
-function launchLong(targetTimeS?: number) {
+/** Today's run, in week 6 of a 10-week half plan: the build. */
+function launchLong(
+  targetTimeS?: number,
+  templateId = "long_15k",
+  type = "long"
+) {
   const today = new Date();
   const raceGoal = { distance: "half", targetDate: "2099-04-18" };
   profile = {
@@ -89,8 +95,8 @@ function launchLong(targetTimeS?: number) {
         dayIndex: today.getDay(),
         date: localDateString(today),
         weekKey: localWeekKey(today),
-        templateId: "long_15k",
-        type: "long",
+        templateId,
+        type,
         completed: false,
         status: "planned",
       },
@@ -99,7 +105,9 @@ function launchLong(targetTimeS?: number) {
   } as unknown as ProgramState;
   render(
     <MemoryRouter
-      initialEntries={["/run?template=long_15k&scheduledRunId=runday_today"]}
+      initialEntries={[
+        `/run?template=${templateId}&scheduledRunId=runday_today`,
+      ]}
     >
       <Routes>
         <Route path="/run" element={<Run />} />
@@ -118,6 +126,12 @@ describe("Run launch card — a long run that finishes at race pace", () => {
     // 15 km: the last 5 at the goal pace, as the run's own block.
     expect(finish).toBe("5 km");
     expect(purpose).toMatch(/rehearses race day/);
+  });
+
+  it("names a tempo at the goal pace, and why it's in the week", () => {
+    const { finish, purpose } = launchLong(6330, "tempo_20", "tempo");
+    expect(finish).toBe("tempo");
+    expect(purpose).toMatch(/what race pace feels like/);
   });
 
   it("names none without a goal time", () => {

@@ -29,9 +29,10 @@ export interface SessionExplainerInput {
    *  (Run15), nor does every other build week on the gentler setting. Left
    *  out, the week isn't assumed to. */
   weekHasQuality?: boolean;
-  /** A long run that finishes at race pace (`racePaceFinishFor`): in the
-   *  build, it's in the week to rehearse race day. */
-  racePaceFinish?: boolean;
+  /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
+   *  that finishes at it rehearses race day, and a tempo at it practises
+   *  the pace, in place of the reasons for a tempo at fitness pace. */
+  racePace?: "finish" | "tempo" | null;
 }
 
 /**
@@ -136,6 +137,13 @@ export function runSessionExplainer(
   }
 
   if (phase === "taper") {
+    if (type === "tempo" && input.racePace === "tempo") {
+      return "Taper — a short block at race pace keeps the rhythm sharp while the volume drops.";
+    }
+    // Not the easy runs' reason: a tempo is comfortably hard (Run21 (1)).
+    if (type === "tempo") {
+      return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
+    }
     if (type === "intervals") {
       return "Taper sharpener — fast but small, keeping the legs quick while the volume drops.";
     }
@@ -154,11 +162,14 @@ export function runSessionExplainer(
     if (phase === "base") {
       return "The week's anchor run — long-run volume ramps gradually through the base.";
     }
-    return input.racePaceFinish
+    return input.racePace === "finish"
       ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
       : weekHasQuality
         ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
         : "The week's anchor run — it builds the endurance the race needs.";
+  }
+  if (type === "tempo" && input.racePace === "tempo") {
+    return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
   }
   if (type === "tempo") {
     return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";

@@ -12,8 +12,10 @@ import { RUN_TEMPLATES } from "../workoutTemplates";
 const about = (id: string) =>
   runSessionAbout(RUN_TEMPLATES.find((t) => t.id === id)!);
 
-/** A long run's race-pace finish, as `racePaceFinishFor` gives one. */
-const FINISH = { blockKm: 5, goalPaceS: 300 };
+/** A long run's race-pace finish, as `racePaceWorkFor` gives one. */
+const FINISH = { kind: "finish" as const, blockKm: 5, goalPaceS: 300 };
+/** A tempo at the goal pace, as `racePaceWorkFor` gives one. */
+const TEMPO = { kind: "tempo" as const, goalPaceS: 300 };
 
 describe("runSessionAbout", () => {
   it("says what every session is, how it should feel, and what to do", () => {
@@ -117,19 +119,41 @@ describe("runSessionAbout", () => {
     // A long run that finishes at race pace has lines and a reason of its
     // own (Run21 (2)), in the build.
     for (const t of RUN_TEMPLATES.filter((x) => x.type === "long")) {
-      const lines = runSessionAbout(t, { racePaceFinish: FINISH });
+      const lines = runSessionAbout(t, { racePace: FINISH });
       const why = runSessionExplainer({
         type: t.type,
         templateId: t.id,
         currentWeek: 9,
         totalWeeks: 16,
         distance: "marathon",
-        racePaceFinish: true,
+        racePace: "finish",
       });
       expect(why, t.id).toMatch(/rehearses race day/);
       for (const line of [lines.what, lines.feel, lines.ifWrong]) {
         const shared = [...phrases(why!)].filter((p) => phrases(line).has(p));
         expect(shared, `${t.id} with race pace`).toEqual([]);
+      }
+    }
+    // So has a tempo at the goal pace, in the build and in the taper.
+    for (const t of RUN_TEMPLATES.filter((x) => x.type === "tempo")) {
+      const lines = runSessionAbout(t, { racePace: TEMPO });
+      for (const currentWeek of [9, 13]) {
+        const why = runSessionExplainer({
+          type: t.type,
+          templateId: t.id,
+          currentWeek,
+          totalWeeks: 16,
+          distance: "marathon",
+          racePace: "tempo",
+        });
+        expect(why, `${t.id}, week ${currentWeek + 1}`).toMatch(/race pace/);
+        for (const line of [lines.what, lines.feel, lines.ifWrong]) {
+          const shared = [...phrases(why!)].filter((p) => phrases(line).has(p));
+          expect(
+            shared,
+            `${t.id} at race pace, week ${currentWeek + 1}`
+          ).toEqual([]);
+        }
       }
     }
   });
@@ -153,7 +177,7 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
   const long15 = RUN_TEMPLATES.find((t) => t.id === "long_15k")!;
 
   it("says what it is, how it should feel and what to do if race pace won't come", () => {
-    const lines = runSessionAbout(long15, { racePaceFinish: FINISH });
+    const lines = runSessionAbout(long15, { racePace: FINISH });
     expect(lines.what).toBe(
       "Your longest run of the week, finishing at your goal race pace."
     );
@@ -165,7 +189,7 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
   });
 
   it("keeps the plain long run's lines without one", () => {
-    const lines = runSessionAbout(long15, { racePaceFinish: null });
+    const lines = runSessionAbout(long15, { racePace: null });
     expect(lines.what).toBe("Your longest run of the week.");
     expect(lines.feel).toMatch(/^Easy, like your easy days/);
   });
@@ -175,5 +199,38 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
     expect(runSessionName(long15, null)).toBe("Long 15K");
     expect(runSessionName(undefined, null)).toBe("Run");
     expect(runSessionName(undefined, null, "Free run")).toBe("Free run");
+  });
+});
+
+describe("a tempo at the goal race pace (Run21 (2), Run21 (3))", () => {
+  // A2 runs a half or marathon plan's tempos at the goal pace through the
+  // build and taper. Their lines called them comfortably hard, at a pace
+  // "from your fitness".
+  const tempo = (id: string) => RUN_TEMPLATES.find((t) => t.id === id)!;
+
+  it("says it runs at your goal race pace, in one block or two", () => {
+    const one = runSessionAbout(tempo("tempo_20"), { racePace: TEMPO });
+    expect(one.what).toBe(
+      "A warm-up, then a block at your goal race pace, then a cool-down."
+    );
+    expect(one.feel).toMatch(/^Race pace: even and controlled/);
+    expect(one.ifWrong).toMatch(/change your goal time/);
+    const two = runSessionAbout(tempo("tempo_40"), { racePace: TEMPO });
+    expect(two.what).toMatch(/goal race pace in two blocks/);
+    for (const line of [one.what, one.feel, two.what]) {
+      expect(line).not.toMatch(/comfortably hard/i);
+    }
+  });
+
+  it("keeps the tempo's own lines without it", () => {
+    expect(runSessionAbout(tempo("tempo_20")).feel).toMatch(
+      /^Comfortably hard/
+    );
+  });
+
+  it("is named for it", () => {
+    expect(runSessionName(tempo("tempo_20"), TEMPO)).toBe(
+      "20 Min Tempo at race pace"
+    );
   });
 });

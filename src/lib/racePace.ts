@@ -1,9 +1,9 @@
 /**
- * A long run's race-pace finish (A2, Run21 (2)): whether a planned long run
- * closes at the goal race pace, and how much of it. One gate, for the
- * launch (`runPlanMetadata`'s prefill, which builds the run's segments from
- * it) and for every surface that names the run before it starts: Home's
- * cards, Train's card, the day sheet and the launch card.
+ * A planned run's work at the goal race pace (A2, Run21 (2)): a long run's
+ * closing block, or a tempo run at the goal pace. One gate, for the launch
+ * (`runPlanMetadata`'s prefill, which builds the run's segments and target
+ * from it) and for every surface that names the run before it starts:
+ * Home's cards, Train's card, the day sheet and the launch card.
  *
  * It sits apart from `runPlanMetadata` so Home can read it without loading
  * the segment builders and their cue copy.
@@ -121,32 +121,37 @@ export function racePaceBlockKm(
 }
 
 /**
- * A long run's race-pace finish: its last `blockKm` at the goal pace. The
- * run screen plays it as the closing segment; every surface that names the
- * run before it starts says so (Run21 (2)).
+ * A planned run's work at the goal race pace (A2), which the run screen
+ * plays and every surface that names the run before it starts says
+ * (Run21 (2)):
+ *
+ * - `finish`: a long run's last `blockKm` at the goal pace, in the build of
+ *   a half or marathon plan, once the run is 12 km or more, so it holds an
+ *   easy majority and a block worth running. A taper long run stays easy
+ *   (the taper cuts load).
+ * - `tempo`: a tempo run's blocks at the goal pace, through the build and
+ *   the taper (race rhythm is what the taper's sharpening is for), in place
+ *   of the pace the runner's fitness would set.
  */
-export interface RacePaceFinish {
-  /** The closing block, km (`racePaceBlockKm`). */
-  blockKm: number;
-  /** The goal pace, s/km. */
-  goalPaceS: number;
-}
+export type RacePaceWork =
+  | { kind: "finish"; blockKm: number; goalPaceS: number }
+  | { kind: "tempo"; goalPaceS: number };
 
-/**
- * Whether a long run finishes at race pace: in the build of a half or
- * marathon plan with a goal time, once the run is 12 km or more, so it
- * holds an easy majority and a block worth running. A taper long run stays
- * easy (the taper cuts load).
- */
-export function longRunRacePaceFinish(
+/** The gate: a session's race-pace work, given the plan's enrichment. */
+export function racePaceWork(
   tmpl: Pick<RunTemplate, "type" | "config">,
   race: RaceEnrichment | null | undefined
-): RacePaceFinish | null {
-  const km = tmpl.config.targetDistanceKm ?? 0;
-  if (!race || tmpl.type !== "long" || race.phase !== "build" || km < 12) {
-    return null;
+): RacePaceWork | null {
+  if (!race) return null;
+  if (tmpl.type === "tempo") {
+    return race.phase === "build" || race.phase === "taper"
+      ? { kind: "tempo", goalPaceS: race.goalPaceS }
+      : null;
   }
+  const km = tmpl.config.targetDistanceKm ?? 0;
+  if (tmpl.type !== "long" || race.phase !== "build" || km < 12) return null;
   return {
+    kind: "finish",
     blockKm: racePaceBlockKm(km, race.distance),
     goalPaceS: race.goalPaceS,
   };
@@ -183,18 +188,18 @@ export function raceTargetFromProfile(
 }
 
 /**
- * A planned run's race-pace finish, for the surfaces that name it before it
+ * A planned run's race-pace work, for the surfaces that name it before it
  * starts: the launch's gate on the launch's inputs. The plan's current week
  * sets the phase, as it does for "Why this run" and at the launch; the plan
  * holds only the current week's runs.
  */
-export function racePaceFinishFor(
+export function racePaceWorkFor(
   tmpl: Pick<RunTemplate, "type" | "config"> | null | undefined,
   profile: RaceTargetProfile | null | undefined,
   runPlan: RunPlan | null | undefined
-): RacePaceFinish | null {
+): RacePaceWork | null {
   if (!tmpl) return null;
-  return longRunRacePaceFinish(
+  return racePaceWork(
     tmpl,
     resolveRaceEnrichment(
       profile?.runMode ?? "freeform",

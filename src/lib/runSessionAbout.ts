@@ -10,7 +10,7 @@
  * depends on its distance. The register is the explainer's: what the session
  * is and how to run it, never a physiology measurement, readiness or safety.
  */
-import type { RacePaceFinish } from "./racePaceFinish";
+import type { RacePaceWork } from "./racePace";
 import {
   isRunWalkTemplateId,
   RUN_WALK_TEMPLATE_IDS,
@@ -30,25 +30,28 @@ export interface RunSessionAbout {
 const LONGER_EASY_MINUTES = 60;
 
 /**
- * A planned run's name (Run21 (2)): the template's, and a long run that
- * finishes at race pace says so, in running-evidence Appendix B's words
- * ("Long run with race pace"): "Long 18K with race pace". The finish is
- * `racePaceFinishFor`'s, the launch's own gate.
+ * A planned run's name (Run21 (2)): the template's, and a run with work at
+ * the goal race pace says so. A long run that finishes at it is "Long 18K
+ * with race pace", running-evidence Appendix B's "Long run with race pace";
+ * a tempo run at it is "20 Min Tempo at race pace". The race pace is
+ * `racePaceWorkFor`'s, the launch's own gate.
  */
 export function runSessionName(
   template: Pick<RunTemplate, "name"> | null | undefined,
-  racePaceFinish?: RacePaceFinish | null,
+  racePace?: RacePaceWork | null,
   fallback = "Run"
 ): string {
   if (!template) return fallback;
-  return racePaceFinish ? `${template.name} with race pace` : template.name;
+  if (racePace?.kind === "finish") return `${template.name} with race pace`;
+  if (racePace?.kind === "tempo") return `${template.name} at race pace`;
+  return template.name;
 }
 
 export function runSessionAbout(
   template: Pick<RunTemplate, "id" | "type" | "estimatedDuration" | "config">,
-  /** A long run's race-pace finish (`racePaceFinishFor`): it changes what
-   *  the run is, how it feels and what to do when it won't come. */
-  { racePaceFinish }: { racePaceFinish?: RacePaceFinish | null } = {}
+  /** The run's work at the goal race pace (`racePaceWorkFor`): it changes
+   *  what the run is, how it feels and what to do when it won't come. */
+  { racePace }: { racePace?: RacePaceWork | null } = {}
 ): RunSessionAbout {
   const { config } = template;
   if (template.type === "race") {
@@ -98,6 +101,19 @@ export function runSessionAbout(
             "Can't match your first rep? Take a longer rest, or stop a rep early. One fewer rep is still the session.",
         };
   }
+  if (template.type === "tempo" && racePace?.kind === "tempo") {
+    // A2: the goal pace, not the comfortably hard pace fitness would set.
+    const blocks = config.tempo?.workSecs.length ?? 1;
+    return {
+      what:
+        blocks > 1
+          ? "A warm-up, then your goal race pace in two blocks with easy running between, then a cool-down."
+          : "A warm-up, then a block at your goal race pace, then a cool-down.",
+      feel: "Race pace: even and controlled, the rhythm you'll hold on race day.",
+      ifWrong:
+        "Race pace won't come today? Ease off to a pace you can hold and finish the time. If it keeps feeling out of reach, you can change your goal time in your run plan.",
+    };
+  }
   if (template.type === "tempo") {
     const blocks = config.tempo?.workSecs.length ?? 1;
     return {
@@ -110,7 +126,7 @@ export function runSessionAbout(
         "Gasping, or slowing every minute? Ease off until you can say a few words. Flat all over? Run easy today and keep the tempo for another day.",
     };
   }
-  if (template.type === "long" && racePaceFinish) {
+  if (template.type === "long" && racePace?.kind === "finish") {
     return {
       what: "Your longest run of the week, finishing at your goal race pace.",
       feel: "Easy until the final stretch, then strong and even at race pace.",
