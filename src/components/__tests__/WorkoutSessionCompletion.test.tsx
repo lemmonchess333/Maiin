@@ -258,6 +258,71 @@ describe("set completion through row controls", () => {
     );
   });
 
+  /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
+     a working set is done and while sets remain; under the set action it
+     took a row from the list on every set after the first. */
+  it("offers Finish in the top bar once a set is done, asking first", async () => {
+    openSession();
+    const finish = () =>
+      screen.queryByRole("button", { name: "Finish workout" });
+    expect(finish()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() => expect(finish()).toBeVisible());
+    expect(finish()).toHaveTextContent("Finish");
+    expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
+    fireEvent.click(finish()!);
+    expect(
+      screen.getByRole("alertdialog", { name: "Finish early?" })
+    ).toBeInTheDocument();
+  });
+
+  /* The exercise's name and set count head the list rather than sit fixed
+     above it, so another exercise starts at its head. */
+  it("brings another exercise's head into view when it opens", () => {
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Test lift",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "test",
+              name: "First lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+            {
+              exerciseId: "test-2",
+              name: "Second lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={writer()}
+        onClose={vi.fn()}
+      />
+    );
+    scroll.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Second lift" }));
+    const header = screen
+      .getByRole("heading", { level: 2, name: "Second lift" })
+      .closest("[class*='@container']");
+    const call = scroll.mock.contexts.findIndex((el) => el === header);
+    expect(call).toBeGreaterThanOrEqual(0);
+    expect(scroll.mock.calls[call][0]).toEqual({
+      block: "start",
+      behavior: "instant",
+    });
+  });
+
   it("keeps completed exercises in the draft until the workout is saved", async () => {
     const log = openSession();
     // Cursor remains at set 1; completing set 3 must not finish the exercise.
@@ -1678,7 +1743,7 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Finish early" }));
+  fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
   fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
