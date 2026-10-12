@@ -18,11 +18,16 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
 
 import { loadsTheLegs } from "@/features/program/easierToday";
+import { toExperience } from "@/features/program/experienceModel";
 import {
   weeklyVolumeByJudgementMuscle,
   type VolumeDay,
 } from "@/features/program/volumeModel";
-import type { ProgramExercise } from "@/features/program/programTypes";
+import type {
+  ProgramExercise,
+  ProgramState,
+} from "@/features/program/programTypes";
+import { setWarmupPricing } from "@/features/program/sessionFit";
 import { pickAccessory } from "@/features/program/variationBank";
 import {
   getPhaseForWeek,
@@ -41,6 +46,21 @@ import { BASE_VARIANT, HARSH_VARIANT } from "@/test/sim/lifter";
 import { LIFT_PERSONAS } from "@/test/sim/liftPersonas";
 import { runTypeOf } from "@/test/sim/runSeason";
 import { RUN_PERSONAS } from "@/test/sim/runPersonas";
+import {
+  dropScaledByLevel,
+  e1rmTrendLoads,
+  SCALED_DROP_SHARE,
+  TREND,
+  weeklyStep,
+  WEEKLY_STEP_DAYS,
+  type CountedVariant,
+} from "@/test/sim/sawtooth";
+import {
+  BLOCK_SESSIONS,
+  LONGEST_BLOCK_SESSIONS,
+  projectedPricing,
+  refitWhenRampsGrow,
+} from "@/test/sim/timeFit";
 
 type RaceDistance = keyof typeof TAPER_WEEKS_BY_DISTANCE;
 
@@ -785,6 +805,396 @@ describe.skipIf(!SEEDS)("L10: the same lift in two slots", () => {
       }
     },
     TIMEOUT
+  );
+});
+
+/** The sections below run several options of every lifting persona: a
+ *  season is a fifth of a second to a second, and the machine may be
+ *  shared. */
+const LONG_TIMEOUT = Math.max(600_000, SEEDS * 150_000);
+
+/** A plan variant, or none, that also keeps the last plan each season
+ *  showed it: the plan the season ended on. */
+function recording(variant?: PlanVariant): {
+  variant: PlanVariant;
+  plans: ProgramState[];
+} {
+  const plans: ProgramState[] = [];
+  return {
+    plans,
+    variant: {
+      name: variant?.name ?? "as built",
+      start: () => {
+        const inner = variant?.start();
+        const at = plans.length;
+        return (state, date) => {
+          const out = inner ? inner(state, date) : state;
+          plans[at] = out;
+          return out;
+        };
+      },
+    },
+  };
+}
+
+/** Each persona's seasons as built, and the plans they ended on: run once
+ *  for the sections that compare with them. Watching the plan changes
+ *  nothing in it. */
+const built = new Map<string, { list: Season[]; plans: ProgramState[] }>();
+function builtSeasons(persona: LiftPersona) {
+  let got = built.get(persona.name);
+  if (!got) {
+    const rec = recording();
+    got = {
+      list: seasons(persona, 26, { planVariant: rec.variant }),
+      plans: rec.plans,
+    };
+    built.set(persona.name, got);
+  }
+  return got;
+}
+
+const mean = (values: number[]) =>
+  values.reduce((a, b) => a + b, 0) / values.length;
+
+/** The rules a season broke, by name. */
+const rulesOf = (list: Season[]) =>
+  new Set(list.flatMap((s) => s.failures.map((f) => f.rule)));
+
+/** What the sawtooth did to a season's tracked lifts. */
+interface Sawtooth {
+  /** The tracked lifts' true 1RM gain, %, averaged over the lifts. */
+  gain: number | null;
+  /** Each per 100 of the tracked lifts' sessions. */
+  misses: number;
+  drops: number;
+  below: number;
+}
+
+/**
+ * Per 100 of the tracked lifts' sessions: misses (a session the plan
+ * judged short at its weight, `miss` or `lowered`), drops (`lowered`: the
+ * plan took the lift down after it), and sessions below best (planned under
+ * the slot's heaviest plan weight at any of its sessions before).
+ */
+function sawtoothOf(season: Season, tracked: readonly string[]): Sawtooth {
+  const gains = tracked
+    .map((id) => gain(season, id))
+    .filter((g): g is number => g !== null);
+  const lifts = season.sessions
+    .flatMap((s) => s.lifts)
+    .filter((l) => tracked.includes(l.exerciseId));
+  const best = new Map<string, number>();
+  let below = 0;
+  for (const l of lifts) {
+    const top = best.get(l.slot);
+    if (top !== undefined && l.planned < top - 1e-6) below++;
+    best.set(l.slot, Math.max(top ?? 0, l.planned));
+  }
+  const per100 = (n: number) => (lifts.length ? (n / lifts.length) * 100 : NaN);
+  return {
+    gain: gains.length ? mean(gains) : null,
+    misses: per100(
+      lifts.filter((l) => l.outcome === "miss" || l.outcome === "lowered")
+        .length
+    ),
+    drops: per100(lifts.filter((l) => l.outcome === "lowered").length),
+    below: per100(below),
+  };
+}
+
+describe.skipIf(!SEEDS)("L4: the session-to-session sawtooth", () => {
+  it(
+    "a weekly step, a drop scaled by level and loads from an e1RM trend, against Lift4 as built",
+    () => {
+      report.push(
+        "",
+        "## L4: the session-to-session sawtooth",
+        "",
+        `Lift4 as built: a step whenever every set hits its target (Lift4 (6)); two misses in a row, 10% lighter, then a step a session back (Lift4 (7), owner call (1)). Each option is laid over it at Finish (\`ProgressionVariant\`, \`sawtooth.ts\`), from where the app's own rules left each lift. **Weekly step, per slot** (as briefed): an intermediate's or advanced lifter's slot steps at most once in ${String(WEEKLY_STEP_DAYS)} days; a step the app takes sooner is held back, weight and reps as before it (every step, a lowered lift's way back included). **Weekly step, per lift** (an addition, since the per-slot rule never bites; see below the table): the same, with a step in any of the lift's slots starting the ${String(WEEKLY_STEP_DAYS)} days for all of them. **Drop scaled by level:** an intermediate's or advanced lifter's two-miss drop is ${String(SCALED_DROP_SHARE * 100)}% on its grid (at least a step), climbing back as built. A beginner keeps Lift4 (6) and the 10% under these three, so they are left out of their rows. **e1RM trend:** after a miss, a main lift's load is the trend's: the app's own record of each of the lift's last ${String(TREND.exposures)} sessions (any slot, at most ${String(TREND.maxReps)} reps), through its Epley (\`epley1RMExact\`), a least-squares line read at the latest, and the load for the target by the app's own rep-to-load scaling, Epley's 1 / (1 + reps / 30); on the grid, no lighter than the bar. The step stays as built: the person stops each set at its target, so an e1RM read off it gives back the weight it was lifted at, and only a step raises a load. Accessories as built. Oreb's waves aren't run (the reading says why).`,
+        "",
+        `26 weeks; ${String(SEEDS)} seeds of each lifter model variant; per season, median [10th–90th]. Over the persona's tracked lifts (squat, bench, deadlift, press; the dumbbell beginner's four): **gain**, true 1RM, %, averaged over the lifts; **Δ gain**, the option's gain less as built's for the same seed and model variant, percentage points; per 100 of their sessions, **misses** (a session the plan judged short at its weight), **drops** (the plan took the lift down after it) and **below best** (planned under the slot's heaviest plan weight at its sessions before). **Changed**: what the option did in the season, on every loaded lift for the weekly step and the drop: steps held back, drops made ${String(SCALED_DROP_SHARE * 100)}%, and for the trend, loads taken down / second misses kept at their weight. **New rules**: rules of the app's code the option's seasons break that as built's don't.`,
+        "",
+        "| persona | option | gain % | Δ gain, pp | misses /100 | drops /100 | below best /100 | changed | new rules |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+      );
+      /** A season, and as built's for the same seed and model variant. */
+      type Pair = { tooth: Sawtooth; was: Sawtooth };
+      const pooled = new Map<string, Pair[]>();
+      /** A metric's value in each season, or its paired difference from
+       *  as built's; `metric` gives their median [10th–90th]. */
+      const valuesOf = (
+        pairs: Pair[],
+        pick: (t: Sawtooth) => number | null,
+        paired = false
+      ) =>
+        pairs
+          .map(({ tooth, was }) => {
+            const now = pick(tooth);
+            if (!paired || now === null) return now;
+            const then = pick(was);
+            return then === null ? null : now - then;
+          })
+          .filter((v): v is number => v !== null && Number.isFinite(v));
+      const metric = (
+        pairs: Pair[],
+        pick: (t: Sawtooth) => number | null,
+        digits = 1,
+        paired = false
+      ) => range(valuesOf(pairs, pick, paired), digits);
+      for (const persona of LIFT_PERSONAS) {
+        const level = toExperience(persona.answers.experience);
+        const group =
+          level === "beginner"
+            ? "beginners (6)"
+            : "intermediate and advanced (9)";
+        const base = builtSeasons(persona).list;
+        const options: [string, Season[], CountedVariant | null][] = [
+          ["as built", base, null],
+        ];
+        for (const variant of [
+          weeklyStep(level, "slot"),
+          weeklyStep(level, "lift"),
+          dropScaledByLevel(level),
+          e1rmTrendLoads(),
+        ])
+          if (variant)
+            options.push([
+              variant.name,
+              seasons(persona, 26, { progressionVariant: variant }),
+              variant,
+            ]);
+        const baseTeeth = base.map((s) => sawtoothOf(s, persona.tracked));
+        const baseRules = rulesOf(base);
+        for (const [option, list, variant] of options) {
+          const pairs: Pair[] = list.map((s, i) => ({
+            tooth: sawtoothOf(s, persona.tracked),
+            was: baseTeeth[i],
+          }));
+          const key = `${group}|${option}`;
+          pooled.set(key, [...(pooled.get(key) ?? []), ...pairs]);
+          const changed = variant
+            ? variant.name === "e1RM trend"
+              ? `${range(
+                  variant.counts.map((c) => c.changed),
+                  0
+                )} / ${range(
+                  variant.counts.map((c) => c.kept),
+                  0
+                )}`
+              : range(
+                  variant.counts.map((c) => c.changed),
+                  0
+                )
+            : "-";
+          const fresh = [...rulesOf(list)].filter((r) => !baseRules.has(r));
+          report.push(
+            `| ${persona.name} | ${option} | ${metric(pairs, (t) => t.gain)} | ${variant ? metric(pairs, (t) => t.gain, 1, true) : "-"} | ${metric(pairs, (t) => t.misses, 0)} | ${metric(pairs, (t) => t.drops, 0)} | ${metric(pairs, (t) => t.below, 0)} | ${changed} | ${fresh.join(", ") || "none"} |`
+          );
+          expect(list.length).toBe(2 * SEEDS);
+        }
+      }
+      // Why the per-slot weekly step never bites: a slot's sessions as
+      // built, days apart.
+      const gaps = LIFT_PERSONAS.flatMap((persona) =>
+        builtSeasons(persona).list.flatMap((season) => {
+          const last = new Map<string, string>();
+          const out: number[] = [];
+          for (const session of season.sessions)
+            for (const l of session.lifts) {
+              const before = last.get(l.slot);
+              if (before)
+                out.push(
+                  Math.round(
+                    (parseLocalDate(session.date).getTime() -
+                      parseLocalDate(before).getTime()) /
+                      86_400_000
+                  )
+                );
+              last.set(l.slot, session.date);
+            }
+          return out;
+        })
+      );
+      report.push(
+        "",
+        `As built, a slot's sessions come ${String(gaps.reduce((a, b) => Math.min(a, b), Infinity))} days apart at the least (median ${fmt(median(gaps), 0)}, 90th percentile ${fmt(quantile(gaps, 0.9), 0)}; ${String(gaps.length)} gaps, every persona and season): each slot is one day's lift, and the week's order carries over, so a slot comes round a week later or more, never sooner. Lift4 (6)'s step after every session is already at most one a week in each slot, so the weekly step per slot holds nothing back; a lift steps more often than weekly only through its other slots.`,
+        "",
+        "Pooled, every season of the group's personas, median [10th–90th]; each Δ is the option's value less as built's for the same persona, seed and model variant, median [10th–90th] and mean:",
+        "",
+        "| group | option | gain % | Δ gain, pp | misses /100 | Δ misses | drops /100 | Δ drops | below best /100 | Δ below best |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+      );
+      for (const [key, pairs] of pooled) {
+        const [group, option] = key.split("|");
+        const isBuilt = option === "as built";
+        /** The paired difference, median [10th–90th], and its mean: a
+         *  season's misses and drops are small counts, so the median of
+         *  their difference is often 0 either way. */
+        const delta = (pick: (t: Sawtooth) => number | null, digits = 1) => {
+          if (isBuilt) return "-";
+          const values = valuesOf(pairs, pick, true);
+          return `${range(values, digits)}, mean ${fmt(mean(values), digits + 1)}`;
+        };
+        report.push(
+          `| ${group} | ${option} | ${metric(pairs, (t) => t.gain)} | ${delta((t) => t.gain)} | ${metric(pairs, (t) => t.misses, 0)} | ${delta((t) => t.misses, 0)} | ${metric(pairs, (t) => t.drops, 0)} | ${delta((t) => t.drops, 0)} | ${metric(pairs, (t) => t.below, 0)} | ${delta((t) => t.below, 0)} |`
+        );
+      }
+    },
+    LONG_TIMEOUT
+  );
+});
+
+/** A plan's weekly sets for each muscle, as the app's volume model counts
+ *  them, at the plan's own sets (`baseSets`): its full week. */
+function planSetsByMuscle(plan: ProgramState): Map<string, number> {
+  return new Map(
+    weeklyVolumeByJudgementMuscle(
+      plan.workouts.map((d) => ({
+        exercises: d.exercises.map((ex) => ({
+          exerciseId: ex.exerciseId,
+          movementCategory: ex.movementCategory,
+          sets: ex.baseSets ?? ex.sets,
+        })),
+      }))
+    ).map((m) => [m.muscle, m.sets])
+  );
+}
+
+/** The working sets of a plan's full week. */
+const planSets = (plan: ProgramState) =>
+  plan.workouts
+    .flatMap((d) => d.exercises)
+    .reduce((n, ex) => n + (ex.baseSets ?? ex.sets), 0);
+
+/** Each lift's own sets in a plan's full week, by day and exercise. */
+const setsByLift = (plan: ProgramState) =>
+  new Map(
+    plan.workouts.flatMap((d) =>
+      d.exercises.map(
+        (ex) =>
+          [`${d.dayName}: ${ex.exerciseId}`, ex.baseSets ?? ex.sets] as const
+      )
+    )
+  );
+
+/** Each key's mean over seasons (a key a season lacks counts 0). */
+function meanByKey(maps: Map<string, number>[]): Map<string, number> {
+  const keys = new Set(maps.flatMap((m) => [...m.keys()]));
+  return new Map(
+    [...keys].map((k) => [k, mean(maps.map((m) => m.get(k) ?? 0))])
+  );
+}
+
+/** The keys whose mean differs from `against`'s, as "key a → b". */
+function differences(
+  against: Map<string, number>,
+  got: Map<string, number>
+): string {
+  return (
+    [...new Set([...against.keys(), ...got.keys()])]
+      .filter((k) => Math.abs((got.get(k) ?? 0) - (against.get(k) ?? 0)) > 1e-6)
+      .map(
+        (k) =>
+          `${k} ${fmt(against.get(k) ?? 0, 1)} → ${fmt(got.get(k) ?? 0, 1)}`
+      )
+      .join(", ") || "none"
+  );
+}
+
+/** Each lift whose sets differ from (a)'s in the same seed and model
+ *  variant, as "day: lift a → b in N% of seasons" (a lift gone counts 0). */
+function liftChanges(against: ProgramState[], plans: ProgramState[]): string {
+  const seen = new Map<string, number>();
+  for (const [i, plan] of plans.entries()) {
+    const base = setsByLift(against[i]);
+    const mine = setsByLift(plan);
+    for (const key of new Set([...base.keys(), ...mine.keys()])) {
+      const was = base.get(key) ?? 0;
+      const now = mine.get(key) ?? 0;
+      if (now === was) continue;
+      const label = `${key} ${String(was)} → ${String(now)}`;
+      seen.set(label, (seen.get(label) ?? 0) + 1);
+    }
+  }
+  return (
+    [...seen]
+      .map(([label, n]) => `${label} in ${fmt((n / plans.length) * 100, 0)}%`)
+      .join(", ") || "none"
+  );
+}
+
+describe.skipIf(!SEEDS)("L5 (F8): the time fit's warm-ups", () => {
+  it(
+    "warm-ups priced at a block's weight (b), and a re-fit when a ramp grows (c), against the fit as built (a)",
+    () => {
+      report.push(
+        "",
+        "## L5 (F8): the time fit's warm-ups",
+        "",
+        `(a) as built: the fit prices each loaded lift's warm-up at the heavier of its weight and an established lifter's starting weight (\`sessionFit.ts\`). (b): each barbell lift's warm-up is priced at the heavier of that and its weight after a block, the weight the plan's own rule (\`applyProgression\`) takes it to in ${String(BLOCK_SESSIONS)} sessions of every set at its target, from its starting weight: the shortest block the app offers, a slot coming round once a week; the row for the longest block, ${String(LONGEST_BLOCK_SESSIONS)} weeks, checks that choice. Through the fit's pricing seam (\`setWarmupPricing\`), so the plan is built and balanced as the app would build it so priced. (c): at a week's first rollover, a day the app's own check says no longer fits (\`sessionFits\`) is re-fitted as the app re-fits a plan to a new length (\`refitSessionsToTime\`, then \`balanceWeekVolume\`), keeping only the re-fit's cuts on that day; a lighter week or the first week back waits for the next ordinary one (\`timeFit.ts\`).`,
+        "",
+        `26 weeks; ${String(SEEDS)} seeds of each lifter model variant; per season, median [10th–90th]. **Over-time**: sessions the app estimates past the chosen length (the \`over-time\` rule, on the estimate rounded to the minute), and the share of seasons with any. **Sets**: the plan's working sets in a full week at the season's end (its own sets, \`baseSets\`). **Lifts**: each lift whose sets in that week differ from (a)'s, by day, and in what share of seasons. **Muscles**: each muscle's sets in that week as the app's volume model counts them (\`weeklyVolumeByJudgementMuscle\`), the mean over seasons, where it differs from (a)'s. **Re-fits**: days (c) re-fitted in the season. The fit's own check is on the unrounded estimate, so (c) also re-fits a day that runs over by under half a minute, which the rule doesn't count.`,
+        "",
+        "| persona | option | over-time sessions | seasons with any | sets | lifts, (a) → option | muscles, (a) → option | re-fits |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |"
+      );
+      for (const persona of LIFT_PERSONAS) {
+        const goal = persona.answers.primaryGoal;
+        const level = toExperience(persona.answers.experience);
+        const a = builtSeasons(persona);
+        /** The seasons with the fit's warm-ups priced at the weight a
+         *  block of `sessions` takes each barbell lift to. */
+        const priced = (sessions: number) => {
+          const restore = setWarmupPricing(
+            projectedPricing(goal, level, sessions)
+          );
+          try {
+            const rec = recording();
+            return {
+              list: seasons(persona, 26, { planVariant: rec.variant }),
+              plans: rec.plans,
+            };
+          } finally {
+            restore();
+          }
+        };
+        const b = priced(BLOCK_SESSIONS);
+        const b12 = priced(LONGEST_BLOCK_SESSIONS);
+        const refit = refitWhenRampsGrow(goal, level);
+        const recC = recording(refit);
+        const c = {
+          list: seasons(persona, 26, { planVariant: recC.variant }),
+          plans: recC.plans,
+        };
+        const aMuscles = meanByKey(a.plans.map(planSetsByMuscle));
+        for (const [option, got, refits] of [
+          ["(a) as built", a, null],
+          ["(b) priced at a block's weight", b, null],
+          [`(b), a ${String(LONGEST_BLOCK_SESSIONS)}-week block`, b12, null],
+          ["(c) re-fit at the rollover", c, refit.refits],
+        ] as const) {
+          const over = got.list.map(
+            (s) => s.failures.filter((f) => f.rule === "over-time").length
+          );
+          const any = over.filter((n) => n > 0).length / over.length;
+          const lifts = got === a ? "-" : liftChanges(a.plans, got.plans);
+          const muscles =
+            got === a
+              ? "-"
+              : differences(
+                  aMuscles,
+                  meanByKey(got.plans.map(planSetsByMuscle))
+                );
+          report.push(
+            `| ${persona.name} | ${option} | ${range(over, 0)} | ${fmt(any * 100, 0)}% | ${range(got.plans.map(planSets), 0)} | ${lifts} | ${muscles} | ${refits ? range(refits, 0) : "-"} |`
+          );
+          expect(got.list.length).toBe(2 * SEEDS);
+          expect(got.plans.length).toBe(2 * SEEDS);
+        }
+      }
+    },
+    LONG_TIMEOUT
   );
 });
 

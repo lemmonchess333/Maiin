@@ -219,6 +219,10 @@ export interface SeasonOptions {
    *  builds later get it too. It must leave a plan it already changed as
    *  it is. */
   planVariant?: PlanVariant;
+  /** A progression rule the app doesn't have, for a measured comparison
+   *  (decisions.md L4): applied at Finish to each lift the session trained,
+   *  after the app's own rules moved it. */
+  progressionVariant?: ProgressionVariant;
   /** A9 measured (decisions.md L18): a leg miss after a hard run counts in
    *  full, as it did before Lift4 (7) halved it. */
   hardRunMissCountsFull?: boolean;
@@ -230,6 +234,39 @@ export interface SeasonOptions {
 export interface PlanVariant {
   name: string;
   start: () => (state: ProgramState, date: string) => ProgramState;
+}
+
+/**
+ * A progression rule the app doesn't have, for a measured comparison. At
+ * Finish, once the app's own rules have moved each lift the session
+ * trained (and the rules check has held the app's code to its sheet), the
+ * alternative says where each one goes instead; a swapped slot is left as
+ * the app left it. `start` begins a season's copy, which may remember what
+ * it has seen. The session's outcome (`LiftOutcome`) is read off the plan
+ * as the alternative leaves it.
+ */
+export interface ProgressionVariant {
+  name: string;
+  start: () => (lift: LiftAtFinish) => ProgramExercise;
+}
+
+/** One lift at Finish, as a progression variant sees it. */
+export interface LiftAtFinish {
+  date: string;
+  /** The slot as the session found it, and as the app's rules left it. */
+  before: ProgramExercise;
+  after: ProgramExercise;
+  /** The weight the app followed (`followedWeight`), and the reps of each
+   *  set done at it. */
+  lifted: number;
+  reps: number[];
+  /** Light by design: a lighter week's session, or an easier one, where
+   *  the app moves a weight up only and says nothing else (Lift4 (8)). */
+  lighter: boolean;
+  smallPlates: boolean;
+  /** The whole plan after the app's rules, for a rule that reads the
+   *  lift's other slots. */
+  plan: ProgramState;
 }
 
 /** What a session did to a lift's numbers, read off the plan before and
@@ -777,6 +814,7 @@ export function simulateLiftSeason(
     );
     const varyPlan = options.planVariant?.start();
     if (varyPlan) state = varyPlan(state, start);
+    const varyProgression = options.progressionVariant?.start();
     // The day the account began and setup finished, as the server stamps
     // them (`createdAt`, and `completeOnboarding`'s `onboardingCompletedAt`):
     // a new runner's first weeks count from it (`profileNewRunnerUntil`).
@@ -1719,8 +1757,51 @@ export function simulateLiftSeason(
             `${stored.dayName} ${plan.exerciseId}: ${why}`
           );
       }
+      // A progression rule the app doesn't have, for a measured comparison:
+      // each lift the session trained goes where it says, from where the
+      // app's rules (held to their sheet above) left it.
+      let varied = after;
+      if (varyProgression) {
+        const bySlot = new Map(lifts.map((l, k) => [l.slot, { l, k }]));
+        const lighter = before.currentPhase === "deload" || easier;
+        const smallPlates = before.settings?.smallPlates ?? false;
+        varied = {
+          ...after,
+          workouts: after.workouts.map((d, i) =>
+            i !== dayIndex
+              ? d
+              : {
+                  ...d,
+                  exercises: d.exercises.map((now) => {
+                    const done = bySlot.get(slotOf(now));
+                    const plan = was.get(slotOf(now));
+                    if (!done || !plan || swapped.has(done.k)) return now;
+                    const { l } = done;
+                    return varyProgression({
+                      date,
+                      before: plan,
+                      after: now,
+                      lifted: l.weight,
+                      reps: l.reps.filter(
+                        (_, k) => Math.abs(l.weights[k] - l.weight) < 0.01
+                      ),
+                      lighter,
+                      smallPlates,
+                      plan: after,
+                    });
+                  }),
+                }
+          ),
+        };
+      }
+      const moved =
+        varied === after
+          ? next
+          : new Map(
+              varied.workouts[dayIndex].exercises.map((ex) => [slotOf(ex), ex])
+            );
       return {
-        state: after,
+        state: varied,
         session: {
           date,
           dayIndex,
@@ -1734,7 +1815,7 @@ export function simulateLiftSeason(
             return {
               ...l,
               outcome: plan
-                ? outcomeOf(plan, next.get(l.slot), l.weight)
+                ? outcomeOf(plan, moved.get(l.slot), l.weight)
                 : "hold",
             };
           }),
