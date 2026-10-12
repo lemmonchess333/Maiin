@@ -25,8 +25,9 @@ Money, privacy and medical or safety claims stay the owner's too.
 **2026-10-11: the hand-back questions too.** The owner then delegated the
 questions this file had handed back ("make decisions on the rest") and asked
 for every open PR of the pass to be merged. The answers are locked as Pgm8
-(lemmonchess333/Maiin#2683); the table at the end of this file says how each
-one is being built.
+(lemmonchess333/Maiin#2683), and each is built in the PR the table at the
+end of this file names. Every PR of the pass was merged by 2026-10-12, in the
+order its stacks set, and the builds after them.
 
 **Status words.**
 
@@ -40,8 +41,7 @@ one is being built.
   privacy or safety. The evidence and a recommendation are here.
 
 **What the simulator can and can't say.** The simulator
-(lemmonchess333/Maiin#2613, #2617, #2619; [`simulator.md`](https://github.com/lemmonchess333/Maiin/blob/claude/sim-actions/docs/training-engine-2026-10/simulator.md)
-on its branch) runs the app's own plan code under simulated people. Its body
+(lemmonchess333/Maiin#2613, #2617, #2619; [`simulator.md`](simulator.md)) runs the app's own plan code under simulated people. Its body
 models are hypotheses built from the evidence docs, so where a model was fitted
 to a source, agreeing with that source is not new evidence. Three limits shape
 several answers below:
@@ -61,38 +61,42 @@ several answers below:
 These restore a lock's text or fix a defect; they needed no decision. Each is
 a draft PR with a red test first.
 
-| What                                                                                | Finding                   | PR                                                           |
-| ----------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| Dumbbell and kettlebell lifts start on a weight the rack has                        | F1                        | lemmonchess333/Maiin#2610                                    |
-| A short session's two-set main lifts survive every load                             | F7                        | lemmonchess333/Maiin#2612                                    |
-| "Last time" is the last session in the lift's own slot                              | F11                       | lemmonchess333/Maiin#2614                                    |
-| Easier today's weights on the lift's own equipment, never under the bar             | F20                       | lemmonchess333/Maiin#2620                                    |
-| The lighter-week banner only when a lighter week can be taken                       | F19                       | lemmonchess333/Maiin#2621                                    |
-| A lighter week taken from Train restarts the calendar's count                       | Lift4 (9), A4             | lemmonchess333/Maiin#2622                                    |
-| One set of goal names                                                               | Lift4 (4)                 | lemmonchess333/Maiin#2623                                    |
-| Miss counts start again after any break                                             | Lift4 (7)                 | lemmonchess333/Maiin#2624                                    |
-| A bodyweight lift on a fixed target climbs a rep when every set hits it             | Lift4 (6)                 | lemmonchess333/Maiin#2625                                    |
-| No lifting suggestions on the Performance tab                                       | Lift4 (3)                 | lemmonchess333/Maiin#2626                                    |
-| Each session keeps its heavier or lighter role as the order carries over            | Lift4 (12)(b)             | lemmonchess333/Maiin#2627                                    |
-| A level change sets how the main lifts progress                                     | Lift4 (12)(a)             | lemmonchess333/Maiin#2629                                    |
-| Replace and Add take their role's numbers                                           | Lift4 (5); Lift5          | lemmonchess333/Maiin#2630 (lock lemmonchess333/Maiin#2628)   |
-| One definition of a long or hard run, the run plan's                                | A5                        | lemmonchess333/Maiin#2607                                    |
-| A tempo is judged by its blocks, live and after; a goal-pace tempo against its pace | F22; audit §0 item 3      | lemmonchess333/Maiin#2633                                    |
-| A quality day counts the run done as that session                                   | F13; PR-J-Q1              | lemmonchess333/Maiin#2635 (STATUS lemmonchess333/Maiin#2632) |
-| A plan made mid-week plans no run before that day                                   | F16; Run19                | lemmonchess333/Maiin#2636 (lock lemmonchess333/Maiin#2634)   |
-| Home shows a run on the date the plan holds it                                      | F14, F21; ADR-0002        | lemmonchess333/Maiin#2637                                    |
-| A race plan needs at least two run days a week                                      | A7; audit §7 item 11      | lemmonchess333/Maiin#2638                                    |
-| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3     | lemmonchess333/Maiin#2639                                    |
-| The taper's session is placed like every quality run                                | R10; RUN-EV-10            | lemmonchess333/Maiin#2642                                    |
-| The copy that was wrong today                                                       | R12                       | lemmonchess333/Maiin#2641                                    |
-| The rest-day card and the usual-meal row fit at large text                          | #2612's capture run       | lemmonchess333/Maiin#2631                                    |
-| Setup asks, optionally, for a recent 5K or 10K time                                 | R11; adaptive paces §10.2 | lemmonchess333/Maiin#2653                                    |
-| The plan moves on with the day while the app stays open                             | Found by the journeys     | lemmonchess333/Maiin#2672                                    |
-| Fonts are never inlined, so the CSP loads them                                      | Found wiring A11          | lemmonchess333/Maiin#2674                                    |
-| A rebuilt race week and "Re-plan from today" plan no run before today               | R21; Run19                | lemmonchess333/Maiin#2669                                    |
-| A layout change mid-week keeps the week's days already gone                         | Run19                     | lemmonchess333/Maiin#2670                                    |
-| The recovery banner says what the weeks hold, not a template id                     | Found by the journeys     | lemmonchess333/Maiin#2677                                    |
-| The Performance tab's run suggestion says it in plain words                         | Found by the journeys; E2 | lemmonchess333/Maiin#2678                                    |
+| What                                                                                | Finding                              | PR                                                           |
+| ----------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------ |
+| Dumbbell and kettlebell lifts start on a weight the rack has                        | F1                                   | lemmonchess333/Maiin#2610                                    |
+| A short session's two-set main lifts survive every load                             | F7                                   | lemmonchess333/Maiin#2612                                    |
+| "Last time" is the last session in the lift's own slot                              | F11                                  | lemmonchess333/Maiin#2614                                    |
+| Easier today's weights on the lift's own equipment, never under the bar             | F20                                  | lemmonchess333/Maiin#2620                                    |
+| The lighter-week banner only when a lighter week can be taken                       | F19                                  | lemmonchess333/Maiin#2621                                    |
+| A lighter week taken from Train restarts the calendar's count                       | Lift4 (9), A4                        | lemmonchess333/Maiin#2622                                    |
+| One set of goal names                                                               | Lift4 (4)                            | lemmonchess333/Maiin#2623                                    |
+| Miss counts start again after any break                                             | Lift4 (7)                            | lemmonchess333/Maiin#2624                                    |
+| A bodyweight lift on a fixed target climbs a rep when every set hits it             | Lift4 (6)                            | lemmonchess333/Maiin#2625                                    |
+| No lifting suggestions on the Performance tab                                       | Lift4 (3)                            | lemmonchess333/Maiin#2626                                    |
+| Each session keeps its heavier or lighter role as the order carries over            | Lift4 (12)(b)                        | lemmonchess333/Maiin#2627                                    |
+| A level change sets how the main lifts progress                                     | Lift4 (12)(a)                        | lemmonchess333/Maiin#2629                                    |
+| Replace and Add take their role's numbers                                           | Lift4 (5); Lift5                     | lemmonchess333/Maiin#2630 (lock lemmonchess333/Maiin#2628)   |
+| One definition of a long or hard run, the run plan's                                | A5                                   | lemmonchess333/Maiin#2607                                    |
+| A tempo is judged by its blocks, live and after; a goal-pace tempo against its pace | F22; audit §0 item 3                 | lemmonchess333/Maiin#2633                                    |
+| A quality day counts the run done as that session                                   | F13; PR-J-Q1                         | lemmonchess333/Maiin#2635 (STATUS lemmonchess333/Maiin#2632) |
+| A plan made mid-week plans no run before that day                                   | F16; Run19                           | lemmonchess333/Maiin#2636 (lock lemmonchess333/Maiin#2634)   |
+| Home shows a run on the date the plan holds it                                      | F14, F21; ADR-0002                   | lemmonchess333/Maiin#2637                                    |
+| A race plan needs at least two run days a week                                      | A7; audit §7 item 11                 | lemmonchess333/Maiin#2638                                    |
+| An easy run reaches the run screen timed by its length                              | RUN-EV-09; audit §2.3                | lemmonchess333/Maiin#2639                                    |
+| The taper's session is placed like every quality run                                | R10; RUN-EV-10                       | lemmonchess333/Maiin#2642                                    |
+| The copy that was wrong today                                                       | R12                                  | lemmonchess333/Maiin#2641                                    |
+| The rest-day card and the usual-meal row fit at large text                          | #2612's capture run                  | lemmonchess333/Maiin#2631                                    |
+| Setup asks, optionally, for a recent 5K or 10K time                                 | R11; adaptive paces §10.2            | lemmonchess333/Maiin#2653                                    |
+| The plan moves on with the day while the app stays open                             | Found by the journeys                | lemmonchess333/Maiin#2672                                    |
+| Fonts are never inlined, so the CSP loads them                                      | Found wiring A11                     | lemmonchess333/Maiin#2674                                    |
+| A rebuilt race week and "Re-plan from today" plan no run before today               | R21; Run19                           | lemmonchess333/Maiin#2669                                    |
+| A layout change mid-week keeps the week's days already gone                         | Run19                                | lemmonchess333/Maiin#2670                                    |
+| The recovery banner says what the weeks hold, not a template id                     | Found by the journeys                | lemmonchess333/Maiin#2677                                    |
+| The Performance tab's run suggestion says it in plain words                         | Found by the journeys; E2            | lemmonchess333/Maiin#2678                                    |
+| A race plan made after its week's last run day starts on next week's runs           | Found by R23's build; Run19          | lemmonchess333/Maiin#2687 (STATUS lemmonchess333/Maiin#2686) |
+| History's chart labels fit at large text on a Monday, and at 1W and 6M              | Found merging: capture-specs on main | lemmonchess333/Maiin#2691                                    |
+| A swap for the kit or an injury doesn't give a lift a third day in the week         | Found by L7's build; Lift4 (5)       | lemmonchess333/Maiin#2700                                    |
+| A taper's long run and easy runs step down from what the build held                 | Found by R17's measurement; Run22    | lemmonchess333/Maiin#2707                                    |
 
 The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 #2609, #2615, #2616 and #2618.
@@ -126,6 +130,26 @@ The seams the simulator needed are lemmonchess333/Maiin#2605, #2606, #2608,
 Run20 is lemmonchess333/Maiin#2640. R22 and R20 needed no lock: R22
 restores what the race lifecycle (PR-J) already decides, and R20 is the
 correction Run19 recorded.
+
+### Handed back, answered under Pgm8, and built
+
+| What                                                                      | Answer                       | PR                                                         |
+| ------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| The simulator measures the sawtooth's options and the time fit's warm-ups | L4 (kept), L5 measured       | lemmonchess333/Maiin#2693                                  |
+| The simulator measures the marathon long run's peak                       | R17 (kept) measured          | lemmonchess333/Maiin#2694                                  |
+| A light lift's stretched target, from Nuzzo 2024, said once               | L11; A3 (Pgm7), kept by Pgm8 | lemmonchess333/Maiin#2695                                  |
+| A bodyweight lift done with added load follows it                         | L6; Pgm8                     | lemmonchess333/Maiin#2696                                  |
+| A new plan's barbell lift under the bar starts as its dumbbell version    | L15; Pgm8                    | lemmonchess333/Maiin#2697                                  |
+| The hinge accessory gives way to the hamstrings' ceiling                  | L7 (its defect); Pgm8        | lemmonchess333/Maiin#2699                                  |
+| A fitted session keeps fitting as its lifts get heavier                   | L5 (F8); Lift7               | lemmonchess333/Maiin#2701 (lock lemmonchess333/Maiin#2688) |
+| The running fitness the app works out comes from a race or a tempo        | R1; Pgm8                     | lemmonchess333/Maiin#2702                                  |
+| A race plan shows its coming weeks                                        | R23; Pgm8                    | lemmonchess333/Maiin#2703                                  |
+| "Run by feel" before a run on a hot day, with no number                   | E8; Pgm8                     | lemmonchess333/Maiin#2704                                  |
+| Setup says when a new runner's race is too soon to build to               | R14c; Pgm8                   | lemmonchess333/Maiin#2705                                  |
+| A planned run done on the treadmill counts as the planned run             | The treadmill; Pgm8          | lemmonchess333/Maiin#2706                                  |
+
+Pgm8 is lemmonchess333/Maiin#2683. The STATUS lines that close it, Lift7,
+Run17 and Run22 are lemmonchess333/Maiin#2708.
 
 ### Every ⚠ cell in running-engine-audit §2.3
 
@@ -197,8 +221,9 @@ journey alone on fresh emulators.
 
 The runner with no benchmark is the journey that checks how a planned run
 is explained before it is run (E1, E2, E3, E6 and R2). Each of those
-surfaces is changed by a Run21 or Run20 PR that is still open
-(lemmonchess333/Maiin#2643, #2656 to #2661, #2663, #2665, #2666, #2668).
+surfaces is changed by a Run21 or Run20 PR that was open then
+(lemmonchess333/Maiin#2643, #2656 to #2661, #2663, #2665, #2666, #2668;
+all merged by 2026-10-12).
 Written against main, the journey would pin the copy those PRs replace, so
 it stacks on them instead. Building that stack found the PRs' one real
 interaction: with R2's effort words (#2643) and E2c's feel line (#2668)
@@ -332,7 +357,8 @@ design, so it goes to the owner with the final report.
   slot's sessions come round a week apart); a 5% drop adds misses and drops;
   an e1RM trend cuts misses but about doubles drops and the sessions below a
   lift's best. Oreb's waves weren't run: they need a per-lift max and logged
-  effort the model doesn't have.
+  effort the model doesn't have. The measuring suite's L4 section is
+  lemmonchess333/Maiin#2693.
 
 ### L5. Short Build muscle sessions hold few working sets, and fitted sessions run over
 
@@ -366,6 +392,12 @@ design, so it goes to the owner with the final report.
   `balanceWeekVolume`) gives 5 of 15 personas' new plans one set more than
   the generator's own fit, where `balanceWeekVolume`'s comment says the two
   agree.
+- **Built** (locked as Lift7, lemmonchess333/Maiin#2688; built in
+  lemmonchess333/Maiin#2701): when the week moves on into an ordinary
+  week, a day over its length only because its lifts' warm-ups grew is
+  re-fitted by the plan's own fit for a new length, keeping only that
+  re-fit's cuts to sets. `over-time` is gone from every persona, at a set a
+  week where a day grew. The measurement is lemmonchess333/Maiin#2693.
 
 ### L6. Bodyweight main lifts with added load
 
@@ -386,6 +418,10 @@ design, so it goes to the owner with the final report.
   with none. Lift4 (1)'s own reason applies: a load that is too light or
   too heavy is put right by the first session rather than typed over in
   every session after it.
+- **Built** under Pgm8 (lemmonchess333/Maiin#2696): a bodyweight lift done
+  with load follows it, stepping a plate on a belt at the top of its range
+  (2.5 kg, 1.25 kg with small plates) and easing back on the belt; done with
+  none it keeps its rep climb. Train shows the load ("+10 kg").
 
 ### L7. The beginner's deadlift
 
@@ -408,6 +444,14 @@ design, so it goes to the owner with the final report.
   the hamstrings keep their 15 sets. That breach stays a defect against
   Lift4 (5), open: its fix takes sets off the hinge work, not the deadlift
   off a day.
+- **Built** under Pgm8 (lemmonchess333/Maiin#2699): the deadlift keeps its
+  3 × 8 twice a week, and the hinge accessories give way. Sets come off them
+  first, and a new plan drops one at its floor when that brings the
+  hamstrings down without taking another muscle further over its ceiling
+  or under two days a week. Plans over the hamstrings' ceiling, of 600 each,
+  measured where it was built: beginner 137 → 109, intermediate 41 → 24,
+  advanced 39 → 22; with the twice-a-week fix on top
+  (lemmonchess333/Maiin#2700), 93, 12 and 12. The audit's plan reads 13 of 13.
 
 ### L8. Curls fill the push/pull balance
 
@@ -470,6 +514,13 @@ design, so it goes to the owner with the final report.
   ceiling's maths is checked against Nuzzo 2024 (`stretchedRepCeiling` uses
   Epley past 10 reps, where Reynolds 2006 stops). Anything more (an automatic
   big step, a prompt) changes Lift4 (6): **Owner**.
+- **Built** (lemmonchess333/Maiin#2695), kept by Pgm8's L11: the stretched
+  ceiling inverts Nuzzo 2024's main table (log reps between its points, a
+  bottom under 3.3 reps bridged to 1 rep at 100%, our assumption), up to 5
+  reps lower than Epley past 10. The session where a target first climbs
+  past its range's top leaves a record, and the next session shows one line
+  ("Up to 19 reps on 10 kg: 12.5 kg is a big jump"), under the target and on
+  Train's row. Anything more waits on a measurement (Pgm8).
 
 ### L12. Race build: the leg trim on 2-set lifts, and lighter weeks near a race
 
@@ -533,6 +584,12 @@ design, so it goes to the owner with the final report.
   is the generator's choice and reverses nothing; existing plans keep theirs
   (Pgm5), and Easier today already never goes under the bar
   (lemmonchess333/Maiin#2620).
+- **Built** under Pgm8 (lemmonchess333/Maiin#2697): a new plan builds a
+  barbell lift that would start under the bar as its dumbbell version (the
+  equipment swap's own pick, on its own rack weight, not already in the day
+  or twice in the week, and safe for the person's injuries), or starts it
+  at the bar. Existing plans keep their lifts. `below-bar` is gone from
+  every persona.
 
 ### L16. Size plans give the quads 9 sets a week
 
@@ -599,6 +656,13 @@ against Lift4 as built on the simulator before it comes here with an answer.
   who runs easy runs too fast would get paces too quick once they accept
   them. Recommendation: (a) plus the setup question §10.2 already asks for
   (R11), so a new runner has a benchmark from setup, not from easy runs.
+- **Built** under Pgm8 (lemmonchess333/Maiin#2702): (a). The benchmark the
+  app works out comes from efforts only, a race or time trial read whole
+  (2 km or more) or a tempo's work segments (10 minutes or more, not at a
+  goal pace the plan pinned), and one is enough; Pace Insight and the
+  simulator read the same efforts. `derived-low` and `easy-nag` leave the
+  five personas they fired for, each deriving from its first tempo, 0.1–0.7
+  VDOT under the runner.
 
 ### R2. With no benchmark, every tempo targets 4:30 /km and intervals are judged at 5:00
 
@@ -768,6 +832,13 @@ against Lift4 as built on the simulator before it comes here with an answer.
   the session. The simulator's `taper-cut` and `taper-long` stop firing
   everywhere but the one-run-a-week new runner, who returns to the taper
   detrained after skipping both 25 km runs; no new finding appears.
+- **Fixed (2026-10-12, lemmonchess333/Maiin#2707):** the shares are of
+  what the build held, as (1) and (2) say. As first built they were taken
+  from the ramp before the plan's fits, so where a fit held the build short
+  (a new runner's minutes, a time limit, a running baseline) the taper
+  stepped down from runs the build never held: a new runner's marathon took
+  12 km and 15 km long runs after a build whose longest was 12 km (found by
+  R17's measurement). Now 8 km and 6 km.
 
 ### R9. Demanding days back to back
 
@@ -874,6 +945,12 @@ against Lift4 as built on the simulator before it comes here with an answer.
   running handoff's own rule: build broad capacity before making work more
   event-specific. The runner model has no run-walk, so the injury effect
   can't be simulated.
+- **R14c built** under Pgm8 (lemmonchess333/Maiin#2705): when someone new
+  to running picks a race their plan can't build to (the race takes more
+  than twice the longest run the plan reaches before race week, a Tropos
+  heuristic labelled in the code), setup and the run plan editor say what
+  their runs build to by then and that they can run-walk it or choose a
+  later date. It never holds the plan back.
 
 ### R15. Weekly jumps after step-back weeks
 
@@ -918,6 +995,8 @@ against Lift4 as built on the simulator before it comes here with an answer.
   build's own longest run, so a new runner's taper long run (15 km) is
   longer than any run in their build (12 km). A defect against R8's own
   text, to fix once lemmonchess333/Maiin#2682 is on main.
+- **The measurement** is lemmonchess333/Maiin#2694; the taper's defect is
+  fixed in lemmonchess333/Maiin#2707 (R8).
 
 ### R18. The year-out marathon's shape
 
@@ -997,6 +1076,11 @@ against Lift4 as built on the simulator before it comes here with an answer.
 - **Answer: Owner.** Recommendation: the coming weeks' outline (long run and
   quality per week, no daily detail) on the race plan, as Runna shows its
   calendar.
+- **Built** under Pgm8 (lemmonchess333/Maiin#2703): Train's race plan card
+  has a closed "The weeks ahead" disclosure, one row a week to race week
+  (its long run, its quality sessions, a lighter week, the race), walked
+  forward by the rollover's own week builder. No days, no easy runs, no
+  phase names (E3a). Free runners see nothing new (Run9).
 
 ### R24. Race predictions as ranges
 
@@ -1186,6 +1270,11 @@ tap away, and a change the person didn't make gets one line.
 - **Evidence:** race pace slows about 0.2–0.6% per °C WBGT above about 10 °C,
   more for slower runners [C, WEAK]; nothing gives training-pace slopes.
 - **Answer: Owner** (a heat line is a safety claim).
+- **Built** under Pgm8 (lemmonchess333/Maiin#2704): the run setup's weather
+  strip says "Hot today: run by feel, not by pace" on a hot day (the
+  temperature plus dew point rule of thumb's bands of 3% and over, labelled
+  as such) and nothing on any other day. The "expect ~3% slower" numbers and
+  the equal-effort pace are gone; the plan's paces never change.
 
 ### E9. The post-run line
 
@@ -1209,16 +1298,11 @@ Answered 2026-10-11 under the owner's delegation, each as its row
 recommends, and locked as Pgm8 (lemmonchess333/Maiin#2683). How each one
 stands:
 
-- **Built, PR to follow once the merges land:** E8 (the hot-day line,
-  `claude/run-heat-by-feel`), R14c (the race-too-soon line at setup,
-  `claude/run-new-runner-race-too-soon`), the treadmill as a place
-  (`claude/run-treadmill-is-a-place`), and A3, which L11 keeps
-  (`claude/lift-stretched-range-line`: the ceiling read from Nuzzo 2024's
-  table, then the one line).
-- **Being built:** L15, R1, and L7's hamstring ceiling (Kept above, its
-  defect fixed on the hinge work).
-- **Next:** L6 (after A3, which shares `applyProgression`), R23, and L4
-  once its simulation is run.
+- **Built:** L6 (lemmonchess333/Maiin#2696), L15 (#2697), R1 (#2702), R23
+  (#2703), E8 (#2704), R14c (#2705), the treadmill as a place
+  (#2706), A3, which L11 keeps (#2695), and L7's hamstring ceiling,
+  Kept above, with its defect fixed on the hinge work (#2699).
+- **Measured and kept:** L4 (#2693): Lift4 (6) and owner call (1) stand.
 - **Kept as they are, by the answer:** L3, R24, E3a and E3b.
 
 The questions the merges and builds raised are under "Open after Pgm8"
@@ -1270,8 +1354,12 @@ because it touches a Lift4 call or a copy decision.
   lifts the kit can't do, so a swap can bring the deadlift (or, with no bar,
   a dumbbell RDL) back on a third day. Found while building L7: it is most
   of the 30 beginner plans whose hamstrings stay over Lift4 (5)'s ceiling.
-  A defect against the twice-a-week rule. Recommendation: cap after the
-  filter.
+  A defect against the twice-a-week rule. **Fixed**
+  (lemmonchess333/Maiin#2700): the filters' own pickers keep the cap, so no
+  plan without an injury has a lift three times (66 of 600 beginner plans,
+  and 60 of 600 at each other level, before). With an injury in a 3-day home
+  or minimal plan, where every allowed option is already in the week twice,
+  the old choice stands (340 of 14,400 plans).
 - **Removing a derived benchmark doesn't stick.** Settings → Run fitness's
   Remove clears a pending benchmark, and the next visit to Train derives it
   again from the same effort. True before R1 and after it. Recommendation:
@@ -1310,6 +1398,16 @@ because it touches a Lift4 call or a copy decision.
   can get a third leg press, 38 of 12,600 injured plans. Found while
   building the twice-a-week fix. Recommendation: one gate, before the
   filters.
+  - **2026-10-12, lemmonchess333/Maiin#2709:** the gate stays where it is
+    and gives back every slot an injury holds. One gate before the filters
+    was measured first and left 60 of 2,250 uninjured beginners an Arnold
+    press the time fit had left above their level, which the second gate
+    levels. Over 7,200 plans, those with a lift three days a week fall
+    352 → 300 (no leg press or hip thrust); uninjured plans are unchanged.
+    Still open: whether the injury picker prefers a curated substitute at
+    the person's level. Measured both ways, plans with an above-level lift
+    fall 1,745 → 929 or 969, but those with a lift three days a week rise
+    300 → 400 or 360, and 444 Nordic curls arrive through later passes.
 - **The race cockpit at large text.** Its heading, the Week and Phase tiles
   and the phase rail overflow at 2× text, and the large-text capture spec
   never opens the cockpit. Recommendation: let them wrap, and add the

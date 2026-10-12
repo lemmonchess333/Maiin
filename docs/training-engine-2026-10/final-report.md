@@ -3,28 +3,29 @@
 The report [`docs/agents/training-engine-prompt.md`](../agents/training-engine-prompt.md)
 asks for at its end ("DONE MEANS"): the PRs shipped, the known defects
 left, the decisions, Phase 0's claims, the simulator's calibration and the
-new baseline. Written 2026-10-10. The answers themselves, with their evidence
-and measurements, are in [`decisions.md`](decisions.md); the simulator is
-described in `simulator.md` on its branch (lemmonchess333/Maiin#2619).
+new baseline. Written 2026-10-10 and brought up to date on 2026-10-12, once
+every PR of the pass was merged. The answers themselves, with their
+evidence and measurements, are in [`decisions.md`](decisions.md); the
+simulator is described in [`simulator.md`](simulator.md).
 
 ## Where it stands
 
-- **74 PRs** (numbers here are lemmonchess333/Maiin's). 3 are merged; 71
-  are open as drafts for the owner to merge.
-- **CI.** By 23:41 UTC on 2026-10-10, every check was green on all 71
-  open heads, and none conflicted with main. The last four (#2601, #2675,
-  #2680, #2682) were pushed that evening.
-- **Two PRs went red on 2026-10-10, and both are fixed.** In
-  lemmonchess333/Maiin#2680, a comment named the report the measuring suite
-  writes. That file exists only where the suite has run, so the dead-path
-  check failed every unit job. In lemmonchess333/Maiin#2675, the nightly job
-  installed Playwright itself, which the install guard from
-  lemmonchess333/Maiin#2652 refuses. The shared script now takes the
-  browsers a job names.
+- **Every PR of the pass is merged**, 98 in all (numbers here are
+  lemmonchess333/Maiin's): the 74 this report first listed, seven that
+  merging and building them added, and the 14 builds of the questions the
+  owner had handed back, with their three locks. On 2026-10-11 the owner asked for every
+  open PR of the pass to be merged and for the hand-back questions to be
+  decided; the answers are Pgm8 (lemmonchess333/Maiin#2683).
+- **How they were merged** is in section 1: in the order the stacks set,
+  each on a head that merges main as a dry run of all 71 resolved it, and
+  each only once its CI was green.
+- **What merging and building found**, twelve things, is in section 1 too.
+  Each was fixed in the PR it belonged to, or in one of its own.
+- **Main after the last merge** is section 6's baseline.
 
 ## 1. The PRs shipped
 
-### Merged (3)
+### Merged first (3)
 
 | PR                        | What                                                         |
 | ------------------------- | ------------------------------------------------------------ |
@@ -32,25 +33,31 @@ described in `simulator.md` on its branch (lemmonchess333/Maiin#2619).
 | lemmonchess333/Maiin#2646 | After race day the race plan waits for the race's own ending |
 | lemmonchess333/Maiin#2652 | ci: clear dpkg's lock between Playwright install attempts    |
 
-### Merging the rest
+### How the rest were merged
 
-- **A lock goes in before the PR that builds on it.** Pgm7
-  (lemmonchess333/Maiin#2604) goes first: it holds the owner's delegation
-  that the other answers rest on.
-- **A PR that stacks on another says so at the top of its body**, and shows
-  the other's diff until that one merges. The longest chains:
-  - the simulator: #2613, then #2617, #2619 and #2680, on the seams;
-  - the journeys: #2676 (on #2609 and #2672), then #2679 (on the Run21 PRs);
-  - the stepped taper: #2682 on #2644, which is on #2642.
-- **Where two stacks meet**, eight resolutions need thought. They are listed
-  at the end of this report.
+- **A dry run first.** All 71 open PRs were merged locally, in order, into
+  one integration branch, and the full unit suite run on its tip. Each
+  place two PRs met was resolved there once (the appendix lists the ones
+  that needed thought), and the simulator's PRs were adapted to the fixes
+  merged before them: harness, ratchets and traces.
+- **Then one at a time on GitHub, in that order.** Locks went before the PRs
+  that build on them, Pgm7 first. Each PR's head became a merge of main
+  whose tree is the integration's after that PR, so its diff was its own
+  and its CI ran on main as it was. Main squash-merges, so each head was
+  rebuilt after the merge before it; a head that shared files with a PR
+  still open before it carried that one's change until it merged.
+- **Checked before each push.** `tsc -b`, the suites near the change and
+  the source guards ran on every head, and a resolver checked each against
+  a simulated squash of the PRs before it. The resolver also ran ahead on
+  a simulated main, so the next head was built and tested while the PR
+  before it was in CI, and the real build had to match the tree tested.
+- **Merged on green.** A PR merged once CI passed on its head; one that
+  changes what the app shows waited for the capture specs too. None was
+  merged red, and no test was skipped.
 - **The simulator's ratchets.** Each known defect is an entry in a ratchet,
-  and each fix takes its entry out. A fix that merges before the simulator
-  has no entry to take out, so whichever of the two merges second removes
-  the entry and regenerates the traces. Section 2 says which PR clears which
-  entry.
+  and each fix takes its entry out. Section 2 says what is left.
 
-### Locks (8)
+### Locks (12)
 
 | PR                        | What                                                                            |
 | ------------------------- | ------------------------------------------------------------------------------- |
@@ -62,6 +69,10 @@ described in `simulator.md` on its branch (lemmonchess333/Maiin#2619).
 | lemmonchess333/Maiin#2649 | plan: lock Lift6, the push/pull balance weighs presses against pulls            |
 | lemmonchess333/Maiin#2654 | plan: lock Run21, how the app explains a run                                    |
 | lemmonchess333/Maiin#2681 | plan: lock Run22, the taper in steps with a reduced long run                    |
+| lemmonchess333/Maiin#2683 | plan: lock Pgm8, the hand-back answers of the training-engine pass              |
+| lemmonchess333/Maiin#2686 | plan: Run19 STATUS, a week with no run day left starts on next week's runs      |
+| lemmonchess333/Maiin#2688 | plan: lock Lift7, the rollover re-fits a day its warm-ups outgrew               |
+| lemmonchess333/Maiin#2708 | plan: STATUS on Pgm8, Lift7, Run17 and Run22, the hand-back answers built       |
 
 ### Seams the simulator needed (7)
 
@@ -166,48 +177,137 @@ described in `simulator.md` on its branch (lemmonchess333/Maiin#2619).
 | ------------------------- | -------------------------------------------------------------------------------- |
 | lemmonchess333/Maiin#2601 | A prompt for the lifting and running pass, and the audits and evidence behind it |
 
+### Found while merging and building (6)
+
+| PR                        | What                                                                      |
+| ------------------------- | ------------------------------------------------------------------------- |
+| lemmonchess333/Maiin#2687 | A race plan made after its week's last run day starts on next week's runs |
+| lemmonchess333/Maiin#2689 | The race-plan tests plan a race half a year out, not in 2099              |
+| lemmonchess333/Maiin#2690 | The weight sheet's tests run at noon, so midnight can't split one         |
+| lemmonchess333/Maiin#2691 | History's chart labels fit at large text on a Monday, and at 1W and 6M    |
+| lemmonchess333/Maiin#2692 | ci: give the unit job 25 minutes                                          |
+| lemmonchess333/Maiin#2698 | Treadmill journey: Home waits for Train's day after the summary's Done    |
+
+- **#2687** was found by R23's build: a race plan saved on a Sunday after
+  its week's run days planned no run that week, and never planned one
+  again. Run19's STATUS (#2686) records the answer.
+- **#2689**: since #2672 the run rollover builds a race plan twice for each
+  week it rolls, and tests that planned a race in 2099 (3,800 weeks a
+  build) passed the 5 s timeout on loaded runners.
+- **#2690**: a test that ran across midnight read the next day's log
+  (unit-locale went red at 23:59:15 UTC).
+- **#2691**: on a Monday History's 1M range draws six weeks, and "This
+  week" ran 2 px past its bar at 135% text on a 320 px phone, which turned
+  the capture specs red on main.
+- **#2692**: the required `unit` job installs, lints, tests, builds and
+  checks the bundle inside 15 minutes, and ran 10 to 13.5 of them during
+  the merges. On #2666 it passed every step and was cancelled at 15:01
+  while cleaning up, and the job can't be re-run from here, so its budget
+  is 25 minutes now. #2666 carried the same line until #2692 merged.
+- **#2698**: on L15's head the treadmill journey's last check failed with
+  its 20 s wait, on a page showing Train, not Home. Done on the run
+  summary goes to Train, which writes the day it shows into its URL once
+  its plan loads, and that write overtook the journey's tap on Home. The
+  journey waits for the day first. A person who taps a tab while Train
+  loads can be taken back to Train the same way; that is an app change,
+  left for its own PR.
+
+Six more were fixed in the PR they belonged to, on its merge with main:
+
+- **#2659**: its dose test spied through setup's real plan builder, and a
+  spy an earlier test left behind made it call itself (shuffle seed 5).
+  The file now restores its spies after each test.
+- **#2668**: with R2's effort words (#2643) and E2c's feel line both on the
+  Run page's launch card, a quality session with no pace said how it should
+  feel twice. #2679 carried the change that drops R2's line, for whichever
+  of the two merged second; #2668's merge took it, so main never showed the
+  line twice.
+- **#2676**: once F22 (#2633) was on main the Run page saves `workPortion`,
+  and the journeys' run document, pinned to the page's field for field,
+  lacked it. #2676's merge took #2679's line.
+- **#2676**: CI's journeys job, the first run on main, found setup's
+  optional recent race time (R11) has its own "Recent race distance" group,
+  with a 5K and a 10K of its own. A role lookup matches a name by
+  substring, so "Race distance" found both groups. `setUpPlan` names the
+  group exactly.
+- **#2676 and #2679**: setup's default week now gives the runs a weekend
+  day (Run20 (2)), so a race plan made on a Monday needn't run that day,
+  and its long run is at the weekend. The treadmill journey takes the
+  plan's first run, and the runner with no benchmark the first week's long
+  run, each moving the day to it. The treadmill build carries the change
+  in its own version of the journey.
+- **#2676**: run fourth on the same emulators, the treadmill journey's last
+  check, Home's week showing the run done, missed Playwright's default
+  5 s once in two runs of the same commit, with the run saved and marked
+  done. It takes the 20 s the rig's other waits on data after a
+  navigation have.
+
+### The hand-back answers, built (14)
+
+| PR                        | What                                                                                  | Answers             |
+| ------------------------- | ------------------------------------------------------------------------------------- | ------------------- |
+| lemmonchess333/Maiin#2693 | The simulator measures the sawtooth's options and the time fit's warm-ups             | L4 (kept), L5       |
+| lemmonchess333/Maiin#2694 | The simulator measures the marathon long run's peak                                   | R17 (kept)          |
+| lemmonchess333/Maiin#2695 | A light lift's stretched target, from Nuzzo 2024, and its one line                    | L11, A3             |
+| lemmonchess333/Maiin#2696 | A bodyweight lift done with added load follows it                                     | L6                  |
+| lemmonchess333/Maiin#2697 | A new plan's barbell lift under the bar starts as its dumbbell version                | L15                 |
+| lemmonchess333/Maiin#2699 | The hinge accessory gives way to the hamstrings' ceiling; the deadlift keeps its days | L7                  |
+| lemmonchess333/Maiin#2700 | A swap for the kit or an injury doesn't give a lift a third day in the week           | Found by L7's build |
+| lemmonchess333/Maiin#2701 | A fitted session keeps fitting as its lifts get heavier                               | L5, Lift7           |
+| lemmonchess333/Maiin#2702 | The running fitness the app works out comes from a race or a tempo                    | R1                  |
+| lemmonchess333/Maiin#2703 | A race plan shows its coming weeks                                                    | R23                 |
+| lemmonchess333/Maiin#2704 | "Run by feel" before a run on a hot day, with no number                               | E8                  |
+| lemmonchess333/Maiin#2705 | Setup says when a new runner's race is too soon to build to                           | R14c                |
+| lemmonchess333/Maiin#2706 | A planned run done on the treadmill counts as the planned run                         | The treadmill       |
+| lemmonchess333/Maiin#2707 | A taper's long run and easy runs step down from what the build held                   | R8, found by R17    |
+
+They merged in that order, each after the one before it, since most share
+the plan generator and the simulator's traces.
+
 ## 2. The known defects left
 
 The simulator pins every defect it finds in a ratchet
 (`KNOWN_RULE_FAILURES` and `KNOWN_COACHING` in `liftSeason.sim`,
 `runSeason.sim` and `personActions.sim`). Numbers are `simulator.md`'s
-findings.
+findings. With everything merged, every rule ratchet is empty: no persona
+breaks a rule of the plan's own.
 
-**Cleared by an open PR once it merges:**
+**Cleared by the merges and the builds:**
 
-| Finding                                                   | Entry                           | Cleared by                              |
-| --------------------------------------------------------- | ------------------------------- | --------------------------------------- |
-| F11 "Last time" read the lift's other slot                | `stall:squat`                   | lemmonchess333/Maiin#2614               |
-| F13 A quality day counted only under 4:30 /km             | `not-counted`                   | lemmonchess333/Maiin#2635               |
-| F14, F21 Home read a dated run by weekday                 | `race-day-card`, `run-day-card` | lemmonchess333/Maiin#2637               |
-| F16 A plan made mid-week planned that week's earlier runs | `before-plan`                   | lemmonchess333/Maiin#2636               |
-| F20 Easier today's weights off the rack                   | `session-off-grid`              | lemmonchess333/Maiin#2620               |
-| F22 A tempo judged on the whole run                       | `verdict-slow`                  | lemmonchess333/Maiin#2633               |
-| F18 A new runner's continuous runs and early quality      | `run-walk`, `novice-quality`    | lemmonchess333/Maiin#2655, #2648        |
-| F18 A marathon on one run a week                          | `one-run-week`                  | lemmonchess333/Maiin#2638               |
-| F18 The one-step taper with no long run                   | `taper-cut`, `taper-long`       | lemmonchess333/Maiin#2682, except below |
-| F18 Demanding days back to back                           | `back-to-back`, in part         | lemmonchess333/Maiin#2644, except below |
+| Finding                                                   | Entry                           | Cleared by                                     |
+| --------------------------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| F8 Fitted 60-minute sessions ran 61–63 minutes            | `over-time`                     | lemmonchess333/Maiin#2701 (Lift7)              |
+| F10 Barbell lifts planned under the bar                   | `below-bar`                     | lemmonchess333/Maiin#2697 (L15)                |
+| F11 "Last time" read the lift's other slot                | `stall:squat`                   | lemmonchess333/Maiin#2614                      |
+| F13 A quality day counted only under 4:30 /km             | `not-counted`                   | lemmonchess333/Maiin#2635                      |
+| F14, F21 Home read a dated run by weekday                 | `race-day-card`, `run-day-card` | lemmonchess333/Maiin#2637                      |
+| F16 A plan made mid-week planned that week's earlier runs | `before-plan`                   | lemmonchess333/Maiin#2636                      |
+| F17 The derived benchmark read easy runs as races         | `derived-low`, `easy-nag`       | lemmonchess333/Maiin#2702 (R1)                 |
+| F20 Easier today's weights off the rack                   | `session-off-grid`              | lemmonchess333/Maiin#2620                      |
+| F22 A tempo judged on the whole run                       | `verdict-slow`                  | lemmonchess333/Maiin#2633                      |
+| F18 A new runner's continuous runs and early quality      | `run-walk`, `novice-quality`    | lemmonchess333/Maiin#2655, #2648               |
+| F18 A marathon on one run a week                          | `one-run-week`                  | lemmonchess333/Maiin#2638                      |
+| F18 The one-step taper with no long run                   | `taper-cut`, `taper-long`       | lemmonchess333/Maiin#2682, #2707, except below |
+| F18 Demanding days back to back                           | `back-to-back`, in part         | lemmonchess333/Maiin#2644, except below        |
+| L7 The hamstrings got 15 sets                             | not pinned                      | lemmonchess333/Maiin#2699, #2700               |
 
 F1, F6, F7 and F19 were fixed without a ratchet entry
-(lemmonchess333/Maiin#2610, #2646 (merged), #2612, #2621).
+(lemmonchess333/Maiin#2610, #2646, #2612, #2621).
 
 **Left, each with its reason:**
 
-| Finding                                                  | Entry                     | Why it stays                                                                                                                                                       |
-| -------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| F4 Linear steps outrun slow-gaining lifts                | `misses`                  | L4, the owner's: every option changes Lift4 (6) or owner call (1)                                                                                                  |
-| F8 Fitted 60-minute sessions run 61–63                   | `over-time`               | L5, not run: the options change how the time fit prices a session, and they are written first                                                                      |
-| F9 Light lifts wait for the person                       | `stall`                   | Lift4 (6). A3's one line is answered and not built: it waits on the stretched ceiling's maths being checked against Nuzzo 2024. Anything more is the owner's (L11) |
-| F10 Barbell lifts planned under the bar                  | `below-bar`               | L15, the owner's: Lift4 (2) allows no automatic swap                                                                                                               |
-| F12 Size plans give the quads 9 sets                     | `acsm-size:quads`         | L16, kept: the simulator has no size model to separate the options                                                                                                 |
-| F15 The plan doesn't start from the runner's own running | `under-dose`              | R5, not run: it waits on the review being modelled                                                                                                                 |
-| F17 The derived benchmark reads easy runs as races       | `derived-low`, `easy-nag` | R1, the owner's (adaptive paces §10.2). Setup's optional race time (lemmonchess333/Maiin#2653) gives a runner the way round it                                     |
-| F18 Long runs past the single-run guard                  | `spike`                   | R7: the race's spike is fixed by #2682; the first long run's waits on R5, and the rebound after a step-back week isn't measured                                    |
-| F18 Weeks that jump                                      | `volume-jump`             | R15, kept                                                                                                                                                          |
-| F18 Long runs over half a short week                     | `long-share`              | R16, kept                                                                                                                                                          |
-| F18 Back to back where the week leaves no room           | `back-to-back`            | R9: a two-day week's long run and quality, and a week whose every easy day is beside a demanding one, keep the person's days                                       |
-| F18 The new-runner marathoner's taper                    | `taper-cut`               | They run once a week, skip both 25 km runs and come back to the taper detrained, so its share is taken of their base long run                                      |
-| L7 The hamstrings get 15 sets                            | not pinned                | Open against Lift4 (5)'s ceiling: its fix takes sets off the hinge work, not the deadlift off a day                                                                |
+| Finding                                                  | Entry                                   | Why it stays                                                                                                                             |
+| -------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| F4 Linear steps outrun slow-gaining lifts                | `misses`                                | L4, measured: no option cuts misses and drops without costing gains, so Lift4 (6) and owner call (1) stand                               |
+| F9 Light lifts wait for the person                       | `stall`                                 | Lift4 (6). A3's line now says so once (#2695); the dumbbell versions L15 builds wait the same way. Anything more is measured first (L11) |
+| F12 Size plans give the quads 9 sets                     | `acsm-size:quads`                       | L16, kept: the simulator has no size model to separate the options                                                                       |
+| F15 The plan doesn't start from the runner's own running | `under-dose`                            | R5, not run: it waits on the review being modelled                                                                                       |
+| F18 Long runs past the single-run guard                  | `spike`                                 | R7: the race's spike is fixed by #2682; the first long run's waits on R5, and the rebound after a step-back week isn't measured          |
+| F18 Weeks that jump                                      | `volume-jump`                           | R15, kept                                                                                                                                |
+| F18 Long runs over half a short week                     | `long-share`                            | R16, kept                                                                                                                                |
+| F18 Back to back where the week leaves no room           | `back-to-back`                          | R9: a two-day week's long run and quality, and a week whose every easy day is beside a demanding one, keep the person's days             |
+| F18 A 10K's taper that still cuts over half in one step  | `taper-cut`                             | The 2+3 hybrids' 10K: its taper is one week, which Run22 leaves as it was                                                                |
+| F23 A set taken lighter stays lighter                    | `stall:deadlift` (lighter-after-misses) | Open after Pgm8 (decisions.md), the owner's: it touches a Lift4 call                                                                     |
 
 **Seen outside the ratchets:**
 
@@ -218,10 +318,10 @@ F1, F6, F7 and F19 were fixed without a ratchet entry
 - One marathon journey stopped advancing in week 32 on emulators that had
   run two hours of journeys. It didn't come back on fresh emulators, where
   CI runs every journey.
-- A planned long run done on a treadmill isn't credited without the
-  summary's "Mark scheduled run complete" tap, because the type picker
-  treats "Treadmill" as a run type rather than a place. Brought to the owner
-  as an observation (lemmonchess333/Maiin#2676).
+- The treadmill run that wasn't credited to a planned long run without a
+  tap is fixed: the treadmill is a place now (#2706). Its two
+  neighbours, "Track without GPS" and an unplanned treadmill run's type,
+  are open after Pgm8.
 
 ## 3. Decisions
 
@@ -230,68 +330,78 @@ today, the evidence, the simulation and the answer. The owner delegated the
 answers on 2026-10-07 under rules that keep every explicit owner decision
 with the owner ([`owner-answers.md`](owner-answers.md), locked as Pgm7 in
 lemmonchess333/Maiin#2604). Each answer was locked before it was built:
-A1–A12 as Pgm7, the rest as Lift5, Lift6, Run19, Run20, Run21 and Run22,
-plus a STATUS line on PR-J-Q1. A correction restores an existing lock's
-text, so it needed none.
+A1–A12 as Pgm7, the rest as Lift5, Lift6, Lift7, Run19, Run20, Run21,
+Run22 and Pgm8, plus a STATUS line on PR-J-Q1. A correction restores an
+existing lock's text, so it needed none.
 
-**By status**, the 53 questions (L1–L19, R1–R25, E1–E9):
+**By status**, the 53 questions (L1–L19, R1–R25, E1–E9), once the
+hand-back answers were built:
 
-- **20 built**: L8; R2, R4, R8, R9, R10, R11 (its race-time half; the
-  self-rated level is still to build), R12, R13, R14, R20, R21 and R22;
-  E1–E6 and E9.
-- **1 answered and not built**: L11's A3 line, which waits on the maths
-  check in section 2.
-- **13 kept**: L1, L2, L7, L10, L12, L14, L16, L17, L18, R3, R15, R16 and
-  R19.
-- **11 measuring**: L5, L9, L13, L19, R5, R6, R17, R18 and R25 are not run
-  yet, each with its reason; R7 is part measured; E7 is measured and its
-  band stands, but whether to show the band's fast end as a ceiling is
-  open.
-- **8 the owner's**: L3, L4, L6, L15, R1, R23, R24 and E8. L11 beyond A3,
-  and E3's and R14's owner parts, are the owner's too.
+- **27 built**: L5, L6, L8, L11 (A3's line) and L15; R1, R2, R4, R8, R9,
+  R10, R11 (its race-time half; the self-rated level is still to build),
+  R12, R13, R14 (R14c included), R20, R21, R22 and R23; E1–E6, E8 and E9.
+- **17 kept**: L1, L2, L3, L4 (measured), L7 (its hamstring defect fixed),
+  L10, L12, L14, L16, L17, L18, R3, R15, R16, R17 (measured), R19 and R24.
+- **9 measuring**: L9, L13, L19, R5, R6, R18 and R25 are not run yet, each
+  with its reason; R7 is part measured; E7 is measured and its band
+  stands, but whether to show the band's fast end as a ceiling is open.
+- **None the owner's.** The eight handed back on 2026-10-10 were decided
+  under Pgm8; what the merges and builds raised since is under "Open after
+  Pgm8" in decisions.md, each with a recommendation.
 
 | Question                                   | Status                                     | Lock, PR                                       |
 | ------------------------------------------ | ------------------------------------------ | ---------------------------------------------- |
+| L4 The sawtooth                            | Measured, kept                             | Pgm8; #2693                                    |
+| L5 Fitted sessions run over (F8)           | Built                                      | Lift7 (#2688); #2701                           |
+| L6 Added load on bodyweight lifts          | Built                                      | Pgm8; #2696                                    |
+| L7 The hamstrings over their ceiling       | Kept, its defect fixed                     | Pgm8; #2699, #2700                             |
 | L8 Curls fill the push/pull balance        | Built                                      | Lift6 (#2649); #2650                           |
+| L11 A3's line                              | Built                                      | Pgm7 A3, Pgm8; #2695                           |
+| L15 Barbell lifts under the bar            | Built for new plans                        | Pgm8; #2697                                    |
+| R1 The derived benchmark                   | Built                                      | Pgm8; #2702                                    |
 | R2 Paces with no benchmark                 | Built                                      | Run20 (1); #2643                               |
 | R4 The long run's weekday                  | Built                                      | Run20 (2); #2647                               |
-| R8 The taper                               | Built                                      | Run22 (#2681); #2682                           |
+| R8 The taper                               | Built                                      | Run22 (#2681); #2682, #2707                    |
 | R9 Demanding days back to back             | Built                                      | Run20 (3); #2644                               |
 | R10 The taper's session bypassed placement | Built, a correction                        | #2642                                          |
 | R11 Setup asks for no benchmark            | Race time built; self-rated level to build | adaptive paces §10.2; #2653                    |
 | R12 Copy that was wrong                    | Built, a correction                        | #2641                                          |
 | R13 The quality ladder started mid-way     | Built                                      | Run20 (4); #2645                               |
-| R14 A new runner's quality and run-walk    | Built                                      | Run20 (5); #2648, #2655                        |
+| R14 A new runner's quality and run-walk    | Built                                      | Run20 (5), Pgm8; #2648, #2655, #2705           |
+| R17 The marathon long run's peak           | Measured, kept                             | Run17; #2694                                   |
 | R20 The Monday check on a first week       | Built, a correction                        | Run19; #2651                                   |
 | R21 A rebuilt week, "Re-plan from today"   | Built, a correction                        | Run19; #2669, #2670                            |
-| R22 The race plan after race day           | Built, merged                              | PR-J; #2646                                    |
+| R22 The race plan after race day           | Built                                      | PR-J; #2646                                    |
+| R23 The weeks ahead                        | Built                                      | Pgm8; #2703                                    |
 | E1–E6, E9 Explaining runs                  | Built                                      | Run21; #2656–#2661, #2663, #2665, #2666, #2668 |
+| E8 Heat                                    | Built                                      | Pgm8; #2704                                    |
 
 A1–A12, the owner-delegated answers locked as Pgm7: A1 keeps the plan's
 1.0 counting of indirect sets; A2 keeps the fitness–fatigue
-curve; A3 is the line above; A4 is built (#2622); A5 is built (#2607); A6
+curve; A3 is built (#2695); A4 is built (#2622); A5 is built (#2607); A6
 keeps Home's today card as the owner set it; A7 is built (#2638); A8 keeps
 Lift4's lighter-week recipe; A9 keeps the half-counted leg miss, labelled
 an assumption; A10 keeps the ramp line; A11 is built (#2675); A12 needs
 nothing.
 
-**Handed back to the owner**, each with a recommendation in decisions.md:
+**Handed back to the owner, then decided under Pgm8** (2026-10-11, each as
+decisions.md recommended):
 
-| #    | Question                                            | Why it's the owner's                                             |
-| ---- | --------------------------------------------------- | ---------------------------------------------------------------- |
-| L3   | 4 × 3 and 4 × 7 on Get stronger                     | Lift4 (5)'s heavier and lighter days                             |
-| L4   | The sawtooth                                        | Lift4 (6); owner call (1)                                        |
-| L6   | Added load on bodyweight lifts                      | Lift4 (1)'s change, pinned in its tests                          |
-| L11  | Light lifts that wait for the person, beyond A3     | Lift4 (6): no automatic big step, no "try X kg"                  |
-| L15  | Barbell lifts under the bar in existing plans       | Lift4 (2): no automatic swaps                                    |
-| R1   | The derived benchmark                               | Adaptive paces §10.2; RUN-EV-08                                  |
-| R23  | Freeform runners' plan; the weeks ahead             | Run9                                                             |
-| R24  | Race predictions as ranges                          | The running handoff's non-adoption of a source-derived predictor |
-| E8   | Heat                                                | A safety claim                                                   |
-| E3a  | Phase names on run surfaces                         | Run9f keeps base, build and peak internal                        |
-| E3b  | A sheet for runs, not the "Why this run" disclosure | The design guide's note on Lift4 (3)                             |
-| R14c | A race too soon for someone new to running          | A claim about readiness                                          |
-| —    | A treadmill run credited to a planned long run      | The type picker's model of a run (section 2)                     |
+| #    | Question                                            | Answer                                                        |
+| ---- | --------------------------------------------------- | ------------------------------------------------------------- |
+| L3   | 4 × 3 and 4 × 7 on Get stronger                     | Kept                                                          |
+| L4   | The sawtooth                                        | Measured; Lift4 (6) and owner call (1) stand                  |
+| L6   | Added load on bodyweight lifts                      | Followed, as any weight (#2696)                               |
+| L11  | Light lifts that wait for the person, beyond A3     | A3's line (#2695); measure before anything more               |
+| L15  | Barbell lifts under the bar in existing plans       | Dumbbell versions for new plans; existing plans as they are   |
+| R1   | The derived benchmark                               | From efforts only (#2702), with setup's race time (#2653)     |
+| R23  | Freeform runners' plan; the weeks ahead             | The weeks ahead on race plans (#2703); free running unchanged |
+| R24  | Race predictions as ranges                          | Kept: a labelled snapshot until a way to set a range's width  |
+| E8   | Heat                                                | "Run by feel" on hot days, no number (#2704)                  |
+| E3a  | Phase names on run surfaces                         | Kept internal; defined only where they already show           |
+| E3b  | A sheet for runs, not the "Why this run" disclosure | Kept: the disclosure, with E3's four lines                    |
+| R14c | A race too soon for someone new to running          | Said at setup, never blocking (#2705)                         |
+| —    | A treadmill run credited to a planned long run      | The treadmill is a place (#2706)                              |
 
 ## 4. Phase 0: the claims
 
@@ -359,30 +469,42 @@ shown equal.
 
 ## 6. The new baseline
 
-| Measure                        | 2026-10-06 (the prompt)                      | 2026-10-10                                                                                                                                                                                                                                                                        |
-| ------------------------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit suite                     | 1,075 files; 11,784 passed, 372 skipped      | Each open PR runs on its own tree. The stepped taper's (main with #2642, #2644 and #2682): 1,091 files; 11,874 passed, 392 skipped. The simulator's (#2680, in CI): 1,105 files; 12,083 passed, 398 skipped. Run20 and Run21 with the journeys (#2679): 1,087 files, 12,106 tests |
-| `src/features/program`         | 124 files; 1,732 tests; 48.4 s               | main: 124 files, 1,748 tests; the stepped taper's tree: 125 files, 1,761 tests (61–66 s with start-up)                                                                                                                                                                            |
-| Signed-in E2E on the emulators | 46 tests in 4.7 minutes                      | Not re-run as a whole; CI's new journeys job runs four journeys in 5.2 minutes (the job 7 min 38 s)                                                                                                                                                                               |
-| A simulated week               | 2–5 ms headless; 15–20 s through the browser | about 4 ms headless (a 26-week lifting season in a tenth of a second); about 7 s through the browser in a journey                                                                                                                                                                 |
-| The measuring suite, 20 seeds  | (new)                                        | 426 s                                                                                                                                                                                                                                                                             |
-| `npm run verify`               | passed in 603 s                              | Not re-run: no single tree holds the 71 open PRs                                                                                                                                                                                                                                  |
+Main after the last merge (lemmonchess333/Maiin#2707, then the plan file's
+STATUS lines in #2708), against the baseline the prompt was written on.
+
+| Measure                        | 2026-10-06 (the prompt)                      | 2026-10-12 (main after the last merge)                                                               |
+| ------------------------------ | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Unit suite                     | 1,075 files; 11,784 passed, 372 skipped      | 1,144 files (10 skipped); 12,775 passed, 404 skipped; 634 s                                          |
+| `src/features/program`         | 124 files; 1,732 tests; 48.4 s               | 153 files (2 skipped); 2,200 passed, 14 skipped; 83 s                                                |
+| Signed-in E2E on the emulators | 46 tests in 4.7 minutes                      | Not re-run as a whole; CI's journeys job runs five journeys, which pass here in 6.9 minutes          |
+| A simulated week               | 2–5 ms headless; 15–20 s through the browser | about 4 ms headless (a 26-week lifting season in a tenth of a second); about 7 s through the browser |
+| The measuring suite, 20 seeds  | (new)                                        | 426 s                                                                                                |
+| `npm run verify`               | passed in 603 s                              | passed in 867 s                                                                                      |
 
 ## 7. Next
 
-- Merge in the order above; after each fix lands with the simulator, take
-  its ratchet entry out.
-- Measure R17 once #2682 is on main, with the option to compare against
-  Run17 written first; then R18 after R5 and R13.
-- Build A3's line once the stretched ceiling's maths is checked against
-  Nuzzo 2024; fix L7's hamstring ceiling on the hinge work.
-- R5 and R6 need the running baseline's review modelled; L5 needs its
-  time-fit options written.
-- The owner's questions in section 3.
+- **The findings open after Pgm8** (decisions.md), each the owner's, with a
+  recommendation: a set taken lighter stays lighter (F23); a range that
+  waits at its top with nothing said; the treadmill's two neighbours;
+  removing a derived benchmark doesn't stick; warm-ups on a light dumbbell
+  isolation; a barbell lift lowered under the bar; a lift whose dumbbell
+  version is already in its day; a compressed plan's last build-week tempo;
+  a second level gate after the filters (#2709 keeps the gate off the
+  injury swaps; whether the injury picker prefers the person's level is
+  open); the race cockpit at large text.
+- **Still to measure:** R5 and R6 need the running baseline's review
+  modelled, and R18 follows R5; L9, L13, L19 and R25 each wait on their
+  reason; E7's ceiling.
+- **Still to build:** R11's self-rated level; Train's day write must not
+  take a person back to Train when they tap another tab while it loads
+  (#2698).
+- **On a device:** the rows this pass added to
+  `docs/qa/pre-launch-backlog.md`.
 
 ## Appendix: where two stacks meet
 
-From merging the Run21 PRs with the others (the resolution each needs):
+From merging the Run21 PRs with the others, each resolved so in the
+merges:
 
 1. `RunSummary.tsx`: the run-walk PR (#2655) kept run-walk out of the
    inline pace verdict, and the E9 chain moved the verdict into
@@ -402,10 +524,10 @@ From merging the Run21 PRs with the others (the resolution each needs):
 6. `journeyScreens.ts`: `runWeekLabel = runStripLabel` once #2663 is on
    main.
 7. `RunLaunchCard.tsx` (R2 in #2643 against E2c in #2668): both feel lines
-   merge in cleanly, but E2c's lock gives a session one. Drop R2's line;
-   lemmonchess333/Maiin#2679 carries the change.
-8. `journeyRunDoc.ts`: `workPortion: null` once F22 (#2633) is on main;
-   #2679 carries it.
+   merge in cleanly, but E2c's lock gives a session one. Drop R2's line:
+   #2679 carried the change, and #2668's merge took it (section 1).
+8. `journeyRunDoc.ts`: `workPortion: null` once F22 (#2633) is on main:
+   #2679 carried it, and #2676's merge took it.
 
 The stepped taper (#2682) adds a ninth: its "Why this run" line for a taper
 medium-long sits in the same taper block of `runSessionExplainer.ts` as the
