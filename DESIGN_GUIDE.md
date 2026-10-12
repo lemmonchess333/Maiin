@@ -441,6 +441,16 @@ behaviour.
   offsets, `pathLength` and count-ups are not covered: if you add one,
   gate it in the component with the `useReducedMotion` hook, as
   `ProgressRing` and `AnimatedNumber` do.
+- **A change seen on screen moves; the same state arriving by mount does
+  not** (Pol1, 2026-10-11). A set ticked on screen pops its check
+  (`SetCheck`); a done set on a resumed session or a return to its
+  exercise just shows. Content replacing its placeholder fades in where
+  the placeholder was (`ArrivalFade` with `useArrivedAfterLoading`);
+  content that was ready, or comes back on a tab or view switch, just
+  shows.
+- **Transient workout cards dock above the bottom bar** (Pol1): the rest
+  timer and the new-best moment take their room from the bottom of the
+  list, so nothing above them moves under the thumb that ticked the set.
 
 ---
 
@@ -500,6 +510,13 @@ true, which is the whole point of separating them.
 | **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
 | **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
 | **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+
+A placeholder holds the loaded content's shape, at every text size: set
+a line of text's placeholder in that line's own classes (`LineBar` in
+`LoadingSkeleton.tsx`) and a chart's at the chart's aspect ratio, rather
+than a bar in pixels that matches one size and shoves everything under it
+at the others (Pol1: Analytics' placeholder had drifted from its page,
+and the score arriving dropped the page about 70 px).
 
 The trap this table exists to catch is the middle one: a loading state
 that is height-stable and confident reads as final. Home renders past the

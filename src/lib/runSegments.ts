@@ -36,10 +36,76 @@ import {
   floatCue,
   intervalRecoveryCue,
   intervalRepCue,
+  runWalkCooldownCue,
+  runWalkRunCue,
+  runWalkWalkCue,
+  runWalkWarmupCue,
   strideRepCue,
   walkBackCue,
   warmupCue,
 } from "./runCueCopy";
+
+/**
+ * A segment the runner works in: a tempo block (`moderate`) or an interval
+ * rep (`hard`), as against the warm-up, floats, recoveries and cool-down
+ * around them.
+ */
+export function isWorkSegment(
+  segment: Pick<SessionSegment, "type"> | null | undefined
+): boolean {
+  return segment?.type === "moderate" || segment?.type === "hard";
+}
+
+/**
+ * The pace a session pinned as its prescription: the goal race pace on a
+ * goal-pace tempo's blocks or a long run's race-pace block (`pacePinned`).
+ * Null when no work segment pins one.
+ */
+export function pinnedWorkPace(
+  segments: readonly SessionSegment[] | null | undefined
+): number | null {
+  const pinned = segments?.find(
+    (s) => isWorkSegment(s) && s.pacePinned && (s.paceTarget ?? 0) > 0
+  );
+  return pinned?.paceTarget ?? null;
+}
+
+/**
+ * Whether a run's pace target is judged in the segment it is in. A tempo's
+ * or an interval session's target is its work pace, so it is judged in the
+ * work segments only: the warm-up, floats, recoveries and cool-down are
+ * meant to be slower, and a pace bar or an alert there would call a perfect
+ * tempo slow. Any other run with a pace goal (an easy run's, say, whose
+ * strides are faster) is judged throughout, and so is a session with no
+ * structure.
+ */
+export function judgesPaceNow(
+  activityType: string | undefined,
+  segments: readonly Pick<SessionSegment, "type">[],
+  current: Pick<SessionSegment, "type"> | null
+): boolean {
+  if (activityType !== "tempo" && activityType !== "intervals") return true;
+  return segments.length === 0 || isWorkSegment(current);
+}
+
+/**
+ * The pace the Run screen's live bar judges against: an interval session's
+ * work pace, or a pace target. Null when the run has no pace to judge, as a
+ * tempo or an interval session has none until a benchmark gives one
+ * (Run20): the bar then doesn't show, rather than judging against a pace
+ * nobody prescribed, and a distance or a time target is never read as one.
+ */
+export function livePaceTarget(config: {
+  intervals?: Partial<IntervalShape> | null;
+  target?: { type: string; value?: number } | null;
+}): number | null {
+  const work = config.intervals?.workPace;
+  if (work && work > 0) return work;
+  const target = config.target;
+  if (target?.type === "pace" && target.value && target.value > 0)
+    return target.value;
+  return null;
+}
 
 export type SegmentTarget =
   | { kind: "duration"; seconds: number }
@@ -95,6 +161,15 @@ export interface TempoShape {
 export interface StridesShape {
   reps: number;
   workSeconds: number;
+}
+
+export interface RunWalkShape {
+  warmupWalkSec: number;
+  /** The runs, in order. */
+  runSecs: number[];
+  /** The walk after each run but the last: one fewer than `runSecs`. */
+  walkSecs: number[];
+  cooldownWalkSec: number;
 }
 
 /** Walk-back recovery between strides. Part of the strides dose, so it is
@@ -212,7 +287,7 @@ export function segmentsFromTempo(
     out.push({
       type: "moderate",
       label: atGoal
-        ? `${min(seconds)} min @ goal pace${pace}`
+        ? `${min(seconds)} min goal pace${pace}`
         : `${min(seconds)} min tempo${pace}`,
       instruction: atGoal
         ? "Your goal race pace — hold the rhythm"
@@ -363,6 +438,64 @@ export function segmentsFromLongWithRacePace(
   ];
 }
 
+/**
+ * Run20 (5): a run-walk session. A walk to warm up, easy runs with walks
+ * between them, and a walk to finish: NHS Couch to 5K's shape. No segment
+ * carries a pace. The running is easy, by feel, and an average over runs
+ * and walks is not a running pace anyone could aim at.
+ */
+export function segmentsFromRunWalk(
+  shape: RunWalkShape,
+  /** Same cross-run rotation contract as segmentsFromIntervals. */
+  seed: number = 0
+): SessionSegment[] {
+  const runs = shape.runSecs.length;
+  const out: SessionSegment[] = [
+    {
+      type: "warmup",
+      label: "Walk",
+      instruction: "Brisk walk to warm up",
+      target: { kind: "duration", seconds: shape.warmupWalkSec },
+      eyebrow: "WARM-UP",
+      cue: runWalkWarmupCue(shape.warmupWalkSec, seed),
+    },
+  ];
+  shape.runSecs.forEach((seconds, i) => {
+    const rep = i + 1;
+    out.push({
+      type: "easy",
+      label: "Run",
+      instruction: "Easy, slow enough to talk",
+      target: { kind: "duration", seconds },
+      ...(runs > 1 ? { rep, totalReps: runs } : {}),
+      eyebrow: runs > 1 ? `RUN ${rep}/${runs}` : "RUN",
+      cue: runWalkRunCue(rep, runs, seconds, seed + rep),
+    });
+    const walk = shape.walkSecs[i];
+    if (rep < runs && walk) {
+      out.push({
+        type: "recovery",
+        label: "Walk",
+        instruction: "Brisk walk, let your breathing settle",
+        target: { kind: "duration", seconds: walk },
+        rep,
+        totalReps: runs,
+        eyebrow: "WALK",
+        cue: runWalkWalkCue(rep, runs, walk, seed + rep),
+      });
+    }
+  });
+  out.push({
+    type: "cooldown",
+    label: "Walk",
+    instruction: "Easy walk to finish",
+    target: { kind: "duration", seconds: shape.cooldownWalkSec },
+    eyebrow: "COOL-DOWN",
+    cue: runWalkCooldownCue(shape.cooldownWalkSec, seed),
+  });
+  return out;
+}
+
 export function segmentsFromGuided(
   workout: GuidedRunWorkout
 ): SessionSegment[] {
@@ -375,15 +508,19 @@ export function segmentsFromGuided(
   }));
 }
 
-/** Display helper: "20 min" / "1K". */
+/** Display helper: "20 min" / "90s" / "2 min 30s" / "1K". A part minute
+ *  is spelled out: rounded, a 90-second walk read "2 min". */
 export function segmentTargetLabel(target: SegmentTarget): string {
   if (target.kind === "distance") {
     return target.meters >= 1000
       ? `${(target.meters / 1000).toFixed(target.meters % 1000 === 0 ? 0 : 1)}K`
       : `${target.meters}m`;
   }
-  if (target.seconds < 60) return `${target.seconds}s`;
-  return `${min(target.seconds)} min`;
+  const seconds = Math.round(target.seconds);
+  const s = seconds % 60;
+  if (seconds < 120 && s !== 0) return `${seconds}s`;
+  if (s !== 0) return `${Math.floor(seconds / 60)} min ${s}s`;
+  return `${seconds / 60} min`;
 }
 
 /** Total planned seconds across duration-based segments (distance segments

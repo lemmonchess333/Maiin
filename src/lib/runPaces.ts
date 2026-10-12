@@ -169,6 +169,56 @@ export function parseRaceTimeToSeconds(input: string): number | null {
   return seconds > 0 ? seconds : null;
 }
 
+/** Why a typed race time can't be a benchmark: it doesn't read as a time,
+ *  or no one could have run it. */
+export type RaceTimeError = "format" | "implausible";
+
+/** Faster than anyone has raced from 5K to the marathon (the world records
+ *  sit at VDOT 85 to 87), and the server's sanitizer drops a VDOT over 90. */
+const MAX_PLAUSIBLE_VDOT = 90;
+
+/** A race or time trial the person typed ("22:30", "1:45:00"), read as a
+ *  benchmark. Settings and setup's optional question (adaptive paces §10.2)
+ *  both read it here, and store it with `manualRunFitness`. */
+export function benchmarkFromRaceTime(
+  distance: RaceDistanceKey,
+  time: string
+):
+  | { benchmark: { distanceM: number; timeS: number }; vdot: number }
+  | { error: RaceTimeError } {
+  const timeS = parseRaceTimeToSeconds(time);
+  if (timeS === null) return { error: "format" };
+  const distanceM = RACE_DISTANCES_M[distance];
+  const vdot = vdotFromRace(distanceM, timeS);
+  if (vdot <= 0 || vdot > MAX_PLAUSIBLE_VDOT) return { error: "implausible" };
+  return {
+    benchmark: { distanceM, timeS },
+    vdot: Math.round(vdot * 10) / 10,
+  };
+}
+
+/** How a benchmark the person typed is stored. Consented by definition
+ *  (RUN-EV-08), so `pendingConfirmation` is a literal false: a pending
+ *  auto-derived benchmark can't survive the merge. */
+export function manualRunFitness(
+  entry: { benchmark: { distanceM: number; timeS: number }; vdot: number },
+  now: Date
+): {
+  benchmark: { distanceM: number; timeS: number };
+  vdot: number;
+  source: "manual";
+  updatedAt: string;
+  pendingConfirmation: false;
+} {
+  return {
+    benchmark: entry.benchmark,
+    vdot: entry.vdot,
+    source: "manual",
+    updatedAt: now.toISOString(),
+    pendingConfirmation: false,
+  };
+}
+
 /** Riegel race-time prediction: T2 = T1 · (D2/D1)^1.06. */
 export function predictRaceTimeS(
   benchmark: { distanceM: number; timeS: number },
