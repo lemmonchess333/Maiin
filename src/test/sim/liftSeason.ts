@@ -213,6 +213,23 @@ export interface SeasonOptions {
   runnerVariant?: RunnerVariant;
   /** Overrides the persona's start. */
   start?: string;
+  /** An alternative plan measured against the one the app builds
+   *  (decisions.md's "Measuring" questions): applied to the plan setup
+   *  makes and again after each day's rollover, so the weeks the app
+   *  builds later get it too. It must leave a plan it already changed as
+   *  it is. */
+  planVariant?: PlanVariant;
+  /** A9 measured (decisions.md L18): a leg miss after a hard run counts in
+   *  full, as it did before Lift4 (7) halved it. */
+  hardRunMissCountsFull?: boolean;
+}
+
+/** A plan the app doesn't build, for a measured comparison. `start`
+ *  begins a season's copy of it, which may remember what it has seen (the
+ *  build's long run, say) from one day to the next. */
+export interface PlanVariant {
+  name: string;
+  start: () => (state: ProgramState, date: string) => ProgramState;
 }
 
 /** What a session did to a lift's numbers, read off the plan before and
@@ -258,6 +275,8 @@ export interface SessionDone {
   phase: string;
   /** The app's estimate of the session's length. */
   minutes: number;
+  /** A long or hard run in the 24 hours before it (Lift4 (14)). */
+  afterHardRun?: boolean;
   lifts: LiftDone[];
 }
 
@@ -756,6 +775,8 @@ export function simulateLiftSeason(
       normalizeProgramState(plan.programState),
       weekOf(start)
     );
+    const varyPlan = options.planVariant?.start();
+    if (varyPlan) state = varyPlan(state, start);
     // The day the account began and setup finished, as the server stamps
     // them (`createdAt`, and `completeOnboarding`'s `onboardingCompletedAt`):
     // a new runner's first weeks count from it (`profileNewRunnerUntil`).
@@ -883,6 +904,7 @@ export function simulateLiftSeason(
           season.failures,
           runSide?.layoff(date) ?? "none"
         );
+        if (varyPlan) state = varyPlan(state, date);
         if (runSide && raceWeekNeedsBuilding(state, profile, date))
           fail(
             "race-week-stale",
@@ -1610,13 +1632,16 @@ export function simulateLiftSeason(
       const completionLogs = toCompletionSetLogs(setLogs);
       // A long or hard run in the 24 hours before the start
       // (`useHardRunBefore`) rides the finish (Lift4 (14)).
+      const afterHardRun = runSide?.hardRunBefore(Date.now()) ?? false;
       const progression = toSessionProgression({
         completionId,
         date,
         prescription,
         setLogs: completionLogs,
         ...(easier ? { sessionVariant: "easier_today" as const } : {}),
-        ...(runSide?.hardRunBefore(Date.now()) ? { afterHardRun: true } : {}),
+        ...(afterHardRun && !options.hardRunMissCountsFull
+          ? { afterHardRun: true }
+          : {}),
       });
       const current = before.workouts[dayIndex];
       const lands =
@@ -1703,6 +1728,7 @@ export function simulateLiftSeason(
           weekNumber: before.weekNumber,
           phase: before.currentPhase,
           minutes,
+          ...(afterHardRun ? { afterHardRun: true } : {}),
           lifts: lifts.map((l) => {
             const plan = was.get(l.slot);
             return {
