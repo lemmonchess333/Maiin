@@ -306,6 +306,19 @@ function raceProfile(
   };
 }
 
+/**
+ * A race half a year out, for the tests that build a race plan more than
+ * once. Each build runs through to the race, and each week a rollover moves
+ * builds it twice, once to decide and again in the transaction
+ * (`useProgram`'s run rollover), so a race in 2099, some 3,800 weeks of
+ * plan, took a two-week roll past the 5 s test timeout on a loaded CI
+ * runner, and a regeneration's tests to 1.5 s on an idle one. From the
+ * clock, so it is half a year out on every CI clock.
+ */
+function raceHalfAYearOut(): string {
+  return localDateString(addLocalDays(new Date(), 26 * 7));
+}
+
 // V2 runDays carry id / date / weekKey / status. Assert all four
 // in one helper.
 function expectV2Shape(rd: ScheduledRunDay) {
@@ -601,7 +614,8 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Run9: structured retired, so the override-threading contract is now
     // exercised via a race plan (the surviving runDays-generating mode). The
     // staleness concern is mode-agnostic.
-    mockProfile = raceProfile("2099-09-15", { weekSchedule: staleSchedule });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weekSchedule: staleSchedule });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -616,7 +630,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runDays: [],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
 
@@ -651,7 +665,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // load-time wipe therefore never actually removed `runPlan`, and
     // regenerate still saw `mode: "structured"`. Under a fake that honours
     // replace-vs-merge the wipe lands, and the assertion had no subject.
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -711,7 +725,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       createdAt: 1,
       schemaVersion: 1 as const,
     };
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -744,7 +758,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
 
   // The other direction, so the carry can't be "always write something".
   it("regenerateProgram writes no block when there was none", async () => {
-    mockProfile = raceProfile("2099-09-15");
+    mockProfile = raceProfile(raceHalfAYearOut());
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -1390,7 +1404,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     // baseline. Same replace-not-merge contract; if we ever
     // regress to merging, structured easy_30 entries would leak
     // into race-period weeks.
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 3 });
+    mockProfile = raceProfile(raceHalfAYearOut(), { weeklyRunDaysTarget: 3 });
 
     const structuredPeriodRunDays: ScheduledRunDay[] = [
       {
@@ -2007,7 +2021,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     })();
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -2033,7 +2048,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
 
@@ -2140,7 +2155,8 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     // Monday on its own dates; the lift side must not roll with it.
     const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
     function hybrid(liftWeekKey: string) {
-      mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+      const raceDate = raceHalfAYearOut();
+      mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
       seedProgram({
         goal: "recomp",
         currentPhase: "progression",
@@ -2170,7 +2186,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         ],
         runPlan: {
           mode: "race_prep",
-          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+          raceGoal: { distance: "10k", targetDate: raceDate },
         },
       } as ProgramState);
     }
@@ -3586,7 +3602,8 @@ describe("the week rollover waits for a finish (Lift4)", () => {
 
   it("holds the race-plan rollover the same way", async () => {
     const stale = lastWeek();
-    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+    const raceDate = raceHalfAYearOut();
+    mockProfile = raceProfile(raceDate, { weeklyRunDaysTarget: 2 });
     resetFirestore();
     seedProgram({
       goal: "recomp",
@@ -3613,7 +3630,7 @@ describe("the week rollover waits for a finish (Lift4)", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        raceGoal: { distance: "10k", targetDate: raceDate },
       },
     } as ProgramState);
     const { openLiftSession } = await import("../openLiftSession");
