@@ -69,6 +69,7 @@ import { nextUpIndex } from "./nextUpCursor";
 import {
   hardestEffort,
   recordedReps,
+  sameWeight,
   sessionOutcome,
   type SessionRead,
 } from "./sessionSets";
@@ -2113,17 +2114,31 @@ export function applyProgression(
   // and a step of more than about 15% is never taken on its own: the target
   // climbs a rep past what was done instead, as far as the next weight's
   // equal effort, and the plan follows the heavier weight once the person
-  // picks it up (`applySessionSets`).
+  // picks it up (`applySessionSets`). `top` is the top of the range the
+  // target climbs, or a fixed target itself. The session where the target
+  // first climbs past it at this weight leaves the record for the next
+  // session's one line (`stretched`, Pgm7 A3); a target already past it
+  // at this weight, climbing on, leaves none.
   const grid = loadGridFor(exercise.exerciseId, smallPlates);
-  const stepOrStretch = () => {
+  const stepOrStretch = (top: number) => {
     const next = automaticStepUp(grid, anchor);
     if (next !== null) {
       updated.weight = next;
       updated.reps = resetReps;
       return;
     }
-    const ceiling = stretchedRepCeiling(anchor, grid.above(anchor), resetReps);
+    const heavier = grid.above(anchor);
+    const ceiling = stretchedRepCeiling(anchor, heavier, resetReps);
     updated.reps = Math.max(exercise.reps, Math.min(actualReps + 1, ceiling));
+    const pastAlready =
+      exercise.reps > top && sameWeight(exercise.weight, anchor);
+    if (updated.reps > top && !pastAlready)
+      updated.stretched = {
+        exerciseId: exercise.exerciseId,
+        weight: anchor,
+        next: heavier,
+        ceiling,
+      };
   };
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
@@ -2196,7 +2211,7 @@ export function applyProgression(
         // contract as every other progression path.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            stepOrStretch();
+            stepOrStretch(rangeMax);
           } else {
             // Next target: one past what was actually done (monotonic —
             // completed ⇒ actualReps >= exercise.reps), capped at the range.
@@ -2210,7 +2225,9 @@ export function applyProgression(
           // Bodyweight: progress via rep target increase (capped)
           bumpBodyweightReps();
         } else {
-          stepOrStretch();
+          // No range above the target to climb (a loaded hold has none):
+          // the target is its own top.
+          stepOrStretch(resetReps);
         }
       }
       // Otherwise: success recorded but reps still accumulating toward ceiling
@@ -2261,7 +2278,7 @@ export function applyProgression(
         }
       } else if (rpeOk) {
         // A fixed target met on every set: the weight goes up a step.
-        stepOrStretch();
+        stepOrStretch(resetReps);
       }
       updated.lastSuccessfulWeight = actualWeight;
       updated.consecutiveFailures = 0;
@@ -2440,6 +2457,17 @@ export function afterLoweredLine(exercise: ProgramExercise): ProgramExercise {
   return lowering?.unit === "kg" && exercise.weight < lowering.from
     ? { ...rest, lowered: { ...lowering, shown: true } }
     : rest;
+}
+
+/**
+ * A lift once a session has shown its stretched line (Pgm7 A3): the line
+ * said, and the record gone with it, since nothing else reads it. A record
+ * a swap left behind goes too.
+ */
+export function afterStretchedLine(exercise: ProgramExercise): ProgramExercise {
+  if (!exercise.stretched) return exercise;
+  const { stretched: _line, ...rest } = exercise;
+  return rest;
 }
 
 /** A session recorded with no step and no miss: its history line, what was
@@ -2863,7 +2891,8 @@ export function raceWeekSession(
  * yes. Every loaded lift comes down `share` (10%, or 20% after a long
  * break; `liftLayoff.ts`) on its own steps, by at least one, and climbs
  * back a step a session to the weight it came down from (`lowered`,
- * already marked shown: the person chose this, so no line explains it).
+ * already marked shown: the person chose this, so no line explains it, and
+ * a stretched target's line goes for the same reason, Pgm7 A3).
  * A bodyweight lift or a hold comes down as much in reps or seconds and
  * climbs back by the usual rules; a lift with no weight yet keeps it. This
  * week has one set fewer on every lift, the miss counts start again, and
@@ -2905,6 +2934,7 @@ function easedBack(
   if (!(ex.weight > 0)) return ex;
   const grid = loadGridFor(ex.exerciseId, smallPlates);
   const climbing = loweringOf(ex);
+  const { stretched: _line, ...lift } = ex;
   // Race week's legs are lighter for the week already, with the weight
   // they go back to stashed: that weight comes down instead.
   const stash = ex.preDeloadWeight;
@@ -2912,7 +2942,7 @@ function easedBack(
     const back = lighterBy(grid, stash, share);
     if (!(back > 0)) return ex;
     return {
-      ...ex,
+      ...lift,
       preDeloadWeight: Math.max(back, ex.weight),
       lowered: {
         exerciseId: ex.exerciseId,
@@ -2926,7 +2956,7 @@ function easedBack(
   const weight = lighterBy(grid, ex.weight, share);
   if (!(weight > 0)) return ex;
   return {
-    ...ex,
+    ...lift,
     weight,
     lowered: {
       exerciseId: ex.exerciseId,

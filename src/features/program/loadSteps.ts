@@ -130,20 +130,81 @@ export function automaticStepUp(grid: LoadGrid, weight: number): number | null {
 }
 
 /**
+ * Mean reps to failure at a share of 1RM, heaviest first: Nuzzo et al.
+ * 2024 (Sports Med 54:303–321), the main table, which covers every lift
+ * but the bench press and leg press (lifting-evidence §2.15, "Verified
+ * parameters"). The table stops at 95%, where its curve gives 3.3 reps, not
+ * 1; the first row, 1 rep at 100%, is the bridge to a true single, and it
+ * is our assumption, not the paper's.
+ */
+const REPS_TO_FAILURE: readonly (readonly [share: number, reps: number])[] = [
+  [1, 1],
+  [0.95, 3.3],
+  [0.9, 4.9],
+  [0.85, 7.2],
+  [0.8, 9.8],
+  [0.75, 12.4],
+  [0.7, 14.8],
+  [0.65, 17.1],
+  [0.6, 19.5],
+];
+
+/** The table as points with log reps, which run straight between them. */
+const EFFORT_CURVE = REPS_TO_FAILURE.map(([share, reps]) => ({
+  share,
+  logReps: Math.log(reps),
+}));
+
+/** The curve's segment this value falls in, by the coordinate given; the
+ *  last segment, 65–60%, carries on past the lightest load. */
+function effortSegment(
+  fallsIn: (end: (typeof EFFORT_CURVE)[number]) => boolean
+) {
+  let i = 0;
+  while (i < EFFORT_CURVE.length - 2 && fallsIn(EFFORT_CURVE[i + 1])) i++;
+  return [EFFORT_CURVE[i], EFFORT_CURVE[i + 1]] as const;
+}
+
+/** The share of 1RM at which this many reps go to failure. */
+function shareAtReps(reps: number): number {
+  const logReps = Math.log(Math.max(1, reps));
+  const [a, b] = effortSegment((end) => end.logReps < logReps);
+  return (
+    a.share +
+    ((logReps - a.logReps) / (b.logReps - a.logReps)) * (b.share - a.share)
+  );
+}
+
+/** The reps to failure at this share of 1RM. */
+function repsAtShare(share: number): number {
+  const [a, b] = effortSegment((end) => end.share > share);
+  return Math.exp(
+    a.logReps +
+      ((share - a.share) / (b.share - a.share)) * (b.logReps - a.logReps)
+  );
+}
+
+/**
  * How far a target climbs past its range when the next weight is too big a
- * step to take on its own: up to the reps at which the next weight, for the
- * range's bottom, is the same effort by Epley's estimate (10 kg dumbbells
- * for 22 reps against 12.5 kg for 12). There it waits for the person to
- * pick the heavier weight up, which the plan then follows.
+ * step to take on its own: up to the reps at which this weight is the same
+ * effort as the next weight for the range's bottom, by Nuzzo 2024's mean
+ * reps to failure (`REPS_TO_FAILURE`, read between its points on log reps,
+ * as lifting-evidence §2.15 does). 12.5 kg dumbbells for 12 is about 75.7%
+ * of 1RM, so 10 kg is about 60.6%: 19 reps. There it waits for the person
+ * to pick the heavier weight up, which the plan then follows.
+ *
+ * Epley's estimate, used here before (Pgm7 A3), ran up to 5 reps high in
+ * this zone (22 for the same pair), past the 10 reps Reynolds 2006 found
+ * such formulas good for. Whole reps, rounded down, and never under the
+ * bottom.
  */
 export function stretchedRepCeiling(
   weight: number,
   next: number,
   bottomReps: number
 ): number {
-  return Math.floor(
-    30 * ((next / weight) * (1 + bottomReps / 30) - 1) + EPSILON
-  );
+  const share = shareAtReps(bottomReps) * (weight / next);
+  return Math.max(bottomReps, Math.floor(repsAtShare(share) + EPSILON));
 }
 
 /** A share lighter on the grid, by at least one step. */

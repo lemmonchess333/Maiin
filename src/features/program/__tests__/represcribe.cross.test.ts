@@ -146,6 +146,24 @@ function week(days: number): WorkoutDay[] {
         baseReps: 12,
         weight: 8,
       }),
+      // Stretched past its range on 10 kg dumbbells (Pgm7 A3): both copies
+      // drop the record, whose ceiling was the old range's.
+      exercise({
+        instanceId: `curl-${i}`,
+        exerciseId: "db-curl",
+        movementCategory: "arms_biceps",
+        isAccessory: true,
+        reps: 16,
+        baseReps: 12,
+        repRangeMax: 15,
+        weight: 10,
+        stretched: {
+          exerciseId: "db-curl",
+          weight: 10,
+          next: 12.5,
+          ceiling: 19,
+        },
+      }),
       // Bodyweight: a LOWER ceiling (15), the branch a single fixture misses.
       exercise({
         instanceId: `bw-${i}`,

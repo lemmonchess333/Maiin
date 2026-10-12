@@ -1294,8 +1294,9 @@ describe("progression scheme per exercise type (backlog #7)", () => {
       raise = applyProgression(raise, raise.reps, 10, false);
       targets.push(raise.reps);
     }
-    // 13–15 climbs the range; past it, 22 reps at 10 kg is about 12 at 12.5.
-    expect(targets).toEqual([13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 22, 22]);
+    // 13–15 climbs the range; past it, 19 reps at 10 kg is about 12 at 12.5
+    // (Nuzzo 2024's means, `stretchedRepCeiling`).
+    expect(targets).toEqual([13, 14, 15, 16, 17, 18, 19, 19, 19, 19, 19, 19]);
     expect(raise.weight).toBe(10);
   });
 

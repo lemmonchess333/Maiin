@@ -71,6 +71,32 @@ describe("ExerciseRowSummary — one row's words", () => {
     );
   });
 
+  it("carries the line when the target climbed past its range (Pgm7 A3)", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "lateral-raise",
+          name: "Lateral Raise",
+          weight: 10,
+          reps: 16,
+          baseReps: 12,
+          repRangeMax: 15,
+          progressionType: "double",
+          stretched: {
+            exerciseId: "lateral-raise",
+            weight: 10,
+            next: 12.5,
+            ceiling: 19,
+          },
+        })}
+      />
+    );
+    expect(container).toHaveTextContent("3 sets × 12–16 reps · 10 kg");
+    expect(container).toHaveTextContent(
+      "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
+    );
+  });
+
   it("states a climbing lift's range, and a fixed lift's target (Lift4 (3))", () => {
     const { container, rerender } = render(
       <ExerciseRowSummary

@@ -7,6 +7,7 @@ import {
 import type { LoggedSet } from "./workoutSetRecord";
 import {
   afterLoweredLine,
+  afterStretchedLine,
   applySessionSets,
   liftedLoad,
   PERFORMANCE_HISTORY_CAP,
@@ -171,6 +172,12 @@ function withoutMisses<T extends Pick<ProgramExercise, "consecutiveFailures">>(
   return ex.consecutiveFailures ? { ...ex, consecutiveFailures: 0 } : ex;
 }
 
+/** A lift once its session is finished: its line said, whether the plan
+ *  lowered it (Lift4) or stretched its target (Pgm7 A3). */
+function afterItsLine(ex: ProgramExercise): ProgramExercise {
+  return afterStretchedLine(afterLoweredLine(ex));
+}
+
 /** Called only within the transaction that creates this session's workout. */
 export function applySessionProgression(
   before: ProgramState,
@@ -232,12 +239,12 @@ export function applySessionProgression(
               );
               if (!legacy && !sameStoredValue(baseline, expected))
                 return stored;
-              // A lowered lift's line is this session's alone (Lift4). A
-              // kept swap takes the lift's place, and today's sets are its
-              // first session.
+              // A lowered lift's line is this session's alone (Lift4), and
+              // so is a stretched target's (Pgm7 A3). A kept swap takes the
+              // lift's place, and today's sets are its first session.
               const start = swap
                 ? keptSwap(baseline, session.prescription.exercises[inputIndex])
-                : afterLoweredLine(baseline);
+                : afterItsLine(baseline);
               // Lift4: every working set counts, and a set not done is just
               // not done, so a session cut short counts like any other.
               const read = readSessionSets(
@@ -259,7 +266,7 @@ export function applySessionProgression(
                     weight: lifted,
                     lastAttemptedWeight: lifted,
                   };
-                return legacy || swap ? start : afterLoweredLine(stored);
+                return legacy || swap ? start : afterItsLine(stored);
               }
               const reps = recordedReps(read);
 

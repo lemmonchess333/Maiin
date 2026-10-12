@@ -93,9 +93,35 @@ describe("loweredLoad — 10% lighter on the grid, by at least one step", () => 
 });
 
 describe("stretchedRepCeiling — as far as the next weight's equal effort", () => {
+  // By Nuzzo 2024's main table (lifting-evidence §2.15), reps to failure at
+  // a share of 1RM, read between its points on log reps. Epley's estimate
+  // ran high past 10 reps: 22, 17 and 16 for the first three below, and 26
+  // for the 15-rep bottom.
   it("stops where the next weight, for the range's bottom, is as hard", () => {
-    expect(stretchedRepCeiling(10, 12.5, 12)).toBe(22); // dumbbells, 25%
-    expect(stretchedRepCeiling(15, 17.5, 10)).toBe(16); // a stack, 17%
+    // 12 reps is about 75.7% of 1RM, so 12.5 kg for 12 puts 10 kg at about
+    // 60.6%: about 19 reps.
+    expect(stretchedRepCeiling(10, 12.5, 12)).toBe(19); // dumbbells, 25%
+    // 8 reps is about 83.3%; 10 kg is then about 66.6%: about 16 reps.
+    expect(stretchedRepCeiling(10, 12.5, 8)).toBe(16);
+    // 10 reps is about 79.6%; 15 kg is then about 68.2%: about 15.6 reps.
+    expect(stretchedRepCeiling(15, 17.5, 10)).toBe(15); // a stack, 17%
     expect(stretchedRepCeiling(12, 14, 8)).toBe(14); // kettlebells, 17%
+  });
+
+  it("reads under the table's lightest load along its last segment", () => {
+    // 15 reps is about 69.5%, so 10 kg is about 55.6%, under the table's
+    // 60%: the 65–60% segment carried on gives about 21.9 reps.
+    expect(stretchedRepCeiling(10, 12.5, 15)).toBe(21);
+  });
+
+  it("bridges a bottom under the table's 3.3 reps to 1 rep at 100%", () => {
+    // 2 reps is about 97.1% on the bridge, so 10 kg is about 77.7%: about
+    // 10.9 reps. Stopping at the table's 95% would make it 11.
+    expect(stretchedRepCeiling(10, 12.5, 2)).toBe(10);
+  });
+
+  it("never comes in under the range's bottom", () => {
+    expect(stretchedRepCeiling(10, 10, 12)).toBe(12);
+    expect(stretchedRepCeiling(10, 10, 2)).toBe(2);
   });
 });

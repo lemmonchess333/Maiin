@@ -1869,3 +1869,26 @@ describe("the plate hint (Lift4 (6))", () => {
     );
   });
 });
+
+describe("the stretched line (Pgm7 A3)", () => {
+  it("says under the target how far the reps go before the next weight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "lateral-raise",
+      name: "Lateral Raise",
+      weight: 10,
+      reps: 16,
+      baseReps: 12,
+      repRangeMax: 15,
+      progressionType: "double",
+      stretched: {
+        exerciseId: "lateral-raise",
+        weight: 10,
+        next: 12.5,
+        ceiling: 19,
+      },
+    });
+    expect(screen.getByText(/^Up to/)).toHaveTextContent(
+      "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
+    );
+  });
+});

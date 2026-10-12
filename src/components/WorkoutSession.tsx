@@ -43,6 +43,7 @@ import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import LoweredLine from "@/components/program/LoweredLine";
+import StretchedLine from "@/components/program/StretchedLine";
 import EditSetSheet from "@/components/workout/EditSetSheet";
 import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
@@ -2279,6 +2280,12 @@ export default function WorkoutSession({
         )}
         {currentExercise && (
           <LoweredLine
+            exercise={currentExercise}
+            className="text-xs text-muted-foreground text-center"
+          />
+        )}
+        {currentExercise && (
+          <StretchedLine
             exercise={currentExercise}
             className="text-xs text-muted-foreground text-center"
           />

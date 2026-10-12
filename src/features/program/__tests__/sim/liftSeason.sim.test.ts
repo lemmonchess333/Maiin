@@ -71,7 +71,10 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *
  * - F9 `stall`: a light lift whose next weight is more than 15% heavier
  *   waits at a stretched rep target for the person to pick it up, with
- *   reps to spare (a 10 kg leg curl at 20 reps, dumbbells from 10 kg).
+ *   reps to spare (a 10 kg leg curl at 17 reps, dumbbells from 10 kg).
+ *   The ceiling from Nuzzo 2024's means (Pgm7 A3) is a few reps under
+ *   Epley's, so the wait starts sooner, and shows in lifts Epley's let
+ *   climb on: a 10 kg curl or pushdown at 17 reps, not 20.
  * - F4 `misses`: the plan's steps outrun a lifter who gains slowly or
  *   trains half the planned sessions.
  * - F12 `acsm-size:quads`: size plans give the quads 9 sets a week.
@@ -85,14 +88,21 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   ],
   "intermediate-woman": ["acsm-size:quads"],
   "powerbuilder-size": ["acsm-size:quads"],
-  "light-trainer": ["misses:overhead-press", "misses:squat", "stall:db-bench"],
+  "light-trainer": [
+    "misses:overhead-press",
+    "misses:squat",
+    "stall:barbell-curl",
+    "stall:db-bench",
+    "stall:rope-tricep-pushdown",
+  ],
   "dumbbell-beginner": [
+    "stall:db-curl",
     "stall:db-rdl",
     "stall:db-row",
     "stall:db-shoulder-press",
     "stall:goblet-squat",
   ],
-  "off-sick": ["misses:overhead-press"],
+  "off-sick": ["misses:overhead-press", "stall:barbell-curl"],
   holidays: ["acsm-size:quads"],
   "over-55": [
     "misses:bench-press",
