@@ -26,10 +26,20 @@ export function clock(seconds: number): string {
 const band = (b: PaceBand | null) =>
   b ? `${clock(b[0])}–${clock(b[1])}` : "none";
 
-/** One run: "Mon long_10k 10.0 km/62 min 6:11", flagged when Home didn't
- *  count it, when it hurt, or when its pace was more than they had. */
+/** What the run summary said of a run's pace. */
+const VERDICT: Record<NonNullable<RunRecord["verdict"]>, string> = {
+  on: "on target",
+  fast: "fast",
+  "easy-too-fast": "easy too fast",
+  slow: "slow",
+};
+
+/** One run: "Mon long_10k 10.0 km/62 min 6:11 [on target]", with the run
+ *  summary's verdict, and flagged when Home didn't count it, when it hurt,
+ *  or when its pace was more than they had. */
 function runText(r: RunRecord): string {
   const flags = [
+    r.verdict ? ` [${VERDICT[r.verdict]}]` : "",
     r.counted || r.templateId === "free" ? "" : " NOT COUNTED",
     r.done.tooFast ? " (target too fast)" : "",
     r.done.injury ? ` INJURY ${r.done.injury}` : "",

@@ -43,24 +43,24 @@ w8 2026-04-27  build, plan week 8 of 11  counted 3/3  plan 60 min, long 0.0 km, 
   runner  VDOT 26.00 · fitness 61 min · easy own 8:22–9:21, prescribed none
 w9 2026-05-04  build, plan week 9 of 11  counted 2/3  plan 90 min, long 0.0 km, quality 1
   planned Wed:tempo_20 · Fri:easy_30 · Sun:easy_30
-  ran     Wed tempo_20 3.8 km/30 min 7:49 · Fri easy_30 3.3 km/30 min 9:02
+  ran     Wed tempo_20 3.8 km/30 min 7:49 [fast] · Fri easy_30 3.3 km/30 min 9:02 [easy too fast]
   week    60 min · 7.2 km · easy 67% · longest ×1.16 the month's
   runner  VDOT 26.04 · fitness 61 min · easy own 8:21–9:20, prescribed none
   · 2026-05-04: the app derived a benchmark, 2.2 km in 20:00 (VDOT 18.0, true 26.0)
 w10 2026-05-11  taper, plan week 10 of 11  counted 3/3  plan 85 min, long 0.0 km, quality 1
   planned Wed:8x400 · Fri:easy_30 · Sun:easy_30
-  ran     Wed 8x400 5.1 km/38 min 7:24 · Fri easy_30 3.3 km/30 min 8:59 · Sun easy_30 3.4 km/30 min 8:55
+  ran     Wed 8x400 5.1 km/38 min 7:24 · Fri easy_30 3.3 km/30 min 8:59 [easy too fast] · Sun easy_30 3.4 km/30 min 8:55 [easy too fast]
   week    98 min · 11.8 km · easy 79% · longest ×1.34 the month's
   runner  VDOT 26.34 · fitness 68 min · easy own 8:18–9:17, prescribed none
 w11 2026-05-18  recovery, plan week 11 of 11  counted 2/3  plan 104 min, long 0.0 km, quality 0
   planned Wed:easy_30 · Fri:easy_30 · Sun:5k_race
-  ran     Wed easy_30 3.4 km/30 min 8:45 · Sun 5k_race 5.0 km/34 min 6:52 finish 34:20
+  ran     Wed easy_30 3.4 km/30 min 8:45 [easy too fast] · Sun 5k_race 5.0 km/34 min 6:52 [fast] finish 34:20
   week    64 min · 8.4 km · easy 47% · longest ×0.98 the month's
   runner  VDOT 26.40 · fitness 70 min · easy own 8:19–9:18, prescribed none
   · 2026-05-24: server entered recovery until 2026-05-31
 w12 2026-05-25  recovery, plan week 11 of 11  counted 2/3  plan 90 min, long 0.0 km, quality 0
   planned Wed:easy_30 · Fri:easy_30 · Sun:easy_30
-  ran     Wed easy_30 3.3 km/30 min 9:00 · Fri easy_30 3.4 km/30 min 8:57 INJURY short
+  ran     Wed easy_30 3.3 km/30 min 9:00 [easy too fast] · Fri easy_30 3.4 km/30 min 8:57 [easy too fast] INJURY short
   week    60 min · 6.7 km · easy 100% · longest ×0.65 the month's
   runner  VDOT 26.34 · fitness 68 min · easy own 8:16–9:15, prescribed none
   · 2026-05-29: short injury on easy_30

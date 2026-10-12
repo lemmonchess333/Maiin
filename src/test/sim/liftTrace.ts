@@ -82,7 +82,7 @@ export function liftTrace(season: Season, tracked: readonly string[]): string {
         : `  ${String(Math.min(...minutes))}–${String(Math.max(...minutes))} min`;
     lines.push("");
     lines.push(
-      `w${String(w.week)} ${w.weekStart}  plan week ${String(w.weekNumber)} ${w.phase}  ${String(w.done)}/${String(w.offered)} sessions${span}`
+      `w${String(w.week)} ${w.weekStart}  plan week ${String(w.weekNumber)} ${w.phase}${w.raceWeek ? ` (race: ${w.raceWeek})` : ""}  ${String(w.done)}/${String(w.offered)} sessions${span}`
     );
     for (const id of tracked) {
       const plan = w.plan[id];

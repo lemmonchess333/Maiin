@@ -25,14 +25,14 @@ const check = (
   after: Partial<ProgramExercise>,
   lifted: number,
   reps: number[],
-  lighterWeek = false
+  lighter: false | "a lighter week" | "an easier session" = false
 ) =>
   unexplainedChange(
     squat(before),
     squat({ ...before, ...after }),
     lifted,
     reps,
-    lighterWeek,
+    lighter,
     bar
   );
 
@@ -68,7 +68,7 @@ describe("the simulator's rules-sheet check", () => {
   });
 
   it("names a lift lowered in a lighter week", () => {
-    expect(check({}, { weight: 57.5 }, 60, [5, 5], true)).toMatch(
+    expect(check({}, { weight: 57.5 }, 60, [5, 5], "a lighter week")).toMatch(
       /lighter week/
     );
   });

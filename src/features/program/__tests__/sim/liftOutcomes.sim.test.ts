@@ -9,7 +9,8 @@
  * The soak: `TROPOS_SIM_SEEDS=500 npx vitest run
  * src/features/program/__tests__/sim/liftOutcomes.sim.test.ts` runs 500
  * seeds of each and writes a markdown report to `test-results/sim/`
- * (uncommitted). Without it, three seeds keep the PR gate quick.
+ * (uncommitted); `sim-soak.yml` runs it each week. Without it, three seeds
+ * keep the PR gate quick.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -28,6 +29,9 @@ import {
 } from "@/test/sim/lifter";
 
 const SEEDS = Number(process.env.TROPOS_SIM_SEEDS ?? 3);
+/** A persona runs two seasons a seed, each a fraction of a second: the
+ *  timeout grows with the soak, twice over to spare. */
+const TIMEOUT = Math.max(120_000, SEEDS * 2_000);
 const WEEKS = 26;
 const AT = [8, 16, 26] as const;
 
@@ -108,59 +112,65 @@ const report: string[] = [
 describe.each(LIFT_PERSONAS.map((p) => [p.name, p] as const))(
   "%s",
   (name, persona) => {
-    it("gains within broad plausibility of lifting-evidence §4.2", () => {
-      const byVariant = [BASE_VARIANT, HARSH_VARIANT].map((variant) =>
-        Array.from({ length: SEEDS }, (_, i) =>
-          simulateLiftSeason(persona, { weeks: WEEKS, seed: i + 1, variant })
-        )
-      );
-      const seasons = byVariant.flat();
-      const age = persona.lifter.trainingAge;
-      const floor = persona.breaks?.length ? -20 : -10;
-      report.push("", `## ${name} (${age})`, "");
-      report.push(
-        "| lift | " +
-          AT.map((w) => `${String(w)} weeks`).join(" | ") +
-          " | misses /100 |",
-        "| --- | " + AT.map(() => "---").join(" | ") + " | --- |"
-      );
-      for (const id of persona.tracked) {
-        const half = halfOfLift(seasons[0], id);
-        const sortedGains = (list: Season[], week: number) =>
-          list
-            .map((s) => gainAt(s, id, week))
-            .filter((g): g is number => g !== null)
-            .sort((a, b) => a - b);
-        const cells = AT.map((week, k) => {
-          const gains = sortedGains(seasons, week);
-          const [base, harsh] = byVariant.map((list) =>
-            quantile(sortedGains(list, week), 0.5)
-          );
-          const [central, low, high] = BANDS[age][half][k];
-          if (week === WEEKS && gains.length > 0) {
-            const median = quantile(gains, 0.5);
-            expect(
-              median,
-              `${name} ${id}: median ${pct(median)}% at ${String(week)} weeks`
-            ).toBeGreaterThan(floor);
-            expect(
-              median,
-              `${name} ${id}: median ${pct(median)}% at ${String(week)} weeks`
-            ).toBeLessThan(2 * high);
-          }
-          return `${pct(base)} / ${pct(harsh)} [${pct(quantile(gains, 0.1))}–${pct(quantile(gains, 0.9))}] vs ${String(central)} [${String(low)}–${String(high)}]`;
-        });
-        const lifts = seasons.flatMap((s) =>
-          s.sessions.flatMap((x) => x.lifts.filter((l) => l.exerciseId === id))
+    it(
+      "gains within broad plausibility of lifting-evidence §4.2",
+      () => {
+        const byVariant = [BASE_VARIANT, HARSH_VARIANT].map((variant) =>
+          Array.from({ length: SEEDS }, (_, i) =>
+            simulateLiftSeason(persona, { weeks: WEEKS, seed: i + 1, variant })
+          )
         );
-        const misses = lifts.filter(
-          (l) => l.outcome === "miss" || l.outcome === "lowered"
-        ).length;
+        const seasons = byVariant.flat();
+        const age = persona.lifter.trainingAge;
+        const floor = persona.breaks?.length ? -20 : -10;
+        report.push("", `## ${name} (${age})`, "");
         report.push(
-          `| ${id} | ${cells.join(" | ")} | ${lifts.length ? ((misses / lifts.length) * 100).toFixed(0) : "-"} |`
+          "| lift | " +
+            AT.map((w) => `${String(w)} weeks`).join(" | ") +
+            " | misses /100 |",
+          "| --- | " + AT.map(() => "---").join(" | ") + " | --- |"
         );
-      }
-    }, 120_000);
+        for (const id of persona.tracked) {
+          const half = halfOfLift(seasons[0], id);
+          const sortedGains = (list: Season[], week: number) =>
+            list
+              .map((s) => gainAt(s, id, week))
+              .filter((g): g is number => g !== null)
+              .sort((a, b) => a - b);
+          const cells = AT.map((week, k) => {
+            const gains = sortedGains(seasons, week);
+            const [base, harsh] = byVariant.map((list) =>
+              quantile(sortedGains(list, week), 0.5)
+            );
+            const [central, low, high] = BANDS[age][half][k];
+            if (week === WEEKS && gains.length > 0) {
+              const median = quantile(gains, 0.5);
+              expect(
+                median,
+                `${name} ${id}: median ${pct(median)}% at ${String(week)} weeks`
+              ).toBeGreaterThan(floor);
+              expect(
+                median,
+                `${name} ${id}: median ${pct(median)}% at ${String(week)} weeks`
+              ).toBeLessThan(2 * high);
+            }
+            return `${pct(base)} / ${pct(harsh)} [${pct(quantile(gains, 0.1))}–${pct(quantile(gains, 0.9))}] vs ${String(central)} [${String(low)}–${String(high)}]`;
+          });
+          const lifts = seasons.flatMap((s) =>
+            s.sessions.flatMap((x) =>
+              x.lifts.filter((l) => l.exerciseId === id)
+            )
+          );
+          const misses = lifts.filter(
+            (l) => l.outcome === "miss" || l.outcome === "lowered"
+          ).length;
+          report.push(
+            `| ${id} | ${cells.join(" | ")} | ${lifts.length ? ((misses / lifts.length) * 100).toFixed(0) : "-"} |`
+          );
+        }
+      },
+      TIMEOUT
+    );
   }
 );
 

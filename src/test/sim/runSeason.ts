@@ -45,6 +45,9 @@ import {
   type RunPlanPrefill,
 } from "@/lib/runPlanMetadata";
 import { parseSavedRun, type SavedRun } from "@/lib/savedRuns";
+import type { PaceVerdict } from "@/lib/paceVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "@/lib/plannedRunVerdict";
+import { pinnedWorkPace } from "@/lib/runSegments";
 import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
@@ -153,6 +156,9 @@ export interface RunRecord {
   raceTimeS?: number;
   /** The server entered recovery on this run. */
   recovery?: string;
+  /** What the run summary said of its pace, saved on the run
+   *  (`paceVerdictTone`), or null for a run it doesn't judge. */
+  verdict: PaceVerdict["tone"] | null;
 }
 
 /** The race distances' lengths, metres. */
@@ -312,7 +318,8 @@ const paceText = (s: number) =>
 function finishedRun(
   done: RunDone,
   prefill: RunPlanPrefill,
-  planMetadata: RunPlanMetadata
+  planMetadata: RunPlanMetadata,
+  verdict: PaceVerdict | null
 ): FinishedRun {
   return {
     points: [],
@@ -339,7 +346,7 @@ function finishedRun(
     intervalData: prefill.intervals,
     notes: "",
     relativeEffort: null,
-    paceVerdictTone: null,
+    paceVerdictTone: verdict?.tone ?? null,
     isInvalid: false,
     invalidReason: null,
     routeQuality: null,
@@ -630,8 +637,23 @@ export class RunSide {
       (prefill.activityType ??
         DEFAULT_CONFIG.activityType) as typeof DEFAULT_CONFIG.activityType
     );
+    // The summary's verdict, saved with the run (RunSummary.tsx): a tempo
+    // by its work segments (F22), a goal-pace tempo against the pace its
+    // blocks pinned.
+    const verdict = plannedRunVerdict({
+      planMetadata,
+      avgPaceSeconds: done.pace,
+      workPaceSeconds: workPaceSeconds({
+        seconds: done.qualityMinutes * 60,
+        meters: done.qualityKm * 1000,
+      }),
+      pinnedPaceSeconds: pinnedWorkPace(prefill.segments),
+      distance: done.km * 1000,
+      runFitness: profile.runFitness,
+      unit: "km",
+    });
     const doc = runDocument(
-      finishedRun(done, prefill, planMetadata),
+      finishedRun(done, prefill, planMetadata, verdict),
       new Date()
     );
     const id = `run-${this.name}-${date}-${String(++this.count)}`;
@@ -677,6 +699,7 @@ export class RunSide {
       ownEasy: trainingBands(trueVdot).easy,
       ...(race ? { raceTimeS: done.minutes * 60 } : {}),
       ...(recovery ? { recovery } : {}),
+      verdict: verdict?.tone ?? null,
     };
     this.records.push(record);
     if (done.injury)
