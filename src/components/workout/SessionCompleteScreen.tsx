@@ -244,7 +244,10 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-h1 font-extrabold tracking-tight text-foreground text-balance">
+          {/* A display heading (text-h2, bold), under the figures' weight:
+              at the page-title size, centred over three hero figures, it
+              outshouted them. */}
+          <h2 className="text-h2 font-bold tracking-tight text-foreground text-balance">
             {heading}
           </h2>
           <p className="text-base text-muted-foreground">{dayLabel}</p>
