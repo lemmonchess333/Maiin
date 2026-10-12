@@ -1679,9 +1679,7 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Finish early" }));
-  fireEvent.click(
-    screen.getByRole("button", { name: "Review completed work" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(

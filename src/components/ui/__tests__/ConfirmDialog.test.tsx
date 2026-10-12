@@ -112,3 +112,26 @@ describe("ConfirmDialog — destructive variant", () => {
     expect(confirm.className).not.toContain("bg-destructive");
   });
 });
+
+describe("ConfirmDialog — labels keep to one line", () => {
+  it("stacks the buttons rather than breaking a label over lines", () => {
+    /* A flex item may shrink to its longest word, which broke "Review
+       completed work" over three lines in half a 393 px dialog. Each
+       button's floor is its one-line width (`min-w-fit`), and the row
+       wraps, so a pair that does not fit stacks, as an iOS alert does. */
+    render(
+      <ConfirmDialog
+        {...baseProps}
+        cancelLabel="Keep training"
+        confirmLabel="Review completed work"
+      />
+    );
+    const confirm = screen.getByRole("button", {
+      name: "Review completed work",
+    });
+    const cancel = screen.getByRole("button", { name: "Keep training" });
+    for (const button of [confirm, cancel])
+      expect(button.className.split(" ")).toContain("min-w-fit");
+    expect(confirm.parentElement!.className.split(" ")).toContain("flex-wrap");
+  });
+});

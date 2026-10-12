@@ -2507,9 +2507,9 @@ export default function WorkoutSession({
 
       <ConfirmDialog
         open={showFinishEarly}
-        title="Finish with unfinished sets?"
-        description="Only completed working sets will be saved. Unfinished sets will not count toward your workout totals."
-        confirmLabel="Review completed work"
+        title="Finish early?"
+        description="Sets you haven't ticked won't be saved."
+        confirmLabel="Finish"
         cancelLabel="Keep training"
         onCancel={() => setShowFinishEarly(false)}
         onConfirm={() => {

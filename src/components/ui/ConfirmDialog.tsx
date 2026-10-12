@@ -73,20 +73,26 @@ export function ConfirmDialogActions({
 > & {
   cancelRef?: Ref<HTMLButtonElement>;
 }) {
+  /* The two share a row while each label fits on one line, and stack
+     full width when they do not, as an iOS alert does. A flex item's
+     floor is its longest word, so "Review completed work" broke over
+     three lines in half a 393 px dialog; `min-w-fit` makes the floor
+     the label's one-line width, or the dialog's when even that is
+     wider, and `flex-wrap` gives the second button its own row. */
   return (
-    <div className="flex gap-2 pt-1">
+    <div className="flex flex-wrap gap-2 pt-1">
       <Button
         ref={cancelRef}
         onClick={onCancel}
         variant="secondary"
-        className="flex-1"
+        className="min-w-fit flex-1"
       >
         {cancelLabel}
       </Button>
       <Button
         onClick={onConfirm}
         variant={destructive ? "destructive" : "primary"}
-        className="flex-1"
+        className="min-w-fit flex-1"
       >
         {confirmLabel}
       </Button>
