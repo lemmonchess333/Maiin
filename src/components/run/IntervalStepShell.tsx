@@ -192,28 +192,33 @@ export default function IntervalStepShell({
           {headlineFor(current, unit, band)}
         </p>
 
-        <div className="flex items-center justify-between gap-3 pt-0.5">
-          <p className="text-xs text-white/50 min-w-0 truncate">
-            {next ? (
-              <>
-                Up next:{" "}
-                <span className="text-white/70 font-medium">
-                  {headlineFor(next, unit, band)}
-                </span>
-              </>
-            ) : (
-              "Last step — bring it home."
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
-            aria-label="Skip to the next step"
-          >
-            Skip step
-          </button>
-        </div>
+        {/* A one-step session (an easy 30) has no next step to name or
+            skip to, and its only step is not a closing stretch: "Last
+            step — bring it home." read from the first second. */}
+        {segments.length > 1 && (
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <p className="text-xs text-white/50 min-w-0 truncate">
+              {next ? (
+                <>
+                  Up next:{" "}
+                  <span className="text-white/70 font-medium">
+                    {headlineFor(next, unit, band)}
+                  </span>
+                </>
+              ) : (
+                "Last step — bring it home."
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={onSkip}
+              className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
+              aria-label="Skip to the next step"
+            >
+              Skip step
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

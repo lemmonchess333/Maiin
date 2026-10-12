@@ -75,3 +75,30 @@ describe("IntervalStepShell — step headings", () => {
     ]);
   });
 });
+
+describe("IntervalStepShell — a session of one step", () => {
+  it("names no next step and offers no skip", () => {
+    render(
+      <IntervalStepShell
+        player={playerAt([step("easy", { label: "Easy 30 min" })], 0)}
+        onSkip={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Easy 30 min")).toBeInTheDocument();
+    expect(screen.queryByText(/bring it home/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /skip/i })).toBeNull();
+  });
+
+  it("still closes a longer session on its last step", () => {
+    render(
+      <IntervalStepShell
+        player={playerAt([step("warmup"), step("cooldown")], 1)}
+        onSkip={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Last step — bring it home.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Skip to the next step" })
+    ).toBeInTheDocument();
+  });
+});
