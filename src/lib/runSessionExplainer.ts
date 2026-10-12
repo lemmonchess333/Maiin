@@ -11,6 +11,7 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -74,9 +75,22 @@ export function runSessionExplainer(
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 
+  // A new runner's run-walk (Run20 (5)) is that in any week, the taper's
+  // and race week's included. The last has one run, and no walks between.
+  // "Why this run" says what the session is in its own line (Run21 (3)), so
+  // these give the reason only.
+  if (isRunWalkTemplateId(templateId)) {
+    const runs =
+      RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
+        .length ?? 0;
+    return runs === 1
+      ? "The last run-walk — what the weeks before it built up to."
+      : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
+  }
+
   if (phase === "race") {
     if (type === "race") {
-      return "Race day. The whole block pointed here — trust the plan and start conservatively.";
+      return "Race day — the whole plan has led to this. Trust the training you've done.";
     }
     return "Race-week shakeout — short and conversational; there's nothing left to gain from more.";
   }
@@ -88,6 +102,10 @@ export function runSessionExplainer(
     if (type === "long") {
       return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
     }
+    // Run22: the first taper weeks keep a shorter medium-long.
+    if (isMediumLong) {
+      return "Taper medium-long — shorter on purpose: the volume comes down in steps, so you arrive fresh without losing your rhythm.";
+    }
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
 
@@ -98,7 +116,7 @@ export function runSessionExplainer(
       : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
   }
   if (type === "tempo") {
-    return "Tempo — grows how long you can hold your threshold pace. The pace itself comes from your fitness, so the session ramps volume, not speed.";
+    return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
   }
   if (type === "intervals") {
     return "Intervals — short fast repeats for top-end economy. The recovery between reps is part of the session, not a failure of it.";

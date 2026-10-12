@@ -51,19 +51,11 @@ jobs:
       - name: Type-check the account-free review fixture
         run: npx tsc -p e2e/fixtures/tsconfig.form-art.json
       - name: Install test browser
-        # A stalled apt mirror hangs apt-get with no error, and on 2026-10-07
-        # that cost two whole jobs (14.5 and 30 min) before a test ran. Each
-        # attempt gets a bound; `timeout` kills the whole process group, and
-        # `dpkg --configure -a` repairs a dpkg it interrupted mid-install.
-        timeout-minutes: 11
-        run: |
-          for i in 1 2 3; do
-            timeout --kill-after=10 200 npx playwright install --with-deps chromium && exit 0
-            echo "::warning::'npx playwright install --with-deps chromium' attempt $i failed or stalled; retrying"
-            sudo dpkg --configure -a || true
-            sleep 10
-          done
-          exit 1
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Capture all frames and verify real player behavior
         run: npx playwright test --config playwright.form-art.config.ts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
