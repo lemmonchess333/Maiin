@@ -8,6 +8,12 @@
  * while each share holds that word, and below that only the two ends are
  * named, at the chart's edges.
  *
+ * Where only every few bars are named (3M's weeks, 1Y's months), a label's
+ * share is the empty columns beside it as well as its own: each gap
+ * between two named bars is split between them, and the first and last
+ * labels run to the chart's edges. One column each was a bar's width for
+ * "This week", which ran past the chart even at the designed size.
+ *
  * How wide that is depends on how many bars there are, and so on the day:
  * the thirty days up to a Monday begin on a Sunday, so the 30-day range
  * draws six weeks on a Monday and five on every other day. A card that
@@ -44,9 +50,22 @@ interface GiveWay {
   ends: string;
 }
 
+/** A named bar's label: the columns it may use, 0-based and inclusive. */
+export interface AxisLabelSpan {
+  /** The bar it names. */
+  index: number;
+  start: number;
+  end: number;
+  /** Against its columns: the first label to the chart's left edge, the
+   *  last to its right, the rest centred. */
+  align: "left" | "center" | "right";
+}
+
 export interface BinAxis extends GiveWay {
   /** One bar in `every` is named, counted back from the current one. */
   every: number;
+  /** The labels under the chart and the columns each may use. */
+  spans: AxisLabelSpan[];
 }
 
 /* Tailwind builds only the class names it finds written out whole, so
@@ -61,21 +80,46 @@ const GIVE_WAY: readonly GiveWay[] = [
   { below: 16, labels: "@max-[16em]:hidden", ends: "@max-[16em]:flex" },
 ];
 
+/**
+ * The columns each named bar's label may use. Every bar named: its own.
+ * Every few: the gap to each neighbour is split between the two, the later
+ * label taking the larger half, as the current bar's label is the longest.
+ */
+export function axisLabelSpans(bars: number, every: number): AxisLabelSpan[] {
+  const named: number[] = [];
+  for (let i = bars - 1; i >= 0; i -= every) named.unshift(i);
+  const gap = every - 1;
+  const toLeft = Math.floor(gap / 2);
+  return named.map((index, k) => {
+    const first = k === 0;
+    const last = k === named.length - 1;
+    return {
+      index,
+      start: first ? 0 : index - (gap - toLeft),
+      end: last ? bars - 1 : index + toLeft,
+      align:
+        every === 1 ? "center" : last ? "right" : first ? "left" : "center",
+    };
+  });
+}
+
 /** The axis under a chart of `bars` bars. */
 export function binAxis(
   bars: number,
   granularity: SummaryGranularity
 ): BinAxis {
   /* Every bar is named while they fit; past seven, every few, counted
-     back from the current bar so it is always named. Then each named bar
-     has empty shares beside it, and the narrowest width applies. */
+     back from the current bar so it is always named. */
   const every = bars <= 7 ? 1 : Math.ceil(bars / 4);
-  if (every > 1) return { every, ...GIVE_WAY[0] };
+  const spans = axisLabelSpans(bars, every);
+  /* The card each label's columns need to hold the longest word, for the
+     narrowest of them. */
+  const narrowest = Math.min(...spans.map((s) => s.end - s.start + 1));
   const need = Math.min(
     DESIGNED_CARD_EM,
-    bars * LONGEST_LABEL_WORD_EM[granularity]
+    (bars / narrowest) * LONGEST_LABEL_WORD_EM[granularity]
   );
   const giveWay =
     GIVE_WAY.find((g) => g.below >= need) ?? GIVE_WAY[GIVE_WAY.length - 1];
-  return { every, ...giveWay };
+  return { every, spans, ...giveWay };
 }

@@ -341,26 +341,30 @@ export default function TrainingWeeksCard({
             }}
             aria-hidden="true"
           >
-            {bins.map((b, i) => {
-              const fromEnd = bins.length - 1 - i;
-              const shown = fromEnd % every === 0;
+            {axis.spans.map((span) => {
+              const b = bins[span.index];
               return (
                 <span
                   key={b.key}
-                  /* As in PeriodSummaryCard: a label wraps within its bar's
-                     slot, and where a slot is narrower than the longest
+                  /* As in PeriodSummaryCard: a label wraps within its
+                     columns, and where they are narrower than the longest
                      word the row below takes over. Held to one line, the
                      dates ran past the card and the page scrolled sideways
                      at larger text. */
                   className={cn(
-                    "min-w-0 text-center leading-tight",
-                    b.key === selected.key && "font-semibold text-foreground",
-                    i === bins.length - 1 && every > 1 && "text-right"
+                    "min-w-0 leading-tight",
+                    span.align === "left" && "text-left",
+                    span.align === "center" && "text-center",
+                    span.align === "right" && "text-right",
+                    b.key === selected.key && "font-semibold text-foreground"
                   )}
+                  style={{ gridColumn: `${span.start + 1} / ${span.end + 2}` }}
                 >
-                  {shown
-                    ? summaryAxisLabel(b, granularity, i === firstLabelled)
-                    : ""}
+                  {summaryAxisLabel(
+                    b,
+                    granularity,
+                    span.index === firstLabelled
+                  )}
                 </span>
               );
             })}

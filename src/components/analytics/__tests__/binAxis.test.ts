@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { binAxis, LONGEST_LABEL_WORD_EM } from "../binAxis";
+import { axisLabelSpans, binAxis, LONGEST_LABEL_WORD_EM } from "../binAxis";
 import {
   addLocalDays,
   localDateString,
@@ -98,14 +98,39 @@ describe("when the labels give way to the two ends", () => {
     expect(binAxis(7, "monthly").below).toBe(16);
   });
 
-  it("takes the narrowest width, 11em, where only every few bars are named", () => {
+  it("asks the card the narrowest label's columns need where only every few bars are named", () => {
+    // 3M: two columns for the first label of 13 weeks, three of 14.
+    expect(binAxis(13, "weekly").below).toBe(14.5);
     expect(binAxis(14, "weekly").below).toBe(11);
-    expect(binAxis(13, "monthly").below).toBe(11);
+    // 1Y: two columns for the first label of 13 months, the last of 12.
+    expect(binAxis(13, "monthly").below).toBe(15.5);
+    expect(binAxis(12, "monthly").below).toBe(14.5);
   });
 
   it("takes the narrowest width, 11em, however few the bars", () => {
     expect(binAxis(3, "monthly").below).toBe(11);
     expect(binAxis(4, "weekly").below).toBe(11);
+  });
+});
+
+describe("each label's columns", () => {
+  it("are its own bar's while every bar is named", () => {
+    expect(axisLabelSpans(3, 1).map((s) => [s.start, s.end, s.align])).toEqual([
+      [0, 0, "center"],
+      [1, 1, "center"],
+      [2, 2, "center"],
+    ]);
+  });
+
+  it("split each gap between its two labels, the ends running to the chart's edges", () => {
+    expect(
+      axisLabelSpans(13, 4).map((s) => [s.index, s.start, s.end, s.align])
+    ).toEqual([
+      [0, 0, 1, "left"],
+      [4, 2, 5, "center"],
+      [8, 6, 9, "center"],
+      [12, 10, 12, "right"],
+    ]);
   });
 });
 
@@ -120,19 +145,42 @@ describe("every chart History draws, on every day of two years", () => {
     expect(wrong).toEqual([]);
   });
 
-  it("names every bar only while each bar's share holds the longest word", () => {
+  it("names bars only while each label's columns hold the longest word", () => {
     const wrong = charts
       .map((c) => ({ ...c, axis: binAxis(c.bars, c.granularity) }))
-      .filter(({ axis }) => axis.every === 1)
-      .filter(
-        ({ axis, bars, granularity }) =>
-          axis.below <
-          Math.min(DESIGNED_CARD_EM, bars * LONGEST_LABEL_WORD_EM[granularity])
+      .filter(({ axis, bars, granularity }) =>
+        axis.spans.some(
+          (s) =>
+            axis.below <
+            Math.min(
+              DESIGNED_CARD_EM,
+              (bars / (s.end - s.start + 1)) *
+                LONGEST_LABEL_WORD_EM[granularity]
+            )
+        )
       )
       .map(
         (c) =>
           `${c.day}, ${c.rangeDays} days: ${c.bars} bars below ${c.axis.below}em`
       );
+    expect(wrong).toEqual([]);
+  });
+
+  it("gives the labels columns that tile the chart, each holding its bar", () => {
+    const wrong = charts
+      .map((c) => ({ ...c, axis: binAxis(c.bars, c.granularity) }))
+      .filter(({ axis, bars }) => {
+        const cols = axis.spans.flatMap((s) =>
+          Array.from({ length: s.end - s.start + 1 }, (_, k) => s.start + k)
+        );
+        return (
+          axis.spans.some((s) => s.index < s.start || s.index > s.end) ||
+          axis.spans.at(-1)?.index !== bars - 1 ||
+          cols.length !== bars ||
+          cols.some((col, k) => col !== k)
+        );
+      })
+      .map((c) => `${c.day}, ${c.rangeDays} days: ${c.bars} bars`);
     expect(wrong).toEqual([]);
   });
 

@@ -337,26 +337,29 @@ export default function PeriodSummaryCard({
             }}
             aria-hidden="true"
           >
-            {bins.map((b, i) => {
-              const fromEnd = bins.length - 1 - i;
-              const shown = fromEnd % every === 0;
+            {axis.spans.map((span) => {
+              const b = bins[span.index];
               return (
                 <span
                   key={b.key}
-                  /* Wraps within its bar's slot ("14 / Sept") rather
-                     than running into the next label, as the dates did
-                     at larger text. Where a slot is narrower than the
-                     longest word, the row below takes over. */
+                  /* Wraps within its columns ("14 / Sept") rather than
+                     running into the next label, as the dates did at
+                     larger text. Where they are narrower than the longest
+                     word, the row below takes over. */
                   className={cn(
-                    "min-w-0 text-center leading-tight",
-                    b.current && "font-semibold text-foreground",
-                    // The last label may be wider than its bar's slot.
-                    i === bins.length - 1 && every > 1 && "text-right"
+                    "min-w-0 leading-tight",
+                    span.align === "left" && "text-left",
+                    span.align === "center" && "text-center",
+                    span.align === "right" && "text-right",
+                    b.current && "font-semibold text-foreground"
                   )}
+                  style={{ gridColumn: `${span.start + 1} / ${span.end + 2}` }}
                 >
-                  {shown
-                    ? summaryAxisLabel(b, granularity, i === firstLabelled)
-                    : ""}
+                  {summaryAxisLabel(
+                    b,
+                    granularity,
+                    span.index === firstLabelled
+                  )}
                 </span>
               );
             })}
