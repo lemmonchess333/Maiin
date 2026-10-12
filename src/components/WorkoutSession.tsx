@@ -8,6 +8,7 @@ import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -806,6 +807,33 @@ export default function WorkoutSession({
   );
 
   const stopRest = useCallback(() => setRest(null), []);
+
+  /* The set being logged stays on screen. Ticking a set moves the current
+     one down the table while the rest card (and a new best) dock under
+     it, so on a phone the next set went below the fold: after a squat's
+     four warm-ups, 393 × 715 showed the four done rows and not "Set 2 of
+     4". The list scrolls only as far as the row needs, and not at all
+     while it is in view; the row's scroll margin keeps a little of the
+     list around it, and set 1 brings the table's head. Instant on the
+     first render (Pol1: what is there on arrival does not move); after
+     that no `behavior`, so it takes the list's `scroll-behavior`, smooth
+     unless Reduce Motion, as the exercise strip's scroll does. */
+  const contentRef = useRef<HTMLDivElement>(null);
+  const placedOnce = useRef(false);
+  const restDocked = rest !== null;
+  const bestDocked = newBest?.setKey ?? null;
+  useLayoutEffect(() => {
+    const row = contentRef.current?.querySelector<HTMLElement>(
+      `[data-set-row="${currentSetIndex}"]`
+    );
+    if (!row) return;
+    row.scrollIntoView(
+      placedOnce.current
+        ? { block: "nearest" }
+        : { block: "nearest", behavior: "instant" }
+    );
+    placedOnce.current = true;
+  }, [currentExIndex, currentSetIndex, restDocked, bestDocked]);
 
   /* A set's type can change after it is done, as in Hevy: a set logged as
      working and meant as a warm-up is corrected here rather than by undoing
@@ -1817,7 +1845,10 @@ export default function WorkoutSession({
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <div
+        ref={contentRef}
+        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 motion-safe:scroll-smooth"
+      >
         {/* The last note on this exercise stays above the sets: it is
             usually a setting to read before lifting ("Level 8, 6.0
             incline"). Today's note is written under the sets. */}
@@ -1934,7 +1965,15 @@ export default function WorkoutSession({
                       result.setKey === `${currentExIndex}:${setIdx}`
                   );
                   return (
-                    <div key={setIdx}>
+                    <div
+                      key={setIdx}
+                      data-set-row={setIdx}
+                      className={
+                        setIdx === 0
+                          ? "scroll-mt-12 scroll-mb-4"
+                          : "scroll-my-4"
+                      }
+                    >
                       <div
                         className={cn(
                           columns,
