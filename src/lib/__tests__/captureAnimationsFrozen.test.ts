@@ -13,7 +13,7 @@
  *
  * The cause was the capture, not the app. The specs switch theme by
  * toggling the `dark` class and shooting immediately, and
- * `SegmentedControl` carries `motion-safe:transition-colors`, so the frame
+ * `SegmentedControl` eases its colours (`motion-safe:transition`), so the frame
  * caught its options at the start of the colour transition, still holding
  * the light value. Nothing else on the page transitions colour, which is
  * why only that control looked wrong.
