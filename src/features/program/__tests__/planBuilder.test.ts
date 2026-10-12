@@ -32,7 +32,22 @@ import {
 import { isRaceBuildWeek, raceBlockWeek } from "../weekPrescription";
 import { loadsTheLegs } from "../easierToday";
 import { roleRepsFor } from "../roleTable";
+import { exerciseRole } from "../exerciseRole";
+import { represcribeWorkouts } from "../represcribe";
 import { getExerciseById } from "@/lib/exercises";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+
+/** Lifts Monday, Thursday and Friday; runs Tuesday, Wednesday and Saturday
+ *  (day 0 is Sunday). */
+const TUE_WED_SAT_RUNS: ScheduleDay[] = [
+  { day: 0, type: "rest" },
+  { day: 1, type: "lift" },
+  { day: 2, type: "run" },
+  { day: 3, type: "run" },
+  { day: 4, type: "lift" },
+  { day: 5, type: "lift" },
+  { day: 6, type: "run" },
+];
 
 function makeInput(
   overrides: Partial<PlanBuilderInput> = {}
@@ -346,6 +361,104 @@ describe("buildPlan · race_prep mode", () => {
     expect(long.programState.runPlan?.totalWeeks ?? 0).toBeGreaterThan(
       short.programState.runPlan?.totalWeeks ?? 0
     );
+  });
+});
+
+/* ─── Run19: a plan made mid-week plans no run before that day ─── */
+
+describe("buildPlan · a plan made mid-week plans no run before that day (Run19)", () => {
+  // The week of Monday 11 May 2026.
+  const monday = "2026-05-11";
+  const thursday = "2026-05-14";
+  const raceInput = (currentDate: string) =>
+    makeInput({
+      currentDate,
+      runMode: "race_prep",
+      liftDays: 3,
+      weeklyRunDays: 4,
+      raceGoal: { distance: "10k", targetDate: "2026-08-14" },
+    });
+  const runsOf = (out: ReturnType<typeof buildPlan>) =>
+    out.programState.runDays ?? [];
+
+  it("dates no run before the day the plan is made", () => {
+    // Made on the Monday, the week has runs before Thursday...
+    expect(
+      runsOf(buildPlan(raceInput(monday))).some((run) => run.date! < thursday)
+    ).toBe(true);
+    // ...which the same plan made on the Thursday doesn't plan. It keeps
+    // the week's runs from Thursday on.
+    const made = runsOf(buildPlan(raceInput(thursday)));
+    expect(made.length).toBeGreaterThan(0);
+    expect(made.every((run) => run.date! >= thursday)).toBe(true);
+  });
+
+  it("keeps the week's days from the day it is made, as a Monday plan has them", () => {
+    const fromThursday = (runs: ReturnType<typeof runsOf>) =>
+      runs
+        .filter((run) => run.date! >= thursday)
+        .map((run) => [run.date, run.templateId]);
+    expect(fromThursday(runsOf(buildPlan(raceInput(thursday))))).toEqual(
+      fromThursday(runsOf(buildPlan(raceInput(monday))))
+    );
+  });
+
+  it("keeps a continuing plan's own days before today", () => {
+    const existingState = buildPlan(raceInput(monday)).programState;
+    const before = (existingState.runDays ?? []).filter(
+      (run) => run.date! < thursday
+    );
+    expect(before.length).toBeGreaterThan(0);
+    const saved = runsOf(
+      buildPlan({
+        ...raceInput(thursday),
+        preserveHistory: true,
+        existingState,
+      })
+    );
+    expect(saved.filter((run) => run.date! < thursday)).toEqual(before);
+  });
+
+  it("starts on next week's runs when no run day is left in this one", () => {
+    // Runs on Tuesday, Wednesday and Saturday, the plan made on the Sunday
+    // after. Saved with an empty week, it left the rollover, which moves on
+    // from its runs' week, nothing to move on from, and its runs never came.
+    const sunday = "2026-05-17";
+    const nextMonday = "2026-05-18";
+    const made = (currentDate: string) =>
+      buildPlan({
+        ...raceInput(currentDate),
+        liftDays: 3,
+        weeklyRunDays: 3,
+        weekSchedule: TUE_WED_SAT_RUNS,
+      });
+    const runs = runsOf(made(sunday));
+    expect(runs.map((run) => run.date)).toEqual([
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-23",
+    ]);
+    expect(runs.every((run) => run.weekKey === nextMonday)).toBe(true);
+    // The plan a save on that Monday makes: the same runs and race block.
+    const monday = made(nextMonday).programState;
+    expect(runs.map((run) => [run.date, run.templateId])).toEqual(
+      (monday.runDays ?? []).map((run) => [run.date, run.templateId])
+    );
+    expect(made(sunday).programState.runPlan).toEqual(monday.runPlan);
+  });
+
+  it("plans a structured week from that day too", () => {
+    const runs = runsOf(
+      buildPlan(
+        makeInput({
+          currentDate: thursday,
+          runMode: "structured",
+          liftDays: 3,
+          weeklyRunDays: 4,
+        })
+      )
+    );
+    expect(runs.every((run) => run.date! >= thursday)).toBe(true);
   });
 });
 
@@ -973,21 +1086,130 @@ describe("buildPlan · a level change is a content edit (Lift4)", () => {
   const intermediate = () =>
     buildPlan(makeInput({ experience: "intermediate" }));
 
-  it("keeps the week's exercises, sets and reps when the level changes", () => {
-    const first = intermediate();
+  /* Lift4 (12): a level change sets how the main lifts progress. This
+     pinned the opposite (every rep target kept), which left a beginner's
+     plan on fixed 3 × 8 main lifts after the move to intermediate. */
+  const changed = (
+    from: PlanBuilderInput["experience"],
+    to: PlanBuilderInput["experience"],
+    over: Partial<PlanBuilderInput> = {}
+  ) => {
+    const first = buildPlan(makeInput({ experience: from, ...over }));
     const edited = buildPlan(
       makeInput({
+        experience: to,
+        previousExperience: from,
+        existingState: first.programState,
+        preserveHistory: true,
+        ...over,
+      })
+    );
+    return { first: first.programState, edited: edited.programState };
+  };
+  const lifts = (state: ProgramState, main: boolean) =>
+    state.workouts.flatMap((d) =>
+      d.exercises.filter((e) => (exerciseRole(e) === "main") === main)
+    );
+
+  it("keeps the week's exercises and sets when the level changes", () => {
+    const { first, edited } = changed("intermediate", "beginner");
+    const shape = (state: ProgramState) =>
+      state.workouts.map((d) => d.exercises.map((e) => [e.exerciseId, e.sets]));
+    expect(shape(edited)).toEqual(shape(first));
+    // Everything but the main lifts is as it was, reps and all.
+    expect(lifts(edited, false)).toEqual(lifts(first, false));
+  });
+
+  it("gives a beginner's main lifts one target each", () => {
+    const { first, edited } = changed("intermediate", "beginner");
+    expect(lifts(first, true).some((e) => e.progressionType === "double")).toBe(
+      true
+    );
+    for (const lift of lifts(edited, true)) {
+      expect(lift.progressionType, lift.name).toBe("linear");
+      expect(lift.repRangeMax, lift.name).toBeUndefined();
+      expect(lift.reps, lift.name).toBe(8);
+    }
+  });
+
+  it("gives an intermediate's main lifts a range, heavier and lighter by day", () => {
+    const { edited } = changed("beginner", "intermediate");
+    for (const day of edited.workouts) {
+      const shift =
+        day.dayRole === "heavy" ? -2 : day.dayRole === "pump" ? 2 : 0;
+      for (const lift of day.exercises.filter(
+        (e) => exerciseRole(e) === "main"
+      )) {
+        expect(lift.progressionType, lift.name).toBe("double");
+        expect(lift.repRangeMax, lift.name).toBeGreaterThan(lift.reps);
+        // The pump day's +2 skips a hinge (`undulationDeltaFor`).
+        const expected =
+          6 +
+          (shift > 0 && lift.movementCategory === "hip_dominant" ? 0 : shift);
+        expect(lift.reps, `${day.dayName}: ${lift.name}`).toBe(expected);
+      }
+    }
+  });
+
+  it("changes nothing where the level keeps the same numbers", () => {
+    const { first, edited } = changed("intermediate", "advanced");
+    expect(edited.workouts).toEqual(first.workouts);
+  });
+
+  it("keeps the sessions' focus when the same save changes the focus", () => {
+    // "Keep your current sessions and change the focus only": the level
+    // still sets the main lifts, for the focus the sessions follow.
+    const first = buildPlan(makeInput({ experience: "intermediate" }));
+    const edited = buildPlan(
+      makeInput({
+        primaryGoal: "strength",
         experience: "beginner",
         previousExperience: "intermediate",
         existingState: first.programState,
         preserveHistory: true,
       })
-    );
-    const shape = (plan: ReturnType<typeof buildPlan>) =>
-      plan.programState.workouts.map((d) =>
-        d.exercises.map((e) => [e.exerciseId, e.sets, e.reps])
-      );
-    expect(shape(edited)).toEqual(shape(first));
+    ).programState;
+    // A beginner's Build muscle main lifts, 8, not Get stronger's 5.
+    for (const lift of lifts(edited, true)) {
+      expect(lift.reps, lift.name).toBe(8);
+    }
+  });
+
+  it("sets the main lifts for a block's focus while one runs", () => {
+    const first = buildPlan(makeInput({ experience: "intermediate" }));
+    const block: ProgramState = {
+      ...first.programState,
+      primaryGoal: "strength",
+      workouts: represcribeWorkouts(
+        first.programState.workouts,
+        "strength",
+        "intermediate"
+      ),
+      trainingBlock: {
+        id: "2026-05-11-1",
+        owned: true,
+        focus: "strength",
+        pace: "full",
+        durationWeeks: 8,
+        startDate: "2026-05-11",
+        goalBefore: "hypertrophy",
+        amnestyWeeksLeft: 0,
+      } as ProgramState["trainingBlock"],
+    };
+    const edited = buildPlan(
+      makeInput({
+        experience: "beginner",
+        previousExperience: "intermediate",
+        existingState: block,
+        preserveHistory: true,
+      })
+    ).programState;
+    // A beginner's Get stronger main lifts: one target of 5, not Build
+    // muscle's 8.
+    for (const lift of lifts(edited, true)) {
+      expect(lift.reps, lift.name).toBe(5);
+      expect(lift.progressionType, lift.name).toBe("linear");
+    }
   });
 
   it("does not swap lifts by level on a later, unrelated save", () => {

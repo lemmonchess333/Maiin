@@ -52,8 +52,46 @@ describe("RunFitnessSection", () => {
       },
     });
     expect(screen.getByText("Personalised paces")).toBeInTheDocument();
-    expect(screen.getByText("Threshold")).toBeInTheDocument();
+    // Named for the sessions run at them (Run21 (2)).
+    expect(screen.getByText("Tempo")).toBeInTheDocument();
+    expect(screen.getByText("Intervals")).toBeInTheDocument();
+    expect(screen.queryByText("Threshold")).toBeNull();
     expect(screen.getByText(/VDOT/)).toBeInTheDocument();
+  });
+});
+
+describe("RunFitnessSection — a race time typed in", () => {
+  const enter = (time: string) => {
+    fireEvent.change(screen.getByLabelText("Finish time"), {
+      target: { value: time },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save fitness" }));
+  };
+
+  it("saves it as the person's own benchmark, never pending", async () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("22:30");
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    expect(updateProfile.mock.calls[0][0]).toEqual({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 1350 },
+        vdot: 43.4,
+        source: "manual",
+        updatedAt: expect.any(String),
+        pendingConfirmation: false,
+      },
+    });
+  });
+
+  it("refuses a time faster than anyone has raced", () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("12:00");
+    expect(
+      screen.getByText("That time doesn't look right. Check it and try again.")
+    ).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
   });
 });
 

@@ -183,7 +183,8 @@ describe("Home session actions and metadata", () => {
     expect(container).not.toHaveTextContent(/Session \d/);
   });
 
-  it("uses the real template duration and preserves the planned run identity", () => {
+  it("states the dose it is given and preserves the planned run identity", () => {
+    // Run21 (5): the dose is `todaySession`'s; a timed run states its time.
     const navigate = vi.fn();
     const { container } = render(
       <RunCTACard
@@ -195,9 +196,11 @@ describe("Home session actions and metadata", () => {
           } as ScheduledRunDay
         }
         navigate={navigate}
+        dose="30 min"
       />
     );
-    expect(container).toHaveTextContent("About 30 min");
+    expect(container).toHaveTextContent("30 min");
+    expect(container).not.toHaveTextContent(/about/i);
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=planned%20run"

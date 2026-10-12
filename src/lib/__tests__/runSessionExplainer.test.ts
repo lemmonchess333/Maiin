@@ -8,10 +8,12 @@
  * no physiology-measurement claims, no safety promises.
  */
 import { describe, it, expect } from "vitest";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getPhaseForWeek } from "@/features/program/runScheduler";
 import {
   runSessionExplainer,
   runSessionPresentation,
+  weekHoldsQuality,
 } from "../runSessionExplainer";
 
 const base = {
@@ -56,6 +58,7 @@ describe("runSessionExplainer", () => {
       ["tempo", "tempo_30", build],
       ["intervals", "5x1k", build],
       ["easy", "easy_30", taper],
+      ["easy", "easy_60", taper],
       ["intervals", "8x400", taper],
       ["long", "long_10k", taper],
       ["race", "marathon_race", race],
@@ -66,6 +69,21 @@ describe("runSessionExplainer", () => {
       expect(line, `${type}/${templateId} @ wk${ctx.currentWeek}`).toBeTruthy();
       expect(line!.length).toBeGreaterThan(20);
     }
+  });
+
+  /* A tempo's pace comes from the benchmark, from the goal race pace in
+     build and taper (A2), or from the template when there is neither, so
+     the line can't say where it comes from, nor how hard it feels: a
+     marathon's goal pace is steadier than threshold. The session's own
+     segments say both. */
+  it("the tempo line says what a tempo does, not where its pace comes from", () => {
+    const line = runSessionExplainer({
+      type: "tempo",
+      templateId: "tempo_30",
+      ...build,
+    });
+    expect(line).not.toMatch(/fitness/);
+    expect(line).toMatch(/blocks get longer/);
   });
 
   it("phase drives the copy: same template reads differently in build vs taper", () => {
@@ -99,6 +117,50 @@ describe("runSessionExplainer", () => {
     expect(strides).toMatch(/not a hard session/i);
   });
 
+  it("a run-walk says what it is, in every phase (Run20 (5))", () => {
+    // A 5K six weeks out is all run-walk, its taper and race week too, and
+    // there a run-walk was "Taper — easy and short on purpose" and a
+    // "Race-week shakeout".
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_2",
+        ...ctx,
+      });
+      expect(line).toMatch(/^Run-walk/);
+      expect(line).toMatch(/walks are part of the method/);
+      expect(line).not.toMatch(/readiness|safe|VO2/i);
+    }
+  });
+
+  it("the last run-walk is the one the weeks before built to, with no walks between", () => {
+    // Run-walk 6 is a walk, 20 minutes of running and a walk (review of
+    // #2655). What it is, "Why this run" says in its own line (Run21 (3)),
+    // so this is the reason only.
+    for (const ctx of [base, build, taper, race]) {
+      const line = runSessionExplainer({
+        type: "easy",
+        templateId: "run_walk_6",
+        ...ctx,
+      });
+      expect(line).toMatch(/^The last run-walk — what the weeks before/);
+      expect(line).not.toMatch(/walks between/);
+    }
+  });
+
+  it("a taper medium-long says it is shorter on purpose (Run22), not short", () => {
+    const line = runSessionExplainer({
+      type: "easy",
+      templateId: "easy_60",
+      ...taper,
+    });
+    expect(line).toMatch(/^Taper medium-long/);
+    expect(line).toMatch(/shorter on purpose/);
+    expect(line).not.toBe(
+      runSessionExplainer({ type: "easy", templateId: "easy_30", ...taper })
+    );
+  });
+
   it("REGISTER: never claims readiness, physiology measurement, or safety", () => {
     const all: string[] = [];
     for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
@@ -111,6 +173,95 @@ describe("runSessionExplainer", () => {
       expect(line).not.toMatch(/readiness|recovery score|safe(ly|ty)?\b/i);
       expect(line).not.toMatch(/VO2|lactate|MRV/i);
     }
+  });
+
+  it("calls tempo and intervals the quality sessions: hard is an effort, not a family (Run21 (4))", () => {
+    expect(
+      runSessionExplainer({
+        type: "easy",
+        templateId: "easy_30",
+        ...build,
+        weekHasQuality: true,
+      })
+    ).toMatch(/quality sessions/);
+    for (const type of ["easy", "long", "tempo", "intervals", "race"]) {
+      for (const templateId of ["x", "easy_40_strides", "easy_90"]) {
+        for (const ctx of [base, build, taper, race]) {
+          const line = runSessionExplainer({ type, templateId, ...ctx }) ?? "";
+          expect(line, `${type} ${templateId}`).not.toMatch(
+            /\bhard (days|sessions|runs)\b/i
+          );
+        }
+      }
+    }
+  });
+});
+
+describe("the build names the quality sessions only in a week that holds one", () => {
+  // "Why this run" never gives an invented reason (Run21 (3)). A returning
+  // runner's weeks hold no tempo or intervals (Run15), nor does every other
+  // build week on the gentler setting, and a week nobody read isn't assumed
+  // to.
+  const easy = (weekHasQuality?: boolean) =>
+    runSessionExplainer({
+      type: "easy",
+      templateId: "easy_30",
+      ...build,
+      weekHasQuality,
+    });
+  const long = (weekHasQuality?: boolean) =>
+    runSessionExplainer({
+      type: "long",
+      templateId: "long_15k",
+      ...build,
+      weekHasQuality,
+    });
+
+  it("an easy day and the long run name them when the week holds one", () => {
+    expect(easy(true)).toMatch(/quality sessions/);
+    expect(long(true)).toMatch(/quality/);
+  });
+
+  it("and give a reason true of any week when it doesn't, or isn't known", () => {
+    for (const holds of [false, undefined]) {
+      expect(easy(holds)).toMatch(/^Easy day — /);
+      expect(easy(holds)).not.toMatch(/quality|hard days/);
+      expect(long(holds)).toMatch(/^The week's anchor run — /);
+      expect(long(holds)).not.toMatch(/quality/);
+    }
+  });
+
+  it("reads the week the run is in, the person's swaps included", () => {
+    const week = "2026-10-05";
+    const day = (
+      templateId: string,
+      weekKey = week,
+      userOverride?: string
+    ) => ({
+      templateId,
+      weekKey,
+      userOverride,
+    });
+    expect(weekHoldsQuality([day("easy_30"), day("tempo_20")], week)).toBe(
+      true
+    );
+    expect(weekHoldsQuality([day("easy_30"), day("8x400")], week)).toBe(true);
+    expect(weekHoldsQuality([day("easy_30"), day("long_10k")], week)).toBe(
+      false
+    );
+    // Another week's tempo isn't this week's.
+    expect(
+      weekHoldsQuality([day("easy_30"), day("tempo_20", "2026-10-12")], week)
+    ).toBe(false);
+    // A tempo swapped for an easy run is gone, and the other way it counts.
+    expect(weekHoldsQuality([day("tempo_20", week, "easy_30")], week)).toBe(
+      false
+    );
+    expect(weekHoldsQuality([day("easy_30", week, "tempo_20")], week)).toBe(
+      true
+    );
+    expect(weekHoldsQuality([day("tempo_20")], undefined)).toBe(false);
+    expect(weekHoldsQuality(undefined, week)).toBe(false);
   });
 });
 
@@ -158,5 +309,97 @@ describe("shared run purpose presentation", () => {
         templateId: "easy_30",
       }).purpose
     ).toBeNull();
+  });
+});
+
+describe("a long run that finishes at race pace (Run21 (2))", () => {
+  // Half plan, 10 weeks: base w0-2, build w3-6.
+  const long = {
+    type: "long",
+    templateId: "long_15k",
+    totalWeeks: 10,
+    distance: "half",
+  };
+
+  it("is in the build's week to rehearse race day", () => {
+    expect(
+      runSessionExplainer({ ...long, currentWeek: 5, racePace: "finish" })
+    ).toBe(
+      "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+    );
+  });
+
+  it("keeps the anchor run's reason without one", () => {
+    expect(runSessionExplainer({ ...long, currentWeek: 5 })).toMatch(
+      /^The week's anchor run/
+    );
+  });
+});
+
+describe("a tempo at the goal race pace (Run21 (3))", () => {
+  // Half, 10 weeks: base w0-2, build w3-6, taper w7-8. The plain tempo's
+  // reason says its pace "comes from your fitness", which a goal-pace
+  // tempo's doesn't, and the taper's says "easy and short".
+  const tempo = {
+    type: "tempo",
+    templateId: "tempo_20",
+    totalWeeks: 10,
+    distance: "half",
+  };
+
+  it("practises the goal pace in the build", () => {
+    const why = runSessionExplainer({
+      ...tempo,
+      currentWeek: 5,
+      racePace: "tempo",
+    });
+    expect(why).toBe(
+      "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts."
+    );
+  });
+
+  it("keeps the rhythm sharp in the taper", () => {
+    expect(
+      runSessionExplainer({ ...tempo, currentWeek: 7, racePace: "tempo" })
+    ).toBe(
+      "Taper — a short block at race pace keeps the rhythm sharp while the volume drops."
+    );
+  });
+
+  it("keeps the tempo's own reasons without it", () => {
+    expect(runSessionExplainer({ ...tempo, currentWeek: 5 })).toMatch(
+      /^Tempo — /
+    );
+  });
+
+  // Without a goal time, a tempo in the taper fell through to the easy
+  // runs' reason, "easy and short on purpose", for a comfortably hard run.
+  it("a plain tempo in the taper isn't called easy", () => {
+    expect(runSessionExplainer({ ...tempo, currentWeek: 7 })).toBe(
+      "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops."
+    );
+  });
+});
+
+describe("physiology words stay out of the reasons (Run21 (2))", () => {
+  // They appear only as "Coaches also call this" (runSessionAbout).
+  it("gives no reason that names one, in any week", () => {
+    for (const t of RUN_TEMPLATES) {
+      for (let week = 0; week < 16; week++) {
+        for (const racePace of [null, "finish", "tempo"] as const) {
+          const why = runSessionExplainer({
+            type: t.type,
+            templateId: t.id,
+            currentWeek: week,
+            totalWeeks: 16,
+            distance: "marathon",
+            racePace,
+          });
+          expect(why ?? "", `${t.id}, week ${week + 1}`).not.toMatch(
+            /aerobic|threshold|economy|VO2|lactate/i
+          );
+        }
+      }
+    }
   });
 });

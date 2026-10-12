@@ -1,5 +1,9 @@
 import { differenceInCalendarDays } from "date-fns";
-import { RUN_TEMPLATES, type RunTemplate } from "@/lib/workoutTemplates";
+import {
+  isRunWalkTemplateId,
+  RUN_TEMPLATES,
+  type RunTemplate,
+} from "@/lib/workoutTemplates";
 import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 import { plannedRunMinutes } from "./runTimeLimits";
 import type { ScheduledRunDay } from "./programTypes";
@@ -69,10 +73,14 @@ export function fitWeekToRunningBaseline(
   const templateFor = (row: ScheduledRunDay) =>
     RUN_TEMPLATES.find((t) => t.id === (row.userOverride ?? row.templateId));
   const minutes = (t: RunTemplate) => plannedRunMinutes(t, easyPaceSPerKm);
+  // A run-walk session (Run20 (5)) is already the gentlest prescription,
+  // made for someone with no running to report; the baseline fits
+  // continuous runs, and never swaps one for a run-walk.
   const protectedRow = (row: ScheduledRunDay) =>
     row.type === "race" ||
     row.completed ||
     row.userOverride ||
+    isRunWalkTemplateId(row.templateId) ||
     (row.status && row.status !== "planned");
   const replace = (
     row: ScheduledRunDay,
@@ -100,6 +108,7 @@ export function fitWeekToRunningBaseline(
     const fitting = RUN_TEMPLATES.filter(
       (t) =>
         t.type !== "race" &&
+        !isRunWalkTemplateId(t.id) &&
         minutes(t) <= ceiling &&
         (onlyEasy
           ? t.type === "easy" && !t.config?.strides
@@ -109,7 +118,11 @@ export function fitWeekToRunningBaseline(
     return (
       fitting[0] ??
       RUN_TEMPLATES.filter(
-        (t) => t.type === "easy" && !t.config?.strides && minutes(t) <= ceiling
+        (t) =>
+          t.type === "easy" &&
+          !t.config?.strides &&
+          !isRunWalkTemplateId(t.id) &&
+          minutes(t) <= ceiling
       ).sort((a, b) => minutes(b) - minutes(a))[0]
     );
   };
