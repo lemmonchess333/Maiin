@@ -119,7 +119,7 @@ function SplitsStrip({
           s.paceSeconds <
           splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length - 5;
         const color = isBest
-          ? THEME.teal
+          ? THEME.running
           : isFast
             ? THEME.success
             : "rgba(255,255,255,0.5)";
@@ -164,7 +164,7 @@ function SplitsStrip({
  *  recent with an honest "last 5 of N" header rather than an inner
  *  scroller: the whole sheet is a pointer-drag surface, and a scrollable
  *  list inside it would fight the drag for the same gesture. The full
- *  list lives on the post-run summary. Best lap carries the teal the
+ *  list lives on the post-run summary. Best lap carries the coral the
  *  expanded SplitsStrip already uses for it; each later lap shows a
  *  signed delta vs the lap before (green = faster). Before the first
  *  lap completes, the current-lap progress bar plus a quiet line — the
@@ -229,7 +229,7 @@ export function SplitsList({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                color: isBest ? THEME.teal : "rgba(255,255,255,0.85)",
+                color: isBest ? THEME.running : "rgba(255,255,255,0.85)",
                 fontVariantNumeric: "tabular-nums",
                 fontFamily: "var(--font-mono)",
               }}
@@ -307,7 +307,7 @@ function KmProgress({
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${progress * 100}%`,
-            background: `linear-gradient(90deg, ${THEME.teal}, ${THEME.brand})`,
+            background: THEME.running,
           }}
         />
       </div>
@@ -532,10 +532,10 @@ export default function RunBottomSheet({
                     fontWeight: 800,
                     fontVariantNumeric: "tabular-nums",
                     fontFamily: "var(--font-mono)",
-                    color: THEME.teal,
+                    color: THEME.running,
                     lineHeight: 1,
                     letterSpacing: "-2px",
-                    textShadow: `0 0 40px ${THEME.teal}55`,
+                    textShadow: `0 0 40px ${THEME.running}55`,
                   }}
                 >
                   {formatTime(elapsed)}
@@ -909,7 +909,7 @@ export default function RunBottomSheet({
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  color: THEME.teal,
+                  color: THEME.running,
                   fontVariantNumeric: "tabular-nums",
                   fontFamily: "var(--font-mono)",
                 }}
@@ -965,7 +965,7 @@ export default function RunBottomSheet({
               }}
               className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{
-                background: isPaused ? THEME.teal : "rgba(255,255,255,0.1)",
+                background: isPaused ? THEME.running : "rgba(255,255,255,0.1)",
                 border: "2px solid rgba(255,255,255,0.18)",
               }}
             >

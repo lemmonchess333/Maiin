@@ -182,7 +182,7 @@ export default function RunMap({
         source: "route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": THEME.teal,
+          "line-color": THEME.running,
           "line-width": 5,
           "line-opacity": 0.95,
         },
@@ -329,12 +329,12 @@ export default function RunMap({
           // Heading cone — hidden until we actually have a bearing so it
           // doesn't point a misleading direction while stationary.
           const cone = document.createElement("div");
-          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.teal};opacity:0;transition:opacity .2s;`;
+          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.running};opacity:0;transition:opacity .2s;`;
           coneRef.current = cone;
           const halo = document.createElement("div");
-          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
+          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.running}33;display:flex;align-items:center;justify-content:center;`;
           const inner = document.createElement("div");
-          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.teal};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.teal}55;`;
+          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.running};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.running}55;`;
           halo.appendChild(inner);
           outer.appendChild(cone);
           outer.appendChild(halo);

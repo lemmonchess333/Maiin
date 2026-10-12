@@ -24,7 +24,7 @@
  *
  * Variants encode the run screen's existing colour vocabulary:
  *   - neutral   translucent white surface (lock, pause)
- *   - primary   THEME.teal filled (resume — go-action)
+ *   - primary   THEME.running filled (resume — go-action)
  *   - danger    red translucent + red icon (stop)
  *
  * The optional visible label below the button (e.g. "LOCK", "PAUSE")
@@ -55,7 +55,7 @@ type RunControlButtonProps = Omit<
    *  SVG, two-rect pause symbol). */
   icon: ReactNode;
   /** When true, applies an outer glow that mirrors the visual
-   *  emphasis of the active "Resume" button (THEME.teal). The
+   *  emphasis of the active "Resume" button (THEME.running). The
    *  variant already drives the colour; this gates the shadow on
    *  the call site. */
   glow?: boolean;
@@ -98,12 +98,12 @@ function variantStyle(
 ): React.CSSProperties {
   switch (variant) {
     case "primary":
-      // THEME.teal filled — used on Resume. Glow always-on for this
+      // THEME.running filled — used on Resume. Glow always-on for this
       // variant because the user is looking for the go-action.
       return {
-        background: THEME.teal,
+        background: THEME.running,
         boxShadow: glow
-          ? `0 0 32px ${THEME.teal}66, 0 8px 24px rgba(0, 0, 0, 0.4)`
+          ? `0 0 32px ${THEME.running}66, 0 8px 24px rgba(0, 0, 0, 0.4)`
           : "0 8px 24px rgba(0, 0, 0, 0.4)",
       };
     case "danger":
