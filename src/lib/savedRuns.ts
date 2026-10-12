@@ -43,6 +43,8 @@ import {
 } from "./runExecutionEvidence";
 import { sampleRoute, type RouteCoordinate } from "./routeSegments";
 import { pinnedWorkPace, type SessionSegment } from "./runSegments";
+import { isTreadmillRun } from "./runGuards";
+import type { RunPlace } from "@/types/run";
 
 export interface RunSummaryItem {
   id: string;
@@ -52,6 +54,11 @@ export interface RunSummaryItem {
   elevationGain: number;
   calories: number;
   activityType: string;
+  /** "treadmill" for a run on one (Pgm8): its stored `place`, or, for a
+   *  run saved before the treadmill became a place, its `activityType:
+   *  "treadmill"`. Absent for every other run. The eligibility policies
+   *  and the guards read it (`isTreadmillRun`). */
+  place?: RunPlace;
   completedAt: Date;
   date?: string;
   executionTarget?: RunExecutionTarget | null;
@@ -201,6 +208,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     elevationGain: finite(data.elevationGain),
     calories: finite(data.calories),
     activityType: data.activityType || "freerun",
+    ...(isTreadmillRun(data) ? { place: "treadmill" as const } : {}),
     completedAt,
     date,
     day: runEvidenceDate({ date, completedAt }),

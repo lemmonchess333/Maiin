@@ -448,3 +448,77 @@ describe("the lock screen", () => {
     expect(screen.queryByText(/km/)).toBeNull();
   });
 });
+
+/* Pgm8: the treadmill is where a run is done, so a treadmill run keeps its
+   session's type ("long") with `place: "treadmill"`. Everything that asks
+   "is this run on the GPS" reads the place too: such a run never starts
+   the GPS, runs on the treadmill screen, and hands the summary its type
+   and its place. A run stored before Pgm8 as `activityType: "treadmill"`
+   is one too. */
+describe("a run on the treadmill", () => {
+  /** Stands in for the finish screen: what the run handed it. */
+  function PlaceSummary() {
+    const state = useLocation().state as {
+      distance: number;
+      runConfig: { activityType: string; place?: string };
+    };
+    return (
+      <p>
+        {`${state.runConfig.activityType} · ${state.runConfig.place ?? "outdoors"} · ${state.distance} m`}
+      </p>
+    );
+  }
+
+  it.each([
+    [
+      "a planned long run, since Pgm8",
+      { activityType: "long" as const, place: "treadmill" as const },
+      "long · treadmill · 6000 m",
+    ],
+    [
+      "a treadmill run stored before Pgm8",
+      // The treadmill was a run type then; it is no ActivityType now.
+      {
+        activityType:
+          "treadmill" as unknown as StoredRun["config"]["activityType"],
+      },
+      "treadmill · outdoors · 6000 m",
+    ],
+  ])(
+    "%s resumes without the GPS, on the treadmill screen",
+    async (_name, config, handed) => {
+      const { points: _trace, ...snapshot } = saveInterruptedRun(
+        "active",
+        config
+      );
+      expect(
+        writeStoredRun("recording-test", { ...snapshot, points: [] })
+      ).toBe(true);
+      render(
+        <MemoryRouter initialEntries={["/run"]}>
+          <Routes>
+            <Route path="/run" element={<Run />} />
+            <Route path="/run-summary" element={<PlaceSummary />} />
+          </Routes>
+        </MemoryRouter>
+      );
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }));
+      });
+      const distance = screen.getByRole("spinbutton", {
+        name: "Distance from treadmill",
+      });
+      expect(h.gpsCalls).not.toContain("start");
+      // The outdoor run's sheet, with its Finish, is not there.
+      expect(screen.queryByRole("button", { name: "Finish" })).toBeNull();
+      fireEvent.change(distance, { target: { value: "6" } });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: "Save Treadmill Run" })
+        );
+      });
+      expect(screen.getByText(handed)).toBeInTheDocument();
+      expect(h.gpsCalls).not.toContain("start");
+    }
+  );
+});

@@ -9,7 +9,7 @@
  * their trend visibility.
  */
 
-import type { ActivityType } from "@/types/run";
+import type { ActivityType, RunPlace } from "@/types/run";
 import { isPaceTrendEligible } from "./runStatsEligibility";
 import { isRunWalkTemplateId } from "./workoutTemplates";
 
@@ -60,6 +60,8 @@ interface RunForTrend {
   avgPace: number; // sec/km
   completedAt: Date;
   activityType?: ActivityType | string;
+  /** "treadmill" for a run on one (Pgm8): no trend, whatever its type. */
+  place?: RunPlace | string | null;
   isInvalid?: boolean;
   savedAnyway?: boolean;
   /** The template the run was, when it was one. */

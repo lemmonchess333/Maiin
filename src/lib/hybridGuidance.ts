@@ -12,10 +12,11 @@
  * The run plan's definition wins (Pgm7 A5). A run carrying a planned type
  * is judged by that type alone, against the same `HARD_RUN_TYPES` the run
  * scheduler, spacing, rescheduling and day intensity read: an easy run is
- * never hard, and a race always is. A run with no planned type (a free run,
- * treadmill, manual, guided, or one logged without the plan) counts as long
- * from 75 minutes. Distance never counts on its own: 8 km takes 40 minutes
- * for one runner and 70 for another.
+ * never hard, and a race always is. A run on the treadmill keeps its type
+ * (Pgm8), so it is judged the same. A run with no planned type (a free run,
+ * a treadmill run saved before Pgm8, manual, guided, or one logged without
+ * the plan) counts as long from 75 minutes. Distance never counts on its
+ * own: 8 km takes 40 minutes for one runner and 70 for another.
  *
  * Pure + deterministic.
  */

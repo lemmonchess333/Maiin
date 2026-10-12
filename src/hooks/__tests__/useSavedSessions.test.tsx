@@ -75,6 +75,47 @@ describe("useSavedRuns readiness", () => {
   });
 });
 
+describe("useSavedRuns: where a run was run (Pgm8)", () => {
+  it("reads a treadmill run as one, saved before Pgm8 or since, and keeps it through a queued edit", async () => {
+    seedFirestore({
+      // Since Pgm8: the plan's type, on the treadmill.
+      "users/runner/runs/belt-new": savedRunDoc("2026-09-03", {
+        activityType: "long",
+        place: "treadmill",
+      }),
+      // Before: the treadmill was the run's type.
+      "users/runner/runs/belt-old": savedRunDoc("2026-09-02", {
+        activityType: "treadmill",
+      }),
+      // Outdoors, saved since Pgm8.
+      "users/runner/runs/road": savedRunDoc("2026-09-04", { place: null }),
+    });
+    // A note added offline: a merge that leaves the place alone.
+    queueDurableWrite(
+      "runner",
+      "users/runner/runs",
+      "belt-new",
+      { notes: "Hills on the belt" },
+      true
+    );
+    const { result } = renderHook(() => useSavedRuns(WINDOW));
+    await waitFor(() => expect(result.current.answered).toBe(true));
+    const byId = Object.fromEntries(
+      result.current.runs.map((run) => [run.id, run])
+    );
+    expect(byId["belt-new"]).toMatchObject({
+      activityType: "long",
+      place: "treadmill",
+    });
+    expect(byId["belt-old"]).toMatchObject({
+      activityType: "treadmill",
+      place: "treadmill",
+    });
+    expect(byId.road.place).toBeUndefined();
+    expect(byId.old.place).toBeUndefined();
+  });
+});
+
 describe("the same engine for workouts", () => {
   it("shows a workout finished on this phone, and answers with the list", async () => {
     seedFirestore({

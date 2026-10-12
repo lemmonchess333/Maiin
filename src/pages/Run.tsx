@@ -87,6 +87,7 @@ import { THEME } from "../lib/theme";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
+  isTreadmillRun,
   requiresManualDistance,
   getInvalidRunReason,
 } from "../lib/runGuards";
@@ -347,10 +348,10 @@ export default function Run() {
   // stop/restart/gap-accounting policy below is therefore WEB-ONLY, where
   // backgrounding genuinely loses fixes.
   const handleHidden = useCallback(() => {
-    if (!isNativePlatform() && isOutdoorGpsRun(runConfig?.activityType)) {
+    if (!isNativePlatform() && isOutdoorGpsRun(runConfig)) {
       gps.stop(); // Stop GPS to save battery while backgrounded (web only)
     }
-  }, [gps, runConfig?.activityType]);
+  }, [gps, runConfig]);
 
   const handleVisible = useCallback(
     (event: import("../hooks/useRunVisibility").VisibilityEvent) => {
@@ -366,7 +367,7 @@ export default function Run() {
         // Restart GPS tracking if we were actively tracking (web only — the
         // native watcher never stopped, and re-creating it would churn the
         // foreground service).
-        if (isOutdoorGpsRun(runConfig?.activityType) && phase === "active") {
+        if (isOutdoorGpsRun(runConfig) && phase === "active") {
           gps.start();
         }
 
@@ -395,7 +396,7 @@ export default function Run() {
         // symptom of a "While Using"-only grant (the plugin exposes no API
         // to read the tier directly). Surface the non-blocking note once,
         // pointing at Settings → Always. The run is never blocked.
-        isOutdoorGpsRun(runConfig?.activityType) &&
+        isOutdoorGpsRun(runConfig) &&
         phase === "active" &&
         !bgGrantNoteDismissedRef.current &&
         shouldWarnBackgroundPause({
@@ -407,7 +408,7 @@ export default function Run() {
         setShowBgGrantNote(true);
       }
     },
-    [timer, gps, wakeLock, runConfig?.activityType, phase]
+    [timer, gps, wakeLock, runConfig, phase]
   );
 
   useRunVisibility({
@@ -681,6 +682,9 @@ export default function Run() {
     // activityType (chooser may have diverged from the prefill).
     // RunSetupModal carries the prefill snapshot on config.planMetadata;
     // here we recompute the four user-dependent fields and persist.
+    // The type alone decides: the treadmill is where the run is done
+    // (`config.place`, Pgm8), so a planned run on one is still the planned
+    // run and the summary has nothing to ask about it.
     const finalisedMetadata = finalisePlanMetadata(
       config.planMetadata,
       config.activityType
@@ -700,7 +704,7 @@ export default function Run() {
       kind: "run",
       offPlan: planDecision.metadata.offPlan,
     });
-    if (requiresManualDistance(finalConfig.activityType)) {
+    if (requiresManualDistance(finalConfig)) {
       dispatch({ type: "START_MANUAL" });
       timer.start();
       haptic("heavy");
@@ -813,8 +817,10 @@ export default function Run() {
     // Restart GPS for outdoor runs that were active. Paused runs
     // get GPS back on user-driven Resume (handleResume below); we
     // only re-arm here when the snapshot itself was active.
+    // A run stored before Pgm8 as `activityType: "treadmill"` reads as
+    // a treadmill run too (`isTreadmillRun`), so it resumes without GPS.
     if (
-      isOutdoorGpsRun(resumePrompt.config.activityType) &&
+      isOutdoorGpsRun(resumePrompt.config) &&
       resumePrompt.phase === "active"
     ) {
       gps.start();
@@ -962,7 +968,7 @@ export default function Run() {
   // updates are throttled + deduped internally — this effect just feeds
   // it the current truth every tick.
   useEffect(() => {
-    if (!isOutdoorGpsRun(runConfig?.activityType)) return;
+    if (!isOutdoorGpsRun(runConfig)) return;
     if (phase !== "active" && phase !== "paused") return;
     const paceS = rollingPaceSeconds(gps.points, 30);
     const data = {
@@ -973,15 +979,7 @@ export default function Run() {
     };
     void startRunActivity(data);
     void updateRunActivity(data);
-  }, [
-    phase,
-    timer,
-    timer.elapsed,
-    gps.distance,
-    gps.points,
-    unit,
-    runConfig?.activityType,
-  ]);
+  }, [phase, timer, timer.elapsed, gps.distance, gps.points, unit, runConfig]);
 
   // Dismiss the Live Activity the moment the run leaves the live states
   // (finish → summary, discard, GPS-fail exit) and on unmount — a card
@@ -1002,7 +1000,7 @@ export default function Run() {
     const eligible =
       phase === "active" &&
       !!runConfig?.autoPause &&
-      !requiresManualDistance(runConfig.activityType);
+      !requiresManualDistance(runConfig);
     if (!eligible) {
       // Left the auto-pause-eligible state (paused, finished, config off) —
       // cancel any pending pause.
@@ -1046,13 +1044,7 @@ export default function Run() {
     // No cleanup here: React runs effect cleanup before EVERY re-run, so
     // clearing the pending timeout in a cleanup is exactly what broke auto-pause
     // (reset every ~1s). Teardown on unmount is handled by the effect below.
-  }, [
-    gps.currentPoint,
-    phase,
-    autoPaused,
-    runConfig?.autoPause,
-    runConfig?.activityType,
-  ]);
+  }, [gps.currentPoint, phase, autoPaused, runConfig]);
 
   // Unmount-only teardown for the auto-pause timer (the main effect above
   // deliberately has no per-run cleanup).
@@ -1121,7 +1113,7 @@ export default function Run() {
     // rather than silently saving a blank 0 km run.
     if (
       distanceOverride === undefined &&
-      isOutdoorGpsRun(runConfig?.activityType) &&
+      isOutdoorGpsRun(runConfig) &&
       points.length < 2
     ) {
       toast(
@@ -1134,7 +1126,7 @@ export default function Run() {
     // have no points and would always score "poor" by the
     // <-5-fixes rule. We skip the computation entirely for those
     // and let RunSummary persist null on the run doc.
-    const routeQuality = isOutdoorGpsRun(runConfig?.activityType)
+    const routeQuality = isOutdoorGpsRun(runConfig)
       ? computeRouteQuality({
           acceptedAccuracies: points
             .map((p) => p.accuracy)
@@ -1184,13 +1176,13 @@ export default function Run() {
        auto-paused at a crossing added everything since the last resume to
        the run's duration a second time. */
     if (timer.isRunning) timer.pause();
-    if (isOutdoorGpsRun(runConfig?.activityType)) gps.stop();
+    if (isOutdoorGpsRun(runConfig)) gps.stop();
     dispatch({ type: "PAUSE" });
   };
 
   const handleResume = () => {
     haptic("medium");
-    if (isOutdoorGpsRun(runConfig?.activityType)) gps.start();
+    if (isOutdoorGpsRun(runConfig)) gps.start();
     timer.resume();
     /* Resuming by hand ends an auto-pause too. Left set, the timer would
        run under an "Auto-paused" banner with the trace still held, until
@@ -1208,11 +1200,11 @@ export default function Run() {
        next render, jump straight to 'active' (NOT 'waiting' — that
        would re-prompt the setup modal) and start the timer.
 
-       Writes activityType='manual' (not 'treadmill') so History,
-       RunDetail, etc. can label the run honestly: the user was
-       outdoors and intended a real run, GPS just didn't lock.
+       Writes activityType='manual' (not the treadmill place) so
+       History, RunDetail, etc. can label the run honestly: the user
+       was outdoors and intended a real run, GPS just didn't lock.
        requiresManualDistance() and isOutdoorGpsRun() both treat
-       'manual' identically to 'treadmill' — this difference is
+       'manual' identically to a treadmill run — this difference is
        cosmetic / labelling only.
 
        audioCues.prime() / wakeLock.request() were called when the run
@@ -1257,7 +1249,7 @@ export default function Run() {
           {/* In the reader's unit, as the sheet under it reads: this said
               "km" over a kilometre figure to a runner who reads miles. */}
           {distanceValue(
-            requiresManualDistance(runConfig?.activityType)
+            requiresManualDistance(runConfig)
               ? treadmillDistance
               : gps.distance,
             unit,
@@ -1286,7 +1278,7 @@ export default function Run() {
     );
   }
 
-  const currentDistance = requiresManualDistance(runConfig?.activityType)
+  const currentDistance = requiresManualDistance(runConfig)
     ? treadmillDistance
     : gps.distance;
 
@@ -1299,6 +1291,7 @@ export default function Run() {
   const liveInvalidReason = runConfig
     ? getInvalidRunReason({
         activityType: runConfig.activityType,
+        place: runConfig.place,
         distanceKm: (currentDistance ?? 0) / 1000,
         elapsedSeconds: timer.elapsed,
       })
@@ -1424,8 +1417,8 @@ export default function Run() {
             </div>
           ) : (
             // Freeform / rest / completed / ad-hoc → one-tap tile picker.
-            // Structured sessions (intervals/treadmill/guided/race/route) live
-            // behind "More options" → the full modal.
+            // Structured sessions (intervals/guided/race/route) and any run
+            // on the treadmill live behind "More options" → the full modal.
             <RunTilePicker
               paceTable={paceTable}
               selectedShoeId={launchShoeId}
@@ -1625,15 +1618,13 @@ export default function Run() {
       )}
 
       {(phase === "active" || phase === "paused") &&
-        requiresManualDistance(runConfig?.activityType) && (
+        requiresManualDistance(runConfig) && (
           <div
             className="flex-1 flex items-center text-white"
             style={{ backgroundColor: THEME.bg }}
           >
             <TreadmillMode
-              mode={
-                runConfig?.activityType === "manual" ? "manual" : "treadmill"
-              }
+              mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
               elapsed={timer.elapsed}
               formatTime={timer.formatTime}
               onSave={(distance) => {
@@ -1650,7 +1641,7 @@ export default function Run() {
         )}
 
       {(phase === "active" || phase === "paused") &&
-        isOutdoorGpsRun(runConfig?.activityType) && (
+        isOutdoorGpsRun(runConfig) && (
           <div
             className="fixed inset-0 z-50 text-white"
             style={

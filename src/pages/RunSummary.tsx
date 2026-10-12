@@ -102,6 +102,7 @@ import {
   canShowShare,
   getInvalidRunReason,
   isOutdoorGpsRun,
+  requiresManualDistance,
   type InvalidRunReason,
   type SaveStatus,
 } from "../lib/runGuards";
@@ -533,6 +534,8 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          // A treadmill run (Pgm8) has no trend, whatever its type.
+          place: state.runConfig?.place,
           templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
@@ -564,6 +567,8 @@ export default function RunSummary() {
       completedAt: new Date(),
       avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
       activityType: state.runConfig?.activityType ?? "freerun",
+      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
+      place: state.runConfig?.place ?? null,
       isInvalid: false,
       savedAnyway: false,
       // What decides whether it was an effort (Pgm8 R1): a tempo by its
@@ -631,6 +636,7 @@ export default function RunSummary() {
       isInvalid: type
         ? getInvalidRunReason({
             activityType: type,
+            place: state.runConfig?.place,
             distanceKm: (runDistance ?? 0) / 1000,
             elapsedSeconds: state.elapsed ?? 0,
           }) !== null
@@ -681,6 +687,10 @@ export default function RunSummary() {
   const distanceKm = (distance ?? 0) / 1000;
   const elapsedSeconds = elapsed ?? 0;
   const activityType = runConfig?.activityType;
+  /* The distance was typed in (TreadmillMode): on the treadmill, the place,
+     whatever the type (Pgm8), or a run tracked without GPS. Typed, so the
+     finish screen can correct it. */
+  const typedDistance = requiresManualDistance(runConfig);
 
   // Run8-Vocab — adherence chip in the summary header.
   // Maps runConfig.planMetadata → "Planned" / "Custom" / "Extra"
@@ -785,6 +795,7 @@ export default function RunSummary() {
   // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
   const paceVerdict = plannedRunVerdict({
     planMetadata: runConfig?.planMetadata,
+    place: runConfig?.place,
     avgPaceSeconds,
     workPaceSeconds: workPaceSeconds(state.workPortion),
     pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
@@ -854,10 +865,15 @@ export default function RunSummary() {
      treadmill (e.g. types `20` instead of `2.0`); 'too-short' covers
      the original sub-50m / sub-30s thresholds. */
   const invalidReason = activityType
-    ? getInvalidRunReason({ activityType, distanceKm, elapsedSeconds })
+    ? getInvalidRunReason({
+        activityType,
+        place: runConfig?.place,
+        distanceKm,
+        elapsedSeconds,
+      })
     : null;
   const isInvalid = invalidReason !== null;
-  const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
+  const outdoorGps = activityType ? isOutdoorGpsRun(runConfig) : false;
 
   /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
      with material climb (≥8 m/km, gated in the module) get one calm
@@ -1146,9 +1162,7 @@ export default function RunSummary() {
           pendingSync={pendingSync}
           /* Edit distance only for treadmill / manual — outdoor
              GPS distance came from a sensor, no typo to fix. */
-          canEditDistance={
-            activityType === "treadmill" || activityType === "manual"
-          }
+          canEditDistance={typedDistance}
           onSave={handleSave}
           onDiscard={handleDiscard}
           onDone={() => navigate("/")}
@@ -1713,7 +1727,7 @@ export default function RunSummary() {
                 and there is no typo to fix. Pre-save only — afterwards the
                 figure is on the account and correcting it is a different
                 operation. */}
-            {(activityType === "treadmill" || activityType === "manual") &&
+            {typedDistance &&
               canShowNormalSave({ isInvalid: false, saveStatus }) && (
                 <EditDistance
                   unit={unit}

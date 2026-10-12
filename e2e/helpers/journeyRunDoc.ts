@@ -88,6 +88,7 @@ export function journeyRunFields(input: JourneyRun) {
     visibility: "followers" as const,
     type: "run",
     activityType: runConfig.activityType || "freerun",
+    place: runConfig.place ?? null,
     target: runConfig.target,
     intervalData: runConfig.intervals,
     runConfig,

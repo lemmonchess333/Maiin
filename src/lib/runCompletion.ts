@@ -98,7 +98,11 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     paceVerdictTone: run.paceVerdictTone,
     visibility: "followers" as const,
     type: "run",
+    // The session, the plan's type for a planned run, wherever it was run.
     activityType: run.runConfig?.activityType || "freerun",
+    // Pgm8: where it was run, "treadmill" or null, not absent, so the
+    // field's shape does not split.
+    place: run.runConfig?.place ?? null,
     target: run.runConfig?.target,
     intervalData: run.intervalData,
     runConfig: run.runConfig,

@@ -236,3 +236,39 @@ describe("RunDetail — splits and the route key", () => {
     expect(screen.queryByRole("img", { name: /^Route pace/ })).toBeNull();
   });
 });
+
+/* Pgm8: a treadmill run keeps its session's type, with the treadmill as
+   where it was run. Its page says so, as it does for one saved before, so
+   no treadmill run reads as an outdoor run. */
+describe("RunDetail — a treadmill run says so", () => {
+  /** A run typed in on the treadmill: no track, no splits, 6 km. */
+  function onTreadmill(extra: Record<string, unknown>) {
+    return savedRun({
+      points: [],
+      splits: [],
+      distance: 6000,
+      duration: 2160,
+      ...extra,
+    });
+  }
+
+  it("titles a planned long run done there with its type and the treadmill", () => {
+    h.run = onTreadmill({ activityType: "long", place: "treadmill" });
+    renderDetail();
+    expect(screen.getByText("Long Run · Treadmill")).toBeInTheDocument();
+    expect(screen.getByText("Splits · No GPS route")).toBeInTheDocument();
+  });
+
+  it("titles one saved before Pgm8, under the old treadmill type, Treadmill", () => {
+    h.run = onTreadmill({ activityType: "treadmill" });
+    renderDetail();
+    expect(screen.getByText("Treadmill")).toBeInTheDocument();
+  });
+
+  it("titles the same long run outdoors by its type alone", () => {
+    h.run = savedRun({ activityType: "long", place: null });
+    renderDetail();
+    expect(screen.getByText("Long Run")).toBeInTheDocument();
+    expect(screen.queryByText(/Treadmill/)).toBeNull();
+  });
+});

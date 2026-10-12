@@ -41,6 +41,7 @@ const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
   domAtRender: [] as string[],
   paceLoading: [] as boolean[],
+  paceEnabled: [] as boolean[],
   paceRuns: [] as { id?: string }[],
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
@@ -65,9 +66,10 @@ vi.mock("@/features/program/useProgram", () => ({
 vi.mock("@/hooks/usePaceInsight", () => ({
   usePaceInsightFromRuns: (
     runs: { id?: string }[],
-    opts: { loading?: boolean }
+    opts: { loading?: boolean; enabled?: boolean }
   ) => {
     h.paceLoading.push(opts.loading ?? false);
+    h.paceEnabled.push(opts.enabled ?? true);
     h.paceRuns = runs;
     return { insight: null, accept: vi.fn(), dismiss: vi.fn() };
   },
@@ -339,11 +341,10 @@ describe("RunSummary — Save", () => {
 
   it("queues the run, then shows it saved", async () => {
     renderUnsaved();
-    // The E2E journeys read the summary and save and leave by these
-    // (src/test/journeyScreens.ts).
     expect(
-      await screen.findByRole("heading", { name: RUN.summary, level: 1 })
+      await screen.findByRole("heading", { name: "Nice run", level: 1 })
     ).toBeInTheDocument();
+    // The E2E journeys save and leave by these (src/test/journeyScreens.ts).
     fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
     expect(
       await screen.findByRole("button", { name: RUN.done })
@@ -531,7 +532,14 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     };
     // 5 km in 25 minutes: 5:00 /km, quicker than a 25-minute 5K's easy.
     const easy = renderPlanned("easy_30");
-    expect(await screen.findByText("Easy 30 complete ✓")).toBeInTheDocument();
+    // The E2E journeys read a planned run's summary by its heading
+    // (src/test/journeyScreens.ts).
+    expect(
+      await screen.findByRole("heading", {
+        name: RUN.summary("Easy 30"),
+        level: 1,
+      })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/^Faster than easy today: 5:00 \/km/)
     ).toBeInTheDocument();
@@ -692,5 +700,165 @@ describe("RunSummary — the pace line speaks only when the run didn't match", (
     expect(
       screen.getByText(/^Faster than easy today: 5:00 \/km/)
     ).toBeInTheDocument();
+  });
+});
+
+/* Pgm8: the treadmill is where a run is done, not a run type. A planned
+   run done on one is the planned run: the summary names it complete and
+   asks nothing about the planned run, its pace (typed in, not measured)
+   is not judged, its typed distance can still be corrected, and it is
+   saved as the plan's type, on the treadmill. */
+describe("RunSummary — a planned run on the treadmill (Pgm8)", () => {
+  const auth = h.auth as { profile: Record<string, unknown> };
+  const profile = auth.profile;
+  const queued = () => pendingDocumentWrites("runner", "users/runner/runs");
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    // Offline, the run waits in the queue, where the test can read it.
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    // A 25-minute 5K: an easy window of about 6:13–6:52 /km.
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+  });
+  afterEach(() => {
+    online.mockRestore();
+    auth.profile = profile;
+  });
+
+  /** Today's planned easy run, finished on the treadmill (or, with
+   *  `outdoors`, out on the GPS) and not yet saved: 5 km after 25
+   *  minutes, 5:00 /km. */
+  function renderTreadmillRun(outdoors = false) {
+    const state = {
+      points: [],
+      distance: 5000,
+      elapsed: 25 * 60,
+      splits: [],
+      elevationGain: 0,
+      runConfig: {
+        activityType: "easy",
+        ...(outdoors ? {} : { place: "treadmill" }),
+        planMetadata: {
+          planMode: "race_prep",
+          planSource: "today_plan",
+          plannedRunDayIndex: 2,
+          plannedTemplateId: "easy_30",
+          plannedTemplateType: "easy",
+          actualTemplateId: "easy_30",
+          matchedPlanExact: true,
+          matchedPlanType: true,
+          offPlan: false,
+          planWeekIndex: 0,
+          planTotalWeeks: 10,
+          scheduledRunId: "rd-1",
+        },
+      },
+    };
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("is the planned run, complete, with nothing to ask about it", async () => {
+    renderTreadmillRun();
+    expect(
+      await screen.findByRole("heading", {
+        name: RUN.summary("Easy 30"),
+        level: 1,
+      })
+    ).toBeInTheDocument();
+    // The distance was typed in, so it can be corrected before Save.
+    expect(
+      screen.getByRole("button", { name: "Edit distance" })
+    ).toBeInTheDocument();
+    // Its pace is not judged: outdoors, 5:00 /km on this easy day hears
+    // "Faster than easy today" (the run-walk describe above).
+    expect(
+      screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
+    ).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: RUN.save }));
+    // POSITIVE anchor: the run is saved, which is when the summary would
+    // ask about the planned run.
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).toMatchObject({
+      activityType: "easy",
+      place: "treadmill",
+      matchedPlanType: true,
+      offPlan: false,
+      scheduledRunId: "rd-1",
+      paceVerdictTone: null,
+    });
+    expect(screen.queryByText("Off-plan save")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: RUN.markPlannedDone })
+    ).toBeNull();
+    expect(h.markManualComplete).not.toHaveBeenCalled();
+  });
+
+  it("gives a typed pace no trend against outdoor runs", async () => {
+    // Eight outdoor 5 km runs at 5:30 /km: this 5:00 /km is a PR outdoors,
+    // and nothing on the treadmill, whatever the run's type.
+    seedFirestore(
+      Object.fromEntries(
+        Array.from({ length: 8 }, (_, i) => [
+          `users/runner/runs/past-${i}`,
+          {
+            completedAt: Timestamp.fromMillis(
+              Date.now() - (i + 2) * 86_400_000
+            ),
+            distance: 5000,
+            duration: 1650,
+            avgPace: 330,
+            activityType: "easy",
+          },
+        ])
+      )
+    );
+    const outdoors = renderTreadmillRun(true);
+    expect(await screen.findByText("PR!")).toBeInTheDocument();
+    outdoors.unmount();
+
+    renderTreadmillRun();
+    expect(
+      await screen.findByRole("heading", {
+        name: RUN.summary("Easy 30"),
+        level: 1,
+      })
+    ).toBeInTheDocument();
+    // The history has been read and judged by the time the insight settles.
+    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+    expect(screen.queryByText("PR!")).toBeNull();
+  });
+
+  it("suggests no new benchmark from a typed pace, as an outdoor run's can", async () => {
+    renderTreadmillRun();
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(h.paceEnabled.at(-1)).toBe(false);
+    cleanup();
+
+    // The same run outdoors, saved, is one the Pro insight reads.
+    resetFirestore();
+    renderTreadmillRun(true);
+    fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+    expect(
+      await screen.findByRole("button", { name: RUN.done })
+    ).toBeInTheDocument();
+    expect(h.paceEnabled.at(-1)).toBe(true);
   });
 });

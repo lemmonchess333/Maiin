@@ -44,6 +44,35 @@ describe("claimMapFor", () => {
     expect(claims.get("d1")?.claimedSavedRunId).toBe("r1");
   });
 
+  it("fills a planned tempo with the tempo done on the treadmill, by its type (Pgm8)", () => {
+    const days = [runDay("d1", "2026-09-08", "tempo_30", "tempo")];
+    // 5:30 /km on the belt: no pace that counts a run of no quality type.
+    const since = claimMapFor(
+      days,
+      claimableRuns([
+        run("r1", "2026-09-08", {
+          activityType: "tempo",
+          place: "treadmill",
+          avgPace: 330,
+        }),
+      ]),
+      {},
+      "2026-09-08"
+    );
+    expect(since.get("d1")?.claimedSavedRunId).toBe("r1");
+    // Saved before Pgm8, the treadmill was its type, and the same tempo
+    // left the day to a mark by hand.
+    const before = claimMapFor(
+      days,
+      claimableRuns([
+        run("r1", "2026-09-08", { activityType: "treadmill", avgPace: 330 }),
+      ]),
+      {},
+      "2026-09-08"
+    );
+    expect(before.get("d1")?.claimedSavedRunId).toBeUndefined();
+  });
+
   it("leaves a day to a run saved anyway, and marks by hand still count", () => {
     const days = [runDay("d1", "2026-09-08", "easy_30", "easy")];
     const runs = claimableRuns([

@@ -209,6 +209,29 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("no-data");
     });
 
+    it("a planned type on the treadmill returns no-data too (Pgm8: the place, not the type)", () => {
+      const allRuns = generateRuns(10, 300, 5000, 1);
+      const onTreadmill = {
+        ...makeRun(280, 5000, 0),
+        activityType: "easy",
+        place: "treadmill",
+      };
+      expect(calculatePaceTrend(onTreadmill, allRuns).trend).toBe("no-data");
+      // The same run outdoors is a PR against the same pool.
+      expect(
+        calculatePaceTrend({ ...onTreadmill, place: null }, allRuns).trend
+      ).toBe("pr");
+      // And treadmill runs of a planned type are no comparables either.
+      const beltPool = allRuns.map((r) => ({
+        ...r,
+        activityType: "easy",
+        place: "treadmill",
+      }));
+      expect(
+        calculatePaceTrend({ ...onTreadmill, place: null }, beltPool).trend
+      ).toBe("no-data");
+    });
+
     it("manual current run returns no-data (GPS never locked)", () => {
       const current = {
         ...makeRun(158, 2000, 0),

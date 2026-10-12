@@ -9,8 +9,8 @@
  * - The workout screen's: `WorkoutSessionCompletion.test.tsx` finishes a
  *   session by them.
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
- *   `RunSetupModal.journeyNames.test.tsx` (the run type and the treadmill),
- *   `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
+ *   `RunSetupModal.journeyNames.test.tsx` (the run type, the treadmill and
+ *   its start), `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
  * - Welcome back's: `LiftReturnSheet.test.tsx`.
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
@@ -86,18 +86,27 @@ export const WORKOUT = {
 } as const;
 
 /** A planned run done on a treadmill, from Home's card to the summary:
- *  Home's run card, the Run page's launch card and its run-type sheet
- *  (`RunLaunchCard`, `RunSetupModal`), the manual distance
- *  (`TreadmillMode`, labelled by `Run`) and the summary (`RunSummary`). */
+ *  Home's run card, the Run page's launch card and its setup
+ *  (`RunLaunchCard`, `RunSetupModal`: the run's type, by its name, and the
+ *  "On a treadmill" switch, which says where the run is done and leaves
+ *  the type alone, Pgm8), the manual distance (`TreadmillMode`, labelled
+ *  by `Run`) and the summary (`RunSummary`): the planned session's heading
+ *  for a planned run done as planned, its Save, the off-plan prompt's
+ *  "Mark scheduled run complete" a run of another type than the plan's is
+ *  asked, and Done. */
 export const RUN = {
   homeStart: "Start run",
   customise: "Customise",
-  runType: /^Selected run type/,
-  treadmill: /^Treadmill/,
-  startTreadmill: "Start Treadmill",
+  /** The setup's run type, by the type's name ("Easy Run"). */
+  runType: (typeName: string) =>
+    `Selected run type: ${typeName}. Tap to change.`,
+  /** A switch. */
+  treadmill: "On a treadmill",
+  startTreadmill: "Start on the treadmill",
   distance: "Distance from treadmill",
   saveTreadmill: "Save Treadmill Run",
-  summary: "Nice run",
+  /** The summary's heading, by the planned session's name ("Easy 30"). */
+  summary: (sessionName: string) => `${sessionName} complete ✓`,
   save: "Save run",
   markPlannedDone: "Mark scheduled run complete",
   done: "Done",

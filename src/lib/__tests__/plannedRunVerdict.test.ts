@@ -66,6 +66,27 @@ describe("plannedRunVerdict", () => {
     expect(v?.speaks).toBe(true);
   });
 
+  it("judges no run on the treadmill: it is the planned run (Pgm8), but its pace was typed in", () => {
+    // A tempo's average there carries its warm-up and cool-down, with no
+    // record of its blocks: judged, it reads slow and feeds A6's nudge.
+    const onTreadmill = (templateId: string, pace: number) =>
+      plannedRunVerdict({
+        planMetadata: planned(templateId),
+        place: "treadmill",
+        avgPaceSeconds: pace,
+        distance: 6000,
+        runFitness: FITNESS,
+        unit: "km",
+      });
+    expect(onTreadmill("tempo_20", tempoTarget + 30)).toBeNull();
+    expect(onTreadmill("easy_30", easy[0] - 30)).toBeNull();
+    // The same runs outdoors are judged.
+    expect(verdict(planned("tempo_20"), tempoTarget + 30)?.tone).toBe("slow");
+    expect(verdict(planned("easy_30"), easy[0] - 30)?.tone).toBe(
+      "easy-too-fast"
+    );
+  });
+
   it("Run21 (6): keeps quiet about an easy run slower than its window", () => {
     const v = verdict(planned("easy_30"), easy[1] + 60);
     expect(v?.tone).toBe("slow");

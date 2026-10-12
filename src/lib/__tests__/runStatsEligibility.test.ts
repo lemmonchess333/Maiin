@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   isVolumeEligible,
   isPaceEligible,
+  isIndoorPaceEligible,
   isPaceTrendEligible,
   sumLifetimeRunTotals,
   type RunRecord,
@@ -179,6 +180,44 @@ describe("screenshot acceptance case — treadmill-only account", () => {
 
   it("does NOT count toward Best Pace / Fastest-K / Longest Run", () => {
     expect(isPaceEligible(treadmill2k)).toBe(false);
+  });
+});
+
+/* Pgm8: the treadmill is where a run is done, so a treadmill run now keeps
+ * its session's type ("long") with `place: "treadmill"`. Every policy
+ * reads it as the treadmill run it is, as it reads one saved before as
+ * `activityType: "treadmill"`: volume, the indoor records, never the
+ * outdoor ones or the trend. */
+describe("a session type on the treadmill (Pgm8)", () => {
+  const before = {
+    isInvalid: false,
+    savedAnyway: false,
+    distance: 6000,
+    duration: 2160,
+    avgPace: 360,
+    activityType: "treadmill",
+  };
+  const since = { ...before, activityType: "long", place: "treadmill" };
+
+  it("counts as volume and sets indoor records, as before", () => {
+    for (const run of [before, since]) {
+      expect(isVolumeEligible(run)).toBe(true);
+      expect(isIndoorPaceEligible(run)).toBe(true);
+    }
+  });
+
+  it("sets no outdoor record and no trend, whatever its type", () => {
+    for (const run of [before, since]) {
+      expect(isPaceEligible(run)).toBe(false);
+      expect(isPaceTrendEligible(run)).toBe(false);
+    }
+  });
+
+  it("is outdoor again without the place", () => {
+    const outdoors = { ...since, place: null };
+    expect(isPaceEligible(outdoors)).toBe(true);
+    expect(isPaceTrendEligible(outdoors)).toBe(true);
+    expect(isIndoorPaceEligible(outdoors)).toBe(false);
   });
 });
 

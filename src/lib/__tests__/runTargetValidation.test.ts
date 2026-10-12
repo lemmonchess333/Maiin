@@ -38,13 +38,29 @@ describe("getTargetValidationError — skip cases", () => {
     ).toBeNull();
   });
 
-  it("returns null for treadmill (target inputs are not rendered)", () => {
+  it("returns null on the treadmill (target inputs are not rendered)", () => {
+    // A config stored before Pgm8, when the treadmill was a type.
     expect(
       getTargetValidationError({
         activityType: "treadmill",
         target: { type: "distance", value: 1 },
       })
     ).toBeNull();
+    // Since: any type, with the treadmill as where it is run.
+    expect(
+      getTargetValidationError({
+        activityType: "long",
+        place: "treadmill",
+        target: { type: "distance", value: 1 },
+      })
+    ).toBeNull();
+    // The same long run outdoors shows its goal, so it is held to it.
+    expect(
+      getTargetValidationError({
+        activityType: "long",
+        target: { type: "distance", value: 1 },
+      })
+    ).not.toBeNull();
   });
 
   it("returns null when value is undefined / NaN / Infinity (mid-edit)", () => {
