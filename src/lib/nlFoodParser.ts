@@ -357,6 +357,13 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 1,
     serving: "1 slice (30g)",
   },
+  sourdough: {
+    calories: 136,
+    protein: 5,
+    carbs: 26,
+    fat: 1,
+    serving: "1 slice (50g)",
+  },
   toast: {
     calories: 80,
     protein: 3,
@@ -511,6 +518,14 @@ const FOOD_DB: Record<string, Macros> = {
     carbs: 30,
     fat: 0,
     serving: "1 medium (150g)",
+  },
+  // A jacket potato is a large baked potato, eaten as a meal.
+  "jacket potato": {
+    calories: 233,
+    protein: 6,
+    carbs: 53,
+    fat: 0,
+    serving: "1 large (250g)",
   },
   mash: {
     calories: 226,
@@ -1246,6 +1261,30 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 7,
     serving: "1 grande (470ml)",
   },
+  // A flat white is a short latte with less milk; an americano is espresso
+  // and water. Both are among the commonest UK coffee orders, and without
+  // rows a typed "and a flat white" logged nothing for the coffee.
+  "flat white": {
+    calories: 110,
+    protein: 6,
+    carbs: 9,
+    fat: 6,
+    serving: "1 regular (180ml)",
+  },
+  americano: {
+    calories: 10,
+    protein: 1,
+    carbs: 1,
+    fat: 0,
+    serving: "1 regular (350ml)",
+  },
+  mocha: {
+    calories: 290,
+    protein: 11,
+    carbs: 38,
+    fat: 11,
+    serving: "1 regular (350ml)",
+  },
   tea: { calories: 2, protein: 0, carbs: 0, fat: 0, serving: "240ml" },
   "hot chocolate": {
     calories: 190,
@@ -1444,6 +1483,58 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 14,
     serving: "240ml",
   },
+  // Everyday plated dishes, each a typical home or ready-meal portion, so
+  // a typed dish logs a meal rather than nothing.
+  "chilli con carne": {
+    calories: 330,
+    protein: 26,
+    carbs: 24,
+    fat: 14,
+    serving: "1 portion (300g)",
+  },
+  "spaghetti bolognese": {
+    calories: 540,
+    protein: 30,
+    carbs: 62,
+    fat: 18,
+    serving: "1 plate (400g)",
+  },
+  lasagne: {
+    calories: 450,
+    protein: 26,
+    carbs: 40,
+    fat: 21,
+    serving: "1 portion (300g)",
+  },
+  lasagna: {
+    calories: 450,
+    protein: 26,
+    carbs: 40,
+    fat: 21,
+    serving: "1 portion (300g)",
+  },
+  "mac and cheese": {
+    calories: 500,
+    protein: 20,
+    carbs: 52,
+    fat: 23,
+    serving: "1 portion (300g)",
+  },
+  "macaroni cheese": {
+    calories: 500,
+    protein: 20,
+    carbs: 52,
+    fat: 23,
+    serving: "1 portion (300g)",
+  },
+  // Two pork sausages, mash and gravy.
+  "bangers and mash": {
+    calories: 600,
+    protein: 19,
+    carbs: 39,
+    fat: 41,
+    serving: "1 plate (370g)",
+  },
   "stir fry": {
     calories: 300,
     protein: 20,
@@ -1505,6 +1596,13 @@ const FOOD_DB: Record<string, Macros> = {
     carbs: 14,
     fat: 0,
     serving: "1 tbsp (20g)",
+  },
+  honey: {
+    calories: 64,
+    protein: 0,
+    carbs: 17,
+    fat: 0,
+    serving: "1 tbsp (21g)",
   },
   sugar: {
     calories: 16,
@@ -1583,6 +1681,8 @@ const FOOD_ALIASES: Record<string, string> = {
   "greek yoghurt": "greek yogurt",
   mayo: "mayonnaise",
   donut: "doughnut",
+  lasagna: "lasagne", // US ↔ UK
+  "macaroni cheese": "mac and cheese", // the UK name
 };
 
 /** Canonical form of a FOOD_DB key. Non-aliased keys pass through. */
