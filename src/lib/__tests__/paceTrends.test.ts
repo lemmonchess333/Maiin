@@ -294,3 +294,37 @@ describe("calculatePaceTrend", () => {
     });
   });
 });
+
+/* Run20 (5): a run-walk's pace is an average over its runs and its walks,
+   so it is no one's running pace. Six weeks of them gave a new runner a
+   "PR!" each time the runs got longer, and made the first runs after them
+   look fast against walking. */
+describe("a run-walk and the trend", () => {
+  const runWalks = (n: number, pace: number) =>
+    generateRuns(n, pace, 4000, 1).map((r) => ({
+      ...r,
+      templateId: "run_walk_4",
+    }));
+
+  it("gives a run-walk no trend", () => {
+    const current = { ...makeRun(500, 4000, 0), templateId: "run_walk_5" };
+    expect(calculatePaceTrend(current, runWalks(10, 560)).trend).toBe(
+      "no-data"
+    );
+  });
+
+  it("doesn't hold a run against run-walks", () => {
+    // Ten run-walks at 9:20 /km and no runs of the distance: nothing to
+    // compare an easy run's 7:00 /km with.
+    expect(
+      calculatePaceTrend(makeRun(420, 4000, 0), runWalks(10, 560)).trend
+    ).toBe("no-data");
+    // Against runs, as before.
+    expect(
+      calculatePaceTrend(makeRun(420, 4000, 0), [
+        ...runWalks(10, 560),
+        ...generateRuns(8, 450, 4000, 20),
+      ]).trend
+    ).toBe("pr");
+  });
+});

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Navigation & UI', () => {
   test('login page shows sign-in options', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     // Should show login UI elements
     await expect(page.locator('#root')).toBeAttached();
     // Look for common auth UI text
@@ -11,7 +11,7 @@ test.describe('Navigation & UI', () => {
   });
 
   test('privacy policy page has content', async ({ page }) => {
-    await page.goto('/privacy');
+    await page.goto('privacy');
     await expect(page.locator('#root')).toBeAttached();
     // Privacy page should have substantial content
     const rootContent = await page.locator('#root').textContent();
@@ -19,14 +19,14 @@ test.describe('Navigation & UI', () => {
   });
 
   test('unknown routes redirect to login', async ({ page }) => {
-    await page.goto('/nonexistent-route');
+    await page.goto('nonexistent-route');
     await expect(page.locator('#root')).toBeAttached();
     // Unauthenticated users get redirected to login for any route
   });
 
   test('page loads within acceptable time', async ({ page }) => {
     const start = Date.now();
-    await page.goto('/');
+    await page.goto('');
     await page.locator('#root').waitFor({ state: 'attached' });
     const loadTime = Date.now() - start;
     // Should load within 5 seconds
@@ -34,7 +34,7 @@ test.describe('Navigation & UI', () => {
   });
 
   test('no accessibility violations on login page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     // Check basic accessibility: images should have alt text
     const images = page.locator('img:not([alt])');
     const count = await images.count();
@@ -42,13 +42,13 @@ test.describe('Navigation & UI', () => {
   });
 
   test('viewport meta tag exists for mobile', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
     expect(viewport).toContain('width=device-width');
   });
 
   test('manifest.json is accessible', async ({ page }) => {
-    const response = await page.goto('/manifest.json');
+    const response = await page.goto('manifest.json');
     expect(response?.status()).toBe(200);
     const manifest = await response?.json();
     expect(manifest?.name).toBeTruthy();
@@ -56,7 +56,7 @@ test.describe('Navigation & UI', () => {
   });
 
   test('service worker registers without error', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     // Wait for SW registration
     await page.waitForTimeout(2000);
     // PR B (audit): pre-fix this asserted `>= 0` against a value

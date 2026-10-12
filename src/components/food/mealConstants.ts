@@ -13,6 +13,8 @@
  * share the same identity without prop-drilling.
  */
 
+import { Apple, Coffee, Sandwich, Soup, type LucideIcon } from "lucide-react";
+
 export type MealKey = "breakfast" | "lunch" | "snacks" | "dinner";
 
 export const MEAL_ORDER: readonly MealKey[] = [
@@ -27,6 +29,15 @@ export const MEAL_LABELS: Record<MealKey, string> = {
   lunch: "Lunch",
   dinner: "Dinner",
   snacks: "Snacks",
+};
+
+/** Each slot's drawing, in the tile a diary row without a photo carries
+ *  on a day with photos (Pol1), and in the Pro scan demo's diary. */
+export const MEAL_SLOT_ICONS: Record<MealKey, LucideIcon> = {
+  breakfast: Coffee,
+  lunch: Sandwich,
+  dinner: Soup,
+  snacks: Apple,
 };
 
 /**

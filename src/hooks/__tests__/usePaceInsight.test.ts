@@ -24,6 +24,8 @@ const H = vi.hoisted(() => ({
   isPro: true,
   fbAuth: { currentUser: { uid: "A" } as { uid: string } | null },
   engineInsight: null as PaceInsight | null,
+  /** The runs the engine was handed last. */
+  engineRuns: [] as { id?: string }[],
 }));
 const authState = H.authState;
 const fbAuth = H.fbAuth;
@@ -38,7 +40,10 @@ vi.mock("@/lib/subscription", () => ({
 vi.mock("@/lib/firebase", () => ({ auth: H.fbAuth }));
 vi.mock("@/lib/runStatsEligibility", () => ({ isPaceEligible: () => true }));
 vi.mock("@/lib/runPaces", () => ({
-  resolvePaceInsight: () => H.engineInsight,
+  resolvePaceInsight: (_fitness: unknown, runs: { id?: string }[]) => {
+    H.engineRuns = runs;
+    return runs.length ? H.engineInsight : null;
+  },
   vdotFromRace: () => 45,
 }));
 
@@ -99,6 +104,32 @@ describe("usePaceInsightFromRuns — gating", () => {
   it("surfaces the engine's insight for a Pro user", () => {
     const { result } = renderHook(() => usePaceInsightFromRuns([run()]));
     expect(result.current.insight).toEqual(INSIGHT);
+  });
+});
+
+/* Run20 (5): a run-walk's time includes its walks, so its pace is no one's
+   running. Three of them suggested a benchmark from a new runner's walking
+   pace (review of #2655). */
+describe("usePaceInsightFromRuns — a run-walk", () => {
+  const walked = (id: string): PaceInsightRun => ({
+    ...run(),
+    id,
+    duration: 1740,
+    templateId: "run_walk_3",
+  });
+
+  it("sets no benchmark, and the runs around it do", () => {
+    renderHook(() =>
+      usePaceInsightFromRuns([walked("rw1"), run(), walked("rw2")])
+    );
+    expect(H.engineRuns.map((r) => r.id)).toEqual(["r1"]);
+  });
+
+  it("alone suggests nothing", () => {
+    const { result } = renderHook(() =>
+      usePaceInsightFromRuns([walked("rw1"), walked("rw2"), walked("rw3")])
+    );
+    expect(result.current.insight).toBeNull();
   });
 });
 

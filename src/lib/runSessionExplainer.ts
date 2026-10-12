@@ -11,6 +11,7 @@
  * plan context is missing (freeform runs, extras, legacy docs).
  */
 import { getPhaseForWeek } from "@/features/program/runPlanTiming";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |
@@ -22,6 +23,40 @@ export interface SessionExplainerInput {
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   distance: string | null | undefined;
+  /** Whether the run's week holds a tempo or intervals session
+   *  (`weekHoldsQuality`). The build's easy day and long run name the
+   *  quality sessions only when it does: a returning runner's weeks hold none
+   *  (Run15), nor does every other build week on the gentler setting. Left
+   *  out, the week isn't assumed to. */
+  weekHasQuality?: boolean;
+  /** The run's work at the goal race pace (`racePaceWorkFor`): a long run
+   *  that finishes at it rehearses race day, and a tempo at it practises
+   *  the pace, in place of the reasons for a tempo at fitness pace. */
+  racePace?: "finish" | "tempo" | null;
+}
+
+/**
+ * Whether the week `weekKey` starts holds a tempo or intervals session, the
+ * person's swaps (`userOverride`) included.
+ */
+export function weekHoldsQuality(
+  runDays:
+    | ReadonlyArray<{
+        templateId: string;
+        userOverride?: string | null;
+        weekKey?: string;
+      }>
+    | null
+    | undefined,
+  weekKey: string | null | undefined
+): boolean {
+  if (!runDays || !weekKey) return false;
+  return runDays.some((day) => {
+    if (day.weekKey !== weekKey) return false;
+    const id = day.userOverride || day.templateId;
+    const type = RUN_TEMPLATES.find((t) => t.id === id)?.type;
+    return type === "tempo" || type === "intervals";
+  });
 }
 
 /** Shared by Manage, Programme and Home: the explanation and real phase agree. */
@@ -54,7 +89,14 @@ const MEDIUM_LONG_IDS = new Set(["easy_60", "easy_75", "easy_90"]);
 export function runSessionExplainer(
   input: SessionExplainerInput
 ): string | null {
-  const { type, templateId, currentWeek, totalWeeks, distance } = input;
+  const {
+    type,
+    templateId,
+    currentWeek,
+    totalWeeks,
+    distance,
+    weekHasQuality,
+  } = input;
   if (
     currentWeek == null ||
     totalWeeks == null ||
@@ -74,34 +116,66 @@ export function runSessionExplainer(
   const isStrides = templateId.endsWith("_strides");
   const isMediumLong = MEDIUM_LONG_IDS.has(templateId);
 
+  // A new runner's run-walk (Run20 (5)) is that in any week, the taper's
+  // and race week's included. The last has one run, and no walks between.
+  // "Why this run" says what the session is in its own line (Run21 (3)), so
+  // these give the reason only.
+  if (isRunWalkTemplateId(templateId)) {
+    const runs =
+      RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk?.runSecs
+        .length ?? 0;
+    return runs === 1
+      ? "The last run-walk — what the weeks before it built up to."
+      : "Run-walk — the runs grow each week until you run without stopping. The walks are part of the method, not giving up.";
+  }
+
   if (phase === "race") {
     if (type === "race") {
-      return "Race day. The whole block pointed here — trust the plan and start conservatively.";
+      return "Race day — the whole plan has led to this. Trust the training you've done.";
     }
     return "Race-week shakeout — short and conversational; there's nothing left to gain from more.";
   }
 
   if (phase === "taper") {
+    if (type === "tempo" && input.racePace === "tempo") {
+      return "Taper — a short block at race pace keeps the rhythm sharp while the volume drops.";
+    }
+    // Not the easy runs' reason: a tempo is comfortably hard (Run21 (1)).
+    if (type === "tempo") {
+      return "Taper — a short tempo keeps the legs used to a comfortably hard effort while the volume drops.";
+    }
     if (type === "intervals") {
       return "Taper sharpener — fast but small, keeping the legs quick while the volume drops.";
     }
     if (type === "long") {
       return "Taper long run — shorter on purpose, so the training you've banked shows up fresh.";
     }
+    // Run22: the first taper weeks keep a shorter medium-long.
+    if (isMediumLong) {
+      return "Taper medium-long — shorter on purpose: the volume comes down in steps, so you arrive fresh without losing your rhythm.";
+    }
     return "Taper — easy and short on purpose; recovery is the work now.";
   }
 
   // Base / build.
   if (type === "long") {
-    return phase === "base"
-      ? "The week's anchor run — long-run volume ramps gradually through the base."
-      : "The week's anchor run — the long run keeps ramping while quality sharpens around it.";
+    if (phase === "base") {
+      return "The week's anchor run — long-run volume ramps gradually through the base.";
+    }
+    return input.racePace === "finish"
+      ? "It rehearses race day on tired legs: your pace, your fuelling and your focus."
+      : weekHasQuality
+        ? "The week's anchor run — the long run keeps ramping while quality sharpens around it."
+        : "The week's anchor run — it builds the endurance the race needs.";
+  }
+  if (type === "tempo" && input.racePace === "tempo") {
+    return "It teaches your legs and breathing what race pace feels like, so the goal pace is familiar when it counts.";
   }
   if (type === "tempo") {
-    return "Tempo — grows how long you can hold your threshold pace. The pace itself comes from your fitness, so the session ramps volume, not speed.";
+    return "Tempo — builds how long you can hold a sustained, even pace. The tempo blocks get longer through the plan.";
   }
   if (type === "intervals") {
-    return "Intervals — short fast repeats for top-end economy. The recovery between reps is part of the session, not a failure of it.";
+    return "Intervals — short, fast repeats raise the pace you can race at. The recovery between reps is part of the session, not a failure of it.";
   }
   // Easy family.
   if (isMediumLong) {
@@ -110,7 +184,10 @@ export function runSessionExplainer(
   if (isStrides) {
     return "Easy day with strides — relaxed 20-second accelerations keep leg speed awake at almost no cost. Not a hard session.";
   }
-  return phase === "base"
-    ? "Base phase — easy aerobic volume is the foundation everything later stands on."
-    : "Easy day — it makes the hard days work. If it feels too easy, it's right.";
+  if (phase === "base") {
+    return "Base phase — easy running now is the foundation everything later stands on.";
+  }
+  return weekHasQuality
+    ? "Easy day — it makes the quality sessions work. If it feels too easy, it's right."
+    : "Easy day — most of your running is easy, and it all counts towards the race. If it feels too easy, it's right.";
 }

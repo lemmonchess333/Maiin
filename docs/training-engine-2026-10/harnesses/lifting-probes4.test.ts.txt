@@ -1,0 +1,28 @@
+import { it } from "vitest";
+import { writeFileSync } from "fs";
+import { createRequire } from "node:module";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
+import { normalizeProgramState, type ProgramState } from "../programTypes";
+import { advanceWeek } from "../programEngine";
+import { lighterWeekAllowed } from "../weekPrescription";
+
+const require = createRequire(import.meta.url);
+const cf = require("../../../../functions/lib/programCommands") as {
+  applyProgramCommand: (a: { state: unknown; profile?: unknown; command: unknown; now: number }) => { state: ProgramState };
+};
+const OUT = (process.env.SIM_OUT_DIR ?? "/tmp/tropos-sim");
+
+it("manual lighter week and the calendar count", () => {
+  const plan = buildOnboardingPlan({ primaryGoal: "hypertrophy", daysPerWeek: 4, experience: "intermediate", sessionMinutes: 60, gender: "male", weightKg: 80, runFrequency: "none", runMode: "freeform", weeklyRunDays: 0, raceDistance: "half", raceTargetDate: "", injuries: [], equipment: "full_gym", barbellAtHome: false, smallPlates: false } as never, "recomp", "2026-03-09");
+  let s: ProgramState = normalizeProgramState(plan.programState);
+  const done = (st: ProgramState) => ({ ...st, workouts: st.workouts.map((d) => ({ ...d, completed: true })) });
+  const log: string[] = [];
+  for (let w = 1; w <= 9; w++) {
+    if (w === 2) {
+      s = cf.applyProgramCommand({ state: s, profile: { experience: "intermediate" }, command: { kind: "applyDeloadWeek", commandId: "manualLighterWeek01", expectedWeekNumber: s.weekNumber }, now: 1773000000000 }).state;
+    }
+    log.push(`week ${w}: weekNumber ${s.weekNumber} phase ${s.currentPhase} (takeable now: ${lighterWeekAllowed(s)})`);
+    s = advanceWeek(done(s), "intermediate", `2026-0${3 + Math.floor(w / 4)}-1${w % 9}`);
+  }
+  writeFileSync(`${OUT}/probes4.md`, log.join("\n"));
+});

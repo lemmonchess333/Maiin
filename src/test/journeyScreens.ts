@@ -20,7 +20,7 @@ import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { formatRepTarget } from "@/features/program/repTarget";
 import { getExerciseById } from "@/lib/exercises";
-import { compactRunLabel } from "@/lib/runProgrammeViewModel";
+import { runStripLabel } from "@/lib/runProgrammeViewModel";
 
 /** Setup's screens (`Onboarding`). */
 export const SETUP = {
@@ -52,7 +52,7 @@ export const SETUP_OPTIONS = {
     "Get stronger",
     "Lose fat",
     "General fitness",
-    "Improve running",
+    "Support my running",
   ],
   activities: ["Lifting", "Running", "Both"],
   liftDays: ["2", "3", "4", "5", "6"],
@@ -132,7 +132,7 @@ export const TRAIN = {
 
 /** A run's short name on Train's run week, from its template: the
  *  function `ProgrammeRunSection` labels each day's cell with. */
-export const runWeekLabel = compactRunLabel;
+export const runWeekLabel = runStripLabel;
 
 /** A day on Train's run week, by its name: the run's short label
  *  (`runWeekLabel`), and whether the day is today or the run done. Until

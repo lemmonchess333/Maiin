@@ -6,11 +6,11 @@
  * would notice one coming back: a new fixed width, a row that cannot
  * wrap, a picture that never gives way all pass every other test.
  *
- * The screens: Home, Train, History's five pages, Food and its manual
- * entry and edit sheets, Settings and every section of it, Train's
- * exercise menu, a workout, a run before, during and after, the
- * exercise, run and workout detail pages, the Weekly review, sign-up,
- * setup and the Pro page.
+ * The screens: Home, Train, History's five pages (and its charts again
+ * on a Monday), Food and its manual entry and edit sheets, Settings and
+ * every section of it, Train's exercise menu, a workout, a run before,
+ * during and after, the exercise, run and workout detail pages, the
+ * Weekly review, sign-up, setup and the Pro page.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -206,6 +206,51 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
+    /* How many bars a History chart draws depends on the day: the 30 days
+       up to a Monday begin on a Sunday and touch six weeks, every other
+       day's touch five, and a card that holds five weeks' labels need not
+       hold six (binAxis.ts). So History is measured on a Monday whatever
+       day this runs, at each range whose chart names every bar: a week's
+       days, a month's weeks, six months. */
+    test(`History's charts on a Monday at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      // The coming Monday, so everything seeded is in the past.
+      const monday = new Date();
+      monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7));
+      monday.setHours(12, 0, 0, 0);
+      await page.clock.setFixedTime(monday);
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const nav = page.getByRole("navigation").first();
+
+      for (const [range, views] of [
+        ["1W", [""]],
+        ["1M", ["", "lifting", "running"]],
+        ["6M", ["", "lifting", "running"]],
+      ] as const) {
+        for (const view of views) {
+          await page.goto(
+            `history?${view ? `view=${view}&` : ""}range=${range}`
+          );
+          await ready(page, nav);
+          // The chart is what this measures: a page without it would pass.
+          await page
+            .getByTestId("axis-ends")
+            .first()
+            .waitFor({ state: "attached", timeout: 20_000 });
+          await measure(
+            page,
+            `history${view ? `-${view}` : ""}-${range}-monday`,
+            width,
+            found
+          );
+        }
+      }
+
+      expect(found).toEqual([]);
+    });
+
     test(`a workout and a run at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
@@ -316,6 +361,11 @@ test.describe("large text", () => {
         .fill(
           new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10)
         );
+      // The widest a recent race's time gets: a 10K in 1:45:59.
+      const recentRace = page.getByRole("region", { name: "Recent race" });
+      await recentRace.getByRole("radio", { name: "10K" }).click();
+      await recentRace.getByRole("textbox", { name: "Minutes" }).fill("105");
+      await recentRace.getByRole("textbox", { name: "Seconds" }).fill("59");
       await page.waitForTimeout(500);
       await measure(page, "setup-running", width, found);
       await next();
@@ -381,8 +431,17 @@ test.describe("large text", () => {
       await ready(page, page.getByRole("heading").first());
       await measure(page, "weekly-review", width, found);
 
-      // A meal's edit sheet, from today's diary.
-      await page.goto("food");
+      // A meal's edit sheet, from yesterday's diary. seed:rich logs meals
+      // on the five days up to the one it ran on, so yesterday has them
+      // whether or not the run has crossed midnight since it seeded. One
+      // that seeded at 23:59 on 7 October 2026 found today's diary empty.
+      const yesterday = await page.evaluate(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      });
+      await page.goto(`food?date=${yesterday}`);
       const meal = page.getByRole("button", { name: /^Edit / }).first();
       await ready(page, meal);
       await meal.click();

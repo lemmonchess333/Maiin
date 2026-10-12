@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Smoke tests', () => {
   test('login page loads', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     // Unauthenticated users should see the login page
     await expect(page.locator('body')).toBeVisible();
     // The app should render without crashing
@@ -10,7 +10,7 @@ test.describe('Smoke tests', () => {
   });
 
   test('privacy policy page loads', async ({ page }) => {
-    await page.goto('/privacy');
+    await page.goto('privacy');
     await expect(page.locator('body')).toBeVisible();
   });
 
@@ -26,13 +26,13 @@ test.describe('Smoke tests', () => {
       }
     });
 
-    await page.goto('/');
+    await page.goto('');
     await page.waitForTimeout(2000);
     expect(errors).toHaveLength(0);
   });
 
   test('app has correct title or root element', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('');
     const root = page.locator('#root');
     await expect(root).toBeAttached();
     // App should render some content within the root
@@ -42,7 +42,7 @@ test.describe('Smoke tests', () => {
 
   test('responsive: mobile viewport renders without horizontal scroll', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/');
+    await page.goto('');
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
     const viewportWidth = await page.evaluate(() => window.innerWidth);
     expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1); // +1 for rounding

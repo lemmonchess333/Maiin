@@ -49,7 +49,7 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     await openJourney(page, start);
     account = await signUp(page, "treadmill");
     await setUpPlan(page, {
-      aim: "Improve running",
+      aim: "Support my running",
       activity: "Running",
       runner: "Regular runner",
       race: {

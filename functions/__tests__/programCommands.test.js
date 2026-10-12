@@ -1989,12 +1989,16 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
     });
     const ex = state.workouts[0].exercises;
     expect(ex).toHaveLength(4); // inst-a, inst-b, + 2 appended
-    // client add default (3×10×0) when fields omitted
+    // Lift5: with no numbers given, an added lift takes its role's. An
+    // unmarked compound counts as a main, and this plan names no goal and
+    // the profile no level: a beginner's General fitness main, one target
+    // of 8 (it was the old add default, 3×10). The load still starts empty.
     expect(ex[2]).toMatchObject({
       exerciseId: "bench-press",
       name: "Bench Press",
       sets: 3,
-      reps: 10,
+      reps: 8,
+      progressionType: "linear",
       weight: 0,
       movementCategory: "horizontal_push",
     });

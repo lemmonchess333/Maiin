@@ -48,17 +48,28 @@ import {
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  RUN_TEMPLATES,
+  isRunWalkTemplateId,
+  isScheduledRaceRunDay,
+} from "@/lib/workoutTemplates";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { runDoseLine } from "@/lib/runDose";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import { format } from "date-fns";
 import {
   parseLocalDate,
@@ -72,7 +83,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
@@ -199,12 +210,29 @@ export default function DayActionSheet({
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
       )
     : null;
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const selectedRacePace = racePaceWorkFor(
+    selectedRunTemplate,
+    profile,
+    programState?.runPlan
+  );
   // Adaptive Paces: the user's personalised pace for this session, appended to
   // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
   // sessionPaceDisplay rule (the range is the honest coaching target; singles
-  // only for race pace). Null when there's no benchmark.
+  // only for race pace). Null when there's no benchmark, and for run-walk,
+  // which is run by feel (Run20 (5)).
   const selectedRunPace: string | null = (() => {
-    if (!selectedRunTemplate) return null;
+    if (!selectedRunTemplate || isRunWalkTemplateId(selectedRunTemplate.id))
+      return null;
+    // A2: a tempo at the goal pace shows that pace, the one the run will
+    // set, with or without a benchmark.
+    if (selectedRacePace?.kind === "tempo") {
+      return sessionPaceDisplay(
+        { targetPace: Math.round(selectedRacePace.goalPaceS) },
+        unit
+      );
+    }
     const table = prescriptivePaceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -218,21 +246,26 @@ export default function DayActionSheet({
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [
-        selectedRunTemplate.config.targetDistanceKm
-          ? `${selectedRunTemplate.config.targetDistanceKm} km`
-          : `${selectedRunTemplate.estimatedDuration} min`,
+        // Run21 (5): a long run's minutes at the runner's own pace.
+        runDoseLine(
+          selectedRunTemplate,
+          planningEasyPaceSPerKm(profile?.runFitness)
+        ),
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
     : null;
   // Target HR zone — the HR analogue of the pace target ("run easy in Zone 2").
   // Uses the measured max HR, else the age estimate; null when neither exists
   // (then we just don't show the pill — the pace pill still stands alone).
-  const selectedRunHr: string | null = (() => {
-    if (!selectedRunTemplate) return null;
+  const selectedRunHr: string[] = (() => {
+    if (!selectedRunTemplate) return [];
     const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profile?.age ?? 0);
-    const band = targetZoneForRun(selectedRunTemplate.type, maxHr);
-    if (!band) return null;
-    return `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm`;
+    const band = targetZoneForRun(
+      selectedRunTemplate.type,
+      maxHr,
+      selectedRunTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
   // WAVE1-EXPLAIN (roadmap A5): one honest "why this session" sentence,
   // derived from the plan's REAL phase — null for freeform/extras, and the
@@ -251,6 +284,11 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
+      weekHasQuality: weekHoldsQuality(
+        programState?.runDays,
+        run.runDay.weekKey
+      ),
+      racePace: selectedRacePace?.kind,
     }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
@@ -352,15 +390,23 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {selectedRunTemplate?.name ?? "Run"}
+                  {runSessionName(selectedRunTemplate, selectedRacePace)}
                 </p>
-                {selectedRunTemplate?.description && (
+                {/* Run21 (2): the session's one feel line. Its shape is
+                    "What it is", in "Why this run" below. */}
+                {selectedRunTemplate && (
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {selectedRunTemplate.description}
+                    {
+                      runSessionAbout(selectedRunTemplate, {
+                        racePace: selectedRacePace,
+                      }).feel
+                    }
                   </p>
                 )}
                 <RunPlanPurpose
                   purpose={selectedRunWhy}
+                  template={selectedRunTemplate}
+                  racePace={selectedRacePace}
                   run={run.runDay}
                   runDays={programState?.runDays ?? []}
                 />
@@ -374,16 +420,17 @@ export default function DayActionSheet({
                       )}
                     </p>
                   )}
-                {(selectedRunMeta || selectedRunHr) && (
+                {(selectedRunMeta || selectedRunHr.length > 0) && (
                   /* Distance/duration and the HR zone are facts about the
                      session, so they read as one line — the same MetaLine
                      the command card uses — not as two pills. */
                   <MetaLine
                     size="xs"
                     className="mt-2"
-                    items={[selectedRunMeta, selectedRunHr].filter(
-                      (s): s is string => Boolean(s)
-                    )}
+                    items={[
+                      ...(selectedRunMeta ? [selectedRunMeta] : []),
+                      ...selectedRunHr,
+                    ]}
                   />
                 )}
               </div>

@@ -96,6 +96,8 @@ export function journeyRunFields(input: JourneyRun) {
     invalidReason: null,
     savedAnyway: false,
     routeQuality: null,
+    // A run done as planned with no work segments recorded (F22).
+    workPortion: null,
     planMode: plan.planMode,
     planSource: plan.planSource,
     plannedRunDayIndex: plan.plannedRunDayIndex,
