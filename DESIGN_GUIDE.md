@@ -81,7 +81,7 @@ it belongs next to Apple Fitness / Strava / a well-made iOS health app.
 | `src/index.css`                      | The **canonical HSL colour variables** (`--primary`, `--card`, `--destructive`, etc.) for `:root` (light) and `.dark`, plus the Tailwind `@theme` bridge that exposes them as `bg-primary`, `text-muted-foreground`, etc. Also app-shell layout vars (`--tab-bar-height`, safe-area insets). |
 | `src/lib/theme.ts`                   | The `THEME` **JavaScript object** — sport colours, semantic colours, macro colours, chart colours, gradients. Used in TS/inline styles where a CSS class can't reach. Also `MACROS_TEXT_LIGHT` + `useMacroPalette()`.                                                                        |
 | `src/styles/components.css`          | Shared CSS primitives: `.ds-card`, `.ds-card-interactive`, `.ds-input`, `.ds-status-banner`, `.bottom-nav-frost`, auth shell, `.stat-number`, `.progress-ring`, `.pressable`.                                                                                                                |
-| `src/styles/animations.css`          | Keyframes + classes: `ds-fade-up`, `ds-scale-in`, stagger delays, run-button pulse, skeleton shimmer, number-update flash, PR flash, tab bounce.                                                                                                                                             |
+| `src/styles/animations.css`          | The Start Run pulse (`ds-run-pulse`, `.btn-start-run-pulse`), the skeleton shimmer and pulse, and the global reduced-motion reset. Nothing else: what moves is framer-motion in its component (§8).                                                                                          |
 | `src/components/ui/`                 | React primitives: `Button`, `IconButton`, `Banner`, `BottomSheet`, `Dialog`, `ConfirmDialog`, `ChoiceSheet`, `Tooltip`, `Toggle`, `Spinner`, `AnimatedNumber`, `ErrorState`.                                                                                                                 |
 | `CLAUDE.md` → "Tropos Design System" | The authoritative spec this guide summarises. If you need deeper detail, read that section.                                                                                                                                                                                                  |
 
@@ -429,10 +429,19 @@ behaviour.
   Use `.pressable` or the primitives (which bake it in).
 - **Haptics:** call the `haptic()` utility on button/card taps (Capacitor).
 - **Count-up:** the moments' numbers count up as they appear, through
-  `AnimatedNumber` (or `useCountUp` for a once-a-session count on Home).
-  Under Reduce Motion `AnimatedNumber` is plain text from the first paint.
-- **Entrance:** `ds-fade-up` / `ds-scale-in` with `ds-stagger-*` delays.
-- **Number updates:** `.ds-stat-updated` flash; PRs use `.ds-badge-new-pr`.
+  `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
+  a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
+  plain text from the first paint.
+- **Entrance:** a page's header and sections rise in, staggered, through
+  the framer variants in `src/components/ui/pageMotion.ts`
+  (`pageItemVariant` inside `pageStaggerContainer`), which `PageShell`
+  applies; a page that animates a section itself imports
+  `pageItemVariant`. Content replacing its placeholder fades in instead
+  (`ArrivalFade`, under Pol1 below).
+- **Numbers and records:** no flash class. A figure counts up (above), a
+  set ticked on screen pops its check (`SetCheck`, under Pol1 below) and a
+  new best is the gold card docked above the workout's bottom bar
+  (`NewBestMoment`).
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
   `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
