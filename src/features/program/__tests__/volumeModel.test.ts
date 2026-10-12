@@ -9,8 +9,10 @@ import {
   SECONDARY_SET_WEIGHT,
   balancePushPull,
   reconcileToLandmarks,
+  hingeAccessoryPastCeiling,
   primaryJudgementForExercise,
   toCanonical,
+  type JudgementMuscle,
 } from "../volumeModel";
 import { generateProgram } from "../programEngine";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -536,6 +538,101 @@ describe("reconcileToLandmarks", () => {
     ];
     expect(reconcileToLandmarks(week, lm)).toEqual(
       reconcileToLandmarks(week, lm)
+    );
+  });
+});
+
+describe("the hinge work keeps the hamstrings' ceiling (L7)", () => {
+  /** Hamstrings held to `high`; every other muscle out of the way. */
+  const hamstringsAt =
+    (high: number) =>
+    (m: JudgementMuscle): number =>
+      m === "Hamstrings" ? high : 99;
+  const band = (high: number) => (m: JudgementMuscle) => ({
+    mv: 0,
+    low: 0,
+    high: hamstringsAt(high)(m),
+  });
+  const deadlift = (sets: number, over: Partial<ProgramExercise> = {}) =>
+    ex({
+      exerciseId: "deadlift",
+      movementCategory: "hip_dominant",
+      sets,
+      instanceId: "deadlift",
+      ...over,
+    });
+  const hipThrust = (sets: number, over: Partial<ProgramExercise> = {}) =>
+    ex({
+      exerciseId: "hip-thrust",
+      movementCategory: "hip_dominant",
+      isAccessory: true,
+      sets,
+      instanceId: "hip-thrust",
+      ...over,
+    });
+  const legPress = (sets: number) =>
+    ex({
+      exerciseId: "leg-press",
+      movementCategory: "knee_dominant",
+      isAccessory: true,
+      sets,
+      instanceId: "leg-press",
+    });
+
+  it("the reconciler takes sets off a hinge accessory for the hamstrings, whatever its primary", () => {
+    // Hamstrings: deadlift 3 + hip thrust 4 + leg press 3 = 10 against 6.
+    // The hip thrust (glutes first) comes to its floor; the leg press, whose
+    // hamstring credit is a squat's, and the deadlift, a main lift, keep
+    // theirs.
+    const week = [day([deadlift(3), hipThrust(4), legPress(3)])];
+    expect(primaryJudgementForExercise(hipThrust(4))).toBe("Glutes");
+    const out = reconcileToLandmarks(week, band(6));
+    expect(out[0].exercises.map((e) => `${e.exerciseId} ${e.sets}`)).toEqual([
+      "deadlift 3",
+      "hip-thrust 2",
+      "leg-press 3",
+    ]);
+  });
+
+  it("names nothing while the hamstrings are within their ceiling", () => {
+    const week = [day([deadlift(3), hipThrust(2), legPress(3)])];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBeUndefined();
+  });
+
+  it("names the hinge accessory once they are over, the biggest first and then the earliest", () => {
+    const week = [
+      day([deadlift(3), hipThrust(2), legPress(3)]),
+      day([
+        ex({
+          exerciseId: "seated-leg-curl",
+          movementCategory: "hip_dominant",
+          isAccessory: true,
+          sets: 3,
+          instanceId: "leg-curl",
+        }),
+        hipThrust(3, { instanceId: "second-hip-thrust" }),
+      ]),
+    ];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBe("leg-curl");
+    expect(
+      hingeAccessoryPastCeiling(
+        [day([deadlift(3), hipThrust(2), hipThrust(2, { instanceId: "b" })])],
+        hamstringsAt(4)
+      )
+    ).toBe("hip-thrust");
+  });
+
+  it("never names a lift the week has as a main lift, nor anything but a hinge accessory", () => {
+    // A deadlift in a supporting slot is the deadlift on one of its days.
+    const week = [
+      day([deadlift(3)]),
+      day([deadlift(2, { isAccessory: true, instanceId: "support" })]),
+      day([legPress(3)]),
+    ];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(4))).toBeUndefined();
+    // Without the main lift it is just a hinge accessory.
+    expect(hingeAccessoryPastCeiling(week.slice(1), hamstringsAt(4))).toBe(
+      "support"
     );
   });
 });

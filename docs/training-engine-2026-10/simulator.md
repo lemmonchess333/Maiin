@@ -230,11 +230,11 @@ the persona doesn't do shows as -.
 
 | Persona               | Squat       | Bench       | Deadlift    | Press       | §4.2 (lower / upper) |
 | --------------------- | ----------- | ----------- | ----------- | ----------- | -------------------- |
-| novice-man            | 39.1 / 32.5 | 24.3 / 19.9 | 39.3 / 32.4 | 19.8 / 14.7 | 38 / 30              |
-| novice-woman          | 37.5 / 31.8 | 26.2 / 21.0 | 38.5 / 31.8 | 17.2 / 13.7 | 38 / 30              |
+| novice-man            | 39.4 / 32.8 | 24.3 / 19.9 | 36.1 / 29.0 | 19.8 / 14.7 | 38 / 30              |
+| novice-woman          | 37.6 / 31.8 | 26.2 / 21.0 | 35.6 / 28.7 | 17.2 / 13.7 | 38 / 30              |
 | light-trainer         | 23.6 / 18.3 | 16.0 / 11.7 | 25.3 / 18.1 | 17.8 / 13.0 | 38 / 30              |
-| off-sick              | 31.6 / 25.0 | 19.7 / 15.1 | 31.6 / 24.9 | 14.6 / 10.0 | 38 / 30              |
-| over-55               | 36.7 / 30.9 | 26.0 / 20.7 | 37.9 / 31.4 | 16.1 / 12.0 | 38 / 30              |
+| off-sick              | 32.0 / 25.3 | 19.7 / 15.1 | 28.2 / 20.7 | 14.6 / 10.0 | 38 / 30              |
+| over-55               | 37.0 / 31.1 | 26.0 / 20.7 | 34.8 / 27.7 | 16.1 / 12.0 | 38 / 30              |
 | intermediate-man      | 9.0 / 6.3   | 7.5 / 5.0   | 9.0 / 6.3   | 7.7 / 5.2   | 9 / 8                |
 | intermediate-woman    | 8.9 / 6.3   | 7.4 / 4.9   | 8.9 / 6.2   | 7.6 / 5.2   | 9 / 8                |
 | powerbuilder-size     | 8.8 / 6.1   | 7.3 / 4.9   | 8.7 / 6.0   | 7.4 / 5.1   | 9 / 8                |
@@ -254,9 +254,12 @@ whose first weight would be under the bar as one (Pgm8 L15).
 What the table says:
 
 - **Where the plan doses fully, the model lands on §4.2's centre.** That's
-  the base model's squat and deadlift at every level, which is what the
-  calibration promised. The harsh model runs a sixth lower for novices and
-  about a third lower for intermediates and the advanced lifter.
+  the base model's squat at every level, and its deadlift above novice,
+  which is what the calibration promised. A novice's deadlift lands about
+  2 points under (36 against 38) since Pgm8 L7 took out the leg curl the
+  model counted as deadlift work. The harsh model runs a sixth lower for
+  novices and about a third lower for intermediates and the advanced
+  lifter.
 - **Novice upper body falls short:** a bench of about 25 against 30, and a
   press of 17–20. The 3-day plans train the bench twice a week and the
   press once, and the press moves in 2.5 kg steps on a 30–40 kg lift (F2,
@@ -264,7 +267,7 @@ What the table says:
   sessions, and on the two dumbbell presses 12 and 16.
 - **The 2-day, 30-minute dumbbell beginner gets about half of §4.2:**
   two short days, then F9's waits from about week 8.
-- **A light trainer doing about half the sessions** gets 60–65% of the
+- **A light trainer doing about half the sessions** gets 60–70% of the
   novice man's squat, bench and deadlift gains.
 - **The over-55 persona's press** was a 15 kg barbell, below the bar
   (F10) and at her 1RM: under the harsh model she mostly couldn't lift it,

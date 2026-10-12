@@ -68,7 +68,7 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {
  *
  * - F9 `stall`: a light lift whose next weight is more than 15% heavier
  *   waits at a stretched rep target for the person to pick it up, with
- *   reps to spare (a 10 kg leg curl at 17 reps, dumbbells from 10 kg).
+ *   reps to spare (a 10 kg leg curl or calf raise, dumbbells from 10 kg).
  *   The ceiling from Nuzzo 2024's means (Pgm7 A3) is a few reps under
  *   Epley's, so the wait starts sooner, and shows in lifts Epley's let
  *   climb on: a light curl or pushdown at 17 reps, not 20. The dumbbell
@@ -85,7 +85,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "novice-woman": [
     "stall:db-shoulder-press",
     "stall:seated-calf-raise",
-    "stall:seated-leg-curl",
+    "stall:standing-calf-raise",
   ],
   "intermediate-woman": ["acsm-size:quads"],
   "powerbuilder-size": ["acsm-size:quads"],
@@ -110,7 +110,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "misses:deadlift",
     "stall:db-shoulder-press",
     "stall:seated-calf-raise",
-    "stall:seated-leg-curl",
+    "stall:standing-calf-raise",
   ],
 };
 

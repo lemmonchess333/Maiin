@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   daysPerMuscle,
   extraPastCeiling,
+  keepsWeeklyFrequency,
   twiceWeeklyAdditions,
 } from "../weeklyFrequency";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -72,6 +73,38 @@ describe("daysPerMuscle — the days a week each muscle is worked on", () => {
     expect(days.get("Biceps")).toBe(1);
     expect(days.get("Quads")).toBe(1);
     expect(days.has("Calves")).toBe(false);
+  });
+});
+
+describe("keepsWeeklyFrequency — a change that costs no muscle its two days", () => {
+  const week = (aExtra: ProgramExercise[], bExtra: ProgramExercise[]) => [
+    lower("Lower A", aExtra),
+    lower("Lower B", bExtra),
+    upper("Upper", [seatedCalf()]),
+  ];
+
+  it("holds while every muscle keeps its days, up to two", () => {
+    // Calves on three days, then two: still twice a week.
+    expect(
+      keepsWeeklyFrequency(
+        week([seatedCalf()], [seatedCalf()]),
+        week([seatedCalf()], [])
+      )
+    ).toBe(true);
+    // A muscle the week only works once may stay once.
+    expect(
+      keepsWeeklyFrequency(week([], [crunch()]), week([], [crunch()]))
+    ).toBe(true);
+  });
+
+  it("fails when a muscle loses a day it needs for its two", () => {
+    expect(keepsWeeklyFrequency(week([seatedCalf()], []), week([], []))).toBe(
+      false
+    );
+    // …or its only day.
+    expect(keepsWeeklyFrequency(week([], [crunch()]), week([], []))).toBe(
+      false
+    );
   });
 });
 
