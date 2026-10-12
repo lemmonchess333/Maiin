@@ -106,6 +106,13 @@ export async function getDocs(ref: CollectionRef) {
   return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
 }
 
+/** Server-only query read, the collection twin of `getDocFromServer`: the
+ *  fake's normal reads ARE server reads, so it is `getDocs`, and it shares
+ *  `getDocs`' failure injection and deferral. */
+export async function getDocsFromServer(ref: CollectionRef) {
+  return getDocs(ref);
+}
+
 /**
  * Cache-only read. The fake models a COLD cache: it always rejects with
  * Firestore's `unavailable`, which is what the real SDK does for a
@@ -160,6 +167,9 @@ export function onSnapshot(
   // Match the SDK overload used by metadata-sensitive privacy listeners.
   const withOptions =
     a != null && typeof a === "object" && "includeMetadataChanges" in a;
+  const includeMetadataChanges =
+    withOptions &&
+    (a as { includeMetadataChanges?: boolean }).includeMetadataChanges === true;
   if (withOptions) {
     a = b;
     b = c;
@@ -175,6 +185,7 @@ export function onSnapshot(
 
   return firestoreFake.addListener({
     ref,
+    includeMetadataChanges,
     fire: () => {
       try {
         firestoreFake.failIfArmed("onSnapshot", ref.path);

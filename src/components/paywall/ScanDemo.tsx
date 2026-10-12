@@ -25,6 +25,7 @@ import MealMacroBar from "@/components/food/MealMacroBar";
 import CalorieRing from "@/components/food/CalorieRing";
 import MacroColumn from "@/components/food/MacroColumn";
 import { Avocado } from "@/components/icons/Avocado";
+import { MEAL_SLOT_ICONS, type MealKey } from "@/components/food/mealConstants";
 import {
   AnalyticsTabIcon,
   FoodTabIcon,
@@ -33,6 +34,7 @@ import {
   TrainTabIcon,
 } from "@/components/icons/TabIcons";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { formatTimeOfDay } from "@/utils/formatters";
 import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
 
 /**
@@ -85,6 +87,14 @@ const AFTER = {
   carbs: DAY.before.carbs + SCAN_DEMO_RESULT.carbs,
   fat: DAY.before.fat + SCAN_DEMO_RESULT.fat,
 };
+
+/** A time on that day, printed as the diary prints one ("19:42"). */
+function dayTime(hours: number, minutes: number): string {
+  return formatTimeOfDay(new Date(2026, 0, 15, hours, minutes));
+}
+/** The moment the demo shows: the phone's clock, and when the scanned
+ *  meal is logged. */
+const NOW = dayTime(19, 42);
 
 /* ── Geometry, in the phone's own pixels ─────────────────────────────── */
 
@@ -141,12 +151,15 @@ const PAN_START = { x: -PHOTO_LEFT, y: -PHOTO_TOP, zoom: 2.6 };
 const PAN_CLOSE = { ...lookAt(560, 1000, 1.6), zoom: 1.6 };
 
 /* The Food page: how far it scrolls to show the diary, and where the
-   phone comes in close. */
-const SCROLL_Y = -420;
+   phone comes in close. The scroll sets the diary's card down just above
+   the tab bar, and the close-up frames the card with its new row in the
+   upper half; both were measured with the rows as FoodRow draws them on a
+   day with a photo (Pol1). */
+const SCROLL_Y = -268;
 const Z_SHEET = 1.4;
 const Y_SHEET = centreOn(BEZEL + 612, Z_SHEET);
 const Z_ROW = 1.35;
-const Y_ROW = centreOn(BEZEL + 470, Z_ROW);
+const Y_ROW = centreOn(BEZEL + 540, Z_ROW);
 /** Off the stage, below and to one side, with no corner left showing:
  *  in from the bottom right, out to the bottom left. */
 const OFF_X = 560;
@@ -241,7 +254,7 @@ function StatusBar({ className }: { className?: string }) {
       style={{ fontFamily: SYSTEM_FONT }}
     >
       <span className="flex w-[130px] justify-center text-base font-semibold tracking-tight">
-        7:42
+        {NOW}
       </span>
       <span className="flex w-[130px] items-center justify-center gap-[5px]">
         <SignalGlyph />
@@ -897,30 +910,44 @@ function CalorieCard({ calories }: { calories: number }) {
 
 function LogRow({
   name,
-  meta,
+  meal,
+  slot,
+  time,
   calories,
   photo,
 }: {
   name: string;
-  meta: string;
+  meal: string;
+  slot: MealKey;
+  time: string;
   calories: number;
   photo?: boolean;
 }) {
-  // FoodRow's photo row: the photo over the name, when and calories.
+  /* FoodRow's row on a day with a photo (Pol1): the photo as a thumbnail
+     at the start of the row, or the slot's tile where there is none, then
+     the name, when and calories, the caption drawn as FoodTimeline draws
+     it. */
+  const SlotIcon = MEAL_SLOT_ICONS[slot];
   return (
-    <div className="py-2.5">
-      {photo && (
+    <div className="flex items-center gap-3 py-2.5">
+      {photo ? (
         <img
           src={rigatoniUrl}
           alt=""
-          className="mb-2.5 h-44 w-full rounded-lg object-cover"
+          className="size-[52px] shrink-0 rounded-xl object-cover"
         />
+      ) : (
+        <span className="flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <SlotIcon className="size-5" strokeWidth={1.75} />
+        </span>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex min-w-0 flex-1 items-center justify-between">
         <div className="mr-2 min-w-0 flex-1">
           <p className="truncate text-sm text-foreground">{name}</p>
           <p className="mt-0.5 truncate text-caption text-muted-foreground">
-            {meta}
+            {meal}
+            {" · "}
+            <span className="font-mono tabular-nums">{time}</span>
           </p>
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">
@@ -1093,7 +1120,9 @@ function FoodScreen({ live }: { live: boolean }) {
               <LogRow
                 photo
                 name={r.title}
-                meta={`${r.meal} · 7:42 PM`}
+                meal={r.meal}
+                slot="dinner"
+                time={NOW}
                 calories={r.calories}
               />
             </motion.div>
@@ -1101,14 +1130,18 @@ function FoodScreen({ live }: { live: boolean }) {
           <div className="border-t border-border/40">
             <LogRow
               name="Greek yogurt"
-              meta="Snacks · 4:24 PM"
+              meal="Snacks"
+              slot="snacks"
+              time={dayTime(16, 24)}
               calories={180}
             />
           </div>
           <div className="border-t border-border/40">
             <LogRow
               name="Chicken & rice"
-              meta="Lunch · 1:17 PM"
+              meal="Lunch"
+              slot="lunch"
+              time={dayTime(13, 17)}
               calories={650}
             />
           </div>

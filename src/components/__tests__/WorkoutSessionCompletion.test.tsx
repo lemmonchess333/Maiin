@@ -33,6 +33,7 @@ const h = vi.hoisted(() => ({
   success: vi.fn(),
   message: vi.fn(),
   user: null as { uid: string } | null,
+  profile: null as Record<string, unknown> | null,
   awardEventBadge: vi.fn(),
   awardEventBadges: vi.fn(),
   authReads: vi.fn(),
@@ -40,7 +41,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => {
     h.authReads();
-    return { user: h.user, profile: null };
+    return { user: h.user, profile: h.profile };
   },
   useUidForStorageKey: () => "test",
 }));
@@ -79,13 +80,13 @@ vi.mock("@/lib/toast", () => ({
 vi.mock("@/components/workout/PlateCalculatorSheet", () => ({
   default: () => null,
 }));
-vi.mock("@/components/workout/StallModal", () => ({ default: () => null }));
 vi.mock("@/lib/restTimerNotification", () => ({
   restNotificationDelaySeconds: () => 0,
   scheduleRestEndNotification: vi.fn(),
   cancelRestEndNotification: vi.fn(),
 }));
 import WorkoutSession from "../WorkoutSession";
+import { WORKOUT } from "@/test/journeyScreens";
 
 /**
  * What a writer hands back (`completeLift`): saved now, or, given the
@@ -114,10 +115,12 @@ const writer = (queued?: Promise<"synced" | "failed">) =>
 function openSession(
   onCompleteDay = writer(),
   onClose = vi.fn(),
-  exercise: Partial<ProgramExercise> = {}
+  exercise: Partial<ProgramExercise> = {},
+  extra: Partial<ComponentProps<typeof WorkoutSession>> = {}
 ) {
   render(
     <WorkoutSession
+      {...extra}
       day={{
         dayName: "Test lift",
         dayType: "upper",
@@ -145,6 +148,7 @@ function openSession(
 beforeEach(() => {
   vi.clearAllMocks();
   h.user = null;
+  h.profile = null;
   h.save.mockReturnValue(true);
   resetFirestore();
   vi.stubGlobal(
@@ -163,6 +167,26 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/* The E2E journeys finish a session on this screen by these names
+   (src/test/journeyScreens.ts, `finishLiftViaUi`). Finished here the same
+   way, so a renamed control fails in the unit suite, not in a journey. */
+it("finishes a session by the names the journeys use", async () => {
+  const log = openSession();
+  expect(screen.getByRole("button", { name: WORKOUT.close })).toBeVisible();
+  for (let set = 0; set < 3; set++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: WORKOUT.markSet })[0]
+    );
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.save })).toBeVisible()
+  );
+  fireEvent.click(screen.getByRole("button", { name: WORKOUT.save }));
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.done })).toBeVisible()
+  );
+  expect(log).toHaveBeenCalledTimes(1);
+});
+
 describe("set completion through row controls", () => {
   it("rejects an invalid later set and keeps it editable", () => {
     openSession();
@@ -178,6 +202,63 @@ describe("set completion through row controls", () => {
     ).toBeEnabled();
   });
 
+  it("completes a hold timed past 100 seconds (Lift4 (14))", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "plank",
+      name: "Plank",
+      reps: 60,
+      repUnit: "seconds",
+    });
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" }),
+      { target: { value: "120" } }
+    );
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    expect(h.error).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 seconds" })
+    ).toBeDisabled();
+  });
+
+  /* Quieter colours (owner, 2026-10-12): a done row keeps the card's
+     colour and says done with its green tick; the row being logged is the
+     table's one tinted row. */
+  it("tints only the row being logged, not the done ones", async () => {
+    openSession();
+    const row = (index: number) =>
+      document.querySelector(`[data-set-row="${index}"] > div`)!;
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(row(1).className.split(" ")).toContain("bg-primary/10")
+    );
+    expect(row(0).className).not.toMatch(/\bbg-(success|primary)\//);
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+  });
+
+  it("draws Previous in grey, still a tap to fill", () => {
+    openSession(writer(), vi.fn(), {
+      weight: 60,
+      lastPerformance: { sets: 3, reps: 8, weight: 60, completed: true },
+    });
+    const cells = screen.getAllByRole("button", { name: /^Last time / });
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) {
+      expect(cell.className.split(" ")).toContain("text-muted-foreground");
+      expect(cell.className).not.toMatch(/text-lifting/);
+    }
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 reps" }), {
+      target: { value: "5" },
+    });
+    fireEvent.click(cells[0]);
+    expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(
+      8
+    );
+  });
+
   it("offers undo for a valid out-of-order set", () => {
     openSession();
     fireEvent.click(
@@ -190,6 +271,93 @@ describe("set completion through row controls", () => {
     expect(
       screen.getByRole("spinbutton", { name: "Set 2 reps" })
     ).toBeEnabled();
+  });
+
+  /* The set being logged stays on screen: each move of the current set
+     asks its row into view, only as far as it needs (nearest). The
+     first placement is instant (Pol1); later ones pass no behavior, so
+     the list's scroll-behavior decides, as Reduce Motion needs. */
+  it("brings the set being logged into view, instantly on arrival", async () => {
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    openSession();
+    const rowCalls = () =>
+      scroll.mock.contexts.flatMap((el, i) =>
+        el instanceof Element && el.hasAttribute("data-set-row")
+          ? [[el.getAttribute("data-set-row"), scroll.mock.calls[i][0]]]
+          : []
+      );
+    expect(rowCalls()).toEqual([
+      ["0", { block: "nearest", behavior: "instant" }],
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() =>
+      expect(rowCalls().at(-1)).toEqual(["1", { block: "nearest" }])
+    );
+  });
+
+  /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
+     a working set is done and while sets remain; under the set action it
+     took a row from the list on every set after the first. */
+  it("offers Finish in the top bar once a set is done, asking first", async () => {
+    openSession();
+    const finish = () =>
+      screen.queryByRole("button", { name: "Finish workout" });
+    expect(finish()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+    await vi.waitFor(() => expect(finish()).toBeVisible());
+    expect(finish()).toHaveTextContent("Finish");
+    expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
+    fireEvent.click(finish()!);
+    expect(
+      screen.getByRole("alertdialog", { name: "Finish early?" })
+    ).toBeInTheDocument();
+  });
+
+  /* The exercise's name and set count head the list rather than sit fixed
+     above it, so another exercise starts at its head. */
+  it("brings another exercise's head into view when it opens", () => {
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Test lift",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "test",
+              name: "First lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+            {
+              exerciseId: "test-2",
+              name: "Second lift",
+              sets: 2,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={writer()}
+        onClose={vi.fn()}
+      />
+    );
+    scroll.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "Second lift" }));
+    const header = screen
+      .getByRole("heading", { level: 2, name: "Second lift" })
+      .closest("[class*='@container']");
+    const call = scroll.mock.contexts.findIndex((el) => el === header);
+    expect(call).toBeGreaterThanOrEqual(0);
+    expect(scroll.mock.calls[call][0]).toEqual({
+      block: "start",
+      behavior: "instant",
+    });
   });
 
   it("keeps completed exercises in the draft until the workout is saved", async () => {
@@ -245,6 +413,13 @@ it("a supported PR appears only on its row and Undo removes it", async () => {
   expect(screen.queryByText("PR")).not.toBeInTheDocument();
 });
 
+/** Whether `later` comes after `earlier` in the document: the order the
+ *  screen draws them in, top to bottom. */
+const follows = (earlier: Node, later: Node) =>
+  (earlier.compareDocumentPosition(later) &
+    Node.DOCUMENT_POSITION_FOLLOWING) !==
+  0;
+
 describe("the new-best moment (DS3)", () => {
   const seedBest = (bucket: "8rm" | "3rm" = "8rm") => {
     h.user = { uid: "pr-user" };
@@ -293,6 +468,20 @@ describe("the new-best moment (DS3)", () => {
     expect(spoken()?.textContent).toBe(
       "New best on Test exercise: 62.5 kg for 8 reps. Previous best 60 kg for 8 reps."
     );
+  });
+
+  it("stacks above the rest timer when the set that earned it starts a rest (Pol1)", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    const card = screen.getByTestId("new-best-moment");
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    expect(follows(card, timer)).toBe(true);
+    expect(
+      follows(timer, screen.getByRole("button", { name: /^Complete set/ }))
+    ).toBe(true);
   });
 
   it("stays quiet for a set that did not beat the best", async () => {
@@ -869,14 +1058,47 @@ describe("completed-set corrections", () => {
   });
 });
 
+describe("WorkoutSession — the record of a hard run before it (Lift4 (14))", () => {
+  async function finished(hardRunBefore?: (startedAt: number) => boolean) {
+    const complete = writer();
+    openSession(complete, vi.fn(), {}, hardRunBefore ? { hardRunBefore } : {});
+    for (let i = 0; i < 3; i++)
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    return complete.mock.calls[0][1];
+  }
+
+  it("carries a long or hard run in the day before the start to the save", async () => {
+    const asked: number[] = [];
+    const data = await finished((startedAt) => {
+      asked.push(startedAt);
+      return true;
+    });
+    expect(data.afterHardRun).toBe(true);
+    // Asked about the session's own start.
+    expect(asked[0]).toBe(data.startedAt);
+  });
+
+  it("records nothing without one", async () => {
+    expect((await finished(() => false)).afterHardRun).toBeUndefined();
+    cleanup();
+    expect((await finished()).afterHardRun).toBeUndefined();
+  });
+});
+
 describe("WorkoutSession — an accidental extra set can be removed", () => {
   /* "Add set" had no inverse, so a mis-tap left an uncompleted set the
      session counted as outstanding: finishing the three sets the programme
      prescribed still routed the lifter through "Finish early". */
   const rows = () => screen.getAllByLabelText(/^Set \d+ reps$/);
 
-  /* The set-type popover is the menu each set already has; its trigger
-     is the numbered badge at the head of the row. */
+  /* The set type sheet is the menu each set already has; its trigger is
+     the numbered badge at the head of the row. */
   it("removes the extra through the set's own menu", () => {
     openSession();
     expect(rows()).toHaveLength(3);
@@ -885,7 +1107,9 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     expect(rows()).toHaveLength(4);
 
     // Open set 4's menu and remove it.
-    fireEvent.click(screen.getAllByTitle("Set type: working")[3]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 4. Change set type" })
+    );
     fireEvent.click(screen.getByRole("button", { name: /Remove set/i }));
     expect(rows()).toHaveLength(3);
   });
@@ -894,7 +1118,9 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     /* The boundary. Removing one of the three the programme asked for is a
        change to the prescription, not a correction of a mis-tap. */
     openSession();
-    fireEvent.click(screen.getAllByTitle("Set type: working")[2]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 3. Change set type" })
+    );
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
   });
 
@@ -903,51 +1129,407 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     // completion cursor under the lifter.
     openSession();
     fireEvent.click(screen.getByRole("button", { name: "Add set" }));
-    fireEvent.click(screen.getAllByTitle("Set type: working")[1]);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 2. Change set type" })
+    );
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
   });
 });
 
-describe("WorkoutSession — the set-type menu opens beside its button", () => {
-  it("places the menu from the tapped button on the frame that opens it", () => {
-    /* The position came from a ref the button's ref callback filled, which
-       runs after the render that opens the menu, so the menu's first frame
-       drew at the previous position (0, 0 on a first open). */
+describe("WorkoutSession — a set's type is picked from its badge", () => {
+  /* As in Hevy and MacroFactor: tap the set's badge, pick a type. Each
+     type says what it does, because a W on its own told nobody why the
+     row was there. */
+  const badge = (name: string) =>
+    screen.getByRole("button", { name: `${name}. Change set type` });
+
+  it("opens a sheet naming the set, with every type explained", () => {
     openSession();
-    const trigger = screen.getAllByTitle("Set type: working")[1];
-    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue({
-      top: 120,
-      bottom: 148,
-      left: 20,
-      right: 48,
-      width: 28,
-      height: 28,
-      x: 20,
-      y: 120,
-      toJSON: () => ({}),
+    fireEvent.click(badge("Set 2"));
+    const sheet = screen.getByRole("dialog", { name: "Set type" });
+    expect(sheet).toHaveTextContent("Set 2");
+    for (const name of ["Working set", "Warm-up", "Drop set", "To failure"]) {
+      expect(
+        screen.getByRole("button", { name: new RegExp(`^.?${name}`) })
+      ).toBeInTheDocument();
+    }
+    expect(
+      screen.getByRole("button", { name: /^.?Working set/ })
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("renumbers the sets that count when one becomes a warm-up", () => {
+    openSession();
+    fireEvent.click(badge("Set 1"));
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    expect(badge("Warm-up 1")).toHaveTextContent("W");
+    expect(badge("Set 1")).toHaveTextContent("1");
+    expect(badge("Set 2")).toHaveTextContent("2");
+    expect(screen.getByLabelText("Warm-up 1 weight")).toBeInTheDocument();
+  });
+
+  it("marks a drop set with its letter, and keeps its number in its name", () => {
+    openSession();
+    fireEvent.click(badge("Set 3"));
+    fireEvent.click(screen.getByRole("button", { name: /^D?Drop set/ }));
+    expect(badge("Set 3, drop set")).toHaveTextContent("D");
+  });
+
+  it("corrects a done set's type, and its edit names it", () => {
+    openSession();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    fireEvent.click(badge("Set 1"));
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    expect(
+      screen.getByRole("button", { name: "Edit completed warm-up 1" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("WorkoutSession — a done set's type can be corrected", () => {
+  it("takes back a best when the set turns out to be a warm-up", async () => {
+    /* A done set has fed the session's bests; a warm-up may not. */
+    h.user = { uid: "pr-user" };
+    seedFirestore({
+      "users/pr-user/stats/prMap": {
+        map: {
+          "Test exercise": {
+            "1rm": null,
+            "3rm": null,
+            "5rm": null,
+            "8rm": { weight: 60, reps: 8, date: "2026-07-01" },
+            "10rm": null,
+          },
+        },
+        sessionCounts: { "Test exercise": 5 },
+        volumeBest: {},
+      },
     });
-    fireEvent.click(trigger);
-    // The menu is the fixed card holding the set types.
-    const menu = screen
-      .getByRole("button", { name: /warm-?up/i })
-      .closest("div.fixed") as HTMLElement;
-    expect(menu.style.left).toBe("56px");
-    expect(menu.style.top).toBe("120px");
+    await act(async () => {
+      openSession();
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+      target: { value: "62.5" },
+    });
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    expect(screen.getByText("PR")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 1. Change set type" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    expect(screen.queryByText("PR")).not.toBeInTheDocument();
+  });
+});
+
+describe("WorkoutSession — Previous shows the same set last time", () => {
+  it("captions each set with last session's set of the same number", async () => {
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "test",
+            exerciseName: "Test exercise",
+            sets: [
+              { reps: 8, weightKg: 60 },
+              { reps: 6, weightKg: 62.5 },
+              { reps: 4, weightKg: 65 },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () => openSession());
+    for (const [set, label] of [
+      ["set 1", "60 × 8"],
+      ["set 2", "62.5 × 6"],
+      ["set 3", "65 × 4"],
+    ]) {
+      expect(
+        screen.getByRole("button", {
+          name: `Last time ${label}. Use it for ${set}`,
+        })
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("marks a bodyweight lift's load as added, and a set with none as BW (Pgm8 L6)", async () => {
+    // "10 × 8" read as a 10 kg pull-up; the plan follows the load on the
+    // belt, as Train's row does ("+10 kg").
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "pull-ups",
+            exerciseName: "Pull-Ups",
+            sets: [
+              { reps: 8, weightKg: 10, type: "working" },
+              { reps: 12, weightKg: 0, type: "working" },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () =>
+      openSession(writer(), vi.fn(), {
+        exerciseId: "pull-ups",
+        name: "Pull-Ups",
+        weight: 10,
+      })
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Last time +10 × 8. Use it for set 1",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Last time BW × 12. Use it for set 2",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("fills a set from last time on a tap, until the set is done", async () => {
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "test",
+            exerciseName: "Test exercise",
+            sets: [
+              { reps: 8, weightKg: 60 },
+              { reps: 6, weightKg: 62.5 },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () => openSession());
+    const weight = screen.getByLabelText("Set 2 weight");
+    const reps = screen.getByLabelText("Set 2 reps");
+    fireEvent.change(weight, { target: { value: "50" } });
+    fireEvent.change(reps, { target: { value: "3" } });
+    expect(weight).toHaveValue(50);
+    const lastTime = () =>
+      screen.getByRole("button", {
+        name: "Last time 62.5 × 6. Use it for set 2",
+      });
+    fireEvent.click(lastTime());
+    expect(weight).toHaveValue(62.5);
+    expect(reps).toHaveValue(6);
+
+    // A done set is the record of what was lifted: last time no longer
+    // writes over it.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[1]
+    );
+    expect(lastTime()).toBeDisabled();
+  });
+
+  it("on a programme day, starts each lift from the last session in its slot", async () => {
+    /* One squat in two slots: 3×5 heavy, 2×9 light. Read by the exercise,
+       the heavy day opened with the light day's lighter set at 9 reps. */
+    h.user = { uid: "prev-user" };
+    const squat = (
+      slot: string,
+      sets: { reps: number; weightKg: number }[]
+    ) => ({
+      exercises: [{ exerciseId: "squat", exerciseName: "Barbell Squat", sets }],
+      programmeCompletion: {
+        context: {
+          progression: {
+            prescription: {
+              exercises: [{ exerciseId: "squat", instanceId: slot }],
+            },
+          },
+        },
+      },
+    });
+    seedFirestore({
+      "users/prev-user/workouts/light": {
+        date: "2026-09-03",
+        ...squat("light", [
+          { reps: 9, weightKg: 70 },
+          { reps: 9, weightKg: 65 },
+        ]),
+      },
+      "users/prev-user/workouts/heavy": {
+        date: "2026-09-01",
+        ...squat("heavy", [
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 80 },
+        ]),
+      },
+    });
+    await act(async () =>
+      openSession(
+        writer(),
+        vi.fn(),
+        {
+          exerciseId: "squat",
+          instanceId: "heavy",
+          name: "Barbell Squat",
+          reps: 5,
+          weight: 87.5,
+        },
+        {
+          planLifts: [
+            { exerciseId: "squat", instanceId: "heavy" },
+            { exerciseId: "squat", instanceId: "light" },
+          ],
+        }
+      )
+    );
+    expect(
+      screen.getByRole("button", { name: "Last time 85 × 5. Use it for set 2" })
+    ).toBeInTheDocument();
+    // The plan's step for the sets lifted at 85, the lighter last set as
+    // lifted: never the light day's 65 × 9.
+    expect(screen.getByLabelText("Set 2 weight")).toHaveValue(87.5);
+    expect(screen.getByLabelText("Set 2 reps")).toHaveValue(5);
+    expect(screen.getByLabelText("Set 3 weight")).toHaveValue(80);
+    expect(screen.getByLabelText("Set 3 reps")).toHaveValue(5);
+  });
+
+  it("gives a warm-up no previous figure", async () => {
+    /* Captioned with a working set, every ramp row read "100 × 5" on a
+       100 kg squat, and a tap loaded the top set as the first warm-up. */
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "squat",
+            exerciseName: "Barbell Squat",
+            sets: [
+              { reps: 5, weightKg: 100 },
+              { reps: 5, weightKg: 100 },
+              { reps: 5, weightKg: 100 },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () =>
+      openSession(writer(), vi.fn(), {
+        exerciseId: "squat",
+        name: "Barbell Squat",
+        weight: 100,
+      })
+    );
+    // The working sets carry last time's figure...
+    expect(
+      screen.getByRole("button", {
+        name: "Last time 100 × 5. Use it for set 1",
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Warm-up 1 weight")).toHaveValue(20);
+    // ...and the three warm-ups carry none.
+    expect(
+      screen.queryAllByRole("button", { name: /Use it for warm-up/ })
+    ).toHaveLength(0);
+  });
+});
+
+describe("WorkoutSession — warm-ups are optional", () => {
+  /* A 100 kg squat gets a three-set ramp (20, 50 and 70 kg). The ramp used
+     to take the first numbers, so the first working set was "Set 4 of 6",
+     and an unticked warm-up held the exercise open. */
+  const squat = {
+    exerciseId: "squat",
+    name: "Barbell Squat",
+    weight: 100,
+  } satisfies Partial<ProgramExercise>;
+  /** The line under the exercise's name, read as one string. */
+  const setLine = (pattern: RegExp) =>
+    screen.getByText(
+      (_, element) =>
+        element?.tagName === "P" && pattern.test(element.textContent ?? "")
+    );
+
+  it("numbers the working sets from 1, after a lettered ramp", () => {
+    openSession(writer(), vi.fn(), squat);
+    expect(
+      screen
+        .getAllByRole("button", { name: /\. Change set type$/ })
+        .map((button) => button.textContent)
+    ).toEqual(["W", "W", "W", "1", "2", "3"]);
+    expect(screen.getByLabelText("Set 1 weight")).toHaveValue(100);
+    expect(screen.getByLabelText("Warm-up 1 weight")).toHaveValue(20);
+    expect(setLine(/^Warm-up 1 of 3 · 0 done$/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Complete warm-up 1" })
+    ).toBeInTheDocument();
+    // The session's progress counts the sets that count.
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "P" &&
+          /^0\/3 sets/.test(element.textContent ?? "")
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("moves on from a skipped ramp instead of going back to it", () => {
+    openSession(writer(), vi.fn(), squat);
+    // Straight to the first working set.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[3]
+    );
+    expect(
+      screen.getByRole("button", { name: "Complete set 2" })
+    ).toBeInTheDocument();
+    expect(setLine(/^Set 2 of 3 · 1 done$/)).toBeInTheDocument();
+  });
+
+  it("finishes the exercise when the working sets are done", () => {
+    openSession(writer(), vi.fn(), squat);
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" }).at(-1)!
+      );
+    }
+    // Three warm-ups left unticked do not hold the workout open: it is
+    // the only exercise, so its last working set finishes the session.
+    expect(
+      screen.getByRole("button", { name: "Save workout" })
+    ).toBeInTheDocument();
   });
 });
 
 describe("WorkoutSession — rest timer", () => {
-  /* The fixture carries `restSeconds: 0` and a null profile, so every rest
-     falls back to the 90s default. That makes the default the thing a leak
-     would visibly overwrite. */
+  /* The exercise carries a 90s rest and the profile fixes none, so every
+     rest is 90s. That makes it the thing a leak would visibly overwrite. */
   // The time left reads as a clock (DS3): "1:30", not "90 s".
   const restLabel = () =>
     screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
 
   function startFirstRest() {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
   }
+
+  it("rests as the plan suggests when none is fixed (Lift4 (5))", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
+  });
 
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
@@ -971,6 +1553,34 @@ describe("WorkoutSession — rest timer", () => {
     expect(restLabel()).toContain("1:30");
   });
 
+  it("docks between the set table and the bottom bar, so ticking moves nothing above it (Pol1)", () => {
+    // In the header it pushed the exercise strip and the set table down
+    // 61 px under the thumb that had just ticked the set.
+    startFirstRest();
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    const lastRow = screen.getByRole("spinbutton", { name: "Set 3 reps" });
+    expect(follows(lastRow, timer)).toBe(true);
+    expect(
+      follows(timer, screen.getByRole("button", { name: /^Complete set/ }))
+    ).toBe(true);
+  });
+
+  it("with auto-start off, offers the rest where the timer docks and starts it there (Pol1)", () => {
+    h.profile = { autoRestTimer: false };
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    const start = screen.getByRole("button", { name: "Start rest timer" });
+    expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull();
+    expect(
+      follows(screen.getByRole("spinbutton", { name: "Set 3 reps" }), start)
+    ).toBe(true);
+    fireEvent.click(start);
+    expect(restLabel()).toContain("1:30");
+    expect(
+      screen.queryByRole("button", { name: "Start rest timer" })
+    ).toBeNull();
+  });
+
   it("extends repeatedly within one rest — the counterweight", () => {
     // A fix that reset the target on every render would pass the test above
     // while making the button useless.
@@ -978,6 +1588,49 @@ describe("WorkoutSession — rest timer", () => {
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     expect(restLabel()).toContain("2:00");
+  });
+});
+
+describe("the tick (Pol1)", () => {
+  /* framer writes a mark's starting values inline as it mounts: a box
+     that pops starts at 0.72. */
+  const pops = (mark: HTMLElement) =>
+    (mark.getAttribute("style") ?? "").includes("0.72");
+
+  it("pops a set ticked on screen, and not again on a return to its exercise", () => {
+    const exercise = (exerciseId: string, name: string) =>
+      ({
+        exerciseId,
+        name,
+        sets: 3,
+        reps: 8,
+        weight: 0,
+        restSeconds: 0,
+      }) as ProgramExercise;
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Test lift",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            exercise("test", "Test exercise"),
+            exercise("test-2", "Second exercise"),
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={writer()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(pops(screen.getByTestId("set-check-mark"))).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Second exercise" }));
+    expect(screen.queryByTestId("set-check-mark")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Test exercise" }));
+    const mark = screen.getByTestId("set-check-mark");
+    expect(pops(mark)).toBe(false);
   });
 });
 
@@ -1041,7 +1694,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("ticks both displays without re-rendering the set editor or saving drafts", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     // Let mount work settle, then observe real editor renders via its auth read.
     await act(async () => {});
@@ -1067,7 +1720,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
   });
 
   it("stops paint pulses while hidden and catches up on foreground immediately", async () => {
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
     await act(async () => {});
     const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
@@ -1096,7 +1749,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
        chime flag stayed set from the first expiry, so the second one passed
        in silence — a timer running with no alert at the end of it. */
     const { haptic } = await import("@/lib/haptic");
-    openSession();
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
 
     // Run past the 90s target: the alert fires once.
@@ -1127,10 +1780,8 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Finish early" }));
-  fireEvent.click(
-    screen.getByRole("button", { name: "Review completed work" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(
@@ -1334,5 +1985,146 @@ describe("wayfinding between exercises", () => {
       screen.getByRole("button", { name: "Pull-Ups, done" })
     ).toBeVisible();
     expect(screen.queryByText("Up next")).toBeNull();
+  });
+});
+
+describe("the session's target (Lift4 (3))", () => {
+  it("names a climbing lift's range", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 10,
+      baseReps: 8,
+      repRangeMax: 12,
+      progressionType: "double",
+      weight: 60,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8–12 @ 60 kg"
+    );
+  });
+
+  it("names a bodyweight lift's load as weight added to it (Pgm8 L6)", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 10,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight + 10 kg"
+    );
+  });
+
+  it("names a bodyweight lift done with none as bodyweight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 0,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight"
+    );
+  });
+});
+
+describe("the plate hint (Lift4 (6))", () => {
+  it("loads the plan's 2.5 kg step with a 1.25 kg plate a side", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 62.5,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 + 1.25"
+    );
+    expect(screen.queryByText(/kg short/)).toBeNull();
+  });
+
+  it("says what the plates can't make", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 61,
+    });
+    expect(screen.getByText(/Per side:/)).toHaveTextContent(
+      "Per side: 20 · 1 kg short"
+    );
+  });
+});
+
+describe("the plan's lines caption the set table", () => {
+  /* Centred at the bottom of the list, under Up next, the target and the
+     plates read as loose notes. They sit right under the table, in one
+     block, before the note field, and the RPE switch is in the table's
+     own foot beside Add set. */
+  it("puts the target and plates under the table, before the note", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 62.5,
+    });
+    const target = screen.getByText(/^Target:/);
+    const plates = screen.getByText(/Per side:/);
+    const note = screen.getByRole("textbox", { name: "Exercise notes" });
+    expect(target.parentElement).toBe(plates.parentElement);
+    expect(
+      target.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const addSet = screen.getByRole("button", { name: "Add set" });
+    expect(screen.getByRole("button", { name: "Show RPE" }).parentElement).toBe(
+      addSet.parentElement
+    );
+    expect(note).toHaveAttribute("placeholder", "Add a note for next time");
+  });
+});
+
+describe("the stretched line (Pgm7 A3)", () => {
+  it("says under the target how far the reps go before the next weight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "lateral-raise",
+      name: "Lateral Raise",
+      weight: 10,
+      reps: 16,
+      baseReps: 12,
+      repRangeMax: 15,
+      progressionType: "double",
+      stretched: {
+        exerciseId: "lateral-raise",
+        weight: 10,
+        next: 12.5,
+        ceiling: 19,
+      },
+    });
+    expect(screen.getByText(/^Up to/)).toHaveTextContent(
+      "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
+    );
+  });
+});
+
+describe("WorkoutSession — the rest after a warm-up", () => {
+  /* A warm-up is light, so it is briefly rested: the plan's session length
+     counts a minute for one, reps and rest. A working set's full rest after
+     each warm-up put minutes on every main lift that the plan never
+     counted. */
+  const restLabel = () =>
+    screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
+
+  it("rests 45 seconds after a warm-up and the lift's full rest after a working set", () => {
+    // A 5-rep bench is a heavy main lift: 3 minutes between working sets.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      reps: 5,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set 1. Change set type" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^W?Warm-up/ }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("0:45");
+
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("3:00");
   });
 });

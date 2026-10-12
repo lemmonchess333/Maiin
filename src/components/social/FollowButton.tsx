@@ -1,5 +1,7 @@
 import { useUid } from "../../lib/auth";
 import { useFollowState } from "@/hooks/useFollowState";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { showRestrictedToast } from "@/lib/accountRestriction";
 import { haptic } from "../../lib/haptic";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
@@ -47,9 +49,19 @@ export default function FollowButton({
   const { following: known, settled, busy, toggle } = useFollowState(targetUid);
   // A failed check reads as not following, as it always has here.
   const following = known ?? false;
+  /* A restricted account can unfollow but not follow (S4e). The button
+     stays tappable so the tap can say why; every Follow control, the
+     profile page's included, goes through here. */
+  const { isRestricted } = useRestrictedStatus(uid ?? undefined);
+  const refused = isRestricted && !following;
 
   const handleToggle = async () => {
     if (!uid || busy || disabled) return;
+    if (refused) {
+      haptic("error");
+      showRestrictedToast();
+      return;
+    }
     const nextFollowing = !following;
     // Tactile confirmation on the commit — follow is stronger haptic
     // (meaningful new relationship), unfollow is lighter (undo action).
@@ -72,6 +84,7 @@ export default function FollowButton({
       type="button"
       onClick={handleToggle}
       disabled={showSpinner || disabled}
+      aria-disabled={refused || undefined}
       aria-label={
         disabled
           ? "Following actions are unavailable — your account is restricted"
@@ -81,7 +94,7 @@ export default function FollowButton({
       }
       aria-busy={showSpinner}
       className={cn(
-        "inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50",
+        "inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 aria-disabled:opacity-50",
         following
           ? "bg-muted text-muted-foreground border border-border"
           : "bg-primary-strong text-white",

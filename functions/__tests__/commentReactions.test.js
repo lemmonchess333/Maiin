@@ -176,3 +176,18 @@ describe("toggleCommentReaction", () => {
     );
   });
 });
+
+describe("toggleCommentReaction — a restricted account (S4e)", () => {
+  it("may take a reaction back but not add one", async () => {
+    const adding = makeFirestore({ reactions: { muscle: ["u2"] } });
+    await expect(
+      toggleCommentReaction(args(adding, { refuseAdd: true }))
+    ).rejects.toMatchObject({ code: "account-restricted" });
+    expect(adding.data().reactions.muscle).toEqual(["u2"]);
+
+    const removing = makeFirestore({ reactions: { muscle: ["u1"] } });
+    expect(
+      await toggleCommentReaction(args(removing, { refuseAdd: true }))
+    ).toEqual({ reacted: false, count: 0 });
+  });
+});

@@ -35,7 +35,7 @@ export type { DailyTargetsCaption };
  *
  * Single source of truth for "what is today's calorie + macro target."
  * Every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet)
- * reads from here. See CONTEXT.md → Nutrition for term definitions.
+ * reads from here. See GLOSSARY.md → Nutrition for term definitions.
  *
  * Nutr1 (expenditure-inclusive): the daily CALORIE target is FLAT —
  * `finalTarget === baseTarget`. The stored TDEE already accounts for the
@@ -401,7 +401,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const annotation = taper
       ? taper.annotation
       : signals.isDeload
-        ? "Deload week"
+        ? "Lighter week"
         : eve && (intensity === "REST" || intensity === "EASY")
           ? `${eve.templateName} tomorrow — fuel up today`
           : intensity === "REST"

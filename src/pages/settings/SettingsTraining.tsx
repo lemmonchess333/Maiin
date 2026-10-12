@@ -11,8 +11,8 @@
  *
  * Composition:
  *   - `useAuth` for profile (+ updateProfile, needed by ScheduleLayoutSheet)
- *   - `useProgram` for programState + updateSettings + regenerateProgram +
- *     refreshRunSchedule
+ *   - `useProgram` for programState (+ its readiness, which the reset waits
+ *     on) + updateSettings + regenerateProgram + refreshRunSchedule
  *   - `ProgrammeSettings` renders the grouped form; rebuild-class edits go
  *     through buildPlan + configurePlan (preserveHistory:true)
  *   - `ScheduleLayoutSheet` mounted at the page level; ProgrammeSettings
@@ -30,6 +30,7 @@ export default function SettingsTraining() {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const {
     programState,
+    readiness,
     updateSettings,
     regenerateProgram,
     refreshRunSchedule,
@@ -55,6 +56,7 @@ export default function SettingsTraining() {
           variant="overview"
           profile={profile}
           programState={programState}
+          readiness={readiness}
           recentLayoff={recentLayoff}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}

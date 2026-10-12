@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 
 /**
  * Run-Split contract, rebuilt for RUN-EV-02 (owner decision, P0): the
@@ -98,27 +111,52 @@ const baseProfile = {
   program: { goal: "recomp" },
 } as unknown as UserProfile;
 
-function renderPage(profile: UserProfile, path = "/settings/run-plan") {
+/** What `useProgram` hands the page. By default the programme has loaded
+ *  and there is none: `null` once "ready" is an account with no programme
+ *  document, which the save creates. */
+type Programme = {
+  readiness?: ProgramReadiness;
+  programState?: ProgramState | null;
+};
+
+function renderPage(
+  profile: UserProfile,
+  path = "/settings/run-plan",
+  programme: Programme = {}
+) {
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
   const onOpenFullSettings = vi.fn();
-  const { unmount } = render(
+  const page = ({ readiness = "ready", programState = null }: Programme) => (
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
         profile={profile}
-        programState={null}
+        programState={programState}
+        readiness={readiness}
         refreshProfile={refreshProfile}
         onOpenFullSettings={onOpenFullSettings}
       />
     </MemoryRouter>
   );
-  return { refreshProfile, onOpenFullSettings, unmount };
+  const { unmount, rerender } = render(page(programme));
+  return {
+    refreshProfile,
+    onOpenFullSettings,
+    unmount,
+    /** The programme arrives, as `useProgram` re-renders the page with it. */
+    load: (next: Programme) => rerender(page(next)),
+  };
 }
 
 type ConfigurePayload = {
+  baseProgramState?: unknown;
   profileUpdates: Record<string, unknown> & {
     raceGoal?: Record<string, unknown> | null;
   };
-  programState: { runDays?: { date: string }[]; runPlan?: unknown };
+  programState: {
+    runDays?: { date: string }[];
+    runPlan?: unknown;
+    weekNumber?: number;
+  };
   weekSchedule: { day: number; type: string }[];
 };
 
@@ -142,6 +180,89 @@ describe("RunPlanSettings", () => {
     // The draft is uid-scoped localStorage; without this a draft written
     // by one test seeds the next one's editor.
     localStorage.clear();
+  });
+
+  /* Pgm7 A7: a race plan needs at least two run days a week; one already
+     on fewer keeps them (Pgm5). */
+  it("starts a new race plan at two run days and goes no lower (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "new-race-two-days",
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less).toBeDisabled();
+    expect(less.parentElement).toHaveTextContent("2");
+  });
+
+  it("keeps an existing race plan's one run day, and says what it needs (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "one-day-race-plan",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less.parentElement).toHaveTextContent("1");
+    expect(less).toBeDisabled();
+    expect(
+      screen.getByText(/A race plan needs at least two runs a week/)
+    ).toBeInTheDocument();
+  });
+
+  it("recommends three run days for a marathon (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "two-day-marathon",
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: MARATHON_TARGET_DATE },
+      weeklyRunDaysTarget: 2,
+      weeklyRunsTarget: 2,
+    } as unknown as UserProfile);
+    expect(
+      screen.getByText(/A marathon plan works best on three runs a week/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Increase run days/i }));
+    expect(
+      screen.queryByText(/A marathon plan works best on three runs a week/)
+    ).not.toBeInTheDocument();
+  });
+
+  /* Pgm8 (R14c): someone new to running who ran freely first and adds a
+     race here is told what setup would have told them when the plan can't
+     build to it. Their first weeks count from the day setup finished. */
+  const addHalfTenWeeksOut = (runFrequency: string) => {
+    const setUp = addLocalDays(new Date(), -21);
+    renderPage({
+      ...baseProfile,
+      uid: `${runFrequency}-runner-adds-a-race`,
+      runFrequency,
+      onboardingCompletedAt: { toMillis: () => setUp.getTime() },
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "Half" }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: localDateString(addLocalDays(new Date(), 70)) },
+    });
+  };
+
+  it("says when a new runner's plan can't build to the race (R14c)", () => {
+    addHalfTenWeeksOut("new");
+    expect(
+      screen.getByText(/You can run-walk it, or choose a later date\./)
+    ).toHaveTextContent(
+      /^Your plan builds to about \d+ min of running by then, and a half marathon takes about 2 h 30 min\./
+    );
+  });
+
+  it("says nothing of it to someone who runs already (R14c)", () => {
+    addHalfTenWeeksOut("occasional");
+    expect(screen.getByText("Good runway")).toBeInTheDocument();
+    expect(screen.queryByText(/You can run-walk it/)).not.toBeInTheDocument();
   });
 
   it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
@@ -253,6 +374,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("saving a race goal commits ONE atomic payload with mode, goal and plan together", async () => {
+    // Saved on Monday, the first week holds runs to send.
+    await onThisWeeksMonday(saveRaceGoal);
+  });
+
+  async function saveRaceGoal() {
     const { refreshProfile } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
@@ -273,9 +399,30 @@ describe("RunPlanSettings", () => {
     expect(payload.programState.runDays?.length ?? 0).toBeGreaterThan(0);
     expect(payload.weekSchedule).toHaveLength(7);
     await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
-  });
+  }
+
+  /** Runs `body` with the clock at noon on this week's Monday, so the whole
+   *  week is ahead. A plan made later in the week plans no run before that
+   *  day (Run19): its first week holds fewer runs, and one made on a Sunday
+   *  after its run days holds none. */
+  async function onThisWeeksMonday(body: () => Promise<void>) {
+    const monday = parseLocalDate(localWeekKey(new Date()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await body();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
 
   it("RUN-EV-02: a 2→4 run-day change moves slots, rows and targets TOGETHER", async () => {
+    // The first week holds all four rows only if it is all ahead.
+    await onThisWeeksMonday(saveTwoToFour);
+  });
+
+  async function saveTwoToFour() {
     // Saved baseline says 2 run days; the draft raises it to 4.
     const profile = {
       ...baseProfile,
@@ -312,7 +459,7 @@ describe("RunPlanSettings", () => {
       (payload.programState.runDays ?? []).slice(0, 4).map((r) => r.date)
     );
     expect(firstWeekDates.size).toBe(4);
-  });
+  }
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
@@ -331,6 +478,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("previews, commits and restores recurring time limits", async () => {
+    // Saved on Monday, the first week holds runs to shorten.
+    await onThisWeeksMonday(saveTimeLimits);
+  });
+
+  async function saveTimeLimits() {
     const profile = {
       ...baseProfile,
       uid: "run-limit-user",
@@ -374,7 +526,7 @@ describe("RunPlanSettings", () => {
       screen.getByText(String(Math.round(total)), { selector: "span" })
     ).toBeInTheDocument();
     expect(rows.some((row) => row.timeLimit)).toBe(true);
-  });
+  }
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
     renderPage(baseProfile);
@@ -405,6 +557,12 @@ describe("RunPlanSettings", () => {
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
+    // Pgm6's knob scales the race's own peak (runScheduler's
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Lighter peaks about a quarter lower/)
+    ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
@@ -420,6 +578,55 @@ describe("RunPlanSettings", () => {
     // profile copy and the generated plan cannot disagree.
     expect(payload.profileUpdates.runVolume).toBe("lighter");
     expect(payload.profileUpdates.runDifficulty).toBe("gentler");
+  });
+
+  it("Lift4 (10): asks a lifter about the legs while the runs build, and saves the answer with the plan", async () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const legTrim = screen.getByRole("switch", {
+      name: "Lighten leg sessions while your runs build",
+    });
+    // Never asked reads as no.
+    expect(legTrim).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(legTrim);
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: RACE_TARGET_DATE },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceLegTrim).toBe(true);
+  });
+
+  it("Lift4 (10): the answer alone is a change to save", async () => {
+    renderPage({
+      ...baseProfile,
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      raceLegTrim: true,
+    } as UserProfile);
+    expect(screen.queryByRole("button", { name: /Save .*plan/i })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.raceLegTrim).toBe(false);
+  });
+
+  it("Lift4 (10): not asked of someone who doesn't lift", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 0 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    expect(
+      screen.queryByRole("switch", {
+        name: "Lighten leg sessions while your runs build",
+      })
+    ).toBeNull();
   });
 
   it("D14: knobs hidden in freeform (nothing scheduled to tune)", () => {
@@ -557,6 +764,105 @@ describe("RunPlanSettings", () => {
     expect(save).not.toHaveAttribute("aria-disabled");
     fireEvent.click(save);
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+  });
+
+  describe("Save waits for the programme it is built on", () => {
+    /* `useProgram` paints before the server has answered: `programState`
+       is null (or the cached copy) and `readiness` is "pending". Save was
+       live then, so a tap built a plan from no programme at all and sent
+       `baseProgramState: null`, which the server refuses as a conflict
+       whenever a programme exists ("Your programme changed. Reopen
+       settings…"). A capture spec that tapped Save as the page opened
+       found it. */
+    const LOADED = {
+      goal: "recomp",
+      currentPhase: "build",
+      weekNumber: 5,
+      splitType: "upper_lower",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: 1,
+      settings: { autoProgression: true, smallPlates: false },
+      weekHistory: [],
+    } as unknown as ProgramState;
+
+    function setWeeklyGoal() {
+      fireEvent.change(
+        screen.getByRole("combobox", { name: "Weekly running goal" }),
+        { target: { value: "minutes" } }
+      );
+      fireEvent.change(screen.getByLabelText("Minutes per week"), {
+        target: { value: "120" },
+      });
+    }
+
+    it("a tap while it loads sends nothing; the same tap once it has loaded saves on it", async () => {
+      const page = renderPage(
+        { ...baseProfile, uid: "slow-programme" },
+        "/settings/run-plan",
+        { readiness: "pending" }
+      );
+      setWeeklyGoal();
+
+      // The anchor: the Save under test is on screen, named, and loading.
+      const waiting = screen.getByRole("button", { name: "Save run plan" });
+      expect(waiting).toHaveAttribute("aria-busy", "true");
+      expect(waiting).toBeDisabled();
+      fireEvent.click(waiting);
+      // Whatever the tap started has had its chance to land.
+      await act(async () => {});
+      expect(configureSpy).not.toHaveBeenCalled();
+
+      page.load({ readiness: "ready", programState: LOADED });
+      const save = screen.getByRole("button", { name: "Save run plan" });
+      expect(save).not.toHaveAttribute("aria-busy");
+      fireEvent.click(save);
+      await waitFor(() => expect(configureSpy).toHaveBeenCalled());
+      // One save, built on the programme that loaded and committed against
+      // it: its week carries over, where a plan from nothing starts at 1.
+      const payload = sentPayload();
+      expect(payload.baseProgramState).toEqual(LOADED);
+      expect(payload.programState.weekNumber).toBe(5);
+    });
+
+    it("a failed load says so in one line, and Save sends nothing", async () => {
+      renderPage(
+        { ...baseProfile, uid: "failed-programme" },
+        "/settings/run-plan",
+        { readiness: "failed" }
+      );
+      setWeeklyGoal();
+
+      const line = screen.getByText(
+        "Couldn't load your programme. Reopen this page to try again."
+      );
+      const save = screen.getByRole("button", { name: "Save run plan" });
+      expect(save).toHaveAccessibleDescription(line.textContent ?? "");
+      expect(save).toBeDisabled();
+      fireEvent.click(save);
+      await act(async () => {});
+      expect(configureSpy).not.toHaveBeenCalled();
+    });
+
+    it("an invalid field still points the way while it loads", () => {
+      /* The tap that reveals the field sends nothing, so it needs no
+         programme. Its label and focus move are the behaviour the long
+         comment above `invalid` keeps. */
+      renderPage(baseProfile, "/settings/run-plan", { readiness: "pending" });
+      fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+      fireEvent.change(screen.getByLabelText(/Target date/i), {
+        target: { value: RACE_TARGET_DATE },
+      });
+      const time = screen.getByLabelText(/Goal time \(optional\)/i);
+      fireEvent.change(time, { target: { value: "abc" } });
+
+      const fix = screen.getByRole("button", { name: /Fix goal time/i });
+      expect(fix).toHaveAttribute("aria-disabled", "true");
+      expect(fix).not.toHaveAttribute("aria-busy");
+      fireEvent.click(fix);
+      expect(document.activeElement).toBe(time);
+      expect(configureSpy).not.toHaveBeenCalled();
+    });
   });
 
   it("an unfinished race edit survives leaving the page", async () => {

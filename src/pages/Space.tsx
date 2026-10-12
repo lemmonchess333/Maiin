@@ -44,12 +44,22 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
-import { spaceDef, type SpaceEventInfo } from "@/features/spaces/spaceDefs";
+import {
+  spaceDef,
+  isTrainableRaceEvent,
+  type SpaceEventInfo,
+} from "@/features/spaces/spaceDefs";
+import { raceDistanceLabel } from "@/features/spaces/raceBrowse";
+import {
+  raceEventDates,
+  formatRaceEventDate,
+} from "@/features/spaces/raceDates";
 import {
   resolveRaceEvent,
   useRaceEventOverrides,
 } from "@/features/spaces/raceEventOverrides";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
@@ -75,13 +85,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   medal: Medal,
   plane: Plane,
   flag: Flag,
-};
-
-const DISTANCE_LABEL: Record<SpaceEventInfo["distance"], string> = {
-  "5k": "5K",
-  "10k": "10K",
-  half: "Half Marathon",
-  marathon: "Marathon",
 };
 
 const ELEVATION_LABEL: Record<
@@ -114,9 +117,18 @@ function RaceEventHeader({
   const { profile } = useAuth();
   const todayKey = localDateString();
   const past = event.dateKey < todayKey;
+  const trainable = isTrainableRaceEvent(event);
   const isYourRace = profile?.raceGoal?.eventSpaceId === spaceId;
-  const raceDay = format(parseLocalDate(event.dateKey), "EEEE d MMMM yyyy");
-  const shortDay = format(parseLocalDate(event.dateKey), "d MMM yyyy");
+  const dates = raceEventDates(event);
+  const [chosenDay, setChosenDay] = useState("");
+  const trainingDate =
+    dates.length === 1
+      ? dates[0]
+      : dates.includes(chosenDay) && chosenDay >= todayKey
+        ? chosenDay
+        : "";
+  const raceDay = formatRaceEventDate(event, true);
+  const shortDay = formatRaceEventDate(event);
 
   return (
     <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
@@ -130,7 +142,9 @@ function RaceEventHeader({
             color: "hsl(var(--running-strong))",
           }}
         >
-          {DISTANCE_LABEL[event.distance]}
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
         </span>
         {event.elevation && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">
@@ -140,14 +154,42 @@ function RaceEventHeader({
       </div>
 
       <div>
-        <p className="text-base font-bold font-mono tabular-nums text-foreground">
-          {raceDay}
+        <p
+          className={cn(
+            "text-base font-bold text-foreground",
+            !past && "font-mono tabular-nums"
+          )}
+        >
+          {past ? "Next date to be announced" : raceDay}
         </p>
         <p className="text-sm text-muted-foreground mt-0.5">
           {event.city} {event.countryFlag}
-          {past && " · Date passed — next edition coming"}
+          {past && ` · Last edition: ${shortDay}`}
         </p>
       </div>
+
+      {trainable && !past && !isYourRace && dates.length > 1 && (
+        <div className="space-y-1">
+          <label htmlFor="space-race-day" className="text-sm font-medium">
+            Your assigned race day
+          </label>
+          <select
+            id="space-race-day"
+            className="ds-input w-full"
+            value={trainingDate}
+            onChange={(e) => setChosenDay(e.target.value)}
+          >
+            <option value="">Choose the day on your entry</option>
+            {dates
+              .filter((d) => d >= todayKey)
+              .map((d) => (
+                <option key={d} value={d}>
+                  {format(parseLocalDate(d), "EEEE d MMMM yyyy")}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
 
       {isYourRace ? (
         <div
@@ -157,18 +199,27 @@ function RaceEventHeader({
           <Check className="size-4 shrink-0 text-running" aria-hidden />
           <p className="text-sm font-semibold text-foreground">
             Your race ·{" "}
-            <span className="font-mono tabular-nums">{shortDay}</span>
+            <span className="font-mono tabular-nums">
+              {profile?.raceGoal?.targetDate
+                ? format(
+                    parseLocalDate(profile.raceGoal.targetDate),
+                    "d MMM yyyy"
+                  )
+                : shortDay}
+            </span>
           </p>
         </div>
       ) : (
+        trainable &&
         !past && (
           <Button
             variant="sport"
             fullWidth
+            disabled={!trainingDate}
             onClick={() =>
               navigate(
                 `/settings/run-plan?distance=${event.distance}&date=${
-                  event.dateKey
+                  trainingDate
                 }&eventName=${encodeURIComponent(name)}&spaceId=${spaceId}`
               )
             }
@@ -176,6 +227,13 @@ function RaceEventHeader({
             Train for this race
           </Button>
         )
+      )}
+
+      {!trainable && (
+        <p className="text-sm text-muted-foreground">
+          Ultra training plans aren’t available in Tropos yet. Visit the
+          organiser for event preparation and entry details.
+        </p>
       )}
 
       <a
@@ -217,7 +275,7 @@ export default function Space() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const def = spaceId ? spaceDef(spaceId) : undefined;
-  const { joined, memberCount, busy, join, leave } =
+  const { joined, memberCount, busy, join, leave, restricted } =
     useSpaceMembership(spaceId);
   const { blocked: blockedUsers } = useBlockedUsers();
   const sessions = useRecentSessions();
@@ -476,6 +534,10 @@ export default function Space() {
 
       <div className="px-4 pt-4 space-y-4">
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
+
+        {/* A restricted account can read a Space and leave it, but not
+            join, post or comment (S4e). */}
+        {restricted && <RestrictedNotice />}
 
         {def.kind === "race" && resolvedEvent && (
           <>

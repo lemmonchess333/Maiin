@@ -109,6 +109,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "autoPostRuns", sanitized: false },
   { field: "autoPostWorkouts", sanitized: false },
   { field: "autoRestTimer", sanitized: true },
+  { field: "barbellAtHome", sanitized: true },
   { field: "createdAt", sanitized: false, serverGuarded: true },
   // LEGACY: crews retired 2026-07-20 — kept so existing docs pass the
   // allow-list; never read or written by live code.
@@ -160,6 +161,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // in createNotification.
   { field: "notificationPreferences", sanitized: false },
   { field: "onboardingComplete", sanitized: false },
+  // Stamped by `completeOnboarding` alone: the day setup finished, which a
+  // new runner's first weeks count from.
+  { field: "onboardingCompletedAt", sanitized: false, serverOnly: true },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },
@@ -168,6 +172,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "primaryGoal", sanitized: true },
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
+  { field: "raceLegTrim", sanitized: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
   { field: "runDifficulty", sanitized: true },
   { field: "runFitness", sanitized: true },
@@ -188,6 +193,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
   { field: "subscriptionSource", sanitized: false, serverOnly: true },
   { field: "subscriptionTier", sanitized: false, serverGuarded: true },
+  // The free trial a purchase is in, written by the RevenueCat sync
+  // (functions/lib/trialReminder.js). The reminder email reads it, so a
+  // client that could write it could move or cancel its own reminder.
+  { field: "subscriptionTrial", sanitized: false, serverOnly: true },
   { field: "targetCalories", sanitized: true },
   { field: "targetCarbs", sanitized: true },
   { field: "targetFat", sanitized: true },

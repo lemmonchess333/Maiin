@@ -357,6 +357,15 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     expect(container.textContent).not.toContain("0.75");
   });
 
+  it("says one litre in the singular", () => {
+    /* The App Store screenshot capture logged four 250 ml glasses and the
+       card's name read "1 litres". */
+    render(<WaterCard compact ml={1000} targetMl={2000} onLog={vi.fn()} />);
+    const body = screen.getByRole("button", { name: /add water/i });
+    expect(body).toHaveAccessibleName(/\b1 litre\b/i);
+    expect(body).not.toHaveAccessibleName(/1 litres/i);
+  });
+
   it("says nothing about a target, at any amount", () => {
     for (const ml of [0, 1750, 2000, 7250]) {
       const { unmount } = render(

@@ -46,7 +46,7 @@ vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: vi.fn(),
   exportMealsCSV: vi.fn(),
   exportBodyweightCSV: vi.fn(),
-  downloadCSV: vi.fn(),
+  csvFile: vi.fn(),
 }));
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));

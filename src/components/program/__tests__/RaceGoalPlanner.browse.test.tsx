@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import RaceGoalPlanner from "../RaceGoalPlanner";
 import { upcomingRaceSpaceDefs, spaceDef } from "@/features/spaces/spaceDefs";
@@ -26,7 +26,83 @@ describe("race picker browsing", () => {
       weeklyRunDays: 3,
     }),
   };
-  it("starts in the selected race's country and preserves the goal through empty filters", () => {
+  it("offers both London race days and passes the selected day into the plan draft", () => {
+    const handlers = callbacks();
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...handlers}
+        selectedEventSpaceId="london-marathon"
+        targetDate="2027-04-24"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "London Marathon" }));
+    expect(
+      screen.getByRole("option", { name: /London Marathon 24 Apr 2027/ })
+    ).toHaveAttribute("aria-selected", "true");
+    const sunday = screen.getByRole("option", {
+      name: /London Marathon 25 Apr 2027/,
+    });
+    expect(sunday).toHaveAttribute("aria-selected", "false");
+    fireEvent.click(sunday);
+    expect(handlers.onPickRace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "london-marathon",
+        event: expect.objectContaining({ dateKey: "2027-04-25" }),
+      })
+    );
+  });
+  it("keeps ultras out of the plan picker even after clearing all filters", () => {
+    render(<RaceGoalPlanner {...base} {...callbacks()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "all" },
+    });
+    fireEvent.change(screen.getByLabelText("Distance"), {
+      target: { value: "all" },
+    });
+    expect(
+      screen.queryByRole("option", { name: "Ultra" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Race to the|Chiltern 50/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /City of Lincoln 10K/ })
+    ).toBeInTheDocument();
+  });
+  it("keeps the picker closed when the only upcoming event is an ultra", () => {
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...callbacks()}
+        upcomingRaces={[spaceDef("chiltern-50")!]}
+        selectedEventSpaceId=""
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: "Choose an upcoming race" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Target date")).toBeInTheDocument();
+  });
+  it("does not offer the elapsed day of a two-day race", () => {
+    render(
+      <RaceGoalPlanner
+        {...base}
+        {...callbacks()}
+        selectedEventSpaceId="london-marathon"
+        minDate="2027-04-25"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "London Marathon" }));
+    expect(
+      screen.queryByRole("option", { name: /London Marathon 24 Apr 2027/ })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /London Marathon 25 Apr 2027/ })
+    ).toBeInTheDocument();
+  });
+  it("starts in the selected race's country and preserves the goal through empty filters", async () => {
     const handlers = callbacks();
     render(<RaceGoalPlanner {...base} {...handlers} />);
     fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
@@ -50,10 +126,13 @@ describe("race picker browsing", () => {
     expect(handlers.onPickRace).toHaveBeenCalledWith(
       spaceDef("paris-marathon")
     );
-    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    // The picker closes the way it opened (Collapse), then is gone.
+    await waitFor(() =>
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument()
+    );
     expect(handlers.onDistanceChange).not.toHaveBeenCalled();
   });
-  it("keeps manual entry available when the chosen distance has no catalogue races", () => {
+  it("keeps manual entry available when the country and distance have no catalogue races", () => {
     const handlers = callbacks();
     render(
       <RaceGoalPlanner
@@ -68,6 +147,12 @@ describe("race picker browsing", () => {
       screen.getByRole("button", { name: "Choose an upcoming race" })
     );
     expect(screen.getByLabelText("Country")).toHaveValue("GB");
+    expect(
+      screen.getByRole("option", { name: /Edinburgh Marathon Festival 5K/ })
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "US" },
+    });
     expect(screen.getByText("No matching races")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Event name (optional)"), {
       target: { value: "My summer 5K" },

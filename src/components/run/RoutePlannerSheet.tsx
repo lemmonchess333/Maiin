@@ -14,10 +14,10 @@
  * (source "planned") and are followed exactly like a GPX import: the run
  * map draws them as the ghost guide line.
  *
- * Own minimal MapLibre instance (mirrors RunMap's basemap + dark-mode
- * pattern) — RunMap is display-oriented and pulling gesture editing into it
- * would tangle the live-run map. Lazy-imported by RouteSetupSection so the
- * maplibre chunk loads only when the planner opens.
+ * Own minimal MapLibre instance (RunMap's basemap, credit and dark-mode
+ * pattern, from @/lib/basemap) — RunMap is display-oriented and pulling
+ * gesture editing into it would tangle the live-run map. Lazy-imported by
+ * RouteSetupSection so the maplibre chunk loads only when the planner opens.
  */
 import { useEffect, useId, useRef, useState } from "react";
 import type { Feature } from "geojson";
@@ -52,11 +52,7 @@ import {
   type RoadRoute,
 } from "@/lib/routePlanningApi";
 import { useSubscription } from "@/lib/subscription";
-
-const TILE_STYLES = {
-  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-};
+import { addBasemapCredit, basemapStyle } from "@/lib/basemap";
 
 interface RoutePlannerSheetProps {
   open: boolean;
@@ -118,11 +114,12 @@ export default function RoutePlannerSheet({
     try {
       map = new maplibregl.Map({
         container: containerRef.current,
-        style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
+        style: basemapStyle(darkMode),
         center: initialCenter
           ? [initialCenter.lon, initialCenter.lat]
           : [-0.1276, 51.5072],
         zoom: initialCenter ? 15 : 2,
+        // Off here so the credit can be placed: addBasemapCredit adds it.
         attributionControl: false,
       });
     } catch {
@@ -136,6 +133,8 @@ export default function RoutePlannerSheet({
     }
     setMapUnavailable(false);
     mapRef.current = map;
+    // The basemap's credit, bottom-left: the Locate button is top-right.
+    const removeCredit = addBasemapCredit(map, "bottom-left");
 
     map.on("load", () => {
       map.addSource("plan", {
@@ -209,6 +208,7 @@ export default function RoutePlannerSheet({
     }
 
     return () => {
+      removeCredit();
       map.remove();
       mapRef.current = null;
     };
@@ -363,7 +363,11 @@ export default function RoutePlannerSheet({
         </div>
 
         <div className="relative h-[50vh] min-h-[280px]">
-          <div ref={containerRef} className="absolute inset-0" />
+          <div
+            ref={containerRef}
+            data-map-theme={darkMode ? "dark" : "light"}
+            className="absolute inset-0"
+          />
           {mapUnavailable && (
             <div
               role="status"

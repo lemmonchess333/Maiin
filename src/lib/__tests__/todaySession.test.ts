@@ -44,7 +44,7 @@ function programStateWith(overrides: Record<string, unknown> = {}) {
     workouts: [],
     fatigueScore: 0,
     updatedAt: 0,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays: [],
@@ -234,6 +234,132 @@ describe("todaySession — a run day", () => {
     expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
     expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
     expect(session.rest).toBeNull();
+  });
+});
+
+/* F14 and F21 (the training-engine simulator): runs are pinned to dates
+   and lifts to the week's pattern (ADR-0002), but the card asked the
+   weekday whether there was a run. A Sunday race read as a rest day for 7
+   of the 10 race personas, and a run moved to another weekday showed rest
+   there, 11 times of 11. */
+describe("todaySession — a run sits on its date, whatever the weekday", () => {
+  it("offers a race on a Sunday the week leaves to rest", () => {
+    const session = todaySession(
+      input({
+        today: SUNDAY,
+        profile: profileWith({ 2: "run", 4: "run" }),
+        programState: programStateWith({
+          runDays: [runDay(SUNDAY, { templateId: "half_race", type: "race" })],
+        }),
+      })
+    );
+    expect(session.type).toBe("run");
+    expect(session.run?.runDay?.id).toBe(`rd-${SUNDAY}`);
+    expect(session.rest).toBeNull();
+  });
+
+  it("offers a run moved to a lifting day, with the lift", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift", 4: "run" }),
+        programState: programStateWith({
+          workouts: [PUSH],
+          runDays: [runDay(WEDNESDAY, { movedFromDate: THURSDAY })],
+        }),
+      })
+    );
+    expect(session.type).toBe("both");
+    expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
+    expect(session.run?.runDay?.id).toBe(`rd-${WEDNESDAY}`);
+  });
+
+  it("offers no run on the weekday a run moved from, once the week's runs are written", () => {
+    const session = todaySession(
+      input({
+        today: THURSDAY,
+        profile: profileWith({ 4: "run" }),
+        programState: programStateWith({
+          runDays: [runDay(FRIDAY, { movedFromDate: THURSDAY })],
+        }),
+      })
+    );
+    expect(session.type).toBe("rest");
+    expect(session.run).toBeNull();
+  });
+
+  it("still offers a run on a free runner's run weekday, where no runs are written", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, { runMode: "freeform" }),
+        programState: programStateWith({ runDays: [] }),
+      })
+    );
+    expect(session.type).toBe("run");
+    expect(session.run?.runDay).toBeNull();
+  });
+});
+
+/* Run21 (5): Home's card states the run's dose. A timed run states its
+   time; a long run its distance, and its minutes at the runner's own easy
+   pace once a benchmark is confirmed. The template's "about 80 min" for
+   15 km assumed 5:20 /km. */
+describe("todaySession — a run's dose", () => {
+  // A 25-minute 5K, confirmed: an easy pace of about 6:32 /km.
+  const confirmed = {
+    runFitness: {
+      benchmark: { distanceM: 5000, timeS: 25 * 60 },
+      vdot: 38.3,
+      source: "manual",
+    },
+  } as Partial<UserProfile>;
+  const dose = (templateId: string, extra: Partial<UserProfile> = {}) =>
+    todaySession(
+      input({
+        profile: profileWith({ 3: "run" }, extra),
+        programState: programStateWith({
+          runDays: [runDay(WEDNESDAY, { templateId })],
+        }),
+      })
+    ).run?.dose;
+
+  it("is a timed run's own time", () => {
+    expect(dose("easy_40")).toBe("40 min");
+    expect(dose("easy_40", confirmed)).toBe("40 min");
+  });
+
+  it("is a long run's distance, and its minutes at a confirmed pace", () => {
+    expect(dose("long_15k")).toBe("15 km");
+    expect(dose("long_15k", confirmed)).toBe("15 km · about 100 min");
+  });
+
+  it("waits for a derived benchmark to be confirmed", () => {
+    expect(
+      dose("long_15k", {
+        runFitness: {
+          ...confirmed.runFitness!,
+          source: "derived",
+          pendingConfirmation: true,
+        },
+      } as Partial<UserProfile>)
+    ).toBe("15 km");
+  });
+
+  it("is the day's override when the person swapped the run", () => {
+    expect(
+      todaySession(
+        input({
+          profile: profileWith({ 3: "run" }),
+          programState: programStateWith({
+            runDays: [
+              runDay(WEDNESDAY, {
+                templateId: "long_15k",
+                userOverride: "easy_30",
+              }),
+            ],
+          }),
+        })
+      ).run?.dose
+    ).toBe("30 min");
   });
 });
 
@@ -495,6 +621,86 @@ describe("todaySession — one day", () => {
     expect(session.lift).toMatchObject({
       status: "completed",
       isStartable: false,
+    });
+  });
+});
+
+describe("todaySession — a long run that finishes at race pace (Run21 (2))", () => {
+  // Half, 10 weeks: week 6 is the build, where a goal time gives a long run
+  // of 12 km or more a race-pace finish (the launch's gate).
+  const racePlan = (runDays: unknown[]) =>
+    programStateWith({
+      runDays,
+      runPlan: {
+        mode: "race_prep",
+        currentWeek: 5,
+        totalWeeks: 10,
+        raceGoal: { distance: "half", targetDate: "2099-01-01" },
+      },
+    });
+  const racer = (
+    types: Partial<Record<number, DayType>>,
+    targetTimeS?: number
+  ) =>
+    profileWith(types, {
+      runMode: "race_prep",
+      raceGoal: {
+        distance: "half",
+        targetDate: "2099-01-01",
+        ...(targetTimeS ? { targetTimeS } : {}),
+      },
+    });
+  const long15 = { templateId: "long_15k", type: "long" };
+
+  it("gives today's run card the finish its name says", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 3: "run" }, 6330),
+        programState: racePlan([runDay(WEDNESDAY, long15)]),
+      })
+    );
+    expect(session.run?.racePace).toMatchObject({ kind: "finish", blockKm: 5 });
+  });
+
+  it("gives none without a goal time", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 3: "run" }),
+        programState: racePlan([runDay(WEDNESDAY, long15)]),
+      })
+    );
+    expect(session.run?.racePace).toBeNull();
+  });
+
+  it("gives a tempo at the goal pace its race pace, and names it so", () => {
+    const tempo = { templateId: "tempo_20", type: "tempo" };
+    const today = todaySession(
+      input({
+        profile: racer({ 3: "run" }, 6330),
+        programState: racePlan([runDay(WEDNESDAY, tempo)]),
+      })
+    );
+    expect(today.run?.racePace).toMatchObject({ kind: "tempo" });
+    const restDay = todaySession(
+      input({
+        profile: racer({ 4: "run" }, 6330),
+        programState: racePlan([runDay(THURSDAY, tempo)]),
+      })
+    );
+    expect(restDay.rest).toMatchObject({
+      tomorrow: { label: "20 Min Tempo at race pace" },
+    });
+  });
+
+  it("names it so on the rest day before it", () => {
+    const session = todaySession(
+      input({
+        profile: racer({ 4: "run" }, 6330),
+        programState: racePlan([runDay(THURSDAY, long15)]),
+      })
+    );
+    expect(session.rest).toMatchObject({
+      tomorrow: { label: "Long 15K with race pace" },
     });
   });
 });

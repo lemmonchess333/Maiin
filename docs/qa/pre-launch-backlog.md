@@ -6,6 +6,586 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The plan moves on with the day while the app stays open (2026-10-10)
+
+Affects: `useProgram` (`src/features/program/useProgram.ts`) and Home's
+`useHomeProgram`. The lift and run weeks' rollover, the runner's
+recent-running read and the race's rest days now re-run when the day
+changes (`useLocalDateKey`: a check every 30 seconds, and on focus and
+`visibilitychange`), not only on a reload. Home loads that engine only when
+its plan needs it, and now asks again on each new day. On a phone the app
+is resumed far more often than it is started, so before this a plan stayed
+on last week until the app was killed and reopened.
+
+The hook tests (`useProgramResume.test.ts`, `useHomeProgram.test.tsx`) fire
+the resume in jsdom. WKWebView's own resume events need a device.
+
+- [ ] **Monday, from the background.** On Sunday evening open Train, then
+      leave the app in the background (don't close it). Open it again on
+      Monday morning: within a few seconds Train shows the new week, its
+      sessions not done and the week number one on, and Home's week strip
+      and today's card agree with it. No relaunch, no pull to refresh.
+- [ ] **Monday, from the background, on Home.** The same with a
+      running-only race plan, left on Home rather than Train: on Monday's
+      return Home's run card and week strip show the new week's runs
+      without a visit to Train.
+- [ ] **Race week's rest days.** On a race-prep account with the race on a
+      Saturday and a lift session not done that week, leave the app in
+      the background from Wednesday to Thursday. On Thursday's return the
+      session shows as skipped, under the "Race week" banner ("No lifting
+      in the two days before your race…").
+
+## The polish round on a phone (Pol1, 2026-10-11)
+
+Affects: the workout screen's rest timer and set ticks
+(`WorkoutSession.tsx`, `CompactRestTimer.tsx`, `SetCheck.tsx`), the
+finish screen (`SessionCompleteScreen.tsx`, `SessionBadge.tsx`), the Food
+diary's rows (`FoodRow.tsx`, `FoodTimeline.tsx`), the Pro scan demo's
+diary (`ScanDemo.tsx`) and Analytics while it loads (`HistorySkeleton`,
+`PerformanceCardSkeleton`, `PeriodSummarySkeleton`). The unit tests and
+the emulator captures cover order, placement and the fallbacks; these
+need an iPhone.
+
+- [ ] **The rest card by the thumb.** Tick a working set: nothing above
+      the set table moves, the rest card rises above Complete set and the
+      home indicator, and its ring sweeps rather than stepping. A set
+      that is also a new best shows the gold card above the rest card.
+- [ ] **The tick.** A tick pops its box and draws its check once; going
+      back to an earlier exercise does not replay it. With Reduce Motion
+      on, neither moves.
+- [ ] **Done in thumb reach.** Save a workout whose finish screen
+      scrolls (a new best, a badge, the sharing question): Done stays
+      pinned above the home indicator while the page scrolls under it,
+      and comes last at the end. With VoiceOver, saving lands focus on
+      Done.
+- [ ] **Meal photos as thumbnails.** On a day with a scanned meal, its
+      photo is a 52 px thumbnail read from the device, the other rows
+      carry their slot's tile, and swiping a photo row to delete folds it
+      away. A photo past the 90-day sweep falls back to the tile.
+- [ ] **Analytics on a cold open.** Open Analytics first after a fresh
+      launch on a slow connection: the placeholder is the page's shape,
+      and nothing moves as the score and the range card arrive, at the
+      default text size and at a larger one.
+
+## Race plans the rollover dropped end on the server (2026-10-10)
+
+Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
+`_decideReconciliationActions` (`functions/index.js`). A profile left in
+`race_prep` on a finished race after the rollover dropped its plan (before
+the plan was kept until its race ends) returns to free running once the
+race is past both exits the sweep would have taken: day 15, 21, 28 or 35
+after a 5K, 10K, half or marathon.
+
+The decision tests and the emulator case cover the rule and its
+profile-only write; these need the deployed function.
+
+- [x] **The deployed source.** The deploy's read-back prints
+      `Verified deployed source: dailyRaceReconciliationSweep`. Deploy
+      production run 253 (2026-10-10, #2667) printed it, version 183.
+- [ ] **The first sweep.** The 04:00 UTC log line after the deploy ends
+      `orphanedGoalCleared=N`. Every stuck active account goes in that one
+      sweep, so N may be more than one; most days after, 0. Open one
+      profile it counted: `runMode` is `freeform`, `raceGoal` is gone, and
+      Train shows free running, not "Race day has passed".
+- [ ] **A race ahead stays.** A race-prep account whose race is still
+      ahead, or whose plan is still there, is not counted and keeps its
+      race.
+
+## The run screen in the training-engine pass (2026-10-08)
+
+Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
+session, which now judge only the work segments
+(lemmonchess333/Maiin#2633), a planned easy run's time target, countdown and
+finish cue (lemmonchess333/Maiin#2639), a tempo or intervals with no pace
+to give (lemmonchess333/Maiin#2643), and a new runner's run-walk sessions
+(lemmonchess333/Maiin#2655). The unit tests cover which segment is judged
+and what each run is set for; these need a phone's speaker and screen.
+
+- [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
+      tempo: no pace alert in the warm-up; the pace bar appears with the
+      first tempo block and goes in the float and the cool-down; alerts speak
+      only in a block.
+- [ ] **An interval session.** The same for reps and recoveries: the bar and
+      the alerts in the reps only.
+- [ ] **A planned easy run.** Start a planned Easy 40: the screen counts down
+      from 40 minutes, says "Easy running for 40 minutes. Keep it
+      conversational." as it starts, and marks the 40 minutes without saving
+      the run by itself.
+- [ ] **A tempo with no pace yet.** On an account with no benchmark, open a
+      planned tempo: the launch card says "Comfortably hard" where a pace
+      would be, and the run shows no pace bar and speaks no pace alert.
+- [ ] **A run-walk.** On a new runner's account with a race, start the
+      week's planned run-walk and lock the screen: each walk and run is
+      announced as it starts ("Run 1 of 8. 1 minute, easy enough to talk."),
+      on time, for the whole 29 minutes, with no pace bar or pace alert; the
+      summary says nothing about pace.
+
+## After race day, the race's own ending (F6, 2026-10-08)
+
+Affects: the client's rollover after race day, which now leaves the run plan
+and race week's days for the race's own ending, and `weeklyFellBehindCheck`'s
+skip of a week that began after the race (`functions/lib/fellBehindWeek.js`),
+both in lemmonchess333/Maiin#2646. The unit tests cover the rollover and the
+skip; these need the deployed functions and a test account a week past its
+race.
+
+- [ ] **No "fell behind" after the race.** After the deploy, a test account
+      whose race was the week before gets no fell-behind flag from the next
+      Monday's `weeklyFellBehindCheck`, and no recap push saying so.
+- [ ] **A no-show ends race prep.** A test account that skips its race: the
+      Run tab shows the no-show banner from the fourth day, without "All
+      runs done this week", and `dailyRaceReconciliationSweep` returns it to
+      free running after the fourteenth.
+- [ ] **A first week begun on a Thursday** (F16b,
+      lemmonchess333/Maiin#2651). A test account made on a Thursday with
+      runs on Tuesday, Thursday and Saturday, one of them done: no
+      fell-behind flag on its first Monday.
+
+## Setup's recent race (R11, 2026-10-08)
+
+Affects: setup's optional recent 5K or 10K, typed as minutes and seconds,
+and the typed-time reader it shares with Settings → Your running fitness
+(lemmonchess333/Maiin#2653). The unit tests cover the reading and the save;
+these need a phone's keyboard.
+
+- [ ] **The number pad.** On an iPhone, setup's minutes and seconds boxes
+      bring up the number pad, and a time typed there is on the review.
+- [ ] **A colon on the number pad.** On an iPhone, Settings → Your running
+      fitness's finish time and the run plan editor's goal time are one box
+      each that asks for the number pad. Check whether "22:30" can be typed
+      in either; if not, they need setup's minutes-and-seconds boxes.
+
+## A restriction stops what reaches other people (S4e, 2026-10-06)
+
+Affects: `firestore.rules` (`isRestricted()` on feed and Space posts,
+follows, Space and challenge joins, Circle events and partner bonds), the
+props, comment, like, reaction and Circle callables
+(`functions/lib/restriction.js`), the app's gates (`RestrictedNotice`,
+`showRestrictedToast`), Settings → Social & privacy's explanation, and
+the moderation page's Restricted accounts with Lift (`listRestrictedUsers`,
+`liftRestriction`).
+
+The rules suite (`firestore.restriction.rules.test.ts`) and the unit tests
+cover each refusal and what stays open; these need a device or the
+console.
+
+- [ ] **One restriction, end to end.** With two test accounts, report the
+      second from the first, then Restrict user on the moderation page.
+      On the second account (no sign-out): the feed and Space composers,
+      comments, props, likes, reactions, Follow (a profile's too), Space,
+      challenge and Circle joins, a Circle check-in and a partner streak
+      each say "Your account is restricted" and nothing goes out; taking
+      back props, unfollowing and leaving still work; Social & privacy
+      explains it, and Contact support opens Mail.
+- [ ] **Lift.** Lift the second account from Restricted accounts: within
+      a minute, without signing out, every one of those works again, and
+      the report in the console shows `restrictionLiftedBy`.
+- [ ] **App Review notes.** If the notes are already in App Store Connect,
+      paste the moderation sentence from `docs/app-store/listing.md`
+      ("…restricting the account so it can't post, comment or follow
+      anyone"). This replaces the trial reminder section's notes row.
+
+## The trial reminder (Sub1, 2026-10-06)
+
+Affects: the RevenueCat sync (`subscriptionTrial`, `lib/trialReminder.js`),
+`trialReminderSweep` and its email (`lib/trialReminderEmail.js`), the
+phone reminder (`useTrialReminder`), the Upgrade page's trial lines and
+"Remind me before the trial ends", Home's strip for a trial's last two
+days, Settings → Subscription. The email goes at 10:00 local, two days
+before the last moment to cancel (a day before the trial ends).
+
+Unit tests cover the timing in every zone, the record and the email's
+words; these need the operator, a device, or a real trial.
+
+- [ ] **The sender.** troposfit.com verified in Resend and `RESEND_FROM`
+      set (the LAUNCH_TODO §19 item; until then every email reaches only
+      the Resend account's owner).
+- [ ] **Apple's relay.** troposfit.com and Resend's `send.troposfit.com`
+      registered under Certificates, Identifiers & Profiles → Services →
+      Sign in with Apple for Email Communication. Then, from the sign-in
+      screen, ask for a password reset for an account that signed in with
+      Apple and Hide My Email: the email must arrive in that iCloud inbox.
+      Same sender as the reminder; a bounce there is a bounce here.
+      Passing this unlocks the paywall's reminder step (Sub1, the PR after
+      this one).
+- [ ] **The Upgrade page on the iOS app.** After a sandbox trial purchase
+      (TestFlight, a uid on `REVENUECAT_SANDBOX_UIDS`), the Pro card shows
+      "Free trial until …", the price line with the last moment to cancel,
+      and "Remind me before the trial ends"; tapping it brings the system
+      prompt once, and Diagnostics lists the pending reminder (id 3003).
+      Sandbox trials last minutes, so check the screens, not the date.
+- [ ] **The first real reminder.** The first App Store trial after launch:
+      the email arrives at 10:00 local on day 4 with the price, the dates
+      and the cancel link right, and the console shows
+      `subscriptionTrial.reminderEmailedAt` on that profile. The
+      `trialReminderSweep` log line counts it as `emailed`.
+- [ ] **Who the "trader" is.** Before the UK rules start in January 2027,
+      someone qualified confirms whether Tropos counts as the trader for
+      App Store subscriptions sold through Apple as commissionaire. The
+      build assumes it does.
+- [ ] **App Review notes.** If the notes are already in App Store Connect,
+      paste the corrected moderation sentence from
+      `docs/app-store/listing.md` ("…removing the content and, where
+      needed, disabling the account").
+
+## The lifting system, Lift4 (2026-10-06, #2593)
+
+Affects: progression, the plan generator, lighter weeks and races
+(`raceRest.ts`, `weekPrescription.ts`), Swap for today and Skip
+(`WorkoutSession`), Welcome back, the rules sheet, and the schema 5
+migrations (`migrations.ts`). Deploy production release 242 shipped it,
+with the functions' source read back.
+
+Unit, emulator and large-text checks cover the rules and the layout in
+Chromium; these need the iOS app or a production account.
+
+- [ ] **The screens in the iOS app.** In the native shell, at the phone's
+      own text size and at its largest: the rules sheet from the ⓘ beside
+      Train's week label and from "Why this session"; an exercise's menu,
+      Swap for today (one pick, its bar reads "Swap for today"), Skip, and
+      Finish's question about keeping a swap; Welcome back's "Ease back
+      in" after two weeks away; setup's "What do you have?" and the
+      session length beside the days.
+- [ ] **The schema 5 migration on a real plan.** After the first open
+      on the new build, the console shows `programSchemaVersion: 5`;
+      every weight sits on its equipment's steps (no 101 kg, no 9.25 kg);
+      miss counts are 0; a bodyweight lift that a swap had handed a load
+      shows none.
+- [ ] **A plan carrying the new fields takes a command.** With
+      `easingBack` (after "Ease back in") or `raceWeek` (a race plan in its
+      last two weeks) on the plan, "Take a lighter week" and Skip are
+      accepted by the deployed allow-list, not refused.
+- [ ] **The race's rest days on a real race plan.** Two days before the
+      race date, race week's session, if not done, shows as skipped, and
+      Train's banner reads "No lifting in the two days before your race,
+      or on the day, so your legs are fresh for it."
+
+## TestFlight from the API key, function settings on GitHub, the status bar (2026-10-04)
+
+Affects: `deploy-ios.yml` and `scripts/ios/asc-signing.mjs`,
+`deploy-functions.yml` and `scripts/write-functions-env.mjs`, and the
+full-screen layers (`WorkoutSession`, `SessionCompleteScreen`, Social's
+people search, `FoodCameraModal`).
+
+Unit tests pin the API client, the settings file and the padding; these
+need Apple, the Cloud console or a phone.
+
+- [ ] **The first TestFlight run signs from the API key.** With only the
+      five secrets `docs/ios-release.md` asks for, Deploy iOS to
+      TestFlight makes a certificate and a profile named
+      `Tropos CI <serial>`, passes the import step's checks, archives and
+      uploads. A second run deletes the first run's profile and revokes
+      its certificate (Apple Developer → Certificates shows one Apple
+      Distribution certificate from these runs), and the first build
+      stays installable in TestFlight.
+- [ ] **Function settings from GitHub.** After setting `ADMIN_UIDS` and
+      the rest as repository variables and running Deploy production,
+      the "Write functions/.env from repository variables" step names
+      them, and the Cloud console shows them on `listPendingReports`,
+      `createReport` and the two RevenueCat functions. `/admin/moderation`
+      opens for that uid on the web build with no `VITE_ADMIN_UIDS`
+      secret.
+- [ ] **The status bar on a phone.** On the first TestFlight build, the
+      workout session, its finish screen, Social's people search, the
+      food camera, the run screen (setup, countdown and the live map's
+      controls), the run summary and the Privacy Policy, Terms and
+      Support pages keep their first row clear of the clock and the
+      Dynamic Island, with no doubled gap above it. The shell sets
+      `ios.contentInset: "automatic"`, so whether its web view reports a
+      top inset is unverified; pages and these screens pad by the same
+      `--safe-top`, so a gap on one is a gap on all.
+
+## Privacy and consent for App Review (2026-10-04)
+
+Affects: the AI permission (`src/lib/aiConsent.ts`, `useAiConsent`,
+`AiConsentSheet`, `FoodAnalyzer`, `FoodCameraModal`, the Settings switch,
+`functions/lib/aiConsent.js` in `analyzeFood` / `analyzeFoodText`), the
+run save's privacy zones (`RunSummary`, `usePrivacyZones`), the Privacy
+Policy, `ios/App/App/PrivacyInfo.xcprivacy`, the `Info.plist` purpose
+strings, the SPM traits in `capacitor.config.ts`, and the patched
+`@capacitor-firebase/authentication` (`patches/`).
+
+Unit tests pin the rules, the copy and the committed files; these need a
+phone, Xcode or a console.
+
+- [ ] **Functions deployed.** The deployed `analyzeFood` and
+      `analyzeFoodText` contain `refuseUnlessAiAllowed`. An account with
+      `aiAnalysisEnabled: false` gets 400 with reason
+      `ai-analysis-disabled` and no scan counted.
+- [ ] **The question over the scanner** (iPhone, Pro or trial account,
+      never asked): the first Meal photo opens "Send food to Google for
+      analysis?" above the scanner, not under it, with the camera still
+      running. Allow analyses the photo just taken. Not now leaves the
+      photo tabs saying "AI analysis is off", and Turn on asks again.
+- [ ] **A typed meal** on a fresh Pro or trial account asks first; Not
+      now logs it from the on-device parser.
+- [ ] **Settings → Social & privacy → AI food analysis** shows off for an
+      account that hasn't been asked.
+- [ ] **A run that ends offline.** If the finish screen loaded while
+      online, Save works offline. If it never reached the server, the
+      Retry banner says the privacy zones couldn't be checked, and Retry
+      saves once online, with the zone cut from the route.
+- [ ] **Archive** (Xcode 16.3 or later): the Swift tools 6.1 traits
+      resolve, the Facebook SDK is not fetched, GoogleSignIn is.
+- [ ] **No tracking framework in the binary:** `otool -L` on the built app
+      lists neither AppTrackingTransparency.framework nor
+      AdSupport.framework.
+- [ ] **Upload to App Store Connect:** no ITMS-91053 (missing
+      required-reason API) warning and no request for
+      `NSUserTrackingUsageDescription`. Xcode Organizer → Generate Privacy
+      Report lists the 16 data types.
+- [ ] **File the App Store privacy label** from the manifest's list: each
+      type linked to the user, none used for tracking, purposes as listed.
+- [ ] **Permission prompts** show the new words: the camera (the
+      scanner), adding to Photos (Save Image from a share card's share
+      sheet), location (the first run).
+
+## Credits, weather, push and exports for the App Store (2026-10-04)
+
+Affects: `src/lib/basemap.ts` (RunMap, RoutePlannerSheet), the new
+`getCurrentWeather` callable (`functions/currentWeather.js`,
+`functions/lib/metWeather.js`) and `src/lib/weather.ts`, the Open Food
+Facts credit (FoodAnalyzer, FoodSuggestionsDropdown, ServingSizeDrawer),
+`NotificationsSection`, and `src/lib/shareFile.ts` (the CSV exports,
+both Export GPX buttons, the share cards).
+
+Unit tests pin the rules; the tiles, MET's answer and the share sheet
+need a phone and a deploy.
+
+- [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
+      finish screen and the route planner draw OpenFreeMap's basemap in
+      both themes. The credit shows as each map opens and folds to its
+      (i) after five seconds; the (i) opens it again, and its links open
+      outside the app. On the live run it sits top-right, clear of the
+      GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
+- [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
+      with no secret. Open run setup with location allowed: the strip
+      shows the weather and "Weather data from MET Norway". The function
+      logs show no `weather.failed` with status 403 (MET refusing the
+      User-Agent) and no `weather.met_deprecated`.
+- [ ] **No push on the iPhone app.** Settings > Notifications shows the
+      meal, workout and streak reminders and no push switch; the Settings
+      list says "Reminders, activity". The web build still has the switch.
+- [ ] **Exports on the iPhone app.** Settings > Your data > Export
+      workouts opens the share sheet; Save to Files saves a .csv that
+      opens in Numbers, then "Workouts exported" shows. Closing the sheet
+      says nothing. On a slow connection a "Workouts export ready" toast
+      may come instead: its Share opens the sheet. Export GPX on the
+      finish screen and on a saved run opens the sheet with a .gpx.
+- [ ] **Open Food Facts credit** under a barcode result, the search
+      results and the portion sheet, which still fits on an SE.
+
+## User content moderation for App Review 1.2 (2026-10-04)
+
+Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,
+`src/components/social/CommentSheet.tsx`, `CommentPanels.tsx`, `ReportForm.tsx`,
+`src/features/spaces/SpaceCommentSheet.tsx`, `src/pages/AdminModeration.tsx`;
+`functions/index.js` (`createReport`, `listPendingReports`, `resolveReport`,
+the two comment callables, `completeOnboarding`, `configurePlan`, the new
+`onSpacePostWritten` trigger), `functions/lib/reportTargets.js`,
+`reportAlert.js`, `objectionableText.js`, `spacePostModeration.js`.
+Operator setup (ADMIN_UIDS, MODERATION_ALERT_EMAIL, RESEND_FROM, the
+VITE_ADMIN_UIDS secret): `docs/LAUNCH_TODO.md` §19.
+
+The callables, the trigger and the email are tested against an in-memory
+Firestore with Resend mocked at `fetch`; whether an email actually lands, and
+how the sheets feel on a phone, need the real thing.
+
+- [ ] **Report alert reaches the inbox.** After the first Deploy production
+      run carrying this work, and with the moderation variables set on
+      GitHub and deployed as §19 says: sign in as a second account,
+      report someone's comment with a note. Within a minute an email titled
+      "New report: …" arrives at `MODERATION_ALERT_EMAIL`
+      (`support@troposfit.com` when unset), carrying the reason, what was
+      reported, the note, and an "Open the moderation queue" link that opens
+      `/admin/moderation` with the report on it. If nothing arrives, Cloud
+      Logging for `createReport` has a `createReport.alert_failed` line with
+      Resend's answer; with no `RESEND_FROM` the sender is
+      `onboarding@resend.dev`, which Resend only delivers to its own
+      account owner's address.
+- [ ] **Deployed source.** `scripts/verify-deployed-functions-source.py`
+      now reads back `createReport` and `onSpacePostWritten` (and the
+      word filter's module on both comment callables) after every
+      functions deploy. Confirm the first Deploy production run after this
+      work logs "Verified deployed source" for each.
+- [ ] **Hide content on each kind.** From the queue, hide a reported Space
+      comment, an activity comment and a Space post. Each is gone for a
+      third account, and the comment counts on the post or activity drop by
+      one.
+- [ ] **Report and Block user from a comment, on a phone.** The ⋯ on
+      someone else's comment opens its options inside the sheet; the report
+      form fits and scrolls on a small phone (SE) with Submit reachable;
+      Block user removes their comments from the list. Delete on your own
+      comment now confirms in the sheet and deletes on the first tap of
+      Delete (the old confirm dialog closed the sheet on the first tap).
+- [ ] **A Space post that trips the filter is removed.** A clean post edited
+      to objectionable text with a direct SDK write is gone from the space
+      within seconds (the app itself refuses the text first).
+- [ ] **The Terms line on sign-in and sign-up** wraps cleanly on a small
+      phone, and its two links open the Terms and the Privacy Policy while
+      signed out. `public/legal/terms.html` carries the same October 2026
+      Terms as `TermsOfService.tsx`.
+
+## iOS 15.4 is the minimum (2026-10-06)
+
+Affects: `ios/App/App.xcodeproj/project.pbxproj` (every
+`IPHONEOS_DEPLOYMENT_TARGET`), pinned by `iosDeploymentTarget.test.ts`,
+whose header has the reason: Safari before 15.4 drops the stylesheet's
+`@layer` blocks and the app opens unstyled.
+
+- [ ] **App Store Connect shows iOS 15.4.** After the next TestFlight
+      upload, the build's minimum OS version reads 15.4, and the App
+      Store listing's compatibility line says "Requires iOS 15.4 or
+      later".
+- [ ] **An iOS 15 phone, if one is to hand** (iPhone 6s, 7 or first SE
+      on 15.8): the app installs and opens styled. Container queries
+      start at iOS 16, so it shows each screen's designed layout at every
+      text size, which is expected.
+
+## Phone platform layer: taps, field zoom, status bar (2026-10-05)
+
+Affects: `src/index.css` (tap flash, control touch rules, the 16px
+field floor), `src/lib/systemChrome.ts` (status bar and browser bar
+follow the theme), `src/main.tsx`.
+
+`mobileNative.test.ts` and `systemChrome.test.ts` pin the rules, and the
+built CSS was measured in Chromium with a touch screen emulated (14px
+fields compute 16px, 18px fields keep 18px, FoodRow keeps `pan-y`).
+Emulation reproduces none of the behaviours themselves, so these need
+the iPhone app.
+
+- [ ] **No zoom into a field.** Tap Train → add exercise → the search
+      field, a Settings → Profile field, and a comment box. The page
+      stays at its size; nothing drifts after the keyboard closes.
+- [ ] **No grey flash on tap** on a food row, a Home card and a
+      settings row.
+- [ ] **Long-press a tab** in the tab bar: no link preview and no
+      selected label. Long-press a post's text: it still selects.
+- [ ] **Status bar in light theme.** Settings → Units & appearance →
+      light: the clock and battery turn dark and stay readable. Back to
+      dark: they turn light. Force-quit and reopen in light: the
+      launch splash is dark with light text, and the text turns dark as
+      the light page appears.
+- [ ] **Swipe a food row** to delete: still horizontal, the page does
+      not scroll with it.
+
+## Text follows the phone's text size on iPhone (2026-10-05)
+
+Affects: `src/lib/systemTextSize.ts` (reads `@capacitor/text-zoom`'s
+`getPreferred()` and scales the root font size, held between 1× and
+2×), `src/main.tsx`, `ios/App/CapApp-SPM/Package.swift` (the plugin,
+added by `npx cap update ios`).
+
+`systemTextSize.test.ts` pins the scaling and the limits, and the feed
+and food diary capture specs measure both at double text. Nothing in a
+browser reads Dynamic Type, so the reading itself needs the iPhone app.
+
+- [ ] **Larger text reaches the app.** Settings → Display & Brightness
+      → Text Size, drag to the largest standard size, return to Tropos:
+      the text is about a third larger, and Home, the feed and Food
+      still read with nothing cut off or overlapping.
+- [ ] **An accessibility size stops at double.** Settings →
+      Accessibility → Display & Text Size → Larger Text, turn it on and
+      drag to the largest: the app grows to twice its size and no
+      further.
+- [ ] **Back to the default** restores the designed size, and a smaller
+      setting does not shrink the app below it.
+- [ ] **The main screens at large text.** Home, Train, History, Food
+      and Settings were measured in a browser at 1.35× and 2× text
+      (393, 375 and 320 px wide) and fixed to wrap, stack or drop a
+      decorative icon rather than overlap. On the phone, at the largest
+      standard size and at the largest accessibility size, scroll each
+      and note anything cut off or overlapping. Known and accepted: the
+      day names under Train's week, and segmented-control labels at 2× on
+      a 320px screen (Display Zoom on an SE or mini), end in "…".
+- [ ] **A workout and a run at large text** (2026-10-06). The lift
+      screen, the run screen before and during a run, Train's exercise
+      menu and Food's manual entry were measured the same way. At the
+      largest accessibility size, log a set and run for a minute. The set
+      table drops its "Previous" column under the set's figures ("Last
+      80 × 8"); the done tick, set badge and run controls stay their
+      designed size; a missing map says "Map unavailable" at the top
+      right. Known and accepted: at 2× on a 320px screen the "kg" and
+      "Reps" column headers run a little past their columns.
+- [ ] **Sign-up, setup and Pro at large text** (2026-10-06). The welcome
+      screen, sign-in, sign-up, every setup step and the Pro offer and
+      plans were measured the same way, down to 320px at 2×. With Larger
+      Text at its largest, make a new account: the answer cards drop their
+      pictures rather than cutting a word, Continue goes above Back when
+      the two don't fit side by side, and each plan's price stays whole.
+      Headings now grow by as much as body text rather than in proportion,
+      so check that page titles still read as titles at every size.
+
+## The first-visit guide (2026-10-04)
+
+Affects: `src/components/guide/GuideWalk.tsx`, `GuideHint.tsx`,
+`src/pages/Home.tsx`, `src/pages/Onboarding.tsx` (Continue now lands on
+Home), the hints on Train, the workout screen, Food and the run screen.
+
+The walk's stops, the hints' rules and the row actions are pinned by unit
+tests; jsdom draws no layout, so where the card sits and how the mark
+moves need a phone.
+
+- [ ] **The walk on a new account.** Sign up, finish setup, Continue with
+      Free: Home opens and dims around the first card, and the mark lifts
+      out of the header into the card. Next: the card disappears, the
+      light moves, and the card fades in beside the next stop, never
+      mid-scroll. The third stop scrolls the Food card into view (it is
+      below the fold on every phone); Done scrolls back up and the mark
+      goes back into the header.
+- [ ] **A small phone (SE).** No card hides under the tab bar or the
+      Dynamic Island's status bar, and the Food hint turns above the
+      composer rather than lie across the tab bar.
+- [ ] **VoiceOver** reads each stop's title and words as the walk moves
+      on, and focus starts on Next and stays there.
+- [ ] **Reduce Motion:** no flight, the cards fade.
+- [ ] **The hints**, each once: Train's lift tab, the first set of the
+      first workout (it sits above the workout screen), Food's composer,
+      the run screen before a first run. Tapping the thing a hint points
+      at closes it and still does what it does.
+- [ ] **Health steps prompt** (native only): on a new account it opens
+      after the walk, not over it.
+- [ ] **The Health steps prompt doesn't flash** (native only, FV2): an
+      account that already answered it, either way, sees no "Count your
+      steps" open and close as Home loads, on a cold start and on coming
+      back to Home from another tab.
+- [ ] **Food's first visit on a free account** (FV2): the guide's
+      "Logging food" hint shows on its own; "Photo logging is part of Pro"
+      appears under the food box once it is closed.
+
+## Run recording: pauses, each fix's own time, smoothed climb (2026-10-04)
+
+Affects: `src/lib/gps.ts` (`pausedMs`, `movingClockMs`, `segmentMetres`,
+`fixTimestamp`, `readingVerdict`, `climbBySegment`), `src/hooks/useGPS.ts`
+(`pause` / `resume`), `src/pages/Run.tsx`.
+
+Splits, best efforts, the live pace and the ghost now count moving time:
+nothing is recorded while the run's clock is stopped. A point is stamped
+with when its fix was taken, not when it arrived. Unit and property tests
+cover the rules; these need a phone outside.
+
+- [ ] **A backgrounded run on iOS.** Lock the phone for a kilometre or
+      two. Back in the app, the route should have no straight-line jump
+      and the split for that stretch a believable pace. iOS hands fixes
+      over in a batch; before, the batch after its first fix was thrown
+      away as a teleport.
+- [ ] **Auto-pause at a crossing.** Stand for a minute with auto-pause on:
+      the run's time stops, the distance does not creep, and the split
+      that contains the stop reads at running pace. Then the same with
+      Pause pressed while auto-paused, which used to count the time since
+      the last resume twice.
+- [ ] **Standing with auto-pause off.** Twenty seconds still should leave
+      the route quality "good" on the finish screen, not "poor".
+- [ ] **Climb on a known hill.** A run with a known climb should read
+      close to it; a flat run should read a few metres, not hundreds.
+- [ ] **Route colours after a run** (2026-10-10). On a steady run the
+      route on the finish screen should be mostly amber, not speckled
+      green and coral. A surge, a hill or a walk should show as one green
+      or coral stretch where it happened. The colours are now measured
+      over 200 m of route (`routePaceRatios` in
+      `src/components/run/routePace.ts`); measured between each pair of
+      fixes, GPS wobble alone changed them.
+
 ## The new logo, icon and launch animation (2026-10-01)
 
 Affects: `src/assets/brand/app-icon.svg`, the iOS AppIcon set (default,
@@ -473,6 +1053,8 @@ Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletio
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
 Affects: `src/components/ui/Tooltip.tsx`, `src/components/ui/Coachmark.tsx`, plus the LIVE wire-ups — as of 2026-08-08 these are: Performance Index tooltip in `PerformanceTab.tsx`, Trajectory delta chip in `social/TrajectoryCard.tsx`, and the `social-find-invite` Coachmark in `social/views/PeopleView.tsx`.
+
+**STATUS 2026-10-04 (FV2):** `Coachmark` and its one live wire-up (`social-find-invite`) are removed, and `e2e/coachmark.auth.spec.ts` with them. The rig showed the bubble had never been seen: it portalled at z-40 under the People overlay's z-50 and saved itself as seen after six seconds, while that spec's `toBeVisible()` passed throughout, because visibility does not check what is painted on top. The Tooltip rows below still apply; the Coachmark row is moot.
 
 Wire-up history (rows below referenced surfaces that no longer exist): the Nutrition HealthScore wire-up was removed by PI2; the Programme running-icon coachmark's successor (`extras-pill-v1` in `HybridWeekRail`) was orphaned by the `2b4e07b8` navigation unification and deleted in #1882.
 
@@ -962,13 +1544,13 @@ sandbox Pro to nobody. Production purchases are unaffected.
 - [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
       test event returns 200. It did on 2026-09-30.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
-      Review's demo account uid, comma-separated. It is a plain env var,
-      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
-      **App Review's demo uid must be on it before submission**, or the
-      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
-      function already has but gives a newly created function nothing, so
-      set it after the first deploy creates these two functions and confirm
-      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
+      Review's demo account uid, comma-separated. It is a plain setting,
+      set the way `ADMIN_UIDS` is: a repository variable on GitHub, which
+      the functions deploy writes into `functions/.env`, then a Deploy
+      production run. **App Review's demo uid must be on it before
+      submission**, or the reviewer's test purchase will not unlock Pro.
+      Confirm it in the Cloud console. Steps:
+      `docs/iap/revenuecat-setup.md` Part C.
 - [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The
@@ -991,6 +1573,40 @@ sandbox Pro to nobody. Production purchases are unaffected.
       subscriber record (purchase history keyed by the uid) in place, and a
       RevenueCat promotional grant does not grant Pro. Comps are written in
       Firestore directly.
+
+## Purchases on iPad, iPhone-only, the paywall's prices (2026-10-04)
+
+Affects: `src/lib/purchaseProvider.ts` (`isNativeIOS` reads the native
+shell, not the user agent), `ios/App/App.xcodeproj/project.pbxproj`
+(`TARGETED_DEVICE_FAMILY = 1`), `ios/App/App/Info.plist` (no iPad
+orientation list), `src/lib/proPlans.ts`, `src/hooks/useProPlanPrices.ts`,
+`src/pages/Upgrade.tsx`, `src/components/ProModal.tsx`,
+`src/components/TrialTimeline.tsx`, `src/components/paywall/`.
+
+Unit tests pin the routing with an iPad's desktop user agent, every price
+line, and the currency arithmetic against a simulated storefront. What no
+test reaches is a real iPad, a real storefront and App Store Connect.
+
+- [ ] **An iPad running the TestFlight build.** It opens as an iPhone app.
+      The paywall shows "Already purchased? Restore" and "Manage or cancel
+      in your Apple Account subscriptions"; Start opens Apple's purchase
+      sheet, never Stripe; once subscribed, Manage subscription (Settings →
+      Subscription) opens Apple's subscriptions page.
+- [ ] **A storefront not in pounds** (a US sandbox account). The offer's
+      lead line, the plan cards, the per-week figures, the "Save N%" on the
+      yearly card, the CTA, the line under it and the timeline's Day 7 are
+      all in dollars, and nothing on either beat or in ProModal shows £.
+      The prices match Apple's purchase sheet.
+- [ ] **The trial copy against Apple's sheet.** The paywall decides whether
+      to show the trial from the account's `hasUsedTrial`; Apple grants the
+      introductory offer per Apple Account. On a sandbox account that has
+      already used the intro offer, check what the sheet says against the
+      paywall's "7 days free, then …". If they disagree, the paywall needs
+      RevenueCat's intro-eligibility check (not built).
+- [ ] **App Store Connect after the first iPhone-only upload**: the build
+      lists iPhone only, and the version page asks for iPhone screenshots
+      only. Nothing has been released with iPad support, which is the only
+      time dropping it is allowed.
 
 ## Apple subscription uniqueness binding (PR #822)
 

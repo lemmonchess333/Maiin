@@ -4,6 +4,7 @@ import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
 import { useTrialReminderInternal } from "@/hooks/useTrialReminder";
+import { useTrialPriceReport } from "@/hooks/useTrialPriceReport";
 
 /**
  * Reminders (meal / workout / streak) share three characteristics that
@@ -47,6 +48,8 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   const streak = useStreakReminderInternal(pushOwns, refreshKey);
   // One-shot, no prefs, no consumer: it only needs to run once per session.
   useTrialReminderInternal();
+  // The trial reminder email's price, when the purchase's own sync missed it.
+  useTrialPriceReport();
   const value = useMemo(
     () => ({ meal, workout, streak }),
     [meal, workout, streak]

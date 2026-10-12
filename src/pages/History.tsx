@@ -85,7 +85,13 @@ import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
+import {
+  Skeleton,
+  ChartSkeleton,
+  PeriodSummarySkeleton,
+} from "@/components/LoadingSkeleton";
+import ArrivalFade from "@/components/ui/ArrivalFade";
+import { useArrivedAfterLoading } from "@/hooks/useArrivedAfterLoading";
 import {
   formatVolume,
   formatDistance,
@@ -590,6 +596,8 @@ export default function History() {
    */
   const dataLoading =
     runsLoading || workoutsLoading || mealsLoading || rangeMealsLoading;
+  // The overview fades in where its placeholder was (Pol1).
+  const overviewArrival = useArrivedAfterLoading(dataLoading);
 
   /* Names whichever reads are still outstanding after 15s. Purely
      diagnostic — it never cancels or fakes a result, because a slow read
@@ -1149,15 +1157,10 @@ export default function History() {
                 Splitting the three states keeps them mutually exclusive and
                 exhaustive: loading → skeleton, then cold-start → card, else
                 → overview. */}
+            {/* The range card's own shape (Pol1), so the chart arriving
+                moves nothing under it. */}
             {filter === "analytics" && view === "overview" && dataLoading && (
-              <div className="p-4 rounded-2xl bg-card space-y-3">
-                <Skeleton className="h-3 w-20" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                </div>
-              </div>
+              <PeriodSummarySkeleton />
             )}
 
             {/*
@@ -1203,20 +1206,22 @@ export default function History() {
               view === "overview" &&
               !dataLoading &&
               isAnalyticsColdStart && (
-                <EmptyState
-                  icon={LineChart}
-                  accent={THEME.brand}
-                  headline="No analytics yet"
-                  sub="Log a workout, run or meal and your trends will show up here."
-                  action={{ label: "Start a workout", href: "/program" }}
-                />
+                <ArrivalFade {...overviewArrival}>
+                  <EmptyState
+                    icon={LineChart}
+                    accent={THEME.brand}
+                    headline="No analytics yet"
+                    sub="Log a workout, run or meal and your trends will show up here."
+                    action={{ label: "Start a workout", href: "/program" }}
+                  />
+                </ArrivalFade>
               )}
 
             {filter === "analytics" &&
               view === "overview" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
-                <>
+                <ArrivalFade {...overviewArrival} className="space-y-4">
                   <SectionErrorBoundary sectionName="period-summary">
                     <PeriodSummaryCard
                       title={rollingRangeLabel(timeRange)}
@@ -1253,13 +1258,15 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
-                </>
+                </ArrivalFade>
               )}
 
             {/* The way into the four pages. Shown in cold start too: the
                 Body page holds a weight chart that needs no session. */}
             {filter === "analytics" && view === "overview" && !dataLoading && (
-              <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              <ArrivalFade {...overviewArrival}>
+                <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              </ArrivalFade>
             )}
 
             {/* On its own page a section renders whatever its data: each
@@ -1530,7 +1537,7 @@ export default function History() {
               <section
                 id="analytics-nutrition"
                 aria-label="Food analytics"
-                className="space-y-2"
+                className="@container space-y-2"
               >
                 {/* Its sport-coded peers on this page are section
                     headings coloured by a `-strong` utility. This one once
@@ -1624,10 +1631,13 @@ export default function History() {
                         />
                       </SectionErrorBoundary>
                     )}
+                    {/* The stat pairs go one per row under 17.5em of page
+                        (larger text): at 1.35× on a 393pt phone "1,790" was
+                        already wider than half of it. Wide-first. */}
                     {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
                   showSparklines / showDelta in `nutritionFigures`). */}
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
                       <StatCard
                         label="Avg calories"
                         value={nutrition.avgCalories.toLocaleString()}
@@ -1677,7 +1687,7 @@ export default function History() {
                         accentColor={THEME.macros.protein}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="grid grid-cols-2 @max-[17.5em]:grid-cols-1 gap-2 mt-2">
                       <StatCard
                         label="Carbs"
                         value={nutrition.avgCarbs.toString()}
@@ -1764,56 +1774,62 @@ export default function History() {
                       also dropped from 700 to font-medium: at 700 beside
                       an 800 figure it was the weight-mixing DESIGN_GUIDE
                       bars, and `text-sm font-medium` is what the Home
-                      weight tile already uses for exactly this role. */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <Card size="compact" className="text-center">
-                      <Footprints className="size-4 mx-auto mb-1.5 text-running" />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {/* In the reader's unit: it read "km" to everyone. */}
-                        {abbreviateK(
-                          distanceIn(lifetimeTotals.runKm * 1000, unit)
-                        )}
-                        <span className="text-xs font-medium ml-0.5">
-                          {distanceUnitLabel(unit)}
-                        </span>
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        {lifetimeTotals.runCount}{" "}
-                        {lifetimeTotals.runCount === 1 ? "run" : "runs"}
-                      </p>
-                    </Card>
-                    <Card size="compact" className="text-center">
-                      <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {formatVolume(lifetimeTotals.liftVolume).value}
-                        {formatVolume(lifetimeTotals.liftVolume).unit && (
-                          <span className="text-xs font-medium ml-0.5">
-                            {formatVolume(lifetimeTotals.liftVolume).unit}
+                      weight tile already uses for exactly this role.
+                      Three across while 17em allows (a 320px phone at the
+                      designed size), stacked below: at larger text
+                      "115.2k kg" was wider than a third. */}
+                  <div className="@container">
+                    <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
+                      <Card size="compact" className="text-center">
+                        <Footprints className="size-4 mx-auto mb-1.5 text-running" />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {/* In the reader's unit: it read "km" to everyone. */}
+                          {abbreviateK(
+                            distanceIn(lifetimeTotals.runKm * 1000, unit)
+                          )}{" "}
+                          <span className="text-xs font-medium">
+                            {distanceUnitLabel(unit)}
                           </span>
-                        )}
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        {lifetimeTotals.liftCount}{" "}
-                        {lifetimeTotals.liftCount === 1
-                          ? "session"
-                          : "sessions"}
-                      </p>
-                    </Card>
-                    <Card size="compact" className="text-center">
-                      <UtensilsCrossed
-                        className="size-4 mx-auto mb-1.5"
-                        style={{ color: THEME.semantic.nutrition }}
-                      />
-                      <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {lifetimeTotals.daysLogged.toLocaleString()}
-                        <span className="text-xs font-medium ml-0.5">
-                          {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
-                        </span>
-                      </p>
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        logged
-                      </p>
-                    </Card>
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          {lifetimeTotals.runCount}{" "}
+                          {lifetimeTotals.runCount === 1 ? "run" : "runs"}
+                        </p>
+                      </Card>
+                      <Card size="compact" className="text-center">
+                        <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {formatVolume(lifetimeTotals.liftVolume).value}
+                          {formatVolume(lifetimeTotals.liftVolume).unit && " "}
+                          {formatVolume(lifetimeTotals.liftVolume).unit && (
+                            <span className="text-xs font-medium">
+                              {formatVolume(lifetimeTotals.liftVolume).unit}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          {lifetimeTotals.liftCount}{" "}
+                          {lifetimeTotals.liftCount === 1
+                            ? "session"
+                            : "sessions"}
+                        </p>
+                      </Card>
+                      <Card size="compact" className="text-center">
+                        <UtensilsCrossed
+                          className="size-4 mx-auto mb-1.5"
+                          style={{ color: THEME.semantic.nutrition }}
+                        />
+                        <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
+                          {lifetimeTotals.daysLogged.toLocaleString()}{" "}
+                          <span className="text-xs font-medium">
+                            {lifetimeTotals.daysLogged === 1 ? "day" : "days"}
+                          </span>
+                        </p>
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          logged
+                        </p>
+                      </Card>
+                    </div>
                   </div>
                 </section>
               )}

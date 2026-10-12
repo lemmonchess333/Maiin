@@ -25,7 +25,7 @@ DE-SLOP → FRONT-END → DESIGN. Plan, implement in small PRs, verify each.
 running all five.]
 
 READ FIRST, BEFORE THE FIRST EDIT: CLAUDE.md (all of it — the recurring-
-mistake rules and the design system are the spec), CONTEXT.md, docs/adr/,
+mistake rules and the design system are the spec), GLOSSARY.md, docs/adr/,
 docs/invariant-guards.md, docs/voice-and-tone.md, docs/design-principles.md,
 docs/frontend-design-principles-2026-07.md (Part F and its Guardrails),
 .claude/plans/programme-run-followups.md, the three prior security
@@ -106,7 +106,7 @@ LOGIC IN PAGES (ADR-0001): move pure logic out of pages into src/lib or
 the owning feature module, with tests. Do not otherwise split pages.
 TESTS: a test whose expected value is computed by the code under test
 pins consistency, not behaviour — assert a literal instead.
-NAMING: do NOT mass-rename. User-facing copy uses the CONTEXT.md glossary
+NAMING: do NOT mass-rename. User-facing copy uses the GLOSSARY.md glossary
 term; identifiers follow their module's existing convention; fix mixed
 usage only in files you touch.
 

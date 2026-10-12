@@ -22,6 +22,10 @@ const h = vi.hoisted(() => ({
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -232,5 +236,23 @@ describe("SpacePostComposer — attachLatest", () => {
     expect(
       screen.getByRole("button", { name: "Remove attached session" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("SpacePostComposer — a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("holds Post and says why", () => {
+    restriction.isRestricted = true;
+    renderComposer({ sessions: [] });
+    fireEvent.change(screen.getByLabelText("Post body"), {
+      target: { value: "Long run done." },
+    });
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Post to space" })
+    ).toBeDisabled();
   });
 });

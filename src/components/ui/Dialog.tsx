@@ -3,8 +3,8 @@
  *
  * Sprint 3 — single source of truth for centred modal dialogs.
  * Replaces ~7 hand-rolled centred-modal shapes across the app
- * (StallModal, ReportModal, ProModal, the RunBottomSheet stop-
- * confirm, account-delete confirms, etc.) that each implemented
+ * (ReportModal, ProModal, the RunBottomSheet stop-confirm,
+ * account-delete confirms, etc.) that each implemented
  * slightly different focus traps, escape handlers, scroll locks,
  * backdrop dismissals, and aria wiring. Many missed one or more —
  * notably the RunBottomSheet stop-confirm had no focus trap and no
@@ -29,7 +29,7 @@
  * Sizes (max width):
  *   - sm   320px — the ConfirmDialog footprint. Default.
  *   - md   440px — for forms / longer copy.
- *   - lg   560px — for richer content (StallModal-style detail).
+ *   - lg   560px — for richer content (the route planner).
  *
  * The children render in the body area; callers compose their own
  * footer (typically two Button primitives in a flex row). This is

@@ -115,7 +115,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
 8. **Hue overload on Home + Food** (6–7 distinct hues per viewport vs the documented 4-ish semantic system). Macro pink/yellow/green + sport coral/purple + nutrition orange all co-present; the semantic system is intact but the _density_ of simultaneous accents is the issue. (`01-home-scrolled`, `02-food-scrolled`)
 9. ~~Webview desktop scrollbar~~ — **fixed (B)** (suppression CSS; rig cannot render the before state — see device screenshots).
-10. ~~**Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to.~~ — **fixed**: the modal fires only on a completed session (`tropos:workout-completed` / `tropos:run-completed`), never on mount or `visibilitychange`, and is gated through the SurfaceCoordinator so it cannot stack. Pinned by `src/components/__tests__/StreakReminderPrimingModal.test.tsx`. (`03-program-top`)
+10. ~~**Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to.~~ — **fixed**: the modal fires only on a completed session (`tropos:workout-completed` / `tropos:run-completed`), never on mount or `visibilitychange`, and is gated through the SurfaceCoordinator so it cannot stack. FV2 (2026-10-04) then removed the modal, and the test that pinned this, because nothing ever sent those two events, so it never opened at all. (`03-program-top`)
 
 _(Bug C — amber selected-pill clash — fixed; would have ranked ~#8.)_
 

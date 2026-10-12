@@ -5,11 +5,18 @@ import {
 } from "@/features/program/runTimeLimits";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
+  newRunnerLongestRunMinutes,
+  runWalkTemplateIdForWeek,
+} from "@/features/program/newRunner";
+import {
   continuingRacePlan,
   continuedBlockWeeks,
-  preserveEditedRunDays,
+  raceWeekFromToday,
 } from "@/features/program/racePlanContinuation";
-import type { ProgramState } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 /**
  * Race Goal Planner — pure derivation of the pre-save preview shown in the
  * Programme Settings race-prep editor (see RaceGoalPlanner.tsx).
@@ -31,7 +38,12 @@ import type { ProgramState } from "@/features/program/programTypes";
  * No medical warnings, no performance promises (Run9 / design system).
  */
 import { planWeekSchedule, type ScheduleDay } from "./scheduleUtils";
-import { localWeekKey, parseLocalDate } from "./dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "./dateHelpers";
 import {
   getRaceMinWeeks,
   getRaceFloorWeeks,
@@ -54,6 +66,107 @@ import { paceMinSec } from "./runLabels";
 import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
+
+const DISTANCE_METERS: Record<RaceDistance, number> = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+};
+
+/** Pgm7 A7: a race plan needs at least two run days a week. A plan that
+ *  already has fewer keeps them (Pgm5: no silent rebuild); a new one starts
+ *  at two. */
+export const MIN_RACE_RUN_DAYS = 2;
+/** Pgm7 A7: a marathon's setup recommends three. */
+export const MARATHON_RUN_DAYS = 3;
+
+/**
+ * The line under a race plan's run-days control, or null when the count
+ * suits the race. Fewer days are offered more days, a shorter race or a
+ * later date (A7).
+ */
+export function raceRunDaysNote(
+  distance: RaceDistance,
+  runDays: number
+): string | null {
+  if (runDays < MIN_RACE_RUN_DAYS)
+    return "A race plan needs at least two runs a week. Add a day when you can.";
+  if (distance === "marathon" && runDays < MARATHON_RUN_DAYS)
+    return "A marathon plan works best on three runs a week. Add a day, or choose a half marathon or a later date.";
+  return null;
+}
+
+/**
+ * Pgm8 (R14c): the pace a new runner's race is timed at, seconds per km.
+ * 7:00 /km is the middle of the 30 to 40 minutes a first 5K usually takes
+ * (running-evidence §6.5 A). A Tropos heuristic. The templates' own minutes
+ * assume about 5:36 /km, a pace for runners in general (`runDose.ts` says
+ * why a slower runner can't be told them), so a new runner's race isn't
+ * timed from them. One pace for every distance times the longer races a
+ * little short, so the note below errs towards saying nothing.
+ */
+const NEW_RUNNER_RACE_PACE_S_PER_KM = 420;
+
+/** A race's name inside a sentence, as the Realign toast has them. */
+const RACE_IN_A_SENTENCE: Record<RaceDistance, string> = {
+  "5k": "5K",
+  "10k": "10K",
+  half: "half marathon",
+  marathon: "marathon",
+};
+
+/** A span of minutes to the nearest five: "35 min", "2 h", "2 h 30 min". */
+function aboutTime(minutes: number): string {
+  const rounded = Math.round(minutes / 5) * 5;
+  const hours = Math.floor(rounded / 60);
+  const rest = rounded % 60;
+  if (!hours) return `${rest} min`;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
+/**
+ * Pgm8 (R14c): the line under a race date when someone new to running has
+ * picked a race their plan can't build to, or null. Can't build to is a
+ * Tropos heuristic: the race would take them more than twice the longest
+ * run the plan reaches before race week. That run is the build's, the most
+ * a new runner's run can be (`newRunnerLongestRunMinutes`): it only rises,
+ * so the week before race week holds it, or this week when the race is
+ * this week and no week comes before it. Each of the plan's runs is the
+ * longest of its kind within it, and a taper week's sit below it. The race
+ * is timed at `NEW_RUNNER_RACE_PACE_S_PER_KM`. The line suggests
+ * run-walking the race or a later date. It never holds up the plan.
+ *
+ * Null for anyone who isn't new to running (`newRunnerUntil` null), and
+ * without a race date of today or later.
+ */
+export function newRunnerRaceNote(input: {
+  distance: RaceDistance;
+  /** Local "YYYY-MM-DD"; "" when no date chosen yet. */
+  targetDate: string;
+  /** Local "YYYY-MM-DD", today. */
+  currentDate: string;
+  /** The day a new runner's first weeks end (`newRunnerUntil`). */
+  newRunnerUntil?: string | null;
+}): string | null {
+  const { distance, targetDate, currentDate } = input;
+  const until = input.newRunnerUntil;
+  if (!until || !targetDate || targetDate < currentDate) return null;
+  const raceWeek = localWeekKey(parseLocalDate(targetDate));
+  const weekBefore = localDateString(
+    addLocalDays(parseLocalDate(raceWeek), -7)
+  );
+  const thisWeek = localWeekKey(parseLocalDate(currentDate));
+  const week = weekBefore > thisWeek ? weekBefore : thisWeek;
+  const longestRun = newRunnerLongestRunMinutes(week, until) ?? 0;
+  const raceMinutes =
+    (DISTANCE_METERS[distance] / 1000) * (NEW_RUNNER_RACE_PACE_S_PER_KM / 60);
+  if (raceMinutes <= 2 * longestRun) return null;
+  const plan = runWalkTemplateIdForWeek(week, until)
+    ? "Your plan is still run-walk by then"
+    : `Your plan builds to about ${aboutTime(longestRun)} of running by then`;
+  return `${plan}, and a ${RACE_IN_A_SENTENCE[distance]} takes about ${aboutTime(raceMinutes)}. You can run-walk it, or choose a later date.`;
+}
 
 /**
  * Five states, not four. `below-floor` (finish-safely) is DISTINCT from
@@ -85,6 +198,9 @@ export interface RaceGoalPlannerInput {
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  /** Run20 (5): as the save passes it (`PlanBuilderInput.newRunnerUntil`),
+   *  so the preview shows the weeks the save writes. */
+  newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
 }
 
@@ -110,6 +226,12 @@ export interface RaceGoalPlannerState {
   hardClashDays: number;
   timeLimitedRuns: number;
   firstWeekMinutes: number;
+  /** The first week runs as run-walk: a new runner's first weeks (Run20
+   *  (5)), which no fit shortens. */
+  runWalkWeeks: boolean;
+  /** Pgm8 (R14c): for a new runner whose plan can't build to the race, the
+   *  line that says so (`newRunnerRaceNote`); null otherwise. */
+  newRunnerNote: string | null;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -149,6 +271,8 @@ export function getRaceGoalPlannerState(
     hardClashDays: 0,
     timeLimitedRuns: 0,
     firstWeekMinutes: 0,
+    runWalkWeeks: false,
+    newRunnerNote: null,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -186,34 +310,47 @@ export function getRaceGoalPlannerState(
     weeklyRunDays,
     input.weekSchedule
   );
-  const weekStart = localWeekKey(now);
   const continued = continuingRacePlan(input.existingState?.runPlan, {
     distance,
     targetDate,
   });
-  const plan = generateRacePlanV2({
-    // Settings preview the same returning-runner guard used by the save.
-    // Calendar-only callers deliberately retain the no-history fallback.
-    recentLayoff: input.recentLayoff ?? "none",
-    weekSchedule,
-    raceGoal: { distance, targetDate },
-    weeklyRunDays,
-    currentDate,
+  // The week the save plans (Run19): from today, over a continuing plan's
+  // kept days, or next week's runs when none of this week's run days is
+  // left (`raceWeekFromToday`).
+  const {
+    plan,
+    runDays: firstWeek,
     weekStart,
-    tuning: input.tuning,
-    runningBaseline: input.runningBaseline,
-    runTimeLimits: input.runTimeLimits,
-    easyPaceSPerKm: input.easyPaceSPerKm,
-    planTotalWeeks: continued?.totalWeeks,
-  });
-  if (continued && plan.weeks[0]) {
-    plan.weeks[0] = preserveEditedRunDays(
-      input.existingState?.runDays ?? [],
-      plan.weeks[0],
-      input.existingState?.manualCompletions,
-      currentDate
-    );
-  }
+  } = raceWeekFromToday(
+    (from) =>
+      generateRacePlanV2({
+        // Settings preview the same returning-runner guard used by the save.
+        // Calendar-only callers deliberately retain the no-history fallback.
+        recentLayoff: input.recentLayoff ?? "none",
+        weekSchedule,
+        raceGoal: { distance, targetDate },
+        weeklyRunDays,
+        currentDate: from.currentDate,
+        weekStart: from.weekStart,
+        tuning: input.tuning,
+        runningBaseline: input.runningBaseline,
+        runTimeLimits: input.runTimeLimits,
+        easyPaceSPerKm: input.easyPaceSPerKm,
+        newRunnerUntil: input.newRunnerUntil,
+        planTotalWeeks: continued?.totalWeeks,
+      }),
+    { currentDate, weekStart: localWeekKey(now) },
+    currentDate,
+    continued
+      ? {
+          runDays: input.existingState?.runDays ?? [],
+          manualCompletions: input.existingState?.manualCompletions,
+        }
+      : undefined
+  );
+  // The plan's weekly shape, before today's cut: what a week of it holds.
+  const shapeWeek = plan.weeks[0] ?? [];
+  if (plan.weeks[0]) plan.weeks[0] = firstWeek;
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
   const status: RacePlannerStatus = plan.belowFloor
@@ -222,13 +359,16 @@ export function getRaceGoalPlannerState(
       ? "compressed"
       : "healthy";
 
-  const week0 = (plan.weeks[0] ?? []).filter((run) =>
+  const inThisWeek = (run: ScheduledRunDay) =>
     run.date
       ? localWeekKey(parseLocalDate(run.date)) === weekStart
-      : !run.weekKey || run.weekKey === weekStart
-  );
-  const recommendedRunDays = week0.length || weeklyRunDays;
-  const hardClashDays = week0.filter((rd) => rd.clashesWithLift).length;
+      : !run.weekKey || run.weekKey === weekStart;
+  // What is saved for the plan's first week (`raceWeekFromToday`), and a
+  // week's shape: a plan made on a Thursday still runs three days a week.
+  const week0 = (plan.weeks[0] ?? []).filter(inThisWeek);
+  const shape = shapeWeek.filter(inThisWeek);
+  const recommendedRunDays = shape.length || weeklyRunDays;
+  const hardClashDays = shape.filter((rd) => rd.clashesWithLift).length;
   const blockWeeks = continuedBlockWeeks(plan.totalWeeks, continued);
   const firstWeekPhase = getRacePhaseLabel(
     blockWeeks - plan.totalWeeks,
@@ -247,7 +387,7 @@ export function getRaceGoalPlannerState(
   } else if (status === "compressed") {
     statusTitle = "Short runway";
     statusDescription =
-      "Tropos will compress the plan — fewer hard sessions, a shorter long-run progression.";
+      "Tropos will compress the plan — fewer quality sessions, and the long runs build in fewer weeks, with bigger jumps between them.";
     ctaLabel = "Save compressed plan";
   } else {
     statusTitle = "Very tight";
@@ -256,7 +396,7 @@ export function getRaceGoalPlannerState(
        "finish-safely" label implied a safety promise the product cannot
        make (the internal `finish_safely` state keys are unchanged;
        renaming persisted vocabulary buys no user value). */
-    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no hard sessions.`;
+    statusDescription = `Too soon for a full ${lower} build. Tropos can create a mostly-easy plan — easy running only, no quality sessions.`;
     ctaLabel = "Save mostly-easy plan";
   }
 
@@ -281,6 +421,10 @@ export function getRaceGoalPlannerState(
         (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
       );
     }, 0),
+    // From the six weeks, not this week's runs: a week can have none left.
+    runWalkWeeks:
+      runWalkTemplateIdForWeek(weekStart, input.newRunnerUntil) !== null,
+    newRunnerNote: newRunnerRaceNote(input),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,
@@ -313,13 +457,6 @@ export interface RaceTargetVerdict {
   /** One honest sentence for the planner preview. */
   line: string;
 }
-
-const DISTANCE_METERS: Record<RaceDistance, number> = {
-  "5k": 5000,
-  "10k": 10000,
-  half: 21097.5,
-  marathon: 42195,
-};
 
 export function raceTargetVerdict(input: {
   distance: RaceDistance;
@@ -355,7 +492,7 @@ export function raceTargetVerdict(input: {
     band === "long_shot"
       ? " Training paces stay on your current fitness until the gap closes."
       : "";
-  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)}${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
+  const line = `Goal pace ${paceMinSec(Math.round(goalPaceS), unit)} ${paceUnitLabel(unit)} · ${phrase[band]} (target fitness ${targetVdot.toFixed(1)} vs current ${currentVdot.toFixed(1)} — a Tropos estimate, not a promise).${holdNote}`;
   return {
     band,
     goalPaceS,

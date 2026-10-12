@@ -47,11 +47,6 @@ import MinVersionGate from "@/components/MinVersionGate";
    reads. They render only inside the authenticated branch, already behind
    its Suspense, so the bytes now load alongside the page chunks instead of
    before anything paints. */
-const StreakReminderPrimingModal = lazyRetry(() =>
-  import("@/components/StreakReminderPrimingModal").then((m) => ({
-    default: m.StreakReminderPrimingModal,
-  }))
-);
 const OneTimeMaintenance = lazyRetry(
   () => import("@/components/OneTimeMaintenance")
 );
@@ -188,6 +183,20 @@ const WeightPickerLab =
 const BadgeSealLab =
   import.meta.env.MODE !== "production"
     ? lazyRetry(() => import("@/pages/dev/BadgeSealLab"))
+    : null;
+
+// Dev-only break-social lab: the activity card and leaderboard row with
+// worst-case data behind a toggle. Same build-time stripping.
+const BreakSocialLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BreakSocialLab"))
+    : null;
+
+// Dev-only break-food lab: the food diary with worst-case data behind a
+// toggle. Same build-time stripping.
+const BreakFoodLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BreakFoodLab"))
     : null;
 
 // The ambient-emission bake-off (#1252) shipped a single brand-purple
@@ -510,19 +519,14 @@ function AppRoutes() {
             / useWeeklyDayMap all read from it, collapsing four listeners
             into one. */}
             <DailyLogsProvider>
-              {/* #995: app-global tier-4 coordinator. Wraps BOTH the global
-                priming modal and the routes (Home's trial/fell-behind/badge),
-                so at most one blocking surface shows per app-open. */}
+              {/* #995: app-global tier-4 coordinator. Wraps the routes, so at
+                most one blocking surface shows per app-open. It was made
+                app-wide for a globally mounted streak-reminder prompt,
+                removed in FV2: nothing ever sent the events it opened on,
+                and the finish screen and Settings ask the same thing. */}
               <SurfaceCoordinatorProvider>
                 {/* #995 tier-3: ≤1 inline education card at a time. */}
                 <EducationLaneProvider>
-                  {/* Mounted at App root (not in Settings) so the priming check runs
-            on every foreground event regardless of which page the user is
-            on. The modal internally gates on currentStreak >= 2 and
-            primingShown === false — renders nothing on most sessions. */}
-                  <Suspense fallback={null}>
-                    <StreakReminderPrimingModal />
-                  </Suspense>
                   <Routes>
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
@@ -860,6 +864,26 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <BadgeSealLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {BreakSocialLab && (
+                      <Route
+                        path="/dev/break-social"
+                        element={
+                          <RouteErrorBoundary>
+                            <BreakSocialLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {BreakFoodLab && (
+                      <Route
+                        path="/dev/break-food"
+                        element={
+                          <RouteErrorBoundary>
+                            <BreakFoodLab />
                           </RouteErrorBoundary>
                         }
                       />

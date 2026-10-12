@@ -49,6 +49,10 @@ interface FoodHeroCardProps {
    *  the hero correctly — the affordance is omitted when no handler
    *  is supplied. */
   onTapDrillDown?: () => void;
+  /** Draw the ring and tiles in from zero on mount (the default).
+   *  Food passes false once the person has switched day: the card is
+   *  remounted per day, and a remount is a browse, not a log. */
+  drawIn?: boolean;
   /** Task-first Food entry: full nutrition stays one tap away in Details. */
 }
 
@@ -68,6 +72,7 @@ export default function FoodHeroCard({
   dailyTargets,
   dailyTotals,
   onTapDrillDown,
+  drawIn = true,
 }: FoodHeroCardProps) {
   /* Targets-set detection. When a user hasn't customised
      `profile.targetCalories`, useDailyTargets falls back to a
@@ -332,6 +337,7 @@ export default function FoodHeroCard({
               trajectoryLabel={trajectoryLabel}
               glowing={celebrating}
               ringDurationMs={LOG_MOMENT_MS}
+              drawIn={drawIn}
             />
 
             {/* Food6 a2: the drill-down, at the bottom right. "Details" and
@@ -401,50 +407,57 @@ export default function FoodHeroCard({
         columns equal by construction, and `min-w-0` on each cell lets a
         long number shrink inside its own tile instead of pushing the
         row wider. gap-2 matches the compact-grid rule in the design
-        system and the Analytics period summary's figures. */}
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="protein"
-            Icon={Beef}
-            consumed={dailyTotals.protein}
-            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-            label="Protein"
-            color={THEME.macros.protein}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </Card>
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="carbs"
-            Icon={Wheat}
-            consumed={dailyTotals.carbs}
-            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-            label="Carbs"
-            color={THEME.macros.carbs}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </Card>
-        <Card size="compact" className="min-w-0 flex">
-          <MacroColumn
-            macroKey="fat"
-            Icon={Avocado}
-            consumed={dailyTotals.fat}
-            target={dailyTargets.fat}
-            label="Fat"
-            color={THEME.macros.fat}
-            mode={mode}
-            onTap={toggleMode}
-            numberDurationSec={LOG_MOMENT_SEC}
-            barDurationSec={LOG_MOMENT_SEC}
-          />
-        </Card>
+        system and the Analytics period summary's figures. Under 10em
+        (double text on a 320px phone) they stack: three across, "101g"
+        ran into its neighbours. */}
+      <div className="@container mt-4">
+        <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="protein"
+              Icon={Beef}
+              consumed={dailyTotals.protein}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
+              label="Protein"
+              color={THEME.macros.protein}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="carbs"
+              Icon={Wheat}
+              consumed={dailyTotals.carbs}
+              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
+              label="Carbs"
+              color={THEME.macros.carbs}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+          <Card size="compact" className="min-w-0 flex">
+            <MacroColumn
+              macroKey="fat"
+              Icon={Avocado}
+              consumed={dailyTotals.fat}
+              target={dailyTargets.fat}
+              label="Fat"
+              color={THEME.macros.fat}
+              mode={mode}
+              onTap={toggleMode}
+              numberDurationSec={LOG_MOMENT_SEC}
+              barDurationSec={LOG_MOMENT_SEC}
+              drawIn={drawIn}
+            />
+          </Card>
+        </div>
       </div>
 
       {/* Wave3 G — the training-aware day annotation (the free→premium

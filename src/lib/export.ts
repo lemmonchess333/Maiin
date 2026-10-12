@@ -99,12 +99,12 @@ export async function exportBodyweightCSV(uid: string): Promise<string> {
   return rows.join("\n");
 }
 
-export function downloadCSV(content: string, filename: string) {
-  const blob = new Blob([content], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+/**
+ * An export as a CSV file, for shareFile to hand over: the share sheet on
+ * the iPhone (Save to Files, Mail…), a download on the web. This was a
+ * blob `<a download>` everywhere, which WKWebView drops without a word,
+ * so on iPhone nothing was saved while the app said "exported".
+ */
+export function csvFile(content: string, filename: string): File {
+  return new File([content], filename, { type: "text/csv" });
 }

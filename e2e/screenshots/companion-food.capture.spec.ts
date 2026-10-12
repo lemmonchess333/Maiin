@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser, TEST_USER } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
 
@@ -56,7 +55,6 @@ test("usual meals are visible and offline adds can be undone", async ({
       document.head.append(style);
     })
   );
-  await suppressCoachmarks(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signInAsTestUser(page, { email, password });
   await page.goto("food");

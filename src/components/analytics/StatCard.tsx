@@ -58,7 +58,7 @@ export default function StatCard({
     <Container
       {...(onClick ? { type: "button" as const } : {})}
       onClick={onClick}
-      className={`p-4 rounded-2xl bg-card text-left w-full card-shadow${onClick ? " motion-safe:active:scale-[0.98]" : ""}`}
+      className={`p-4 rounded-2xl bg-card text-left w-full card-shadow${onClick ? " transition-transform motion-safe:active:scale-[0.98]" : ""}`}
     >
       <SectionLabel className="mb-2">{label}</SectionLabel>
 
@@ -68,7 +68,10 @@ export default function StatCard({
           sparkline overflows the ~152px content area. Stacking the
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
-      <div className="flex items-baseline gap-1 min-w-0">
+      {/* At larger text the unit wraps under the figure rather than
+          squeezing it: "1,790 kcal/day" was wider than the card at double
+          size, and a figure is never cut. */}
+      <div className="flex flex-wrap items-baseline gap-x-1 min-w-0">
         <span
           className={
             valueKind === "text"

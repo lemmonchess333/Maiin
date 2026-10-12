@@ -1,5 +1,4 @@
 import { useId, useState } from "react";
-import { format } from "date-fns";
 import { ChevronDown, Droplets, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
@@ -15,6 +14,8 @@ import {
   formatWaterVolume,
 } from "@/lib/waterUnits";
 import type { WaterDrink } from "@/lib/waterActions";
+import { formatTimeOfDay } from "@/utils/formatters";
+import { Collapse } from "@/components/ui/Collapse";
 
 export default function WaterSizeSheet({
   open,
@@ -116,13 +117,13 @@ export default function WaterSizeSheet({
             onClick={() => setCustomOpen((current) => !current)}
             rightIcon={
               <ChevronDown
-                className={`size-4 text-muted-foreground ${customOpen ? "rotate-180" : ""}`}
+                className={`size-4 text-muted-foreground motion-safe:transition-transform duration-200 ${customOpen ? "rotate-180" : ""}`}
               />
             }
           >
             Other amount
           </Button>
-          {customOpen && (
+          <Collapse open={customOpen}>
             <form
               id={`${amountId}-custom`}
               className="pt-2 space-y-2"
@@ -179,7 +180,7 @@ export default function WaterSizeSheet({
                 </p>
               )}
             </form>
-          )}
+          </Collapse>
         </div>
         {/* The day's log. Each drink is its own record in the water
             document (`waterReceipts`), so a row takes back exactly the
@@ -209,13 +210,13 @@ export default function WaterSizeSheet({
                   </span>
                   {drink.at !== undefined && (
                     <span className="text-micro font-mono tabular-nums text-muted-foreground">
-                      {format(new Date(drink.at), "HH:mm")}
+                      {formatTimeOfDay(new Date(drink.at))}
                     </span>
                   )}
                   <IconButton
                     aria-label={`Remove ${formatWaterVolume(drink.ml)}${
                       drink.at !== undefined
-                        ? ` logged at ${format(new Date(drink.at), "HH:mm")}`
+                        ? ` logged at ${formatTimeOfDay(new Date(drink.at))}`
                         : ""
                     }`}
                     onClick={() => removeDrink(drink.id)}

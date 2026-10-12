@@ -26,7 +26,7 @@ import { describe, it, expect } from "vitest";
 
 import { buildPlan } from "../planBuilder";
 import { repScaledSeed, startingWeightForExercise } from "../startingLoads";
-import { goalProfileFor } from "../programEngine";
+import { mainRepAnchor } from "../roleTable";
 import type { PrimaryGoal, ProgramExercise } from "../programTypes";
 
 const CTX = {
@@ -73,24 +73,26 @@ function seedFor(primaryGoal: PrimaryGoal, exerciseId: string): number {
 
 describe("the seed answers to the rep target", () => {
   it("fewer prescribed reps means a heavier cold-start load", () => {
-    // The whole point: `running` mains are 4-6 and `strength` 5-7, against
-    // `hypertrophy`'s 8-12 — so the seeded bar weight must be ordered the
-    // other way round. Pre-fix all three were identical.
+    // The whole point: the role table (`roleTable.ts`) starts `strength` and
+    // `running` mains at 5 and `hypertrophy` at 6, against `general`'s 8 —
+    // so the seeded bar weight must be ordered the other way round. Pre-fix
+    // all of them were identical.
     //
-    // This originally read running > hypertrophy > fat_loss, which stopped
-    // being a valid ordering the moment fat_loss moved onto the 8-rep anchor
-    // alongside hypertrophy and general. No goal prescribes ABOVE the anchor
-    // any more, so the lighter-for-more-reps direction is now only
-    // demonstrable through the pure function — see `repScaledSeed` below.
+    // No goal prescribes ABOVE the anchor, so the lighter-for-more-reps
+    // direction is only demonstrable through the pure function — see
+    // `repScaledSeed` below.
     const bench = {
       running: seedFor("running", "bench-press"),
       strength: seedFor("strength", "bench-press"),
       hypertrophy: seedFor("hypertrophy", "bench-press"),
       fat_loss: seedFor("fat_loss", "bench-press"),
+      general: seedFor("general", "bench-press"),
     };
-    expect(bench.running).toBeGreaterThan(bench.strength);
     expect(bench.strength).toBeGreaterThan(bench.hypertrophy);
-    // Equal, and for a reason worth stating: both sit on the anchor.
+    expect(bench.hypertrophy).toBeGreaterThan(bench.general);
+    // Equal, and for a reason worth stating: each pair shares its mains'
+    // number (Lose fat builds as Build muscle).
+    expect(bench.running).toBe(bench.strength);
     expect(bench.fat_loss).toBe(bench.hypertrophy);
   });
 
@@ -99,8 +101,8 @@ describe("the seed answers to the rep target", () => {
     // seeded at the ~8-rep anchor — a pre-existing instance of this defect
     // that the running change happens to resolve. Worth pinning so it can't
     // silently regress back.
-    expect(goalProfileFor("strength").mainReps).toBeLessThan(
-      goalProfileFor("hypertrophy").mainReps
+    expect(mainRepAnchor("strength", "intermediate")).toBeLessThan(
+      mainRepAnchor("hypertrophy", "intermediate")
     );
     expect(seedFor("strength", "bench-press")).toBeGreaterThan(
       seedFor("hypertrophy", "bench-press")
@@ -108,11 +110,11 @@ describe("the seed answers to the rep target", () => {
   });
 
   it("the anchor goal is unchanged — the table is calibrated at ~8 reps", () => {
-    // `hypertrophy` mains sit exactly on the anchor, so its seeds must be
+    // `general` mains sit exactly on the anchor, so its seeds must be
     // byte-identical to the rep-blind behaviour. This is what makes the
     // change safe to reason about: only goals that prescribe away from 8
     // move at all.
-    expect(goalProfileFor("hypertrophy").mainReps).toBe(8);
+    expect(mainRepAnchor("general", "intermediate")).toBe(8);
     expect(repScaledSeed(100, 8)).toBe(100);
     expect(
       startingWeightForExercise("bench-press", "horizontal_push", CTX, false, 8)
@@ -198,7 +200,7 @@ describe("both seeding passes agree", () => {
     // Asserted through buildPlan (the path that runs both) against the pure
     // function, so a future edit to either pass has to keep them agreeing.
     for (const goal of ["running", "strength", "fat_loss"] as const) {
-      const anchor = goalProfileFor(goal).mainReps;
+      const anchor = mainRepAnchor(goal, "intermediate");
       const expected = startingWeightForExercise(
         "bench-press",
         "horizontal_push",

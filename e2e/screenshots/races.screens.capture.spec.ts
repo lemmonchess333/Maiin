@@ -13,7 +13,6 @@ import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -33,7 +32,6 @@ test.describe("races & events directory screenshots", () => {
     // its date passes, so an unpinned clock lets the row thin out — and
     // the first card change — every time the calendar overtakes an entry.
     await page.clock.setFixedTime(new Date("2026-06-01T12:00:00Z"));
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

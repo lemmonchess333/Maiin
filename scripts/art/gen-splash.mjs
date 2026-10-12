@@ -27,9 +27,11 @@
  * storyboard image view is `scaleAspectFill`, so a 2732 square on a
  * 1179x2556 phone is scaled 0.9356 and centre-cropped to the middle
  * ~46% of its width; the hexagon is 53.8% of its own box. At 0.22 that
- * lands the hexagon at ~26% of phone screen width and ~17% of an 11"
- * iPad's — the usual launch-mark register on both. LAUNCH_MARK_SHARE in
- * src/lib/brandMark.ts is the same arithmetic for the web layer.
+ * lands the hexagon at ~26% of phone screen width — the usual launch-mark
+ * register. The app is iPhone-only (TARGETED_DEVICE_FAMILY = 1), so an
+ * iPad shows it in an iPhone-sized window, not across its own screen.
+ * LAUNCH_MARK_SHARE in src/lib/brandMark.ts is the same arithmetic for the
+ * web layer.
  *
  *   node scripts/art/gen-splash.mjs
  */

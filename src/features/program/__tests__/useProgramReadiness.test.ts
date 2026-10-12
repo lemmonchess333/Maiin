@@ -11,7 +11,7 @@
  * (useHomeProgram.test.tsx).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 
 const h = vi.hoisted(() => ({
@@ -57,8 +57,11 @@ import {
   resumeReads,
   deferReads,
   releaseAllReads,
+  pendingReads,
   seedCache,
+  seedFirestore,
   readDoc,
+  writeLog,
   failNextFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
@@ -113,5 +116,56 @@ describe("readiness", () => {
     await waitFor(() => expect(result.current.readiness).toBe("failed"));
     expect(unfiredFailures()).toEqual([]);
     expect(result.current.loading).toBe(false);
+  });
+});
+
+describe("a rebuild waits for the server's copy", () => {
+  /* `regenerateProgram` rebuilds from `programState`, and from scratch
+     when it is null. While the programme loads it IS null, so a rebuild
+     then was committed against no document while one exists, and refused
+     as a conflict. The weekly-layout sheet's restructure confirm reached
+     it from Settings, whose pages open before the programme has loaded. */
+  it("refuses while the programme loads, then rebuilds on it", async () => {
+    // The stored profile, which the rebuild's profile patch merges onto.
+    seedFirestore({ "users/userA": h.profile! });
+    // A stored plan, built by a first visit.
+    const first = renderHook(() => useProgram());
+    await waitFor(() => expect(first.result.current.readiness).toBe("ready"));
+    first.unmount();
+    const stored = readDoc(PROGRAM);
+    const before = writeLog().length;
+
+    // The next visit: nothing cached, and the server's answer held. The
+    // rebuild's own reads answer; the loader's stays held.
+    deferReads();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(pendingReads()).toContain(PROGRAM));
+    resumeReads();
+    expect(result.current.programState).toBeNull();
+    expect(result.current.readiness).toBe("pending");
+
+    let refused: unknown;
+    await act(async () => {
+      await result.current.regenerateProgram().catch((error: unknown) => {
+        refused = error;
+      });
+    });
+    // Refused for the right reason, before anything was built or sent.
+    expect((refused as Error | undefined)?.message).toBe(
+      "Wait for your programme to load, then try again."
+    );
+    expect(writeLog()).toHaveLength(before);
+    expect(readDoc(PROGRAM)).toEqual(stored);
+
+    releaseAllReads();
+    await waitFor(() => expect(result.current.readiness).toBe("ready"));
+    await act(async () => {
+      await result.current.regenerateProgram();
+    });
+    expect(
+      writeLog()
+        .slice(before)
+        .map((write) => write.path)
+    ).toContain(PROGRAM);
   });
 });

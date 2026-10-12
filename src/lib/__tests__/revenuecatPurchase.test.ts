@@ -46,9 +46,18 @@ beforeEach(() => {
 });
 
 describe("rcPurchase", () => {
-  it("purchases the matching package and reports the active pro entitlement", async () => {
+  it("purchases the matching package and reports the active pro entitlement, with the price Apple showed", async () => {
     mockPurchases.getOfferings.mockResolvedValue(
-      offeringsWith([{ product: { identifier: PID, priceString: "£3.99" } }])
+      offeringsWith([
+        {
+          product: {
+            identifier: PID,
+            priceString: "£3.99",
+            price: 3.99,
+            currencyCode: "GBP",
+          },
+        },
+      ])
     );
     mockPurchases.purchasePackage.mockResolvedValue({
       customerInfo: proActiveInfo,
@@ -56,7 +65,12 @@ describe("rcPurchase", () => {
     const { rcPurchase } = await loadModule();
 
     const outcome = await rcPurchase(PID);
-    expect(outcome).toEqual({ success: true, isProActive: true });
+    // The price goes to the server for the trial reminder's email.
+    expect(outcome).toEqual({
+      success: true,
+      isProActive: true,
+      price: { priceString: "£3.99", price: 3.99, currencyCode: "GBP" },
+    });
     expect(mockPurchases.purchasePackage).toHaveBeenCalledWith({
       aPackage: expect.objectContaining({
         product: expect.objectContaining({ identifier: PID }),
@@ -133,14 +147,27 @@ describe("rcRestore", () => {
 });
 
 describe("rcGetLocalizedPrices", () => {
-  it("maps product ids to Apple's localized price strings", async () => {
+  it("maps product ids to Apple's price string, with the number and currency behind it", async () => {
+    // The number and the currency are what the paywall works its per-week
+    // figures and its saving out from; with the string alone it could only
+    // do that in pounds.
     mockPurchases.getOfferings.mockResolvedValue(
       offeringsWith([
-        { product: { identifier: PID, priceString: "$4.99" } },
+        {
+          product: {
+            identifier: PID,
+            priceString: "$4.99",
+            price: 4.99,
+            currencyCode: "USD",
+            pricePerWeekString: "$1.24",
+          },
+        },
         {
           product: {
             identifier: "com.tropos.app.pro.yearly",
             priceString: "$44.99",
+            price: 44.99,
+            currencyCode: "USD",
           },
         },
       ])
@@ -148,8 +175,12 @@ describe("rcGetLocalizedPrices", () => {
     const { rcGetLocalizedPrices } = await loadModule();
 
     expect(await rcGetLocalizedPrices()).toEqual({
-      [PID]: "$4.99",
-      "com.tropos.app.pro.yearly": "$44.99",
+      [PID]: { priceString: "$4.99", price: 4.99, currencyCode: "USD" },
+      "com.tropos.app.pro.yearly": {
+        priceString: "$44.99",
+        price: 44.99,
+        currencyCode: "USD",
+      },
     });
   });
 

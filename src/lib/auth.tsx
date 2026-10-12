@@ -141,6 +141,13 @@ export interface UserProfileCore {
    * to a Timestamp. Read for the #972 cold-start activation window.
    */
   createdAt?: Timestamp | FieldValue;
+  /**
+   * When setup last finished, stamped by `completeOnboarding` (server time; a
+   * client can't write it). A new runner's first weeks count from it
+   * (`profileNewRunnerUntil`), as setup's own plan does. Absent on a profile
+   * set up before it was kept.
+   */
+  onboardingCompletedAt?: Timestamp | FieldValue;
 }
 
 /** Physical attributes and fitness metrics */
@@ -232,6 +239,34 @@ export interface UserProfileSubscription {
    *  flag is the Stripe-pipeline equivalent. */
   hasUsedTrial?: boolean;
   trialExpiryPromptShown?: boolean;
+  /** The free trial a store purchase is in, before its first payment.
+   *  Written by the server from RevenueCat (functions/lib/trialReminder.js);
+   *  null or absent once there is none. Not `trialExpiresAt`, the old
+   *  onboarding free week. */
+  subscriptionTrial?: SubscriptionTrial | null;
+}
+
+/** A free trial that becomes a paid subscription unless it is cancelled
+ *  (Sub1, STATUS 2026-10-06). Instants are ISO strings. */
+export interface SubscriptionTrial {
+  productId: string;
+  store: string;
+  /** How often it renews once paid; null for a product the server does
+   *  not know. */
+  period: "month" | "year" | null;
+  startedAt: string | null;
+  /** When the trial ends and the first payment is taken. */
+  endsAt: string;
+  /** The last moment to cancel without being charged: Apple wants a day. */
+  cancelBy: string;
+  /** When the reminder goes: 10:00 local, two days before `cancelBy`. The
+   *  email and the phone notification both use this instant. */
+  reminderAt: string;
+  /** False once the person has turned renewal off. */
+  willRenew: boolean;
+  /** The price the app showed when it sold the plan, when it reported one. */
+  price: { amount: number; currencyCode: string; display: string } | null;
+  reminderEmailedAt: string | null;
 }
 
 /** User preferences and settings */
@@ -253,12 +288,12 @@ export interface UserProfilePreferences {
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   audioCues?: boolean;
-  /** F1 privacy toggle: user opt-out for Gemini-backed food analysis
-   *  (image AI + NL text refinement). Undefined / missing = enabled
-   *  (default behaviour). Set to false via Settings → Privacy to
-   *  disable; AI CTAs hide and the underlying calls refuse. The
-   *  manual parse / barcode paths are unaffected — only AI calls
-   *  are gated. */
+  /** Permission before food goes to Google's Gemini (meal and label
+   *  photos, Pro typed meals): undefined = not asked yet (the first AI
+   *  request asks), true = allowed, false = off (nothing is sent, and
+   *  the server refuses it too). Written by the consent sheet and the
+   *  Settings → Social & privacy switch. Barcodes and the on-device
+   *  parser are not AI and are unaffected. See src/lib/aiConsent.ts. */
   aiAnalysisEnabled?: boolean;
   /** Device IANA timezone (e.g. "Europe/London"), captured on boot (#962).
    *  Read server-side for scan-quota day-keying + streak-nudge local-hour
@@ -386,6 +421,11 @@ export interface UserProfileRunning {
    */
   runVolume?: "lighter" | "standard" | "bigger";
   runDifficulty?: "gentler" | "standard" | "harder";
+  /** Lift4 (10): the answer at race setup to "Lighten leg sessions while
+   *  your runs build?": yes trims the leg lifts in the run plan's build
+   *  weeks. Never asked reads as no. Written by configurePlan and
+   *  completeOnboarding alongside the plan. */
+  raceLegTrim?: boolean;
   runningBaseline?:
     | import("@/features/program/runningBaseline").RunningBaseline
     | null;
@@ -470,6 +510,9 @@ export interface UserProfileOnboarding {
   experienceSuggestionDismissed?: { signature: string; at: number };
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
+  /** Lift4 (11): a barbell and a rack beside a home gym's or a minimal
+   *  setup's kit, so the plan can give barbell lifts. */
+  barbellAtHome?: boolean;
   preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];
@@ -850,6 +893,7 @@ const PROTECTED_FIELDS = [
   "appleOriginalTransactionId",
   "hasUsedTrial",
   "trialExpiresAt",
+  "subscriptionTrial",
 ] as const;
 
 // Subset of UserProfile fields that also need to be mirrored onto the
@@ -1585,12 +1629,12 @@ export function useUid() {
  *
  * Returns the signed-in uid, or `"anon"` for both "signed out" and "no
  * AuthProvider". The tolerance is the point and it is narrow: the callers
- * are leaf UI primitives (`useDismissOnce`, `useCoachMarks`) that render in
- * isolation in tests, and a banner must not crash a page because its
- * dismissal key had nowhere to look. Conflating signed-out with
- * no-provider is safe HERE because both mean the same thing to a storage
- * key — "not a known account" — and a signed-out dismissal correctly stops
- * applying the moment someone signs in.
+ * are leaf UI pieces (`useDismissOnce` and the cards that key their own
+ * dismissals) that render in isolation in tests, and a banner must not
+ * crash a page because its dismissal key had nowhere to look. Conflating
+ * signed-out with no-provider is safe HERE because both mean the same thing
+ * to a storage key — "not a known account" — and a signed-out dismissal
+ * correctly stops applying the moment someone signs in.
  *
  * Do NOT reach for this when you need to know WHO the user is. `"anon"` is
  * a bucket name, not an identity; use `useUid()`, which throws rather than

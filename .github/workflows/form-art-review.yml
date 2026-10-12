@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'docs/exercise-art/**'
-      - 'src/components/ExerciseFormFrames.tsx'
-      - 'e2e/fixtures/form-art.tsx'
-      - 'e2e/form-art-review.pw.ts'
-      - 'playwright.form-art.config.ts'
-      - 'scripts/export-form-art-review.py'
-      - '.github/workflows/form-art-review.yml'
+      - "docs/exercise-art/**"
+      - "src/components/ExerciseFormFrames.tsx"
+      - "e2e/fixtures/form-art.tsx"
+      - "e2e/form-art-review.pw.ts"
+      - "playwright.form-art.config.ts"
+      - "scripts/export-form-art-review.py"
+      - ".github/workflows/form-art-review.yml"
 
 permissions:
   contents: read
@@ -51,7 +51,11 @@ jobs:
       - name: Type-check the account-free review fixture
         run: npx tsc -p e2e/fixtures/tsconfig.form-art.json
       - name: Install test browser
-        run: npx playwright install --with-deps chromium
+        # A stalled apt mirror hangs apt-get with no error. The script bounds
+        # each attempt, tries three times, and clears dpkg's lock between
+        # attempts; this limit covers its worst case.
+        timeout-minutes: 13
+        run: bash scripts/ci/install-playwright-chromium.sh install 200
       - name: Capture all frames and verify real player behavior
         run: npx playwright test --config playwright.form-art.config.ts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

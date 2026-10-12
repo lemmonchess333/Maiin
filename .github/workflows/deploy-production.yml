@@ -40,7 +40,7 @@ jobs:
           backend=true
           if [[ "$REDEPLOY" != true && "$previous" =~ ^[0-9a-f]{40}$ ]] && git cat-file -e "$previous^{commit}"; then
             git diff --name-only "$previous" "$GITHUB_SHA" > changed-paths.txt
-            if ! grep -qE '^(functions/|firestore\.(rules|indexes\.json)$|storage\.rules$|firebase\.json$|scripts/verify[-_]|\.github/workflows/deploy)' changed-paths.txt; then
+            if ! grep -qE '^(functions/|firestore\.(rules|indexes\.json)$|storage\.rules$|firebase\.json$|scripts/verify[-_]|scripts/write-functions-env\.mjs$|\.github/workflows/deploy)' changed-paths.txt; then
               backend=false
             fi
           fi

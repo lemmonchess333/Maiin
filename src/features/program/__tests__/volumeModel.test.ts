@@ -7,11 +7,12 @@ import {
   classifyVolume,
   classifyVolumeDose,
   SECONDARY_SET_WEIGHT,
-  balanceWeeklyVolume,
   balancePushPull,
   reconcileToLandmarks,
+  hingeAccessoryPastCeiling,
   primaryJudgementForExercise,
   toCanonical,
+  type JudgementMuscle,
 } from "../volumeModel";
 import { generateProgram } from "../programEngine";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -110,189 +111,33 @@ describe("weeklyVolumeByMuscle", () => {
   });
 });
 
-describe("balanceWeeklyVolume (D-LIFT-1 active)", () => {
-  const hyper = volumeLandmark("hypertrophy"); // low 12, high 20
-
-  it("grows an under-dosed muscle's accessory toward the landmark (capped)", () => {
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          // main back row — untouched
-          ex({
-            exerciseId: "custom-row",
-            movementCategory: "horizontal_pull",
-            sets: 4,
-            isAccessory: false,
-          }),
-          // biceps accessory, badly under-dosed (2 sets vs low 12)
-          ex({
-            exerciseId: "custom-curl",
-            movementCategory: "arms_biceps",
-            sets: 2,
-            isAccessory: true,
-          }),
-        ]),
-      ],
-      hyper
-    );
-    const exs = out[0].exercises;
-    expect(exs[0].sets).toBe(4); // main untouched
-    expect(exs[1].sets).toBe(5); // accessory grown 2 → ACCESSORY_SET_CAP (5)
-  });
-
-  it("never touches main lifts", () => {
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          ex({
-            exerciseId: "custom-curl",
-            movementCategory: "arms_biceps",
-            sets: 3,
-            isAccessory: false, // a MAIN biceps lift
-          }),
-        ]),
-      ],
-      hyper
-    );
-    expect(out[0].exercises[0].sets).toBe(3); // unchanged despite under-dosed
-  });
-
-  it("leaves legacy exercises (no isAccessory flag) unchanged", () => {
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          ex({
-            exerciseId: "custom-curl",
-            movementCategory: "arms_biceps",
-            sets: 2,
-            // isAccessory undefined (legacy)
-          }),
-        ]),
-      ],
-      hyper
-    );
-    expect(out[0].exercises[0].sets).toBe(2);
-  });
-
-  it("does not grow a muscle already at/above the landmark low", () => {
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          ex({
-            exerciseId: "custom-curl",
-            movementCategory: "arms_biceps",
-            sets: 13, // already ≥ low (12)
-            isAccessory: true,
-          }),
-        ]),
-      ],
-      hyper
-    );
-    expect(out[0].exercises[0].sets).toBe(13); // add-only; nothing to do
-  });
-
-  it("declines an add whose cost lands on a muscle already at its ceiling", () => {
-    // The balancers were add-only with no ceiling at all, so chasing one
-    // under-dosed muscle up to MEV freely pushed the muscles that SHARE the
-    // exercise past MRV — a 2026-07-28 audit measured generated weeks
-    // violating both landmarks at once (Back = 39 against a high of 20 while
-    // hamstrings sat at 11 against a low of 12).
-    //
-    // A hip thrust is Glutes-primary with Hamstrings secondary (1.0/set at
-    // 1:1), so topping up under-dosed glutes also spends hamstring volume —
-    // and here the hamstrings are already past the ceiling.
-    const atCeiling = () =>
-      ex({
-        exerciseId: "seated-leg-curl", // Hamstrings 1.0/set
-        movementCategory: "hip_dominant",
-        sets: 19, // with the hip thrust's 1.0/set this puts Hamstrings over 20
-        isAccessory: false, // a main, so the balancer can't grow it
-      });
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          ex({
-            exerciseId: "hip-thrust",
-            movementCategory: "hip_dominant",
-            sets: 2, // Glutes = 2, far under the low of 12
-            isAccessory: true,
-          }),
-          atCeiling(),
-        ]),
-      ],
-      hyper
-    );
-    expect(out[0].exercises[0].sets).toBe(2); // add declined
-  });
-
-  it("still grows when the cost lands somewhere with room", () => {
-    // The guard must not become a blanket freeze — the identical shape with
-    // the hamstrings nowhere near their ceiling still gets the glute top-up.
-    const out = balanceWeeklyVolume(
-      [
-        day([
-          ex({
-            exerciseId: "hip-thrust",
-            movementCategory: "hip_dominant",
-            sets: 2,
-            isAccessory: true,
-          }),
-          ex({
-            exerciseId: "seated-leg-curl",
-            movementCategory: "hip_dominant",
-            sets: 4,
-            isAccessory: false,
-          }),
-        ]),
-      ],
-      hyper
-    );
-    expect(out[0].exercises[0].sets).toBeGreaterThan(2);
-  });
-
-  it("does not mutate the input workouts", () => {
-    const input = [
-      day([
-        ex({
-          exerciseId: "custom-curl",
-          movementCategory: "arms_biceps",
-          sets: 2,
-          isAccessory: true,
-        }),
-      ]),
-    ];
-    balanceWeeklyVolume(input, hyper);
-    expect(input[0].exercises[0].sets).toBe(2); // original untouched
-  });
-});
-
 describe("balancePushPull (D-LIFT-3)", () => {
   it("grows pull accessories until pull ≥ push when push-dominant", () => {
     const out = balancePushPull([
       day([
-        // push: bench main 5 + triceps accessory 3 = 8 push
+        // push: bench main 5 + overhead press accessory 3 = 8 push
         ex({
           movementCategory: "horizontal_push",
           sets: 5,
           isAccessory: false,
         }),
-        ex({ movementCategory: "arms_triceps", sets: 3, isAccessory: true }),
-        // pull: row main 4 = 4 pull (under push)
+        ex({ movementCategory: "vertical_push", sets: 3, isAccessory: true }),
+        // pull: row main 4 + pull-down accessory 2 = 6 pull (under push)
         ex({
           movementCategory: "horizontal_pull",
           sets: 4,
           isAccessory: false,
         }),
         // pull accessory to grow
-        ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true }),
+        ex({ movementCategory: "vertical_pull", sets: 2, isAccessory: true }),
       ]),
     ]);
     const sets = (cat: string) =>
       out[0].exercises
         .filter((e) => e.movementCategory === cat)
         .reduce((s, e) => s + e.sets, 0);
-    const push = sets("horizontal_push") + sets("arms_triceps");
-    const pull = sets("horizontal_pull") + sets("arms_biceps");
+    const push = sets("horizontal_push") + sets("vertical_push");
+    const pull = sets("horizontal_pull") + sets("vertical_pull");
     expect(pull).toBeGreaterThanOrEqual(push);
     // mains untouched
     expect(
@@ -300,6 +145,50 @@ describe("balancePushPull (D-LIFT-3)", () => {
         (e) => e.movementCategory === "horizontal_pull" && !e.isAccessory
       )?.sets
     ).toBe(4);
+  });
+
+  /* Lift6: the balance is about the shoulders, so it weighs pressing against
+     rows and pull-downs. It counted triceps as push and biceps as pull, and
+     the pull it grew was often a curl: a beginner got a 4-set barbell curl. */
+  it("counts arm work on neither side, and never grows a curl", () => {
+    const curl = () =>
+      ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true });
+    // Presses 5 against rows 5: balanced once the triceps sets don't count.
+    const balanced = balancePushPull([
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 5,
+          isAccessory: false,
+        }),
+        ex({ movementCategory: "arms_triceps", sets: 3, isAccessory: true }),
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 5,
+          isAccessory: false,
+        }),
+        curl(),
+      ]),
+    ]);
+    expect(balanced[0].exercises[3].sets).toBe(2);
+    // Presses 8 against rows 4, with a curl the only pull accessory: there
+    // is no row or pull-down to grow, so nothing grows.
+    const pressHeavy = balancePushPull([
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 8,
+          isAccessory: false,
+        }),
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 4,
+          isAccessory: false,
+        }),
+        curl(),
+      ]),
+    ]);
+    expect(pressHeavy[0].exercises[2].sets).toBe(2);
   });
 
   it("does nothing when pull already ≥ push", () => {
@@ -349,6 +238,40 @@ describe("balancePushPull (D-LIFT-3)", () => {
     ];
     balancePushPull(input);
     expect(input[0].exercises[1].sets).toBe(2);
+  });
+
+  // A push-heavy day whose one pull accessory is a pull-down: 2 sets.
+  const pushHeavy = (pushSets: number) => [
+    day([
+      ex({
+        movementCategory: "horizontal_push",
+        sets: pushSets,
+        isAccessory: false,
+      }),
+      ex({
+        exerciseId: "custom-pulldown",
+        movementCategory: "vertical_pull",
+        sets: 2,
+        isAccessory: true,
+      }),
+    ]),
+  ];
+
+  it("declines an add whose cost lands on a muscle at its ceiling", () => {
+    // The add-only balancers had no ceiling at all once, so chasing one goal
+    // pushed the muscles sharing the exercise past MRV. With a ceiling of 3,
+    // the pull-down grows once (3 sets) and stops, pull still under push.
+    const out = balancePushPull(pushHeavy(8), { mv: 0, low: 0, high: 3 });
+    expect(out[0].exercises[1].sets).toBe(3);
+  });
+
+  it("adds only inside what the session fits (Lift4 (5))", () => {
+    const fitsEleven = (exs: { sets: number }[]) =>
+      exs.reduce((n, e) => n + e.sets, 0) <= 11;
+    const out = balancePushPull(pushHeavy(8), undefined, fitsEleven);
+    expect(out[0].exercises[1].sets).toBe(3); // 8 + 3 = 11
+    // …and with no fit given, the 18-set ceiling alone
+    expect(balancePushPull(pushHeavy(16))[0].exercises[1].sets).toBe(2);
   });
 });
 
@@ -619,6 +542,101 @@ describe("reconcileToLandmarks", () => {
   });
 });
 
+describe("the hinge work keeps the hamstrings' ceiling (L7)", () => {
+  /** Hamstrings held to `high`; every other muscle out of the way. */
+  const hamstringsAt =
+    (high: number) =>
+    (m: JudgementMuscle): number =>
+      m === "Hamstrings" ? high : 99;
+  const band = (high: number) => (m: JudgementMuscle) => ({
+    mv: 0,
+    low: 0,
+    high: hamstringsAt(high)(m),
+  });
+  const deadlift = (sets: number, over: Partial<ProgramExercise> = {}) =>
+    ex({
+      exerciseId: "deadlift",
+      movementCategory: "hip_dominant",
+      sets,
+      instanceId: "deadlift",
+      ...over,
+    });
+  const hipThrust = (sets: number, over: Partial<ProgramExercise> = {}) =>
+    ex({
+      exerciseId: "hip-thrust",
+      movementCategory: "hip_dominant",
+      isAccessory: true,
+      sets,
+      instanceId: "hip-thrust",
+      ...over,
+    });
+  const legPress = (sets: number) =>
+    ex({
+      exerciseId: "leg-press",
+      movementCategory: "knee_dominant",
+      isAccessory: true,
+      sets,
+      instanceId: "leg-press",
+    });
+
+  it("the reconciler takes sets off a hinge accessory for the hamstrings, whatever its primary", () => {
+    // Hamstrings: deadlift 3 + hip thrust 4 + leg press 3 = 10 against 6.
+    // The hip thrust (glutes first) comes to its floor; the leg press, whose
+    // hamstring credit is a squat's, and the deadlift, a main lift, keep
+    // theirs.
+    const week = [day([deadlift(3), hipThrust(4), legPress(3)])];
+    expect(primaryJudgementForExercise(hipThrust(4))).toBe("Glutes");
+    const out = reconcileToLandmarks(week, band(6));
+    expect(out[0].exercises.map((e) => `${e.exerciseId} ${e.sets}`)).toEqual([
+      "deadlift 3",
+      "hip-thrust 2",
+      "leg-press 3",
+    ]);
+  });
+
+  it("names nothing while the hamstrings are within their ceiling", () => {
+    const week = [day([deadlift(3), hipThrust(2), legPress(3)])];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBeUndefined();
+  });
+
+  it("names the hinge accessory once they are over, the biggest first and then the earliest", () => {
+    const week = [
+      day([deadlift(3), hipThrust(2), legPress(3)]),
+      day([
+        ex({
+          exerciseId: "seated-leg-curl",
+          movementCategory: "hip_dominant",
+          isAccessory: true,
+          sets: 3,
+          instanceId: "leg-curl",
+        }),
+        hipThrust(3, { instanceId: "second-hip-thrust" }),
+      ]),
+    ];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(8))).toBe("leg-curl");
+    expect(
+      hingeAccessoryPastCeiling(
+        [day([deadlift(3), hipThrust(2), hipThrust(2, { instanceId: "b" })])],
+        hamstringsAt(4)
+      )
+    ).toBe("hip-thrust");
+  });
+
+  it("never names a lift the week has as a main lift, nor anything but a hinge accessory", () => {
+    // A deadlift in a supporting slot is the deadlift on one of its days.
+    const week = [
+      day([deadlift(3)]),
+      day([deadlift(2, { isAccessory: true, instanceId: "support" })]),
+      day([legPress(3)]),
+    ];
+    expect(hingeAccessoryPastCeiling(week, hamstringsAt(4))).toBeUndefined();
+    // Without the main lift it is just a hinge accessory.
+    expect(hingeAccessoryPastCeiling(week.slice(1), hamstringsAt(4))).toBe(
+      "support"
+    );
+  });
+});
+
 describe("generateProgram honours the ceilings (reconciler wiring)", () => {
   it("any JUDGEMENT group still over its ceiling has every primary slot at floor", () => {
     // The reconciler's contract, in the unit it actually enforces: overage
@@ -627,7 +645,7 @@ describe("generateProgram honours the ceilings (reconciler wiring)", () => {
     // means the pass isn't wired in.
     for (const goal of ["hypertrophy", "strength"] as const) {
       for (const days of [4, 5, 6]) {
-        const { workouts } = generateProgram("recomp", days, undefined, goal);
+        const { workouts } = generateProgram(days, undefined, goal);
         for (const mv of weeklyVolumeByJudgementMuscle(workouts)) {
           const lm2 = judgementLandmark(goal, mv.muscle);
           if (mv.sets <= lm2.high) continue;

@@ -43,6 +43,8 @@ import {
   commitmentDocPath,
 } from "@/lib/nutritionConsistency";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { Collapse } from "@/components/ui/Collapse";
 
 /** Compact segment labels — the card copy above carries the "logging
  *  focus" context, so the control itself stays glanceable at 375px. */
@@ -63,6 +65,9 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   const [intent, setIntent] = useState<NutritionIntent>("log_3_days");
   const [saving, setSaving] = useState(false);
   const { circles, publishEvent } = useGoalSpaces(uid);
+  // A restricted account shares nothing with a Circle (S4e), so the card
+  // keeps its progress and drops the offer.
+  const { isRestricted } = useRestrictedStatus(uid);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +154,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   };
 
   const shareMet = async () => {
-    if (!commitment) return;
+    if (!commitment || isRestricted) return;
     haptic("light");
     const activeCircles = circles.filter((c) => c.space.active);
     const results = await Promise.all(
@@ -170,7 +175,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   // Unset — one quiet row; the picker expands in place.
   if (commitment === null) {
     return (
-      <div className="p-3 rounded-xl bg-card space-y-2">
+      <div className="@container p-3 rounded-xl bg-card space-y-2">
         <button
           type="button"
           onClick={() => {
@@ -180,7 +185,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
           aria-expanded={picking}
           className="w-full min-h-[44px] flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+          <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
             <UtensilsCrossed
               className="size-4 text-nutrition"
               aria-hidden="true"
@@ -195,7 +200,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
             </p>
           </div>
         </button>
-        {picking && (
+        <Collapse open={picking}>
           <div className="space-y-2">
             <SegmentedControl
               options={INTENT_OPTIONS.map((o) => ({
@@ -217,16 +222,16 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
               Set focus
             </Button>
           </div>
-        )}
+        </Collapse>
       </div>
     );
   }
 
   const progress = deriveProgress(commitment.intent, mealDates, weekKey);
   return (
-    <div className="p-3 rounded-xl bg-card space-y-2">
+    <div className="@container p-3 rounded-xl bg-card space-y-2">
       <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
+        <div className="flex @max-[12em]:hidden size-9 items-center justify-center rounded-xl bg-nutrition/10 shrink-0">
           <UtensilsCrossed
             className="size-4 text-nutrition"
             aria-hidden="true"
@@ -256,6 +261,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       </div>
       {progress.met &&
         !commitment.sharedMet &&
+        !isRestricted &&
         circles.some((c) => c.space.active) && (
           <Button
             variant="secondary"

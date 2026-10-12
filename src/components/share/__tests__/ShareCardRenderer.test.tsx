@@ -113,6 +113,29 @@ describe("ShareCardRenderer", () => {
     expect(screen.queryByText("TROPOS")).toBeNull();
   });
 
+  it("a run card wears the brand purple, as a lift card does", () => {
+    /* Its maroon background and coral route read as another running
+       app's red once the card left the app. */
+    const card = (template: ShareTemplate) => {
+      const { container, unmount } = render(
+        <ShareCardRenderer
+          data={{ ...base, template, background: "brand" }}
+          offscreen={false}
+        />
+      );
+      const root = container.firstElementChild as HTMLElement;
+      const look = {
+        background: root.style.backgroundImage,
+        route: document.querySelector("path[d]")?.getAttribute("stroke"),
+      };
+      unmount();
+      return look;
+    };
+    const run = card("run");
+    expect(run.background).toBe(card("lift").background);
+    expect(run.route?.toLowerCase()).toBe("#7b72e9");
+  });
+
   it("RUN draws the abstract route polyline from the supplied path", () => {
     render(<ShareCardRenderer data={base} offscreen={false} />);
     const path = document.querySelector("path");

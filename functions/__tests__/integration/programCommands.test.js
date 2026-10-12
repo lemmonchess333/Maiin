@@ -52,7 +52,7 @@ function seedState() {
     splitType: "upper_lower",
     fatigueScore: 0,
     updatedAt: 1000,
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     workouts: [
       {
@@ -230,15 +230,12 @@ suite("runProgramCommandTransaction — apply + receipt", () => {
         raceGoal: race,
       },
     });
-    await db
-      .collection("users")
-      .doc(UID)
-      .set({
-        weightKg: 80,
-        timezone: "UTC",
-        runMode: "race_prep",
-        raceGoal: race,
-      });
+    await db.collection("users").doc(UID).set({
+      weightKg: 80,
+      timezone: "UTC",
+      runMode: "race_prep",
+      raceGoal: race,
+    });
 
     await runProgramCommandTransaction({
       firestore: db,

@@ -1,7 +1,8 @@
 import { doc, runTransaction, type Firestore } from "firebase/firestore";
 import { stripUndefined } from "./firestoreGuards";
 import type { SessionProgression } from "@/features/program/sessionCompletion";
-import type { ProgramState } from "@/features/program/programTypes";
+import type { ProgramState, WorkoutDay } from "@/features/program/programTypes";
+import { sameStoredValue } from "@/features/program/stateTransition";
 
 export interface SavedProgrammeCompletion {
   context: Omit<ProgrammeCompletionContext, "progression"> & {
@@ -46,6 +47,116 @@ export interface ProgrammeCompletionContext {
   dayIdentity: string;
   trainingBlockId?: string;
   progression?: SessionProgression;
+}
+
+/**
+ * Where a saved session's progression still stands in the plan: the plan's
+ * policy, week, block and day are the ones it was saved against, the day is
+ * still the one it marked done, and `eligible` holds the lifts it stepped
+ * that nothing has changed since. Null when the plan has moved on. A
+ * correction replays the eligible lifts, and a delete puts them back.
+ */
+export function sessionStillInPlan(
+  state: ProgramState,
+  saved: SavedProgrammeCompletion,
+  workoutId: string
+): {
+  day: WorkoutDay;
+  original: SessionProgression;
+  eligible: ReadonlySet<string | undefined>;
+} | null {
+  const { context } = saved;
+  if (!context.progression) return null;
+  const day = state.workouts[context.dayIndex];
+  if (
+    !sameStoredValue(saved.policy, {
+      goal: state.goal,
+      settings: state.settings,
+      trainingBlock: state.trainingBlock,
+    }) ||
+    state.weekNumber !== context.weekNumber ||
+    state.trainingBlock?.id !== context.trainingBlockId ||
+    workoutCompletionDayIdentity(day) !== context.dayIdentity ||
+    day.completedWorkoutId !== workoutId
+  )
+    return null;
+  const eligible = new Set(
+    saved.committedExercises
+      .filter((ex) =>
+        sameStoredValue(
+          ex,
+          day.exercises.find((current) => current.instanceId === ex.instanceId)
+        )
+      )
+      .map((ex) => ex.instanceId)
+  );
+  return {
+    day,
+    original: restoreSessionProgression(context.progression),
+    eligible,
+  };
+}
+
+/**
+ * The plan as it was before a deleted session (Lift4 (14)), when nothing has
+ * moved on since: the lifts it stepped go back to the weights and reps they
+ * had, and its day is no longer done. Null when the plan has moved on, which
+ * leaves the plan as it is.
+ */
+export function planWithoutSession(
+  state: ProgramState,
+  saved: SavedProgrammeCompletion,
+  workoutId: string
+): ProgramState | null {
+  const current = sessionStillInPlan(state, saved, workoutId);
+  if (!current) return null;
+  const baseline = current.original.prescription.progressionBaseline;
+  return {
+    ...state,
+    workouts: state.workouts.map((row, index) => {
+      if (index !== saved.context.dayIndex) return row;
+      const { completedWorkoutId: _done, ...rest } = row;
+      return {
+        ...rest,
+        completed: false,
+        exercises: row.exercises.map((ex) =>
+          current.eligible.has(ex.instanceId)
+            ? (baseline.find((base) => base.instanceId === ex.instanceId) ?? ex)
+            : ex
+        ),
+      };
+    }),
+  };
+}
+
+/**
+ * The plan with a day marked done by the session saved as `workoutId`: done
+ * and not skipped, and no longer the session chosen to come next. The save's
+ * transaction and the app's copy before the save lands both mark it here,
+ * each after the session's progression (`applySessionProgression`), which
+ * changes only the day's lifts. Deleting the session undoes the day
+ * (`planWithoutSession`).
+ */
+export function markDayDone(
+  state: ProgramState,
+  dayIndex: number,
+  workoutId: string
+): ProgramState {
+  const next: ProgramState = {
+    ...state,
+    workouts: state.workouts.map((row, index) =>
+      index === dayIndex
+        ? {
+            ...row,
+            completed: true,
+            skipped: false,
+            completedWorkoutId: workoutId,
+          }
+        : row
+    ),
+  };
+  if (next.nextWorkoutOverride === dayIndex) delete next.nextWorkoutOverride;
+  return next;
 }
 
 export function workoutCompletionDayIdentity(day: unknown): string | null {
@@ -130,21 +241,9 @@ export async function commitWorkoutCompletion(
             ),
           };
         next = {
-          ...progressed,
+          ...markDayDone(progressed, completion.dayIndex, workoutId),
           updatedAt: Date.now(),
-          workouts: progressed.workouts.map((row, index) =>
-            index === completion.dayIndex
-              ? {
-                  ...row,
-                  completed: true,
-                  skipped: false,
-                  completedWorkoutId: workoutId,
-                }
-              : row
-          ),
         };
-        if (next.nextWorkoutOverride === completion.dayIndex)
-          delete next.nextWorkoutOverride;
       }
     }
     assertOwner();

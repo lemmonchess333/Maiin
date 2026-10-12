@@ -38,6 +38,9 @@ describe("runPlanDraft", () => {
   it("round-trips a draft", () => {
     saveRunPlanDraft("u1", draft());
     expect(loadRunPlanDraft("u1")).toEqual(draft());
+    // Lift4 (10): with the leg trim's answer.
+    saveRunPlanDraft("u1", draft({ raceLegTrim: false }));
+    expect(loadRunPlanDraft("u1")).toEqual(draft({ raceLegTrim: false }));
   });
 
   it("keeps an INVALID goal time — the unfinished edit is the point", () => {
@@ -88,6 +91,7 @@ describe("runPlanDraft", () => {
     ["a non-numeric run-day count", { weeklyRunDays: "four" }],
     ["an out-of-range run-day count", { weeklyRunDays: 9 }],
     ["a mistyped event name", { raceEventName: 42 }],
+    ["a leg trim that is not yes or no", { raceLegTrim: "yes" }],
   ])("rejects the WHOLE draft for %s", (_name, bad) => {
     /* Strict, not merged. A partial restore over the editor's defaults
        would be a second copy of those defaults, free to drift from the

@@ -20,12 +20,12 @@ export default function Support() {
   )}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-[var(--safe-top)]">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
+          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
         >
           <ArrowLeft className="size-4" />
           Back
@@ -46,7 +46,7 @@ export default function Support() {
             </p>
             <a
               href={mailto}
-              className="flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity active:scale-[0.97]"
+              className="flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-semibold hover:opacity-90 transition active:scale-[0.97]"
             >
               <Mail className="size-4" aria-hidden="true" />
               Email support@troposfit.com

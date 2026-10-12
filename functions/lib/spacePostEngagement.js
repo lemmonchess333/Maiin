@@ -29,6 +29,7 @@ const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
  *  notifications: it is not a user. Clients hide those posts. */
 const COACH_AUTHOR_ID = "tropos-coach";
 const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { refusedAddError } = require("./restriction");
 
 async function toggleSpacePostLike({
   firestore,
@@ -37,6 +38,8 @@ async function toggleSpacePostLike({
   postId,
   increment,
   serverTimestamp,
+  // A restricted account may take a like back but not give one (S4e).
+  refuseAdd = false,
 }) {
   if (!firestore || !uid || !spaceId || !postId) {
     throw new Error(
@@ -64,6 +67,7 @@ async function toggleSpacePostLike({
       txn.update(postRef, { likeCount: increment(-1) });
       return { liked: false, postAuthorId: postSnap.data().authorId };
     }
+    if (refuseAdd) throw refusedAddError();
     txn.set(likeRef, { createdAt: serverTimestamp() });
     txn.update(postRef, { likeCount: increment(1) });
     return { liked: true, postAuthorId: postSnap.data().authorId };

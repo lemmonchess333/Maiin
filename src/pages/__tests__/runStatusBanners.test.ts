@@ -41,7 +41,9 @@ const run = stripComments(runSrc);
 describe("run screen — status banners share one stack", () => {
   it("no banner is positioned at a hand-picked vertical offset", () => {
     // `top-20` and `top-32` were the two colliding offsets. The surviving
-    // anchor is `top-3`, which the stack as a whole hangs from.
+    // anchor is 0.75rem below the status bar (`--safe-top`; it was a bare
+    // `top-3` until the map's overlays cleared the clock), which the stack
+    // as a whole hangs from.
     expect(run).not.toMatch(/absolute[^"]*\btop-20\b/);
     expect(run).not.toMatch(/absolute[^"]*\btop-32\b/);
   });
@@ -49,7 +51,10 @@ describe("run screen — status banners share one stack", () => {
   it("keeps exactly one top-anchored overlay stack", () => {
     // The positive control. If the stack were deleted rather than the
     // offsets, the assertion above would pass while the banners vanished.
-    const anchors = run.match(/absolute inset-x-0 top-3 z-50 flex/g) || [];
+    const anchors =
+      run.match(
+        /absolute inset-x-0 top-\[calc\(var\(--safe-top\)\+0\.75rem\)\] z-50 flex/g
+      ) || [];
     expect(anchors).toHaveLength(1);
     expect(run).toMatch(/flex-col items-center gap-1\.5/);
   });
@@ -61,7 +66,7 @@ describe("run screen — status banners share one stack", () => {
        Two lines is then tall enough for the expanded sheet to clip — which
        looked like a separate bug and was the same one. */
     expect(run).not.toMatch(/absolute[^"]*\bleft-1\/2\b[^"]*flex-col/);
-    expect(run).toMatch(/absolute inset-x-0 top-3/);
+    expect(run).toMatch(/absolute inset-x-0 top-\[calc\(var\(--safe-top\)/);
   });
 
   it("keeps every banner on one line", () => {
@@ -114,26 +119,5 @@ describe("run screen — design-system invariants", () => {
     expect(
       "animate-pulse".match(/(?<!motion-safe:)animate-pulse/g)
     ).not.toBeNull();
-  });
-});
-
-describe("workout session — PREV is a working-set reference", () => {
-  const workout = stripComments(
-    readFileSync(resolve(repoRoot, "src/components/WorkoutSession.tsx"), "utf8")
-  );
-
-  it("shows no previous figure on a warm-up row", () => {
-    /* On a 60kg squat the warm-up ramp (20 / 30 / 42.5) was each captioned
-       "PREV 60×8" — the last working set — and each one tappable to prefill
-       60kg as a warm-up. The label is per-exercise, so every row in the grid
-       carried the same value regardless of what that row is for. */
-    expect(workout).toMatch(/set\.type === "warmup" \?/);
-  });
-
-  it("still offers tap-to-fill on working rows", () => {
-    // The other half: suppressing PREV everywhere would also pass the
-    // assertion above while removing a real affordance.
-    expect(workout).toMatch(/canFillPrev && !set\.completed && prev/);
-    expect(workout).toMatch(/\{prevLabel\}/);
   });
 });

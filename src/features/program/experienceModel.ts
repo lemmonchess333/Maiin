@@ -130,7 +130,7 @@ export function offerableTo(
  * sessions now read the same, which is the point.
  */
 export function usesUndulation(experience: Experience | undefined): boolean {
-  return (experience ?? "intermediate") !== "beginner";
+  return toExperience(experience) !== "beginner";
 }
 
 /**
@@ -146,13 +146,15 @@ export function showsRpeByDefault(experience: Experience | undefined): boolean {
   return experience === "advanced";
 }
 
-/** Coerce any stored/legacy value to a known level. */
+/** Coerce any stored/legacy value to a known level. An unknown level is a
+ *  beginner's, everywhere (Lift4 (5)): the lighter, simpler plan is the safe
+ *  guess for someone the app knows nothing about. */
 export function toExperience(value: string | undefined): Experience {
   return value === "beginner" ||
     value === "advanced" ||
     value === "intermediate"
     ? value
-    : "intermediate";
+    : "beginner";
 }
 
 /**

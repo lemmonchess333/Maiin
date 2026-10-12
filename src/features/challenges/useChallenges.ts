@@ -15,6 +15,8 @@ import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import {
@@ -207,6 +209,8 @@ async function readMyProgress(
 
 export function useChallenges() {
   const uid = useUid();
+  // A restricted account can leave a challenge but not join one (S4e).
+  const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   /* Finale window (social features pass, 2026-07): challenges that ended
      within the last 7 days. The active list drops ended challenges, which
@@ -341,6 +345,10 @@ export function useChallenges() {
   const joinChallenge = useCallback(
     async (challengeId: string) => {
       if (!uid) return;
+      if (isRestricted) {
+        showRestrictedToast();
+        return;
+      }
       try {
         const participantRef = doc(
           db,
@@ -399,7 +407,7 @@ export function useChallenges() {
         toast.error("Couldn't join the challenge. Try again.");
       }
     },
-    [uid]
+    [uid, isRestricted]
   );
 
   const leaveChallenge = useCallback(
@@ -456,5 +464,6 @@ export function useChallenges() {
     /** SOC-P1d: on-demand progress refetch (cascades the leaderboards
      *  via the myProgress dependency) — the pull-to-refresh handle. */
     refreshProgress: loadMyProgress,
+    restricted: isRestricted,
   };
 }

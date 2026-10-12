@@ -137,6 +137,21 @@ const PINNED: Record<string, string> = {
   // this file's own rule that is a cross-test, not an exemption.
   "functions/profanityFilter.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // The sentences a refused comment or name reads. The client says them when
+  // it catches the text first, the callables when they refuse it; one
+  // person, one sentence either way.
+  "functions/lib/objectionableText.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // Report targets: the types and id shapes the server validates, which the
+  // client builds (REPORT_TARGET_TYPES, reportTargetIds.ts). A mismatch
+  // refuses every report of that kind.
+  "functions/lib/reportTargets.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
+  // The report alert email's labels mirror the report form's
+  // (src/lib/reportCategories.ts), so the owner reads the reason the
+  // reporter picked.
+  "functions/lib/reportAlert.js":
+    "src/lib/__tests__/reportTargets.cross.test.ts",
   "functions/lib/nutritionPhase.js":
     "src/lib/__tests__/nutritionPhaseMirror.cross.test.ts",
   // Admin allowlist. BOTH copies run — the server as the trust boundary on
@@ -160,9 +175,6 @@ const PINNED: Record<string, string> = {
   // scheduledRunStatus.ts). Pinned by the cross-test below.
   "functions/lib/programCommands.js":
     "src/features/program/__tests__/programCommands.cross.test.ts",
-  // Packet 18 — CF progression engine mirrors programEngine.ts applyProgression.
-  "functions/lib/progressionEngine.js":
-    "src/features/program/__tests__/applyProgression.cross.test.ts",
   // Packet 18 — CF bodyweight id set mirrors the catalog's Bodyweight rows.
   "functions/lib/bodyweightExerciseIds.js":
     "src/features/program/__tests__/bodyweightExerciseIds.cross.test.ts",
@@ -184,13 +196,9 @@ const PINNED: Record<string, string> = {
   "functions/lib/workoutBurn.js":
     "src/features/program/__tests__/workoutBurn.cross.test.ts",
   // PROGRAM-DELOAD-01 — CF deload transform mirrors programEngine.ts
-  // applyDeload (and the easierToday.deloadWeight weight rule).
+  // applyDeload.
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
-  // Easing-block progression hold — the third branch of logExercise, which
-  // the server reducer lacked until the writer migrated to the boundary.
-  "functions/lib/progressionHold.js":
-    "src/features/program/__tests__/progressionHold.cross.test.ts",
   // One-off run move — the copy inside the command transaction is the one
   // that decides where the run is actually stored.
   "functions/lib/runReschedule.js":
@@ -200,6 +208,10 @@ const PINNED: Record<string, string> = {
   // a block actually writes.
   "functions/lib/represcribe.js":
     "src/features/program/__tests__/represcribe.cross.test.ts",
+  // Lift4 (5) — the role table a block's re-prescription reads its sets and
+  // reps from, with the catalogue's isolation and 12–20 id lists.
+  "functions/lib/roleTable.js":
+    "src/features/program/__tests__/roleTable.cross.test.ts",
   // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
   // entries. Same shape as spaceIds below: the server cannot import the
   // catalogue, so the list is pinned set-equal instead.
@@ -251,6 +263,16 @@ const PINNED: Record<string, string> = {
   // declares it too, which is what makes this entry reachable.
   "functions/lib/aiScanQuota.js":
     "src/lib/__tests__/aiScanQuota.parity.cross.test.ts",
+  // Permission before food goes to AI. BOTH copies run: the client decides
+  // whether a photo or typed meal is sent to Gemini, the server whether
+  // analyzeFood / analyzeFoodText answer. One stored answer, read alike.
+  "functions/lib/aiConsent.js": "src/lib/__tests__/aiConsent.cross.test.ts",
+  // MET Norway's weather symbols as the WMO codes src/lib/weather.ts reads
+  // for the strip's icon and the pre-run tips. Not a copy of client logic,
+  // but an agreement both sides must keep: a code the client does not know
+  // draws a sun over snow and silences the snow tip, with both suites green.
+  "functions/lib/metWeather.js":
+    "src/lib/__tests__/weatherSymbols.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
@@ -275,6 +297,11 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
+  "functions/lib/raceReconciliation.js":
+    "server-only race-day decisions, moved verbatim out of index.js: its 'mirror' " +
+    "lines name the client effects these replaced, which PR-L L5 deleted (no client " +
+    "write path remains, useProgram.ts says), and the rule it calls in " +
+    "runModeResolution.js, which is pinned in its own right",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */

@@ -39,7 +39,7 @@ describe("SessionStructureView — intervals", () => {
     expect(screen.getByText("Warm-up")).toBeInTheDocument();
     expect(screen.getByText("10 min · Easy jogging")).toBeInTheDocument();
     // Per-rep rows: 5 work rows with the pace suffix, 4 recoveries.
-    expect(screen.getAllByText("1K @ 4:30/km")).toHaveLength(5);
+    expect(screen.getAllByText("1K @ 4:30 /km")).toHaveLength(5);
     expect(screen.getByText(/Rep 1 of 5/)).toBeInTheDocument();
     expect(screen.getAllByText("Recover")).toHaveLength(4);
     expect(screen.getByText("Cool-down")).toBeInTheDocument();

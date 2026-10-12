@@ -23,7 +23,6 @@ describe("THEME", () => {
       "chartGrid",
       "chartTooltipBg",
       "paceFast",
-      "paceOnTarget",
       "paceSlow",
     ];
     for (const key of requiredKeys) {

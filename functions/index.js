@@ -44,9 +44,10 @@ const {
   runProgramCommandTransaction,
 } = require("./lib/programCommandTransaction");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
-const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
+// S4e: a restricted account is refused anything that reaches another person.
+const restriction = require("./lib/restriction");
 const {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
@@ -102,6 +103,12 @@ const revenueCat = require("./revenueCat");
 exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
 exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
 
+// The reminder before a free trial is charged (Sub1, STATUS 2026-10-06).
+exports.trialReminderSweep = require("./trialReminders").trialReminderSweep;
+
+// The pre-run weather strip, from MET Norway through this server (currentWeather.js).
+exports.getCurrentWeather = require("./currentWeather").getCurrentWeather;
+
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting
 // firebase-admin. The underscore-prefixed names below are kept as
@@ -155,6 +162,14 @@ const accountDeletion = require("./accountDeletion");
 // onCommentCreated triggers below to auto-flag or auto-delete
 // objectionable content (App Store Guideline 1.2 requirement).
 const profanityFilter = require("./profanityFilter");
+// The same filter's decisions for the callables that write public text
+// (comments, display names) and the sentences a refused person reads.
+const objectionableText = require("./lib/objectionableText");
+// The same filter over Community Space posts (onSpacePostWritten).
+const spacePostModeration = require("./lib/spacePostModeration");
+// The email that tells the owner a report has come in (createReport).
+const reportAlert = require("./lib/reportAlert");
+const { sendViaResend } = require("./email/accountEmails");
 // Admin-uid allowlist for moderation callables. Trust boundary for
 // the listPendingReports / resolveReport / hideActivity surfaces.
 const adminAuth = require("./adminAuth");
@@ -245,6 +260,11 @@ const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // RESEND_API_KEY now lives in email/accountEmails.js with its callables.
 // (a deploy referencing an unprovisioned bound secret FAILS — the safety gate).
+// createReport binds it too, for the moderation alert. defineSecret registers
+// by name, so this is the same secret, already provisioned; and the functions
+// share one runtime account, which can already read it, so binding it here
+// needs no new accessor grant.
+const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Money-path audit F8: deleteMyAccount tombstones Apple billing
 // identities before sweeping their bindings; the write hash needs the
 // same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
@@ -658,6 +678,17 @@ const {
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
 
+/* A display name that trips the word filter is refused, as
+   failed-precondition so the client can show the sentence
+   (lib/objectionableText.js). The client refuses it first
+   (src/lib/displayName.ts); this is the boundary a direct call meets. */
+function assertDisplayNameAllowed(displayName) {
+  const refusal = objectionableText.displayNameRefusal(displayName);
+  if (refusal) {
+    throw new functions.https.HttpsError("failed-precondition", refusal);
+  }
+}
+
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -732,6 +763,10 @@ exports.completeOnboarding = functions
         });
       }
 
+      // The display name is public (profile, feed, spaces, leaderboards), so
+      // the word filter that covers posts and comments covers it too.
+      assertDisplayNameAllowed(profileData.displayName);
+
       // Required-field gate runs AFTER sanitise — a value that failed
       // its validator is now `undefined` here, which surfaces as
       // "Missing required field" rather than a more specific error.
@@ -798,6 +833,12 @@ exports.completeOnboarding = functions
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
+      // The day setup finished, which a new runner's first weeks count from
+      // (`profileNewRunnerUntil`). Setup's own plan counts from that day, so
+      // a plan made later has to as well: `createdAt` is sign-up, and setup
+      // can finish weeks after it. Server time, and not client-writable.
+      profileData.onboardingCompletedAt =
+        admin.firestore.FieldValue.serverTimestamp();
 
       const db = admin.firestore();
 
@@ -976,6 +1017,10 @@ exports.configurePlan = functions
           fields: droppedPlanFields,
         });
       }
+
+      // The sanitiser lets displayName through here as on onboarding, so a
+      // patch carrying one meets the same word filter.
+      assertDisplayNameAllowed(profileUpdates.displayName);
 
       // Configure Plan is always a v7 path — no legacy bypass. The
       // client must send a valid plan; nothing else makes sense for
@@ -1198,8 +1243,12 @@ exports.applyProgramCommand = functions
   });
 
 // ══════════════════════════════════════════════
-// EXISTING — analyzeFood (untouched)
+// EXISTING — analyzeFood
 // ══════════════════════════════════════════════
+
+// Permission before food goes to AI — shared by analyzeFood and
+// analyzeFoodText. See lib/aiConsent.js.
+const aiConsent = require("./lib/aiConsent");
 
 exports.analyzeFood = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -1241,6 +1290,20 @@ exports.analyzeFood = functions
           } else {
             throw err;
           }
+          return;
+        }
+
+        // Permission before food goes to AI: an account that has turned
+        // AI analysis off is refused here (failed-precondition, reason
+        // "ai-analysis-disabled"), ahead of the kill switch, the rate
+        // limit and the quota, so a refusal costs it nothing.
+        if (
+          await aiConsent.refuseUnlessAiAllowed(
+            admin.firestore(),
+            authUser.uid,
+            res
+          )
+        ) {
           return;
         }
 
@@ -1469,6 +1532,19 @@ exports.analyzeFoodText = functions
           } else {
             throw err;
           }
+          return;
+        }
+
+        // Permission before food goes to AI, as in analyzeFood: refused
+        // for an account that has turned AI analysis off, before anything
+        // is counted against it.
+        if (
+          await aiConsent.refuseUnlessAiAllowed(
+            admin.firestore(),
+            authUser.uid,
+            res
+          )
+        ) {
           return;
         }
 
@@ -3090,7 +3166,12 @@ async function maybeSendWeeklyRecap(uid, now) {
     }
   }
   const status = ctx
-    ? _fellBehindRatio(ctx.profile, ctx.programState, priorWeekRuns)
+    ? _fellBehindRatio(
+        ctx.profile,
+        ctx.programState,
+        priorWeekRuns,
+        range.weekKey
+      )
     : null;
   const behind = !!(status && status.fellBehind);
 
@@ -3363,12 +3444,6 @@ exports.sendTestPush = functions
 // makes overlap safe — last-writer-wins on the same shape, and
 // they write the same shape.
 
-const RACE_NO_SHOW_GRACE_DAYS = 3;
-const RECOVERY_EXIT_GRACE_DAYS = 7;
-// A no-show race auto-returns the user to freeform this many days after the
-// race date (well after the +3d no-show flip), so they're not stranded in
-// race_prep on a race that never happened (#1109).
-const NO_SHOW_EXIT_GRACE_DAYS = 14;
 // Race-day completion rule — extracted to ./lib/raceDayCompletion.js so the
 // rule that ACTUALLY RUNS is importable and pinned by golden fixtures. It is
 // a deliberate NON-mirror of the client's claim-map rule (different question,
@@ -3376,8 +3451,6 @@ const NO_SHOW_EXIT_GRACE_DAYS = 14;
 const raceDayCompletion = require("./lib/raceDayCompletion");
 const RACE_STRICT_DISTANCE_RATIO_FNS =
   raceDayCompletion.RACE_STRICT_DISTANCE_RATIO;
-const PLANNED_RACE_DISTANCE_METERS_FNS =
-  raceDayCompletion.PLANNED_RACE_DISTANCE_METERS;
 
 // Date helpers — `utcDateString` (YYYY-MM-DD in UTC) and
 // `parseUtcDate` (YYYY-MM-DD → UTC 00:00 Date) live in
@@ -3398,256 +3471,16 @@ const _parseUtcDate = parseUtcDate;
  *  clear no-show). */
 const _hasStrictRaceMatch = raceDayCompletion.hasStrictRaceMatch;
 
-/** Locate the plan's race-day runDay.
- *
- *  Primary match is exact `date === raceDate` — the common case where the race
- *  falls on the user's long-run weekday (long-run slots prefer the weekend, and
- *  races are usually weekends, so the race template's date equals targetDate).
- *
- *  Fallback: the week's `type: "race"` day. Retained for plans PERSISTED before
- *  the RUN-M2 generator fix (#1115): the old generator placed the race template
- *  on the long-run slot's weekday (`runScheduler.ts`), so for a race on a
- *  NON-long-run weekday the runDay's `date` was the long-run day, not the race
- *  date — exact date-match missed it and the no-show / recovery-entry
- *  reconciliation silently never fired (#1128). There is exactly one race day
- *  per plan, so the fallback is unambiguous. Conservative by construction: the
- *  date match wins whenever it exists, so weekend-race behaviour is unchanged.
- *
- *  As of RUN-M2 (#1115) the generator places the race day ON `targetDate`, so
- *  the PRIMARY date-match is now the normal path for freshly-generated plans;
- *  the `type:"race"` fallback only catches legacy plans generated before it. */
-function _findRaceDayRunDay(runDays, raceDate) {
-  const days = runDays || [];
-  return (
-    days.find((rd) => rd && rd.date === raceDate) ||
-    days.find((rd) => rd && rd.type === "race") ||
-    null
-  );
-}
-
-/** Whether the race-no-show pass needs to fetch the bounded
- *  saved-run query for this user. Pure; called BEFORE the read so
- *  we can skip the I/O when grace / mode / status disqualify the
- *  user. */
-function _needsRaceNoShowEvaluation(profile, programState, nowMs) {
-  if (!profile || profile.runMode !== "race_prep") return false;
-  const runPlan = (programState && programState.runPlan) || null;
-  if (!runPlan || !runPlan.raceGoal) return false;
-  const raceDate = runPlan.raceGoal.targetDate;
-  if (typeof raceDate !== "string") return false;
-  const raceDayRunDay = _findRaceDayRunDay(
-    programState && programState.runDays,
-    raceDate
-  );
-  if (!raceDayRunDay || raceDayRunDay.status !== "planned") return false;
-  const dayMs = 24 * 60 * 60 * 1000;
-  const daysPast = Math.floor(
-    (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
-  );
-  return daysPast > RACE_NO_SHOW_GRACE_DAYS;
-}
-
-/** Pure decision function — given the user's profile, programState,
- *  the bounded saved-runs-for-race-date list, and `now`, returns
- *  the Firestore update payload to apply (or null when nothing
- *  needs to change). Idempotent — a second call with the post-write
- *  state returns null. Easy to test exhaustively without Firestore. */
-function _decideReconciliationActions(
-  profile,
-  programState,
-  savedRunsForRaceDate,
-  nowMs
-) {
-  const updatePayload = {};
-  // Run9 3b — a second payload for the user PROFILE doc (runMode + raceGoal),
-  // written alongside the programState payload when recovery-exit materializes.
-  let profilePayload = null;
-  let noShowWritten = false;
-  let recoveryCleared = false;
-  let noShowCleared = false;
-
-  // ── L1 decision ────────────────────────────────────────────────
-  if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
-    const runPlan = programState.runPlan;
-    const raceDate = runPlan.raceGoal.targetDate;
-    const raceDayRunDay = _findRaceDayRunDay(programState.runDays, raceDate);
-    const plannedDistance =
-      PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
-    if (!_hasStrictRaceMatch(savedRunsForRaceDate, plannedDistance)) {
-      const updatedRunDays = programState.runDays.map((rd) =>
-        rd === raceDayRunDay ? { ...rd, status: "race_no_show" } : rd
-      );
-      updatePayload.runDays = updatedRunDays;
-      noShowWritten = true;
-    }
-  }
-
-  // ── L3 decision ────────────────────────────────────────────────
-  const runPlan = (programState && programState.runPlan) || null;
-  if (
-    runPlan &&
-    runPlan.phase === "recovery" &&
-    typeof runPlan.recoveryEndDate === "string"
-  ) {
-    const exitMs = _parseUtcDate(runPlan.recoveryEndDate).getTime();
-    const graceEndMs = exitMs + RECOVERY_EXIT_GRACE_DAYS * 24 * 60 * 60 * 1000;
-    if (nowMs >= graceEndMs) {
-      // Firestore `set(merge: true)` does a *recursive* merge of
-      // nested maps — fields omitted from `runPlan` inside the
-      // payload remain untouched in storage. JS-side `delete cleared.phase`
-      // is therefore a no-op at the wire level and the user stays
-      // stuck in `phase: 'recovery'` forever. Writing explicit
-      // `null` overwrites the stored value; downstream readers all
-      // check `phase === 'recovery'` and `typeof recoveryEndDate
-      // === 'string'`, both of which falsify against null.
-      const clearedRunPlan = {
-        ...runPlan,
-        phase: null,
-        recoveryEndDate: null,
-      };
-
-      // Run9 3b — recovery EXIT materialization. Mirror the client's
-      // resolveRecoveryExit (the single, unit-tested source of the rule) so
-      // non-React clients (Apple Watch, future native) converge to the same
-      // state. The completed race is identifiable from the recovery anchor:
-      // recovery-entry derived `recoveryEndDate = raceDate +
-      // recoveryWeeks(distance)·7`, so a current raceGoal that reproduces the
-      // stored recoveryEndDate IS the race recovery was entered for
-      // (raceGoalIsCompletedRace). A current raceGoal that doesn't reproduce
-      // it is a newer race set during recovery → kept (stay race_prep).
-      // The user's CURRENT declared race lives on the PROFILE; the runPlan
-      // still carries the race recovery was ENTERED for (its anchor reproduces
-      // the stored recoveryEndDate). Reading currentRaceGoal from the runPlan
-      // made a newer race set during recovery INVISIBLE — when the client's
-      // in-recovery branch preserves the stale (completed) runPlan.raceGoal,
-      // the sweep saw "same race" and DELETED the successor, dropping the user
-      // to freeform (C-RUN). Read the current race from the profile so a
-      // successor is preserved; anchor the completed race off the runPlan.
-      const currentRaceGoal = (profile && profile.raceGoal) || null;
-      const recoveryRaceGoal = runPlan.raceGoal || null;
-      const anchorMatches =
-        !!recoveryRaceGoal &&
-        _recoveryEndDateForRace(recoveryRaceGoal) === runPlan.recoveryEndDate;
-      const completedRaceGoal = anchorMatches ? recoveryRaceGoal : null;
-      const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
-
-      if (exit.runMode === "freeform") {
-        // Completed race, no successor → freeform. Clear raceGoal on BOTH the
-        // runPlan (server deciders read programState.runPlan.raceGoal) and the
-        // profile (materialization invariant: a raceGoal clear co-writes
-        // runMode). Mirrors skipRecoveryEarly's freeform branch — minus the
-        // runPlan/runDays teardown, which is a client UI concern (the freeform
-        // hero ignores stale runDays; the no-show / recovery-entry deciders
-        // gate on raceGoal/runMode, both now falsified) and isn't safely
-        // expressible via a recursive merge write.
-        clearedRunPlan.raceGoal = null;
-        profilePayload = { runMode: "freeform", raceGoal: null };
-      } else {
-        // Newer race set during recovery → stay race_prep with the SUCCESSOR.
-        // Materialize it onto the runPlan too: the runPlan.raceGoal mirror may
-        // be stale (the client's in-recovery branch preserves the completed
-        // race), so without this the no-show / recovery-entry deciders would
-        // keep acting on the already-completed race. The full plan is
-        // regenerated client-side once phase is cleared. Defensive runMode
-        // co-write so a drifted profile.runMode converges.
-        clearedRunPlan.raceGoal = currentRaceGoal;
-        if (profile && profile.runMode !== exit.runMode) {
-          profilePayload = { runMode: exit.runMode };
-        }
-      }
-
-      updatePayload.runPlan = clearedRunPlan;
-      recoveryCleared = true;
-    }
-  }
-
-  // ── L4 decision (no-show auto-return) ──────────────────────────
-  // A no-show race left the user stranded in race_prep on a race that never
-  // happened (L1 flips the slot to race_no_show but there was no exit). Once
-  // the slot is race_no_show and the race is more than NO_SHOW_EXIT_GRACE_DAYS
-  // past, return the user to freeform — or to a successor race they declared in
-  // the meantime. Reuses resolveRecoveryExit: the no-show race plays the
-  // "resolved race" role, so same-race (no successor) → freeform, a newer
-  // declared race → stay race_prep with it (symmetric with L3). (#1109)
-  if (
-    !recoveryCleared &&
-    profile &&
-    profile.runMode === "race_prep" &&
-    runPlan &&
-    runPlan.raceGoal &&
-    typeof runPlan.raceGoal.targetDate === "string" &&
-    runPlan.phase !== "recovery"
-  ) {
-    const raceDate = runPlan.raceGoal.targetDate;
-    // Use the post-L1 runDays so a slot flipped THIS sweep (function was down
-    // past +14d) is seen as race_no_show, not its stale "planned".
-    const effectiveRunDays =
-      updatePayload.runDays || (programState && programState.runDays) || [];
-    const raceDayRunDay = _findRaceDayRunDay(effectiveRunDays, raceDate);
-    const dayMs = 24 * 60 * 60 * 1000;
-    const daysPast = Math.floor(
-      (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
-    );
-    if (
-      raceDayRunDay &&
-      raceDayRunDay.status === "race_no_show" &&
-      daysPast > NO_SHOW_EXIT_GRACE_DAYS
-    ) {
-      const currentRaceGoal = profile.raceGoal || null;
-      const exit = resolveRecoveryExit({
-        currentRaceGoal,
-        completedRaceGoal: runPlan.raceGoal,
-      });
-      const clearedRunPlan = { ...runPlan };
-      if (exit.runMode === "freeform") {
-        // No successor → freeform. Clear raceGoal on the runPlan (deciders read
-        // it) and co-write the profile (materialization invariant).
-        clearedRunPlan.raceGoal = null;
-        profilePayload = { runMode: "freeform", raceGoal: null };
-      } else {
-        // A newer race was declared during the no-show window → keep it.
-        clearedRunPlan.raceGoal = currentRaceGoal;
-        if (profile.runMode !== exit.runMode) {
-          profilePayload = { runMode: exit.runMode };
-        }
-      }
-      updatePayload.runPlan = clearedRunPlan;
-      noShowCleared = true;
-    }
-  }
-
-  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
-    return {
-      payload: null,
-      profilePayload: null,
-      noShowWritten,
-      recoveryCleared,
-      noShowCleared,
-    };
-  }
-  return {
-    payload: updatePayload,
-    profilePayload,
-    noShowWritten,
-    recoveryCleared,
-    noShowCleared,
-  };
-}
-
-/** Run9 3b — reconstruct the recovery-end date a given race goal would
- *  produce under the recovery-entry formula (`raceDate +
- *  recoveryWeeks(distance)·7`). Returns null for an unknown distance. Used to
- *  decide whether the current raceGoal is the race recovery was entered for
- *  (anchor match) without storing the completed-race goal separately. */
-function _recoveryEndDateForRace(raceGoal) {
-  if (!raceGoal || typeof raceGoal.targetDate !== "string") return null;
-  const weeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[raceGoal.distance];
-  if (typeof weeks !== "number") return null;
-  const ms =
-    _parseUtcDate(raceGoal.targetDate).getTime() +
-    weeks * 7 * 24 * 60 * 60 * 1000;
-  return _utcDateString(new Date(ms));
-}
+// The decisions themselves (L1, L3 and L4 for the sweep below, L2 for
+// onRunCreated further down) live in ./lib/raceReconciliation.js, pure, so
+// the rules that run can be required without firebase-admin. The `_`
+// aliases keep every call site and test export in this file unchanged.
+const raceReconciliation = require("./lib/raceReconciliation");
+const _needsRaceNoShowEvaluation = raceReconciliation.needsRaceNoShowEvaluation;
+const _decideReconciliationActions =
+  raceReconciliation.decideReconciliationActions;
+const _recoveryEndDateForRace = raceReconciliation.recoveryEndDateForRace;
+const _decideRecoveryEntry = raceReconciliation.decideRecoveryEntry;
 
 /** Per-user worker. Thin I/O wrapper around `_decideReconciliationActions`.
  *  Reads profile + programState, fetches the race-day saved-runs
@@ -3661,6 +3494,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   const { userRef, programRef, profile, programState, programUpdateTime } = ctx;
@@ -3692,6 +3526,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
     noShowWritten,
     recoveryCleared,
     noShowCleared,
+    orphanedGoalCleared,
   } = _decideReconciliationActions(
     profile,
     programState,
@@ -3700,7 +3535,12 @@ async function _runDailyRaceReconciliationForUser(uid) {
   );
 
   if (!payload && !profilePayload) {
-    return { noShowWritten, recoveryCleared, noShowCleared };
+    return {
+      noShowWritten,
+      recoveryCleared,
+      noShowCleared,
+      orphanedGoalCleared,
+    };
   }
 
   // R1A: tombstone guard immediately before the write — per spec
@@ -3718,6 +3558,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
@@ -3757,11 +3598,13 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowWritten: false,
       recoveryCleared: false,
       noShowCleared: false,
+      orphanedGoalCleared: false,
     };
   }
   // Include noShowCleared so the sweep's observability counter increments when
   // an L4 clear actually writes (the early no-write return above already did).
-  return { noShowWritten, recoveryCleared, noShowCleared };
+  // An orphaned goal writes no programState (`programWritten` starts true).
+  return { noShowWritten, recoveryCleared, noShowCleared, orphanedGoalCleared };
 }
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
@@ -3776,21 +3619,28 @@ exports.dailyRaceReconciliationSweep = functions
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
       let totalNoShowCleared = 0;
+      let totalOrphanedGoalCleared = 0;
       await sweepActiveUsers({
         name: "dailyRaceReconciliationSweep",
         cutoffDays: 30,
         perUser: async (uid) => {
-          const { noShowWritten, recoveryCleared, noShowCleared } =
-            await _runDailyRaceReconciliationForUser(uid);
+          const {
+            noShowWritten,
+            recoveryCleared,
+            noShowCleared,
+            orphanedGoalCleared,
+          } = await _runDailyRaceReconciliationForUser(uid);
           if (noShowWritten) totalNoShow += 1;
           if (recoveryCleared) totalRecoveryCleared += 1;
           if (noShowCleared) totalNoShowCleared += 1;
+          if (orphanedGoalCleared) totalOrphanedGoalCleared += 1;
         },
       });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
           `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
-          `noShowCleared=${totalNoShowCleared}`
+          `noShowCleared=${totalNoShowCleared}, ` +
+          `orphanedGoalCleared=${totalOrphanedGoalCleared}`
       );
     } catch (err) {
       console.error("dailyRaceReconciliationSweep: fatal error:", {
@@ -3836,104 +3686,6 @@ exports._recoveryEndDateForRace = _recoveryEndDateForRace;
 //   - Self-correcting: if a previous race already entered recovery
 //     and a newer race lands, the recoveryEndDate updates to the
 //     new race's window (later race's recovery overrides).
-
-// Recovery weeks by distance — from ./lib/raceDayCompletion.js. The server
-// derives `recoveryEndDate` from this AND uses that date as the identity
-// check for "which race did recovery come from", so a silent drift against
-// the scheduler's `recoveryWeeksForDistance` mis-identifies the completed
-// race. Pinned by golden fixtures.
-const RECOVERY_WEEKS_BY_DISTANCE_FNS =
-  raceDayCompletion.RECOVERY_WEEKS_BY_DISTANCE;
-
-/** Pure decision function for the recovery-entry write triggered
- *  by `onRunCreated`. Returns `{ write, payload?, raceDayRunDayId?,
- *  recoveryEndDate? }`. Easy to test exhaustively without Firestore
- *  — same pattern as L1+L3's `_decideReconciliationActions`. */
-function _decideRecoveryEntry(profile, programState, savedRun) {
-  // Gate 1 — user must be in race_prep mode with a race goal +
-  // active runPlan.
-  if (!profile || profile.runMode !== "race_prep") {
-    return { write: false };
-  }
-  const runPlan = (programState && programState.runPlan) || null;
-  if (!runPlan || !runPlan.raceGoal || !runPlan.raceGoal.targetDate) {
-    return { write: false };
-  }
-  const raceDate = runPlan.raceGoal.targetDate;
-
-  // Gate 2 — saved run must be on the race date. Q1 P4 is strict
-  // on date for race claims (no day-late / day-early forgiveness).
-  if (!savedRun || savedRun.date !== raceDate) {
-    return { write: false };
-  }
-
-  // Gates 2b–4 — one predicate, shared with the reconciliation sweep:
-  //   2b. reject invalid / "Save anyway" runs (a borked GPS trace the
-  //       user explicitly flagged must not trip recovery entry);
-  //   3.  saved run must be race-templated (`actualTemplateId` — the
-  //       raw-doc field RunSummary writes);
-  //   4.  saved run must clear the ≥95% planned-distance bar, with the
-  //       Q1 P29 zero-planned fallback.
-  // Previously re-derived inline here AND in `_hasStrictRaceMatch`,
-  // which is how the two drifted apart from the (dead) lib port.
-  if (
-    !raceDayCompletion.isStrictRaceRun(
-      savedRun,
-      raceDayCompletion.plannedDistanceFor(runPlan.raceGoal.distance)
-    )
-  ) {
-    return { write: false };
-  }
-
-  // Gate 5 — race-day runDay must exist in the plan.
-  const raceDayRunDay = _findRaceDayRunDay(
-    programState && programState.runDays,
-    raceDate
-  );
-  if (!raceDayRunDay || !raceDayRunDay.id) {
-    return { write: false };
-  }
-
-  // Gate 6 — per-race idempotency (Q2 P28). If this runDay's id is
-  // already in completedRaces, recovery already entered for this
-  // race; no-op even if the user re-logs.
-  const completedRaces = Array.isArray(runPlan.completedRaces)
-    ? runPlan.completedRaces
-    : [];
-  if (completedRaces.includes(raceDayRunDay.id)) {
-    return { write: false };
-  }
-
-  // All gates passed — compute the recovery end date and build the
-  // runPlan update. Recovery clock anchors on the race date so the
-  // user's countdown reads correctly even if the trigger fires
-  // hours after the actual run.
-  const distanceKey = runPlan.raceGoal.distance;
-  const recoveryWeeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[distanceKey];
-  if (typeof recoveryWeeks !== "number") {
-    // Unknown distance string — defensive bail. Real values are
-    // gated by the onboarding UI; this guard protects against
-    // schema drift.
-    return { write: false };
-  }
-  const recoveryEndMs =
-    _parseUtcDate(raceDate).getTime() + recoveryWeeks * 7 * 24 * 60 * 60 * 1000;
-  const recoveryEndDate = _utcDateString(new Date(recoveryEndMs));
-
-  const updatedRunPlan = {
-    ...runPlan,
-    phase: "recovery",
-    recoveryEndDate,
-    completedRaces: [...completedRaces, raceDayRunDay.id],
-  };
-
-  return {
-    write: true,
-    payload: { runPlan: updatedRunPlan },
-    raceDayRunDayId: raceDayRunDay.id,
-    recoveryEndDate,
-  };
-}
 
 /** Side-effect wrapper. Reads profile + programState for the user,
  *  runs the pure decision, applies the write when needed. Callable
@@ -5596,15 +5348,23 @@ exports.recreditMyLiftVolume = functions
 //   2. onCommentCreated — auto-delete profane comments. Comments
 //      are tiny and high-frequency; review-after-the-fact would let
 //      objectionable content stay visible until a human moderator
-//      catches it. Hard-delete is the simpler invariant.
+//      catches it. Hard-delete is the simpler invariant. (The comment
+//      callables now refuse the same text before writing it; this is
+//      the backstop for anything that got past them.)
 //
-//   3. listPendingReports — admin-only callable. Returns reports
+//   3. onSpacePostWritten — the same filter over Community Space
+//      posts, removing a post whose text trips it.
+//
+//   4. createReport — files a report and emails the owner
+//      (MODERATION_ALERT_EMAIL) that one is waiting.
+//
+//   5. listPendingReports — admin-only callable. Returns reports
 //      with `status: 'pending'` plus their target content for
 //      review.
 //
-//   4. resolveReport — admin-only callable. Marks a report as
-//      resolved + optionally hides the target activity in one
-//      atomic write.
+//   6. resolveReport — admin-only callable. Marks a report as
+//      resolved + optionally hides the reported content (any of
+//      reportTargets.HIDEABLE_TARGET_TYPES) in one atomic write.
 //
 // The admin gate is env-var driven via adminAuth.isAdminUid — a
 // proper custom-claims rollout is a separate piece of work, this
@@ -5831,6 +5591,38 @@ exports.onCommentCreated = functions
   });
 
 /**
+ * The word filter over Community Space posts — the activity pattern
+ * above, applied to a post's title, body and author name. A post whose
+ * text trips it is removed (any signed-in user can read a space post, so
+ * there is no visibility to turn off). Fires on edits too: an author may
+ * rewrite a post's title and body. The decision lives in
+ * lib/spacePostModeration.js; deleting only ever shrinks data, so no
+ * account-deletion guard is needed (the reasoning onActivityDeleted gives).
+ */
+exports.onSpacePostWritten = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("spaces/{spaceId}/posts/{postId}")
+  .onWrite(async (change, context) => {
+    const { spaceId, postId } = context.params;
+    try {
+      await spacePostModeration.removeObjectionableSpacePost({
+        firestore: admin.firestore(),
+        ref: change.after.ref,
+        before: change.before.exists ? change.before.data() : null,
+        after: change.after.exists ? change.after.data() : null,
+        logger: functions.logger,
+      });
+    } catch (err) {
+      functions.logger.error("onSpacePostWritten.error", {
+        spaceId,
+        postId,
+        message: err && err.message,
+      });
+    }
+    return null;
+  });
+
+/**
  * Admin-only: fetch pending reports for the moderation queue.
  * Joins each report with its target content so the reviewer
  * doesn't have to chase doc references. Returns a sanitised
@@ -5867,7 +5659,7 @@ function queueReason(value) {
 }
 
 exports.createReport = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -5951,6 +5743,26 @@ exports.createReport = functions
       });
     });
 
+    // Tell the owner a report is waiting. After the commit, so an alert
+    // never announces a report that failed to store. sendReportAlert never
+    // throws and gives up on a slow provider: a reporter told their report
+    // failed would file it again.
+    await reportAlert.sendReportAlert({
+      sendEmail: sendViaResend,
+      to: reportAlert.alertRecipient(),
+      queueUrl: reportAlert.moderationQueueUrl(
+        helpers.getStripeReturnBaseUrl()
+      ),
+      report: {
+        reportId: reportRef.id,
+        targetType: target.targetType,
+        category: input.category,
+        subReason: input.subReason,
+        freeformNote: input.freeformNote,
+      },
+      logger: functions.logger,
+    });
+
     return { reportId: reportRef.id };
   });
 
@@ -6014,6 +5826,12 @@ exports.listPendingReports = functions
           targetId: target ? target.targetId : null,
           targetUid: target ? target.targetUid : null,
           targetActionable: target !== null,
+          // Whether resolveReport's hideActivity can act on it (Hide
+          // content in the queue). Decided here so the page holds no list
+          // of its own.
+          targetHideable:
+            target !== null &&
+            reportTargets.HIDEABLE_TARGET_TYPES.includes(target.targetType),
           target: target ? target.preview : null,
           // Display-only diagnostics — they never select a target.
           reportedTargetType: nullableString(report.targetType),
@@ -6035,9 +5853,10 @@ exports.listPendingReports = functions
 
 /**
  * Admin-only: mark a report as resolved. Optional `hideActivity`
- * flag flips the target activity to `flagged: true,
- * visibility: 'private'` in the same call so a moderator can
- * dismiss + hide in one click.
+ * flag takes the reported content out of the app in the same call so
+ * a moderator can dismiss + hide in one click: an activity becomes
+ * `flagged: true, visibility: 'private'`; a comment (activity or space
+ * post) or a space post is deleted. See reportTargets.queueContentHide.
  */
 // S4e (PR #722): resolveReport gains an optional `restrictUser` field
 // that atomically writes to globalRestrictedUids/{targetUid} alongside
@@ -6083,8 +5902,11 @@ exports.resolveReport = functions
     const firestore = admin.firestore();
     const reportRef = firestore.collection("reports").doc(reportId);
     const authorityRef = firestore.collection("reportAuthority").doc(reportId);
+    // A hidden space post's likes and comments, swept after the commit.
+    let removedSpacePostRef = null;
 
     await firestore.runTransaction(async (transaction) => {
+      removedSpacePostRef = null; // a retried attempt starts clean
       const reportSnap = await transaction.get(reportRef);
       if (!reportSnap.exists) {
         throw new functions.https.HttpsError("not-found", "Report not found.");
@@ -6141,11 +5963,31 @@ exports.resolveReport = functions
         return;
       }
 
-      if (hideActivity && target.targetType !== "activity") {
+      // `hideActivity` is the wire name from when only activities could be
+      // hidden; it now means "hide the reported content", whatever kind.
+      if (
+        hideActivity &&
+        !reportTargets.HIDEABLE_TARGET_TYPES.includes(target.targetType)
+      ) {
         throw new functions.https.HttpsError(
           "invalid-argument",
-          "Only activity reports can be hidden."
+          "Only content reports can be hidden."
         );
+      }
+
+      // Activities are flagged and made private; comments and space posts
+      // are deleted (reportTargets.queueContentHide says why).
+      const hideOutcome = hideActivity
+        ? reportTargets.queueContentHide({
+            transaction,
+            target,
+            adminUid: context.auth.uid,
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            increment: admin.firestore.FieldValue.increment,
+          })
+        : null;
+      if (hideActivity && target.targetType === "space_post") {
+        removedSpacePostRef = target.targetRef;
       }
 
       transaction.update(reportRef, {
@@ -6153,19 +5995,10 @@ exports.resolveReport = functions
         resolvedBy: context.auth.uid,
         resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
         hideAppliedByAdmin: hideActivity,
+        ...(hideOutcome ? { hideOutcome } : {}),
         restrictAppliedByAdmin: restrictUser,
         targetResolution: "revalidated",
       });
-
-      if (hideActivity) {
-        transaction.update(target.targetRef, {
-          flagged: true,
-          flaggedBy: "admin",
-          flaggedByAdminUid: context.auth.uid,
-          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-          visibility: "private",
-        });
-      }
 
       if (restrictUser) {
         const restrictionRef = firestore
@@ -6185,7 +6018,135 @@ exports.resolveReport = functions
       }
     });
 
+    if (removedSpacePostRef) {
+      // The post is gone; its likes and comments subcollections are not
+      // (a document delete leaves them, and recursiveDelete cannot run in a
+      // transaction). Best effort: the report is already resolved, and
+      // nothing reads a subcollection whose post no longer exists.
+      try {
+        await firestore.recursiveDelete(removedSpacePostRef);
+      } catch (err) {
+        functions.logger.warn("resolveReport.space_post_cleanup_failed", {
+          reportId,
+          error: err && err.message,
+        });
+      }
+    }
+
     return { ok: true };
+  });
+
+/* The restricted accounts and the undo (S4e, STATUS 2026-10-06). Once a
+   restriction refuses posts, comments, props and follows, a mistaken one
+   needs a way back that is not the Firebase console. Admin-only, like the
+   queue: the page's VITE_ADMIN_UIDS gate is a convenience, ADMIN_UIDS here
+   is the check. */
+
+/** Admin-only: accounts under a restriction, most recent first. */
+exports.listRestrictedUsers = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
+
+    const firestore = admin.firestore();
+    const snap = await firestore
+      .collection("globalRestrictedUids")
+      .orderBy("restrictedAt", "desc")
+      .limit(100)
+      .get();
+    const restricted = await Promise.all(
+      snap.docs.map(async (restrictionDoc) => {
+        const row = restrictionDoc.data() || {};
+        const profileSnap = await firestore
+          .collection("users")
+          .doc(restrictionDoc.id)
+          .collection("public")
+          .doc("profile")
+          .get();
+        return {
+          uid: restrictionDoc.id,
+          displayName: profileSnap.exists
+            ? nullableString((profileSnap.data() || {}).displayName)
+            : null,
+          restrictedAt:
+            row.restrictedAt && typeof row.restrictedAt.toMillis === "function"
+              ? row.restrictedAt.toMillis()
+              : null,
+          lastActionedReport: nullableString(row.lastActionedReport),
+        };
+      })
+    );
+    return { restricted };
+  });
+
+/**
+ * Admin-only: lift a restriction. Deletes globalRestrictedUids/{uid} and
+ * records who lifted it, and when, on the report that caused it — the
+ * report already holds who restricted (`resolvedBy`), so the two ends of
+ * one restriction sit together. Lifting an account that is not restricted
+ * succeeds with `lifted: false`, so a second tap is harmless.
+ */
+exports.liftRestriction = functions
+  .runWith(ADMIN_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    adminAuth.assertAdminCallable(context.auth.uid);
+
+    const uid = data && typeof data === "object" ? data.uid : undefined;
+    if (
+      typeof uid !== "string" ||
+      !uid ||
+      uid !== uid.trim() ||
+      uid.includes("/") ||
+      uid === "." ||
+      uid === ".."
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which account? Send its uid."
+      );
+    }
+
+    const firestore = admin.firestore();
+    const restrictionRef = firestore
+      .collection("globalRestrictedUids")
+      .doc(uid);
+    const lifted = await firestore.runTransaction(async (transaction) => {
+      const snap = await transaction.get(restrictionRef);
+      if (!snap.exists) return false;
+      const reportId = nullableString((snap.data() || {}).lastActionedReport);
+      const reportRef =
+        reportId && !reportId.includes("/")
+          ? firestore.collection("reports").doc(reportId)
+          : null;
+      const reportSnap = reportRef ? await transaction.get(reportRef) : null;
+      transaction.delete(restrictionRef);
+      if (reportSnap && reportSnap.exists) {
+        transaction.update(reportRef, {
+          restrictionLiftedBy: context.auth.uid,
+          restrictionLiftedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      return true;
+    });
+
+    functions.logger.info("liftRestriction", {
+      adminUid: context.auth.uid,
+      uid,
+      lifted,
+    });
+    return { ok: true, lifted };
   });
 
 // ══════════════════════════════════════════════
@@ -6221,6 +6182,11 @@ exports.toggleKudosCallable = functions
     // mutate kudos on other users' activities on the way out — the
     // counter+sub-doc write would leak past the cascade.
     await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    // Read before the toggle; the toggle refuses only an add with it.
+    const refuseAdd = await restriction.isRestricted(
       admin.firestore(),
       context.auth.uid
     );
@@ -6264,6 +6230,7 @@ exports.toggleKudosCallable = functions
         activityId,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        refuseAdd,
       });
       // 2026-05-26 audit PR 3 (finding #6) — kudos notification is
       // now written server-side, atomically with the kudos doc.
@@ -6306,6 +6273,9 @@ exports.toggleKudosCallable = functions
       }
       return result;
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleKudosCallable.error", {
         uid: context.auth.uid,
         activityId,
@@ -6358,6 +6328,10 @@ exports.toggleSpacePostLikeCallable = functions
       admin.firestore(),
       context.auth.uid
     );
+    const refuseAdd = await restriction.isRestricted(
+      admin.firestore(),
+      context.auth.uid
+    );
     const limited = await isRateLimited(
       context.auth.uid,
       "toggleSpacePostLike",
@@ -6378,6 +6352,7 @@ exports.toggleSpacePostLikeCallable = functions
         postId,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        refuseAdd,
       });
       // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
       // self, never the retired coach author (not a notifiable user).
@@ -6420,6 +6395,9 @@ exports.toggleSpacePostLikeCallable = functions
       }
       return result;
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleSpacePostLikeCallable.error", {
         uid: context.auth.uid,
         spaceId,
@@ -6464,6 +6442,17 @@ function assertCallerEmailVerified(context) {
   }
 }
 
+/* Comments are public text: the word filter refuses one before it is
+   written, as failed-precondition so the client shows the sentence
+   (lib/objectionableText.js). The name rides on every comment, so it is
+   checked too. Pure and free, so it runs ahead of every Firestore read. */
+function assertCommentTextAllowed({ text, authorName }) {
+  const refusal = objectionableText.commentRefusal({ text, authorName });
+  if (refusal) {
+    throw new functions.https.HttpsError("failed-precondition", refusal);
+  }
+}
+
 exports.addSpacePostCommentCallable = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
@@ -6486,9 +6475,17 @@ exports.addSpacePostCommentCallable = functions
         "spaceId and postId required."
       );
     }
+    // The word filter, before any read or write: this callable is the only
+    // writer of space comments, so nothing gets past it to clean up later.
+    assertCommentTextAllowed({ text, authorName });
     await accountDeletionLocks.assertCallableActorNotDeleting(
       admin.firestore(),
       context.auth.uid
+    );
+    await restriction.assertNotRestricted(
+      admin.firestore(),
+      context.auth.uid,
+      functions
     );
     const limited = await isRateLimited(
       context.auth.uid,
@@ -6640,11 +6637,20 @@ exports.addCommentCallable = functions
         "activityId required."
       );
     }
+    // Refused here rather than written and then deleted by
+    // onCommentCreated: the comment would be visible until the trigger ran,
+    // and its notification would already have gone to the author.
+    assertCommentTextAllowed({ text, authorName });
     // R1A-Deletion: callable-actor lock — deleting users cannot
     // post new comments mid-cascade.
     await accountDeletionLocks.assertCallableActorNotDeleting(
       admin.firestore(),
       context.auth.uid
+    );
+    await restriction.assertNotRestricted(
+      admin.firestore(),
+      context.auth.uid,
+      functions
     );
     const limited = await isRateLimited(
       context.auth.uid,
@@ -6820,6 +6826,10 @@ exports.toggleCommentReactionCallable = functions
       admin.firestore(),
       context.auth.uid
     );
+    const refuseAdd = await restriction.isRestricted(
+      admin.firestore(),
+      context.auth.uid
+    );
     // Same budget as kudos — reactions are the same tap economy.
     const limited = await isRateLimited(
       context.auth.uid,
@@ -6840,8 +6850,12 @@ exports.toggleCommentReactionCallable = functions
         activityId,
         commentId,
         reaction,
+        refuseAdd,
       });
     } catch (err) {
+      if (err && err.code === restriction.RESTRICTED_REASON) {
+        throw restriction.restrictedError(functions);
+      }
       functions.logger.warn("toggleCommentReactionCallable.error", {
         uid: context.auth.uid,
         activityId,
@@ -7067,7 +7081,15 @@ function mapGoalSpaceError(err) {
   return new functions.https.HttpsError("internal", "Something went wrong.");
 }
 
-async function goalSpaceCallableGate(context, action, limit) {
+/* `reachesOthers`: the action puts this person in front of the other
+   members (starting or joining a Circle, a check-in, backing one), so a
+   restricted account is refused it (S4e). Leaving and removing are not. */
+async function goalSpaceCallableGate(
+  context,
+  action,
+  limit,
+  { reachesOthers = false } = {}
+) {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
@@ -7076,6 +7098,9 @@ async function goalSpaceCallableGate(context, action, limit) {
     admin.firestore(),
     uid
   );
+  if (reachesOthers) {
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+  }
   const limited = await isRateLimited(uid, action, limit, 600_000);
   if (limited) {
     throw new functions.https.HttpsError(
@@ -7089,7 +7114,9 @@ async function goalSpaceCallableGate(context, action, limit) {
 exports.createGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceCreate", 5);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCreate", 5, {
+      reachesOthers: true,
+    });
     const profile = await goalSpaceCallerProfile(uid);
     try {
       return await goalSpaceMembership.createGoalSpace({
@@ -7110,7 +7137,9 @@ exports.createGoalSpace = functions
 exports.joinGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceJoin", 10);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceJoin", 10, {
+      reachesOthers: true,
+    });
     const profile = await goalSpaceCallerProfile(uid);
     try {
       await goalSpaceMembership.joinGoalSpace({
@@ -7173,7 +7202,9 @@ const goalSpaceCheckIn = require("./lib/goalSpaceCheckIn");
 exports.goalSpaceWeeklyCheckIn = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceCheckIn", 10);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCheckIn", 10, {
+      reachesOthers: true,
+    });
     try {
       return await goalSpaceCheckIn.weeklyCheckIn({
         firestore: admin.firestore(),
@@ -7191,7 +7222,9 @@ exports.goalSpaceWeeklyCheckIn = functions
 exports.backGoalSpaceCheckIn = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {
-    const uid = await goalSpaceCallableGate(context, "goalSpaceBack", 20);
+    const uid = await goalSpaceCallableGate(context, "goalSpaceBack", 20, {
+      reachesOthers: true,
+    });
     try {
       const result = await goalSpaceCheckIn.backWeeklyCheckIn({
         firestore: admin.firestore(),

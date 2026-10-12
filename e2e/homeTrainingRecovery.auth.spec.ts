@@ -9,7 +9,6 @@ import type {
 import { localWeekKey } from "../src/lib/dateHelpers";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
@@ -73,7 +72,7 @@ test.describe("Home training recovery", () => {
           updatedAt: saturday.getTime(),
           liftWeekKey: localWeekKey(saturday),
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [],
         } satisfies ProgramState);
         // Give each theme its own account; other auth specs use the shared seed.
@@ -94,7 +93,6 @@ test.describe("Home training recovery", () => {
             type: "lift",
           })),
         });
-        await suppressCoachmarks(page);
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
         await page.clock.setFixedTime(saturday);
         await signInAsTestUser(page, {

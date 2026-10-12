@@ -41,7 +41,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * explicit commit (you're picking a date), and the RaceGoalPlanner CTA
  * carries the honest runway label (Save race plan / compressed /
  * mostly-easy). Preview ≡ commit: the planner preview and buildPlan derive
- * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
+ * the week from the same `planWeekSchedule(liftDays, weeklyRunDays, …)`
  * derivation, so what the runway preview shows is what the save writes.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -60,17 +60,22 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
   getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
@@ -80,7 +85,11 @@ import {
   saveRunPlanDraft,
   clearRunPlanDraft,
 } from "@/lib/runPlanDraft";
-import { spaceDef, type SpaceDef } from "@/features/spaces/spaceDefs";
+import {
+  spaceDef,
+  isTrainableRaceEvent,
+  type SpaceDef,
+} from "@/features/spaces/spaceDefs";
 import {
   upcomingResolvedRaceDefs,
   useRaceEventOverrides,
@@ -90,6 +99,7 @@ import type {
   ProgramState,
   RaceDistance,
 } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 import {
   runTuningFromProfile,
   type RunVolumePreset,
@@ -138,6 +148,13 @@ interface RunPlanSettingsProps {
   /** Current programme state — threaded so buildPlan can preserve the
    *  lift prescription (`preserveHistory: true`) through a run-only save. */
   programState: ProgramState | null;
+  /** `useProgram().readiness`: whether `programState` is the server's
+   *  copy yet. The save is built on it and committed against it, so none
+   *  is built before "ready". While the programme loads it is null or the
+   *  cached copy, and a save made on null was refused as a conflict ("Your
+   *  programme changed") having first built a plan from nothing. Null once
+   *  ready is real: there is no programme, and the save creates one. */
+  readiness: ProgramReadiness;
   /** Re-hydrate the authoritative profile after the configurePlan batch
    *  (the callable writes via Admin SDK, outside updateProfile's
    *  optimistic local state). */
@@ -167,6 +184,7 @@ export default function RunPlanSettings({
   recentLayoff = "none",
   profile,
   programState,
+  readiness,
   refreshProfile,
   onOpenFullSettings,
 }: RunPlanSettingsProps) {
@@ -192,6 +210,8 @@ export default function RunPlanSettings({
       nonRaceGoal: isNonRaceGoal(profile.nonRaceGoal)
         ? profile.nonRaceGoal
         : null,
+      // Lift4 (10): never asked reads as no.
+      raceLegTrim: profile.raceLegTrim === true,
     }),
     [profile]
   );
@@ -217,8 +237,15 @@ export default function RunPlanSettings({
   const [runMode, setRunMode] = useState<RunMode>(
     deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    storedDraft?.weeklyRunDays ?? saved.weeklyRunDays
+  /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
+     already on fewer keeps them (Pgm5: no silent rebuild), so its own count
+     is its floor; anything new starts at two. */
+  const minRunDays =
+    saved.runMode === "race_prep"
+      ? Math.min(MIN_RACE_RUN_DAYS, saved.weeklyRunDays)
+      : MIN_RACE_RUN_DAYS;
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(() =>
+    Math.max(minRunDays, storedDraft?.weeklyRunDays ?? saved.weeklyRunDays)
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
@@ -269,6 +296,11 @@ export default function RunPlanSettings({
       ? storedDraft.nonRaceGoal
       : saved.nonRaceGoal
   );
+  const [raceLegTrim, setRaceLegTrim] = useState<boolean>(
+    storedDraft?.raceLegTrim ?? saved.raceLegTrim
+  );
+  /* The leg trim is a lifting question: asked only of someone who lifts. */
+  const lifts = (profile.weeklyWorkoutsTarget ?? 0) > 0;
   const baselineInvalid =
     runMode === "race_prep" &&
     runningBaseline !== null &&
@@ -285,6 +317,8 @@ export default function RunPlanSettings({
 
   const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
+  // Run20 (5): a new runner's first weeks, for the preview and the save.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
@@ -302,6 +336,7 @@ export default function RunPlanSettings({
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
       }),
     [
@@ -317,6 +352,7 @@ export default function RunPlanSettings({
       profile.runFitness,
       programState,
       recentLayoff,
+      newRunnerUntil,
       profile.weekSchedule,
     ]
   );
@@ -340,6 +376,7 @@ export default function RunPlanSettings({
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty ||
+        (lifts && raceLegTrim !== saved.raceLegTrim) ||
         runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
         runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
 
@@ -362,6 +399,7 @@ export default function RunPlanSettings({
         runTimeLimits,
         runningBaseline,
         nonRaceGoal,
+        raceLegTrim,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -381,6 +419,7 @@ export default function RunPlanSettings({
     runTimeLimits,
     runningBaseline,
     nonRaceGoal,
+    raceLegTrim,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -404,7 +443,7 @@ export default function RunPlanSettings({
   }
 
   function handlePickRace(def: SpaceDef): void {
-    if (!def.event) return;
+    if (!def.event || !isTrainableRaceEvent(def.event)) return;
     setRaceDistance(def.event.distance);
     setRaceTargetDate(def.event.dateKey);
     setRaceEventName(def.name);
@@ -416,6 +455,9 @@ export default function RunPlanSettings({
     if (
       saving ||
       !dirty ||
+      // Not before the programme has loaded: see `readiness`. The button
+      // waits too; this holds for any other way in.
+      readiness !== "ready" ||
       raceDateInvalid ||
       raceTimeInvalid ||
       baselineInvalid ||
@@ -425,8 +467,8 @@ export default function RunPlanSettings({
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
-      // effective weekSchedule (the same generateSchedule(liftDays,
-      // weeklyRunDays) derivation the planner preview uses), run targets,
+      // effective weekSchedule (the same planWeekSchedule(liftDays,
+      // weeklyRunDays, …) derivation the planner preview uses), run targets,
       // goal, mode, tuning, runDays and plan — so none of them can
       // disagree. The lift slice threads unchanged from the saved profile
       // with preserveHistory: true (run edits never rebuild lifting).
@@ -446,6 +488,7 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
@@ -467,6 +510,7 @@ export default function RunPlanSettings({
           : {}),
         equipment: profile.equipment ?? "full_gym",
         injuries: profile.injuries ?? [],
+        ...(runMode === "race_prep" && lifts ? { raceLegTrim } : {}),
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
         preserveHistory: true,
@@ -558,9 +602,16 @@ export default function RunPlanSettings({
      button therefore stays operable while invalid, reads as unavailable
      (`aria-disabled` + the muted treatment), and spends the tap moving
      the user to the field that needs fixing. `disabled` proper is kept
-     for the states with nothing to reveal: not dirty, or mid-save. */
+     for the states with nothing to reveal: not dirty, mid-save, or the
+     programme not loaded (`readiness`). Loading, the button takes the
+     primitive's loading state; failed, one line above it says so. An
+     invalid field outranks both, since its tap sends nothing and the
+     field needs fixing either way. */
   const invalid =
     raceDateInvalid || raceTimeInvalid || baselineInvalid || goalInvalid;
+  const programReady = readiness === "ready";
+  const loadFailed = readiness === "failed" && !saving;
+  const waitingForProgramme = !invalid && !saving && readiness === "pending";
   function revealInvalidField(): void {
     // Date first: it sits higher on the page and is the required one.
     const target = raceDateInvalid
@@ -598,17 +649,20 @@ export default function RunPlanSettings({
   return (
     <div className="space-y-5 pb-6">
       {/* ── Mode ─────────────────────────────────────────────────────── */}
-      <div className="space-y-2">
+      {/* Under 15em (larger text on the phone) the two cards stack: side
+          by side, "Periodised" no longer fit inside its half. Wide-first. */}
+      <div className="@container space-y-2">
         <SectionHeading size="compact">Run mode</SectionHeading>
         <div
           role="radiogroup"
           aria-label="Run mode"
-          className="grid grid-cols-2 gap-2"
+          className="grid grid-cols-2 gap-2 @max-[15em]:grid-cols-1"
         >
           {MODE_OPTIONS.map((opt) => {
             const selected = runMode === opt.id;
             return (
               <motion.button
+                data-motion-driven
                 key={opt.id}
                 type="button"
                 role="radio"
@@ -617,6 +671,8 @@ export default function RunPlanSettings({
                 onClick={() => {
                   haptic();
                   setRunMode(opt.id);
+                  if (opt.id === "race_prep")
+                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
                 }}
                 className={cn(
                   "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
@@ -738,6 +794,11 @@ export default function RunPlanSettings({
                 run — some days combine both.
               </p>
             )}
+            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {raceRunDaysNote(raceDistance, weeklyRunDays)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -745,10 +806,10 @@ export default function RunPlanSettings({
               aria-label="Decrease run days"
               onClick={() => {
                 haptic();
-                setWeeklyRunDays((n) => Math.max(1, n - 1));
+                setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
-              disabled={weeklyRunDays <= 1}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              disabled={weeklyRunDays <= minRunDays}
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -763,7 +824,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.min(7, n + 1));
               }}
               disabled={weeklyRunDays >= 7}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>
@@ -807,7 +868,8 @@ export default function RunPlanSettings({
               Long-run volume
             </p>
             <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter caps them at 10K.
+              How big your long runs build — Lighter peaks about a quarter
+              lower, Bigger about a quarter higher.
             </p>
             <SegmentedControl
               options={[
@@ -837,58 +899,101 @@ export default function RunPlanSettings({
               ariaLabel="Plan intensity"
             />
           </div>
+          {/* Lift4 (10): the race-setup answer on the leg trim, changeable
+              here for as long as the race runs. */}
+          {lifts && (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Lighten leg sessions while your runs build
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  A third fewer sets on leg lifts, at the same weights, from
+                  your plan&apos;s build weeks until the two lighter weeks
+                  before your race.
+                </p>
+              </div>
+              <Toggle
+                checked={raceLegTrim}
+                label="Lighten leg sessions while your runs build"
+                className="ml-3"
+                onChange={() => setRaceLegTrim((v) => !v)}
+              />
+            </div>
+          )}
         </div>
       )}
 
       {/* ── The way back to the Programme page ───────────────────────── */}
-      <button
-        type="button"
-        onClick={() => {
-          haptic();
-          onOpenFullSettings();
-        }}
-        className="w-full text-left rounded-2xl bg-card border border-border/40 px-3.5 py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
-      >
-        {/* Icon container + trailing chevron, i.e. the row shape every
+      {/* The container is a wrapper, not the button: a query against the
+          button itself did not apply reliably to its children. */}
+      <div className="@container">
+        <button
+          type="button"
+          onClick={() => {
+            haptic();
+            onOpenFullSettings();
+          }}
+          className="w-full text-left rounded-2xl bg-card border border-border/40 px-[14px] py-3 min-h-[56px] flex items-center gap-3 hover:bg-muted/40 transition-colors"
+        >
+          {/* Icon container + trailing chevron, i.e. the row shape every
             other drill-in in Settings uses (`SettingsIndex.tsx`). Without
             them this was the only cross-page navigation row in Settings
             with neither affordance, so the one escape hatch out to
             /settings/training read as a static description card. */}
-        <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <SlidersHorizontal className="size-4 text-muted-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground">Programme</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Your setup, lift plan, reset
-          </p>
-        </div>
-        <ChevronRight
-          className="size-4 text-muted-foreground shrink-0"
-          aria-hidden="true"
-        />
-      </button>
+          {/* Under 12em (larger text on the phone) the icon gives way so
+            "Programme" keeps room, and a word wider than the row still
+            hyphenates rather than running out of it. Wide-first. */}
+          <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0 @max-[10em]:hidden">
+            <SlidersHorizontal className="size-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0 break-words hyphens-auto">
+            <p className="text-sm font-medium text-foreground">Programme</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Your setup, lift plan, reset
+            </p>
+          </div>
+          <ChevronRight
+            className="size-4 text-muted-foreground shrink-0"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
 
       {/* ── Sticky save bar (only when there's a run-plan change) ─────── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
-          <button
-            type="button"
+          {loadFailed && (
+            <p
+              id="run-plan-load-failed"
+              className="mb-2 text-center text-xs text-muted-foreground"
+            >
+              Couldn't load your programme. Reopen this page to try again.
+            </p>
+          )}
+          <Button
+            variant="sport"
+            fullWidth
             onClick={invalid ? revealInvalidField : handleSave}
-            disabled={!dirty || saving}
+            disabled={!dirty || saving || (!invalid && !programReady)}
+            loading={waitingForProgramme}
+            // The spinner replaces the label, so the label stays the name.
+            aria-label={waitingForProgramme ? saveLabel : undefined}
             aria-disabled={invalid || undefined}
+            aria-describedby={loadFailed ? "run-plan-load-failed" : undefined}
             className={cn(
-              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || invalid || saving
-                ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-running-fill text-white"
+              // The bar's own shape and muted treatment, kept from before
+              // the primitive.
+              "rounded-2xl py-3.5 font-bold disabled:opacity-60",
+              (!dirty || invalid || saving || !programReady) &&
+                "bg-muted text-muted-foreground opacity-60"
             )}
           >
             {saveLabel}
-          </button>
+          </Button>
         </div>
       )}
     </div>

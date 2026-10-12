@@ -38,7 +38,7 @@ export default function PeopleToFollowRow({
       >
         People to follow
       </SectionHeading>
-      <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 snap-x snap-mandatory">
+      <ul className="-mx-[16px] flex gap-2 overflow-x-auto px-[16px] pb-1 snap-x snap-mandatory">
         {people.map((person) => (
           <li
             key={person.uid}

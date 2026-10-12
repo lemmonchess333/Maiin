@@ -2,14 +2,14 @@ import { test, expect } from "@playwright/test";
 import { initializeApp, deleteApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import type {
-  ProgramState,
-  ScheduledRunDay,
-  WorkoutDay,
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  type ProgramState,
+  type ScheduledRunDay,
+  type WorkoutDay,
 } from "../src/features/program/programTypes";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 import { settleImages } from "./helpers/settleImages";
 
 test.use({ viewport: { width: 393, height: 852 }, timezoneId: "UTC" });
@@ -113,7 +113,7 @@ test.describe("Monday migration on an existing account", () => {
           updatedAt: now.getTime(),
           liftWeekKey: "2026-09-06",
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [{ weekNumber: 2, workouts: [] }],
           runDays: runs,
           runPlan: {
@@ -127,7 +127,6 @@ test.describe("Monday migration on an existing account", () => {
           },
         };
         await programmeRef.set(original);
-        await suppressCoachmarks(page);
         await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
         await page.clock.setFixedTime(now);
         await signInAsTestUser(page, {
@@ -137,11 +136,13 @@ test.describe("Monday migration on an existing account", () => {
         await page.addStyleTag({
           content: ".firebase-emulator-warning { display: none !important; }",
         });
+        // The account is migrated once the document carries the current
+        // version, whatever the bumps since this spec was written did.
         await expect
           .poll(
             async () => (await programmeRef.get()).data()?.programSchemaVersion
           )
-          .toBe(4);
+          .toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
         const saved = (await programmeRef.get()).data() as ProgramState;
         expect(saved.liftWeekKey).toBe("2026-09-07");
         expect(saved.weekNumber).toBe(3);
@@ -220,7 +221,7 @@ test.describe("Monday migration on an existing account", () => {
             .evaluateAll((els) =>
               els.map((el) => el.getAttribute("aria-label")?.split(",")[0])
             )
-        ).toEqual(["7", "30m", "9", "10", "30m", "12", "13"]);
+        ).toEqual(["7", "Easy 30", "9", "10", "Easy 30", "12", "13"]);
         expect(
           await week
             .locator(":scope > div")

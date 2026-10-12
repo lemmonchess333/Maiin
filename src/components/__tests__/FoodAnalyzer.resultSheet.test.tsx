@@ -100,6 +100,7 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
+import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 
 const MEAL = {
   foodName: "Lunch Plate",
@@ -163,7 +164,7 @@ async function scan(
     h.state.result = MEAL;
     return { data: MEAL, errorMessage: null };
   });
-  render(<FoodAnalyzer date="2026-09-23" meal={meal} />);
+  render(<FoodAnalyzer date="2026-09-23" meal={meal} aiConsent={AI_ALLOWED} />);
   await waitFor(() => expect(modal().dataset.open).toBe("true"));
   fireEvent.click(screen.getByText(button));
   await waitFor(() => expect(modal().dataset.open).toBe("false"));
@@ -331,7 +332,9 @@ describe("FoodAnalyzer — the result sheet", () => {
         }),
       }))
     );
-    render(<FoodAnalyzer date="2026-09-23" meal="breakfast" />);
+    render(
+      <FoodAnalyzer date="2026-09-23" meal="breakfast" aiConsent={AI_ALLOWED} />
+    );
     await waitFor(() => expect(modal().dataset.open).toBe("true"));
     fireEvent.click(screen.getByText("stub-barcode"));
     await screen.findByTestId("scan-result-sheet");
@@ -340,5 +343,46 @@ describe("FoodAnalyzer — the result sheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Scan again" }));
     await waitFor(() => expect(modal().dataset.open).toBe("true"));
     expect(modal().dataset.tab).toBe("barcode");
+  });
+});
+
+describe("FoodAnalyzer — the Open Food Facts credit", () => {
+  /* Open Food Facts' licence (ODbL) asks for a credit wherever its data
+     is shown. A barcode result is its data; a photo result is not. */
+  it("credits Open Food Facts under a barcode result", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          status: 1,
+          product: {
+            product_name: "Oat drink",
+            brands: "Oatly",
+            serving_size: "250 ml",
+            nutriments: { "energy-kcal_100g": 46 },
+          },
+        }),
+      }))
+    );
+    render(
+      <FoodAnalyzer date="2026-09-23" meal="breakfast" aiConsent={AI_ALLOWED} />
+    );
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    fireEvent.click(screen.getByText("stub-barcode"));
+    await screen.findByTestId("scan-result-sheet");
+    expect(
+      within(sheet()).getByText("Food data from Open Food Facts")
+    ).toBeTruthy();
+  });
+
+  it("does not credit Open Food Facts under a photo result", async () => {
+    await scan();
+    expect(
+      within(sheet()).getByText("AI estimate · check the portions")
+    ).toBeTruthy();
+    expect(
+      within(sheet()).queryByText("Food data from Open Food Facts")
+    ).toBeNull();
   });
 });

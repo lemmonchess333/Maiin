@@ -184,6 +184,45 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(update).toBe(usesHealthKit);
   });
 
+  it("builds an iPhone-only app", () => {
+    // Tropos is designed for the phone. A universal build ("1,2") is
+    // reviewed and listed as an iPad app too: iPad screenshots, iPad
+    // layouts, iPad purchases. Built for the iPhone family alone, an iPad
+    // runs it as an iPhone app (and App Review still tries it there, so
+    // purchases on an iPad stay a native-iOS path, see purchaseProvider).
+    // Read from the App target's own configuration list, so a config added
+    // later is covered without editing this.
+    const list = pbxproj.match(
+      /\/\* Build configuration list for PBXNativeTarget "App" \*\/ = \{[\s\S]*?buildConfigurations = \(([\s\S]*?)\);/
+    );
+    expect(list).not.toBeNull();
+    const configIds = [
+      ...list![1].matchAll(new RegExp(`(${OBJECT_ID.source}) /\\*`, "g")),
+    ].map((m) => m[1]);
+    // Anchor: Debug and Release, so the loop below is not vacuous.
+    expect(configIds).toHaveLength(2);
+    for (const id of configIds) {
+      const config = pbxproj.match(
+        new RegExp(
+          `^\\s*${id} /\\*[^\\n]*\\*/ = \\{\\n\\s*isa = XCBuildConfiguration;[\\s\\S]*?\\n\\s*name = ([^;]+);`,
+          "m"
+        )
+      );
+      expect(config, `XCBuildConfiguration ${id}`).not.toBeNull();
+      expect(
+        config![0].match(/TARGETED_DEVICE_FAMILY = "?([^";]+)"?;/)?.[1],
+        `App target ${config![1]}`
+      ).toBe("1");
+    }
+    // No configuration anywhere in the project brings the iPad back.
+    expect(pbxproj).not.toMatch(/TARGETED_DEVICE_FAMILY = "?[^;]*2/);
+    // And the iPad-only orientation list went with it.
+    expect(plistKeys(infoPlist)).toContain("UISupportedInterfaceOrientations");
+    expect(plistKeys(infoPlist)).not.toContain(
+      "UISupportedInterfaceOrientations~ipad"
+    );
+  });
+
   it("answers the export-compliance question in the bundle", () => {
     // Tropos uses only HTTPS (exempt). Without this key every CI upload sits
     // in "Missing Compliance" until someone answers the question in App

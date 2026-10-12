@@ -9,7 +9,6 @@ import type {
 import { localWeekKey } from "../src/lib/dateHelpers";
 import { signInAsTestUser, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
 /**
  * Home's Today card has two actions (DS3): Start begins the session, and
@@ -97,7 +96,7 @@ test.describe("Home's Today card", () => {
           updatedAt: wednesday.getTime(),
           liftWeekKey: localWeekKey(wednesday),
           programSchemaVersion: 3,
-          settings: { autoProgression: true, microloading: true },
+          settings: { autoProgression: true, smallPlates: false },
           weekHistory: [],
         } satisfies ProgramState);
       const seedUser = await auth.getUserByEmail(TEST_USER.email);
@@ -116,7 +115,6 @@ test.describe("Home's Today card", () => {
           type: day === 1 || day === 3 ? "lift" : "rest",
         })),
       });
-      await suppressCoachmarks(page);
       await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
       await page.clock.setFixedTime(wednesday);
       await signInAsTestUser(page, {
@@ -142,10 +140,11 @@ test.describe("Home's Today card", () => {
       await training.getByRole("button", { name: "Start workout" }).click();
       const close = page.getByLabel("Close workout");
       await expect(close).toBeVisible({ timeout: 15_000 });
-      // The session header names its day beside the close control. Train's
-      // own page for day 1 sits underneath, so a bare "Bench Press" anywhere on
-      // screen would pass whichever day the session had opened.
-      await expect(close.locator("..")).toContainText("Session 1");
+      // The session's top bar names its day; Close sits at its end, grouped
+      // with Finish. Train's own page for day 1 sits underneath, so a bare
+      // "Bench Press" anywhere on screen would pass whichever day the session
+      // had opened.
+      await expect(close.locator("../..")).toContainText("Session 1");
       // The link is consumed, so a refresh or Back lands on the day.
       await expect(page).toHaveURL(/\/program\?day=0$/);
 

@@ -85,7 +85,13 @@ describe("Home's tier-4 surface registry", () => {
 
   it("registers the surfaces the coordinator arbitrates", () => {
     expect(regs.map((r) => r.id).sort()).toEqual(
-      ["fell-behind", "goal-reached", "lift-return", "trial-expired"].sort()
+      [
+        "fell-behind",
+        "first-visit-guide",
+        "goal-reached",
+        "lift-return",
+        "trial-expired",
+      ].sort()
     );
   });
 
@@ -108,6 +114,18 @@ describe("Home's tier-4 surface registry", () => {
     // wired but unproven.
     const liftReturn = regs.find((r) => r.id === "lift-return")!;
     expect(liftReturn.suppressedBy).toContain("fell-behind");
+  });
+
+  it("lets a new account's first visit start with the walk", () => {
+    // FV1: the first-visit walk is the visit's one blocking surface. It
+    // only runs in an account's first week, when the others rarely have
+    // anything to say, and it outranks them so that when one does (a
+    // trial that ended in the first week) the new account still meets
+    // the app before it is asked anything.
+    const byId = Object.fromEntries(regs.map((r) => [r.id, r.priority]));
+    for (const r of regs)
+      if (r.id !== "first-visit-guide")
+        expect(byId["first-visit-guide"]).toBeGreaterThan(r.priority);
   });
 
   it("never opens a badge over Home on its own", () => {

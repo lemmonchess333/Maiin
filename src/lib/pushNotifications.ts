@@ -41,6 +41,7 @@ import { logger } from "@/lib/logger";
 import { readJson, remove, writeJson } from "@/lib/localStore";
 import { DEFAULT_PUSH_CONSENT, type PushConsent } from "@/lib/pushConsent";
 import { getAppServiceWorkerRegistration } from "@/lib/register-sw";
+import { isNativePlatform } from "@/lib/platform";
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY ?? "";
 const NOTIFICATION_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
@@ -62,7 +63,27 @@ export function invalidatePushTokenLifecycle(): void {
   tokenLifecycleGeneration += 1;
 }
 
+/**
+ * Whether this build offers remote push at all.
+ *
+ * Remote push here is FCM web push: a service worker and the browser's
+ * Push API. The native shells have neither. iOS's WKWebView runs no
+ * service worker, and the app has no APNs registration and no push
+ * plugin, so on iPhone the switch could only fail ("Couldn't register for
+ * push (unsupported)"). Settings offers no push switch there, and nothing
+ * on native promises a phone notification; the web keeps its switch. The
+ * local reminders (src/lib/notifications.ts) are a different channel and
+ * work on both.
+ *
+ * When native push lands (APNs through a push plugin), this is the seam:
+ * answer true there and register the native token below.
+ */
+export function isRemotePushOffered(): boolean {
+  return !isNativePlatform();
+}
+
 export async function isPushSupported(): Promise<boolean> {
+  if (!isRemotePushOffered()) return false;
   if (!VAPID_KEY) return false;
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return false;

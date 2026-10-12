@@ -77,6 +77,8 @@ function run(
     /** Finish time on the run's day, or the day after with `nextDay`. */
     at?: [number, number];
     type?: string;
+    /** Where it was run: "treadmill" (Pgm8). */
+    place?: string;
     nextDay?: boolean;
     savedAnyway?: boolean;
   }
@@ -97,6 +99,7 @@ function run(
     duration: km * pace,
     avgPace: pace,
     activityType: type,
+    ...(extra.place ? { place: extra.place } : {}),
     ...(extra.savedAnyway ? { savedAnyway: true } : {}),
   };
 }
@@ -436,6 +439,23 @@ describe("runRecordRows", () => {
     expect(row(records.lifetime, "Best pace")?.runId).toBe("road");
     expect(row(records.indoor, "Best pace")?.runId).toBe("belt");
     expect(records.hasAnyIndoor).toBe(true);
+  });
+
+  it("keeps a planned run done on the treadmill with the typed ones (Pgm8)", () => {
+    // Its type is the plan's, "long"; the treadmill is where it was run.
+    const records = rows([
+      run("road", { daysAgo: 3, km: 5, pace: 320 }),
+      run("belt", {
+        daysAgo: 4,
+        km: 8,
+        pace: 290,
+        type: "long",
+        place: "treadmill",
+      }),
+    ]);
+    expect(row(records.lifetime, "Best pace")?.runId).toBe("road");
+    expect(row(records.lifetime, "Longest run")?.runId).toBe("road");
+    expect(row(records.indoor, "Best pace")?.runId).toBe("belt");
   });
 
   it("sets no indoor record from a run saved anyway", () => {

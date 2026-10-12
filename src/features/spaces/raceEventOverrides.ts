@@ -3,9 +3,10 @@
  * metadata, so date updates reach every platform (including stale
  * native binaries) without an app release.
  *
- * Model: git is the SOURCE OF TRUTH (spaceDefs.ts, reviewed via PR);
+ * Model: Git owns race identity and reviewed bundled dates;
  * CI mirrors the race event blocks into the Firestore doc
- * `config/raceEvents` on merge (sync-race-events.yml). The client
+ * `config/raceEvents` on merge (sync-race-events.yml), preserving dates
+ * verified by the daily official-source refresher. The client
  * fetches that doc LAZILY — once per session, on the first race
  * surface touched — and merges it OVER the bundled event blocks.
  * Bundled values are the seed and the fallback: a failed read, an
@@ -22,6 +23,7 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { logger } from "@/lib/logger";
+import { validRaceDateKeys } from "./raceDates";
 import {
   RACE_COUNTRIES,
   raceSpaceDefs,
@@ -52,6 +54,7 @@ export function sanitizeRaceEventOverrides(raw: unknown): RaceEventOverrides {
     if (typeof v.dateKey === "string" && DATE_KEY_RE.test(v.dateKey)) {
       o.dateKey = v.dateKey;
     }
+    if (validRaceDateKeys(v.dateKeys, o.dateKey)) o.dateKeys = v.dateKeys;
     if (
       typeof v.websiteUrl === "string" &&
       v.websiteUrl.startsWith("https://") &&
@@ -97,7 +100,11 @@ export function resolveRaceEvent(
 ): SpaceEventInfo | undefined {
   if (!def.event) return undefined;
   const o = overrides[def.id];
-  return o ? { ...def.event, ...o } : def.event;
+  if (!o) return def.event;
+  const resolved = { ...def.event, ...o };
+  if (o.dateKey && o.dateKey !== def.event.dateKey && !o.dateKeys)
+    delete resolved.dateKeys;
+  return resolved;
 }
 
 /** Race defs with resolved events baked in (new objects — the bundled
@@ -127,6 +134,22 @@ export function upcomingResolvedRaceDefs(
     .sort((a, b) =>
       (a.event?.dateKey ?? "").localeCompare(b.event?.dateKey ?? "")
     );
+}
+
+/** Evergreen directory: confirmed dates first, awaiting editions last.
+ * The training picker continues to use upcomingResolvedRaceDefs. */
+export function directoryResolvedRaceDefs(
+  overrides: RaceEventOverrides,
+  todayKey: string
+): SpaceDef[] {
+  return applyRaceEventOverrides(raceSpaceDefs(), overrides).sort((a, b) => {
+    const aPast = a.event!.dateKey < todayKey;
+    const bPast = b.event!.dateKey < todayKey;
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    return aPast
+      ? a.name.localeCompare(b.name)
+      : a.event!.dateKey.localeCompare(b.event!.dateKey);
+  });
 }
 
 /* ── Session store (fetch once, share everywhere) ─────────────────── */

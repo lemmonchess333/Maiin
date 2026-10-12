@@ -129,19 +129,18 @@ function bgStyle(
 ): CSSProperties {
   switch (background) {
     case "brand":
-      // Token gradient, sport-tinted by template (subtle, dark base so the
-      // Archivo numerals pop). HYBRID gets the purple→coral signature.
-      // Dark base throughout (never resolves light) so white numerals +
-      // footer stay legible at every stop; sport tint stays subtle.
+      // Token gradient on a dark base, so the Archivo numerals pop and white
+      // numerals + footer stay legible at every stop. A run wears the brand
+      // purple, as a lift does: its own maroon and coral read as another
+      // running app's red once the card left the app. HYBRID keeps the
+      // purple→coral signature.
       return {
         backgroundImage:
-          template === "run"
-            ? `linear-gradient(155deg, #140a0e 0%, #21131a 55%, #301a24 100%)`
-            : template === "lift"
-              ? `linear-gradient(155deg, #100e1a 0%, #181428 55%, #221c38 100%)`
-              : template === "nutrition"
-                ? `linear-gradient(155deg, #15100a 0%, #221a10 55%, #33260f 100%)`
-                : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
+          template === "run" || template === "lift"
+            ? `linear-gradient(155deg, #100e1a 0%, #181428 55%, #221c38 100%)`
+            : template === "nutrition"
+              ? `linear-gradient(155deg, #15100a 0%, #221a10 55%, #33260f 100%)`
+              : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
       };
     case "dark":
       return { backgroundColor: "#0a0a0f" };
@@ -153,7 +152,6 @@ function bgStyle(
 }
 
 function accentFor(template: ShareTemplate): string {
-  if (template === "run") return RUN_CORAL;
   if (template === "nutrition") return NUTRITION_ORANGE;
   return LIFT_PURPLE;
 }

@@ -39,7 +39,7 @@ const baseState: ProgramState = {
   workouts: [],
   fatigueScore: 0,
   updatedAt: Date.now(),
-  settings: { autoProgression: true, microloading: true },
+  settings: { autoProgression: true, smallPlates: false },
   weekHistory: [],
 };
 
@@ -101,9 +101,26 @@ describe("normalizeProgramState — undefined-field hygiene (issue #845)", () =>
     expect(result.weekHistory).toEqual([]);
     expect(result.settings).toEqual({
       autoProgression: true,
-      microloading: true,
+      smallPlates: false,
     });
     expect(Object.keys(result)).not.toContain("primaryGoal");
+  });
+
+  it("reads an older plan's settings with small plates off (Lift4 (6))", () => {
+    const older = {
+      ...baseState,
+      settings: { autoProgression: false, microloading: true },
+    } as unknown as ProgramState;
+    expect(
+      normalizeProgramState(older, { primaryGoal: undefined }).settings
+    ).toEqual({ autoProgression: false, smallPlates: false });
+    const said = {
+      ...baseState,
+      settings: { autoProgression: true, smallPlates: true },
+    } as ProgramState;
+    expect(
+      normalizeProgramState(said, { primaryGoal: undefined }).settings
+    ).toEqual({ autoProgression: true, smallPlates: true });
   });
 
   it("is Firestore-safe: every own property must have a defined value", () => {

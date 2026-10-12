@@ -17,6 +17,7 @@
 const {
   assertCanInteractWithActivity,
 } = require("./activityAccess");
+const { refusedAddError } = require("./restriction");
 
 const REACTION_KEYS = ["muscle", "fire"];
 
@@ -37,6 +38,8 @@ async function toggleCommentReaction({
   activityId,
   commentId,
   reaction,
+  // A restricted account may take a reaction back but not add one (S4e).
+  refuseAdd = false,
 }) {
   if (!REACTION_KEYS.includes(reaction)) {
     throw new Error("invalid-reaction");
@@ -66,6 +69,7 @@ async function toggleCommentReaction({
         ? data.reactions[reaction]
         : [];
     const has = current.includes(uid);
+    if (!has && refuseAdd) throw refusedAddError();
     const next = has ? current.filter((u) => u !== uid) : [...current, uid];
     // merge:true + nested map so the OTHER reaction key is preserved.
     tx.set(ref, { reactions: { [reaction]: next } }, { merge: true });

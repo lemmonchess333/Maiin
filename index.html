@@ -34,6 +34,20 @@
          src/lib/exerciseDemo.ts fetches the free-exercise-db catalogue
          and its images from that host for the exercise guide.
 
+         https://tiles.openfreemap.org is the basemap (src/lib/basemap.ts):
+         MapLibre fetches the style, its TileJSON, the tiles, glyphs and
+         sprites from that one origin (connect-src), and img-src covers
+         the sprite and raster images. A map style is JSON, not CSS, so
+         style-src needs nothing for it. basemap.test.ts holds this list
+         to the origin the maps use.
+
+         There is no weather host: the phone asks the getCurrentWeather
+         callable (*.cloudfunctions.net), which asks MET Norway.
+
+         img-src carries https://images.openfoodfacts.org for the product
+         photo on a barcode result (FoodAnalyzer reads image_url from Open
+         Food Facts); without it the result showed a broken image.
+
          form-action 'self': no form posts anywhere but the app's own
          origin (Stripe Checkout is a redirect, not a form post). The
          anti-framing directive, frame-ancestors, is deliberately NOT
@@ -44,9 +58,9 @@
       content="
       default-src 'self';
       script-src 'self' https://js.stripe.com https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/;
-      style-src 'self' 'unsafe-inline' https://basemaps.cartocdn.com;
+      style-src 'self' 'unsafe-inline';
       font-src 'self';
-      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com https://www.google-analytics.com https://www.googletagmanager.com;
+      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://tiles.openfreemap.org https://images.openfoodfacts.org https://www.google-analytics.com https://www.googletagmanager.com;
       connect-src 'self'
         https://*.googleapis.com
         https://*.firebaseio.com
@@ -54,9 +68,7 @@
         https://*.appspot.com
         https://*.cloudfunctions.net
         https://world.openfoodfacts.org
-        https://api.open-meteo.com
-        https://basemaps.cartocdn.com
-        https://*.cartocdn.com
+        https://tiles.openfreemap.org
         https://raw.githubusercontent.com
         https://js.stripe.com
         https://api.stripe.com

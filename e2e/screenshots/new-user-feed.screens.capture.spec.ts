@@ -12,13 +12,12 @@ import { openSignUpForm } from "../helpers/auth";
  * Following, with nobody followed, says so.
  *
  * Fixture: brand-new signup-form account + onboardingComplete patched
- * via the emulator's rules-free REST surface (the coachmark.auth
- * pattern). The posts are the shared seed's (seed:rich's Maya Chen).
+ * via the emulator's rules-free REST surface. The posts are the shared
+ * seed's (seed:rich's Maya Chen).
  * Each claim is asserted before shooting, so a regression films loudly.
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -78,7 +77,6 @@ test.describe("new person's feed screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

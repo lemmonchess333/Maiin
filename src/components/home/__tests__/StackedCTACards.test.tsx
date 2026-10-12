@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { RUN } from "@/test/journeyScreens";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -61,6 +62,7 @@ vi.mock("@/hooks/useCountUp", function () {
 });
 
 import StackedCTACards from "../StackedCTACards";
+import { todayCard, todayCardTarget } from "@/lib/firstGuide";
 import type {
   RestDayOffer,
   TodayLift,
@@ -90,11 +92,13 @@ const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
   runDay: null,
   completed: false,
   isFirst: false,
+  dose: null,
   ...extra,
 });
 
 const liftDay = (extra: Partial<TodayLift> = {}): TodaySession => ({
   type: "lift",
+  restContext: {},
   lift: lift(extra),
   run: null,
   rest: null,
@@ -102,6 +106,7 @@ const liftDay = (extra: Partial<TodayLift> = {}): TodaySession => ({
 
 const runDay = (extra: Partial<TodayRun> = {}): TodaySession => ({
   type: "run",
+  restContext: {},
   lift: null,
   run: run(extra),
   rest: null,
@@ -112,6 +117,7 @@ const bothDay = (
   runExtra: Partial<TodayRun> = {}
 ): TodaySession => ({
   type: "both",
+  restContext: {},
   lift: lift(liftExtra),
   run: run(runExtra),
   rest: null,
@@ -119,7 +125,13 @@ const bothDay = (
 
 const restDay = (
   offer: RestDayOffer = { kind: "rest", tomorrow: null }
-): TodaySession => ({ type: "rest", lift: null, run: null, rest: offer });
+): TodaySession => ({
+  type: "rest",
+  restContext: {},
+  lift: null,
+  run: null,
+  rest: offer,
+});
 
 function renderCards(session: TodaySession = bothDay(), navigate = vi.fn()) {
   return render(
@@ -341,10 +353,31 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       }),
       navigate
     );
-    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    // The E2E journeys start a planned run by this (src/test/journeyScreens.ts).
+    fireEvent.click(screen.getByRole("button", { name: RUN.homeStart }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=run-2"
     );
+  });
+
+  /* Run21 (5): the card draws the dose `todaySession` decided, and works
+     out none of its own. */
+  it("states the run's dose as the session gives it", function () {
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-3",
+          dayIndex: 3,
+          templateId: "long_15k",
+          type: "long",
+          status: "planned",
+        } as any,
+        dose: "15 km · about 100 min",
+      }),
+      vi.fn()
+    );
+    expect(document.body.textContent).toContain("15 km · about 100 min");
+    expect(document.body.textContent).not.toContain("about 80 min");
   });
 
   it("tapping a startable run's card previews it in Train instead of starting it", function () {
@@ -523,5 +556,75 @@ describe("rest day — what else it can offer", function () {
     expect(screen.queryByText("Run when it suits you")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=0&start=1");
+  });
+});
+
+/* The first-visit walk (FV1) points at the stack's first card by the
+   `data-guide-stop` it carries; `todayCard` / `todayCardTarget` in
+   firstGuide.ts name it. If the two disagree the walk's first stop points
+   at nothing and is quietly passed over, so the pair is pinned here. */
+describe("the first-visit walk finds today's card", function () {
+  const firstWorkout: RestDayOffer = {
+    kind: "first-workout",
+    workout: PUSH,
+    index: 0,
+  };
+  const days: [string, TodaySession][] = [
+    ["a lifting day", liftDay()],
+    ["a run day", runDay()],
+    ["a day with both", bothDay()],
+    ["a new lifter's rest day", restDay(firstWorkout)],
+    ["a free runner's rest day", restDay({ kind: "free-run" })],
+    ["a rest day", restDay()],
+    ["a first-meal day", restDay({ kind: "first-meal" })],
+  ];
+  for (const [label, session] of days) {
+    it(`on ${label}, the stop names the first card`, function () {
+      const { container } = renderCards(session);
+      const card = todayCard(session);
+      expect(card).not.toBeNull();
+      const first = container.querySelector("[data-guide-stop]");
+      expect(first?.getAttribute("data-guide-stop")).toBe(
+        todayCardTarget(card!)
+      );
+    });
+  }
+});
+
+describe("today's run card names a race-pace finish (Run21 (2))", function () {
+  const longDay = {
+    id: "run-1",
+    dayIndex: 3,
+    templateId: "long_15k",
+    type: "long",
+    status: "planned",
+  } as any;
+  // The title sets its numerals apart (InlineNumerals), so read it whole.
+  const title = (name: string) =>
+    screen.getByText(function (_content, el) {
+      return el?.tagName === "P" && el.textContent === name;
+    });
+
+  it("says 'with race pace' when the long run finishes at it", function () {
+    renderCards(
+      runDay({
+        runDay: longDay,
+        racePace: { kind: "finish" as const, blockKm: 5, goalPaceS: 300 },
+      })
+    );
+    expect(title("Long 15K with race pace")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Open Long 15K with race pace in Train",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("is the plain long run without one", function () {
+    renderCards(runDay({ runDay: longDay, racePace: null }));
+    expect(title("Long 15K")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open Long 15K in Train" })
+    ).toBeInTheDocument();
   });
 });

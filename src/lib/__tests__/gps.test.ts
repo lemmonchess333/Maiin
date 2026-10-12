@@ -8,6 +8,7 @@ import {
   routeTotalDistance,
   routeTimeAtDistance,
   isValidReading,
+  readingVerdict,
   calculatePace,
   rollingPaceSeconds,
   paceAsNumber,
@@ -19,8 +20,16 @@ import {
   detectBestEfforts,
   KalmanFilter,
   toGPX,
+  climbBySegment,
+  movingClockMs,
+  movingSecondsBetween,
+  segmentMetres,
+  fixTimestamp,
+  MAX_PLAUSIBLE_SPEED_MPS,
+  FIX_TIME_MAX_AGE_MS,
   type GPSPoint,
 } from "../gps";
+import { sampleRoute } from "../routeSegments";
 
 // ── Helpers ──────────────────────────────────
 
@@ -46,6 +55,54 @@ function makePoint(overrides: Partial<GPSPoint> = {}): GPSPoint {
     rawLat: overrides.rawLat ?? base.lat,
     rawLon: overrides.rawLon ?? base.lon,
   };
+}
+
+/** Metres in one degree of latitude, by this module's haversine (R =
+ *  6,371 km): a step of `m / M_PER_DEG` degrees along a meridian is
+ *  exactly `m` metres to it. */
+const M_PER_DEG = (6371000 * Math.PI) / 180;
+
+/**
+ * A run due north from the equator: `n` points `stepM` metres apart, one
+ * every `dtSec` seconds of running. `holds[i]` is seconds the clock was
+ * stopped just before point `i` — the shape useGPS records a pause in:
+ * nothing recorded while held, the wall clock jumps, and every later point
+ * carries the time held in `pausedMs`. `carriedM[i]` moves point `i` (and
+ * everything after it) on by that many metres, covered while held.
+ */
+function trace(
+  n: number,
+  stepM: number,
+  dtSec: number,
+  holds: Record<number, number> = {},
+  carriedM: Record<number, number> = {},
+  moveSec: Record<number, number> = {}
+): GPSPoint[] {
+  const pts: GPSPoint[] = [];
+  let t = 1_700_000_000_000;
+  let held = 0;
+  let metres = 0;
+  for (let i = 0; i < n; i++) {
+    if (i > 0) {
+      t += (moveSec[i] ?? dtSec) * 1000;
+      metres += stepM;
+    }
+    if (holds[i]) {
+      t += holds[i] * 1000;
+      held += holds[i] * 1000;
+    }
+    metres += carriedM[i] ?? 0;
+    pts.push(
+      makePoint({
+        lat: metres / M_PER_DEG,
+        lon: 0,
+        altitude: 10,
+        timestamp: t,
+        ...(held > 0 ? { pausedMs: held } : {}),
+      })
+    );
+  }
+  return pts;
 }
 
 // ── haversine ────────────────────────────────
@@ -570,6 +627,55 @@ describe("calculateSplits — the lap, and splitsForDisplay", () => {
 
 // ── totalElevationGain ───────────────────────
 
+/** The rule totalElevationGain used until 2026-10: any rise over 2 m
+ *  between two consecutive fixes, counted in full. Kept here only so the
+ *  tests below can show what it got wrong on the same tracks. */
+function perFixRule(points: GPSPoint[]): number {
+  let gain = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1].altitude;
+    const b = points[i].altitude;
+    if (a != null && b != null && b - a > 2) gain += b - a;
+  }
+  return gain;
+}
+
+/** Deterministic uniform noise in [-amp, amp]. */
+function jitter(seed: number, amp: number): () => number {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((((t ^ (t >>> 14)) >>> 0) / 4294967296) * 2 - 1) * amp;
+  };
+}
+
+/** A track of the given altitudes, one fix a second. */
+function altitudeTrack(altitudes: (number | null)[]): GPSPoint[] {
+  return altitudes.map((altitude, i) =>
+    makePoint({ lat: i * 0.0001, lon: 0, altitude, timestamp: i * 1000 })
+  );
+}
+
+/** Level, then a steady climb of `rise` metres over `climbFixes` fixes,
+ *  then level again — 0.5 m a fix for 30 m over 60 is a ~17% hill at a
+ *  jog, already steeper than most. */
+function hill(
+  rise: number,
+  climbFixes: number,
+  flatFixes: number,
+  noise?: () => number
+): number[] {
+  const alts: number[] = [];
+  for (let i = 0; i < flatFixes; i++) alts.push(100);
+  for (let i = 1; i <= climbFixes; i++)
+    alts.push(100 + (rise * i) / climbFixes);
+  for (let i = 0; i < flatFixes; i++) alts.push(100 + rise);
+  return noise ? alts.map((a) => a + noise()) : alts;
+}
+
 describe("totalElevationGain", () => {
   it("returns 0 for empty array", () => {
     expect(totalElevationGain([])).toBe(0);
@@ -579,43 +685,123 @@ describe("totalElevationGain", () => {
     expect(totalElevationGain([makePoint()])).toBe(0);
   });
 
-  it("sums only positive elevation changes > 2m", () => {
-    const points: GPSPoint[] = [
-      makePoint({ altitude: 10 }),
-      makePoint({ altitude: 15 }), // +5 (counted)
-      makePoint({ altitude: 12 }), // -3 (ignored)
-      makePoint({ altitude: 20 }), // +8 (counted)
-      makePoint({ altitude: 19 }), // -1 (ignored, also <= 2)
-    ];
-    // gain = 5 + 8 = 13
-    expect(totalElevationGain(points)).toBe(13);
+  it("counts a smooth, gentle climb in full — the per-fix rule counted none of it", () => {
+    /* UNDER-count. A real climb arrives in small steps: half a metre a
+       fix here, and on a 2% grade about 6 cm. No single step clears 2 m,
+       so on a smooth (barometric) altitude track the old rule read a 30 m
+       hill as flat. */
+    const track = altitudeTrack(hill(30, 60, 30));
+    expect(perFixRule(track)).toBe(0);
+    expect(totalElevationGain(track)).toBe(30);
   });
 
-  it("ignores small gains <= 2m (noise filter)", () => {
-    const points: GPSPoint[] = [
-      makePoint({ altitude: 10 }),
-      makePoint({ altitude: 11.5 }), // +1.5 ≤ 2, ignored
-      makePoint({ altitude: 12 }), // +0.5 ≤ 2, ignored
-    ];
-    expect(totalElevationGain(points)).toBe(0);
+  it("reads a flat track with ±2–4 m jitter as next to no climb — the per-fix rule read hundreds of metres", () => {
+    /* OVER-count. Every fix-to-fix rise over 2 m counted in full, so ten
+       flat minutes of jitter added up to a mountain. 20 seeds per
+       amplitude, ten minutes at a fix a second each. */
+    for (const amp of [2, 3, 4]) {
+      const gains: number[] = [];
+      for (let seed = 1; seed <= 20; seed++) {
+        const noise = jitter(seed * 7 + amp, amp);
+        const track = altitudeTrack(
+          Array.from({ length: 600 }, () => 100 + noise())
+        );
+        expect(perFixRule(track)).toBeGreaterThan(100);
+        gains.push(totalElevationGain(track));
+      }
+      /* Measured: 0 m on every seed at ±2 and ±3 m; at ±4 m a mean of
+         2.3 m and a worst of 6 m. The per-fix rule: 166–730 m. */
+      const mean = gains.reduce((a, b) => a + b, 0) / gains.length;
+      expect(mean).toBeLessThanOrEqual(amp === 4 ? 3 : 0.5);
+      expect(Math.max(...gains)).toBeLessThanOrEqual(amp === 4 ? 8 : 1);
+    }
   });
 
-  it("handles null altitudes", () => {
-    const points: GPSPoint[] = [
-      makePoint({ altitude: 10 }),
-      makePoint({ altitude: null }),
-      makePoint({ altitude: 20 }),
-    ];
-    // First→Second: null altitude, skipped. Second→Third: null altitude, skipped.
-    expect(totalElevationGain(points)).toBe(0);
+  it("reads a steady 30 m climb with ±3 m noise as about 30 m", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const track = altitudeTrack(hill(30, 120, 60, jitter(seed, 3)));
+      const gain = totalElevationGain(track);
+      // Measured 31–32 m on these seeds; the per-fix rule read 139–231 m.
+      expect(gain).toBeGreaterThanOrEqual(29);
+      expect(gain).toBeLessThanOrEqual(33);
+      expect(perFixRule(track)).toBeGreaterThan(100);
+    }
   });
 
-  it("rounds the result", () => {
-    const points: GPSPoint[] = [
-      makePoint({ altitude: 10 }),
-      makePoint({ altitude: 15.7 }), // +5.7
+  it("counts a descent as loss, not gain", () => {
+    const down = altitudeTrack(hill(30, 60, 30).reverse());
+    expect(totalElevationGain(down)).toBe(0);
+    const { loss } = climbBySegment(down);
+    expect(loss.reduce((a, b) => a + b, 0)).toBeCloseTo(30, 6);
+  });
+
+  it("ignores a rise and fall under the 3 m threshold, and counts one over it in full", () => {
+    // Level, up h metres, level, back down, level.
+    const bump = (h: number) => [
+      ...hill(h, 30, 30),
+      ...hill(h, 30, 0).reverse(),
+      ...Array.from({ length: 30 }, () => 100),
     ];
-    expect(totalElevationGain(points)).toBe(6); // Math.round(5.7)
+    expect(totalElevationGain(altitudeTrack(bump(2)))).toBe(0);
+    /* The whole 5 m from the low point, not 5 − 3: a threshold that shaved
+       itself off every hill would under-count every hilly run. */
+    expect(totalElevationGain(altitudeTrack(bump(5)))).toBe(5);
+  });
+
+  it("reads past fixes with no altitude instead of breaking the climb at them", () => {
+    /* A source that reports altitude on alternate fixes. The per-fix rule
+       needed two consecutive altitudes, so it saw no climb at all. */
+    const alts = hill(30, 60, 30);
+    const patchy = altitudeTrack(alts.map((a, i) => (i % 2 ? null : a)));
+    expect(perFixRule(patchy)).toBe(0);
+    expect(totalElevationGain(patchy)).toBe(30);
+  });
+
+  it("returns whole metres", () => {
+    expect(
+      Number.isInteger(
+        totalElevationGain(altitudeTrack(hill(12.6, 40, 30, jitter(9, 1))))
+      )
+    ).toBe(true);
+  });
+});
+
+describe("climbBySegment and the splits' elevation", () => {
+  it("is non-negative per segment and adds up to the total", () => {
+    const track = altitudeTrack([
+      ...hill(20, 50, 20, jitter(3, 2)),
+      ...hill(20, 50, 20, jitter(4, 2)).reverse(),
+    ]);
+    const { gain, loss } = climbBySegment(track);
+    expect(gain.every((g) => g >= 0) && loss.every((l) => l >= 0)).toBe(true);
+    expect(gain[0]).toBe(0);
+    expect(totalElevationGain(track)).toBe(
+      Math.round(gain.reduce((a, b) => a + b, 0))
+    );
+  });
+
+  it("puts a climb in the split it happened in, and the splits add up to the run", () => {
+    /* Three kilometres at 5:00/km, a fix a second (3.33 m apart): level,
+       a 20 m climb across the second kilometre, level. Smoothing spreads
+       the corners of the climb over a few fixes either side, a few
+       centimetres into the neighbouring kilometres. */
+    const alts = Array.from({ length: 910 }, (_, i) =>
+      i <= 300 ? 100 : i >= 600 ? 120 : 100 + (20 * (i - 300)) / 300
+    );
+    const track = alts.map((altitude, i) =>
+      makePoint({
+        lat: (i * (10 / 3)) / M_PER_DEG,
+        lon: 0,
+        altitude,
+        timestamp: i * 1000,
+      })
+    );
+    const splits = calculateSplits(track);
+    expect(splits.map((s) => s.elevationGain)).toEqual([0, 20, 0]);
+    expect(splits.reduce((a, s) => a + s.elevationGain, 0)).toBe(
+      totalElevationGain(track)
+    );
+    expect(splits.every((s) => s.elevationLoss === 0)).toBe(true);
   });
 });
 
@@ -978,5 +1164,251 @@ describe("detectBestEfforts", () => {
     expect(oneK).toBeDefined();
     // Fast block ≈ 111m/4s → 1000m ≈ 36s; the slow-window 1K would be ~180s.
     expect(oneK!.time).toBeLessThan(60);
+  });
+});
+
+// ── Moving time: pauses are not running ──────
+// A pause (manual or auto) and the start countdown stop the run's clock;
+// useGPS records nothing while it is stopped and stamps every later point
+// with the time held (`pausedMs`). Splits, best efforts, the live pace and
+// the ghost all read the MOVING clock, as `duration` always has — Strava's
+// splits and best efforts do the same. `trace()` builds that shape.
+
+describe("calculateSplits — moving time", () => {
+  it("leaves a 5-minute stop inside km 2 out of km 2's time", () => {
+    /* 5:00/km, a point every 100 m; the clock stops for 300 s at 1.4 km.
+       Timed on the wall clock (the old code) km 2 read 10:00. */
+    const pts = trace(32, 100, 30, { 15: 300 }); // 3.1 km
+    const splits = calculateSplits(pts);
+    expect(splits.map((s) => Math.round(s.time))).toEqual([300, 300, 300]);
+    expect(splits[1].pace).toBe("5:00");
+    // The splits add up to the moving time, which is the run's duration.
+    expect(splits.reduce((a, s) => a + s.time, 0)).toBeCloseTo(
+      movingSecondsBetween(pts[0], pts[30]),
+      3
+    );
+  });
+
+  it("reads a trace without pausedMs on the wall clock, as before — saved runs do not move", () => {
+    const pts = trace(32, 100, 30);
+    expect(pts.every((p) => p.pausedMs === undefined)).toBe(true);
+    expect(calculateSplits(pts).map((s) => Math.round(s.time))).toEqual([
+      300, 300, 300,
+    ]);
+    expect(movingClockMs(pts[7])).toBe(pts[7].timestamp);
+  });
+
+  it("survives the saved trace being thinned — mile splits are recut from it", () => {
+    /* `pausedMs` is cumulative, so any two points left after sampleRoute
+       still subtract to the right moving time. An imperial reader's mile
+       splits are recomputed from the SAVED (sampled) trace. */
+    const pts = trace(1010, 5, 1.5, { 430: 600 }); // 5 km, 5:00/km, a 10-minute stop in km 3
+    const thinned = sampleRoute(pts, 120);
+    expect(thinned.length).toBeLessThan(pts.length);
+    const full = calculateSplits(pts);
+    const fromSaved = calculateSplits(thinned);
+    expect(fromSaved).toHaveLength(full.length);
+    fromSaved.forEach((s, i) => expect(s.time).toBeCloseTo(full[i].time, 0));
+    expect(Math.max(...fromSaved.map((s) => s.time))).toBeLessThan(310);
+  });
+
+  it("never times a split negative when the phone's clock steps back", () => {
+    const pts = trace(32, 100, 30);
+    // The fix at the 1 km mark reads 400 s early: on the raw clock, km 1 took -100 s.
+    pts[10] = { ...pts[10], timestamp: pts[10].timestamp - 400_000 };
+    for (const s of calculateSplits(pts))
+      expect(s.time).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("detectBestEfforts — moving time", () => {
+  it("never puts a pause's time into a best 1K", () => {
+    /* 1.1 km at 5:00/km with a 5-minute stop at 0.5 km, so EVERY 1 km
+       stretch contains the stop. On the wall clock (the old code) the
+       best 1K was 10:00. */
+    const pts = trace(12, 100, 30, { 6: 300 });
+    const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
+      (e) => e.label === "1K"
+    );
+    // 10 or 11 of the 100 m steps, whichever first covers 1 km: 5:00 or 5:30.
+    expect(oneK!.time).toBeGreaterThanOrEqual(300 - 1e-6);
+    expect(oneK!.time).toBeLessThanOrEqual(330 + 1e-6);
+  });
+
+  it("does not let a line drawn across a pause carry a 1K", () => {
+    /* Paused, given a lift 2 km up the road, resumed. Nothing was recorded
+       while held, so the next point is 2 km from the last — with the
+       paused time taken out of the clock that line alone would be a 1K in
+       two seconds. Only what the two clock-running seconds either side of
+       the stop could cover (MAX_PLAUSIBLE_SPEED_MPS) is credited. On the
+       wall clock (the old code) that same line made the best 1K 10:02. */
+    const pts = trace(12, 100, 30, { 6: 600 }, { 6: 2000 }, { 6: 2 });
+    const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
+      (e) => e.label === "1K"
+    );
+    expect(oneK).toBeDefined();
+    expect(oneK!.time).toBeGreaterThan(280);
+    expect(oneK!.time).toBeLessThan(310);
+    // …and the 2 km is not distance: 1.0 km run plus at most 2 s × 12 m/s.
+    expect(totalDistance(pts)).toBeCloseTo(
+      1000 + 2 * MAX_PLAUSIBLE_SPEED_MPS,
+      6
+    );
+    expect(calculateSplits(pts).length).toBeLessThanOrEqual(1);
+  });
+
+  it("finds the same efforts on a trace with no holds as it always did", () => {
+    const pts = meridianPath(55, 0.001, 10);
+    const labels = detectBestEfforts(pts, totalDistance(pts)).map(
+      (e) => e.label
+    );
+    expect(labels).toEqual(["1K", "5K"]);
+  });
+});
+
+describe("segmentMetres and the moving clock", () => {
+  it("is the straight line when no hold falls between the points", () => {
+    const [a, b] = trace(2, 250, 60);
+    expect(segmentMetres(a, b)).toBeCloseTo(250, 6);
+  });
+
+  it("caps the line across a hold at what the running part of the gap could cover", () => {
+    // 3 s of clock-running time either side of a 10-minute hold, 900 m apart.
+    const [a, b] = trace(2, 900, 3, { 1: 600 });
+    expect(movingSecondsBetween(a, b)).toBeCloseTo(3, 6);
+    expect(segmentMetres(a, b)).toBeCloseTo(3 * MAX_PLAUSIBLE_SPEED_MPS, 6);
+    // A runner who resumed where they stopped keeps every metre.
+    const [c, d] = trace(2, 8, 3, { 1: 600 });
+    expect(segmentMetres(c, d)).toBeCloseTo(8, 6);
+  });
+
+  it("reads a missing or malformed pausedMs as nothing held", () => {
+    const p = makePoint({ timestamp: 5000 });
+    expect(movingClockMs(p)).toBe(5000);
+    expect(movingClockMs({ ...p, pausedMs: "300" as unknown as number })).toBe(
+      5000
+    );
+    expect(movingClockMs({ ...p, pausedMs: NaN })).toBe(5000);
+    expect(movingClockMs({ ...p, pausedMs: 1200 })).toBe(3800);
+  });
+});
+
+describe("rollingPaceSeconds — moving time", () => {
+  it("reads the running pace straight after a wait, not the wait", () => {
+    /* A fix a second at 5:00/km for a minute, 20 s stopped at a crossing,
+       then 5 s running. On the wall clock the 30 s window held 10 s of
+       running and 20 s of standing: 15:00/km, and the pace alert told the
+       runner they were behind as they set off. */
+    const pts = trace(67, 10 / 3, 1, { 61: 20 });
+    expect(rollingPaceSeconds(pts, 30)).toBeCloseTo(300, 0);
+  });
+});
+
+describe("routeTimeAtDistance — moving time", () => {
+  it("leaves the original run's stops out of the ghost, as the live timer does", () => {
+    // 222 m, a 2-minute stop halfway; the live side is timer.elapsed.
+    const route = trace(3, 111, 60, { 2: 120 });
+    expect(routeTimeAtDistance(route, 222)).toBeCloseTo(120, 0);
+    expect(routeTimeAtDistance(route, 10_000)).toBeCloseTo(120, 0);
+  });
+});
+
+describe("fixTimestamp — when a fix was taken", () => {
+  const now = 1_700_000_000_000;
+
+  it("uses the fix's own time when it is sane", () => {
+    expect(fixTimestamp(now - 4000, now, now - 5000)).toBe(now - 4000);
+    expect(fixTimestamp(now - 4000, now, null)).toBe(now - 4000);
+  });
+
+  it("falls back to arrival for a time that is missing or not a number", () => {
+    expect(fixTimestamp(undefined, now, null)).toBe(now);
+    expect(fixTimestamp(NaN, now, null)).toBe(now);
+    expect(fixTimestamp(Infinity, now, null)).toBe(now);
+    expect(fixTimestamp("1700000000000", now, null)).toBe(now);
+  });
+
+  it("never stamps a fix later than it arrived", () => {
+    // A receiver clock running ahead: a little, then an hour.
+    expect(fixTimestamp(now + 500, now, null)).toBe(now);
+    expect(fixTimestamp(now + 3_600_000, now, now - 1000)).toBe(now);
+  });
+
+  it("falls back to arrival for a time before the previous point, or absurdly old", () => {
+    expect(fixTimestamp(now - 9000, now, now - 5000)).toBe(now);
+    expect(fixTimestamp(now - FIX_TIME_MAX_AGE_MS - 1, now, null)).toBe(now);
+    // Seconds read as milliseconds would date the run in 1970.
+    expect(fixTimestamp(now / 1000, now, null)).toBe(now);
+  });
+});
+
+describe("isValidReading — measured on the fix's own time", () => {
+  it("judges a batched fix on the seconds between the fixes, not between arrivals", () => {
+    // 30 m in 1 s is 30 m/s — a teleport — even though it arrives 10 s late.
+    const lastPoint = makePoint({ lat: 0, lon: 0, timestamp: 1_000_000 });
+    const coords = {
+      latitude: 30 / M_PER_DEG,
+      longitude: 0,
+      accuracy: 5,
+      altitude: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+      toJSON() {
+        return this;
+      },
+    } as GeolocationCoordinates;
+    expect(isValidReading(coords, lastPoint, 60, 1_001_000)).toBe(false);
+    expect(isValidReading(coords, lastPoint, 60, 1_010_000)).toBe(true);
+  });
+});
+
+describe("readingVerdict — why a fix is not recorded", () => {
+  const coordsAt = (lat: number, accuracy = 5) => ({
+    latitude: lat,
+    longitude: -0.1,
+    accuracy,
+    altitude: 10,
+    altitudeAccuracy: 5,
+    heading: 0,
+    speed: 3,
+    toJSON() {
+      return this;
+    },
+  });
+  const T = 1_700_000_000_000;
+  const last = makePoint({ lat: 51.5, lon: -0.1, timestamp: T });
+  const metresNorth = (m: number) => 51.5 + m / 111_320;
+
+  it("calls a fix that has not moved still, not bad", () => {
+    expect(readingVerdict(coordsAt(metresNorth(0.4)), last, 60, T + 1000)).toBe(
+      "still"
+    );
+    // The same fix delivered twice: still, not out of order.
+    expect(readingVerdict(coordsAt(51.5), last, 60, T)).toBe("still");
+  });
+
+  it("names each fault", () => {
+    expect(
+      readingVerdict(coordsAt(metresNorth(5), 80), last, 60, T + 1000)
+    ).toBe("inaccurate");
+    expect(readingVerdict(coordsAt(metresNorth(5)), last, 60, T - 1000)).toBe(
+      "out-of-order"
+    );
+    expect(readingVerdict(coordsAt(metresNorth(50)), last, 60, T + 1000)).toBe(
+      "teleport"
+    );
+    expect(readingVerdict(coordsAt(metresNorth(3)), last, 60, T + 1000)).toBe(
+      "ok"
+    );
+  });
+
+  it("records only what it calls ok", () => {
+    expect(isValidReading(coordsAt(metresNorth(3)), last, 60, T + 1000)).toBe(
+      true
+    );
+    expect(isValidReading(coordsAt(metresNorth(0.4)), last, 60, T + 1000)).toBe(
+      false
+    );
   });
 });

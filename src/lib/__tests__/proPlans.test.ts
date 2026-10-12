@@ -8,20 +8,47 @@
  *     ribbon renders
  *   - getCheckoutCtaLabel returns the "Start Pro — £X/<period>"
  *     shape both ProModal and Upgrade.tsx rely on
- *   - Yearly billing disclosure says "annually" (App Store
- *     Guideline 3.1.2(c) requires accurate auto-renew copy)
+ *   - The renewal disclosure says what is charged, after the trial when
+ *     there is one, and that it renews (App Store Guideline 3.1.2(c)),
+ *     in Apple's current name for the account ("Apple Account")
+ *   - Every figure is in the currency of the plan it is worked out from:
+ *     on the App Store build that is the storefront's, never pounds
  */
 import { describe, it, expect } from "vitest";
 import {
   PRO_PLANS,
   DEFAULT_PLAN,
-  getPlan,
+  TRIAL_DAYS,
+  findPlan,
+  getBilledPriceLine,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
+  getRenewalTerms,
   getInlinePriceSummary,
+  localizePlans,
+  yearlySavingPercent,
   type PlanId,
+  type ProPlan,
+  type StorePrice,
   weeklyPriceLabel,
 } from "../proPlans";
+
+/** An amount written the way this runtime writes `currency` — the store
+ *  prices' figures follow the viewer's locale, like the app's other
+ *  numbers (see src/test/localeGrouping.ts), so the expected string is
+ *  built from the runtime rather than spelled for one locale. */
+const money = (amount: number, currency: string) =>
+  new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+    amount
+  );
+
+/** A pound plan by id, as the web shows it. */
+const getPlan = (id: PlanId) => findPlan(PRO_PLANS, id);
+
+const US_STOREFRONT: Record<PlanId, StorePrice> = {
+  monthly: { priceString: "$4.99", price: 4.99, currencyCode: "USD" },
+  yearly: { priceString: "$39.99", price: 39.99, currencyCode: "USD" },
+};
 
 describe("PRO_PLANS — shape", () => {
   it("has exactly two plans (monthly + yearly)", () => {
@@ -49,59 +76,120 @@ describe("PRO_PLANS — shape", () => {
     const recommended = PRO_PLANS.find((p) => p.recommended);
     expect(recommended?.savingsLabel).toBeTruthy();
   });
+
+  it("the pound plans say they are pounds, written en-GB", () => {
+    for (const plan of PRO_PLANS) {
+      expect(plan.currencyCode).toBe("GBP");
+      expect(plan.priceLocale).toBe("en-GB");
+    }
+  });
 });
 
-describe("getPlan", () => {
+describe("findPlan", () => {
   it("returns the matching plan", () => {
-    expect(getPlan("monthly").id).toBe("monthly");
-    expect(getPlan("yearly").id).toBe("yearly");
+    expect(findPlan(PRO_PLANS, "monthly").id).toBe("monthly");
+    expect(findPlan(PRO_PLANS, "yearly")).toBe(PRO_PLANS[1]);
   });
 
   it("throws on unknown plan", () => {
-    expect(() => getPlan("annual" as PlanId)).toThrow();
+    expect(() => findPlan(PRO_PLANS, "annual" as PlanId)).toThrow();
+  });
+
+  it("finds a plan in the list it is given, not in the pound list", () => {
+    const plans = localizePlans(US_STOREFRONT);
+    expect(findPlan(plans, "yearly").price).toBe("$39.99");
   });
 });
 
 describe("getCheckoutCtaLabel", () => {
   it("formats as 'Start Pro — <price>/<short-period>'", () => {
-    expect(getCheckoutCtaLabel("monthly")).toBe("Start Pro — £3.99/mo");
-    expect(getCheckoutCtaLabel("yearly")).toBe("Start Pro — £34.99/yr");
+    expect(getCheckoutCtaLabel(getPlan("monthly"))).toBe(
+      "Start Pro — £3.99/mo"
+    );
+    expect(getCheckoutCtaLabel(getPlan("yearly"))).toBe(
+      "Start Pro — £34.99/yr"
+    );
+  });
+
+  it("is priced from the plan it is handed (the App Store's price on iOS)", () => {
+    const plans = localizePlans(US_STOREFRONT);
+    expect(getCheckoutCtaLabel(findPlan(plans, "yearly"))).toBe(
+      "Start Pro — $39.99/yr"
+    );
+  });
+
+  it("the trial CTA names the trial's length", () => {
+    expect(getCheckoutCtaLabel(getPlan("yearly"), true)).toBe(
+      `Start your ${TRIAL_DAYS}-day free trial`
+    );
+    expect(TRIAL_DAYS).toBe(7);
+  });
+});
+
+describe("getBilledPriceLine — what is billed, and from when", () => {
+  it("with the trial, the trial and the price in one line", () => {
+    expect(getBilledPriceLine(getPlan("yearly"), true)).toBe(
+      "7 days free, then £34.99 a year"
+    );
+    expect(getBilledPriceLine(getPlan("monthly"), true)).toBe(
+      "7 days free, then £3.99 a month"
+    );
+  });
+
+  it("without the trial, the price and its period", () => {
+    expect(getBilledPriceLine(getPlan("yearly"), false)).toBe("£34.99 a year");
+    expect(getBilledPriceLine(getPlan("monthly"), false)).toBe("£3.99 a month");
   });
 });
 
 describe("getRenewalDisclosure", () => {
-  it("uses 'monthly' for the monthly plan (web default)", () => {
-    expect(getRenewalDisclosure("monthly")).toContain("monthly");
-  });
-
-  it("uses 'annually' for the yearly plan (web default)", () => {
-    expect(getRenewalDisclosure("yearly")).toContain("annually");
-  });
-
-  it("includes 'Cancel anytime' on web (paywall trust copy)", () => {
-    expect(getRenewalDisclosure("monthly", "web")).toContain("Cancel anytime");
-    expect(getRenewalDisclosure("yearly", "web")).toContain("Cancel anytime");
-  });
-
-  it("iOS variant uses Apple ID subscriptions wording", () => {
-    const ios = getRenewalDisclosure("yearly", "ios");
-    expect(ios).toContain("Apple ID");
-    expect(ios).toContain("Auto-renews annually");
-  });
-
-  it("android falls through to the web disclosure shape", () => {
-    expect(getRenewalDisclosure("monthly", "android")).toContain(
-      "Cancel anytime"
+  it("iOS with the trial: what is charged after it, that it renews, where to cancel", () => {
+    expect(
+      getRenewalDisclosure(getPlan("yearly"), {
+        platform: "ios",
+        withTrial: true,
+      })
+    ).toBe(
+      "7 days free, then £34.99 a year. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
     );
+  });
+
+  it("iOS without the trial: the price, then the same renewal sentence", () => {
+    expect(getRenewalDisclosure(getPlan("monthly"), { platform: "ios" })).toBe(
+      "£3.99 a month. Renews automatically until cancelled. Manage or cancel in your Apple Account subscriptions."
+    );
+  });
+
+  it("names the selected plan's period, so it flips with the selection", () => {
+    expect(getRenewalDisclosure(getPlan("yearly"))).toContain("£34.99 a year");
+    expect(getRenewalDisclosure(getPlan("monthly"))).toContain("£3.99 a month");
+  });
+
+  it("web: renews until cancelled, and can be cancelled any time", () => {
+    expect(getRenewalDisclosure(getPlan("monthly"), { platform: "web" })).toBe(
+      "£3.99 a month. Renews automatically until cancelled. Cancel any time."
+    );
+  });
+
+  it("android falls through to the web wording", () => {
+    expect(getRenewalTerms("android")).toBe(getRenewalTerms("web"));
+  });
+
+  it("says Apple Account, Apple's current name, never Apple ID", () => {
+    const ios = getRenewalTerms("ios");
+    expect(ios).toContain("Apple Account");
+    expect(ios).not.toMatch(/Apple ID/);
   });
 });
 
 describe("getInlinePriceSummary", () => {
-  it("returns 'monthly or yearly' shape pulled from PRO_PLANS", () => {
-    const summary = getInlinePriceSummary();
-    expect(summary).toContain("£3.99/month");
-    expect(summary).toContain("£34.99/year");
-    expect(summary).toContain(" or ");
+  it("both plans, from the list it is given", () => {
+    expect(getInlinePriceSummary(PRO_PLANS)).toBe(
+      "£3.99 a month or £34.99 a year"
+    );
+    expect(getInlinePriceSummary(localizePlans(US_STOREFRONT))).toBe(
+      "$4.99 a month or $39.99 a year"
+    );
   });
 });
 
@@ -110,15 +198,121 @@ describe("getInlinePriceSummary", () => {
  * shows and that yearly reads cheaper per week than monthly. */
 describe("weeklyPriceLabel", () => {
   it("expresses both plans per week", () => {
-    expect(weeklyPriceLabel("monthly")).toBe("\u2248 \u00a30.92/wk");
-    expect(weeklyPriceLabel("yearly")).toBe("\u2248 \u00a30.67/wk");
+    expect(weeklyPriceLabel(getPlan("monthly"))).toBe("≈ £0.92/wk");
+    expect(weeklyPriceLabel(getPlan("yearly"))).toBe("≈ £0.67/wk");
   });
 
   it("yearly per-week undercuts monthly per-week (the anchoring point)", () => {
-    const num = (s: string) => Number(s.replace(/[^0-9.]/g, ""));
-    expect(num(weeklyPriceLabel("yearly"))).toBeLessThan(
-      num(weeklyPriceLabel("monthly"))
+    const perWeek = (plan: ProPlan) =>
+      (plan.priceValue * plan.periodsPerYear) / 52;
+    expect(perWeek(getPlan("yearly"))).toBeLessThan(
+      perWeek(getPlan("monthly"))
     );
+  });
+
+  it("is written in the plan's own currency", () => {
+    const plans = localizePlans(US_STOREFRONT);
+    expect(weeklyPriceLabel(findPlan(plans, "yearly"))).toBe(
+      `≈ ${money(39.99 / 52, "USD")}/wk`
+    );
+    expect(weeklyPriceLabel(findPlan(plans, "monthly"))).toBe(
+      `≈ ${money((4.99 * 12) / 52, "USD")}/wk`
+    );
+  });
+
+  it("is hidden (null), not guessed, when the currency cannot be written", () => {
+    expect(
+      weeklyPriceLabel({ ...getPlan("yearly"), currencyCode: "" })
+    ).toBeNull();
+    expect(
+      weeklyPriceLabel({ ...getPlan("yearly"), priceValue: Number.NaN })
+    ).toBeNull();
+  });
+});
+
+describe("localizePlans — the App Store's prices, in one currency", () => {
+  it("takes Apple's string, number and currency for every plan", () => {
+    const plans = localizePlans(US_STOREFRONT);
+    expect(plans.map((p) => p.price)).toEqual(["$4.99", "$39.99"]);
+    expect(plans.map((p) => p.priceValue)).toEqual([4.99, 39.99]);
+    expect(plans.every((p) => p.currencyCode === "USD")).toBe(true);
+    // Written the viewer's way, as Apple's own string is.
+    expect(plans.every((p) => p.priceLocale === undefined)).toBe(true);
+    // Everything that is not a price stays as authored.
+    expect(plans.map((p) => p.id)).toEqual(PRO_PLANS.map((p) => p.id));
+    expect(findPlan(plans, "yearly").recommended).toBe(true);
+    expect(findPlan(plans, "yearly").topBadge).toBe("Most popular");
+  });
+
+  it("works the saving out from the store's own prices", () => {
+    // $4.99 × 12 = $59.88 against $39.99: 33%, not the pound plans' 27%.
+    const plans = localizePlans(US_STOREFRONT);
+    expect(yearlySavingPercent(plans)).toBe(33);
+    expect(findPlan(plans, "yearly").savingsLabel).toBe("Save 33%");
+    expect(findPlan(plans, "monthly").savingsLabel).toBeUndefined();
+  });
+
+  it("claims no saving when the store's yearly price saves nothing", () => {
+    const plans = localizePlans({
+      monthly: { priceString: "€3.00", price: 3, currencyCode: "EUR" },
+      yearly: { priceString: "€36.00", price: 36, currencyCode: "EUR" },
+    });
+    expect(findPlan(plans, "yearly").price).toBe("€36.00");
+    expect(yearlySavingPercent(plans)).toBeNull();
+    expect(findPlan(plans, "yearly").savingsLabel).toBeUndefined();
+  });
+
+  it("all or nothing: one plan missing from the store keeps both in pounds", () => {
+    const plans = localizePlans({ yearly: US_STOREFRONT.yearly });
+    expect(plans).toBe(PRO_PLANS);
+    expect(plans.every((p) => p.price.startsWith("£"))).toBe(true);
+  });
+
+  it("all or nothing: two currencies, or an unusable price, keep the pounds", () => {
+    expect(
+      localizePlans({
+        monthly: US_STOREFRONT.monthly,
+        yearly: { priceString: "€39.99", price: 39.99, currencyCode: "EUR" },
+      })
+    ).toBe(PRO_PLANS);
+    expect(
+      localizePlans({
+        ...US_STOREFRONT,
+        monthly: { priceString: "$4.99", price: 0, currencyCode: "USD" },
+      })
+    ).toBe(PRO_PLANS);
+    expect(
+      localizePlans({
+        ...US_STOREFRONT,
+        monthly: { priceString: "", price: 4.99, currencyCode: "USD" },
+      })
+    ).toBe(PRO_PLANS);
+    expect(
+      localizePlans({
+        ...US_STOREFRONT,
+        yearly: { priceString: "$39.99", price: 39.99, currencyCode: "usd" },
+      })
+    ).toBe(PRO_PLANS);
+  });
+
+  it("no helper prints a pound figure for a storefront that is not in pounds", () => {
+    const plans = localizePlans(US_STOREFRONT);
+    const printed = [
+      getInlinePriceSummary(plans),
+      ...plans.flatMap((plan) => [
+        plan.price,
+        plan.savingsLabel ?? "",
+        weeklyPriceLabel(plan) ?? "",
+        getCheckoutCtaLabel(plan),
+        getBilledPriceLine(plan, true),
+        getRenewalDisclosure(plan, { platform: "ios", withTrial: true }),
+        getRenewalDisclosure(plan, { platform: "ios" }),
+      ]),
+    ];
+    // Anchor: the figures are really there, in dollars.
+    expect(printed.join(" ")).toContain("$39.99");
+    expect(printed.filter((s) => s.includes("$")).length).toBeGreaterThan(10);
+    expect(printed.join(" ")).not.toContain("£");
   });
 });
 
@@ -135,7 +329,8 @@ describe("weeklyPriceLabel", () => {
  *
  * `savingsLabel` is the third copy of the same two numbers, and the one most
  * likely to be left behind: it reads as marketing copy rather than as a
- * derived figure.
+ * derived figure. (On the App Store build it is recomputed from the store's
+ * prices by `localizePlans`; the pound plans keep it authored, pinned here.)
  *
  * These are display-side only — the amount actually charged comes from the
  * Stripe price / Apple product id in `purchaseProvider.ts`, which this
@@ -170,13 +365,14 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
     }
   });
 
-  it("periodsPerYear agrees with the billing frequency", () => {
-    // weeklyPriceLabel multiplies by this; a yearly plan with 12 would
-    // anchor the annual price twelve times too high.
+  it("periodsPerYear and periodPhrase agree with the billing frequency", () => {
+    // weeklyPriceLabel multiplies by periodsPerYear; a yearly plan with 12
+    // would anchor the annual price twelve times too high. periodPhrase is
+    // the disclosure's "£34.99 a year".
     for (const plan of PRO_PLANS) {
-      expect(plan.periodsPerYear).toBe(
-        plan.billingFrequency === "monthly" ? 12 : 1
-      );
+      const monthly = plan.billingFrequency === "monthly";
+      expect(plan.periodsPerYear).toBe(monthly ? 12 : 1);
+      expect(plan.periodPhrase).toBe(monthly ? "a month" : "a year");
     }
   });
 
@@ -198,6 +394,8 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
       claimed,
       `label says "${yearly.savingsLabel}" but £${monthlyShown}×${monthly.periodsPerYear} vs £${yearlyShown} is ${actual}%`
     ).toBe(actual);
+    // And the function the App Store prices go through agrees with it.
+    expect(yearlySavingPercent(PRO_PLANS)).toBe(actual);
   });
 
   it("the weekly anchor is computed from the displayed price", () => {
@@ -205,7 +403,7 @@ describe("PRO_PLANS — the derived copy cannot drift from the price", () => {
     // number on the card, not to a second field that may have moved.
     for (const plan of PRO_PLANS) {
       const perWeek = (displayedNumber(plan.price) * plan.periodsPerYear) / 52;
-      expect(weeklyPriceLabel(plan.id)).toBe(`≈ £${perWeek.toFixed(2)}/wk`);
+      expect(weeklyPriceLabel(plan)).toBe(`≈ £${perWeek.toFixed(2)}/wk`);
     }
   });
 });

@@ -38,7 +38,7 @@ function tsxFiles(dir: string): string[] {
 
 describe("paceLabel — the unit belongs to the helper", () => {
   it("includes the unit, so callers must not add one", () => {
-    expect(paceLabel(334, "km")).toBe("5:34/km");
+    expect(paceLabel(334, "km")).toBe("5:34 /km");
     expect(paceLabel(334, "km")).toMatch(/\/km$/);
   });
 

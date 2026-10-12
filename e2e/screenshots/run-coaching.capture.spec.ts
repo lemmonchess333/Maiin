@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 import { createRequire } from "node:module";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 import { computePlanMetadata } from "../../src/lib/runPlanMetadata";
 import {
@@ -130,7 +129,6 @@ test("running feedback follows edits and opens a reversible easier-week preview"
       });
     }
   );
-  await suppressCoachmarks(page);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signInAsTestUser(page, { email, password });
   await page.goto("program?tab=run");

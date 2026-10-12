@@ -3,6 +3,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { suggestionReason } from "@/components/social/suggestionReason";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import RestrictedNotice from "../RestrictedNotice";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useUid } from "@/lib/auth";
@@ -16,7 +17,6 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
-import Coachmark from "@/components/ui/Coachmark";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 export interface PeopleViewProps {
@@ -35,7 +35,6 @@ export interface PeopleViewProps {
    *  suggested-people fetch waits on this so a blocked user can't
    *  surface as a suggestion before the exclude set is known. */
   blockedReady: boolean;
-  isNewUser: boolean;
   /** Close the overlay and land on Together. */
   openTogether: () => void;
 }
@@ -45,7 +44,6 @@ export default function PeopleView({
   chromeHidden,
   blockedUsers,
   blockedReady,
-  isNewUser,
   openTogether,
 }: PeopleViewProps) {
   const uid = useUid();
@@ -207,24 +205,13 @@ export default function PeopleView({
   return (
     <section aria-label="People">
       <div className="space-y-6">
-        {/* S4e-MVP — restricted-user gate banner. Renders ABOVE
-            all Find-tab content when useRestrictedStatus reports
-            the current user is restricted. Search input +
-            FollowButtons + invite-share below are disabled. Copy
-            matches Soc5 #15 locked spec verbatim ("Your account
-            is restricted · Contact support"). role="status" so
-            screen readers announce on tab entry. */}
-        {isRestricted && (
-          <div
-            role="status"
-            aria-label="Your account is restricted. Contact support."
-            className="p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-          >
-            <p className="text-xs text-destructive-strong">
-              Your account is restricted · Contact support
-            </p>
-          </div>
-        )}
+        {/* S4e — the restricted-user notice, ABOVE all Find-tab
+            content when useRestrictedStatus reports the current user
+            is restricted. Search input + FollowButtons + invite-share
+            below are disabled. The shared notice (Soc5 #15's "Your
+            account is restricted · Contact support"), whose Contact
+            support now opens a mail to support. */}
+        {isRestricted && <RestrictedNotice />}
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
       people next (most relevant social action). Invite
@@ -481,48 +468,25 @@ export default function PeopleView({
                 </p>
               </div>
             </div>
-            {isNewUser ? (
-              <Coachmark
-                storageKey="social-find-invite"
-                placement="top"
-                content="Share your profile link to get started"
-                onDismiss={() =>
-                  trackSocialEvent("social_coachmark_dismissed", {
-                    coachmarkKey: "social-find-invite",
-                  })
-                }
-              >
-                <button
-                  type="button"
-                  onClick={handleShareInvite}
-                  disabled={isRestricted}
-                  aria-label={
-                    isRestricted
-                      ? "Inviting is unavailable while your account is restricted"
-                      : undefined
-                  }
-                  className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: THEME.brandStrong }}
-                >
-                  Share invite link
-                </button>
-              </Coachmark>
-            ) : (
-              <button
-                type="button"
-                onClick={handleShareInvite}
-                disabled={isRestricted}
-                aria-label={
-                  isRestricted
-                    ? "Inviting is unavailable while your account is restricted"
-                    : undefined
-                }
-                className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ background: THEME.brandStrong }}
-              >
-                Share invite link
-              </button>
-            )}
+            {/* A brand-new account got a coach mark here, "Share your
+                profile link to get started" (Soc5c). It drew behind this
+                overlay and saved itself as seen after six seconds, so
+                nobody ever saw it, and the card above already says it.
+                Removed with the coach-mark component (FV2). */}
+            <button
+              type="button"
+              onClick={handleShareInvite}
+              disabled={isRestricted}
+              aria-label={
+                isRestricted
+                  ? "Inviting is unavailable while your account is restricted"
+                  : undefined
+              }
+              className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: THEME.brandStrong }}
+            >
+              Share invite link
+            </button>
           </div>
         </div>
       </div>

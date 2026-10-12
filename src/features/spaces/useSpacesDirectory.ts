@@ -3,8 +3,8 @@
  * plan PR2 adds the race-kind rows).
  *
  * Static reads: interest Spaces request an aggregate count plus the
- * caller's membership; race cards only need membership. Apply country,
- * distance and past-date filtering before querying. Cache read promises
+ * caller's membership; race cards only need membership. Apply country
+ * and distance filtering before querying. Cache read promises
  * per mounted hook and user so changing a filter does not reload interest
  * counts. `refresh()` invalidates that cache after a join/leave.
  *
@@ -29,7 +29,7 @@ import {
 } from "./raceBrowse";
 import { SPACE_DEFS, type SpaceDef } from "./spaceDefs";
 import {
-  upcomingResolvedRaceDefs,
+  directoryResolvedRaceDefs,
   useRaceEventOverrides,
 } from "./raceEventOverrides";
 
@@ -49,7 +49,7 @@ export function useSpacesDirectory(
   const overrides = useRaceEventOverrides();
   const todayKey = localDateString();
   const upcomingRaces = useMemo(
-    () => (includeRaces ? upcomingResolvedRaceDefs(overrides, todayKey) : []),
+    () => (includeRaces ? directoryResolvedRaceDefs(overrides, todayKey) : []),
     [includeRaces, overrides, todayKey]
   );
   const { country, distance } = filters;

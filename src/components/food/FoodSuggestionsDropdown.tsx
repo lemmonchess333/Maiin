@@ -14,6 +14,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { OFF_CREDIT } from "@/lib/offNutrition";
 
 /* Long-press gesture constants — moved verbatim from the retired
    FoodQuickAddRow (wave2 D). Rationale unchanged: */
@@ -454,6 +455,11 @@ function FoodSuggestionsDropdown({
               </div>
             </button>
           ))}
+          {/* These rows are Open Food Facts' data, whose licence (ODbL)
+              asks for a credit wherever it is shown. */}
+          <p className="px-4 py-2 text-micro text-muted-foreground">
+            {OFF_CREDIT}
+          </p>
         </motion.div>
       )}
       {suggestions.length === 0 &&

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   act,
   fireEvent,
@@ -17,7 +17,12 @@ import {
   setSnapshotMetadata,
   readLog,
 } from "@/test/firestoreHarness";
-import { localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "../programTypes";
 
@@ -30,6 +35,7 @@ const h = vi.hoisted(() => ({
   state: null as unknown,
   readiness: "ready" as "pending" | "ready" | "failed",
   publish: null as ((value: unknown) => void) | null,
+  layoff: vi.fn(async (_uid: string, _day: string) => "none"),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: h.profile }),
@@ -44,7 +50,7 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("../fetchRecentLayoff", () => ({
-  fetchRecentLayoff: async () => "none",
+  fetchRecentLayoff: (uid: string, day: string) => h.layoff(uid, day),
 }));
 vi.mock("../HomeProgramController", () => {
   h.controllerImports++;
@@ -81,6 +87,8 @@ function Harness() {
           ? `Week ${model.programState.weekNumber}`
           : "Loading"}
       </p>
+      <p data-testid="loading">{String(model.loading)}</p>
+      <p data-testid="layoff">{model.recentLayoff}</p>
       <button
         onClick={() =>
           void model.skipRunDay("run").catch((e: Error) => setError(e.message))
@@ -125,6 +133,7 @@ beforeEach(() => {
     localDateString()
   ).programState;
   h.skip.mockReset().mockResolvedValue(undefined);
+  h.layoff.mockReset().mockResolvedValue("none");
   h.controllerMounts = 0;
   h.readiness = "ready";
   h.publish = null;
@@ -161,6 +170,75 @@ describe("Home defers the programme controller", () => {
     render(<Harness />);
     await flushSnapshots();
     expect(h.controllerMounts).toBe(0);
+  });
+  /* The cache already knows the document is missing (an earlier session
+     read it from the server, then closed before the programme was built),
+     so the first snapshot is the cached one and the hook rightly waits.
+     The server's answer changes nothing but `fromCache`, and Firestore
+     delivers a change to metadata alone only to a listener that asked
+     for it: without `includeMetadataChanges`, Home's session card stayed
+     a grey placeholder on every launch until Train built the programme. */
+  it("builds the programme when the server confirms one the cache already knew was missing", async () => {
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+    expect(h.controllerMounts).toBe(0);
+
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+  });
+  /* Drawn from no programme, a lifting day read "Today is a lifting day,
+     but no workout is linked" for the second the build took. */
+  it("stays loading until the built programme arrives", async () => {
+    h.readiness = "pending";
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+
+    act(() =>
+      h.publish!({
+        loading: false,
+        readiness: "ready",
+        programState: h.state,
+        skipRunDay: h.skip,
+      })
+    );
+    await flushSnapshots();
+    expect(screen.getByTestId("loading")).toHaveTextContent("true");
+
+    emit(h.state as ProgramState);
+    await waitFor(() => expect(screen.getByText("Week 3")).toBeInTheDocument());
+    expect(screen.getByTestId("loading")).toHaveTextContent("false");
+  });
+  it("stops loading when the programme cannot be built", async () => {
+    h.readiness = "pending";
+    emit(null, true);
+    render(<Harness />);
+    await flushSnapshots();
+    setSnapshotMetadata("users/alice/programState/current", {
+      fromCache: false,
+    });
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+
+    act(() =>
+      h.publish!({
+        loading: false,
+        readiness: "failed",
+        programState: null,
+        skipRunDay: h.skip,
+      })
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("loading")).toHaveTextContent("false")
+    );
   });
   it("loads maintenance when a real stored week is stale", async () => {
     emit({ ...(h.state as ProgramState), liftWeekKey: "2020-01-06" });
@@ -251,5 +329,64 @@ describe("Home acts on the server's copy of the plan", () => {
       "Couldn't load your programme. Please try again."
     );
     expect(h.skip).not.toHaveBeenCalled();
+  });
+});
+
+describe("Home, left open into a new week", () => {
+  /* Home loads the programme engine only when the plan needs it, and asked
+     that when the plan document changed, never when the day did. An app
+     left open on Home over the weekend (on a phone, in the background)
+     came back on Monday with last week's plan, and stayed on it until
+     something else loaded the engine: the week's rollover lives there. The
+     E2E journeys found it with a running plan, which nothing else on Home
+     loads the engine for. */
+  const shift = (key: string, days: number) =>
+    localDateString(addLocalDays(parseLocalDate(key), days));
+  const MONDAY = localWeekKey(new Date());
+  const SUNDAY = shift(MONDAY, 6);
+  const NEXT_MONDAY = shift(MONDAY, 7);
+  function resume() {
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("focus"));
+    });
+  }
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(`${SUNDAY}T20:00:00`));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("loads the engine on the app's return in a week the plan hasn't reached", async () => {
+    emit({ ...(h.state as ProgramState), liftWeekKey: MONDAY });
+    render(<Harness />);
+    await flushSnapshots();
+    expect(screen.getByText("Week 3")).toBeInTheDocument();
+    expect(h.controllerMounts).toBe(0);
+
+    vi.setSystemTime(new Date(`${NEXT_MONDAY}T08:00:00`));
+    resume();
+    await waitFor(() => expect(h.controllerMounts).toBe(1));
+  });
+
+  it("reads the runner's recent running again for the new day", async () => {
+    h.profile = { ...h.profile, runMode: "structured" };
+    emit(h.state as ProgramState);
+    render(<Harness />);
+    await waitFor(() => expect(h.layoff).toHaveBeenCalledWith("alice", SUNDAY));
+    expect(screen.getByTestId("layoff")).toHaveTextContent("none");
+
+    // Back after weeks away, with the app open all along.
+    h.layoff.mockResolvedValue("detrained");
+    vi.setSystemTime(new Date(`${NEXT_MONDAY}T08:00:00`));
+    resume();
+    await waitFor(() =>
+      expect(h.layoff).toHaveBeenCalledWith("alice", NEXT_MONDAY)
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("layoff")).toHaveTextContent("detrained")
+    );
   });
 });

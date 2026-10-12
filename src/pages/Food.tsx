@@ -10,7 +10,10 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import GuideHint from "@/components/guide/GuideHint";
+import { useGuideHint } from "@/hooks/useGuideHint";
+import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useUid } from "@/lib/auth";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
@@ -59,6 +62,8 @@ import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
+import { useAiConsent } from "@/hooks/useAiConsent";
+import AiConsentSheet from "@/components/food/AiConsentSheet";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
@@ -155,6 +160,20 @@ export default function Food() {
   // today rather than throwing — direct URLs come from many places
   // and should be lenient.
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const guideAsked = guideRequest(location.state);
+  /* The food-box hint goes first on its visit (FV2): the Pro line under
+     the box waits until the hint has been closed, so the first visit shows
+     one thing at a time. */
+  const composerHint = useGuideHint("food-composer");
+  const [composerHintClosed, setComposerHintClosed] = useState(false);
+  const proLineWaits = hintDue({
+    allowed: composerHint.allowed,
+    owed: composerHint.owed,
+    requested: guideAsked === "food-composer",
+    closed: composerHintClosed,
+  });
   const FOOD_TAP_BACK_DAYS = 90;
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const minDateStr = format(
@@ -270,6 +289,10 @@ export default function Food() {
   } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
+  /* Permission before food goes to Google (src/lib/aiConsent.ts). One
+     gate for the page: the composer uses it for typed meals and the
+     scanner gets it as a prop, so both ask the same question once. */
+  const aiConsent = useAiConsent();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   /* Optimistic-hide set for long-press → remove. Chips with an id
      in here are filtered from the rendered row immediately so the
@@ -470,8 +493,14 @@ export default function Food() {
   const todaysMeals = getMealsForDate(selectedDate);
 
   const [prevDate, setPrevDate] = useState(selectedDate);
+  /* The hero draws in when Food opens. A day switch remounts it (the
+     `key` below, which also resets its log haptic and celebration
+     guards), and from then on it arrives at the day's figures rather
+     than counting up from zero on every tap of the week strip. */
+  const [heroDrawIn, setHeroDrawIn] = useState(true);
   if (prevDate !== selectedDate) {
     setPrevDate(selectedDate);
+    if (heroDrawIn) setHeroDrawIn(false);
     if (targetMeal) setTargetMeal(null);
     // Clear any in-flight typed text on date change. Without this,
     // typing "2 eggs" for today, then tapping yesterday on the date
@@ -912,7 +941,17 @@ export default function Food() {
     setNlParsing(true);
     let items: ParsedFood[];
     let confidence: string;
-    if (isPro) {
+    /* A Pro typed meal goes to Gemini only with the person's yes: asked
+       the first time (AiConsentSheet), and never sent once they have said
+       no, when it is read on the phone as a free account's is — and
+       logged all the same. Closing the question without an answer logs
+       nothing and keeps the draft, so Log asks again. */
+    const consent = isPro ? await aiConsent.gate.ensure() : null;
+    if (consent === "dismissed") {
+      setNlParsing(false);
+      return;
+    }
+    if (consent === "allowed") {
       try {
         const result = await analyzeFoodText(nlInput);
         if (result && result.items?.length > 0) {
@@ -1808,8 +1847,10 @@ export default function Food() {
           <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
         </SectionErrorBoundary>
       </motion.div>
-      <motion.div variants={pageItemVariant} key={selectedDate}>
+      <motion.div variants={pageItemVariant}>
         <FoodHeroCard
+          key={selectedDate}
+          drawIn={heroDrawIn}
           selectedDate={selectedDate}
           isToday={isToday}
           dailyTargets={dailyTargets}
@@ -1910,6 +1951,7 @@ export default function Food() {
              when it has something to say, so the ungated tiers never
              run its hooks and never carry an empty step in the rhythm. */
           proHint={
+            !proLineWaits &&
             !scanUsage.loading &&
             !scanUsage.isUnlimited &&
             scanUsage.limit === 0 ? (
@@ -1959,6 +2001,22 @@ export default function Food() {
           onUpgrade={handleUpgrade}
           onManualOpen={() => setManualOpen(true)}
         />
+        {/* The guide's hint on a first visit (FV1), and the step the
+            first-week card's "Log your first meal" opens. The request
+            rides in the router state and is cleared when it closes. */}
+        <GuideHint
+          id="food-composer"
+          when
+          requested={guideAsked === "food-composer"}
+          onClose={() => {
+            setComposerHintClosed(true);
+            if (guideAsked)
+              navigate(location.pathname + location.search, {
+                replace: true,
+                state: null,
+              });
+          }}
+        />
       </motion.div>
       {usual && (
         /* One row: what and how much on the left, Edit and Log on the
@@ -1976,14 +2034,19 @@ export default function Food() {
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two
-           cannot disagree. */
+           cannot disagree.
+
+           At larger text the two controls drop under the words together,
+           at the right, once the words would have less than 7em beside
+           them: at double size on a 320px screen, "Your usual at
+           breakfast" ran 74px past the card. */
         <Card
           size="compact"
-          className="flex items-center gap-2"
+          className="flex flex-wrap items-center gap-2"
           role="group"
           aria-labelledby={usualHeadingId}
         >
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 grow basis-[7em]">
             <p
               id={usualHeadingId}
               className="text-micro leading-tight text-muted-foreground"
@@ -2000,22 +2063,24 @@ export default function Food() {
               kcal{usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
-          <IconButton
-            aria-label="Adjust portion or meal"
-            disabled={quickAdding !== null}
-            onClick={() => setPortionMeal(usual)}
-            icon={<Pencil className="size-4" />}
-          />
-          {/* Logs to the slot the heading names. With no slot selected the
-              heading names the hour's slot, and a meal saved without one
-              is filed by the diary's own hour rule, which differs. */}
-          <Button
-            variant="nutrition"
-            disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual, usualSlot)}
-          >
-            Log
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <IconButton
+              aria-label="Adjust portion or meal"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+              icon={<Pencil className="size-4" />}
+            />
+            {/* Logs to the slot the heading names. With no slot selected
+                the heading names the hour's slot, and a meal saved without
+                one is filed by the diary's own hour rule, which differs. */}
+            <Button
+              variant="nutrition"
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual, usualSlot)}
+            >
+              Log
+            </Button>
+          </div>
         </Card>
       )}
       {copyPreviewOpen && (
@@ -2070,6 +2135,7 @@ export default function Food() {
                   }
                 : null
             }
+            aiConsent={aiConsent.gate}
             onSaved={() => {
               setScanOpen(false);
             }}
@@ -2269,6 +2335,10 @@ export default function Food() {
           />
         </Suspense>
       )}
+
+      {/* The one AI question, for the composer and the scanner alike. It
+          raises itself above the scanner when a photo asks. */}
+      <AiConsentSheet {...aiConsent.sheet} />
     </PageShell>
   );
 }

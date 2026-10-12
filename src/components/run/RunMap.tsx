@@ -7,6 +7,9 @@ import { splitRouteSegments } from "@/lib/routeSegments";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
+import { routePaceColor, routePaceRatios } from "./routePace";
+import { lapMetresFor, type DistanceUnit } from "@/lib/distanceUnits";
+import { addBasemapCredit, basemapStyle } from "@/lib/basemap";
 
 interface RunMapProps {
   points: GPSPoint[];
@@ -27,22 +30,21 @@ interface RunMapProps {
    */
   liveControls?: boolean;
   /**
-   * Numbered waypoints at each whole kilometre along the route (matches the
-   * km-based run stats). Append-only — new markers appear as the run passes
-   * each km. Skipped while replaying (replayIndex set). Off by default.
+   * Numbered waypoints at each whole lap along the route: each kilometre,
+   * or each mile for a runner who reads miles (`markerUnit`), so the
+   * numbers match the splits listed under the map. Append-only: new
+   * markers appear as the run passes each lap. Skipped while replaying
+   * (replayIndex set). Off by default.
    */
   distanceMarkers?: boolean;
+  /** The lap the markers count: the runner's distance unit. */
+  markerUnit?: DistanceUnit;
   /**
    * A route to follow, drawn as a faded "ghost" line beneath the live track.
    * Static for the run; populate once (e.g. re-running a past run's polyline).
    */
   targetRoute?: GPSPoint[];
 }
-
-const TILE_STYLES = {
-  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-};
 
 export default function RunMap({
   points,
@@ -56,6 +58,7 @@ export default function RunMap({
   replayIndex,
   liveControls = false,
   distanceMarkers = false,
+  markerUnit = "km",
   targetRoute,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,6 +86,8 @@ export default function RunMap({
   // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).
   // Append-only: distance only grows live, and static routes compute once.
   const kmMarkersRef = useRef<maplibregl.Marker[]>([]);
+  // The lap the markers above were placed on; a different one starts over.
+  const markerLapRef = useRef<number | null>(null);
 
   // Initialize map — once per (interactive / paceColored / darkMode), NOT per
   // GPS fix. Listing points/currentPoint as deps re-ran init on every fix,
@@ -101,14 +106,25 @@ export default function RunMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
+      style: basemapStyle(darkMode),
       center: initialCenter,
       zoom: 16,
+      // Off here so the credit can be placed: addBasemapCredit adds it.
       attributionControl: false,
       interactive: interactive,
       dragRotate: false,
       pitchWithRotate: false,
     });
+    /* The basemap's credit, in a corner none of the map's users cover.
+       The live run's sheet covers the bottom of its map in every snap, and
+       the top-left holds the GPS indicator; its top-right is clear, the
+       zoom stack sitting at mid-height. Every other map keeps the
+       bottom-left clear: RunDetail's Replay button is bottom-right, and
+       the summary and preview maps have nothing over them. */
+    const removeCredit = addBasemapCredit(
+      map,
+      liveControls ? "top-right" : "bottom-left"
+    );
 
     const onLoad = () => {
       // Target route (the plan you're following) — a faded line drawn FIRST so
@@ -166,7 +182,7 @@ export default function RunMap({
         source: "route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": THEME.teal,
+          "line-color": THEME.running,
           "line-width": 5,
           "line-opacity": 0.95,
         },
@@ -222,6 +238,7 @@ export default function RunMap({
       map.off("dragstart", onUserGesture);
       map.off("zoomstart", onUserGesture);
       map.off("rotatestart", onUserGesture);
+      removeCredit();
       map.remove();
       mapRef.current = null;
       // Null the marker refs too — they pointed at markers the removed map
@@ -267,28 +284,18 @@ export default function RunMap({
           geometry: { type: "LineString"; coordinates: number[][] };
           properties: { color: string };
         }[] = [];
+        /* Each stretch's pace over the 200 m of route around it, not over
+           the few metres between two fixes, where GPS wobble alone moved
+           the colour (`routePaceRatios`). Null for a stretch with no pace
+           of its own: the line across a pause, which was not run, and the
+           jump after a gap. Those get no pace colour, and only the
+           route's dark casing shows there. The steps live with the key
+           under the map (`routePace.ts`), so the two cannot disagree. */
+        const ratios = routePaceRatios(visiblePoints, avgPaceSecPerKm);
         for (let i = 1; i < visiblePoints.length; i++) {
-          if (visiblePoints[i].breakBefore) continue;
-          const dist = haversineQuick(
-            visiblePoints[i - 1].lat,
-            visiblePoints[i - 1].lon,
-            visiblePoints[i].lat,
-            visiblePoints[i].lon
-          );
-          const timeDiff =
-            (visiblePoints[i].timestamp - visiblePoints[i - 1].timestamp) /
-            1000;
-          const segPace =
-            timeDiff > 0 && dist > 0
-              ? (timeDiff / dist) * 1000
-              : avgPaceSecPerKm;
-          const ratio = segPace / avgPaceSecPerKm;
-
-          let color: string;
-          if (ratio < 0.92) color = THEME.paceFast;
-          else if (ratio < 1.03) color = THEME.paceOnTarget;
-          else if (ratio < 1.1) color = THEME.warning;
-          else color = THEME.paceSlow;
+          const ratio = ratios[i];
+          if (ratio === null) continue;
+          const color = routePaceColor(ratio);
 
           features.push({
             type: "Feature" as const,
@@ -322,12 +329,12 @@ export default function RunMap({
           // Heading cone — hidden until we actually have a bearing so it
           // doesn't point a misleading direction while stationary.
           const cone = document.createElement("div");
-          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.teal};opacity:0;transition:opacity .2s;`;
+          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.running};opacity:0;transition:opacity .2s;`;
           coneRef.current = cone;
           const halo = document.createElement("div");
-          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
+          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.running}33;display:flex;align-items:center;justify-content:center;`;
           const inner = document.createElement("div");
-          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.teal};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.teal}55;`;
+          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.running};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.running}55;`;
           halo.appendChild(inner);
           outer.appendChild(cone);
           outer.appendChild(halo);
@@ -408,9 +415,15 @@ export default function RunMap({
             visiblePoints[i].lon
           );
         }
-        const desired = Math.floor(total / 1000);
+        const lap = lapMetresFor(markerUnit);
+        if (markerLapRef.current !== lap) {
+          for (const marker of kmMarkersRef.current) marker.remove();
+          kmMarkersRef.current = [];
+          markerLapRef.current = lap;
+        }
+        const desired = Math.floor(total / lap);
         for (let km = kmMarkersRef.current.length + 1; km <= desired; km++) {
-          const pos = positionAtDistance(visiblePoints, km * 1000);
+          const pos = positionAtDistance(visiblePoints, km * lap);
           if (!pos) break;
           const el = document.createElement("div");
           el.style.cssText =
@@ -460,6 +473,7 @@ export default function RunMap({
     avgPaceSecPerKm,
     replayIndex,
     distanceMarkers,
+    markerUnit,
   ]);
 
   // Target route (static) — drawn independently of the live track so it shows
@@ -521,7 +535,11 @@ export default function RunMap({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full ${height} ${className}`}
+      // Which basemap is drawn, for the credit's dark styling
+      // (components.css). An attribute, not a class: MapLibre adds its
+      // own classes to this element, and React rewrites className.
+      data-map-theme={darkMode ? "dark" : "light"}
+      className={`@container relative w-full ${height} ${className}`}
     >
       {liveControls && (
         // On-map control stack (right edge, clear of the top GPS pills and the
@@ -570,9 +588,24 @@ export default function RunMap({
         // max-w reserves ~8rem (2× a top-4 size-11 corner control) so the
         // pill can never sit under a corner button in any consumer; in the
         // active-run map it lines up with the existing centred GPS pills.
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
-          Map tiles unavailable. Check your connection. GPS status is shown
-          separately.
+        // `--map-overlay-top` is set by a map that runs under the status bar
+        // (the live run's); anywhere else the pill sits 0.5rem down.
+        // Under 20rem of map (larger text on the phone) the reserve leaves
+        // a word no room, and lower down the live run's sheet covers the
+        // map. So the pill says only "Map unavailable", on one line, at the
+        // map's own size (1em: MapLibre sets this element to 12px, and its
+        // credit uses the same) with px padding, at the top right: clear of
+        // the top-left back button and GPS chip at any text size, and no
+        // consumer puts a control top right. The chip beside it is the GPS
+        // status the long copy points to. Wide-first. The query is in rem,
+        // not em: a container query's em is the container's own 12px, so
+        // 20em never matched.
+        <div className="absolute top-[var(--map-overlay-top,0.5rem)] left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] @max-[20rem]:left-auto @max-[20rem]:right-2 @max-[20rem]:translate-x-0 @max-[20rem]:max-w-none @max-[20rem]:whitespace-nowrap @max-[20rem]:px-[12px] @max-[20rem]:py-[8px] @max-[20rem]:text-[1em] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+          <span className="@max-[20rem]:hidden">
+            Map tiles unavailable. Check your connection. GPS status is shown
+            separately.
+          </span>
+          <span className="hidden @max-[20rem]:inline">Map unavailable</span>
         </div>
       )}
     </div>

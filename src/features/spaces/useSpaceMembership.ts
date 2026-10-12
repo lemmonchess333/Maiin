@@ -5,6 +5,9 @@
  * through the guarded wrappers (never raw setDoc — offline-queue +
  * undefined-stripping invariant). Member count is the same aggregate
  * read the directory uses.
+ *
+ * A restricted account can leave but not join (S4e): `restricted` lets
+ * the page say so, and a Join tap says why instead of writing.
  */
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -19,10 +22,13 @@ import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { showRestrictedToast } from "@/lib/accountRestriction";
 import { spaceDef } from "./spaceDefs";
 
 export function useSpaceMembership(spaceId: string | undefined) {
   const { user, profile } = useAuth();
+  const { isRestricted } = useRestrictedStatus(user?.uid);
   const [joined, setJoined] = useState<boolean | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,6 +56,11 @@ export function useSpaceMembership(spaceId: string | undefined) {
 
   const join = useCallback(async () => {
     if (!user || !spaceId || busy) return;
+    if (isRestricted) {
+      haptic("error");
+      showRestrictedToast();
+      return;
+    }
     setBusy(true);
     setJoined(true);
     setMemberCount((c) => (c === null ? c : c + 1));
@@ -72,7 +83,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
     } finally {
       setBusy(false);
     }
-  }, [user, profile, spaceId, busy]);
+  }, [user, profile, spaceId, busy, isRestricted]);
 
   const leave = useCallback(async () => {
     if (!user || !spaceId || busy) return;
@@ -92,5 +103,5 @@ export function useSpaceMembership(spaceId: string | undefined) {
     }
   }, [user, spaceId, busy]);
 
-  return { joined, memberCount, busy, join, leave };
+  return { joined, memberCount, busy, join, leave, restricted: isRestricted };
 }

@@ -59,9 +59,10 @@ function renderGap(daysAway: number): void {
     <LiftReturnSheet
       open
       onClose={() => {}}
-      onGoToProgramme={() => {}}
+      onEaseBack={async () => {}}
       daysAway={daysAway}
-      layoff={classifyLayoff(daysAway)}
+      easeBackFirst={classifyLayoff(daysAway) === "detrained"}
+      easeBackShare={0.1}
     />
   );
 }
@@ -81,9 +82,9 @@ describe("lift-return capture fixture", () => {
     });
 
     it(`is still a detrained layoff at ${daysAway} days away`, () => {
-      // The spec also waits on the detrained body copy, so a gap that
-      // rolled out of `detrained` would fail the capture on the sentence
-      // below the one above.
+      // The spec also waits on the copy that puts easing back first, so a
+      // gap that rolled out of `detrained` would fail the capture on the
+      // sentence below the one above.
       expect(classifyLayoff(daysAway)).toBe("detrained");
     });
   }

@@ -1,17 +1,18 @@
 import type { RunTimeLimits } from "@/features/program/runTimeLimits";
 import type { RunFitnessInput } from "./runPaces";
 import { buildPlan } from "@/features/program/planBuilder";
-import { PROGRAM_TEMPLATES } from "@/features/program/templates";
-import {
-  matchTemplate,
-  applyInjuryFilters,
-} from "@/features/program/matchTemplate";
-import { templateToProgramState } from "@/features/program/templateConversion";
-import type { Goal, ProgramState } from "@/features/program/programTypes";
+import { newRunnerUntil } from "@/features/program/newRunner";
+import type { Goal } from "@/features/program/programTypes";
 import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
+import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
 
-/** The review and the commit consume this SAME result, including template selection. */
+/**
+ * The review and the commit consume this SAME result. Every new plan comes
+ * from the one generator (Lift4 (5)); the hand-written templates, the
+ * once-a-week Bro Split among them, no longer start plans, and plans they
+ * started stay as they are.
+ */
 export function buildOnboardingPlan(
   draft: Pick<
     OnboardingDraft,
@@ -27,6 +28,10 @@ export function buildOnboardingPlan(
     | "raceTargetDate"
     | "injuries"
     | "weightKg"
+    | "sessionMinutes"
+    | "barbellAtHome"
+    | "smallPlates"
+    | "raceLegTrim"
   >,
   nutritionPhase: Goal,
   currentDate: string,
@@ -45,44 +50,37 @@ export function buildOnboardingPlan(
       draft.raceTargetDate && draft.raceTargetDate >= currentDate
     ),
   });
-  const weeklyRunDays = runMode === "freeform" ? 0 : draft.weeklyRunDays;
-  const match = matchTemplate(
-    {
-      daysPerWeek: draft.daysPerWeek,
-      equipment: draft.equipment,
-      gender: draft.gender,
-      preferredSplit: "auto",
-      primaryGoal: draft.primaryGoal,
-      experience: draft.experience,
-      runFrequency: draft.runFrequency,
-      injuries: draft.injuries,
-    } as Parameters<typeof matchTemplate>[0],
-    PROGRAM_TEMPLATES
-  );
-  let existingState: ProgramState | undefined;
-  if (draft.daysPerWeek > 0 && match.isGoalMatch) {
-    const template = applyInjuryFilters(
-      match.template,
-      draft.injuries,
-      PROGRAM_TEMPLATES
-    );
-    existingState = templateToProgramState(template, nutritionPhase);
-    existingState.primaryGoal = draft.primaryGoal;
-    existingState.templateId = template.id;
-  }
-  const plan = buildPlan({
+  // A race plan needs at least two run days a week (Pgm7 A7).
+  const weeklyRunDays =
+    runMode === "freeform"
+      ? 0
+      : Math.max(MIN_RACE_RUN_DAYS, draft.weeklyRunDays);
+  return buildPlan({
     primaryGoal: draft.primaryGoal,
     nutritionPhase,
     experience: draft.experience,
     bodyweightKg: draft.weightKg,
     sex: draft.gender === "female" ? "female" : "male",
     liftDays: draft.daysPerWeek,
+    sessionMinutes: draft.sessionMinutes,
+    barbellAtHome: draft.barbellAtHome,
+    smallPlates: draft.smallPlates,
+    // Lift4 (10): asked with a race, of someone who lifts; yes unless
+    // answered for Support my running, no unless answered otherwise.
+    ...(runMode === "race_prep" && draft.daysPerWeek > 0
+      ? {
+          raceLegTrim: draft.raceLegTrim ?? draft.primaryGoal === "running",
+        }
+      : {}),
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,
     runningBaseline: runningPreferences?.runningBaseline,
     runTimeLimits: runningPreferences?.runTimeLimits,
     runFitness: runningPreferences?.runFitness,
+    // Run20 (5): someone new to running begins today, the day the server
+    // stamps as `onboardingCompletedAt` for the plans made after this one.
+    newRunnerUntil: newRunnerUntil(draft.runFrequency, currentDate),
     ...(runMode === "race_prep"
       ? {
           raceGoal: {
@@ -94,12 +92,8 @@ export function buildOnboardingPlan(
     equipment: draft.equipment,
     injuries: draft.injuries,
     currentDate,
-    existingState,
     preserveHistory: false,
   });
-  if (existingState?.templateId)
-    plan.programState.templateId = existingState.templateId;
-  return plan;
 }
 
 /** Additive draft metadata: older drafts keep the week they already chose. */

@@ -1,6 +1,21 @@
 // @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { shareRoute, routeSlug, resolveShareRoute } from "../shareRoute";
+
+/* The web unless a test says it is the native app. */
+const platform = vi.hoisted(() => ({ native: false }));
+vi.mock("@/lib/platform", () => ({
+  isNativePlatform: () => platform.native,
+}));
+const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("@/lib/toast", () => ({ toast: toasts }));
+
+import {
+  announceRouteShare,
+  shareGpx,
+  shareRoute,
+  routeSlug,
+  resolveShareRoute,
+} from "../shareRoute";
 import type { GPSPoint } from "../gps";
 import type { PrivacyZone } from "../privacyZones";
 
@@ -62,6 +77,7 @@ describe("shareRoute", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    platform.native = false;
     Object.defineProperty(globalThis, "navigator", {
       value: origNav,
       configurable: true,
@@ -110,5 +126,65 @@ describe("shareRoute", () => {
     expect(await shareRoute("Loop", ROUTE)).toBe("downloaded");
     expect(createUrl).toHaveBeenCalledOnce();
     expect(click).toHaveBeenCalledOnce();
+  });
+
+  it("fails on the native app rather than claim a download it cannot make", async () => {
+    // WKWebView drops a blob download without a word.
+    platform.native = true;
+    setNavigator({ canShare: () => false } as unknown as Navigator);
+    const createUrl = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:x");
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+    expect(await shareRoute("Loop", ROUTE)).toBe("failed");
+    expect(createUrl).not.toHaveBeenCalled();
+    expect(click).not.toHaveBeenCalled();
+  });
+
+  it("shares a GPX built elsewhere under the name it is given", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    setNavigator({ canShare: () => true, share } as unknown as Navigator);
+    expect(await shareGpx("<gpx/>", "tropos-run-1.gpx")).toBe("shared");
+    const file = share.mock.calls[0][0].files[0] as File;
+    expect(file.name).toBe("tropos-run-1.gpx");
+    expect(file.type).toBe("application/gpx+xml");
+    expect(await file.text()).toBe("<gpx/>");
+  });
+
+  it("calls a native sheet refused for want of a fresh tap a failure", async () => {
+    platform.native = true;
+    const share = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error("no tap"), { name: "NotAllowedError" })
+      );
+    setNavigator({ canShare: () => true, share } as unknown as Navigator);
+    expect(await shareGpx("<gpx/>", "tropos-run-1.gpx")).toBe("failed");
+    expect(share).toHaveBeenCalledOnce();
+  });
+});
+
+describe("announceRouteShare", () => {
+  afterEach(() => {
+    toasts.success.mockClear();
+    toasts.error.mockClear();
+  });
+
+  it("confirms a download and says when nothing was shared", () => {
+    announceRouteShare("downloaded");
+    expect(toasts.success).toHaveBeenCalledWith("Route downloaded");
+    announceRouteShare("failed");
+    expect(toasts.error).toHaveBeenCalledWith("Couldn't share route");
+  });
+
+  it("says nothing after a share or a dismissed sheet", () => {
+    announceRouteShare("downloaded");
+    expect(toasts.success).toHaveBeenCalledOnce();
+    announceRouteShare("shared");
+    announceRouteShare("cancelled");
+    expect(toasts.success).toHaveBeenCalledOnce();
+    expect(toasts.error).not.toHaveBeenCalled();
   });
 });

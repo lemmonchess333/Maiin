@@ -93,6 +93,10 @@ export const DRAFT_PRIMARY_GOALS = [
   "running",
 ] as const;
 export const DRAFT_DAYS_PER_WEEK = [0, 2, 3, 4, 5, 6] as const;
+/** About how long a lift session is, in minutes; 75 reads "75+" (Lift4 (5)).
+ *  The time fit's own list (`SESSION_MINUTES_OPTIONS`), written out so the
+ *  draft stays light; `onboardingDraft.test.ts` holds the two equal. */
+export const DRAFT_SESSION_MINUTES = [30, 45, 60, 75] as const;
 export const DRAFT_TRAINING_ACTIVITIES = [
   "lifting",
   "running",
@@ -110,6 +114,7 @@ export const DRAFT_RUN_FREQUENCIES = [
   "new",
 ] as const;
 export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
+export const DRAFT_RECENT_RACE_DISTANCES = ["5k", "10k"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;
 
@@ -149,6 +154,22 @@ export interface OnboardingDraft {
   trainingActivity?: OnboardingActivity;
   /** Keep the chosen lifting rhythm when switching to running and back. */
   liftDaysPreference?: Exclude<OnboardingDraft["daysPerWeek"], 0>;
+  /** About how long a lift session is; the plan is built to fit it. */
+  sessionMinutes?: (typeof DRAFT_SESSION_MINUTES)[number];
+  /** "What do you have?" (Lift4 (11)): a barbell and a rack beside a home
+   *  gym's or a minimal setup's kit, and small plates. */
+  barbellAtHome?: boolean;
+  smallPlates?: boolean;
+  /** Lift4 (10): "Lighten leg sessions while your runs build?", asked with
+   *  a race. Unanswered, the plan takes yes for Support my running and no
+   *  otherwise. */
+  raceLegTrim?: boolean;
+  /** Adaptive paces §10.2: setup's optional recent race, a 5K or a 10K,
+   *  and its time as typed, in minutes and seconds. Blank, no benchmark is
+   *  set. */
+  recentRaceDistance?: (typeof DRAFT_RECENT_RACE_DISTANCES)[number];
+  recentRaceMinutes?: string;
+  recentRaceSeconds?: string;
 }
 
 interface DraftEnvelope {
@@ -217,7 +238,18 @@ export function isValidDraft(
     (d.trainingActivity === undefined ||
       oneOf(DRAFT_TRAINING_ACTIVITIES, d.trainingActivity)) &&
     (d.liftDaysPreference === undefined ||
-      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference))
+      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference)) &&
+    (d.sessionMinutes === undefined ||
+      oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
+    (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
+    (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
+    (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean") &&
+    (d.recentRaceDistance === undefined ||
+      oneOf(DRAFT_RECENT_RACE_DISTANCES, d.recentRaceDistance)) &&
+    (d.recentRaceMinutes === undefined ||
+      typeof d.recentRaceMinutes === "string") &&
+    (d.recentRaceSeconds === undefined ||
+      typeof d.recentRaceSeconds === "string")
   );
 }
 

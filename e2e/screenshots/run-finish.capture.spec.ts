@@ -12,7 +12,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 
@@ -28,7 +27,6 @@ test("the run finish screen leads with the map and the distance", async ({
 }) => {
   test.skip(!emulatorActive, "needs the Firebase emulator");
   test.setTimeout(90_000);
-  await suppressCoachmarks(page);
   await page.addInitScript(() => {
     document.addEventListener("DOMContentLoaded", () => {
       const style = document.createElement("style");

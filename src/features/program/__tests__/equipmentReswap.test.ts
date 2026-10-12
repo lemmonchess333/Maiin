@@ -84,6 +84,20 @@ describe("applyEquipmentFilterToWorkouts", () => {
     expect(swapped.notes).toMatch(/not available with your equipment/i);
   });
 
+  it("carries no load onto a bodyweight lift it swaps in at home_gym", () => {
+    // A home gym has no cable stack, so the lat pulldown becomes a pull-up.
+    // Scaled as a full-weight lift, 45 kg arrived as 75 kg of added load.
+    const w = [
+      day([
+        ex("lat-pulldown", "Lat Pulldown", "vertical_pull", { weight: 45 }),
+      ]),
+    ];
+    const swapped = applyEquipmentFilterToWorkouts(w, "home_gym")[0]
+      .exercises[0];
+    expect(getExerciseById(swapped.exerciseId)!.equipment).toBe("Bodyweight");
+    expect(swapped.weight).toBe(0);
+  });
+
   it("keeps an already-available exercise (Dumbbells at home_gym)", () => {
     const w = [day([ex("db-row", "Dumbbell Row", "horizontal_pull")])];
     const out = applyEquipmentFilterToWorkouts(w, "home_gym");
@@ -106,5 +120,87 @@ describe("applyEquipmentFilterToWorkouts", () => {
     const out = applyEquipmentFilterToWorkouts(w, "minimal");
     expect(out).toHaveLength(1);
     expect(out[0].exercises).toHaveLength(2);
+  });
+});
+
+describe("applyEquipmentFilterToWorkouts — no lift a third day in the week", () => {
+  /** A week of one-lift days. */
+  const week = (...lifts: ProgramExercise[]): WorkoutDay[] =>
+    lifts.map((lift, i) => ({ ...day([lift]), dayName: `Day ${i + 1}` }));
+  const liftsOf = (workouts: WorkoutDay[]) =>
+    workouts.flatMap((d) => d.exercises.map((e) => e.exerciseId));
+  const squat = (isAccessory = false) =>
+    ex("squat", "Barbell Squat", "knee_dominant", { isAccessory });
+  const deadlift = () => ex("deadlift", "Deadlift", "hip_dominant");
+  const legCurl = () =>
+    ex("seated-leg-curl", "Seated Leg Curl", "hip_dominant", {
+      isAccessory: true,
+    });
+
+  it("two swaps don't land on a lift the week can take once more", () => {
+    // Both squats become goblet squats, so the leg press takes the next
+    // squat a beginner can do at home.
+    const out = applyEquipmentFilterToWorkouts(
+      week(
+        squat(),
+        squat(true),
+        ex("leg-press", "Leg Press", "knee_dominant", { isAccessory: true })
+      ),
+      "home_gym",
+      [],
+      "beginner"
+    );
+    expect(liftsOf(out)).toEqual([
+      "goblet-squat",
+      "goblet-squat",
+      "bodyweight-squat",
+    ]);
+  });
+
+  it("gives the main lifts the first choice, wherever the supporting slot sits", () => {
+    // The leg curl comes first in the week, and still gives way.
+    const out = applyEquipmentFilterToWorkouts(
+      week(legCurl(), deadlift(), deadlift()),
+      "home_gym",
+      [],
+      "beginner"
+    );
+    expect(liftsOf(out)).toEqual(["glute-bridge", "db-rdl", "db-rdl"]);
+  });
+
+  it("counts the lifts the week keeps", () => {
+    // With a barbell at home the deadlift stays on its two days, so the
+    // leg curl doesn't become a third.
+    const out = applyEquipmentFilterToWorkouts(
+      week(legCurl(), deadlift(), deadlift()),
+      "home_gym",
+      [],
+      "beginner",
+      undefined,
+      true
+    );
+    expect(liftsOf(out)).toEqual(["hip-thrust", "deadlift", "deadlift"]);
+  });
+
+  it("ranks the level gate above the cap", () => {
+    // Five leg curls with minimal kit: the dumbbell RDL twice, the glute
+    // bridge twice, and then a beginner gets the RDL a third time rather
+    // than the Nordic curl, which is above their level. An intermediate
+    // gets the Nordic curl.
+    const curls = week(legCurl(), legCurl(), legCurl(), legCurl(), legCurl());
+    expect(
+      liftsOf(applyEquipmentFilterToWorkouts(curls, "minimal", [], "beginner"))
+    ).toEqual(["db-rdl", "db-rdl", "glute-bridge", "glute-bridge", "db-rdl"]);
+    expect(
+      liftsOf(
+        applyEquipmentFilterToWorkouts(curls, "minimal", [], "intermediate")
+      )
+    ).toEqual([
+      "db-rdl",
+      "db-rdl",
+      "glute-bridge",
+      "glute-bridge",
+      "nordic-hamstring-curl",
+    ]);
   });
 });

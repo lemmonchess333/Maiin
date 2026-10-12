@@ -15,7 +15,6 @@ import { expect, test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { settleImages } from "../helpers/settleImages";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -31,7 +30,6 @@ test.describe("space page screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

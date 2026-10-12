@@ -8,7 +8,7 @@ import {
   exportWorkoutsCSV,
   exportMealsCSV,
   exportBodyweightCSV,
-  downloadCSV,
+  csvFile,
 } from "../export";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
@@ -270,27 +270,13 @@ describe("collection isolation", () => {
   });
 });
 
-describe("downloadCSV", () => {
-  it("creates and clicks a download link", () => {
-    const mockClick = vi.fn();
-    const mockCreateObjectURL = vi.fn().mockReturnValue("blob:url");
-    const mockRevokeObjectURL = vi.fn();
-    const mockCreateElement = vi.fn().mockReturnValue({
-      href: "",
-      download: "",
-      click: mockClick,
-    });
-
-    vi.stubGlobal("URL", {
-      createObjectURL: mockCreateObjectURL,
-      revokeObjectURL: mockRevokeObjectURL,
-    });
-    vi.spyOn(document, "createElement").mockImplementation(mockCreateElement);
-
-    downloadCSV("csv,content", "test.csv");
-
-    expect(mockCreateElement).toHaveBeenCalledWith("a");
-    expect(mockClick).toHaveBeenCalled();
-    expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:url");
+describe("csvFile", () => {
+  /* The handover (share sheet, or a download on the web) is shareFile's,
+     tested in shareFile.test.ts; this is the file it is given. */
+  it("makes the export a CSV file under its name", async () => {
+    const file = csvFile("Date,Weight (kg)\n2026-10-04,82.5", "test.csv");
+    expect(file.name).toBe("test.csv");
+    expect(file.type).toBe("text/csv");
+    expect(await file.text()).toBe("Date,Weight (kg)\n2026-10-04,82.5");
   });
 });

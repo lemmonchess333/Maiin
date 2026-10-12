@@ -1,18 +1,14 @@
 /**
- * B2 (heat half) — heat pace adjustment.
+ * The heat line before a run, Pgm8 (E8).
  *
- * Pins: the Magnus dew point against known values, the published T+DP
- * band boundaries, the quiet threshold (cool weather says nothing), the
- * effort-only top band, and the display line's honest register — the
- * prescription is always stated as unchanged.
+ * Pins: the Magnus dew point against known values; on a hot day, one line
+ * saying to run by feel with no number in it (no %, no equivalent pace,
+ * no dew point); nothing below hot; and where hot starts, which is the
+ * published T+DP rule of thumb's 3% band, a temperature-plus-dew-point
+ * sum over 130°F. The sums quoted below were measured with `dewPointC`.
  */
 import { describe, it, expect } from "vitest";
-import {
-  dewPointC,
-  heatAdjustedPaceS,
-  heatAdjustmentLine,
-  heatPaceAdjustment,
-} from "../heatAdjustment";
+import { dewPointC, heatLine } from "../heatAdjustment";
 
 describe("dewPointC", () => {
   it("matches known Magnus values", () => {
@@ -23,73 +19,53 @@ describe("dewPointC", () => {
   });
 });
 
-describe("heatPaceAdjustment", () => {
-  it("cool weather is silent — no line, no caveat", () => {
-    expect(heatPaceAdjustment({ temperature: 10, humidity: 50 })).toBeNull();
-    expect(heatPaceAdjustment({ temperature: 15, humidity: 40 })).toBeNull();
+/** Hot days, from the lowest hot band to past the end of the table. */
+const HOT_DAYS = [
+  { temperature: 24, humidity: 60 }, // 135.6°F, the 3% band
+  { temperature: 38, humidity: 10 }, // 134.4°F, hot and dry
+  { temperature: 29, humidity: 40 }, // 141.5°F, the 4.5% band
+  { temperature: 32, humidity: 75 }, // 170.2°F, the 10% band
+  { temperature: 38, humidity: 80 }, // 193.5°F, past the table
+];
+
+describe("heatLine", () => {
+  it("on a hot day, says to run by feel, with no number in it", () => {
+    for (const day of HOT_DAYS) {
+      const line = heatLine(day);
+      expect(line, JSON.stringify(day)).toMatch(/run by feel/i);
+      // No %, no equivalent pace, no dew point: nothing gives
+      // training-pace slopes, and the race-pace evidence is weak.
+      expect(line, JSON.stringify(day)).not.toMatch(/\d/);
+    }
   });
 
-  it("reads the published bands (measured T+DP sums)", () => {
-    // 24°C / 60% → dew point ≈ 15.8°C → T+DP ≈ 136°F → 3% band.
-    const warm = heatPaceAdjustment({ temperature: 24, humidity: 60 })!;
-    expect(warm.pct).toBe(0.03);
-    expect(warm.effortOnly).toBe(false);
-    expect(warm.dewPointC).toBe(16);
-    // 32°C / 75% → dew point ≈ 27°C → T+DP ≈ 170°F → 8–10% territory.
-    const hot = heatPaceAdjustment({ temperature: 32, humidity: 75 })!;
-    expect(hot.pct).toBeGreaterThanOrEqual(0.08);
-    expect(hot.effortOnly).toBe(false);
+  it("is the same one line on every hot day", () => {
+    const lines = new Set(HOT_DAYS.map((day) => heatLine(day)));
+    expect([...lines]).toEqual(["Hot today: run by feel, not by pace"]);
   });
 
-  it("extreme heat flips to effort-only instead of fake precision", () => {
-    // 38°C / 80% → T+DP ≈ 194°F.
-    const extreme = heatPaceAdjustment({ temperature: 38, humidity: 80 })!;
-    expect(extreme.effortOnly).toBe(true);
-    expect(heatAdjustmentLine(extreme, "km")).toMatch(/run by effort/i);
-  });
-});
-
-describe("heatAdjustedPaceS + the display line", () => {
-  const warm = heatPaceAdjustment({ temperature: 24, humidity: 60 })!;
-
-  it("computes the equal-effort equivalent", () => {
-    expect(heatAdjustedPaceS(300, warm)).toBe(309);
+  it("says nothing below hot, however warm the day reads", () => {
+    expect(heatLine({ temperature: 10, humidity: 50 })).toBeNull(); // 82.1°F
+    expect(heatLine({ temperature: 15, humidity: 40 })).toBeNull(); // 93.7°F
+    expect(heatLine({ temperature: 22, humidity: 40 })).toBeNull(); // 117.6°F, 1%
+    expect(heatLine({ temperature: 30, humidity: 20 })).toBeNull(); // 126.3°F, 2%
   });
 
-  it("with a prescribed pace, shows the concrete equivalent AND that the plan is unchanged", () => {
-    const line = heatAdjustmentLine(warm, "km", 300);
-    expect(line).toContain("5:00/km");
-    expect(line).toContain("5:09/km");
-    expect(line).toMatch(/paces are unchanged/i);
-    expect(line).toMatch(/published heat curves/i);
+  it("starts at the 3% band, a sum over 130°F", () => {
+    /* Saturated air keeps the dew point at the temperature, so the sum is
+       3.6 × T + 64 and the boundary is exact whatever Magnus's constants. */
+    expect(heatLine({ temperature: 18.3, humidity: 100 })).toBeNull(); // 129.9°F
+    expect(heatLine({ temperature: 18.4, humidity: 100 })).not.toBeNull(); // 130.2°F
+    // A day either side of it: 25°C at 43% humidity, then 44%.
+    expect(heatLine({ temperature: 25, humidity: 43 })).toBeNull(); // 129.8°F
+    expect(heatLine({ temperature: 25, humidity: 44 })).not.toBeNull(); // 130.4°F
   });
 
-  it("quotes the equivalent in the reader's unit", () => {
-    /* The heat ADJUSTMENT is a percentage, so it is unit-free; only the
-       two quoted paces convert. 5:00/km is 8:03/mi and its 3%-slower
-       equivalent 5:09/km is 8:17/mi. */
-    const line = heatAdjustmentLine(warm, "mi", 300);
-    expect(line).toContain("8:03/mi");
-    expect(line).toContain("8:17/mi");
-    expect(line).not.toMatch(/\/km/);
-  });
-
-  it("without a pace, stays generic but still honest", () => {
-    const line = heatAdjustmentLine(warm, "km");
-    expect(line).toMatch(/~3% slower/);
-    expect(line).toMatch(/paces are unchanged/i);
-  });
-
-  it("register ban-list on every line variant", () => {
-    for (const line of [
-      heatAdjustmentLine(warm, "km"),
-      heatAdjustmentLine(warm, "km", 300),
-      heatAdjustmentLine(
-        heatPaceAdjustment({ temperature: 38, humidity: 80 })!,
-        "km"
-      ),
-    ]) {
-      expect(line).not.toMatch(/injur|risk|danger|guarantee|will you|promise/i);
+  it("claims nothing beyond running by feel", () => {
+    for (const day of HOT_DAYS) {
+      expect(heatLine(day)).not.toMatch(
+        /injur|risk|danger|safe|guarantee|promise|hydrat|water|slower/i
+      );
     }
   });
 });

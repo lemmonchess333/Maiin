@@ -80,30 +80,8 @@ test.describe("Reduce Motion reaches scrolling", () => {
     ).toBeGreaterThan(1000);
   });
 
-  test("no source passes an explicit smooth behaviour", async () => {
-    /* An explicit `behavior` beats the computed property by spec —
-       measured at 24px in 30ms with the CSS fix in place — so the CSS
-       cannot defend this on its own. Three call sites named it: the
-       Food composer, the run-plan validation jump, and the workout
-       exercise rail. They pass no behaviour now and inherit the
-       decision the stylesheet makes. */
-    const { readdirSync, readFileSync, statSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const offenders: string[] = [];
-    const walk = (dir: string) => {
-      for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
-        if (statSync(full).isDirectory()) walk(full);
-        else if (/\.tsx?$/.test(entry) && !/\.css$/.test(entry)) {
-          const src = readFileSync(full, "utf8");
-          if (/behavior:\s*["']smooth["']/.test(src)) offenders.push(full);
-        }
-      }
-    };
-    walk("src");
-    expect(
-      offenders,
-      "these override the computed scroll-behavior and animate under Reduce Motion"
-    ).toEqual([]);
-  });
+  /* No source may pass an explicit `behavior: "smooth"`: it beats the
+     computed property by spec. That ban is an ESLint rule now
+     (no-restricted-syntax in eslint.config.js), so `npm run lint` catches
+     it in seconds instead of this file catching it after a CI build. */
 });

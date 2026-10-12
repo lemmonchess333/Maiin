@@ -37,6 +37,9 @@ interface MacroColumnProps {
   numberDurationSec?: number;
   /** Progress bar animation duration in seconds */
   barDurationSec?: number;
+  /** Fill the bar and count the number up from zero when it mounts
+   *  (the default). False mounts it at its figures. */
+  drawIn?: boolean;
   /**
    * "tile" is the Food page's macro card. "compact" is the same tile at
    * the size Home's food card draws it, on a tinted tile beside the
@@ -59,11 +62,13 @@ export default function MacroColumn({
   onTap = () => {},
   numberDurationSec = 0.6,
   barDurationSec = 0.6,
+  drawIn = true,
   size = "tile",
 }: MacroColumnProps) {
   const compact = size === "compact";
   const framerReduce = useFramerReducedMotion();
   const reduce = framerReduce === true;
+  const settled = reduce || !drawIn;
 
   const hasTarget = target > 0;
   const pct = hasTarget ? Math.min(consumed / target, 1) : 0;
@@ -281,6 +286,7 @@ export default function MacroColumn({
           value={displayValue}
           duration={numberDurationSec}
           ease={RING_EASE}
+          fromZero={drawIn}
         />
         <span
           className={cn(
@@ -332,7 +338,7 @@ export default function MacroColumn({
         <motion.div
           className="h-full rounded-full"
           style={{ background: overColor, opacity: pulseOpacity }}
-          initial={{ width: reduce ? `${barFillPct * 100}%` : "0%" }}
+          initial={{ width: settled ? `${barFillPct * 100}%` : "0%" }}
           animate={{ width: `${barFillPct * 100}%` }}
           transition={{
             width: { duration: reduce ? 0 : barDurationSec, ease: RING_EASE },
@@ -350,7 +356,7 @@ export default function MacroColumn({
               filter: "brightness(0.65) saturate(1.2)",
               opacity: pulseOpacity,
             }}
-            initial={{ width: reduce ? `${overshootPct * 100}%` : "0%" }}
+            initial={{ width: settled ? `${overshootPct * 100}%` : "0%" }}
             animate={{ width: `${overshootPct * 100}%` }}
             transition={{
               width: {

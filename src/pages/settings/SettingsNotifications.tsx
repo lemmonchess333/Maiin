@@ -7,6 +7,7 @@ import {
 import SettingsSection from "@/components/settings/SettingsSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import ActivityNotificationsGroup from "@/components/settings/ActivityNotificationsGroup";
+import { isRemotePushOffered } from "@/lib/pushNotifications";
 
 export default function SettingsNotifications() {
   const { reminders: mealReminders, updateReminders: updateMealReminders } =
@@ -21,7 +22,12 @@ export default function SettingsNotifications() {
   return (
     <SettingsSection
       title="Notifications"
-      subtitle="Reminders, push and activity"
+      /* The native app has no push switch (isRemotePushOffered). */
+      subtitle={
+        isRemotePushOffered()
+          ? "Reminders, push and activity"
+          : "Reminders and activity"
+      }
       section="notifications"
     >
       <NotificationsSection

@@ -34,6 +34,20 @@ describe("getTimeAgo", () => {
     expect(result).toMatch(/\d{1,2}\s\w{3}/);
   });
 
+  it("gives the date without a year earlier this year", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15, 12));
+    expect(getTimeAgo(new Date(2026, 2, 20, 9))).toBe("20 Mar");
+  });
+
+  it("gives the year with a date from another year", () => {
+    // "6 Oct" for a post three Octobers ago reads as this month.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 15, 12));
+    expect(getTimeAgo(new Date(2023, 9, 6, 9))).toBe("6 Oct 2023");
+    expect(getTimeAgo(new Date(2025, 11, 30, 9))).toBe("30 Dec 2025");
+  });
+
   it('returns "just now" at exactly 0 seconds', () => {
     const date = new Date();
     expect(getTimeAgo(date)).toBe("just now");

@@ -99,7 +99,7 @@ describe("ChoiceSheet — rows are inset like the size they borrow", () => {
 
   it("carries the md size's horizontal padding", () => {
     const md = buttonClasses({ size: "md", variant: "secondary" });
-    const mdPx = md.match(/\bpx-\d+\b/)?.[0];
+    const mdPx = md.match(/(?<![\w-])px-(\d+|\[[^\]]+\])/)?.[0];
     expect(mdPx, "buttonClasses md no longer sets px-*").toBeTruthy();
     expect(rowClasses()).toContain(mdPx!);
   });

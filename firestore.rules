@@ -128,6 +128,24 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
     }
 
+    /* Has a moderator restricted the signed-in account? (S4e, STATUS
+       2026-10-06.)
+
+       `resolveReport` with `restrictUser` writes globalRestrictedUids/{uid}
+       and nothing else does. A restriction refuses everything that reaches
+       another person and nothing else: publishing, editing or widening a
+       post, follows, joining a Space or a challenge, Circle events and
+       partner bonds are refused; private logging, the person's own
+       profile, reading, blocking, unfollowing, leaving and deleting their
+       own things stay open. The callables (props, comments, likes,
+       reactions, Circles) hold the same line in functions/lib/restriction.js.
+
+       One exists() on each write it guards. Every caller has already
+       required request.auth. */
+    function isRestricted() {
+      return exists(/databases/$(database)/documents/globalRestrictedUids/$(request.auth.uid));
+    }
+
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
        profile avatar, activity and space-post author avatars, a space
@@ -351,6 +369,9 @@ service cloud.firestore {
         // the configurePlan CF today, but allow-listed here so a future direct
         // updateProfile write isn't silently rejected. Also in profileSanitizer.js.
         'runVolume', 'runDifficulty', 'runTimeLimits', 'runningBaseline', 'nonRaceGoal', 'liftTimeBudgetMinutes',
+        // Lift4 (10): the race-setup answer on the leg trim. Also in
+        // profileSanitizer.js.
+        'raceLegTrim',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
@@ -364,7 +385,7 @@ service cloud.firestore {
         // Experience auto-detection: dismissed-suggestion marker, client-only.
         'experienceSuggestionDismissed',
         'daysPerWeek',
-        'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
+        'equipment', 'barbellAtHome', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
         // D16 personal "why" — free-text motivation captured at onboarding and
         // editable in Settings. Client-written via updateProfile + set by the
@@ -697,6 +718,8 @@ service cloud.firestore {
         && !isWriteFrozen(request.auth.uid)
         // Feed posts are public content — verified email only.
         && isEmailVerified()
+        // A restricted account may keep a private post, not share one.
+        && (request.resource.data.visibility == 'private' || !isRestricted())
         && request.resource.data.authorId == request.auth.uid
         // Field allowlist — fail-closed; adding a field to
         // postActivity requires adding it here too.
@@ -715,7 +738,10 @@ service cloud.firestore {
         // Required fields + types
         && request.resource.data.authorName is string
         && request.resource.data.authorName.size() > 0
-        && request.resource.data.authorName.size() <= 100
+        // Every copied name is capped at the one display-name limit,
+        // pinned equal to the app's and the server's by
+        // src/lib/__tests__/displayNameLimit.cross.test.ts.
+        && request.resource.data.authorName.size() <= 50
         // authorPhotoURL is loaded as <img src> by every feed viewer.
         // postActivity omits it when the author has no photo (never
         // null or ''), so present means a trusted origin or nothing.
@@ -826,7 +852,22 @@ service cloud.firestore {
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visibility']);
+            .hasOnly(['visibility'])
+        // A flagged activity stays private. The word filter
+        // (onActivityCreated) and a moderator's Hide content both flag
+        // it and make it private; without this its author could make
+        // it public again with one write, undoing both.
+        && (
+          resource.data.get('flagged', false) != true
+          || request.resource.data.visibility == 'private'
+        )
+        // A restricted account may narrow who sees a post, never widen it.
+        && (
+          request.resource.data.visibility == 'private'
+          || (request.resource.data.visibility == 'followers'
+              && resource.data.visibility == 'public')
+          || !isRestricted()
+        );
       allow delete: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid;
@@ -971,6 +1012,7 @@ service cloud.firestore {
         allow create: if request.auth != null
           && request.auth.uid == uid
           && !isWriteFrozen(uid)
+          && !isRestricted()
           && request.resource.data.keys().hasOnly([
             'currentValue', 'tierAchieved', 'joinedAt',
             'displayName', 'photoURL', 'uid'
@@ -993,7 +1035,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1011,7 +1053,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1062,7 +1104,30 @@ service cloud.firestore {
         // Winter and spring additions
         'valencia-marathon', 'houston-marathon', 'seville-marathon',
         'brighton-half', 'tokyo-marathon', 'cambridge-half',
-        'bath-half', 'barcelona-marathon'
+        'bath-half', 'barcelona-marathon',
+        'sydney-marathon',
+        'amsterdam-marathon',
+        'rotterdam-marathon',
+        'copenhagen-marathon',
+        'oxford-half',
+        'great-bristol-10k',
+        'edinburgh-5k',
+        'river-ness-5k',
+        'edinburgh-half',
+        'bournemouth-half',
+        'sheffield-half',
+        'valencia-half',
+        'edinburgh-10k',
+        'bournemouth-10k',
+        'lincoln-10k',
+        'york-10k',
+        'river-ness-10k',
+        'bournemouth-5k',
+        'supernova-forth-5k',
+        'supernova-kelpies-5k',
+        'race-to-the-king-100k',
+        'race-to-the-stones-100k',
+        'chiltern-50'
       ];
     }
 
@@ -1095,6 +1160,7 @@ service cloud.firestore {
           && request.auth.uid == uid
           && isKnownSpaceId(spaceId)
           && !isWriteFrozen(uid)
+          && !isRestricted()
           && request.resource.data.keys().hasOnly([
             'joinedAt', 'displayName', 'photoURL', 'uid'
           ])
@@ -1105,7 +1171,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1120,7 +1186,7 @@ service cloud.firestore {
           && (
             !('displayName' in request.resource.data)
             || (request.resource.data.displayName is string
-                && request.resource.data.displayName.size() <= 100)
+                && request.resource.data.displayName.size() <= 50)
           )
           && (
             !('photoURL' in request.resource.data)
@@ -1147,6 +1213,7 @@ service cloud.firestore {
           && !isWriteFrozen(request.auth.uid)
           // Space posts are public content — verified email only.
           && isEmailVerified()
+          && !isRestricted()
           && request.resource.data.authorId == request.auth.uid
           // Posting requires membership (Spc1 engineering pin).
           && exists(/databases/$(database)/documents/spaces/$(spaceId)/members/$(request.auth.uid))
@@ -1160,7 +1227,7 @@ service cloud.firestore {
           && request.resource.data.body.size() <= 4000
           && request.resource.data.authorName is string
           && request.resource.data.authorName.size() >= 1
-          && request.resource.data.authorName.size() <= 100
+          && request.resource.data.authorName.size() <= 50
           && (
             !('title' in request.resource.data)
             || (request.resource.data.title is string
@@ -1213,6 +1280,7 @@ service cloud.firestore {
               resource.data.authorId == request.auth.uid
               && request.resource.data.diff(resource.data).affectedKeys()
                   .hasOnly(['title', 'body'])
+              && !isRestricted()
               && request.resource.data.body is string
               && request.resource.data.body.size() >= 1
               && request.resource.data.body.size() <= 4000
@@ -1359,7 +1427,8 @@ service cloud.firestore {
         && !isWriteFrozen(targetUid);
       allow create: if isOwnerAndNotDeleting(uid)
         && !isWriteFrozen(targetUid)
-        && !blockExistsBetween(uid, targetUid);
+        && !blockExistsBetween(uid, targetUid)
+        && !isRestricted();
     }
 
     match /followers/{uid}/users/{followerUid} {
@@ -1375,7 +1444,8 @@ service cloud.firestore {
         && request.auth.uid == followerUid
         && !isWriteFrozen(followerUid)
         && !isWriteFrozen(uid)
-        && !blockExistsBetween(uid, followerUid);
+        && !blockExistsBetween(uid, followerUid)
+        && !isRestricted();
     }
 
     // ========================================
@@ -1432,7 +1502,8 @@ service cloud.firestore {
         && request.resource.data.lastActive.size() == 0
         && request.resource.data.freezeWeek.size() == 0
         && !isWriteFrozen(request.resource.data.members[0])
-        && !isWriteFrozen(request.resource.data.members[1]);
+        && !isWriteFrozen(request.resource.data.members[1])
+        && !isRestricted();
       // Soc7: streak state is server-written (Admin SDK). No client update.
       allow update: if false;
       // A frozen/tombstoned member cannot dissolve the bond client-side;
@@ -1623,6 +1694,7 @@ service cloud.firestore {
       // OUT of the client field allowlist below either way.
       allow create: if isGoalSpaceMember(spaceId)
         && !isWriteFrozen(request.auth.uid)
+        && !isRestricted()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['joined', 'session_completed', 'milestone', 'needs_support', 'routine_shared']
         && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
@@ -1767,8 +1839,9 @@ service cloud.firestore {
     // Restricted-user marker (S4e lock — PR #722).
     //
     // Single doc per restricted UID. The doc's mere existence
-    // signals "this user is currently restricted from social
-    // actions" (Find-tab search/follow/invite). Schema per S4e
+    // signals "this user is currently restricted": every write that
+    // reaches another person is refused (isRestricted() above, and
+    // functions/lib/restriction.js for the callables). Schema per S4e
     // critical implication (1): { uid, restrictedAt,
     // restrictionEndsAt: null, lastActionedReport, strikes: null }.
     // strikes/restrictionEndsAt null on manual restriction; future
@@ -1778,8 +1851,9 @@ service cloud.firestore {
     // state for the UI gate. No cross-user discovery: rules-deny on
     // any uid != request.auth.uid.
     //
-    // Writes: Admin SDK only via the resolveReport callable's
-    // restrictUser option. Direct client writes denied.
+    // Writes: Admin SDK only. resolveReport's restrictUser creates
+    // it; liftRestriction (the moderation page's Lift) deletes it.
+    // Direct client writes denied.
     // ========================================
     match /globalRestrictedUids/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

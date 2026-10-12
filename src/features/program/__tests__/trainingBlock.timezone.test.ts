@@ -22,17 +22,13 @@ describe("training block calendar dates across timezones", () => {
           "--input-type=module",
           "-e",
           `
-        import { blockEndDate, blockWeekOf, isBlockFinished } from "./src/features/program/trainingBlock.ts";
-        import { isProgressionHeld } from "./src/features/program/represcribe.ts";
-        import cf from "./functions/lib/progressionHold.js";
+        import { blockEndDate, blockWeekOf, isBlockFinished, isProgressionHeld } from "./src/features/program/trainingBlock.ts";
         const results = ${JSON.stringify(cases)}.map(([startDate, week2, week3, last, end]) => {
           const block = { startDate, durationWeeks: 4, pace: "easing" };
           const dates = [startDate, week2, week3, last, end];
           return {
             weeks: dates.map(date => blockWeekOf(block, date)),
-            serverWeeks: dates.map(date => cf.blockWeekOf(block, date)),
             holds: dates.map(date => isProgressionHeld(block, blockWeekOf(block, date))),
-            serverHolds: dates.map(date => cf.holdsProgression(block, date)),
             end: blockEndDate(block),
             finished: [isBlockFinished(block, last), isBlockFinished(block, end)],
           };
@@ -53,9 +49,7 @@ describe("training block calendar dates across timezones", () => {
       expect(JSON.parse(output)).toEqual(
         cases.map((dates) => ({
           weeks: [1, 2, 3, 4, null],
-          serverWeeks: [1, 2, 3, 4, null],
           holds: [true, true, false, false, false],
-          serverHolds: [true, true, false, false, false],
           end: dates[4],
           finished: [false, true],
         }))

@@ -104,3 +104,10 @@ unless the a11y gap is the point of the change.
   (reset) + `Button variant="destructive"` (reset trigger); (2) build the
   `SegmentedControl` primitive and migrate the lift-day / race-distance /
   `ProModal` / `ReportModal` / `TrainingSection` selectors.
+
+## Amendment 2026-10-04
+
+`Coachmark` is gone from the set (FV2). Its one wire-up drew behind the
+overlay it pointed into, and the first-visit guide's `GuideHint`
+(`src/components/guide/`) is now the app's one kind of one-time hint.
+`Tooltip` stays, for the tap-to-explain ⓘ.

@@ -43,6 +43,7 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "appleOriginalTransactionId",
   "appleProductId",
   "subscriptionExpiresAt",
+  "subscriptionTrial",
   "trialExpiresAt",
   "createdAt",
 ]);
@@ -60,6 +61,9 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
  */
 
 const MAX_STRING_LENGTH = 200;
+/* The one display-name limit: the app's (src/lib/displayName.ts), the
+   rules' caps on every copied name and the fan-out's all equal this,
+   pinned by displayNameLimit.cross.test.ts. */
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_PHOTO_URL_LENGTH = 2048;
 // eslint-disable-next-line no-control-regex
@@ -247,6 +251,8 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   experience: (v) => cleanEnum(v, ["beginner", "intermediate", "advanced"]),
   daysPerWeek: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
   equipment: (v) => cleanString(v, 30),
+  // Lift4 (11): a barbell and a rack beside a home gym's kit.
+  barbellAtHome: (v) => (typeof v === "boolean" ? v : undefined),
   preferredSplit: (v) => cleanString(v, 30),
   goal: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
@@ -257,6 +263,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
+  // Lift4 (10): the race-setup answer on trimming the leg lifts while the
+  // runs build.
+  raceLegTrim: (v) => (typeof v === "boolean" ? v : undefined),
   liftTimeBudgetMinutes: (v) =>
     v === null
       ? null
@@ -495,6 +504,7 @@ function sanitizeProfileData(input) {
 }
 
 module.exports = {
+  MAX_DISPLAY_NAME_LENGTH,
   SERVER_MANAGED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,

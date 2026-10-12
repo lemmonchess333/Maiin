@@ -1,8 +1,7 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useMemo, useRef } from "react";
 import { UtensilsCrossed } from "lucide-react";
-import { format } from "date-fns";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
 import EmptyState from "@/components/ui/EmptyState";
 import { MEAL_LABELS } from "./mealConstants";
@@ -11,12 +10,13 @@ import { THEME } from "@/lib/theme";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
+import { formatTimeOfDay } from "@/utils/formatters";
 
 /**
  * The Food diary feed — a single chronological timeline (newest first),
  * Cal-AI-style. Replaces the four fixed slot sections (FoodMealSection /
  * Food6d): the slot is now row METADATA — auto-derived by `mealSlotFor`,
- * shown in each row's caption ("Breakfast · 8:12 AM") and editable
+ * shown in each row's caption ("Breakfast · 08:12") and editable
  * through the row's edit sheet (the existing move-slot path with its
  * "Moved X to Y" toast). Slot targeting for NEW logs lives on in the
  * composer pills; this surface is purely the record of the day.
@@ -26,11 +26,12 @@ import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
  * the lifted openRowId, group delete, and the edit sheet's count/slot/
  * macro semantics all carry over untouched.
  *
- * Mixed feed ("photos big, text compact" locked decision): AI-scanned
- * meals persist their capture and render as BIG photo cards;
- * text/barcode/manual logs stay compact rows. Both shapes share
- * FoodRow's swipe/tap machinery — the photo is just a hero block inside
- * the same surface.
+ * Mixed feed (Food8): AI-scanned meals keep their capture and show it;
+ * text, barcode and manual logs have none. Pol1 made the photo a 52 px
+ * thumbnail at the start of its row, in place of Food8's 176 px photo
+ * card, and on a day with any photo every other row carries its slot's
+ * tile in the same column, so the names line up. A day without photos
+ * keeps the compact rows. Every shape shares FoodRow's swipe and tap.
  *
  * Food9 moved that persistence off Firebase Storage and onto the device
  * (`foodPhotoStore.ts`), so the photo source is now resolved
@@ -143,6 +144,14 @@ export default function FoodTimeline({
     [entries]
   );
   const localPhotoUrls = useFoodPhotoUrls(photoCandidateIds);
+  /* Local first, legacy Storage URL second. Pre-Food9 docs keep rendering
+     from `photoUrl`; new ones never write that field at all, so the
+     fallback drains on its own as those meals age out of the 90-day diary
+     window. */
+  const photoUrlOf = (group: (typeof entries)[number]) =>
+    localPhotoUrls[group.meals[0]?.id ?? ""] ??
+    group.meals.find((m) => m.photoUrl)?.photoUrl;
+  const dayHasPhotos = entries.some((group) => !!photoUrlOf(group));
 
   /* Same render-timing shape as the FoodMealSection probe it replaces —
      see that pattern's rationale in the Food6e lock. */
@@ -190,67 +199,64 @@ export default function FoodTimeline({
       </div>
 
       <div className="divide-y divide-border/12">
-        {entries.map((group) => {
-          const rowGroup: FoodRowGroup = {
-            id: group.id,
-            foodName: group.foodName,
-            items: group.meals.flatMap((m) => m.items ?? []),
-            count: group.meals.length,
-            totalCal: group.totalCal,
-            totalPro: group.totalPro,
-            totalCarb: group.totalCarb,
-            totalFat: group.totalFat,
-            // Food6 ci7: only USER edits flip the pill (userEditCount,
-            // not revisionCount — AI refinement doesn't count).
-            wasEdited: group.meals.some((m) => (m.userEditCount ?? 0) > 0),
-          };
-          /* Mixed feed: a group whose docs carry a captured photo
-             renders as a big photo card (image above the meta row,
-             same swipe/tap surface); text logs stay compact rows. */
-          /* Local first, legacy Storage URL second. Pre-Food9 docs keep
-             rendering from `photoUrl`; new ones never write that field at
-             all, so the fallback drains on its own as those meals age out
-             of the 90-day diary window. */
-          const photoUrl =
-            localPhotoUrls[group.meals[0]?.id ?? ""] ??
-            group.meals.find((m) => m.photoUrl)?.photoUrl;
-          return (
-            <FoodRow
-              key={group.id}
-              group={rowGroup}
-              photoUrl={photoUrl}
-              subLabel={
-                <>
-                  {MEAL_LABELS[group.slot]}
-                  {group.latestMs > 0 && (
-                    <>
-                      {" · "}
-                      <span className="font-mono tabular-nums">
-                        {format(new Date(group.latestMs), "h:mm a")}
-                      </span>
-                    </>
-                  )}
-                </>
-              }
-              isOpen={openRowId === group.id}
-              onOpenChange={(open) => setOpenRowId(open ? group.id : null)}
-              onDelete={() =>
-                onDelete(
-                  group.meals.map((m) => m.id),
-                  group.foodName
-                )
-              }
-              onEdit={() => {
-                setOpenRowId(null);
-                onEdit({
-                  id: group.id,
-                  foodName: group.foodName,
-                  meals: group.meals,
-                });
-              }}
-            />
-          );
-        })}
+        {/* One presence for the list, so a deleted meal's row folds away
+            and the rows below slide up into its place (Pol1). Not on the
+            first paint: the day's rows are simply there. */}
+        <AnimatePresence initial={false}>
+          {entries.map((group) => {
+            const rowGroup: FoodRowGroup = {
+              id: group.id,
+              foodName: group.foodName,
+              items: group.meals.flatMap((m) => m.items ?? []),
+              count: group.meals.length,
+              totalCal: group.totalCal,
+              totalPro: group.totalPro,
+              totalCarb: group.totalCarb,
+              totalFat: group.totalFat,
+              // Food6 ci7: only USER edits flip the pill (userEditCount,
+              // not revisionCount — AI refinement doesn't count).
+              wasEdited: group.meals.some((m) => (m.userEditCount ?? 0) > 0),
+            };
+            return (
+              <FoodRow
+                key={group.id}
+                group={rowGroup}
+                photoUrl={photoUrlOf(group)}
+                slot={group.slot}
+                thumbnailColumn={dayHasPhotos}
+                subLabel={
+                  <>
+                    {MEAL_LABELS[group.slot]}
+                    {group.latestMs > 0 && (
+                      <>
+                        {" · "}
+                        <span className="font-mono tabular-nums">
+                          {formatTimeOfDay(new Date(group.latestMs))}
+                        </span>
+                      </>
+                    )}
+                  </>
+                }
+                isOpen={openRowId === group.id}
+                onOpenChange={(open) => setOpenRowId(open ? group.id : null)}
+                onDelete={() =>
+                  onDelete(
+                    group.meals.map((m) => m.id),
+                    group.foodName
+                  )
+                }
+                onEdit={() => {
+                  setOpenRowId(null);
+                  onEdit({
+                    id: group.id,
+                    foodName: group.foodName,
+                    meals: group.meals,
+                  });
+                }}
+              />
+            );
+          })}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

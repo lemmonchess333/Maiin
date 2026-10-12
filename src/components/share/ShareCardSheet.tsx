@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Eye, EyeOff, Share2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -110,10 +110,14 @@ export function ShareCardSheet({
   open,
   onOpenChange,
   data,
+  extras,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: ShareCardSheetData;
+  /** Other ways to share the same thing, under the card's own Share: a
+   *  run's GPX file, say, or its Circle. */
+  extras?: ReactNode;
 }) {
   const unit = useDistanceUnit();
   const [format, setFormat] = useState<ShareFormat>("story");
@@ -357,7 +361,7 @@ export function ShareCardSheet({
         )}
 
         <Button
-          variant={data.template === "run" ? "sport" : "primary"}
+          variant="primary"
           fullWidth
           loading={exporting}
           onClick={handleExport}
@@ -365,6 +369,12 @@ export function ShareCardSheet({
         >
           {exporting ? "Preparing…" : "Share"}
         </Button>
+
+        {extras && (
+          <div className="space-y-2 border-t border-border/50 pt-4">
+            {extras}
+          </div>
+        )}
       </div>
 
       {/* Offscreen full-size rasterisation source */}

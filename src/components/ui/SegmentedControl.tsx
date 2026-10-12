@@ -73,9 +73,12 @@ export interface SegmentedControlProps<T extends string | number> {
   ref?: Ref<HTMLDivElement>;
 }
 
+// `scale-[0.97]` sets the `scale` property, which transition-colors leaves
+// out, so the press snapped. The default list eases it with the colours and
+// the selected card's shadow, at DESIGN_GUIDE §8's 150ms curve.
 const OPTION_BASE = [
   "min-h-[44px] rounded-lg text-sm font-semibold",
-  "active:scale-[0.97] motion-safe:transition-colors",
+  "active:scale-[0.97] motion-safe:transition",
   "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");
@@ -183,7 +186,11 @@ function SegmentedControl<T extends string | number>({
               emphasis === "solid"
                 ? "rounded-full border px-4"
                 : layout === "fill"
-                  ? "flex-1"
+                  ? // Equal parts end a label in "…" when it no longer
+                    // fits, as iOS's own segmented control does, rather
+                    // than pushing the row off the screen at larger text
+                    // ("Analytics PRs Badges" on a 320px phone).
+                    "flex-1 min-w-0 truncate"
                   : "px-4",
               emphasis === "solid"
                 ? selected

@@ -230,25 +230,28 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                home/minimal UpperBack stops
                                                reading UNDER for volume the
                                                swap never removed.
-     Tighten whenever they improve; the test fails the moment a change makes
-     either worse in the CURRENT unit. */
-  it("D-VOL: landmark violations are ratcheted and must only shrink", () => {
+       (judged, 1:1)     43 over / —         — Lift4 (5): time decides a
+                                               plan's volume (the sweep
+                                               builds hour-long sessions)
+                                               and the bands are only its
+                                               ceiling, so the floor
+                                               chasing retired and a reading
+                                               under a floor is no longer a
+                                               defect. The Weekly volume
+                                               card judges what fits.
+     Tighten whenever it improves; the test fails the moment a change makes
+     it worse in the CURRENT unit. */
+  it("D-VOL: ceiling violations are ratcheted and must only shrink", () => {
     const high = SWEEP.filter((s) =>
       Object.values(s.volume).some((v) => v.includes("HIGH"))
     ).length;
-    const low = SWEEP.filter((s) =>
-      Object.values(s.volume).some((v) => v.includes("LOW"))
-    ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      50
-    );
-    expect(low, `${low} configs under a landmark floor`).toBeLessThanOrEqual(
-      47
+      43
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
-    expect(high + low).toBeGreaterThan(0);
+    expect(high).toBeGreaterThan(0);
   });
 
   /* D-ACC — REPAIRED. Was: `buildFullBody` passed the isAccessory flag but

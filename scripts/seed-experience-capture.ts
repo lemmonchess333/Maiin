@@ -156,7 +156,7 @@ async function run() {
       splitType: "full_body",
       fatigueScore: 10,
       updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
+      settings: { autoProgression: true, smallPlates: false },
       weekHistory: [],
       workouts: [
         {

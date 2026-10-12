@@ -6,6 +6,8 @@ import RunTemplateIcon from "@/components/run/RunTemplateIcon";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import type { RacePaceWork } from "@/lib/racePace";
+import { runSessionName } from "@/lib/runSessionAbout";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
@@ -23,12 +25,17 @@ import { cardClasses } from "@/components/ui/cardClasses";
  */
 export default function RunCTACard({
   todayRun,
+  racePace = null,
   navigate,
   isFirst = false,
   eyebrowLabel,
   completed,
+  dose,
 }: {
   todayRun: ScheduledRunDay | null;
+  /** A long run that finishes at race pace says so in its name
+   *  (Run21 (2)). */
+  racePace?: RacePaceWork | null;
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
@@ -36,6 +43,8 @@ export default function RunCTACard({
    *  planned session (free running plans none). */
   eyebrowLabel?: string;
   completed?: boolean;
+  /** The session's dose, as `todaySession` decided it (Run21 (5)). */
+  dose?: string | null;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -44,7 +53,7 @@ export default function RunCTACard({
     : null;
   /* A run day with no planned run yet (a new plan, or a legacy schedule)
      is a free run, the name Train's Run tab gives the same choice. */
-  const runLabel = tmpl ? tmpl.name : "Free run";
+  const runLabel = runSessionName(tmpl, racePace, "Free run");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
@@ -54,15 +63,6 @@ export default function RunCTACard({
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
   const queryString = params.length ? "?" + params.join("&") : "";
-
-  // Key metric = the planned distance, read from the template config (the
-  // source of truth) rather than regex-parsed out of the prose description.
-  // Descriptions are coaching-led now ("Steady, controlled effort"), so the
-  // distance no longer lives in the text; reading config also makes the metric
-  // work for race templates whose descriptions carry no distance.
-  const runKeyMetric = tmpl?.config.targetDistanceKm
-    ? `${tmpl.config.targetDistanceKm} km`
-    : null;
 
   // HOME-ACTION-01: a terminal/reconciliation run must not relaunch the run
   // flow, so it gets no Start. No todayRun (cold-start) is startable.
@@ -100,7 +100,7 @@ export default function RunCTACard({
           trackHomeEvent("home_card_tapped", { card: "today_run" });
           navigate(dayTarget);
         }}
-        aria-label={tmpl ? `Open ${tmpl.name} in Train` : "Open today in Train"}
+        aria-label={tmpl ? `Open ${runLabel} in Train` : "Open today in Train"}
         className="absolute inset-0 z-0 rounded-[inherit] motion-safe:active:bg-running/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
       />
       <div className="pointer-events-none relative z-10 flex items-start gap-4 px-5 pt-5">
@@ -111,13 +111,9 @@ export default function RunCTACard({
           <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
             <InlineNumerals>{runLabel}</InlineNumerals>
           </p>
-          {tmpl && (
+          {tmpl && dose && (
             <p className="mt-2 text-sm font-medium text-muted-foreground">
-              <InlineNumerals>
-                {runKeyMetric
-                  ? `${runKeyMetric} · about ${tmpl.estimatedDuration} min`
-                  : `About ${tmpl.estimatedDuration} min`}
-              </InlineNumerals>
+              <InlineNumerals>{dose}</InlineNumerals>
             </p>
           )}
         </div>

@@ -50,13 +50,21 @@ describe("DeloadBanner", () => {
 
   it("does not render when visible is false (deloadRecommended off)", () => {
     render(<DeloadBanner visible={false} weekKey="w14" />);
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   it("renders the locked copy when visible and not dismissed", () => {
     render(<DeloadBanner visible weekKey="w14" />);
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Dismiss deload banner/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    ).toBeInTheDocument();
+  });
+
+  it("speaks for running, the one load it is shown for (Lift4 (9))", () => {
+    render(<DeloadBanner visible weekKey="w14" />);
+    expect(screen.getByText(/Your running load has been high/i)).toBeTruthy();
+    expect(screen.queryByText(/deload/i)).toBeNull();
   });
 
   it("fires programme_deload_banner_viewed exactly once on first visible render", () => {
@@ -69,7 +77,9 @@ describe("DeloadBanner", () => {
 
   it("fires programme_deload_banner_action with action='dismissed' on dismiss tap", () => {
     render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     const dismissed = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -80,20 +90,24 @@ describe("DeloadBanner", () => {
 
   it("persists dismissal in localStorage per-week and stays hidden on re-mount", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     render(<DeloadBanner visible weekKey="w14" />);
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   it("reopens on a new weekKey even if the prior week was dismissed", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     render(<DeloadBanner visible weekKey="w15" />);
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
   });
 
   it("takes its dismissal from the page when the page owns it", () => {
@@ -108,14 +122,16 @@ describe("DeloadBanner", () => {
         onDismiss={onDismiss}
       />
     );
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     expect(onDismiss).toHaveBeenCalledTimes(1);
     // Still up: the page has not said so yet.
-    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
     rerender(
       <DeloadBanner visible weekKey="w14" dismissed onDismiss={onDismiss} />
     );
-    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+    expect(screen.queryByText(/Consider a lighter week/i)).toBeNull();
   });
 
   // PROGRAM-DELOAD-01 — the Apply CTA v1 reserved.
@@ -123,7 +139,7 @@ describe("DeloadBanner", () => {
   it("shows the Apply CTA only when onApply is provided", () => {
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
     expect(
-      screen.queryByRole("button", { name: /Apply deload week/i })
+      screen.queryByRole("button", { name: /Take a lighter week/i })
     ).toBeNull();
     unmount();
 
@@ -135,7 +151,7 @@ describe("DeloadBanner", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: /Apply deload week/i })
+      screen.getByRole("button", { name: /Take a lighter week/i })
     ).toBeInTheDocument();
   });
 
@@ -144,8 +160,10 @@ describe("DeloadBanner", () => {
     const onApply = vi.fn(() => Promise.resolve(resolveWith));
     render(<DeloadBanner visible weekKey="w14" onApply={onApply} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Apply deload week/i }));
-    await screen.findByRole("button", { name: /Apply deload week/i });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Take a lighter week/i })
+    );
+    await screen.findByRole("button", { name: /Take a lighter week/i });
     let applied = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -157,8 +175,10 @@ describe("DeloadBanner", () => {
     // A failed apply must NOT fire the telemetry.
     mocks.logger.log.mockClear();
     resolveWith = false;
-    fireEvent.click(screen.getByRole("button", { name: /Apply deload week/i }));
-    await screen.findByRole("button", { name: /Apply deload week/i });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Take a lighter week/i })
+    );
+    await screen.findByRole("button", { name: /Take a lighter week/i });
     applied = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
@@ -170,7 +190,9 @@ describe("DeloadBanner", () => {
   it("deloadActive renders the calm active state: no Apply, no Dismiss, overrides dismissal", () => {
     // Dismiss the recommendation first…
     const { unmount } = render(<DeloadBanner visible weekKey="w14" />);
-    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    fireEvent.click(
+      screen.getByLabelText(/Dismiss the lighter week suggestion/i)
+    );
     unmount();
 
     // …then an applied deload still shows the active confirmation.
@@ -182,51 +204,22 @@ describe("DeloadBanner", () => {
         onApply={() => Promise.resolve(true)}
       />
     );
-    expect(screen.getByText(/Deload week active/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Lighter week$/)).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Apply deload week/i })
+      screen.queryByRole("button", { name: /Take a lighter week/i })
     ).toBeNull();
-    expect(screen.queryByLabelText(/Dismiss deload banner/i)).toBeNull();
+    expect(
+      screen.queryByLabelText(/Dismiss the lighter week suggestion/i)
+    ).toBeNull();
   });
 
-  /* Active copy must describe the recipe the deload actually applied
-     (backlog #8 tier split, mirrored client + server): beginner/unknown
-     cuts a set AND load; intermediate/advanced cuts a set and targets at
-     HELD load. The old fixed "lighter weights" sentence was false for
-     every post-novice user (evidence-handoff LIFT-EV-03). Both matrices
-     assert the WRONG tier's sentence absent, not just the right one
-     present — the copy must never say two contradictory things. */
-  it.each(["beginner", undefined] as const)(
-    "active copy for %s promises lighter weights (the novice recipe cuts load)",
-    (experience) => {
-      render(
-        <DeloadBanner
-          visible
-          weekKey="w20"
-          deloadActive
-          experience={experience}
-        />
-      );
-      expect(screen.getByText(/lighter weights/i)).toBeInTheDocument();
-      expect(screen.queryByText(/at the same weights/i)).toBeNull();
-    }
-  );
-
-  it.each(["intermediate", "advanced"] as const)(
-    "active copy for %s says same weights, lower volume (the post-novice recipe holds load)",
-    (experience) => {
-      render(
-        <DeloadBanner
-          visible
-          weekKey="w21"
-          deloadActive
-          experience={experience}
-        />
-      );
-      expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
-      expect(screen.queryByText(/lighter weights/i)).toBeNull();
-    }
-  );
+  it("active copy describes the one recipe: half the sets, same weights", () => {
+    render(<DeloadBanner visible weekKey="w20" deloadActive />);
+    expect(
+      screen.getByText(/Half the sets this week, at the same weights/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/lighter weights/i)).toBeNull();
+  });
 
   it("an ACTIVE deload confirms even when nothing recommends one", () => {
     /**
@@ -238,7 +231,7 @@ describe("DeloadBanner", () => {
      * banner, not the tier-split copy LIFT-EV-03 wrote for them.
      */
     render(<DeloadBanner visible={false} weekKey="w4" deloadActive />);
-    expect(screen.getByText(/deload week active/i)).toBeTruthy();
+    expect(screen.getByText(/^Lighter week$/)).toBeTruthy();
   });
 });
 
@@ -261,15 +254,7 @@ describe("DeloadBanner", () => {
  */
 describe("DeloadBanner — the active copy names the run half", () => {
   it("adds the run clause when the deload stepped runs down", () => {
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w30"
-        deloadActive
-        runsEased={3}
-        experience="intermediate"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w30" deloadActive runsEased={3} />);
     expect(
       screen.getByText(/3 runs are a step shorter too/i)
     ).toBeInTheDocument();
@@ -278,15 +263,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   });
 
   it("says ONE run, singular", () => {
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w31"
-        deloadActive
-        runsEased={1}
-        experience="beginner"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w31" deloadActive runsEased={1} />);
     expect(
       screen.getByText(/One run is a step shorter too/i)
     ).toBeInTheDocument();
@@ -295,15 +272,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   it("stays silent for a lift-only deload", () => {
     /* The automatic week-4 path. Mentioning runs here would be the
        mirror-image lie of the one this fixes. */
-    render(
-      <DeloadBanner
-        visible
-        weekKey="w32"
-        deloadActive
-        runsEased={0}
-        experience="intermediate"
-      />
-    );
+    render(<DeloadBanner visible weekKey="w32" deloadActive runsEased={0} />);
     expect(screen.queryByText(/step shorter/i)).toBeNull();
     expect(screen.getByText(/at the same weights/i)).toBeInTheDocument();
   });
@@ -311,9 +280,7 @@ describe("DeloadBanner — the active copy names the run half", () => {
   it("stays silent when the count is not supplied at all", () => {
     // Every other DeloadBanner call site omits the prop; none of them
     // should start claiming a run change.
-    render(
-      <DeloadBanner visible weekKey="w33" deloadActive experience="advanced" />
-    );
+    render(<DeloadBanner visible weekKey="w33" deloadActive />);
     expect(screen.queryByText(/step shorter/i)).toBeNull();
   });
 
@@ -324,10 +291,98 @@ describe("DeloadBanner — the active copy names the run half", () => {
         visible
         weekKey="w34"
         runsEased={3}
-        experience="intermediate"
         onApply={async () => true}
       />
     );
     expect(screen.queryByText(/step shorter/i)).toBeNull();
+  });
+});
+
+/** The race's final weeks say what each is for (Lift4 (10)), in the words
+ *  Train's week label uses. */
+describe("DeloadBanner — the race's final weeks", () => {
+  it("names the taper", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w40"
+        deloadActive
+        raceWeek="taper"
+      />
+    );
+    expect(screen.getByRole("region", { name: "Taper" })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Half the sets this week, at the same weights, so you reach the race fresh."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("names race week and when to lift in it", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w41"
+        deloadActive
+        raceWeek="race"
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Race week" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "One short session this week, with nothing heavy for your legs, at least three days before the race."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Half the sets/)).toBeNull();
+  });
+
+  it("says why nothing is left to lift on the race's rest days", () => {
+    for (const raceWeek of ["race", "taper"] as const) {
+      const { unmount } = render(
+        <DeloadBanner
+          visible={false}
+          weekKey="w41"
+          deloadActive
+          raceWeek={raceWeek}
+          raceRest
+        />
+      );
+      expect(
+        screen.getByRole("region", {
+          name: raceWeek === "race" ? "Race week" : "Taper",
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "No lifting in the two days before your race, or on the day, so your legs are fresh for it."
+        )
+      ).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it("names the week after", () => {
+    render(
+      <DeloadBanner
+        visible={false}
+        weekKey="w42"
+        deloadActive
+        raceWeek="after"
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Recovery" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/while you recover from the race/)
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the suggestion as it is", () => {
+    render(<DeloadBanner visible weekKey="w43" raceWeek="taper" />);
+    expect(screen.getByText(/Consider a lighter week/i)).toBeInTheDocument();
+    expect(screen.queryByText(/race/i)).toBeNull();
   });
 });

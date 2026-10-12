@@ -221,7 +221,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   {
     id: "early_bird",
     name: "Early Bird",
-    description: "Log before 7am for 5 days",
+    description: "Log before 07:00 for 5 days",
     icon: "sunrise",
     lucideIcon: "Sunrise",
     tier: "bronze",
@@ -324,7 +324,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   {
     id: "speed_demon",
     name: "Speed Demon",
-    description: "Run a sub-5:00/km pace",
+    description: "Run a sub-5:00 /km pace",
     icon: "zap",
     lucideIcon: "Zap",
     tier: "silver",

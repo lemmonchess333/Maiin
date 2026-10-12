@@ -8,9 +8,11 @@ const catalogue = raceSpaceDefs();
 export default function RaceFilters({
   value,
   onChange,
+  trainingOnly = false,
 }: {
   value: RaceBrowseFilters;
   onChange: (next: RaceBrowseFilters) => void;
+  trainingOnly?: boolean;
 }) {
   const id = useId();
   return (
@@ -65,6 +67,7 @@ export default function RaceFilters({
         >
           <option value="all">All distances</option>
           {Object.entries(RACE_DISTANCE_LABELS)
+            .filter(([distance]) => !trainingOnly || distance !== "ultra")
             .filter(
               ([distance]) =>
                 value.distance === distance ||

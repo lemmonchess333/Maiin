@@ -221,7 +221,14 @@ interface PendingFailure {
 
 /* ── The store ─────────────────────────────────────────────────────── */
 
-type Listener = { ref: DocRef | CollectionRef; fire: () => void };
+type Listener = {
+  ref: DocRef | CollectionRef;
+  fire: () => void;
+  /** The SDK's `includeMetadataChanges` option. Without it, a change to a
+   *  snapshot's metadata alone (`fromCache`, `hasPendingWrites`) is not
+   *  delivered — see `notify`. */
+  includeMetadataChanges?: boolean;
+};
 
 let autoId = 0;
 
@@ -235,7 +242,7 @@ export class FirestoreFake {
     metadata: { fromCache: boolean; hasPendingWrites?: boolean }
   ): void {
     this.snapshotMetadata.set(path, { hasPendingWrites: false, ...metadata });
-    this.notify();
+    this.notify({ metadataOnly: true });
   }
   /** path → document data. Paths are "a/b/c/d" (even segment count). */
   private docs = new Map<string, Record<string, unknown>>();
@@ -787,14 +794,25 @@ export class FirestoreFake {
   }
 
   private notifyScheduled = false;
-  private notify(): void {
+  private dataChanged = false;
+  private notify({ metadataOnly = false } = {}): void {
+    if (!metadataOnly) this.dataChanged = true;
     // Coalesce like a real snapshot batch — a multi-doc seed or batch commit
     // should surface as ONE listener fire, not N.
     if (this.notifyScheduled) return;
     this.notifyScheduled = true;
     queueMicrotask(() => {
       this.notifyScheduled = false;
-      for (const l of [...this.listeners]) l.fire();
+      const dataChanged = this.dataChanged;
+      this.dataChanged = false;
+      // A change to metadata alone reaches only a listener that asked for
+      // metadata changes, as in the SDK (QueryListener: "Remove the
+      // metadata only changes"). Delivering it to every listener hid a
+      // hook that waited on a server-confirmed snapshot which, for a
+      // document the cache already knew was missing, never came:
+      // Home's session card stayed a placeholder for good.
+      for (const l of [...this.listeners])
+        if (dataChanged || l.includeMetadataChanges) l.fire();
     });
   }
 }

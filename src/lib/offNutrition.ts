@@ -21,6 +21,14 @@
  */
 import { parseServingGrams, round1, safeNum } from "@/lib/foodParseHelpers";
 
+/**
+ * The credit Open Food Facts' database licence (ODbL) asks for wherever its
+ * data is shown: the barcode result (FoodAnalyzer), the search results
+ * that come from it (FoodSuggestionsDropdown) and the portion sheet they
+ * open (ServingSizeDrawer).
+ */
+export const OFF_CREDIT = "Food data from Open Food Facts";
+
 /** The subset of an OFF product this app reads. */
 export interface OffProductLike {
   product_name?: string;

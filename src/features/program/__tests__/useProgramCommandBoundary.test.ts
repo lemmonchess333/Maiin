@@ -28,6 +28,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
 
 import type { ProgramState } from "../programTypes";
+import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -173,7 +174,7 @@ function seed(withIds: boolean): void {
       },
     ],
     runDays: [],
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
   } as unknown as ProgramState;
   seedFirestore({ [PROGRAM]: state as unknown as Record<string, unknown> });
 }
@@ -731,7 +732,7 @@ describe("every migrated writer sends a command the server accepts", () => {
           startDate: "2026-03-02",
           goalBefore: "hypertrophy",
         },
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
       } as unknown as Record<string, unknown>,
     });
   }
@@ -808,7 +809,7 @@ describe("every migrated writer sends a command the server accepts", () => {
           },
         ],
         runDays: [],
-        settings: { autoProgression: true, microloading: true },
+        settings: { autoProgression: true, smallPlates: false },
       } as unknown as Record<string, unknown>,
     });
     const hook = renderHook(() => useProgram());
@@ -825,5 +826,112 @@ describe("every migrated writer sends a command the server accepts", () => {
 
     const kinds = sendProgramCommand.mock.calls.map((a) => (a[0] as any).kind);
     expect(kinds).toContain("startTrainingBlock");
+  });
+});
+
+/* ─── Lift4: a block with the week's own focus changes nothing ─────────
+   The reducer and this optimistic copy make the same call
+   (`programCommands.js` startTrainingBlock / releaseTrainingBlock). Read
+   while the server's answer is held, so what is asserted is the
+   optimistic week and not the refetch that replaces it. */
+describe("a block with the week's own focus changes nothing", () => {
+  const PROGRAM = "users/test-user-1/programState/current";
+
+  function seedClimbingWeek(extra: Record<string, unknown> = {}) {
+    seedFirestore({
+      [PROGRAM]: {
+        // Current, so the loader's one-time resets leave the miss count be.
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        weekNumber: 1,
+        splitType: "upper_lower",
+        goal: "recomp",
+        primaryGoal: "strength",
+        workouts: [
+          {
+            dayName: "Push",
+            dayType: "upper",
+            completed: false,
+            skipped: false,
+            // Mid-climb: reps above the focus's base, and a miss counted.
+            exercises: [
+              {
+                ...ex("i-a", "Alpha"),
+                reps: 7,
+                baseReps: 5,
+                consecutiveFailures: 1,
+              },
+            ],
+          },
+        ],
+        runDays: [],
+        settings: { autoProgression: true, smallPlates: false },
+        ...extra,
+      } as unknown as Record<string, unknown>,
+    });
+  }
+
+  async function heldWhile(
+    run: (
+      h: ReturnType<typeof renderHook<ReturnType<typeof useProgram>, unknown>>
+    ) => Promise<unknown>
+  ) {
+    const hook = renderHook(() => useProgram());
+    await waitFor(() => expect(hook.result.current.programState).toBeTruthy());
+    let release: (() => void) | undefined;
+    sendProgramCommand.mockImplementation(
+      () => new Promise<undefined>((r) => (release = () => r(undefined)))
+    );
+    let pending: Promise<unknown> | undefined;
+    await act(async () => {
+      pending = run(hook);
+    });
+    const held = hook.result.current.programState?.workouts[0].exercises[0];
+    await act(async () => {
+      release?.();
+      await pending;
+    });
+    return held;
+  }
+
+  const start =
+    (focus: "strength" | "hypertrophy") =>
+    (hook: { result: { current: ReturnType<typeof useProgram> } }) =>
+      hook.result.current.startTrainingBlock({
+        focus,
+        pace: "full",
+        durationWeeks: 8,
+        startDate: "2026-03-02",
+      });
+
+  it("starting one keeps the week's climbing reps and misses", async () => {
+    seedClimbingWeek();
+    const held = await heldWhile(start("strength"));
+    expect(held?.reps).toBe(7);
+    expect(held?.consecutiveFailures).toBe(1);
+  });
+
+  it("starting one with another focus still re-derives the week", async () => {
+    seedClimbingWeek();
+    const held = await heldWhile(start("hypertrophy"));
+    expect(held?.reps).not.toBe(7);
+  });
+
+  it("ending one that hands back its own focus keeps the week", async () => {
+    seedClimbingWeek({
+      trainingBlock: {
+        id: "blk",
+        owned: true,
+        focus: "strength",
+        goalBefore: "strength",
+        pace: "full",
+        durationWeeks: 8,
+        startDate: "2026-03-02",
+      },
+    });
+    const held = await heldWhile((hook) =>
+      hook.result.current.releaseTrainingBlock()
+    );
+    expect(held?.reps).toBe(7);
+    expect(held?.consecutiveFailures).toBe(1);
   });
 });

@@ -113,7 +113,13 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-10-01: 16 → 18. The Settings pass: the Programme row's icon on
   // the Settings list and the Lift plan row's on the Programme page, both
   // ICONS; their words are foreground.
-  lifting: 18, // Redesign consolidates onboarding option icons.
+  // 2026-10-04: 18 → 19. The first-visit guide's mark (GuideMark): the
+  // same solid hexagon as Home's header mark, an ICON (3:1 non-text).
+  // 2026-10-05: 19 → 18. The workout screen's "try X kg" chip went, and
+  // its trend icon with it (Lift4).
+  // 2026-10-08: 18 → 17. The Performance tab's "Lifting suggestions" card
+  // went, and its dumbbell icon with it (Lift4 (3)).
+  lifting: 17, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -163,7 +169,11 @@ const EXPECTED_INLINE_USES = {
   // brand-coloured Double beside them.
   // 2026-10-01: 17 → 15. The Social pass retired the feed's recap card
   // (its run figure) and the solo feed's share card.
-  "THEME.running": 15,
+  // 2026-10-12: 15 → 17. The live run screen took the run's coral for
+  // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
+  // 22px bold distance, both large text, on a sheet that is dark in both
+  // themes, where the coral measures about 5:1.
+  "THEME.running": 17,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
@@ -279,7 +289,9 @@ function bareUses(token: string): string[] {
 // section took one icon.
 // 43 → 41 with the first-week pass: the welcome card's two tab icons
 // (Train, Analytics) in text-primary went with it.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
+// 2026-10-06: 41 → 42. Home's strip for a store trial's last two days
+// carries the same sparkle icon as the free-week strip beside it.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 42 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

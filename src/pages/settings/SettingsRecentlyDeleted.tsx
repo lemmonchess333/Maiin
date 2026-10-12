@@ -154,7 +154,7 @@ export default function SettingsRecentlyDeleted() {
                     onClick={() => handleRestore(meal)}
                     disabled={isPending}
                     aria-label={`Restore ${meal.foodName || "meal"}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary-strong text-primary-foreground text-xs font-semibold motion-safe:active:scale-[0.98] disabled:opacity-50"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary-strong text-primary-foreground text-xs font-semibold transition-transform motion-safe:active:scale-[0.98] disabled:opacity-50"
                   >
                     <RotateCcw className="size-3.5" />
                     Restore
@@ -164,7 +164,7 @@ export default function SettingsRecentlyDeleted() {
                     onClick={() => handleHardDelete(meal)}
                     disabled={isPending}
                     aria-label={`Permanently delete ${meal.foodName || "meal"}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold motion-safe:active:scale-[0.98] disabled:opacity-50"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold transition-transform motion-safe:active:scale-[0.98] disabled:opacity-50"
                     style={{
                       backgroundColor: "hsl(var(--destructive) / 0.1)",
                       color: "hsl(var(--destructive))",

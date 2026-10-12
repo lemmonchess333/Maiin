@@ -33,6 +33,17 @@ Create a GitHub issue.
 
 Run `gh issue view <number> --comments`.
 
+## Wayfinding operations
+
+Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets.
+
+- **Map**: a single issue labelled `wayfinder:map`, holding the Notes / Decisions-so-far / Fog body. `gh issue create --label wayfinder:map`.
+- **Child ticket**: an issue linked to the map as a GitHub sub-issue (`gh api` on the sub-issues endpoint). Where sub-issues aren't enabled, add the child to a task list in the map body and put `Part of #<map>` at the top of the child body. Labels: `wayfinder:<type>` (`research`/`prototype`/`grilling`/`task`). Once claimed, the ticket is assigned to the driving dev.
+- **Blocking**: GitHub's **native issue dependencies**, the canonical, UI-visible representation. Add an edge with `gh api --method POST repos/lemmonchess333/Maiin/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`, where `<blocker-db-id>` is the blocker's numeric **database id** (`gh api repos/lemmonchess333/Maiin/issues/<n> --jq .id`, _not_ the `#number` or `node_id`). GitHub reports `issue_dependencies_summary.blocked_by` (open blockers only, the live gate). Where dependencies aren't available, fall back to a `Blocked by: #<n>, #<n>` line at the top of the child body. A ticket is unblocked when every blocker is closed.
+- **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (`issue_dependencies_summary.blocked_by > 0`, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
+- **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
+- **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
 ## Agent-harness fallback
 
 In Claude Code agent-harness sessions where `gh` isn't available
@@ -43,6 +54,13 @@ In Claude Code agent-harness sessions where `gh` isn't available
 - `mcp__github__issue_read` / `mcp__github__list_issues` → read
 - `mcp__github__pull_request_read` / `mcp__github__pull_request_review_write` → PR ops
 - `mcp__github__add_issue_comment` → comment shortcut
+- `mcp__github__sub_issue_write` → link a wayfinder child to its map
+- `mcp__github__issue_write` with `assignees` → a wayfinder claim
+
+The MCP tools have no issue-dependency call, so a wayfinder map run from
+an agent-harness session records blocking with the `Blocked by: #<n>`
+line at the top of the child body, which the frontier query already
+reads.
 
 Repo scope is enforced server-side to `lemmonchess333/maiin`. Schemas
 are deferred — load via `ToolSearch` before calling.

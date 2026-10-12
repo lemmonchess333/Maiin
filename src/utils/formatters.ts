@@ -2,10 +2,19 @@
  * Formatting utilities for display values across the app.
  */
 
-/** Format lifting volume for display (e.g. 500 → "500", 1500 → "1.5k") */
+/**
+ * Format lifting volume for display (500 → "500", 1500 → "1.5k",
+ * 1,500,000 → "1.5M"). Millions are their own step because a lifetime
+ * total reaches them in a year or two of regular lifting, and "1500.0k"
+ * was wider than History's Lifetime tile on a 320 px phone.
+ */
 export function formatVolume(kg: number): { value: string; unit: string } {
   if (kg <= 0) return { value: "\u2014", unit: "" };
-  if (kg >= 1000) return { value: (kg / 1000).toFixed(1) + "k", unit: "kg" };
+  if (kg >= 1000) {
+    const thousands = (kg / 1000).toFixed(1);
+    if (Number(thousands) < 1000) return { value: thousands + "k", unit: "kg" };
+    return { value: (kg / 1_000_000).toFixed(1) + "M", unit: "kg" };
+  }
   return { value: String(Math.round(kg)), unit: "kg" };
 }
 
@@ -81,6 +90,20 @@ export function formatWeekdayDayMonth(d: Date): string {
     day: "numeric",
     month: "long",
   });
+}
+
+/**
+ * "07:10", "13:13" — a clock time of day: 24-hour, the hour zero-padded,
+ * in the device's time zone. The app's one time format, as day-first is
+ * its one date order. Built from the hours and minutes, not by Intl,
+ * whose time follows a locale's convention, so the same moment would
+ * read two ways on two phones. Not for an elapsed time ("23:41"): that
+ * is formatClock. timeTreatment.test.ts keeps this the only one.
+ */
+export function formatTimeOfDay(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 /**

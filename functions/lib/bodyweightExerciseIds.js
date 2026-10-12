@@ -4,9 +4,9 @@
  * Bodyweight exercise-id set (packet 18) — server copy of the catalog's
  * `equipment: "Bodyweight"` rows in src/lib/exercises.ts.
  *
- * The programme progression engine (progressionEngine.js) needs to know which
- * movements are true bodyweight movements (pull-ups, dips, …) so it progresses
- * them by rep-target rather than load. The exercise catalog is a ~2500-line
+ * The block re-prescription (represcribe.js) needs to know which movements
+ * are true bodyweight movements (pull-ups, dips, …), whose rep ceiling is
+ * their own. The exercise catalog is a ~2500-line
  * Vite/TS data module that can't be required from CommonJS Cloud Functions, so
  * this is a deliberate, minimal DATA MIRROR of just the bodyweight ids.
  *

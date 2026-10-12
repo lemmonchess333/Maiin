@@ -1,5 +1,6 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import {
   useState,
   useEffect,
@@ -39,11 +40,13 @@ import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SegmentedControl from "../components/ui/SegmentedControl";
-import SplitsBarChart from "../components/analytics/SplitsBarChart";
+import SplitsTable from "../components/run/SplitsTable";
+import BestEffortsCard from "../components/run/BestEffortsCard";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import { Button } from "@/components/ui/Button";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { fetchSavedRuns } from "../lib/savedRuns";
@@ -53,18 +56,15 @@ import {
   type PaceInsightRun,
 } from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
-import { applyPrivacyZones } from "../lib/privacyZones";
+import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import { getAdherenceLabel } from "../lib/runPlanMetadata";
+import { getAdherenceLabel, runTemplateIdOf } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
-import {
-  paceTableFromFitness,
-  resolveSessionPaces,
-  raceDistanceKeyFromKm,
-} from "../lib/runPaces";
-import { resolvePaceVerdict } from "../lib/paceVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
+import { pinnedWorkPace } from "../lib/runSegments";
+import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -78,8 +78,9 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
 import { completeRun, runPostRoute } from "@/lib/runCompletion";
-import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
+import { isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
+import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import {
@@ -102,6 +103,7 @@ import {
   canShowShare,
   getInvalidRunReason,
   isOutdoorGpsRun,
+  requiresManualDistance,
   type InvalidRunReason,
   type SaveStatus,
 } from "../lib/runGuards";
@@ -109,6 +111,12 @@ import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
+
+/** Why a save stopped short when the privacy zones could not be checked
+ *  (offline before they had loaded, or the read refused). Shown in the
+ *  Retry banner, under "Couldn't save your run". */
+const PRIVACY_ZONES_UNCHECKED =
+  "Privacy zones are cut from the route before it's saved, and they couldn't be checked. Try again when you're online.";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -344,6 +352,9 @@ interface RunData {
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
+  /** The time and distance in the session's work segments
+   *  (`useSessionPlayer`), null for a run with none. */
+  workPortion?: WorkPortion | null;
 }
 
 export default function RunSummary() {
@@ -357,6 +368,7 @@ export default function RunSummary() {
     zones: privacyZones,
     loading: privacyZonesLoading,
     error: privacyZonesError,
+    confirmZones: confirmPrivacyZones,
   } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
@@ -455,6 +467,17 @@ export default function RunSummary() {
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
+  /* Done replaces Save run, pinned last (Pol1). The button that had focus
+     goes with the save, so focus moves to Done, unless something else on
+     the screen already holds it. */
+  const doneRef = useRef<HTMLButtonElement>(null);
+  const doneShown = canShowDone({ saveStatus });
+  useEffect(() => {
+    if (!doneShown) return;
+    const active = document.activeElement;
+    if (!active || active === document.body)
+      doneRef.current?.focus({ preventScroll: true });
+  }, [doneShown]);
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   // The historical run list, reused for BOTH the pace-trend badge and the
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
@@ -523,6 +546,9 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          // A treadmill run (Pgm8) has no trend, whatever its type.
+          place: state.runConfig?.place,
+          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
@@ -553,8 +579,14 @@ export default function RunSummary() {
       completedAt: new Date(),
       avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
       activityType: state.runConfig?.activityType ?? "freerun",
+      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
+      place: state.runConfig?.place ?? null,
       isInvalid: false,
       savedAnyway: false,
+      // What decides whether it was an effort (Pgm8 R1): a tempo by its
+      // work segments, unless they were pinned to a goal pace.
+      workPortion: state.workPortion ?? null,
+      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 
@@ -616,6 +648,7 @@ export default function RunSummary() {
       isInvalid: type
         ? getInvalidRunReason({
             activityType: type,
+            place: state.runConfig?.place,
             distanceKm: (runDistance ?? 0) / 1000,
             elapsedSeconds: state.elapsed ?? 0,
           }) !== null
@@ -666,6 +699,10 @@ export default function RunSummary() {
   const distanceKm = (distance ?? 0) / 1000;
   const elapsedSeconds = elapsed ?? 0;
   const activityType = runConfig?.activityType;
+  /* The distance was typed in (TreadmillMode): on the treadmill, the place,
+     whatever the type (Pgm8), or a run tracked without GPS. Typed, so the
+     finish screen can correct it. */
+  const typedDistance = requiresManualDistance(runConfig);
 
   // Run8-Vocab — adherence chip in the summary header.
   // Maps runConfig.planMetadata → "Planned" / "Custom" / "Extra"
@@ -765,39 +802,19 @@ export default function RunSummary() {
     return "Nice run";
   })();
 
-  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): for a
-  // PLANNED session with a resolvable per-session pace target, say how the
-  // run compared — including the "keep the easy days easy" nudge when an easy
-  // session ran hot. Only planned runs are judged (custom/extra have no honest
-  // target), and intervals are excluded (session avg mixes work + rest — the
-  // same reason the primary stat swaps to the work-set summary for them).
-  const paceVerdict = (() => {
-    if (adherenceLabel !== "Planned") return null;
-    const pm = runConfig?.planMetadata;
-    const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
-    const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-    if (!tmpl || tmpl.type === "intervals") return null;
-    if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
-    if (!table) return null;
-    const paces = resolveSessionPaces(tmpl.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistanceKm),
-    });
-    const target =
-      paces.targetPace ??
-      paces.workPace ??
-      (paces.band ? (paces.band[0] + paces.band[1]) / 2 : undefined);
-    if (!target) return null;
-    return resolvePaceVerdict({
-      templateType: tmpl.type,
-      actualPaceS: avgPaceSeconds,
-      targetPaceS: target,
-      // Band-aware verdict (Runna teardown #2): anywhere inside the session's
-      // pace window is on-target, and the copy speaks the range.
-      targetBandS: paces.band,
-      unit,
-    });
-  })();
+  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
+  // PLANNED session's pace compared with its target, including the "keep
+  // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
+  const paceVerdict = plannedRunVerdict({
+    planMetadata: runConfig?.planMetadata,
+    place: runConfig?.place,
+    avgPaceSeconds,
+    workPaceSeconds: workPaceSeconds(state.workPortion),
+    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
+    distance,
+    runFitness: profile?.runFitness,
+    unit,
+  });
 
   // The context-aware primary stat, a card above the stats card of four.
   // Intervals get a work-set summary ("N × distance @ pace") instead of
@@ -813,13 +830,14 @@ export default function RunSummary() {
         iv.workDistance && iv.workDistance >= 1000
           ? `${(iv.workDistance / 1000).toFixed(iv.workDistance % 1000 === 0 ? 0 : 1)}K`
           : iv.workDistance
-            ? `${iv.workDistance}m`
+            ? `${iv.workDistance} m`
             : iv.workDuration
               ? `${Math.round(iv.workDuration / 60)} min`
               : null;
       if (!distLabel) return null;
+      // Spaced units, as everywhere: "5 × 400 m @ 4:30 /km".
       const paceLabel = iv.workPace
-        ? ` @ ${paceMinSec(iv.workPace, unit)}${paceUnitLabel(unit)}`
+        ? ` @ ${paceMinSec(iv.workPace, unit)} ${paceUnitLabel(unit)}`
         : "";
       return {
         kind: "intervals" as const,
@@ -859,10 +877,15 @@ export default function RunSummary() {
      treadmill (e.g. types `20` instead of `2.0`); 'too-short' covers
      the original sub-50m / sub-30s thresholds. */
   const invalidReason = activityType
-    ? getInvalidRunReason({ activityType, distanceKm, elapsedSeconds })
+    ? getInvalidRunReason({
+        activityType,
+        place: runConfig?.place,
+        distanceKm,
+        elapsedSeconds,
+      })
     : null;
   const isInvalid = invalidReason !== null;
-  const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
+  const outdoorGps = activityType ? isOutdoorGpsRun(runConfig) : false;
 
   /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
      with material climb (≥8 m/km, gated in the module) get one calm
@@ -917,6 +940,38 @@ export default function RunSummary() {
     // picked explicitly, so a runner who started on the default saw none.
     const effectiveShoeId = runConfig?.shoeId ?? defaultShoe?.id ?? null;
     try {
+      /* Privacy zones come out of the trace before the run is written, as
+         the Privacy Policy says. The trace on screen was cut with whatever
+         the zone listener had delivered, which is nothing before its first
+         answer or after it fails, so a run saved then kept its whole
+         trace. The save now waits for zones the server has confirmed: the
+         listener's last server answer, else a server read. If neither can
+         be had, nothing is written and the Retry banner says why. A run
+         with no trace has nothing to cut, and a Retry that resumes a run
+         already queued writes no trace again (its zones were cut then). */
+      let savedPoints = points;
+      if (savedRunId === null && state.points.length > 0) {
+        let zones: PrivacyZone[];
+        try {
+          zones = await confirmPrivacyZones();
+        } catch (error) {
+          logger.warn("[RunSave] privacy zones unconfirmed:", error);
+          throw new Error(PRIVACY_ZONES_UNCHECKED);
+        }
+        // The trace on screen was cut with these same zones; keep it, so
+        // the saved route matches the map.
+        if (zones !== privacyZones) {
+          savedPoints = applyPrivacyZones(state.points, zones);
+        }
+        // The wait can outlast the account the run belongs to.
+        if (
+          auth.currentUser?.uid !== user.uid ||
+          runOwnerRef.current !== user.uid
+        ) {
+          setSaveStatus("idle");
+          return;
+        }
+      }
       /* The save (`completeRun`): the device's copy is queued before any
          server write, under an id a retry keeps. A Retry after the run was
          saved but a later step failed resumes against that id rather than
@@ -931,7 +986,7 @@ export default function RunSummary() {
         runId: savedRunId ?? runIdRef.current,
         alreadySaved: savedRunId !== null,
         run: {
-          points,
+          points: savedPoints,
           distance,
           elapsed,
           avgPaceSeconds,
@@ -947,10 +1002,12 @@ export default function RunSummary() {
           isInvalid,
           invalidReason: invalidReason ?? null,
           routeQuality: state.routeQuality ?? null,
+          workPortion: state.workPortion ?? null,
           shoeId: effectiveShoeId,
+          bestEfforts,
         },
         // Loading or unread privacy settings withhold the route.
-        route: runPostRoute(points, {
+        route: runPostRoute(savedPoints, {
           withheld: Boolean(privacyZonesLoading || privacyZonesError),
           showEnds: profile?.hideSharedRouteEnds === false,
         }),
@@ -1062,14 +1119,68 @@ export default function RunSummary() {
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
-    const blob = new Blob([gpx], { type: "application/gpx+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tropos-run-${Date.now()}.gpx`;
-    a.click();
-    URL.revokeObjectURL(url);
+    /* The share sheet on the iPhone, where a blob download is dropped
+       without a word, and a download on the web; the same handover and
+       the same words as RunDetail's Export GPX. */
+    void shareGpx(gpx, `tropos-run-${Date.now()}.gpx`).then(announceRouteShare);
   };
+
+  /* Races plan PR4: a saved race-type run whose goal is bound to a real
+     race space can be posted there. Navigation only (?compose=1 opens the
+     space composer once membership allows): nothing is posted without an
+     explicit write in the space. */
+  const raceSpace =
+    activityType === "race" && profile?.raceGoal?.eventSpaceId
+      ? spaceDef(profile.raceGoal.eventSpaceId)
+      : undefined;
+  const raceCommunity = raceSpace?.kind === "race" ? raceSpace : undefined;
+  /* Treadmill runs have no track to export. */
+  const showGpx = canExportGpx({
+    isInvalid: false,
+    isOutdoorGpsRun: outdoorGps,
+    saveStatus,
+  });
+  const shareExtras =
+    (isPlannedSession && user) || raceCommunity || showGpx ? (
+      <>
+        {isPlannedSession && user && (
+          /* CIRCLE-SESSION-01: a summary-only share for planned runs. The
+             sheet publishes just the `session_completed` event
+             (privacy-fenced), never distance, pace, route or any number. */
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setShareOpen(false);
+              setCircleShareOpen(true);
+            }}
+          >
+            Share to circle
+          </Button>
+        )}
+        {raceCommunity && (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => navigate(`/space/${raceCommunity.id}?compose=1`)}
+          >
+            Post in {raceCommunity.name} community
+          </Button>
+        )}
+        {showGpx && (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              setShareOpen(false);
+              handleExportGPX();
+            }}
+          >
+            Export GPX
+          </Button>
+        )}
+      </>
+    ) : undefined;
 
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);
@@ -1083,7 +1194,11 @@ export default function RunSummary() {
   return (
     <div
       className="min-h-screen bg-background text-foreground"
-      style={{ paddingBottom: "var(--page-bottom-pad)" }}
+      // Outside Layout, so it pads for the status bar itself.
+      style={{
+        paddingTop: "var(--safe-top)",
+        paddingBottom: "var(--page-bottom-pad)",
+      }}
     >
       <div className="px-4 pt-4">
         <button
@@ -1116,9 +1231,7 @@ export default function RunSummary() {
           pendingSync={pendingSync}
           /* Edit distance only for treadmill / manual — outdoor
              GPS distance came from a sensor, no typo to fix. */
-          canEditDistance={
-            activityType === "treadmill" || activityType === "manual"
-          }
+          canEditDistance={typedDistance}
           onSave={handleSave}
           onDiscard={handleDiscard}
           onDone={() => navigate("/")}
@@ -1129,20 +1242,27 @@ export default function RunSummary() {
       ) : (
         <>
           {/* DS3: the finish leads with the map and the distance, the way
-              the run detail does. The route map comes first. */}
+              the run detail does. The route map comes first, coloured by
+              pace when there is an average to colour it against, and its
+              key sits under it, outside the map's rounded frame. Without
+              an average the map draws a plain line and there is nothing
+              for a key to explain. */}
           {points.length > 1 && (
-            <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
-              <RunMap
-                points={points}
-                currentPoint={null}
-                interactive={true}
-                distanceMarkers={true}
-                height="h-64"
-                paceColored={true}
-                avgPaceSecPerKm={avgPaceSeconds}
-                darkMode={!!profile?.darkMode}
-              />
-              <PaceLegend />
+            <div className="mx-4 mb-4">
+              <div className="rounded-2xl overflow-hidden">
+                <RunMap
+                  points={points}
+                  currentPoint={null}
+                  interactive={true}
+                  distanceMarkers={true}
+                  markerUnit={unit}
+                  height="h-64"
+                  paceColored={avgPaceSeconds > 0}
+                  avgPaceSecPerKm={avgPaceSeconds}
+                  darkMode={!!profile?.darkMode}
+                />
+              </div>
+              {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
             </div>
           )}
 
@@ -1152,9 +1272,15 @@ export default function RunSummary() {
             </h1>
             {/* The distance is the page's one big number, in the reader's
                 unit. It was a tile reading km whatever the unit setting
-                said, beside a pace that also ignored it. */}
+                said, beside a pace that also ignored it. It counts up as
+                the finish screen's figures do on a lift (StatFigure's
+                0.6s); a corrected distance counts from the one shown. */}
             <p className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
-              {distanceValue(distance, unit, 2)}{" "}
+              <AnimatedNumber
+                value={distance}
+                format={(metres) => distanceValue(metres, unit, 2)}
+                duration={0.6}
+              />{" "}
               <span className="font-sans text-h3 font-bold text-muted-foreground">
                 {distanceUnitLabel(unit)}
               </span>
@@ -1169,8 +1295,9 @@ export default function RunSummary() {
               })}
             </p>
             {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). */}
-            {paceVerdict && (
+                calm register (never shames a slow day). It speaks only
+                when the run didn't match its type (Run21 (6)). */}
+            {paceVerdict?.speaks && (
               <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
               </p>
@@ -1454,7 +1581,11 @@ export default function RunSummary() {
                   value: paceMinSec(avgPaceSeconds, unit),
                   unit: paceUnitLabel(unit),
                 },
-                { label: "Calories", value: `${calories}`, unit: "kcal" },
+                {
+                  label: "Calories",
+                  value: formatCalories(calories),
+                  unit: CALORIE_UNIT,
+                },
                 {
                   label: "Elevation gain",
                   value: elevationLabel(elevationGain, unit, false),
@@ -1471,7 +1602,7 @@ export default function RunSummary() {
               Grade-adjusted pace{" "}
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {paceMinSec(gap.gapSecondsPerKm, unit)}
-              </span>
+              </span>{" "}
               {paceUnitLabel(unit)} — flat-equivalent for this climb
             </p>
           )}
@@ -1542,127 +1673,36 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Run8 PR3c — the plan row: this week's runs against the
-              plan's, from the same read as the card above, so the two
-              cannot disagree, and a race plan's week. It shows only while
-              the plan has runs this week: a free runner's week is
-              done-only (Run9a). */}
-          {weekPulse?.runs && weekPulse.runs.planned !== null && (
-            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center gap-1.5 text-xs">
-              {profile?.runMode === "race_prep" &&
-                runPlanTotalWeeks &&
-                runPlanCurrentWeek != null && (
-                  <>
-                    <span className="font-semibold text-foreground">
-                      Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                  </>
-                )}
-              <span className="font-mono tabular-nums font-semibold text-foreground">
-                {weekPulse.runs.count}
-              </span>
-              <span className="text-muted-foreground">of</span>
-              <span className="font-mono tabular-nums font-semibold text-foreground">
-                {weekPulse.runs.planned}
-              </span>
-              <span className="text-muted-foreground">runs this week</span>
-              {saved &&
-                isVolumeEligible({
-                  distance,
-                  duration: elapsed,
-                  isInvalid,
-                }) && (
-                  <span
-                    className="ml-1 text-xs font-semibold"
-                    style={{ color: THEME.success }}
-                    aria-label="this run counts"
-                  >
-                    +1 ✓
-                  </span>
-                )}
-            </div>
-          )}
-
-          {/* Best efforts */}
-          {bestEfforts.length > 0 && (
-            <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                Best efforts
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {bestEfforts.map((effort) => (
-                  <div
-                    key={effort.label}
-                    className="text-center p-2 rounded-lg bg-muted/50"
-                  >
-                    <p className="text-xs text-muted-foreground">
-                      {effort.label}
-                    </p>
-                    <p className="text-sm font-bold font-mono tabular-nums">
-                      {Math.floor(effort.time / 60)}:
-                      {(Math.floor(effort.time) % 60)
-                        .toString()
-                        .padStart(2, "0")}
-                    </p>
-                  </div>
-                ))}
+          {/* A race plan's week. The week's runs against the plan's are
+              the card's above: this row counted them a second time. */}
+          {profile?.runMode === "race_prep" &&
+            runPlanTotalWeeks &&
+            runPlanCurrentWeek != null && (
+              <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
+                <span className="font-semibold text-foreground">
+                  Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
+                </span>
               </div>
+            )}
+
+          {/* Best efforts: the quickest 1K / 5K / 10K anywhere in the
+              track. The same card a saved run shows. */}
+          {bestEfforts.length > 0 && (
+            <div className="px-4 mb-4">
+              <BestEffortsCard efforts={bestEfforts} />
             </div>
           )}
 
-          {/* Splits bar chart */}
+          {/* Splits: one table, lap, pace and climb, with a bar per lap
+              for its speed, and the only view of the laps here. A saved
+              run shows the same table. */}
           {displaySplits.length > 0 && (
             <div className="px-4 mb-4">
-              <SplitsBarChart
+              <SplitsTable
                 splits={displaySplits}
-                avgPaceSeconds={avgPaceSeconds}
-                accentColor={THEME.running}
                 lapUnit={lapUnit}
+                unit={unit}
               />
-
-              {/* Per-km split list */}
-              <div className="mt-3 space-y-1">
-                {displaySplits.map((s, i) => {
-                  const fastest = Math.min(
-                    ...displaySplits.map((sp) => sp.paceSeconds)
-                  );
-                  const slowest = Math.max(
-                    ...displaySplits.map((sp) => sp.paceSeconds)
-                  );
-                  const color =
-                    s.paceSeconds === fastest
-                      ? "text-success-strong"
-                      : s.paceSeconds === slowest
-                        ? "text-destructive-strong"
-                        : "text-muted-foreground";
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between text-xs px-1"
-                    >
-                      <span className="text-muted-foreground">
-                        {distanceUnitLabel(lapUnit)} {s.km}
-                      </span>
-                      <span
-                        className={`font-mono tabular-nums font-medium ${color}`}
-                      >
-                        {paceMinSec(s.paceSeconds, unit)}
-                        {paceUnitLabel(unit)}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="flex items-center justify-between text-xs px-1 pt-1 border-t border-border/50">
-                  <span className="text-muted-foreground font-medium">
-                    Average
-                  </span>
-                  <span className="font-mono tabular-nums font-semibold text-foreground">
-                    {paceMinSec(avgPaceSeconds, unit)}
-                    {paceUnitLabel(unit)}
-                  </span>
-                </div>
-              </div>
             </div>
           )}
 
@@ -1732,7 +1772,7 @@ export default function RunSummary() {
                 and there is no typo to fix. Pre-save only — afterwards the
                 figure is on the account and correcting it is a different
                 operation. */}
-            {(activityType === "treadmill" || activityType === "manual") &&
+            {typedDistance &&
               canShowNormalSave({ isInvalid: false, saveStatus }) && (
                 <EditDistance
                   unit={unit}
@@ -1809,26 +1849,7 @@ export default function RunSummary() {
               </Button>
             )}
 
-            {canShowDone({ saveStatus }) && (
-              /* Replaces the removed auto-navigation timeouts. Sits in the
-             same primary-action slot as Save run so the user's eye
-             doesn't move when the state transitions saved → saved. */
-              <button
-                type="button"
-                onClick={() => navigate("/program?tab=run")}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-                style={{
-                  background: `${THEME.success}20`,
-                  color: THEME.success,
-                  border: `1px solid ${THEME.success}4d`,
-                }}
-              >
-                <CheckCircle size={16} aria-hidden="true" />
-                Done
-              </button>
-            )}
-
-            {canShowDone({ saveStatus }) && (
+            {doneShown && (
               /* FOOD-02: post-run → Food handoff, at the moment the runner
                  has refuel intent. Secondary and skippable — routes into
                  the EXISTING composer flow with a narrow context param
@@ -1844,81 +1865,18 @@ export default function RunSummary() {
               </button>
             )}
 
-            {canShowDone({ saveStatus }) && isPlannedSession && user && (
-              /* CIRCLE-SESSION-01 — explicit summary-only Circle share
-                 for PLANNED runs only. The sheet publishes just the
-                 `session_completed` event (privacy-fenced) — never
-                 distance, pace, route or any other number. */
-              <Button
-                variant="sport-tinted"
-                fullWidth
-                onClick={() => setCircleShareOpen(true)}
+            {/* One Share: the card, and under it the run's other ways out
+                (its Circle, its race's community, its GPX file), which
+                were three more buttons here. */}
+            {canShowShare({ isInvalid: false, saveStatus }) && (
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
               >
-                Share to circle
-              </Button>
+                Share
+              </button>
             )}
-
-            {(() => {
-              /* Races plan PR4 — post-race share into the race's
-                 community space. Offered ONLY for a saved race-type
-                 run when the user's goal carries a catalogue binding
-                 that resolves to a real race space. Navigation only
-                 (?compose=1 opens the space composer once membership
-                 allows) — nothing is posted without an explicit
-                 write in the space. */
-              if (!canShowDone({ saveStatus }) || activityType !== "race")
-                return null;
-              const raceSpace = profile?.raceGoal?.eventSpaceId
-                ? spaceDef(profile.raceGoal.eventSpaceId)
-                : undefined;
-              if (raceSpace?.kind !== "race") return null;
-              return (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/space/${raceSpace.id}?compose=1`)}
-                  className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                >
-                  Post in {raceSpace.name} community
-                </button>
-              );
-            })()}
-
-            {(() => {
-              /* Share + Export GPX gated together so the wrapping flex row
-             collapses to nothing when neither is renderable (e.g. a
-             treadmill run pre-save → both hidden). Treadmill never
-             shows GPX (no track to export); both only show after
-             saveStatus === 'saved'. */
-              const showShare = canShowShare({ isInvalid: false, saveStatus });
-              const showGpx = canExportGpx({
-                isInvalid: false,
-                isOutdoorGpsRun: outdoorGps,
-                saveStatus,
-              });
-              if (!showShare && !showGpx) return null;
-              return (
-                <div className="flex gap-2">
-                  {showGpx && (
-                    <button
-                      type="button"
-                      onClick={handleExportGPX}
-                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                    >
-                      Export GPX
-                    </button>
-                  )}
-                  {showShare && (
-                    <button
-                      type="button"
-                      onClick={handleShare}
-                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
-                    >
-                      Share
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
             {canShowDiscard({ saveStatus }) && (
               <button
                 type="button"
@@ -1929,6 +1887,23 @@ export default function RunSummary() {
               </button>
             )}
           </div>
+
+          {/* Saved, Done comes last and stays in thumb reach, as on the
+              lift's finish (Pol1): pinned to the bottom of the screen
+              while the page scrolls under it. */}
+          {doneShown && (
+            <div className="sticky bottom-0 z-10 mt-4 border-t border-border/50 bg-background px-4 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
+              <Button
+                ref={doneRef}
+                variant="sport"
+                size="lg"
+                fullWidth
+                onClick={() => navigate("/program?tab=run")}
+              >
+                Done
+              </Button>
+            </div>
+          )}
         </>
       )}
 
@@ -1946,6 +1921,7 @@ export default function RunSummary() {
       <ShareCardSheet
         open={shareOpen}
         onOpenChange={setShareOpen}
+        extras={shareExtras}
         data={{
           template: "run",
           handle: profile?.displayName || "Athlete",

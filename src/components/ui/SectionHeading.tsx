@@ -73,18 +73,20 @@ export default function SectionHeading({
       </Tag>
     );
   }
+  // The action drops under the heading when the two no longer fit on one
+  // line (larger text on the phone), rather than running off the card.
   return (
     <div
       className={cn(
-        "flex items-baseline justify-between gap-3 min-w-0 text-foreground",
+        "flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 min-w-0 text-foreground",
         className
       )}
       style={style}
     >
-      <Tag id={id} className={cn(SIZE_CLASSES[size], "min-w-0")}>
+      <Tag id={id} className={cn(SIZE_CLASSES[size], "min-w-min flex-1")}>
         {children}
       </Tag>
-      <div className="flex-shrink-0">{action}</div>
+      <div className="ml-auto flex-shrink-0">{action}</div>
     </div>
   );
 }

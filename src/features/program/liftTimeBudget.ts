@@ -5,6 +5,7 @@ import {
   type ExpressPlan,
 } from "./expressSession";
 import type { WorkoutDay } from "./programTypes";
+import type { RestContext } from "./restTime";
 
 export function isLiftTimeBudget(value: unknown): value is number {
   return (
@@ -19,12 +20,16 @@ export function isLiftTimeBudget(value: unknown): value is number {
  * lifter. The original anchor, identities, loads, rests and history survive. */
 export function buildTimeBudgetSession(
   day: WorkoutDay,
-  budget: number
+  budget: number,
+  rest: RestContext = {}
 ): ExpressPlan {
   let items = day.exercises.map((ex) => ({ ex: { ...ex } }));
   const trim: ExpressPlan["trim"] = { droppedExercises: [], reducedSets: [] };
   const over = () =>
-    estimateSessionMinutes(items.map((item) => item.ex)) > budget;
+    estimateSessionMinutes(
+      items.map((item) => item.ex),
+      rest
+    ) > budget;
   if (isLiftTimeBudget(budget)) {
     for (let i = items.length - 1; i >= 1 && over(); i--) {
       const item = items[i];
@@ -49,7 +54,10 @@ export function buildTimeBudgetSession(
   return {
     variant: "time_budget",
     exercises: items.map((i) => i.ex),
-    estimatedMinutes: estimateSessionMinutes(items.map((i) => i.ex)),
+    estimatedMinutes: estimateSessionMinutes(
+      items.map((i) => i.ex),
+      rest
+    ),
     trim,
   };
 }

@@ -29,7 +29,6 @@ import { openSignUpForm } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { settleImages } from "../helpers/settleImages";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -228,7 +227,6 @@ test.describe("form demo screenshots", () => {
     // shot below selects the reduced-motion label specifically so a
     // regression fails the spec instead of quietly producing churn.
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

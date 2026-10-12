@@ -16,6 +16,16 @@ export function splitRouteSegments<T extends { breakBefore?: boolean }>(
   return segments;
 }
 
+/**
+ * How many points of its trace a saved run keeps (`runDocument`). Enough
+ * to draw the route, too coarse to search it again: a best effort can
+ * only start and end on a kept point, so on a thinned track a marathon's
+ * 1K read 25 s slow and a winding 10K up to 80 s. A run's efforts are
+ * saved with it instead, worked out from the full trace, as its splits
+ * are.
+ */
+export const KEPT_ROUTE_POINTS = 500;
+
 /** Keep the point budget and both endpoints of every represented segment.
  * If the budget cannot represent all disconnected pieces, omit whole pieces
  * rather than joining across a cut. The share preview uses this exact result. */

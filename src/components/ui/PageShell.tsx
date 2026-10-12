@@ -22,8 +22,10 @@
  *     (`brand`) for the date and "Today", and Train's sport-tinted header
  *     zone (`accent`) with its icon tile (`leading`), because the Lift/Run
  *     switch and the page's own content already say which mode is on
- *   - the entrance stagger, which Food, Social and History each declared
- *     identically and Home inlined
+ *   - the section variants, which Food, Social and History each declared
+ *     identically and Home inlined. The page starts settled
+ *     (`initial={false}`): switching tabs is the most frequent thing in the
+ *     app, and restaggering every section on each switch only slowed it
  *   - the rhythm between page sections
  *
  * What it does NOT own, deliberately: the column and gutter. `Layout`'s
@@ -93,14 +95,18 @@ export default function PageShell({
     <motion.div
       {...rest}
       className={cn("space-y-4", className)}
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={pageStaggerContainer}
     >
       {banner}
       <motion.header variants={pageItemVariant}>
-        <div className="flex items-start justify-between gap-3 pt-1 pb-1">
-          <div className="min-w-0 flex-1">
+        {/* The title's column is never narrower than its longest word,
+            and the row wraps: at large text, actions that no longer fit
+            beside the title (Food's date switcher) move under it rather
+            than being drawn over it. */}
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 pt-1 pb-1">
+          <div className="min-w-min flex-1">
             {eyebrow !== undefined && (
               <p className="text-sm font-semibold text-muted-foreground">
                 {eyebrow}
@@ -120,7 +126,7 @@ export default function PageShell({
             )}
           </div>
           {actions && (
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="ml-auto flex items-center gap-1 flex-shrink-0">
               {actions}
             </div>
           )}

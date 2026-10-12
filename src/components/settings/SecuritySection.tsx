@@ -162,7 +162,13 @@ export default function SecuritySection({
           {user.email && (
             <SettingsRow
               label="Email"
-              description={user.email}
+              /* An address has no break of its own: it wraps anywhere
+                 rather than running past the card at larger text. */
+              description={
+                <span className="block [overflow-wrap:anywhere]">
+                  {user.email}
+                </span>
+              }
               trailing={
                 emailVerified ? (
                   <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">

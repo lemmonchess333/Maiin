@@ -25,6 +25,10 @@
  * the account's answer (`refreshProfile`) before acting on it, and shows
  * nothing until it has. Offline there is nothing fresher to read, and it
  * acts on the answer this device holds.
+ *
+ * A restricted account shares nothing (S4e): the row waits for that answer
+ * too, so an automatic share never goes out ahead of it, and then says so
+ * in the row's place. A post that already went out keeps its Undo.
  */
 import { useEffect, useId, useState } from "react";
 import { Check, Clock, EyeOff, Globe, Users } from "lucide-react";
@@ -32,6 +36,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/lib/auth";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -122,7 +128,8 @@ export default function SessionShareRow({
 }: {
   action: SessionShareAction;
 }) {
-  const { refreshProfile } = useAuth();
+  const { user, refreshProfile } = useAuth();
+  const restriction = useRestrictedStatus(user?.uid);
   // Nothing to read first when the post already exists, or offline.
   const [checked, setChecked] = useState(
     () => liveSessionPost(action) !== undefined || isOffline()
@@ -141,7 +148,11 @@ export default function SessionShareRow({
       current = false;
     };
   }, [checked, refreshProfile]);
-  return checked ? <ShareRow action={action} /> : null;
+  if (!checked || restriction.loading) return null;
+  if (restriction.isRestricted && !liveSessionPost(action)) {
+    return <RestrictedNotice />;
+  }
+  return <ShareRow action={action} />;
 }
 
 function ShareRow({ action }: { action: SessionShareAction }) {

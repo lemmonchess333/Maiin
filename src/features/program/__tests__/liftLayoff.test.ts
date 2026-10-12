@@ -36,6 +36,9 @@ describe("assessLiftReturn — no history is not a layoff", () => {
       daysAway: null,
       layoff: "none",
       dismissKey: null,
+      welcomeBack: false,
+      easeBackFirst: false,
+      easeBackShare: 0.1,
     });
   });
 
@@ -103,6 +106,30 @@ describe("assessLiftReturn — shares the run side's thresholds", () => {
       assessLiftReturn([trained(daysBefore(LAYOFF_DETRAINED_DAYS))], TODAY)
         .layoff
     ).toBe("detrained");
+  });
+});
+
+describe("assessLiftReturn — the Welcome back sheet (Lift4 (11))", () => {
+  const at = (days: number) =>
+    assessLiftReturn([trained(daysBefore(days))], TODAY);
+
+  it("is offered from two weeks away, not one", () => {
+    // A week away is a missed week, which the run side's gap names; the
+    // lifting's sheet waits for a break.
+    expect(at(13).welcomeBack).toBe(false);
+    expect(at(13).layoff).toBe("gap");
+    expect(at(14).welcomeBack).toBe(true);
+  });
+
+  it("puts easing back first from three weeks, the shared detrained line", () => {
+    expect(at(LAYOFF_DETRAINED_DAYS - 1).easeBackFirst).toBe(false);
+    expect(at(LAYOFF_DETRAINED_DAYS).easeBackFirst).toBe(true);
+  });
+
+  it("takes 10% off up to eight weeks away and 20% after", () => {
+    expect(at(14).easeBackShare).toBe(0.1);
+    expect(at(56).easeBackShare).toBe(0.1);
+    expect(at(57).easeBackShare).toBe(0.2);
   });
 });
 

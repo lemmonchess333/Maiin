@@ -10,8 +10,8 @@
  *      and a lateral raise as `progressionType: "double"` with no range — it
  *      ran against every stored document on 2026-08-04, so the affected
  *      exercises are in real users' plans right now;
- *   2. `templateExToProgEx`, which leaves per-side forms ("10/leg") range-less
- *      — 15 of the 245 authored template exercises;
+ *   2. plans the hand-written templates started, whose per-side forms
+ *      ("10/leg") carry no range — 15 of their 245 exercises;
  *   3. any document generated before backlog #7 stamped ranges at all.
  *
  * All three fell to the legacy arm, which fires only when the lifter
@@ -21,73 +21,23 @@
  * raise sat at 3×12@40 kg for all twelve while a ranged accessory beside it
  * took three load steps.
  *
- * ADR-0008: the SERVER copy is the one that runs (session completion goes
- * through `programCommands` → `functions/lib/progressionEngine.js`), so every
- * behaviour case here asserts against BOTH engines, server first. Byte-level
- * parity across the whole input matrix is `applyProgression.cross.test.ts`'s
- * job — including the `repRangeMax: undefined` × `double` rows this fix
- * changes, which is why that test is the mirror guard and this one is the
- * behaviour guard.
  */
 import { describe, it, expect } from "vitest";
-import { createRequire } from "node:module";
 
 import { applyProgression as clientApplyProgression } from "@/features/program/programEngine";
 import { migrateProgramState } from "@/features/program/migrations";
-import {
-  parseTemplateReps,
-  templateExToProgEx,
-} from "@/features/program/templateConversion";
 import type {
-  Goal,
   ProgramExercise,
   ProgramState,
 } from "@/features/program/programTypes";
 
-const require = createRequire(import.meta.url);
-const cf = require("../../../../functions/lib/progressionEngine") as {
-  applyProgression: (
-    exercise: ProgramExercise,
-    actualReps: number,
-    actualWeight: number,
-    goal: Goal,
-    microloading: boolean,
-    actualRpe?: number,
-    now?: number
-  ) => ProgramExercise;
-};
-
-/** Run a session on both engines and assert they agree before returning. */
-function bothEngines(
+/** One session, without small plates. */
+function session(
   ex: ProgramExercise,
   actualReps: number,
   actualWeight: number
 ): ProgramExercise {
-  const server = cf.applyProgression(
-    ex,
-    actualReps,
-    actualWeight,
-    "recomp",
-    false,
-    undefined,
-    0
-  );
-  const client = clientApplyProgression(
-    ex,
-    actualReps,
-    actualWeight,
-    "recomp",
-    false
-  );
-  expect(
-    { reps: server.reps, weight: server.weight, notes: server.notes ?? null },
-    "server and client disagreed"
-  ).toEqual({
-    reps: client.reps,
-    weight: client.weight,
-    notes: client.notes ?? null,
-  });
-  return server;
+  return clientApplyProgression(ex, actualReps, actualWeight, false);
 }
 
 /** A compliant lifter: hits the target exactly, at the prescribed load. */
@@ -95,7 +45,7 @@ function compliantSessions(start: ProgramExercise, n: number) {
   let ex = start;
   const seen: string[] = [];
   for (let i = 0; i < n; i++) {
-    ex = bothEngines(ex, ex.reps, ex.weight);
+    ex = session(ex, ex.reps, ex.weight);
     seen.push(`${ex.reps}@${ex.weight}`);
   }
   return { final: ex, seen };
@@ -210,7 +160,7 @@ describe("range-less double progression — the v3 coverage backfill", () => {
        lifter who volunteers the two extra reps sees exactly what they saw
        before — same load, same reset target. */
     const calf = backfilledExercises()[0]; // 3x12@40, baseReps 12
-    const overshoot = bothEngines(calf, 14, 40);
+    const overshoot = session(calf, 14, 40);
     expect(overshoot.weight).toBe(42.5);
     expect(overshoot.reps).toBe(12);
   });
@@ -218,20 +168,17 @@ describe("range-less double progression — the v3 coverage backfill", () => {
 
 describe("range-less double progression — template per-side forms", () => {
   it("progresses a per-side accessory", () => {
-    const lunge = templateExToProgEx(
-      {
-        name: "Walking Lunge",
-        exerciseId: "walking-lunge",
-        sets: 3,
-        reps: "10/leg",
-        restSeconds: 60,
-        isAccessory: true,
-      },
-      "double"
-    );
-    expect(lunge.progressionType).toBe("double");
-    expect(lunge.repRangeMax).toBeUndefined();
-
+    // "10/leg" as a template plan stored it: a double with no range.
+    const lunge = bodyweight({
+      name: "Walking Lunge",
+      exerciseId: "walking-lunge",
+      movementCategory: "knee_dominant",
+      sets: 3,
+      reps: 10,
+      baseReps: 10,
+      restSeconds: 60,
+      isAccessory: true,
+    });
     const { seen } = compliantSessions(
       {
         ...lunge,
@@ -241,27 +188,9 @@ describe("range-less double progression — template per-side forms", () => {
       },
       4
     );
-    // 1.25 kg steps, not 2.5 — a 20 kg lift is below HEAVY_LOAD_KG, so the
-    // microplate step applies (backlog #7's proportional load step).
-    expect(seen).toEqual(["11@20", "12@20", "10@21.25", "11@21.25"]);
-  });
-
-  it("keeps an authored range that sits inside a per-side form", () => {
-    /* "8-10/leg" fell past the numeric-range branch (the `/leg` suffix breaks
-       its anchor) and came out as a bare 8 with no ceiling — the author wrote
-       a range and the conversion deleted it. Two template exercises use this
-       form. */
-    expect(parseTemplateReps("8-10/leg")).toEqual({ reps: 8, repRangeMax: 10 });
-    expect(parseTemplateReps("12-15/side")).toEqual({
-      reps: 12,
-      repRangeMax: 15,
-    });
-    // Plain per-side forms still carry no range, and a descending pair is
-    // still treated as a single number rather than an inverted range.
-    expect(parseTemplateReps("10/leg")).toEqual({ reps: 10 });
-    expect(parseTemplateReps("10-10/leg")).toEqual({ reps: 10 });
-    // The unit simplification is unchanged: per-side reps stay plain reps.
-    expect(parseTemplateReps("8-10/leg").repUnit).toBeUndefined();
+    // A lift the catalogue doesn't know steps as a stack does: 2.5 kg, which
+    // is 12.5% of 20 kg (`loadSteps.ts`).
+    expect(seen).toEqual(["11@20", "12@20", "10@22.5", "11@22.5"]);
   });
 });
 
@@ -296,12 +225,12 @@ describe("range-less double progression — the ceilings", () => {
        lifter to strap on a weight vest at TEN reps. 20 is the number
        `bumpBodyweightReps` already falls back to when no range is authored,
        so the fallback inherits it rather than inventing one. */
-    expect(bothEngines(bodyweight(), 8, 0).reps).toBe(9); // was frozen at 8
+    expect(session(bodyweight(), 8, 0).reps).toBe(9); // was frozen at 8
     // Ten pull-ups is nowhere near "add a weight vest" — under a resetReps+2
     // ceiling it would be exactly that.
-    expect(bothEngines(bodyweight(), 10, 0).notes ?? null).toBeNull();
-    expect(bothEngines(bodyweight(), 10, 0).reps).toBe(11);
-    const atCap = bothEngines(bodyweight({ reps: 19, baseReps: 19 }), 20, 0);
+    expect(session(bodyweight(), 10, 0).notes ?? null).toBeNull();
+    expect(session(bodyweight(), 10, 0).reps).toBe(11);
+    const atCap = session(bodyweight({ reps: 19, baseReps: 19 }), 20, 0);
     expect(atCap.notes).toMatch(/add load/i);
   });
 
@@ -332,67 +261,38 @@ describe("range-less double progression — the ceilings", () => {
       });
     for (const seconds of [10, 15, 19, 30, 45]) {
       expect(
-        bothEngines(plank(seconds), seconds, 0).reps,
+        session(plank(seconds), seconds, 0).reps,
         `${seconds}s hold moved on an exact-target session`
       ).toBe(seconds);
     }
     // The legacy +2 overshoot still drives the 5-second bump, unchanged.
-    expect(bothEngines(plank(30), 32, 0).reps).toBe(35);
-    expect(bothEngines(plank(15), 17, 0).reps).toBe(20);
+    expect(session(plank(30), 32, 0).reps).toBe(35);
+    expect(session(plank(15), 17, 0).reps).toBe(20);
   });
 
-  it("leaves the LINEAR path alone, including its own separate gap", () => {
+  it("leaves the LINEAR path to its own rule: a completed session steps", () => {
     /* The fallback is scoped to `progressionType === "double"`, and this pins
-       that scope from the other side.
-     *
-     * Worth being explicit about what is being pinned, because it is NOT that
-     * the linear arm is healthy. The weighted linear arm consults
-     * `microloading`: with it ON (the default in onboarding, planBuilder,
-     * useProgram and the server command defaults alike) a completed session
-     * adds 1 kg, so the lift moves. With the user's own Programme-settings
-     * toggle OFF it needs the same +2 overshoot the double arm needed, and a
-     * compliant lifter is frozen exactly as this file's subjects were.
-     *
-     * That is a real second gap, deliberately left alone here: what a linear
-     * progression should do without microplates is a training-policy question
-     * (a full 2.5 kg plate pair every session is a different programme, not a
-     * bug fix), and the evidence handoff bars inferring that unilaterally.
-     * Widening this fallback to cover it would smuggle that decision in. */
+       that scope from the other side. The linear arm had a gap of its own:
+       without Microloading it needed the same +2 overshoot, so a compliant
+       lifter froze. Lift4 (6) closed it with one visible rule, a step for
+       every session with every set at the target, on the lift's own grid
+       (`loadSteps.ts`). */
     const linearEx = bodyweight({
-      exerciseId: "barbell-bench-press",
+      exerciseId: "bench-press",
       movementCategory: "horizontal_push",
       weight: 60,
       lastSuccessfulWeight: 60,
       lastAttemptedWeight: 60,
       progressionType: "linear",
     });
-    const goal: Goal = "recomp";
-    for (const microloading of [true, false]) {
-      const server = cf.applyProgression(
-        linearEx,
-        8,
-        60,
-        goal,
-        microloading,
-        undefined,
-        0
-      );
-      const client = clientApplyProgression(
-        linearEx,
-        8,
-        60,
-        goal,
-        microloading
-      );
-      expect(server.weight).toBe(client.weight);
-      expect(server.reps).toBe(8);
-      // microloading on → +1 kg; off → unchanged (the pre-existing gap).
-      expect(server.weight).toBe(microloading ? 61 : 60);
-    }
+    const plain = clientApplyProgression(linearEx, 8, 60, false);
+    expect(plain.reps).toBe(8);
+    expect(plain.weight).toBe(62.5);
+    expect(clientApplyProgression(linearEx, 8, 60, true).weight).toBe(61.25);
   });
 
   it("leaves an AUTHORED range alone", () => {
-    const ranged = bothEngines(
+    const ranged = session(
       bodyweight({
         exerciseId: "leg-curl",
         weight: 30,

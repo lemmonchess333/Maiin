@@ -32,6 +32,8 @@ import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { Workout } from "@/hooks/useWorkouts";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 
 interface Props {
   open: boolean;
@@ -56,6 +58,9 @@ export default function WorkoutFeedShareSheet({
   const { user, profile } = useAuth();
   const { isOnline } = useOnlineStatus();
   const gate = useEmailVerificationGate(user);
+  // A restricted account cannot share to the feed (S4e).
+  const { isRestricted } = useRestrictedStatus(user?.uid);
+  const held = gate.needsVerification || isRestricted;
   const [caption, setCaption] = useState("");
   const [posting, setPosting] = useState(false);
 
@@ -68,8 +73,9 @@ export default function WorkoutFeedShareSheet({
   const preview = liftPostPreview(lift);
 
   const share = async (visibility: "followers" | "public") => {
-    // Held while the email is unverified — the rules refuse the write.
-    if (gate.needsVerification) return;
+    // Held while the email is unverified or the account is restricted —
+    // the rules refuse the write.
+    if (held) return;
     if (captionIsProfane || posting) {
       if (captionIsProfane) haptic("error");
       return;
@@ -151,15 +157,19 @@ export default function WorkoutFeedShareSheet({
           </p>
         )}
 
-        {gate.needsVerification && (
-          <VerifyEmailNotice onRecheck={gate.recheck} />
+        {isRestricted ? (
+          <RestrictedNotice />
+        ) : (
+          gate.needsVerification && (
+            <VerifyEmailNotice onRecheck={gate.recheck} />
+          )
         )}
 
         <div className="space-y-2">
           <Button
             fullWidth
             loading={posting}
-            disabled={captionIsProfane || !isOnline || gate.needsVerification}
+            disabled={captionIsProfane || !isOnline || held}
             onClick={() => share("followers")}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
@@ -169,7 +179,7 @@ export default function WorkoutFeedShareSheet({
             fullWidth
             variant="secondary"
             loading={posting}
-            disabled={captionIsProfane || !isOnline || gate.needsVerification}
+            disabled={captionIsProfane || !isOnline || held}
             onClick={() => share("public")}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >

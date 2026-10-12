@@ -118,3 +118,21 @@ describe("muscle-group taxonomy — both live vocabularies resolve", () => {
     expect(MUSCLE_MAP["Cardio"]).toEqual([]);
   });
 });
+
+describe("the movement groups' names", () => {
+  /* The finish screen lists a session's groups side by side. A deadlift's
+     group was "Hamstrings & Back" over a row's "Back", which read as one
+     group counted twice. */
+  it("keeps the hinge's name clear of the row's", () => {
+    const words = (name: string) =>
+      new Set(
+        name
+          .toLowerCase()
+          .split(/[^a-z]+/)
+          .filter(Boolean)
+      );
+    const hinge = words(CATEGORY_DISPLAY.hip_dominant);
+    const row = words(CATEGORY_DISPLAY.horizontal_pull);
+    expect([...hinge].filter((word) => row.has(word))).toEqual([]);
+  });
+});

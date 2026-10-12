@@ -19,6 +19,7 @@ import { haptic } from "@/lib/haptic";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
+import RestrictedNotice from "@/components/social/RestrictedNotice";
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
@@ -46,6 +47,7 @@ export function ChallengeList({
     joinChallenge,
     leaveChallenge,
     refreshProgress,
+    restricted,
   } = useChallenges();
 
   /* SOC-P1d: publish the progress refetch for the shell's pull-to-refresh
@@ -247,6 +249,10 @@ export function ChallengeList({
 
   return (
     <div className="space-y-4">
+      {/* A restricted account can follow its challenges and leave them,
+          but not join one (S4e). */}
+      {restricted && availableChallenges.length > 0 && <RestrictedNotice />}
+
       {/* SOC-P1e — collective pulse leads the section: honest ambient
           liveness (the km total moves whenever anyone runs). */}
       {collectiveCh && (

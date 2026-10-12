@@ -3,7 +3,7 @@
 **Researched:** 2026-06-11 · **Method:** multi-source web research (search fan-out + source fetch), cross-checked. Re-verify when products change.
 **Scope (locked with product owner):** wedge = **hybrid all-in-one** (run + lift + nutrition + measured/adaptive recovery); full competitor landscape; deliverable = this report + the roadmap in §6.
 
-> Companion to `CONTEXT.md → Reference-app patterns`, which already covers the _training-plan mechanics_ layer (linking, recovery, rollover, mode-change, streaks). This doc is the _whole-product / why-switch_ layer.
+> Companion to `GLOSSARY.md → Reference-app patterns`, which already covers the _training-plan mechanics_ layer (linking, recovery, rollover, mode-change, streaks). This doc is the _whole-product / why-switch_ layer.
 
 ---
 

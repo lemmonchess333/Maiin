@@ -3,6 +3,7 @@ import type {
   ShareBackground,
 } from "@/components/share/ShareCardRenderer";
 import { logger } from "@/lib/logger";
+import { shareFile } from "@/lib/shareFile";
 
 const FORMAT_DIMS: Record<ShareFormat, { w: number; h: number }> = {
   story: { w: 1080, h: 1920 },
@@ -40,37 +41,26 @@ export async function generateShareImage(
 }
 
 /**
- * Hand a generated File to the native share sheet (Web Share API — works
- * in browsers AND the iOS WKWebView), falling back to a download. A
- * user-cancelled native share (AbortError) reports "cancelled", not a
- * failure, so the caller doesn't show an error toast.
+ * Hand a generated share card to the share sheet (Web Share API — works in
+ * browsers AND the iOS WKWebView), falling back to a download on the web
+ * only: the native app has no download, so there a card the sheet cannot
+ * take is a failure, not a silent "downloaded". A user-cancelled share
+ * reports "cancelled", not a failure, so the caller doesn't show an error
+ * toast. The mechanism is shareFile's (src/lib/shareFile.ts), which the
+ * data exports share.
+ *
+ * The card is drawn after an await, so the tap that asked for it can have
+ * expired by the time the sheet is asked for ("blocked"). Here that is a
+ * failure: ShareCardSheet says "Couldn't share. Try again.", and tapping
+ * Share again is the fresh tap the sheet needs.
  *
  * NATIVE SEAM: when @capacitor/share is added (needs `cap sync`), swap
- * the navigator.share branch for the plugin on native platforms.
+ * the navigator.share branch in shareFile for the plugin on native.
  */
 export async function shareImageFile(
   file: File,
   text: string
 ): Promise<"shared" | "downloaded" | "cancelled" | "failed"> {
-  try {
-    if (
-      typeof navigator !== "undefined" &&
-      navigator.share &&
-      navigator.canShare?.({ files: [file] })
-    ) {
-      await navigator.share({ files: [file], text });
-      return "shared";
-    }
-    const url = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
-    return "downloaded";
-  } catch (e) {
-    if ((e as { name?: string })?.name === "AbortError") return "cancelled";
-    logger.error("Share dispatch failed:", e);
-    return "failed";
-  }
+  const outcome = await shareFile(file, { text });
+  return outcome === "blocked" ? "failed" : outcome;
 }

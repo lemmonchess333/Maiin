@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
-import type { SessionSegment } from "@/lib/runSegments";
+import { stepEyebrow, type SessionSegment } from "@/lib/runSegments";
 import { paceBandLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -20,28 +20,27 @@ import { THEME } from "@/lib/theme";
  *  - big countdown / metres-left, "Up next", a step-complete flash,
  *    a manual "Skip step" override, and a terminal all-steps-done state
  *
- * Colour: the active-run cockpit's own language (see the original header
- * note) — TEAL family, work full-strength, easier segments half voltage,
- * recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
+ * Colour: the run's coral (DESIGN_GUIDE §14, the live run screen), work
+ * full-strength, easier segments half voltage, recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
  * opacity/width only (WKWebView-safe); reduced motion gets settled states.
  */
 
-const TEAL = THEME.teal;
+const RUN = THEME.running;
 const TYPE_COLOR: Record<string, string> = {
-  warmup: `${TEAL}73`,
-  easy: `${TEAL}73`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}73`,
+  easy: `${RUN}73`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.35)",
-  cooldown: `${TEAL}73`,
+  cooldown: `${RUN}73`,
 };
 const TYPE_EYEBROW: Record<string, string> = {
-  warmup: `${TEAL}CC`,
-  easy: `${TEAL}CC`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}CC`,
+  easy: `${RUN}CC`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.6)",
-  cooldown: `${TEAL}CC`,
+  cooldown: `${RUN}CC`,
 };
 
 /** A countdown shows 0:01 until it reaches zero — ceil before formatting. */
@@ -68,20 +67,6 @@ function headlineFor(
     return `${seg.effort} at ${paceBandLabel(band, unit)}`;
   }
   return seg.label;
-}
-
-function eyebrowFor(seg: SessionSegment): string {
-  if (seg.eyebrow) return seg.eyebrow;
-  if (seg.type === "hard" && seg.rep && seg.totalReps) {
-    return `REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "recovery" && seg.rep && seg.totalReps) {
-    return `AFTER REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "moderate" && seg.rep && seg.totalReps) {
-    return `BLOCK ${seg.rep}/${seg.totalReps}`;
-  }
-  return seg.type.toUpperCase();
 }
 
 export default function IntervalStepShell({
@@ -191,7 +176,7 @@ export default function IntervalStepShell({
               className="text-caption font-bold tracking-wider"
               style={{ color: TYPE_EYEBROW[current.type] }}
             >
-              {eyebrowFor(current)}
+              {stepEyebrow(current)}
             </p>
           )}
           <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
@@ -206,28 +191,33 @@ export default function IntervalStepShell({
           {headlineFor(current, unit, band)}
         </p>
 
-        <div className="flex items-center justify-between gap-3 pt-0.5">
-          <p className="text-xs text-white/50 min-w-0 truncate">
-            {next ? (
-              <>
-                Up next:{" "}
-                <span className="text-white/70 font-medium">
-                  {headlineFor(next, unit, band)}
-                </span>
-              </>
-            ) : (
-              "Last step — bring it home."
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 active:scale-[0.97]"
-            aria-label="Skip to the next step"
-          >
-            Skip step
-          </button>
-        </div>
+        {/* A one-step session (an easy 30) has no next step to name or
+            skip to, and its only step is not a closing stretch: "Last
+            step — bring it home." read from the first second. */}
+        {segments.length > 1 && (
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <p className="text-xs text-white/50 min-w-0 truncate">
+              {next ? (
+                <>
+                  Up next:{" "}
+                  <span className="text-white/70 font-medium">
+                    {headlineFor(next, unit, band)}
+                  </span>
+                </>
+              ) : (
+                "Last step — bring it home."
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={onSkip}
+              className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
+              aria-label="Skip to the next step"
+            >
+              Skip step
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

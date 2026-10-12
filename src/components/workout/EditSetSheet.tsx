@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/Button";
 
 export default function EditSetSheet({
   set,
-  setNumber,
+  setName,
   timed,
   onSave,
   onClose,
 }: {
   set: { weight: number; reps: number };
-  setNumber: number;
+  /** The set as the workout screen names it: "set 2", "warm-up 1". */
+  setName: string;
   timed: boolean;
   onSave: (values: { weight: number; reps: number }) => Promise<void>;
   onClose: () => void;
@@ -28,7 +29,7 @@ export default function EditSetSheet({
         if (!open && !pending.current) onClose();
       }}
       dismissible={!saving}
-      title={`Edit set ${setNumber}`}
+      title={`Edit ${setName}`}
       description="Correct this set while keeping the rest of your workout."
       className="z-[70]"
       overlayClassName="z-[60]"

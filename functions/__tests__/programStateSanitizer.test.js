@@ -30,7 +30,7 @@ const realProgramState = {
   ],
   fatigueScore: 0,
   updatedAt: 1717_000_000_000,
-  settings: { autoProgression: true, microloading: true },
+  settings: { autoProgression: true, smallPlates: true },
   weekHistory: [],
   runDays: [],
   runPlan: { phase: null },
@@ -93,7 +93,7 @@ describe("sanitizeProgramState", () => {
       ...realProgramState,
       // a junk nested field inside a legit object is NOT stripped — the engine
       // reads specific fields; top-level injection + bloat is the real vector.
-      settings: { autoProgression: true, microloading: true, junk: 1 },
+      settings: { autoProgression: true, smallPlates: true, junk: 1 },
     });
     expect(value.settings.junk).toBe(1);
   });

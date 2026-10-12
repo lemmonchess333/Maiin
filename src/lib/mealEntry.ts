@@ -6,6 +6,23 @@ import { toast } from "@/lib/toast";
 import { track as trackFoodEvent, type FoodLogPath } from "@/lib/foodAnalytics";
 
 /**
+ * The longest food name a meal keeps. Barcode lookups bring in product
+ * names of any length, and nothing else bounds one: the meal rules check
+ * no fields (a meal is private to its owner), so the cap is applied
+ * where meals are written, in `createMealEntry` and `useMeals.editMeal`.
+ */
+export const FOOD_NAME_MAX = 100;
+
+/** A food name trimmed and cut to FOOD_NAME_MAX characters, never through
+ *  the middle of an emoji or accented letter. */
+export function clampFoodName(name: string): string {
+  const chars = Array.from(name.trim());
+  return chars.length <= FOOD_NAME_MAX
+    ? chars.join("")
+    : chars.slice(0, FOOD_NAME_MAX).join("").trimEnd();
+}
+
+/**
  * B0 effort telemetry for one logging attempt. `path` is required because
  * a save whose entry route is unknown cannot answer the question the event
  * exists for — whether the remembered-meal routes are cheaper than typing.
@@ -26,7 +43,11 @@ export async function createMealEntry(
 ) {
   if (auth.currentUser?.uid !== uid)
     throw new Error("Sign in again to log food.");
-  return addDocGuarded(collection(db, "users", uid, "meals"), data, {
+  const named =
+    typeof data.foodName === "string"
+      ? { ...data, foodName: clampFoodName(data.foodName) }
+      : data;
+  return addDocGuarded(collection(db, "users", uid, "meals"), named, {
     id,
     enqueue: (ref, clean) => {
       queueDurableWrite(uid, `users/${uid}/meals`, ref.id, clean);

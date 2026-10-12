@@ -68,7 +68,7 @@ const RACE: SpaceDirectoryEntry = {
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-09-13",
+      dateKey: "2099-09-13",
       distance: "half",
       city: "Newcastle",
       countryCode: "GB",
@@ -122,7 +122,7 @@ describe("SpacesDirectory — Races & Events", () => {
         screen.getByRole("link", { name: "Great North Run space" })
       ).getByText("Half marathon")
     ).toBeInTheDocument();
-    expect(screen.getByText(/13 Sep 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/13 Sep 2099/)).toBeInTheDocument();
     expect(screen.getByText(/Newcastle/)).toBeInTheDocument();
     // Density gate stays interest-only territory: the race card never
     // renders a count line, whatever its membership.
@@ -205,4 +205,21 @@ it("keeps filters visible through no matches and recovers across countries", asy
   expect(
     screen.getByRole("link", { name: "Great North Run space" })
   ).toBeInTheDocument();
+});
+
+it("keeps an expired race card visible with an honest awaiting-date label", () => {
+  const past = {
+    ...RACE,
+    def: { ...RACE.def, event: { ...RACE.def.event!, dateKey: "2000-01-01" } },
+  };
+  mockUseSpacesDirectory.mockReturnValue({
+    entries: [past],
+    upcomingRaces: [past.def],
+  });
+  renderDirectory();
+  expect(
+    screen.getByRole("link", { name: "Great North Run space" })
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Next date TBA/)).toBeInTheDocument();
+  expect(screen.queryByText(/1 Jan 2000/)).not.toBeInTheDocument();
 });

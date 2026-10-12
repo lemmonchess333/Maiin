@@ -9,7 +9,11 @@ import {
 import { motion, useMotionValue, animate } from "framer-motion";
 import { formatClock } from "@/utils/formatters";
 import { THEME } from "../../lib/theme";
-import { HUD_CAPTION, HUD_SECONDARY } from "./runHudTypography";
+import {
+  HUD_CAPTION,
+  HUD_DESTRUCTIVE,
+  HUD_SECONDARY,
+} from "./runHudTypography";
 import { haptic } from "../../lib/haptic";
 import { projectAndSnap } from "../../lib/sheetSnap";
 import {
@@ -115,7 +119,7 @@ function SplitsStrip({
           s.paceSeconds <
           splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length - 5;
         const color = isBest
-          ? THEME.teal
+          ? THEME.running
           : isFast
             ? THEME.success
             : "rgba(255,255,255,0.5)";
@@ -160,7 +164,7 @@ function SplitsStrip({
  *  recent with an honest "last 5 of N" header rather than an inner
  *  scroller: the whole sheet is a pointer-drag surface, and a scrollable
  *  list inside it would fight the drag for the same gesture. The full
- *  list lives on the post-run summary. Best lap carries the teal the
+ *  list lives on the post-run summary. Best lap carries the coral the
  *  expanded SplitsStrip already uses for it; each later lap shows a
  *  signed delta vs the lap before (green = faster). Before the first
  *  lap completes, the current-lap progress bar plus a quiet line — the
@@ -225,7 +229,7 @@ export function SplitsList({
               style={{
                 fontSize: 15,
                 fontWeight: 700,
-                color: isBest ? THEME.teal : "rgba(255,255,255,0.85)",
+                color: isBest ? THEME.running : "rgba(255,255,255,0.85)",
                 fontVariantNumeric: "tabular-nums",
                 fontFamily: "var(--font-mono)",
               }}
@@ -278,21 +282,22 @@ function KmProgress({
   const progress = (distance % lap) / lap;
   const next = kmDone + 1;
   const u = distanceUnitLabel(unit);
+  /* `w-full`: the expanded sheet centres its column, which sizes a row
+     to its content, and the bar's `flex-1` then had no width at all —
+     the two labels sat side by side with nothing between them. */
   return (
-    <div className="flex items-center gap-2 px-1">
+    <div className="flex w-full items-center gap-2 px-1">
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          /* Room for "100 km" at 11px tabular (~39px), so the bar does not
+             move as the count gains a digit. */
+          width: 44,
           textAlign: "right",
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {kmDone}
-        {u}
+        {`${kmDone} ${u}`}
       </p>
       <div
         className="flex-1 h-1 rounded-full overflow-hidden"
@@ -302,22 +307,18 @@ function KmProgress({
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${progress * 100}%`,
-            background: `linear-gradient(90deg, ${THEME.teal}, ${THEME.brand})`,
+            background: THEME.running,
           }}
         />
       </div>
       <p
         style={{
           ...HUD_SECONDARY,
-          /* 34, not 28: the label went 9px → 11px with the D18 floor, and
-             28px was sized for the smaller type. `{kmDone}{u}` reaches four
-             glyphs at "12km" (~24px at 11px tabular) and five past 100km. */
-          width: 34,
+          width: 44,
           fontVariantNumeric: "tabular-nums",
         }}
       >
-        {next}
-        {u}
+        {`${next} ${u}`}
       </p>
     </div>
   );
@@ -531,10 +532,10 @@ export default function RunBottomSheet({
                     fontWeight: 800,
                     fontVariantNumeric: "tabular-nums",
                     fontFamily: "var(--font-mono)",
-                    color: THEME.teal,
+                    color: THEME.running,
                     lineHeight: 1,
                     letterSpacing: "-2px",
-                    textShadow: `0 0 40px ${THEME.teal}55`,
+                    textShadow: `0 0 40px ${THEME.running}55`,
                   }}
                 >
                   {formatTime(elapsed)}
@@ -550,10 +551,13 @@ export default function RunBottomSheet({
                 </p>
               </div>
 
-              {/* Distance + Pace */}
-              <div className="flex gap-12 items-end">
+              {/* Distance + Pace. The figures are px, so the gap is too:
+                  3rem doubled at large text and left pace a column one
+                  character wide on a 320pt screen. */}
+              <div className="flex gap-[48px] items-end">
                 <div className="text-center">
                   <p
+                    className="whitespace-nowrap"
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
@@ -577,6 +581,7 @@ export default function RunBottomSheet({
                 </div>
                 <div className="text-center">
                   <p
+                    className="whitespace-nowrap"
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
@@ -759,7 +764,7 @@ export default function RunBottomSheet({
                 is the correct posture for an active-run surface
                 where the user is moving and eyes are off-screen. */}
             {!isPaused ? (
-              <div className="flex items-center justify-center gap-10 flex-shrink-0">
+              <div className="flex items-center justify-center gap-[40px] flex-shrink-0">
                 {/* Lock */}
                 <RunControlButton
                   aria-label="Lock screen"
@@ -828,19 +833,23 @@ export default function RunBottomSheet({
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-12 flex-shrink-0">
+              <div className="flex items-center justify-center gap-[48px] flex-shrink-0">
+                {/* Stop is a grey ring like Pause and Lock, so Resume is the
+                    paused screen's one filled colour. Stopping keeps the run
+                    (its confirm offers End run), so it is not red; red
+                    belongs to Discard, which deletes it. */}
                 <RunControlButton
                   aria-label="Stop run"
                   label="STOP"
                   size="lg"
-                  variant="danger"
+                  variant="neutral"
                   onClick={() => setShowStopConfirm(true)}
                   icon={
                     <div
                       style={{
                         width: 22,
                         height: 22,
-                        background: "hsl(var(--destructive))",
+                        background: "white",
                         borderRadius: 5,
                       }}
                     />
@@ -904,7 +913,7 @@ export default function RunBottomSheet({
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  color: THEME.teal,
+                  color: THEME.running,
                   fontVariantNumeric: "tabular-nums",
                   fontFamily: "var(--font-mono)",
                 }}
@@ -960,7 +969,7 @@ export default function RunBottomSheet({
               }}
               className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{
-                background: isPaused ? THEME.teal : "rgba(255,255,255,0.1)",
+                background: isPaused ? THEME.running : "rgba(255,255,255,0.1)",
                 border: "2px solid rgba(255,255,255,0.18)",
               }}
             >
@@ -1059,7 +1068,11 @@ export default function RunBottomSheet({
               >
                 {pace}
               </p>
-              <p style={{ ...HUD_CAPTION }}>/KM</p>
+              {/* The reader's unit, as the bar behind this dialog says it:
+                  the pace above is converted, so its label must be too. */}
+              <p style={{ ...HUD_CAPTION }}>
+                {paceUnitLabel(unit).toUpperCase()}
+              </p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest
@@ -1116,8 +1129,10 @@ export default function RunBottomSheet({
                   setShowStopConfirm(false);
                   onStop();
                 }}
+                /* Ending keeps the run, so it is the run's own button;
+                   red belongs to Discard, which deletes it. */
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: "hsl(var(--destructive))" }}
+                style={{ background: "hsl(var(--running-fill))" }}
               >
                 End run
               </button>
@@ -1130,8 +1145,8 @@ export default function RunBottomSheet({
                   }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm"
                   style={{
-                    color: "rgba(255,255,255,0.6)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: HUD_DESTRUCTIVE,
+                    border: `1px solid ${HUD_DESTRUCTIVE}4D`,
                   }}
                 >
                   Discard run

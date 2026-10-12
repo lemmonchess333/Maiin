@@ -63,8 +63,7 @@ export default function RaceDayPlanCard({
           </span>
           {" · "}
           <span className="font-mono tabular-nums">
-            {paceMinSec(vm.avgPaceS, unit)}
-            {paceUnitLabel(unit)}
+            {paceMinSec(vm.avgPaceS, unit)} {paceUnitLabel(unit)}
           </span>{" "}
           average
         </p>
@@ -110,8 +109,7 @@ export default function RaceDayPlanCard({
               </span>
               <span className="flex-1 border-b border-dashed border-border/60 mx-1 translate-y-[-3px]" />
               <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                {paceMinSec(row.segmentPaceS, unit)}
-                {paceUnitLabel(unit)}
+                {paceMinSec(row.segmentPaceS, unit)} {paceUnitLabel(unit)}
               </span>
               <span className="font-semibold font-mono tabular-nums text-foreground min-w-[64px] text-right">
                 {raceTimeLabel(row.cumulativeS)}

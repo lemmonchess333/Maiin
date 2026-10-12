@@ -121,6 +121,16 @@ struck. This document supersedes the pack for the lifting arc.
 >   decision about whether Tropos asks the user to approve prescriptions is
 >   not mine to take unilaterally.
 
+> **STATUS 2026-10-06 — the first item reversed, by the owner's Lift4 (10)
+> lock.** Running now shapes the lift plan, though not through the aerobic
+> minutes this STATUS declined: with a race plan the lighter weeks fall on the
+> run plan's step-back weeks, the race's last two weeks, race week and the
+> week after are lighter, and on a yes at race setup the leg lifts lose a third
+> of their sets in the build weeks. Each is a rule on the run plan's calendar,
+> agreed or labelled, with no exchange rate between the two loads. Lift4 (10)
+> also supersedes RP2. The lifting handoff's build step 5 STATUS paragraphs
+> say what shipped.
+
 > **STATUS 2026-08-02d — P4 (handoff 12) shipped, and the anchor slot it aimed
 > at turned out to be computed-but-rendered-nowhere.** §5 says the strength
 > readout goes "into the existing block-review anchor slot". The slot exists in

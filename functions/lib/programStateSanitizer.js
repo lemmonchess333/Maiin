@@ -43,6 +43,9 @@ const PROGRAM_STATE_KEYS = new Set([
   "manualCompletions",
   "pendingFellBehindPrompt",
   "primaryGoal",
+  // Lift4 (5): the session length the plan was fitted to. Listed before
+  // the client writes it, for the reason trainingBlock's entry gives.
+  "sessionMinutes",
   // Backlog #9 (Helms H5): the adjustment rule's second-order memory.
   // `advanceWeek` emits it UNCONDITIONALLY (programEngine.ts, in the return
   // literal), so every user who has ever rolled a week carries it — and
@@ -85,10 +88,19 @@ const PROGRAM_STATE_KEYS = new Set([
   // and strand the user's rollover.
   "liftWeekKey",
   // 14b: canonical muscles that got a recovery session on the last advance.
-  // One week's refractory list, not a history — see `recoveryTrigger.ts`.
+  // The retired per-muscle recovery session's list; stored plans carry it.
   // Unlisted, it would strand a muscle mid-re-entry AND reject the deload
   // command outright for any user carrying one.
   "recoveringMuscles",
+  // Lift4 (11): the weeks of a return after a break, written by the
+  // client's "Ease back in" (`easeBackIn`) and counted down by its rollover.
+  // Unlisted, every command on a plan that carries it would be refused for
+  // the dropped key, the lighter week's guard below among them.
+  "easingBack",
+  // Lift4 (10): which of a race's final weeks this is, written by the
+  // client's rollover. Unlisted, a command on a plan in one would be
+  // refused for the dropped key.
+  "raceWeek",
   // P6 soft delete: the single-slot stash the `restoreExercise` undo reads.
   // Unlisted, `removeExercise` would write a key the sanitiser drops — and
   // `applyProgramCommand` REJECTS on any dropped key, so every removal would

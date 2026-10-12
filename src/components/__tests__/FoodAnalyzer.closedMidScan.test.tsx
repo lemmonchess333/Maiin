@@ -82,6 +82,7 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
+import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 import { toast } from "@/lib/toast";
 
 const MEAL = {
@@ -139,7 +140,9 @@ async function startThenClose(button: "stub-capture" | "stub-barcode") {
       })
   );
   vi.stubGlobal("fetch", fetchMock);
-  render(<FoodAnalyzer date="2026-09-23" meal="lunch" />);
+  render(
+    <FoodAnalyzer date="2026-09-23" meal="lunch" aiConsent={AI_ALLOWED} />
+  );
   await waitFor(() => expect(modal().dataset.open).toBe("true"));
   fireEvent.click(screen.getByText(button));
   await waitFor(() => expect(fetchMock).toHaveBeenCalled());

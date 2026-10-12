@@ -51,4 +51,33 @@ describe("FirstWeekCard", () => {
     );
     expect(onDismiss).toHaveBeenCalledOnce();
   });
+
+  /* FV1: an item still to do opens its step (Home decides what that is:
+     a session card pointed out, Food's composer, the weigh-in sheet). */
+  it("opens the step an item still to do names", () => {
+    const onOpen = vi.fn();
+    render(<FirstWeekCard week={week()} onDismiss={vi.fn()} onOpen={onOpen} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /Go for your first run/ })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Weigh in on three mornings/ })
+    );
+    expect(onOpen.mock.calls).toEqual([["run"], ["weigh-in"]]);
+  });
+
+  it("a ticked item is plain text, not a button", () => {
+    render(
+      <FirstWeekCard week={week()} onDismiss={vi.fn()} onOpen={vi.fn()} />
+    );
+    expect(
+      screen.queryByRole("button", { name: /Finish your first workout/ })
+    ).toBeNull();
+    expect(screen.getByText("Finish your first workout")).toBeInTheDocument();
+  });
+
+  it("without somewhere to open, no row is a button", () => {
+    render(<FirstWeekCard week={week()} onDismiss={vi.fn()} />);
+    expect(screen.getAllByRole("button")).toHaveLength(1); // the close X
+  });
 });

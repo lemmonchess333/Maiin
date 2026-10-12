@@ -14,6 +14,7 @@ import {
   type MealKey,
 } from "./mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { FOOD_NAME_MAX } from "@/lib/mealEntry";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -360,6 +361,7 @@ function EditServingsSheet({
             type="text"
             value={pickedName}
             onChange={(e) => setPickedName(e.target.value)}
+            maxLength={FOOD_NAME_MAX}
             disabled={saving}
             aria-label="Edit name"
             placeholder="Name"
@@ -382,7 +384,7 @@ function EditServingsSheet({
             slots, where snapping all docs to one slot via this picker IS the
             intended outcome but the section label here would be
             misleading. */}
-        <div className="space-y-2">
+        <div className="@container space-y-2">
           <SectionLabel className="text-center">Meal slot</SectionLabel>
           <SegmentedControl
             emphasis="solid"
@@ -487,8 +489,12 @@ function EditServingsSheet({
           </div>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-center justify-center gap-4">
+        {/* Stepper. The round buttons and the gaps are px, as iOS keeps
+            a stepper's controls one size whatever the text size: in rem,
+            at larger text the row outgrew the sheet, the buttons squeezed
+            to ovals and the count's "serving" ran out of its box. The
+            count itself still grows, and never shrinks below its words. */}
+        <div className="flex items-center justify-center gap-[16px]">
           <button
             type="button"
             onClick={() => {
@@ -497,11 +503,11 @@ function EditServingsSheet({
             }}
             disabled={target <= 1 || saving}
             aria-label="Decrease servings"
-            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
           >
             −
           </button>
-          <div className="text-center min-w-[80px]" aria-live="polite">
+          <div className="text-center min-w-[80px] shrink-0" aria-live="polite">
             <p
               className="text-4xl font-mono tabular-nums font-extrabold text-foreground"
               aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
@@ -520,7 +526,7 @@ function EditServingsSheet({
             }}
             disabled={saving}
             aria-label="Increase servings"
-            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-[48px] shrink-0 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 transition-transform active:scale-90"
           >
             +
           </button>
@@ -581,7 +587,7 @@ function EditServingsSheet({
               onDelete();
             }}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive-strong active:scale-[0.98] disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive-strong transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             <Trash2 className="size-4" aria-hidden="true" />
             Delete
@@ -589,24 +595,29 @@ function EditServingsSheet({
         )}
       </div>
 
-      <div className="flex gap-2 border-t border-border/40 px-5 pt-3 pb-4">
-        <Button
-          variant="secondary"
-          size="lg"
-          className="flex-1"
-          onClick={onCancel}
-          disabled={saving}
-        >
-          Cancel
-        </Button>
-        <Button
-          size="lg"
-          className="flex-1"
-          onClick={handleSave}
-          disabled={unchanged || hasInvalidMacro || saving}
-        >
-          {saving ? "Saving…" : "Save"}
-        </Button>
+      {/* Under 15em of footer (larger text on the phone) Cancel and Save
+          no longer fit side by side: Save goes on top, Cancel under it,
+          each the full width. Wide-first. */}
+      <div className="@container border-t border-border/40 px-5 pt-3 pb-4">
+        <div className="flex gap-2 @max-[15em]:flex-col-reverse">
+          <Button
+            variant="secondary"
+            size="lg"
+            className="flex-1"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="lg"
+            className="flex-1"
+            onClick={handleSave}
+            disabled={unchanged || hasInvalidMacro || saving}
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </div>
       </div>
     </BottomSheet>
   );

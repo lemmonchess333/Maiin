@@ -521,3 +521,45 @@ describe("FoodSuggestionsDropdown — each row says what tapping it does", () =>
     expect(screen.queryByText("Log")).not.toBeInTheDocument();
   });
 });
+
+describe("FoodSuggestionsDropdown — the Open Food Facts credit", () => {
+  /* Open Food Facts' licence (ODbL) asks for a credit wherever its data
+     is shown, and the database rows are its data. */
+  it("credits Open Food Facts once, under its results", () => {
+    renderOff([makeOff({ name: "Muesli" }), makeOff({ name: "Oat bar" })]);
+    expect(screen.getByText("Oat bar")).toBeInTheDocument();
+    expect(screen.getAllByText("Food data from Open Food Facts")).toHaveLength(
+      1
+    );
+  });
+
+  it("shows no credit when no row came from Open Food Facts", () => {
+    render(
+      <FoodSuggestionsDropdown
+        suggestions={[
+          {
+            name: "Banana",
+            calories: 100,
+            protein: 1,
+            carbs: 25,
+            fat: 0,
+            serving: "1 medium",
+          },
+        ]}
+        offResults={[]}
+        pantryResults={[makePantry({ name: "Greek yoghurt" })]}
+        offEmpty={false}
+        offSearchQuery={null}
+        onSelectSuggestion={vi.fn()}
+        onSelectOff={vi.fn()}
+        onSelectPantry={vi.fn()}
+        onLogManually={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Banana")).toBeInTheDocument();
+    expect(screen.getByText("Greek yoghurt")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Food data from Open Food Facts")
+    ).not.toBeInTheDocument();
+  });
+});

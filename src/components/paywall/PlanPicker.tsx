@@ -11,7 +11,8 @@ import { weeklyPriceLabel, type PlanId, type ProPlan } from "@/lib/proPlans";
  *
  * Prices come in via `plans` (Apple-localised on the RC build through
  * `useProPlanPrices`), never from here — this component knows nothing
- * about money beyond how to lay it out.
+ * about money beyond how to lay it out. The weekly figure is worked out
+ * from each plan's own price and currency (`weeklyPriceLabel`).
  */
 interface Props {
   plans: ProPlan[];
@@ -36,6 +37,9 @@ export default function PlanPicker({
     >
       {plans.map((plan) => {
         const isSelected = selectedPlan === plan.id;
+        // In the plan's own currency, or nothing: never pounds beside a
+        // dollar price.
+        const weekly = weeklyPriceLabel(plan);
         return (
           <button
             key={plan.id}
@@ -45,7 +49,9 @@ export default function PlanPicker({
             disabled={disabled}
             onClick={() => onSelect(plan.id)}
             className={cn(
-              "relative w-full flex items-center justify-between p-4 rounded-2xl border transition-colors text-left",
+              // The price drops under the plan's name when the two no longer
+              // fit (larger text) rather than leaving the screen. Never cut.
+              "relative w-full flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4 rounded-2xl border transition-colors text-left",
               "min-h-[64px]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               "disabled:opacity-60 disabled:cursor-not-allowed",
@@ -88,7 +94,7 @@ export default function PlanPicker({
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="ml-auto text-right">
               <p className="text-base font-bold text-foreground font-mono tabular-nums">
                 {plan.price}
                 <span className="text-xs font-medium text-muted-foreground">
@@ -97,9 +103,11 @@ export default function PlanPicker({
               </p>
               {/* Weekly anchoring (Sub3): both plans in the same per-week
                   unit makes the annual saving legible. */}
-              <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                {weeklyPriceLabel(plan.id)}
-              </p>
+              {weekly ? (
+                <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                  {weekly}
+                </p>
+              ) : null}
             </div>
           </button>
         );

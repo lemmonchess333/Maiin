@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   generateSchedule,
   countByType,
+  defaultWeekSchedule,
   liftIndexForDayOfWeek,
   isValidWeekSchedule,
+  planWeekSchedule,
   type ScheduleDay,
 } from "../scheduleUtils";
 
@@ -304,6 +306,19 @@ describe("liftIndexForDayOfWeek", () => {
     expect(liftIndexForDayOfWeek(schedule, liftDays[2])).toBe(2);
   });
 
+  it("counts from Monday, so a Sunday lift is the week's last session", () => {
+    // The generated week for 4 lift and 3 run days lifts on Sunday, Monday,
+    // Thursday and Friday. Monday opens it, as Train does.
+    const schedule = generateSchedule(4, 3);
+    expect(schedule.filter((d) => d.type === "lift").map((d) => d.day)).toEqual(
+      [0, 1, 4, 5]
+    );
+    expect(liftIndexForDayOfWeek(schedule, 1)).toBe(0);
+    expect(liftIndexForDayOfWeek(schedule, 4)).toBe(1);
+    expect(liftIndexForDayOfWeek(schedule, 5)).toBe(2);
+    expect(liftIndexForDayOfWeek(schedule, 0)).toBe(3);
+  });
+
   it("returns -1 for a rest day", () => {
     const schedule = generateSchedule(3, 2);
     const restDay = schedule.find((d) => d.type === "rest");
@@ -437,5 +452,74 @@ describe("isValidWeekSchedule", () => {
       { day: 6, type: "rest" },
     ];
     expect(isValidWeekSchedule(malformed)).toBe(false);
+  });
+});
+
+/* Run20 (2): the long run goes on a weekend run day (`pickLongRunSlot`),
+   but the default week filled the weekend last and seldom held a weekend
+   run, so a runner-only plan's long run fell on a Monday. */
+describe("defaultWeekSchedule — the week a new plan is offered", () => {
+  const runDaysOf = (week: ScheduleDay[]) =>
+    week.filter((d) => d.type === "run" || d.type === "both").map((d) => d.day);
+  const liftDaysOf = (week: ScheduleDay[]) =>
+    week
+      .filter((d) => d.type === "lift" || d.type === "both")
+      .map((d) => d.day);
+
+  it("puts a run on the weekend, Sunday when it is free, keeping the counts and the lift days", () => {
+    for (let lifts = 0; lifts <= 6; lifts++) {
+      for (let runs = 1; lifts + runs <= 7; runs++) {
+        const generated = generateSchedule(lifts, runs);
+        const week = defaultWeekSchedule(lifts, runs);
+        const label = `${lifts} lifts, ${runs} runs`;
+        expect(isValidWeekSchedule(week), label).toBe(true);
+        expect(runDaysOf(week), label).toHaveLength(runs);
+        expect(liftDaysOf(week), label).toEqual(liftDaysOf(generated));
+        const weekendRun = runDaysOf(week).some((d) => d === 0 || d === 6);
+        const weekendFree = [0, 6].some(
+          (d) =>
+            generated[d].type === "rest" || runDaysOf(generated).includes(d)
+        );
+        expect(weekendRun, label).toBe(weekendFree);
+        if (
+          !runDaysOf(generated).some((d) => d === 0 || d === 6) &&
+          weekendFree
+        )
+          expect(
+            runDaysOf(week).includes(generated[0].type === "rest" ? 0 : 6),
+            label
+          ).toBe(true);
+      }
+    }
+  });
+
+  it("moves the run that leaves the runs most spread out", () => {
+    // Mon, Wed, Fri: Wed, Fri, Sun, not Mon, Wed, Sun (Sunday's long run,
+    // then Monday's run).
+    expect(runDaysOf(defaultWeekSchedule(0, 3))).toEqual([0, 3, 5]);
+    expect(runDaysOf(defaultWeekSchedule(0, 2))).toEqual([0, 3]);
+    // Two lifts and three runs: Tue, Wed, Thu become Tue, Thu, Sun.
+    expect(runDaysOf(defaultWeekSchedule(2, 3))).toEqual([0, 2, 4]);
+  });
+
+  it("leaves a week that already runs on the weekend, or has no free weekend day", () => {
+    expect(defaultWeekSchedule(3, 3)).toEqual(generateSchedule(3, 3));
+    expect(defaultWeekSchedule(5, 2)).toEqual(generateSchedule(5, 2));
+    expect(defaultWeekSchedule(4, 0)).toEqual(generateSchedule(4, 0));
+    expect(defaultWeekSchedule(4, 4)).toEqual(generateSchedule(4, 4));
+  });
+});
+
+describe("planWeekSchedule", () => {
+  it("keeps the person's days while the counts stand", () => {
+    const chosen = generateSchedule(0, 3);
+    expect(planWeekSchedule(0, 3, chosen)).toBe(chosen);
+  });
+
+  it("offers the default week when the counts change or none is stored", () => {
+    expect(planWeekSchedule(0, 3)).toEqual(defaultWeekSchedule(0, 3));
+    expect(planWeekSchedule(0, 3, generateSchedule(2, 2))).toEqual(
+      defaultWeekSchedule(0, 3)
+    );
   });
 });

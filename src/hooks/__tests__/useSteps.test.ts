@@ -17,10 +17,10 @@ vi.mock("@/lib/healthKit", () => ({
   openHealthSettings: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => {
-  const user = { uid: "u1" };
-  return { useAuth: () => ({ user }) };
-});
+// One object per account, kept between renders as the real hook's is; a
+// test switches accounts by replacing it.
+const auth = vi.hoisted(() => ({ user: { uid: "u1" } }));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: auth.user }) }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 // ADR-0009: the one shared Firestore fake — bare mock + seedFirestore.
@@ -41,13 +41,22 @@ vi.mock("@/lib/toast", () => ({
 }));
 
 import { useSteps } from "../useSteps";
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import { logger } from "@/lib/logger";
+import {
+  seedFirestore,
+  resetFirestore,
+  deferReads,
+  releaseRead,
+  rejectRead,
+  pendingReads,
+} from "@/test/firestoreHarness";
 
 const FLAG_DOC = "users/u1/settings/healthKit";
 
 beforeEach(() => {
   resetFirestore();
   vi.clearAllMocks();
+  auth.user = { uid: "u1" };
   requestStepsReadPermission.mockResolvedValue("granted");
   getTodayStepTotal.mockResolvedValue(0);
 });
@@ -111,6 +120,71 @@ describe("useSteps status", () => {
     const { result } = renderHook(() => useSteps());
     await waitFor(() => expect(result.current.status).toBe("ambiguous"));
     expect(result.current.steps).toBe(0);
+  });
+});
+
+describe("useSteps ready: the account's saved answer has loaded", () => {
+  // Health being available is known before the account's answer is, so
+  // the status reads "unprompted" off the defaults while the answer is
+  // still on its way. Home's prompt opened on that and closed again a
+  // moment later for someone who had answered long ago (FV2).
+  it("is false while the saved answer is still loading, true once it lands", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: false, primingShown: true } });
+    deferReads();
+    const { result } = renderHook(() => useSteps());
+    // Anchor: the hook has asked for the saved answer and is waiting on it.
+    await waitFor(() => expect(pendingReads()).toEqual([FLAG_DOC]));
+    expect(result.current.status).toBe("unprompted");
+    expect(result.current.primingShown).toBe(false);
+    expect(result.current.ready).toBe(false);
+
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+    });
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    expect(result.current.primingShown).toBe(true);
+  });
+
+  it("stays false when the read fails: the answer is still unknown", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    deferReads();
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(pendingReads()).toEqual([FLAG_DOC]));
+
+    await act(async () => {
+      expect(rejectRead()).toBe(true);
+    });
+    // Anchor: the failure has been handled, which is the same step that
+    // would have marked the answer loaded.
+    await waitFor(() =>
+      expect(logger.error).toHaveBeenCalledWith(
+        "[steps] settings load failed",
+        expect.anything()
+      )
+    );
+    await act(async () => {});
+    expect(result.current.ready).toBe(false);
+  });
+
+  it("another account's answer never counts as this one's", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    const { result, rerender } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    deferReads();
+    auth.user = { uid: "u2" };
+    rerender();
+    // Anchor: the second account's answer has been asked for.
+    await waitFor(() =>
+      expect(pendingReads()).toEqual(["users/u2/settings/healthKit"])
+    );
+    expect(result.current.ready).toBe(false);
+
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+    });
+    await waitFor(() => expect(result.current.ready).toBe(true));
   });
 });
 

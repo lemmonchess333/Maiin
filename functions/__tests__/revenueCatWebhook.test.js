@@ -443,6 +443,36 @@ describe("syncRevenueCatEntitlement", () => {
     expect(db.data.get("users/uid-1").subscriptionTier).toBe("pro");
   });
 
+  it("records the price the app sold a trial at, and drops one that is not a price", async () => {
+    const inTrial = subscriber({ expires: NOW + 7 * DAY });
+    inTrial.subscriber.subscriptions[MONTHLY].period_type = "trial";
+    const PRICE = {
+      productId: MONTHLY,
+      amount: 3.99,
+      currencyCode: "GBP",
+      display: "£3.99",
+    };
+    for (const [price, expected] of [
+      [PRICE, { amount: 3.99, currencyCode: "GBP", display: "£3.99" }],
+      [{ ...PRICE, display: "<b>free</b>" }, null],
+      [undefined, null],
+    ]) {
+      const db = memoryFirestore({
+        "users/uid-1": { subscriptionTier: "free" },
+      });
+      const rc = fakeRevenueCat({ "uid-1": inTrial });
+      const result = await handleSync(
+        { auth: { uid: "uid-1" } },
+        deps(db, rc.fetchImpl),
+        { price }
+      );
+      expect(result.result).toBe("granted");
+      const trial = db.data.get("users/uid-1").subscriptionTrial;
+      expect(trial.endsAt).toBe(iso(NOW + 7 * DAY));
+      expect(trial.price, JSON.stringify(price)).toEqual(expected);
+    }
+  });
+
   it("syncs only the caller", async () => {
     const db = memoryFirestore({ "users/uid-1": {}, "users/uid-2": {} });
     const rc = fakeRevenueCat({ "uid-1": subscriber(), "uid-2": subscriber() });

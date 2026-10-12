@@ -9,6 +9,8 @@
  *   2. The engine toggles live-save via updateSettings (no rebuild).
  *   3. Reset calls regenerateProgram.
  *   4. The save action is gated until a field actually changes.
+ *   5. Neither save nor reset runs before the programme has loaded
+ *      (`readiness`), since both are built on it.
  *
  * The lifting fields live in ONE view ("lift": Settings → Lift plan). The
  * Programme page ("overview") shows the setup, opens each part's own page
@@ -21,11 +23,13 @@ import {
   cleanup,
   fireEvent,
   within,
+  act,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
 
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
@@ -60,7 +64,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 }
 
 const programState = {
-  settings: { autoProgression: true, microloading: true },
+  settings: { autoProgression: true, smallPlates: false },
 } as ProgramState;
 
 /** Where the page sent the user. */
@@ -68,21 +72,33 @@ function LocationProbe() {
   return <div data-testid="location">{useLocation().pathname}</div>;
 }
 
+/** What `useProgram` hands the page; by default the programme has loaded. */
+type Programme = {
+  readiness?: ProgramReadiness;
+  programState?: ProgramState | null;
+};
+
 function setup(
   profileOverrides: Partial<UserProfile> = {},
   variant: "overview" | "lift" = "lift",
-  stateOverride?: ProgramState
+  stateOverride?: ProgramState,
+  programme: Programme = {}
 ) {
   const updateSettings = vi.fn();
   const regenerateProgram = vi.fn();
   const onOpenWeeklyLayout = vi.fn();
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
-  render(
+  const profile = makeProfile(profileOverrides);
+  const page = ({
+    readiness = "ready",
+    programState: loaded = stateOverride ?? programState,
+  }: Programme) => (
     <MemoryRouter>
       <ProgrammeSettings
         variant={variant}
-        profile={makeProfile(profileOverrides)}
-        programState={stateOverride ?? programState}
+        profile={profile}
+        programState={loaded}
+        readiness={readiness}
         updateSettings={updateSettings}
         regenerateProgram={regenerateProgram}
         refreshProfile={refreshProfile}
@@ -91,11 +107,14 @@ function setup(
       <LocationProbe />
     </MemoryRouter>
   );
+  const { rerender } = render(page(programme));
   return {
     updateSettings,
     regenerateProgram,
     refreshProfile,
     onOpenWeeklyLayout,
+    /** The programme arrives, as `useProgram` re-renders the page with it. */
+    load: (next: Programme) => rerender(page(next)),
   };
 }
 
@@ -224,7 +243,87 @@ describe("ProgrammeSettings — rebuild path", () => {
   });
 });
 
+describe("ProgrammeSettings — session length (Lift4 (5))", () => {
+  it("edits the session length beside the lift days, and saves it with the plan", async () => {
+    setup({ liftTimeBudgetMinutes: 60 });
+    const lengths = screen.getByRole("radiogroup", {
+      name: "Minutes per lift session",
+    });
+    expect(
+      within(lengths).getByRole("radio", { name: "60 min" })
+    ).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(lengths).getByRole("radio", { name: "45 min" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm says what a re-fit does before it happens.
+    expect(
+      screen.getByText(/sets are refitted to sessions of about 45 minutes/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.liftTimeBudgetMinutes).toBe(45);
+  });
+
+  it("reads an older 90-minute answer as 75+", () => {
+    setup({ liftTimeBudgetMinutes: 90 });
+    expect(screen.getByRole("radio", { name: "75+ min" })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+});
+
+describe("ProgrammeSettings — what do you have? (Lift4 (11))", () => {
+  it("offers a barbell and a rack beside a home gym, and saves it with the plan", async () => {
+    setup({ equipment: "full_gym" });
+    // A full gym has barbells.
+    expect(
+      screen.queryByRole("switch", { name: "A barbell and a rack" })
+    ).toBeNull();
+    fireEvent.click(screen.getByText("Home gym"));
+    const bar = screen.getByRole("switch", { name: "A barbell and a rack" });
+    expect(bar).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(bar);
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    // The confirm's recap names it.
+    expect(
+      within(screen.getByRole("alertdialog")).getByText("A barbell and a rack")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.equipment).toBe("home_gym");
+    expect(payload.profileUpdates.barbellAtHome).toBe(true);
+  });
+
+  it("shows the answer the person gave", () => {
+    setup({ equipment: "home_gym", barbellAtHome: true });
+    expect(
+      screen.getByRole("switch", { name: "A barbell and a rack" })
+    ).toHaveAttribute("aria-checked", "true");
+  });
+});
+
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
+  it("asks about small plates, off until turned on, in Microloading's place (Lift4 (6))", () => {
+    const { updateSettings } = setup();
+    expect(screen.queryByText(/microloading/i)).toBeNull();
+    const plates = screen.getByRole("switch", { name: /i have small plates/i });
+    expect(plates).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(plates);
+    expect(updateSettings).toHaveBeenCalledWith({ smallPlates: true });
+    // It steps a belt too (Pgm8 L6), and says so.
+    expect(
+      screen.getByText(
+        "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("toggling auto-progression calls updateSettings, not configurePlan", () => {
     const { updateSettings } = setup();
     fireEvent.click(screen.getByRole("switch", { name: /auto progression/i }));
@@ -305,6 +404,122 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ProgrammeSettings — waits for the programme it is built on", () => {
+  /* As in the Run plan editor: `useProgram` paints before the server has
+     answered, with `programState` null (or the cached copy) and
+     `readiness` "pending". Save changes was live then, and its confirm
+     built a plan from no programme and sent `baseProgramState: null`,
+     which the server refuses as a conflict while a programme exists; the
+     reset rebuilt from null the same way. */
+  const LOADED = {
+    goal: "recomp",
+    currentPhase: "build",
+    weekNumber: 5,
+    splitType: "upper_lower",
+    workouts: [],
+    fatigueScore: 0,
+    updatedAt: 1,
+    settings: { autoProgression: true, smallPlates: false },
+    weekHistory: [],
+  } as unknown as ProgramState;
+  const LOAD_FAILED =
+    "Couldn't load your programme. Reopen this page to try again.";
+
+  it("Save changes waits while the programme loads, then saves on it", async () => {
+    const page = setup({}, "lift", undefined, {
+      readiness: "pending",
+      programState: null,
+    });
+    fireEvent.click(screen.getByText("Get stronger"));
+
+    // The anchor: the Save under test is on screen, named, and loading.
+    const waiting = screen.getByRole("button", { name: "Save changes" });
+    expect(waiting).toHaveAttribute("aria-busy", "true");
+    expect(waiting).toBeDisabled();
+    fireEvent.click(waiting);
+    await act(async () => {});
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(configureSpy).not.toHaveBeenCalled();
+
+    page.load({ readiness: "ready", programState: LOADED });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Save",
+      })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalled());
+    expect(configureSpy).toHaveBeenCalledTimes(1);
+    // Built on the programme that loaded and committed against it: its
+    // week carries over, where a plan from nothing starts at 1.
+    const payload = configureSpy.mock.calls[0][0] as {
+      baseProgramState: unknown;
+      programState: { weekNumber: number };
+    };
+    expect(payload.baseProgramState).toEqual(LOADED);
+    expect(payload.programState.weekNumber).toBe(5);
+  });
+
+  it("a failed load says so, and Save changes opens nothing", () => {
+    setup({}, "lift", undefined, { readiness: "failed", programState: null });
+    fireEvent.click(screen.getByText("Get stronger"));
+
+    const save = screen.getByRole("button", { name: "Save changes" });
+    expect(save).toHaveAccessibleDescription(LOAD_FAILED);
+    expect(save).toBeDisabled();
+    fireEvent.click(save);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("Reset waits while the programme loads, then resets", async () => {
+    const page = setup({}, "overview", undefined, {
+      readiness: "pending",
+      programState: null,
+    });
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+
+    const dialog = screen.getByRole("alertdialog");
+    const waiting = within(dialog).getByRole("button", { name: "Reset" });
+    expect(waiting).toHaveAttribute("aria-busy", "true");
+    expect(waiting).toBeDisabled();
+    // Cancel never waits.
+    expect(
+      within(dialog).getByRole("button", { name: "Cancel" })
+    ).toBeEnabled();
+    fireEvent.click(waiting);
+    await act(async () => {});
+    expect(page.regenerateProgram).not.toHaveBeenCalled();
+
+    page.load({ readiness: "ready", programState: LOADED });
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Reset",
+      })
+    );
+    await vi.waitFor(() =>
+      expect(page.regenerateProgram).toHaveBeenCalledTimes(1)
+    );
+  });
+
+  it("a failed load says so in the reset dialog, and Reset does nothing", async () => {
+    const { regenerateProgram } = setup({}, "overview", undefined, {
+      readiness: "failed",
+      programState: null,
+    });
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+
+    const reset = within(screen.getByRole("alertdialog")).getByRole("button", {
+      name: "Reset",
+    });
+    expect(reset).toHaveAccessibleDescription(LOAD_FAILED);
+    expect(reset).toBeDisabled();
+    fireEvent.click(reset);
+    await act(async () => {});
+    expect(regenerateProgram).not.toHaveBeenCalled();
   });
 });
 
@@ -403,7 +618,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     lastPerformance: null,
   });
   const liftState = {
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     splitType: "upper_lower",
     weekNumber: 5,
     currentPhase: "progression",
@@ -483,6 +698,27 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
     };
     expect(payload.profileUpdates.primaryGoal).toBe("strength");
     expect(payload.programState.workouts).toEqual(liftState.workouts);
+  });
+
+  it("offers the choice when the level changes too, and re-aims at the new level", async () => {
+    // A level change keeps the plan (Lift4 (12)), so the focus would go
+    // nowhere without the choice.
+    const { represcribeWorkouts } =
+      await import("@/features/program/represcribe");
+    setup({}, "lift", liftState);
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /^advanced/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /save and update sessions/i })
+    );
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      programState: { workouts: unknown };
+    };
+    expect(payload.programState.workouts).toEqual(
+      represcribeWorkouts(liftState.workouts, "strength", "advanced")
+    );
   });
 
   it("no choice when lift days change too — the rebuild arm owns that", () => {

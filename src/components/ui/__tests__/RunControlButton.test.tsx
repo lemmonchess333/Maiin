@@ -60,28 +60,20 @@ describe("RunControlButton — sizes", () => {
     expect(screen.getByRole("button").className).toContain("size-[76px]");
   });
 
-  it("sm is 56px (size-14)", () => {
+  it("sm is 56px, in px so it keeps its size at larger text", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} size="sm" />);
     const cls = screen.getByRole("button").className;
-    expect(cls).toContain("size-14");
+    expect(cls).toContain("size-[56px]");
   });
 });
 
 describe("RunControlButton — variants", () => {
-  it("primary variant applies the teal background via inline style", () => {
+  it("primary variant applies the run's coral background via inline style", () => {
     render(
       <RunControlButton aria-label="Resume" icon={<svg />} variant="primary" />
     );
     const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(82, 163, 189)");
-  });
-
-  it("danger variant applies the red border via inline style", () => {
-    render(
-      <RunControlButton aria-label="Stop" icon={<svg />} variant="danger" />
-    );
-    const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(239, 68, 68)");
+    expect(style).toContain("rgb(212, 99, 122)");
   });
 
   it("neutral (default) variant has translucent white background", () => {
@@ -91,13 +83,13 @@ describe("RunControlButton — variants", () => {
   });
 
   it("glow prop is opt-in for variants other than primary", () => {
-    // primary has glow always on; neutral/danger respect the prop
+    // primary has glow always on; neutral respects the prop
     render(
       <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
     );
     const styleNoGlow = screen.getByRole("button").getAttribute("style") || "";
-    // neutral always has a drop-shadow but no teal-tinted glow
-    expect(styleNoGlow).not.toMatch(/rgba\(82,\s*163,\s*189/);
+    // neutral always has a drop-shadow but no coral-tinted glow
+    expect(styleNoGlow).not.toMatch(/rgba\(212,\s*99,\s*122/);
   });
 });
 

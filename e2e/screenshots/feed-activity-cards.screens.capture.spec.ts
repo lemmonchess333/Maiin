@@ -13,7 +13,7 @@ import { openSignUpForm } from "../helpers/auth";
  *
  * Fixture: a fresh signup-form account, then two PUBLIC activity docs
  * seeded through the emulator's rules-free REST surface (the
- * new-user-feed / coachmark pattern) and read back through the Explore
+ * new-user-feed pattern) and read back through the Explore
  * source, which queries `activities` on `visibility == "public"`.
  * `useDiscoverFeed` spreads the flat doc into `activity` (`...item`), so
  * the seed shape is the doc shape — no nesting.
@@ -29,7 +29,6 @@ import { openSignUpForm } from "../helpers/auth";
  */
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -199,7 +198,6 @@ test.describe("feed activity card screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
         const style = document.createElement("style");

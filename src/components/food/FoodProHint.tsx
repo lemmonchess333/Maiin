@@ -51,37 +51,43 @@ export default function FoodProHint({ limit, isUnlimited, loading }: Props) {
   return (
     <div
       role="note"
-      className="mt-1.5 flex items-center gap-1.5 px-1 text-micro text-muted-foreground"
+      className="mt-1.5 flex flex-wrap items-center gap-x-1.5 px-1 text-micro text-muted-foreground"
     >
       <Lock className="size-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate">
+      {/* Wraps, and the offer and the close drop under it when 8em will
+          not fit beside them: cut to one line at larger text it read "P",
+          and on the smallest phone it vanished, leaving "Try Pro free"
+          with nothing to say what for. */}
+      <span className="min-w-[min(100%,8em)] flex-1">
         Photo logging is part of Pro
       </span>
-      <button
-        type="button"
-        onClick={() => {
-          haptic();
-          track("paywall_cta_clicked", {
-            source: "food_page",
-            featureKey: "ai_food_logging",
-            platform: "web",
-          });
-          navigate("/upgrade?from=food");
-        }}
-        className="min-h-11 px-1 font-semibold text-lifting-strong active:scale-[0.97] transition-transform"
-      >
-        {ctaLabel}
-      </button>
-      <IconButton
-        aria-label="Dismiss"
-        onClick={() => {
-          haptic("light");
-          writeString(DISMISSED_KEY, "1");
-          setDismissed(true);
-        }}
-        className="-mr-2"
-        icon={<X className="size-3.5" />}
-      />
+      <div className="ml-auto flex items-center">
+        <button
+          type="button"
+          onClick={() => {
+            haptic();
+            track("paywall_cta_clicked", {
+              source: "food_page",
+              featureKey: "ai_food_logging",
+              platform: "web",
+            });
+            navigate("/upgrade?from=food");
+          }}
+          className="min-h-11 px-1 font-semibold text-lifting-strong active:scale-[0.97] transition-transform"
+        >
+          {ctaLabel}
+        </button>
+        <IconButton
+          aria-label="Dismiss"
+          onClick={() => {
+            haptic("light");
+            writeString(DISMISSED_KEY, "1");
+            setDismissed(true);
+          }}
+          className="-mr-2"
+          icon={<X className="size-3.5" />}
+        />
+      </div>
     </div>
   );
 }

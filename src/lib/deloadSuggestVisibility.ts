@@ -3,16 +3,28 @@ import { isCurrentWeekInRaceWindDown } from "@/features/program/runPlanTiming";
 export interface DeloadSuggestInput {
   /** `resolveDeloadRecommended(perfWeek)` — the PI's recommendation. */
   deloadRecommended: boolean;
+  /** `loadFromRunning(perfWeek)` — whether running carried the week. */
+  loadFromRunning: boolean;
   /** `programState.runPlan.currentWeek` — absent for non-race plans. */
   currentWeek: number | undefined;
   /** `programState.runPlan.totalWeeks` — absent for non-race plans. */
   totalWeeks: number | undefined;
   /** Resolved race distance — absent for non-race plans. */
   distance: "5k" | "10k" | "half" | "marathon" | undefined;
+  /** `lighterWeekAllowed(programState)`: whether Train's menu offers a
+   *  lighter week now (Lift4 (9): not during one, not straight after one,
+   *  not in a first week back). The banner's button sends the menu's
+   *  command, which the server refuses otherwise. */
+  lighterWeekAllowed: boolean;
 }
 
 /**
- * Should the Programme page offer "Apply deload week"?
+ * Should Train suggest a lighter week ("Take a lighter week")?
+ *
+ * Only for running (Lift4 (9)): the Performance Index's recommendation
+ * counts when the week's load came from running (`loadFromRunning`). A
+ * lifting week gets no early offer; its lighter weeks come on the
+ * calendar, or whenever the person takes one from Train's menu.
  *
  * Extracted rather than inlined into the JSX, following the precedent
  * Program.tsx set for `runHeaderLine`: a derivation living as an
@@ -45,10 +57,34 @@ export interface DeloadSuggestInput {
  * prevents.
  */
 export function shouldSuggestDeload(input: DeloadSuggestInput): boolean {
-  if (!input.deloadRecommended) return false;
+  // The running half stays until the running grill decides it.
+  if (!input.deloadRecommended || !input.loadFromRunning) return false;
+  // Only a lighter week that can be taken: one at a time (Lift4 (9)).
+  if (!input.lighterWeekAllowed) return false;
   return !isCurrentWeekInRaceWindDown(
     input.currentWeek,
     input.totalWeeks,
     input.distance
+  );
+}
+
+/**
+ * Whether a week's load came from running (Lift4 (9)): it had runs, and
+ * where it had lifting too, the running side carried at least as much of
+ * the load. A week with no performance document had none.
+ */
+export function loadFromRunning(
+  week:
+    | {
+        breakdown?: { liftLoadScore?: number; runLoadScore?: number };
+        aggregates?: { liftSessions?: number; runSessions?: number };
+      }
+    | null
+    | undefined
+): boolean {
+  if (!week || (week.aggregates?.runSessions ?? 0) <= 0) return false;
+  if ((week.aggregates?.liftSessions ?? 0) <= 0) return true;
+  return (
+    (week.breakdown?.runLoadScore ?? 0) >= (week.breakdown?.liftLoadScore ?? 0)
   );
 }

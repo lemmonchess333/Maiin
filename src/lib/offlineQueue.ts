@@ -216,6 +216,18 @@ export function hasQueuedWorkoutCompletion(
   );
 }
 
+/** A finished programme session still on its way to the server. The week
+ * rollover waits for one: rolled first, the replay finds a different week
+ * and lands the workout without its progression or the day's tick. An
+ * entry that failed doesn't count. It waits on the person's retry, and the
+ * week must not freeze behind it. */
+export function hasPendingProgrammeCompletion(uid: string): boolean {
+  return getQueue().some(
+    (item) =>
+      item.uid === uid && !!item.workoutCompletion?.programme && !item.failed
+  );
+}
+
 /** The complete, timestamp-encoded workout survives programme rollover and
  * view teardown. Replays never restore a stale whole programme document. */
 export function queueWorkoutCompletion(

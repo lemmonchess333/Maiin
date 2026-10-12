@@ -1,0 +1,75 @@
+diff --git a/node_modules/@capacitor-firebase/authentication/ios/Plugin/Classes/Results/CheckAppTrackingTransparencyPermissionResult.swift b/node_modules/@capacitor-firebase/authentication/ios/Plugin/Classes/Results/CheckAppTrackingTransparencyPermissionResult.swift
+index e3c19d8..5c0c07f 100644
+--- a/node_modules/@capacitor-firebase/authentication/ios/Plugin/Classes/Results/CheckAppTrackingTransparencyPermissionResult.swift
++++ b/node_modules/@capacitor-firebase/authentication/ios/Plugin/Classes/Results/CheckAppTrackingTransparencyPermissionResult.swift
+@@ -1,31 +1,19 @@
+ import Capacitor
+-import AppTrackingTransparency
+ 
++// Tropos patch (patches/@capacitor-firebase+authentication+*.patch): Tropos
++// never asks for App Tracking Transparency, so this result carries a fixed
++// status string instead of the tracking framework's status type, and this
++// file no longer imports that framework.
+ @objc public class CheckAppTrackingTransparencyPermissionResult: NSObject, Result {
+-    let status: ATTrackingManager.AuthorizationStatus
++    let status: String
+ 
+-    init(_ status: ATTrackingManager.AuthorizationStatus) {
++    init(_ status: String) {
+         self.status = status
+     }
+ 
+     func toJSObject() -> AnyObject {
+         var result = JSObject()
+-        result["status"] = convertStatusToPermissionStatus(status)
++        result["status"] = status
+         return result as AnyObject
+     }
+-
+-    private func convertStatusToPermissionStatus(_ status: ATTrackingManager.AuthorizationStatus) -> String {
+-        switch status {
+-        case .notDetermined:
+-            return "prompt"
+-        case .denied:
+-            return "denied"
+-        case .authorized:
+-            return "granted"
+-        case .restricted:
+-            return "restricted"
+-        @unknown default:
+-            return "prompt"
+-        }
+-    }
+ }
+diff --git a/node_modules/@capacitor-firebase/authentication/ios/Plugin/FirebaseAuthentication.swift b/node_modules/@capacitor-firebase/authentication/ios/Plugin/FirebaseAuthentication.swift
+index 2192f83..95b27fc 100644
+--- a/node_modules/@capacitor-firebase/authentication/ios/Plugin/FirebaseAuthentication.swift
++++ b/node_modules/@capacitor-firebase/authentication/ios/Plugin/FirebaseAuthentication.swift
+@@ -2,7 +2,6 @@ import Foundation
+ import Capacitor
+ import FirebaseCore
+ import FirebaseAuth
+-import AppTrackingTransparency
+ 
+ public typealias AuthStateChangedObserver = () -> Void
+ 
+@@ -712,14 +711,15 @@ public typealias AuthStateChangedObserver = () -> Void
+         return self.config
+     }
+ 
++    // Tropos patch: Tropos never asks for App Tracking Transparency. Both
++    // methods stay, and answer a fixed "denied" without asking iOS, so the
++    // tracking framework is neither imported nor linked.
+     func requestAppTrackingTransparencyPermission(completion: @escaping (CheckAppTrackingTransparencyPermissionResult) -> Void) {
+-        ATTrackingManager.requestTrackingAuthorization { result in
+-            completion(CheckAppTrackingTransparencyPermissionResult(result))
+-        }
++        completion(CheckAppTrackingTransparencyPermissionResult("denied"))
+     }
+ 
+     func checkAppTrackingTransparencyPermission(completion: @escaping (CheckAppTrackingTransparencyPermissionResult) -> Void) {
+-        completion(CheckAppTrackingTransparencyPermissionResult(ATTrackingManager.trackingAuthorizationStatus))
++        completion(CheckAppTrackingTransparencyPermissionResult("denied"))
+     }
+ 
+     private func createProviderNotEnabledErrorMessage(_ providerName: String) -> String {

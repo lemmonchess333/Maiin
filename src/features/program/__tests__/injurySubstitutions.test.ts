@@ -20,9 +20,18 @@
  *      InjuryCategory union (e.g. "ankle", "neck") are dropped
  *      from the relevance check so they don't accidentally
  *      block a swap.
+ *   5. A preference below equipment — the injury filter's way of
+ *      keeping a lift to two days a week. It reorders, never
+ *      excludes, and a lift the person's kit has comes first.
  */
 import { describe, it, expect } from "vitest";
-import { findSafeSubstitute } from "../injurySubstitutions";
+import { getExerciseById } from "@/lib/exercises";
+import {
+  CONTRAINDICATED,
+  INJURY_SUBSTITUTIONS,
+  contraindicatedFor,
+  findSafeSubstitute,
+} from "../injurySubstitutions";
 
 describe("findSafeSubstitute — happy path", () => {
   it("returns the first safe substitute for a single injury", () => {
@@ -77,6 +86,7 @@ describe("findSafeSubstitute — excludeIds", () => {
       "rack-pull",
       "hip-thrust",
       "glute-ham-raise",
+      "glute-bridge",
     ]);
     const result = findSafeSubstitute("deadlift", ["lower_back"], excluded);
     expect(result).toBeNull();
@@ -110,6 +120,50 @@ describe("findSafeSubstitute — guards", () => {
   });
 });
 
+describe("findSafeSubstitute — a preference below equipment (the week's cap)", () => {
+  const homeGym = (id: string) =>
+    ["Dumbbells", "Bodyweight", "Kettlebell"].includes(
+      getExerciseById(id)?.equipment ?? ""
+    );
+
+  it("takes the first safe substitute the preference accepts", () => {
+    /* The injury filter prefers a lift the week has fewer than twice:
+       with the trap bar deadlift on two days already, the rack pull. */
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      undefined,
+      (id) => id !== "trap-bar-deadlift"
+    );
+    expect(result?.id).toBe("rack-pull");
+  });
+
+  it("ranks below equipment: a lift the person can do beats one under the cap", () => {
+    /* At home the glute bridge is the only deadlift substitute the kit
+       has; refused by the preference, it is still the one. */
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      homeGym,
+      (id) => id !== "glute-bridge"
+    );
+    expect(result?.id).toBe("glute-bridge");
+  });
+
+  it("is never a filter: accepting none, it gives the first", () => {
+    const result = findSafeSubstitute(
+      "deadlift",
+      ["lower_back"],
+      undefined,
+      undefined,
+      () => false
+    );
+    expect(result?.id).toBe("trap-bar-deadlift");
+  });
+});
+
 describe("findSafeSubstitute — deterministic ordering", () => {
   it("always returns the first matching candidate (not a random one)", () => {
     /* Called twice with the same inputs, must return the same
@@ -120,5 +174,38 @@ describe("findSafeSubstitute — deterministic ordering", () => {
     const b = findSafeSubstitute("barbell-row", ["lower_back"]);
     expect(a?.id).toBe(b?.id);
     expect(a?.id).toBe("chest-supported-db-row");
+  });
+});
+
+describe("CONTRAINDICATED — the lifts each injury's promise names (Lift4 (11))", () => {
+  it("gives every named lift a substitute for each injury it is named for", () => {
+    const missing: string[] = [];
+    for (const [id, injuries] of Object.entries(CONTRAINDICATED)) {
+      for (const injury of injuries) {
+        if (!findSafeSubstitute(id, [injury]))
+          missing.push(`${id} / ${injury}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("never offers a substitute for an injury it is itself named for", () => {
+    // Or the next save would swap it again: the old table offered the seated
+    // dumbbell press for a shoulder its own entry flagged.
+    const loops: string[] = [];
+    for (const [id, candidates] of Object.entries(INJURY_SUBSTITUTIONS)) {
+      for (const c of candidates) {
+        for (const injury of contraindicatedFor(c.id, c.safeFor)) {
+          loops.push(`${id} → ${c.id} (${injury})`);
+        }
+      }
+    }
+    expect(loops).toEqual([]);
+  });
+
+  it("reads only the injuries asked about", () => {
+    expect(contraindicatedFor("squat", ["knee", "shoulder"])).toEqual(["knee"]);
+    expect(contraindicatedFor("squat", ["none"])).toEqual([]);
+    expect(contraindicatedFor("lateral-raise", ["shoulder"])).toEqual([]);
   });
 });

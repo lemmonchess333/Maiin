@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 import { settleImages } from "../helpers/settleImages";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { emulatorActive } from "../helpers/emulator";
 
 test.use({ viewport: { width: 375, height: 852 } });
@@ -10,7 +9,6 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
   test.skip(!emulatorActive, "needs Auth and Firestore emulators");
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("program");
   await page.addStyleTag({

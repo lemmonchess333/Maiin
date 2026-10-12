@@ -143,8 +143,12 @@ export function routeTimeAtDistance(
   meters: number
 ): number | null {
   if (route.length < 2) return null;
-  const t0 = route[0].timestamp;
-  if (!t0) return null;
+  if (!route[0].timestamp) return null;
+  /* MOVING time, on the run's own clock: the live side of this comparison
+     is `timer.elapsed`, which stops for every pause, so a ghost that kept
+     the original run's stops in would fall a whole stop behind at the
+     first crossing it waited at. */
+  const c0 = movingClockMs(route[0]);
 
   let cum = 0;
   for (let i = 1; i < route.length; i++) {
@@ -156,19 +160,19 @@ export function routeTimeAtDistance(
       route[i].lon
     );
     if (cum + seg >= meters) {
-      const tA = route[i - 1].timestamp;
-      const tB = route[i].timestamp;
-      if (!tA || !tB) return null;
+      if (!route[i - 1].timestamp || !route[i].timestamp) return null;
+      const cA = movingClockMs(route[i - 1]);
+      const cB = movingClockMs(route[i]);
       const frac = seg > 0 ? (meters - cum) / seg : 0;
-      const interp = tA + (tB - tA) * frac;
-      return Math.max(0, (interp - t0) / 1000);
+      const interp = cA + (cB - cA) * frac;
+      return Math.max(0, (interp - c0) / 1000);
     }
     cum += seg;
   }
 
-  const tLast = route[route.length - 1].timestamp;
-  if (!tLast) return null;
-  return Math.max(0, (tLast - t0) / 1000);
+  const last = route[route.length - 1];
+  if (!last.timestamp) return null;
+  return Math.max(0, (movingClockMs(last) - c0) / 1000);
 }
 
 export class KalmanFilter {
@@ -213,9 +217,116 @@ export interface GPSPoint {
   altitude: number | null;
   accuracy: number;
   speed: number | null;
+  /** When the fix was taken, in epoch ms: the fix's own time when the
+   *  location source gave a sane one, else when it arrived (`fixTimestamp`). */
   timestamp: number;
   rawLat: number;
   rawLon: number;
+  /**
+   * Milliseconds the run's clock had been HELD before this fix — the 3-2-1
+   * countdown, a pause, an auto-pause — counted from the start of the
+   * recording. Nothing is recorded while the clock is held (useGPS), so
+   * only differences mean anything: the MOVING time between two points is
+   * their timestamp difference less their `pausedMs` difference
+   * (`movingClockMs`). That is how a split, a best effort and the live pace
+   * leave out ten minutes at a crossing, as Strava's do.
+   *
+   * Cumulative rather than per-gap so it survives `sampleRoute` thinning
+   * the saved trace: any two surviving points still subtract correctly.
+   * Absent until the first hold, and on every trace recorded before holds
+   * were tracked, and read as 0 — those runs compute exactly as before.
+   */
+  pausedMs?: number;
+}
+
+/**
+ * The fastest a recorded position may plausibly move, in metres a second —
+ * 43 km/h, faster than any sprint. `isValidReading` rejects a fix that
+ * implies more; `segmentMetres` caps the line drawn across a pause by it.
+ */
+export const MAX_PLAUSIBLE_SPEED_MPS = 12;
+
+/** A point's `pausedMs`, or 0 when it has none. A saved trace is stored
+ *  data, so anything that is not a positive finite number reads as 0. */
+export function pausedMsOf(p: GPSPoint): number {
+  const v = p.pausedMs;
+  return typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0;
+}
+
+/**
+ * Where a point sits on the run's MOVING clock, in ms: its timestamp with
+ * every hold before it taken out. Only differences between points of one
+ * trace mean anything. For a trace without `pausedMs` this is the
+ * timestamp, so old runs read as they always did.
+ */
+export function movingClockMs(p: GPSPoint): number {
+  return p.timestamp - pausedMsOf(p);
+}
+
+/** Seconds of moving time between two points of one trace, never negative.
+ *  Use this, not a timestamp difference, for any pace between two points. */
+export function movingSecondsBetween(a: GPSPoint, b: GPSPoint): number {
+  return Math.max(0, (movingClockMs(b) - movingClockMs(a)) / 1000);
+}
+
+/**
+ * Metres a trace credits between two consecutive points: the straight line
+ * between them, except across a hold.
+ *
+ * Nothing is recorded while the clock is held, so the first point after a
+ * resume joins the last one before it with a straight line. If the runner
+ * walked to a fountain or took a lift while paused, that line is distance
+ * covered with the clock stopped. It is credited only as far as the part
+ * of the gap with the clock RUNNING could have carried them at
+ * `MAX_PLAUSIBLE_SPEED_MPS` — which keeps the few metres either side of a
+ * stop at a crossing and drops the rest. Without the cap, taking the paused
+ * time out of the clock would turn that line into a "1K" run in seconds.
+ *
+ * The live distance (useGPS), the splits and the best efforts all count
+ * through this one rule, so the run's distance and its splits agree.
+ */
+export function segmentMetres(a: GPSPoint, b: GPSPoint): number {
+  const d = haversine(a.lat, a.lon, b.lat, b.lon);
+  if (pausedMsOf(b) <= pausedMsOf(a)) return d;
+  return Math.min(d, MAX_PLAUSIBLE_SPEED_MPS * movingSecondsBetween(a, b));
+}
+
+/** The oldest a fix's own time may be, against its arrival, and still be
+ *  believed. A batch the OS held back is seconds to a few minutes old; a
+ *  time older than this is a broken clock or a unit mix-up (seconds read as
+ *  milliseconds is 1970), and would date the whole run by it. */
+export const FIX_TIME_MAX_AGE_MS = 5 * 60_000;
+
+/**
+ * The timestamp a fix's point gets: when the fix was TAKEN, where that can
+ * be trusted.
+ *
+ * Stamping on arrival is wrong whenever delivery is late or bunched. When
+ * the OS hands over fixes in a batch (iOS does for a backgrounded app),
+ * ten fixes taken a second apart arrive in the same millisecond: the speed
+ * gate reads the second one as a teleport and the rest of the batch goes
+ * with it, and the time the batch covered reads as a stop before it.
+ *
+ * The fix's own time is used when it is a finite number, no older than
+ * `FIX_TIME_MAX_AGE_MS`, and not before the previous point's — a stale
+ * cached fix, or a clock that stepped back. Anything else falls back to the
+ * arrival time, which is what every fix used before. A time AHEAD of
+ * arrival (a receiver clock running ahead of the phone's, by a little or a
+ * lot) becomes the arrival time: a fix cannot have been taken after it got
+ * here, and no point is ever stamped later than now — which the holds in
+ * useGPS rely on when they compare a point's time with the clock.
+ */
+export function fixTimestamp(
+  fixTime: unknown,
+  arrivedAt: number,
+  previous: number | null
+): number {
+  if (typeof fixTime !== "number" || !Number.isFinite(fixTime)) {
+    return arrivedAt;
+  }
+  if (fixTime < arrivedAt - FIX_TIME_MAX_AGE_MS) return arrivedAt;
+  if (previous !== null && fixTime < previous) return arrivedAt;
+  return Math.min(fixTime, arrivedAt);
 }
 
 export interface Split {
@@ -227,19 +338,39 @@ export interface Split {
   elevationLoss: number;
 }
 
-export function isValidReading(
+/**
+ * What becomes of a fix. "ok" joins the trace. "still" is a good fix that
+ * has not moved a metre from the last one: nothing to add, and nothing
+ * wrong with the signal, so it is not counted against the route's quality
+ * (standing at a crossing with auto-pause off read as a "poor" route).
+ * The rest are fixes the trace cannot believe: too vague, out of order,
+ * or a jump no runner makes.
+ */
+export type ReadingVerdict =
+  | "ok"
+  | "still"
+  | "inaccurate"
+  | "out-of-order"
+  | "teleport";
+
+export function readingVerdict(
   coords: GeolocationCoordinates,
   lastPoint: GPSPoint | null,
-  elapsedSeconds?: number
-): boolean {
+  elapsedSeconds?: number,
+  /** When this fix was taken (`fixTimestamp`). Defaults to now. The step is
+   *  measured against the previous POINT's time, so a batch of fixes
+   *  arriving together is judged on the seconds between them, not on the
+   *  millisecond between their arrivals. */
+  fixTimeMs: number = Date.now()
+): ReadingVerdict {
   // First point (no lastPoint): accept up to 150m accuracy to avoid stuck acquiring phase
   if (!lastPoint) {
-    return coords.accuracy <= 150;
+    return coords.accuracy <= 150 ? "ok" : "inaccurate";
   }
 
   const maxAccuracy =
     elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
-  if (coords.accuracy > maxAccuracy) return false;
+  if (coords.accuracy > maxAccuracy) return "inaccurate";
 
   /* Compare RAW to RAW. `lastPoint.lat/lon` are the Kalman OUTPUT (see
      useGPS.makePoint, which keeps the unfiltered pair in rawLat/rawLon), and
@@ -270,12 +401,23 @@ export function isValidReading(
     coords.latitude,
     coords.longitude
   );
-  const timeDiff = (Date.now() - lastPoint.timestamp) / 1000;
-  if (timeDiff <= 0) return false;
+  // Not moved: the same place again, or the same fix delivered twice.
+  if (dist < 1) return "still";
+  const timeDiff = (fixTimeMs - lastPoint.timestamp) / 1000;
+  if (timeDiff <= 0) return "out-of-order";
   const impliedSpeed = dist / timeDiff;
-  if (impliedSpeed > 12) return false;
-  if (dist < 1) return false;
-  return true;
+  if (impliedSpeed > MAX_PLAUSIBLE_SPEED_MPS) return "teleport";
+  return "ok";
+}
+
+/** Whether a fix joins the trace (`readingVerdict` says why not). */
+export function isValidReading(
+  coords: GeolocationCoordinates,
+  lastPoint: GPSPoint | null,
+  elapsedSeconds?: number,
+  fixTimeMs: number = Date.now()
+): boolean {
+  return readingVerdict(coords, lastPoint, elapsedSeconds, fixTimeMs) === "ok";
 }
 
 export function calculatePace(
@@ -322,30 +464,30 @@ export function calculatePace(
  * "no reading yet" from "a real reading", and stay silent for the
  * former. Returning the misleading average as a fallback would put the
  * bug straight back.
+ *
+ * The window is measured on the MOVING clock (`movingClockMs`). On the wall
+ * clock, the first fixes after a 20-second wait at a crossing shared a
+ * window with the wait, so the pace read near-walking and the pace alert
+ * told the runner they were behind just as they set off again.
  */
 export function rollingPaceSeconds(
   points: GPSPoint[],
   windowSeconds: number = 30
 ): number | null {
   if (points.length < 2) return null;
-  const now = points[points.length - 1].timestamp;
+  const now = movingClockMs(points[points.length - 1]);
   const windowMs = windowSeconds * 1000;
   /* Find the first point within the rolling window. Points are kept
      in chronological order by useGPS so a linear scan from the start
      is fine; the array is also bounded by the run duration. */
-  const startIdx = points.findIndex((p) => now - p.timestamp <= windowMs);
+  const startIdx = points.findIndex((p) => now - movingClockMs(p) <= windowMs);
   if (startIdx === -1 || startIdx === points.length - 1) return null;
 
   let dist = 0;
   for (let i = startIdx + 1; i < points.length; i++) {
-    dist += haversine(
-      points[i - 1].lat,
-      points[i - 1].lon,
-      points[i].lat,
-      points[i].lon
-    );
+    dist += segmentMetres(points[i - 1], points[i]);
   }
-  const elapsedSec = (now - points[startIdx].timestamp) / 1000;
+  const elapsedSec = (now - movingClockMs(points[startIdx])) / 1000;
 
   if (dist < 10 || elapsedSec < 5) return null;
 
@@ -374,29 +516,40 @@ export function paceAsNumber(
  * is a rate, so it converts independently of how long the lap was. Only
  * `km` — the lap ORDINAL, named for the metric case it was written in —
  * counts in laps.
+ *
+ * A split's `time` is MOVING time (`movingClockMs`): ten minutes stopped
+ * at a crossing inside the second kilometre are not in that kilometre's
+ * time, as they are not in the run's duration. Its distance counts through
+ * `segmentMetres`, the rule the live distance uses, so a line drawn across
+ * a pause cannot bank distance at no time. Its elevation is the run's
+ * smoothed climb (`climbBySegment`) that fell inside the split.
  */
 export function calculateSplits(
   points: GPSPoint[],
   lapMetres: number = 1000
 ): Split[] {
   if (points.length < 2) return [];
+  const climb = climbBySegment(points);
   const splits: Split[] = [];
   let accDistance = 0;
-  let splitStartTime = points[0].timestamp;
-  let splitStartIdx = 0;
+  /* The moving clock never steps back inside one computation: a trace
+     whose clock did (a phone clock corrected mid-run) would otherwise
+     produce a negative split. */
+  let clock = movingClockMs(points[0]);
+  let splitStartTime = clock;
+  let elevGain = 0;
+  let elevLoss = 0;
   let currentKm = 1; // lap ordinal, not necessarily a kilometre
 
   for (let i = 1; i < points.length; i++) {
     const segStart = accDistance;
-    const segDist = haversine(
-      points[i - 1].lat,
-      points[i - 1].lon,
-      points[i].lat,
-      points[i].lon
-    );
+    const segDist = segmentMetres(points[i - 1], points[i]);
     accDistance += segDist;
-    const segStartTime = points[i - 1].timestamp;
-    const segEndTime = points[i].timestamp;
+    const segStartTime = clock;
+    clock = Math.max(clock, movingClockMs(points[i]));
+    const segEndTime = clock;
+    elevGain += climb.gain[i];
+    elevLoss += climb.loss[i];
     // A single GPS segment can cross multiple lap thresholds (signal drop +
     // reappear with a multi-km jump). Distribute THIS segment's time
     // proportionally across each km boundary it crosses — interpolate the
@@ -412,15 +565,8 @@ export function calculateSplits(
           : 1;
       const boundaryTime = segStartTime + frac * (segEndTime - segStartTime);
       const splitTime = (boundaryTime - splitStartTime) / 1000;
-      let elevGain = 0;
-      let elevLoss = 0;
-      for (let j = splitStartIdx + 1; j <= i; j++) {
-        if (points[j].altitude != null && points[j - 1].altitude != null) {
-          const diff = points[j].altitude! - points[j - 1].altitude!;
-          if (diff > 2) elevGain += diff;
-          if (diff < -2) elevLoss += Math.abs(diff);
-        }
-      }
+      // A segment's climb goes to the split whose boundary it crosses; a
+      // second boundary inside the same segment gets none of it.
       splits.push({
         km: currentKm,
         time: splitTime,
@@ -429,8 +575,9 @@ export function calculateSplits(
         elevationGain: Math.round(elevGain),
         elevationLoss: Math.round(elevLoss),
       });
+      elevGain = 0;
+      elevLoss = 0;
       splitStartTime = boundaryTime;
-      splitStartIdx = i;
       currentKm++;
     }
   }
@@ -465,14 +612,154 @@ export function splitsForDisplay(
   return { splits: calculateSplits(trace, METRES_PER_MILE), lapUnit: "mi" };
 }
 
-export function totalElevationGain(points: GPSPoint[]): number {
-  let gain = 0;
-  for (let i = 1; i < points.length; i++) {
-    if (points[i].altitude != null && points[i - 1].altitude != null) {
-      const diff = points[i].altitude! - points[i - 1].altitude!;
-      if (diff > 2) gain += diff;
+/**
+ * Altitude samples averaged either side of each one before climbing is
+ * counted: 7 each way, a 15-fix window — about fifteen seconds at the usual
+ * one fix a second, forty-odd metres of running.
+ *
+ * Chosen by simulation (200 seeds each, 3 m threshold). Ten flat minutes
+ * with uniform ±4 m fix-to-fix jitter read 2.4 m of climb on average at
+ * radius 7, 7.9 m at radius 5, 58 m at radius 2 — and 670 m under the old
+ * per-fix rule. What it costs: a 6 m bridge with 40 m ramps reads 4.3 m
+ * (4.7 m at radius 5). A hill with level ground either side keeps its full
+ * height at any radius; only bumps narrower than the window shrink.
+ */
+export const ALTITUDE_SMOOTHING_RADIUS = 7;
+
+/**
+ * How far the smoothed altitude must move from its last low (or high)
+ * point before the move counts as a climb (or a descent). Once it does,
+ * the whole move from that turning point counts, so nothing below the
+ * threshold is shaved off a real hill.
+ */
+export const CLIMB_THRESHOLD_M = 3;
+
+/**
+ * The run's climb and descent, attributed to the segment each happened in:
+ * `gain[i]` and `loss[i]` are for the segment from point `i - 1` to point
+ * `i` (both 0 at index 0), all non-negative, and they sum to the run's
+ * totals — which is what lets a split's elevation be the climb that fell
+ * inside it, and the splits add up to the run.
+ *
+ * Two steps, the standard ones for a GPS altitude track:
+ *
+ *  1. SMOOTH. A centred moving average over the fixes that have an
+ *     altitude (`ALTITUDE_SMOOTHING_RADIUS`), cut short at the ends of the
+ *     track. Fixes without one are skipped, not treated as breaks.
+ *  2. HYSTERESIS. Walk the smoothed track keeping the extreme of the
+ *     current leg; a leg ends when the altitude comes back
+ *     `CLIMB_THRESHOLD_M` from that extreme. A climb is counted from its
+ *     low point to its high point; a wobble that never moves the threshold
+ *     from where it started is not a climb at all.
+ *
+ * It replaced a per-fix rule — count any rise over 2 m between two
+ * consecutive fixes — that was wrong in both directions. A real climb comes
+ * in small steps: a runner on a 2% grade rises about 6 cm a fix, so a whole
+ * hill on a smooth (barometric) altitude track counted as nothing. And on a
+ * jittery track every fix-to-fix rise over 2 m counted in full, so ten flat
+ * minutes with ±3 m noise read as hundreds of metres of climbing.
+ *
+ * One honest limit: slow wander in GPS-only altitude (no barometer) is
+ * indistinguishable from terrain without a map of the ground, and moves
+ * the threshold like a hill does. This counts it; nothing short of a
+ * terrain model would not.
+ */
+export function climbBySegment(points: GPSPoint[]): {
+  gain: number[];
+  loss: number[];
+} {
+  const n = points.length;
+  const gain = new Array<number>(n).fill(0);
+  const loss = new Array<number>(n).fill(0);
+  const at: number[] = []; // indices of points with a usable altitude
+  for (let i = 0; i < n; i++) {
+    const a = points[i].altitude;
+    if (typeof a === "number" && Number.isFinite(a)) at.push(i);
+  }
+  const m = at.length;
+  if (m < 2) return { gain, loss };
+
+  // 1. Smooth.
+  const s = new Array<number>(m);
+  for (let k = 0; k < m; k++) {
+    const lo = Math.max(0, k - ALTITUDE_SMOOTHING_RADIUS);
+    const hi = Math.min(m - 1, k + ALTITUDE_SMOOTHING_RADIUS);
+    let sum = 0;
+    for (let j = lo; j <= hi; j++) sum += points[at[j]].altitude as number;
+    s[k] = sum / (hi - lo + 1);
+  }
+
+  // 2. Hysteresis: the turning points that end each confirmed leg.
+  const turns: number[] = [];
+  let dir = 0; // +1 climbing, -1 descending, 0 not yet decided
+  let low = 0;
+  let high = 0;
+  let extreme = 0;
+  for (let k = 1; k < m; k++) {
+    if (dir === 0) {
+      if (s[k] < s[low]) low = k;
+      if (s[k] > s[high]) high = k;
+      if (s[k] - s[low] >= CLIMB_THRESHOLD_M) {
+        turns.push(low);
+        dir = 1;
+        extreme = k;
+      } else if (s[high] - s[k] >= CLIMB_THRESHOLD_M) {
+        turns.push(high);
+        dir = -1;
+        extreme = k;
+      }
+    } else if (dir === 1) {
+      if (s[k] >= s[extreme]) extreme = k;
+      else if (s[extreme] - s[k] >= CLIMB_THRESHOLD_M) {
+        turns.push(extreme);
+        dir = -1;
+        extreme = k;
+      }
+    } else {
+      if (s[k] <= s[extreme]) extreme = k;
+      else if (s[k] - s[extreme] >= CLIMB_THRESHOLD_M) {
+        turns.push(extreme);
+        dir = 1;
+        extreme = k;
+      }
     }
   }
+  if (dir === 0) return { gain, loss }; // nothing ever moved the threshold
+  turns.push(extreme);
+
+  /* The counted profile: flat before the first turn and after the last,
+     and between two turns the running high (on a climb) or low (on a
+     descent) — monotone, so each step is all climb or all descent, and the
+     steps of a leg add up to exactly its turn-to-turn change. Sub-threshold
+     wobbles inside a leg are flattened rather than counted twice. */
+  const y = new Array<number>(m);
+  for (let k = 0; k <= turns[0]; k++) y[k] = s[turns[0]];
+  for (let t = 0; t + 1 < turns.length; t++) {
+    const from = turns[t];
+    const to = turns[t + 1];
+    const up = s[to] > s[from];
+    let run = s[from];
+    for (let k = from + 1; k <= to; k++) {
+      run = up ? Math.max(run, s[k]) : Math.min(run, s[k]);
+      y[k] = run;
+    }
+  }
+  const last = turns[turns.length - 1];
+  for (let k = last + 1; k < m; k++) y[k] = s[last];
+
+  for (let k = 1; k < m; k++) {
+    const d = y[k] - y[k - 1];
+    if (d > 0) gain[at[k]] += d;
+    else if (d < 0) loss[at[k]] -= d;
+  }
+  return { gain, loss };
+}
+
+/** Total climb in whole metres — see `climbBySegment` for how it is read
+ *  from a noisy altitude track. */
+export function totalElevationGain(points: GPSPoint[]): number {
+  let gain = 0;
+  for (const g of climbBySegment(points).gain) gain += g;
   return Math.round(gain);
 }
 
@@ -480,16 +767,18 @@ export function totalDistance(points: GPSPoint[]): number {
   let dist = 0;
   for (let i = 1; i < points.length; i++) {
     if (points[i].breakBefore) continue;
-    dist += haversine(
-      points[i - 1].lat,
-      points[i - 1].lon,
-      points[i].lat,
-      points[i].lon
-    );
+    dist += segmentMetres(points[i - 1], points[i]);
   }
   return dist;
 }
 
+/**
+ * The fastest 1K / 5K / 10K inside one run: for every point, the shortest
+ * stretch ending there that covers the distance, timed on the MOVING clock
+ * (`movingClockMs`) and measured through `segmentMetres` — so a stretch
+ * that waited at a crossing is timed without the wait, and a line drawn
+ * across a pause cannot carry a stretch past the distance in no time.
+ */
 export function detectBestEfforts(
   points: GPSPoint[],
   totalDistance: number
@@ -500,35 +789,35 @@ export function detectBestEfforts(
     { target: 10000, label: "10K" },
   ];
   const results: { distance: number; time: number; label: string }[] = [];
+  const n = points.length;
+  if (n < 2) return results;
+
+  // Credited distance and moving clock at each point. The clock never steps
+  // back, so no stretch can time out negative on a corrected phone clock.
+  const cum = new Array<number>(n);
+  const clock = new Array<number>(n);
+  cum[0] = 0;
+  clock[0] = movingClockMs(points[0]);
+  for (let i = 1; i < n; i++) {
+    cum[i] = cum[i - 1] + segmentMetres(points[i - 1], points[i]);
+    clock[i] = Math.max(clock[i - 1], movingClockMs(points[i]));
+  }
 
   for (const effort of efforts) {
     if (totalDistance < effort.target) continue;
     let bestTime = Infinity;
     let startIdx = 0;
-    let accDist = 0;
 
-    for (let endIdx = 1; endIdx < points.length; endIdx++) {
-      accDist += haversine(
-        points[endIdx - 1].lat,
-        points[endIdx - 1].lon,
-        points[endIdx].lat,
-        points[endIdx].lon
-      );
-      while (startIdx < endIdx) {
-        const frontDist = haversine(
-          points[startIdx].lat,
-          points[startIdx].lon,
-          points[startIdx + 1].lat,
-          points[startIdx + 1].lon
-        );
-        if (accDist - frontDist >= effort.target) {
-          accDist -= frontDist;
-          startIdx++;
-        } else break;
+    for (let endIdx = 1; endIdx < n; endIdx++) {
+      // Move the start up while the stretch would still cover the distance.
+      while (
+        startIdx < endIdx &&
+        cum[endIdx] - cum[startIdx + 1] >= effort.target
+      ) {
+        startIdx++;
       }
-      if (accDist >= effort.target) {
-        const segTime =
-          (points[endIdx].timestamp - points[startIdx].timestamp) / 1000;
+      if (cum[endIdx] - cum[startIdx] >= effort.target) {
+        const segTime = (clock[endIdx] - clock[startIdx]) / 1000;
         if (segTime < bestTime) bestTime = segTime;
       }
     }

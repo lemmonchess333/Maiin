@@ -8,7 +8,7 @@ import {
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { localDateString } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { logger } from "@/lib/logger";
 import { homeProgramSnapshot } from "./homeProgramSnapshot";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
@@ -30,11 +30,22 @@ type Actions = Pick<
   | "moveRunDay"
   | "dismissFellBehindPrompt"
   | "realignRacePlan"
+  | "easeBackIn"
 >;
 
 export function useHomeProgram() {
   const { user, profile } = useAuth();
   const uid = user?.uid;
+  /**
+   * Today, as the app sees it, moving on while the app stays open and when
+   * a phone brings it back (`useLocalDateKey`). Whether the plan needs the
+   * engine depends on the day as much as on the document: a plan on last
+   * week needs its rollover, and only the engine rolls it. Asked only when
+   * the document changed, an app left open on Home over the weekend came
+   * back on Monday with last week's plan, and kept it until something else
+   * loaded the engine.
+   */
+  const today = useLocalDateKey();
   const [snapshot, setSnapshot] = useState<{
     uid: string;
     programState: ProgramState | null;
@@ -48,6 +59,8 @@ export function useHomeProgram() {
     uid: string;
     value: LayoffClass;
   } | null>(null);
+  /** The account whose missing programme could not be built. */
+  const [buildFailed, setBuildFailed] = useState<string | null>(null);
   const api = useRef<{ uid: string; value: ProgramController } | null>(null);
   const pending = useRef<
     {
@@ -123,19 +136,27 @@ export function useHomeProgram() {
     let active = true;
     const stop = onSnapshot(
       doc(db, "users", uid, "programState", "current"),
+      // The wait below needs the server's answer, and when the cache
+      // already knows the document is missing that answer changes only
+      // `fromCache`: Firestore delivers it to this listener only because
+      // it asks for metadata changes. Without this, Home stayed on its
+      // placeholder for good.
+      { includeMetadataChanges: true },
       (value) => {
         if (!active) return;
         // An empty cache is not proof that a new programme needs generating.
         if (!value.exists() && value.metadata.fromCache) return;
         const read = homeProgramSnapshot(
           value.exists() ? (value.data() as ProgramState) : null,
-          profile
+          profile,
+          today
         );
         setSnapshot({ uid, ...read });
         if (read.needsMaintenance)
-          void prepare().catch((error) =>
-            logger.warn("Home programme maintenance pending", error)
-          );
+          void prepare().catch((error) => {
+            logger.warn("Home programme maintenance pending", error);
+            if (!read.programState) setBuildFailed(uid);
+          });
       },
       (error) => {
         if (active) {
@@ -148,17 +169,21 @@ export function useHomeProgram() {
       active = false;
       stop();
     };
-  }, [uid, profile, prepare]);
+    // On a new day the listener starts again, and its first snapshot asks
+    // the question on that day.
+  }, [uid, profile, prepare, today]);
   useEffect(() => {
     if (!uid || !profile?.runMode || profile.runMode === "freeform") return;
     let active = true;
-    void fetchRecentLayoff(uid, localDateString()).then((value) => {
+    // Read again for each new day, as the engine reads it: the fell-behind
+    // sheet's words have to match what its button will build.
+    void fetchRecentLayoff(uid, today).then((value) => {
       if (active) setLayoff({ uid, value });
     });
     return () => {
       active = false;
     };
-  }, [uid, profile?.runMode]);
+  }, [uid, profile?.runMode, today]);
 
   function action<K extends keyof Actions>(name: K) {
     return async (
@@ -176,10 +201,20 @@ export function useHomeProgram() {
     loadedController && loadedController.uid === uid
       ? loadedController.component
       : null;
+  const current = snapshot && snapshot.uid === uid ? snapshot : null;
   return {
-    programState:
-      snapshot && snapshot.uid === uid ? snapshot.programState : null,
-    loading: !!uid && snapshot?.uid !== uid,
+    programState: current ? current.programState : null,
+    // A missing programme is built as soon as the server confirms it is
+    // missing, so until the built one arrives this is still loading: Home
+    // said "Today is a lifting day, but no workout is linked" for the
+    // second the build took. A build that fails ends it, and Home shows
+    // what it can without a plan.
+    loading:
+      !!uid &&
+      (!current ||
+        (!current.programState &&
+          current.needsMaintenance &&
+          buildFailed !== uid)),
     recentLayoff:
       layoff && layoff.uid === uid ? layoff.value : ("none" as LayoffClass),
     controller: Controller ? <Controller key={uid} publish={publish} /> : null,
@@ -192,5 +227,6 @@ export function useHomeProgram() {
     moveRunDay: action("moveRunDay"),
     dismissFellBehindPrompt: action("dismissFellBehindPrompt"),
     realignRacePlan: action("realignRacePlan"),
+    easeBackIn: action("easeBackIn"),
   };
 }

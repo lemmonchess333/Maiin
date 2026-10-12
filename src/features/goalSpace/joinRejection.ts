@@ -31,6 +31,11 @@
  * information the block exists to withhold.
  */
 
+import {
+  isRestrictedRefusal,
+  RESTRICTED_TOAST,
+} from "@/lib/accountRestriction";
+
 /** Refusals keyed by a distinctive fragment of the server's message. */
 const BY_MESSAGE: [needle: string, copy: string][] = [
   [
@@ -57,6 +62,8 @@ const BY_CODE: [suffix: string, copy: string][] = [
 export const JOIN_FAILED_FALLBACK = "Couldn't join. Try again in a moment.";
 
 export function describeJoinRejection(err: unknown): string {
+  // A restricted account (S4e) gets the app's one sentence for it.
+  if (isRestrictedRefusal(err)) return RESTRICTED_TOAST;
   const message = String((err as { message?: unknown })?.message ?? "")
     .toLowerCase()
     .trim();

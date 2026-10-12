@@ -210,7 +210,8 @@ describe("PeriodSummaryCard", () => {
         month(`${y}-01-01`, true),
       ],
     });
-    const labels = screen.getByText("This month").parentElement!;
+    const labels = screen.getByTestId("axis-labels");
+    expect(within(labels).getByText("This month")).toBeInTheDocument();
     expect(within(labels).getByText(`Oct ${y - 1}`)).toBeInTheDocument();
     expect(within(labels).getByText("Nov")).toBeInTheDocument();
     expect(within(labels).getByText("Dec")).toBeInTheDocument();
@@ -218,8 +219,31 @@ describe("PeriodSummaryCard", () => {
 
   it("names the current bar in the labels under the chart", () => {
     card();
-    const labels = screen.getByText("This week").parentElement!;
+    const labels = screen.getByTestId("axis-labels");
+    expect(within(labels).getByText("This week")).toBeInTheDocument();
     expect(within(labels).getByText("31 Aug")).toBeInTheDocument();
+  });
+
+  it("names only the chart's two ends in the row for a narrow card", () => {
+    card();
+    const full = screen.getByTestId("axis-labels").textContent;
+    const ends = within(screen.getByTestId("axis-ends"))
+      .getAllByText(/./)
+      .map((el) => el.textContent);
+    expect(ends).toHaveLength(2);
+    expect(ends[1]).toBe("This week");
+    expect(full).toContain(ends[0]!);
+  });
+
+  it("takes more card to name all six of a Monday's weeks than five", () => {
+    const { unmount } = card();
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[11em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[11em]:flex");
+    unmount();
+    // The 30 days up to a Monday draw six weeks (binAxis).
+    card({ bins: [{ ...WEEKS[0], key: "2026-08-17" }, ...WEEKS] });
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[12em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[12em]:flex");
   });
 });
 

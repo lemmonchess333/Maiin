@@ -10,6 +10,11 @@ import {
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import {
+  isRestrictedRefusal,
+  showRestrictedToast,
+} from "@/lib/accountRestriction";
 
 /**
  * Phase 2 — post-completion kudos prompt.
@@ -25,6 +30,7 @@ import { logger } from "@/lib/logger";
  *    completion doesn't burn the day.
  *  - uid-scoped storage key (no cross-account leakage on a shared device).
  *  - Fails silent: a feed-read error just means no prompt, never an error UI.
+ *  - Never offered to a restricted account (S4e), which cannot give props.
  */
 function storageKey(uid: string): string {
   return `tropos.kudosPrompt.${uid}`;
@@ -40,9 +46,10 @@ export function usePostCompletionKudos(opts: {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const ranRef = useRef(false);
+  const { isRestricted } = useRestrictedStatus(uid);
 
   useEffect(() => {
-    if (!enabled || !uid || ranRef.current) return;
+    if (!enabled || !uid || isRestricted || ranRef.current) return;
     ranRef.current = true;
 
     const today = localDayKey(new Date());
@@ -67,7 +74,7 @@ export function usePostCompletionKudos(opts: {
     return () => {
       cancelled = true;
     };
-  }, [enabled, uid]);
+  }, [enabled, uid, isRestricted]);
 
   const sendKudos = useCallback(async () => {
     if (!candidate || !uid || sending || sent) return;
@@ -83,16 +90,20 @@ export function usePostCompletionKudos(opts: {
       toast.success(`Kudos sent to ${candidate.authorName}`);
     } catch (e) {
       logger.error("[kudos] send failed", e);
-      toast.error("Couldn't send kudos");
+      if (isRestrictedRefusal(e)) showRestrictedToast();
+      else toast.error("Couldn't send kudos");
     } finally {
       setSending(false);
     }
   }, [candidate, uid, fromName, sending, sent]);
+
+  // A restriction that lands while the prompt is up takes it away.
+  const offered = isRestricted ? null : candidate;
 
   const dismiss = useCallback(() => {
     haptic("light");
     setCandidate(null);
   }, []);
 
-  return { candidate, sending, sent, sendKudos, dismiss };
+  return { candidate: offered, sending, sent, sendKudos, dismiss };
 }

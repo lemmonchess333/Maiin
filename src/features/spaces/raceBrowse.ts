@@ -1,11 +1,23 @@
-import type { RaceCountryCode, RaceEventDistance, SpaceDef } from "./spaceDefs";
+import type {
+  RaceCountryCode,
+  RaceEventDistance,
+  SpaceDef,
+  SpaceEventInfo,
+} from "./spaceDefs";
 
 export const RACE_DISTANCE_LABELS: Record<RaceEventDistance, string> = {
   "5k": "5K",
   "10k": "10K",
   half: "Half marathon",
   marathon: "Marathon",
+  ultra: "Ultra",
 };
+
+export function raceDistanceLabel(event: SpaceEventInfo): string {
+  return event.distance === "ultra" && event.distanceKm
+    ? `${event.distanceKm} km ultra`
+    : RACE_DISTANCE_LABELS[event.distance];
+}
 
 export interface RaceBrowseFilters {
   country: RaceCountryCode | "all";

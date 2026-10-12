@@ -15,9 +15,9 @@ export type MovementCategory =
 /**
  * Infer a MovementCategory from an exercise name (and optional id).
  *
- * The template system (`src/features/program/templates.ts`) doesn't
- * carry a movementCategory per exercise — it relies on
- * `templateExToProgEx` and `normalizeExercise` to fill the field. Both
+ * Plans built from the hand-written templates, which no longer build plans,
+ * carry no movementCategory per exercise, and `normalizeExercise` fills
+ * the field for them. It and the template converter
  * previously hardcoded `"horizontal_push"` as a default, which made
  * every Pull/Legs/etc. day's activity card mis-tag the workout
  * (Pull A showing "horizontal_push" was the visible bug).

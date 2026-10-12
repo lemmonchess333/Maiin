@@ -33,17 +33,6 @@
  * a pure mapper, so nothing blocks it — it is a one-time backfill for
  * pre-Blk2 blocks that simply never moved. Marked `unaccounted` rather
  * than folded into a category that does not describe it.
- *
- * `undoRecoveryReduction` was marked that way too on the first pass, and
- * that was WRONG — checked rather than assumed, and the check overturned
- * it. It calls `revertRecoverySession`, which needs
- * `primaryCanonicalForExercise` -> `volumeModel` -> per-exercise muscle
- * attributions; `functions/` has no muscle data of any kind. That is
- * exactly the dependency ADR-0011 measured for `musclesAtMrv`, reached
- * through a helper the ADR did not happen to name. So the ADR's REASONING
- * covers it even though its enumeration does not, and recording it as an
- * unexplained gap would have sent the next reader hunting for a decision
- * nobody failed to make.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -80,6 +69,11 @@ const EXPECTED_WRITERS: ReadonlyArray<{
     why: "the manual button for the same engine",
   },
   {
+    owner: "easeBackInAfterBreak",
+    category: "week-engine",
+    why: "Ease back in after a break (Lift4 (11)) lowers every lift on its equipment's load steps (`loadSteps.ts`), which read exercise equipment `functions/` has no copy of — the same unmirrored-data blocker, and the return's weeks are counted down by advanceWeek",
+  },
+  {
     owner: "regenerateProgram",
     category: "whole-plan",
     why: "rebuilds from the generator; configurePlan-shaped, and a public command kind would put whole-plan authorship on the client surface",
@@ -98,11 +92,6 @@ const EXPECTED_WRITERS: ReadonlyArray<{
     owner: "adoptLegacyTrainingBlock",
     category: "unaccounted",
     why: "NOT covered by ADR-0011's reasoning. Its blocker was the represcribe mirror, which §8.6 records as DONE on 2026-08-02 — so the stated obstacle no longer exists and nothing has recorded what replaced it",
-  },
-  {
-    owner: "undoRecoveryReduction",
-    category: "week-engine",
-    why: "engine-blocked through a helper ADR-0011 does not enumerate but whose blocker it measured: revertRecoverySession -> primaryCanonicalForExercise -> volumeModel -> per-exercise muscle attributions, and functions/ has NO muscle data of any kind",
   },
   {
     owner: "realignRacePlan",
@@ -161,10 +150,10 @@ describe("programme document writers outside the command boundary", () => {
   });
 
   it("matches ADR-0011's reasoning for all but one, which is marked", () => {
-    /* Seven are covered by the ADR's reasoning — six it enumerates plus
-       `undoRecoveryReduction`, which reaches the same measured
-       muscle-attribution blocker through a helper it does not name. One
-       deliberate fallback. One genuinely outside the account.
+    /* Seven are covered by the ADR's reasoning: the six it enumerates,
+       and easing back after a break, which its 2026-10-06 update adds for
+       the same reason. One deliberate fallback. One genuinely outside the
+       account.
 
        Pinning the SHAPE of that gap rather than hiding it means the next
        person to open the ADR knows before they start that it does not

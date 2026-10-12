@@ -16,6 +16,7 @@
  *     race date
  *   - `tropos_stall_{exerciseName}` — exercise names are global, so A's
  *     3-week stall cooldown suppressed B's stall prompt for the same lift
+ *     (the stall prompt itself has since been removed)
  *   - `home-day-tap-seen` — the sibling of a hint already fixed on the same
  *     page
  *   - the Food celebration date
@@ -26,7 +27,7 @@
  * built elsewhere is judged by NAME — which is why the allow-list below
  * exists and why every entry carries a reason rather than just a path.
  *
- * The primitives (`useDismissOnce`, `useCoachMarks`) are the preferred fix;
+ * The primitive (`useDismissOnce`) is the preferred fix;
  * `useUidForStorageKey()` is the escape hatch when the surface needs raw
  * access. Reaching for the allow-list should be rare, and only for state
  * that genuinely belongs to the DEVICE rather than the account.
@@ -35,7 +36,6 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stallCooldownKey } from "@/features/program/stallDetection";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -62,6 +62,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "ONE key holding uid-TAGGED entries, filtered per-uid on flush (#820)",
   "tropos.share.queue": "same uid-tagged-entries shape (#820)",
   "tropos.program.commandOutbox": "same uid-tagged-entries shape",
+  "tropos-guide-under-automation":
+    "a capture spec's switch that turns the first-visit guide on in an automated browser, planted before the account it films exists; the app only reads it",
 };
 
 /**
@@ -112,9 +114,7 @@ function resolveConst(src: string, name: string): string | null {
 
 /** Does this key expression show a uid? */
 function looksScoped(key: string): boolean {
-  if (/uid/i.test(key)) return true;
-  if (/\bstallCooldownKey\(/.test(key)) return true;
-  return false;
+  return /uid/i.test(key);
 }
 
 function stripComments(src: string): string {
@@ -231,18 +231,6 @@ describe("localStorage keys are uid-scoped", () => {
     expect(looksScoped("`tropos_stall_${exercise.name}`")).toBe(false);
   });
 
-  it("the helper `looksScoped` trusts really does scope", () => {
-    /* `looksScoped` waves through any `stallCooldownKey(...)` call, because
-       the key is built in another file. That trust is only sound if the
-       helper scopes — and a mutation run proved the gap was real: reverting
-       the helper to its unscoped form left every call site reading as clean.
-       So assert the helper's OUTPUT here, where the bypass is granted. */
-    expect(stallCooldownKey("u1", "Bench Press")).toContain("u1");
-    expect(stallCooldownKey("u1", "Bench Press")).not.toBe(
-      stallCooldownKey("u2", "Bench Press")
-    );
-  });
-
   it("no unscoped key holds per-account state", () => {
     const offenders = found
       .filter((f) => !looksScoped(f.resolved))
@@ -257,7 +245,7 @@ describe("localStorage keys are uid-scoped", () => {
     expect(
       offenders,
       `localStorage is per-DEVICE, so an unscoped key is shared by every ` +
-        `account on the phone. Prefer useDismissOnce / useCoachMarks; use ` +
+        `account on the phone. Prefer useDismissOnce; use ` +
         `useUidForStorageKey() for raw access. If the state really belongs ` +
         `to the DEVICE, add it to DEVICE_SCOPED with the reason:\n  ` +
         offenders.join("\n  ")

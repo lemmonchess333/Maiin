@@ -80,9 +80,8 @@ export interface LoggedSet {
  * `plannedReps` / `plannedWeightKg` are the PRESCRIPTION at the moment the set
  * was executed — `exercise.reps` and `exercise.weight` — not the previous
  * session's actuals. That distinction is the whole point: those two fields are
- * exactly what `applyProgression` compares the actual against
- * (`actualReps >= exercise.reps && actualWeight >= exercise.weight`), and
- * exactly what it overwrites immediately afterwards.
+ * the target reps `applyProgression` judges the set against and the load it
+ * moves the plan from, and exactly what it overwrites immediately afterwards.
  */
 export interface PersistedWorkoutSet {
   setNumber: number;

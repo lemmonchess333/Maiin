@@ -32,6 +32,10 @@ const composeMock = vi.fn();
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -194,6 +198,25 @@ describe("WorkoutFeedShareSheet", () => {
     );
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(postActivityMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("WorkoutFeedShareSheet — a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("holds the share and says why", async () => {
+    restriction.isRestricted = true;
+    renderSheet();
+    expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
+    const followers = screen.getByRole("button", {
+      name: /share to followers/i,
+    });
+    expect(followers).toBeDisabled();
+    expect(screen.getByRole("button", { name: /make public/i })).toBeDisabled();
+    fireEvent.click(followers);
     expect(postActivityMock).not.toHaveBeenCalled();
   });
 });

@@ -16,6 +16,7 @@
  * behaviour, which is a shape this repo has been caught by before.
  */
 import { describe, it, expect } from "vitest";
+import { group } from "@/test/localeGrouping";
 import {
   paceLabel,
   durationLabel,
@@ -31,26 +32,27 @@ import {
   elevationLabel,
   storedKmLabel,
   runTypeTitle,
+  runTitle,
   noSplitsReason,
 } from "../runLabels";
 
 describe("paceLabel", () => {
-  it("formats sub-minute pace as M:SS/km", () => {
-    expect(paceLabel(45, "km")).toBe("0:45/km");
+  it("formats sub-minute pace as M:SS /km", () => {
+    expect(paceLabel(45, "km")).toBe("0:45 /km");
   });
 
   it("formats whole-minute pace with zero seconds padded", () => {
-    expect(paceLabel(300, "km")).toBe("5:00/km");
+    expect(paceLabel(300, "km")).toBe("5:00 /km");
   });
 
   it("zero-pads single-digit seconds", () => {
     /* 5:05 not 5:5 — the zero-padding is the contract. */
-    expect(paceLabel(305, "km")).toBe("5:05/km");
+    expect(paceLabel(305, "km")).toBe("5:05 /km");
   });
 
   it("rounds the seconds component to the nearest second", () => {
     /* 304.6s should round to 5:05, not 5:04. */
-    expect(paceLabel(304.6, "km")).toBe("5:05/km");
+    expect(paceLabel(304.6, "km")).toBe("5:05 /km");
   });
 
   it("returns the em-dash placeholder for zero pace", () => {
@@ -75,8 +77,8 @@ describe("paceLabel", () => {
     /* The direction check. 5:00/km is 8:03/mi — if this ever reads 3:06
        the conversion has been inverted, which is the failure mode the
        whole module exists to prevent. */
-    expect(paceLabel(300, "mi")).toBe("8:03/mi");
-    expect(paceLabel(240, "mi")).toBe("6:26/mi");
+    expect(paceLabel(300, "mi")).toBe("8:03 /mi");
+    expect(paceLabel(240, "mi")).toBe("6:26 /mi");
   });
 });
 
@@ -198,6 +200,11 @@ describe("elevationLabel", () => {
   it("rounds AFTER converting, so metres stay the stored whole number", () => {
     expect(elevationLabel(120.4, "km")).toBe("120 m");
     expect(elevationLabel(1, "mi")).toBe("3 ft");
+  });
+
+  it("groups a climb past a thousand like every other count", () => {
+    expect(elevationLabel(2845, "km")).toBe(`${group(2845)} m`);
+    expect(elevationLabel(2845, "km", false)).toBe(group(2845));
   });
 
   it("renders a flat run as zero, not a placeholder", () => {
@@ -406,6 +413,32 @@ describe("runTypeTitle", () => {
     expect(runTypeTitle("manual")).toBe("Manual Run");
     expect(runTypeTitle("something-new")).toBe("Run");
     expect(runTypeTitle(undefined)).toBe("Run");
+  });
+});
+
+describe("runTitle", () => {
+  it("titles an outdoor run by its type alone", () => {
+    expect(runTitle({ activityType: "long" })).toBe("Long Run");
+    expect(runTitle({ activityType: "long", place: null })).toBe("Long Run");
+    expect(runTitle({ activityType: "manual" })).toBe("Manual Run");
+    expect(runTitle({})).toBe("Run");
+  });
+
+  it("says Treadmill for a treadmill run, saved before Pgm8 or since, so none reads as outdoors", () => {
+    // Before Pgm8 the treadmill was the type.
+    expect(runTitle({ activityType: "treadmill" })).toBe("Treadmill");
+    // Since, a run keeps its session's type, with the treadmill as where.
+    expect(runTitle({ activityType: "long", place: "treadmill" })).toBe(
+      "Long Run · Treadmill"
+    );
+    expect(runTitle({ activityType: "intervals", place: "treadmill" })).toBe(
+      "Intervals · Treadmill"
+    );
+    // A run with no session of its own is the treadmill run it always was.
+    expect(runTitle({ activityType: "freerun", place: "treadmill" })).toBe(
+      "Treadmill"
+    );
+    expect(runTitle({ place: "treadmill" })).toBe("Treadmill");
   });
 });
 

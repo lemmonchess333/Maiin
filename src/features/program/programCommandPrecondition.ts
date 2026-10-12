@@ -5,8 +5,8 @@
  *
  * It should have existed from the first migrated writer, and its absence
  * shipped a regression. Every workout-day command kind (`skipWorkoutDay`,
- * `setNextWorkout`, `logExercise`, `completeWorkoutDay`, the exercise
- * mutations) requires THREE precondition fields — `dayIndex`,
+ * `setNextWorkout`, `completeWorkoutDay`, the exercise mutations) requires
+ * THREE precondition fields — `dayIndex`,
  * `expectedWeekNumber`, `expectedDaySignature` — and the server rejects the
  * command outright if any is missing. There was no client-side way to build
  * them, so the writers migrated in P6 sent a bare `dayIndex` and were rejected

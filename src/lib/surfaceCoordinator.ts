@@ -1,12 +1,12 @@
 /**
  * Surface coordinator — pure core (#995).
  *
- * The problem: Home (and the globally-mounted StreakReminderPrimingModal)
- * accumulated four independently-triggered BLOCKING surfaces, each with its
- * own persistence store and no shared gate. On a returning user's visit they
- * could all mount at once; z-index was the only arbiter, so they stacked
- * (BadgeEarnedModal's z-[60] just painted over the rest). See
- * docs/adr/0004-surface-coordinator.md for the full taxonomy.
+ * The problem: Home (and a globally mounted streak-reminder prompt, since
+ * removed in FV2) accumulated four independently-triggered BLOCKING
+ * surfaces, each with its own persistence store and no shared gate. On a
+ * returning user's visit they could all mount at once; z-index was the only
+ * arbiter, so they stacked (BadgeEarnedModal's z-[60] just painted over the
+ * rest). See docs/adr/0004-surface-coordinator.md for the full taxonomy.
  *
  * This module is the pure decision logic — no React, no I/O — so the policy
  * (priority, per-open budget, suppression, defer-vs-drop) is unit-testable in

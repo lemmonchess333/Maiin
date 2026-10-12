@@ -74,3 +74,53 @@ the volume-drop reason above). What changed is component naming/placement only:
   navigation. The rail component + `buildHybridWeekItems` remain for potential
   reuse (e.g. Home), and the "do not assert weekday-pinned lift identity"
   constraint still applies wherever a combined calendar surface is used.
+
+## Update 2026-10-05 — the order carries over between weeks (Lift4)
+
+The dual ontology is unchanged. What changed is where a lift week starts:
+
+- **The week opens with the session not reached.** At the rollover,
+  `advanceWeek` moves the session that was up next (`nextUpIndex`, the same
+  cursor Train's "Up next" reads, a "Make this next" choice included) to the
+  front of `workouts`, and the rest follow in their order. Each session comes
+  round once; nothing is doubled up to catch up. A week with nothing left to
+  do, or whose first session was still next, keeps its order. Before this,
+  every rollover put the cursor back on the first session, so a lifter on a
+  three-session plan who managed two a week did the first two every week and
+  never met the third — the light-trainer segment this ADR's rejected option
+  was rejected to protect.
+- **The calendar counts lift days from Monday.** `liftIndexForDayOfWeek`
+  orders the lift days by `weekPosition`, so `workouts[0]` lands on the
+  week's first lift day: the order the cursor runs and the builder spaces
+  (`overlapModel.ts`). It counted from `getDay()`, which put `workouts[0]` on
+  Sunday and showed every other lift day the session after the one Train
+  started there. The generated weeks for 4 lift + 3 run days and for 6 lift
+  days both lift on Sunday.
+
+Consequences:
+
+- After a rollover, `workouts` is no longer in the builder's order. Anything
+  that pairs a saved plan with a built one has to match days by name, as
+  `generateProgram` already does (`alignExistingTo`); a rebuild starts again
+  from the builder's order.
+- A day index is only meaningful inside its week. `nextWorkoutOverride` is
+  cleared at the rollover, a finish checks the week and the day before it
+  ticks anything (`commitWorkoutCompletion`), the server rejects a command
+  whose day signature no longer matches (`workoutDaySignature`), and the
+  rollover waits while a session is open or a finish is queued
+  (`useProgram`).
+- `weekHistory` archives each week in the order it was trained.
+
+## Update 2026-10-06 — a race plan's lighter weeks (Lift4)
+
+The dual ontology is unchanged. One thing on the lift side now reads the run
+side's calendar: with a race plan, the lifting's lighter week falls on the
+run plan's step-back week (`isRunStepBackWeek`, the same weeks the ramp's
+cutbacks fall on, every 4th week of the base and build), not on every 4th
+trained lift week. So the rollover works out the run side's next week first
+(`nextRunWeek`) and hands the lift side where the race block lands
+(`raceBlockWeek`, read by `advanceWeek`). The lift week number still counts
+trained weeks, and nothing else about the order moves; without a race plan,
+and in the recovery after one, the lighter week comes every 4th trained week
+again. Train counts a race plan's weeks in the race block and names them by
+its phases (Base, Build, Taper, Race).

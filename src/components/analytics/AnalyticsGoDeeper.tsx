@@ -60,9 +60,11 @@ export default function AnalyticsGoDeeper({
   lines?: Partial<Record<AnalyticsPage, string>>;
 }) {
   return (
-    <section aria-label="Go deeper" className="space-y-2">
+    <section aria-label="Go deeper" className="@container space-y-2">
       <SectionHeading>Go deeper</SectionHeading>
-      <div className="grid grid-cols-2 gap-2">
+      {/* One column under 11em (larger text on a small phone), where two
+          ran "Running" into the card's edge. */}
+      <div className="grid grid-cols-2 @max-[11em]:grid-cols-1 gap-2">
         {ORDER.map((page) => {
           const { title, detail, icon: Icon, tint } = ANALYTICS_PAGES[page];
           return (

@@ -104,6 +104,46 @@ describe("useFoodAnalysis — the outcome contract", () => {
     );
   });
 
+  it("a refusal because AI analysis is off reads as a plain way back on", async () => {
+    // functions/lib/aiConsent.js: failed-precondition, sent as 400, with a
+    // stable reason. The message names where the switch is, whatever the
+    // server's own wording.
+    stubFetch(async () =>
+      reply(400, {
+        error: "AI food analysis is off for this account.",
+        code: "failed-precondition",
+        reason: "ai-analysis-disabled",
+      })
+    );
+    const { result } = renderHook(() => useFoodAnalysis());
+    let outcome!: Awaited<ReturnType<typeof result.current.analyzeFood>>;
+    await act(async () => {
+      outcome = await result.current.analyzeFood("QUJD");
+    });
+    expect(outcome.data).toBeNull();
+    expect(outcome.errorMessage).toBe(
+      "AI food analysis is off. You can turn it on in Settings › Social & privacy."
+    );
+  });
+
+  it("a typed meal refused because AI analysis is off comes back empty, for the parser to read", async () => {
+    stubFetch(async () =>
+      reply(400, {
+        error: "AI food analysis is off for this account.",
+        code: "failed-precondition",
+        reason: "ai-analysis-disabled",
+      })
+    );
+    const { result } = renderHook(() => useFoodAnalysis());
+    let parsed: Awaited<ReturnType<typeof result.current.analyzeFoodText>> =
+      GOOD;
+    await act(async () => {
+      parsed = await result.current.analyzeFoodText("2 eggs");
+    });
+    expect(parsed).toBeNull();
+    expect(vi.mocked(fetch)).toHaveBeenCalledOnce();
+  });
+
   it("a status with no server message still gets actionable copy", async () => {
     stubFetch(async () => reply(429, null));
     const { result } = renderHook(() => useFoodAnalysis());

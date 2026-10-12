@@ -31,7 +31,8 @@ const fadeUp = {
  * no action — one voice per screen).
  *
  * Which cards show, and what each says, is decided by `todaySession`; this
- * draws its answer.
+ * draws its answer. Each card carries the `data-guide-stop` the first-visit
+ * walk points at (`todayCardTarget` in firstGuide.ts names the same three).
  */
 export default function StackedCTACards({
   session,
@@ -46,14 +47,15 @@ export default function StackedCTACards({
   return (
     <motion.div
       className="space-y-3"
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={stagger}
     >
       {lift?.workout && (
-        <motion.div key="lift" variants={fadeUp}>
+        <motion.div key="lift" variants={fadeUp} data-guide-stop="today-lift">
           <LiftCTACard
             nextWorkout={lift.workout}
+            rest={session.restContext}
             navigate={navigate}
             muscleGroups={lift.muscleGroups}
             dayIndex={lift.index}
@@ -87,23 +89,36 @@ export default function StackedCTACards({
         </motion.div>
       )}
       {run && (
-        <motion.div key="run" variants={fadeUp}>
+        <motion.div key="run" variants={fadeUp} data-guide-stop="today-run">
           <RunCTACard
             todayRun={run.runDay}
+            racePace={run.racePace}
             completed={run.completed}
             navigate={navigate}
             isFirst={run.isFirst}
+            dose={run.dose}
           />
         </motion.div>
       )}
       {rest && (
-        <motion.div key="rest" variants={fadeUp}>
+        <motion.div
+          key="rest"
+          variants={fadeUp}
+          data-guide-stop={
+            rest.kind === "first-workout"
+              ? "today-lift"
+              : rest.kind === "free-run"
+                ? "today-run"
+                : "today-rest"
+          }
+        >
           {/* Rest-day cue. Previously neither lift nor run rendered on rest
               days and the page looked half-empty — users couldn't
               distinguish "scheduled rest" from "something broke". */}
           {rest.kind === "first-workout" ? (
             <LiftCTACard
               nextWorkout={rest.workout}
+              rest={session.restContext}
               navigate={navigate}
               dayIndex={rest.index}
               eyebrowLabel="Your first workout"

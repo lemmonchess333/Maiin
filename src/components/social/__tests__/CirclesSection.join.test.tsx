@@ -32,6 +32,10 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 
 const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: toastMock }));
@@ -152,5 +156,34 @@ describe("joining with a code", () => {
     expect(join).toBeDisabled();
     fireEvent.change(field, { target: { value: "K7P4-9M2H" } });
     expect(join).toBeEnabled();
+  });
+});
+
+describe("a restricted account (S4e)", () => {
+  afterEach(() => {
+    restriction.isRestricted = false;
+  });
+
+  it("says so once, and Start and Join say why instead of opening", async () => {
+    restriction.isRestricted = true;
+    const hook = hookValue();
+    mockUseGoalSpaces.mockReturnValue(hook);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    expect(screen.getAllByText("Your account is restricted")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: /join with code/i }));
+    expect(screen.queryByLabelText("Invite code")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /start a circle/i }));
+    expect(toastMock.error).toHaveBeenCalledTimes(2);
+    expect(toastMock.error).toHaveBeenCalledWith(
+      "Your account is restricted, so you can't do this for now.",
+      expect.anything()
+    );
+    expect(hook.joinCircle).not.toHaveBeenCalled();
+    expect(hook.createCircle).not.toHaveBeenCalled();
   });
 });

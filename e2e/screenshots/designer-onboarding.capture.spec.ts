@@ -3,7 +3,6 @@ import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 test.use({ viewport: { width: 375, height: 852 } });
 async function capture(page: Page, name: string) {
@@ -177,7 +176,6 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
 test("Home leads with today's task and puts the week's verdict below it, task above the fold, at 375 px", async ({
   page,
 }) => {
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("/");
   await page

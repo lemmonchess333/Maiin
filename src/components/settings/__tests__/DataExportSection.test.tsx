@@ -9,6 +9,12 @@
  * assertions are about the export ACTUALLY happening for the signed-in user
  * and failing loudly when it doesn't — a silent no-op here looks identical to
  * a working button, which is exactly how it stayed unnoticed.
+ *
+ * It did stay a silent no-op on the iPhone for a while: the CSV went out as
+ * a blob `<a download>`, which WKWebView drops, and the page still said
+ * "exported". The file now goes through shareFile (the share sheet, or a
+ * download on the web), and "exported" is said only when it was shared or
+ * downloaded.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -18,21 +24,27 @@ import { isTitleCase } from "@/lib/__tests__/copyCasing.test";
 const exportWorkoutsCSV = vi.fn().mockResolvedValue("w-csv");
 const exportMealsCSV = vi.fn().mockResolvedValue("m-csv");
 const exportBodyweightCSV = vi.fn().mockResolvedValue("b-csv");
-const downloadCSV = vi.fn();
 vi.mock("@/lib/export", () => ({
   exportWorkoutsCSV: (...a: unknown[]) => exportWorkoutsCSV(...a),
   exportMealsCSV: (...a: unknown[]) => exportMealsCSV(...a),
   exportBodyweightCSV: (...a: unknown[]) => exportBodyweightCSV(...a),
-  downloadCSV: (...a: unknown[]) => downloadCSV(...a),
+  csvFile: (content: string, name: string) =>
+    new File([content], name, { type: "text/csv" }),
 }));
 
+const shareFile = vi.fn();
+vi.mock("@/lib/shareFile", () => ({
+  shareFile: (...a: unknown[]) => shareFile(...a),
+}));
+
+const toastPlain = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 vi.mock("@/lib/toast", () => ({
-  toast: {
+  toast: Object.assign((...a: unknown[]) => toastPlain(...a), {
     success: (...a: unknown[]) => toastSuccess(...a),
     error: (...a: unknown[]) => toastError(...a),
-  },
+  }),
 }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
 
@@ -42,7 +54,13 @@ const USER = { uid: "u1" } as User;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  shareFile.mockResolvedValue("shared");
 });
+
+/** The File handed to shareFile on its nth call. */
+function sharedFile(n = 0): File {
+  return shareFile.mock.calls[n][0] as File;
+}
 
 describe("DataExportSection", () => {
   it("offers all three exports", () => {
@@ -74,19 +92,18 @@ describe("DataExportSection", () => {
     }
   });
 
-  it("exports for the SIGNED-IN uid and hands the CSV to the downloader", async () => {
+  it("exports for the SIGNED-IN uid and hands the CSV over as a file", async () => {
     // The uid is the whole correctness question: exporting the wrong
     // user's data is a privacy incident, not a bug.
     render(<DataExportSection user={USER} />);
     fireEvent.click(screen.getByRole("button", { name: /export workouts/i }));
 
     await waitFor(() => expect(exportWorkoutsCSV).toHaveBeenCalledWith("u1"));
-    await waitFor(() =>
-      expect(downloadCSV).toHaveBeenCalledWith(
-        "w-csv",
-        expect.stringContaining("tropos-workouts-")
-      )
-    );
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    const file = sharedFile();
+    expect(file.name).toMatch(/^tropos-workouts-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(file.type).toBe("text/csv");
+    expect(await file.text()).toBe("w-csv");
     expect(exportMealsCSV).not.toHaveBeenCalled();
     expect(exportBodyweightCSV).not.toHaveBeenCalled();
   });
@@ -97,7 +114,76 @@ describe("DataExportSection", () => {
     render(<DataExportSection user={USER} />);
     fireEvent.click(screen.getByRole("button", { name: /export bodyweight/i }));
     await waitFor(() => expect(exportBodyweightCSV).toHaveBeenCalledWith("u1"));
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    expect(sharedFile().name).toMatch(/^tropos-bodyweight-/);
     expect(exportWorkoutsCSV).not.toHaveBeenCalled();
+  });
+
+  it.each(["shared", "downloaded"])(
+    "says exported once the file was %s",
+    async (outcome) => {
+      shareFile.mockResolvedValue(outcome);
+      render(<DataExportSection user={USER} />);
+      fireEvent.click(screen.getByRole("button", { name: /export meals/i }));
+      await waitFor(() =>
+        expect(toastSuccess).toHaveBeenCalledWith("Meals exported")
+      );
+      expect(toastError).not.toHaveBeenCalled();
+    }
+  );
+
+  it("says nothing when the share sheet is dismissed", async () => {
+    shareFile.mockResolvedValue("cancelled");
+    render(<DataExportSection user={USER} />);
+    fireEvent.click(screen.getByRole("button", { name: /export meals/i }));
+    await waitFor(() => expect(shareFile).toHaveBeenCalledOnce());
+    // The row is back from "Exporting…" once the handover has settled.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /export meals/i })
+      ).not.toBeDisabled()
+    );
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(toastError).not.toHaveBeenCalled();
+    expect(toastPlain).not.toHaveBeenCalled();
+  });
+
+  it("says so when nothing could be shared or saved", async () => {
+    shareFile.mockResolvedValue("failed");
+    render(<DataExportSection user={USER} />);
+    fireEvent.click(screen.getByRole("button", { name: /export meals/i }));
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "Couldn't export your data. Try again."
+      )
+    );
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("offers a Share button when the sheet needed a fresh tap, and that tap shares the same file", async () => {
+    /* The export reads Firestore before it can share; on an iPhone the
+       tap can have expired by then, and only a new one opens the sheet. */
+    shareFile.mockResolvedValueOnce("blocked").mockResolvedValueOnce("shared");
+    render(<DataExportSection user={USER} />);
+    fireEvent.click(screen.getByRole("button", { name: /export workouts/i }));
+
+    await waitFor(() => expect(toastPlain).toHaveBeenCalledOnce());
+    const [message, options] = toastPlain.mock.calls[0] as [
+      string,
+      { action: { label: string; onClick: () => void } },
+    ];
+    expect(message).toBe("Workouts export ready");
+    expect(options.action.label).toBe("Share");
+    expect(toastSuccess).not.toHaveBeenCalled();
+
+    options.action.onClick();
+    await waitFor(() => expect(shareFile).toHaveBeenCalledTimes(2));
+    expect(sharedFile(1)).toBe(sharedFile(0));
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("Workouts exported")
+    );
+    // The Firestore read is not repeated for the second tap.
+    expect(exportWorkoutsCSV).toHaveBeenCalledOnce();
   });
 
   it("tells the user when an export fails instead of failing silently", async () => {
@@ -106,7 +192,7 @@ describe("DataExportSection", () => {
     fireEvent.click(screen.getByRole("button", { name: /export workouts/i }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalled());
-    expect(downloadCSV).not.toHaveBeenCalled();
+    expect(shareFile).not.toHaveBeenCalled();
   });
 
   it("does nothing when signed out, rather than exporting an empty file", async () => {
@@ -114,6 +200,6 @@ describe("DataExportSection", () => {
     fireEvent.click(screen.getByRole("button", { name: /export workouts/i }));
 
     await waitFor(() => expect(exportWorkoutsCSV).not.toHaveBeenCalled());
-    expect(downloadCSV).not.toHaveBeenCalled();
+    expect(shareFile).not.toHaveBeenCalled();
   });
 });

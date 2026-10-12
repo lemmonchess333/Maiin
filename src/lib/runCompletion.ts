@@ -13,7 +13,7 @@ import { collection, doc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
 import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
-import { sampleRoute } from "@/lib/routeSegments";
+import { KEPT_ROUTE_POINTS, sampleRoute } from "@/lib/routeSegments";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { createSessionShare, type SessionShareAction } from "@/lib/sessionPost";
@@ -50,9 +50,15 @@ export interface FinishedRun {
   isInvalid: boolean;
   invalidReason: string | null;
   routeQuality: RouteQuality | null;
+  /** The time and distance in the session's work segments, which a tempo
+   *  is judged by (`plannedRunVerdict`); null for a run with none. */
+  workPortion?: { seconds: number; meters: number } | null;
   /** The shoe the run's distance goes on: the one picked at the start,
    *  else the default. */
   shoeId: string | null;
+  /** The quickest 1K, 5K and 10K in the full trace, as the finish screen
+   *  lists them (`detectBestEfforts`). */
+  bestEfforts: { distance: number; time: number; label: string }[];
 }
 
 /** The run's start: its first point, or now for a run with no trace. */
@@ -74,8 +80,11 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     avgPace: run.avgPaceSeconds,
     calories: run.calories,
     elevationGain: run.elevationGain,
-    points: sampleRoute(run.points, 500),
+    points: sampleRoute(run.points, KEPT_ROUTE_POINTS),
     splits: run.splits,
+    // A run saved despite invalid figures has no efforts worth naming, as
+    // its finish screen named none.
+    bestEfforts: run.isInvalid ? [] : run.bestEfforts,
     startedAt: Timestamp.fromDate(startedAt),
     completedAt: Timestamp.fromDate(now),
     // Lift3: a run belongs to the local day it started, not the day Save
@@ -89,7 +98,11 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     paceVerdictTone: run.paceVerdictTone,
     visibility: "followers" as const,
     type: "run",
+    // The session, the plan's type for a planned run, wherever it was run.
     activityType: run.runConfig?.activityType || "freerun",
+    // Pgm8: where it was run, "treadmill" or null, not absent, so the
+    // field's shape does not split.
+    place: run.runConfig?.place ?? null,
     target: run.runConfig?.target,
     intervalData: run.intervalData,
     runConfig: run.runConfig,
@@ -102,6 +115,9 @@ export function runDocument(run: FinishedRun, now: Date = new Date()) {
     invalidReason: run.invalidReason,
     savedAnyway: run.isInvalid,
     routeQuality: run.routeQuality,
+    // Null, not absent, for a run with no work segments, as the verdict's
+    // tone is.
+    workPortion: run.workPortion ?? null,
     // Phase B1: plan adherence at the top level, the field adherence
     // queries filter on. P0-6: `scheduledRunId` names the planned run it
     // was.

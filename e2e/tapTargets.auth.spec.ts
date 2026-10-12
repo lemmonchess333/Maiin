@@ -37,7 +37,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
-import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -83,7 +82,6 @@ test.describe("form controls clear the touch floor", () => {
   test("no select, input or textarea renders under the floor", async ({
     page,
   }) => {
-    await suppressCoachmarks(page);
     await signInAsTestUser(page);
 
     const short: string[] = [];

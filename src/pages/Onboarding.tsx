@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Toggle } from "@/components/ui/Toggle";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -23,13 +24,18 @@ import {
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import {
+  getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
+} from "@/lib/raceGoalPlanner";
 import {
   loadOnboardingDraft,
   saveOnboardingDraft,
   clearOnboardingDraft,
   ONBOARDING_STEP_IDS,
   DRAFT_AGE_RANGES,
+  DRAFT_SESSION_MINUTES,
   type OnboardingDraft,
   type OnboardingActivity,
 } from "@/lib/onboardingDraft";
@@ -41,15 +47,23 @@ import {
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { formatDayMonth } from "@/utils/formatters";
+import { benchmarkFromRaceTime, manualRunFitness } from "@/lib/runPaces";
+import { finishTimeLabel } from "@/lib/runLabels";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import SessionLengthLabel from "@/components/program/SessionLengthLabel";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
-import { validateDisplayName } from "@/lib/displayName";
+import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { describeRejection } from "@/lib/callableErrors";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
+import { newRunnerUntil } from "@/features/program/newRunner";
+import { runDoseLine } from "@/lib/runDose";
+import { SMALL_PLATES_HINT } from "@/lib/liftRules";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -143,6 +157,10 @@ export default function Onboarding() {
           : (draft?.step ?? 0);
     return flow.includes(storedStep) ? storedStep : 1;
   });
+  /* Which way the last step change went: forward on Continue, back on Back
+     and on an edit from the review. A step shown when setup opens (a fresh
+     account, a resumed draft) has none, and just shows (Pol1). */
+  const [stepMove, setStepMove] = useState<-1 | 0 | 1>(0);
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
@@ -192,11 +210,27 @@ export default function Onboarding() {
     Exclude<OnboardingDraft["daysPerWeek"], 0>
   >(draft?.liftDaysPreference ?? (draft?.daysPerWeek || 4));
   const daysPerWeek = hasLifting ? liftDaysPreference : 0;
+  // Lift4 (5): asked with the days, and the plan is built to fit it.
+  const [sessionMinutes, setSessionMinutes] = useState<
+    NonNullable<OnboardingDraft["sessionMinutes"]>
+  >(draft?.sessionMinutes ?? 60);
   const [equipment, setEquipment] = useState<OnboardingDraft["equipment"]>(
     draft?.equipment ?? "full_gym"
   );
+  // "What do you have?" (Lift4 (11)): optional, beside the three setups.
+  const [barbellAtHome, setBarbellAtHome] = useState(
+    draft?.barbellAtHome ?? false
+  );
+  const [smallPlates, setSmallPlates] = useState(draft?.smallPlates ?? false);
+  // Lift4 (10): asked with a race. Unanswered, the plan takes yes for
+  // Support my running and no otherwise (`buildOnboardingPlan`).
+  const [raceLegTrim, setRaceLegTrim] = useState<boolean | undefined>(
+    draft?.raceLegTrim
+  );
+  // Until the person picks one, the draft week is a beginner's: an unknown
+  // level is a beginner's everywhere (Lift4 (5)).
   const [experience, setExperience] = useState<OnboardingDraft["experience"]>(
-    draft?.experience ?? "intermediate"
+    draft?.experience ?? "beginner"
   );
   const [chosenRunFrequency, setRunFrequency] = useState<
     OnboardingDraft["runFrequency"]
@@ -207,12 +241,25 @@ export default function Onboarding() {
   const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
     draft?.runMode === "race_prep" ? "race_prep" : "freeform"
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState(draft?.weeklyRunDays ?? 2);
+  // At least two, a race plan's least (A7), for a draft saved before that.
+  const [weeklyRunDays, setWeeklyRunDays] = useState(
+    Math.max(MIN_RACE_RUN_DAYS, draft?.weeklyRunDays ?? MIN_RACE_RUN_DAYS)
+  );
   const [raceDistance, setRaceDistance] = useState<
     OnboardingDraft["raceDistance"]
   >(draft?.raceDistance ?? "10k");
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
+  );
+  // Adaptive paces §10.2: an optional recent race, which sets the paces.
+  const [recentRaceDistance, setRecentRaceDistance] = useState<
+    NonNullable<OnboardingDraft["recentRaceDistance"]>
+  >(draft?.recentRaceDistance ?? "5k");
+  const [recentRaceMinutes, setRecentRaceMinutes] = useState(
+    draft?.recentRaceMinutes ?? ""
+  );
+  const [recentRaceSeconds, setRecentRaceSeconds] = useState(
+    draft?.recentRaceSeconds ?? ""
   );
   const [injuries, setInjuries] = useState<string[]>(draft?.injuries ?? []);
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
@@ -265,6 +312,13 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
     }),
     [
       step,
@@ -296,6 +350,13 @@ export default function Onboarding() {
       returnToReview,
       trainingActivity,
       liftDaysPreference,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
     ]
   );
   useEffect(() => {
@@ -351,6 +412,25 @@ export default function Onboarding() {
       ),
     [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
   );
+  /* Asked of someone who runs already: a new runner has no recent race to
+     give. Typed as minutes and seconds, because a phone's number pad has no
+     colon. Blank is no answer, and an answer the plan can't read holds the
+     step until it's corrected or cleared. */
+  const askRecentRace =
+    runConfirmed &&
+    (runFrequency === "occasional" || runFrequency === "regular");
+  const recentRace = useMemo(
+    () =>
+      askRecentRace && (recentRaceMinutes !== "" || recentRaceSeconds !== "")
+        ? benchmarkFromRaceTime(
+            recentRaceDistance,
+            `${recentRaceMinutes || "0"}:${recentRaceSeconds.padStart(2, "0")}`
+          )
+        : null,
+    [askRecentRace, recentRaceDistance, recentRaceMinutes, recentRaceSeconds]
+  );
+  const recentRaceBenchmark =
+    recentRace && !("error" in recentRace) ? recentRace : null;
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -367,13 +447,17 @@ export default function Onboarding() {
           raceTargetDate,
           injuries,
           weightKg,
+          sessionMinutes,
+          barbellAtHome: equipment !== "full_gym" && barbellAtHome,
+          smallPlates,
+          raceLegTrim,
         },
         goalPlan.fitnessGoal,
         currentDate,
         {
           runningBaseline: profile?.runningBaseline ?? null,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: profile?.runFitness,
+          runFitness: recentRaceBenchmark ?? profile?.runFitness,
         }
       ),
     [
@@ -389,15 +473,23 @@ export default function Onboarding() {
       raceTargetDate,
       injuries,
       weightKg,
+      sessionMinutes,
+      barbellAtHome,
+      smallPlates,
+      raceLegTrim,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
       profile?.runTimeLimits,
+      recentRaceBenchmark,
       profile?.runFitness,
     ]
   );
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
+  // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
+  // plan itself uses.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -406,8 +498,16 @@ export default function Onboarding() {
         currentDate,
         liftDays: daysPerWeek,
         weeklyRunDays,
+        newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
       }),
-    [raceDistance, raceTargetDate, currentDate, daysPerWeek, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      currentDate,
+      daysPerWeek,
+      weeklyRunDays,
+      runFrequency,
+    ]
   );
   const displayNameValidation = validateDisplayName(displayName);
   /* A race with no date is not a race plan. Run9a lands a persisted
@@ -425,7 +525,8 @@ export default function Onboarding() {
       runFrequency !== "none" &&
       runMode === "race_prep" &&
       (racePreview.status === "invalid" || racePreview.status === "empty")
-    );
+    ) &&
+    !(recentRace && "error" in recentRace);
   const validBody =
     ageConfirmed &&
     bodyAnswered &&
@@ -453,9 +554,21 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* A step's heading and questions are new elements on each step (keyed
+     below), so a step reached by Continue comes in from the right and one
+     reached by Back from the left: CSS @starting-style, the browser
+     animating a new element from its starting style. Only the new step
+     moves; the old one goes at once, so Continue never waits. */
+  const stepEnters = cn(
+    stepMove !== 0 &&
+      "transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] starting:opacity-0",
+    stepMove > 0 && "starting:[transform:translateX(16px)]",
+    stepMove < 0 && "starting:[transform:translateX(-16px)]"
+  );
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
+    setStepMove(-1);
     setStep(next);
   };
   const advance = () => {
@@ -468,6 +581,7 @@ export default function Onboarding() {
       void handleFinish();
       return;
     }
+    setStepMove(1);
     setStep(returnToReview ? 7 : flow[flow.indexOf(step) + 1]);
     setReturnToReview(false);
   };
@@ -512,8 +626,12 @@ export default function Onboarding() {
         experience,
         daysPerWeek,
         equipment,
+        ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
+        ...(recentRaceBenchmark
+          ? { runFitness: manualRunFitness(recentRaceBenchmark, new Date()) }
+          : {}),
         // #975: race_prep without a date → freeform substrate (Run9a),
         // never a dangling race_prep with no raceGoal. Single source of
         // truth for the branch is resolveOnboardingRunMode.
@@ -631,11 +749,9 @@ export default function Onboarding() {
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
-        // Re-read the completed profile at the same relevant Train tab.
-        // Preserve the hosting basename as well as the selected activity.
-        window.location.assign(
-          `${import.meta.env.BASE_URL || "/"}${firstActivityPath.slice(1)}`
-        );
+        // Re-read the completed profile on Home, where the first-visit
+        // walk starts. Preserve the hosting basename.
+        window.location.assign(import.meta.env.BASE_URL || "/");
         return;
       }
 
@@ -687,27 +803,35 @@ export default function Onboarding() {
       // onboardingComplete=true makes App.tsx switch to the authenticated
       // route set. The first screen of the app is the Pro offer (the
       // Cal AI / MacroFactor placement: the product, shown once, right
-      // after the plan is made), and its "Continue with Free" lands on the
-      // activity shown in the review. `replace` keeps Back from returning
-      // into the finished onboarding flow; `state.next` carries the
-      // destination so the offer page needs no knowledge of the plan.
+      // after the plan is made), and its "Continue with Free" lands on Home,
+      // whose first card is the session the review led with and where the
+      // first-visit walk starts (FV1; until then it opened Train on the
+      // review's activity). `replace` keeps Back from returning into the
+      // finished onboarding flow; `state.next` carries the destination so
+      // the offer page needs no knowledge of the plan.
       navigate("/upgrade?from=onboarding", {
         replace: true,
-        state: { next: firstActivityPath },
+        state: { next: "/" },
       });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");
+      // A failed-precondition carries a sentence written for the person
+      // (e.g. the server refusing a display name the word filter flags).
+      const refusal =
+        code === "failed-precondition" ? describeRejection(err) : null;
       setSaveError(
         code === "unauthenticated"
           ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
             ? "Please wait a moment, then try creating your plan again. Your answers are saved."
-            : code === "invalid-argument"
-              ? // The server refused an answer, so a retry on a better
-                // connection would fail the same way.
-                "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
-              : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
+            : refusal
+              ? refusal
+              : code === "invalid-argument"
+                ? // The server refused an answer, so a retry on a better
+                  // connection would fail the same way.
+                  "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
+                : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
       );
     } finally {
       pending.current = false;
@@ -718,9 +842,6 @@ export default function Onboarding() {
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
-  const firstActivityPath = runningFirst
-    ? "/program?tab=run"
-    : "/program?tab=lift";
   const firstRun = plan.programState.runDays
     ?.filter((run) => run.date && run.date >= currentDate)
     .sort((a, b) => a.date!.localeCompare(b.date!))[0];
@@ -736,12 +857,15 @@ export default function Onboarding() {
     ? "Choose your running setup"
     : runFrequency === "none"
       ? "No running selected"
-      : effectiveRunMode === "freeform"
-        ? "Free running · no scheduled runs"
-        : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week · ${raceTargetDate}`;
+      : (effectiveRunMode === "freeform"
+          ? "Free running · no scheduled runs"
+          : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+        (recentRaceBenchmark
+          ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
+          : "");
   return (
     <div
-      className="h-dvh flex flex-col bg-background text-foreground px-4 max-w-lg mx-auto"
+      className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
@@ -767,11 +891,19 @@ export default function Onboarding() {
               key={name}
               aria-current={chapter === index ? "step" : undefined}
               aria-label={`${name}${index < chapter ? ", completed" : ""}`}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                index <= chapter ? "bg-primary" : "bg-muted"
-              )}
-            />
+              className="h-1 flex-1 overflow-hidden rounded-full bg-muted"
+            >
+              {/* A chapter reached fills from the left, the way setup
+                  reads; going back empties it the same way. */}
+              <span
+                className={cn(
+                  "block h-full origin-left bg-primary transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
+                  index <= chapter
+                    ? "[transform:scaleX(1)]"
+                    : "[transform:scaleX(0)]"
+                )}
+              />
+            </li>
           ))}
         </ol>
       </header>
@@ -779,7 +911,7 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div className="space-y-3">
+        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
           {((step === 1 && trainingActivity !== "lifting") ||
             step === 3 ||
             step === 2 ||
@@ -801,7 +933,11 @@ export default function Onboarding() {
               : STEP_META[step][1]}
           </p>
         </div>
-        <fieldset disabled={saving} className="min-w-0 space-y-5">
+        <fieldset
+          key={`questions-${step}`}
+          disabled={saving}
+          className={cn("min-w-0 space-y-5", stepEnters)}
+        >
           <legend className="sr-only">{chapters[chapter]}</legend>
           {step === 0 && (
             <div className="space-y-3">
@@ -877,9 +1013,24 @@ export default function Onboarding() {
                   className="py-2"
                 />
               )}
+              {hasLifting && (
+                <SegmentedControl<
+                  NonNullable<OnboardingDraft["sessionMinutes"]>
+                >
+                  ariaLabel="Minutes per lift session"
+                  value={sessionMinutes}
+                  options={DRAFT_SESSION_MINUTES.map((n) => ({
+                    value: n,
+                    label: <SessionLengthLabel minutes={n} />,
+                  }))}
+                  onChange={setSessionMinutes}
+                  tone="lifting"
+                  className="@container"
+                />
+              )}
               <p className="text-sm text-muted-foreground">
                 {hasLifting
-                  ? "Choose lift sessions per week. The draft below updates with your plan."
+                  ? "Choose lift sessions per week and about how long each one is. The draft below updates with your plan."
                   : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
               </p>
               {hasLifting && (
@@ -889,6 +1040,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -943,15 +1095,10 @@ export default function Onboarding() {
                          themselves under "occasional runner"; it does not
                          change a freeform plan, and reading it as a
                          freeform scheduling lever is reading it wrong.
-                         One a week when a race IS set, for the same
-                         volume-preserving reason ADR-0002 gives for not
-                         punishing a light trainer. */
+                         Two a week when a race IS set: a race plan needs
+                         at least two run days (Pgm7 A7). */
                       setWeeklyRunDays(
-                        option.id === "regular"
-                          ? 3
-                          : option.id === "new"
-                            ? 1
-                            : 2
+                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
                       );
                     }}
                   />
@@ -979,7 +1126,7 @@ export default function Onboarding() {
                         <RangeInput
                           className="min-h-11"
                           aria-label="Runs per week"
-                          min={1}
+                          min={MIN_RACE_RUN_DAYS}
                           max={7}
                           step={1}
                           value={weeklyRunDays}
@@ -1000,6 +1147,11 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                        <p className="text-sm text-muted-foreground">
+                          {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                        </p>
+                      )}
                       <label className="block text-sm space-y-2">
                         <span>Race target date</span>
                         <input
@@ -1035,12 +1187,130 @@ export default function Onboarding() {
                           </p>
                         </div>
                       )}
+                      {/* Pgm8 (R14c): a race too soon for a new runner's
+                          plan to build to. It never holds the step:
+                          Continue stays as it is. */}
+                      {racePreview.newRunnerNote && (
+                        <p className="text-sm text-muted-foreground">
+                          <InlineNumerals>
+                            {racePreview.newRunnerNote}
+                          </InlineNumerals>
+                        </p>
+                      )}
                       {racePreview.doubleDays > 0 && (
                         <p className="text-sm text-muted-foreground">
                           Some days include a lift and a run.
                         </p>
                       )}
+                      {hasLifting && (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-foreground">
+                              Lighten leg sessions while your runs build
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              A third fewer sets on leg lifts, at the same
+                              weights, from your plan's build weeks until the
+                              two lighter weeks before your race.
+                            </p>
+                          </div>
+                          <Toggle
+                            checked={raceLegTrim ?? primaryGoal === "running"}
+                            label="Lighten leg sessions while your runs build"
+                            className="ml-3"
+                            onChange={() =>
+                              setRaceLegTrim(
+                                !(raceLegTrim ?? primaryGoal === "running")
+                              )
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
+                  )}
+                  {askRecentRace && (
+                    <section
+                      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+                      aria-label="Recent race"
+                    >
+                      {/* The distance drops under the heading at larger
+                          text, and never grows past the card. */}
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <h2 className="text-base font-semibold">Recent race</h2>
+                        <SegmentedControl<
+                          NonNullable<OnboardingDraft["recentRaceDistance"]>
+                        >
+                          ariaLabel="Recent race distance"
+                          tone="running"
+                          className="w-36 max-w-full shrink-0"
+                          value={recentRaceDistance}
+                          onChange={setRecentRaceDistance}
+                          options={[
+                            { value: "5k", label: "5K" },
+                            { value: "10k", label: "10K" },
+                          ]}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Optional. A recent race or hard solo run sets your
+                        training paces. You can add one later in Settings.
+                      </p>
+                      <div className="flex gap-3">
+                        {(
+                          [
+                            {
+                              label: "Minutes",
+                              unit: "min",
+                              value: recentRaceMinutes,
+                              set: setRecentRaceMinutes,
+                              digits: 3,
+                            },
+                            {
+                              label: "Seconds",
+                              unit: "sec",
+                              value: recentRaceSeconds,
+                              set: setRecentRaceSeconds,
+                              digits: 2,
+                            },
+                          ] as const
+                        ).map((field) => (
+                          <label key={field.unit} className="flex-1 min-w-0">
+                            <span className="sr-only">{field.label}</span>
+                            <input
+                              inputMode="numeric"
+                              className="ds-input w-full min-w-0 text-center text-h2 font-mono tabular-nums"
+                              value={field.value}
+                              aria-invalid={Boolean(
+                                recentRace && "error" in recentRace
+                              )}
+                              onChange={(event) =>
+                                field.set(
+                                  event.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, field.digits)
+                                )
+                              }
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="block text-center text-sm text-muted-foreground"
+                            >
+                              {field.unit}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {recentRace && "error" in recentRace && (
+                        <p
+                          role="alert"
+                          className="text-sm text-destructive-strong"
+                        >
+                          {Number(recentRaceSeconds) > 59
+                            ? "Seconds go up to 59."
+                            : "That time doesn't look right. Check it and try again."}
+                        </p>
+                      )}
+                    </section>
                   )}
                 </div>
               )}
@@ -1051,6 +1321,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -1070,7 +1341,7 @@ export default function Onboarding() {
                     {
                       id: "home_gym",
                       label: "Home gym",
-                      desc: "Barbell and dumbbell setup.",
+                      desc: "Dumbbells, a bench and a pull-up bar.",
                       art: "db-bench",
                     },
                     {
@@ -1098,6 +1369,48 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              {equipmentConfirmed && (
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">What do you have?</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Optional. The plan uses what you have.
+                    </p>
+                  </div>
+                  {equipment !== "full_gym" && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-foreground">
+                          A barbell and a rack
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Squats, deadlifts and presses with the bar.
+                        </p>
+                      </div>
+                      <Toggle
+                        checked={barbellAtHome}
+                        label="A barbell and a rack"
+                        className="ml-3"
+                        onChange={() => setBarbellAtHome((v) => !v)}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-foreground">Small plates</p>
+                      <p className="text-xs text-muted-foreground">
+                        {SMALL_PLATES_HINT}
+                      </p>
+                    </div>
+                    <Toggle
+                      checked={smallPlates}
+                      label="Small plates"
+                      className="ml-3"
+                      onChange={() => setSmallPlates((v) => !v)}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
                 {(
@@ -1160,6 +1473,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               </details>
             </div>
@@ -1361,7 +1675,7 @@ export default function Onboarding() {
                   <InlineNumerals>
                     {runningFirst
                       ? firstRunTemplate
-                        ? `${firstRunTemplate.estimatedDuration} min · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
+                        ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."
@@ -1404,6 +1718,7 @@ export default function Onboarding() {
                 workouts={plan.programState.workouts}
                 runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
+                easyPaceSPerKm={easyPaceSPerKm}
               />
               {effectiveRunMode === "race_prep" &&
                 (profile?.runTimeLimits?.sessionMinutes ||
@@ -1501,9 +1816,12 @@ export default function Onboarding() {
                     .map((row) => (
                       <div
                         key={row.label}
-                        className="flex items-center gap-3 py-3"
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3"
                       >
-                        <div className="flex-1 min-w-0">
+                        {/* Edit drops under the answer when the two no
+                            longer fit (larger text), rather than leaving a
+                            word like "Intermediate" too little room. */}
+                        <div className="flex-1 min-w-[min(100%,9em)]">
                           <p className="text-sm text-muted-foreground">
                             {row.label}
                           </p>
@@ -1511,6 +1829,7 @@ export default function Onboarding() {
                         </div>
                         <Button
                           variant="ghost"
+                          className="ml-auto"
                           onClick={() => edit(row.target)}
                           aria-label={`Edit ${row.label.toLowerCase()}`}
                         >
@@ -1531,7 +1850,7 @@ export default function Onboarding() {
                   id="onboarding-name"
                   className="ds-input w-full min-h-11"
                   value={displayName}
-                  maxLength={30}
+                  maxLength={DISPLAY_NAME_MAX}
                   aria-invalid={!displayNameValidation.valid}
                   onChange={(event) => setDisplayName(event.target.value)}
                 />
@@ -1541,7 +1860,7 @@ export default function Onboarding() {
                 </p>
                 {!displayNameValidation.valid && (
                   <p className="text-sm text-destructive-strong" role="alert">
-                    Enter a name between 2 and 30 characters.
+                    {displayNameValidation.message}
                   </p>
                 )}
               </div>
@@ -1562,8 +1881,12 @@ export default function Onboarding() {
           </p>
         )}
       </div>
-      <footer className="shrink-0 border-t border-border pt-4 space-y-2">
-        <div className="flex gap-3">
+      {/* Under 15em of footer (larger text on the phone) Back and the main
+          button no longer fit side by side, and "Continue" is one word that
+          cannot wrap: the main button goes on top, Back under it, each the
+          full width. Wide-first. */}
+      <footer className="@container shrink-0 border-t border-border pt-4 space-y-2">
+        <div className="flex gap-3 @max-[15em]:flex-col-reverse">
           {step !== 0 && (
             <Button
               variant="secondary"
@@ -1571,6 +1894,7 @@ export default function Onboarding() {
               leftIcon={<ArrowLeft className="size-4" />}
               onClick={() => {
                 setSaveError("");
+                setStepMove(-1);
                 setStep(
                   returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
                 );

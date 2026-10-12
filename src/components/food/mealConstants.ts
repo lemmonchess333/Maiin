@@ -13,6 +13,8 @@
  * share the same identity without prop-drilling.
  */
 
+import { Apple, Coffee, Sandwich, Soup, type LucideIcon } from "lucide-react";
+
 export type MealKey = "breakfast" | "lunch" | "snacks" | "dinner";
 
 export const MEAL_ORDER: readonly MealKey[] = [
@@ -29,14 +31,31 @@ export const MEAL_LABELS: Record<MealKey, string> = {
   snacks: "Snacks",
 };
 
+/** Each slot's drawing, in the tile a diary row without a photo carries
+ *  on a day with photos (Pol1), and in the Pro scan demo's diary. */
+export const MEAL_SLOT_ICONS: Record<MealKey, LucideIcon> = {
+  breakfast: Coffee,
+  lunch: Sandwich,
+  dinner: Soup,
+  snacks: Apple,
+};
+
 /**
  * Layout for both meal-slot pickers, the composer's row and the edit
- * sheet's: the four slots on one row from 360px up, two by two below
- * that. Left to the solid SegmentedControl's own wrapping, the sheet's
- * pills fit three to a line and leave "Dinner" on a line of its own.
+ * sheet's: the four slots on one row while the picker is 20em wide (on
+ * the Food page, a phone of about 360px at the designed text size; at
+ * 320px it is 18em), two by two below that. Left to
+ * the solid SegmentedControl's own wrapping, the sheet's pills fit three
+ * to a line and leave "Dinner" on a line of its own.
+ *
+ * Measured in em on the picker's wrapper (both call sites wrap it in an
+ * `@container`), so larger text moves it to two by two as a narrower
+ * phone does: at 1.35x on a 393px phone, "Breakfast" overflowed a
+ * quarter. Under 9em (double text on a 320px phone) it is one per row:
+ * "Breakfast" overflowed a half too.
  */
 export const MEAL_PICKER_LAYOUT =
-  "grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
+  "grid grid-cols-4 @max-[20em]:grid-cols-2 @max-[9em]:grid-cols-1 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
 
 /**
  * Best-guess meal slot for "now" (local hour), used to pre-select the

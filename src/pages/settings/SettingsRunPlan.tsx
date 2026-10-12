@@ -30,6 +30,7 @@ export default function SettingsRunPlan() {
   const { profile, updateProfile, refreshProfile } = useAuth();
   const {
     programState,
+    readiness,
     applyEaseWeek,
     revertEaseWeek,
     realignRacePlan,
@@ -114,6 +115,7 @@ export default function SettingsRunPlan() {
         key={profile.uid}
         profile={profile}
         programState={programState}
+        readiness={readiness}
         recentLayoff={recentLayoff}
         refreshProfile={refreshProfile}
         onOpenFullSettings={() => navigate("/settings/training")}

@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ExtrasExpandSheet from "../ExtrasExpandSheet";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -123,7 +123,7 @@ describe("ExtrasExpandSheet", () => {
       />
     );
     // The pace label is `5:30/km` from paceLabel(330).
-    expect(screen.getByText(/5:30\/km/)).toBeInTheDocument();
+    expect(screen.getByText(/5:30 \/km/)).toBeInTheDocument();
   });
 
   it("tap on a row navigates to /run/:id then closes the sheet", () => {

@@ -62,6 +62,12 @@ function daysBetween(fromKey: string, toKey: string): number {
   );
 }
 
+/** Which day of the account `todayKey` is: 1 on the day it began. Zero or
+ *  less before it began, which only a wrong clock produces. */
+export function accountDay(startKey: string, todayKey: string): number {
+  return daysBetween(startKey, todayKey) + 1;
+}
+
 /**
  * The card's content, or null when it should not show: before the start
  * day is known, after the seventh day, once dismissed, or once every item
@@ -69,7 +75,7 @@ function daysBetween(fromKey: string, toKey: string): number {
  */
 export function firstWeek(input: FirstWeekInput): FirstWeek | null {
   if (input.dismissed || !input.startKey) return null;
-  const day = daysBetween(input.startKey, input.todayKey) + 1;
+  const day = accountDay(input.startKey, input.todayKey);
   if (day < 1 || day > FIRST_WEEK_DAYS) return null;
 
   const items: FirstWeekItem[] = [];

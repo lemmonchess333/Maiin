@@ -7,14 +7,21 @@ import type {
 import type { DayType } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
+  dayTypeFor,
   resolveTrainingDayForDate,
+  runsWrittenForWeek,
   type LiftSlotStatus,
   type ResolvedLift,
 } from "@/lib/trainingResolver";
 import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
+import type { RestContext } from "@/features/program/restTime";
 import { getActivationFraming } from "@/lib/activationFraming";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
+import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
 import {
@@ -81,6 +88,13 @@ export interface TodayRun {
   completed: boolean;
   /** A new person's first run. */
   isFirst: boolean;
+  /** Its dose, as the card states it (`runDoseLine`): "40 min", "15 km",
+   *  or "15 km · about 100 min" at a confirmed easy pace. Null with no
+   *  planned run. */
+  dose: string | null;
+  /** A long run that finishes at race pace, which its name says
+   *  (Run21 (2), `racePaceWorkFor`). Absent reads as none. */
+  racePace?: RacePaceWork | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -102,6 +116,9 @@ export type RestDayOffer =
 
 export interface TodaySession {
   type: DayType;
+  /** How a lift session's timer will rest, so its card's minutes price
+   *  it: the person's fixed rest, and the length the plan is built for. */
+  restContext: RestContext;
   /** Set on a lifting day ("lift" or "both"). */
   lift: TodayLift | null;
   /** Set on a run day ("run" or "both"). */
@@ -123,7 +140,12 @@ export function todaySession(input: TodaySessionInput): TodaySession {
     claimMap,
     todayKey: today,
   });
-  const type = resolved.scheduleType;
+  // A run is today's when the plan holds one on today's date, whatever the
+  // weekday (ADR-0002): a Sunday race, or a run moved to a lifting day.
+  const type = dayTypeFor(
+    resolved,
+    runsWrittenForWeek(programState?.runDays, currentWeekKey, currentWeekKey)
+  );
   const lifting = type === "lift" || type === "both";
   const running = type === "run" || type === "both";
 
@@ -151,6 +173,10 @@ export function todaySession(input: TodaySessionInput): TodaySession {
 
   return {
     type,
+    restContext: {
+      fixedRest: profile?.defaultRestSeconds,
+      sessionMinutes: programState?.sessionMinutes,
+    },
     lift: lifting
       ? {
           workout: homeLift.workout,
@@ -165,6 +191,12 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           runDay: resolved.run.runDay,
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
+          dose: runDose(resolved.run.runDay, profile),
+          racePace: racePaceWorkFor(
+            templateOfRunDay(resolved.run.runDay),
+            profile,
+            programState?.runPlan
+          ),
         }
       : null,
     rest:
@@ -258,17 +290,17 @@ function tomorrowSession(
      another date (runs are pinned to dates, ADR-0002), and it names
      nothing. A run with neither date nor week key belongs to the
      current week, as the resolver reads it. */
-  const nextWeekKey = localWeekKey(date);
-  const nextWeekWritten = (programState?.runDays ?? []).some(
-    (rd) =>
-      (rd.date
-        ? localWeekKey(parseLocalDate(rd.date))
-        : (rd.weekKey ?? currentWeekKey)) === nextWeekKey
+  const nextWeekWritten = runsWrittenForWeek(
+    programState?.runDays,
+    localWeekKey(date),
+    currentWeekKey
   );
+  const runTemplate = templateOfRunDay(runDay);
   const runName = runDay
-    ? (RUN_TEMPLATES.find(
-        (t) => t.id === (runDay.userOverride ?? runDay.templateId)
-      )?.name ?? "Run")
+    ? runSessionName(
+        runTemplate,
+        racePaceWorkFor(runTemplate, profile, programState?.runPlan)
+      )
     : (next.scheduleType === "run" || next.scheduleType === "both") &&
         !nextWeekWritten
       ? "Run"
@@ -283,6 +315,21 @@ function tomorrowSession(
   return { label, target };
 }
 
+/** A planned run's dose at the person's confirmed easy pace (Run21 (5)). */
+function runDose(
+  runDay: ScheduledRunDay | null,
+  profile: UserProfile | null
+): string | null {
+  const template = runDay
+    ? RUN_TEMPLATES.find(
+        (t) => t.id === (runDay.userOverride || runDay.templateId)
+      )
+    : null;
+  return template
+    ? runDoseLine(template, planningEasyPaceSPerKm(profile?.runFitness))
+    : null;
+}
+
 /** Up to three of a workout's muscle groups, then "+ more". */
 function muscleGroupsOf(workout: WorkoutDay | null): string {
   if (!workout) return "";
@@ -293,4 +340,13 @@ function muscleGroupsOf(workout: WorkoutDay | null): string {
   if (unique.length === 0) return "";
   if (unique.length <= 3) return unique.join(" · ");
   return unique.slice(0, 3).join(" · ") + " + more";
+}
+
+/** The session a run day holds, its override included. */
+function templateOfRunDay(runDay: ScheduledRunDay | null) {
+  return runDay
+    ? RUN_TEMPLATES.find(
+        (t) => t.id === (runDay.userOverride ?? runDay.templateId)
+      )
+    : undefined;
 }

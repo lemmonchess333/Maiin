@@ -93,7 +93,7 @@ export default function ProPreview({
         // its own container; a snap point per frame, a peek of the next.
         // items-start: the scan demo is square and the target frame is
         // not, so a stretched row would pad the target card with blank.
-        "flex items-start gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1",
+        "flex items-start gap-3 overflow-x-auto snap-x snap-mandatory -mx-[16px] px-[16px] pb-1",
         "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className
       )}

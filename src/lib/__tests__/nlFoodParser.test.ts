@@ -502,7 +502,7 @@ describe("a typo never turns one food into another", () => {
      no warning, where a food the table does not know is flagged as
      unknown. Each word here is a real food or drink a letter or two from
      a row, and each was logged as that row: cider as liver, toffee as
-     coffee, a pasty as pasta, 6 wings as 6 glasses of wine. None has a
+     coffee, a pasty as pasta. None has a
      row of its own; give one a row and it leaves this list. */
   it.each([
     ["cider", "liver"],
@@ -522,7 +522,6 @@ describe("a typo never turns one food into another", () => {
     ["batter", "butter"],
     ["soba", "soda"],
     ["beet", "beef"],
-    ["wings", "wine"],
     ["leek", "beef"],
     ["lemon", "melon"],
     ["salsa", "salad"],
@@ -698,5 +697,44 @@ describe("a pint is 568 ml", () => {
     expect(
       parseFoodText("2 pints of beer and a packet of crisps").map((r) => r.name)
     ).toEqual(["2 pints of beer", "Packet of crisps"]);
+  });
+});
+
+describe("a count of a food eaten in pieces counts pieces", () => {
+  /* Wings, prawns and berries are weighed by the portion, so a count
+     multiplied portions: "6 chicken wings" logged 600 g of wings. */
+  const grams = (food: string, g: number) =>
+    parseFoodText(`${g}g ${food}`)[0].calories;
+
+  it.each([
+    ["6 chicken wings", "chicken wing", 6 * 34],
+    ["6 wings", "chicken wing", 6 * 34],
+    ["a chicken wing", "chicken wing", 34],
+    ["2 chicken thighs", "chicken thigh", 2 * 52],
+    ["10 prawns", "prawns", 10 * 6],
+    ["4 sardines", "sardines", 4 * 12],
+    ["5 strawberries", "strawberries", 5 * 12],
+    ["10 grapes", "grapes", 10 * 5],
+    ["3 mushrooms", "mushrooms", 3 * 18],
+    ["10 almonds", "almonds", 12],
+  ] as const)("%s weighs what the pieces weigh", (text, food, g) => {
+    expect(parseFoodText(text)[0].calories).toBe(grams(food, g));
+  });
+
+  it("logs a bare food as the portion it always was", () => {
+    expect(parseFoodText("chicken wings")[0].calories).toBe(
+      grams("chicken wing", 100)
+    );
+    expect(parseFoodText("grapes")[0].calories).toBe(grams("grapes", 92));
+  });
+
+  it("keeps counting the thing the count was written against", () => {
+    expect(parseFoodText("2 cans of sardines")[0].calories).toBe(
+      2 * parseFoodText("sardines")[0].calories
+    );
+  });
+
+  it("logs wings with their skin, as they are eaten", () => {
+    expect(parseFoodText("100g chicken wing")[0].calories).toBe(290);
   });
 });

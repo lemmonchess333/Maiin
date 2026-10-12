@@ -53,12 +53,18 @@ vi.mock("@/lib/firebaseApp", () => ({ app: {}, auth: h.authMock }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
 }));
+/* The web unless a test says it is the native app. */
+const platform = vi.hoisted(() => ({ native: false }));
+vi.mock("@/lib/platform", () => ({
+  isNativePlatform: () => platform.native,
+}));
 
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
 beforeEach(() => {
   resetFirestore();
   vi.clearAllMocks();
+  platform.native = false;
   h.setUid("u1");
   h.getToken.mockResolvedValue("tok123");
   localStorage.clear();
@@ -80,6 +86,36 @@ async function load() {
 }
 
 const PUSH_SETTINGS = "users/u1/settings/push";
+
+describe("remote push on the native app", () => {
+  /* The iPhone app has no remote push: no APNs registration, no push
+     plugin, and WKWebView runs no service worker. Its switch could only
+     fail with "Couldn't register for push (unsupported)". */
+  it("is offered on the web and not on the native app", async () => {
+    const { isRemotePushOffered } = await load();
+    expect(isRemotePushOffered()).toBe(true);
+    platform.native = true;
+    expect(isRemotePushOffered()).toBe(false);
+  });
+
+  it("registers on the web; on the native app it never asks for a token", async () => {
+    const { registerDeviceToken, isPushSupported } = await load();
+    expect(await registerDeviceToken("u1")).toEqual({
+      ok: true,
+      token: "tok123",
+    });
+    expect(h.getToken).toHaveBeenCalledOnce();
+
+    platform.native = true;
+    expect(await isPushSupported()).toBe(false);
+    expect(await registerDeviceToken("u1")).toEqual({
+      ok: false,
+      reason: "unsupported",
+    });
+    expect(h.getToken).toHaveBeenCalledOnce();
+    expect(h.claimFn).toHaveBeenCalledOnce();
+  });
+});
 
 describe("registerDeviceToken (packet 19 — server-owned)", () => {
   it("claims the token via the callable with the ownerUid + a fresh binding id", async () => {

@@ -21,7 +21,10 @@
  * than recomputed, so this file tests the GUARD, not the phase maths.
  */
 import { describe, it, expect } from "vitest";
-import { shouldSuggestDeload } from "../deloadSuggestVisibility";
+import {
+  loadFromRunning,
+  shouldSuggestDeload,
+} from "../deloadSuggestVisibility";
 
 /** A 16-week marathon block — the phase map pinned in taperCap.test.ts. */
 const MARATHON = { totalWeeks: 16, distance: "marathon" as const };
@@ -31,7 +34,9 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [12, 13, 14]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: true,
+          loadFromRunning: true,
           currentWeek,
           ...MARATHON,
         }),
@@ -46,7 +51,9 @@ describe("shouldSuggestDeload", () => {
     // lifting" is the worst possible advice the week of a marathon.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
+        loadFromRunning: true,
         currentWeek: 15,
         ...MARATHON,
       })
@@ -60,7 +67,9 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [0, 5, 11]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: true,
+          loadFromRunning: true,
           currentWeek,
           ...MARATHON,
         }),
@@ -74,7 +83,9 @@ describe("shouldSuggestDeload", () => {
     // This is the majority case and the guard must be inert for it.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
+        loadFromRunning: true,
         currentWeek: undefined,
         totalWeeks: undefined,
         distance: undefined,
@@ -88,7 +99,9 @@ describe("shouldSuggestDeload", () => {
     for (const currentWeek of [0, 11, 13, 15]) {
       expect(
         shouldSuggestDeload({
+          lighterWeekAllowed: true,
           deloadRecommended: false,
+          loadFromRunning: true,
           currentWeek,
           ...MARATHON,
         })
@@ -96,7 +109,9 @@ describe("shouldSuggestDeload", () => {
     }
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: false,
+        loadFromRunning: true,
         currentWeek: undefined,
         totalWeeks: undefined,
         distance: undefined,
@@ -110,7 +125,9 @@ describe("shouldSuggestDeload", () => {
     // half-written plan is not evidence of a taper.
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
+        loadFromRunning: true,
         currentWeek: 13,
         totalWeeks: undefined,
         distance: "marathon",
@@ -118,11 +135,75 @@ describe("shouldSuggestDeload", () => {
     ).toBe(true);
     expect(
       shouldSuggestDeload({
+        lighterWeekAllowed: true,
         deloadRecommended: true,
+        loadFromRunning: true,
         currentWeek: 13,
         totalWeeks: 16,
         distance: undefined,
       })
     ).toBe(true);
+  });
+});
+
+describe("the suggestion speaks for running only (Lift4 (9))", () => {
+  it("is not offered for a week whose load came from lifting", () => {
+    // No early offer for the lifting: its lighter weeks come on the
+    // calendar, or when the person takes one.
+    expect(
+      shouldSuggestDeload({
+        lighterWeekAllowed: true,
+        deloadRecommended: true,
+        loadFromRunning: false,
+        currentWeek: undefined,
+        totalWeeks: undefined,
+        distance: undefined,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("the suggestion is one Train's menu can carry out (Lift4 (9))", () => {
+  it("is not offered when no lighter week can be taken", () => {
+    // Its button sends the menu's command (`applyDeloadWeek`), which the
+    // server refuses on a lighter week, the week straight after one and a
+    // first week back: the person was told no to the app's own suggestion.
+    expect(
+      shouldSuggestDeload({
+        lighterWeekAllowed: false,
+        deloadRecommended: true,
+        loadFromRunning: true,
+        currentWeek: 5,
+        ...MARATHON,
+      })
+    ).toBe(false);
+  });
+});
+
+describe("loadFromRunning — whether running carried the week", () => {
+  const week = (
+    liftSessions: number,
+    runSessions: number,
+    liftLoadScore: number,
+    runLoadScore: number
+  ) => ({
+    aggregates: { liftSessions, runSessions },
+    breakdown: { liftLoadScore, runLoadScore },
+  });
+
+  it("is false with no week and with no runs", () => {
+    expect(loadFromRunning(null)).toBe(false);
+    expect(loadFromRunning(undefined)).toBe(false);
+    expect(loadFromRunning(week(4, 0, 90, 0))).toBe(false);
+  });
+
+  it("is true for a week of running alone", () => {
+    expect(loadFromRunning(week(0, 3, 0, 40))).toBe(true);
+  });
+
+  it("weighs the two halves when the week had both", () => {
+    expect(loadFromRunning(week(3, 3, 60, 80))).toBe(true);
+    expect(loadFromRunning(week(3, 3, 70, 70))).toBe(true);
+    expect(loadFromRunning(week(3, 3, 80, 60))).toBe(false);
   });
 });

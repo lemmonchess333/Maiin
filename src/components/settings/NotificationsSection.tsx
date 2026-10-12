@@ -22,10 +22,21 @@ import { usePushSettings } from "@/hooks/usePushSettings";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import {
+  isRemotePushOffered,
   registerDeviceToken,
   unregisterDeviceToken,
 } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+/* A row's control (switch, time field, button) drops under its label,
+   at the right, once the label would be narrower than 8em: at double
+   text on a 320px phone a switch beside it left a column too narrow for
+   one word, and a time field ran off the screen. At the designed size
+   every row is one line, as before. */
+const ROW =
+  "flex flex-wrap items-center gap-x-3 gap-y-2 p-4 rounded-lg bg-muted";
+const LABEL = "min-w-[min(100%,8em)] flex-1";
 
 interface NotificationsSectionProps {
   mealReminders: MealReminders;
@@ -51,6 +62,11 @@ export default function NotificationsSection({
   // server senders read, plus token register/revoke on the global toggle.
   const uid = useUid();
   const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
+  /* No remote push on the native app (no APNs, no push plugin, no service
+     worker in WKWebView): the switch could only fail there, so it and
+     everything under it is not offered. The reminders above are local and
+     stay. See isRemotePushOffered. */
+  const pushOffered = isRemotePushOffered();
 
   // #965 — fire a server→device test push to this user's registered tokens.
   const handleTestPush = async () => {
@@ -133,9 +149,10 @@ export default function NotificationsSection({
     }
   };
 
-  // Display helper: turn a pending notification's scheduleAt ISO into
-  // a friendly relative-time label ("Tomorrow at 8:00 AM", "In 12
-  // minutes", etc.). Kept simple — we don't need date-fns for this.
+  // Display helper: how long until a pending notification fires, from
+  // its scheduleAt ISO ("in 12 mins", "in 3 hrs", "in 2 days"); null
+  // when that is missing, unreadable or already past. A relative label,
+  // never a clock time.
   const formatNextFire = (iso: string | null): string | null => {
     if (!iso) return null;
     const at = new Date(iso);
@@ -222,14 +239,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Meal reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Enable meal reminders</p>
             <p className="text-xs text-muted-foreground">
               Get notified when it&apos;s time to eat
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={mealReminders.enabled}
             label="Toggle meal reminders"
             onChange={async () => {
@@ -263,11 +281,10 @@ export default function NotificationsSection({
               onTest={() => handleTestNotification("meal")}
             />
             {(["breakfast", "lunch", "dinner"] as const).map((meal) => (
-              <div
-                key={meal}
-                className="flex items-center justify-between p-4 rounded-lg bg-muted"
-              >
-                <div className="flex items-center gap-3">
+              <div key={meal} className={ROW}>
+                {/* Wraps too: at double text on a 320px phone the switch
+                    and "Breakfast" together are wider than the row. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <Toggle
                     checked={mealReminders[meal].enabled}
                     label={`${meal} reminder`}
@@ -294,7 +311,7 @@ export default function NotificationsSection({
                       [meal]: { ...mealReminders[meal], time: e.target.value },
                     })
                   }
-                  className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+                  className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
                   disabled={!mealReminders[meal].enabled}
                 />
               </div>
@@ -307,14 +324,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Workout reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Enable workout reminders</p>
             <p className="text-xs text-muted-foreground">
               Get notified when it&apos;s time to train
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={workoutReminders.enabled}
             label="Toggle workout reminders"
             onChange={async () => {
@@ -346,14 +364,14 @@ export default function NotificationsSection({
         )}
 
         {workoutReminders.enabled && (
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
               aria-label="Workout reminder time"
               value={workoutReminders.time}
               onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
-              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -369,14 +387,15 @@ export default function NotificationsSection({
       <div className="space-y-3">
         <p className="text-sm font-medium text-foreground">Streak reminders</p>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div className="pr-3">
+        <div className={ROW}>
+          <div className={LABEL}>
             <p className="text-sm text-foreground">Streak reminder</p>
             <p className="text-xs text-muted-foreground">
               Remind me if I haven&apos;t logged today
             </p>
           </div>
           <Toggle
+            className="ml-auto"
             checked={streakReminder.enabled}
             label="Toggle streak reminder"
             onChange={async () => {
@@ -411,14 +430,14 @@ export default function NotificationsSection({
         )}
 
         {streakReminder.enabled && (
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className={ROW}>
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
               aria-label="Streak reminder time"
               value={streakReminder.time}
               onChange={(e) => updateStreakReminder({ time: e.target.value })}
-              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -427,107 +446,115 @@ export default function NotificationsSection({
             global toggle requests OS permission + registers/revokes this
             device's FCM token; per-type toggles gate which senders may target
             the user (each sender checks the flag via the server-side
-            mayTargetUserConsent in functions/lib/pushConsent.js). */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div className="pr-3">
-            <p className="text-sm text-foreground">Push notifications</p>
-            <p className="text-xs text-muted-foreground">
-              Get nudges and recaps even when the app is closed
-            </p>
-          </div>
-          <Toggle
-            checked={pushConsent.enabled}
-            label="Toggle push notifications"
-            onChange={async () => {
-              haptic("light");
-              const next = !pushConsent.enabled;
-              trackSettingsEvent("settings_toggle_changed", {
-                toggle: "push_notifications",
-                value: next,
-              });
-              if (next) {
-                const granted = await requestNotificationPermission();
-                refreshPermission();
-                if (!granted) {
-                  toast.error(
-                    "Allow notifications in your browser settings to turn this on."
-                  );
-                  return;
-                }
-                await updatePushConsent({ enabled: true });
-                if (uid) {
-                  const result = await registerDeviceToken(uid);
-                  if (result.ok) {
-                    toast.success("Push on. This device is registered.");
-                  } else {
-                    // Surface the exact failure (iOS web push fails quietly).
-                    toast.error(
-                      `Couldn't register for push (${result.reason}${
-                        result.detail ? `: ${result.detail}` : ""
-                      }).`
-                    );
-                  }
-                }
-              } else {
-                await updatePushConsent({ enabled: false });
-                if (uid) {
-                  try {
-                    await unregisterDeviceToken(uid);
-                  } catch {
-                    // Server consent is already off, so no sender targets the
-                    // account while the user retries device cleanup online.
-                    toast.error(
-                      "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
-                    );
-                  }
-                }
-              }
-            }}
-          />
-        </div>
-
-        {pushConsent.enabled &&
-          (
-            [
-              ["streak", "Streak nudges"],
-              ["recap", "Weekly recap"],
-              ["badge", "Badge unlocked"],
-            ] as const
-          ).map(([type, label]) => (
-            <div
-              key={type}
-              className="flex items-center justify-between p-4 rounded-lg bg-muted"
-            >
-              <span className="text-sm text-foreground">{label}</span>
+            mayTargetUserConsent in functions/lib/pushConsent.js). Web only:
+            see pushOffered above. */}
+        {pushOffered && (
+          <>
+            <div className={ROW}>
+              <div className={LABEL}>
+                <p className="text-sm text-foreground">Push notifications</p>
+                <p className="text-xs text-muted-foreground">
+                  Get nudges and recaps even when the app is closed
+                </p>
+              </div>
               <Toggle
-                checked={pushConsent[type]}
-                label={`Toggle ${label} push`}
-                onChange={() => {
+                className="ml-auto"
+                checked={pushConsent.enabled}
+                label="Toggle push notifications"
+                onChange={async () => {
                   haptic("light");
-                  const next = !pushConsent[type];
+                  const next = !pushConsent.enabled;
                   trackSettingsEvent("settings_toggle_changed", {
-                    toggle: `push_${type}`,
+                    toggle: "push_notifications",
                     value: next,
                   });
-                  void updatePushConsent({ [type]: next });
+                  if (next) {
+                    const granted = await requestNotificationPermission();
+                    refreshPermission();
+                    if (!granted) {
+                      toast.error(
+                        "Allow notifications in your browser settings to turn this on."
+                      );
+                      return;
+                    }
+                    await updatePushConsent({ enabled: true });
+                    if (uid) {
+                      const result = await registerDeviceToken(uid);
+                      if (result.ok) {
+                        toast.success("Push on. This device is registered.");
+                      } else {
+                        // Surface the exact failure (iOS web push fails quietly).
+                        toast.error(
+                          `Couldn't register for push (${result.reason}${
+                            result.detail ? `: ${result.detail}` : ""
+                          }).`
+                        );
+                      }
+                    }
+                  } else {
+                    await updatePushConsent({ enabled: false });
+                    if (uid) {
+                      try {
+                        await unregisterDeviceToken(uid);
+                      } catch {
+                        // Server consent is already off, so no sender targets the
+                        // account while the user retries device cleanup online.
+                        toast.error(
+                          "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
+                        );
+                      }
+                    }
+                  }
                 }}
               />
             </div>
-          ))}
 
-        {/* #965 — on-demand test push so the user can confirm end-to-end
+            {pushConsent.enabled &&
+              (
+                [
+                  ["streak", "Streak nudges"],
+                  ["recap", "Weekly recap"],
+                  ["badge", "Badge unlocked"],
+                ] as const
+              ).map(([type, label]) => (
+                <div key={type} className={ROW}>
+                  <span className={cn(LABEL, "text-sm text-foreground")}>
+                    {label}
+                  </span>
+                  <Toggle
+                    className="ml-auto"
+                    checked={pushConsent[type]}
+                    label={`Toggle ${label} push`}
+                    onChange={() => {
+                      haptic("light");
+                      const next = !pushConsent[type];
+                      trackSettingsEvent("settings_toggle_changed", {
+                        toggle: `push_${type}`,
+                        value: next,
+                      });
+                      void updatePushConsent({ [type]: next });
+                    }}
+                  />
+                </div>
+              ))}
+
+            {/* #965 — on-demand test push so the user can confirm end-to-end
             server→device delivery (works with the app closed in PWA mode). */}
-        {pushConsent.enabled && (
-          <button
-            type="button"
-            onClick={handleTestPush}
-            className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
-          >
-            <span className="text-sm text-foreground">Send a test push</span>
-            <span className="text-sm font-medium text-lifting-strong">
-              Send test
-            </span>
-          </button>
+            {pushConsent.enabled && (
+              <button
+                type="button"
+                onClick={handleTestPush}
+                className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
+              >
+                <span className="text-sm text-foreground">
+                  Send a test push
+                </span>
+                <span className="text-sm font-medium text-lifting-strong">
+                  Send test
+                </span>
+              </button>
+            )}
+          </>
         )}
       </div>
     </AccordionSection>
@@ -556,8 +583,8 @@ export function ReminderDiagnostics({
 }) {
   const relative = next ? formatNextFire(next.scheduleAt) : null;
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/60 border border-border/40">
-      <div className="text-xs text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3 rounded-lg bg-muted/60 border border-border/40">
+      <div className={cn(LABEL, "text-xs text-muted-foreground")}>
         {relative ? (
           <>
             Next:{" "}
@@ -570,7 +597,12 @@ export function ReminderDiagnostics({
           <span>Reminders fire while this tab is open.</span>
         )}
       </div>
-      <Button variant="ghost" size="sm" onClick={onTest} className="shrink-0">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onTest}
+        className="ml-auto shrink-0"
+      >
         Send test
       </Button>
     </div>

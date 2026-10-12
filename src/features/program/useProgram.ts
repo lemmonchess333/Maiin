@@ -5,10 +5,15 @@ import {
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import {
+  raceAwaitsItsEnding,
   raceWeekNeedsBuilding,
   weekRolloverAnchor,
 } from "./programMaintenance";
-import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
+import { raceRestSkips } from "./raceRest";
+import {
+  markDayDone,
+  type ProgrammeCompletionContext,
+} from "@/lib/workoutCompletion";
 import {
   completeLift,
   liftSessionDay,
@@ -16,15 +21,33 @@ import {
 } from "@/lib/liftCompletion";
 import {
   applySessionProgression,
+  toSessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
-import { useState, useEffect, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { captureError } from "@/lib/errorReporting";
 import { doc, getDoc, getDocFromCache, onSnapshot } from "firebase/firestore";
-import { workoutCompletionDayIdentity } from "@/lib/offlineQueue";
+import {
+  hasPendingProgrammeCompletion,
+  queuedWritesVersion,
+  subscribeQueuedWrites,
+  workoutCompletionDayIdentity,
+} from "@/lib/offlineQueue";
+import {
+  isLiftSessionOpen,
+  liftSessionVersion,
+  subscribeLiftSession,
+} from "./openLiftSession";
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import type {
   BlockDurationWeeks,
   BlockPace,
@@ -37,12 +60,19 @@ import type {
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
-import { represcribeWorkouts } from "./represcribe";
+import { represcribeWorkouts, withRoleNumbers } from "./represcribe";
+import { exerciseRole } from "./exerciseRole";
 import { legacyToActiveBlock, type TrainingBlock } from "./trainingBlock";
-import { normalizeProgramState, transitionStatus } from "./programTypes";
+import {
+  DEFAULT_PROGRAM_SETTINGS,
+  normalizeProgramState,
+  transitionStatus,
+} from "./programTypes";
 import { resolveRecoveryExit } from "./runModeResolution";
+import { rebuiltWeekFromToday } from "./racePlanContinuation";
 import { fetchRecentLayoff } from "./fetchRecentLayoff";
 import type { LayoffClass } from "./layoffDetection";
+import { profileNewRunnerUntil } from "./newRunner";
 import { workoutDayPrecondition } from "./programCommandPrecondition";
 import {
   migrateProgramState,
@@ -51,17 +81,21 @@ import {
 import {
   generateProgram,
   advanceWeek,
+  easeBackIn,
   shouldAdvanceWeek,
-  generateWeekPrescription,
 } from "./programEngine";
-import { revertRecoverySession } from "./recoveryTrigger";
+import { generateWeekPrescription } from "./weekPrescription";
+import {
+  nextRunWeek,
+  regenerateRacePlan,
+  rollLiftWeeks,
+  rollRunWeeks,
+} from "./weekRollover";
 import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
-import { recoveryStateFrom } from "./adjustmentRule";
-import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { sessionMinutesFor } from "./sessionFit";
 import { logger } from "@/lib/logger";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -129,21 +163,14 @@ export interface CompletedSessionData {
    *  Home's "today" burn all read `date`). Older drafts omit it → finish
    *  time, the pre-Lift3 behaviour. */
   startedAt?: number;
+  /** Lift4 (14): a long or hard run finished in the 24 hours before the
+   *  session started (`useHardRunBefore`). Recorded on the workout, and a
+   *  leg miss counts half (Lift4 (7)). */
+  afterHardRun?: boolean;
 }
-import { planningEasyPaceSPerKm } from "@/lib/runPaces";
-import { clampPlanWeek, type RaceTiming } from "./runPlanTiming";
-import {
-  generateRacePlanV2,
-  scheduleRecoveryWeekV2,
-  runTuningFromProfile,
-  type RunTuning,
-} from "./runScheduler";
-import {
-  localWeekKey,
-  localDateString,
-  addLocalDays,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import type { RaceTiming } from "./runPlanTiming";
+import { scheduleRecoveryWeekV2, type RunTuning } from "./runScheduler";
+import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
@@ -171,245 +198,6 @@ import {
 } from "./programOutcome";
 
 const PROGRAM_DOC = "current";
-
-/**
- * PR-0b-ii: assemble a v7 RunPlan record from a V2 race-plan
- * output. Preserves previous-plan continuity for the
- * "Week N of M" display: callers that advance / refresh pass
- * the prior `currentWeek` + `totalWeeks` through `carry` so the
- * stored counters keep their semantic meaning. Initial /
- * full-regenerate paths leave `carry` empty and accept V2's
- * fresh values + currentWeek=0.
- *
- * `compressed` always trusts V2's fresh output — config changes
- * (e.g. race date pushed earlier) can flip an uncompressed plan
- * to compressed and the UI banner needs to reflect that.
- */
-function makeRunPlanRecord(
-  v2: { totalWeeks: number; compressed: boolean; belowFloor: boolean },
-  raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
-    targetDate: string;
-    eventName?: string;
-  },
-  carry: { currentWeek?: number; totalWeeks?: number } = {}
-): RunPlan {
-  return {
-    mode: "race_prep",
-    raceGoal,
-    totalWeeks: carry.totalWeeks ?? v2.totalWeeks,
-    currentWeek: carry.currentWeek ?? 0,
-    compressed: v2.compressed,
-    // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
-    // finish-safely risk instead of presenting a tight plan as a normal one.
-    belowFloor: v2.belowFloor,
-  };
-}
-
-/**
- * Centralised race-plan regeneration recipe.
- *
- * Eight call sites previously repeated the same sequence — build
- * generator args → call `generateRacePlanV2` → slice `weeks[0]` for
- * runDays → wrap in `makeRunPlanRecord` → optionally re-attach
- * `completedRaces[]`. Drift across sites was the symptom: PR-L L4's
- * shift/compress writers landed without the `currentWeek` carry
- * that `refreshRunSchedule` already used, and without the
- * `completedRaces` re-attach that multi-race plans need.
- *
- * Callers pass what varies per site — which week, schedule and target
- * (load uses today, week-advance uses next-week start, editor-apply uses
- * an overridden schedule). What does not vary — the runner's tuning, easy
- * pace, time limits and running baseline — is read off the profile here,
- * so no site can leave one out. They were required arguments, written out
- * the same way at all seven sites.
- */
-function regenerateRacePlan({
-  profile,
-  raceGoal,
-  recentLayoff,
-  weekSchedule,
-  weeklyRunDays,
-  currentDate,
-  weekStart,
-  tuning,
-  carry,
-  prior,
-}: {
-  /** The runner. Pgm6's tuning (`runTuningFromProfile`), Run17's confirmed
-   *  easy pace (`planningEasyPaceSPerKm`), the run time limits and the
-   *  running baseline all come from here: a plan built without one would
-   *  regress a tuned plan to standard, or a benchmarked runner's long-run
-   *  ceiling to the nominal table, on the next weekly refresh. */
-  profile: UserProfile;
-  raceGoal: {
-    distance: "5k" | "10k" | "half" | "marathon";
-    targetDate: string;
-    eventName?: string;
-  };
-  weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[];
-  weeklyRunDays: number;
-  currentDate: string;
-  weekStart: string;
-  /** Pgm6 knobs newer than `profile`: the run-plan editor saves them and
-   *  refreshes before this closure's profile has caught up
-   *  (`RefreshRunScheduleOverrides.tuning`). */
-  tuning?: RunTuning;
-  /** Run15 — how long the runner has been away. Required for the same reason
-   *  it is required on `RacePlanV2Input`: a regen site that forgets it would
-   *  silently rebuild a returning runner's week at mid-block volume, and a
-   *  compile error is a better guard than a convention. */
-  recentLayoff: LayoffClass;
-  carry?: {
-    currentWeek?: number;
-    totalWeeks?: number;
-    completedRaces?: string[];
-    /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
-     *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
-     *  callers that run while recovery is live pass them through to be
-     *  preserved. Recovery EXIT stays a deliberate decision
-     *  (resolveRecoveryExit) — callers that intend to exit simply don't pass
-     *  them. */
-    phase?: "recovery";
-    recoveryEndDate?: string;
-  };
-  /** Run9 phase-3 Slice A — when a regen rewrites the CURRENT week with
-   *  existing completions (compress / shift / schedule edit), pass the
-   *  pre-regen runDays + manualCompletions so terminal status is re-stamped
-   *  and manualCompletions are re-keyed onto the same-date new days. Omitted
-   *  on fresh-creation sites (load with no prior runDays) where there is
-   *  nothing to carry. */
-  prior?: {
-    runDays: ScheduledRunDay[];
-    manualCompletions?: Record<string, ManualCompletion>;
-  };
-}): {
-  runDays: ScheduledRunDay[];
-  runPlan: RunPlan;
-  /** Re-keyed map — present only when `prior` was supplied; callers that pass
-   *  `prior` must persist this in place of the stale programState map. */
-  manualCompletions?: Record<string, ManualCompletion>;
-} {
-  const v2 = generateRacePlanV2({
-    raceGoal,
-    weekSchedule,
-    weeklyRunDays,
-    currentDate,
-    weekStart,
-    tuning: tuning ?? runTuningFromProfile(profile),
-    recentLayoff,
-    easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
-    runningBaseline: profile.runningBaseline ?? null,
-    runTimeLimits: profile.runTimeLimits ?? null,
-    // The block's original length, so the generator emits the week for where
-    // the runner actually IS rather than week 0 of a fresh block. Without it
-    // `weeks[0]` — the only week any caller persists — is always a base week,
-    // and
-    // the ramp lives in `weeks[1..n]` where nothing reads it. See the
-    // `planTotalWeeks` doc comment in runScheduler.ts for the measurement.
-    // Absent on fresh-creation sites, which is the correct fallback: a new
-    // plan genuinely is at position 0.
-    planTotalWeeks: carry?.totalWeeks,
-  });
-  let runDays = v2.weeks[0] ?? [];
-  let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
-  if (prior) {
-    const carried = carryCompletionsAcrossRegen(
-      prior.runDays,
-      runDays,
-      prior.manualCompletions
-    );
-    runDays = carried.runDays;
-    carriedManualCompletions = carried.manualCompletions;
-  }
-  const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
-  if (carry?.completedRaces) {
-    runPlan.completedRaces = carry.completedRaces;
-  }
-  // RUN-H1: preserve an active recovery phase across regen when the caller
-  // passes it. makeRunPlanRecord emits a fresh race_prep record with no
-  // phase/recoveryEndDate, so without this a regen during recovery (e.g.
-  // week auto-rollover, realign) would silently exit recovery.
-  if (carry?.phase) runPlan.phase = carry.phase;
-  if (carry?.recoveryEndDate) runPlan.recoveryEndDate = carry.recoveryEndDate;
-  // Compress / late-mid-week regen can produce a smaller totalWeeks
-  // than the carried currentWeek (user on week 5 of 8, plan compresses
-  // to 3 → "Week 5 of 3" surfaces in the race-strip and downstream
-  // phase math). Clamp here once so every caller is covered.
-  // currentWeek is 0-based (fresh plans start at 0; the cockpit renders
-  // currentWeek + 1), so the last valid index is totalWeeks - 1.
-  if (
-    typeof runPlan.currentWeek === "number" &&
-    typeof runPlan.totalWeeks === "number"
-  ) {
-    runPlan.currentWeek = clampPlanWeek(
-      runPlan.currentWeek,
-      runPlan.totalWeeks
-    );
-  }
-  return { runDays, runPlan, manualCompletions: carriedManualCompletions };
-}
-
-/**
- * The run side of moving the programme into the next week, shared by the
- * Monday rollover and "Start next week". `advanced` is the programme with
- * its lift side already moved on; `next` is the week moved into.
- */
-function nextRunWeek(
-  advanced: ProgramState,
-  next: { weekStart: string; date: string },
-  profile: UserProfile,
-  recentLayoff: LayoffClass
-): Pick<ProgramState, "runDays" | "runPlan"> {
-  const weekSchedule = profile.weekSchedule ?? [];
-  const runPlan = advanced.runPlan;
-  // Asked about NEXT week's date, not today: the question is whether the
-  // week being rolled into is still inside the recovery window.
-  if (runPlan && isInRecoveryOn(runPlan, next.date)) {
-    // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
-    // and keep phase/recoveryEndDate — never regenerate a race plan (which
-    // emits race-training runDays AND drops the recovery flags via
-    // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
-    // recovery exit is a deliberate decision (resolveRecoveryExit), not a
-    // rollover side effect.
-    return {
-      runDays: scheduleRecoveryWeekV2({
-        weekSchedule,
-        weekStart: next.weekStart,
-      }),
-      runPlan: { ...runPlan },
-    };
-  }
-  if (
-    profile.runMode === "race_prep" &&
-    profile.raceGoal &&
-    // R3: same elapsed guard as refreshRunSchedule — a week rolling over
-    // after an elapsed race (recovery ended, raceGoal not yet server-
-    // cleared) must go freeform, not regenerate a plan dated in the past.
-    next.date <= profile.raceGoal.targetDate
-  ) {
-    const regenerated = regenerateRacePlan({
-      profile,
-      recentLayoff,
-      raceGoal: profile.raceGoal,
-      weekSchedule,
-      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-      currentDate: next.date,
-      weekStart: next.weekStart,
-      carry: {
-        currentWeek: (runPlan?.currentWeek ?? 0) + 1,
-        totalWeeks: runPlan?.totalWeeks,
-        completedRaces: runPlan?.completedRaces,
-      },
-    });
-    return { runDays: regenerated.runDays, runPlan: regenerated.runPlan };
-  }
-  // RUN-M: structured mode is retired (Run9a — the Run surface is two
-  // states, freeform + race_prep), so a week that is neither recovering nor
-  // racing is free running: no planned runs, no runPlan. Never resurrect a
-  // structured week here.
-  return { runDays: [], runPlan: undefined };
-}
 
 interface RefreshRunScheduleOverrides {
   profileUpdates?: Partial<UserProfile>;
@@ -442,21 +230,40 @@ function declineWithReason(base: string, reason: string): ProgramOutcome {
   return declined(reason);
 }
 
+/** What "next week" says when it opens a lighter week, naming which of a
+ *  race's final weeks it is (Lift4 (10)). */
+function lighterWeekStarted(raceWeek: ProgramState["raceWeek"]): string {
+  if (raceWeek === "race")
+    return "Race week: one short session, with nothing heavy for your legs";
+  if (raceWeek === "taper")
+    return "A lighter week before your race: half the sets, at the same weights";
+  if (raceWeek === "after")
+    return "A lighter week after your race: half the sets, at the same weights";
+  return "A lighter week: half the sets, at the same weights";
+}
+
 /** See `readiness` on the hook's return. */
 export type ProgramReadiness = "pending" | "ready" | "failed";
 
+/** A finish the week rollover must wait for: a programme session open on
+ *  this device, or a finished one still waiting to sync. */
+function finishOutstanding(uid: string | undefined): boolean {
+  return isLiftSessionOpen() || (!!uid && hasPendingProgrammeCompletion(uid));
+}
+
 export function useProgram() {
   const { user, profile, updateProfile, refreshProfile } = useAuth();
-  // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
-  // read — the rule is only consulted on a week advance, so this is the
-  // cheapest way to have the answer in hand when that happens. Resolves to
-  // "unknown" (⇒ hold) with no doc, a legacy doc, or too little baseline
-  // depth for the engine's own deload judgement to mean anything.
-  const { currentWeek: perfWeek } = usePerformanceWeeks(1);
-  const recovery = recoveryStateFrom(perfWeek?.signals);
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   /**
-   * Run15 — how long the runner has been away, resolved once per session and
+   * Today, as the app sees it: it moves on while the app is open, and when
+   * a phone brings the app back (`useLocalDateKey`). The week rollovers and
+   * the race's rest days re-run on it, so a resumed app reaches the new
+   * week without a reload. On iOS the app is resumed far more often than it
+   * is started.
+   */
+  const today = useLocalDateKey();
+  /**
+   * Run15 — how long the runner has been away, resolved once per day and
    * consumed by every race-plan regen below.
    *
    * Held as state rather than fetched per regen because all seven regen sites
@@ -476,8 +283,10 @@ export function useProgram() {
    */
   const [layoffRead, setLayoffRead] = useState<{
     uid: string | null;
+    /** The day it was read for: a week's rollover waits for that day's. */
+    day: string | null;
     cls: LayoffClass;
-  }>({ uid: null, cls: "none" });
+  }>({ uid: null, day: null, cls: "none" });
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const [loading, setLoading] = useState(true);
@@ -612,7 +421,9 @@ export function useProgram() {
           profile.raceGoal &&
           // Earlier weeks belong to auto-rollover, which archives their
           // history. Only this week's runs are built here, inline with load,
-          // so a second effect cannot race the rollover writer.
+          // so a second effect cannot race the rollover writer, or next
+          // week's when none of this week's run days is left (Run19,
+          // `raceWeekFromToday`).
           raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
@@ -626,6 +437,8 @@ export function useProgram() {
             weeklyRunDays: runTarget,
             currentDate: today,
             weekStart: thisWeek,
+            // Run19: no run before today; the week's own days stay.
+            plannedFrom: today,
             carry: next.runPlan
               ? {
                   currentWeek: next.runPlan.currentWeek,
@@ -682,7 +495,6 @@ export function useProgram() {
         // what the user asked for. Pre-W1a this call dropped primaryGoal
         // entirely and hypertrophy-rep defaults leaked into every goal.
         const { splitType, workouts } = generateProgram(
-          goal,
           weeklyTarget,
           undefined,
           profile.primaryGoal,
@@ -691,7 +503,15 @@ export function useProgram() {
           // the two that load the same lower back. Read-only — this does not
           // date-pin lifts (ADR-0002).
           profile.weekSchedule,
-          toExperience(profile.experience)
+          toExperience(profile.experience),
+          sessionMinutesFor(profile.liftTimeBudgetMinutes),
+          // Lift4 (11): the person's equipment and injuries, as a plan
+          // built from settings honours them.
+          {
+            equipment: profile.equipment,
+            injuries: profile.injuries,
+            barbellAtHome: profile.barbellAtHome,
+          }
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -703,14 +523,17 @@ export function useProgram() {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
+          const today = localDateString();
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
-            currentDate: localDateString(),
+            currentDate: today,
             weekStart,
+            // Run19: a plan made mid-week plans no run before today.
+            plannedFrom: today,
           }));
         }
 
@@ -723,13 +546,15 @@ export function useProgram() {
           ...(profile.primaryGoal !== undefined && {
             primaryGoal: profile.primaryGoal,
           }),
+          // Lift4 (5): the session length the workouts were fitted to.
+          sessionMinutes: sessionMinutesFor(profile.liftTimeBudgetMinutes),
           currentPhase: "base",
           weekNumber: 1,
           splitType,
           workouts,
           fatigueScore: 0,
           updatedAt: Date.now(),
-          settings: { autoProgression: true, microloading: true },
+          settings: DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
           // PR-0b-ii: explicit schema version on initial creation so
           // PR-0b-i's shape-aware migration sees a current doc on
@@ -832,6 +657,11 @@ export function useProgram() {
     const ref = doc(db, "users", uid, "programState", PROGRAM_DOC);
     const unsubscribe = onSnapshot(
       ref,
+      // A write it skipped as pending (another tab's, say) is confirmed by
+      // a change to metadata alone, which Firestore delivers only to a
+      // listener that asks for metadata changes; without it the mirror
+      // kept the state from before that write until the next one.
+      { includeMetadataChanges: true },
       (snap) => {
         if (auth.currentUser?.uid !== uid) return;
         if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;
@@ -854,24 +684,29 @@ export function useProgram() {
   // Save program to Firestore.
   //
   // Two forms. A plain state is a proposal built from the `programState`
-  // the caller rendered, committed against it as the base: the form for
-  // the rollover effects, whose refusal refetches and whose effect then
-  // recomputes on the refreshed state and fires again. An updater is a
-  // proposal built INSIDE the transaction from what the store holds now:
-  // the form for a user action, which is a closure over the state it was
-  // rendered with and can be a write behind the store by the time it
-  // commits — the rollover's own transaction still in flight, a server
-  // trigger, a second device. Committed plain, such an action was refused
-  // with "Your programme changed while you were editing" for an edit the
-  // user never made; computed live, it lands on top of the change.
+  // the caller rendered, committed against it as the base, and refused
+  // when the store has moved on a key it changes: the form for a plan
+  // made from nothing. An updater is a proposal built INSIDE the
+  // transaction from what the store holds now: the form for a user action
+  // and for the week's rollovers. Each is computed from a copy that can be
+  // a write behind the store by the time it commits: the rollover's own
+  // transaction still in flight, a server trigger, a second device, an
+  // app back from the background before its listener has caught up.
+  // Committed plain, a user action was refused with "Your programme
+  // changed while you were editing" for an edit the user never made, and
+  // a rollover that left a key alone took the store's copy of it: last
+  // week's sessions, finished elsewhere, came into the new week as done.
+  // Computed live, each lands on top of the change.
   //
   // Resolves to the store's state afterwards, or null when the updater
   // declined and nothing was written — the caller decides what a decline
-  // means for its own toast.
+  // means for its own toast. `quiet` is for the saves nobody asked for
+  // (the rollovers): a failure is logged, never shown.
   const saveProgram = useCallback(
     async (
       proposal: ProgramState | ProgramUpdater,
-      profilePatch?: Partial<UserProfile>
+      profilePatch?: Partial<UserProfile>,
+      options?: { quiet?: boolean }
     ): Promise<ProgramState | null> => {
       if (!user) throw new Error("Sign in again to save your programme.");
       try {
@@ -912,11 +747,12 @@ export function useProgram() {
           if (auth.currentUser?.uid === user.uid && latest?.exists())
             setProgramState(latest.data() as ProgramState);
         }
-        toast.error(
-          error instanceof ProgrammeConflictError
-            ? error.message
-            : "Couldn't save your changes. Try again."
-        );
+        if (!options?.quiet)
+          toast.error(
+            error instanceof ProgrammeConflictError
+              ? error.message
+              : "Couldn't save your changes. Try again."
+          );
         throw error;
       }
     },
@@ -1087,6 +923,22 @@ export function useProgram() {
   // Latency trade-off: recovery hero pops in 3-10s vs <1s pre-L5
   // (next Cloud Function invocation); acceptable per the PR-L scope.
 
+  // Both rollovers below wait while a finished session is still on its way
+  // to the server, or one is open on this device: a finish lands only on the
+  // week it was started in (`commitWorkoutCompletion`), so rolling first
+  // drops its progression and leaves its day undone. They re-run when the
+  // queue or the open session changes.
+  const queuedWrites = useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
+  const openSessions = useSyncExternalStore(
+    subscribeLiftSession,
+    liftSessionVersion,
+    liftSessionVersion
+  );
+
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
   // runDays were generated for, automatically rotate forward to
@@ -1104,17 +956,9 @@ export function useProgram() {
   // the week the runDays were last generated for. If that's
   // before `localWeekKey()`, the user is ≥1 week stale.
   //
-  // Loop: while stale, run `advanceWeek` and regenerate runDays
-  // for the new week. Cap at 12 iterations to prevent runaway
-  // in pathological cases (user gone for months). Each iteration
-  // archives the previous week into `weekHistory` and increments
-  // `weekNumber`.
-  //
-  // Trade-off (per the design grill): a planned-but-never-done
-  // Saturday run gets archived as `status: "planned"` in
-  // weekHistory on the Monday rollover. That's intentional —
-  // honest record of "we didn't do this." Better than zombie
-  // planned entries lingering in the current week.
+  // The move itself is `rollRunWeeks` (weekRollover.ts), a pure function
+  // a simulator can call too; this effect decides only when the app may
+  // write it.
   //
   // Skips: freeform users (no runDays to rotate); users whose
   // runDays is empty (no signal to compare).
@@ -1147,7 +991,12 @@ export function useProgram() {
     // every failure path settles as "none"), and re-run when it lands via
     // the layoffRead dep. Same pattern as the lift rollover's
     // wait-for-migration early-return.
-    if (user && layoffRead.uid !== user.uid) return;
+    // And for TODAY's read: an app resumed on a later day still holds the
+    // day it was opened on, and a runner who has been away since then would
+    // roll into a full week on the old answer.
+    if (user && (layoffRead.uid !== user.uid || layoffRead.day !== today))
+      return;
+    if (finishOutstanding(user?.uid)) return;
 
     const rollover = weekRolloverAnchor(programState, profile);
     if (rollover?.side !== "run") return;
@@ -1156,78 +1005,53 @@ export function useProgram() {
     const todayKeyG = localWeekKey();
     if (runDayWeekKey >= todayKeyG) return;
 
-    // Loop up to 12 iterations. Each iteration advances the
-    // local `rolling` state but doesn't write to Firestore — we
-    // batch all writes into a single saveProgram at the end.
-    let rolling = programState;
-    let iterations = 0;
-    while (iterations < 12) {
-      const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
-      if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
-
-      // Advance lift side (workouts, weekNumber, weekHistory).
-      // Backlog #8: the deload recipe follows training age (Helms H4).
-      // Backlog #9: plus the joint plateau x recovery adjustment rule.
-      // 4th arg (D1): keep the lift anchor moving in lockstep on this path
-      // too, so a user who later switches to freeform doesn't inherit a stale
-      // `liftWeekKey` and trigger a spurious catch-up.
-      const nextLiftWeekKey = localWeekKey(
-        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
-      );
-      // A lift anchor already at or past that week (a Thursday-to-Sunday
-      // start's long first week, or a manual "next week") holds the lift
-      // side still; the runs, which are date-pinned (ADR-0002), roll on.
-      const liftsAhead =
-        !!rolling.liftWeekKey && rolling.liftWeekKey >= nextLiftWeekKey;
-      const advanced = liftsAhead
-        ? { ...rolling }
-        : advanceWeek(rolling, profile.experience, recovery, nextLiftWeekKey);
-
-      // Advance run side: one week step from the current runDay week key.
-      const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
-      const runs = nextRunWeek(
-        advanced,
-        {
-          weekStart: localWeekKey(nextRunDate),
-          date: localDateString(nextRunDate),
-        },
-        profile,
-        recentLayoff
-      );
-      advanced.runDays = runs.runDays;
-      advanced.runPlan = runs.runPlan;
-
-      rolling = advanced;
-      iterations++;
-    }
-
-    if (iterations === 0) return;
+    // Moves up to MAX_ROLLOVER_WEEKS weeks without writing; the one
+    // saveProgram below writes them all, and a plan further behind moves
+    // again when this effect runs on the saved plan.
+    const { state: rolling, weeks } = rollRunWeeks(
+      programState,
+      profile,
+      todayKeyG,
+      recentLayoff
+    );
+    if (weeks === 0) return;
 
     logger.log(
-      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
+      `[auto-rollover] advanced ${weeks} week${weeks > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
     );
 
+    // Said nothing on purpose (Lift4: silent by default). Train's week row
+    // names the week, and a count of the calendar weeks caught up is not the
+    // programme's: a week with no training holds the week number.
+    //
+    // Rolled again in the transaction, from the plan the store holds: this
+    // copy can be behind it (see saveProgram), and a decline repaints from
+    // the store, where the week has already moved.
+    //
     // saveProgram sets state only after its awaited write, never
     // synchronously: the rule counts any call that reaches a setter.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling)
-      .then(() => {
-        toast.success(
-          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
-        );
-      })
-      .catch((err) => {
-        logger.warn("[auto-rollover] save failed", err);
-      });
+    saveProgram(
+      (stored) => {
+        const rolled = rollRunWeeks(stored, profile, todayKeyG, recentLayoff);
+        return rolled.weeks === 0 ? null : rolled.state;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((err) => {
+      logger.warn("[auto-rollover] save failed", err);
+    });
   }, [
     programState,
     profile,
     saveProgram,
-    recovery,
     layoffRead,
     recentLayoff,
     user,
     mirrorReady,
+    queuedWrites,
+    openSessions,
+    today,
   ]);
 
   /**
@@ -1256,21 +1080,23 @@ export function useProgram() {
    * in the current week"): the archive says what actually happened, so the
    * adherence-sensitive readers downstream are not fed a lie.
    */
-  /* Resolve the layoff once the user is known. Bounded one-shot read — see
-     `fetchRecentLayoff` for why this is not a subscription. Race-prep only: a freeform runner has no plan for a layoff to
-     reshape, so the read is not worth making for them. */
+  /* Resolve the layoff once the user is known, and again on each new day
+     the app sees. Bounded one-shot read — see `fetchRecentLayoff` for why
+     this is not a subscription. Race-prep only: a freeform runner has no
+     plan for a layoff to reshape, so the read is not worth making for
+     them. */
   useEffect(() => {
     if (!user?.uid) return;
     if (!profile?.runMode || profile.runMode === "freeform") return;
     let cancelled = false;
     const uid = user.uid;
-    void fetchRecentLayoff(uid, localDateString(new Date())).then((cls) => {
-      if (!cancelled) setLayoffRead({ uid, cls });
+    void fetchRecentLayoff(uid, today).then((cls) => {
+      if (!cancelled) setLayoffRead({ uid, day: today, cls });
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, profile?.runMode]);
+  }, [user?.uid, profile?.runMode, today]);
 
   useEffect(() => {
     if (!programState || !profile) return;
@@ -1279,6 +1105,7 @@ export function useProgram() {
     if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
+    if (finishOutstanding(user?.uid)) return;
 
     // The run-side effect acts on a "run" anchor and this one on a "lift"
     // anchor, so exactly one of the two can act on any given state. No
@@ -1293,36 +1120,91 @@ export function useProgram() {
     const todayKey = localWeekKey();
     if (anchor >= todayKey) return;
 
-    let rolling = programState;
-    let iterations = 0;
-    // Same cap as the run side: a user gone for months catches up twelve weeks
-    // and then stops, rather than spinning through a year of deloads.
-    while (iterations < 12) {
-      const current = rolling.liftWeekKey;
-      if (!current || current >= todayKey) break;
-      const nextKey = localWeekKey(addLocalDays(parseLocalDate(current), 7));
-      rolling = advanceWeek(rolling, profile.experience, recovery, nextKey);
-      iterations++;
-    }
-
-    if (iterations === 0) return;
+    // As the run side: one write per MAX_ROLLOVER_WEEKS weeks at most.
+    const { state: rolling, weeks } = rollLiftWeeks(
+      programState,
+      profile,
+      todayKey
+    );
+    if (weeks === 0) return;
 
     logger.log(
-      `[auto-rollover:lift] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
+      `[auto-rollover:lift] advanced ${weeks} week${weeks > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
     );
 
-    // As the run rollover above: saveProgram sets state after its await.
+    // As the run rollover above: silent, rolled again from the plan the
+    // store holds, and saveProgram sets state after its await.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
-    saveProgram(rolling)
-      .then(() => {
-        toast.success(
-          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
-        );
-      })
-      .catch((err) => {
-        logger.warn("[auto-rollover:lift] save failed", err);
-      });
-  }, [programState, profile, saveProgram, recovery, mirrorReady]);
+    saveProgram(
+      (stored) => {
+        const rolled = rollLiftWeeks(stored, profile, todayKey);
+        return rolled.weeks === 0 ? null : rolled.state;
+      },
+      undefined,
+      { quiet: true }
+    ).catch((err) => {
+      logger.warn("[auto-rollover:lift] save failed", err);
+    });
+  }, [
+    programState,
+    profile,
+    saveProgram,
+    mirrorReady,
+    user,
+    queuedWrites,
+    openSessions,
+    today,
+  ]);
+
+  /* The race's rest days (Lift4 (10)): from two days before a race, and on
+     race day, a lift session not done yet is skipped (`raceRestSkips`), so
+     race week's session is at least three days before the race. Through
+     the same command as a skip the person makes, one session per run (the
+     optimistic skip re-runs this for the next), and silently: Train's
+     banner says why. Each session is tried once, so a refusal can't loop.
+     The same waits as the rollovers above, and after them: a week still to
+     roll over is theirs to move first. */
+  const raceRestTried = useRef(new Set<string>());
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!mirrorReady) return;
+    if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
+      return;
+    if (finishOutstanding(user?.uid)) return;
+    const rollover = weekRolloverAnchor(programState, profile);
+    if (rollover && rollover.weekKey < localWeekKey()) return;
+    for (const dayIndex of raceRestSkips(programState, localDateString())) {
+      const precondition = workoutDayPrecondition(programState, dayIndex);
+      if (!precondition) continue;
+      const key = `${precondition.expectedWeekNumber}:${dayIndex}:${precondition.expectedDaySignature}`;
+      if (raceRestTried.current.has(key)) continue;
+      raceRestTried.current.add(key);
+      void runProgramCommand(
+        {
+          kind: "skipWorkoutDay",
+          commandId: generateInstanceId(),
+          ...precondition,
+        },
+        (state) => ({
+          ...state,
+          workouts: state.workouts.map((d, i) =>
+            i === dayIndex ? { ...d, skipped: true } : d
+          ),
+        }),
+        null
+      );
+      return;
+    }
+  }, [
+    programState,
+    profile,
+    mirrorReady,
+    user,
+    queuedWrites,
+    openSessions,
+    runProgramCommand,
+    today,
+  ]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
@@ -1349,23 +1231,6 @@ export function useProgram() {
       }
 
       const workoutId = liftWorkoutId("programme", sessionData.completionId);
-      const updated: ProgramState = {
-        ...programState,
-        workouts: programState.workouts.map((d, i) =>
-          i === dayIndex
-            ? {
-                ...d,
-                completed: true,
-                skipped: false,
-                completedWorkoutId: workoutId,
-              }
-            : d
-        ),
-        // Clear next-workout override if completing the overridden day
-        ...(programState.nextWorkoutOverride === dayIndex && {
-          nextWorkoutOverride: undefined,
-        }),
-      };
 
       // The exercises the session ran: its prescription, or (a day marked
       // done without one) the day's, at the baseline this completion's
@@ -1389,21 +1254,12 @@ export function useProgram() {
               trainingBlockId: programState.trainingBlock?.id,
             }
           : undefined);
+      const progression = toSessionProgression({
+        ...sessionData,
+        date: liftSessionDay(sessionData.startedAt),
+      });
       const completionContext = savedContext
-        ? {
-            ...savedContext,
-            ...(sessionData.prescription
-              ? {
-                  progression: {
-                    completionId: sessionData.completionId,
-                    date: liftSessionDay(sessionData.startedAt),
-                    prescription: sessionData.prescription,
-                    setLogs: sessionData.setLogs,
-                    sessionVariant: sessionData.sessionVariant,
-                  },
-                }
-              : {}),
-          }
+        ? { ...savedContext, ...(progression ? { progression } : {}) }
         : undefined;
       const matchesCurrentDay =
         completionContext?.weekNumber === programState.weekNumber &&
@@ -1411,15 +1267,21 @@ export function useProgram() {
         completionContext.dayIdentity === dayIdentity &&
         completionContext.trainingBlockId === programState.trainingBlock?.id &&
         !(day.completed && day.completedWorkoutId !== workoutId);
+      // The plan as the save's transaction leaves it: the session's
+      // progression, then the day marked done.
       let committedState: ProgramState | null = matchesCurrentDay
-        ? updated
+        ? markDayDone(
+            completionContext?.progression
+              ? applySessionProgression(
+                  programState,
+                  dayIndex,
+                  completionContext.progression
+                )
+              : programState,
+            dayIndex,
+            workoutId
+          )
         : programState;
-      if (matchesCurrentDay && completionContext?.progression)
-        committedState = applySessionProgression(
-          updated,
-          dayIndex,
-          completionContext.progression
-        );
 
       // ── CORE persistence boundary: the workout and the plan in one
       // transaction (`commitWorkoutCompletion`, through `completeLift`).
@@ -1447,6 +1309,7 @@ export function useProgram() {
         notes: `${sessionData.prescription?.dayName ?? day.dayName} — Programme Week ${sessionData.programmeContext?.weekNumber ?? programState.weekNumber}`,
         extra: {
           sessionVariant: sessionData.sessionVariant,
+          ...(sessionData.afterHardRun ? { afterHardRun: true } : {}),
           // D2: session-level provenance for any per-set RPE. Helms p139
           // keeps novices on %1RM rather than RPE for their first month,
           // and p73 claims accuracy only for lifters who are advanced AND
@@ -1582,29 +1445,36 @@ export function useProgram() {
     // advanced the week — declines rather than advancing a second time.
     const saved = await saveProgram((base) => {
       if (!shouldAdvanceWeek(base.workouts)) return null;
-      const advanced = advanceWeek(
-        base,
-        profile?.experience,
-        recovery,
-        localWeekKey(addLocalDays(new Date(), 7))
-      );
-
       // Refresh run days for new week. PR-0b-ii: V2 writers + next-
       // week date vantage so the saved runDays carry next-week
       // dates / weekKey. `currentWeek` increments to track week-
       // since-plan-start; `totalWeeks` preserved from prev so the
-      // race-strip "Week N of M" display stays consistent.
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        const nextRunDate = addLocalDays(new Date(), 7);
-        const runs = nextRunWeek(
-          advanced,
-          {
-            weekStart: localWeekKey(nextRunDate),
-            date: localDateString(nextRunDate),
-          },
-          profile,
-          recentLayoff
-        );
+      // race-strip "Week N of M" display stays consistent. First, so the
+      // lift side knows whether next week is the run plan's step-back week.
+      const nextRunDate = addLocalDays(new Date(), 7);
+      const runs =
+        profile?.runMode && profile.runMode !== "freeform"
+          ? nextRunWeek(
+              base,
+              {
+                weekStart: localWeekKey(nextRunDate),
+                date: localDateString(nextRunDate),
+              },
+              profile,
+              recentLayoff
+            )
+          : null;
+      const advanced = advanceWeek(
+        base,
+        profile?.experience,
+        localWeekKey(addLocalDays(new Date(), 7)),
+        runs?.raceBlock ?? null,
+        {
+          raceLegTrim: profile?.raceLegTrim === true,
+          primaryGoal: profile?.primaryGoal,
+        }
+      );
+      if (runs) {
         advanced.runDays = runs.runDays;
         advanced.runPlan = runs.runPlan;
       }
@@ -1612,13 +1482,34 @@ export function useProgram() {
     });
     if (!saved) return;
 
-    const rx = generateWeekPrescription(saved.weekNumber);
-    if (rx.deload) {
-      toast.info("Deload week — reduce intensity and recover");
+    if (saved.currentPhase === "deload") {
+      toast.info(lighterWeekStarted(saved.raceWeek));
     } else {
       toast.success(`Week ${saved.weekNumber} started`);
     }
-  }, [programState, profile, saveProgram, recovery, recentLayoff]);
+  }, [programState, profile, saveProgram, recentLayoff]);
+
+  /**
+   * "Ease back in" on Home's Welcome back sheet (Lift4 (11)): the plan's
+   * loads `share` lighter, a set fewer this week and the miss counts reset
+   * (`easeBackIn`). Built against the live document, as the rollover is:
+   * lowering a lift reads its equipment's steps, which `functions/` has no
+   * copy of (ADR-0011). Resolves whether it was saved; a failed save has
+   * said so already (`saveProgram`).
+   */
+  const easeBackInAfterBreak = useCallback(
+    async (share: number): Promise<boolean> => {
+      try {
+        const saved = await saveProgram((base) =>
+          base.workouts.length > 0 ? easeBackIn(base, share) : null
+        );
+        return saved !== null;
+      } catch {
+        return false;
+      }
+    },
+    [saveProgram]
+  );
 
   // P0-6: Mark a run day as completed.
   //
@@ -2148,21 +2039,17 @@ export function useProgram() {
   const updateSettings = useCallback(
     async (updates: Partial<ProgramSettings>): Promise<ProgramOutcome> => {
       if (!programState) return FAILED;
-      const current = programState.settings ?? {
-        autoProgression: true,
-        microloading: true,
-      };
+      const current = programState.settings ?? DEFAULT_PROGRAM_SETTINGS;
       const newSettings = { ...current, ...updates };
-      // P6: the reducer replaces the whole settings object, so the MERGE stays
-      // client-side and the full result is sent. Both fields are required by
-      // the validator, which is why a partial patch would be rejected.
+      // P6: the MERGE stays client-side and the full result is sent: the
+      // validator requires auto-progression, and the reducer writes both.
       return runProgramCommand(
         {
           kind: "setProgramSettings",
           commandId: generateInstanceId(),
           settings: {
             autoProgression: newSettings.autoProgression,
-            microloading: newSettings.microloading,
+            smallPlates: newSettings.smallPlates,
           },
         },
         (state) => ({ ...state, settings: newSettings }),
@@ -2195,6 +2082,15 @@ export function useProgram() {
       }
     ) => {
       if (!profile) return;
+      // Null before the server has answered means the programme has not
+      // loaded, not that there is none. Rebuilt from nothing then, the
+      // plan was committed against no document while one exists, and
+      // refused as a conflict: the weekly-layout sheet's restructure
+      // reached it from Settings while the programme loaded. Refused here
+      // as `refreshRunSchedule` refuses. Once `mirrorReady`, null does
+      // mean there is none, and the rebuild below creates it.
+      if (!programState && !mirrorReady)
+        throw new Error("Wait for your programme to load, then try again.");
 
       const goal = (goalOverride ??
         programState?.goal ??
@@ -2207,13 +2103,19 @@ export function useProgram() {
       const build = (base: ProgramState | null): ProgramState => {
         const primaryGoal = base?.primaryGoal ?? profile.primaryGoal;
         const { splitType, workouts } = generateProgram(
-          goal,
           weeklyTarget,
           base?.workouts,
           primaryGoal,
           loadContextFrom(profile),
           overrides?.weekSchedule ?? profile.weekSchedule,
-          toExperience(profile.experience)
+          toExperience(profile.experience),
+          sessionMinutesFor(profile.liftTimeBudgetMinutes),
+          // Lift4 (11): a reset keeps the person's equipment and injuries.
+          {
+            equipment: profile.equipment,
+            injuries: profile.injuries,
+            barbellAtHome: profile.barbellAtHome,
+          }
         );
 
         // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
@@ -2229,15 +2131,24 @@ export function useProgram() {
             overrides?.weekSchedule ?? profile.weekSchedule ?? [];
           const weekStart = localWeekKey();
           if (profile.runMode === "race_prep" && profile.raceGoal) {
+            const today = localDateString();
             ({ runDays, runPlan } = regenerateRacePlan({
               recentLayoff,
               profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
               weeklyRunDays: runTarget,
-              currentDate: localDateString(),
+              currentDate: today,
               weekStart,
             }));
+            // Run19: the week's days already gone stay as they were, and
+            // none is planned before today.
+            runDays = rebuiltWeekFromToday(
+              base?.runDays ?? [],
+              runDays,
+              today,
+              weekStart
+            );
           } else {
             // RUN-M: structured retired — a non-race state is freeform.
             runDays = [];
@@ -2254,16 +2165,15 @@ export function useProgram() {
           // Goal change / Refresh, even for a hypertrophy or strength
           // user.
           ...(primaryGoal !== undefined && { primaryGoal }),
+          // Lift4 (5): the session length the workouts were fitted to.
+          sessionMinutes: sessionMinutesFor(profile.liftTimeBudgetMinutes),
           currentPhase: "base",
           weekNumber: 1,
           splitType,
           workouts,
           fatigueScore: base?.fatigueScore ?? 0,
           updatedAt: Date.now(),
-          settings: base?.settings ?? {
-            autoProgression: true,
-            microloading: true,
-          },
+          settings: base?.settings ?? DEFAULT_PROGRAM_SETTINGS,
           weekHistory: [],
           // Blk2 / H1. `saveProgram` is a no-merge full replace and this
           // literal spreads nothing from `programState`, so an unnamed field
@@ -2313,7 +2223,7 @@ export function useProgram() {
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram, recentLayoff]
+    [profile, programState, mirrorReady, saveProgram, recentLayoff]
   );
 
   // Refresh run schedule without resetting program (called when
@@ -2371,7 +2281,11 @@ export function useProgram() {
         const inRecovery = isInRecoveryOn(base.runPlan, localDateString());
 
         if (inRecovery) {
-          runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
+          runDays = scheduleRecoveryWeekV2({
+            weekSchedule,
+            weekStart,
+            newRunnerUntil: profileNewRunnerUntil(profile),
+          });
           runPlan = { ...base.runPlan! };
         } else if (
           profile.runMode === "race_prep" &&
@@ -2379,9 +2293,10 @@ export function useProgram() {
           // R3: don't regenerate a race-prep plan for a race that has already
           // passed. Recovery has ended here (else `inRecovery` is true), but the
           // server clears profile.raceGoal only at recoveryEndDate + 7d; in that
-          // window an elapsed race must fall through to freeform, NOT spawn a
-          // fresh plan dated in the past (regenerateRacePlan with a past target
-          // produced a 2-week phantom block). Local string compare = date compare.
+          // window an elapsed race must wait for its own ending (the next
+          // branch), NOT spawn a fresh plan dated in the past (regenerateRacePlan
+          // with a past target produced a 2-week phantom block). Local string
+          // compare = date compare.
           localDateString() <= profile.raceGoal.targetDate
         ) {
           // Refresh preserves currentWeek + totalWeeks so the user's
@@ -2407,6 +2322,13 @@ export function useProgram() {
               completedRaces: base.runPlan?.completedRaces,
             },
           }));
+        } else if (
+          raceAwaitsItsEnding(base.runPlan, profile, localDateString())
+        ) {
+          // The race has passed: race prep is the race lifecycle's to end,
+          // from the plan and its race day, so both stay as they are.
+          runDays = base.runDays ?? [];
+          runPlan = base.runPlan;
         } else {
           // RUN-M: structured retired — a non-race state is freeform.
           runDays = [];
@@ -2426,6 +2348,16 @@ export function useProgram() {
             ? { ...rd, userOverride: preserved, templateId: preserved }
             : rd;
         });
+        // Run19: the layout changes the week from today. Its days already
+        // gone stay as they were, and none is planned before today.
+        if (runPlan) {
+          runDays = rebuiltWeekFromToday(
+            base.runDays ?? [],
+            runDays,
+            localDateString(),
+            weekStart
+          );
+        }
 
         return { ...base, runDays, runPlan };
       }, overrides?.profileUpdates);
@@ -2688,9 +2620,8 @@ export function useProgram() {
           ...precondition,
           exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const added = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2714,13 +2645,29 @@ export function useProgram() {
                   ],
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: each added lift takes its role's numbers, as the reducer
+          // gives them.
+          return {
+            ...state,
+            workouts: exerciseIds.reduce(
+              (workouts, _id, n) =>
+                withRoleNumbers(
+                  workouts,
+                  dayIndex,
+                  `cmd-${commandId}-${n}`,
+                  state.primaryGoal ?? "general",
+                  toExperience(profile?.experience)
+                ),
+              added
+            ),
+          };
+        },
         "Couldn't add that."
       );
       return changeStands(outcome);
     },
-    [programState, runProgramCommand]
+    [programState, profile, runProgramCommand]
   );
 
   /**
@@ -2812,9 +2759,8 @@ export function useProgram() {
           replacementExerciseId,
           replacementWeight: calibrated.weight,
         },
-        (state) => ({
-          ...state,
-          workouts: state.workouts.map((d, i) =>
+        (state) => {
+          const replaced = state.workouts.map((d, i) =>
             i === dayIndex
               ? {
                   ...d,
@@ -2856,8 +2802,27 @@ export function useProgram() {
                   ),
                 }
               : d
-          ),
-        }),
+          );
+          // Lift5: within a role the slot's numbers stay; across one the
+          // replacement takes its role's, no more sets than the slot had.
+          const replacement = replaced[dayIndex].exercises.find(
+            (ex) => ex.instanceId === `cmd-${commandId}`
+          );
+          return {
+            ...state,
+            workouts:
+              replacement && exerciseRole(old) !== exerciseRole(replacement)
+                ? withRoleNumbers(
+                    replaced,
+                    dayIndex,
+                    `cmd-${commandId}`,
+                    state.primaryGoal ?? "general",
+                    toExperience(profile?.experience),
+                    old.sets
+                  )
+                : replaced,
+          };
+        },
         "Couldn't swap that."
       );
       return changeStands(outcome);
@@ -3115,15 +3080,19 @@ export function useProgram() {
         // Optimistic: the same transform, from the same shared rule. The
         // block object itself is left to the refetch — its id embeds the
         // server's `now`, and inventing a local one would show a value that
-        // is about to be replaced.
+        // is about to be replaced. A block with the focus the week already
+        // has changes nothing (Lift4), as in the reducer.
         (state) => ({
           ...state,
           primaryGoal: input.focus,
-          workouts: represcribeWorkouts(
-            state.workouts,
-            input.focus,
-            toExperience(profile?.experience)
-          ),
+          workouts:
+            input.focus === (state.primaryGoal ?? "general")
+              ? state.workouts
+              : represcribeWorkouts(
+                  state.workouts,
+                  input.focus,
+                  toExperience(profile?.experience)
+                ),
         }),
         "Couldn't start that block."
       );
@@ -3151,18 +3120,21 @@ export function useProgram() {
       // Applying the same transform with `goalBefore` IS the inverse, which
       // is why there is no snapshot to restore. A legacy un-owned block
       // never represcribed anything, so releasing it must not retroactively
-      // rewrite a prescription it never owned.
+      // rewrite a prescription it never owned, and a block that hands back
+      // the focus it had changes nothing.
       (state) => {
         const next = {
           ...state,
           primaryGoal: block.goalBefore,
-          workouts: block.owned
-            ? represcribeWorkouts(
-                state.workouts,
-                block.goalBefore,
-                toExperience(profile?.experience)
-              )
-            : state.workouts,
+          workouts:
+            block.owned &&
+            block.goalBefore !== (state.primaryGoal ?? block.focus)
+              ? represcribeWorkouts(
+                  state.workouts,
+                  block.goalBefore,
+                  toExperience(profile?.experience)
+                )
+              : state.workouts,
         };
         delete next.trainingBlock;
         return next;
@@ -3232,43 +3204,16 @@ export function useProgram() {
     [sendDeloadCommand]
   );
 
-  /**
-   * LIFT-EV-05 one-tap undo: restore the undiminished prescription after
-   * the rollover's automatic recovery reduction halved sets/reps for
-   * `recoveringMuscles` (RecoveryReductionBanner's CTA).
-   *
-   * A document write, not a command — consistent with ADR-0011's standing
-   * document-write sites: the reduction itself was written by the client
-   * rollover through `saveProgram`, so its inverse takes the same path.
-   * `recoveringMuscles` is deliberately KEPT: it is the refractory guard,
-   * and clearing it would re-arm the trigger for the same muscles on the
-   * very next rollover (see `revertRecoverySession`).
-   */
-  const undoRecoveryReduction = useCallback(async (): Promise<boolean> => {
-    if (!programState?.recoveringMuscles?.length) return false;
-    try {
-      const saved = await saveProgram((base) => {
-        const muscles = base.recoveringMuscles;
-        if (!muscles?.length) return null;
-        return {
-          ...base,
-          workouts: revertRecoverySession(base.workouts, muscles),
-        };
-      });
-      return saved !== null;
-    } catch {
-      return false;
-    }
-  }, [programState, saveProgram]);
-
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today, keeping the
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
    *  below the taper-safe floor it yields the finish-safely shape (belowFloor).
-   *  Carries terminal status + re-keys manualCompletions (Slice A) so the
-   *  current week's completions survive the regen. Clears the server-written
-   *  fell-behind flag if present — but works WITHOUT it too, since the in-tab
-   *  Realign banner can be triggered any time the user feels behind.
+   *  Plans no run before today and keeps the week's own days before it, and
+   *  its done, moved and swapped days, as the save does (Run19,
+   *  `planWeekFromToday`), so the current week's completions survive the
+   *  regen. Clears the server-written fell-behind flag if present — but
+   *  works WITHOUT it too, since the in-tab Realign banner can be triggered
+   *  any time the user feels behind.
    *
    *  Returns what happened. When it landed, the timing + totalWeeks, so the
    *  caller can toast the right copy; a refusal is said here, once, and the
@@ -3294,7 +3239,7 @@ export function useProgram() {
     // R3: a race that has already passed (recovery ended, raceGoal not yet
     // server-cleared at recoveryEndDate + 7d) must not be realigned —
     // regenerating would produce a phantom plan dated in the past. Leave it for
-    // the freeform transition, same as refreshRunSchedule / the rollovers.
+    // the race's own ending, as refreshRunSchedule and the rollovers do.
     if (localDateString() > profile.raceGoal.targetDate) {
       return refuse("Your race date has passed.");
     }
@@ -3307,7 +3252,8 @@ export function useProgram() {
     let saved: ProgramState | null;
     try {
       saved = await saveProgram((base) => {
-        if (isInRecoveryOn(base.runPlan, localDateString())) return null;
+        const today = localDateString();
+        if (isInRecoveryOn(base.runPlan, today)) return null;
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
           recentLayoff,
@@ -3315,8 +3261,11 @@ export function useProgram() {
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],
           weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-          currentDate: localDateString(),
+          currentDate: today,
           weekStart: localWeekKey(),
+          // Run19: re-planned from today, so no run before it; the week's
+          // own days before today stay as they were.
+          plannedFrom: today,
           carry: {
             currentWeek: prevRunPlan?.currentWeek,
             // Carried WITH currentWeek, as every other regen site does: the
@@ -3393,6 +3342,7 @@ export function useProgram() {
     skipWorkoutDay,
     setNextWorkout,
     advanceToNextWeek,
+    easeBackIn: easeBackInAfterBreak,
     updateSettings,
     regenerateProgram,
     saveProgram,
@@ -3419,7 +3369,6 @@ export function useProgram() {
     revertDeloadWeek,
     applyEaseWeek,
     revertEaseWeek,
-    undoRecoveryReduction,
     realignRacePlan,
     /** Run15 packet — exposed so the FellBehindSheet copy can match the
      *  plan realign will actually produce (the SAME uid-paired value every

@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 import { settleFullPageHeight } from "../helpers/settleHeight";
 
@@ -10,7 +9,6 @@ test("companion notification settings — light and dark", async ({ page }) => {
   test.skip(!emulatorActive, "needs Auth and Firestore emulators");
   test.setTimeout(90_000);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("settings/notifications");
   await expect(

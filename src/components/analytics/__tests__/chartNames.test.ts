@@ -30,18 +30,19 @@ const read = (p: string) => readFileSync(p, "utf8");
 /**
  * Every chart that keeps Recharts' accessibility layer.
  *
- * The last two render on the run surfaces (RunSummary, RunDetail) rather
- * than the Analytics tab, and they are here for the reason the list
- * exists at all: they live in `src/components/analytics/`, so a reader
- * of this file would take an enumeration that skipped them as saying the
- * directory was covered. It was not — both were unnamed until the sweep
- * that added this comment.
+ * `ElevationProfile` renders on the run surfaces (RunSummary, RunDetail)
+ * rather than the Analytics tab, and it is here for the reason the list
+ * exists at all: it lives in `src/components/analytics/`, so a reader
+ * of this file would take an enumeration that skipped it as saying the
+ * directory was covered. It was not — it and the run pages' old splits
+ * bar chart were unnamed until the sweep that added this comment. (That
+ * chart is gone: the run pages show their splits as a table now,
+ * `components/run/SplitsTable`, which is no Recharts root.)
  */
 const CHARTS: [string, string][] = [
   ["src/components/analytics/TrainingLoadCard.tsx", "<ComposedChart"],
   ["src/components/analytics/PerformanceIndexChart.tsx", "<AreaChart"],
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
-  ["src/components/analytics/SplitsBarChart.tsx", "<BarChart"],
   ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],
   ["src/components/progress/TrendWeight.tsx", "<ComposedChart"],
 ];

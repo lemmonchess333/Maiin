@@ -224,6 +224,11 @@ export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
  * progression anchor and usually the lift the day is named for), then
  * earliest day, then earliest slot. Fully deterministic — a regenerate must
  * not churn the programme (the lesson of #11 and #17).
+ *
+ * The injury and equipment filters run after this and keep the cap in their
+ * own pickers, in the same order (`matchTemplate.ts`): this picker knows
+ * nothing of the person's kit or injuries, so running it after them would
+ * hand back lifts they can't do.
  */
 export function capRepeatedLifts(
   workouts: WorkoutDay[],

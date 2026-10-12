@@ -12,6 +12,8 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { runMinutesLine } from "@/lib/runDose";
+import { formatRepTarget } from "@/features/program/repTarget";
 import { parseLocalDate, weekPosition } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +23,15 @@ export default function WeekPreview({
   runDays = [],
   draft = false,
   freeRunning = false,
+  easyPaceSPerKm = null,
 }: {
   schedule: ScheduleDay[];
   workouts?: WorkoutDay[];
   runDays?: ScheduledRunDay[];
   draft?: boolean;
   freeRunning?: boolean;
+  /** A confirmed easy pace, for a long run's minutes (Run21 (5)). */
+  easyPaceSPerKm?: number | null;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   // `schedule` arrives in getDay() order (Sunday first). The week the
@@ -60,6 +65,11 @@ export default function WeekPreview({
     RUN_TEMPLATES.find(
       (template) => template.id === (run.userOverride || run.templateId)
     );
+  // The name says a long run's distance ("Long 6K"); its minutes are the
+  // runner's own, when a confirmed pace gives them.
+  const runMinutes = runTemplate
+    ? runMinutesLine(runTemplate, easyPaceSPerKm)
+    : null;
   return (
     <section
       className="rounded-2xl bg-card card-shadow p-4 space-y-3"
@@ -135,7 +145,7 @@ export default function WeekPreview({
                 >
                   <span>{exercise.name}</span>
                   <span className="shrink-0 text-muted-foreground">
-                    <InlineNumerals>{`${exercise.sets} × ${exercise.reps}${exercise.repUnit === "seconds" ? " s" : " reps"}`}</InlineNumerals>
+                    <InlineNumerals>{`${exercise.sets} × ${formatRepTarget(exercise)}${exercise.repUnit === "seconds" ? "" : " reps"}`}</InlineNumerals>
                   </span>
                 </li>
               ))}
@@ -145,7 +155,11 @@ export default function WeekPreview({
         {runTemplate && (
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-running-strong">
-              <InlineNumerals>{`${runTemplate.name} · ${runTemplate.estimatedDuration} min`}</InlineNumerals>
+              <InlineNumerals>
+                {runMinutes
+                  ? `${runTemplate.name} · ${runMinutes}`
+                  : runTemplate.name}
+              </InlineNumerals>
             </h3>
             <p className="text-sm text-muted-foreground">
               {runTemplate.description}

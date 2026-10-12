@@ -9,8 +9,8 @@
  *
  * Races & Events (races plan PR2): a second row of race-kind spaces —
  * RACE chip, race date + city under the name (Runna's card anatomy),
- * soonest first, past dates hidden (Q2: derived from dateKey, never
- * operated), filtered by a row of chips (two selects before the Social
+ * soonest first, then evergreen races awaiting their next date,
+ * filtered by a row of chips (two selects before the Social
  * pass). The Feed's compact "Spaces for you" row went in the same pass:
  * Together already leads with this directory.
  *
@@ -20,14 +20,14 @@
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import RaceFilterChips from "./RaceFilterChips";
 import {
   ALL_RACE_FILTERS,
   UK_RACE_FILTERS,
-  RACE_DISTANCE_LABELS,
+  raceDistanceLabel,
 } from "./raceBrowse";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
 import {
   Check,
   Dumbbell,
@@ -45,7 +45,8 @@ import {
 import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString } from "@/lib/dateHelpers";
+import { formatRaceEventDate } from "./raceDates";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -151,7 +152,9 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
               : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
-          {RACE_DISTANCE_LABELS[event.distance]}
+          <span>
+            <InlineNumerals>{raceDistanceLabel(event)}</InlineNumerals>
+          </span>
         </span>
       )}
 
@@ -188,8 +191,16 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
             /* Runna's race-card anatomy: race day + city, not a member
                count (membership lives on the space page header). */
             <span className="truncate">
-              <span className="font-mono tabular-nums">
-                {format(parseLocalDate(event.dateKey), "d MMM yyyy")}
+              <span
+                className={
+                  event.dateKey < localDateString()
+                    ? undefined
+                    : "font-mono tabular-nums"
+                }
+              >
+                {event.dateKey < localDateString()
+                  ? "Next date TBA"
+                  : formatRaceEventDate(event)}
               </span>
               {" · "}
               {event.city} {event.countryFlag}
@@ -220,7 +231,7 @@ function CardRow({
   return (
     <div className="space-y-2">
       {!hideLabel && <SectionHeading>{label}</SectionHeading>}
-      {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
+      {/* -mx-[16px]/px-[16px] (the page gutter, px) bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance).
           data-no-page-swipe: a horizontal swipe to scroll this carousel
           must NOT be hijacked by the page/tab swipe-navigation gesture
@@ -232,7 +243,7 @@ function CardRow({
           px-4 inset on every carousel (2026-08-22 frame sweep). */}
       <div
         data-no-page-swipe
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 scroll-pl-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-[16px] px-[16px] scroll-pl-[16px] pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="list"
         aria-label={label}
       >
@@ -262,7 +273,7 @@ export default function SpacesDirectory() {
           <SectionHeading>Races & events</SectionHeading>
           <RaceFilterChips value={filters} onChange={setFilters} />
           {races.length > 0 ? (
-            <CardRow label="Upcoming races" entries={races} hideLabel />
+            <CardRow label="Race directory" entries={races} hideLabel />
           ) : (
             <EmptyState
               compact

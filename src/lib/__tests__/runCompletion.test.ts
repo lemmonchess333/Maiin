@@ -73,6 +73,7 @@ const run = (extra: Partial<FinishedRun> = {}): FinishedRun => ({
   invalidReason: null,
   routeQuality: null,
   shoeId: "shoe-1",
+  bestEfforts: [{ distance: 5000, time: 1385, label: "5K" }],
   ...extra,
 });
 
@@ -121,6 +122,59 @@ describe("runDocument", () => {
       offPlan: false,
       scheduledRunId: null,
     });
+  });
+
+  it("saves a planned run done on the treadmill as the planned run, with the treadmill as where (Pgm8)", () => {
+    const planMetadata = {
+      planMode: "race_prep" as const,
+      planSource: "today_plan" as const,
+      plannedRunDayIndex: 3,
+      plannedTemplateId: "tempo_30",
+      plannedTemplateType: "tempo",
+      actualTemplateId: "tempo_30",
+      matchedPlanExact: true,
+      matchedPlanType: true,
+      offPlan: false,
+      planWeekIndex: 4,
+      planTotalWeeks: 12,
+      scheduledRunId: "rd-tempo",
+    };
+    const runConfig = {
+      activityType: "tempo",
+      place: "treadmill",
+      planMetadata,
+    } as FinishedRun["runConfig"];
+    expect(runDocument(run({ points: [], runConfig }), FINISH)).toMatchObject({
+      activityType: "tempo",
+      place: "treadmill",
+      matchedPlanType: true,
+      offPlan: false,
+      scheduledRunId: "rd-tempo",
+    });
+    // An outdoor run says so, rather than leaving the field out.
+    expect(runDocument(run(), FINISH).place).toBeNull();
+  });
+
+  it("keeps the finish screen's best efforts, which the thinned trace cannot find again", () => {
+    expect(runDocument(run(), FINISH).bestEfforts).toEqual([
+      { distance: 5000, time: 1385, label: "5K" },
+    ]);
+    // A run saved despite invalid figures names none, as its finish
+    // screen named none.
+    expect(
+      runDocument(run({ isInvalid: true, invalidReason: "too-fast" }), FINISH)
+        .bestEfforts
+    ).toEqual([]);
+  });
+
+  it("keeps what the session's work segments covered, and null for a run with none", () => {
+    // A tempo is judged by its blocks (`plannedRunVerdict`); the run keeps
+    // the figures it was judged on.
+    expect(
+      runDocument(run({ workPortion: { seconds: 1200, meters: 4000 } }))
+        .workPortion
+    ).toEqual({ seconds: 1200, meters: 4000 });
+    expect(runDocument(run()).workPortion).toBeNull();
   });
 
   it("thins the trace, trims the notes and names the shoe", () => {

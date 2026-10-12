@@ -19,6 +19,10 @@ interface CalorieRingProps {
   glowing?: boolean;
   /** Main ring redraw duration in seconds. Default 1.5. */
   ringDurationMs?: number;
+  /** Draw the ring and count the number up from zero when it mounts
+   *  (the default). False mounts it already drawn, at its figures —
+   *  Food's hero after a day switch, which is a browse, not a log. */
+  drawIn?: boolean;
   /**
    * "hero" is the Food page's ring. "compact" is the same ring at the size
    * Home's food card draws it: one ring, two sizes, so the two screens
@@ -65,10 +69,12 @@ export default function CalorieRing({
   trajectoryLabel,
   glowing = false,
   ringDurationMs = 1500,
+  drawIn = true,
   size = "hero",
 }: CalorieRingProps) {
   const compact = size === "compact";
   const reduce = useReducedMotion();
+  const settled = reduce || !drawIn;
 
   const hasTarget = target > 0;
   const remaining = hasTarget ? target - consumed : 0;
@@ -118,7 +124,9 @@ export default function CalorieRing({
       }
       className={cn(
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
-        compact ? "size-26 shrink-0" : "size-40 mx-auto"
+        // Never wider than its card: at larger text on the phone the
+        // ring's rem size outgrew it.
+        compact ? "w-26 max-w-full shrink-0" : "w-40 max-w-full mx-auto"
       )}
       style={{
         // Celebration glow — the ring's own orange, for the moment a day's
@@ -148,7 +156,7 @@ export default function CalorieRing({
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
               initial={{
-                strokeDashoffset: reduce ? strokeDashoffset : CIRCUMFERENCE,
+                strokeDashoffset: settled ? strokeDashoffset : CIRCUMFERENCE,
               }}
               animate={{ strokeDashoffset }}
               transition={{
@@ -172,7 +180,7 @@ export default function CalorieRing({
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
               initial={{
-                strokeDashoffset: reduce ? overlapOffset : CIRCUMFERENCE,
+                strokeDashoffset: settled ? overlapOffset : CIRCUMFERENCE,
               }}
               animate={{ strokeDashoffset: overlapOffset }}
               transition={{
@@ -194,7 +202,7 @@ export default function CalorieRing({
         aria-hidden="true"
       >
         {hasTarget ? (
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={drawIn}>
             <motion.div
               key={mode}
               initial={{ opacity: 0, y: 4 }}
@@ -215,6 +223,7 @@ export default function CalorieRing({
                   value={displayValue}
                   duration={ringDurationSec}
                   ease={RING_EASE}
+                  fromZero={drawIn}
                 />
               </p>
               {/* The label is the only mode indicator ("kcal left",

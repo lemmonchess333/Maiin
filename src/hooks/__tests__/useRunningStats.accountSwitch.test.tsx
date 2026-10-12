@@ -306,9 +306,7 @@ describe("running evidence authority", () => {
     const day = {
       exercises: [{ movementCategory: "knee_dominant" }],
     } as WorkoutDay;
-    const { result } = renderHook(() =>
-      useEasierTodayRecommendation(day, [], false)
-    );
+    const { result } = renderHook(() => useEasierTodayRecommendation(day));
     const initial = deliveries[0];
     for (const metadata of [
       { fromCache: true, hasPendingWrites: false },

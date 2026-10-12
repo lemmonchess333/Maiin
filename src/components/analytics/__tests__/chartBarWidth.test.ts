@@ -72,9 +72,11 @@ describe("Recharts bars — width is constrained", () => {
   it("finds the chart files (a scan that matches nothing proves nothing)", () => {
     // The sport pages' week bars are SVG, not Recharts
     // (`TrainingWeeksCard`), and set their own width from the bin count.
-    expect(files.length).toBeGreaterThanOrEqual(3);
+    // The run pages' splits bar chart is gone too: their splits are a
+    // table now (`components/run/SplitsTable`), its bars plain divs.
+    expect(files.length).toBeGreaterThanOrEqual(2);
     expect(files).toContain("components/progress/CalorieBalanceChart.tsx");
-    expect(files).toContain("components/analytics/SplitsBarChart.tsx");
+    expect(files).toContain("components/analytics/TrainingLoadCard.tsx");
   });
 
   it("excludes LoadingSkeleton's own non-Recharts Bar", () => {

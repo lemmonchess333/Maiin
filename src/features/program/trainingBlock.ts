@@ -158,8 +158,8 @@ export const FOCUS_LABELS: Record<PrimaryGoal, string> = {
   hypertrophy: "Build muscle",
   strength: "Get stronger",
   fat_loss: "Lose fat",
-  general: "Stay fit",
-  running: "Running support",
+  general: "General fitness",
+  running: "Support my running",
 };
 
 export function focusLabel(goal: PrimaryGoal): string {
@@ -314,6 +314,25 @@ export function blockWeekOf(
   if (!Number.isFinite(elapsed) || elapsed < 0) return null;
   const week = Math.floor(elapsed / 7) + 1;
   return week > block.durationWeeks ? null : week;
+}
+
+/** Weeks an "easing back in" block holds load before resuming progression. */
+export const EASING_HOLD_WEEKS = 2;
+
+/**
+ * Whether an easing block is holding progression this week.
+ *
+ * Deliberately NOT implemented by flipping `programState.settings
+ * .autoProgression`: that is a switch the user owns in Lift plan settings,
+ * and a block must not silently move someone's setting. Block-scoped and
+ * self-expiring — week 3 resumes normal progression with nothing to clear.
+ */
+export function isProgressionHeld(
+  block: ActiveTrainingBlock | undefined,
+  blockWeek: number | null
+): boolean {
+  if (!block || block.pace !== "easing") return false;
+  return blockWeek !== null && blockWeek <= EASING_HOLD_WEEKS;
 }
 
 /** True once `today` reaches the exclusive end — time for the review. */

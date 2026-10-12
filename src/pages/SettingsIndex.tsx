@@ -39,6 +39,7 @@ import SettingsAvatar from "@/components/settings/SettingsAvatar";
 import SettingsOfflineBanner from "@/components/settings/SettingsOfflineBanner";
 import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { haptic } from "@/lib/haptic";
+import { isRemotePushOffered } from "@/lib/pushNotifications";
 
 declare const __APP_VERSION__: string;
 
@@ -47,6 +48,10 @@ interface SectionRow {
   slug: string;
   label: string;
   description: string;
+  /** The description where the app offers no remote push (the native
+   *  app: see isRemotePushOffered), for a row whose description names
+   *  push. */
+  descriptionWithoutPush?: string;
   icon: LucideIcon;
   /** Icon colour for a row that belongs to a sport or to food. */
   tint?: string;
@@ -106,6 +111,7 @@ const GROUPS: SectionGroup[] = [
         slug: "notifications",
         label: "Notifications",
         description: "Reminders, push, activity",
+        descriptionWithoutPush: "Reminders, activity",
         icon: Bell,
         migrated: true,
       },
@@ -171,6 +177,8 @@ export default function SettingsIndex() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
+  // The native app has no push switch, so no row there says "push".
+  const pushOffered = isRemotePushOffered();
 
   const plan =
     tier === "pro" ? (
@@ -191,7 +199,7 @@ export default function SettingsIndex() {
           a button cannot sit inside a button. */}
       <motion.div
         variants={pageItemVariant}
-        className="rounded-xl bg-card flex items-center gap-3 pl-3"
+        className="rounded-xl bg-card flex flex-wrap items-center gap-x-3 pl-3"
       >
         {profile ? <SettingsAvatar profile={profile} /> : null}
         <button
@@ -200,13 +208,16 @@ export default function SettingsIndex() {
             haptic();
             navigate("/settings/profile");
           }}
-          className="flex-1 min-w-0 min-h-[80px] pr-4 py-3 flex items-center gap-3 text-left rounded-r-xl hover:bg-muted/30 motion-safe:transition-colors"
+          className="flex-1 min-w-[min(100%,9em)] min-h-[80px] pr-4 py-3 flex items-center gap-3 text-left rounded-r-xl hover:bg-muted/30 motion-safe:transition-colors"
         >
+          {/* Two lines each before they cut, and under the photo when
+              9em will not fit beside it: at larger text one line beside
+              the photo read "E2…" and "e2e-…". */}
           <span className="flex-1 min-w-0">
-            <span className="block text-body font-bold text-foreground truncate">
+            <span className="block text-body font-bold text-foreground line-clamp-2 break-words">
               {profile?.displayName || "Your profile"}
             </span>
-            <span className="block text-xs text-muted-foreground truncate">
+            <span className="block text-xs text-muted-foreground line-clamp-2 [overflow-wrap:anywhere]">
               {user?.email ?? "Name, photo, body metrics"}
             </span>
           </span>
@@ -224,7 +235,10 @@ export default function SettingsIndex() {
               <SettingsRow
                 key={row.slug}
                 label={row.label}
-                description={row.description}
+                description={
+                  (!pushOffered && row.descriptionWithoutPush) ||
+                  row.description
+                }
                 icon={row.icon}
                 iconClassName={row.tint}
                 value={row.slug === "subscription" ? plan : undefined}

@@ -56,6 +56,10 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const restriction = vi.hoisted(() => ({ isRestricted: false, loading: false }));
+vi.mock("@/hooks/useRestrictedStatus", () => ({
+  useRestrictedStatus: () => restriction,
+}));
 vi.mock("@/lib/sessionPost", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/sessionPost")>()),
   withdrawSessionPost: (...args: unknown[]) => h.withdraw(...args),
@@ -102,6 +106,8 @@ beforeEach(() => {
   resetFirestore();
   localStorage.clear();
   setOnline(true);
+  restriction.isRestricted = false;
+  restriction.loading = false;
   h.withdraw.mockReset();
   h.user = {
     uid: "u1",
@@ -461,5 +467,32 @@ describe("screen readers", () => {
       expect(status).toHaveTextContent("Shared with your followers")
     );
     expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+});
+
+describe("a restricted account (S4e)", () => {
+  it("shares nothing automatically, and says why in the row's place", async () => {
+    saved({ run: "followers", workout: "followers" });
+    restriction.isRestricted = true;
+    const a = action("workout");
+    render(<SessionShareRow action={a} />);
+    expect(
+      await screen.findByText("Your account is restricted")
+    ).toBeInTheDocument();
+    expect(a.post).not.toHaveBeenCalled();
+    expect(screen.queryByRole("heading", QUESTION)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Share this session" })
+    ).toBeNull();
+  });
+
+  it("posts nothing while the restriction is still being read", async () => {
+    saved({ run: "public", workout: "public" });
+    restriction.loading = true;
+    const a = action("run");
+    const { container } = render(<SessionShareRow action={a} />);
+    await waitFor(() => expect(h.refresh).toHaveBeenCalled());
+    expect(container).toBeEmptyDOMElement();
+    expect(a.post).not.toHaveBeenCalled();
   });
 });

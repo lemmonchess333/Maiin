@@ -14,7 +14,6 @@ import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
 // iPhone-15-ish portrait. Overrides the auth-emulator project's desktop
 // viewport while keeping its bypassCSP (needed for the emulator).
@@ -35,7 +34,6 @@ test.describe("app screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    await suppressCoachmarks(page);
     await page.addInitScript(() => {
       // The emulator SDK injects a fixed "Running in emulator mode" banner
       // that overlays the bottom nav — it intercepted pointer events in past

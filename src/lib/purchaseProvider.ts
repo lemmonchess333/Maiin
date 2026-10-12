@@ -12,8 +12,13 @@
 import { Capacitor } from "@capacitor/core";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
-import type { PlanId } from "@/lib/proPlans";
-import { isRevenueCatEnabled, rcPurchase, rcRestore } from "@/lib/revenuecat";
+import type { PlanId, StorePrice } from "@/lib/proPlans";
+import {
+  isRevenueCatEnabled,
+  rcGetLocalizedPrices,
+  rcPurchase,
+  rcRestore,
+} from "@/lib/revenuecat";
 
 export type { PlanId };
 
@@ -66,16 +71,18 @@ export interface PurchaseOptions {
   withTrial?: boolean;
 }
 
-// Detect if running inside a native iOS Capacitor shell.
-// Uses Capacitor.isNativePlatform() — the old `!!window.Capacitor`
-// check was truthy on web too, so mobile-web Safari on an iPhone (which
-// matches the UA test) was wrongly treated as native iOS and routed to
-// Apple IAP instead of Stripe.
+// True inside the native iOS Capacitor shell, on an iPhone or an iPad.
+//
+// Asks Capacitor which shell the bundle runs in, never the user agent. An
+// iPad's WKWebView reports a desktop Mac user agent (Capacitor's default
+// content mode, "recommended", is desktop-class on iPad), so the old
+// `/iPhone|iPad|iPod/` test sent every iPad purchase down the Stripe path,
+// hid Restore and printed the web's renewal wording — on the device App
+// Review also tests the iPhone build on. `getPlatform()` is "ios" exactly
+// when the native iOS bridge is present, so mobile Safari on an iPhone is
+// still the web (the case the older `!!window.Capacitor` check got wrong).
 export function isNativeIOS(): boolean {
-  return (
-    Capacitor.isNativePlatform() &&
-    /iPhone|iPad|iPod/i.test(navigator.userAgent)
-  );
+  return Capacitor.getPlatform() === "ios";
 }
 
 // Apple IAP product IDs — configure these in App Store Connect
@@ -162,7 +169,8 @@ async function purchaseWithStripe(
  * Pro unlocks the moment the sheet dismisses.
  */
 async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
-  const outcome = await rcPurchase(APPLE_PRODUCT_IDS[plan]);
+  const productId = APPLE_PRODUCT_IDS[plan];
+  const outcome = await rcPurchase(productId);
   if (outcome.userCancelled) {
     return { success: false, error: "Purchase cancelled." };
   }
@@ -172,20 +180,55 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
       error: outcome.error ?? "Purchase failed. Try again.",
     };
   }
-  await syncEntitlementBestEffort();
+  await syncEntitlementBestEffort(
+    outcome.price ? reportedPrice(productId, outcome.price) : undefined
+  );
   return { success: true };
+}
+
+/** The price the server keeps for the trial reminder's email
+ *  (functions/lib/trialReminder.js readReportedPrice). */
+interface ReportedPrice {
+  productId: string;
+  amount: number;
+  currencyCode: string;
+  display: string;
+}
+
+function reportedPrice(productId: string, price: StorePrice): ReportedPrice {
+  return {
+    productId,
+    amount: price.price,
+    currencyCode: price.currencyCode,
+    display: price.priceString,
+  };
 }
 
 /** Nudge the backend to pull the fresh entitlement from RC and write the
  *  profile fields immediately. MUST never fail a successful purchase — the
- *  webhook lands the same write within seconds regardless. */
-async function syncEntitlementBestEffort(): Promise<void> {
+ *  webhook lands the same write within seconds regardless. `price` is what
+ *  Apple's sheet showed, for a trial's reminder email. */
+async function syncEntitlementBestEffort(price?: ReportedPrice): Promise<void> {
   try {
     const sync = httpsCallable(functions, "syncRevenueCatEntitlement");
-    await sync({});
+    await sync(price ? { price } : {});
   } catch {
     /* tolerated: webhook is the source of truth */
   }
+}
+
+/**
+ * Report the store's price for a trial whose record has none: the sync
+ * after the purchase never landed (the webhook recorded the trial without
+ * it). Best effort, like the sync; returns whether a price was sent.
+ */
+export async function reportTrialPrice(productId: string): Promise<boolean> {
+  if (!isNativeIOS() || !isRevenueCatEnabled()) return false;
+  const prices = await rcGetLocalizedPrices();
+  const price = prices?.[productId];
+  if (!price) return false;
+  await syncEntitlementBestEffort(reportedPrice(productId, price));
+  return true;
 }
 
 /**

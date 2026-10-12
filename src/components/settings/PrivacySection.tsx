@@ -13,6 +13,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { AI_SWITCH_DESCRIPTION } from "@/lib/aiConsent";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ShareDefaults } from "@/lib/shareDefaults";
 import type { PrivacyZone } from "@/lib/privacyZones";
@@ -21,8 +22,7 @@ import type { User } from "firebase/auth";
 interface PrivacySectionProps {
   user: User | null;
   /** Subset of the profile fields read by this section. Required for
-   *  F1's aiAnalysisEnabled toggle which renders the switch in its
-   *  current state. */
+   *  the aiAnalysisEnabled switch, which shows on only for `true`. */
   profile: Pick<
     UserProfile,
     "aiAnalysisEnabled" | "hideSharedRouteEnds" | "shareDefaults"
@@ -85,31 +85,28 @@ export default function PrivacySection({
           updateShareDefaults={updateShareDefaults}
         />
 
-        {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
-          false = user opted out. Toggling off hides the AI CTAs and
-          refuses the underlying Gemini calls (gate lives downstream
-          in useFoodAnalysis — wired separately so the call-site
-          changes can be reviewed independently). */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-          <div className="flex-1 mr-3">
+        {/* AI food analysis — permission before food goes to Google (App
+            Review 5.1.2(i); the rule is in src/lib/aiConsent.ts). On only
+            once the person has said yes: undefined means not asked yet,
+            and the first scan or Pro typed meal asks (AiConsentSheet).
+            Turning it on here IS that yes, which is why the line under it
+            says what is sent and to whom. Off writes false: nothing more
+            is sent, and the server refuses it as well. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+          <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               AI food analysis
             </p>
             <p className="text-xs text-muted-foreground">
-              Allow Gemini to analyse food photos and refine text entries
+              {AI_SWITCH_DESCRIPTION}
             </p>
           </div>
           <Toggle
-            checked={profile?.aiAnalysisEnabled !== false}
+            checked={profile?.aiAnalysisEnabled === true}
             label="Toggle AI food analysis"
             onChange={async () => {
               haptic("light");
-              // The field is undefined-default-on: treat any non-false
-              // current value as "currently enabled" and flip to false.
-              // Subsequent flips toggle between true / false explicitly
-              // so the user can re-opt-in via the same control.
-              const currentlyEnabled = profile?.aiAnalysisEnabled !== false;
-              const next = !currentlyEnabled;
+              const next = profile?.aiAnalysisEnabled !== true;
               trackSettingsEvent("settings_toggle_changed", {
                 toggle: "ai_analysis_enabled",
                 value: next,
@@ -121,8 +118,8 @@ export default function PrivacySection({
 
         {/* Shared-route end clipping — default-on home-location protection,
             independent of (and composed with) explicit Privacy zones below. */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-          <div className="flex-1 mr-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+          <div className="min-w-[min(100%,8em)] flex-1">
             <p className="text-sm font-medium text-foreground">
               Hide route start &amp; end on shared runs
             </p>
@@ -184,19 +181,22 @@ export default function PrivacySection({
             </div>
           ))}
 
-          <div className="flex gap-2">
+          {/* The radius goes under the name once the name field would be
+             narrower than 8em (double text): a text field's natural width
+             alone had pushed the radius off the screen at larger text. */}
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               aria-label="Privacy zone name"
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
-              className="flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="min-w-[min(100%,8em)] flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
             />
             <select
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="min-h-11 max-w-full px-3 rounded-lg bg-card border border-border text-sm"
             >
               <option value={200}>200 m</option>
               <option value={500}>500 m</option>
@@ -240,10 +240,12 @@ export default function PrivacySection({
 
         {/* Blocked users (#25) */}
         <div className="p-4 rounded-lg bg-muted space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="size-4 text-primary" />
-              <div>
+          {/* "Show" drops under the heading, at the right, rather than
+              past the card at double text on a 320px phone. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex min-w-[min(100%,8em)] flex-1 items-center gap-2">
+              <Shield className="size-4 shrink-0 text-primary" />
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
                   Blocked users
                 </p>
@@ -256,6 +258,7 @@ export default function PrivacySection({
               <Button
                 variant="outline"
                 size="sm"
+                className="ml-auto"
                 loading={blockedUsersLoading}
                 onClick={async () => {
                   if (!user) return;

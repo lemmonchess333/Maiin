@@ -24,8 +24,9 @@ import EmptyState from "@/components/ui/EmptyState";
  * says so explicitly, so the card doesn't pretend to follow the range pills.
  *
  * Cold start is a designed state, not a hidden one: without a benchmark the
- * card explains the two unlock paths (auto-derive after 3 outdoor runs — the
- * locked §10 silent-derive — or set a race time in Settings → Run plan).
+ * card explains the two unlock paths (the app derives one from a race, a time
+ * trial or a tempo, the locked §10 silent-derive as Pgm8 R1 narrowed it, or
+ * set a race time in Settings → Run plan).
  *
  * That destination is `/settings/run-plan` because `RunFitnessSection` — the
  * only writer of `profile.runFitness`, which is the field this card reads —
@@ -45,8 +46,11 @@ const ROWS: { key: RaceDistanceKey; label: string; km: number }[] = [
   { key: "marathon", label: "Marathon", km: 42.195 },
 ];
 
+/** How the benchmark was set. A derived one shown here is a race or time
+ *  trial: one from a tempo stores no race result (Pgm8 R1), so the line
+ *  reads "Based on your current fitness level" instead. */
 const SOURCE_LABEL: Record<string, string> = {
-  derived: "derived from your best run",
+  derived: "from a race or time trial you ran",
   manual: "set by you",
   race: "from a race result",
   estimate: "estimated",
@@ -65,8 +69,8 @@ export default function RacePredictionsCard() {
           compact
           icon={Timer}
           accent={THEME.running}
-          headline="Race predictions appear after a few runs"
-          sub="Log three outdoor runs and Tropos estimates your fitness level — or set a recent race time yourself."
+          headline="Race predictions appear after a race or tempo"
+          sub="Run a race, time trial or tempo outdoors and Tropos estimates your fitness from it, or set a recent race time yourself."
           action={{
             label: "Set a race time",
             href: "/settings/run-plan",
@@ -87,19 +91,23 @@ export default function RacePredictionsCard() {
         <h3 className="text-sm font-bold text-foreground">Race predictions</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {ROWS.map(({ key, label, km }) => (
-          <div key={key} className="rounded-xl bg-muted p-3">
-            <SectionLabel>{label}</SectionLabel>
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
-              {finishTimeLabel(times[key])}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono tabular-nums">
-              {paceMinSec(Math.round(times[key] / km), unit)}{" "}
-              {paceUnitLabel(unit)}
-            </p>
-          </div>
-        ))}
+      {/* Two across while 13em of card allows, one per row below that:
+          at larger text "4:16:09" no longer fit half the card. */}
+      <div className="@container">
+        <div className="grid grid-cols-2 @max-[13em]:grid-cols-1 gap-2">
+          {ROWS.map(({ key, label, km }) => (
+            <div key={key} className="rounded-xl bg-muted p-3">
+              <SectionLabel>{label}</SectionLabel>
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
+                {finishTimeLabel(times[key])}
+              </p>
+              <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                {paceMinSec(Math.round(times[key] / km), unit)}{" "}
+                {paceUnitLabel(unit)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground mt-3">

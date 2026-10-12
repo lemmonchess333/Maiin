@@ -34,6 +34,7 @@ import {
   subscribeQueuedWrites,
 } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
+import { clampFoodName } from "@/lib/mealEntry";
 
 export interface MealItem {
   name: string;
@@ -68,7 +69,7 @@ export interface Meal {
    *  written by the pre-Food9 background upload. NOTHING WRITES THIS ANY
    *  MORE: captures now live on the device (`src/lib/foodPhotoStore.ts`)
    *  and no photo field is persisted at all. It stays parsed so docs
-   *  written before the swap keep rendering their photo card, and it
+   *  written before the swap keep rendering their photo, and it
    *  drains on its own as those meals fall out of the diary's 90-day
    *  tap-back window. Do not add new writers.
    *
@@ -453,6 +454,9 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
         );
         tx.update(ref, {
           ...updates,
+          ...(typeof updates.foodName === "string"
+            ? { foodName: clampFoodName(updates.foodName) }
+            : {}),
           updatedAt: serverTimestamp(),
           revisionCount: currentRevision + 1,
           userEditCount: currentUserEdit + 1,

@@ -1,7 +1,13 @@
-import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
+import { stripUndefined } from "@/lib/firestoreGuards";
 import { invalidateLiftRecords } from "@/lib/liftRecordsStore";
+import {
+  planWithoutSession,
+  type SavedProgrammeCompletion,
+} from "@/lib/workoutCompletion";
+import type { ProgramState } from "@/features/program/programTypes";
 import {
   pendingDocumentWrites,
   flushQueue,
@@ -33,6 +39,12 @@ import { logger } from "@/lib/logger";
  * remain: a mis-logged best must not stay the best to beat. The map is a
  * cache only this app writes (`liftRecordsStore.ts`), so its repair is
  * here rather than in the trigger.
+ *
+ * And it puts the plan back (Lift4 (14), ADR-0012's fifth amendment):
+ * when nothing has moved on since the session (the check a correction
+ * makes, `sessionStillInPlan`), the lifts it stepped return to the weights
+ * and reps they had and its day is no longer done, in the same
+ * transaction as the delete.
  *
  * `deleteDoc` is raw on purpose. The `firestoreWrite` guards exist to
  * strip `undefined` (which Firestore rejects) and to survive offline-queue
@@ -101,10 +113,27 @@ export async function deleteLoggedSession({
     await deleteDocGuarded(session);
     return;
   }
-  const batch = writeBatch(db);
-  batch.delete(session);
-  invalidateLiftRecords(batch, uid);
-  await batch.commit();
+  const programRef = doc(db, "users", uid, "programState", "current");
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(session);
+    const saved = snapshot.exists()
+      ? (snapshot.data() as { programmeCompletion?: SavedProgrammeCompletion })
+          .programmeCompletion
+      : undefined;
+    if (saved) {
+      const program = await transaction.get(programRef);
+      const restored = program.exists()
+        ? planWithoutSession(program.data() as ProgramState, saved, id)
+        : null;
+      if (restored)
+        transaction.set(
+          programRef,
+          stripUndefined({ ...restored, updatedAt: Date.now() })
+        );
+    }
+    transaction.delete(session);
+    invalidateLiftRecords(transaction, uid);
+  });
 }
 
 /** Where a feed post came from — carried on queued shares so the drain

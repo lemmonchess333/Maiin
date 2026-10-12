@@ -230,8 +230,8 @@ describe("beginner → intermediate (linear progress exhausted)", () => {
   it("misses WITHOUT a reset are still not exhaustion — reset must be tried first", () => {
     // Grinding and missing, but no back-off ever happened: Rippetoe's
     // protocol says reset ~10% and rebuild BEFORE concluding the phase is
-    // over. The engine's own backoff will produce the dip; until it does,
-    // this is a plateau being worked, not a graduation.
+    // over. A calendar deload or a lighter session will produce the dip;
+    // until one does, this is a plateau being worked, not a graduation.
     const missesNoReset = STALL_WITH_RESET.map((r) => ({
       ...r,
       weight: 60, // flatten the dip away
@@ -453,14 +453,13 @@ describe("boundaries the module promises", () => {
     ).toBeNull();
   });
 
-  it("unknown/legacy stored values coerce to intermediate behaviour", () => {
-    // toExperience coerces garbage to "intermediate", whose only suggestion
-    // direction is the novice window.
-    const out = detectExperienceSuggestion(
-      week(main("bench-press", CLIMB), main("squat", CLIMB)),
-      "Novice"
-    );
-    expect(out?.to).toBe("beginner");
+  it("unknown/legacy stored values coerce to beginner behaviour", () => {
+    // toExperience coerces garbage to "beginner" (Lift4 (5)): lifts still
+    // climbing session to session are a beginner's, so nothing is suggested,
+    // where the old intermediate coercion offered "beginner" here.
+    const climbing = week(main("bench-press", CLIMB), main("squat", CLIMB));
+    expect(detectExperienceSuggestion(climbing, "Novice")).toBeNull();
+    expect(detectExperienceSuggestion(climbing, "beginner")).toBeNull();
   });
 
   it("suggestionSignature is stable per (to, reason)", () => {

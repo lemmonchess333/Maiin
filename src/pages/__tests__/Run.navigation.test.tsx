@@ -13,6 +13,10 @@ import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { uid: "navigation-test", runMode: "freeform" } }),
+  // The first-run hint's seen flags, and its run count (read only while
+  // the hint is owed, which it never is here: no walk has been seen).
+  useUidForStorageKey: () => "navigation-test",
+  useUid: () => "navigation-test",
 }));
 vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => ({ programState: null, loading: false }),
@@ -42,7 +46,12 @@ vi.mock("@/hooks/useHeartRate", () => ({
 }));
 vi.mock("@/hooks/useAudioCues", () => ({ useAudioCues: () => ({}) }));
 vi.mock("@/hooks/useSessionPlayer", () => ({
-  useSessionPlayer: () => ({ state: { index: 0 } }),
+  useSessionPlayer: () => ({
+    state: { index: 0 },
+    segments: [],
+    current: null,
+    workPortion: () => null,
+  }),
 }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/run/RouteSetupSection", () => ({ default: () => null }));

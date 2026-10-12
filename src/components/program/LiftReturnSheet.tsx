@@ -1,18 +1,15 @@
 /**
- * The lifter's welcome back.
+ * The lifter's welcome back, and the one way back in after a break
+ * (Lift4 (11)).
  *
- * The run side has greeted a returning runner since Run15; a lifter who
- * came back after three weeks got nothing at all, while the programme
- * carried on prescribing the loads of someone who had never stopped.
- *
- * Two rules shape what this sheet is allowed to be.
- *
- * It does not MUTATE. The Momentum check-in settled that a response maps
- * to a navigation and never to a plan change, on the reasoning that a plan
- * should not swing on one answer; an absence is the same case, and a sheet
- * that quietly halved next week's loads because someone was on holiday
- * would be worse than saying nothing. Both choices here either dismiss or
- * route.
+ * Offered from two weeks away (`assessLiftReturn`). It asks one thing: ease
+ * back in, or keep the old weights. Easing back is the only plan change
+ * here, and it happens on the person's yes: the loads come down 10%, or 20%
+ * after more than eight weeks away, this week has one set fewer (unless it
+ * is a lighter week, which has fewer already), and each lift climbs back a
+ * step a session to where it was (`easeBackIn`). From
+ * three weeks away it is the choice put first; under that, keeping the
+ * weights is. Either way the sheet says what will happen before it does.
  *
  * It does not SCOLD. The register is `FellBehindSheet`'s "Welcome back",
  * and the body states the gap as a fact without a verdict on it. There is
@@ -24,7 +21,6 @@ import { useEffect, useRef } from "react";
 import { Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
-import type { LayoffClass } from "@/features/program/layoffDetection";
 import {
   track as trackLifecycleEvent,
   type ReturnChoice,
@@ -32,29 +28,34 @@ import {
 
 interface LiftReturnSheetProps {
   open: boolean;
-  /** Dismiss without routing. Persists so this absence is not re-raised. */
+  /** Close without changing the plan. Persists so this absence is not
+   *  raised again. */
   onClose: () => void;
-  /** Route to the programme, where the easier-session option already lives. */
-  onGoToProgramme: () => void;
+  /** Ease the plan back (`easeBackIn`). Throws when it couldn't, which
+   *  keeps the sheet open for another try. */
+  onEaseBack: () => Promise<void>;
   /** Whole days since the last session with work in it. */
   daysAway: number;
-  /** `gap` or `detrained` — `none` never reaches this component. */
-  layoff: LayoffClass;
+  /** Whether "Ease back in" is the choice put first: three weeks or more. */
+  easeBackFirst: boolean;
+  /** What easing back takes off the loads: 0.1 or 0.2. */
+  easeBackShare: number;
 }
 
 export default function LiftReturnSheet({
   open,
   onClose,
-  onGoToProgramme,
+  onEaseBack,
   daysAway,
-  layoff,
+  easeBackFirst,
+  easeBackShare,
 }: LiftReturnSheetProps) {
-  const detrained = layoff === "detrained";
+  const percent = Math.round(easeBackShare * 100);
 
   // Reported at most once per opening, and re-armed per opening: a ref that
-  // survived one would silence every opening after the first, and an
-  // outside-tap close after a button has run would otherwise land a second
-  // answer on top of the real one.
+  // survived one would silence every opening after the first, and the close
+  // that follows a choice would otherwise land a second answer on top of
+  // the real one.
   const choiceReported = useRef(false);
   useEffect(() => {
     if (open) choiceReported.current = false;
@@ -65,31 +66,27 @@ export default function LiftReturnSheet({
     trackLifecycleEvent("return_choice", { surface: "lift-return", choice });
   };
 
-  const choices: Choice[] = [
-    {
-      id: "pick-up",
-      label: "Pick up where I left off",
-      sublabel: "Your plan is unchanged",
-      variant: "primary" as const,
-      onSelect: async () => {
-        reportChoice("acknowledge");
-        onClose();
-      },
+  // The sheet closes itself once a choice resolves (`ChoiceSheet`).
+  const easeBack: Choice = {
+    id: "ease-back",
+    label: "Ease back in",
+    sublabel: `${percent}% lighter, then back up a step each session`,
+    pendingLabel: "Easing back…",
+    variant: easeBackFirst ? "primary" : "secondary",
+    onSelect: async () => {
+      await onEaseBack();
+      reportChoice("ease_back");
     },
-    {
-      id: "ease-back",
-      label: "Start easier →",
-      // Names the real mechanism rather than promising a plan rewrite this
-      // sheet is not allowed to make: "Easier today" already exists on the
-      // session chooser and drops a set and the load on the day.
-      sublabel: "Choose an easier session on your next lift",
-      variant: "secondary" as const,
-      onSelect: async () => {
-        reportChoice("shift");
-        onGoToProgramme();
-      },
+  };
+  const keep: Choice = {
+    id: "keep",
+    label: "Keep my old weights",
+    sublabel: "Your plan is unchanged",
+    variant: easeBackFirst ? "secondary" : "primary",
+    onSelect: async () => {
+      reportChoice("acknowledge");
     },
-  ];
+  };
 
   return (
     <ChoiceSheet
@@ -101,7 +98,7 @@ export default function LiftReturnSheet({
       title="Welcome back"
       description="Pick how you want to start again"
       hideHeader
-      choices={choices}
+      choices={easeBackFirst ? [easeBack, keep] : [keep, easeBack]}
       logTag="liftReturn"
     >
       <div className="flex items-center gap-3">
@@ -111,19 +108,18 @@ export default function LiftReturnSheet({
         <div>
           <SectionLabel>Welcome back</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
-            {/* The gap as a fact. Weeks past a fortnight because "24 days"
-                invites arithmetic where "3 weeks" reads at a glance. */}
-            {daysAway >= 14
-              ? `It's been about ${Math.round(daysAway / 7)} weeks`
-              : `It's been ${daysAway} days`}
+            {/* The gap as a fact, in weeks: "24 days" invites arithmetic
+                where "3 weeks" reads at a glance. */}
+            {`It's been about ${Math.round(daysAway / 7)} weeks`}
           </p>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {detrained
-          ? "Your plan still has the loads you left on. Starting a little lighter is the usual way back, and progression picks up from what you actually lift."
-          : "Your plan is where you left it. Pick up as planned, or start easier and let progression catch up."}
+        {easeBackFirst
+          ? "Your plan still has the weights you left on. "
+          : "Your plan is where you left it. "}
+        {`Easing back takes ${percent}% off each lift and a set off this week's sessions, then each lift climbs back a step a session to where it was.`}
       </p>
     </ChoiceSheet>
   );

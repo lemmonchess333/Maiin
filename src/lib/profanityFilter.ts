@@ -39,6 +39,18 @@ export function containsProfanity(text: unknown): boolean {
 }
 
 /**
+ * What a person reads when public text they wrote is refused. The server
+ * refuses with the same sentences (REFUSALS in
+ * functions/lib/objectionableText.js), so a comment or a name reads the same
+ * whether the app caught it first or the server did. Pinned equal by
+ * profanityFilterMirror.cross.test.ts.
+ */
+export const OBJECTIONABLE_COMMENT_MESSAGE =
+  "This comment contains objectionable language. Reword it and try again.";
+export const OBJECTIONABLE_NAME_MESSAGE =
+  "This name contains objectionable language. Choose a different one.";
+
+/**
  * Returns a cleaned version of `text` with blocked words replaced
  * by asterisks. Used by the auto-clean fallback path on the
  * server when a write would otherwise be rejected — exposed here

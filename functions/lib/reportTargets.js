@@ -17,11 +17,30 @@
  * all reads before the transaction's writes).
  */
 
+/* Ids on the wire:
+ *   activity            → "<activityId>"
+ *   comment             → "<activityId>:<commentId>"
+ *   user                → "<uid>"
+ *   space_post          → "<spaceId>:<postId>"
+ *   space_post_comment  → "<spaceId>:<postId>:<commentId>"
+ * The client builds them in src/lib/reportTargetIds.ts, and
+ * src/lib/__tests__/reportTargets.cross.test.ts feeds what it builds
+ * through normalizeCreateReportInput, so the two cannot drift apart. */
 const TARGET_TYPES = Object.freeze([
   "activity",
   "comment",
   "user",
   "space_post",
+  "space_post_comment",
+]);
+
+/* What "Hide content" can act on in the moderation queue. A user report
+ * has no content of its own; its action is Restrict user. */
+const HIDEABLE_TARGET_TYPES = Object.freeze([
+  "activity",
+  "comment",
+  "space_post",
+  "space_post_comment",
 ]);
 
 const REPORT_CATEGORIES = Object.freeze([
@@ -79,17 +98,14 @@ function assertDocumentId(value) {
   return value;
 }
 
-function parseScopedTargetId(value) {
+/** Splits a colon-joined id into exactly `segments` document ids. */
+function parseScopedTargetId(value, segments) {
   if (typeof value !== "string" || value !== value.trim()) {
     fail("invalid-report-target");
   }
   const parts = value.split(":");
-  if (parts.length !== 2) fail("invalid-report-target");
-  return {
-    targetId: value,
-    scopeId: assertDocumentId(parts[0]),
-    documentId: assertDocumentId(parts[1]),
-  };
+  if (parts.length !== segments) fail("invalid-report-target");
+  return parts.map(assertDocumentId);
 }
 
 function normalizeTarget(targetType, targetId) {
@@ -105,22 +121,18 @@ function normalizeTarget(targetType, targetId) {
     return { targetType, targetId: uid, uid };
   }
 
-  const scoped = parseScopedTargetId(targetId);
   if (targetType === "comment") {
-    return {
-      targetType,
-      targetId: scoped.targetId,
-      activityId: scoped.scopeId,
-      commentId: scoped.documentId,
-    };
+    const [activityId, commentId] = parseScopedTargetId(targetId, 2);
+    return { targetType, targetId, activityId, commentId };
   }
 
-  return {
-    targetType,
-    targetId: scoped.targetId,
-    spaceId: scoped.scopeId,
-    postId: scoped.documentId,
-  };
+  if (targetType === "space_post_comment") {
+    const [spaceId, postId, commentId] = parseScopedTargetId(targetId, 3);
+    return { targetType, targetId, spaceId, postId, commentId };
+  }
+
+  const [spaceId, postId] = parseScopedTargetId(targetId, 2);
+  return { targetType, targetId, spaceId, postId };
 }
 
 function optionalText(value, maxLength) {
@@ -269,10 +281,8 @@ async function resolveReportTarget({
       "comments/" + target.activityId + "/items/" + target.commentId
     );
     const data = await readExisting(reader, ref);
-    const activity = await readExisting(
-      reader,
-      firestore.doc("activities/" + target.activityId)
-    );
+    const activityRef = firestore.doc("activities/" + target.activityId);
+    const activity = await readExisting(reader, activityRef);
     await assertReporterCanSeeActivity({
       firestore,
       reader,
@@ -285,11 +295,48 @@ async function resolveReportTarget({
       targetId: target.targetId,
       targetUid: uid,
       targetRef: ref,
+      // The document holding the comment's server-owned commentCount.
+      parentRef: activityRef,
       preview: {
         authorId: uid,
         authorName: previewString(data.authorName),
         text: previewString(data.text),
         activityId: target.activityId,
+      },
+    };
+  }
+
+  if (target.targetType === "space_post_comment") {
+    // Space posts and their comments are readable by any signed-in user
+    // (firestore.rules), so there is no reporter visibility gate here, as
+    // for space_post. The post must still exist: a comment under a deleted
+    // post is not shown anywhere, and its commentCount has nowhere to live.
+    const postRef = firestore.doc(
+      "spaces/" + target.spaceId + "/posts/" + target.postId
+    );
+    const ref = firestore.doc(
+      "spaces/" +
+        target.spaceId +
+        "/posts/" +
+        target.postId +
+        "/comments/" +
+        target.commentId
+    );
+    const data = await readExisting(reader, ref);
+    await readExisting(reader, postRef);
+    const uid = targetUid(data.authorId);
+    return {
+      targetType: target.targetType,
+      targetId: target.targetId,
+      targetUid: uid,
+      targetRef: ref,
+      parentRef: postRef,
+      preview: {
+        authorId: uid,
+        authorName: previewString(data.authorName),
+        text: previewString(data.text),
+        spaceId: target.spaceId,
+        postId: target.postId,
       },
     };
   }
@@ -329,11 +376,59 @@ async function resolveReportTarget({
   };
 }
 
+/**
+ * Queue the writes that take a resolved target out of the app, inside the
+ * resolveReport transaction (after all of its reads). Returns what was done.
+ *
+ *   activity            → flagged and made private: the author keeps it,
+ *                         nobody else can read it (firestore.rules).
+ *   comment,
+ *   space_post_comment  → deleted, and the parent's server-owned
+ *                         commentCount decremented in the same commit.
+ *   space_post          → deleted. Any signed-in user can read a space
+ *                         post, so there is no visibility to turn off. Its
+ *                         likes and comments subcollections are removed by
+ *                         the caller after the commit (recursiveDelete
+ *                         cannot run inside a transaction).
+ *
+ * Comments and posts are deleted rather than flagged because a flag would
+ * hide nothing: the rules let every signed-in user read them, and rules
+ * cannot filter a list query.
+ */
+function queueContentHide({
+  transaction,
+  target,
+  adminUid,
+  serverTimestamp,
+  increment,
+}) {
+  if (!HIDEABLE_TARGET_TYPES.includes(target.targetType)) {
+    throw new TypeError("not a hideable target: " + target.targetType);
+  }
+  if (target.targetType === "activity") {
+    transaction.update(target.targetRef, {
+      flagged: true,
+      flaggedBy: "admin",
+      flaggedByAdminUid: adminUid,
+      flaggedAt: serverTimestamp(),
+      visibility: "private",
+    });
+    return "flagged-private";
+  }
+  transaction.delete(target.targetRef);
+  if (target.parentRef) {
+    transaction.update(target.parentRef, { commentCount: increment(-1) });
+  }
+  return "deleted";
+}
+
 module.exports = {
   TARGET_TYPES,
+  HIDEABLE_TARGET_TYPES,
   REPORT_CATEGORIES,
   ReportTargetError,
   isReportTargetError,
   normalizeCreateReportInput,
   resolveReportTarget,
+  queueContentHide,
 };

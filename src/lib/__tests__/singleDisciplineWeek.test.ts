@@ -1,7 +1,7 @@
 /**
  * What the PI says about a week with only ONE discipline in it.
  *
- * Not a hypothetical segment. CONTEXT.md settles that a permanently
+ * Not a hypothetical segment. GLOSSARY.md settles that a permanently
  * run-only USER is a chosen non-goal ("Tropos is a hybrid app… revisit
  * only if Tropos adds a run-only user segment"). This is a different
  * thing: a supported hybrid user having a single-discipline WEEK. A
@@ -78,7 +78,7 @@ import type {
 } from "../performanceTypes";
 
 /* Both copies, with the SERVER first: it is the authoritative one — the
-   weekly rollup persists the PI users see, and CONTEXT.md records that the
+   weekly rollup persists the PI users see, and GLOSSARY.md records that the
    client engine is an `@oracle` with zero production consumers. */
 const require = createRequire(import.meta.url);
 const scoreJs = require("../../../functions/lib/perfScoring")

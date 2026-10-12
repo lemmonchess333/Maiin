@@ -14,6 +14,7 @@
  * that into a hard error for CI lanes.
  */
 import { SPACE_DEFS } from "./src/features/spaces/spaceDefs";
+import { DISPLAY_NAME_MAX } from "./src/lib/displayName";
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
@@ -377,6 +378,24 @@ suite("firestore.rules — community spaces", () => {
           doc(db(MEMBER, {}), `spaces/${SPACE}/posts/p1`),
           validPost(MEMBER)
         )
+      );
+    });
+
+    it("a member's name is capped at the display-name limit", async () => {
+      const member = `spaces/${SPACE}/members/${MEMBER}`;
+      await assertFails(
+        setDoc(doc(db(MEMBER), member), {
+          joinedAt: new Date(),
+          displayName: "a".repeat(DISPLAY_NAME_MAX + 1),
+          uid: MEMBER,
+        })
+      );
+      await assertSucceeds(
+        setDoc(doc(db(MEMBER), member), {
+          joinedAt: new Date(),
+          displayName: "a".repeat(DISPLAY_NAME_MAX),
+          uid: MEMBER,
+        })
       );
     });
 

@@ -8,11 +8,11 @@ common first-submission rejection.
 This directory stands up three **self-contained static pages** (no login,
 no SPA, no external requests) so those URLs resolve:
 
-| Page    | File                        | Content source                               |
-| ------- | --------------------------- | -------------------------------------------- |
-| Terms   | `public/legal/terms.html`   | verbatim from `src/pages/TermsOfService.tsx` |
-| Privacy | `public/legal/privacy.html` | verbatim from `src/pages/PrivacyPolicy.tsx`  |
-| Support | `public/legal/support.html` | new — contact + FAQ, `support@troposfit.com` |
+| Page    | File                        | Content source                                |
+| ------- | --------------------------- | --------------------------------------------- |
+| Terms   | `public/legal/terms.html`   | generated from `src/pages/TermsOfService.tsx` |
+| Privacy | `public/legal/privacy.html` | generated from `src/pages/PrivacyPolicy.tsx`  |
+| Support | `public/legal/support.html` | new — contact + FAQ, `support@troposfit.com`  |
 
 They live under `public/legal/` (not `public/`) so they never collide
 with the SPA's own client-side `/terms` and `/privacy` routes. Vite
@@ -56,8 +56,11 @@ Then, in **App Store Connect**:
 
 ## Keeping them in sync
 
-These are a transcription of the in-app legal docs. If
-`TermsOfService.tsx` or `PrivacyPolicy.tsx` changes materially, update
-the matching `public/legal/*.html` in the same PR (and bump the "Last
-updated" line). They are intentionally plain HTML so this is a
-copy-paste, not a build step.
+The Terms and Privacy copies are generated from the in-app pages, not
+written by hand: run `npm run legal:sync` after changing
+`TermsOfService.tsx` or `PrivacyPolicy.tsx`, and commit the result.
+`scripts/legal-pages.test.ts` fails while either copy says something its
+page doesn't. They used to be transcribed by hand, and by October 2026
+the privacy copy was five months behind, still promising deletion
+"within 30 days". The support page is written by hand; it has no in-app
+counterpart.

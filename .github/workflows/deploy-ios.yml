@@ -41,8 +41,10 @@
 #
 # Canonical pattern: import a distribution cert + provisioning profile into
 # an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
-# with an App Store Connect API key. See docs/ios-release.md for the full
-# secret-provisioning guide.
+# with an App Store Connect API key. The cert and profile are the owner's
+# own when the IOS_DIST_CERT_* secrets are set; otherwise the run makes them
+# from the API key (scripts/ios/asc-signing.mjs), so the API key, the team ID
+# and the Firebase plist are all it needs. See docs/ios-release.md.
 
 name: Deploy iOS to TestFlight
 
@@ -104,8 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           missing=""
-          for name in APPLE_TEAM_ID IOS_DIST_CERT_P12_BASE64 IOS_DIST_CERT_PASSWORD \
-            IOS_PROVISIONING_PROFILE_BASE64 ASC_API_KEY_ID ASC_API_ISSUER_ID \
+          for name in APPLE_TEAM_ID ASC_API_KEY_ID ASC_API_ISSUER_ID \
             ASC_API_KEY_P8_BASE64 IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64; do
             if [ -z "${!name}" ]; then missing="$missing $name"; fi
           done
@@ -113,6 +114,36 @@ jobs:
             echo "::error::Missing repository secrets:$missing. docs/ios-release.md says how to make each one, without a Mac."
             exit 1
           fi
+          # Your own certificate and profile are optional: all three secrets,
+          # or none, and then the run makes its signing from the API key.
+          own=0
+          for name in IOS_DIST_CERT_P12_BASE64 IOS_DIST_CERT_PASSWORD \
+            IOS_PROVISIONING_PROFILE_BASE64; do
+            if [ -n "${!name}" ]; then own=$((own + 1)); fi
+          done
+          if [ "$own" -ne 0 ] && [ "$own" -ne 3 ]; then
+            echo "::error::Only some of your own signing secrets are set. Set all of IOS_DIST_CERT_P12_BASE64, IOS_DIST_CERT_PASSWORD and IOS_PROVISIONING_PROFILE_BASE64, or delete them and the run makes its signing from the API key."
+            exit 1
+          fi
+          if [ "$own" -eq 3 ]; then
+            echo "Signing with your own certificate and profile."
+          else
+            echo "Signing from the API key: this run makes its own certificate and profile."
+          fi
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          if ! write_secret_file "$ASC_API_KEY_P8_BASE64" "$RUNNER_TEMP/check.p8" 2>/dev/null \
+            || ! grep -q "BEGIN PRIVATE KEY" "$RUNNER_TEMP/check.p8"; then
+            rm -f "$RUNNER_TEMP/check.p8"
+            echo "::error::ASC_API_KEY_P8_BASE64 is not an App Store Connect key. Paste the whole .p8 file's text (it starts with -----BEGIN PRIVATE KEY-----), or its base64."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/check.p8"
           # Every step strips whitespace from these, so a secret pasted with a
           # trailing newline still works.
           if ! [[ "$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')" =~ ^[A-Z0-9]{10}$ ]]; then
@@ -143,11 +174,18 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
-            echo "::error::IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 is not set. Firebase Console → Project settings → Your apps → iOS app → download GoogleService-Info.plist, then 'base64 -i GoogleService-Info.plist | pbcopy' into a repo secret of that name. Without it the app crashes at launch."
+            echo "::error::IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 is not set. Firebase Console → Project settings → Your apps → iOS app → download GoogleService-Info.plist, then paste the file's text (or its base64) into a repo secret of that name. Without it the app crashes at launch."
             exit 1
           fi
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
           PLIST=ios/App/App/GoogleService-Info.plist
-          printf '%s' "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | tr -d '[:space:]' | base64 --decode > "$PLIST"
+          write_secret_file "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" "$PLIST"
           plutil -lint "$PLIST"
           PLIST_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" "$PLIST")
           if [ "$PLIST_BUNDLE_ID" != "$BUNDLE_ID" ]; then
@@ -246,13 +284,59 @@ jobs:
             exit 1
           fi
 
-      # The owner has no Mac, so the certificate comes from a CSR made with
-      # openssl and the profile from Apple's website (docs/ios-release.md).
-      # Either can be wrong in a way that only shows 20 minutes into the
-      # archive, so both are checked here first. The profile is checked
-      # against the team, the bundle id, the distribution type, its expiry
-      # and every entitlement the app declares. The certificate is checked
-      # against the profile it has to match.
+      # Without the owner's own certificate secrets, the run makes its
+      # signing from the API key: a private key and certificate request made
+      # here, then an Apple Distribution certificate and an App Store profile
+      # from App Store Connect's API (scripts/ios/asc-signing.mjs). The key
+      # never leaves this runner, so every run makes a new certificate, and
+      # the script revokes the one the run before made. The import step
+      # below checks the result just as it checks the owner's own.
+      #
+      # /usr/bin/openssl is macOS's own LibreSSL, and the .p12 takes the older
+      # encryption macOS's `security` imports; OpenSSL 3's default can fail
+      # there with "MAC verification failed" (docs/ios-release.md).
+      - name: Make the signing certificate and profile from the API key
+        env:
+          IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -n "$IOS_DIST_CERT_P12_BASE64" ]; then
+            echo "Your own certificate secrets are set, so this run signs with them."
+            exit 0
+          fi
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
+          OUT="$RUNNER_TEMP/api-signing"
+          mkdir -p "$OUT"
+          write_secret_file "$ASC_API_KEY_P8_BASE64" "$OUT/AuthKey.p8"
+          /usr/bin/openssl genrsa -out "$OUT/dist.key" 2048
+          /usr/bin/openssl req -new -key "$OUT/dist.key" -out "$OUT/dist.csr" \
+            -subj "/CN=Tropos CI/C=GB"
+          ASC_API_KEY_PATH="$OUT/AuthKey.p8" node scripts/ios/asc-signing.mjs "$OUT/dist.csr" "$OUT"
+          /usr/bin/openssl x509 -inform DER -in "$OUT/dist.cer" -out "$OUT/dist.pem"
+          /usr/bin/openssl rand -hex 16 | tr -d '\n' > "$OUT/p12-password"
+          /usr/bin/openssl pkcs12 -export -inkey "$OUT/dist.key" -in "$OUT/dist.pem" \
+            -name "Tropos CI" -out "$RUNNER_TEMP/dist-cert.p12" \
+            -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
+            -passout "file:$OUT/p12-password"
+          cp "$OUT/profile.mobileprovision" "$RUNNER_TEMP/profile.mobileprovision"
+          rm -f "$OUT/dist.key" "$OUT/AuthKey.p8"
+
+      # The owner has no Mac, so their own certificate comes from a CSR made
+      # with openssl and the profile from Apple's website, or the step above
+      # makes both (docs/ios-release.md). Either can be wrong in a way that
+      # only shows 20 minutes into the archive, so both are checked here
+      # first. The profile is checked against the team, the bundle id, the
+      # distribution type, its expiry and every entitlement the app declares.
+      # The certificate is checked against the profile it has to match.
       - name: Import signing certificate + provisioning profile
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -270,12 +354,19 @@ jobs:
           # here rather than kept as a secret.
           KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
           export APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
-          IOS_DIST_CERT_PASSWORD=$(printf '%s' "$IOS_DIST_CERT_PASSWORD" | tr -d '\r\n')
 
-          printf '%s' "$IOS_DIST_CERT_P12_BASE64" | tr -d '[:space:]' | base64 --decode > "$CERT_PATH"
-          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILE_PATH"
+          if [ -f "$RUNNER_TEMP/api-signing/p12-password" ]; then
+            # Made from the API key in the step above, already in place.
+            CERT_SOURCE="The certificate this run made from the API key"
+            IOS_DIST_CERT_PASSWORD=$(cat "$RUNNER_TEMP/api-signing/p12-password")
+          else
+            CERT_SOURCE="IOS_DIST_CERT_P12_BASE64"
+            IOS_DIST_CERT_PASSWORD=$(printf '%s' "$IOS_DIST_CERT_PASSWORD" | tr -d '\r\n')
+            printf '%s' "$IOS_DIST_CERT_P12_BASE64" | tr -d '[:space:]' | base64 --decode > "$CERT_PATH"
+            printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILE_PATH"
+          fi
           if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
-            echo "::error::IOS_PROVISIONING_PROFILE_BASE64 does not decode to a provisioning profile. It should be the base64 of the .mobileprovision file."
+            echo "::error::The provisioning profile does not decode. IOS_PROVISIONING_PROFILE_BASE64 should be the base64 of the .mobileprovision file."
             exit 1
           fi
 
@@ -303,7 +394,9 @@ jobs:
           if missing:
               problems.append(
                   "it lacks " + ", ".join(missing)
-                  + ". Turn the matching capabilities on for the App ID, then make the profile again"
+                  + ". Turn the matching capabilities on for the App ID (Apple Developer → Identifiers),"
+                  + " then make the profile again; a run that signs from the API key makes a new one,"
+                  + " so for that just run this workflow again"
               )
           for problem in problems:
               print(f"::error::The provisioning profile is wrong: {problem}.")
@@ -336,7 +429,7 @@ jobs:
           echo "$IDENTITIES"
           CERT_SHA1=$(echo "$IDENTITIES" | awk '/"(Apple|iPhone) Distribution/ {print $2; exit}')
           if [ -z "$CERT_SHA1" ]; then
-            echo "::error::IOS_DIST_CERT_P12_BASE64 holds no valid Apple Distribution identity. The certificate must be an Apple Distribution certificate made from the private key that went into the .p12."
+            echo "::error::$CERT_SOURCE holds no valid Apple Distribution identity. The certificate must be an Apple Distribution certificate made from the private key that went into the .p12."
             exit 1
           fi
           if ! tail -n +2 "$FACTS" | grep -qx "$CERT_SHA1"; then
@@ -465,9 +558,16 @@ jobs:
           set -euo pipefail
           ASC_API_KEY_ID=$(printf '%s' "$ASC_API_KEY_ID" | tr -d '[:space:]')
           ASC_API_ISSUER_ID=$(printf '%s' "$ASC_API_ISSUER_ID" | tr -d '[:space:]')
+          # A file's secret may hold the file's text as pasted, or its base64.
+          write_secret_file() {
+            case "$1" in
+              *"-----BEGIN"*|*"<?xml"*|*"<plist"*) printf '%s\n' "$1" > "$2" ;;
+              *) printf '%s' "$1" | tr -d '[:space:]' | base64 --decode > "$2" ;;
+            esac
+          }
           mkdir -p "$HOME/.appstoreconnect/private_keys"
-          printf '%s' "$ASC_API_KEY_P8_BASE64" | tr -d '[:space:]' | base64 --decode \
-            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
+          write_secret_file "$ASC_API_KEY_P8_BASE64" \
+            "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
           IPA=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)
           xcrun altool --upload-app -f "$IPA" -t ios \
             --apiKey "$ASC_API_KEY_ID" \
@@ -480,3 +580,4 @@ jobs:
         run: |
           security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
           rm -f "$RUNNER_TEMP/dist-cert.p12" "$HOME/.appstoreconnect/private_keys/"AuthKey_*.p8
+          rm -rf "$RUNNER_TEMP/api-signing"

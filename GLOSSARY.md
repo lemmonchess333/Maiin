@@ -1,0 +1,451 @@
+# Tropos — Glossary
+
+Domain vocabulary as it solidifies, plus the reference-app patterns we've researched. Skills like `improve-codebase-architecture`, `diagnosing-bugs`, `tdd`, and `grill-with-docs` read this to use the project's actual terms and to inform decisions with what dominant apps already do.
+
+This file was `CONTEXT.md` until 2026-10-04, when it took the name Matt Pocock’s skills use. Plan-file rows and ADRs written before then cite it as `CONTEXT.md`, and are left as written; the sections they name are all here.
+
+Update when a /grill-me session crystallises new vocabulary, when we adopt or reject a reference-app pattern with explicit reasoning, or when a competitor changes a relevant behaviour.
+
+---
+
+## Domain glossary
+
+### Naming — one concept, several spellings (rule, 2026-09-05)
+
+Two concepts carry more than one name in the code and that is not going
+to be mass-renamed: **Programme / Program** (`Programme*` identifiers and
+the `/program` route, `programState`, `programEngine` — ~50 files mixed)
+and **Circle / GoalSpace / Space** (`goalSpaces` collection, the
+`goalSpace/` feature module, `spaces/` for community Spaces, "Circles" in
+copy). A rename would churn hundreds of identifiers, the Firestore paths
+cannot move, and the mixed state is not what hurts — inconsistency INSIDE
+one file is.
+
+The rule:
+
+- **User-facing copy uses the glossary term.** "Programme" (en-GB) for the
+  training plan surface; "Circle" for a user's goal group; "Space" for a
+  community Space. Never "Program" in copy, never "GoalSpace" in copy.
+- **Identifiers follow their module's existing convention.** A file that
+  says `programState` keeps saying it; a file that says `ProgrammeRunSection`
+  keeps saying it. Firestore paths (`goalSpaces`, `spaces`) are fixed.
+- **Fix mixed usage only in files you touch** — and fix ALL of it in that
+  file while you are there. Do not open a rename PR.
+
+### Running
+
+- **runDay** — a prescribed running slot for a specific date. Carries `id` (stable across regenerates within a week), `date` (YYYY-MM-DD, local timezone), `weekKey` (the Monday that starts its week, local: `localWeekKey`), `templateId` (e.g. `easy_30`, `tempo_20`, `long_10k`, `10k_race`), `status`. Persisted in `programState.runDays[]`.
+- **programState** — Firestore doc at `users/{uid}/programState/current`. Holds the user's running + lifting prescriptions: `runDays`, `runPlan`, `workouts`, `weekHistory`, `weekNumber`, `splitType`.
+- **runMode** — `freeform | race_prep` (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
+- **runPlan** — sub-object on programState. Holds mode-specific config: `mode`, `raceGoal` (race_prep only), `currentWeek`, `totalWeeks`, `compressed` flag (when race date forces a sub-minimum plan), `phase` (currently only `"recovery"`), `recoveryEndDate`.
+- **recovery phase** — post-race state where all run slots emit `easy_30` templates (in a new runner's first weeks, that week's run-walk, and the build's runs after them). Triggered by completing the race-day runDay. Distance-scaled: 5K=1w, 10K=2w, half=3w, marathon=4w. Cleared by the recovery-exit effect 7d after `recoveryEndDate`, or by `skipRecoveryEarly` writer.
+- **New runner's first weeks** — Run20 (5): the six weeks after someone who answered "New to running" at setup began, counted from the day setup finished (`onboardingCompletedAt`, stamped by the server; `createdAt` on a profile without it) (`newRunnerUntil`, `src/features/program/newRunner.ts`). A race plan's weeks that start before then hold no tempo or intervals, and every run in them but the race is that week's run-walk. Six is a Tropos heuristic inside the evidence's four to six. After them, each run is held to the minutes the running has built to: run-walk's last 20, and five more each week (`newRunnerBuildMinutes`), taking the longest run of its kind that fits (for a tempo or intervals session, a smaller dose of itself, the deload's rungs), else an easy run, until the plan's own runs fit. A recovery week in or after them is the same. Free running plans no runs, so the first weeks reach a new runner only through a race plan.
+- **Run-walk** — a session of easy runs with walks between them, after a warm-up walk and before a walk to finish (NHS Couch to 5K; Galloway). Spelled run-walk, not run/walk or walk-run. Templates `run_walk_1` to `run_walk_6` ("Run-walk 1" to "Run-walk 6"), one for each of a new runner's first weeks (`RUN_WALK_TEMPLATE_IDS`), from Couch to 5K's week 1 to 20 minutes non-stop. Type `easy`, timed and never paced: no pace target, alert, pill, verdict, split or time announcement, or trend, and it never sets a benchmark, since its pace averages the runs and the walks. A method, not a fallback, so anyone can pick one from the day sheet.
+- **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
+- **expired** _(proposed, not shipped — Q6)_ — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
+- **softlink** _(proposed, not shipped — Q7 revision)_ — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
+- **Effort words (runs)** — Run21 (1): one language for how a run should feel, words first: **Easy** (you can talk in full sentences), **Steady** (shorter sentences), **Comfortably hard** (a few words at a time), **Hard** (no chatting, but you could hold it for a few minutes) and **Quick and relaxed** (fast but smooth, not a sprint: strides and short repeats). The Run screen heads each step with one ("HARD · REP 2/5"; `EFFORT_EYEBROW`, `stepEyebrow` in `src/lib/runSegments.ts`), and the heart-rate zones are named by them: Z1 Recovery, Z2 Easy, Z3 Steady, Z4 Comfortably hard, Z5 Hard (`ZONE_NAMES`, `src/lib/hrZones.ts`). A race's zone follows its distance: a 5K or 10K Z5, a half or marathon Z4. Lifting keeps Lift4's words ("reps to spare").
+- **Ad-hoc run launcher** — the run-type picker accessed via the **footprint icon** on the Programme page (top-right). Lets the user start a run on demand without committing to a programmed plan. Run types: Free Run, Easy Run, Tempo Run, Intervals, Long Run, Race; Guided Run (other). **The treadmill is a place, not a run type** (Pgm8): the setup's "On a treadmill" switch says where any of them is run (`RunConfig.place`, saved as the run's `place`), with no GPS and the distance typed in at the end, and leaves the type alone, so a planned run done on a treadmill is still the planned run. Runs saved before Pgm8 carry `activityType: "treadmill"` instead, and read the same (`isTreadmillRun`). **Freeform mode shares this same launcher surface** — Freeform mode's "Go" CTA opens the same Choose-run-type picker. Distinct from Structured / Race Prep modes which surface their pre-scheduled runs day-by-day in ProgrammeRunSection. The ad-hoc launcher is the single canonical entry point for unplanned runs, regardless of which mode the user is in.
+- **Quality session** — Run21 (4): a tempo or intervals run, named as a family: the runs a plan holds above easy effort. A compressed race plan has fewer of them and a mostly-easy plan has none; the long run is its own kind. Copy says "quality sessions" for the family and keeps "hard" for the effort word only, since "Hard" is a rung of Run21 (1)'s effort scale and a tempo is "Comfortably hard". The lift side's "after a long or hard run" is Lift4's words for A5's category (`isHardRun`), and stays.
+- **medium-long run** (`easy_60`, `easy_75`, `easy_90`: "Medium-long 60", "Medium-long 75", "Medium-long 90") — in a race plan's base and build weeks, the one easy run that grows past the 50-minute easy ceiling towards a peak set by the race's distance (RUN-EV-11, after Pfitzinger's midweek medium-long run). Below 60 minutes the slot is an ordinary easy run ("Easy 50"), and a 5K plan's peak is the ceiling, so it never has one. The three rungs are one family by name since Run21 (2); the 60-minute rung was "Easy 60".
+- **race-pace finish** (`racePaceWorkFor`, A2) — the closing block of a long run at the goal race pace: about a third of the run in whole kilometres, at least 3, at most 8 for a half and 12 for a marathon (`racePaceBlockKm`). A long run has one in the build of a half or marathon plan with a goal time, once it is 12 km or more; not in base or taper weeks, not without a goal time, and not when the goal is a long shot for the runner's fitness. The run screen plays it as the closing segment, headed "RACE PACE". Since Run21 (2), Home, Train and the launch card name the run for it, "Long 18K with race pace" (running-evidence Appendix B's "Long run with race pace"), and "Why this run" says it rehearses race day. A tempo in the build or taper of such a plan runs at the goal pace too, in place of the pace the runner's fitness would set: "20 Min Tempo at race pace", with that pace on Train's card. Either is a run's **race-pace work** (`RacePaceWork`, `src/lib/racePace.ts`), which the launch and every surface read from one gate.
+- **feel line** (`runSessionAbout(...).feel`, Run21 (2)) — a run's one line on how it should feel, opening with its effort word: "Easy: you can talk in full sentences. Slower is fine." It is the one line under a planned run's name on Home's day details, Train's card, the day sheet and the launch card, where the template's description used to be, and "How it should feel" inside "Why this run". Home's today card shows none (A6). What the session is, its minutes, repeats and rests, is "What it is", one tap away. A session's physiology name, where coaches use one (zone 2, threshold, VO2 max), appears only as the last line of "Why this run", **Coaches also call this** (`alsoCalled`): never in a name, a feel line, a reason or a template's description. Settings' personalised paces name their bands for the sessions run at them, Tempo and Intervals.
+
+### Lifting (for cross-reference)
+
+- **workouts** — array of prescribed lift sessions on programState. Each has `dayIndex`, `dayName`, `exercises[]`, `completed`, `skipped`.
+- **weekHistory** — array of archived past weeks, currently storing `{ workouts, weekNumber }`. Proposed extension (Q6): also store `runDays`.
+
+### Training-week scheduling ontology & surfaces
+
+Tropos deliberately uses **two different scheduling ontologies**, one per discipline. They are not a bug or unharmonised tech debt — each is correct for its sport. See `docs/adr/0002-dual-scheduling-ontology.md`.
+
+- **date-pinned** (runs) — a running slot belongs to a specific **calendar date** (`runDay.date`). Missing it leaves it missed; it does not slide forward. Right for running, where the stimulus is about the day (long run Sunday, intervals Tuesday, race countdown).
+- **split-ordered** (lifts) — a lift session belongs to a **position in the rotation** (`workouts[]` order), not a weekday. "Next up" is the next not-completed/not-skipped session (or the one chosen with "Make this next"; see **next-up cursor**), done **whenever** you next train; volume accumulates and a session is not lost if a day slips. Right for lifting, where total weekly volume matters more than which weekday.
+- **planned week vs progress** — the calendar shows the _planned_ week; "next up" reflects _progress_. They can legitimately differ (you worked ahead, or lifted off-schedule) — this is plan-vs-progress, **not** a conflict. Lift completion state (`workout.completed`) is shared, so a done session reads done on every surface.
+- **week selector** (`ProgrammeWeekSelector`, Train) — the one day picker on each Train tab, drawn like Home's week strip (purple cells for lifts, coral for runs), and it drives the card beneath it. The Lift tab's cells are the rotation, numbered in `workouts[]` order (split-ordered); the Run tab's are the week's seven dates (date-pinned). It replaced the two-lane week rail (`HybridWeekRail`), a second navigator beside each tab's own day picker, on 2026-05-31; the rail's file was deleted on 2026-08-08. Under each cell is what the day holds: a lift's split name on one line, a run's name on two (Run21 (2), `runStripLines`), each line ending in "…" when it doesn't fit.
+- **week strip** (`WeekStrip`, Home) — multi-week, horizontally-scrolling **date navigator** with density dots (purple = lift, coral = run). A navigation + glance surface, not a plan editor.
+- **next-up cursor** (`nextUpCursor.ts`) — which workout comes next in the rotation: the first one neither completed nor skipped, or the one chosen with "Make this next" (`nextWorkoutOverride`) while it is still to do. The lift _execution_ surface: Train's "Up next" (marked on the Lift tab's numbered `ProgrammeWeekSelector`), Home's today, tomorrow and rest-day cards, and the finish screen's "Next:" all read it, so they name the same session.
+- **the weeks ahead** (`RaceWeeksAhead` on Train's race plan card, `raceWeeksAhead.ts`) — R23 (Pgm8, 2026-10-11): a race plan's coming weeks, outlined, as Runna shows its calendar. A closed disclosure under the card's phase rail; opened, one row a week from next week to race week: "Week of 12 Oct", then what the week holds by the names Train gives its runs ("Long 20K with race pace · 20 Min Tempo at race pace"), the race in race week, and "Lighter week" on the plan's step-back weeks. No days, no easy runs, and no base, build or peak (E3a). Each row is the rollover's own build of that week (`nextRunWeek`), walked forward from the plan as it stands, so it says what will arrive; the generator's whole-plan pass doesn't, since it judges a compressed plan's quality sessions by the weeks left. It is the plan as it stands today: a layoff, a confirmed benchmark, a realign or a settings change rebuilds the weeks after it. A free runner has no plan and no outline (Run9).
+- **training week** (`trainingWeek.ts`) — what was done and what was planned, Monday to Sunday, from the day the account began. Lifts done: every session saved in the week; lifts planned: the schedule's lift days. Runs done: runs that count (`isVolumeEligible`, so a run saved anyway counts nowhere), by the day each belongs to, plus planned runs marked done by hand on a day with no such run; runs planned: the plan's dated run days. A free runner's plan has no run days, so their week is done-only (Run9a). Home's "This week", both finish screens' "Your week so far", the run finish screen's plan row and the weekly recap all read it, so they count one week one way.
+
+### Nutrition (daily targets)
+
+Calorie + macro target for a given date. The single source of truth is `useEffectiveTargets(date)`; every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet) reads from there.
+
+**The model is EXPENDITURE-INCLUSIVE (Nutr1, 2026-06-02).** The stored TDEE already accounts for the user's activity, so completed exercise is **never added back** (no eat-back) and training days carry **no net calorie surplus**. The calorie target is flat; day-type fuelling lives entirely in the macro split.
+
+- **baseTarget** — the user's stored daily calorie target (from `profile.targetCalories`). The TDEE + phase + goal output of onboarding / Settings.
+- **dayType** — `"lift" | "run" | "both" | "rest"`. Derived from the user's weekly schedule (`profile.weekSchedule`, or `generateSchedule(...)` if absent) on the date's day-of-week. The "planned" day type — it drives the macro split. (Nutr1 removed the actual-activity-aware `effectiveDayType`; macros are plan-based, not reactive to each logged workout.)
+- **finalTarget** — `=== baseTarget`. Flat. There is no calorie bonus and no eat-back. This is the number the user sees as "today's calorie target."
+- **net-neutral carb periodization** — day-type fuelling is a macro shift at CONSTANT calories: on training days `phaseNutrition.getDayAdjustment().fuelShiftCalories` worth of fat is moved into carbs (glycogen for the work), clamped at an essential-fat floor (`ESSENTIAL_FAT_FLOOR_PER_KG = 0.6` g/kg, and never cut below an already-low stored fat). Because carbs are the balancing macro at flat calories, a 200-cal lift day yields the SAME carb grams the old net-additive model did — only the calorie total and fat now stay flat. Rest days = baseline split.
+- **active meal** — a meal document that COUNTS. Deletion is SOFT (`deletedAt`
+  - a 24h restore window), so a deleted meal is still a document any raw read
+    returns; `deletedAt` truthy = deleted, `null` (the post-restore value) or
+    absent = active. The rule is HOME-MEALS-01 and its one owner is
+    `isActiveMealDoc` / `activeMealDocs` (`src/lib/mealTotals.ts`), mirrored for
+    the server as `functions/lib/mealDocs.js` — the same consolidation, for the
+    same reason, as `isVolumeEligibleRun` next door. Seven surfaces read the
+    meals collection; before 2026-08-22 only the two that materialised `Meal[]`
+    could reach the rule, so a corrected meal still counted toward the learned
+    TDEE, nutrition streaks, badge eligibility, the weekly commitment and the
+    server's PI adherence. Pinned by `mealActiveSingleSource.test.ts`, which
+    bans hand-written copies and cross-tests the server mirror.
+- **actualBurn / actualLiftBurn / actualRunBurn** — sum of `totalCalories` from completed workouts + `calories` from completed runs on the date (runs filtered through `isVolumeEligible`). **DISPLAY ONLY** — the Today's Energy "burned today" tiles and the Food drill-down show them for context ("already in your target"); they do NOT move the target.
+- **retired:** `strategicBonus`, `effectiveBonus`, the `max(strategicBonus, actualBurn)` rule, `effectiveDayType`, the `src/lib/effectiveTargets.ts` helper, the FoodHeroCard training-burn toast + fuel explainer, and the `adjustCaloriesForTraining` Settings toggle (field left vestigial in `UserProfile`, no migration). Prerequisite for the adaptive TDEE engine (#982), which drives `finalTarget` from MEASURED maintenance — any eat-back would double-count there.
+
+#### Adaptive TDEE engine (Nutr2 / #981 #982)
+
+Learns the user's true maintenance expenditure from the two signals they
+already log (calorie intake + body-weight trend) and drives `baseTarget` from
+MEASURED maintenance rather than the onboarding formula. Three layers:
+
+- **estimator** (`adaptiveTdee.ts`, `estimateAdaptiveTDEE`) — energy-balance regression: `learnedTDEE = avgIntake − (Δweight/day × 7700)`, where Δweight is the least-squares SLOPE (not endpoints) of the weigh-ins. Gated `ready: false` until enough trusted intake-days + weigh-ins + elapsed span accumulate; below the gate the user sees the **warmup** ("Personalizing your metabolism").
+- **adaptive-target engine** (`adaptiveTarget.ts`) — the deep entry point `resolveAdaptiveTarget(...)` owns the whole `estimate → weekly cap → source precedence → view assembly` pipeline as ONE pure function. The **weekly cap** (`applyWeeklyCap`, ±150 kcal / 7 days, seeded from the formula so the formula→learned handoff never jumps) and the **precedence ladder** (`resolveTargetSource`: manual override > learned (Pro/trial + ready) > formula; free users never see learned or the warmup) are its composed steps. `isAdaptiveActive` is the single eligibility gate (signed-in Pro/trial, no manual override) shared with the hook's data-load gate.
+- **plumbing** (`useAdaptiveTdee.ts`) — thin hook: loads the trailing-window data, holds the session warmup **latch** (high-water so the bar never visibly shrinks), persists `profile.adaptiveCapState`, and calls the engine. No decision logic. The decision matrix is table-tested directly against `resolveAdaptiveTarget` (Nutr2 consolidation, 2026-06-04).
+
+#### Reference-app audit — eat-back & day-type calorie cycling (Nutr1)
+
+Two axes, from the food-logging reference set:
+
+- **Eat-back (add completed-exercise calories to the goal?):** MacroFactor (Tropos's adaptive twin) and Cronometer's goal-setting default do **NOT** eat back — expenditure is measured, activity is already in it. MyFitnessPal / Lose It! **do** ("you've earned X exercise calories") and are the cautionary double-count example. → The modern/sophisticated end has converged on _not_ eating back; Tropos follows it.
+- **Daily target — flat vs cycled by training day:** MacroFactor, MyFitnessPal, Cronometer, Lose It! all keep a **flat daily calorie target** (none auto-cycle calories by day; weekly adjustment absorbs activity). The only apps that vary by day — RP (Renaissance Periodization), Carbon by Layne Norton — do it via **carb periodization within a budget**, which is exactly Tropos's net-neutral fat→carb shift. → Flat calories + carb periodization = MacroFactor's flat base + RP/Carbon's carb-cycling lever.
+- **Rejected for Tropos:** a net-additive planned training-day calorie bump (no mainstream food app does this) and net-neutral _calorie_ cycling as a default (a coaching-app power feature that couples to the weekly schedule).
+
+### Community Spaces (Spc1)
+
+- **Space** — a Tropos-created public topic room (`spaces/{spaceId}` namespace; taxonomy in `src/features/spaces/spaceDefs.ts`). Users join (`members/{uid}`) and post (`posts/{postId}`); nobody creates public spaces — S1's rejection of user-created public communities stands. Seven at launch; `kind: interest | race | location` is schema-ready for later sections.
+- **Tropos Team badge** — `official: true` on a post, rules-validated against `system/config.officialUids` (fails closed when unset). Officials pin posts and moderate-delete.
+- **Density gate (spaces)** — member counts below `SPACE_MEMBER_COUNT_MIN_VISIBLE` render "New space", never a shame-count (Soc8 idiom).
+- **Circles vs Spaces** — Circles stay the private 2–8-person support layer; Spaces are the public curated layer. Same tab (Community), different trust models.
+
+### Performance Index (PI)
+
+A weekly 0–100 score of how the user's training week went, with a `loadBand` (deload / low / moderate / high / overreach — FIVE bands; this line said "low / deload / optimal / overreach" until 2026-08-11, naming a band that has never existed and omitting the two most common ones) and a `deloadRecommended` flag. The single conceptual engine has **two physical copies**: server `functions/performanceEngine.js` (the authoritative copy — `weeklyPerformanceRollup` / `computePerformanceWeek` persist the PI users actually see, which `usePerformance` reads straight off Firestore) and client `src/lib/performanceEngine.ts`.
+
+**The client copy is an `@oracle`, not a preview engine** (corrected 2026-07-11, ADR-0008). Its scoring core — `scorePerformance`, `computePerformanceIndex`, `computeBaseline`, `computeLiftLoadScore`, `computeRunLoadScore`, `computeRecoveryScore`, `computeAdherenceScore`, `shouldRecommendDeload`, `generatePlanAdjustments` — has **zero production consumers**. App code imports two helpers and nothing else: `weekKeyMinusN` (a date function, in `useWeeklyReview`) and `computeLoadBand` (the band of a PI the server already computed, in `performanceDocFields`). `performanceEngineConsumers.test.ts` pins that list. This entry previously claimed it "drives Home/analytics previews", which was false. It is kept deliberately as a readable TS reference implementation whose interface IS its test surface, pinning the server copy that runs. Do not "wire it up" to restore the documented-but-never-real preview, and do not delete it as dead code.
+
+- **Components:** `loadScore` (weighted `liftLoadScore` + `runLoadScore` vs a baseline), `recoveryScore` (bodyweight-stability + meal-logging + session-count proxies), `adherenceScore` (calorie + protein + workout-count vs target). Composed via `PI_WEIGHTS`.
+- **goal-aware scoring:** the PI is a function of `profile.goal` (`cut` / `lean bulk` / `recomp` / unspecified) in **four** places — recovery bodyweight-delta thresholds, adherence calorie tolerance (`cut` ±10% vs ±15%), the lift/run weighting inside `loadScore` (`lean bulk` 0.65/0.35, `cut` 0.6/0.4, else 0.5/0.5), and the default `weeklyWorkoutsTarget` (`cut` 3 / `lean bulk` 5 / else 4). A cut and a lean-bulk week with identical raw activity get **different** PIs by design.
+- **`scorePerformance` (the seam):** the pure, admin-free post-baseline scoring — `scorePerformance(currentAgg, bl, profile, prevPI) → PerformanceDoc`. Both copies derive their **baseline differently by design** (client from `priorWeeks[]`, server by aggregating a baseline window), then call the SAME scoring composition. The seam is the post-baseline scoring, NOT the windowing.
+- **A parity pin is only worth the reachability of what it pins (ADR-0008).** A cross-test proves two copies agree; it says nothing about whether either one RUNS. `functions/lib/scheduledRunCompletion.js` was cross-tested _and_ unit-tested for months while being `require`d by nothing — the rule that ran was a third, unpinned copy inline in `index.js`, and the pinned port read a field (`templateId`) that raw docs don't carry, so it could never have replaced it. `mirrorCrossTestGate.test.ts` now enforces **reachability**: a domain module must be referenced by non-test code or carry `@oracle` (test-only by design, permanent) or `@unwired: <reason>` (debt, reason mandatory). Before adding a mirror, ask which copy production actually calls.
+- **Not every duplicated rule is a mirror.** Server race-day completion (`functions/lib/raceDayCompletion.js`) asks _"was this race run?"_ over RAW docs (`actualTemplateId`, date-scoped ANY); the client (`src/lib/scheduledRunCompletion.ts`) asks _"is this slot complete?"_ over a NORMALISED `SavedRunLike` via the claim map. Different question, different shape — an equality pin is wrong, exactly as it would be for `dateUtils.js` (UTC vs local). Classified in the gate's `NOT_EQUALITY_MIRROR`; pinned by golden fixtures in the raw-doc shape instead.
+- **Mirror invariant (locked 2026-06-04, `/improve-codebase-architecture` Cand-1):** the two copies of `scorePerformance` must produce identical output for identical `(currentAgg, bl, profile, prevPI)`. Pinned by a **cross-copy parity test** (client Vitest suite imports both the `.ts` and the admin-free `.js`) across all goal values — drift fails CI. This is the same mirror+parity discipline as `runModeResolution.ts ↔ .js` and `runStatsEligibility ↔ runEligibility.js`. History: the server copy silently lagged the client's goal-awareness (all four branches goal-blind server-side), recomputing every cut/bulk user's stored PI wrong — the `62a9cfa`-class drift the CLAUDE.md recurring-mistake rule names. Do not let the copies diverge without updating the parity test.
+
+---
+
+## Reference-app patterns
+
+Audited May 2026. Re-verify when products change. Each subsection lists what the reference apps do, then the Tropos position with reasoning.
+
+### Linking a saved run to a planned training-plan slot
+
+**Reference apps:**
+
+- **Strava (premium Training Plans):** silent date-based association. Whatever the user uploads on a planned day fills that slot. No prompt at save. No explicit unlink UI surfaced.
+- **Nike Run Club (training plans):** linkage at START time — user taps the workout from the plan calendar to start it. Casual runs ("Just Run" mode) don't get associated. No reconciliation prompt at end. Missed planned runs just stay missed.
+- **Garmin Connect (calendar workouts):** date-based implicit association. Saved activities fill the calendar slot for that day.
+- **TrainingPeaks:** same — date-based, automatic.
+
+**Pattern across the field:** none of the dominant running apps surface "link / unlink" as a user concept. Linkage is invisible plumbing — date proximity at render time, or start-time selection.
+
+**Tropos position:** persisted `linkedRunId` is an internal-only concept that should NOT be exposed in the UX. Compute completion at read time by joining runDays to saved runs by date + template (soft-link). No save-time prompts. No History "Link?" chips. No unlink UI. PR-D's `linkedRunId` write stays as a useful internal hint but is not load-bearing; recovery-phase entry triggers on "saved run exists on race date," not on the link itself.
+
+**Why deviate** — we don't. This is the case where we _match_ the reference apps after initially overcomplicating in PR-D/Q1/Q2.
+
+### Post-race recovery prescription
+
+**Reference apps:**
+
+- **Strava:** no app-side recovery prescription. Up to the user.
+- **Nike Run Club:** post-race "Recovery Plan" is optional, user-initiated. No auto-enter.
+- **Garmin Connect:** "Recovery time" metric advisory only. Doesn't change the training plan.
+- **TrainingPeaks:** recovery weeks are explicit in the coach-built plan, not state-machine triggered.
+
+**Pattern:** auto-entering a recovery phase on race completion is not standard.
+
+**Tropos position:** auto-enter recovery is a Tropos innovation. Justification: we're more opinionated than Strava (we prescribe) and more accessible than coach-built TrainingPeaks plans. The user gets a "you just ran a marathon; we'll give you 4 easy weeks" experience without having to think. Shipped in PR-D + PR-E. Safety net: `skipRecoveryEarly` writer (PR-C) lets the user opt out atomically.
+
+### Mode change ("switch from race plan to freeform")
+
+**Reference apps:**
+
+- **Nike Run Club:** tap "End Plan" → confirmation modal → plan ends, freeform.
+- **Garmin Connect:** drag / delete plan from calendar.
+- **Strava:** deactivate plan in settings.
+
+**Pattern:** confirmation step before destructive mode changes.
+
+**Tropos position:** `ConfigurePlanModal` pattern matches. Tropos extension (Q5): when changing modes _mid-recovery_, the modal shows a banner ("Changing your plan will end recovery early") — a category of warning the reference apps don't have because they don't have a recovery phase to break.
+
+### Logging a casual run when on a training plan
+
+**Reference apps:** all of them just log it. No prompt. No "was this part of your plan?" anywhere.
+
+**Tropos position:** match. Saved runs go to history; soft-link computes any plan-association at render time. The Q1 race-day RunSummary prompt initially proposed was out of pattern — dropped under the soft-link revision.
+
+### Multi-week absence handling (auto-rollover)
+
+**Reference apps:**
+
+- **Nike Run Club:** plan stays paused at the user's last week. Reopening shows "You missed N weeks. Resume or restart?" — explicit prompt.
+- **Garmin Connect:** calendar slots remain in the past; no auto-advance.
+- **Strava:** premium plans don't auto-advance the week pointer.
+
+**Pattern:** ask the user before silently advancing.
+
+**Tropos position:** PR-G silently auto-advances up to 12 weeks with a single toast. Out of pattern. Q6 revision is to add a "Welcome back" bottom sheet on first open after rollover, and prompt the user to reset their plan when iterations > 4 (≈ a month absent). Halfway-aligns with reference apps while keeping the silent-rollover convenience for short absences.
+
+### Streaks
+
+**Reference apps:**
+
+- **Duolingo:** day-by-day count, single freeze-day per period, public visibility, recoverable via "Streak Repair" (paid).
+- **Apple Activity rings:** rings reset daily; streak shown but not gamified the same way.
+- **Strava:** no streak feature. Achievements are weekly-distance / monthly-mileage badges.
+- **Nike Run Club:** "Run Streak" tracker exists but is informational, not gamified.
+
+**Pattern:** streaks are a Duolingo-specific gamification not native to running apps. Tropos has streak infrastructure (`src/features/streaks/`) but should follow the Duolingo-style "forgiving but visible" model — single freeze, public visibility, recovery affordance.
+
+**Tropos position:** TBD as streak-related features land. When designing streak-break rules, default to: `race_no_show` does NOT break a streak (user raced, system didn't see it); `expired` does NOT break a streak (life happens); `skipped` does NOT break a streak (deliberate rest); only zero-activity days break it.
+
+### Editorial imagery — photography on editorial surfaces, user data in the feed (2026-07-11)
+
+**Reference apps:**
+
+- **Runna:** professional athlete/lifestyle photography on plan cards, challenge pages, coach profiles, onboarding. The activity feed itself is user content (maps, stats, user photos).
+- **Strava:** sponsored challenge pages carry photographic hero art; club/marketing surfaces use photography. The feed is user activities.
+- **Nike Run Club / Apple Fitness+:** heavy brand photography on guided/curated content everywhere.
+
+**Pattern:** dominant apps use licensed photography on **editorial surfaces** — challenges, plans, curated content the brand produces — and keep the **peer activity feed** user-generated.
+
+**Tropos position (locked in the Social uplift arc, PRs #1575/#1576/v3):** conform on both halves. Editorial surfaces (challenge cards first; plan/curated surfaces may follow) render licensed photography with a sport-coded tint wash + scrim (`src/lib/editorialImages.ts`, assets in `src/assets/editorial/` — build-time glob, designed no-photo fallback until assets land). Feed cards stay user-data imagery: GPS route scenes and the brand muscle figure. Stock people never appear inside the peer feed; private user photos (progress/food) never leak to social. An earlier blanket "no stock imagery anywhere" stance was overturned by the operator citing Runna/Strava — the refined line above is the durable decision.
+
+### Motivation / "why" capture in onboarding (DEFERRED, 2026-06-12)
+
+The idea (internal label **D10**): capture an emotional _why_ during onboarding (orthogonal driver chips — event / health / energy / confidence / proving — distinct from the `primaryGoal` _what_), then resurface it sparsely (a Home milestone reflection + the recalibration check-in) to lift retention. It was specced and stress-tested before any code.
+
+**Reference apps:**
+
+- **MyFitnessPal, Cronometer, MacroFactor, Lose It!:** capture the _what_ (goal + rate). No emotional-why prompt.
+- **Hevy, Strong, Fitbod:** same — goal/experience, then straight into the tool.
+- **Strava, Nike Run Club, Garmin Connect, TrainingPeaks:** no why-capture; goal/plan only.
+- **Duolingo:** ONE optional screen, orthogonal chips (Education / Career / Travel / Connect / Fun), used to tailor messaging. The why is genuinely orthogonal to the what.
+- **Noom:** a 20+ question psychology quiz with heavy resurfacing — but that long funnel **is** the product (coaching + conversion), not a side feature.
+
+**Pattern across the field:** **no mainstream _fitness_ app captures an emotional why.** The only apps that do are a different domain (Duolingo, language) or a different business model (Noom, where the quiz is the coaching funnel). Per our grilling heuristic — _3+ reference apps don't have X → strong signal the feature doesn't justify the build_ — this is well past the threshold.
+
+**Tropos position: DEFER to post-launch.** Three reasons beyond the reference signal:
+
+1. **Unmeasurable pre-launch.** With one user, "did the why-chip lift D10 retention?" is unanswerable — it would ship on faith.
+2. **Onboarding length is a conversion tax** paid now, by everyone, against a speculative payoff.
+3. **The proven retention levers already exist and are reference-aligned** — streaks, the Performance Index, adaptive coaching, the race cockpit. Motivation-capture is speculative _on top_ of a system that already has the real levers.
+
+The one argument _for_ (cheap to build; chip could tailor copy) is "cheap + unproven" — exactly what a pre-launch backlog drops rather than gold-plates.
+
+**What would flip it:** real users + churn data showing drop-off clustering somewhere a motivational nudge could plausibly catch, _and_ the ability to A/B it. Revisit then, with data — if rebuilding, the Duolingo-light shape (one optional screen, orthogonal driver chips, sparse resurfacing) is the locked starting point, **not** the Noom-style quiz.
+
+### AI food capture, onboarding & cold-start (MacroFactor, audited 2026-08-18)
+
+Owner-supplied walkthrough, 46 screenshots, install → paywall → onboarding →
+program/goal setup → daily use → AI scan → micronutrients → goal completion.
+MacroFactor is Tropos's adaptive twin on the nutrition engine (see the Nutr1
+eat-back audit above), so it is the sharpest available comparison for the food
+surface specifically.
+
+**Their AI capture, and where Tropos differs:**
+
+- **One submission carries up to 3 photos AND a ≤500-char description.** Tropos
+  treats photo and text as separate paths (`analyzeFood` vs `analyzeFoodText`).
+  Theirs is the better shape: the description resolves exactly what a photo
+  cannot — cut of meat, cooking fat, plate diameter — and it is the natural
+  content of a "Type it instead" recovery that keeps the photo.
+- **The wait shows real work.** Skeleton rows stream per-ingredient status
+  ("Searching for 'Pastry Dough'", then Sugar, then Salt) as each database
+  lookup lands. Tropos narrates four invented stages on a 1300ms timer over a
+  single round-trip. Ours is plausible, not false — but it is not _earned_, and
+  it is the same category of thing as the fake % counter we refused in #2066.
+  See the open question below.
+- **Per-ingredient provenance.** A sparkle marks the AI-ESTIMATED ingredient
+  (`✨ Pastry Dough`); database-matched ones (Sugar, Salt) carry none. Each
+  ingredient is independently editable with its own quantity + unit.
+- **Plate/Day toggle** on the result: this meal alone vs its contribution to the
+  day. Tropos shows only the meal.
+- **Capture guidance names the privacy risk**: "Avoid including photos of other
+  people" / "Only upload content you have permission to use", alongside the
+  framing/steadiness tips, in a first-use modal.
+
+**Their funnel order (timestamps, one continuous session):** Let's Get Started
+(3-stage stepper) → Basics (~10 questions) → Goal → Program → **paywall** →
+**account creation** → consent → First 30 Days → Dashboard. Value and a
+personalised plan land BEFORE the payment ask; the account is last. Tropos's
+own web/monetisation principles below should be read against this.
+
+**Cold-start, which is the part our standing rule cares most about:**
+
+- **"FIRST 30 DAYS"** is a four-beat timeline — log daily → _Day 3_ expenditure
+  updates → _next Monday_ first check-in → _30 days_ fully calibrated. It says
+  exactly when each piece of value arrives. Tropos has no equivalent, and our
+  adaptive TDEE has the same "nothing visibly happens for days" shape.
+- **Habits are deliberately NOT streaks.** "1/7 this week" plus a 30-day dot
+  grid — informational, no flame, no loss aversion. A listed reference app
+  actively declining streak mechanics is a real signal against the Streaks
+  subsection above; it does not overturn it (Duolingo/Apple remain the streak
+  references) but it belongs in the evidence.
+
+**Smaller patterns worth taking:** visual 9-tile body-fat picker ("don't worry
+about being too precise"); "why we ask" info boxes on intrusive questions
+(weight history → "can impact your current metabolism"); the calorie floor
+exposed as a _user choice_ with an explicit caution on the aggressive option
+(Standard 1350 / Low 900); goal rate shown in two units at once (lbs AND %BW,
+weekly AND monthly); a plain-English paragraph under every computed number,
+including honest hedging on the projected end date.
+
+**Where they are ahead and it is a data problem, not a design one:**
+micronutrient depth — individual amino acids, omega-3 split ALA/DHA/EPA, added
+sugars, each bar carrying a target marker, and an explicit "No Target" where no
+recommendation exists.
+
+**Where Tropos is differentiated (do not copy these away):** they have no social
+layer, no training tracking, and no gamification. Their food log is clock-hour
+slots rather than meal categories. The hybrid loop remains the moat.
+
+**Open question, not yet decided:** whether to replace the invented scan stages
+with real streamed progress. It is not free — it requires splitting one Gemini
+call into identify → match → portion, which costs latency and quota. Recorded
+here so the next agent inherits the tension rather than re-discovering it.
+
+---
+
+## Visual vocabulary
+
+Sharpened during /grill-with-docs sessions on visual / layout decisions. These are precise definitions for terms that appeared ambiguous in CLAUDE.md or the codebase.
+
+### Contextual card
+
+A card whose CONTENT is sport-specific AND ACTIONABLE — not a card that merely lives within a sport-themed section.
+
+- **Coral-tinted**: "Today's run" CTA on Home — it IS the run action.
+- **NOT coral-tinted**: the outer "Run training" container on Programme — it's adjacent to run content, not the run action itself.
+
+Disambiguates CLAUDE.md's "Running = coral. These two colours appear in calendar dots, section labels, icon tints, and contextual cards" — which the codebase previously read as "any card in run section." The sharper definition prevents coral overuse where every card-in-run-section took a coral fill.
+
+### Coral discipline (run section)
+
+Coral (#D4637A) appears as semantic accent in the Run section on:
+
+- Run icon tints
+- Section labels (10px uppercase tracking)
+- Start CTAs (semantic: Start = start running)
+- Active mode chip when the user is in run mode
+
+Coral does NOT appear as:
+
+- Large card fills
+- Navigation links ("Change plan ›" footer is muted-gray, not coral)
+- Save / general action buttons (those use brand-purple)
+
+Equivalent discipline applies for purple (lifting) — accent not fill.
+
+## Deliberate deviations from reference apps (Run9 redesign, 2026-05-29)
+
+The run-section redesign (`Run9` lock in `.claude/plans/programme-run-followups.md`)
+was adversarially stress-tested against the dominant running apps. Two
+decisions deliberately deviate from the consumer-app convention; the
+reasons are recorded here per the reference-app rule (a deviation needs an
+explicit, written justification).
+
+### Running is the flexible side; the lift programme is the structured anchor
+
+Garmin (Daily Suggested Workouts), Strava (Instant Workouts, 2026), and NRC
+all offer a **no-race adaptive "today's run" layer** — structure without a
+race. Tropos deliberately does **not**: a race goal is the only running
+"plan," and between/without races the run side is freeform logging. The tab is
+kept from feeling barren with a DESCRIPTIVE cadence line ("you've run 3× in the
+last 4 weeks", "last run 2 days ago") — descriptive only, computed client-side,
+NEVER a weekly target or progress bar. A target would be structure, which the
+run side deliberately does not add (a round-2 stress test caught that an earlier
+"weekly target + progress" idea both rendered "0 of 0" — weeklyRunDaysTarget is
+hard-zeroed for freeform — and contradicted this very position).
+
+Tropos-specific reason: Tropos is a **hybrid** app. The **lift programme is
+the structured anchor** that's always present and periodized; running is
+deliberately the flexible complement. A single-sport runner would need a
+no-race structured layer, but a Tropos user always has the lift programme
+providing structure, so duplicating that on the run side adds a concept
+without a Tropos payoff. (Do NOT re-derive this as a gap to "fix" — it's a
+chosen position. Revisit only if Tropos adds a run-only user segment.)
+Note: the original Run9 migration note wrongly cited "matches NRC/Strava" —
+Strava removed static plans in 2025-07; that rationale is retired.
+
+### Phase disclosure: lift shows a phase, run hides it
+
+The lift tab surfaces a phase badge (`WeekPhaseRow`: "Week N · BUILD"); the
+run tab hides base/build/peak and names **only the taper** in plain copy.
+This asymmetry is deliberate, not a bug: the **lift phase is a mesocycle the
+user explicitly configured and navigates**, whereas the **run phase is
+auto-derived from the race date** (an implementation detail). Consumer
+running apps hide periodization vocab; the one cue users need before a race
+(the taper) is named in plain language. Garmin (the periodization-literate
+outlier) does surface run phases, but that's the pro-leaning cohort, not
+Tropos's calm-adaptive positioning.
+
+## Web surface & monetisation principles (post-launch)
+
+Distilled from a Strava mobile-web walkthrough (verifier-tropos-web grilling
+thread, 2026-05-28; originally captured in issue #852). The frame: **web is a
+first-class, permanent surface — not "the thing that exists until iOS ships."**
+The dominant app keeps marketing, subscription billing, and selected functional
+features on web indefinitely, alongside native. Check the relevant principle
+before writing code in these areas; an implementation that violates one is a
+signal to push back / grill first.
+
+- **P1 — No "Install on iOS/Android" copy in logged-in settings UIs.** A
+  logged-in user is already a user; an install CTA inside `/settings/*` reads
+  as the browser admitting it's broken. Reserve install CTAs for store pages,
+  marketing CTAs, and contextual transitions where native is concretely better
+  (e.g. screen-locked run recording). _Concrete edit landed: #851 — the
+  `ReminderDiagnostics` strip + footer no longer push "install the app" (now
+  "Reminders fire while this tab is open"); pinned by `ReminderDiagnostics.test`._
+- **P2 — Web subscription billing stays first-class.** Strava sells on web via
+  Stripe to dodge Apple's 30%. Tropos already mirrors this (`useStripeCheckout`
+  - the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
+    path, not the only path. `useSubscription().isPro` already handles both — keep
+    that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
+    no "install to subscribe" funnel break for desktop upgraders).
+- **P3 — App-store CTAs at contextual conversion moments, not ambient.** Store
+  pushes belong on landing pages, end-of-marketing-scroll, and deliberate
+  transitions ("Continue in the app" after joining a challenge) — NOT in the
+  settings sidebar, an every-page inline strip, or a banner above the feed.
+- **P4 — Marketing depth is a real eventual need.** Strava's Train/Explore
+  tabs are deep feature-explainer pages (NEW pill + pitch + screenshot + press
+  quotes) for SEO + conversion. Tropos has the equivalents (Performance Index,
+  paceTrends, scheduled runs, intervals); post-launch, Onboarding alone won't
+  explain them. Backlog: `/about/performance|runs|lifts` — its own
+  `claude/marketing-pages` arc when the time comes, not urgent.
+
+Usage: notifications/install CTAs → P1+P3; subscription/Stripe/IAP → P2;
+marketing `/about/*` → P4; any "should this live on web post-launch?" → P2+P3.
+Out of scope of the principle (own follow-ups): universal-links infra
+(`apple-app-site-association`), marketing-page design, TestFlight/App Store
+metadata.
+
+---
+
+- After a /grill-me or /grill-with-docs session that touched feature design
+- When a competitor changes a relevant pattern (and the change is material)
+- When we adopt or reject a competitor pattern — write the reasoning here, not just the decision
+- When new domain vocabulary stabilises in conversation (one term used 3+ times)
+
+---
+
+## Whole-product competitive landscape & hybrid differentiation (2026)
+
+Full report: **`docs/competitive-analysis-running-2026.md`** (per-app teardown, table-stakes matrix, pricing map, prioritised roadmap, sources). The reference-app subsections above cover _training-plan mechanics_; this is the _whole-product / why-switch_ layer. Summary of the locked thesis:
+
+- **Tropos is near parity on running SOFTWARE.** The credibility gaps are hardware-adjacent — **heart-rate + zones** and an **Apple Watch / HealthKit** path — plus performance-**adaptive** plans (Runna's bar) and Strava's discovery/social (segments, route builder). These are the table-stakes that make a serious runner bounce.
+- **The "why switch from free NRC / cheap Strava+Runna" answer is NOT "better running"** (they're free/cheap + polished). It's the **hybrid loop**: run + lift + nutrition + recovery in one _adaptive_ app.
+- **White space (evidence-backed):** no mainstream app combines serious run training + progressive strength + measured nutrition + cross-discipline recovery. The DIY stack (MyFitnessPal + Whoop + Strong) is **≈$370–430/yr across silo'd apps that don't read each other's data**. The one purpose-built hybrid app, **Edge**, uses **human coaches at £179.99/yr** (users call it too pricey) and has **no measured nutrition engine**.
+- **Tropos's moat:** **algorithmic** (no human coach → scalable/cheap) + **nutrition-native** (measured adaptive-TDEE + day-type fuelling, already built) + **single price** replacing the stack. Positioning: _"one adaptive app for athletes who run AND lift AND eat with intent — for the price of one app instead of three."_
+- **Sequencing (locked):** P0 running credibility (HR/zones, HealthKit/Watch, adaptive plans) → P1 the hybrid moat (daily cross-discipline readiness, the visible nutrition↔training loop, a unified load dashboard, "replace your stack" imports) → P2 chase Strava's social/discovery only after retention is proven. **Don't let P2 jump the queue ahead of the P1 differentiators.**
+- **Strava acquired Runna (Apr 2025) + a $149.99/yr bundle (Jul 2025)** — confirmed; the run+plan+social layer is consolidating, so win on the axes they don't own (nutrition + serious lifting), don't out-Strava Strava.

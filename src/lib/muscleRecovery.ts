@@ -175,7 +175,7 @@ const HEAT_MAP_GROUP_MUSCLES: Record<string, CanonicalMuscle[]> = {
   // written to correct exactly that, and a reader trimming dead rows
   // reads the comment ON the table, not the paragraph over it.
   "Quads & Glutes": ["Quads", "Glutes"],
-  "Hamstrings & Back": ["Hamstrings", "Back"],
+  "Hamstrings & Glutes": ["Hamstrings", "Glutes", "Back"],
   Lats: ["Back"],
   Calves: ["Calves"],
   Traps: ["Back"],

@@ -6,6 +6,7 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
+import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -133,6 +134,8 @@ export default function ProfileInfoSection({
   // as displayName); clearing it writes an empty string (treated as "no
   // why" everywhere it resurfaces).
   const [why, setWhy] = useState(profile.trainingWhy ?? "");
+  // Why the name typed last was not saved, until it is edited again.
+  const [nameError, setNameError] = useState<string | null>(null);
   return (
     <AccordionSection
       inline={inline}
@@ -149,16 +152,41 @@ export default function ProfileInfoSection({
           id="profile-name"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          maxLength={DISPLAY_NAME_MAX}
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? "profile-name-error" : undefined}
+          onChange={(e) => {
+            setName(e.target.value);
+            setNameError(null);
+          }}
           onBlur={async () => {
             const prev = profile.displayName ?? "";
             if (name === prev) return;
-            const result = await updateProfile({ displayName: name });
+            /* The name is public, and this field writes the profile
+               directly, so it is held to Onboarding's rules here,
+               word filter included. A refused name is not saved; the
+               field keeps it so it can be corrected. */
+            const check = validateDisplayName(name);
+            if (!check.valid) {
+              setNameError(check.message);
+              return;
+            }
+            setName(check.trimmed);
+            const result = await updateProfile({ displayName: check.trimmed });
             if (!result.ok) setName(prev);
           }}
           placeholder="Your name"
           className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
         />
+        {nameError && (
+          <p
+            id="profile-name-error"
+            role="alert"
+            className="text-xs text-destructive-strong mt-1"
+          >
+            {nameError}
+          </p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

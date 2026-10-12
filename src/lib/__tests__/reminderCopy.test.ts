@@ -4,7 +4,6 @@ import { expect, it } from "vitest";
 
 it.each([
   "src/hooks/useStreakReminder.ts",
-  "src/components/StreakReminderPrimingModal.tsx",
   "functions/lib/pushSend.js",
   "functions/lib/streakNudge.js",
 ])("keeps loss framing out of reminder copy in %s", (path) => {

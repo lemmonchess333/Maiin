@@ -44,6 +44,18 @@ describe("Train's lift tab explains the session", () => {
   });
 });
 
+describe("Train's lift tab keeps the plan's rules behind an ⓘ", () => {
+  it("puts it beside the week label, on any day (Lift4 (3))", () => {
+    const row = code.indexOf("<WeekPhaseRow");
+    expect(row).toBeGreaterThan(-1);
+    const props = code.slice(
+      row,
+      code.indexOf("/>", code.indexOf("info=", row))
+    );
+    expect(props).toMatch(/info=\{\s*<LiftRulesInfo/);
+  });
+});
+
 describe("Train names the focus in Settings' words", () => {
   it("does not use the engine's own labels anywhere on the page", () => {
     expect(code).not.toMatch(/primaryGoalLabel/);

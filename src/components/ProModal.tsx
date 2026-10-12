@@ -34,8 +34,8 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
   DEFAULT_PLAN,
+  findPlan,
   getCheckoutCtaLabel,
-  getRenewalDisclosure,
   type PlanId,
 } from "@/lib/proPlans";
 import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
@@ -44,13 +44,14 @@ import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { track } from "@/lib/paywallAnalytics";
-import { isCheckoutTrialEligible } from "@/lib/subscription";
+import { DAILY_AI_LIMITS, isCheckoutTrialEligible } from "@/lib/subscription";
 import { X, Sparkles, Utensils } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
+import RenewalDisclosure from "@/components/paywall/RenewalDisclosure";
 import ProPreview from "@/components/paywall/ProPreview";
 
 /**
@@ -103,8 +104,9 @@ const PRO_FEATURE_BULLETS: {
 }[] = [
   {
     icon: <Utensils className="size-4" />,
-    label: "Unlimited AI food photo logging",
-    sub: "Log meals from a photo. No manual searching.",
+    // Not "unlimited": the server caps Pro photo scans (DAILY_AI_LIMITS).
+    label: "AI food photo logging",
+    sub: `Log meals from a photo, up to ${DAILY_AI_LIMITS.pro.image_ai} scans a day. No manual searching.`,
     color: THEME.semantic.nutrition,
   },
   {
@@ -143,8 +145,10 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const { profile } = useAuth();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
   // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
-  // sheet — a mismatch is an App Review flag.
+  // sheet — a mismatch is an App Review flag. The CTA, the timeline and
+  // the disclosure all read the selected plan from these, never by id.
   const plans = useProPlanPrices();
+  const selected = findPlan(plans, selectedPlan);
 
   // Sub1a P1 — trial offer eligibility (client-side hint; server is
   // authoritative via `hasUsedTrial` in checkoutTrial.js). Missing
@@ -218,7 +222,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   // plan-priced default.
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
-    : getCheckoutCtaLabel(selectedPlan, withTrial);
+    : getCheckoutCtaLabel(selected, withTrial);
 
   return (
     <BottomSheet
@@ -317,7 +321,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         ) : null}
 
         {/* Sub1a trial transparency — what actually happens, before the ask. */}
-        {withTrial ? <TrialTimeline /> : null}
+        {withTrial ? <TrialTimeline plan={selected} /> : null}
 
         {/* The app's primary button, as Upgrade's are: it was a
             purple-to-teal gradient. */}
@@ -332,9 +336,13 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           )}
         </Button>
 
-        <p className="text-caption text-muted-foreground text-center leading-snug">
-          {getRenewalDisclosure(selectedPlan, platform)}
-        </p>
+        {/* Directly beneath the button: what it charges, after the trial
+            when there is one, and that it renews. */}
+        <RenewalDisclosure
+          plan={selected}
+          platform={platform}
+          withTrial={withTrial}
+        />
 
         {showRestore ? (
           <button

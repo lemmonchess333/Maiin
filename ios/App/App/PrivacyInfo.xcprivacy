@@ -2,47 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- NSPrivacyTracking=false: we do not use any collected data for
-	     tracking across apps/websites owned by third parties. All data
-	     is linked to the user (NSPrivacyCollectedDataTypeLinked=true)
-	     solely for app functionality. -->
+	<!-- NSPrivacyTracking=false: no collected data is used to track people
+	     across apps or websites owned by other companies, and nothing is
+	     shared with data brokers. Every type below is linked to the account
+	     and none is used for tracking. This list is what the App Store
+	     privacy label is filed from, and the Privacy Policy
+	     (src/pages/PrivacyPolicy.tsx) describes the same data; keep the
+	     three in step. Pinned by src/lib/__tests__/iosPrivacyDeclarations.test.ts. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array>
-		<!-- Email — collected at sign-up via Firebase Auth (email /
-		     Google / Apple Sign-In) and displayed on the profile. -->
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-		<!-- User ID — Firebase Auth UID, used to scope every
-		     Firestore document and identify the user across
-		     sessions. -->
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeUserID</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
-		<!-- Name — user-supplied display name, shown to other users
-		     in the social feed, leaderboards, comments, and crews. -->
+		<!-- Name: the display name, shown to other signed-in users, and the name
+		     Sign in with Apple or Google may supply. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeName</string>
@@ -55,10 +29,53 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Precise Location — captured only during an active run
-		     while the user has explicitly granted location permission.
-		     Stored to the user's run history and, optionally, a
-		     route preview in the public activity feed. -->
+		<!-- Email address: sign-in (Firebase Authentication) and account emails
+		     (Resend: verification, password reset). -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Health: body weight and measurements, sex, age range, injury limits,
+		     maximum heart rate, nutrition. Some figures reach Google Analytics.
+		     The Apple Health step count is read and shown, never collected. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeHealth</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- Fitness: workouts, sets, runs, pace, training plan and goals. Some
+		     figures about sessions reach Google Analytics. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeFitness</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- Precise location: the GPS route while a run records, including in the
+		     background; privacy zones; the route planner's points. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePreciseLocation</string>
@@ -71,23 +88,23 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Health & Fitness — workouts, sets, reps, running distance,
-		     pace, body weight, calories, macros. Stored in Firestore
-		     under the user's subcollections. -->
+		<!-- Coarse location: Google Analytics works out an approximate location
+		     (country, city) from the connection. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeHealthFitness</string>
+			<string>NSPrivacyCollectedDataTypeCoarseLocation</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
-		<!-- Photos/Videos — progress photos (encrypted, private by
-		     default) and food photos for AI calorie estimation. -->
+		<!-- Photos: progress photos (encrypted), the profile photo and Space post
+		     photos, stored in Cloud Storage. Meal photos are sent to Gemini
+		     for analysis and kept only on the device. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>
@@ -100,9 +117,51 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Purchases — Pro subscription state (product ID, original
-		     transaction ID, expiry). Stored server-side and used to
-		     unlock paid features. -->
+		<!-- Other user content: posts, comments, Circle check-ins, Space posts,
+		     reports, notes, and meals typed for analysis. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- User ID: the Firebase Auth uid, which scopes every document and is the
+		     RevenueCat app user ID. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeUserID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Device ID: Google Analytics for Firebase's app-instance identifier.
+		     No advertising identifier: the analytics plugin is built with
+		     AnalyticsWithoutAdIdSupport (capacitor.config.ts). -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- Purchase history: Pro subscription state and the store's transaction
+		     identifiers (App Store, RevenueCat, Stripe on the web). -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePurchaseHistory</string>
@@ -115,10 +174,8 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Product Interaction — social engagement (kudos,
-		     comments, follows), streak milestones, challenge
-		     participation. Drives the social surface and is shown
-		     to other users. -->
+		<!-- Product interaction: kudos, follows, streaks and challenges run the
+		     social features; screens and taps reach Google Analytics. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
@@ -129,12 +186,26 @@
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
-		<!-- Crash Data — client-side error reports (message + stack)
-		     persisted to the per-user `errors` subcollection via the
-		     errorReporting pipeline. Used to diagnose issues in
-		     production. -->
+		<!-- Other usage data: settings and choices (sharing, notifications, AI
+		     analysis), the time zone, and usage events for analytics. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUsageData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- Crash data: error reports (message and stack) stored with the account
+		     by src/lib/errorReporting.ts. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeCrashData</string>
@@ -147,9 +218,21 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Other Diagnostic Data — non-crash runtime errors routed
-		     through the same errorReporting pipeline (network
-		     failures, component-level exceptions). -->
+		<!-- Performance data: load and render timings sent as analytics events. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePerformanceData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<!-- Other diagnostic data: non-crash runtime errors through the same
+		     error-reporting pipeline. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
@@ -165,16 +248,32 @@
 	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
-		<!-- UserDefaults (CA92.1) — app reads/writes preferences and
-		     dismissal flags via localStorage, which Capacitor bridges
-		     to NSUserDefaults on iOS. CA92.1 is the "previous
-		     preference or setting by user" reason. -->
+		<!-- UserDefaults. CA92.1: preferences only this app reads, written by
+		     @capacitor/preferences (UserDefaults.standard). 1C8F.1: the App
+		     Group defaults capacitor-live-activities shares with the Live
+		     Activity widget. Neither plugin ships a privacy manifest of its
+		     own, so the app declares their reasons. -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+				<string>1C8F.1</string>
+			</array>
+		</dict>
+		<!-- File timestamps. C617.1: modification and creation dates of files
+		     inside the app container or its App Group container. The meal-photo
+		     sweep reads each photo's mtime through @capacitor/filesystem's
+		     readdir (src/lib/foodPhotoStore.ts, 90-day retention), and
+		     capacitor-live-activities reads its images' creation dates to clear
+		     old ones. Neither plugin ships a privacy manifest. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
 			</array>
 		</dict>
 	</array>

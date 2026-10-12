@@ -76,8 +76,9 @@ export default function NutritionSection({
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
 
-  /* Home's "How targets work" tip deep-links to #calorie-targets rather
-     than dumping a second copy of this explanation onto Home. The chain
+  /* #calorie-targets is this explanation's address. Home's "How targets
+     work" tip linked here until the first-visit guide (FV1) took its
+     message into the walk's Food stop; a link to it still lands. The chain
      below (Base TDEE -> offset -> Daily target) sits well under the fold
      on this page, so arriving without a scroll would land the user on
      the goal-weight stepper and read as a dead link. Same shape as
@@ -331,7 +332,9 @@ export default function NutritionSection({
         )}
 
         {/* Derived: direction → phase + the daily offset it produces */}
-        <div className="rounded-xl bg-muted/30 p-3 flex items-center justify-between gap-2">
+        {/* The figure goes under the phase, at the right, when the two no
+            longer fit on one line (double text on a 320px phone). */}
+        <div className="rounded-xl bg-muted/30 p-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <span className="text-xs text-muted-foreground">
             {goalPlan.direction === "lose"
               ? "Losing"
@@ -347,7 +350,7 @@ export default function NutritionSection({
                   : "Recomp"}
             </span>
           </span>
-          <span className="text-xs font-mono tabular-nums font-medium text-foreground">
+          <span className="ml-auto text-xs font-mono tabular-nums font-medium text-foreground">
             {goalPlan.dailyOffset > 0 ? "+" : ""}
             {formatCalories(goalPlan.dailyOffset)} {CALORIE_UNIT}/day
           </span>
@@ -358,7 +361,7 @@ export default function NutritionSection({
         <div
           id="calorie-targets"
           ref={calorieTargetsRef}
-          className="scroll-mt-20 rounded-xl bg-muted/50 p-3 space-y-2"
+          className="scroll-mt-20 rounded-xl bg-muted/50 px-[12px] py-3 space-y-2"
         >
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -438,8 +441,13 @@ export default function NutritionSection({
                     onRecalculate?.();
                   }}
                 >
-                  Recalculate for {formatWeightInUnit(currentKg, weightUnit)}{" "}
-                  {weightLabel}
+                  {/* Its own box, so at double text on a 320px phone
+                      "Recalculate" hyphenates (or breaks) inside the
+                      button rather than running past its edge. */}
+                  <span className="min-w-0 break-words hyphens-auto text-center">
+                    Recalculate for {formatWeightInUnit(currentKg, weightUnit)}{" "}
+                    {weightLabel}
+                  </span>
                 </Button>
               </div>
             )}

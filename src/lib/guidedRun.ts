@@ -59,7 +59,7 @@ export const GUIDED_WORKOUTS: GuidedRunWorkout[] = [
   {
     id: "easy-30",
     name: "Easy 30",
-    description: "A gentle 30-minute run to build your aerobic base",
+    description: "A gentle 30-minute run to build your endurance",
     totalMinutes: 30,
     difficulty: "easy",
     color: "#22c55e",

@@ -78,10 +78,10 @@ describe("FoodComposerCard — the camera button beside the field", () => {
     // rows={1}, the field is 50px and the button hangs 6px below it.
     // jsdom has no layout; companion-food.capture.spec.ts measures the
     // two boxes in a browser.
-    expect(scans[0]).toHaveClass("size-14");
+    expect(scans[0]).toHaveClass("size-[56px]");
     expect(
       screen.getByRole("textbox", { name: "What did you eat" })
-    ).toHaveClass("block", "h-14");
+    ).toHaveClass("block", "min-h-[56px]");
     // The food orange (the nutrition variant) — the owner call recorded
     // in CLAUDE.md's Button mapping — not the brand purple.
     expect(scans[0]).toHaveClass("bg-nutrition-fill");
@@ -187,7 +187,7 @@ describe("FoodComposerCard — visible manual entry", () => {
        button now; the capture spec that clicks by name still finds it. */
     renderComposer();
     const pencil = screen.getByRole("button", { name: "Enter manually" });
-    expect(pencil).toHaveClass("size-11", "absolute", "left-0");
+    expect(pencil).toHaveClass("size-[44px]", "absolute", "left-0");
     expect(
       screen.getAllByRole("button", { name: "Enter manually" })
     ).toHaveLength(1);
@@ -274,9 +274,12 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
   it("renders the exhausted caption with a working upgrade action at remaining === 0 (real quota)", () => {
     const onUpgrade = vi.fn();
     renderComposer({ scanUsage: quota({ remaining: 0 }), onUpgrade });
+    // Pro's own daily cap, not "unlimited": the server stops Pro at
+    // DAILY_AI_LIMITS too.
     const cta = screen.getByRole("button", {
-      name: /out of scans — upgrade for unlimited/i,
+      name: "Out of scans · upgrade for 100 a day · resets 10 Jun",
     });
+    expect(cta.textContent).not.toMatch(/unlimited/i);
     fireEvent.click(cta);
     expect(onUpgrade).toHaveBeenCalledTimes(1);
   });

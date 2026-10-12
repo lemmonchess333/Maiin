@@ -215,14 +215,11 @@ const run = async () => {
   await go("/run");
   await shoot(page, "05-run-setup", { full: false });
   try {
-    // The activity card ("Easy Run · Outdoor GPS") opens the type picker;
-    // pick Treadmill there, then hit the Start CTA and ride out the
+    // The treadmill is where a run is done, a switch beside the run type
+    // (Pgm8): turn it on, then hit the Start CTA and ride out the
     // countdown to the live treadmill screen.
-    await page.getByText("Easy Run").first().click({ timeout: 5000 });
-    await page.waitForTimeout(700);
     await page
-      .getByText(/treadmill/i)
-      .first()
+      .getByRole("switch", { name: "On a treadmill" })
       .click({ timeout: 5000 });
     await page.waitForTimeout(700);
     await shoot(page, "05-run-setup-treadmill", { full: false });

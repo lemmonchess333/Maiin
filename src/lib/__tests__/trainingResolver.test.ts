@@ -71,7 +71,7 @@ function makeProgramState(overrides: Partial<ProgramState> = {}): ProgramState {
     workouts: [],
     fatigueScore: 0,
     updatedAt: Date.now(),
-    settings: { autoProgression: true, microloading: true },
+    settings: { autoProgression: true, smallPlates: false },
     weekHistory: [],
     programSchemaVersion: 2,
     runDays: [],
@@ -438,6 +438,39 @@ describe("resolveTrainingDayForDate — lift index mapping", () => {
     expect(wed.lift.workout?.dayName).toBe("Pull");
     expect(tue.lift.index).toBeNull();
     expect(tue.lift.status).toBe("none");
+  });
+
+  it("counts a Sunday lifter's week from Monday, so Sunday takes the last session", () => {
+    // Train runs the sessions in the week's order and the week opens on
+    // Monday, so Monday shows workouts[0] and Sunday closes the week.
+    const profile = makeProfile({
+      weekSchedule: [
+        { day: 0, type: "lift" },
+        { day: 1, type: "lift" },
+        { day: 2, type: "rest" },
+        { day: 3, type: "lift" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "rest" },
+        { day: 6, type: "rest" },
+      ],
+    });
+    const programState = makeProgramState({
+      workouts: [
+        makeWorkout({ dayName: "Push" }),
+        makeWorkout({ dayName: "Pull" }),
+        makeWorkout({ dayName: "Legs" }),
+      ],
+    });
+    const on = (dateKey: string) =>
+      resolveTrainingDayForDate({
+        dateKey,
+        profile,
+        programState,
+        currentWeekKey: CURRENT_WEEK_KEY,
+      }).lift.workout?.dayName;
+    expect(on(THIS_MON)).toBe("Push");
+    expect(on("2026-05-20")).toBe("Pull");
+    expect(on("2026-05-24")).toBe("Legs");
   });
 
   it("surfaces completed / skipped lift status when set", () => {

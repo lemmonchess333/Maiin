@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { applyProgression } from "../programEngine";
+import { applyProgression, applySessionSets } from "../programEngine";
 import type { ProgramExercise } from "../programTypes";
 import {
   isSetEligibleForProgression,
   isSetEligibleForStrengthPr,
-  progressionSetFor,
 } from "../sessionSetPolicy";
+import { readSessionSets } from "../sessionSets";
 
 describe("isSetEligibleForStrengthPr", () => {
   it("rejects warm-ups so they cannot create phantom rep PRs", () => {
@@ -24,8 +24,9 @@ describe("isSetEligibleForStrengthPr", () => {
 
 describe("isSetEligibleForProgression", () => {
   it("rejects a drop set — the whole point of the predicate", () => {
-    // A drop set is deliberately lighter, so `applyProgression`'s
-    // `actualWeight >= exercise.weight` scores it a miss every session.
+    // A drop set is deliberately lighter, and `applyProgression` moves the
+    // plan to the load lifted, so letting it drive would drop the plan to
+    // the drop set's load every session.
     expect(isSetEligibleForProgression("dropset")).toBe(false);
   });
 
@@ -74,7 +75,7 @@ describe("isSetEligibleForProgression", () => {
    `consecutiveFailures` reached 3, and the backoff cut the load 5%. Then it
    reset the counter and did it again. A lifter using drop sets was walked
    down indefinitely for training correctly. ── */
-describe("progressionSetFor → applyProgression (D3)", () => {
+describe("readSessionSets → applySessionSets (D3)", () => {
   const mkEx = (over: Partial<ProgramExercise> = {}): ProgramExercise => ({
     name: "Bench Press",
     exerciseId: "bench-press",
@@ -104,9 +105,15 @@ describe("progressionSetFor → applyProgression (D3)", () => {
     { completed: true, type: "dropset", reps: 12, weight: 60 },
   ];
 
-  it("picks the last WORKING set, not the trailing drop set", () => {
-    const chosen = progressionSetFor(sessionEndingInADropSet());
-    expect(chosen).toMatchObject({ type: "working", reps: 8, weight: 100 });
+  it("reads the WORKING sets, not the trailing drop set", () => {
+    expect(readSessionSets(sessionEndingInADropSet(), 4)).toEqual({
+      weight: 100,
+      counted: [
+        { weight: 100, reps: 8 },
+        { weight: 100, reps: 8 },
+        { weight: 100, reps: 8 },
+      ],
+    });
   });
 
   /**
@@ -125,8 +132,7 @@ describe("progressionSetFor → applyProgression (D3)", () => {
           ? [{ completed: true, type: "dropset", reps: 12, weight: 60 }]
           : []),
       ];
-      const s = progressionSetFor(sets)!;
-      ex = applyProgression(ex, s.reps, s.weight, "recomp", false);
+      ex = applySessionSets(ex, readSessionSets(sets, ex.sets)!, false);
     }
     return ex;
   };
@@ -144,37 +150,45 @@ describe("progressionSetFor → applyProgression (D3)", () => {
     expect(withDrop.weight).toBeGreaterThan(100);
   });
 
-  it("…while the pre-fix selection FREEZES the lift over the same sessions", () => {
+  it("…while the pre-fix selection drags the lift down to the drop set", () => {
     // Not shipped behaviour — proof the fixture can trigger the defect, so
     // the assertion above is not vacuous. Feeding the raw last set (the drop
     // set) used to fail `actualWeight >= exercise.weight` every time and walk
-    // the load DOWN; under Lift2 a lighter set with the reps hit HOLDS
-    // instead, so the same wrong selection now freezes the prescription at
-    // 100 kg for six sessions while the correct selection climbed past it.
-    // Either way the selection is what makes the lifter progress.
+    // the load down 5% every third session. Now that the plan follows the
+    // load lifted (owner, 2026-10-05), the same wrong selection moves the
+    // prescription straight to the drop set's 60 kg, a step on (12 reps tops
+    // the 8-10 range), while the correct selection climbed past 100 kg.
+    // Either way the selection is what keeps the lifter's load.
     let ex = mkEx();
     for (let session = 0; session < 6; session++) {
-      ex = applyProgression(ex, 12, 60, "recomp", false);
+      ex = applyProgression(ex, 12, 60, false);
     }
-    expect(ex.weight).toBe(100);
+    expect(ex.weight).toBe(62.5);
     expect(ex.reps).toBe(mkEx().reps);
     expect(ex.consecutiveFailures).toBe(0);
   });
 
   it("skips progression when nothing eligible was completed", () => {
     expect(
-      progressionSetFor([
-        { completed: true, type: "warmup", reps: 5, weight: 40 },
-        { completed: false, type: "working", reps: 8, weight: 100 },
-      ])
+      readSessionSets(
+        [
+          { completed: true, type: "warmup", reps: 5, weight: 40 },
+          { completed: false, type: "working", reps: 8, weight: 100 },
+        ],
+        4
+      )
     ).toBeNull();
   });
 
   it("ignores an incomplete trailing set", () => {
-    const chosen = progressionSetFor([
-      { completed: true, type: "working", reps: 8, weight: 100 },
-      { completed: false, type: "working", reps: 0, weight: 100 },
-    ]);
-    expect(chosen).toMatchObject({ reps: 8 });
+    expect(
+      readSessionSets(
+        [
+          { completed: true, type: "working", reps: 8, weight: 100 },
+          { completed: false, type: "working", reps: 0, weight: 100 },
+        ],
+        4
+      )?.counted
+    ).toEqual([{ weight: 100, reps: 8 }]);
   });
 });

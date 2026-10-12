@@ -1,4 +1,5 @@
-import type { ActivityType } from "@/types/run";
+import type { ActivityType, RunPlace } from "@/types/run";
+import { isTreadmillRun } from "./runGuards";
 
 /**
  * Pre-flight validation for run setup targets. Returns a
@@ -22,11 +23,15 @@ import type { ActivityType } from "@/types/run";
  *   target.type === 'none'           — no target, nothing to check
  *   activityType === 'intervals'     — interval config has its own
  *                                       work/rest fields
- *   activityType === 'treadmill'     — target inputs aren't shown
+ *   on the treadmill (`isTreadmillRun`, Pgm8: the place, whatever the
+ *   type)                            — target inputs aren't shown
  */
 
 export interface RunTargetConfigSlice {
-  activityType: ActivityType;
+  /** A config's type; a stored config from before Pgm8 may still say
+   *  "treadmill". */
+  activityType: ActivityType | string;
+  place?: RunPlace;
   target: { type: "none" | "distance" | "time" | "pace"; value?: number };
 }
 
@@ -41,10 +46,7 @@ export function getTargetValidationError(
   config: RunTargetConfigSlice
 ): string | null {
   if (config.target.type === "none") return null;
-  if (
-    config.activityType === "intervals" ||
-    config.activityType === "treadmill"
-  )
+  if (config.activityType === "intervals" || isTreadmillRun(config))
     return null;
 
   const value = config.target.value;
@@ -66,9 +68,9 @@ export function getTargetValidationError(
       return null;
     case "pace":
       if (value < TARGET_PACE_MIN_S_PER_KM)
-        return "Pace must be at least 2:00/km";
+        return "Pace must be at least 2:00 /km";
       if (value > TARGET_PACE_MAX_S_PER_KM)
-        return "Pace must be at most 15:00/km";
+        return "Pace must be at most 15:00 /km";
       return null;
   }
   return null;

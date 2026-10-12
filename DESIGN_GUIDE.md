@@ -81,8 +81,8 @@ it belongs next to Apple Fitness / Strava / a well-made iOS health app.
 | `src/index.css`                      | The **canonical HSL colour variables** (`--primary`, `--card`, `--destructive`, etc.) for `:root` (light) and `.dark`, plus the Tailwind `@theme` bridge that exposes them as `bg-primary`, `text-muted-foreground`, etc. Also app-shell layout vars (`--tab-bar-height`, safe-area insets). |
 | `src/lib/theme.ts`                   | The `THEME` **JavaScript object** — sport colours, semantic colours, macro colours, chart colours, gradients. Used in TS/inline styles where a CSS class can't reach. Also `MACROS_TEXT_LIGHT` + `useMacroPalette()`.                                                                        |
 | `src/styles/components.css`          | Shared CSS primitives: `.ds-card`, `.ds-card-interactive`, `.ds-input`, `.ds-status-banner`, `.bottom-nav-frost`, auth shell, `.stat-number`, `.progress-ring`, `.pressable`.                                                                                                                |
-| `src/styles/animations.css`          | Keyframes + classes: `ds-fade-up`, `ds-scale-in`, stagger delays, run-button pulse, skeleton shimmer, number-update flash, PR flash, tab bounce.                                                                                                                                             |
-| `src/components/ui/`                 | React primitives: `Button`, `IconButton`, `Banner`, `BottomSheet`, `Dialog`, `ConfirmDialog`, `ChoiceSheet`, `Coachmark`, `Tooltip`, `Toggle`, `Spinner`, `AnimatedNumber`, `ErrorState`.                                                                                                    |
+| `src/styles/animations.css`          | The Start Run pulse (`ds-run-pulse`, `.btn-start-run-pulse`), the skeleton shimmer and pulse, and the global reduced-motion reset. Nothing else: what moves is framer-motion in its component (§8).                                                                                          |
+| `src/components/ui/`                 | React primitives: `Button`, `IconButton`, `Banner`, `BottomSheet`, `Dialog`, `ConfirmDialog`, `ChoiceSheet`, `Tooltip`, `Toggle`, `Spinner`, `AnimatedNumber`, `ErrorState`.                                                                                                                 |
 | `CLAUDE.md` → "Tropos Design System" | The authoritative spec this guide summarises. If you need deeper detail, read that section.                                                                                                                                                                                                  |
 
 **Rule:** never re-declare a colour or radius that already exists as a token.
@@ -249,6 +249,12 @@ the count can only fall.
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
 
+Sizes are at the designed text size. The iPhone app follows the phone's
+text size (`systemTextSize.ts`, 1× to 2×): body and small text grow in
+proportion, while the four heading steps grow by the same amount as body
+text, as iOS titles do under Dynamic Type (`tokens.css`). At double text
+a page title is 47px, not 62px.
+
 **Onboarding question role (approved first release, 7 September 2026):**
 The question heading uses the existing `text-h1` token with `font-extrabold`,
 tight leading and natural wrapping. Standard route titles keep their existing
@@ -391,7 +397,21 @@ behaviour.
   - **Hexagon usage rule:** the hexagon mark appears in **empty-states and
     streak badges ONLY** — never as decoration on a populated surface, never
     as a loading placeholder, never inline in content. It is the brand
-    signature; keep it scarce.
+    signature; keep it scarce. Two owner-made exceptions, both the mark
+    itself rather than decoration: it signs Home's header before the date
+    (DS3, 2026-10-01), and it is the first-visit guide's face while the
+    guide is talking (FV1, 2026-10-04: the walk's card and the one-time
+    hints, `GuideMark`).
+- **The first-visit guide** (`src/components/guide/`, FV1): `GuideWalk`
+  dims the page around one card at a time, with the guide's card (the
+  mark, a bold title, one or two sentences, Skip and Next) placed beside
+  it; the first-visit walk starts with the mark lifting out of Home's
+  header. `GuideHint` is the one-time hint: the same card without the dim,
+  closed by Got it or any tap elsewhere. It finds its control by
+  `data-guide-anchor` rather than wrapping it, because wrapping a control
+  in a floating-ui reference replaces its own click handlers. The words
+  live in `firstGuide.ts` and keep the house voice: the app never says
+  "I", and nothing ends in an exclamation mark.
   - This is the **only** empty-state component — every empty/no-data branch
     routes through it (the older square-icon `components/EmptyState.tsx` was
     retired once all surfaces migrated). Don't reintroduce a bespoke
@@ -409,10 +429,19 @@ behaviour.
   Use `.pressable` or the primitives (which bake it in).
 - **Haptics:** call the `haptic()` utility on button/card taps (Capacitor).
 - **Count-up:** the moments' numbers count up as they appear, through
-  `AnimatedNumber` (or `useCountUp` for a once-a-session count on Home).
-  Under Reduce Motion `AnimatedNumber` is plain text from the first paint.
-- **Entrance:** `ds-fade-up` / `ds-scale-in` with `ds-stagger-*` delays.
-- **Number updates:** `.ds-stat-updated` flash; PRs use `.ds-badge-new-pr`.
+  `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
+  a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
+  plain text from the first paint.
+- **Entrance:** a page's header and sections rise in, staggered, through
+  the framer variants in `src/components/ui/pageMotion.ts`
+  (`pageItemVariant` inside `pageStaggerContainer`), which `PageShell`
+  applies; a page that animates a section itself imports
+  `pageItemVariant`. Content replacing its placeholder fades in instead
+  (`ArrivalFade`, under Pol1 below).
+- **Numbers and records:** no flash class. A figure counts up (above), a
+  set ticked on screen pops its check (`SetCheck`, under Pol1 below) and a
+  new best is the gold card docked above the workout's bottom bar
+  (`NewBestMoment`).
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
   `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
@@ -421,6 +450,22 @@ behaviour.
   offsets, `pathLength` and count-ups are not covered: if you add one,
   gate it in the component with the `useReducedMotion` hook, as
   `ProgressRing` and `AnimatedNumber` do.
+- **A change seen on screen moves; the same state arriving by mount does
+  not** (Pol1, 2026-10-11). A set ticked on screen pops its check
+  (`SetCheck`); a done set on a resumed session or a return to its
+  exercise just shows. Content replacing its placeholder fades in where
+  the placeholder was (`ArrivalFade` with `useArrivedAfterLoading`);
+  content that was ready, or comes back on a tab or view switch, just
+  shows.
+- **Transient workout cards dock above the bottom bar** (Pol1): the rest
+  timer and the new-best moment take their room from the bottom of the
+  list, so nothing above them moves under the thumb that ticked the set.
+- **The workout screen fixes only its top bar and exercise strip** (owner,
+  2026-10-12). Finish sits by Close in the top bar, as Hevy and Strong put
+  it, and the exercise's name, set count and effort cue head the list and
+  scroll away with it; another exercise opens at its head. Fixed, they
+  took about 290 px of a 715 px phone, and the set being logged went out
+  of sight.
 
 ---
 
@@ -480,6 +525,13 @@ true, which is the whole point of separating them.
 | **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
 | **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
 | **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+
+A placeholder holds the loaded content's shape, at every text size: set
+a line of text's placeholder in that line's own classes (`LineBar` in
+`LoadingSkeleton.tsx`) and a chart's at the chart's aspect ratio, rather
+than a bar in pixels that matches one size and shoves everything under it
+at the others (Pol1: Analytics' placeholder had drifted from its page,
+and the score arriving dropped the page about 70 px).
 
 The trap this table exists to catch is the middle one: a loading state
 that is height-stable and confident reads as final. Home renders past the
@@ -575,12 +627,19 @@ no new colours, no gradient, no emoji.
 ---
 
 _When this guide and your generic UI instincts disagree, the guide wins. When
-the guide and `CLAUDE.md` disagree, `CLAUDE.md` wins (it's the deeper spec).
-When something genuinely isn't covered here, ask before inventing._
+§14's decision notes and an earlier section disagree, §14 wins: it records the
+owner's dated calls. When something genuinely isn't covered here, ask before
+inventing._
 
 **Daily logging simplification (user direction, 2026-09-09):** Keep decorative food photos out of the calorie summary; retain meal photos on meal entries. Home session cards show the session and dose; rationale lives behind “Why this run” in day details. Water and weight saves update the tile, with editing available by reopening; persistent sync errors remain visible.
 
+**Set types and the set table (owner direction, 2026-10-04):** A set's type is picked from its badge, as Hevy and MacroFactor do it: tap the number (or W, D or F) and a sheet lists Working set, Warm-up, Drop set and To failure, each with one line on what it does in Tropos. The words live in `setLabels.ts` beside the numbering, and the sheet works on a done set too, working the session's bests out again. Warm-ups are lettered, not numbered: the sets that count are "Set 1 of 3" however long the ramp, and a warm-up is optional, so starting the working sets passes over the ramp and never holds the exercise open (`isSetOutstanding`). Previous shows the same counted set last session. A done row turns green with the filled tick; the row being logged keeps the lifting tint. (Revised 2026-10-12, owner: "tone down colours". A done row keeps the card's colour and says done with its filled green tick alone, the row being logged is the table's one tinted row, the warm-up badge is grey, not amber (amber is a status colour, and every exercise opens on three or four warm-ups), and Previous is grey, not purple, still a tap to fill.)
+
 **Lift reasons (owner choice, 2026-10-03):** A lift day's details carry the same closed disclosure, “Why this session”: under the session card on Train's lift tab (on a day still to train this week), in the day sheet's lift block, and under the planned lift in Home's day details. One control draws both (`PurposeDisclosure`). The words come from `liftSessionPurpose.ts`, which states only what the plan stores — the training focus, a lighter week, the last full week before one, and weights holding in an easing block's first weeks — and says nothing without a programme. Home's Today cards stay free of reasons.
+
+**The live run screen (owner call, 2026-10-12, the run screen pass):** its accent is the run's coral: the timer, the km bar, the best lap, Resume, the step card, the route and the position dot on the live map, and the GPS search. It was teal, water's colour, from before DS3. Teal stays only as the first step of the heart-rate zone scale, which is a scale, not the accent. `runScreenCoral.test.ts` holds it.
+
+**The rules sheet (owner lock Lift4 (3), 2026-10-05):** "Why this session" keeps its place on all three surfaces, but opens one sheet rather than a disclosure: the session's reasons first, then "How your plan works", the plan's rules for this person (`liftRules.ts`, its numbers read from the engine's constants), ending on "Stuck on a lift? A variation often gets it moving." Train also has an ⓘ beside the week label that opens the same rules on any day. The sheet loads when first opened (`LiftRulesSheet`). "Why this run" stays a disclosure.
 
 **Daily logging refinement (user direction, 2026-09-09):** The Food calorie
 summary may use a subtle, static halo made from existing theme tokens to
@@ -594,3 +653,293 @@ had proved it); presets add immediately and Other amount expands inside the
 same sheet. Avoid extra quick-add settings and a separate total-edit flow in that
 sheet. Home has no persistent streak-recovery or rest-day banner; native timed
 notifications are a deferred feature in `POST_LAUNCH.md`.
+
+## 14. Decision notes and component specs (moved from CLAUDE.md, 2026-10-05)
+
+These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every turn. They carry the owner's dated design decisions (DS3 and after), the training-plan primitives and the button mapping. Some of it restates §1–§10 above; where the two disagree, this section wins.
+
+### 14a. Visual Identity
+
+- **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
+- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
+- **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
+- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button and the auth logo, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
+- **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
+- **Logo:** a hexagon with rounded corners and an upward chevron cut out of it, white on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose this refinement of the bake-off mark on 2026-10-01 (`docs/visual-audit/bakeoff/DECISION.md`, decision 4). It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), and the launch image (the hexagon alone). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
+- **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same hexagon, `#boot-splash`, until the bundle runs). The chevron rises into the hexagon, cut out so it shows whatever is behind it; once the app is ready (on Home, once Home's header mark has drawn) the mark shrinks into Home's header mark as the page shows, or the overlay fades anywhere but Home. Reduce Motion gets the whole mark and a fade. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
+
+### 14b. Colour System (src/styles/tokens.css + src/lib/theme.ts)
+
+- Purple brand: #7B72E9 (primary), #9590E0 (light), #6560C8 (dark)
+- Running coral: #D4637A
+- Nutrition orange: #D9884E / #e87316
+- Hydration teal: #52A3BD
+- Success green: #4DB872 / #22b558
+- Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
+- Card backgrounds: white (light) / #17171B (dark)
+- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
+- Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
+- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
+- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
+
+### 14c. Typography (Plus Jakarta Sans + Archivo)
+
+- **Display font:** Plus Jakarta Sans (all UI text)
+- **Numeral font:** Archivo (stat numbers — calories, weight, reps, volume). Proportional, not monospace; tabular figures forced on `.font-mono`. Replaced JetBrains Mono (brand bake-off — `docs/visual-audit/bakeoff/DECISION.md`). The `font-mono` utility / `--font-mono` token still means "numbers"; the name is historical.
+- **Scale (1.25 modular):**
+  - Display: 3rem/48px — hero stat numbers (health score)
+  - H1: ~31px — page titles ("Program", "Social", "Analytics")
+  - H2: 25px
+  - H3: 20px — page section headings (`SectionHeading`, "This week", "Running") and hero card titles
+  - Body: 16px — standard text
+  - Small: 14px — secondary descriptions
+  - Micro: 12px — labels and captions, in sentence case
+- **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
+- **Numeric displays:** Always use font-mono + tabular-nums for alignment
+- **Medium (500, `font-medium`) IS a tier — the small-text emphasis
+  weight.** Use it at `text-sm` and `text-xs` for secondary labels, meta
+  rows and pill text; hierarchy at `text-lg` and above is carried by
+  600 / 700 / 800. It was previously held under a count ratchet on the
+  theory that it was off-scale drift. Counting where it actually lands
+  settled that: of 269 sized uses, 113 are `text-sm`, 105 are `text-xs`,
+  and **zero** are `text-lg` or above. A convention that consistent
+  across ~96 components is the scale, not drift. The count ratchet is
+  gone; `designSystemInvariants.test.ts` now pins the boundary that
+  matters — font-medium never appears at heading scale.
+
+### 14d. Card Patterns
+
+- **Cards render through the `Card` primitive** (`src/components/ui/Card.tsx`;
+  pressable cards take the same look from `cardClasses` in its `.ts`
+  sibling). Two sizes, decided once: **hero** = rounded-2xl + p-4,
+  **compact** = rounded-xl + p-3. The radius curve is DS2's (`--radius`
+  10px), so rounded-2xl is 22px and rounded-xl 16px, not Tailwind's
+  defaults. The old "standard card, padding
+  3-4" was the drift — 45 `bg-card` surfaces sat on some third pairing.
+  `designSystemInvariants.test.ts` ratchets hand-rolled off-pairing
+  `bg-card` surfaces down and bans the `shadow-card` class outright: it is
+  a Tailwind shadow COLOUR, not a shadow, and cards that used it were flat.
+  The elevation utility is `card-shadow`.
+- **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
+- **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
+- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Quick actions:** there is no pill row. Today's actions are the Start
+  buttons on the Today cards, and food logging is the "Log food" button in
+  `TodayEnergy`'s header.
+- **Inline banners:** the `Banner` primitive (`src/components/ui/Banner.tsx`), three variants — `info` (coral, running context), `warning` (amber), `neutral` (muted, no domain colour) — on the compact-card pairing, `rounded-xl p-3`. The sustained-offline notices render through `neutral` and render NOTHING while idle: the permanent live-region wrapper they used to keep was an empty first child in the page rhythm, pushing Food's and Train's headers down a step. Pinned in `designSystemInvariants.test.ts`. The global online/offline strip in `Layout` (`ds-status-banner`) is app-shell chrome, not an inline banner.
+- **Section headings:** a group of cards or rows opens with `SectionHeading` (`src/components/ui/SectionHeading.tsx`) — a real heading in sentence case: `page` size (20px bold, the H3 step) on a page or tab, `compact` (16px bold) inside a sheet, a card or a dense settings form, with an optional `action` on the same row. DS3 retired the 12px capital-letter group label. `SectionLabel`'s `tier="section"` now marks a small group inside a Food sheet or list only (the Details sheet, the food suggestions): 12px bold, sentence case since the Food pass. Its surfaces are pinned by `designSystemInvariants.test.ts`.
+- **Labels inside a card:** `SectionLabel`'s caption tier — 12px semibold muted, **sentence case**, no letter-spacing. Write the text the way it is said ("Total volume"); it renders as written. Capitals are kept for table column headers. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`)
+
+### 14e. Training plan primitives
+
+The Programme Run section is a **hybrid training cockpit**, not a settings
+list. It is built from named, reusable training-plan primitives. These are
+NOT considered decorative one-off patterns — they are components, reused
+consistently, and part of the design system.
+
+Primitives (all in `src/components/program/`, fed by the pure view model in
+`src/lib/runProgrammeViewModel.ts`):
+
+- **`RaceCockpitCard`** — race-prep identity card: readable distance heading
+  (Marathon / Half Marathon / 10K / 5K), target date, days-out countdown,
+  week N of M, current phase, and a phase rail. The rail reflects the REAL
+  engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
+  invented "Peak" segment, so the active highlight always maps to a phase
+  the scheduler can emit. Renders ONLY in the race-goal overlay.
+  Under the rail sits a closed disclosure, "The weeks ahead"
+  (`RaceWeeksAhead`, R23 in Pgm8, 2026-10-11): one row a week to race
+  week, each week's long run and quality sessions by name and "Lighter
+  week" on a step-back week, with no days, no easy runs and no base, build
+  or peak (E3a). It is worked out when opened.
+- **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
+  title (the card's one big line, H2) + one quiet meta line + a single
+  primary action (its own control, NOT the whole card) + an overflow that
+  opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
+  "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
+  eyebrow leads with its category and its title is the focus ("Pull · Up
+  next" over "Lat focus", as on Home); its picture sits at the right, as
+  on Home's cards: a lift day's muscles (`figure`), or a run's type in a
+  tile (`icon`, from `runTemplateIcon`); the halo went with the app's
+  other glows. A free runner's Run tab leads with the same card ("Start a
+  run" over "Pick your pace today"). Train's day list below it draws each
+  exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
+  drawing, else the category's muscles, else a dumbbell), and Train shows
+  one advice notice at a time (`programNotices`).
+- **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
+  (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
+  day cells (purple lift / coral run) in the Home WeekStrip visual language
+  (a done day is filled with its sport at 30% with a check, as Home fills a
+  logged day; it was the success green until DS3),
+  a real selected-key controller driving the content beneath it. Lift tab =
+  split-ordered rotation cursor; Run tab = date-pinned 7-day selector
+  (ADR-0002's dual ontology, per tab). Extras (logged runs that claimed no
+  slot) surface as day-cell indicators here and in full in `DayActionSheet`
+  via `unclaimedByDate`. Its predecessor **`HybridWeekRail`** (two-lane
+  week-at-a-glance) was superseded by that unification and sat orphaned —
+  rendered by nothing, tests green — until deleted on 2026-08-08; its
+  `extras-pill-v1` coachmark went with it (the capture rigs' pre-dismissals
+  of that key are now inert).
+- **`DayActionSheet`** — per-day command sheet (run + lift blocks of equal
+  visual weight). Race-day detection is by template **type** (`type ===
+"race"`), never `templateId === "race"` (race ids are `5k_race` …
+  `marathon_race`). Template swap is scoped per-day ("Changes this day
+  only.").
+
+Locked model (Run9a): the Run surface is **two states only** — freeform
+substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
+NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
+not reintroduce structured mode or structured-mode transitions.
+
+Constraints these primitives must keep:
+
+- Closed palette: **coral = running, purple = lifting**; existing semantic
+  tokens for success/warning/destructive. No new colours unless added as
+  tokens. No decorative gradients.
+- 44px+ touch targets (use the `Button` / `IconButton` primitives).
+- Light + dark mode; reduced-motion respected (`motion-safe:` prefixes).
+- Active plan editing deep-links to `/settings/run-plan` — the focused
+  run-plan editor (Set1.2 nested-settings IA; originally
+  `/settings/training` per Run8 PR1a, destination superseded but the
+  "deep-link out, don't edit inline" decision unchanged). The entry copy
+  reads as "Edit run plan", not a generic settings jump.
+
+### 14f. Spacing
+
+- **Page horizontal padding:** px-4 (16px)
+- **Card internal padding:** p-3 (12px) for compact, p-4 (16px) for hero cards
+- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section heading, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section heading carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
+- **Grid gap:** gap-2 (8px) for compact grids
+- **Icon container:** w-9 h-9 (36px) for standard, w-12 h-12 (48px) for hero
+- **Icon inside container:** w-4 h-4 (16px) standard, w-5 h-5 (20px) hero
+
+### 14g. Interactive Patterns
+
+- **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
+- **Haptic:** Called on all button/card taps via haptic() utility
+- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros (on Food and on Home's food card, which draws the same ring and tiles), the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
+- **Water card:** Fill-from-bottom gradient animation, wave SVG, bubble particles, ripple on add
+- **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
+- **Tab navigation:** Horizontal scrolling tabs with active pill indicator
+
+### 14h. Glow & motion rules (WKWebView-safe — 2026-07 visual pass)
+
+- **Glow recipe (non-negotiable):** a glow is a STATIC blurred layer whose
+  **opacity/transform** animates — never animate blur radius or any filter
+  value (filter animation stutters in WKWebView; opacity/transform composite
+  on the GPU). Reference implementation: `src/components/BodyMapGlow.tsx`
+  (blurred overlay `Model` behind the body diagrams — analytics heat map +
+  exercise guide share it).
+- **One ambient loop per surface, maximum.** On the muscle heat map, only
+  the single most-trained muscle pulses; nothing else loops. `prefers-
+reduced-motion` always gets the settled static state — no entrance, no
+  loop.
+- **Warning register:** warnings use `THEME.warning`, and since the D19
+  split (2026-08-22, owner-delegated) that is the AMBER family —
+  `#D97706`, one value with `THEME.amber`, matching the CSS ramp that was
+  already amber (`--warning` light ≈ amber-700, dark = amber-500). Orange
+  (`THEME.semantic.nutrition`, `#D9884E`) is the FOOD domain identity and
+  is now visually distinct from warnings. Warning TEXT takes
+  `hsl(var(--warning-strong))`, never the bare identity (amber-600 is
+  ~3.1:1 on white — fill/icon only). When touching a `THEME.warning`
+  call site, check the SEMANTIC first: the D19 sweep found half of them
+  meant "food" and repointed those to `semantic.nutrition` — a new
+  warning-token use on a food surface recreates the old collision in the
+  other direction. `danger`/`semantic.vitals` and
+  `success`/`semantic.positive` remain value-aliases (pixel-correct,
+  name-only debt, pinned in `colorCanonical.test.ts` alongside the
+  warning≠nutrition inequality that IS the D19 contract).
+- **Framer Motion is gated globally only for POSITION; CSS animations
+  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  `App.tsx` settles positional values (x, y, scale, rotate, width,
+  height) and nothing else: opacity, a stroke offset, `pathLength` and a
+  motion-value count-up all still animate under Reduce Motion. A non-positional animation
+  asks `useReducedMotion` in its own component (`ProgressRing`,
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
+  Tailwind `animate-*` class runs under Reduce Motion unless it carries
+  the `motion-safe:` variant. Every skeleton pulse and ping does;
+  `animate-spin` spinners are progress feedback and stay unprefixed
+  (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
+  is exactly the spinner set).
+- **Empty states go through the `EmptyState` primitive**
+  (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
+  hand-rolled centered-icon-tile blocks. The primitive owns the brand
+  hexagon, accent tinting, and reduced-motion handling.
+
+### 14i. Button variants (canonical CTA mapping)
+
+Every **CTA / action button** uses the shared `Button` primitive
+(`src/components/ui/Button.tsx`) — never a hand-rolled `<button>` with bespoke
+Tailwind. The primitive already supplies the 44px floor, focus-visible ring,
+0.97 press, loading state, and `type="button"` default, so reusing it is also
+how the "every interactive element clears 44px" invariant is satisfied. Pick
+the variant by the action's role:
+
+| Action role                   | Variant                         |
+| ----------------------------- | ------------------------------- |
+| Main lifting / brand CTA      | `primary`                       |
+| Main running CTA              | `sport` (coral)                 |
+| Secondary action              | `secondary` or `outline`        |
+| Low-emphasis action           | `ghost`                         |
+| Destructive action            | `destructive`                   |
+| Running non-critical action   | `sport-tinted` (coral 10%)      |
+| Nutrition-primary CTA         | `nutrition` (orange)            |
+| Nutrition low-emphasis action | `nutrition-tinted` (orange 10%) |
+
+The `nutrition` / `nutrition-tinted` variants are the food-domain analogue of
+`sport` / `sport-tinted`, resolving via the `--nutrition` / `--nutrition-strong`
+tokens (warm orange #D9884E identity; #B45309 amber-700 AA white-text/text step).
+They exist to close the design-system gap — nutrition was the only documented
+domain/sport colour with no first-class token + variant, which is what kept
+leaking one-off hex orange past the hex guardrail. **This is NOT a licence to
+paint Food buttons orange.** Orange is a domain/data identity (section labels,
+macro rings, calorie data), not a per-screen button colour: reserve the filled
+`nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
+orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
+
+**Exceptions, owner calls:** three Food-page buttons are `nutrition`. Brand
+purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
+above until the owner says otherwise.
+
+- **2026-09-22 — the "Your usual" row's Log.** Every other food control on
+  that page is orange, and a purple Log sat directly above the orange meal
+  pills.
+- **2026-09-23 — the camera button beside the composer's text box.** It
+  replaced the coral camera icon inside the field (itself the June Wave 2
+  shrink of a full-width scan CTA): photo scanning is one of the page's main
+  actions, and a 20px grey icon read as decoration. It is a filled square,
+  camera only: it carried the word "Scan" for a day, and the owner found a
+  camera beside "Scan" read as two different actions. Its accessible name is
+  "Scan a meal". Coral (`THEME.food.scan`) now stays inside the scanner.
+  Every account gets the same button; a free account's opens the scanner on
+  Barcode, which is always free (F2b), with the photo tabs holding the Pro
+  offer. The scanner opens by growing out of it (`ScanGrow`).
+- **2026-09-23 — the scan result sheet's Log** ("Log to Breakfast"). It
+  matches the usual row's Log: logging food is the page's one action, and
+  the sheet opens over the orange camera button that started it.
+
+Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
+mandate to wrap every `<button>` element: pressable cards, list/table rows,
+day-cells, chips, and icon taps are legitimately their own controls (use
+`IconButton` for icon taps; `SegmentedControl` for single-select pill groups).
+Unlike the hex guardrail, "use `Button`" can't be lint-enforced (a linter can't
+tell a CTA from a pressable card), so this is a per-PR convention: when adding
+or touching a CTA button, route it through `Button` with the variant above.
+
+### 14j. Design Principles (for Claude Code when improving UI)
+
+- **Keep the existing colour scheme** — the purple/coral/orange/teal semantic system is intentional and should not be changed
+- **Calm over flashy** — subtle shadows, soft tinted backgrounds, no harsh contrasts
+- **Breathing room over density** — generous padding, clear visual hierarchy
+- **iOS conventions** — grouped background, card-based layout, safe area padding, 44px minimum touch targets
+- **Consistent numeric treatment** — all numbers in Archivo (the numeral font) with tabular-nums
+- **Sport-coding everywhere** — lift content uses purple tints, run content uses coral tints
+- **Semantic colour consistency** — orange always = nutrition, teal always = hydration, coral always = vitals/running, purple always = brand/lifting
+- **Progressive disclosure** — cards link to detail views, sheets for editing, don't overload screens
+- **When polishing:** Focus on typography weight consistency, spacing regularity, shadow subtlety, and icon container sizing. Don't introduce new colours, gradients, or decorative elements.
+
+### 14k. Current Known Design Considerations
+
+- The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
+- Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
+- New-best and PR badges are gold (`--achievement`), never the food orange
+- People's names (owner, 2026-10-05, from the break-social pass). A name reads in its own direction (`dir="auto"`) but keeps to the start of its row. A profile's heading wraps to two lines before it truncates. On a card narrower than 20.5em (under 360px at normal text size) a post's Follow is an icon (`InlineFollow`), so the author's name and time keep the room. At large text sizes the feed card, exercise rows and leaderboard rows wrap rather than clip: the card is a query container measured in em, its stats go from three columns to two to one, and the capture spec measures every dataset at 200% text. Display names are 2–50 characters in the app, the server's sanitizer and every rules cap on a copied name, pinned by `displayNameLimit.cross.test.ts`. The worst cases live at `/dev/break-social`

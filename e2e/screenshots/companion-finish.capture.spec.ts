@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { signInAsTestUser, TEST_USER } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
-import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 import { settleImages } from "../helpers/settleImages";
 
 const AUTH = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
@@ -66,7 +65,6 @@ for (const budget of [null, 30] as const) {
       });
       expect(copy.ok()).toBe(true);
     }
-    await suppressCoachmarks(page);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await signInAsTestUser(page, { email, password });
     if (budget !== null) {
@@ -74,19 +72,22 @@ for (const budget of [null, 30] as const) {
       await expect(
         page.getByRole("button", { name: "Start workout", exact: true })
       ).toBeVisible();
+      // Lift4 (5): the plan is built for the session length, which Lift
+      // plan edits beside the lift days.
       await page.goto("settings/lift-plan");
-      const liftingTime = page.getByRole("region", {
-        name: "Usual lifting time",
+      const sessionLength = page.getByRole("radiogroup", {
+        name: "Minutes per lift session",
       });
-      await expect(liftingTime.getByRole("combobox")).toHaveValue("30");
-      await expect(liftingTime.getByText(/ · about /).first()).toBeVisible();
+      await expect(
+        sessionLength.getByRole("radio", { name: "30 min" })
+      ).toHaveAttribute("aria-checked", "true");
       for (const dark of [false, true]) {
         await page.evaluate(
           (value) => document.documentElement.classList.toggle("dark", value),
           dark
         );
-        await liftingTime.screenshot({
-          path: `screenshots/usual-lifting-time-${dark ? "dark" : "light"}.png`,
+        await sessionLength.locator("..").screenshot({
+          path: `screenshots/session-length-${dark ? "dark" : "light"}.png`,
           animations: "disabled",
         });
       }
@@ -147,7 +148,7 @@ for (const budget of [null, 30] as const) {
       .getByRole("button", { name: "Start workout", exact: true })
       .click();
     const warmups = await page
-      .getByTitle("Set type: warmup", { exact: true })
+      .getByRole("button", { name: /^Warm-up \d+\. Change set type$/ })
       .count();
     await page
       .getByRole("button", { name: "Mark set complete", exact: true })
@@ -180,7 +181,7 @@ for (const budget of [null, 30] as const) {
       // current row and the rows still to come.
       await expect(
         page.getByRole("button", {
-          name: `Edit completed set ${warmups + 1}`,
+          name: "Edit completed set 1",
           exact: true,
         })
       ).toBeVisible();
@@ -198,12 +199,12 @@ for (const budget of [null, 30] as const) {
     }
     await page
       .getByRole("button", {
-        name: `Edit completed set ${warmups + 1}`,
+        name: "Edit completed set 1",
         exact: true,
       })
       .click();
     const correction = page.getByRole("dialog", {
-      name: `Edit set ${warmups + 1}`,
+      name: "Edit set 1",
       exact: true,
     });
     await expect(correction).toBeVisible();
@@ -227,16 +228,14 @@ for (const budget of [null, 30] as const) {
     await expect(correction).toHaveCount(0);
     await expect(
       page.getByRole("spinbutton", {
-        name: `Set ${warmups + 1} reps`,
+        name: "Set 1 reps",
         exact: true,
       })
     ).toHaveValue("6");
     await page
-      .getByRole("button", { name: "Finish early", exact: true })
+      .getByRole("button", { name: "Finish workout", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "Review completed work", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Finish", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "Session completion" })
     ).toBeVisible();
@@ -298,8 +297,19 @@ for (const budget of [null, 30] as const) {
     );
     expect(saved.ok()).toBe(true);
     const { fields } = await saved.json();
-    expect(fields.sessionVariant?.stringValue).toBe(
-      budget === null ? undefined : "time_budget"
-    );
+    // Lift4 (5): a new plan is built for the session length and records
+    // it, so Start runs the plan's own session in full at any length; only
+    // a plan from before that still trims to the usual time.
+    expect(fields.sessionVariant?.stringValue).toBeUndefined();
+    if (budget !== null) {
+      const programme = await request.get(
+        `${DOCS}/users/${uid}/programState/current`,
+        { headers }
+      );
+      expect(programme.ok()).toBe(true);
+      expect((await programme.json()).fields.sessionMinutes?.integerValue).toBe(
+        String(budget)
+      );
+    }
   });
 }

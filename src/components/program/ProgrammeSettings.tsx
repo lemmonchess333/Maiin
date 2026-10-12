@@ -18,7 +18,7 @@
  *     two pages.
  *
  * Save model (the lift editor):
- *   - The two engine toggles (auto-progression, microloading) live-save via
+ *   - The two engine toggles (auto-progression, small plates) live-save via
  *     `updateSettings` — no rebuild.
  *   - Every plan-shaping field (focus, experience, lift days, equipment,
  *     injuries) is a DRAFT. A single "Save changes" action runs `buildPlan`
@@ -35,7 +35,7 @@
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
  * ScheduleLayoutSheet — both views link to it.
  */
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -70,6 +70,8 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
+import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
   represcribeWorkouts,
@@ -85,6 +87,11 @@ import {
   RACE_DISTANCE_LABELS,
   programmePreservationNote,
 } from "@/lib/programmeChanges";
+import SessionLengthLabel from "./SessionLengthLabel";
+import {
+  SESSION_MINUTES_OPTIONS,
+  sessionLengthOption,
+} from "@/features/program/sessionFit";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
@@ -100,6 +107,9 @@ import type {
   Equipment,
   RaceDistance,
 } from "@/features/program/programTypes";
+import type { ProgramReadiness } from "@/features/program/useProgram";
+import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
+import { SMALL_PLATES_HINT } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -115,7 +125,13 @@ interface ProgrammeSettingsProps {
   recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   profile: UserProfile;
   programState: ProgramState | null;
-  /** Live-saves the engine toggles (auto-progression / microloading). */
+  /** `useProgram().readiness`: whether `programState` is the server's copy
+   *  yet. Save changes builds the new plan on it and commits against it,
+   *  and Reset rebuilds from it, so neither runs before "ready". While the
+   *  programme loads it is null or the cached copy, and a save built on
+   *  null starts from no programme and is refused as a conflict. */
+  readiness: ProgramReadiness;
+  /** Live-saves the engine toggles (auto-progression / small plates). */
   updateSettings: (patch: Partial<ProgramSettings>) => Promise<unknown> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
   regenerateProgram: (
@@ -194,51 +210,62 @@ function SettingsOptionCard({
   index = 0,
   accent = THEME.brand,
 }: SettingsOptionCardProps) {
+  // The card is a container so its picture can give way at larger text,
+  // as setup's OptionCard does: under 15em the icon tile left a word like
+  // "Intermediate" no room, and a single word cannot wrap. Wide-first, so
+  // a browser without container queries keeps the designed card.
   return (
-    <motion.button
-      type="button"
-      onClick={onSelect}
-      disabled={disabled}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, delay: index * 0.025 }}
-      className={cn(
-        "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
-        "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
-        selected ? "border-transparent" : "border-border/70",
-        disabled && "opacity-35 pointer-events-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      )}
-      style={
-        selected
-          ? {
-              background: `${accent}14`,
-              borderColor: `${accent}45`,
-            }
-          : undefined
-      }
-    >
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-body font-bold leading-tight">{label}</span>
-        {desc ? (
-          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-            {desc}
+    <div className="@container">
+      <motion.button
+        data-motion-driven
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, delay: index * 0.025 }}
+        className={cn(
+          "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
+          "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
+          selected ? "border-transparent" : "border-border/70",
+          disabled && "opacity-35 pointer-events-none",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        )}
+        style={
+          selected
+            ? {
+                background: `${accent}14`,
+                borderColor: `${accent}45`,
+              }
+            : undefined
+        }
+      >
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50 @max-[15em]:hidden">
+          {icon}
+        </span>
+        {/* A word wider than the card (larger text on a narrow phone)
+          hyphenates rather than running out of it. */}
+        <span className="min-w-0 flex-1 break-words hyphens-auto">
+          <span className="block text-body font-bold leading-tight">
+            {label}
           </span>
+          {desc ? (
+            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+              {desc}
+            </span>
+          ) : null}
+        </span>
+        {selected && !disabled ? (
+          <Check className="size-4 shrink-0" style={{ color: accent }} />
         ) : null}
-      </span>
-      {selected && !disabled ? (
-        <Check className="size-4 shrink-0" style={{ color: accent }} />
-      ) : null}
-    </motion.button>
+      </motion.button>
+    </div>
   );
 }
 
 // Each focus card gets a distinct GLYPH for scannability, but all keep the
 // purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Running support" is lifting that
+// drives the lift split's rep ranges; "Support my running" is lifting that
 // complements runs, NOT run scheduling). So per sport-coding, purple is
 // correct; only the icon varies. Do not recolour these to coral.
 const FOCUS_OPTIONS: {
@@ -262,21 +289,21 @@ const FOCUS_OPTIONS: {
   {
     id: "fat_loss",
     label: "Lose fat",
-    // The engine gives this focus the general reps, not high-rep
-    // "conditioning" work: the lifting keeps strength while the calorie
-    // deficit does the fat loss (GOAL_PROFILES.fat_loss).
+    // The engine builds this focus as Build muscle (`roleTable.ts`), not
+    // high-rep "conditioning" work: the lifting keeps strength and muscle
+    // while the calorie deficit does the fat loss (Lift4 (4)).
     desc: "Keeps your strength and muscle as you lose fat",
     icon: <Flame size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "general",
-    label: "Stay fit",
+    label: "General fitness",
     desc: "Balanced general training",
     icon: <Heart size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "running",
-    label: "Running support",
+    label: "Support my running",
     desc: "Lifting that complements your runs",
     icon: <Footprints size={18} style={{ color: THEME.brand }} />,
   },
@@ -413,6 +440,7 @@ export default function ProgrammeSettings({
   recentLayoff = "none",
   profile,
   programState,
+  readiness,
   updateSettings,
   regenerateProgram,
   refreshProfile,
@@ -423,19 +451,24 @@ export default function ProgrammeSettings({
   activeBlockFocus,
 }: ProgrammeSettingsProps) {
   const navigate = useNavigate();
+  const loadFailedId = useId();
   // ── Persisted values (also the dirty-check baseline) ──────────────
   const saved = useMemo(
     () => ({
       primaryGoal: (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
       nutritionPhase: getNutritionPhase(profile),
-      experience: (profile.experience as Experience) ?? "intermediate",
+      experience: toExperience(profile.experience),
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
+      // Lift4 (5): how long a session is; the plan is fitted to it.
+      sessionMinutes: sessionLengthOption(profile.liftTimeBudgetMinutes),
       preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
         profile.preferredSplit ?? ""
       )
         ? (profile.preferredSplit as SplitChoice)
         : "auto",
       equipment: (profile.equipment as Equipment) ?? "full_gym",
+      // Lift4 (11): "what do you have?" beside a home gym's kit.
+      barbellAtHome: profile.barbellAtHome === true,
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
@@ -465,7 +498,11 @@ export default function ProgrammeSettings({
   const nutritionPhase: Goal = saved.nutritionPhase;
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
+  const [sessionMinutes, setSessionMinutes] = useState<number>(
+    saved.sessionMinutes
+  );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
+  const [barbellAtHome, setBarbellAtHome] = useState(saved.barbellAtHome);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
   // /settings/run-plan editor (RunPlanSettings) is the one place they
@@ -478,10 +515,7 @@ export default function ProgrammeSettings({
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const settings = programState?.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
+  const settings = programState?.settings ?? DEFAULT_PROGRAM_SETTINGS;
 
   // The per-field diff is the single source of truth: the recap shown in the
   // confirm modal and the dirty state both derive from it, so they can't drift.
@@ -490,8 +524,10 @@ export default function ProgrammeSettings({
     nutritionPhase,
     experience,
     liftDays,
+    sessionMinutes,
     preferredSplit: saved.preferredSplit,
     equipment,
+    barbellAtHome,
     injuries,
     // Run fields mirror `saved` — run edits live on /settings/run-plan,
     // so they can never appear in this editor's change recap.
@@ -507,17 +543,18 @@ export default function ProgrammeSettings({
   // lift-days change re-derives the skeleton. The confirm copy must name the
   // customization reset for a day-count change, and reassure otherwise.
   const liftDaysChanged = liftDays !== saved.liftDays;
+  const sessionMinutesChanged = sessionMinutes !== saved.sessionMinutes;
   // LIFT-EV-06 (owner decision 2026-08-09): a permanent goal change at the
   // SAME frequency used to be silent — buildPlan's preserve branch keeps the
   // workouts verbatim, so only the label moved. The confirm dialog now offers
   // a visible keep-or-represcribe choice (reusing the training-block
   // transform). The choice only exists when the preserve branch would run:
-  // a day-count or experience change already forces a rebuild, and an active
-  // block owns the focus.
+  // a day-count change rebuilds, and an active block owns the focus. A level
+  // change never rebuilds (Lift4 (12)), so a focus changed with one still
+  // needs the choice, and the new level re-aims the sessions.
   const focusChangedSameFrequency =
     primaryGoal !== saved.primaryGoal &&
     !liftDaysChanged &&
-    experience === saved.experience &&
     !activeBlockFocus &&
     (programState?.workouts?.length ?? 0) > 0;
 
@@ -584,7 +621,9 @@ export default function ProgrammeSettings({
    * re-offers the choice in the opposite direction, so no snapshot is kept.
    */
   async function applyRebuild(represcribe = false) {
-    if (saving) return;
+    // Not before the programme has loaded (`readiness`); the buttons wait
+    // too, and this holds for any other way in.
+    if (saving || readiness !== "ready") return;
     setConfirmRebuild(false);
     setSaving(true);
     try {
@@ -607,15 +646,18 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
-        // Without this a level change is invisible to the builder — it
-        // preserves the saved week whenever the day count is unchanged, so
-        // Beginner ↔ Advanced produced byte-identical workouts behind this
-        // flow's own "Plan updated" toast.
+        // Marks this as a save of someone's own plan, so the experience gate
+        // leaves its exercises alone. A level change is a content edit
+        // (Lift4): it keeps the week, as the confirm above it says.
         previousExperience: saved.experience,
         // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
         bodyweightKg: profile.weightKg,
         sex: profile.sex,
         liftDays,
+        // Lift4 (5): a new plan is fitted to the session length; a changed
+        // one re-fits the plan the person has, sets only.
+        sessionMinutes,
+        previousSessionMinutes: saved.sessionMinutes,
         // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
         // value (inert in generation, keeps profileUpdates consistent).
         preferredSplit:
@@ -631,6 +673,7 @@ export default function ProgrammeSettings({
         runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
+        newRunnerUntil: profileNewRunnerUntil(profile),
         weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
           ? {
@@ -646,6 +689,7 @@ export default function ProgrammeSettings({
             }
           : {}),
         equipment,
+        barbellAtHome,
         injuries,
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -731,9 +775,35 @@ export default function ProgrammeSettings({
   }
 
   async function applyReset() {
+    // As applyRebuild: a reset made while the programme loads was built
+    // from no programme at all.
+    if (readiness !== "ready") return;
     setConfirmReset(false);
     await regenerateProgram();
     toast.success("Programme reset");
+  }
+
+  /* The commit buttons (Save changes, and the dialog's Save and Reset) wait
+     for the programme: the primitive's loading state while it loads, the
+     label staying the name under the spinner; unavailable if the load
+     failed, with one line saying so. Cancel never waits. */
+  const programReady = readiness === "ready";
+  const waitingForProgramme = readiness === "pending";
+  const loadFailed = readiness === "failed";
+  const loadFailedLine = (id: string, className: string) =>
+    loadFailed ? (
+      <p id={id} className={cn("text-xs text-muted-foreground", className)}>
+        Couldn't load your programme. Reopen this page to try again.
+      </p>
+    ) : null;
+  const dialogLoadFailedId = `${loadFailedId}-dialog`;
+  function commitWaits(label: string) {
+    return {
+      disabled: !programReady,
+      loading: waitingForProgramme,
+      "aria-label": waitingForProgramme ? label : undefined,
+      "aria-describedby": loadFailed ? dialogLoadFailedId : undefined,
+    };
   }
 
   /* ── Confirmation modal (rebuild on Lift plan, reset on the overview) ── */
@@ -778,10 +848,14 @@ export default function ProgrammeSettings({
                   {confirmReset
                     ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
                     : focusChangedSameFrequency
-                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          levelChanged: experience !== saved.experience,
+                          ...(sessionMinutesChanged
+                            ? { sessionMinutesTo: sessionMinutes }
+                            : {}),
                         })}
                 </p>
               </div>
@@ -812,16 +886,22 @@ export default function ProgrammeSettings({
                 </ul>
               </div>
             )}
+            {loadFailedLine(dialogLoadFailedId, "leading-relaxed")}
             {!confirmReset && focusChangedSameFrequency ? (
               /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
                  saves — neither outcome is the silent default. */
               <div className="space-y-2 pt-1">
-                <Button fullWidth onClick={() => void applyRebuild(true)}>
+                <Button
+                  fullWidth
+                  {...commitWaits("Save and update sessions")}
+                  onClick={() => void applyRebuild(true)}
+                >
                   Save and update sessions
                 </Button>
                 <Button
                   variant="secondary"
                   fullWidth
+                  {...commitWaits("Save, keep current sessions")}
                   onClick={() => void applyRebuild(false)}
                 >
                   Save, keep current sessions
@@ -852,6 +932,7 @@ export default function ProgrammeSettings({
                 <Button
                   variant={confirmReset ? "destructive" : "primary"}
                   className="flex-1"
+                  {...commitWaits(confirmReset ? "Reset" : "Save")}
                   onClick={
                     confirmReset ? applyReset : () => void applyRebuild(false)
                   }
@@ -1015,6 +1096,23 @@ export default function ProgrammeSettings({
           />
         </div>
 
+        <div>
+          <GroupHeading>Session length</GroupHeading>
+          <SegmentedControl
+            ariaLabel="Minutes per lift session"
+            options={SESSION_MINUTES_OPTIONS.map((n) => ({
+              value: n,
+              label: <SessionLengthLabel minutes={n} />,
+            }))}
+            value={sessionMinutes}
+            onChange={setSessionMinutes}
+            className="@container"
+          />
+          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
+            Your sessions are built to fit this, warm-ups and rests included.
+          </p>
+        </div>
+
         {/* Pgm5 (Q1): split is a derived DISPLAY — the coach sets it from your
             weekly training days; the user expresses preference via lift-days +
             the exercise editor, not a split toggle. */}
@@ -1046,8 +1144,10 @@ export default function ProgrammeSettings({
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
         <div className="rounded-xl bg-muted px-3 py-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+          {/* "Edit days" drops under the counts when the two no longer
+              fit side by side (larger text), rather than squeezing them. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="min-w-[min(100%,8em)] flex-1">
               <p className="text-sm font-medium text-foreground">
                 Weekly layout
               </p>
@@ -1086,7 +1186,7 @@ export default function ProgrammeSettings({
             <button
               type="button"
               onClick={onOpenWeeklyLayout}
-              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
+              className="-mr-1 ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
             >
               Edit days &rarr;
             </button>
@@ -1114,6 +1214,23 @@ export default function ProgrammeSettings({
               />
             ))}
           </div>
+          {/* Lift4 (11): "what do you have?" beside the setups. */}
+          {equipment !== "full_gym" && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground">A barbell and a rack</p>
+                <p className="text-xs text-muted-foreground">
+                  Squats, deadlifts and presses with the bar.
+                </p>
+              </div>
+              <Toggle
+                checked={barbellAtHome}
+                label="A barbell and a rack"
+                className="ml-3"
+                onChange={() => setBarbellAtHome((v) => !v)}
+              />
+            </div>
+          )}
         </div>
 
         <div>
@@ -1144,7 +1261,8 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">Auto progression</p>
               <p className="text-xs text-muted-foreground">
-                Bumps next session's weight when you complete every set cleanly
+                Raises the weight or reps when you hit the target reps. Off,
+                your next session keeps the weight you lifted.
               </p>
             </div>
             <Toggle
@@ -1158,18 +1276,17 @@ export default function ProgrammeSettings({
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-foreground">Microloading</p>
+              <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Add 1 kg every session you complete at the prescribed load,
-                instead of 2.5 kg only after a 2-rep overshoot
+                {SMALL_PLATES_HINT}
               </p>
             </div>
             <Toggle
-              checked={settings.microloading}
-              label="Microloading"
+              checked={settings.smallPlates}
+              label="I have small plates"
               className="ml-3"
               onChange={() =>
-                updateSettings({ microloading: !settings.microloading })
+                updateSettings({ smallPlates: !settings.smallPlates })
               }
             />
           </div>
@@ -1179,26 +1296,33 @@ export default function ProgrammeSettings({
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
+          className="sticky z-20 -mx-[16px] px-[16px] pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           <PendingChangesSummary
             count={changes.length}
             className="mb-2 text-center"
           />
-          <button
-            type="button"
+          {!saving && loadFailedLine(loadFailedId, "mb-2 text-center")}
+          <Button
+            fullWidth
             onClick={() => setConfirmRebuild(true)}
-            disabled={!dirty || saving}
+            disabled={!dirty || saving || !programReady}
+            loading={!saving && waitingForProgramme}
+            aria-label={
+              !saving && waitingForProgramme ? "Save changes" : undefined
+            }
+            aria-describedby={!saving && loadFailed ? loadFailedId : undefined}
             className={cn(
-              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || saving
-                ? "bg-muted text-muted-foreground opacity-60"
-                : "bg-primary-strong text-primary-foreground"
+              // The bar's own shape and muted treatment, kept from before
+              // the primitive.
+              "rounded-2xl py-3.5 font-bold disabled:opacity-60",
+              (!dirty || saving || !programReady) &&
+                "bg-muted text-muted-foreground opacity-60"
             )}
           >
             {saving ? "Saving…" : "Save changes"}
-          </button>
+          </Button>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { useId, useState } from "react";
 import { MapPin, Mountain, Clock } from "lucide-react";
 import {
+  movingSecondsBetween,
   routeTotalDistance,
   totalElevationGain,
   type GPSPoint,
@@ -36,9 +37,14 @@ interface RoutePreviewSheetProps {
 const DEFAULT_PACE_SEC_PER_KM = 390;
 
 function estDuration(points: GPSPoint[]): { sec: number; estimated: boolean } {
-  const t0 = points[0]?.timestamp ?? 0;
-  const tN = points[points.length - 1]?.timestamp ?? 0;
-  if (t0 && tN && tN > t0) return { sec: (tN - t0) / 1000, estimated: false };
+  const first = points[0];
+  const last = points[points.length - 1];
+  // Moving time, as the run counted it: its pauses are not the route's.
+  const sec =
+    first?.timestamp && last?.timestamp && points.length > 1
+      ? movingSecondsBetween(first, last)
+      : 0;
+  if (sec > 0) return { sec, estimated: false };
   const km = routeTotalDistance(points) / 1000;
   return { sec: km * DEFAULT_PACE_SEC_PER_KM, estimated: true };
 }

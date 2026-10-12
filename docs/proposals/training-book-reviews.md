@@ -418,6 +418,11 @@ rather than inside a tier's existing list.
     bench taking 8% jumps is the same error the item set out to fix.
     `effortCue`'s private copy of the single-joint set now imports the
     shared one, so the two can't drift.
+    STATUS 2026-10-05 (Lift4 (6)): `movementClass.ts` is gone. The step
+    follows the equipment (`loadSteps.ts`: a barbell 2.5 kg, dumbbells the
+    next pair, stacks 2.5 kg, kettlebells the next bell), and the
+    percentage survives as a cap: a step of more than about 15% is never
+    taken on its own, so a light lift climbs in reps instead.
 
 17. **Accessories were rebuilt from scratch on every regenerate.** Found
     2026-07-28 while surveying `pickExercise` for #11. `makeAccessory` takes

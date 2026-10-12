@@ -75,18 +75,22 @@ export default function LiftProgressCard({
           Repeat a lift to see progress
         </p>
       )}
-      <ul className="-mx-2">
+      {/* At larger text the picture gives way under 16em and the top set
+          drops under the lift's line, rather than squeezing it to a word
+          a line. Wide-first. */}
+      <ul className="@container -mx-2">
         {shown.map((row) => (
           <li key={row.exerciseId || row.name}>
             <Link
               to={`/history/exercise/${encodeURIComponent(row.name)}`}
-              className="flex min-h-[56px] items-center gap-3 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
+              className="flex min-h-[56px] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
             >
               <ExerciseThumb
                 exerciseId={row.exerciseId || row.name}
                 size="sm"
+                className="@max-[16em]:hidden"
               />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-[min(100%,8em)] flex-1">
                 <p className="flex items-center gap-2">
                   <span className="truncate text-sm font-semibold text-foreground">
                     {row.name}
@@ -100,7 +104,7 @@ export default function LiftProgressCard({
                   {statusLine(row)}
                 </p>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
+              <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
                 <span className="text-sm font-bold font-mono tabular-nums text-foreground">
                   {setText(row.latest)}
                 </span>

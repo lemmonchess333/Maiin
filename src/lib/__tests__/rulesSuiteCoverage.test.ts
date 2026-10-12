@@ -5,7 +5,7 @@
  *
  *   vitest.config.ts   collects them by GLOB — "firestore.*.test.ts",
  *                      "storage.rules.test.ts"
- *   package.json       runs them by NAME — `test:rules` passes seven
+ *   package.json       runs them by NAME — `test:rules` passes eight
  *                      files to vitest explicitly, `test:rules:storage`
  *                      one more
  *

@@ -43,6 +43,7 @@ const { categoryFor, wantsNotification } = require("./notificationPreferences");
  */
 
 const blockGuard = require("./blockGuard");
+const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
@@ -53,7 +54,8 @@ function formatDuration(seconds) {
 function formatPace(secPerKm) {
   const m = Math.floor(secPerKm / 60);
   const s = Math.round(secPerKm % 60);
-  return `${m}:${s.toString().padStart(2, "0")}/km`;
+  // Spaced, as the app writes every pace ("5:00 /km"; unitTreatment.test.ts).
+  return `${m}:${s.toString().padStart(2, "0")} /km`;
 }
 
 function buildSummary(activity) {
@@ -97,7 +99,7 @@ function buildFeedItem(activityId, authorId, activity, serverTimestamp) {
     authorId,
     authorName:
       typeof activity.authorName === "string" && activity.authorName.trim()
-        ? activity.authorName.slice(0, 100)
+        ? activity.authorName.slice(0, MAX_DISPLAY_NAME_LENGTH)
         : "Athlete",
     type: activity.type,
     summary: buildSummary(activity),
@@ -269,7 +271,7 @@ const VALID_NOTIFICATION_TYPES = [
 function sanitiseNotificationData(data) {
   const out = { type: data.type };
   if (typeof data.fromName === "string" && data.fromName) {
-    out.fromName = data.fromName.slice(0, 100);
+    out.fromName = data.fromName.slice(0, MAX_DISPLAY_NAME_LENGTH);
   }
   if (typeof data.activityId === "string" && data.activityId) {
     out.activityId = data.activityId.slice(0, 64);

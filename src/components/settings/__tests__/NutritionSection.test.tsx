@@ -717,39 +717,16 @@ describe("NutritionSection — body-weight units", () => {
 });
 
 /**
- * Home's "How targets work" tip has somewhere to land.
+ * The calorie-target explanation has an address.
  *
- * The tip used to point at `/settings` — the section INDEX — so the
- * answer to "how is my target built?" was three taps and a scroll away,
- * and the obvious alternative (a second explanation card on Home) would
- * have duplicated the one place the numbers are actually derived. It
- * now deep-links to the Base TDEE -> offset -> Daily target chain,
- * which sits well below the fold on this page.
- *
- * Two halves, and BOTH have to hold or the link is dead: Home must aim
- * at this anchor, and this page must move to it on arrival. The href is
- * read out of Home.tsx rather than restated here — a copy of a fact
- * that can drift from the fact is what this pins against.
+ * Home's "How targets work" tip deep-linked here, to the Base TDEE ->
+ * offset -> Daily target chain well below the fold, rather than to the
+ * settings index. The tip went with the first-visit guide (FV1), whose
+ * Food stop says the short version, so nothing in the app links here
+ * now; the anchor stays so a link to the explanation still lands on it.
  */
 describe("NutritionSection — the calorie-target deep-link target", () => {
   const ANCHOR = "calorie-targets";
-
-  function homeSource(): string {
-    const here = dirname(fileURLToPath(import.meta.url));
-    return readFileSync(resolve(here, "../../../pages/Home.tsx"), "utf8");
-  }
-
-  it("Home's tip points at this page's anchor, not the settings index", () => {
-    const source = homeSource();
-    const match = source.match(
-      /ctaLabel="How targets work"\s*\n\s*ctaHref="([^"]+)"/
-    );
-    expect(
-      match,
-      'the "How targets work" tip moved or was renamed'
-    ).not.toBeNull();
-    expect(match![1]).toBe(`/settings/nutrition#${ANCHOR}`);
-  });
 
   it("renders the calorie chain under that anchor id", () => {
     renderSection();

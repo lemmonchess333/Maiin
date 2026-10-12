@@ -27,12 +27,6 @@ import { dirname, join, resolve } from "node:path";
 const SRC_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const EXEMPT: Record<string, string> = {
-  // Set-TYPE badges (warmup/dropset/failure): a deliberate micro-palette
-  // of light/dark pairs whose meanings have no Tropos token equivalents —
-  // warmup-yellow is not the warning register, failure-red is not
-  // destructive-the-action. Conflating them with semantic tokens would
-  // repaint meanings, not clean up drift.
-  "components/WorkoutSession.tsx": "set-type badge micro-palette",
   // Dev-only brand bake-off rig — deliberately outside the app palette.
   "pages/dev/BrandBakeoff.tsx": "dev bake-off rig",
 };

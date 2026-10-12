@@ -32,6 +32,21 @@ describe("warmupRamp", () => {
     ]);
   });
 
+  it("adds 85% × 2 before working sets of 6 reps or fewer (Lift4 (5))", () => {
+    expect(warmupRamp(140, "Barbell", 5)).toEqual([
+      { weight: BAR_KG, reps: 10 },
+      { weight: 70, reps: 5 },
+      { weight: 97.5, reps: 3 },
+      { weight: 120, reps: 2 },
+    ]);
+    expect(warmupRamp(100, "Barbell", 6).at(-1)).toEqual({
+      weight: 85,
+      reps: 2,
+    });
+    // Sets of more than 6 reps, or reps not known, ramp as before.
+    expect(warmupRamp(140, "Barbell", 8)).toEqual(warmupRamp(140));
+  });
+
   it("rounds every step to the plate grid", () => {
     for (const w of [63, 87, 112, 145]) {
       for (const s of warmupRamp(w)) {
@@ -214,7 +229,12 @@ describe("buildInitialSetLogs", () => {
       reps: 5,
     };
     const logs = buildInitialSetLogs([bench]);
-    expect(logs[0].filter((set) => set.type === "warmup")).toHaveLength(3);
+    // Bar, 50%, 70% and, before sets of 5, 85% × 2.
+    expect(
+      logs[0]
+        .filter((set) => set.type === "warmup")
+        .map((set) => `${set.weight}x${set.reps}`)
+    ).toEqual(["20x10", "50x5", "70x3", "85x2"]);
     expect(logs[0].filter((set) => set.type === "working")).toHaveLength(3);
   });
 });
