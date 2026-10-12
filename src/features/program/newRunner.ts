@@ -97,13 +97,21 @@ export function runWalkTemplateIdForWeek(
  */
 export const NEW_RUNNER_BUILD_MINUTES = 5;
 
+/** A run-walk session's longest run without a walk, in minutes. */
+function longestRunWalkMinutes(templateId: string | undefined): number {
+  return (
+    Math.max(
+      0,
+      ...(RUN_TEMPLATES.find((t) => t.id === templateId)?.config.runWalk
+        ?.runSecs ?? [])
+    ) / 60
+  );
+}
+
 /** The run-walk ladder's last run, non-stop: 20 minutes. */
-const FINAL_RUN_WALK_MINUTES =
-  Math.max(
-    0,
-    ...(RUN_TEMPLATES.find((t) => t.id === RUN_WALK_TEMPLATE_IDS.at(-1))?.config
-      .runWalk?.runSecs ?? [])
-  ) / 60;
+const FINAL_RUN_WALK_MINUTES = longestRunWalkMinutes(
+  RUN_WALK_TEMPLATE_IDS.at(-1)
+);
 
 /**
  * The most minutes each of a new runner's runs takes in the week starting
@@ -120,6 +128,24 @@ export function newRunnerBuildMinutes(
   if (!until || !weekKey || weekKey < until) return null;
   const weeksAfter = wholeWeeksBetween(until, weekKey) + 1;
   return FINAL_RUN_WALK_MINUTES + NEW_RUNNER_BUILD_MINUTES * weeksAfter;
+}
+
+/**
+ * The longest a new runner's run goes without a walk in the week starting
+ * `weekKey`: that week's run-walk session's longest run in the first weeks
+ * (a minute in the first, 20 in the last), then the minutes the running has
+ * built to (`newRunnerBuildMinutes`), the most any run that week takes. It
+ * only rises from one week to the next. Null for anyone who isn't new to
+ * running.
+ */
+export function newRunnerLongestRunMinutes(
+  weekKey: string,
+  until: string | null | undefined
+): number | null {
+  const runWalkId = runWalkTemplateIdForWeek(weekKey, until);
+  return runWalkId
+    ? longestRunWalkMinutes(runWalkId)
+    : newRunnerBuildMinutes(weekKey, until);
 }
 
 /**

@@ -1158,6 +1158,16 @@ export default function Onboarding() {
                           </p>
                         </div>
                       )}
+                      {/* Pgm8 (R14c): a race too soon for a new runner's
+                          plan to build to. It never holds the step:
+                          Continue stays as it is. */}
+                      {racePreview.newRunnerNote && (
+                        <p className="text-sm text-muted-foreground">
+                          <InlineNumerals>
+                            {racePreview.newRunnerNote}
+                          </InlineNumerals>
+                        </p>
+                      )}
                       {racePreview.doubleDays > 0 && (
                         <p className="text-sm text-muted-foreground">
                           Some days include a lift and a run.

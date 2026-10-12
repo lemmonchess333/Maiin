@@ -1,10 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
   getRaceGoalPlannerState,
+  newRunnerRaceNote,
   raceRunDaysNote,
   raceTargetVerdict,
+  type RaceDistance,
   type RaceGoalPlannerInput,
 } from "../raceGoalPlanner";
+import { newRunnerUntil } from "@/features/program/newRunner";
+import { addLocalDays, localDateString, parseLocalDate } from "../dateHelpers";
 
 // Deterministic "today" — the helper never reads the wall clock.
 const TODAY = "2026-06-01"; // a Monday
@@ -236,6 +240,123 @@ describe("raceRunDaysNote", () => {
     expect(raceRunDaysNote("5k", 2)).toBeNull();
     expect(raceRunDaysNote("half", 2)).toBeNull();
     expect(raceRunDaysNote("marathon", 3)).toBeNull();
+  });
+});
+
+/* Pgm8 (R14c): when someone new to running picks a race the plan can't
+   build to, setup says so and suggests run-walking it or a later date. The
+   plan can't build to a race that would take them more than twice the
+   longest run it reaches before race week (a Tropos heuristic). A new
+   runner's runs are run-walk for six weeks, ending at 20 minutes non-stop,
+   then grow five minutes a week (Run20 (5)). */
+describe("newRunnerRaceNote", () => {
+  // TODAY is a Monday, so the six weeks end on the Monday of 13 July.
+  const until = newRunnerUntil("new", TODAY);
+  const weeksOut = (weeks: number, from = TODAY) =>
+    localDateString(addLocalDays(parseLocalDate(from), weeks * 7));
+  const note = (
+    distance: RaceDistance,
+    targetDate: string,
+    newRunner: string | null = until,
+    currentDate = TODAY
+  ) =>
+    newRunnerRaceNote({
+      distance,
+      targetDate,
+      currentDate,
+      newRunnerUntil: newRunner,
+    });
+
+  it("says so for a half twelve weeks out, with run-walking it or a later date", () => {
+    // Set up on a Sunday for a Sunday race: the plan's runs build to 45
+    // minutes by the week before race week, and the half takes about two
+    // and a half hours at a new runner's pace.
+    const sunday = "2026-06-07";
+    expect(
+      note("half", weeksOut(12, sunday), newRunnerUntil("new", sunday), sunday)
+    ).toBe(
+      "Your plan builds to about 45 min of running by then, and a half marathon takes about 2 h 30 min. You can run-walk it, or choose a later date."
+    );
+    // From a Monday to a Monday the plan has one more week to build in.
+    expect(note("half", weeksOut(12))).toMatch(
+      /^Your plan builds to about 50 min of running by then, and a half marathon takes about 2 h 30 min\./
+    );
+  });
+
+  it("says nothing for a 5K eight weeks out", () => {
+    // Built to 30 minutes by then, and the 5K takes about 35.
+    expect(note("5k", weeksOut(8))).toBeNull();
+  });
+
+  it("says nothing for anyone who isn't new to running", () => {
+    expect(note("half", weeksOut(12), null)).toBeNull();
+    expect(
+      note("half", weeksOut(12), newRunnerUntil("occasional", TODAY))
+    ).toBeNull();
+    expect(
+      note("half", weeksOut(12), newRunnerUntil("regular", TODAY))
+    ).toBeNull();
+  });
+
+  it("says nothing for a marathon a year out, and says so half a year out", () => {
+    // A year out the runs have built far past half the marathon's five
+    // hours by race week; half a year out they reach two.
+    expect(note("marathon", weeksOut(52))).toBeNull();
+    expect(note("marathon", weeksOut(26))).toBe(
+      "Your plan builds to about 2 h of running by then, and a marathon takes about 4 h 55 min. You can run-walk it, or choose a later date."
+    );
+  });
+
+  it("says the plan is still run-walk when the race comes in its first weeks", () => {
+    expect(note("5k", weeksOut(4))).toBe(
+      "Your plan is still run-walk by then, and a 5K takes about 35 min. You can run-walk it, or choose a later date."
+    );
+    // The week before a race six weeks out runs 20 minutes non-stop: enough
+    // for a 5K by the rule, not for a 10K.
+    expect(note("5k", weeksOut(6))).toBeNull();
+    expect(note("10k", weeksOut(6))).toBe(
+      "Your plan is still run-walk by then, and a 10K takes about 1 h 10 min. You can run-walk it, or choose a later date."
+    );
+  });
+
+  it("reads this week's runs when the race is this week", () => {
+    // No week comes before race week, and this week is the first run-walk.
+    expect(note("5k", TODAY)).toMatch(/^Your plan is still run-walk by then/);
+    expect(note("5k", "2026-06-07")).toMatch(
+      /^Your plan is still run-walk by then/
+    );
+    // Past the run-walk weeks, as in Settings: this week's 65 minutes, not
+    // last week's 60.
+    expect(note("marathon", "2026-09-10", until, "2026-09-07")).toBe(
+      "Your plan builds to about 1 h 5 min of running by then, and a marathon takes about 4 h 55 min. You can run-walk it, or choose a later date."
+    );
+  });
+
+  it("asks for more than twice the longest run, not twice", () => {
+    // A 10K takes 70 minutes: built to 35, it is exactly twice.
+    expect(note("10k", weeksOut(9))).toBeNull();
+    expect(note("10k", weeksOut(8))).toBe(
+      "Your plan builds to about 30 min of running by then, and a 10K takes about 1 h 10 min. You can run-walk it, or choose a later date."
+    );
+  });
+
+  it("says nothing without a race date, or for one already past", () => {
+    expect(note("half", "")).toBeNull();
+    expect(note("half", "2026-05-31")).toBeNull();
+  });
+
+  it("is the planner's line, and only for a new runner", () => {
+    const plan = (newRunner: string | null) =>
+      getRaceGoalPlannerState({
+        ...base,
+        distance: "half",
+        targetDate: weeksOut(12),
+        newRunnerUntil: newRunner,
+      });
+    expect(plan(until).newRunnerNote).toBe(note("half", weeksOut(12)));
+    expect(plan(until).newRunnerNote).not.toBeNull();
+    expect(plan(null).newRunnerNote).toBeNull();
+    expect(getRaceGoalPlannerState(base).newRunnerNote).toBeNull();
   });
 });
 

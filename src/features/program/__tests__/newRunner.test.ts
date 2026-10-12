@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   NEW_RUNNER_WEEKS,
   newRunnerBuildMinutes,
+  newRunnerLongestRunMinutes,
   newRunnerUntil,
   profileNewRunnerUntil,
   runWalkTemplateIdForWeek,
@@ -394,6 +395,33 @@ describe("the minutes a new runner's runs build to", () => {
     expect(
       newRunnerBuildMinutes("2026-10-26", newRunnerUntil("new", "2026-09-09"))
     ).toBe(25);
+  });
+});
+
+/* Pgm8 (R14c): setup compares a new runner's race with the longest run
+   their plan reaches, so that run has to be the plan's own: the run-walk
+   session's longest run, then the build's minutes. */
+describe("a new runner's longest run in a week", () => {
+  const until = newRunnerUntil("new", "2026-09-07"); // a Monday: 2026-10-19
+
+  it("is the run-walk session's longest run, then the build's minutes", () => {
+    expect(
+      [
+        "2026-09-07",
+        "2026-09-14",
+        "2026-09-21",
+        "2026-09-28",
+        "2026-10-05",
+        "2026-10-12",
+        "2026-10-19",
+        "2026-10-26",
+      ].map((w) => newRunnerLongestRunMinutes(w, until))
+    ).toEqual([1, 1.5, 3, 5, 10, 20, 25, 30]);
+  });
+
+  it("is none for anyone else", () => {
+    expect(newRunnerLongestRunMinutes("2026-09-07", null)).toBeNull();
+    expect(newRunnerLongestRunMinutes("2026-10-26", undefined)).toBeNull();
   });
 });
 

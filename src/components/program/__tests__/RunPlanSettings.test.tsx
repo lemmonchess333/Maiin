@@ -232,6 +232,39 @@ describe("RunPlanSettings", () => {
     ).not.toBeInTheDocument();
   });
 
+  /* Pgm8 (R14c): someone new to running who ran freely first and adds a
+     race here is told what setup would have told them when the plan can't
+     build to it. Their first weeks count from the day setup finished. */
+  const addHalfTenWeeksOut = (runFrequency: string) => {
+    const setUp = addLocalDays(new Date(), -21);
+    renderPage({
+      ...baseProfile,
+      uid: `${runFrequency}-runner-adds-a-race`,
+      runFrequency,
+      onboardingCompletedAt: { toMillis: () => setUp.getTime() },
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "Half" }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: localDateString(addLocalDays(new Date(), 70)) },
+    });
+  };
+
+  it("says when a new runner's plan can't build to the race (R14c)", () => {
+    addHalfTenWeeksOut("new");
+    expect(
+      screen.getByText(/You can run-walk it, or choose a later date\./)
+    ).toHaveTextContent(
+      /^Your plan builds to about \d+ min of running by then, and a half marathon takes about 2 h 30 min\./
+    );
+  });
+
+  it("says nothing of it to someone who runs already (R14c)", () => {
+    addHalfTenWeeksOut("occasional");
+    expect(screen.getByText("Good runway")).toBeInTheDocument();
+    expect(screen.queryByText(/You can run-walk it/)).not.toBeInTheDocument();
+  });
+
   it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
     renderPage({ ...baseProfile, uid: "goal-owner" });
     fireEvent.change(
