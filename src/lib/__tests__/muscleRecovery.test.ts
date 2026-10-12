@@ -249,7 +249,7 @@ describe("recoveryForHeatMapGroups", () => {
     );
     const groups = recoveryForHeatMapGroups(entries);
     expect(groups["Lats"].status).toBe("recovering");
-    expect(groups["Hamstrings & Back"].status).toBe("recovering");
+    expect(groups["Hamstrings & Glutes"].status).toBe("recovering");
     expect(groups["Full Body"]).toBeUndefined();
   });
 });

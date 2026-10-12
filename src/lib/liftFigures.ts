@@ -22,6 +22,10 @@ export const groupedFigure = (n: number) =>
  *  minutes; under the word "hours" it read as one figure in hours, so it
  *  says hr:min. */
 export function durationFigure(minutes: number): LiftFigure {
+  // A session under half a minute rounds to 0, and "0 minutes" over a
+  // finished workout reads as nothing timed.
+  if (Math.round(minutes) < 1)
+    return { to: 0, format: () => "<1", unit: "minute" };
   const clock = (m: number) => {
     const whole = Math.round(m);
     return whole >= 60

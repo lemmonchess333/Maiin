@@ -11,6 +11,9 @@ const written = (figure: { to: number; format: (n: number) => string }) =>
 
 describe("lift figures", () => {
   it("writes the time in minutes, and as a clock past the hour", () => {
+    // Under half a minute rounds to 0: said as under a minute, not zero.
+    expect(written(durationFigure(0))).toBe("<1");
+    expect(durationFigure(0).unit).toBe("minute");
     expect(written(durationFigure(54))).toBe("54");
     expect(durationFigure(54).unit).toBe("minutes");
     expect(durationFigure(1).unit).toBe("minute");
