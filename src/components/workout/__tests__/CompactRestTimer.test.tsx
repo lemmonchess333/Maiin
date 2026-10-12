@@ -47,6 +47,18 @@ describe("CompactRestTimer", () => {
     expect(arc()).toBeCloseTo(Math.PI * 15, 5);
   });
 
+  it("sweeps the arc through each second rather than stepping (Pol1)", () => {
+    // A one-second linear transition on the offset, which the global
+    // Reduce Motion rule in animations.css takes back to a step.
+    const { container } = row(10, 90);
+    const arc = container.querySelectorAll("circle")[1];
+    expect(arc).toHaveClass(
+      "transition-[stroke-dashoffset]",
+      "duration-1000",
+      "ease-linear"
+    );
+  });
+
   it("says the rest is done once it is over, in the status green", () => {
     const { container } = row(95, 90);
     const group = screen.getByRole("group", { name: "Rest timer" });

@@ -53,3 +53,27 @@ export function chooseQualityRunSlots({
   });
   return options[0];
 }
+
+/** The week's easy days in the order the plan fills them: the first takes
+ *  the medium-long run, the next the strides. A medium-long run of an hour
+ *  or more is demanding (Run20), so it takes the first easy day that isn't
+ *  beside the long run or a quality session, where there is one; otherwise
+ *  the week keeps its own order, since the days are the person's.
+ */
+export function easyDaysInFillOrder({
+  easyDays,
+  demandingDays,
+  mediumLongDemanding,
+}: {
+  easyDays: readonly number[];
+  demandingDays: readonly number[];
+  mediumLongDemanding: boolean;
+}): number[] {
+  const days = [...easyDays];
+  if (!mediumLongDemanding || days.length < 2) return days;
+  const clear = days.find((day) =>
+    demandingDays.every((other) => gap(day, other) > 1)
+  );
+  if (clear === undefined || clear === days[0]) return days;
+  return [clear, ...days.filter((day) => day !== clear)];
+}
