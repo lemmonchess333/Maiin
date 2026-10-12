@@ -1,0 +1,234 @@
+{
+  "exerciseId": "overhead-cable-tricep-extension",
+  "version": "anatomy-v3-2026-10-09-traced-three-pose-v1",
+  "width": 1240,
+  "height": 1312,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standards",
+  "reviewedAt": "2026-10-09T16:31:20.402225+00:00",
+  "reference": {
+    "path": "form-frames/overhead-cable-tricep-extension/1.webp",
+    "sha256": "2923ff62ea4a576013067b7a5c41aad39a7fbf7f75f272302c97445f6799f3e4"
+  },
+  "cueSha256": "7c9c1009aeea5bf284b78e07854c3c556e3c3eb85f4a8543fa96293fb3398a52",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Existing canonical anatomy-v3 referenced sources retained: lean bald faceless athlete, smooth pelvis, white trainers. No regenerated anatomy, grafts or limb fitting. Sources listed in traced-production/provenance.json."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Sources share1240x1312 scene after documented common master crop/top padding and uniform whole-scene adjacent normalization. No independent body-part transforms. Fixed tower composited at unchanged scene coordinates."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three final poses inspected at native resolution. Elbows extend from overhead flexion to near-straight; small upper-arm rotation and contour differences retained under revised standard. No calibrated3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One central rope junction, two held branches/balls; low pulley tangent connects to observed ferrule. Equipment-only opaque neutral-grey safety shroud retains fixed frame and pulley. Flat shroud accepted as simple neutral equipment; no hidden stack calibration or ratio claim."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Twelve actual sole-column samples recorded across three poses in contact-measurements.json. All vary at most2px; fixed tower anchors/profile also measured. Closed grips remain on rope ends. Strictly fixed anchors are tower cap/base; observed sole contacts are separately recorded with accepted1\u20132px variation, not represented as exact fixed points."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Braced split stance, visible elbow-driven overhead extension with modest shoulder rotation, controlled return. Taut cable follows rope junction, unchanged low pulley/frame. No claim that upper arms are pixel-identical."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Hand-traced primary triceps#7B72E9/secondary shoulders#9590E0 masks; fine contour layer#777777. Source tint neutralized inside documented arm rectangle while retaining luminance shading. Outside recorded masks exact. All three final poses inspected; ORA/lossless verified."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues agree with stretch, early extension, finish, hold, return and reset. Each at most7words. Labels/cues reviewed in actual Form component."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three physical poses reused across six distinct file paths1,2,3,3,2,1 under revised standards. Native1240x1312 six-beat loop traced; return and repeated finish intentional."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual staged Form at390x844: six decoded frames and6to1 closure, full-scene screenshot reviewed. Controls/cues and palette key readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual staged Form dark390x844: six decoded frames/closure, pause and manual6to1 verified, console errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/1.webp",
+      "sha256": "2923ff62ea4a576013067b7a5c41aad39a7fbf7f75f272302c97445f6799f3e4",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1254
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1231
+        }
+      }
+    },
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/2.webp",
+      "sha256": "feccb8695c73d9f3ce8e82f189dde69d4012be32f85dc4ce5f0f9d65f7cb9a43",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1255
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1233
+        }
+      }
+    },
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/3.webp",
+      "sha256": "167dca32a406907f9b115fb59d5c99fb05725d09602c3384d4a104203ef45f06",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1255
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1233
+        }
+      }
+    },
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/4.webp",
+      "sha256": "167dca32a406907f9b115fb59d5c99fb05725d09602c3384d4a104203ef45f06",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1255
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1233
+        }
+      }
+    },
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/5.webp",
+      "sha256": "feccb8695c73d9f3ce8e82f189dde69d4012be32f85dc4ce5f0f9d65f7cb9a43",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1255
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1233
+        }
+      }
+    },
+    {
+      "path": "form-frames/overhead-cable-tricep-extension/6.webp",
+      "sha256": "2923ff62ea4a576013067b7a5c41aad39a7fbf7f75f272302c97445f6799f3e4",
+      "anchors": {
+        "towerCapAt125": {
+          "x": 125,
+          "y": 311
+        },
+        "towerBaseAt125": {
+          "x": 125,
+          "y": 1212
+        }
+      },
+      "invariantDimensions": {
+        "towerWidthAt700": 128,
+        "towerHeightAt125": 902
+      },
+      "observedSoleContacts": {
+        "rearSoleAt660": {
+          "x": 660,
+          "y": 1254
+        },
+        "frontSoleAt960": {
+          "x": 960,
+          "y": 1231
+        }
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark six-beat loops, card, pause/manual6to1. Lint/art/drafts/typecheck/build/stamp passed. Full test summary and measured same-HEAD baseline comparison in traced-production/final-verification.json; no new FAIL headings."
+}

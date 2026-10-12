@@ -1,0 +1,175 @@
+{
+  "exerciseId": "barbell-step-ups",
+  "version": "anatomy-v3-2026-10-12-reviewed-barbell-step-ups-v1",
+  "width": 512,
+  "height": 800,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T19:29:17.063654+00:00",
+  "reference": {
+    "path": "form-frames/barbell-step-ups/1.webp",
+    "sha256": "94c19c8d513d353fa5a6bad9db4ca8543b6c1261438fe0a1b07eba584996c2c5"
+  },
+  "cueSha256": "a5a789ef36e2c3676cc29bbc9e6a0d9cda34601680e28256cb296df10cfc3ec7",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3, accepted top master and adjacent source accompany generation. Bald faceless lean white anatomical model, neutral featureless pelvis and white trainers preserved. Existing low/top whole-body sources reused; one new middle source in fixed-box trial. Exact source IDs, prompts and hashes in provenance.json."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front-three-quarter view and1024x1536 authoring size. Whole low image translated(-25,+22), whole middle(-5,+69), top unchanged; no scaling before common64px top padding and uniform0.5 final export512x800. No anatomical warps, independent limb fitting or head/shoe grafts."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Actual512x800 native sequence including6to1 and390x844 staged mobile reviewed. Anatomical paths continuous; leading leg extends as body rises, trailing leg clears box then lands. Small head/shoe/contour and upper-bar projection changes accepted under revised standard, without claiming calibrated3D invariance."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One rigid neutral grey barbell with one modest plate per side, closed grips and supported bar position. A single fixed grey box replaces source box drift at documented coordinates; top master front/side shading inherited. Equipment-only masks protect visible source anatomy; endpoint-repair-audit.json. Fixed-box measurements verify compositing only."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Leading foot stays fully on the box through rise and return. Trailing foot is on floor at reset, visibly clear in middle and on box at top. Hands stay attached to the bar. Sole contacts inspected in actual motion; lower floor contact judged in perspective, not by equal y with nearest box corner."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Whole body rises over the planted leading leg; trailing foot follows onto box, then controlled reverse. Bar rises with supported torso. Fixed box no longer shrinks. No hop or moving box. Native and mobile qualitative physics review; body and bar lengths are not certified by uncalibrated2D spans."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads primary#7B72E9; visible glute/hamstring fields secondary#9590E0 with inherited grey contour detail. Existing chroma only in saved muscle regions. Neutral anatomy outside isolated equipment masks stays unchanged."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Drive/Stand/Hold/Lower/Return maps to poses1,2,3,3,2,1. Every cue seven words or fewer. Set cue shortened before approval to Keep leading foot fully on the box. Three physical poses across six separate playback paths disclosed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "native-trace.json and native-play-1..7.png prove all six decoded in actual native512x800 playback, including6to1. Original complete body poses retained. Three authoring ORAs reopen exactly and six lossless exports match their PNGs in finishing-audit.json."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent390x844 light: full body/bar/box visible, readable cues/key, all six decoded and6to1 loop. staged-light.png, staged-trace.json, staged-controls.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent390x844 dark: all six decoded and6to1 loop, consistent colours, readable supported/airborne states. staged-dark.png, staged-trace.json. Pause and manual6to1 passed; no console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-step-ups/1.webp",
+      "sha256": "94c19c8d513d353fa5a6bad9db4ca8543b6c1261438fe0a1b07eba584996c2c5",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    },
+    {
+      "path": "form-frames/barbell-step-ups/2.webp",
+      "sha256": "66d5c23f4df2917feb65f4c43f65214e2ab0ac600aad42d6eb9a28e23786a7b3",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    },
+    {
+      "path": "form-frames/barbell-step-ups/3.webp",
+      "sha256": "3355be3f93129950ed0c4440fe8b4cb5e8dbd6b5d91c1d84c38422f56ed05887",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    },
+    {
+      "path": "form-frames/barbell-step-ups/4.webp",
+      "sha256": "3355be3f93129950ed0c4440fe8b4cb5e8dbd6b5d91c1d84c38422f56ed05887",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    },
+    {
+      "path": "form-frames/barbell-step-ups/5.webp",
+      "sha256": "66d5c23f4df2917feb65f4c43f65214e2ab0ac600aad42d6eb9a28e23786a7b3",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    },
+    {
+      "path": "form-frames/barbell-step-ups/6.webp",
+      "sha256": "94c19c8d513d353fa5a6bad9db4ca8543b6c1261438fe0a1b07eba584996c2c5",
+      "anchors": {
+        "boxFrontLowerCorner": {
+          "x": 287.1823899371069,
+          "y": 690.9622641509434
+        },
+        "boxRightLowerCorner": {
+          "x": 356.1309523809524,
+          "y": 665.7738095238095
+        }
+      },
+      "invariantDimensions": {
+        "boxHorizontalChordAt680": 157,
+        "boxVerticalChordAt300": 131
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "Small shoe/head/contour variations and bar orientation change accepted after native motion review under revised standard. Whole source poses translate together; no per-limb transforms or grafts. Leading foot stays on box, trailing foot is clear in middle, both feet on box at top. Low trailing-foot floor position judged with scene perspective rather than equating its y to the nearest box corner.",
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1 verified. Three reopened ORAs, six lossless exports. Lint/art/drafts/typecheck/build/stamp passed. Full suite compared to fresh verified same-HEAD baseline; no unresolved additional failures. See final-verification.json in barbell-step-ups/fixed-box-review."
+}

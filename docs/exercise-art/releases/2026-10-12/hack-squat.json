@@ -1,0 +1,175 @@
+{
+  "exerciseId": "hack-squat",
+  "version": "anatomy-v3-2026-10-12-reviewed-hack-squat-v1",
+  "width": 732,
+  "height": 538,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T19:24:47.301184+00:00",
+  "reference": {
+    "path": "form-frames/hack-squat/1.webp",
+    "sha256": "91e370e41c54c7ea8a786c99444b1ea1edf17862bc7408e56effe31236bfd655"
+  },
+  "cueSha256": "7614f8e8e0ed597deb6b1033146a6695547a1f7fe9799996d2666534898c9911",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 plus accepted provisional exercise master accompany generated pose edits. Bald faceless lean white anatomical model, neutral featureless pelvis, white trainers, fine grey contours retained. Original top/middle/bottom only; the failed middle correction remains excluded. Source IDs, exact prompts and SHA256 in parent directory and preparation-audit.json."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter view. Sources1463x1075; one black pixel row/column added at bottom/right, uniform0.5 whole-scene export732x538. No anatomy transforms, limb fitting, grafting or equipment geometry edits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native all-six sequence, including6to1, and actual mobile390x844 light/dark inspected. Body remains supported, paired feet planted, grips closed. Minor contours differ but no distracting scale jump or broken joint/contact observed. Qualitative illustration review, not calibrated3D proof."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Neutral grey inclined hack-squat apparatus with rigid frame, constant footplate, rails and modest plate configuration. Carriage, shoulder/back support and load move together along rails. Fixed-foot highlight and beam diagnostics within1px/1percent; sequence-measurements.json."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both soles remain on the angled footplate; back and shoulders remain on carriage support; both hands retain handle contact. These contacts were independently inspected in native playback and the real app component."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Actual Life Fitness Hammer Strength Hack Squat footage from manufacturer product page informed top29.61548s, intermediate27.752594s,bottom26.874539s. Carriage descends diagonally toward footplate as knees flex, then reverses. Perspective is not treated as constant2D limb-length evidence."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads primary#7B72E9, glutes secondary#9590E0, inherited grey contours. Colour edits affect existing chroma only inside documented muscle bounds; equipment and neutral anatomy unchanged."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Lower/Bottom/Hold/Rise/Stand match physical poses1,2,3,3,2,1. Every cue seven words or fewer. Three physical poses across six separate paths explicitly disclosed; t values are playback metadata, not measured phase fractions."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "native-trace.json and native-play-1..7.png capture actual sequential playback including6to1. Uneven phase spacing: middle is close to bottom; full movement remains understandable with generic Lower/Rise cues. Three reopened authoring ORAs and six lossless native exports verified in preparation-audit.json."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent at390x844 light: all six decoded,6to1 loop, full body/equipment, legible cues/key and controls. staged-light.png, staged-trace.json, staged-controls.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent at390x844 dark: all six decoded and6to1 loop, full body/equipment and stable palette. staged-dark.png and staged-trace.json. Pause/manual6to1 passed; no console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hack-squat/1.webp",
+      "sha256": "91e370e41c54c7ea8a786c99444b1ea1edf17862bc7408e56effe31236bfd655",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.61881188118812,
+          "y": 485.3217821782178
+        },
+        "rightBaseFootHighlight": {
+          "x": 661.7527472527472,
+          "y": 485.24175824175825
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 545,
+        "rightBaseUprightVerticalChord": 92
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/2.webp",
+      "sha256": "08ce25d8d7ce8c223e385d79350ed9f468d2efe3c29565066f78f0e59c306570",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.71859296482413,
+          "y": 485.3115577889447
+        },
+        "rightBaseFootHighlight": {
+          "x": 662.0898876404494,
+          "y": 485.2303370786517
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 545,
+        "rightBaseUprightVerticalChord": 92
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/3.webp",
+      "sha256": "08aad7f10ec24921d808c63a9d0151845bf6cf5f3875e7dc17439eecfda00315",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.7843137254902,
+          "y": 485.3186274509804
+        },
+        "rightBaseFootHighlight": {
+          "x": 661.8549222797927,
+          "y": 485.2176165803109
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 544,
+        "rightBaseUprightVerticalChord": 92
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/4.webp",
+      "sha256": "08aad7f10ec24921d808c63a9d0151845bf6cf5f3875e7dc17439eecfda00315",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.7843137254902,
+          "y": 485.3186274509804
+        },
+        "rightBaseFootHighlight": {
+          "x": 661.8549222797927,
+          "y": 485.2176165803109
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 544,
+        "rightBaseUprightVerticalChord": 92
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/5.webp",
+      "sha256": "08ce25d8d7ce8c223e385d79350ed9f468d2efe3c29565066f78f0e59c306570",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.71859296482413,
+          "y": 485.3115577889447
+        },
+        "rightBaseFootHighlight": {
+          "x": 662.0898876404494,
+          "y": 485.2303370786517
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 545,
+        "rightBaseUprightVerticalChord": 92
+      }
+    },
+    {
+      "path": "form-frames/hack-squat/6.webp",
+      "sha256": "91e370e41c54c7ea8a786c99444b1ea1edf17862bc7408e56effe31236bfd655",
+      "anchors": {
+        "leftBaseFootHighlight": {
+          "x": 120.61881188118812,
+          "y": 485.3217821782178
+        },
+        "rightBaseFootHighlight": {
+          "x": 661.7527472527472,
+          "y": 485.24175824175825
+        }
+      },
+      "invariantDimensions": {
+        "baseBeamHorizontalChord": 545,
+        "rightBaseUprightVerticalChord": 92
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "Three physical poses with uneven phase spacing: middle is closer to bottom. Full outward/return sequence remains intelligible with Lower/Rise cues; small contour/shading differences accepted under revised standard. No anatomy transforms or equipment geometry edits.",
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1 verified. Three reopened ORAs, six lossless exports. Lint/art/drafts/typecheck/build/stamp passed. Full suite compared to fresh verified same-HEAD baseline; no unresolved additional failures. See final-verification.json in hack-squat/photo-pose-production/provisional-finish."
+}

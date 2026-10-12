@@ -1,0 +1,236 @@
+{
+  "exerciseId": "db-bench",
+  "version": "anatomy-v3-2026-10-08-db-bench-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex canonical/native/actual mobile draft artwork review",
+  "reviewedAt": "2026-10-08T15:24:54.003734+00:00",
+  "reference": {
+    "path": "form-frames/db-bench/4.webp",
+    "sha256": "150bbff0cb320df808d8910c7e744c30519f1693c53b835374b31001d58e100d"
+  },
+  "cueSha256": "34275b9692e7e361b482d841a29850d3ebbe2fd4620791aec2ad81783e536665",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 and all six full native frames directly compared; lean bald faceless model, broad anatomical contours, neutral smooth pelvis and broad-band white trainers retained. Qualitative visual identity review, not canonical pixel identity. Frame3 uses approved same-coordinate moving-arm/weight composite; no anatomical warp or rescale."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All six1536x1024 with fixed three-quarter foot-end view and consistent body/bench layout. Native bench-foot outer bounding extrema measured within1px and projected horizontal/vertical support spans within1%. Measurements and definitions retained in six-frame-scene-measurements-v1.json; not calibrated physical dimensions."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six distinct native poses reviewed: top, initial lowering, approach chest, bottom, early press and late press. Elbows bend through descent and extend through ascent; torso/feet stay supported. No mirrored poses or anatomical warping."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Native individual grips and full-size sequence reviewed. Two matching generic round-disc dumbbells have straight handles, remain separated and follow the hands. Bench stays rigid and fixed; measured support extents stable. This is visual mechanical review with projected scene measurements, not immutable dumbbell-layer parity or manufacturer measurements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Native complete grips and head/bench boundaries reviewed; hands wrap handles without floating or obvious shaft intrusion. Feet remain at their planted positions and shoulders remain supported. Pose3 source-neck ownership and weight-edge repairs reviewed independently."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Dumbbells move with hands through descent/ascent, wrists stack over forearms, bench/supports stay fixed, no observed equipment bending or detachment in native playback and actual mobile playback. No invented cable/pivot mechanisms."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Full pectorals primary #7B72E9, Front Delts/Triceps secondary #9590E0; broad biceps/forearms, abdomen, pelvis and legs neutral. Independently editable positive muscle layers and opaque RGB checks retained. Antialias/gray contours excluded from opaque palette claims; anatomical ownership qualitative source-informed inference."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six new labels/cues match actual reviewed joint beats, primary Chest and secondary Triceps/Front Delts. Sixth corrected to Late press because elbows are still extending; actual light/dark corrected cue screenshots reviewed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six unique decoded native frames reviewed individually and during actual native1536x1024 playback2,3,4,5,6,1. Actual real Form component loaded complete1,2,3,4,5,6,1 cycles in both390x844 mobile themes. Play/Pause verified; traces retained."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent with actual production registry/cues/public files at390x844. All six registered frames and complete loaded1..6..1 loop actually reviewed; no horizontal overflow or browser warnings/errors. Registered449x480 card cutout visually reviewed on project card surfaces. Local integrated harness, not authenticated production navigation."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent with actual production registry/cues/public files at390x844. All six registered frames and complete loaded1..6..1 loop actually reviewed; no horizontal overflow or browser warnings/errors. Registered449x480 card cutout visually reviewed on project card surfaces. Local integrated harness, not authenticated production navigation."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-bench/1.webp",
+      "sha256": "af63ee556ca8f6449807d9dcfc37d68aecdad4ab9ef3e376d4e66577e70196cd",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 440,
+          "y": 613
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 917,
+          "y": 810
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 477,
+        "benchSupportVerticalSpan": 290
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2.webp",
+      "sha256": "cce6b9418510920c140ba13ec27064f98e11acfb6a5a1e84b88659d709a19360",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 440,
+          "y": 612
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 916,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 476,
+        "benchSupportVerticalSpan": 291
+      }
+    },
+    {
+      "path": "form-frames/db-bench/3.webp",
+      "sha256": "4de46b098df30ad73cd56c938e1e748d077951aa153393bb71092f298a8a811e",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 440,
+          "y": 613
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 917,
+          "y": 810
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 477,
+        "benchSupportVerticalSpan": 290
+      }
+    },
+    {
+      "path": "form-frames/db-bench/4.webp",
+      "sha256": "150bbff0cb320df808d8910c7e744c30519f1693c53b835374b31001d58e100d",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 440,
+          "y": 613
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 917,
+          "y": 810
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 477,
+        "benchSupportVerticalSpan": 290
+      }
+    },
+    {
+      "path": "form-frames/db-bench/5.webp",
+      "sha256": "9ea95eac6f7dcb4021ccc2f3c7811f50927b9fa524e5a234452ac9b785624262",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 440,
+          "y": 613
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 917,
+          "y": 810
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 477,
+        "benchSupportVerticalSpan": 290
+      }
+    },
+    {
+      "path": "form-frames/db-bench/6.webp",
+      "sha256": "8f81334a53d5eef82a2b22478daf61df41c806a0dd9022e94b7c0a5eafef59b8",
+      "anchors": {
+        "rearFootLowerOuterBounds": {
+          "x": 439,
+          "y": 613
+        },
+        "frontFootUpperOuterBounds": {
+          "x": 916,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "benchSupportHorizontalSpan": 477,
+        "benchSupportVerticalSpan": 291
+      }
+    }
+  ],
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "workspace": "work/db-bench",
+    "individualReviews": [
+      "frame1-top-authoring-review-v2.json",
+      "frame2-authoring-review-v1.json",
+      "frame3-authoring-review-v1.json",
+      "authoring-master-v7-format-review.json",
+      "frame5-authoring-review-v1.json",
+      "frame6-authoring-review-v1.json"
+    ],
+    "mobileTrace": "mobile-integrated-playback-trace-v1.json",
+    "nativeTrace": "native-playback-review-v1.json"
+  },
+  "integrationValidation": "Passed actual registered asset/cue contract, all-six mobile light/dark stills, complete loaded loops and card cutout review. Lint/both art audits/TypeScript/build/stamp passed. Full unit suite still failing, with no added failure headings versus measured clean HEAD or preintegration app; see integrated-project-checks-v1.json.",
+  "cutoutDraftReview": {
+    "file": "db-bench-cutout-draft-v1.webp",
+    "width": 449,
+    "height": 480,
+    "pipeline": "Unchanged project cutOut/contentBox/constants, local workspace-only output",
+    "lightDarkReviewed": true,
+    "evidence": [
+      "mobile-light-card-preview-v1.jpg",
+      "mobile-dark-card-preview-v1.jpg"
+    ],
+    "findings": "Full athlete, hands, dumbbells, shoes and bench preserved. No black rectangle or visible clipped outline on actual mobile light/dark card surfaces."
+  },
+  "stagedWebpReview": {
+    "allSixLightDarkActuallyViewed": true,
+    "evidence": [
+      "webp-mobile-dark-six-reviewed-sheet-v1.jpg",
+      "webp-mobile-light-six-reviewed-sheet-v1.jpg",
+      "mobile-webp-playback-trace-v1.json"
+    ],
+    "notes": "Same real form player and exact prepared cues using workspace-only lossless WebP middleware. Full cycles and all natural dimensions verified, no horizontal overflow. Historical HMR createRoot log occurred during harness editing; prior fresh PNG loop review had no errors. Final registered public asset navigation remains pending.",
+    "cleanTrace": "mobile-webp-clean-playback-trace-v1.json",
+    "cleanConsole": "mobile-webp-clean-console-v1.json"
+  },
+  "preintegrationChecks": "measured-preintegration-project-checks-v1.json",
+  "registrationAuthorization": {
+    "date": "2026-10-08",
+    "userReply": "Approve local registration and final checks",
+    "scope": "Local reviewed six-frame files/cutout registration and final integrated checks"
+  },
+  "captionRepair": {
+    "reason": "Full integrated bodyRig test found Top caption8words, app maximum7",
+    "change": "Top shortened to6words; five other cues, all labels, images and progress unchanged",
+    "evidence": "integrated-project-unit-v1.log"
+  },
+  "integratedReview": {
+    "passed": true,
+    "evidence": [
+      "registered-assets-contract-v1.json",
+      "mobile-integrated-playback-trace-v1.json",
+      "mobile-integrated-console-v1.json",
+      "integrated-light-six-reviewed-sheet-v1.jpg",
+      "integrated-dark-six-reviewed-sheet-v1.jpg",
+      "integrated-project-checks-v1.json"
+    ],
+    "allSixPublicURLs": true,
+    "cutoutPublicURL": "/form-art/db-bench.webp",
+    "draftMiddleware": false,
+    "cueTransform": false,
+    "fullSuiteGreen": false
+  }
+}

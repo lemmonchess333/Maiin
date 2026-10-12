@@ -1,0 +1,175 @@
+{
+  "exerciseId": "hip-abduction-machine",
+  "version": "anatomy-v3-2026-10-12-reviewed-hip-abduction-machine-v1",
+  "width": 768,
+  "height": 512,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T15:45:37.915938+00:00",
+  "reference": {
+    "path": "form-frames/hip-abduction-machine/1.webp",
+    "sha256": "bd8bf803551bf870570373bd99c5beb0ab7b5f787ebc94aa1e032343fd360762"
+  },
+  "cueSha256": "845cf419e63279faa3ca232d8b571aee75bfc57aa28d1e7b57b5fa9043970ec5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 is the sole identity/style reference for all three direct-photo edits. Bald faceless lean white anatomical male, smooth featureless pelvis and white trainers. Wide master accompanies both adjacent photo targets; closed candidate additionally supports middle. No anatomy warps, grafts or independent limb fitting."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed actual rear-side three-quarter camera from Life Fitness Axiom footage. Identical whole-scene reference crops documented in reference-evidence.json. All generated outputs1536x1024; native768x512 is a uniform half-size export. No separate geometric fitting or whole-scene registration was needed. Generated scene reframes relative to photo, so no exact photo pixel registration is claimed."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three original poses checked at native768x512 and actual390x844. Supported torso, bent knees and outward thigh rotation remain coherent. One native pixel head-chord difference and roughly two pixels crown-height variation are cosmetic under revised authorization; additional-outline-diagnostics.json. No calibrated bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Opaque grey Axiom-style protective tower, fixed seat/back/handholds and floor base. Knee-pad posts and matching footplates belong to curved moving arms connected to the low underseat hubs. Equipment-only repair layers remove small generated post tails below the moving arms, restoring adjacent neutral background/rail pixels. No athlete pixel altered by those layers; equipment-repair-audit.json. Minor pad/shoe contours accepted after motion review."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Back and hips remain supported, near hand closes around fixed handle, shoes stay supported by their moving footplates. Far contacts are partly naturally occluded in this source view. Sampled rear sole remains at y461 and near-handle highlight varies less than one native pixel. Two tower dimensions remain identical; these measure fixed apparatus only, not independent body or moving-arm rigidity."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Actual paused manufacturer positions13.252738,13.752738,14.57456seconds show closed/intermediate/wide. Both legs open about hips and underseat machine pivots with pads and footplates moving together; torso and floor structure remain fixed. Selected resistance indicator rises inside the opaque tower as legs open, while outer housing stays fixed. Qualitative reference agreement; no calibrated routing-ratio claim."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible lateral glute primary#7B72E9; visible hip-flexor fields secondary#9590E0, matching catalogue. Neutral other anatomy/equipment. Inherited fine grey contours retained. Deterministic colour layers change only existing chromatic fields; neutral pixels outside documented equipment repair are byte-identical."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Open/Wide/Hold/Return/Reset matches three real poses reused1,2,3,3,2,1. Six separate full-size file paths; no six-unique claim. Each cue has seven words or fewer. Reset maintains tension rather than instructing the stack to slam down."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native768x512 sequential playback including6to1 and pose inspection passed; native-trace.json and revised-native-review.md. Three1536x1024 ORAs reopen to exact merged output. Six lossless WebPs match corresponding native PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light theme, all six decoded and6to1 verified; complete figure/equipment visible, key and cues readable. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 dark theme, all six decoded and6to1 verified; pause/manual6to1 and clean console. staged-dark.png, staged-trace.json and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hip-abduction-machine/1.webp",
+      "sha256": "bd8bf803551bf870570373bd99c5beb0ab7b5f787ebc94aa1e032343fd360762",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.4230769230769,
+          "y": 294.6923076923077
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/2.webp",
+      "sha256": "42f83146bf7a319bbde94ef2c5219bd906200b97319113c422dccd7690c5626f",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.5217391304348,
+          "y": 294.60869565217394
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/3.webp",
+      "sha256": "d3950b71edfa14a612dd306344a24cb6d6737651164373d95a01c80a509d1cca",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.0952380952381,
+          "y": 294.6666666666667
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/4.webp",
+      "sha256": "d3950b71edfa14a612dd306344a24cb6d6737651164373d95a01c80a509d1cca",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.0952380952381,
+          "y": 294.6666666666667
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/5.webp",
+      "sha256": "42f83146bf7a319bbde94ef2c5219bd906200b97319113c422dccd7690c5626f",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.5217391304348,
+          "y": 294.60869565217394
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    },
+    {
+      "path": "form-frames/hip-abduction-machine/6.webp",
+      "sha256": "bd8bf803551bf870570373bd99c5beb0ab7b5f787ebc94aa1e032343fd360762",
+      "anchors": {
+        "rearBaseSole": {
+          "x": 130,
+          "y": 461
+        },
+        "nearHandleEnd": {
+          "x": 339.4230769230769,
+          "y": 294.6923076923077
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerHeightAtSideColumn": 372,
+        "fixedTowerProjectedWidth": 139
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "One native pixel of head chord width variation and about two pixels of crown-height variation remain; minor muscle/pad/shoe contour variation remains. Accepted under the user revised cosmetic tolerance after native/mobile playback; no body fitting or warping. Small lower pad-post tails were removed on isolated editable equipment-only layers to prevent apparent fixed-base attachment. No anatomy pixels in those repair regions.",
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1 reviewed; three reopened ORAs and six lossless exports. Lint/art/drafts/typecheck/build/stamp passed. Full tests compared against a freshly verified same-HEAD baseline, no unresolved additional failures. See photo-pose-production/final-verification.json."
+}

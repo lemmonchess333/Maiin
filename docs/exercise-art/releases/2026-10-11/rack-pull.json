@@ -1,0 +1,270 @@
+{
+  "exerciseId": "rack-pull",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T19:11:33.651326+00:00",
+  "reference": {
+    "path": "form-frames/rack-pull/1.webp",
+    "sha256": "a05a116bae33ce082c180a385ec8da776dbda9072685af1aa17d9cf7da438387"
+  },
+  "cueSha256": "c5c46e942bfcb28887ba686e88c0e1ed016783676efacdb2e83771363f036ace",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 references used for master and both new poses. Bald faceless lean white athlete, neutral pelvis and white trainers retained. New middle generation9be8af56 and standing5514f59a. Sources and exact prompts saved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed1024x1536 canvas, three-quarter frontal view; original master whole-scene normalization retained. No transforms in these two new poses or colour finishing. Both rack-top samples identical; cap widths vary1px. Full fixed rack vertical spans1079/1164px are identical across poses. The1px cap-width difference is retained as an explicitly reviewed cosmetic variation, separately reported rather than asserted invariant."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native all three poses visually reviewed. Hips/knees extend together with straight hanging arms, neutral head/spine and upright finish. Small contour variation accepted under revised standard; no anatomical warps or grafts."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same capped grey rack, low supports and single plate per side. Straight bar across both closed grips throughout. Measured near-plate vertical sample varies263to254px,3.4%; accepted small projected shape variation under revised standard, not exact geometry."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Ten measured sole samples vary at most2px. Feet no longer visibly slide. Hands remain closed around bar. Bottom rests on both supports using existing equipment-only contact repair; no new high supports in lifted poses."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both sampled bar columns rise monotonically from below knee to thigh, returning to the same pins. Hips unfold while arms remain long. Minor horizontal grip/plate shading variation remains; no detached grip or distracting slide observed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Traced native-coordinate hamstrings/gluteals/lower-back primary#7B72E9 and trapezius secondary#9590E0, matching bodyRig tint. Occluded regions remain hidden. Incorrect abdomen/lat tint neutralized. Flat fills with fine#777 contours; inherited neutral shading preserved. Paths/layers saved; no anatomy edits."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues describe pinned setup, straight-arm rise, upright finish/hold and controlled hinge to pins. Three physical poses reused for the return, disclosed as1,2,3,3,2,1."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six unique playback paths, three physical poses. Native1024x1536 trace covers all beats; repeated finish and return intentional under user-approved revised standard. Native images and mobile motion reviewed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light: all six decoded beats and6to1 loop, full rack and athlete visible; staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual component at390x844 dark: all six decoded beats/loop, readable cues/key, pause and manual6to1 observed; console empty. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rack-pull/1.webp",
+      "sha256": "a05a116bae33ce082c180a385ec8da776dbda9072685af1aa17d9cf7da438387",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1164
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1190,
+        "440": 1180,
+        "470": 1179,
+        "490": 1177,
+        "560": 1220,
+        "590": 1225,
+        "620": 1222,
+        "650": 1206,
+        "670": 1202
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 52,
+        "rightCapWidthAt100": 48
+      }
+    },
+    {
+      "path": "form-frames/rack-pull/2.webp",
+      "sha256": "4d34dca5240f1dbde52ad1e3f3b5727228322b9040d6df343e6779386efdbd53",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1164
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1190,
+        "440": 1180,
+        "470": 1178,
+        "490": 1177,
+        "560": 1221,
+        "590": 1225,
+        "620": 1223,
+        "650": 1207,
+        "670": 1203
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 53,
+        "rightCapWidthAt100": 49
+      }
+    },
+    {
+      "path": "form-frames/rack-pull/3.webp",
+      "sha256": "860bf798ccff30a250bc7166a43ecc863d586db01ba7071962643ca4561b5f93",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1163
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1191,
+        "440": 1180,
+        "470": 1179,
+        "490": 1177,
+        "560": 1222,
+        "590": 1226,
+        "620": 1223,
+        "650": 1207,
+        "670": 1203
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 53,
+        "rightCapWidthAt100": 48
+      }
+    },
+    {
+      "path": "form-frames/rack-pull/4.webp",
+      "sha256": "860bf798ccff30a250bc7166a43ecc863d586db01ba7071962643ca4561b5f93",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1163
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1191,
+        "440": 1180,
+        "470": 1179,
+        "490": 1177,
+        "560": 1222,
+        "590": 1226,
+        "620": 1223,
+        "650": 1207,
+        "670": 1203
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 53,
+        "rightCapWidthAt100": 48
+      }
+    },
+    {
+      "path": "form-frames/rack-pull/5.webp",
+      "sha256": "4d34dca5240f1dbde52ad1e3f3b5727228322b9040d6df343e6779386efdbd53",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1164
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1190,
+        "440": 1180,
+        "470": 1178,
+        "490": 1177,
+        "560": 1221,
+        "590": 1225,
+        "620": 1223,
+        "650": 1207,
+        "670": 1203
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 53,
+        "rightCapWidthAt100": 49
+      }
+    },
+    {
+      "path": "form-frames/rack-pull/6.webp",
+      "sha256": "a05a116bae33ce082c180a385ec8da776dbda9072685af1aa17d9cf7da438387",
+      "anchors": {
+        "left": {
+          "x": 190,
+          "y": 85
+        },
+        "right": {
+          "x": 830,
+          "y": 82
+        }
+      },
+      "invariantDimensions": {
+        "leftRackVerticalSpan": 1079,
+        "rightRackVerticalSpan": 1164
+      },
+      "observedSoleContacts": {
+        "365": 1187,
+        "400": 1190,
+        "440": 1180,
+        "470": 1179,
+        "490": 1177,
+        "560": 1220,
+        "590": 1225,
+        "620": 1222,
+        "650": 1206,
+        "670": 1202
+      },
+      "observedCapDimensions": {
+        "leftCapWidthAt100": 52,
+        "rightCapWidthAt100": 48
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in revised-recovery/final-verification.json; no new failure headings."
+}

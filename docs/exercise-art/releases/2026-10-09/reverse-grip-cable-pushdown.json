@@ -1,0 +1,174 @@
+{
+  "exerciseId": "reverse-grip-cable-pushdown",
+  "version": "anatomy-v3-2026-10-09-four-pose-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile trial; user approved trial and registration",
+  "reviewedAt": "2026-10-09T12:20:35.801292+00:00",
+  "reference": {
+    "path": "form-frames/reverse-grip-cable-pushdown/3.webp",
+    "sha256": "2248a7621576793a4b4c1457540d325a1e6bbf6f53f350fd2c0279a26ae146ca"
+  },
+  "cueSha256": "e44d191297e6314fc7f604e7e400b13b5eb8ce87840e9746d95e66a870f77889",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical identity used for master and original poses; four selected native poses reviewed. Lean physique, faceless bald head, neutral pelvis and white trainers retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same native1024x1536 fixed scene, no anatomical transformations or resizing."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Elbow flexion/extension with attached underhand grips and stable torso. Minor contour/upper-arm silhouette differences retained under user-approved visual standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed enclosed machine and repaired tangent pulley path retained; bar/chain connected. Small projected bar angle/width differences accepted in reviewed trial; not calibrated rigid3D measurements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Fixed sole samples within1px and shoe silhouette widths within1percent. See fixed-measurements.json. Native/mobile review shows planted stance."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Four physical positions form press/return cycle1,2,3,4,3,2; no fabricated independent return pose or morphing."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Triceps primary#7B72E9; forearms secondary#9590E0; inherited neutral shading/contours preserved. Editable recomposition and lossless exports exact."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six staged cues rendered and checked against the selected playback beats."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six-beat native loop confirmed; four unique poses, return reuse explicitly authorized by user after trial."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six decoded beats and6-to1 closure at390x844 in actual ExerciseFormContent; mobile-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six decoded beats and6-to1 closure at390x844; pause and next verified; final clean-tab errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/1.webp",
+      "sha256": "c91726af5da352744d4279222ef834ed162df275b960a53977c0ac5c9ec16c63",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1391
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1331
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 145,
+        "farShoeWidth": 170
+      }
+    },
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/2.webp",
+      "sha256": "69122b854f7f1ad475998e1db1a638bcb918c1ef4344566c43d16d975615c7c7",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1390
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1331
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 169
+      }
+    },
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/3.webp",
+      "sha256": "2248a7621576793a4b4c1457540d325a1e6bbf6f53f350fd2c0279a26ae146ca",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1390
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1331
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 169
+      }
+    },
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/4.webp",
+      "sha256": "0a5c2936e5eb99f6670c2d25e7c0ea57eecdb8cb80e4709ec4b5a6cd8255e12f",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1390
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1330
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 169
+      }
+    },
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/5.webp",
+      "sha256": "2248a7621576793a4b4c1457540d325a1e6bbf6f53f350fd2c0279a26ae146ca",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1390
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1331
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 169
+      }
+    },
+    {
+      "path": "form-frames/reverse-grip-cable-pushdown/6.webp",
+      "sha256": "69122b854f7f1ad475998e1db1a638bcb918c1ef4344566c43d16d975615c7c7",
+      "anchors": {
+        "nearSoleAt330": {
+          "x": 330,
+          "y": 1390
+        },
+        "farSoleAt520": {
+          "x": 520,
+          "y": 1331
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 169
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Completed: integrated mobile light/dark six-beat loops, card and controls; lint/art/drafts/typecheck/build/stamp passed. Full suite48 failures11234passes367skips; no new FAIL headings against measured same-HEAD baseline. See relaxed-trial/final-verification.json."
+}

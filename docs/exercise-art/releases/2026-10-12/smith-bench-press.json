@@ -1,0 +1,181 @@
+{
+  "exerciseId": "smith-bench-press",
+  "version": "anatomy-v3-2026-10-12-reviewed-smith-bench-v1",
+  "width": 888,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T22:20:05.538976+00:00",
+  "reference": {
+    "path": "form-frames/smith-bench-press/1.webp",
+    "sha256": "51d91ad64bd7576c13f5e41070a809a0db7f40efc63a18b1e0ed476521a8aa81"
+  },
+  "cueSha256": "75575508b018416ce939c0cc9e53dd5a51e3b55fd81a4725df0d45ba8c8428bf",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 identity with reviewed Close Grip Bench supported-scene reference. One lower grip/contact correction, then adjacent middle/top edits with canonical plus exercise master supplied. Original IDs, prompts and hashes retained. Bald faceless white anatomy, neutral featureless pelvis, grey contours and white trainers preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter source1536x1024; same empty-side-margin crop(264,0,1152,1024) yields888x1024 without resampling. No body/limb transforms, independent fitting or head/shoe grafts. Source body/bench minor contour differences disclosed."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native source/body, equipment and final loops reviewed, including6to1. Both arms bend/extend, supported head/back and planted feet stay visually steady. Near-arm head occlusion at lockout is natural. Middle is early descent, not half travel. No calibrated3D limb-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "User-authorized separate equipment layers: one fixed neutral Smith frame, two rods and per-pose sliding carriages at measured shaft intersections. Existing source athlete/bar/plates retained; source pixels brightness18+ unchanged by equipment step. One modest plate per side and attached closed grips. Fixed-rig silhouette measures identical across all six exports; these verify compositing only. Native equipment playback and equipment-draft-audit.json."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Corrected lower bar touches the pectoral region with neck clearance and wider-than-shoulder grip; both wrists meet shaft and elbows bend coherently. Head/back supported, feet planted. Guide sleeves surround rods and connect behind the intact bar. Contact judged qualitatively in perspective and native/mobile playback."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises/lowers with both arms and both sleeves follow fixed rods. No moving machine base or guide drift. Projected shaft slope varies and near/far normalized intermediate descent differs about1.8percentage points; unequal pixel travel alone does not establish real rotation. Native mechanism judged plausible in this perspective illustration, not a calibrated camera or3D rigidity certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest primary#7B72E9; visible posterior upper-arm rims and anterior deltoid caps secondary#9590E0. Broad anterior biceps/forearm source tint neutralized. Native traced contours and one coverage refinement reviewed; inherited neutral highlights and grey detail retained. Ownership is anatomical pose inference, not certified segmentation or activation measurement."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Lower/Bottom/Hold/Press/Finish maps to three physical poses1,2,3,3,2,1 at playback t0,.12,1,1,.12,0. Cues at most seven words. First frame starts unracked; no false depicted hook rotation. Uneven phase spacing explicitly disclosed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final888x1024 files decoded in actual native playback including6to1: native-final-trace.json. Separate earlier body and equipment traces preserved. Three multilayer ORAs reopen exactly, including equipment and intact source layers; six lossless exports match cropped PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light: complete figure/machine/plates, consistent colours and readable cues/key; all six decoded and6to1. staged-light.png, staged-trace.json and staged-controls.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 dark: all six plus6to1, readable complete machine/body, pause and manual wrap passed, no console errors. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/smith-bench-press/1.webp",
+      "sha256": "51d91ad64bd7576c13f5e41070a809a0db7f40efc63a18b1e0ed476521a8aa81",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/2.webp",
+      "sha256": "c68b16790cb69f033eedf8b76c4c0d95b51fe10b84b3463f6e29f4d528b87180",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/3.webp",
+      "sha256": "2ade011a8337b8d3fda6b9fe3c0948088e76668f624c94671259197759a239e5",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/4.webp",
+      "sha256": "2ade011a8337b8d3fda6b9fe3c0948088e76668f624c94671259197759a239e5",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/5.webp",
+      "sha256": "c68b16790cb69f033eedf8b76c4c0d95b51fe10b84b3463f6e29f4d528b87180",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    },
+    {
+      "path": "form-frames/smith-bench-press/6.webp",
+      "sha256": "51d91ad64bd7576c13f5e41070a809a0db7f40efc63a18b1e0ed476521a8aa81",
+      "anchors": {
+        "nearUprightLeftEdgeAt620": {
+          "x": 135,
+          "y": 620
+        },
+        "farUprightOuterEdgeAt500": {
+          "x": 685,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "nearUprightWidthAt620": 42,
+        "farUprightWidthAt500": 38
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": [
+    "Intermediate phase is early in descent, about10-12% of visible carriage travel; cue says Lower. Unequal spacing disclosed.",
+    "Generated bench rear/front outlines vary around1-2px; source body is not pixel-identical. Reviewed as minor cosmetic contour variation.",
+    "Projected shaft slope changes with pose; unequal near/far pixel travel alone is not proof of rotation. Fixed rods stay vertical and both carriages connect to the source bar in actual playback; no calibrated3D claim.",
+    "Natural near-arm occlusion of supported head at lockout.",
+    "Original neutral highlights and grey contours retained; colour ownership is pose-based anatomical inference, not certified pixel segmentation."
+  ],
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1 verified. Three ORAs reopen all layers exactly; six lossless exports. Lint/art/drafts/typecheck/build/stamp passed. Full suite compared to fresh verified same-HEAD baseline; no unresolved additional failures. See work/smith-bench-press/contact-first-production/final-verification.json."
+}

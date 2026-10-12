@@ -4829,6 +4829,35 @@ describe("form beats — the caption is a claim about the frame", () => {
       const beats = getAuthoredBeats(id)!;
       const first = beats[0].t;
       const last = beats[beats.length - 1].t;
+      if (id === "jump-rope") {
+        // Rope rotation continues forward through flight and landing.
+        expect(beats.map((beat) => beat.t)).toEqual([
+          0,
+          120 / 360,
+          180 / 360,
+          225 / 360,
+          280 / 360,
+          325 / 360,
+        ]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Overhead",
+          "Take off",
+          "Clear",
+          "Descend",
+          "Land",
+          "Rebound",
+        ]);
+        const advances = beats.map(
+          (beat, i) => (beats[(i + 1) % beats.length].t - beat.t + 1) % 1
+        );
+        expect(advances.every((step) => step > 0 && step <= 1 / 3 + 1e-9)).toBe(
+          true
+        );
+        expect(advances.reduce((sum, step) => sum + step, 0)).toBeCloseTo(1);
+        expect(beats[2].cue).toContain("beneath both shoes");
+        expect(beats[4].cue).toContain("forefeet");
+        continue;
+      }
       if (id === "burpees") {
         // This compound movement ends airborne, then lands into the next
         // squat. It is not a single joint's outward-and-return scalar loop.
@@ -4877,6 +4906,23 @@ describe("form beats — the caption is a claim about the frame", () => {
           expect(beats[3].cue).toContain("from your ankles");
           expect(beats[0].cue).toContain("hands free");
         }
+        continue;
+      }
+      if (id === "walking-dumbbell-lunges") {
+        // Alternating strides advance around a gait cycle. The two low
+        // poses each have a held beat; the loop continues into the next
+        // forward stride instead of reversing the final knee extension.
+        expect(beats.map((beat) => beat.t)).toEqual([
+          0, 0, 0.25, 0.5, 0.5, 0.75,
+        ]);
+        const advances = beats.map(
+          (beat, i) => (beats[(i + 1) % beats.length].t - beat.t + 1) % 1
+        );
+        expect(advances).toEqual([0, 0.25, 0.25, 0, 0.25, 0.25]);
+        expect(advances.reduce((sum, step) => sum + step, 0)).toBeCloseTo(1);
+        expect(beats[2].cue).toContain("rear leg through");
+        expect(beats[3].cue).toContain("opposite leg");
+        expect(beats[5].cue).toContain("next stride");
         continue;
       }
       if (id === "box-jumps") {

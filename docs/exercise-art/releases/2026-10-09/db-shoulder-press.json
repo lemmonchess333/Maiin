@@ -1,0 +1,172 @@
+{
+  "exerciseId": "db-shoulder-press",
+  "version": "anatomy-v3-2026-10-09-db-shoulder-press-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native and actual mobile artwork review",
+  "reviewedAt": "2026-10-09T11:02:23.248053+00:00",
+  "reference": {
+    "path": "form-frames/db-shoulder-press/1.webp",
+    "sha256": "e781962f2356c334fd5fbd4293cbc727ac008c424dd4e0d42d0298f960dfcd8f"
+  },
+  "cueSha256": "e7a90c07ab26dced19e8d4e42a395c3a9e53a08c793b3c465d98fc10c1b350d4",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical attached to original master and all pose edits; six native final frames inspected. Lean physique, bald faceless head, neutral pelvis and white trainers retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same1024x1536 camera/framing; repaired frame5 uses documented exact whole-frame+31px translation only, no resampling or anatomy fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native six-frame review: seated supported trunk, closed grips and controlled arm elevation/extension. No anatomy warps or grafts. Frames3/5 subtle pose difference retained in minor findings."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two grey hex dumbbells remain connected to hands; outer plate column heights near85-86/far87-88px. Bench remains visually stable; small raster discrepancies documented."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Fixed sole samples within1px ofmaster and projected shoe widths163/134px across6; fixed-measurements-v3.json. Bench samples within2px on aligned5, recorded as minor rather than used as strict anchors."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Seated press upward/inward to overhead followed by controlled lowering; six separately authored physical poses, stable supported torso and planted feet."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Flat deltoid primary#7B72E9; triceps/upper-chest secondary#9590E0. New contours#777777; inherited neutral contours preserved. Six ORAs recompose exactly; lossless exports match."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Final seven-word-or-fewer cues describe the reviewed poses. Final integrated cue review remains part of registration validation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six native sources visually compared and browser playback traced at natural/rendered1024x1536, including6-to1 closure. Native-trace-v3.json and native-review-v3.png retained."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent staged all6 at390x844 in light; decoded playback trace, screenshot, pause/manual-next checked."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent staged all6 at390x844 in dark; decoded playback trace and screenshot checked."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-shoulder-press/1.webp",
+      "sha256": "e781962f2356c334fd5fbd4293cbc727ac008c424dd4e0d42d0298f960dfcd8f",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1279
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1312
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    },
+    {
+      "path": "form-frames/db-shoulder-press/2.webp",
+      "sha256": "b7f3014dbc70e795839d03fa89e79c8e424cc4ce44aafbea0095fa801f221152",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1280
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1313
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    },
+    {
+      "path": "form-frames/db-shoulder-press/3.webp",
+      "sha256": "5a49e9c4138ffe881731786d57093cdb41168852f9a6efd6a5c4ab62edfab2b4",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1279
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1312
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    },
+    {
+      "path": "form-frames/db-shoulder-press/4.webp",
+      "sha256": "e1c9c3770242732bc723102092f695ee9f5961b51a7b3820d4d26f6909cc0048",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1279
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1312
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    },
+    {
+      "path": "form-frames/db-shoulder-press/5.webp",
+      "sha256": "755b526ea6b3196c5262cef3babd10b9e944ae940dd8905eb892626ecd9256ca",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1278
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1312
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    },
+    {
+      "path": "form-frames/db-shoulder-press/6.webp",
+      "sha256": "f5c874a4159cbc4842fd6a151e75a0e01907b9b4abc2a860a93c9eb6ec2ee0ff",
+      "anchors": {
+        "nearSoleAt240": {
+          "x": 240,
+          "y": 1279
+        },
+        "farSoleAt540": {
+          "x": 540,
+          "y": 1312
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 163,
+        "farShoeWidth": 134
+      }
+    }
+  ],
+  "measurementScope": "Image-plane fixed soles/shoe widths, not calibrated skeletal anatomy. Equipment ROI boxes are contaminated and not certification; outerplate column spans are separately recorded.",
+  "integrationValidation": "Completed registered public-frame/card/final-cue review at390x844 light and dark. Lint, both artwork audits, typecheck and build pass. Full suite48 failed/11232 passed/367 skipped; no new FAIL headings against measured same-HEAD baseline. Evidence: work/db-shoulder-press/forward-production/final-verification.json."
+}

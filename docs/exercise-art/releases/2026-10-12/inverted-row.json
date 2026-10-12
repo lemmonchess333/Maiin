@@ -1,0 +1,175 @@
+{
+  "exerciseId": "inverted-row",
+  "version": "anatomy-v3-2026-10-12-reviewed-inverted-row-v1",
+  "width": 852,
+  "height": 480,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T13:57:54.047197+00:00",
+  "reference": {
+    "path": "form-frames/inverted-row/1.webp",
+    "sha256": "fcf24678e1f96464374b8b05133d896fe2ceaf51800683c461e06bf88d76d713"
+  },
+  "cueSha256": "d8dc3a04e17e96d081eb19d1c23c4c714563f07868d1953d8c2daad14617e692",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Original direct-photo edit uses athlete-anatomy-v3 as sole identity/style, then canonical plus exercise master for adjacent poses. Bald faceless lean white anatomical figure, smooth featureless pelvis, white trainers. Original anatomy retained; no warps, grafts or independently fitted parts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique side view. Complete-source uniform width normalization and padding documented in revised-review-framing.json. One native-pixel whole-scene top translation aligns both rack bases. Near rack naturally occludes part of the head in lower poses; face and neck orientation remain readable."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Straight-arm hang, partial pull and chest-to-bar top reviewed at native852x480 and actual390x844. Body stays a coherent plank; elbows flex then extend. Small contour/heel-position variations accepted under the owner revised standard; no calibrated3D bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One fixed straight grey rack bar, two fixed grey posts and floor bases, both closed overhand grips at consistent shaft locations. Post tops and tiny upper sleeve edge are cropped in the source composition. No equipment texture/geometry changes from palette finishing; no moving load or inconsistent plate counts."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Two independently measured rack-base contacts remain exactly at459/378native y; widths remain107/61px. Near-heel bright silhouette differs4native pixels and far heel1; reviewed as minor outline/contact variation without distracting step/sliding at native or mobile. No anatomical fitting or shoe graft. See sequence-measurements.json and measurement-method.json."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Body pivots from heel support while hands stay attached to the fixed bar. Progressive elbow flexion lifts the chest to the bar with throat clearance; controlled return reaches straight arms without a sagging hip break. Original hang retained; the worse corrected hang is excluded."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible back/lat field uses primary#7B72E9; biceps and abdominal/core fields secondary#9590E0. Semantic contours distinguish upper arm from lat at the folded top. All uncoloured source pixels including neutral equipment are unchanged; inherited fine grey contours preserved."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Hang/Pull/Chest/Squeeze/Lower/Extend matches three real poses in1,2,3,3,2,1 order. Six separate paths support the preloader; duplicated hold and return poses disclosed. Each cue has seven words or fewer."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Final852x480 sequence reviewed in native sequential playback including6to1 and stepped full-resolution views. native-trace.json. Three1704x960 ORAs reopen to exact merged source; six lossless WebP exports match native PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light: all six decoded, full figure/equipment, caption, colour key and cues visible,6to1 reviewed. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 dark: all six decoded and6to1 reviewed; pause/manual wrap confirmed with no errors on a fresh page. An earlier development-harness hot reload produced a duplicate-root warning retained in staged-first-pass-console.json; fresh review evidence supersedes that page."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/inverted-row/1.webp",
+      "sha256": "fcf24678e1f96464374b8b05133d896fe2ceaf51800683c461e06bf88d76d713",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/2.webp",
+      "sha256": "bc0c193946efd700e48e2edabf071a8f0499c7525bfb72b545bdc64446b85a60",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/3.webp",
+      "sha256": "f3b0b892c0590b56fdfda14f3eba221e84bf80aa5d7931688ac0407d21d7315e",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/4.webp",
+      "sha256": "f3b0b892c0590b56fdfda14f3eba221e84bf80aa5d7931688ac0407d21d7315e",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/5.webp",
+      "sha256": "bc0c193946efd700e48e2edabf071a8f0499c7525bfb72b545bdc64446b85a60",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    },
+    {
+      "path": "form-frames/inverted-row/6.webp",
+      "sha256": "fcf24678e1f96464374b8b05133d896fe2ceaf51800683c461e06bf88d76d713",
+      "anchors": {
+        "nearRackBase": {
+          "x": 100,
+          "y": 459
+        },
+        "farRackBase": {
+          "x": 275,
+          "y": 378
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 107,
+        "farRackBaseWidth": 61
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "Original hang has a small near-heel outline variation, approximately4native/2mobile pixels, accepted in actual native/mobile review under the owner revised standard. Head is partly occluded by the near post in lower poses. Equipment post tops and a tiny sleeve edge are cropped in the source composition. This does not establish calibrated3D anatomy or pixel-identical foot contours.",
+  "integrationValidation": "Complete: native and final registered390x844 light/dark/card/pause/manual6to1 reviewed; three editable ORAs and six lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full tests compared with fresh same-HEAD baseline; no unresolved additional failures. See photo-edit-production/final-verification.json."
+}

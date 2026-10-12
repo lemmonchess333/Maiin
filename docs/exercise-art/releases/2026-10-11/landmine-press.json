@@ -1,0 +1,252 @@
+{
+  "exerciseId": "landmine-press",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 1474,
+  "height": 1067,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T18:52:22.808935+00:00",
+  "reference": {
+    "path": "form-frames/landmine-press/1.webp",
+    "sha256": "c76621e4876c525be4ae86366fd63b2cddab2af9d43796e800c10e7d1a30a9ab"
+  },
+  "cueSha256": "b178cef434a1a0c450adcd722f1e829ae7b36a42585111a5e9b23011fbfeafac",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 referenced existing three source poses. Bald faceless lean athlete, white trainers and neutral pelvis retained. No anatomical transforms or grafts in finishing."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "1474x1067 registered whole scenes; prior documented uniform source normalization only. Eleven sole samples agree within1px. See scene-registration whole-scene-registration.json and finished-production measurements.json."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All three native poses reviewed: shoulder-level flexion, middle press, extended diagonal reach. Small head/contour variation retained under revised standard; no exact3D identity claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single common projected physical bar and plate about fixed pivot, documented in scene-registration repair-equipment.py/bar-projection-feasibility.json. Source hands preserved through occlusion masks. Flat neutral gear accepted as cosmetic variation; debris removed locally without refitting anatomy."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both soles stable within1px across eleven observed columns. Grips stay closed on sleeve; common fixed base dimensions/anchors measured in final decoded frames."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Standing staggered stance with single-arm diagonal press. Straight shaft and coaxial sleeve/plate follow common projected-circle geometry. Projection establishes plausible movement, not recovered actual camera calibration."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Traced primary front-deltoid#7B72E9 and secondary chest/triceps#9590E0; incorrect abdominal tint neutralized. Fine#777777 contours and inherited neutral shading retained. Paths/layers saved; exact flat role interiors counted. All three native final images reviewed."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues describe shoulder setup, diagonal press, reach, hold, controlled lower and reset. Catalogue mapping matches front-deltoids/chest/triceps."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three distinct poses used as1,2,3,3,2,1 across six unique paths. Native1474x1067 playback trace covers all beats; repeated finish and return intentional under revised standard."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent at390x844: six decoded poses and6to1 closure recorded, scene/cues/key readable. Screenshot staged-light.png."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real component dark390x844: six decoded beats/closure, pause and manual6to1 observed, no console errors. Screenshot staged-dark.png."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/landmine-press/1.webp",
+      "sha256": "c76621e4876c525be4ae86366fd63b2cddab2af9d43796e800c10e7d1a30a9ab",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 964,
+        "1240": 968,
+        "1260": 969,
+        "1280": 964,
+        "1300": 949
+      }
+    },
+    {
+      "path": "form-frames/landmine-press/2.webp",
+      "sha256": "0de14245c391448a46584e9da6925f61147686ed3bce2e17bf6b7a957f3fa435",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 965,
+        "1240": 969,
+        "1260": 969,
+        "1280": 963,
+        "1300": 949
+      }
+    },
+    {
+      "path": "form-frames/landmine-press/3.webp",
+      "sha256": "711248bef80821e261ab471c3a3a938d6b1c9d245b47c97db804dd8ac23bc5a6",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 964,
+        "1240": 969,
+        "1260": 969,
+        "1280": 964,
+        "1300": 949
+      }
+    },
+    {
+      "path": "form-frames/landmine-press/4.webp",
+      "sha256": "711248bef80821e261ab471c3a3a938d6b1c9d245b47c97db804dd8ac23bc5a6",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 964,
+        "1240": 969,
+        "1260": 969,
+        "1280": 964,
+        "1300": 949
+      }
+    },
+    {
+      "path": "form-frames/landmine-press/5.webp",
+      "sha256": "0de14245c391448a46584e9da6925f61147686ed3bce2e17bf6b7a957f3fa435",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 965,
+        "1240": 969,
+        "1260": 969,
+        "1280": 963,
+        "1300": 949
+      }
+    },
+    {
+      "path": "form-frames/landmine-press/6.webp",
+      "sha256": "c76621e4876c525be4ae86366fd63b2cddab2af9d43796e800c10e7d1a30a9ab",
+      "anchors": {
+        "fixtureLeftAt940": {
+          "x": 46,
+          "y": 940
+        },
+        "fixtureBottomAt100": {
+          "x": 100,
+          "y": 962
+        }
+      },
+      "invariantDimensions": {
+        "fixtureWidthAt940": 129,
+        "fixtureHeightAt100": 73
+      },
+      "observedSoleContacts": {
+        "900": 954,
+        "920": 955,
+        "940": 953,
+        "960": 947,
+        "980": 946,
+        "1000": 945,
+        "1220": 964,
+        "1240": 968,
+        "1260": 969,
+        "1280": 964,
+        "1300": 949
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in finished-production/final-verification.json; no new failure headings."
+}

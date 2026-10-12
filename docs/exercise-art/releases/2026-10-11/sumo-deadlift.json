@@ -1,0 +1,276 @@
+{
+  "exerciseId": "sumo-deadlift",
+  "version": "anatomy-v3-2026-10-11-three-pose-v1",
+  "width": 1096,
+  "height": 1072,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T20:44:22.625701+00:00",
+  "reference": {
+    "path": "form-frames/sumo-deadlift/1.webp",
+    "sha256": "c2279037deb0e786baca44a9d2e61e2dbb686219e30405910af0ff3246c6e6bb"
+  },
+  "cueSha256": "f3549ba07100ff35bbe0811e569690978a625ba50a88e79c88dcc47f79b87353",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Standing source41bf193b and new middle8b9d40c6/floor6cce01ca built-in generations all canonical anatomy-v3 referenced. Lean bald faceless white athlete, white trainers, fine neutral contours. No rejected old floor image used as a seed. Full native final poses compared qualitatively; no exact3D identity certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same straight-front scene. Measured whole-scene translations+31px middle/+48px floor register12sole samples within1px of standing, without resizing or local anatomy changes. Common crop220..1316 removes empty side margins and48px black top padding adds headroom. Final1096x1072, no anatomical warps or grafts."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three native final poses: wide toes-out floor setup, partially extended knees/hips, tall neutral lockout. Straight arms inside knees and hands at narrow shaft locations throughout. Knees track outward; smooth neutral pelvis restored by colour-only editable layers in middle/standing. Modest contour differences accepted under revised standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest neutral-grey plate per end, collars, straight shaft. Initial floor plate was4px shorter; authorized equipment-only restoration uses exact standing plate/collar assemblies translated vertically263/111px. Isolatedx250..420 and1110..1290 regions exclude all body/grips; no equipment rescaling or anatomy fitting. Measured plateHeight253px and barWidth1009px exact across poses."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands visibly wrap the shaft at stable narrow grip locations, arms inside legs. Twelve sole samples remain within1px after whole-scene registration. Floor plate bottoms at964 in original canvas, consistent with planted heel region959..965; toe silhouettes extend farther down due toes-out perspective. Not a calibrated floor-plane measurement."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises vertically with knee and hip extension to neutral upright lockout; return reverses the same path. Feet remain planted, arms straight, no backward lean at top. Full native motion reviewed; no independent limb transformations."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Glutes; secondary Quads/Hamstrings/Adductors/Core/Traps. Visible small lateral hip patches primary#7B72E9, remaining mapped fields secondary#9590E0. Glutes largely occluded in straight-front floor pose:86opaque primary pixels intentionally retained, not expanded onto quads/adductors. Fine source-derived#777 contours and inherited neutral shading preserved; pelvis neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set, Drive, Stand, Control, Lower, Return cues describe the visible three-pose path, each seven words maximum. Six distinct paths reuse1,2,3,3,2,1 under user-approved revised standard; no claim of six independently authored poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All three final native images and1096x1072 native six-beat loop inspected. Deliberate top hold and return;6to1 floor closure recorded."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent at390x844 light theme: all six decoded beats, loop closure, full athlete and bar visible, key/cues readable. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real component at390x844 dark: all six beats/closure, pause and manual6to1 verified; no console errors. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/sumo-deadlift/1.webp",
+      "sha256": "c2279037deb0e786baca44a9d2e61e2dbb686219e30405910af0ff3246c6e6bb",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1022
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1022
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 973,
+          "500": 974,
+          "530": 965,
+          "555": 960,
+          "580": 959,
+          "950": 959,
+          "975": 961,
+          "1000": 964,
+          "1030": 974,
+          "1060": 972,
+          "1080": 967
+        },
+        "fullCanvasBarCenterY": 838
+      }
+    },
+    {
+      "path": "form-frames/sumo-deadlift/2.webp",
+      "sha256": "cd54e2ae3ad74fbb34f5b4b8e7637df5a39dba55bee385adda981fb6c3ef1862",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1021
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1021
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 972,
+          "500": 973,
+          "530": 965,
+          "555": 961,
+          "580": 960,
+          "950": 959,
+          "975": 961,
+          "1000": 963,
+          "1030": 973,
+          "1060": 971,
+          "1080": 967
+        },
+        "fullCanvasBarCenterY": 686
+      }
+    },
+    {
+      "path": "form-frames/sumo-deadlift/3.webp",
+      "sha256": "273c0981ab7fa58d4ea98ed16d5a456bd62422b974d203a19985b1e0169226b9",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1021
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1021
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 972,
+          "500": 973,
+          "530": 965,
+          "555": 961,
+          "580": 960,
+          "950": 960,
+          "975": 961,
+          "1000": 964,
+          "1030": 973,
+          "1060": 971,
+          "1080": 966
+        },
+        "fullCanvasBarCenterY": 575
+      }
+    },
+    {
+      "path": "form-frames/sumo-deadlift/4.webp",
+      "sha256": "273c0981ab7fa58d4ea98ed16d5a456bd62422b974d203a19985b1e0169226b9",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1021
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1021
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 972,
+          "500": 973,
+          "530": 965,
+          "555": 961,
+          "580": 960,
+          "950": 960,
+          "975": 961,
+          "1000": 964,
+          "1030": 973,
+          "1060": 971,
+          "1080": 966
+        },
+        "fullCanvasBarCenterY": 575
+      }
+    },
+    {
+      "path": "form-frames/sumo-deadlift/5.webp",
+      "sha256": "cd54e2ae3ad74fbb34f5b4b8e7637df5a39dba55bee385adda981fb6c3ef1862",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1021
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1021
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 972,
+          "500": 973,
+          "530": 965,
+          "555": 961,
+          "580": 960,
+          "950": 959,
+          "975": 961,
+          "1000": 963,
+          "1030": 973,
+          "1060": 971,
+          "1080": 967
+        },
+        "fullCanvasBarCenterY": 686
+      }
+    },
+    {
+      "path": "form-frames/sumo-deadlift/6.webp",
+      "sha256": "c2279037deb0e786baca44a9d2e61e2dbb686219e30405910af0ff3246c6e6bb",
+      "anchors": {
+        "leftSole": {
+          "x": 280,
+          "y": 1022
+        },
+        "rightSole": {
+          "x": 810,
+          "y": 1022
+        }
+      },
+      "invariantDimensions": {
+        "plateHeight": 253,
+        "barWidth": 1009
+      },
+      "observedContacts": {
+        "fullCanvasSoleSamples": {
+          "465": 970,
+          "480": 973,
+          "500": 974,
+          "530": 965,
+          "555": 960,
+          "580": 959,
+          "950": 959,
+          "975": 961,
+          "1000": 964,
+          "1030": 974,
+          "1060": 972,
+          "1080": 967
+        },
+        "fullCanvasBarCenterY": 838
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full-suite result and measured same-HEAD baseline comparison in incremental-production/final-verification.json; no new failure headings. Full suite remains failing."
+}
