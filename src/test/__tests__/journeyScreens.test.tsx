@@ -1,8 +1,8 @@
 /**
  * The journeys' screen names (`src/test/journeyScreens.ts`) against the
  * components that draw them: Train's exercise lines, its two halves, the
- * run week, the lift week's banners and the recovery count, and the tab
- * bar here;
+ * run week, the lift week's banners and the recovery count, "Why this
+ * run", and the tab bar here;
  * setup's names in `Onboarding.test.tsx`, the offer's in `Upgrade.test.tsx`
  * and the workout screen's in `WorkoutSessionCompletion.test.tsx`.
  *
@@ -21,9 +21,14 @@ import DeloadBanner from "@/components/program/DeloadBanner";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
+import RunAbout from "@/components/run/RunAbout";
+import RunPurpose from "@/components/run/RunPurpose";
+import { runSessionAbout } from "@/lib/runSessionAbout";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   HOME,
   LIFT_WEEK_BANNER,
+  RUN_ABOUT,
   RUN_RECOVERY,
   TABS,
   TRAIN,
@@ -274,5 +279,29 @@ describe("the lift week's banner in the weeks a race plan turns", () => {
       />
     );
     expect(screen.getByRole("region", { name })).toBeInTheDocument();
+  });
+});
+
+describe("Why this run", () => {
+  it("opens by its name and says a run in RUN_ABOUT's parts, in order", async () => {
+    const long = RUN_TEMPLATES.find((t) => t.type === "long");
+    expect(long, "a long run template").toBeTruthy();
+    const about = runSessionAbout(long!);
+    expect(about.alsoCalled, "a name coaches use for a long run").toBeTruthy();
+    render(
+      <RunPurpose>
+        <RunAbout about={about} why="The week's anchor run." />
+      </RunPurpose>
+    );
+    expect(screen.getByText(RUN_ABOUT.open, { exact: true }).tagName).toBe(
+      "SUMMARY"
+    );
+    expect(screen.getAllByRole("term").map((t) => t.textContent)).toEqual([
+      RUN_ABOUT.what,
+      RUN_ABOUT.feel,
+      RUN_ABOUT.why,
+      RUN_ABOUT.ifWrong,
+      RUN_ABOUT.alsoCalled,
+    ]);
   });
 });

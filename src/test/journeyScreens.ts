@@ -13,8 +13,8 @@
  *   `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
  * - Welcome back's: `LiftReturnSheet.test.tsx`.
  * - Train's rows, its Start workout, its two halves, the run week, the
- *   lift week's banners and the recovery count, Home's title and the tab
- *   bar: `journeyScreens.test.tsx`.
+ *   lift week's banners and the recovery count, "Why this run", Home's
+ *   title and the tab bar: `journeyScreens.test.tsx`.
  */
 import { prescribedRepRange } from "@/features/program/programEngine";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -130,8 +130,8 @@ export const TRAIN = {
   runWeek: "Run week",
 } as const;
 
-/** A run's short name on Train's run week, from its template: the
- *  function `ProgrammeRunSection` labels each day's cell with. */
+/** A run's name on Train's run week, from its template: the function
+ *  `ProgrammeRunSection` labels each day's cell with (Run21 (2)). */
 export const runWeekLabel = runStripLabel;
 
 /** A day on Train's run week, by its name: the run's short label
@@ -153,6 +153,17 @@ export const LIFT_WEEK_BANNER = {
   taper: "Taper",
   race: "Race week",
   recovery: "Recovery",
+} as const;
+
+/** "Why this run" (`RunPurpose`), and the parts it says a run in
+ *  (`RunAbout`, Run21 (3) and (2)). */
+export const RUN_ABOUT = {
+  open: "Why this run",
+  what: "What it is",
+  feel: "How it should feel",
+  why: "Why it's in your week",
+  ifWrong: "If it feels wrong",
+  alsoCalled: "Coaches also call this",
 } as const;
 
 /** Train's run half while the runner recovers from a race
