@@ -10,6 +10,7 @@ import {
 import {
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
+  TAPER_WEEKS_BY_DISTANCE,
   type RacePlanV2Input,
 } from "../runScheduler";
 import { plannedRunMinutes } from "../runTimeLimits";
@@ -313,6 +314,20 @@ describe("a new runner's runs after the run-walk weeks", () => {
         const most = 20 + 5 * (i - NEW_RUNNER_WEEKS + 1);
         week.forEach((run, j) => {
           const own = regular.weeks[i][j];
+          // Run22: a taper week's long run and easy runs are its shares of
+          // what the build held, and a new runner's build held shorter runs
+          // than the plan's own (`taperInSteps.test.ts`).
+          if (
+            (own.type === "long" || own.type === "easy") &&
+            i >= weeks - 1 - TAPER_WEEKS_BY_DISTANCE[distance] &&
+            i < weeks - 1
+          ) {
+            expect(
+              minutes(run),
+              `${distance} in ${weeks} weeks, week ${i + 1}`
+            ).toBeLessThanOrEqual(minutes(own));
+            return;
+          }
           if (own.type === "race" || minutes(own) <= most)
             expect(run, `${distance} in ${weeks} weeks, week ${i + 1}`).toEqual(
               own
