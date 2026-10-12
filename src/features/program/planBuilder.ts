@@ -99,6 +99,7 @@ import {
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
+import { contraindicatedFor } from "./injurySubstitutions";
 import {
   generateRacePlanV2,
   scheduleStructuredWeekV2,
@@ -301,6 +302,30 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
 }
 
 /**
+ * The gated week with every slot an injury holds given back as it was. A
+ * slot is held for an injury when the lift it replaced (`swappedFrom`) is
+ * one the person's injuries rule out. The gate maps each slot to one slot,
+ * so they line up by position.
+ */
+function keepInjurySwaps(
+  before: readonly WorkoutDay[],
+  gated: WorkoutDay[],
+  injuries: readonly string[]
+): WorkoutDay[] {
+  if (injuries.length === 0) return gated;
+  return gated.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      const was = before[d]?.exercises[e];
+      const held =
+        was?.swappedFrom !== undefined &&
+        contraindicatedFor(was.swappedFrom.exerciseId, injuries).length > 0;
+      return held ? { ...was } : ex;
+    }),
+  }));
+}
+
+/**
  * Lift programme. Pgm5 (Q2 — structure-preserving regeneration): a CONTENT
  * edit (goal / nutrition / experience / equipment / injuries with the same
  * lift-day count) preserves the user's day structure and all safe exercise
@@ -367,23 +392,36 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
   // is not enough and a sweep proved it: the PRESERVE branch above never calls
   // `generateProgram` at all, so a beginner seeded from a template — the only
-  // seed path at onboarding — was never gated once. It is idempotent, so the
-  // generated path pays nothing.
+  // seed path at onboarding — was never gated once. On a generated plan it
+  // runs after `generateProgram`'s own gate and filters, so it levels what
+  // the time fit and the kit swaps left above the person's level.
   //
   // Only for a plan being built: a generated one, or a template seeded at
   // onboarding, the one caller with no previous level. A settings save keeps
   // the exercises the plan has. Gated there, a level change kept as a content
   // edit would come back later as swaps on an unrelated save (Lift4: the
   // engine never swaps an exercise on its own).
+  //
+  // A lift held for an injury keeps its place: the injury filter may give a
+  // novice an above-level movement when it is the one that spares the injury
+  // (`applyInjuryFiltersToWorkouts`, the gate's one documented exception).
+  // Gated again here, a generated plan's injury swap went back to a lift
+  // chosen with no regard for the injuries or the twice-a-week cap: a sore
+  // back's Bulgarian split squat became a third leg press.
   const building = !preserve || input.previousExperience === undefined;
   const levelled = building
-    ? applyComplexityGate(
+    ? keepInjurySwaps(
         base.workouts,
-        toExperience(input.experience),
-        exerciseBank,
-        (ex, toId) =>
-          weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
-        exerciseDisplayName
+        applyComplexityGate(
+          base.workouts,
+          toExperience(input.experience),
+          exerciseBank,
+          (ex, toId) =>
+            weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx)
+              .weight,
+          exerciseDisplayName
+        ),
+        input.injuries
       )
     : base.workouts;
 
