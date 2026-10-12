@@ -66,7 +66,7 @@ export default function InlineFollow({
           toast.error("Couldn't follow. Try again.");
         }
       }}
-      className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,transform] disabled:opacity-50"
+      className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-2 text-sm font-semibold text-lifting-strong hover:text-lifting-strong/80 active:scale-[0.97] transition-[color,scale] disabled:opacity-50"
     >
       <UserPlus
         className="hidden size-5 @max-[20.5em]:block"

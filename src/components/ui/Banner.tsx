@@ -188,7 +188,7 @@ export function Banner({
           aria-label={dismissLabel ?? "Dismiss"}
           // Visual stays a quiet 24px glyph; the pseudo-element extends the
           // hit area to the 44px floor without growing the banner.
-          className="col-start-3 row-start-1 row-end-3 -m-1 p-1 relative before:absolute before:-inset-2.5 before:content-[''] rounded-md text-muted-foreground hover:text-foreground active:scale-95 @max-[16em]:row-end-2 @max-[16em]:self-start"
+          className="col-start-3 row-start-1 row-end-3 -m-1 p-1 relative before:absolute before:-inset-2.5 before:content-[''] rounded-md text-muted-foreground hover:text-foreground transition active:scale-95 @max-[16em]:row-end-2 @max-[16em]:self-start"
         >
           <X className="size-4" />
         </button>

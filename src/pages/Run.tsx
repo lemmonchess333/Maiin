@@ -1574,7 +1574,7 @@ export default function Run() {
                     <button
                       type="button"
                       onClick={handleSwitchToManual}
-                      className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
+                      className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-transform active:scale-95"
                       style={{
                         background: THEME.running,
                         color: "hsl(var(--stage))",

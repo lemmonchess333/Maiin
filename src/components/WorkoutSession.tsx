@@ -73,7 +73,10 @@ import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy"
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
-import { restSecondsFor } from "@/features/program/restTime";
+import {
+  restSecondsFor,
+  warmupRestSecondsFor,
+} from "@/features/program/restTime";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import {
   exercisesForLiftBadges,
@@ -790,13 +793,17 @@ export default function WorkoutSession({
      prior inline `navigator.vibrate(pattern)` was a no-op on iOS
      Safari — the Vibrate API has never shipped there. */
 
+  /* A warm-up is briefly rested (`WARMUP_REST_SECONDS`), as the plan's
+     session length counts it; a working set gets the lift's full rest. */
   const startRest = useCallback(
-    (exercise: ProgramExercise | undefined) => {
+    (exercise: ProgramExercise | undefined, afterWarmup = false) => {
       setRest({
         id: ++restSequence.current,
         startedAt: Date.now(),
         target: exercise
-          ? restSecondsFor(exercise, { fixedRest, sessionMinutes })
+          ? afterWarmup
+            ? warmupRestSecondsFor(exercise, { fixedRest, sessionMinutes })
+            : restSecondsFor(exercise, { fixedRest, sessionMinutes })
           : fixedRest && fixedRest > 0
             ? fixedRest
             : DEFAULT_REST_SECONDS,
@@ -1121,12 +1128,14 @@ export default function WorkoutSession({
       } else {
         setCurrentExIndex(next.exerciseIndex);
         setCurrentSetIndex(next.setIndex);
-        if (autoRest) startRest(day.exercises[currentExIndex]);
+        if (autoRest)
+          startRest(day.exercises[currentExIndex], set.type === "warmup");
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex(next?.setIndex ?? 0);
-      if (autoRest) startRest(day.exercises[currentExIndex]);
+      if (autoRest)
+        startRest(day.exercises[currentExIndex], set.type === "warmup");
     }
   };
 
@@ -1885,7 +1894,11 @@ export default function WorkoutSession({
         {/* Set logging grid — the screen's one big thing (DS3). A row is
             the set's badge (its number, or W, D or F, and the way into its
             type), the same set last time, weight, reps and the tick. A
-            done set's row turns green, as the tick it carries.
+            done set says so with its green tick, on the card's own colour,
+            and the row being logged is the table's one tinted row (an
+            owner call, in DESIGN_GUIDE's set-table note: a table of green
+            rows was the loudest thing on the screen, and done sets are the
+            least of what it asks for).
 
             Under 19em of card (larger text on the phone, and a 320px phone
             already at the designed size) the five columns do not fit:
@@ -1978,9 +1991,9 @@ export default function WorkoutSession({
                         className={cn(
                           columns,
                           "border-t border-border/40 px-3 py-1.5 transition-colors",
-                          set.completed
-                            ? "bg-success/10"
-                            : setIdx === currentSetIndex && "bg-primary/10"
+                          !set.completed &&
+                            setIdx === currentSetIndex &&
+                            "bg-primary/10"
                         )}
                       >
                         <button
@@ -2037,9 +2050,10 @@ export default function WorkoutSession({
                               "min-h-[44px] w-full truncate text-center text-small font-mono tabular-nums",
                               // Its own line under the weight and reps.
                               "@max-[19em]:col-span-2 @max-[19em]:col-start-2 @max-[19em]:row-start-2 @max-[19em]:min-h-[32px] @max-[19em]:text-left",
-                              canFill && !set.completed
-                                ? "text-lifting-strong active:opacity-70"
-                                : "text-muted-foreground"
+                              // Grey like the rest of the row's history, not
+                              // a column of purple: still a tap to fill.
+                              "text-muted-foreground",
+                              canFill && !set.completed && "active:opacity-70"
                             )}
                           >
                             <span className="hidden @max-[19em]:inline font-sans">
@@ -2398,7 +2412,14 @@ export default function WorkoutSession({
               leftIcon={<Timer className="size-4" aria-hidden="true" />}
               onClick={() => {
                 haptic("light");
-                startRest(day.exercises[currentExIndex]);
+                // The rest after the set just done: the last ticked row.
+                const lastDone = [...currentSets]
+                  .reverse()
+                  .find((st) => st.completed);
+                startRest(
+                  day.exercises[currentExIndex],
+                  lastDone?.type === "warmup"
+                );
               }}
             >
               Start rest timer

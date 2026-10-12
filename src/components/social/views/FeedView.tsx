@@ -444,7 +444,7 @@ export default function FeedView({
               <button
                 type="button"
                 onClick={() => setSourceMenuOpen(true)}
-                className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
+                className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
                 aria-label={`Feed source: ${
                   feedSubTab === "following"
                     ? "Following"
@@ -521,7 +521,7 @@ export default function FeedView({
                           });
                         }}
                         className={cn(
-                          "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                          "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                           feedSubTab === st
                             ? "bg-primary/10 border border-primary/40"
                             : "bg-muted border border-transparent"
