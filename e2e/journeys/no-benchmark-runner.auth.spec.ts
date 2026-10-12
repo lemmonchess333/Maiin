@@ -147,13 +147,18 @@ test("a runner with no benchmark, through every surface that explains a planned 
       age: "25–34",
     });
     const profile = await programme(account.uid);
-    const first = profile.runDays?.find((run) => run.date === start);
-    expect(first, "the plan runs on its first day").toBeTruthy();
-    expect(templateOf(first!).type, "the first run is the long run").toBe(
-      "long"
+    // The first week's long run. Setup's default week gives it a weekend
+    // day (Run20 (2)), so the journey moves the day to it.
+    const first = profile.runDays?.find(
+      (run) =>
+        run.date !== undefined &&
+        run.date >= start &&
+        templateOf(run).type === "long"
     );
+    expect(first, "the first week holds a long run").toBeTruthy();
+    await moveDay(page, first!.date!);
 
-    // Home: the first run, by name, with its distance and no minutes: no
+    // Home: the long run, by name, with its distance and no minutes: no
     // pace of the runner's own to give them from.
     await openTab(page, TABS.home);
     const long = templateOf(first!);
