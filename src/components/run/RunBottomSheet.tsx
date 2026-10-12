@@ -834,18 +834,22 @@ export default function RunBottomSheet({
               </div>
             ) : (
               <div className="flex items-center justify-center gap-[48px] flex-shrink-0">
+                {/* Stop is a grey ring like Pause and Lock, so Resume is the
+                    paused screen's one filled colour. Stopping keeps the run
+                    (its confirm offers End run), so it is not red; red
+                    belongs to Discard, which deletes it. */}
                 <RunControlButton
                   aria-label="Stop run"
                   label="STOP"
                   size="lg"
-                  variant="danger"
+                  variant="neutral"
                   onClick={() => setShowStopConfirm(true)}
                   icon={
                     <div
                       style={{
                         width: 22,
                         height: 22,
-                        background: "hsl(var(--destructive))",
+                        background: "white",
                         borderRadius: 5,
                       }}
                     />
