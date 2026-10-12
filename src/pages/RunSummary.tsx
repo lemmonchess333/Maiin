@@ -59,14 +59,11 @@ import { applyPrivacyZones, type PrivacyZone } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import { getAdherenceLabel } from "../lib/runPlanMetadata";
+import { getAdherenceLabel, runTemplateIdOf } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
-import {
-  paceTableFromFitness,
-  resolveSessionPaces,
-  raceDistanceKeyFromKm,
-} from "../lib/runPaces";
-import { resolvePaceVerdict } from "../lib/paceVerdict";
+import { plannedRunVerdict, workPaceSeconds } from "../lib/plannedRunVerdict";
+import { pinnedWorkPace } from "../lib/runSegments";
+import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -105,6 +102,7 @@ import {
   canShowShare,
   getInvalidRunReason,
   isOutdoorGpsRun,
+  requiresManualDistance,
   type InvalidRunReason,
   type SaveStatus,
 } from "../lib/runGuards";
@@ -353,6 +351,9 @@ interface RunData {
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
+  /** The time and distance in the session's work segments
+   *  (`useSessionPlayer`), null for a run with none. */
+  workPortion?: WorkPortion | null;
 }
 
 export default function RunSummary() {
@@ -533,6 +534,9 @@ export default function RunSummary() {
               : 0,
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
+          // A treadmill run (Pgm8) has no trend, whatever its type.
+          place: state.runConfig?.place,
+          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
         };
         setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
@@ -563,8 +567,14 @@ export default function RunSummary() {
       completedAt: new Date(),
       avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
       activityType: state.runConfig?.activityType ?? "freerun",
+      // A treadmill run's pace was typed: it suggests no benchmark (Pgm8).
+      place: state.runConfig?.place ?? null,
       isInvalid: false,
       savedAnyway: false,
+      // What decides whether it was an effort (Pgm8 R1): a tempo by its
+      // work segments, unless they were pinned to a goal pace.
+      workPortion: state.workPortion ?? null,
+      workPacePinned: pinnedWorkPace(state.runConfig?.segments) !== null,
     };
   }, [state, saved, savedRunId, editedDistanceMeters]);
 
@@ -626,6 +636,7 @@ export default function RunSummary() {
       isInvalid: type
         ? getInvalidRunReason({
             activityType: type,
+            place: state.runConfig?.place,
             distanceKm: (runDistance ?? 0) / 1000,
             elapsedSeconds: state.elapsed ?? 0,
           }) !== null
@@ -676,6 +687,10 @@ export default function RunSummary() {
   const distanceKm = (distance ?? 0) / 1000;
   const elapsedSeconds = elapsed ?? 0;
   const activityType = runConfig?.activityType;
+  /* The distance was typed in (TreadmillMode): on the treadmill, the place,
+     whatever the type (Pgm8), or a run tracked without GPS. Typed, so the
+     finish screen can correct it. */
+  const typedDistance = requiresManualDistance(runConfig);
 
   // Run8-Vocab — adherence chip in the summary header.
   // Maps runConfig.planMetadata → "Planned" / "Custom" / "Extra"
@@ -775,39 +790,19 @@ export default function RunSummary() {
     return "Nice run";
   })();
 
-  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): for a
-  // PLANNED session with a resolvable per-session pace target, say how the
-  // run compared — including the "keep the easy days easy" nudge when an easy
-  // session ran hot. Only planned runs are judged (custom/extra have no honest
-  // target), and intervals are excluded (session avg mixes work + rest — the
-  // same reason the primary stat swaps to the work-set summary for them).
-  const paceVerdict = (() => {
-    if (adherenceLabel !== "Planned") return null;
-    const pm = runConfig?.planMetadata;
-    const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
-    const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
-    if (!tmpl || tmpl.type === "intervals") return null;
-    if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
-    const table = paceTableFromFitness(profile?.runFitness ?? null);
-    if (!table) return null;
-    const paces = resolveSessionPaces(tmpl.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistanceKm),
-    });
-    const target =
-      paces.targetPace ??
-      paces.workPace ??
-      (paces.band ? (paces.band[0] + paces.band[1]) / 2 : undefined);
-    if (!target) return null;
-    return resolvePaceVerdict({
-      templateType: tmpl.type,
-      actualPaceS: avgPaceSeconds,
-      targetPaceS: target,
-      // Band-aware verdict (Runna teardown #2): anywhere inside the session's
-      // pace window is on-target, and the copy speaks the range.
-      targetBandS: paces.band,
-      unit,
-    });
-  })();
+  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
+  // PLANNED session's pace compared with its target, including the "keep
+  // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
+  const paceVerdict = plannedRunVerdict({
+    planMetadata: runConfig?.planMetadata,
+    place: runConfig?.place,
+    avgPaceSeconds,
+    workPaceSeconds: workPaceSeconds(state.workPortion),
+    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
+    distance,
+    runFitness: profile?.runFitness,
+    unit,
+  });
 
   // The context-aware primary stat, a card above the stats card of four.
   // Intervals get a work-set summary ("N × distance @ pace") instead of
@@ -870,10 +865,15 @@ export default function RunSummary() {
      treadmill (e.g. types `20` instead of `2.0`); 'too-short' covers
      the original sub-50m / sub-30s thresholds. */
   const invalidReason = activityType
-    ? getInvalidRunReason({ activityType, distanceKm, elapsedSeconds })
+    ? getInvalidRunReason({
+        activityType,
+        place: runConfig?.place,
+        distanceKm,
+        elapsedSeconds,
+      })
     : null;
   const isInvalid = invalidReason !== null;
-  const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
+  const outdoorGps = activityType ? isOutdoorGpsRun(runConfig) : false;
 
   /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
      with material climb (≥8 m/km, gated in the module) get one calm
@@ -990,6 +990,7 @@ export default function RunSummary() {
           isInvalid,
           invalidReason: invalidReason ?? null,
           routeQuality: state.routeQuality ?? null,
+          workPortion: state.workPortion ?? null,
           shoeId: effectiveShoeId,
           bestEfforts,
         },
@@ -1161,9 +1162,7 @@ export default function RunSummary() {
           pendingSync={pendingSync}
           /* Edit distance only for treadmill / manual — outdoor
              GPS distance came from a sensor, no typo to fix. */
-          canEditDistance={
-            activityType === "treadmill" || activityType === "manual"
-          }
+          canEditDistance={typedDistance}
           onSave={handleSave}
           onDiscard={handleDiscard}
           onDone={() => navigate("/")}
@@ -1221,8 +1220,9 @@ export default function RunSummary() {
               })}
             </p>
             {/* Plan-vs-actual pace verdict — coral for the running domain,
-                calm register (never shames a slow day). */}
-            {paceVerdict && (
+                calm register (never shames a slow day). It speaks only
+                when the run didn't match its type (Run21 (6)). */}
+            {paceVerdict?.speaks && (
               <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
               </p>
@@ -1727,7 +1727,7 @@ export default function RunSummary() {
                 and there is no typo to fix. Pre-save only — afterwards the
                 figure is on the account and correcting it is a different
                 operation. */}
-            {(activityType === "treadmill" || activityType === "manual") &&
+            {typedDistance &&
               canShowNormalSave({ isInvalid: false, saveStatus }) && (
                 <EditDistance
                   unit={unit}

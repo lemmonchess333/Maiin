@@ -42,6 +42,9 @@ import {
   type RunExecutionTarget,
 } from "./runExecutionEvidence";
 import { sampleRoute, type RouteCoordinate } from "./routeSegments";
+import { pinnedWorkPace, type SessionSegment } from "./runSegments";
+import { isTreadmillRun } from "./runGuards";
+import type { RunPlace } from "@/types/run";
 
 export interface RunSummaryItem {
   id: string;
@@ -51,6 +54,11 @@ export interface RunSummaryItem {
   elevationGain: number;
   calories: number;
   activityType: string;
+  /** "treadmill" for a run on one (Pgm8): its stored `place`, or, for a
+   *  run saved before the treadmill became a place, its `activityType:
+   *  "treadmill"`. Absent for every other run. The eligibility policies
+   *  and the guards read it (`isTreadmillRun`). */
+  place?: RunPlace;
   completedAt: Date;
   date?: string;
   executionTarget?: RunExecutionTarget | null;
@@ -97,6 +105,15 @@ export interface SavedRun extends RunSummaryItem {
    *  every run has saved since the field existed, else the shoe its launch
    *  config named. */
   shoeId?: string;
+  /** The time and distance run in the session's work segments, a tempo's
+   *  blocks or an interval session's reps, as the run saved them;
+   *  null for a run with none, and for runs
+   *  saved before. A tempo's benchmark is read from them (Pgm8 R1). */
+  workPortion?: { seconds: number; meters: number } | null;
+  /** The work segments were run at a pace the plan pinned, a goal-pace
+   *  tempo's race goal (A2, `pinnedWorkPace`): their pace says what the
+   *  goal was, not what the runner can do. */
+  workPacePinned?: boolean;
 }
 
 /**
@@ -157,6 +174,19 @@ function kmSplitSecondsOf(split: unknown): number {
 const finite = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 0;
 
+const measured = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
+
+/** A saved run's work portion, or null when it has none or it can't be
+ *  read as seconds and metres. */
+function workPortionOf(
+  value: unknown
+): { seconds: number; meters: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const { seconds, meters } = value as { seconds?: unknown; meters?: unknown };
+  return measured(seconds) && measured(meters) ? { seconds, meters } : null;
+}
+
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value ? value : undefined;
 
@@ -178,6 +208,7 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     elevationGain: finite(data.elevationGain),
     calories: finite(data.calories),
     activityType: data.activityType || "freerun",
+    ...(isTreadmillRun(data) ? { place: "treadmill" as const } : {}),
     completedAt,
     date,
     day: runEvidenceDate({ date, completedAt }),
@@ -221,6 +252,10 @@ export function parseSavedRun(id: string, data: DocumentData): SavedRun | null {
     type: text(data.type),
     savedAtSeconds: Math.floor(savedAt.getTime() / 1000),
     shoeId: text(data.shoeId) ?? text(data.runConfig?.shoeId),
+    workPortion: workPortionOf(data.workPortion),
+    workPacePinned:
+      Array.isArray(data.runConfig?.segments) &&
+      pinnedWorkPace(data.runConfig.segments as SessionSegment[]) !== null,
   };
 }
 
@@ -305,6 +340,8 @@ export function withQueuedRuns(
         const touched = (key: string) => Object.hasOwn(entry.data, key);
         if (!EXECUTION_FIELDS.some(touched))
           run.executionTarget = base.executionTarget ?? null;
+        if (!touched("runConfig"))
+          run.workPacePinned = base.workPacePinned ?? false;
         if (!touched("splits")) run.kmSplitSeconds = base.kmSplitSeconds;
         if (!touched("createdAt") && !touched("completedAt"))
           run.savedAtSeconds = base.savedAtSeconds;

@@ -5,9 +5,10 @@
  * The default waiting-phase surface when there's NO confident planned run
  * (freeform users, rest days, completed days, ad-hoc). Four one-tap tiles —
  * Easy / Tempo / Long / Free — launch straight into the run (a real gesture,
- * so audio primes). Structured sessions that need setup (Intervals, Treadmill,
- * Guided, Race, Follow a route) live one tap deeper behind "More options",
- * which opens the full RunSetupModal.
+ * so audio primes). Structured sessions that need setup (Intervals, Guided,
+ * Race, Follow a route) and any run on the treadmill (its own switch, Pgm8)
+ * live one tap deeper behind "More options", which opens the full
+ * RunSetupModal.
  *
  * Runna parity: simple session types are one tap; structured setup is one tap
  * deeper. See scratchpad spec `spec-run-fast-launch.md` §10.

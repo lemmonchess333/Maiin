@@ -5,13 +5,18 @@ import {
   trainingBands,
   paceTableFromFitness,
   resolveSessionPaces,
-  deriveBenchmarkFromRuns,
+  bestEffort,
+  derivedFitness,
+  effortVdot,
+  vdotFromTempoPace,
   parseRaceTimeToSeconds,
   resolvePaceInsight,
   raceDistanceKeyFromKm,
   predictedRaceTimesFromFitness,
   prescriptivePaceTableFromFitness,
   raceTargetBand,
+  benchmarkFromRaceTime,
+  manualRunFitness,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -157,44 +162,96 @@ describe("resolveSessionPaces", () => {
   });
 });
 
-describe("deriveBenchmarkFromRuns", () => {
+/* Pgm8 R1: a benchmark is derived from efforts only, a race whole and a
+   tempo by its work, read as threshold pace. */
+describe("vdotFromTempoPace", () => {
+  const tempoPace = (vdot: number) => {
+    const [fast, slow] = trainingBands(vdot).threshold;
+    return Math.round((fast + slow) / 2);
+  };
+
+  it("gives back the VDOT whose tempo pace was held, across the range", () => {
+    for (const vdot of [25, 30, 35, 40, 45, 50, 60, 70]) {
+      // The prescribed pace is whole seconds: within a tenth.
+      expect(Math.abs(vdotFromTempoPace(tempoPace(vdot)) - vdot)).toBeLessThan(
+        0.15
+      );
+    }
+  });
+
+  it("reads a tempo above the same run read as a race of its length", () => {
+    // 20 minutes at VDOT 40's tempo pace is a 20-minute "race" at 95% of
+    // VO2max, against threshold's 86–88%: about 3 VDOT low.
+    const pace = tempoPace(40);
+    const asRace = vdotFromRace((1200 / pace) * 1000, 1200);
+    expect(vdotFromTempoPace(pace) - asRace).toBeGreaterThan(2.5);
+  });
+
+  it("returns 0 for a pace that isn't one", () => {
+    expect(vdotFromTempoPace(0)).toBe(0);
+    expect(vdotFromTempoPace(-300)).toBe(0);
+    expect(vdotFromTempoPace(Number.NaN)).toBe(0);
+  });
+});
+
+describe("bestEffort and derivedFitness", () => {
+  const race = (distanceM: number, timeS: number, id?: string) => ({
+    kind: "race" as const,
+    distanceM,
+    timeS,
+    ...(id ? { id } : {}),
+  });
+
+  it("reads a race by its finish and a tempo by its pace", () => {
+    expect(effortVdot(race(5000, 1200))).toBe(vdotFromRace(5000, 1200));
+    expect(effortVdot({ kind: "tempo", distanceM: 4000, timeS: 1200 })).toBe(
+      vdotFromTempoPace(300)
+    );
+  });
+
   it("picks the effort implying the highest VDOT", () => {
-    const best = deriveBenchmarkFromRuns([
-      { distanceM: 5000, durationS: 1500 }, // 25:00 5K — slower
-      { distanceM: 5000, durationS: 1200 }, // 20:00 5K — fastest VDOT
-      { distanceM: 10000, durationS: 3000 }, // 50:00 10K
+    const best = bestEffort([
+      race(5000, 1500), // 25:00 5K
+      race(5000, 1200), // 20:00 5K, the best
+      race(10000, 3000), // 50:00 10K
     ]);
-    expect(best).toEqual({ distanceM: 5000, timeS: 1200 });
+    expect(best?.effort).toMatchObject({ distanceM: 5000, timeS: 1200 });
+    expect(bestEffort([])).toBeNull();
   });
 
-  it("ignores runs shorter than 2km and returns null when nothing qualifies", () => {
+  it("passes over a VDOT no one has run", () => {
+    // 5 km in 9:00 would be VDOT 120: a bad recording, not an effort.
+    const best = bestEffort([race(5000, 540), race(5000, 1500)]);
+    expect(best?.effort.timeS).toBe(1500);
+  });
+
+  it("stores a race as run, and a tempo as its VDOT with no race result", () => {
     expect(
-      deriveBenchmarkFromRuns([{ distanceM: 800, durationS: 200 }])
-    ).toBeNull();
-    expect(deriveBenchmarkFromRuns([])).toBeNull();
-  });
-
-  it("echoes the WINNING run's provenance (RUN-EV-08)", () => {
-    const best = deriveBenchmarkFromRuns([
-      {
-        distanceM: 5000,
-        durationS: 1500,
-        id: "run-slow",
-        completedAt: new Date("2026-08-01T08:00:00Z"),
-      },
-      {
-        distanceM: 5000,
-        durationS: 1200,
-        id: "run-fast",
-        completedAt: new Date("2026-08-03T08:00:00Z"),
-      },
-    ]);
-    expect(best).toMatchObject({
-      distanceM: 5000,
-      timeS: 1200,
+      derivedFitness({
+        effort: {
+          ...race(5000, 1200, "run-fast"),
+          completedAt: new Date("2026-08-03T08:00:00Z"),
+        },
+        vdot: vdotFromRace(5000, 1200),
+      })
+    ).toEqual({
+      benchmark: { distanceM: 5000, timeS: 1200 },
+      vdot: Math.round(vdotFromRace(5000, 1200) * 10) / 10,
       sourceRunId: "run-fast",
       sourceRunAt: "2026-08-03T08:00:00.000Z",
     });
+    expect(
+      derivedFitness({
+        effort: { kind: "tempo", distanceM: 4000, timeS: 1200, id: "t" },
+        vdot: 41.38,
+      })
+    ).toEqual({ benchmark: null, vdot: 41.4, sourceRunId: "t" });
+  });
+
+  it("a tempo's VDOT alone still gives every pace and prediction", () => {
+    const fitness = { benchmark: null, vdot: 41.4 };
+    expect(paceTableFromFitness(fitness)?.vdot).toBe(41.4);
+    expect(predictedRaceTimesFromFitness(fitness)?.["5k"]).toBeGreaterThan(0);
   });
 });
 
@@ -249,28 +306,83 @@ describe("parseRaceTimeToSeconds", () => {
   });
 });
 
-describe("resolvePaceInsight", () => {
-  const fitness = { benchmark: { distanceM: 5000, timeS: 1500 }, vdot: null }; // 25:00 5K
-
-  it("returns null without fitness or with too few runs", () => {
-    expect(
-      resolvePaceInsight(null, [{ distanceM: 5000, durationS: 1200 }])
-    ).toBeNull();
-    expect(
-      resolvePaceInsight(fitness, [{ distanceM: 5000, durationS: 1200 }])
-    ).toBeNull();
+/* A race time the person typed, in Settings or at setup (adaptive paces
+   §10.2): read as a benchmark, then stored as their own. */
+describe("benchmarkFromRaceTime and manualRunFitness", () => {
+  it("reads a time as a benchmark at its distance, VDOT to a tenth", () => {
+    expect(benchmarkFromRaceTime("5k", "22:30")).toEqual({
+      benchmark: { distanceM: 5000, timeS: 1350 },
+      vdot: 43.4,
+    });
+    expect(benchmarkFromRaceTime("10k", "48:00")).toEqual({
+      benchmark: { distanceM: 10000, timeS: 2880 },
+      vdot: 42,
+    });
+    expect(benchmarkFromRaceTime("half", "1:45:00")).toMatchObject({
+      benchmark: { distanceM: 21097.5, timeS: 6300 },
+    });
   });
 
-  it("suggests a FASTER benchmark when recent runs imply higher fitness", () => {
-    const runs = [
-      { distanceM: 5000, durationS: 1200 }, // 20:00 — much faster (VDOT ~50)
-      { distanceM: 5000, durationS: 1230 },
-      { distanceM: 10000, durationS: 2550 },
-    ];
-    const ins = resolvePaceInsight(fitness, runs);
+  it("refuses a time that doesn't read as one", () => {
+    expect(benchmarkFromRaceTime("5k", "22")).toEqual({ error: "format" });
+    expect(benchmarkFromRaceTime("5k", "22:75")).toEqual({ error: "format" });
+    expect(benchmarkFromRaceTime("5k", "0:00")).toEqual({ error: "format" });
+  });
+
+  it("refuses a time faster than anyone has raced", () => {
+    // The records sit at VDOT 85 to 87: a 12:35 5K reads, a 12:00 one
+    // (90.1) or a 25:00 10K (90.4) doesn't.
+    expect(benchmarkFromRaceTime("5k", "12:35")).not.toHaveProperty("error");
+    expect(benchmarkFromRaceTime("5k", "12:00")).toEqual({
+      error: "implausible",
+    });
+    expect(benchmarkFromRaceTime("10k", "25:00")).toEqual({
+      error: "implausible",
+    });
+  });
+
+  it("keeps a slow time: a 45-minute 5K is a benchmark too", () => {
+    expect(benchmarkFromRaceTime("5k", "45:00")).toEqual({
+      benchmark: { distanceM: 5000, timeS: 2700 },
+      vdot: 18.7,
+    });
+  });
+
+  it("stores a typed benchmark as the person's own, never pending (RUN-EV-08)", () => {
+    const entry = benchmarkFromRaceTime("5k", "22:30");
+    if ("error" in entry) throw new Error("22:30 reads as a 5K");
+    expect(
+      manualRunFitness(entry, new Date("2026-10-08T07:00:00.000Z"))
+    ).toEqual({
+      benchmark: { distanceM: 5000, timeS: 1350 },
+      vdot: 43.4,
+      source: "manual",
+      updatedAt: "2026-10-08T07:00:00.000Z",
+      pendingConfirmation: false,
+    });
+  });
+});
+
+describe("resolvePaceInsight", () => {
+  const fitness = { benchmark: { distanceM: 5000, timeS: 1500 }, vdot: null }; // 25:00 5K
+  const race = (distanceM: number, timeS: number) => ({
+    kind: "race" as const,
+    distanceM,
+    timeS,
+  });
+
+  it("returns null without fitness or without an effort", () => {
+    expect(resolvePaceInsight(null, [race(5000, 1200)])).toBeNull();
+    expect(resolvePaceInsight(fitness, [])).toBeNull();
+  });
+
+  it("suggests a FASTER benchmark when a recent effort implies higher fitness", () => {
+    // One race is enough since Pgm8 R1: the person decides.
+    const ins = resolvePaceInsight(fitness, [race(5000, 1200)]); // 20:00
     expect(ins).not.toBeNull();
     expect(ins!.direction).toBe("faster");
     expect(ins!.suggestedVdot).toBeGreaterThan(ins!.currentVdot);
+    expect(ins!.suggested.benchmark).toEqual({ distanceM: 5000, timeS: 1200 });
   });
 
   it("suggests SLOWER when even the best recent effort is well below the mark", () => {
@@ -278,23 +390,29 @@ describe("resolvePaceInsight", () => {
       benchmark: { distanceM: 5000, timeS: 1080 },
       vdot: null,
     }; // 18:00
-    const runs = [
-      { distanceM: 5000, durationS: 1560 }, // 26:00 — all slow
-      { distanceM: 5000, durationS: 1620 },
-      { distanceM: 8000, durationS: 2520 },
+    const efforts = [
+      race(5000, 1560), // 26:00 — all slow
+      race(5000, 1620),
+      race(8000, 2520),
     ];
-    const ins = resolvePaceInsight(fastFitness, runs);
+    const ins = resolvePaceInsight(fastFitness, efforts);
     expect(ins).not.toBeNull();
     expect(ins!.direction).toBe("slower");
   });
 
   it("returns null when recent fitness matches the stored mark (small delta)", () => {
-    const runs = [
-      { distanceM: 5000, durationS: 1500 },
-      { distanceM: 5000, durationS: 1510 },
-      { distanceM: 5000, durationS: 1495 },
-    ];
-    expect(resolvePaceInsight(fitness, runs)).toBeNull();
+    const efforts = [race(5000, 1500), race(5000, 1510), race(5000, 1495)];
+    expect(resolvePaceInsight(fitness, efforts)).toBeNull();
+  });
+
+  it("suggests from a tempo's work, storing no race result", () => {
+    // 20 minutes at 4:45 /km is a VDOT-44 tempo, over the stored 38.3.
+    const ins = resolvePaceInsight(fitness, [
+      { kind: "tempo", distanceM: (1200 / 285) * 1000, timeS: 1200 },
+    ]);
+    expect(ins?.direction).toBe("faster");
+    expect(ins?.suggested.benchmark).toBeNull();
+    expect(ins?.suggestedVdot).toBe(ins?.suggested.vdot);
   });
 });
 

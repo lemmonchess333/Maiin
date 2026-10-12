@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import type { SessionSegment } from "@/lib/runSegments";
+import { isWorkSegment, type SessionSegment } from "@/lib/runSegments";
 
 /**
  * useSessionPlayer — the ONE in-run structure walker (STRUCT-SESS-02).
@@ -49,6 +49,22 @@ export interface SessionPlayer {
   start: () => void;
   tick: (totalElapsed: number, totalDistance: number) => void;
   skip: (totalElapsed: number, totalDistance: number) => void;
+  /**
+   * The time and distance run in the session's work segments so far, the
+   * one in progress included, given the run's totals now; null for a
+   * session with none, or before any has started. The session is judged
+   * by these, not by the whole run, whose warm-up and cool-down read slow.
+   */
+  workPortion: (
+    totalElapsed: number,
+    totalDistance: number
+  ) => WorkPortion | null;
+}
+
+/** Seconds and metres in a session's work segments. */
+export interface WorkPortion {
+  seconds: number;
+  meters: number;
 }
 
 const IDLE: SessionPlayerState = {
@@ -79,6 +95,10 @@ export function useSessionPlayer(
 
   const phaseStartElapsed = useRef(0);
   const phaseStartDistance = useRef(0);
+  // Where each segment started (and, at `segs.length`, where the session
+  // ended), in the run's pushed totals. Assigned, never accumulated, so a
+  // state updater React runs twice writes the same values twice.
+  const segmentStarts = useRef<{ elapsed: number; distance: number }[]>([]);
   // Live-index mirror so start() stays idempotent without joining the
   // state into its deps (same pattern the old hook documented).
   const indexRef = useRef(-1);
@@ -93,6 +113,7 @@ export function useSessionPlayer(
     // re-anchors implicitly through advance() on every later segment.
     phaseStartElapsed.current = 0;
     phaseStartDistance.current = 0;
+    segmentStarts.current = [{ elapsed: 0, distance: 0 }];
     setState({ index: 0, phaseElapsed: 0, phaseDistanceCovered: 0 });
   }, [segs.length]);
 
@@ -108,6 +129,13 @@ export function useSessionPlayer(
       // Bounded walk past degenerate zero-target segments.
       while (index < segs.length && targetMet(segs[index], 0, 0)) {
         index += 1;
+      }
+      // Every segment passed over starts, and ends, here.
+      for (let i = prev.index + 1; i <= index && i <= segs.length; i++) {
+        segmentStarts.current[i] = {
+          elapsed: totalElapsed,
+          distance: totalDistance,
+        };
       }
       return { index, phaseElapsed: 0, phaseDistanceCovered: 0 };
     },
@@ -142,6 +170,28 @@ export function useSessionPlayer(
     [segs, advance]
   );
 
+  const workPortion = useCallback(
+    (totalElapsed: number, totalDistance: number): WorkPortion | null => {
+      let seconds = 0;
+      let meters = 0;
+      let started = false;
+      segs.forEach((seg, i) => {
+        if (!isWorkSegment(seg)) return;
+        const from = segmentStarts.current[i];
+        if (!from) return;
+        started = true;
+        const to = segmentStarts.current[i + 1] ?? {
+          elapsed: totalElapsed,
+          distance: totalDistance,
+        };
+        seconds += Math.max(0, to.elapsed - from.elapsed);
+        meters += Math.max(0, to.distance - from.distance);
+      });
+      return started ? { seconds, meters } : null;
+    },
+    [segs]
+  );
+
   const current =
     state.index >= 0 && state.index < segs.length ? segs[state.index] : null;
   const next =
@@ -158,5 +208,6 @@ export function useSessionPlayer(
     start,
     tick,
     skip,
+    workPortion,
   };
 }

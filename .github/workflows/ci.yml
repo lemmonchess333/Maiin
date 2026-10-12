@@ -61,7 +61,11 @@ permissions:
 jobs:
   unit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The suite alone takes 10–12 minutes on a busy runner, and this job also
+    # installs, lints, builds and checks the bundle: in the training-engine
+    # merges it ran 10–15 minutes, and one run passed every step and was
+    # cancelled at 15 during its cleanup.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6

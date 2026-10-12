@@ -226,6 +226,14 @@ export interface ProgramExercise {
    */
   lowered?: LoweredBy;
   /**
+   * Pgm7 A3: the plan stretched this lift's target past its range, because
+   * the next weight is too big a step to take on its own (Lift4 (6)). Set by
+   * the session where the target first climbs past the range's top at this
+   * weight, for one line on the next session, whose finish drops it
+   * (`stretchOf` reads it).
+   */
+  stretched?: StretchedBy;
+  /**
    * Lift4 (11): the lift an equipment or injury swap put this one in place
    * of, so a save that lifts the limitation brings it back
    * (`restoreSwappedLifts`).
@@ -260,9 +268,39 @@ export function loweringOf(
     : undefined;
 }
 
+/** How far the plan stretched a lift's target, and why: the weight it
+ *  climbs at, and the next one, too big a step to take on its own. The
+ *  next session's line reads "Up to 19 reps on 10 kg: 12.5 kg is a big
+ *  jump". */
+export interface StretchedBy {
+  /** The exercise it stretched. A swap to another leaves this behind, and
+   *  nothing reads it there (`stretchOf`). */
+  exerciseId: string;
+  /** The weight the target climbs at. */
+  weight: number;
+  /** The next weight up, more than about 15% heavier (`automaticStepUp`). */
+  next: number;
+  /** The reps the target climbs to at `weight`: the same effort as the
+   *  range's bottom at `next` (`stretchedRepCeiling`). */
+  ceiling: number;
+}
+
+/** The plan's own stretch of this lift's target, if it was this lift's. */
+export function stretchOf(
+  exercise: Pick<ProgramExercise, "exerciseId" | "stretched">
+): StretchedBy | undefined {
+  return exercise.stretched?.exerciseId === exercise.exerciseId
+    ? exercise.stretched
+    : undefined;
+}
+
 /* ================================
    WORKOUT DAY
 ================================ */
+
+/** A session's place in the week's heavier and lighter days (backlog #3,
+ *  N9; Lift4 (5) keeps them for intermediates, unlabelled). */
+export type DayRole = "heavy" | "moderate" | "pump";
 
 export interface WorkoutDay {
   /** Exact saved session for this completed programme day. */
@@ -273,6 +311,15 @@ export interface WorkoutDay {
   completed: boolean;
   isCustom?: boolean;
   skipped?: boolean;
+  /**
+   * The session's day role, set when the plan is built (`withDayRoles`).
+   * It stays with the session: the week's order carries over by moving
+   * whole days (Lift4 (11)), so a role read from a day's position would
+   * pass to another session, and a block's start or end, which shifts the
+   * reps by role (`represcribeWorkouts`), would make a lighter session
+   * heavy. Older plans have none until a block re-prescribes them.
+   */
+  dayRole?: DayRole;
 }
 
 /* ================================
@@ -282,8 +329,9 @@ export interface WorkoutDay {
 export interface ProgramSettings {
   autoProgression: boolean;
   /**
-   * Lift4 (6): "I have small plates", so a barbell steps 1.25 kg instead of
-   * 2.5 kg (`loadSteps.ts`). Off until the person turns it on. It replaced
+   * Lift4 (6): "I have small plates", so a barbell, and the belt on a
+   * bodyweight lift (Pgm8 L6), step 1.25 kg instead of 2.5 kg
+   * (`loadSteps.ts`). Off until the person turns it on. It replaced
    * Microloading, whose `microloading` key older documents still carry and
    * nothing reads.
    */
@@ -973,7 +1021,7 @@ export interface WeeklyPrescription {
  * crypto.randomUUID; falls back to a timestamp+random token in environments
  * without it (older WebViews / jsdom without the global).
  */
-export function generateInstanceId(): string {
+function randomInstanceId(): string {
   if (
     typeof crypto !== "undefined" &&
     typeof crypto.randomUUID === "function"
@@ -983,6 +1031,26 @@ export function generateInstanceId(): string {
   return `ex_${Date.now().toString(36)}_${Math.random()
     .toString(36)
     .slice(2, 10)}`;
+}
+
+let instanceIdSource: () => string = randomInstanceId;
+
+export function generateInstanceId(): string {
+  return instanceIdSource();
+}
+
+/**
+ * Swap where new instance ids come from — tests and the simulator only, so
+ * two builds of the same plan come out identical (`src/test/instanceIds.ts`).
+ * Returns a function that puts the previous source back; `null` restores the
+ * random default.
+ */
+export function setInstanceIdSource(source: (() => string) | null): () => void {
+  const previous = instanceIdSource;
+  instanceIdSource = source ?? randomInstanceId;
+  return () => {
+    instanceIdSource = previous;
+  };
 }
 
 /**
@@ -1051,6 +1119,7 @@ export function normalizeExercise(
       : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
     ...(ex.lowered !== undefined ? { lowered: ex.lowered } : {}),
+    ...(ex.stretched !== undefined ? { stretched: ex.stretched } : {}),
     ...(ex.swappedFrom !== undefined ? { swappedFrom: ex.swappedFrom } : {}),
   };
 }

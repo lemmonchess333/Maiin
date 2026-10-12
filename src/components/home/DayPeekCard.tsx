@@ -1,6 +1,12 @@
+import RunAbout from "@/components/run/RunAbout";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -23,7 +29,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
@@ -31,6 +37,8 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
@@ -308,7 +316,17 @@ export default function DayPeekCard({
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
-  const runName = runTemplate?.name ?? "Run";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const runRacePace = racePaceWorkFor(
+    runTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const runName = runSessionName(runTemplate, runRacePace);
+  const runAbout = runTemplate
+    ? runSessionAbout(runTemplate, { racePace: runRacePace })
+    : null;
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -319,6 +337,11 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(
+            programState?.runDays,
+            resolved.run.runDay?.weekKey
+          ),
+          racePace: runRacePace?.kind,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -543,13 +566,19 @@ export default function DayPeekCard({
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-mono tabular-nums">
                       {runTemplate.config.targetDistanceKm
-                        ? `${runTemplate.config.targetDistanceKm} km`
+                        ? runDoseLine(
+                            runTemplate,
+                            planningEasyPaceSPerKm(profile?.runFitness)
+                          )
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
+                    {/* Run21 (2): the session's one feel line. */}
                     {" · "}
-                    {runTemplate.description}
+                    {runAbout?.feel}
                   </p>
-                  <RunPurpose>{runPurpose}</RunPurpose>
+                  <RunPurpose>
+                    <RunAbout about={runAbout} why={runPurpose} />
+                  </RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

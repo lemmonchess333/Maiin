@@ -3,6 +3,7 @@ import {
   unsizedRunHeading,
   hasUnsavedFieldEdits,
   isOutdoorGpsRun,
+  isTreadmillRun,
   requiresManualDistance,
   getInvalidRunReason,
   canShowNormalSave,
@@ -24,50 +25,95 @@ import {
  * test updates rather than silently shifting behaviour.
  *
  * The 'manual' activityType added with the "Track without GPS" rename
- * is treated identically to 'treadmill' for routing/validation
+ * is treated identically to a treadmill run for routing/validation
  * purposes; the distinction is cosmetic (post-run labelling). The
  * tests here pin both shapes so a future change that diverges them
- * has to confront the test. */
+ * has to confront the test.
+ *
+ * Pgm8: the treadmill is where a run is done (`place: "treadmill"`),
+ * whatever its type, and a run saved before that is one by its
+ * `activityType: "treadmill"`. Both shapes are pinned, so the guards can
+ * never tell an old treadmill run from a new one. */
+
+/** Every session type a run can be, outdoors or on the treadmill. */
+const SESSION_TYPES = [
+  "freerun",
+  "easy",
+  "tempo",
+  "intervals",
+  "long",
+  "race",
+  "guided",
+] as const;
+
+describe("isTreadmillRun", () => {
+  it("is a treadmill run by its place, whatever its type (Pgm8)", () => {
+    for (const activityType of SESSION_TYPES)
+      expect(isTreadmillRun({ activityType, place: "treadmill" })).toBe(true);
+  });
+
+  it("is one by its type when saved before the treadmill was a place", () => {
+    expect(isTreadmillRun({ activityType: "treadmill" })).toBe(true);
+    expect(isTreadmillRun({ activityType: "treadmill", place: null })).toBe(
+      true
+    );
+  });
+
+  it("is not one outdoors, tracked without GPS, or with nothing to read", () => {
+    for (const activityType of SESSION_TYPES) {
+      expect(isTreadmillRun({ activityType })).toBe(false);
+      expect(isTreadmillRun({ activityType, place: null })).toBe(false);
+    }
+    expect(isTreadmillRun({ activityType: "manual" })).toBe(false);
+    expect(isTreadmillRun({})).toBe(false);
+    expect(isTreadmillRun(null)).toBe(false);
+    expect(isTreadmillRun(undefined)).toBe(false);
+  });
+});
 
 describe("isOutdoorGpsRun", () => {
   it("returns true for the standard outdoor activity types", () => {
-    expect(isOutdoorGpsRun("freerun")).toBe(true);
-    expect(isOutdoorGpsRun("easy")).toBe(true);
-    expect(isOutdoorGpsRun("tempo")).toBe(true);
-    expect(isOutdoorGpsRun("intervals")).toBe(true);
-    expect(isOutdoorGpsRun("long")).toBe(true);
-    expect(isOutdoorGpsRun("race")).toBe(true);
-    expect(isOutdoorGpsRun("guided")).toBe(true);
+    for (const activityType of SESSION_TYPES)
+      expect(isOutdoorGpsRun({ activityType })).toBe(true);
   });
 
   it("returns false for treadmill and manual (both bypass GPS)", () => {
-    expect(isOutdoorGpsRun("treadmill")).toBe(false);
-    expect(isOutdoorGpsRun("manual")).toBe(false);
+    expect(isOutdoorGpsRun({ activityType: "treadmill" })).toBe(false);
+    expect(isOutdoorGpsRun({ activityType: "manual" })).toBe(false);
   });
 
-  it("treats undefined activityType as outdoor (legacy / mid-config)", () => {
-    /* Run.tsx's `runConfig?.activityType` resolves to undefined while
-       the modal is mounting; the original inline check
-       (`!== 'treadmill'`) returned true for undefined and the helper
-       must preserve that to avoid regressions in the lifecycle. */
+  it("returns false for any type on the treadmill: a planned long run there has no GPS", () => {
+    for (const activityType of SESSION_TYPES)
+      expect(isOutdoorGpsRun({ activityType, place: "treadmill" })).toBe(false);
+  });
+
+  it("treats a run with no type as outdoor (legacy / mid-config)", () => {
+    /* Run.tsx's `runConfig` is null while the modal is mounting; the
+       original inline check (`!== 'treadmill'`) returned true for an
+       undefined type and the helper must preserve that to avoid
+       regressions in the lifecycle. */
     expect(isOutdoorGpsRun(undefined)).toBe(true);
+    expect(isOutdoorGpsRun(null)).toBe(true);
+    expect(isOutdoorGpsRun({})).toBe(true);
   });
 });
 
 describe("requiresManualDistance", () => {
   it("returns true for treadmill and manual", () => {
-    expect(requiresManualDistance("treadmill")).toBe(true);
-    expect(requiresManualDistance("manual")).toBe(true);
+    expect(requiresManualDistance({ activityType: "treadmill" })).toBe(true);
+    expect(requiresManualDistance({ activityType: "manual" })).toBe(true);
+  });
+
+  it("returns true for any type on the treadmill (Pgm8)", () => {
+    for (const activityType of SESSION_TYPES)
+      expect(requiresManualDistance({ activityType, place: "treadmill" })).toBe(
+        true
+      );
   });
 
   it("returns false for every outdoor activity type", () => {
-    expect(requiresManualDistance("freerun")).toBe(false);
-    expect(requiresManualDistance("easy")).toBe(false);
-    expect(requiresManualDistance("tempo")).toBe(false);
-    expect(requiresManualDistance("intervals")).toBe(false);
-    expect(requiresManualDistance("long")).toBe(false);
-    expect(requiresManualDistance("race")).toBe(false);
-    expect(requiresManualDistance("guided")).toBe(false);
+    for (const activityType of SESSION_TYPES)
+      expect(requiresManualDistance({ activityType })).toBe(false);
   });
 
   it("returns false for undefined (matches the original inline check)", () => {
@@ -163,6 +209,27 @@ describe("invalid-run thresholds", () => {
     });
   });
 
+  describe("a session type on the treadmill (Pgm8)", () => {
+    it("is held to the treadmill's floors, not the outdoor ones", () => {
+      expect(
+        isInvalid({
+          activityType: "long",
+          place: "treadmill",
+          distanceKm: 0.04,
+          elapsedSeconds: 60,
+        })
+      ).toBe(true);
+      expect(
+        isInvalid({
+          activityType: "long",
+          place: "treadmill",
+          distanceKm: 0.05,
+          elapsedSeconds: 60,
+        })
+      ).toBe(false);
+    });
+  });
+
   describe("manual", () => {
     it("mirrors treadmill: enforces both distance and elapsed-time floors", () => {
       expect(
@@ -243,6 +310,27 @@ describe("getInvalidRunReason — uniform contract", () => {
         elapsedSeconds: 8,
       })
     ).toBe("too-fast");
+  });
+
+  it("flags a planned long run typed in on the treadmill at 20km / 8s as 'too-fast' (Pgm8)", () => {
+    /* The type is the plan's, "long", but the distance was typed in: the
+       typo check is the treadmill's, which an outdoor long run never
+       gets. */
+    expect(
+      getInvalidRunReason({
+        activityType: "long",
+        place: "treadmill",
+        distanceKm: 20,
+        elapsedSeconds: 8,
+      })
+    ).toBe("too-fast");
+    expect(
+      getInvalidRunReason({
+        activityType: "long",
+        distanceKm: 20,
+        elapsedSeconds: 8,
+      })
+    ).toBe("too-short");
   });
 
   it("flags manual 20km / 8s as 'too-fast'", () => {

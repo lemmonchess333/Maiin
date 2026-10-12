@@ -95,8 +95,10 @@ export function readSessionSets(
  *   nothing else; a different weight from the plan's is never a miss, as
  *   the plan simply follows it.
  *
- * A bodyweight lift's weight is added load, which the plan does not follow,
- * so it steps only at the added load asked for or more.
+ * A bodyweight lift's weight is the load added to it, which the plan follows
+ * like any other weight, none included (Pgm8 L6), so it is read the same
+ * way. Before that it stepped only at the added load asked for or more,
+ * since the plan kept its own.
  */
 export type SessionOutcome = "step" | "miss" | "hold";
 
@@ -107,19 +109,14 @@ export function sessionOutcome(
     reps: number;
     sets: number;
     baseReps?: number;
-  },
-  isBodyweight: boolean
+  }
 ): SessionOutcome {
   const { counted, weight } = read;
   const target = prescription.reps;
   const bottom = Math.min(target, prescription.baseReps ?? target);
   const needed = Math.min(2, Math.max(1, prescription.sets));
   const atPlan = sameWeight(weight, prescription.weight);
-  if (
-    counted.length >= needed &&
-    counted.every((set) => set.reps >= target) &&
-    (!isBodyweight || weight >= prescription.weight - SAME_WEIGHT_KG)
-  )
+  if (counted.length >= needed && counted.every((set) => set.reps >= target))
     return "step";
   const total = counted.reduce((sum, set) => sum + set.reps, 0);
   if (atPlan && total < bottom * counted.length) return "miss";

@@ -9,7 +9,12 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -177,6 +182,89 @@ describe("RunPlanSettings", () => {
     localStorage.clear();
   });
 
+  /* Pgm7 A7: a race plan needs at least two run days a week; one already
+     on fewer keeps them (Pgm5). */
+  it("starts a new race plan at two run days and goes no lower (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "new-race-two-days",
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less).toBeDisabled();
+    expect(less.parentElement).toHaveTextContent("2");
+  });
+
+  it("keeps an existing race plan's one run day, and says what it needs (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "one-day-race-plan",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
+      weeklyRunDaysTarget: 1,
+      weeklyRunsTarget: 1,
+    } as unknown as UserProfile);
+    const less = screen.getByRole("button", { name: /Decrease run days/i });
+    expect(less.parentElement).toHaveTextContent("1");
+    expect(less).toBeDisabled();
+    expect(
+      screen.getByText(/A race plan needs at least two runs a week/)
+    ).toBeInTheDocument();
+  });
+
+  it("recommends three run days for a marathon (A7)", () => {
+    renderPage({
+      ...baseProfile,
+      uid: "two-day-marathon",
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: MARATHON_TARGET_DATE },
+      weeklyRunDaysTarget: 2,
+      weeklyRunsTarget: 2,
+    } as unknown as UserProfile);
+    expect(
+      screen.getByText(/A marathon plan works best on three runs a week/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Increase run days/i }));
+    expect(
+      screen.queryByText(/A marathon plan works best on three runs a week/)
+    ).not.toBeInTheDocument();
+  });
+
+  /* Pgm8 (R14c): someone new to running who ran freely first and adds a
+     race here is told what setup would have told them when the plan can't
+     build to it. Their first weeks count from the day setup finished. */
+  const addHalfTenWeeksOut = (runFrequency: string) => {
+    const setUp = addLocalDays(new Date(), -21);
+    renderPage({
+      ...baseProfile,
+      uid: `${runFrequency}-runner-adds-a-race`,
+      runFrequency,
+      onboardingCompletedAt: { toMillis: () => setUp.getTime() },
+    } as unknown as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "Half" }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: localDateString(addLocalDays(new Date(), 70)) },
+    });
+  };
+
+  it("says when a new runner's plan can't build to the race (R14c)", () => {
+    addHalfTenWeeksOut("new");
+    expect(
+      screen.getByText(/You can run-walk it, or choose a later date\./)
+    ).toHaveTextContent(
+      /^Your plan builds to about \d+ min of running by then, and a half marathon takes about 2 h 30 min\./
+    );
+  });
+
+  it("says nothing of it to someone who runs already (R14c)", () => {
+    addHalfTenWeeksOut("occasional");
+    expect(screen.getByText("Good runway")).toBeInTheDocument();
+    expect(screen.queryByText(/You can run-walk it/)).not.toBeInTheDocument();
+  });
+
   it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
     renderPage({ ...baseProfile, uid: "goal-owner" });
     fireEvent.change(
@@ -286,6 +374,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("saving a race goal commits ONE atomic payload with mode, goal and plan together", async () => {
+    // Saved on Monday, the first week holds runs to send.
+    await onThisWeeksMonday(saveRaceGoal);
+  });
+
+  async function saveRaceGoal() {
     const { refreshProfile } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
@@ -306,9 +399,30 @@ describe("RunPlanSettings", () => {
     expect(payload.programState.runDays?.length ?? 0).toBeGreaterThan(0);
     expect(payload.weekSchedule).toHaveLength(7);
     await waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
-  });
+  }
+
+  /** Runs `body` with the clock at noon on this week's Monday, so the whole
+   *  week is ahead. A plan made later in the week plans no run before that
+   *  day (Run19): its first week holds fewer runs, and one made on a Sunday
+   *  after its run days holds none. */
+  async function onThisWeeksMonday(body: () => Promise<void>) {
+    const monday = parseLocalDate(localWeekKey(new Date()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    try {
+      await body();
+    } finally {
+      vi.useRealTimers();
+    }
+  }
 
   it("RUN-EV-02: a 2→4 run-day change moves slots, rows and targets TOGETHER", async () => {
+    // The first week holds all four rows only if it is all ahead.
+    await onThisWeeksMonday(saveTwoToFour);
+  });
+
+  async function saveTwoToFour() {
     // Saved baseline says 2 run days; the draft raises it to 4.
     const profile = {
       ...baseProfile,
@@ -345,7 +459,7 @@ describe("RunPlanSettings", () => {
       (payload.programState.runDays ?? []).slice(0, 4).map((r) => r.date)
     );
     expect(firstWeekDates.size).toBe(4);
-  });
+  }
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
@@ -364,6 +478,11 @@ describe("RunPlanSettings", () => {
   });
 
   it("previews, commits and restores recurring time limits", async () => {
+    // Saved on Monday, the first week holds runs to shorten.
+    await onThisWeeksMonday(saveTimeLimits);
+  });
+
+  async function saveTimeLimits() {
     const profile = {
       ...baseProfile,
       uid: "run-limit-user",
@@ -407,7 +526,7 @@ describe("RunPlanSettings", () => {
       screen.getByText(String(Math.round(total)), { selector: "span" })
     ).toBeInTheDocument();
     expect(rows.some((row) => row.timeLimit)).toBe(true);
-  });
+  }
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
     renderPage(baseProfile);
@@ -438,6 +557,12 @@ describe("RunPlanSettings", () => {
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
+    // Pgm6's knob scales the race's own peak (runScheduler's
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Lighter peaks about a quarter lower/)
+    ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });

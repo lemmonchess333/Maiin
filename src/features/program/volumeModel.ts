@@ -784,6 +784,30 @@ function resolveLandmark(
 }
 
 /**
+ * The hinge accessory work: a supporting lift of the hip-dominant movement
+ * (`hip_dominant`) — an RDL, a leg curl, a hip thrust or glute bridge, or a
+ * deadlift in a supporting slot. Every lift the bank holds for it loads the
+ * hamstrings. L7 (decisions.md, the beginner's deadlift): when the
+ * hamstrings sit over their ceiling, this is the work that gives way, never
+ * the deadlift off a day.
+ */
+export function isHingeAccessory(
+  ex: Pick<ProgramExercise, "isAccessory" | "movementCategory">
+): boolean {
+  return ex.isAccessory === true && ex.movementCategory === "hip_dominant";
+}
+
+/** Whether the reconciler may take a set off this slot for this muscle: a
+ *  slot that trains it as its primary, or, for the hamstrings, the hinge
+ *  accessory work (L7). */
+function cutsFor(ex: ProgramExercise, muscle: JudgementMuscle): boolean {
+  return (
+    primaryJudgementForExercise(ex) === muscle ||
+    (muscle === "Hamstrings" && isHingeAccessory(ex))
+  );
+}
+
+/**
  * Landmark reconciliation (ADR-0010's staged condition): shrink the authored
  * week until no muscle the builders can reach sits above its volume ceiling.
  *
@@ -801,7 +825,12 @@ function resolveLandmark(
  *     never punished for its secondary credit (cutting bench because
  *     Shoulders read high would starve Chest); secondaries drain anyway as
  *     their over-authored primaries shrink, which at 1:1 is exactly the
- *     cascade that does most of the work.
+ *     cascade that does most of the work. One exception, by decision (L7):
+ *     the hamstrings take sets off the hinge accessory work too, whatever
+ *     its primary, so a hip thrust gives a set before anything comes out
+ *     (`hingeAccessoryPastCeiling`). The hinge is the hamstrings' own
+ *     movement; a squat or leg press, which credits them as well, is not
+ *     cut for them.
  *   - Accessories cut before mains (floor 2 before a main drops below its
  *     authored count; mains floor 3), largest slot first, then day/slot
  *     order — fully deterministic, one set per step, tally recomputed every
@@ -844,7 +873,7 @@ export function reconcileToLandmarks(
         if (d.skipped) return; // the tally skips these — stay consistent
         d.exercises.forEach((ex, ei) => {
           if ((ex.sets ?? 0) <= floorFor(ex)) return;
-          if (primaryJudgementForExercise(ex) !== muscle) return;
+          if (!cutsFor(ex, muscle)) return;
           candidates.push({ di, ei, ex });
         });
       });
@@ -865,6 +894,52 @@ export function reconcileToLandmarks(
     if (!cutMade) break; // in-band, or every remaining overage is floor-bound
   }
   return days;
+}
+
+/**
+ * The table is a ceiling (Lift4 (5)), and the hamstrings' is kept by the
+ * hinge work (L7): in a balanced week whose hamstrings sit over their
+ * ceiling, the hinge accessory that comes out of the week, if any (its
+ * `instanceId`). The reconciler has taken it to its floor already, so what
+ * is left to give is the lift.
+ *
+ * A beginner's supporting lifts start at two sets, the reconciler's floor,
+ * so for a beginner this is the only way the hamstrings' ceiling is kept:
+ * the audit's beginner full body read 15 against 13 with the seated leg
+ * curl at its floor.
+ *
+ * Never a lift the week also has as a main lift: a deadlift in a supporting
+ * slot is the deadlift on one of its days, and it keeps them. Of the rest,
+ * the biggest goes first, then the earliest in the week. The generator
+ * takes it out only when the week, fitted and balanced again without it,
+ * is the better one (`generateProgram`): the hamstrings come down, no
+ * muscle ends further over its ceiling, and every muscle keeps its two days
+ * a week.
+ */
+export function hingeAccessoryPastCeiling(
+  workouts: readonly WorkoutDay[],
+  ceiling: (muscle: JudgementMuscle) => number
+): string | undefined {
+  const hamstrings =
+    weeklyVolumeByJudgementMuscle(workouts).find(
+      (v) => v.muscle === "Hamstrings"
+    )?.sets ?? 0;
+  if (hamstrings <= ceiling("Hamstrings")) return undefined;
+  const lifts = workouts.filter((d) => !d.skipped).flatMap((d) => d.exercises);
+  const mains = new Set(
+    lifts.filter((ex) => ex.isAccessory !== true).map((ex) => ex.exerciseId)
+  );
+  return lifts
+    .map((ex, i) => ({ ex, i }))
+    .filter(
+      ({ ex }) =>
+        isHingeAccessory(ex) &&
+        ex.instanceId !== undefined &&
+        (ex.sets ?? 0) > 0 &&
+        !mains.has(ex.exerciseId)
+    )
+    .sort((a, b) => (b.ex.sets ?? 0) - (a.ex.sets ?? 0) || a.i - b.i)[0]?.ex
+    .instanceId;
 }
 
 /**
@@ -960,17 +1035,11 @@ function overshootsCeiling(
 // Push:pull balance is computed at the MOVEMENT level (robust + unambiguous)
 // rather than the muscle level — the canonical "Shoulders" group lumps the
 // push-y front delt with the pull-y rear delt, so a muscle-level ratio would
-// be misleading.
-const PUSH_CATEGORIES = new Set([
-  "horizontal_push",
-  "vertical_push",
-  "arms_triceps",
-]);
-const PULL_CATEGORIES = new Set([
-  "horizontal_pull",
-  "vertical_pull",
-  "arms_biceps",
-]);
+// be misleading. Lift6: pressing against rows and pull-downs, the movements
+// the shoulder balance is about. Arm work counts on neither side, so the
+// pull grown is never a curl, and triceps sets don't add push to match.
+const PUSH_CATEGORIES = new Set(["horizontal_push", "vertical_push"]);
+const PULL_CATEGORIES = new Set(["horizontal_pull", "vertical_pull"]);
 
 /** Safety bound on auto-added pull sets per week. */
 const MAX_ADDED_PULL_SETS = 8;

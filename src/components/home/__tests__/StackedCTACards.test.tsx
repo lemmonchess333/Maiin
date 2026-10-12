@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { RUN } from "@/test/journeyScreens";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -91,6 +92,7 @@ const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
   runDay: null,
   completed: false,
   isFirst: false,
+  dose: null,
   ...extra,
 });
 
@@ -351,10 +353,31 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       }),
       navigate
     );
-    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    // The E2E journeys start a planned run by this (src/test/journeyScreens.ts).
+    fireEvent.click(screen.getByRole("button", { name: RUN.homeStart }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=run-2"
     );
+  });
+
+  /* Run21 (5): the card draws the dose `todaySession` decided, and works
+     out none of its own. */
+  it("states the run's dose as the session gives it", function () {
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-3",
+          dayIndex: 3,
+          templateId: "long_15k",
+          type: "long",
+          status: "planned",
+        } as any,
+        dose: "15 km · about 100 min",
+      }),
+      vi.fn()
+    );
+    expect(document.body.textContent).toContain("15 km · about 100 min");
+    expect(document.body.textContent).not.toContain("about 80 min");
   });
 
   it("tapping a startable run's card previews it in Train instead of starting it", function () {
@@ -566,4 +589,42 @@ describe("the first-visit walk finds today's card", function () {
       );
     });
   }
+});
+
+describe("today's run card names a race-pace finish (Run21 (2))", function () {
+  const longDay = {
+    id: "run-1",
+    dayIndex: 3,
+    templateId: "long_15k",
+    type: "long",
+    status: "planned",
+  } as any;
+  // The title sets its numerals apart (InlineNumerals), so read it whole.
+  const title = (name: string) =>
+    screen.getByText(function (_content, el) {
+      return el?.tagName === "P" && el.textContent === name;
+    });
+
+  it("says 'with race pace' when the long run finishes at it", function () {
+    renderCards(
+      runDay({
+        runDay: longDay,
+        racePace: { kind: "finish" as const, blockKm: 5, goalPaceS: 300 },
+      })
+    );
+    expect(title("Long 15K with race pace")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Open Long 15K with race pace in Train",
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("is the plain long run without one", function () {
+    renderCards(runDay({ runDay: longDay, racePace: null }));
+    expect(title("Long 15K")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open Long 15K in Train" })
+    ).toBeInTheDocument();
+  });
 });

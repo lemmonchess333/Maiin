@@ -59,6 +59,13 @@ const WORDS = [
   "ten",
 ];
 
+/**
+ * The line under "I have small plates", in setup and in Programme settings:
+ * the step it changes wherever plates go, a barbell's and a belt's on a
+ * bodyweight lift (`loadGridFor`, Pgm8 L6), from the engine's own steps.
+ */
+export const SMALL_PLATES_HINT = `Barbell lifts and weight on a belt go up ${SMALL_PLATES_STEP_KG} kg at a time instead of ${BARBELL_STEP_KG} kg.`;
+
 const word = (n: number) => WORDS[n] ?? String(n);
 const capitalised = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1);
@@ -88,7 +95,9 @@ export function liftRules(ctx: LiftRulesContext): LiftRule[] {
     {
       id: "climb",
       title: "Adding weight",
-      body: "When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom.",
+      // Pgm8 L6: the plan follows the weight added to a bodyweight lift and
+      // steps it a plate on a belt (`loadGridFor`), always taken.
+      body: `When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom. A bodyweight lift, such as pull-ups, climbs in reps instead. With weight added, on a belt or a vest, it goes up like any other lift, ${step} kg at a time.`,
     },
     {
       id: "steps",

@@ -38,6 +38,18 @@ export function daysPerMuscle(
   return counts;
 }
 
+/** Whether `after` works every muscle on as many days as `before` did, up
+ *  to two: a change to the week that costs no muscle its two days. */
+export function keepsWeeklyFrequency(
+  before: readonly VolumeDay[],
+  after: readonly VolumeDay[]
+): boolean {
+  const days = daysPerMuscle(after);
+  return [...daysPerMuscle(before)].every(
+    ([muscle, n]) => (days.get(muscle) ?? 0) >= Math.min(n, WEEKLY_FREQUENCY)
+  );
+}
+
 /** The lift a muscle gets when the week has none to repeat: simple, common,
  *  and a muscle's own (the equipment and injury passes swap it like any
  *  other). */

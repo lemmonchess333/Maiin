@@ -1,4 +1,4 @@
-import type { ActivityType } from "@/types/run";
+import type { RunPlace } from "@/types/run";
 
 export const MIN_RUN_DURATION_SECONDS = 30;
 export const MIN_OUTDOOR_DISTANCE_KM = 0.05;
@@ -29,23 +29,47 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
  *  failure mode instead of a generic "too short" message. */
 export type InvalidRunReason = "too-short" | "too-fast";
 
-/** Treadmill and manual runs both bypass GPS — treadmill because the
- *  user is on a fixed surface, manual because GPS never locked
- *  outdoors. Undefined activityType (legacy / mid-config flow) is
- *  treated as outdoor: that's what the original `!== 'treadmill'`
- *  inline checks resolved to. */
-export function isOutdoorGpsRun(
-  activityType: ActivityType | undefined
-): boolean {
-  return activityType !== "treadmill" && activityType !== "manual";
+/**
+ * A run as the guards read it: a run's config, its saved document or a
+ * parsed row. Its session type, and where it was run. The guards take the
+ * run, never a bare type, because a treadmill run's type is its session's
+ * (Pgm8): "long" alone says nothing about where the long run was.
+ */
+export interface RunSource {
+  activityType?: string | null;
+  place?: RunPlace | string | null;
 }
 
-/** Both treadmill and manual flows take a manual distance entry via
- *  TreadmillMode's input. */
+/** The type a treadmill run was saved under before Pgm8, when Treadmill
+ *  was picked as a run type and replaced the session's own. */
+const PRE_PGM8_TREADMILL_TYPE = "treadmill";
+
+/**
+ * Was this run on a treadmill? Its place says so (Pgm8), or, for a run
+ * saved before the treadmill became a place, its type. Every question of
+ * the kind "was this a treadmill run" asks here, so old and new treadmill
+ * runs answer alike.
+ */
+export function isTreadmillRun(run: RunSource | null | undefined): boolean {
+  return (
+    run?.place === "treadmill" || run?.activityType === PRE_PGM8_TREADMILL_TYPE
+  );
+}
+
+/** Treadmill and manual runs both take their distance typed in, through
+ *  TreadmillMode's input: a treadmill run because it stays in one place,
+ *  a manual one because GPS never locked outdoors. */
 export function requiresManualDistance(
-  activityType: ActivityType | undefined
+  run: RunSource | null | undefined
 ): boolean {
-  return activityType === "treadmill" || activityType === "manual";
+  return isTreadmillRun(run) || run?.activityType === "manual";
+}
+
+/** Treadmill and manual runs both bypass GPS. A run with neither a type
+ *  nor a place (legacy / mid-config flow) is treated as outdoor: that's
+ *  what the original `!== 'treadmill'` inline checks resolved to. */
+export function isOutdoorGpsRun(run: RunSource | null | undefined): boolean {
+  return !requiresManualDistance(run);
 }
 
 /**
@@ -79,19 +103,23 @@ export function requiresManualDistance(
  *
  * `elapsedSeconds === 0` skips the divide and falls through to the
  * elapsed-time floor — returns 'too-short' rather than throwing.
+ *
+ * The run's type and its place both come in (`RunSource`): a planned
+ * long run on a treadmill is typed in like any treadmill run.
  */
-export function getInvalidRunReason(args: {
-  activityType: ActivityType;
-  distanceKm: number;
-  elapsedSeconds: number;
-}): InvalidRunReason | null {
-  if (requiresManualDistance(args.activityType) && args.elapsedSeconds > 0) {
+export function getInvalidRunReason(
+  args: RunSource & {
+    distanceKm: number;
+    elapsedSeconds: number;
+  }
+): InvalidRunReason | null {
+  if (requiresManualDistance(args) && args.elapsedSeconds > 0) {
     const impliedSpeedMS = (args.distanceKm * 1000) / args.elapsedSeconds;
     if (impliedSpeedMS > MAX_PLAUSIBLE_SPEED_MS) return "too-fast";
   }
   if (args.elapsedSeconds < MIN_RUN_DURATION_SECONDS) return "too-short";
-  const minDistance = requiresManualDistance(args.activityType)
-    ? args.activityType === "treadmill"
+  const minDistance = requiresManualDistance(args)
+    ? isTreadmillRun(args)
       ? MIN_TREADMILL_DISTANCE_KM
       : MIN_MANUAL_DISTANCE_KM
     : MIN_OUTDOOR_DISTANCE_KM;

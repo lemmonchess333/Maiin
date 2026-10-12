@@ -19,7 +19,7 @@ import { test, expect, devices } from '@playwright/test';
 test.use({ ...devices['iPhone 14'] });
 
 test('privacy page renders meaningful content on iPhone-shaped UA', async ({ page }) => {
-  await page.goto('/privacy');
+  await page.goto('privacy');
   await expect(page.locator('#root')).toBeAttached();
 
   // Privacy page must render real content, not just a shell. >100
@@ -32,7 +32,7 @@ test('privacy page renders meaningful content on iPhone-shaped UA', async ({ pag
 });
 
 test('iOS Safari user agent is detected by the page', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('');
   // The whole point of running under devices['iPhone 14'] is to
   // exercise the webkit + iOS UA code path. Sanity-check the UA
   // string actually shows iPhone — if Playwright ever drops device

@@ -64,7 +64,7 @@ export default function PaceInsightCard({
       <div>
         <p className="text-sm font-semibold text-foreground">
           {insight.direction === "faster"
-            ? "Your recent runs support faster targets"
+            ? "A recent race or tempo supports faster targets"
             : "Your saved targets may be too quick right now"}
         </p>
         <p className="text-xs text-muted-foreground">

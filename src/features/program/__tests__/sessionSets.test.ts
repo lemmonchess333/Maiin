@@ -87,7 +87,7 @@ describe("readSessionSets — which sets count (Lift4)", () => {
   it("counts the planned number at most, so an extra set can't block a step", () => {
     const out = read([done(60, 8), done(60, 8), done(60, 8), done(60, 4)]);
     expect(out.counted.map((s) => s.reps)).toEqual([8, 8, 8]);
-    expect(sessionOutcome(out, plan, false)).toBe("step");
+    expect(sessionOutcome(out, plan)).toBe("step");
   });
 
   it("is null when no working set was done", () => {
@@ -97,44 +97,42 @@ describe("readSessionSets — which sets count (Lift4)", () => {
 
 describe("sessionOutcome — what the sets earned (Lift4)", () => {
   it("steps when two or more sets all reach the target", () => {
-    expect(sessionOutcome(read([done(60, 8), done(60, 9)]), plan, false)).toBe(
-      "step"
-    );
+    expect(sessionOutcome(read([done(60, 8), done(60, 9)]), plan)).toBe("step");
   });
 
   it("holds on one set of a plan with more", () => {
-    expect(sessionOutcome(read([done(60, 8)]), plan, false)).toBe("hold");
+    expect(sessionOutcome(read([done(60, 8)]), plan)).toBe("hold");
   });
 
   it("steps on the one set of a one-set plan", () => {
-    expect(
-      sessionOutcome(read([done(60, 8)], 1), { ...plan, sets: 1 }, false)
-    ).toBe("step");
+    expect(sessionOutcome(read([done(60, 8)], 1), { ...plan, sets: 1 })).toBe(
+      "step"
+    );
   });
 
   // The lock's own examples, on a 3 × 8 target.
   it("8, 7, 6 is a miss; 9, 8, 7 is not", () => {
     expect(
-      sessionOutcome(read([done(60, 8), done(60, 7), done(60, 6)]), plan, false)
+      sessionOutcome(read([done(60, 8), done(60, 7), done(60, 6)]), plan)
     ).toBe("miss");
     expect(
-      sessionOutcome(read([done(60, 9), done(60, 8), done(60, 7)]), plan, false)
+      sessionOutcome(read([done(60, 9), done(60, 8), done(60, 7)]), plan)
     ).toBe("hold");
   });
 
   it("judges a miss on the sets done", () => {
-    expect(sessionOutcome(read([done(60, 6)]), plan, false)).toBe("miss");
+    expect(sessionOutcome(read([done(60, 6)]), plan)).toBe("miss");
   });
 
   it("never counts a miss at a weight other than the plan's", () => {
     expect(
-      sessionOutcome(read([done(55, 6), done(55, 6), done(55, 6)]), plan, false)
+      sessionOutcome(read([done(55, 6), done(55, 6), done(55, 6)]), plan)
     ).toBe("hold");
   });
 
   it("steps from a different weight when every set reaches the target", () => {
     expect(
-      sessionOutcome(read([done(65, 8), done(65, 8), done(65, 8)]), plan, false)
+      sessionOutcome(read([done(65, 8), done(65, 8), done(65, 8)]), plan)
     ).toBe("step");
   });
 
@@ -142,18 +140,10 @@ describe("sessionOutcome — what the sets earned (Lift4)", () => {
     // At 10 of an 8–12 range, 9s have not missed anything: the climb holds.
     const climbing = { weight: 60, reps: 10, sets: 3, baseReps: 8 };
     expect(
-      sessionOutcome(
-        read([done(60, 9), done(60, 9), done(60, 9)]),
-        climbing,
-        false
-      )
+      sessionOutcome(read([done(60, 9), done(60, 9), done(60, 9)]), climbing)
     ).toBe("hold");
     expect(
-      sessionOutcome(
-        read([done(60, 7), done(60, 7), done(60, 7)]),
-        climbing,
-        false
-      )
+      sessionOutcome(read([done(60, 7), done(60, 7), done(60, 7)]), climbing)
     ).toBe("miss");
   });
 
@@ -164,43 +154,43 @@ describe("sessionOutcome — what the sets earned (Lift4)", () => {
     expect(
       sessionOutcome(
         read([done(10, 17), done(10, 17), done(10, 17)]),
-        stretched,
-        false
+        stretched
       )
     ).toBe("hold");
     expect(
       sessionOutcome(
         read([done(10, 14), done(10, 14), done(10, 14)]),
-        stretched,
-        false
+        stretched
       )
     ).toBe("hold");
     expect(
       sessionOutcome(
         read([done(10, 11), done(10, 11), done(10, 11)]),
-        stretched,
-        false
+        stretched
       )
     ).toBe("miss");
     // A fixed target, stretched: judged at the target it was.
     const fixed = { weight: 15, reps: 8, sets: 3, baseReps: 5 };
     expect(
-      sessionOutcome(
-        read([done(15, 6), done(15, 6), done(15, 6)]),
-        fixed,
-        false
-      )
+      sessionOutcome(read([done(15, 6), done(15, 6), done(15, 6)]), fixed)
     ).toBe("hold");
   });
 
-  it("steps a bodyweight lift only at the added load asked for or more", () => {
+  it("steps a bodyweight lift at any load added, none included, as any weight (Pgm8 L6)", () => {
+    // The plan follows a bodyweight lift's added load like any weight, so
+    // the target met at less of it is a step from what was lifted. It was a
+    // hold: the plan didn't follow the load, so it asked for the plan's.
     const loaded = { weight: 10, reps: 8, sets: 3 };
-    expect(sessionOutcome(read([done(0, 8), done(0, 8)]), loaded, true)).toBe(
-      "hold"
-    );
-    expect(sessionOutcome(read([done(10, 8), done(10, 8)]), loaded, true)).toBe(
+    expect(sessionOutcome(read([done(0, 8), done(0, 8)]), loaded)).toBe("step");
+    expect(sessionOutcome(read([done(5, 8), done(5, 8)]), loaded)).toBe("step");
+    expect(sessionOutcome(read([done(10, 8), done(10, 8)]), loaded)).toBe(
       "step"
     );
+    // A miss is at the load the plan asked for, as for any weight.
+    expect(sessionOutcome(read([done(10, 6), done(10, 6)]), loaded)).toBe(
+      "miss"
+    );
+    expect(sessionOutcome(read([done(0, 6), done(0, 6)]), loaded)).toBe("hold");
   });
 });
 

@@ -129,7 +129,7 @@ import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import { lastSetsBySlot } from "@/features/program/lastSets";
 
 /**
  * IMPORTANT:
@@ -176,6 +176,7 @@ function ProgramInner() {
     skipRecoveryEarly,
     realignRacePlan,
     dismissFellBehindPrompt,
+    recentLayoff,
     applyDeloadWeek,
     revertDeloadWeek,
     startTrainingBlock,
@@ -191,8 +192,9 @@ function ProgramInner() {
   useEffect(() => {
     programStateRef.current = programState;
   }, [programState]);
-  // Adaptive Paces: silently derive a fitness benchmark from recent runs when
-  // the user hasn't set one (the "derive" half of the capture decision).
+  // Adaptive Paces: silently derive a fitness benchmark from a recent race,
+  // time trial or tempo when the user hasn't set one (the "derive" half of
+  // the capture decision, narrowed to efforts by Pgm8 R1).
   useRunFitnessAutoDerive();
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
   // server-side performance rollup; the `deloadRecommended` flag on
@@ -272,11 +274,16 @@ function ProgramInner() {
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
-  // Every counted set from the last session with each exercise, for the
-  // rows' "Last:" line (`lastSetsByExercise`).
-  const lastSetsMap = useMemo(
-    () => lastSetsByExercise(recentWorkouts),
-    [recentWorkouts]
+  // Every lift of the plan in its slot, and every counted set from the last
+  // session each one ran in it, for the rows' "Last:" line
+  // (`lastSetsBySlot`). The workout screen reads the same.
+  const planLifts = useMemo(
+    () => programState?.workouts.flatMap((day) => day.exercises) ?? [],
+    [programState?.workouts]
+  );
+  const lastSetsOf = useMemo(
+    () => lastSetsBySlot(recentWorkouts, planLifts),
+    [recentWorkouts, planLifts]
   );
 
   // Core navigation state. The selected training day is mirrored into the URL
@@ -868,6 +875,7 @@ function ProgramInner() {
   const showDeloadSuggest = shouldSuggestDeload({
     deloadRecommended: resolveDeloadRecommended(perfWeek),
     loadFromRunning: loadFromRunning(perfWeek),
+    lighterWeekAllowed: !!programState && lighterWeekAllowed(programState),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
@@ -1190,6 +1198,7 @@ function ProgramInner() {
             skipRecoveryEarly={skipRecoveryEarly}
             realignRacePlan={realignRacePlan}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
+            recentLayoff={recentLayoff}
           />
         </div>
       )}
@@ -1364,7 +1373,15 @@ function ProgramInner() {
                             <p className="text-sm font-semibold text-foreground">
                               Go easier today ·{" "}
                               {summarizeEasier(
-                                buildEasierSession(selectedWorkout, restContext)
+                                buildEasierSession(
+                                  selectedWorkout,
+                                  restContext,
+                                  {
+                                    smallPlates:
+                                      programState.settings?.smallPlates ===
+                                      true,
+                                  }
+                                )
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -1411,9 +1428,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         thumbSize="sm"
                                       />
                                     </div>
@@ -1475,9 +1490,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         showNotes
                                       />
                                     </button>
@@ -1796,6 +1809,7 @@ function ProgramInner() {
       <ExpressSessionSheet
         timeBudgetMinutes={usualBudget}
         rest={restContext}
+        smallPlates={programState.settings?.smallPlates === true}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1852,7 +1866,9 @@ function ProgramInner() {
             sessionVariant === "full"
               ? null
               : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay, restContext)
+                ? buildEasierSession(storedDay, restContext, {
+                    smallPlates: programState.settings?.smallPlates === true,
+                  })
                 : sessionVariant === "time_budget"
                   ? buildTimeBudgetSession(
                       storedDay,
@@ -1892,6 +1908,7 @@ function ProgramInner() {
                   : undefined
               }
               progressionBaseline={storedDay.exercises}
+              planLifts={planLifts}
               firstWorkout={!workoutsLoading && recentWorkouts.length === 0}
               programmeContext={{
                 weekNumber: programState.weekNumber,

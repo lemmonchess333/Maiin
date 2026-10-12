@@ -157,7 +157,7 @@ describe("predictionRow", () => {
   it("gives the 10K time and where its benchmark came from", () => {
     const row = predictionRow({ tenKSeconds: 3341, source: "derived" })!;
     expect(row.value).toBe("55:41");
-    expect(row.detail).toBe("From your best recent run");
+    expect(row.detail).toBe("From a race, time trial or tempo you ran");
     expect(row.page).toBe("running");
   });
 

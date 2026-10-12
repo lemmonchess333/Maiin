@@ -10,6 +10,7 @@ import {
   elevationUnitLabel,
   METRES_PER_MILE,
 } from "./distanceUnits";
+import { isTreadmillRun, type RunSource } from "./runGuards";
 
 /**
  * Pure label helpers for run display surfaces.
@@ -301,6 +302,8 @@ const RUN_TYPE_TITLES: Record<string, string> = {
   longrun: "Long Run",
   guided: "Guided Run",
   race: "Race",
+  /* The type a treadmill run was saved under before Pgm8 made the
+     treadmill a place (`runTitle` names a newer one). */
   treadmill: "Treadmill",
   /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
      locked. Distinguished from treadmill so the detail header reads
@@ -309,10 +312,30 @@ const RUN_TYPE_TITLES: Record<string, string> = {
 };
 
 /**
- * A saved run's title on its own page. A run saves `long`
- * (`ActivityType`); a table keyed only by `longrun` titled every long run
- * "Run", which Analytics' best efforts now link straight to.
+ * A run type's title. A run saves `long` (`ActivityType`); a table keyed
+ * only by `longrun` titled every long run "Run", which Analytics' best
+ * efforts now link straight to. A saved run is titled by `runTitle`,
+ * which names the treadmill too.
  */
 export function runTypeTitle(activityType: string | undefined): string {
   return (activityType && RUN_TYPE_TITLES[activityType]) ?? "Run";
+}
+
+const TREADMILL_TITLE = "Treadmill";
+
+/**
+ * A saved run's title on its own page: its type's, and the treadmill when
+ * it was on one, so a treadmill run never reads as an outdoor run. Since
+ * Pgm8 a treadmill run keeps its session's type ("Long Run · Treadmill");
+ * one with no session of its own, a free run, is "Treadmill", the title
+ * every treadmill run had before, and so is a run saved then.
+ */
+export function runTitle(run: RunSource): string {
+  const title = runTypeTitle(run.activityType ?? undefined);
+  if (!isTreadmillRun(run)) return title;
+  const ownSession =
+    run.activityType !== "freerun" &&
+    title !== "Run" &&
+    title !== TREADMILL_TITLE;
+  return ownSession ? `${title} · ${TREADMILL_TITLE}` : TREADMILL_TITLE;
 }

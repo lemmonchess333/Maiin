@@ -1,5 +1,8 @@
 import { localDateString } from "@/lib/dateHelpers";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import {
   useState,
   useEffect,
@@ -23,7 +26,6 @@ import { useRunVisibility } from "../hooks/useRunVisibility";
 import {
   calculateSplits,
   movingClockMs,
-  paceAsNumber,
   rollingPaceSeconds,
   totalDistance,
   totalElevationGain,
@@ -31,7 +33,6 @@ import {
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import {
-  paceTableFromFitness,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
 } from "../lib/runPaces";
@@ -64,7 +65,12 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
-import { segmentsFromGuided, segmentsFromIntervals } from "../lib/runSegments";
+import {
+  judgesPaceNow,
+  livePaceTarget,
+  segmentsFromGuided,
+  segmentsFromIntervals,
+} from "../lib/runSegments";
 import { sessionCompleteCue } from "../lib/runCueCopy";
 import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
@@ -78,9 +84,10 @@ import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
-import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
+  isTreadmillRun,
   requiresManualDistance,
   getInvalidRunReason,
 } from "../lib/runGuards";
@@ -92,8 +99,10 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  runTemplateIdOf,
   type PlanMode,
 } from "../lib/runPlanMetadata";
+import { racePaceWorkFor, raceTargetFromProfile } from "../lib/racePace";
 import { logger } from "../lib/logger";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
@@ -307,6 +316,11 @@ export default function Run() {
   // (Resume / Start new / Discard) flip it back to null and either
   // rehydrate the run or proceed to the normal setup flow.
   const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
+  // Set on Resume. The snapshot doesn't keep the session player's place,
+  // so a resumed session starts again at its first segment and its
+  // segments no longer line up with what was run: the summary judges
+  // such a run by the whole run, as before work segments were kept.
+  const resumedRef = useRef(false);
   // Fast-launch arc: `forceModal` is the "Customize" / "More options" escape
   // hatch that drops from the launch card / tile picker into the full config
   // modal. `launchShoeId` is the shoe chosen inline on either fast surface.
@@ -334,10 +348,10 @@ export default function Run() {
   // stop/restart/gap-accounting policy below is therefore WEB-ONLY, where
   // backgrounding genuinely loses fixes.
   const handleHidden = useCallback(() => {
-    if (!isNativePlatform() && isOutdoorGpsRun(runConfig?.activityType)) {
+    if (!isNativePlatform() && isOutdoorGpsRun(runConfig)) {
       gps.stop(); // Stop GPS to save battery while backgrounded (web only)
     }
-  }, [gps, runConfig?.activityType]);
+  }, [gps, runConfig]);
 
   const handleVisible = useCallback(
     (event: import("../hooks/useRunVisibility").VisibilityEvent) => {
@@ -353,7 +367,7 @@ export default function Run() {
         // Restart GPS tracking if we were actively tracking (web only — the
         // native watcher never stopped, and re-creating it would churn the
         // foreground service).
-        if (isOutdoorGpsRun(runConfig?.activityType) && phase === "active") {
+        if (isOutdoorGpsRun(runConfig) && phase === "active") {
           gps.start();
         }
 
@@ -382,7 +396,7 @@ export default function Run() {
         // symptom of a "While Using"-only grant (the plugin exposes no API
         // to read the tier directly). Surface the non-blocking note once,
         // pointing at Settings → Always. The run is never blocked.
-        isOutdoorGpsRun(runConfig?.activityType) &&
+        isOutdoorGpsRun(runConfig) &&
         phase === "active" &&
         !bgGrantNoteDismissedRef.current &&
         shouldWarnBackgroundPause({
@@ -394,7 +408,7 @@ export default function Run() {
         setShowBgGrantNote(true);
       }
     },
-    [timer, gps, wakeLock, runConfig?.activityType, phase]
+    [timer, gps, wakeLock, runConfig, phase]
   );
 
   useRunVisibility({
@@ -440,6 +454,21 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
+  // The pace bar and the pace alerts judge a tempo or an interval session
+  // in its work segments only (`judgesPaceNow`).
+  const judgingPace = judgesPaceNow(
+    runConfig?.activityType,
+    player.segments,
+    player.current
+  );
+  // The bar's pace: none until the run has one to judge (Run20).
+  const barPace = runConfig ? livePaceTarget(runConfig) : null;
+  // A run-walk session (Run20 (5)) is running its steps. A run type picked
+  // on a run-walk day leaves the steps playing, so this reads the template
+  // as the saved run will, the plan's when none was started from.
+  const runWalkSession =
+    !!runConfig?.segments?.length &&
+    isRunWalkTemplateId(runTemplateIdOf(runConfig.planMetadata));
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
   // band-first display rule, now for intervals AND tempo. undefined (no
@@ -499,16 +528,9 @@ export default function Run() {
       paceTable: prescriptivePaceTableFromFitness(runFitness ?? null),
       // A2: the user's own goal time turns into training (race-pace long
       // run blocks, goal-pace tempo) — gating lives in the pure helper.
-      raceTarget: raceGoal?.targetTimeS
-        ? {
-            distance: raceGoal.distance,
-            targetTimeS: raceGoal.targetTimeS,
-            // Feasibility gate reads the FULL fitness (the verdict's tier,
-            // deliberately not the consent-gated prescriptive table) — see
-            // the field doc in runPlanMetadata.
-            currentVdot: paceTableFromFitness(runFitness ?? null)?.vdot ?? null,
-          }
-        : null,
+      // The plan's surfaces read the same target, so a run they name for
+      // its race-pace finish has one here.
+      raceTarget: raceTargetFromProfile({ raceGoal, runFitness }),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -619,6 +641,17 @@ export default function Run() {
         : null,
     [planDecision.metadata.actualTemplateId]
   );
+  // Run21 (2): the launch card names a race-pace finish, by the gate that
+  // gave the prefill its block, on the same inputs.
+  const launchRacePace = useMemo(
+    () =>
+      racePaceWorkFor(
+        launchWorkout,
+        { runMode: profileRunMode, raceGoal, runFitness },
+        programState?.runPlan
+      ),
+    [launchWorkout, profileRunMode, raceGoal, runFitness, programState?.runPlan]
+  );
   const canFastLaunch =
     !forceModal &&
     (isFreeformUser || !programLoading) &&
@@ -634,6 +667,13 @@ export default function Run() {
     const day = programState?.runDays?.find((d) => d.id === id);
     return day ? isScheduledRunTerminal(getScheduledRunStatus(day)) : false;
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
+  // Whether the pinned run's week holds a tempo or intervals session, for
+  // "Why this run" (an easy day's reason names them only then).
+  const launchWeekHasQuality = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    const day = id ? programState?.runDays?.find((d) => d.id === id) : null;
+    return weekHoldsQuality(programState?.runDays, day?.weekKey);
+  }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
     audioCues.prime();
@@ -642,6 +682,9 @@ export default function Run() {
     // activityType (chooser may have diverged from the prefill).
     // RunSetupModal carries the prefill snapshot on config.planMetadata;
     // here we recompute the four user-dependent fields and persist.
+    // The type alone decides: the treadmill is where the run is done
+    // (`config.place`, Pgm8), so a planned run on one is still the planned
+    // run and the summary has nothing to ask about it.
     const finalisedMetadata = finalisePlanMetadata(
       config.planMetadata,
       config.activityType
@@ -661,7 +704,7 @@ export default function Run() {
       kind: "run",
       offPlan: planDecision.metadata.offPlan,
     });
-    if (requiresManualDistance(finalConfig.activityType)) {
+    if (requiresManualDistance(finalConfig)) {
       dispatch({ type: "START_MANUAL" });
       timer.start();
       haptic("heavy");
@@ -740,6 +783,7 @@ export default function Run() {
     if (!resumePrompt) return;
     audioCues.prime();
     await wakeLock.request();
+    resumedRef.current = true;
     setRunConfig(resumePrompt.config);
     startedAtRef.current = resumePrompt.startedAt;
     timer.rehydrate({
@@ -773,8 +817,10 @@ export default function Run() {
     // Restart GPS for outdoor runs that were active. Paused runs
     // get GPS back on user-driven Resume (handleResume below); we
     // only re-arm here when the snapshot itself was active.
+    // A run stored before Pgm8 as `activityType: "treadmill"` reads as
+    // a treadmill run too (`isTreadmillRun`), so it resumes without GPS.
     if (
-      isOutdoorGpsRun(resumePrompt.config.activityType) &&
+      isOutdoorGpsRun(resumePrompt.config) &&
       resumePrompt.phase === "active"
     ) {
       gps.start();
@@ -859,8 +905,12 @@ export default function Run() {
        `calculatePace(gps.distance, timer.elapsed)` — the whole-run average
        — and then announced it as that kilometre's pace. Same mistake the
        pace alert below already documents, on the other cue. */
-    audioCues.checkDistanceCue(gps.distance, timer.elapsed);
-    audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    // Run20 (5): not on a run-walk, whose pace is an average over its runs
+    // and its walks, and whose every step speaks its own line.
+    if (!runWalkSession) {
+      audioCues.checkDistanceCue(gps.distance, timer.elapsed);
+      audioCues.checkTimeCue(timer.elapsed, gps.distance);
+    }
 
     // Pace zone alerts for tempo/interval runs.
     //
@@ -874,7 +924,11 @@ export default function Run() {
     //
     // `null` means the window has too little data to judge, and we say
     // nothing rather than falling back to the average.
-    if (runConfig?.target?.type === "pace" && runConfig.target.value) {
+    if (
+      judgingPace &&
+      runConfig?.target?.type === "pace" &&
+      runConfig.target.value
+    ) {
       const currentPaceSec = rollingPaceSeconds(gps.points, 30);
       if (currentPaceSec !== null) {
         audioCues.checkPaceAlert(
@@ -896,7 +950,16 @@ export default function Run() {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }
-  }, [gps.distance, gps.points, timer.elapsed, phase, audioCues, runConfig]);
+  }, [
+    gps.distance,
+    gps.points,
+    timer.elapsed,
+    phase,
+    audioCues,
+    runConfig,
+    judgingPace,
+    runWalkSession,
+  ]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
   // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
@@ -905,7 +968,7 @@ export default function Run() {
   // updates are throttled + deduped internally — this effect just feeds
   // it the current truth every tick.
   useEffect(() => {
-    if (!isOutdoorGpsRun(runConfig?.activityType)) return;
+    if (!isOutdoorGpsRun(runConfig)) return;
     if (phase !== "active" && phase !== "paused") return;
     const paceS = rollingPaceSeconds(gps.points, 30);
     const data = {
@@ -916,15 +979,7 @@ export default function Run() {
     };
     void startRunActivity(data);
     void updateRunActivity(data);
-  }, [
-    phase,
-    timer,
-    timer.elapsed,
-    gps.distance,
-    gps.points,
-    unit,
-    runConfig?.activityType,
-  ]);
+  }, [phase, timer, timer.elapsed, gps.distance, gps.points, unit, runConfig]);
 
   // Dismiss the Live Activity the moment the run leaves the live states
   // (finish → summary, discard, GPS-fail exit) and on unmount — a card
@@ -945,7 +1000,7 @@ export default function Run() {
     const eligible =
       phase === "active" &&
       !!runConfig?.autoPause &&
-      !requiresManualDistance(runConfig.activityType);
+      !requiresManualDistance(runConfig);
     if (!eligible) {
       // Left the auto-pause-eligible state (paused, finished, config off) —
       // cancel any pending pause.
@@ -989,13 +1044,7 @@ export default function Run() {
     // No cleanup here: React runs effect cleanup before EVERY re-run, so
     // clearing the pending timeout in a cleanup is exactly what broke auto-pause
     // (reset every ~1s). Teardown on unmount is handled by the effect below.
-  }, [
-    gps.currentPoint,
-    phase,
-    autoPaused,
-    runConfig?.autoPause,
-    runConfig?.activityType,
-  ]);
+  }, [gps.currentPoint, phase, autoPaused, runConfig]);
 
   // Unmount-only teardown for the auto-pause timer (the main effect above
   // deliberately has no per-run cleanup).
@@ -1064,7 +1113,7 @@ export default function Run() {
     // rather than silently saving a blank 0 km run.
     if (
       distanceOverride === undefined &&
-      isOutdoorGpsRun(runConfig?.activityType) &&
+      isOutdoorGpsRun(runConfig) &&
       points.length < 2
     ) {
       toast(
@@ -1077,7 +1126,7 @@ export default function Run() {
     // have no points and would always score "poor" by the
     // <-5-fixes rule. We skip the computation entirely for those
     // and let RunSummary persist null on the run doc.
-    const routeQuality = isOutdoorGpsRun(runConfig?.activityType)
+    const routeQuality = isOutdoorGpsRun(runConfig)
       ? computeRouteQuality({
           acceptedAccuracies: points
             .map((p) => p.accuracy)
@@ -1108,6 +1157,13 @@ export default function Run() {
             ? runConfig.intervals
             : undefined,
         routeQuality,
+        // What the session's work segments covered, which the summary
+        // judges the session by. On the distance the player was ticked
+        // with, the run's own, not a hand-entered total; none after a
+        // resume (`resumedRef`).
+        workPortion: resumedRef.current
+          ? null
+          : player.workPortion(timer.elapsed, gps.distance),
       },
     });
   };
@@ -1120,13 +1176,13 @@ export default function Run() {
        auto-paused at a crossing added everything since the last resume to
        the run's duration a second time. */
     if (timer.isRunning) timer.pause();
-    if (isOutdoorGpsRun(runConfig?.activityType)) gps.stop();
+    if (isOutdoorGpsRun(runConfig)) gps.stop();
     dispatch({ type: "PAUSE" });
   };
 
   const handleResume = () => {
     haptic("medium");
-    if (isOutdoorGpsRun(runConfig?.activityType)) gps.start();
+    if (isOutdoorGpsRun(runConfig)) gps.start();
     timer.resume();
     /* Resuming by hand ends an auto-pause too. Left set, the timer would
        run under an "Auto-paused" banner with the trace still held, until
@@ -1144,11 +1200,11 @@ export default function Run() {
        next render, jump straight to 'active' (NOT 'waiting' — that
        would re-prompt the setup modal) and start the timer.
 
-       Writes activityType='manual' (not 'treadmill') so History,
-       RunDetail, etc. can label the run honestly: the user was
-       outdoors and intended a real run, GPS just didn't lock.
+       Writes activityType='manual' (not the treadmill place) so
+       History, RunDetail, etc. can label the run honestly: the user
+       was outdoors and intended a real run, GPS just didn't lock.
        requiresManualDistance() and isOutdoorGpsRun() both treat
-       'manual' identically to 'treadmill' — this difference is
+       'manual' identically to a treadmill run — this difference is
        cosmetic / labelling only.
 
        audioCues.prime() / wakeLock.request() were called when the run
@@ -1193,7 +1249,7 @@ export default function Run() {
           {/* In the reader's unit, as the sheet under it reads: this said
               "km" over a kilometre figure to a runner who reads miles. */}
           {distanceValue(
-            requiresManualDistance(runConfig?.activityType)
+            requiresManualDistance(runConfig)
               ? treadmillDistance
               : gps.distance,
             unit,
@@ -1222,7 +1278,7 @@ export default function Run() {
     );
   }
 
-  const currentDistance = requiresManualDistance(runConfig?.activityType)
+  const currentDistance = requiresManualDistance(runConfig)
     ? treadmillDistance
     : gps.distance;
 
@@ -1235,6 +1291,7 @@ export default function Run() {
   const liveInvalidReason = runConfig
     ? getInvalidRunReason({
         activityType: runConfig.activityType,
+        place: runConfig.place,
         distanceKm: (currentDistance ?? 0) / 1000,
         elapsedSeconds: timer.elapsed,
       })
@@ -1273,6 +1330,7 @@ export default function Run() {
             // gesture so audio primes). Customize drops to the full modal.
             <RunLaunchCard
               workout={launchWorkout}
+              racePace={launchRacePace}
               purpose={
                 runSessionPresentation({
                   type: launchWorkout.type,
@@ -1282,6 +1340,8 @@ export default function Run() {
                   distance:
                     programState?.runPlan?.raceGoal?.distance ??
                     profile?.raceGoal?.distance,
+                  weekHasQuality: launchWeekHasQuality,
+                  racePace: launchRacePace?.kind,
                 }).purpose
               }
               prefill={planDecision.prefill}
@@ -1357,8 +1417,8 @@ export default function Run() {
             </div>
           ) : (
             // Freeform / rest / completed / ad-hoc → one-tap tile picker.
-            // Structured sessions (intervals/treadmill/guided/race/route) live
-            // behind "More options" → the full modal.
+            // Structured sessions (intervals/guided/race/route) and any run
+            // on the treadmill live behind "More options" → the full modal.
             <RunTilePicker
               paceTable={paceTable}
               selectedShoeId={launchShoeId}
@@ -1558,15 +1618,13 @@ export default function Run() {
       )}
 
       {(phase === "active" || phase === "paused") &&
-        requiresManualDistance(runConfig?.activityType) && (
+        requiresManualDistance(runConfig) && (
           <div
             className="flex-1 flex items-center text-white"
             style={{ backgroundColor: THEME.bg }}
           >
             <TreadmillMode
-              mode={
-                runConfig?.activityType === "manual" ? "manual" : "treadmill"
-              }
+              mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
               elapsed={timer.elapsed}
               formatTime={timer.formatTime}
               onSave={(distance) => {
@@ -1583,7 +1641,7 @@ export default function Run() {
         )}
 
       {(phase === "active" || phase === "paused") &&
-        isOutdoorGpsRun(runConfig?.activityType) && (
+        isOutdoorGpsRun(runConfig) && (
           <div
             className="fixed inset-0 z-50 text-white"
             style={
@@ -1612,19 +1670,19 @@ export default function Run() {
             </div>
 
             {(runConfig?.activityType === "tempo" ||
-              runConfig?.activityType === "intervals") && (
-              <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
-                <PaceZoneBar
-                  currentPace={paceAsNumber(currentDistance, timer.elapsed)}
-                  targetPace={
-                    runConfig.intervals?.workPace ||
-                    runConfig.target.value ||
-                    300
-                  }
-                  tolerance={15}
-                />
-              </div>
-            )}
+              runConfig?.activityType === "intervals") &&
+              judgingPace &&
+              barPace !== null && (
+                <div className="absolute top-[calc(var(--safe-top)+2.5rem)] left-4 right-4 z-50">
+                  <PaceZoneBar
+                    /* The last 30 seconds, as the alerts read it: the whole
+                     run's average carries the warm-up into every reading. */
+                    currentPace={rollingPaceSeconds(gps.points, 30) ?? 0}
+                    targetPace={barPace}
+                    tolerance={15}
+                  />
+                </div>
+              )}
 
             <RunMap
               points={gps.points}

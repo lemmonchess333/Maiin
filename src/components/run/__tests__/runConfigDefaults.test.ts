@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  ACTIVITY_TYPES,
   DEFAULT_CONFIG,
   buildLaunchConfig,
   buildTileConfig,
@@ -117,7 +118,19 @@ describe("pacePatchForType / chooserPaceFor", () => {
     const table = paceTableFromFitness({ vdot: 50, benchmark: null });
     expect(chooserPaceFor("easy", table, "km")).not.toBeNull();
     expect(chooserPaceFor("freerun", table, "km")).toBeNull();
-    expect(chooserPaceFor("treadmill", table, "km")).toBeNull();
+    expect(chooserPaceFor("guided", table, "km")).toBeNull();
+  });
+
+  it("lists run types only: the treadmill is where a run is done (Pgm8)", () => {
+    expect(ACTIVITY_TYPES.map((t) => t.type)).toEqual([
+      "freerun",
+      "easy",
+      "tempo",
+      "intervals",
+      "long",
+      "race",
+      "guided",
+    ]);
   });
 });
 
@@ -171,7 +184,28 @@ describe("resolveRepeatType", () => {
 
   it("a recurring STRUCTURED type (needs the modal) → null", () => {
     expect(resolveRepeatType([run("intervals"), run("intervals")])).toBeNull();
+    // A treadmill run saved before Pgm8, as its type.
     expect(resolveRepeatType([run("treadmill"), run("treadmill")])).toBeNull();
+  });
+
+  it("a treadmill habit → null: a tile would start it outdoors (Pgm8)", () => {
+    const onTreadmill = { place: "treadmill" };
+    // Two easy runs, both on the treadmill: their type is a tile's, but
+    // the tile starts an outdoor run.
+    expect(
+      resolveRepeatType([run("easy", onTreadmill), run("easy", onTreadmill)])
+    ).toBeNull();
+    // Either of the two on the treadmill is no outdoor habit either.
+    expect(resolveRepeatType([run("easy", onTreadmill), run("easy")])).toBe(
+      null
+    );
+    expect(resolveRepeatType([run("easy"), run("easy", onTreadmill)])).toBe(
+      null
+    );
+    // Outdoors, the same two are one.
+    expect(resolveRepeatType([run("easy", { place: null }), run("easy")])).toBe(
+      "easy"
+    );
   });
 
   it("missing activityType → null", () => {

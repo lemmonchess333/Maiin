@@ -92,38 +92,83 @@ export function sessionLengthOption(
  * has no warm-up on day one and three or four sets of one a few weeks later,
  * and the plan has to fit those weeks too, so each loaded lift is priced at
  * the heavier of its load and that estimate (`warmupRamp` saturates: a
- * barbell squat's ramp is four sets at 60 kg and at 160).
+ * barbell squat's ramp is four sets at 60 kg and at 160). A lift loaded past
+ * the estimate gains warm-up sets the fit never priced; a day they take over
+ * its length is re-fitted when the week moves on (Lift7,
+ * `warmupsOutgrewFit`).
  */
 const ESTABLISHED: StartingLoadContext = {
   bodyweightKg: 80,
   experience: "intermediate",
 };
 
-/** A session's seconds as the plan prices it. */
+/** The established lifter's load for a lift (`ESTABLISHED`). */
+function establishedLoad(ex: ProgramExercise): number {
+  return startingWeightForExercise(
+    ex.exerciseId,
+    ex.movementCategory,
+    ESTABLISHED,
+    ex.isAccessory === true,
+    undefined,
+    ex.repUnit
+  );
+}
+
+/** Given a loaded lift and the weight the fit prices its warm-up at, the
+ *  weight to price it at instead. */
+export type WarmupPricing = (ex: ProgramExercise, priced: number) => number;
+
+let warmupPricing: WarmupPricing | null = null;
+
+/**
+ * A measurement seam, which the app never sets: the training simulator
+ * prices warm-ups another way to compare it with this one (decisions.md
+ * L5, F8). Returns the function that puts the fit's own pricing back.
+ *
+ * @oracle — test-only by design, permanently: the simulator's measuring
+ * suite is its one caller. The app always prices with the fit's own.
+ */
+export function setWarmupPricing(pricing: WarmupPricing | null): () => void {
+  const previous = warmupPricing;
+  warmupPricing = pricing;
+  return () => {
+    warmupPricing = previous;
+  };
+}
+
+/** The weight the fit prices a loaded lift's warm-up at: the heavier of its
+ *  load and the established lifter's, or what a measurement's pricing makes
+ *  of that (`setWarmupPricing`). */
+function pricedWarmupLoad(ex: ProgramExercise): number {
+  const priced = Math.max(ex.weight, establishedLoad(ex));
+  return warmupPricing ? warmupPricing(ex, priced) : priced;
+}
+
+/** A session's seconds as the plan prices it: each loaded lift's warm-up at
+ *  `pricedWarmupLoad`, or at the load `warmupLoad` gives. */
 function plannedSeconds(
   exercises: readonly ProgramExercise[],
-  minutes: number
+  minutes: number,
+  warmupLoad: (ex: ProgramExercise) => number = pricedWarmupLoad
 ): number {
   return estimateSessionSeconds(
     exercises.map((ex) =>
-      ex.weight > 0
-        ? {
-            ...ex,
-            weight: Math.max(
-              ex.weight,
-              startingWeightForExercise(
-                ex.exerciseId,
-                ex.movementCategory,
-                ESTABLISHED,
-                ex.isAccessory === true,
-                undefined,
-                ex.repUnit
-              )
-            ),
-          }
-        : ex
+      ex.weight > 0 ? { ...ex, weight: warmupLoad(ex) } : ex
     ),
     { sessionMinutes: minutes }
+  );
+}
+
+/** Whether a session fits its time so priced, and the 18-set ceiling. */
+function fitsPriced(
+  exercises: readonly ProgramExercise[],
+  minutes: number,
+  warmupLoad?: (ex: ProgramExercise) => number
+): boolean {
+  const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+  return (
+    sets <= MAX_SETS_PER_SESSION &&
+    plannedSeconds(exercises, minutes, warmupLoad) <= minutes * 60
   );
 }
 
@@ -133,10 +178,24 @@ export function sessionFits(
   exercises: readonly ProgramExercise[],
   minutes: number
 ): boolean {
-  const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+  return fitsPriced(exercises, minutes);
+}
+
+/**
+ * Whether a session has come to run over its length because its lifts'
+ * warm-ups grew with their weights (Lift7): it no longer fits, and it would
+ * with each loaded lift's warm-up priced as the plan prices a new lift's, at
+ * the established lifter's load. A session over for any other reason, lifts
+ * the person added or a short one the fit could not bring inside its length,
+ * is over at that price too.
+ */
+export function warmupsOutgrewFit(
+  exercises: readonly ProgramExercise[],
+  minutes: number
+): boolean {
   return (
-    sets <= MAX_SETS_PER_SESSION &&
-    plannedSeconds(exercises, minutes) <= minutes * 60
+    !sessionFits(exercises, minutes) &&
+    fitsPriced(exercises, minutes, establishedLoad)
   );
 }
 

@@ -12,6 +12,10 @@ describe("realignResultMessage", () => {
     expect(msg).toMatch(/all easy/i);
     expect(msg).toMatch(/marathon/);
     expect(msg).toMatch(/not to PR/i); // honest: finish, don't expect a PR
+    // "Hard" is the effort word only (Run21 (4)); the family is "quality
+    // sessions", as the race cockpit says it every day after.
+    expect(msg).toMatch(/no quality sessions/i);
+    expect(msg).not.toMatch(/\bhard\b/i);
   });
 
   it("compressible → tighter-build copy with the week count", () => {

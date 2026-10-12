@@ -33,6 +33,7 @@ const h = vi.hoisted(() => ({
   success: vi.fn(),
   message: vi.fn(),
   user: null as { uid: string } | null,
+  profile: null as Record<string, unknown> | null,
   awardEventBadge: vi.fn(),
   awardEventBadges: vi.fn(),
   authReads: vi.fn(),
@@ -40,7 +41,7 @@ const h = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => {
     h.authReads();
-    return { user: h.user, profile: null };
+    return { user: h.user, profile: h.profile };
   },
   useUidForStorageKey: () => "test",
 }));
@@ -85,6 +86,7 @@ vi.mock("@/lib/restTimerNotification", () => ({
   cancelRestEndNotification: vi.fn(),
 }));
 import WorkoutSession from "../WorkoutSession";
+import { WORKOUT } from "@/test/journeyScreens";
 
 /**
  * What a writer hands back (`completeLift`): saved now, or, given the
@@ -146,6 +148,7 @@ function openSession(
 beforeEach(() => {
   vi.clearAllMocks();
   h.user = null;
+  h.profile = null;
   h.save.mockReturnValue(true);
   resetFirestore();
   vi.stubGlobal(
@@ -162,6 +165,26 @@ afterEach(() => {
   vi.useRealTimers();
   cleanup();
   vi.unstubAllGlobals();
+});
+
+/* The E2E journeys finish a session on this screen by these names
+   (src/test/journeyScreens.ts, `finishLiftViaUi`). Finished here the same
+   way, so a renamed control fails in the unit suite, not in a journey. */
+it("finishes a session by the names the journeys use", async () => {
+  const log = openSession();
+  expect(screen.getByRole("button", { name: WORKOUT.close })).toBeVisible();
+  for (let set = 0; set < 3; set++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: WORKOUT.markSet })[0]
+    );
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.save })).toBeVisible()
+  );
+  fireEvent.click(screen.getByRole("button", { name: WORKOUT.save }));
+  await vi.waitFor(() =>
+    expect(screen.getByRole("button", { name: WORKOUT.done })).toBeVisible()
+  );
+  expect(log).toHaveBeenCalledTimes(1);
 });
 
 describe("set completion through row controls", () => {
@@ -266,6 +289,13 @@ it("a supported PR appears only on its row and Undo removes it", async () => {
   expect(screen.queryByText("PR")).not.toBeInTheDocument();
 });
 
+/** Whether `later` comes after `earlier` in the document: the order the
+ *  screen draws them in, top to bottom. */
+const follows = (earlier: Node, later: Node) =>
+  (earlier.compareDocumentPosition(later) &
+    Node.DOCUMENT_POSITION_FOLLOWING) !==
+  0;
+
 describe("the new-best moment (DS3)", () => {
   const seedBest = (bucket: "8rm" | "3rm" = "8rm") => {
     h.user = { uid: "pr-user" };
@@ -314,6 +344,20 @@ describe("the new-best moment (DS3)", () => {
     expect(spoken()?.textContent).toBe(
       "New best on Test exercise: 62.5 kg for 8 reps. Previous best 60 kg for 8 reps."
     );
+  });
+
+  it("stacks above the rest timer when the set that earned it starts a rest (Pol1)", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    const card = screen.getByTestId("new-best-moment");
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    expect(follows(card, timer)).toBe(true);
+    expect(
+      follows(timer, screen.getByRole("button", { name: /^Complete set/ }))
+    ).toBe(true);
   });
 
   it("stays quiet for a set that did not beat the best", async () => {
@@ -1090,6 +1134,44 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
     }
   });
 
+  it("marks a bodyweight lift's load as added, and a set with none as BW (Pgm8 L6)", async () => {
+    // "10 × 8" read as a 10 kg pull-up; the plan follows the load on the
+    // belt, as Train's row does ("+10 kg").
+    h.user = { uid: "prev-user" };
+    seedFirestore({
+      "users/prev-user/workouts/last": {
+        date: "2026-09-06",
+        exercises: [
+          {
+            exerciseId: "pull-ups",
+            exerciseName: "Pull-Ups",
+            sets: [
+              { reps: 8, weightKg: 10, type: "working" },
+              { reps: 12, weightKg: 0, type: "working" },
+            ],
+          },
+        ],
+      },
+    });
+    await act(async () =>
+      openSession(writer(), vi.fn(), {
+        exerciseId: "pull-ups",
+        name: "Pull-Ups",
+        weight: 10,
+      })
+    );
+    expect(
+      screen.getByRole("button", {
+        name: "Last time +10 × 8. Use it for set 1",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Last time BW × 12. Use it for set 2",
+      })
+    ).toBeInTheDocument();
+  });
+
   it("fills a set from last time on a tap, until the set is done", async () => {
     h.user = { uid: "prev-user" };
     seedFirestore({
@@ -1127,6 +1209,72 @@ describe("WorkoutSession — Previous shows the same set last time", () => {
       screen.getAllByRole("button", { name: "Mark set complete" })[1]
     );
     expect(lastTime()).toBeDisabled();
+  });
+
+  it("on a programme day, starts each lift from the last session in its slot", async () => {
+    /* One squat in two slots: 3×5 heavy, 2×9 light. Read by the exercise,
+       the heavy day opened with the light day's lighter set at 9 reps. */
+    h.user = { uid: "prev-user" };
+    const squat = (
+      slot: string,
+      sets: { reps: number; weightKg: number }[]
+    ) => ({
+      exercises: [{ exerciseId: "squat", exerciseName: "Barbell Squat", sets }],
+      programmeCompletion: {
+        context: {
+          progression: {
+            prescription: {
+              exercises: [{ exerciseId: "squat", instanceId: slot }],
+            },
+          },
+        },
+      },
+    });
+    seedFirestore({
+      "users/prev-user/workouts/light": {
+        date: "2026-09-03",
+        ...squat("light", [
+          { reps: 9, weightKg: 70 },
+          { reps: 9, weightKg: 65 },
+        ]),
+      },
+      "users/prev-user/workouts/heavy": {
+        date: "2026-09-01",
+        ...squat("heavy", [
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 85 },
+          { reps: 5, weightKg: 80 },
+        ]),
+      },
+    });
+    await act(async () =>
+      openSession(
+        writer(),
+        vi.fn(),
+        {
+          exerciseId: "squat",
+          instanceId: "heavy",
+          name: "Barbell Squat",
+          reps: 5,
+          weight: 87.5,
+        },
+        {
+          planLifts: [
+            { exerciseId: "squat", instanceId: "heavy" },
+            { exerciseId: "squat", instanceId: "light" },
+          ],
+        }
+      )
+    );
+    expect(
+      screen.getByRole("button", { name: "Last time 85 × 5. Use it for set 2" })
+    ).toBeInTheDocument();
+    // The plan's step for the sets lifted at 85, the lighter last set as
+    // lifted: never the light day's 65 × 9.
+    expect(screen.getByLabelText("Set 2 weight")).toHaveValue(87.5);
+    expect(screen.getByLabelText("Set 2 reps")).toHaveValue(5);
+    expect(screen.getByLabelText("Set 3 weight")).toHaveValue(80);
+    expect(screen.getByLabelText("Set 3 reps")).toHaveValue(5);
   });
 
   it("gives a warm-up no previous figure", async () => {
@@ -1281,6 +1429,34 @@ describe("WorkoutSession — rest timer", () => {
     expect(restLabel()).toContain("1:30");
   });
 
+  it("docks between the set table and the bottom bar, so ticking moves nothing above it (Pol1)", () => {
+    // In the header it pushed the exercise strip and the set table down
+    // 61 px under the thumb that had just ticked the set.
+    startFirstRest();
+    const timer = screen.getByRole("group", { name: "Rest timer" });
+    const lastRow = screen.getByRole("spinbutton", { name: "Set 3 reps" });
+    expect(follows(lastRow, timer)).toBe(true);
+    expect(
+      follows(timer, screen.getByRole("button", { name: /^Complete set/ }))
+    ).toBe(true);
+  });
+
+  it("with auto-start off, offers the rest where the timer docks and starts it there (Pol1)", () => {
+    h.profile = { autoRestTimer: false };
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    const start = screen.getByRole("button", { name: "Start rest timer" });
+    expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull();
+    expect(
+      follows(screen.getByRole("spinbutton", { name: "Set 3 reps" }), start)
+    ).toBe(true);
+    fireEvent.click(start);
+    expect(restLabel()).toContain("1:30");
+    expect(
+      screen.queryByRole("button", { name: "Start rest timer" })
+    ).toBeNull();
+  });
+
   it("extends repeatedly within one rest — the counterweight", () => {
     // A fix that reset the target on every render would pass the test above
     // while making the button useless.
@@ -1288,6 +1464,49 @@ describe("WorkoutSession — rest timer", () => {
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     expect(restLabel()).toContain("2:00");
+  });
+});
+
+describe("the tick (Pol1)", () => {
+  /* framer writes a mark's starting values inline as it mounts: a box
+     that pops starts at 0.72. */
+  const pops = (mark: HTMLElement) =>
+    (mark.getAttribute("style") ?? "").includes("0.72");
+
+  it("pops a set ticked on screen, and not again on a return to its exercise", () => {
+    const exercise = (exerciseId: string, name: string) =>
+      ({
+        exerciseId,
+        name,
+        sets: 3,
+        reps: 8,
+        weight: 0,
+        restSeconds: 0,
+      }) as ProgramExercise;
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Test lift",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            exercise("test", "Test exercise"),
+            exercise("test-2", "Second exercise"),
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={writer()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(pops(screen.getByTestId("set-check-mark"))).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Second exercise" }));
+    expect(screen.queryByTestId("set-check-mark")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Test exercise" }));
+    const mark = screen.getByTestId("set-check-mark");
+    expect(pops(mark)).toBe(false);
   });
 });
 
@@ -1662,6 +1881,28 @@ describe("the session's target (Lift4 (3))", () => {
       "Target: 3×8–12 @ 60 kg"
     );
   });
+
+  it("names a bodyweight lift's load as weight added to it (Pgm8 L6)", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 10,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight + 10 kg"
+    );
+  });
+
+  it("names a bodyweight lift done with none as bodyweight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "pull-ups",
+      name: "Pull-Ups",
+      weight: 0,
+    });
+    expect(screen.getByText(/^Target:/)).toHaveTextContent(
+      "Target: 3×8 @ Bodyweight"
+    );
+  });
 });
 
 describe("the plate hint (Lift4 (6))", () => {
@@ -1685,6 +1926,29 @@ describe("the plate hint (Lift4 (6))", () => {
     });
     expect(screen.getByText(/Per side:/)).toHaveTextContent(
       "Per side: 20 · 1 kg short"
+    );
+  });
+});
+
+describe("the stretched line (Pgm7 A3)", () => {
+  it("says under the target how far the reps go before the next weight", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "lateral-raise",
+      name: "Lateral Raise",
+      weight: 10,
+      reps: 16,
+      baseReps: 12,
+      repRangeMax: 15,
+      progressionType: "double",
+      stretched: {
+        exerciseId: "lateral-raise",
+        weight: 10,
+        next: 12.5,
+        ceiling: 19,
+      },
+    });
+    expect(screen.getByText(/^Up to/)).toHaveTextContent(
+      "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
     );
   });
 });

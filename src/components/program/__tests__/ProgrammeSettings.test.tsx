@@ -316,6 +316,12 @@ describe("ProgrammeSettings — toggles live-save without rebuild", () => {
     expect(plates).toHaveAttribute("aria-checked", "false");
     fireEvent.click(plates);
     expect(updateSettings).toHaveBeenCalledWith({ smallPlates: true });
+    // It steps a belt too (Pgm8 L6), and says so.
+    expect(
+      screen.getByText(
+        "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+      )
+    ).toBeInTheDocument();
   });
 
   it("toggling auto-progression calls updateSettings, not configurePlan", () => {

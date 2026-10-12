@@ -70,6 +70,7 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
@@ -108,6 +109,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
+import { SMALL_PLATES_HINT } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -263,7 +265,7 @@ function SettingsOptionCard({
 
 // Each focus card gets a distinct GLYPH for scannability, but all keep the
 // purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Running support" is lifting that
+// drives the lift split's rep ranges; "Support my running" is lifting that
 // complements runs, NOT run scheduling). So per sport-coding, purple is
 // correct; only the icon varies. Do not recolour these to coral.
 const FOCUS_OPTIONS: {
@@ -295,13 +297,13 @@ const FOCUS_OPTIONS: {
   },
   {
     id: "general",
-    label: "Stay fit",
+    label: "General fitness",
     desc: "Balanced general training",
     icon: <Heart size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "running",
-    label: "Running support",
+    label: "Support my running",
     desc: "Lifting that complements your runs",
     icon: <Footprints size={18} style={{ color: THEME.brand }} />,
   },
@@ -671,6 +673,7 @@ export default function ProgrammeSettings({
         runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
+        newRunnerUntil: profileNewRunnerUntil(profile),
         weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
           ? {
@@ -849,6 +852,7 @@ export default function ProgrammeSettings({
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          levelChanged: experience !== saved.experience,
                           ...(sessionMinutesChanged
                             ? { sessionMinutesTo: sessionMinutes }
                             : {}),
@@ -1274,7 +1278,7 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                {SMALL_PLATES_HINT}
               </p>
             </div>
             <Toggle

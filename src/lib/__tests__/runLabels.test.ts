@@ -32,6 +32,7 @@ import {
   elevationLabel,
   storedKmLabel,
   runTypeTitle,
+  runTitle,
   noSplitsReason,
 } from "../runLabels";
 
@@ -412,6 +413,32 @@ describe("runTypeTitle", () => {
     expect(runTypeTitle("manual")).toBe("Manual Run");
     expect(runTypeTitle("something-new")).toBe("Run");
     expect(runTypeTitle(undefined)).toBe("Run");
+  });
+});
+
+describe("runTitle", () => {
+  it("titles an outdoor run by its type alone", () => {
+    expect(runTitle({ activityType: "long" })).toBe("Long Run");
+    expect(runTitle({ activityType: "long", place: null })).toBe("Long Run");
+    expect(runTitle({ activityType: "manual" })).toBe("Manual Run");
+    expect(runTitle({})).toBe("Run");
+  });
+
+  it("says Treadmill for a treadmill run, saved before Pgm8 or since, so none reads as outdoors", () => {
+    // Before Pgm8 the treadmill was the type.
+    expect(runTitle({ activityType: "treadmill" })).toBe("Treadmill");
+    // Since, a run keeps its session's type, with the treadmill as where.
+    expect(runTitle({ activityType: "long", place: "treadmill" })).toBe(
+      "Long Run · Treadmill"
+    );
+    expect(runTitle({ activityType: "intervals", place: "treadmill" })).toBe(
+      "Intervals · Treadmill"
+    );
+    // A run with no session of its own is the treadmill run it always was.
+    expect(runTitle({ activityType: "freerun", place: "treadmill" })).toBe(
+      "Treadmill"
+    );
+    expect(runTitle({ place: "treadmill" })).toBe("Treadmill");
   });
 });
 

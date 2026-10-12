@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import EmptyState from "@/components/ui/EmptyState";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import RaceFilters from "@/features/spaces/RaceFilters";
 import {
   ALL_RACE_FILTERS,
@@ -349,6 +350,14 @@ export default function RaceGoalPlanner({
           <p className="text-xs text-muted-foreground leading-relaxed">
             {state.statusDescription}
           </p>
+
+          {/* Pgm8 (R14c): a race too soon for a new runner's plan to build
+              to, as setup says it. */}
+          {state.newRunnerNote && (
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <InlineNumerals>{state.newRunnerNote}</InlineNumerals>
+            </p>
+          )}
 
           {/* Phase rail — pre-save preview of the cockpit's rail, week 0 active */}
           <PhaseRail activePhase={state.firstWeekPhase} />

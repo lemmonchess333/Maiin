@@ -41,7 +41,7 @@ import {
   WEATHER_CREDIT,
   type WeatherData,
 } from "@/lib/weather";
-import { paceMinSec, distanceValue } from "@/lib/runLabels";
+import { paceMinSec, distanceValue, runTitle } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   paceUnitLabel,
@@ -53,14 +53,14 @@ import {
   DISTANCE_TARGET_MAX_M,
 } from "@/lib/distanceUnits";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { heatPaceAdjustment, heatAdjustmentLine } from "@/lib/heatAdjustment";
+import { heatLine } from "@/lib/heatAdjustment";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
 import { segmentsFromGuided, segmentsFromIntervals } from "@/lib/runSegments";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
-import type { ActivityType } from "@/types/run";
-import { requiresManualDistance } from "@/lib/runGuards";
+import type { ActivityType, RunPlace } from "@/types/run";
+import { isTreadmillRun, requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
 import { formatDayMonthYear, formatClock } from "@/utils/formatters";
@@ -111,7 +111,6 @@ const ICON_MAP: Record<
   RefreshCw,
   Route,
   Flag,
-  Dumbbell,
   Headphones,
 };
 
@@ -229,9 +228,14 @@ export default function RunSetupModal({
     distanceM: number;
     durationS: number;
     activityType: string;
+    place?: RunPlace;
   } | null>(null);
   const updateConfig = (partial: Partial<RunConfig>) =>
     setConfig((prev) => ({ ...prev, ...partial }));
+  /* Pgm8: the treadmill is where the run is done, set by its own switch
+     below the run type. It never touches `activityType`, so a planned run
+     done on the treadmill is still the planned run. */
+  const onTreadmill = isTreadmillRun(config);
   const intervalConfig = config.intervals ?? {
     reps: 5,
     workDistance: 1000,
@@ -281,6 +285,7 @@ export default function RunSetupModal({
             distanceM: run.distance,
             durationS: run.duration,
             activityType: run.activityType,
+            place: run.place,
           });
           return;
         }
@@ -364,13 +369,16 @@ export default function RunSetupModal({
                 {/* Description and mode are facts, so one metadata line
                     (" · "-joined) rather than a chip — the description
                     truncates first and the mode stays whole on narrow
-                    viewports. */}
+                    viewports. On the treadmill the mode is the treadmill,
+                    whatever the type (Pgm8). */}
                 <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                   <span className="truncate min-w-0">
                     {selected.cardDescription}
                   </span>
                   <span aria-hidden="true">·</span>
-                  <span className="shrink-0">{selected.cardChip}</span>
+                  <span className="shrink-0">
+                    {onTreadmill ? "Treadmill" : selected.cardChip}
+                  </span>
                 </div>
               </div>
               <ChevronRight
@@ -380,6 +388,26 @@ export default function RunSetupModal({
             </button>
           );
         })()}
+
+        {/* Where the run is done (Pgm8). The treadmill is a place, not a
+            run type: the type above stays the session (a planned run's
+            own), and this switch says it is run on a treadmill, with no
+            GPS and the distance typed in at the end (TreadmillMode). */}
+        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border/50 bg-card">
+          <div className="min-w-0">
+            <p className="text-sm text-foreground">On a treadmill</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              No GPS. Enter the distance from the treadmill at the end.
+            </p>
+          </div>
+          <Toggle
+            checked={onTreadmill}
+            label="On a treadmill"
+            onChange={() =>
+              updateConfig({ place: onTreadmill ? undefined : "treadmill" })
+            }
+          />
+        </div>
 
         {/* Last-run card — small empty-state context. Renders only
             when an eligible last run exists; nothing otherwise.
@@ -397,13 +425,16 @@ export default function RunSetupModal({
               long: "Long Run",
               longrun: "Long Run",
               race: "Race",
-              treadmill: "Treadmill",
               manual: "Manual Run",
               guided: "Guided",
             };
             const km = distanceValue(lastRun.distanceM, unit, 2);
             const time = formatClock(Math.floor(lastRun.durationS));
-            const type = labelMap[lastRun.activityType] || "Run";
+            // A treadmill run says so, old or new (Pgm8): "Treadmill",
+            // or its type with the treadmill, "Easy Run · Treadmill".
+            const type = isTreadmillRun(lastRun)
+              ? runTitle(lastRun)
+              : labelMap[lastRun.activityType] || "Run";
             return (
               <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
                 <SectionLabel>Last run</SectionLabel>
@@ -450,7 +481,7 @@ export default function RunSetupModal({
               </p>
               {(() => {
                 // Null when conditions warrant no advice — the card then
-                // shows its headline and (if it fires) the heat check, with
+                // shows its headline and (if it fires) the heat line, with
                 // no filler line restating the temperature between them.
                 const tip = getRunningTip(weather, config.activityType);
                 if (!tip) return null;
@@ -466,23 +497,14 @@ export default function RunSetupModal({
                   </motion.p>
                 );
               })()}
-              {/* B2 (heat half): the equal-effort pace equivalent for
-                  today's conditions — display + explanation only, the
-                  prescription is stated as unchanged. Quiet in cool
-                  weather (the helper returns null). */}
+              {/* Pgm8 (E8): on a hot day, one line to run by feel, with no
+                  number in it; nothing below hot. It never touches the
+                  plan's paces, and the tip above leaves heat to it. */}
               {(() => {
-                const adj = heatPaceAdjustment(weather);
-                if (!adj) return null;
+                const line = heatLine(weather);
+                if (!line) return null;
                 return (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {heatAdjustmentLine(
-                      adj,
-                      unit,
-                      config.target?.type === "pace"
-                        ? config.target.value
-                        : undefined
-                    )}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{line}</p>
                 );
               })()}
               {/* MET Norway's licence (CC BY 4.0) asks for this wherever
@@ -659,55 +681,55 @@ export default function RunSetupModal({
           )}
         </AnimatePresence>
 
-        {/* Goal — for non-interval, non-treadmill */}
-        {config.activityType !== "intervals" &&
-          config.activityType !== "treadmill" && (
-            <div>
-              {/* Visible-label rename only ("Target (optional)" → "Goal").
+        {/* Goal — for non-interval runs, and not on the treadmill, which
+            has no live distance to hold a goal against */}
+        {config.activityType !== "intervals" && !onTreadmill && (
+          <div>
+            {/* Visible-label rename only ("Target (optional)" → "Goal").
                 The internal `target.type` config field is unchanged
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-              <SectionHeading size="compact" className="mb-2">
-                Goal
-              </SectionHeading>
-              {/* Goal type — shared SegmentedControl (tone=running). Was a
+            <SectionHeading size="compact" className="mb-2">
+              Goal
+            </SectionHeading>
+            {/* Goal type — shared SegmentedControl (tone=running). Was a
                   hand-rolled pill row that hardcoded the coral hex and used
                   rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the
                   radiogroup primitive with tokens + keyboard nav. */}
-              <SegmentedControl
-                ariaLabel="Run goal"
-                tone="running"
-                value={config.target.type}
-                onChange={(type) =>
-                  updateConfig({
-                    target: {
-                      type,
-                      value:
-                        type === "distance"
-                          ? 5000
-                          : type === "time"
-                            ? 1800
-                            : type === "pace"
-                              ? 330
-                              : undefined,
-                    },
-                  })
-                }
-                options={[
-                  { value: "none", label: "None" },
-                  { value: "distance", label: "Distance" },
-                  { value: "time", label: "Time" },
-                  { value: "pace", label: "Pace" },
-                ]}
-              />
-            </div>
-          )}
+            <SegmentedControl
+              ariaLabel="Run goal"
+              tone="running"
+              value={config.target.type}
+              onChange={(type) =>
+                updateConfig({
+                  target: {
+                    type,
+                    value:
+                      type === "distance"
+                        ? 5000
+                        : type === "time"
+                          ? 1800
+                          : type === "pace"
+                            ? 330
+                            : undefined,
+                  },
+                })
+              }
+              options={[
+                { value: "none", label: "None" },
+                { value: "distance", label: "Distance" },
+                { value: "time", label: "Time" },
+                { value: "pace", label: "Pace" },
+              ]}
+            />
+          </div>
+        )}
 
         {/* Goal value inputs */}
         {config.target.type !== "none" &&
           config.activityType !== "intervals" &&
-          config.activityType !== "treadmill" && (
+          !onTreadmill && (
             <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
               {config.target.type === "distance" &&
                 (() => {
@@ -1033,7 +1055,7 @@ export default function RunSetupModal({
             the current toggle state when collapsed so users don't
             have to expand to see the configuration. */}
         {(() => {
-          const isManualDistance = requiresManualDistance(config.activityType);
+          const isManualDistance = requiresManualDistance(config);
           /* Pace alerts are only relevant when the user has set a
              pace goal — that's the signal the alert reads against.
              Without a pace target the toggle was a visible no-op
@@ -1100,13 +1122,13 @@ export default function RunSetupModal({
                   treadmill/manual run on a fixed surface or have no
                   GPS, so the GPS-derived auto-pause logic is a
                   visible no-op. State is preserved (we don't reset
-                  config.autoPause) so toggling activityType back
+                  config.autoPause) so switching the treadmill off
                   restores the user's choice. */}
               {[
                 {
                   label: "Auto-pause",
                   key: "autoPause" as const,
-                  hidden: requiresManualDistance(config.activityType),
+                  hidden: requiresManualDistance(config),
                 },
                 {
                   label: "Voice cues",
@@ -1144,7 +1166,7 @@ export default function RunSetupModal({
                       State (config.paceAlerts) is preserved when
                       hidden so toggling Goal back to Pace restores
                       the user's choice. */}
-                  {!requiresManualDistance(config.activityType) &&
+                  {!requiresManualDistance(config) &&
                     config.target.type === "pace" && (
                       <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
                         <span className="text-sm">Pace alerts</span>
@@ -1185,8 +1207,9 @@ export default function RunSetupModal({
       {/* Sticky CTA. Underlined "Change type" link removed — the
           selected-run card at the top now owns that affordance.
           Start text is contextual per run type ("Start Free Run",
-          "Start Treadmill", "Start Guided Run") so the button
-          mirrors the user's selection. */}
+          "Start Guided Run") so the button mirrors the user's
+          selection; on the treadmill it says where the run starts
+          ("Start on the treadmill"), whatever its type (Pgm8). */}
       {/* Pinned to the viewport bottom with `fixed` (was `sticky bottom-0`).
           As a sibling of the scroll area the sticky element had no scrolling
           ancestor, so it degraded to `relative` and floated UP over the
@@ -1205,8 +1228,7 @@ export default function RunSetupModal({
           const selected =
             ACTIVITY_TYPES.find((a) => a.type === config.activityType) ??
             ACTIVITY_TYPES[1];
-          const Icon =
-            config.activityType === "treadmill" ? Dumbbell : Footprints;
+          const Icon = onTreadmill ? Dumbbell : Footprints;
           return (
             <button
               type="button"
@@ -1222,7 +1244,10 @@ export default function RunSetupModal({
               // The pulse animation stays via btn-start-run-pulse.
               className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running-fill"
             >
-              <Icon className="inline size-5 mr-1" /> Start {selected.name}
+              <Icon className="inline size-5 mr-1" />{" "}
+              {onTreadmill
+                ? "Start on the treadmill"
+                : `Start ${selected.name}`}
             </button>
           );
         })()}
@@ -1230,7 +1255,10 @@ export default function RunSetupModal({
 
       {/* Run-type chooser drawer. Replaces the in-CTA inline picker.
           Grouped Outdoor / Other rows; each shows icon + name +
-          description + measurement chip + selected check.
+          description + measurement chip + selected check. On the
+          treadmill the first group is the treadmill's, and its rows
+          drop the GPS chip: every type is run there with the
+          distance typed in (Pgm8).
           'manual' is deliberately excluded — that activityType is
           set programmatically by the GPS-fallback "Track without
           GPS" path, never picked by the user. */}
@@ -1268,7 +1296,11 @@ export default function RunSetupModal({
             return (
               <div key={group} className="space-y-1">
                 <SectionLabel className="px-2">
-                  {group === "outdoor" ? "Outdoor" : "Other"}
+                  {group === "outdoor"
+                    ? onTreadmill
+                      ? "Treadmill"
+                      : "Outdoor"
+                    : "Other"}
                 </SectionLabel>
                 {items.map((at) => {
                   const IC = ICON_MAP[at.icon];
@@ -1304,9 +1336,11 @@ export default function RunSetupModal({
                           >
                             {at.name}
                           </p>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {at.chooserChip}
-                          </span>
+                          {!(onTreadmill && at.group === "outdoor") && (
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {at.chooserChip}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {at.chooserDescription}

@@ -1,4 +1,4 @@
-import type { ActivityType } from "@/types/run";
+import type { ActivityType, RunPlace } from "@/types/run";
 import { isOutdoorGpsRun, requiresManualDistance } from "./runGuards";
 
 /**
@@ -8,6 +8,9 @@ import { isOutdoorGpsRun, requiresManualDistance } from "./runGuards";
  *  - {@link isVolumeEligible} — does this run count toward total runs,
  *    total distance, weekly km, lifetime totals, streak days, crew
  *    leaderboards? Includes treadmill + manual.
+ *    (A treadmill run is one by its `place`, or, saved before Pgm8, by its
+ *    `activityType: "treadmill"`; `isTreadmillRun` in runGuards.ts reads
+ *    both, so every policy below treats old and new treadmill runs alike.)
  *  - {@link isPaceEligible} — does this run count toward Best Pace,
  *    the best-pace and Longest Run records, outdoor-style PRs?
  *    Outdoor GPS only. Strict policy.
@@ -48,6 +51,8 @@ export interface RunRecord {
   duration?: number; // seconds
   avgPace?: number; // sec/km
   activityType?: ActivityType | string;
+  /** Where the run happened: "treadmill" (Pgm8), else absent or null. */
+  place?: RunPlace | string | null;
   /** Local "yyyy-MM-dd". Absent on older run documents, which is why every
    *  consumer of it must tolerate the field being missing. */
   date?: string;
@@ -65,6 +70,8 @@ export interface RunPaceTrendInput {
   distance: number; // metres
   avgPace: number; // sec/km
   activityType?: ActivityType | string;
+  /** Where the run happened: "treadmill" (Pgm8), else absent or null. */
+  place?: RunPlace | string | null;
 }
 
 /** Base eligibility floor — also the building block for pace
@@ -88,7 +95,7 @@ export function isVolumeEligible(run: RunRecord): boolean {
 export function isPaceEligible(run: RunRecord): boolean {
   if (!isVolumeEligible(run)) return false;
   if (!run.activityType) return false;
-  if (!isOutdoorGpsRun(run.activityType as ActivityType)) return false;
+  if (!isOutdoorGpsRun(run)) return false;
   const pace = run.avgPace ?? 0;
   return Number.isFinite(pace) && pace > 0;
 }
@@ -100,7 +107,7 @@ export function isPaceEligible(run: RunRecord): boolean {
  *  typed distance is not a measured one. */
 export function isIndoorPaceEligible(run: RunRecord): boolean {
   if (!isVolumeEligible(run)) return false;
-  if (!requiresManualDistance(run.activityType as ActivityType)) return false;
+  if (!requiresManualDistance(run)) return false;
   const pace = run.avgPace ?? 0;
   return Number.isFinite(pace) && pace > 0;
 }
@@ -117,13 +124,8 @@ export function isPaceTrendEligible(run: RunPaceTrendInput): boolean {
   if (run.isInvalid === true) return false;
   if (run.savedAnyway === true) return false;
   if (run.avgPace <= 0 || run.distance <= 0) return false;
-  if (
-    run.activityType !== undefined &&
-    !isOutdoorGpsRun(run.activityType as ActivityType)
-  ) {
-    return false;
-  }
-  return true;
+  // A run with neither a type nor a place reads as outdoor (legacy).
+  return isOutdoorGpsRun(run);
 }
 
 /** Lifetime run totals — count and metres, eligible runs only. */

@@ -13,8 +13,12 @@
  *   - reps missed still move it there and count the miss; the second miss
  *     in a row lowers a loaded lift 10% with its target as it was (Lift4
  *     (7); `sessionSets.test.ts` has the climb back), and a bodyweight one
- *     a rep, or a hold five seconds;
- *   - no load logged holds; bodyweight and uncalibrated lifts are as they
+ *     done with no load added a rep, or a hold five seconds;
+ *   - a bodyweight lift's load is the load added to it, and the plan
+ *     follows it as it follows any other weight (Pgm8 L6): it steps a plate
+ *     on a belt, 2.5 kg or 1.25 kg with small plates, and done with none it
+ *     climbs in reps;
+ *   - no load logged on a loaded lift holds; uncalibrated lifts are as they
  *     were;
  *   - at the finish (`applySessionProgression`), auto-progression off moves
  *     the prescription to the load lifted with no step and no success or
@@ -188,7 +192,7 @@ describe("the second miss in a row: 10% lighter, the target as it was", () => {
     expect(out.plateauCount).toBe(1);
   });
 
-  it("bodyweight movements still step their target down", () => {
+  it("bodyweight movements done with no load added step their target down", () => {
     const pullUps = bench({
       name: "Pull-Ups",
       exerciseId: "pull-ups",
@@ -212,6 +216,11 @@ describe("the second miss in a row: 10% lighter, the target as it was", () => {
       consecutiveFailures: 1,
     });
     expect(progressed(plank, 20, 0).reps).toBe(35); // five seconds down, not 30
+  });
+
+  it("a bodyweight lift with load added comes down in load, its target kept (Pgm8 L6)", () => {
+    // Lifted at the load the plan asked for, as any weight is: the load
+    // comes down, not the reps. It took a rep off and kept the load before.
     const dips = bench({
       exerciseId: "weighted-chest-dip",
       movementCategory: "vertical_push",
@@ -220,8 +229,15 @@ describe("the second miss in a row: 10% lighter, the target as it was", () => {
       consecutiveFailures: 1,
     });
     const dipped = progressed(dips, 5, 10);
-    expect(dipped.reps).toBe(7);
-    expect(dipped.weight).toBe(10);
+    expect(dipped.weight).toBe(7.5); // 10% off is 9 kg, nearest 10: one plate off
+    expect(dipped.reps).toBe(8);
+    expect(dipped.lowered).toEqual({
+      exerciseId: "weighted-chest-dip",
+      from: 10,
+      unit: "kg",
+      target: 8,
+    });
+    expect(dipped.plateauCount).toBe(1);
   });
 });
 
@@ -282,7 +298,7 @@ describe("no load logged: nothing to follow, so the plan holds", () => {
 });
 
 describe("controls: what the change leaves alone", () => {
-  it("a bodyweight movement progresses by reps and never follows a load", () => {
+  it("a bodyweight movement done with no load added progresses by reps", () => {
     const pullUps = bench({
       name: "Pull-Ups",
       exerciseId: "pull-ups",
@@ -294,23 +310,6 @@ describe("controls: what the change leaves alone", () => {
     const out = progressed(pullUps, 8, 0);
     expect(out.weight).toBe(0);
     expect(out.reps).toBe(9); // the bodyweight climb, as before
-  });
-
-  it("a bodyweight movement with load added keeps its load and its old success test", () => {
-    const dips = bench({
-      name: "Weighted Chest Dip",
-      exerciseId: "weighted-chest-dip",
-      movementCategory: "vertical_push",
-      reps: 8,
-      baseReps: 8,
-      weight: 10,
-    });
-    const lighter = progressed(dips, 8, 5);
-    expect(lighter.weight).toBe(10);
-    expect(lighter.consecutiveFailures).toBe(1); // under the plan's load: a miss
-    const heavier = progressed(dips, 8, 20);
-    expect(heavier.weight).toBe(10);
-    expect(heavier.reps).toBe(9);
   });
 
   it("an uncalibrated lift still takes the load lifted, with no step", () => {
@@ -333,8 +332,146 @@ describe("liftedLoad", () => {
   it("names the load to follow, or none", () => {
     expect(liftedLoad("bench-press", 82.5)).toBe(82.5);
     expect(liftedLoad("farmers-carry", 24)).toBe(24); // a loaded hold follows too
-    expect(liftedLoad("pull-ups", 20)).toBeNull();
     expect(liftedLoad("bench-press", 0)).toBeNull();
+  });
+
+  it("follows a bodyweight lift's added load, and none, which is the body alone (Pgm8 L6)", () => {
+    expect(liftedLoad("pull-ups", 20)).toBe(20); // null before: never followed
+    expect(liftedLoad("pull-ups", 0)).toBe(0);
+    expect(liftedLoad("pull-ups", Number.NaN)).toBe(0);
+  });
+});
+
+/* ─── Pgm8 L6: a bodyweight lift done with added load ─────────────────────
+   Reverses "a bodyweight movement with load added keeps its load and its
+   old success test", which this file pinned since #2571: weighted dips
+   planned at 10 kg and lifted at 20 stayed at 10, and lifted at 5 were a
+   miss. Lift4 (1)'s own reason applies: a load that is wrong is put right
+   by the first session, not typed over in every one after it. */
+
+/** Pull-ups, 3 × 6–10, climbing at 8. */
+function pullUps(overrides: Partial<ProgramExercise> = {}): ProgramExercise {
+  return bench({
+    name: "Pull-Ups",
+    exerciseId: "pull-ups",
+    instanceId: "i-pull-ups",
+    movementCategory: "vertical_pull",
+    reps: 8,
+    baseReps: 6,
+    repRangeMax: 10,
+    weight: 0,
+    lastSuccessfulWeight: 0,
+    lastAttemptedWeight: 0,
+    ...overrides,
+  });
+}
+
+/** Weighted dips at 10 kg, a range-less double at 8. */
+function dips(overrides: Partial<ProgramExercise> = {}): ProgramExercise {
+  return bench({
+    name: "Weighted Chest Dip",
+    exerciseId: "weighted-chest-dip",
+    instanceId: "i-dips",
+    movementCategory: "vertical_push",
+    reps: 8,
+    baseReps: 8,
+    weight: 10,
+    lastSuccessfulWeight: 10,
+    lastAttemptedWeight: 10,
+    ...overrides,
+  });
+}
+
+describe("a bodyweight lift done with added load follows it (Pgm8 L6)", () => {
+  it("heavier: the plan moves to the load added, and the climb runs from it", () => {
+    const out = progressed(dips(), 8, 20);
+    expect(out.weight).toBe(20); // 10 before
+    expect(out.reps).toBe(9);
+    expect(out.consecutiveFailures).toBe(0);
+    expect(out.lastSuccessfulWeight).toBe(20);
+  });
+
+  it("lighter, reps hit: a success at that load, not a miss", () => {
+    const out = progressed(dips(), 8, 5);
+    expect(out.weight).toBe(5); // 10 before, and a miss counted
+    expect(out.reps).toBe(9);
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("a lift the plan has at none takes the load added", () => {
+    const out = progressed(pullUps(), 8, 5);
+    expect(out.weight).toBe(5); // 0 before: the load was never followed
+    expect(out.reps).toBe(9);
+  });
+
+  it("the top of the range steps a plate, and the reps start again at the bottom", () => {
+    const out = progressed(pullUps({ reps: 10, weight: 10 }), 10, 10);
+    expect(out.weight).toBe(12.5);
+    expect(out.reps).toBe(6);
+    expect(out.notes).toBeUndefined(); // no "add load": it has some
+  });
+
+  it("a plate is always taken: the weight moved is the person and the belt", () => {
+    // 2.5 kg on 2.5 kg is a 100% step of the load added, which a dumbbell
+    // never takes on its own (Lift4 (6)). It is 3% of an 80 kg person
+    // with the belt on, so the target doesn't stretch past the range.
+    const out = progressed(pullUps({ reps: 10, weight: 2.5 }), 10, 2.5);
+    expect(out.weight).toBe(5);
+    expect(out.reps).toBe(6);
+    expect(out.stretched).toBeUndefined();
+  });
+
+  it("small plates step a belt 1.25 kg", () => {
+    const out = progressed(pullUps({ reps: 10, weight: 10 }), 10, 10, {
+      smallPlates: true,
+    });
+    expect(out.weight).toBe(11.25);
+  });
+
+  it("a fixed target met on every set steps a plate", () => {
+    const linear = pullUps({
+      progressionType: "linear",
+      reps: 5,
+      baseReps: 5,
+      repRangeMax: undefined,
+      weight: 10,
+    });
+    const out = progressed(linear, 5, 10);
+    expect(out.weight).toBe(12.5); // a rep climb before: 6 reps at 10 kg
+    expect(out.reps).toBe(5);
+  });
+
+  it("the RPE hold keeps the plan at the load added, with no step", () => {
+    const out = progressed(pullUps({ reps: 10, weight: 5 }), 10, 10, {
+      rpe: 10,
+    });
+    expect(out.weight).toBe(10);
+    expect(out.reps).toBe(10);
+  });
+
+  it("done with none, the plan follows to none and the rep climb runs", () => {
+    // The person dropped the belt: "follow what was lifted" (Lift4 (1)),
+    // and a bodyweight lift done with none keeps its rep climb (#2625).
+    const out = progressed(pullUps({ weight: 10 }), 8, 0);
+    expect(out.weight).toBe(0);
+    expect(out.reps).toBe(9);
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("a hold done with load added steps it at the top, as a loaded hold does", () => {
+    const plank = bench({
+      name: "Weighted Plank",
+      exerciseId: "weighted-plank",
+      movementCategory: "core",
+      repUnit: "seconds",
+      reps: 40,
+      baseReps: 30,
+      repRangeMax: 45,
+      weight: 10,
+    });
+    const out = progressed(plank, 45, 10);
+    expect(out.weight).toBe(12.5); // 10 kg for 45 s before: no load step
+    expect(out.reps).toBe(30);
   });
 });
 
@@ -455,14 +592,14 @@ describe("at the finish (applySessionProgression)", () => {
     expect(out.weight).toBe(40);
   });
 
-  it("auto-progression off: no load logged, or a bodyweight movement, keeps the plan", () => {
+  it("auto-progression off: no load logged keeps the plan", () => {
     expect(finish(stateWith(bench(), autoOff), three(0, 6)).weight).toBe(60);
-    const dips = bench({
-      exerciseId: "weighted-chest-dip",
-      movementCategory: "vertical_push",
-      weight: 10,
-    });
-    expect(finish(stateWith(dips, autoOff), three(20, 6)).weight).toBe(10);
+  });
+
+  it("auto-progression off: a bodyweight lift takes the load added, and none (Pgm8 L6)", () => {
+    // 10 before: the load added was never followed.
+    expect(finish(stateWith(dips(), autoOff), three(20, 6)).weight).toBe(20);
+    expect(finish(stateWith(dips(), autoOff), three(0, 6)).weight).toBe(0);
   });
 
   it("small plates reach the finish: a barbell steps 1.25 kg", () => {
@@ -520,6 +657,88 @@ describe("at the finish (applySessionProgression)", () => {
     expect(out.weight).toBe(50);
     expect(out.reps).toBe(6);
     expect(out.consecutiveFailures).toBe(0);
+  });
+});
+
+describe("at the finish, a bodyweight lift follows the load added (Pgm8 L6)", () => {
+  it("a weighted pull-up's plan takes the weight on the belt", () => {
+    const out = finish(stateWith(pullUps()), three(10, 8));
+    expect(out.weight).toBe(10); // 0 before
+    expect(out.reps).toBe(9);
+  });
+
+  it("a weighted pull-up at the top of its range steps a plate", () => {
+    const out = finish(stateWith(pullUps({ reps: 10, weight: 10 })), [
+      { weight: 10, reps: 10 },
+      { weight: 10, reps: 10 },
+      { weight: 10, reps: 10 },
+    ]);
+    expect(out.weight).toBe(12.5);
+    expect(out.reps).toBe(6);
+  });
+
+  it("short of the reps at a load of the person's own choosing: followed, not a miss", () => {
+    // Lift4 (7): a miss counts only at the weight the plan asked for.
+    const out = finish(
+      stateWith(pullUps({ weight: 10, consecutiveFailures: 1 })),
+      three(15, 5)
+    );
+    expect(out.weight).toBe(15);
+    expect(out.reps).toBe(6); // a heavier load starts the range again
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("the belt dropped: the plan follows to none, and the rep climb runs", () => {
+    const out = finish(stateWith(pullUps({ weight: 10 })), three(0, 8));
+    expect(out.weight).toBe(0); // 10 before: added load the plan held
+    expect(out.reps).toBe(9);
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("the belt dropped, reps short: the plan still follows to none", () => {
+    const out = finish(stateWith(pullUps({ weight: 10 })), three(0, 6));
+    expect(out.weight).toBe(0);
+    expect(out.reps).toBe(8);
+    expect(out.consecutiveFailures).toBe(0);
+  });
+
+  it("an easier session can move the load added up, never down", () => {
+    const state = stateWith(pullUps({ weight: 10 }));
+    const stored = state.workouts[0].exercises[0];
+    expect(finish(state, three(12.5, 8), "easier_today").weight).toBe(12.5);
+    expect(finish(state, three(0, 8), "easier_today")).toBe(stored);
+  });
+
+  it("a lowered load climbs back a plate a session, from none too", () => {
+    const lowered = (weight: number, from: number) =>
+      pullUps({
+        weight,
+        lowered: { exerciseId: "pull-ups", from, unit: "kg", target: 8 },
+      });
+    expect(finish(stateWith(lowered(7.5, 10)), three(7.5, 8)).weight).toBe(10);
+    // Two misses at 2.5 kg brought it to none (`loweredLoad`): the way back
+    // starts there, as it does for any weight.
+    expect(finish(stateWith(lowered(0, 2.5)), three(0, 8)).weight).toBe(2.5);
+  });
+
+  it("the rep climb's prompt to add load goes once the plan carries some", () => {
+    const prompt =
+      "Hitting 10+ reps — add load (weighted vest / band) to keep progressing.";
+    const atTop = pullUps({ reps: 10, notes: prompt });
+    const loaded = finish(stateWith(atTop), three(5, 8));
+    expect(loaded.weight).toBe(5);
+    expect(loaded.notes).toBeUndefined();
+    // Any other note stays, and so does the prompt while there is no load.
+    const swapped = "Swapped from Lat Pulldown (shoulder limitation)";
+    expect(
+      finish(stateWith(pullUps({ notes: swapped })), three(5, 8)).notes
+    ).toBe(swapped);
+    expect(finish(stateWith(atTop), three(0, 10)).notes).toBe(prompt);
+  });
+
+  it("the next load keeps the load added", () => {
+    const next = finishState(stateWith(pullUps()), three(10, 8));
+    expect(reload(next).weight).toBe(10);
   });
 });
 

@@ -209,6 +209,29 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("no-data");
     });
 
+    it("a planned type on the treadmill returns no-data too (Pgm8: the place, not the type)", () => {
+      const allRuns = generateRuns(10, 300, 5000, 1);
+      const onTreadmill = {
+        ...makeRun(280, 5000, 0),
+        activityType: "easy",
+        place: "treadmill",
+      };
+      expect(calculatePaceTrend(onTreadmill, allRuns).trend).toBe("no-data");
+      // The same run outdoors is a PR against the same pool.
+      expect(
+        calculatePaceTrend({ ...onTreadmill, place: null }, allRuns).trend
+      ).toBe("pr");
+      // And treadmill runs of a planned type are no comparables either.
+      const beltPool = allRuns.map((r) => ({
+        ...r,
+        activityType: "easy",
+        place: "treadmill",
+      }));
+      expect(
+        calculatePaceTrend({ ...onTreadmill, place: null }, beltPool).trend
+      ).toBe("no-data");
+    });
+
     it("manual current run returns no-data (GPS never locked)", () => {
       const current = {
         ...makeRun(158, 2000, 0),
@@ -292,5 +315,39 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("pr");
     });
+  });
+});
+
+/* Run20 (5): a run-walk's pace is an average over its runs and its walks,
+   so it is no one's running pace. Six weeks of them gave a new runner a
+   "PR!" each time the runs got longer, and made the first runs after them
+   look fast against walking. */
+describe("a run-walk and the trend", () => {
+  const runWalks = (n: number, pace: number) =>
+    generateRuns(n, pace, 4000, 1).map((r) => ({
+      ...r,
+      templateId: "run_walk_4",
+    }));
+
+  it("gives a run-walk no trend", () => {
+    const current = { ...makeRun(500, 4000, 0), templateId: "run_walk_5" };
+    expect(calculatePaceTrend(current, runWalks(10, 560)).trend).toBe(
+      "no-data"
+    );
+  });
+
+  it("doesn't hold a run against run-walks", () => {
+    // Ten run-walks at 9:20 /km and no runs of the distance: nothing to
+    // compare an easy run's 7:00 /km with.
+    expect(
+      calculatePaceTrend(makeRun(420, 4000, 0), runWalks(10, 560)).trend
+    ).toBe("no-data");
+    // Against runs, as before.
+    expect(
+      calculatePaceTrend(makeRun(420, 4000, 0), [
+        ...runWalks(10, 560),
+        ...generateRuns(8, 450, 4000, 20),
+      ]).trend
+    ).toBe("pr");
   });
 });
