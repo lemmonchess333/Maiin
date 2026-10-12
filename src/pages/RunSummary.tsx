@@ -78,7 +78,7 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
 import { completeRun, runPostRoute } from "@/lib/runCompletion";
-import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
+import { isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { announceRouteShare, shareGpx } from "@/lib/shareRoute";
 import { toast } from "@/lib/toast";
@@ -1605,47 +1605,17 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Run8 PR3c — the plan row: this week's runs against the
-              plan's, from the same read as the card above, so the two
-              cannot disagree, and a race plan's week. It shows only while
-              the plan has runs this week: a free runner's week is
-              done-only (Run9a). */}
-          {weekPulse?.runs && weekPulse.runs.planned !== null && (
-            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center gap-1.5 text-xs">
-              {profile?.runMode === "race_prep" &&
-                runPlanTotalWeeks &&
-                runPlanCurrentWeek != null && (
-                  <>
-                    <span className="font-semibold text-foreground">
-                      Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                  </>
-                )}
-              <span className="font-mono tabular-nums font-semibold text-foreground">
-                {weekPulse.runs.count}
-              </span>
-              <span className="text-muted-foreground">of</span>
-              <span className="font-mono tabular-nums font-semibold text-foreground">
-                {weekPulse.runs.planned}
-              </span>
-              <span className="text-muted-foreground">runs this week</span>
-              {saved &&
-                isVolumeEligible({
-                  distance,
-                  duration: elapsed,
-                  isInvalid,
-                }) && (
-                  <span
-                    className="ml-1 text-xs font-semibold"
-                    style={{ color: THEME.success }}
-                    aria-label="this run counts"
-                  >
-                    +1 ✓
-                  </span>
-                )}
-            </div>
-          )}
+          {/* A race plan's week. The week's runs against the plan's are
+              the card's above: this row counted them a second time. */}
+          {profile?.runMode === "race_prep" &&
+            runPlanTotalWeeks &&
+            runPlanCurrentWeek != null && (
+              <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center text-xs">
+                <span className="font-semibold text-foreground">
+                  Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
+                </span>
+              </div>
+            )}
 
           {/* Best efforts: the quickest 1K / 5K / 10K anywhere in the
               track. The same card a saved run shows. */}
