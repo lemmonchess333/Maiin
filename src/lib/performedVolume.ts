@@ -114,7 +114,15 @@ export function performedWeeklyVolume(
   {
     weekKeys,
     primaryGoal,
-  }: { weekKeys: readonly string[]; primaryGoal: string | undefined }
+    targets,
+  }: {
+    weekKeys: readonly string[];
+    primaryGoal: string | undefined;
+    /** What the person's plan judges each muscle against
+     *  (`volumeTargetsFor`): the goal's band at their level, its floor
+     *  lowered to what their days and time fit. Absent, the goal's band. */
+    targets?: ReadonlyMap<JudgementMuscle, VolumeLandmark>;
+  }
 ): MuscleWeekVolume[] {
   if (weekKeys.length === 0) return [];
   const inWeeks = new Set(weekKeys);
@@ -138,7 +146,8 @@ export function performedWeeklyVolume(
   return JUDGEMENT_MUSCLE_ORDER.map((muscle) => {
     const setsPerWeek =
       Math.round(((totals.get(muscle) ?? 0) / weekKeys.length) * 10) / 10;
-    const landmark = judgementLandmark(primaryGoal, muscle);
+    const landmark =
+      targets?.get(muscle) ?? judgementLandmark(primaryGoal, muscle);
     return {
       muscle,
       setsPerWeek,

@@ -131,6 +131,7 @@ export default function SettingsLiftPlan() {
             programState?.sessionMinutes ??
             sessionMinutesFor(profile.liftTimeBudgetMinutes)
           }
+          kit={profile}
         />
       </SettingsSection>
 
