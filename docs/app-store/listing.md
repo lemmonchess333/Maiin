@@ -263,6 +263,7 @@ Where to find things
 - Settings: tap the photo or initials at the top right of Home.
 - Account deletion: Settings > Account > Delete account.
 - Reporting and blocking: "More options" on a post (Report activity, Block user), "Post options" on a Space post (Report post, Block user), the "More options" button beside someone else's comment (Report comment, Block user) and "More options" on a profile (Report user, Block user). Blocked people are listed in Settings > Social & privacy.
+- Photo screening: a photo attached to a Space post or set as a profile photo is checked by Google Cloud Vision's SafeSearch before anyone else can see it; a photo with nudity is refused and deleted. Text in posts and comments goes through the objectionable-text filter.
 - Privacy Policy, Terms and support contact: Settings > Help & legal.
 
 Pro and In-App Purchase

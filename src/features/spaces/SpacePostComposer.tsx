@@ -23,6 +23,7 @@ import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
+import { PhotoRefusedError } from "@/lib/photoScreen";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
@@ -189,10 +190,12 @@ export default function SpacePostComposer({
     if (photoFile) {
       try {
         photoUrl = await uploadSpacePostPhoto(user.uid, photoFile);
-      } catch {
+      } catch (error) {
         haptic("error");
         toast.error(
-          "Photo upload failed. Try again, or remove the photo to post without it."
+          error instanceof PhotoRefusedError
+            ? error.message
+            : "Photo upload failed. Try again, or remove the photo to post without it."
         );
         setBusy(false);
         return;

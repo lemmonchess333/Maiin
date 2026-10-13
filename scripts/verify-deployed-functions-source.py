@@ -64,6 +64,9 @@ def verify():
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        # Ship1: the photos other people see, screened for nudity.
+        "screenPhoto": ["index.js", "lib/photoScreen.js"],
+        "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
         # S4e: a restriction refuses props and comments; the moderation page lifts one.
         "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js"],
         "liftRestriction": ["index.js"],

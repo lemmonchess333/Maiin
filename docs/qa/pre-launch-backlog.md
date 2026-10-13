@@ -397,6 +397,31 @@ need a phone and a deploy.
 - [ ] **Open Food Facts credit** under a barcode result, the search
       results and the portion sheet, which still fits on an SE.
 
+## Photos other people see are screened for nudity (Ship1, 2026-10-13)
+
+Affects: a Space post's photo and a profile photo. Right after the upload
+the app calls `screenPhoto`, which runs Google Cloud Vision's SafeSearch;
+a photo rated LIKELY or VERY_LIKELY "adult" is refused and its file
+deleted, and "racy" passes (the owner's call: shirtless and sports-bra gym
+photos are fine). The `screenUploadedPhoto` Storage trigger checks every
+such upload again, for a client that skips the callable
+(`functions/lib/photoScreen.js`).
+
+- [ ] **Turn on the Cloud Vision API** (Google Cloud console → APIs &
+      Services → Enable APIs → "Cloud Vision API", project
+      `adaptive-fitness-af8bb`). Until it is on, every photo post and
+      profile photo is refused as "couldn't check" — the safe way round,
+      but photo posts stop. About $1.50 per 1,000 photos after the first
+      1,000 each month.
+- [ ] **A gym photo goes through.** Post a Space photo of yourself in gym
+      kit, and set a profile photo: both appear.
+- [ ] **The log shows the checks.** In the functions log,
+      `screenPhoto` runs once per photo with no `screenPhoto.failed`, and
+      `screenUploadedPhoto` runs for the same file.
+- [ ] **The privacy label.** App Store Connect's privacy answers already
+      list photos; confirm Google Cloud Vision needs no change there (it
+      processes them for the app, not for tracking).
+
 ## User content moderation for App Review 1.2 (2026-10-04)
 
 Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,

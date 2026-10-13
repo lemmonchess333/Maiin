@@ -333,6 +333,21 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["RESEND_API_KEY"],
   },
+  // Ship1: the photos other people see, screened for nudity
+  // (lib/photoScreen.js). The callable is what the app waits on; the
+  // Storage trigger is the backstop for a client that skips it.
+  screenPhoto: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  screenUploadedPhoto: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "google.storage.object.finalize",
+    resource: "projects/{project}/buckets/{default}",
+  },
   listPendingReports: {
     kind: "callable",
     maxInstances: 10,
@@ -500,7 +515,11 @@ function endpointSummary(fn) {
               (ep.eventTrigger.eventFilters &&
                 ep.eventTrigger.eventFilters.resource) ||
               ""
-            ).replace(/^projects\/[^/]+\//, "projects/{project}/") || null,
+            )
+              .replace(/^projects\/[^/]+\//, "projects/{project}/")
+              // A Storage trigger's default bucket is named after the
+              // project too.
+              .replace(/\/buckets\/[^/]+$/, "/buckets/{default}") || null,
         }
       : {}),
   };

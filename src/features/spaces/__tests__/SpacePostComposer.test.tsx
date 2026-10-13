@@ -36,6 +36,10 @@ vi.mock("@/lib/auth", () => ({
   }),
   useUid: () => "viewer",
 }));
+const photo = vi.hoisted(() => ({ upload: vi.fn() }));
+vi.mock("@/lib/spacePhotoUpload", () => ({
+  uploadSpacePostPhoto: photo.upload,
+}));
 vi.mock("@/hooks/useEmailVerificationGate", () => ({
   useEmailVerificationGate: () => ({
     needsVerification: false,
@@ -44,6 +48,8 @@ vi.mock("@/hooks/useEmailVerificationGate", () => ({
 }));
 
 import SpacePostComposer from "../SpacePostComposer";
+import { toast } from "@/lib/toast";
+import { PhotoRefusedError, PHOTO_REFUSED_MESSAGE } from "@/lib/photoScreen";
 import type { RecentSession } from "../useRecentSessions";
 import { allPaths, readDoc, resetFirestore } from "@/test/firestoreHarness";
 
@@ -254,5 +260,30 @@ describe("SpacePostComposer — a restricted account (S4e)", () => {
     expect(
       screen.getByRole("button", { name: "Post to space" })
     ).toBeDisabled();
+  });
+});
+
+describe("SpacePostComposer — a photo the screening refuses (Ship1)", () => {
+  it("says why and posts nothing", async () => {
+    photo.upload.mockRejectedValueOnce(new PhotoRefusedError());
+    vi.stubGlobal("URL", { ...URL, createObjectURL: () => "blob:photo" });
+    renderComposer({ sessions: [] });
+    // The sheet renders in a portal, outside the render container.
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: {
+        files: [new File(["jpeg"], "gym.jpg", { type: "image/jpeg" })],
+      },
+    });
+    fireEvent.change(screen.getByLabelText("Post body"), {
+      target: { value: "Leg day." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Post to space" }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(PHOTO_REFUSED_MESSAGE)
+    );
+    expect(
+      allPaths().some((p) => p.startsWith("spaces/womens-running/posts/"))
+    ).toBe(false);
+    vi.unstubAllGlobals();
   });
 });
