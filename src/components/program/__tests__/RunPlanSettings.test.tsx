@@ -707,6 +707,25 @@ describe("RunPlanSettings", () => {
     expect("targetTimeS" in sentPayload().profileUpdates.raceGoal!).toBe(false);
   });
 
+  it("gives each distance a goal-time example of its own", () => {
+    /* A 10K showed a 5K time ("e.g. 24:30") and a half a marathon one
+       ("e.g. 3:59:00"). */
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    const time = screen.getByLabelText(/Goal time \(optional\)/i);
+    for (const [distance, example] of [
+      ["5K", "24:30"],
+      ["10K", "50:00"],
+      ["Half", "1:50:00"],
+      ["Full", "3:59:00"],
+    ]) {
+      fireEvent.click(screen.getByRole("radio", { name: distance }));
+      expect(time).toHaveAttribute("placeholder", `e.g. ${example}`);
+    }
+    fireEvent.change(time, { target: { value: "abc" } });
+    expect(screen.getByText("Enter a time like 3:59:00.")).toBeInTheDocument();
+  });
+
   it("an invalid goal time makes Save say so and refuse the tap", async () => {
     /* The test above is titled "blocks the save" but CLEARS the field
        before tapping, so nothing exercised the block. It did not hold:

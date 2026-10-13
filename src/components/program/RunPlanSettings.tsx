@@ -110,6 +110,22 @@ type RunMode = "freeform" | "race_prep";
 
 const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
 
+/** A goal time a recreational runner might set at each distance, for the
+ *  goal-time field's example. A 10K showed a 5K time ("24:30") and a half
+ *  a marathon one ("3:59:00"). */
+const GOAL_TIME_EXAMPLE: Record<RaceDistance, string> = {
+  "5k": "24:30",
+  "10k": "50:00",
+  half: "1:50:00",
+  marathon: "3:59:00",
+};
+
+/** The example for a distance, or the 10K's for one stored before the four
+ *  distances were the only ones. */
+function goalTimeExample(distance: RaceDistance): string {
+  return GOAL_TIME_EXAMPLE[distance] ?? GOAL_TIME_EXAMPLE["10k"];
+}
+
 interface RaceDeepLink {
   distance: RaceDistance;
   date: string;
@@ -739,16 +755,12 @@ export default function RunPlanSettings({
             inputMode="numeric"
             value={raceTimeStr}
             onChange={(e) => setRaceTimeStr(e.target.value)}
-            placeholder={
-              raceDistance === "marathon" || raceDistance === "half"
-                ? "e.g. 3:59:00"
-                : "e.g. 24:30"
-            }
+            placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
             className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
           />
           {raceTimeInvalid && (
             <p className="text-xs text-destructive-strong">
-              Enter a time like 24:30, or 3:59:00 for longer races.
+              Enter a time like {goalTimeExample(raceDistance)}.
             </p>
           )}
           {(() => {
