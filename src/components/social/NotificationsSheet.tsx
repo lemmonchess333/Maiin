@@ -133,7 +133,7 @@ export default function NotificationsSheet({
             compact
             icon={Bell}
             headline="No notifications yet"
-            sub="Kudos, comments and new followers on your activities show up here."
+            sub="Props and comments on your sessions, and news from your Circles and Spaces, show up here."
           />
         ) : (
           <ul className="divide-y divide-border/40">
