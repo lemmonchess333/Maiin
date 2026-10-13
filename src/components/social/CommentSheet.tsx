@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoreHorizontal, Trash2 } from "lucide-react";
@@ -22,10 +21,9 @@ import { haptic } from "../../lib/haptic";
 import type { DocumentSnapshot } from "firebase/firestore";
 import BlockAwareAvatar from "./BlockAwareAvatar";
 import CommentPanels, { type CommentPanel } from "./CommentPanels";
+import CommentSheetFrame from "./CommentSheetFrame";
 import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
-import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Spinner } from "@/components/ui/Spinner";
 import { describeRejection } from "@/lib/callableErrors";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
@@ -34,8 +32,6 @@ import {
   isRestrictedRefusal,
   showRestrictedToast,
 } from "@/lib/accountRestriction";
-import VerifyEmailNotice from "./VerifyEmailNotice";
-import RestrictedNotice from "./RestrictedNotice";
 
 interface Comment {
   id: string;
@@ -275,22 +271,12 @@ export default function CommentSheet({
   );
 
   return (
-    // Sprint 3: vaul boilerplate (Root + Portal + Overlay + Content
-    // + drag handle + Title strip) replaced with the shared
-    // <BottomSheet> primitive. Behaviour is identical — vaul still
-    // handles focus trap, escape, backdrop dismiss, body scroll
-    // lock; the primitive just removes ~10 lines of duplicate
-    // markup and pins the standard 70vh cap via maxHeight.
-    <BottomSheet
+    <CommentSheetFrame
       open={open}
       onOpenChange={onOpenChange}
-      title={`Comments${commentCount > 0 ? ` (${commentCount})` : ""}`}
-      maxHeight="max-h-[70vh]"
-    >
-      {panel ? (
-        // Report, Block user and Delete happen in the sheet, in place of
-        // the list (CommentPanels says why a dialog cannot go over it).
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+      commentCount={commentCount}
+      panel={
+        panel && (
           <CommentPanels
             panel={panel}
             onChange={setPanel}
@@ -300,216 +286,148 @@ export default function CommentSheet({
             })}
             onDelete={(comment) => void handleDelete(comment.id)}
           />
-        </div>
-      ) : (
-        <>
-          {/* Comment list */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-            {visibleComments.length === 0 &&
-              (loading ? (
-                <div className="flex justify-center py-8">
-                  <Spinner size="sm" variant="muted" label="Loading comments" />
-                </div>
-              ) : failed ? (
-                <div className="text-center py-8 space-y-2" role="alert">
-                  <p className="text-sm font-medium text-foreground">
-                    Couldn't load comments
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Check your connection and try again.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setAttempt((n) => n + 1)}
-                  >
-                    Try again
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8 space-y-1.5">
-                  <p className="text-sm font-medium text-foreground">
-                    No comments yet
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Be the first to leave a comment
-                  </p>
-                </div>
-              ))}
+        )
+      }
+      status={
+        visibleComments.length > 0
+          ? null
+          : loading
+            ? "loading"
+            : failed
+              ? "failed"
+              : "empty"
+      }
+      onRetry={() => setAttempt((n) => n + 1)}
+      composer={{
+        text,
+        onTextChange: setText,
+        onSend: handleSend,
+        sending,
+        needsVerification: gate.needsVerification,
+        onRecheck: gate.recheck,
+        isRestricted,
+        quickChips,
+        inputRef,
+      }}
+    >
+      <AnimatePresence>
+        {visibleComments.map((c) => {
+          const timeAgo = c.createdAt?.toDate
+            ? getTimeAgo(c.createdAt.toDate())
+            : "";
+          const isOwn = user?.uid === c.authorId;
 
-            <AnimatePresence>
-              {visibleComments.map((c) => {
-                const timeAgo = c.createdAt?.toDate
-                  ? getTimeAgo(c.createdAt.toDate())
-                  : "";
-                const isOwn = user?.uid === c.authorId;
-
-                return (
-                  <motion.div
-                    key={c.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex gap-2 group"
-                  >
-                    <BlockAwareAvatar
-                      uid={c.authorId}
-                      photoURL={c.authorPhotoURL}
-                      displayName={c.authorName}
-                      size="sm"
-                    />
-                    {/* Phase-6 hierarchy fix (visual audit W9): the message is
-                    the primary content — it reads at text-sm in foreground,
-                    with author (semibold) and timestamp (caption) as the
-                    supporting metadata. Previously author, body AND meta
-                    were all text-xs with the body in muted grey. */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-snug">
-                        <span className="text-xs font-semibold text-foreground">
-                          {c.authorName}
-                        </span>{" "}
-                        <span className="text-foreground/90">{c.text}</span>
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-caption text-muted-foreground">
-                          {timeAgo}
-                        </p>
-                        {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
-                        hit area toward the 44px floor without bloating the
-                        row visually (the sibling flame's -m trick). */}
-                        {REACTION_KEYS.map((k) => {
-                          const uids = c.reactions?.[k] ?? [];
-                          const mine = !!user && uids.includes(user.uid);
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => handleReact(c.id, k)}
-                              aria-pressed={mine}
-                              aria-label={`${mine ? "Remove" : "Add"} ${
-                                k === "muscle" ? "strong" : "fire"
-                              } reaction`}
-                              className="p-2.5 -m-1.5"
-                            >
-                              <span
-                                className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
-                                  mine
-                                    ? "bg-primary/10 text-lifting-strong"
-                                    : uids.length > 0
-                                      ? "bg-muted/70 text-foreground/80"
-                                      : "bg-muted/40 text-muted-foreground"
-                                }`}
-                              >
-                                {REACTION_EMOJI[k]}
-                                {uids.length > 0 && (
-                                  <span className="font-mono tabular-nums font-medium">
-                                    {uids.length}
-                                  </span>
-                                )}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {/* Always visible (W10): the old opacity-0 group-hover reveal
-                    made delete unreachable on touch — this is a mobile bottom
-                    sheet; there is no hover. */}
-                    {isOwn ? (
-                      <button
-                        type="button"
-                        onClick={() => setPanel({ kind: "delete", comment: c })}
-                        disabled={deletingId === c.id}
-                        className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
-                        aria-label="Delete comment"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    ) : c.authorId ? (
-                      // Someone else's comment: Report and Block user (App
-                      // Review 1.2), one tap away like the feed card's menu.
-                      <IconButton
-                        aria-label={
-                          c.authorName
-                            ? `More options for ${c.authorName}'s comment`
-                            : "More options for this comment"
-                        }
-                        onClick={() =>
-                          setPanel({ kind: "options", comment: c })
-                        }
-                        icon={<MoreHorizontal className="size-4" />}
-                        className="text-muted-foreground"
-                      />
-                    ) : null}
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-
-            {hasMore && (
-              <button
-                type="button"
-                onClick={handleLoadMore}
-                className="text-xs text-lifting-strong font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
-              >
-                Load more comments
-              </button>
-            )}
-          </div>
-
-          {/* Quick chips + input */}
-          <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
-            {isRestricted ? (
-              <RestrictedNotice />
-            ) : (
-              gate.needsVerification && (
-                <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
-              )
-            )}
-            {quickChips && quickChips.length > 0 && !isRestricted && (
-              <div
-                data-no-page-swipe
-                className="flex gap-1.5 overflow-x-auto pb-1"
-              >
-                {quickChips.map((chip) => (
-                  <button
-                    type="button"
-                    key={chip}
-                    onClick={() => setText(chip)}
-                    className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition active:scale-95 bg-primary/10 text-lifting-strong"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Add a comment..."
-                aria-label="Add a comment"
-                disabled={sending || gate.needsVerification || isRestricted}
-                className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
+          return (
+            <motion.div
+              key={c.id}
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -100, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex gap-2 group"
+            >
+              <BlockAwareAvatar
+                uid={c.authorId}
+                photoURL={c.authorPhotoURL}
+                displayName={c.authorName}
+                size="sm"
               />
-              <Button
-                onClick={handleSend}
-                disabled={
-                  sending ||
-                  !text.trim() ||
-                  gate.needsVerification ||
-                  isRestricted
-                }
-              >
-                Send
-              </Button>
-            </div>
-          </div>
-        </>
+              {/* Phase-6 hierarchy fix (visual audit W9): the message is
+              the primary content — it reads at text-sm in foreground,
+              with author (semibold) and timestamp (caption) as the
+              supporting metadata. Previously author, body AND meta
+              were all text-xs with the body in muted grey. */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm leading-snug">
+                  <span className="text-xs font-semibold text-foreground">
+                    {c.authorName}
+                  </span>{" "}
+                  <span className="text-foreground/90">{c.text}</span>
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-caption text-muted-foreground">
+                    {timeAgo}
+                  </p>
+                  {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
+                  hit area toward the 44px floor without bloating the
+                  row visually (the sibling flame's -m trick). */}
+                  {REACTION_KEYS.map((k) => {
+                    const uids = c.reactions?.[k] ?? [];
+                    const mine = !!user && uids.includes(user.uid);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => handleReact(c.id, k)}
+                        aria-pressed={mine}
+                        aria-label={`${mine ? "Remove" : "Add"} ${
+                          k === "muscle" ? "strong" : "fire"
+                        } reaction`}
+                        className="p-2.5 -m-1.5"
+                      >
+                        <span
+                          className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
+                            mine
+                              ? "bg-primary/10 text-lifting-strong"
+                              : uids.length > 0
+                                ? "bg-muted/70 text-foreground/80"
+                                : "bg-muted/40 text-muted-foreground"
+                          }`}
+                        >
+                          {REACTION_EMOJI[k]}
+                          {uids.length > 0 && (
+                            <span className="font-mono tabular-nums font-medium">
+                              {uids.length}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Always visible (W10): the old opacity-0 group-hover reveal
+              made delete unreachable on touch — this is a mobile bottom
+              sheet; there is no hover. */}
+              {isOwn ? (
+                <button
+                  type="button"
+                  onClick={() => setPanel({ kind: "delete", comment: c })}
+                  disabled={deletingId === c.id}
+                  className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
+                  aria-label="Delete comment"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              ) : c.authorId ? (
+                // Someone else's comment: Report and Block user (App
+                // Review 1.2), one tap away like the feed card's menu.
+                <IconButton
+                  aria-label={
+                    c.authorName
+                      ? `More options for ${c.authorName}'s comment`
+                      : "More options for this comment"
+                  }
+                  onClick={() => setPanel({ kind: "options", comment: c })}
+                  icon={<MoreHorizontal className="size-4" />}
+                  className="text-muted-foreground"
+                />
+              ) : null}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={handleLoadMore}
+          className="text-xs text-lifting-strong font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
+        >
+          Load more comments
+        </button>
       )}
-    </BottomSheet>
+    </CommentSheetFrame>
   );
 }

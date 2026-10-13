@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MoreHorizontal, Send, Trash2 } from "lucide-react";
-import { BottomSheet } from "@/components/ui/BottomSheet";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { describeRejection } from "@/lib/callableErrors";
-import { Spinner } from "@/components/ui/Spinner";
 import { IconButton } from "@/components/ui/IconButton";
 import Avatar from "@/components/Avatar";
 import CommentPanels, {
   type CommentPanel,
 } from "@/components/social/CommentPanels";
+import CommentSheetFrame from "@/components/social/CommentSheetFrame";
 import { useAuth } from "@/lib/auth";
 import {
   addSpacePostComment,
@@ -31,15 +30,15 @@ import {
   isRestrictedRefusal,
   showRestrictedToast,
 } from "@/lib/accountRestriction";
-import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
-import RestrictedNotice from "@/components/social/RestrictedNotice";
 
 /**
- * SOC-P2g — comments on a Space post. The activity CommentSheet's
- * visual grammar (author row, timeago, own-delete) rebuilt against the
- * space callables rather than parameterising that sheet across two
- * backends with different capabilities (space comments ship without
- * reactions in v1 — an honest smaller surface, not a downgrade).
+ * SOC-P2g — comments on a Space post. The rows are drawn here against
+ * the space callables rather than parameterising the activity
+ * CommentSheet across two backends with different capabilities (space
+ * comments ship without reactions in v1 — an honest smaller surface, not
+ * a downgrade). The sheet around them is the activity sheet's own,
+ * CommentSheetFrame: the same title with the count, the same empty and
+ * failed states, the same field and Send button.
  *
  * Moderation is the same as on the activity sheet (App Review 1.2):
  * someone else's comment can be reported (target `space_post_comment`)
@@ -57,12 +56,15 @@ export default function SpaceCommentSheet({
   postId,
   open,
   onOpenChange,
+  commentCount,
   onCountChange,
 }: {
   spaceId: string;
   postId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** The count the post's card shows, for the sheet's title. */
+  commentCount: number;
   /** +1 per posted comment, -1 per deleted — the card's optimistic delta. */
   onCountChange: (delta: number) => void;
 }) {
@@ -72,6 +74,7 @@ export default function SpaceCommentSheet({
   // A restricted account can read the comments but not add one (S4e).
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [comments, setComments] = useState<SpacePostComment[] | null>(null);
+  const [failed, setFailed] = useState(false);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   /* One comment being acted on (options, report, block, delete) shows in
@@ -86,12 +89,14 @@ export default function SpaceCommentSheet({
   const loadedForRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
+    setComments(null);
+    setFailed(false);
     try {
       setComments(await getSpacePostComments(spaceId, postId));
     } catch (err) {
+      // Said in the sheet, with Try again, not as "No comments yet".
       logger.error("[SpaceComments] load failed", err);
-      setComments([]);
-      toast.error("Couldn't load comments.");
+      setFailed(true);
     }
   }, [spaceId, postId]);
 
@@ -100,7 +105,6 @@ export default function SpaceCommentSheet({
     const key = `${spaceId}/${postId}`;
     if (loadedForRef.current === key) return;
     loadedForRef.current = key;
-    setComments(null);
     void load();
   }, [open, spaceId, postId, load]);
 
@@ -180,9 +184,12 @@ export default function SpaceCommentSheet({
     comments?.filter((c) => !c.authorId || !blocked.has(c.authorId)) ?? null;
 
   return (
-    <BottomSheet open={open} onOpenChange={onOpenChange} title="Comments">
-      {panel ? (
-        <div className="overflow-y-auto min-h-0 px-4 py-3">
+    <CommentSheetFrame
+      open={open}
+      onOpenChange={onOpenChange}
+      commentCount={commentCount}
+      panel={
+        panel && (
           <CommentPanels
             panel={panel}
             onChange={setPanel}
@@ -196,105 +203,73 @@ export default function SpaceCommentSheet({
             })}
             onDelete={(comment) => void remove(comment.id)}
           />
-        </div>
-      ) : (
-        <div className="px-4 space-y-3 pb-2">
-          {visibleComments === null && (
-            <div className="flex items-center justify-center py-6">
-              <Spinner size="sm" variant="muted" label="Loading comments" />
-            </div>
-          )}
-
-          {visibleComments !== null && visibleComments.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No comments yet — start the thread.
-            </p>
-          )}
-
-          {visibleComments?.map((c) => {
-            const isOwn = user?.uid === c.authorId;
-            return (
-              <div key={c.id} className="flex items-start gap-2.5">
-                <Avatar
-                  photoURL={c.authorPhotoURL}
-                  displayName={c.authorName || "Athlete"}
-                  size="sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {c.authorName || "Athlete"}
-                    </p>
-                    <span className="text-caption text-muted-foreground shrink-0">
-                      {c.createdAt?.toDate
-                        ? getTimeAgo(c.createdAt.toDate())
-                        : ""}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
-                    {c.text}
-                  </p>
-                </div>
-                {isOwn ? (
-                  <IconButton
-                    aria-label="Delete comment"
-                    onClick={() => setPanel({ kind: "delete", comment: c })}
-                    icon={<Trash2 className="size-4" />}
-                    className="text-muted-foreground"
-                  />
-                ) : c.authorId ? (
-                  // Someone else's comment: Report and Block user.
-                  <IconButton
-                    aria-label={
-                      c.authorName
-                        ? `More options for ${c.authorName}'s comment`
-                        : "More options for this comment"
-                    }
-                    onClick={() => setPanel({ kind: "options", comment: c })}
-                    icon={<MoreHorizontal className="size-4" />}
-                    className="text-muted-foreground"
-                  />
-                ) : null}
+        )
+      }
+      status={
+        visibleComments === null
+          ? failed
+            ? "failed"
+            : "loading"
+          : visibleComments.length === 0
+            ? "empty"
+            : null
+      }
+      onRetry={() => void load()}
+      composer={{
+        text,
+        onTextChange: setText,
+        onSend: send,
+        sending,
+        needsVerification: gate.needsVerification,
+        onRecheck: gate.recheck,
+        isRestricted,
+      }}
+    >
+      {visibleComments?.map((c) => {
+        const isOwn = user?.uid === c.authorId;
+        return (
+          <div key={c.id} className="flex items-start gap-2.5">
+            <Avatar
+              photoURL={c.authorPhotoURL}
+              displayName={c.authorName || "Athlete"}
+              size="sm"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {c.authorName || "Athlete"}
+                </p>
+                <span className="text-caption text-muted-foreground shrink-0">
+                  {c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : ""}
+                </span>
               </div>
-            );
-          })}
-
-          {user &&
-            (isRestricted ? (
-              <RestrictedNotice />
-            ) : (
-              gate.needsVerification && (
-                <VerifyEmailNotice action="comment" onRecheck={gate.recheck} />
-              )
-            ))}
-
-          {user && (
-            <div className="flex items-end gap-2 pt-2 border-t border-border/40">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Add a comment…"
-                rows={1}
-                maxLength={1000}
-                disabled={sending || gate.needsVerification || isRestricted}
-                className="flex-1 resize-none rounded-xl bg-muted px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
-              />
-              <IconButton
-                aria-label="Post comment"
-                onClick={send}
-                disabled={
-                  sending ||
-                  !text.trim() ||
-                  gate.needsVerification ||
-                  isRestricted
-                }
-                icon={<Send className="size-4" />}
-                className="bg-primary-strong text-primary-foreground"
-              />
+              <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
+                {c.text}
+              </p>
             </div>
-          )}
-        </div>
-      )}
-    </BottomSheet>
+            {isOwn ? (
+              <IconButton
+                aria-label="Delete comment"
+                onClick={() => setPanel({ kind: "delete", comment: c })}
+                icon={<Trash2 className="size-4" />}
+                className="text-muted-foreground"
+              />
+            ) : c.authorId ? (
+              // Someone else's comment: Report and Block user.
+              <IconButton
+                aria-label={
+                  c.authorName
+                    ? `More options for ${c.authorName}'s comment`
+                    : "More options for this comment"
+                }
+                onClick={() => setPanel({ kind: "options", comment: c })}
+                icon={<MoreHorizontal className="size-4" />}
+                className="text-muted-foreground"
+              />
+            ) : null}
+          </div>
+        );
+      })}
+    </CommentSheetFrame>
   );
 }
