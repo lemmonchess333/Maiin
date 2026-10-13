@@ -235,3 +235,41 @@ export function buildRaceCockpitViewModel(args: {
     belowFloor,
   };
 }
+
+/** The word before the date on Train's run card. */
+export type RunCardStatus =
+  | "Due today"
+  | "Tomorrow"
+  | "Pending"
+  | "Up next"
+  | "Upcoming";
+
+/**
+ * The word before the date on Train's run card, for the selected day.
+ * "Up next" belongs to one run: the first still to do from today. A later
+ * one is "Upcoming", the lift half's word for a session after the next
+ * (`LIFT_DAY_STATUS_LABEL`). Every run after tomorrow used to say "Up
+ * next", so Wednesday's run and Saturday's both claimed it while
+ * Tuesday's came first.
+ */
+export function runCardStatus(
+  selectedKey: string,
+  keys: { today: string; tomorrow: string },
+  week: readonly {
+    dateKey: string;
+    run: { runDay: unknown; isCompleted: boolean; isTerminal: boolean };
+  }[]
+): RunCardStatus {
+  if (selectedKey === keys.today) return "Due today";
+  if (selectedKey === keys.tomorrow) return "Tomorrow";
+  if (selectedKey < keys.today) return "Pending";
+  const runFirst = week.some(
+    (day) =>
+      day.dateKey >= keys.today &&
+      day.dateKey < selectedKey &&
+      day.run.runDay != null &&
+      !day.run.isCompleted &&
+      !day.run.isTerminal
+  );
+  return runFirst ? "Upcoming" : "Up next";
+}
