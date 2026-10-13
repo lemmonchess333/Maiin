@@ -417,6 +417,16 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">
+                  Photo checks (Google Cloud Vision):
+                </strong>{" "}
+                a photo you set as your profile photo or attach to a Space post
+                is checked by Google Cloud Vision&apos;s SafeSearch before other
+                people can see it, and a photo with nudity is deleted. Google
+                processes the photo only to return the check and does not use it
+                to train its models.
+              </li>
+              <li>
+                <strong className="text-foreground">
                   AI Food Analysis (Google Gemini):
                 </strong>{" "}
                 if you allow it, the photo you take of a meal or a nutrition

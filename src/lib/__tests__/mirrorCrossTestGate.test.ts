@@ -288,6 +288,10 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "was deleted there on purpose after the tested copy turned out to be the dead " +
     "one. Both headers say so at length. Only one copy runs, so an equality pin " +
     "has nothing to pin — see the module header for the full reasoning.",
+  "functions/lib/photoScreen.js":
+    "server-only screening (SafeSearch, the refusal rule, deleting the file); the " +
+    "client photoScreen.ts only calls the callable and names the refusal, so " +
+    "there is no shared logic to pin",
   "functions/lib/streakNudge.js":
     "server-only; its header states 'no TS↔JS port to keep in lockstep'",
   "functions/index.js":

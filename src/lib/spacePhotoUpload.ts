@@ -17,6 +17,7 @@
  */
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "./firebase";
+import { screenUploadedPhoto } from "./photoScreen";
 
 const STORAGE_PREFIX = "space-photos";
 const MAX_EDGE_PX = 1280;
@@ -73,6 +74,8 @@ export async function uploadSpacePostPhoto(
       contentType: "image/jpeg",
       cacheControl: "public, max-age=31536000, immutable",
     });
+    // Ship1: screened for nudity before the post can name it.
+    await screenUploadedPhoto(photoPath);
     return getDownloadURL(blobRef);
   })();
   const ceiling = new Promise<never>((_, reject) =>
