@@ -24,7 +24,11 @@ import type { LayoffClass } from "./layoffDetection";
 import type { RunPlan, ScheduledRunDay } from "./programTypes";
 import { HARD_RUN_TYPES } from "./programTypes";
 import { newRunnerTemplate } from "./newRunner";
-import { chooseQualityRunSlots, easyDaysInFillOrder } from "./runPlacement";
+import {
+  chooseQualityRunSlots,
+  easyDaysInFillOrder,
+  pickLongRunSlot,
+} from "./runPlacement";
 import {
   fitRunToTimeLimit,
   plannedRunMinutes,
@@ -89,32 +93,6 @@ export type { RaceTiming } from "./runPlanTiming";
 
    V1 functions stay for back-compat with useProgram.ts callers.
    Migration to V2 happens in P0-5 (onboarding) + Configure Plan. */
-
-/** Pick a long-run slot from available run-eligible day indices.
- *  Stress-aware: prefer single-modality "run" slots over "both"
- *  slots so the hardest session isn't paired with a lift day by
- *  default. Falls back to any available slot (with the same
- *  weekend bias as V1) when no run-only slots exist. */
-function pickLongRunSlot(
-  runEligibleSlots: number[],
-  weekSchedule: ScheduleDay[]
-): number {
-  // Categorise: run-only (no lift on that day) vs both (lift+run)
-  const runOnlySlots = runEligibleSlots.filter(
-    (d) => weekSchedule[d]?.type === "run"
-  );
-  const bothSlots = runEligibleSlots.filter(
-    (d) => weekSchedule[d]?.type === "both"
-  );
-
-  // Preference: weekend run-only > any run-only > weekend both > any both
-  const weekendRunOnly = runOnlySlots.find((d) => d === 0 || d === 6);
-  if (weekendRunOnly !== undefined) return weekendRunOnly;
-  if (runOnlySlots.length > 0) return runOnlySlots[0];
-  const weekendBoth = bothSlots.find((d) => d === 0 || d === 6);
-  if (weekendBoth !== undefined) return weekendBoth;
-  return bothSlots[0] ?? runEligibleSlots[0];
-}
 
 /** Build a runDay in v2 shape directly. */
 function buildRunDayV2(args: {
