@@ -77,3 +77,41 @@ export function easyDaysInFillOrder({
   if (clear === undefined || clear === days[0]) return days;
   return [clear, ...days.filter((day) => day !== clear)];
 }
+
+/** Pick a long-run slot from available run-eligible day indices.
+ *  Stress-aware: prefer single-modality "run" slots over "both"
+ *  slots so the hardest session isn't paired with a lift day by
+ *  default. Falls back to any available slot (with the same
+ *  weekend bias as V1) when no run-only slots exist. */
+export function pickLongRunSlot(
+  runEligibleSlots: number[],
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>
+): number {
+  // Categorise: run-only (no lift on that day) vs both (lift+run)
+  const runOnlySlots = runEligibleSlots.filter(
+    (d) => weekSchedule[d]?.type === "run"
+  );
+  const bothSlots = runEligibleSlots.filter(
+    (d) => weekSchedule[d]?.type === "both"
+  );
+
+  // Preference: weekend run-only > any run-only > weekend both > any both
+  const weekendRunOnly = runOnlySlots.find((d) => d === 0 || d === 6);
+  if (weekendRunOnly !== undefined) return weekendRunOnly;
+  if (runOnlySlots.length > 0) return runOnlySlots[0];
+  const weekendBoth = bothSlots.find((d) => d === 0 || d === 6);
+  if (weekendBoth !== undefined) return weekendBoth;
+  return bothSlots[0] ?? runEligibleSlots[0];
+}
+
+/** The weekday a plan's long run falls on, the race and structured plans'
+ *  one picker, or null for a week with no run day. Lift13: a new plan's
+ *  lift order keeps its heaviest leg session off the day before it. */
+export function longRunDayOf(
+  weekSchedule: ReadonlyArray<{ day: number; type: string }>
+): number | null {
+  const runDays = weekSchedule
+    .filter((d) => d.type === "run" || d.type === "both")
+    .map((d) => d.day);
+  return runDays.length > 0 ? pickLongRunSlot(runDays, weekSchedule) : null;
+}

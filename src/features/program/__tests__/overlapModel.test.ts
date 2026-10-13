@@ -6,6 +6,7 @@ import {
   expensiveExposures,
   lowCostAlternative,
   orderForAdjacency,
+  sessionBeforeLongRun,
   surplusExposures,
   weekWrapsBackToBack,
   EXPENSIVE_PATTERNS,
@@ -318,6 +319,74 @@ describe("orderForAdjacency", () => {
       )
     );
     runs.forEach((r) => expect(r).toEqual(runs[0]));
+  });
+});
+
+describe("Lift13 — no heavy legs the day before the long run", () => {
+  // getDay() weekdays: 0 is Sunday. Lifts Mon, Thu, Fri, Sat; runs Wed and
+  // Sun, the long run on Sunday: the default week for four lift days and
+  // two run days.
+  const fourAndTwo = [
+    { day: 0, type: "run" },
+    { day: 1, type: "lift" },
+    { day: 2, type: "rest" },
+    { day: 3, type: "run" },
+    { day: 4, type: "lift" },
+    { day: 5, type: "lift" },
+    { day: 6, type: "lift" },
+  ];
+  const upper = () => day(ex("horizontal_push"), ex("horizontal_pull"));
+  const lower = () => day(ex("knee_dominant"), ex("hip_dominant"));
+  const isLower = (d: WorkoutDay) =>
+    d.exercises.some((e) => e.movementCategory === "knee_dominant");
+
+  it("finds the session the day before the long run", () => {
+    expect(sessionBeforeLongRun(fourAndTwo, 4)).toBe(3); // Saturday's
+    // A Monday long run: the week's last session, Sunday's, is its eve.
+    const mondayLong = [
+      { day: 0, type: "lift" },
+      { day: 1, type: "run" },
+      { day: 2, type: "lift" },
+      { day: 3, type: "rest" },
+      { day: 4, type: "lift" },
+      { day: 5, type: "rest" },
+      { day: 6, type: "rest" },
+    ];
+    expect(sessionBeforeLongRun(mondayLong, 3)).toBe(2);
+  });
+
+  it("is null with no run day, or no lift the day before", () => {
+    const liftsOnly = [1, 3, 5].map((d) => ({ day: d, type: "lift" }));
+    expect(sessionBeforeLongRun(liftsOnly, 3)).toBeNull();
+    const restBefore = fourAndTwo.map((d) =>
+      d.day === 6 ? { ...d, type: "rest" } : d
+    );
+    expect(sessionBeforeLongRun(restBefore, 3)).toBeNull();
+    expect(sessionBeforeLongRun(undefined, 3)).toBeNull();
+  });
+
+  it("puts an upper session, not the lower one, the day before", () => {
+    const out = orderForAdjacency(
+      [upper(), lower(), upper(), lower()],
+      fourAndTwo
+    );
+    expect(isLower(out[3])).toBe(false);
+    expect(out.filter(isLower)).toHaveLength(2);
+  });
+
+  it("reorders two sessions when the second falls the day before", () => {
+    // Lifts Mon and Fri, runs Tue, Wed, Thu and Sat: the long run Saturday.
+    const twoAndFour = [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+      day: d,
+      type: d === 1 || d === 5 ? "lift" : d === 0 ? "rest" : "run",
+    }));
+    const out = orderForAdjacency([upper(), lower()], twoAndFour);
+    expect(out.map(isLower)).toEqual([true, false]);
+  });
+
+  it("leaves a week whose eve already holds the lightest session", () => {
+    const already = [lower(), upper(), lower(), upper()];
+    expect(orderForAdjacency(already, fourAndTwo)).toBe(already);
   });
 });
 
