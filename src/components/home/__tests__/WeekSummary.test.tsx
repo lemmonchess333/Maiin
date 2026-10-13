@@ -37,6 +37,18 @@ describe("WeekSummary", () => {
     expect(screen.getAllByRole("group")).toHaveLength(2);
   });
 
+  it("shows a runner's runs from the week's start, with nothing planned", () => {
+    // A free-run plan has no run days; the column is there before the
+    // week's first run, not only after it.
+    render(<WeekSummary counts={counts([0, 3], [0, null], 0)} runner />);
+    expect(screen.getByRole("group", { name: "Runs: 0" })).toBeInTheDocument();
+  });
+
+  it("leaves Runs out for someone who does not run", () => {
+    render(<WeekSummary counts={counts([0, 3], [0, null], 0)} />);
+    expect(screen.queryByRole("group", { name: /^Runs/ })).toBeNull();
+  });
+
   it("shows a logged session the plan did not have, without a denominator", () => {
     render(<WeekSummary counts={counts([1, null], [0, 3], 0)} />);
     expect(screen.getByRole("group", { name: "Lifts: 1" })).toBeInTheDocument();
