@@ -164,18 +164,35 @@ export function twiceWeeklyAdditions(
  * that works a muscle over its ceiling, if any (its `instanceId`). A lateral
  * raise counts toward the upper back as well as the side delts, so a week
  * whose rows already fill the upper back's ceiling keeps its side delts on
- * one day. A muscle's last direct lift is never one of these: a beginner's
- * rows, over the upper back's ceiling on their own, would otherwise take
- * both lateral raises and leave the side delts with nothing.
+ * one day. An added lift is blamed only for a ceiling the plan's own lifts
+ * keep: where they are over it already, taking the added lift out would not
+ * bring the muscle inside it, and would cost another muscle its second day
+ * for nothing (Lift10). A muscle's last direct lift is never one of these:
+ * a beginner's rows, over the upper back's ceiling on their own, would
+ * otherwise take both lateral raises and leave the side delts with nothing.
  */
 export function extraPastCeiling(
   workouts: readonly WorkoutDay[],
   extras: ReadonlySet<string>,
   ceiling: (muscle: JudgementMuscle) => number
 ): string | undefined {
+  const isExtra = (ex: ProgramExercise) =>
+    ex.instanceId !== undefined && extras.has(ex.instanceId);
+  const own = new Map(
+    weeklyVolumeByJudgementMuscle(
+      workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.filter((ex) => !isExtra(ex)),
+      }))
+    ).map((v) => [v.muscle, v.sets])
+  );
   const over = new Set(
     weeklyVolumeByJudgementMuscle(workouts)
-      .filter((v) => v.sets > ceiling(v.muscle))
+      .filter(
+        (v) =>
+          v.sets > ceiling(v.muscle) &&
+          (own.get(v.muscle) ?? 0) <= ceiling(v.muscle)
+      )
       .map((v) => v.muscle)
   );
   if (over.size === 0) return undefined;
@@ -192,8 +209,7 @@ export function extraPastCeiling(
   return lifts
     .filter(
       (ex) =>
-        ex.instanceId !== undefined &&
-        extras.has(ex.instanceId) &&
+        isExtra(ex) &&
         notLast(ex) &&
         weeklyVolumeByJudgementMuscle([{ exercises: [ex] }]).some((v) =>
           over.has(v.muscle)
