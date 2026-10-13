@@ -1809,9 +1809,9 @@ export default function History() {
                         </p>
                         <p className="text-caption text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
-                          {lifetimeTotals.liftCount === 1
-                            ? "session"
-                            : "sessions"}
+                          {/* "lifts", as the tile beside it says "runs":
+                              the range card's "sessions" counts both. */}
+                          {lifetimeTotals.liftCount === 1 ? "lift" : "lifts"}
                         </p>
                       </Card>
                       <Card size="compact" className="text-center">
