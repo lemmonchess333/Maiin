@@ -2583,6 +2583,7 @@ export default function WorkoutSession({
             open
             headerTitle={`Swap ${day.exercises[swapFor].name} for today`}
             pickAction="Swap for today"
+            currentExerciseId={day.exercises[swapFor].exerciseId}
             onSelect={(picked) => {
               swapForToday(swapFor, picked.id);
               setSwapFor(null);

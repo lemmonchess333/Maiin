@@ -74,6 +74,7 @@ import {
 } from "./overlapModel";
 import {
   applyComplexityGate,
+  offerableTo,
   toExperience,
   usesUndulation,
 } from "./experienceModel";
@@ -498,21 +499,29 @@ function makeExercise(
   weight: number,
   progression: "double" | "linear",
   existingAtSlot?: ProgramExercise,
-  isAccessory = false
+  isAccessory = false,
+  /** The variation a new slot starts on, in place of the category's
+   *  primary. A carried exercise always wins. */
+  freshExerciseId?: string
 ): ProgramExercise {
   const existing =
     existingAtSlot?.movementCategory === category ? existingAtSlot : undefined;
+  const bank = exerciseBank[category] ?? [];
   const currentOption = existing
-    ? (exerciseBank[category] ?? []).find(
-        (option) => option.id === existing.exerciseId
-      )
+    ? bank.find((option) => option.id === existing.exerciseId)
+    : undefined;
+  const freshOption = freshExerciseId
+    ? bank.find((option) => option.id === freshExerciseId)
     : undefined;
   // Keep a carried variation, stalled or not: the engine never swaps a lift
   // on its own (Lift4 (2)). The builders pick at the intermediate tier, so
   // asking `pickExercise` to validate it here would silently turn an
   // advanced specialist lift back into the primary on the next
   // regeneration; the complexity gate owns downgrades.
-  const ex = currentOption ?? pickExercise(category, undefined, BUILDER_TIER);
+  const ex =
+    currentOption ??
+    freshOption ??
+    pickExercise(category, undefined, BUILDER_TIER);
   const identityChanged =
     existing !== undefined && existing.exerciseId !== ex.id;
   const w = identityChanged
@@ -657,12 +666,19 @@ function makeNamedAccessory(
 function buildFullBody(
   profile: GoalProfile,
   count: number,
-  existing?: WorkoutDay[]
+  existing?: WorkoutDay[],
+  experience?: Experience
 ): WorkoutDay[] {
   const vm = profile.volumeMultiplier;
   const round = (n: number) => Math.max(1, Math.round(n));
   const findExisting = (dayIdx: number, exIdx: number) =>
     existing?.[dayIdx]?.exercises[exIdx];
+  // A variation a new slot starts on in place of the primary, when the
+  // lifter's level may be offered it (the complexity gate's own rule).
+  const startsOnIfOfferable = (category: MovementCategory, id: string) => {
+    const option = (exerciseBank[category] ?? []).find((o) => o.id === id);
+    return option && offerableTo(experience, option) ? id : undefined;
+  };
   const main = profile.mainReps;
   const acc = profile.accessoryReps;
 
@@ -672,18 +688,18 @@ function buildFullBody(
     completed: false,
     exercises: [
       makeExercise(
-        "horizontal_push",
-        round(3 * vm),
-        main,
-        60,
-        profile.mainProgression,
-        findExisting(0, 0)
-      ),
-      makeExercise(
         "knee_dominant",
         round(3 * vm),
         main,
         80,
+        profile.mainProgression,
+        findExisting(0, 0)
+      ),
+      makeExercise(
+        "horizontal_push",
+        round(3 * vm),
+        main,
+        60,
         profile.mainProgression,
         findExisting(0, 1)
       ),
@@ -715,8 +731,7 @@ function buildFullBody(
         true
       ),
       // Direct calf work — the bank has no calves category, so this is a
-      // named slot (see makeNamedAccessory). Appended LAST: positions of the
-      // slots above feed findExisting and must not shift.
+      // named slot (see makeNamedAccessory).
       makeNamedAccessory("standing-calf-raise", round(2 * vm), 12, 40),
     ],
   };
@@ -729,18 +744,18 @@ function buildFullBody(
     completed: false,
     exercises: [
       makeExercise(
-        "vertical_push",
-        round(3 * vm),
-        main,
-        40,
-        profile.mainProgression,
-        findExisting(1, 0)
-      ),
-      makeExercise(
         "hip_dominant",
         round(3 * vm),
         main,
         80,
+        profile.mainProgression,
+        findExisting(1, 0)
+      ),
+      makeExercise(
+        "vertical_push",
+        round(3 * vm),
+        main,
+        40,
         profile.mainProgression,
         findExisting(1, 1)
       ),
@@ -779,9 +794,8 @@ function buildFullBody(
     // ~3-set slot — under even the calf-specific maintenance floor. Give
     // day B the soleus-biased partner directly, at the 3-base the
     // upper/lower builders use: the balancer can't top this week up later
-    // (both sessions run at the session-size guard). Appended LAST
-    // (positions above feed findExisting); only for count 2, so the 3-day
-    // rotation keeps its A-standing / C-seated split unchanged.
+    // (both sessions run at the session-size guard). Only for count 2, so
+    // the 3-day rotation keeps its A-standing / C-seated split unchanged.
     return [
       dayA,
       {
@@ -794,7 +808,11 @@ function buildFullBody(
     ];
   }
 
-  // 3 days — add a posterior-emphasis day to complete the rotation
+  // 3 days — add a posterior-emphasis day to complete the rotation. Its
+  // hinge is the Romanian deadlift where the lifter's level takes it, so the
+  // week holds one heavy deadlift (day B's) rather than the same one twice
+  // (Lift8 (2)). A beginner keeps the deadlift on both days (L7), and a
+  // stored plan keeps the hinge it has.
   const dayC: WorkoutDay = {
     dayName: "Full Body — Posterior Focus",
     dayType: "full_body",
@@ -806,7 +824,9 @@ function buildFullBody(
         main,
         80,
         profile.mainProgression,
-        findExisting(2, 0)
+        findExisting(2, 0),
+        false,
+        startsOnIfOfferable("hip_dominant", "romanian-deadlift")
       ),
       makeExercise(
         "horizontal_push",
@@ -1785,7 +1805,7 @@ export function generateProgram(
         // `chooseSplit` now returns "full_body" for 3-day targets too
         // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
         const fbDays = Math.min(weeklyTarget, 3);
-        workouts = buildFullBody(profile, fbDays, existingWorkouts);
+        workouts = buildFullBody(profile, fbDays, existingWorkouts, experience);
         break;
       }
       case "ppl":

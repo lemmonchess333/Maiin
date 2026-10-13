@@ -17,6 +17,8 @@ import {
 } from "@testing-library/react";
 import { useState } from "react";
 import HeroDrillDownSheet from "../HeroDrillDownSheet";
+import { setCalorieRingMode } from "@/hooks/useCalorieRingMode";
+import { groupRe } from "@/test/localeGrouping";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import type { TrainingFuelAdjustment } from "@/hooks/useEffectiveTargets";
 
@@ -295,5 +297,45 @@ describe("HeroDrillDownSheet — bars follow the hero's display mode", () => {
           `the defect that put a 9% bar on the tile and an 89% bar here.`
       ).toBeCloseTo(100, 4);
     });
+  });
+});
+
+describe("HeroDrillDownSheet — counts the way the card does (Food10 (1))", () => {
+  /* The headline led with what was logged in both modes, so in left mode
+     "64%" of what was left sat beside the calories eaten. */
+  const day = { ...totals, calories: 993, protein: 73 };
+  function open() {
+    render(
+      <HeroDrillDownSheet
+        open
+        onOpenChange={() => {}}
+        selectedDate="2026-07-13"
+        isToday
+        dailyTotals={day}
+        dailyTargets={targets()}
+      />
+    );
+  }
+  afterEach(() => setCalorieRingMode("left"));
+
+  it("leads with what is left while the card shows what is left", () => {
+    setCalorieRingMode("left");
+    open();
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(
+      new RegExp(`${groupRe(1507)}\\s*left of ${groupRe(2500)} kcal`)
+    );
+    expect(text).toMatch(/993 kcal logged/);
+    expect(text).toMatch(/107g left of 180g/);
+    expect(text).toMatch(/73g logged/);
+  });
+
+  it("leads with what is logged while the card shows what is logged", () => {
+    setCalorieRingMode("eaten");
+    open();
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(new RegExp(`993\\s*/ ${groupRe(2500)} kcal`));
+    expect(text).toMatch(/73\s*\/ 180g/);
+    expect(text).not.toMatch(/left of/);
   });
 });

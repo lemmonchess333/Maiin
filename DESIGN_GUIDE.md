@@ -896,7 +896,7 @@ macro rings, calorie data), not a per-screen button colour: reserve the filled
 `nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
 orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
 
-**Exceptions, owner calls:** three Food-page buttons are `nutrition`. Brand
+**Exceptions, owner calls:** four Food-page buttons are `nutrition`. Brand
 purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
 above until the owner says otherwise.
 
@@ -916,6 +916,9 @@ above until the owner says otherwise.
 - **2026-09-23 — the scan result sheet's Log** ("Log to Breakfast"). It
   matches the usual row's Log: logging food is the page's one action, and
   the sheet opens over the orange camera button that started it.
+- **2026-10-13 — Copy yesterday's "Log selected meals"** (Food10 (2),
+  decided under the owner's delegation). The page's third way to log food
+  says it in the same colour as the other two.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

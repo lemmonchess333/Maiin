@@ -1189,3 +1189,87 @@ describe("migrateProgramState — v5 rounding onto the equipment's grid", () => 
     expect(weights(current)).toEqual([101]);
   });
 });
+
+describe("migrateProgramState — v6 the named lift leads its Full Body day", () => {
+  const lift = (exerciseId: string, movementCategory: string) => ({
+    name: exerciseId,
+    exerciseId,
+    instanceId: `i-${exerciseId}`,
+    movementCategory,
+    sets: 3,
+    reps: 8,
+    baseReps: 8,
+    weight: 60,
+    progressionType: "double",
+    lastSuccessfulWeight: 60,
+    lastAttemptedWeight: 60,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+  });
+  const stored = (
+    days: { dayName: string; exercises: ReturnType<typeof lift>[] }[],
+    programSchemaVersion = 5
+  ) =>
+    makeLegacyProgramState({
+      programSchemaVersion,
+      liftWeekKey: "2026-09-28",
+      workouts: days.map((d) => ({
+        ...d,
+        dayType: "full_body",
+        completed: false,
+      })),
+    } as unknown as Partial<ProgramState>);
+  const order = (state: ProgramState) =>
+    state.workouts.map((d) => d.exercises.map((e) => e.instanceId));
+
+  const squatDay = {
+    dayName: "Full Body — Squat Focus",
+    exercises: [
+      lift("bench-press", "horizontal_push"),
+      lift("squat", "knee_dominant"),
+      lift("lat-pulldown", "vertical_pull"),
+    ],
+  };
+  const deadliftDay = {
+    dayName: "Full Body — Deadlift Focus",
+    exercises: [
+      lift("overhead-press", "vertical_push"),
+      lift("deadlift", "hip_dominant"),
+      lift("barbell-row", "horizontal_pull"),
+    ],
+  };
+
+  it("puts the squat and the deadlift first, each keeping its own record", () => {
+    const next = migrateProgramState(
+      stored([squatDay, deadliftDay]),
+      "2026-10-05"
+    );
+    expect(order(next)).toEqual([
+      ["i-squat", "i-bench-press", "i-lat-pulldown"],
+      ["i-deadlift", "i-overhead-press", "i-barbell-row"],
+    ]);
+    expect(next.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
+  });
+
+  it("leaves a day the person has reordered, and any other day", () => {
+    const reordered = {
+      ...squatDay,
+      exercises: [squatDay.exercises[2], ...squatDay.exercises.slice(0, 2)],
+    };
+    const push = { ...squatDay, dayName: "Push — Chest Focus" };
+    const next = migrateProgramState(stored([reordered, push]), "2026-10-05");
+    expect(order(next)).toEqual([
+      ["i-lat-pulldown", "i-bench-press", "i-squat"],
+      ["i-bench-press", "i-squat", "i-lat-pulldown"],
+    ]);
+  });
+
+  it("runs once: a plan already on v6 keeps the press first", () => {
+    const current = stored([squatDay], CURRENT_PROGRAM_SCHEMA_VERSION);
+    expect(order(migrateProgramState(current, "2026-10-05"))).toEqual([
+      ["i-bench-press", "i-squat", "i-lat-pulldown"],
+    ]);
+  });
+});
