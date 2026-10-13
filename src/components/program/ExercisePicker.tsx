@@ -43,6 +43,10 @@ interface Props {
    *  the action rather than adding, and the detail sheet's button does it.
    *  Without it the picker adds, as many as are ticked. */
   pickAction?: string;
+  /** The exercise a Replace or a swap stands in for (Lift8 (4)): the picker
+   *  opens on its muscle group, not all of them, and marks it "Current"
+   *  rather than offering it as its own replacement. */
+  currentExerciseId?: string;
 }
 
 export default function ExercisePicker({
@@ -54,9 +58,17 @@ export default function ExercisePicker({
   existingExerciseIds,
   onRemoveExercise,
   pickAction,
+  currentExerciseId,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    () =>
+      (currentExerciseId &&
+        EXERCISE_CATEGORIES.find((cat) =>
+          getExercisesByCategory(cat).some((e) => e.id === currentExerciseId)
+        )) ||
+      "All"
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(existingExerciseIds ?? [])
   );
@@ -113,6 +125,7 @@ export default function ExercisePicker({
   }, [selectedIds, preExistingIds]);
 
   const toggleSelection = (id: string) => {
+    if (id === currentExerciseId) return;
     haptic("light");
     if (pickAction) {
       setSelectedIds((prev) => (prev.has(id) ? new Set() : new Set([id])));
@@ -336,6 +349,7 @@ export default function ExercisePicker({
                           key={`recent-${exercise.id}`}
                           exercise={exercise}
                           isSelected={selectedIds.has(exercise.id)}
+                          isCurrent={exercise.id === currentExerciseId}
                           onToggle={toggleSelection}
                           onOpen={setDetail}
                         />
@@ -355,6 +369,7 @@ export default function ExercisePicker({
                     key={exercise.id}
                     exercise={exercise}
                     isSelected={selectedIds.has(exercise.id)}
+                    isCurrent={exercise.id === currentExerciseId}
                     onToggle={toggleSelection}
                     onOpen={setDetail}
                   />
@@ -429,6 +444,7 @@ export default function ExercisePicker({
                         : "primary"
                     }
                     fullWidth
+                    disabled={detail.id === currentExerciseId}
                     onClick={() => {
                       if (!pickAction) {
                         toggleSelection(detail.id);
@@ -440,15 +456,17 @@ export default function ExercisePicker({
                       onClose();
                     }}
                   >
-                    {pickAction
-                      ? pickAction
-                      : preExistingIds.has(detail.id)
-                        ? selectedIds.has(detail.id)
-                          ? "In this workout — tap to remove"
-                          : "Add back to workout"
-                        : selectedIds.has(detail.id)
-                          ? "Selected — tap to unselect"
-                          : "Add to workout"}
+                    {detail.id === currentExerciseId
+                      ? "Current exercise"
+                      : pickAction
+                        ? pickAction
+                        : preExistingIds.has(detail.id)
+                          ? selectedIds.has(detail.id)
+                            ? "In this workout — tap to remove"
+                            : "Add back to workout"
+                          : selectedIds.has(detail.id)
+                            ? "Selected — tap to unselect"
+                            : "Add to workout"}
                   </Button>
                   <Button
                     variant="ghost"
@@ -481,11 +499,14 @@ export default function ExercisePicker({
 function ExerciseRow({
   exercise,
   isSelected,
+  isCurrent = false,
   onToggle,
   onOpen,
 }: {
   exercise: Exercise;
   isSelected: boolean;
+  /** The exercise being replaced: shown, never offered. */
+  isCurrent?: boolean;
   onToggle: (id: string) => void;
   onOpen: (exercise: Exercise) => void;
 }) {
@@ -528,27 +549,33 @@ function ExerciseRow({
       {/* Trailing circle → select/unselect. Keeps the checkbox role the
           batch-add flow is built on; the 44px target is the button, the
           32px circle is its visual. */}
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={isSelected}
-        aria-label={exercise.name}
-        onClick={() => onToggle(exercise.id)}
-        className="size-11 shrink-0 flex items-center justify-center rounded-full active:scale-[0.97] transition-transform"
-      >
-        {isSelected ? (
-          <span
-            className="size-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: THEME.lifting }}
-          >
-            <Check className="size-4 text-white" />
-          </span>
-        ) : (
-          <span className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
-            <Plus className="size-4 text-muted-foreground" />
-          </span>
-        )}
-      </button>
+      {isCurrent ? (
+        <span className="w-16 shrink-0 text-center text-caption font-semibold text-muted-foreground">
+          Current
+        </span>
+      ) : (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={isSelected}
+          aria-label={exercise.name}
+          onClick={() => onToggle(exercise.id)}
+          className="size-11 shrink-0 flex items-center justify-center rounded-full active:scale-[0.97] transition-transform"
+        >
+          {isSelected ? (
+            <span
+              className="size-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: THEME.lifting }}
+            >
+              <Check className="size-4 text-white" />
+            </span>
+          ) : (
+            <span className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
+              <Plus className="size-4 text-muted-foreground" />
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

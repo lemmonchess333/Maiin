@@ -77,3 +77,46 @@ describe("ExercisePicker with one exercise to pick", () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+describe("ExercisePicker replacing an exercise (Lift8 (4))", () => {
+  function replaceBench() {
+    const onSelect = vi.fn();
+    render(
+      <MemoryRouter>
+        <ExercisePicker
+          open
+          onSelect={onSelect}
+          onClose={vi.fn()}
+          headerTitle="Replace Bench Press"
+          pickAction="Replace"
+          currentExerciseId="bench-press"
+        />
+      </MemoryRouter>
+    );
+    return { onSelect };
+  }
+
+  it("opens on the replaced exercise's group, not every exercise", () => {
+    replaceBench();
+    expect(screen.getByText(/^Chest · \d+ exercises$/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "Barbell Squat" })
+    ).toBeNull();
+    expect(
+      screen.getByRole("checkbox", { name: "Incline Bench Press" })
+    ).toBeInTheDocument();
+  });
+
+  it("marks the exercise being replaced, and never offers it", () => {
+    const { onSelect } = replaceBench();
+    expect(screen.queryByRole("checkbox", { name: "Bench Press" })).toBeNull();
+    expect(screen.getByText("Current")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Bench Press details" })
+    );
+    const current = screen.getByRole("button", { name: "Current exercise" });
+    expect(current).toBeDisabled();
+    fireEvent.click(current);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
