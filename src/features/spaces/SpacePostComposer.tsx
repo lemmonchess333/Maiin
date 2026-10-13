@@ -35,7 +35,7 @@ import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
-import type { RecentSession } from "./useRecentSessions";
+import { recentSessionDay, type RecentSession } from "./useRecentSessions";
 import { distanceLabel } from "@/lib/runLabels";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -350,6 +350,9 @@ export default function SpacePostComposer({
                 <span className="flex-1 text-sm font-medium text-foreground truncate">
                   {attachableLabel(attached, unit)}
                 </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {recentSessionDay(attached)}
+                </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -384,6 +387,9 @@ export default function SpacePostComposer({
                     )}
                     <span className="flex-1 text-sm text-foreground truncate">
                       {attachableLabel(a, unit)}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {recentSessionDay(a)}
                     </span>
                   </button>
                 ))}
