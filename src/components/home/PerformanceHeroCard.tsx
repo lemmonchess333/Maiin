@@ -99,7 +99,7 @@ export default function PerformanceHeroCard({
           </span>
         </ProgressRing>
         <div className="min-w-[min(100%,7em)] flex-1">
-          <p className="text-base font-bold text-foreground break-words hyphens-auto">
+          <p className="text-base font-bold text-foreground break-words hyphens-auto text-balance">
             {copy ? copy.headline : "Performance"}
           </p>
           {copy ? (

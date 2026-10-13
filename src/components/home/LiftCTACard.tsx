@@ -173,7 +173,15 @@ export default function LiftCTACard({
         </p>
         {muscleGroups && (
           <p className="text-sm font-medium text-muted-foreground">
-            {muscleGroups}
+            {/* Each group holds together, "Legs + more" included, so a
+                narrow column breaks between groups rather than leaving
+                "more" alone on a line. */}
+            {muscleGroups.split(" · ").map((group, i) => (
+              <span key={group}>
+                {i > 0 && " · "}
+                <span className="whitespace-nowrap">{group}</span>
+              </span>
+            ))}
           </p>
         )}
       </div>
