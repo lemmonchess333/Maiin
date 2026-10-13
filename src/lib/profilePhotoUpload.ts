@@ -43,6 +43,7 @@ import {
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, storage, auth } from "./firebase";
+import { screenUploadedPhoto } from "./photoScreen";
 
 const STORAGE_PREFIX = "profile-photos";
 
@@ -94,6 +95,9 @@ export async function uploadProfilePhoto(
     contentType: "image/jpeg",
     cacheControl: "public, max-age=31536000, immutable",
   });
+  /* Step 1b (Ship1) — screened for nudity before anything names it. A
+     refused photo is already deleted, and the old photo stays. */
+  await screenUploadedPhoto(newPath);
 
   /* Step 2 — get a fresh download URL and append a cache-bust query
      param. Firebase's URL is `?alt=media&token=...`; appending `&v=`

@@ -11,6 +11,7 @@ import {
   uploadProfilePhoto,
   removeProfilePhoto,
 } from "@/lib/profilePhotoUpload";
+import { PhotoRefusedError } from "@/lib/photoScreen";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import Avatar from "@/components/Avatar";
@@ -68,7 +69,10 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         toast.success("Profile photo updated");
         setOpen(false);
       } catch (err) {
-        if (err instanceof ProfilePhotoProcessingError) {
+        if (
+          err instanceof ProfilePhotoProcessingError ||
+          err instanceof PhotoRefusedError
+        ) {
           /* Specific message per error code — better UX than a
              generic "couldn't upload". HEIC in particular has a
              concrete remediation the user can act on. */

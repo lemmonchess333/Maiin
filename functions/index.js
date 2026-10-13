@@ -66,6 +66,7 @@ const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
 const reportTargets = require("./lib/reportTargets");
+const photoScreen = require("./lib/photoScreen");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -5637,6 +5638,91 @@ function queueReason(value) {
     ? value
     : "other";
 }
+
+/**
+ * Screens a photo the caller just uploaded for other people to see, a
+ * Space post's or their profile's, before the app uses it
+ * (lib/photoScreen.js, Ship1). Answers { ok: false } when the photo is
+ * refused as nudity, its file already deleted, and "unavailable" when it
+ * could not be checked, so the app posts nothing it couldn't check.
+ */
+exports.screenPhoto = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const path = data && typeof data === "object" ? data.path : undefined;
+    if (photoScreen.screenedOwner(path) !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Which photo? Send the path of one you uploaded."
+      );
+    }
+    try {
+      const accessToken = await admin.credential
+        .applicationDefault()
+        .getAccessToken();
+      const { refused, adult } = await photoScreen.screenStoredPhoto({
+        bucket: admin.storage().bucket(),
+        path,
+        accessToken: accessToken.access_token,
+      });
+      if (refused)
+        functions.logger.warn("screenPhoto.refused", {
+          uid: context.auth.uid,
+          path,
+          adult,
+        });
+      return { ok: !refused };
+    } catch (error) {
+      functions.logger.error("screenPhoto.failed", {
+        path,
+        message: String(error && error.message),
+      });
+      throw new functions.https.HttpsError(
+        "unavailable",
+        "Couldn't check this photo. Try again."
+      );
+    }
+  });
+
+/**
+ * The same check on every upload to a screened path, for a client that
+ * skips `screenPhoto`: a refused photo's file is deleted, so a post or
+ * profile that names it shows nothing.
+ */
+exports.screenUploadedPhoto = functions
+  .runWith(TRIGGER_CAP)
+  .storage.object()
+  .onFinalize(async (object) => {
+    const path = object.name;
+    if (photoScreen.screenedOwner(path) === null) return;
+    try {
+      const accessToken = await admin.credential
+        .applicationDefault()
+        .getAccessToken();
+      const { refused, adult } = await photoScreen.screenStoredPhoto({
+        bucket: admin.storage().bucket(object.bucket),
+        path,
+        accessToken: accessToken.access_token,
+      });
+      if (refused)
+        functions.logger.warn("screenUploadedPhoto.refused", { path, adult });
+    } catch (error) {
+      // Gone already: the callable refused it first.
+      if (error && error.code === 404) return;
+      // Vision unavailable: the callable is the gate the app waits on,
+      // and this is the backstop.
+      functions.logger.error("screenUploadedPhoto.failed", {
+        path,
+        message: String(error && error.message),
+      });
+    }
+  });
 
 exports.createReport = functions
   .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
