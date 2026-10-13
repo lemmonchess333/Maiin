@@ -1,0 +1,38 @@
+[
+  {
+    "stage": "1-lower",
+    "primary": [123, 114, 233],
+    "sourceChroma95": 111.0,
+    "exactPrimaryPixels": 434,
+    "outsideCalfColourScopeChanged": 0,
+    "editableReopenedExact": true,
+    "individualAnatomyTransform": false,
+    "wholeWindowNormalization": false,
+    "sourceSha256": "010691fa36dbe22dc367bd8ae078b6d445757c867f0d78a1fb0c6c90b990ab3f",
+    "finalSha256": "af43c0cc3b1819cc6c09b197d7917c89fc7b61f4865505713b1de0c7fe811142"
+  },
+  {
+    "stage": "2-near-top",
+    "primary": [123, 114, 233],
+    "sourceChroma95": 127.0,
+    "exactPrimaryPixels": 504,
+    "outsideCalfColourScopeChanged": 0,
+    "editableReopenedExact": true,
+    "individualAnatomyTransform": false,
+    "wholeWindowNormalization": true,
+    "sourceSha256": "2ad66d01bbfa310471906079b69c7e68030e93c01035e4fdaf7fc8ee3d4cc163",
+    "finalSha256": "8fe4032b758af18f9e6b09cb315d5626e9f87b1c44238599e03193a3bfd9ddd6"
+  },
+  {
+    "stage": "3-raised",
+    "primary": [123, 114, 233],
+    "sourceChroma95": 98.0,
+    "exactPrimaryPixels": 400,
+    "outsideCalfColourScopeChanged": 0,
+    "editableReopenedExact": true,
+    "individualAnatomyTransform": false,
+    "wholeWindowNormalization": false,
+    "sourceSha256": "3cde442f1d9adb1f4a1f36ab83451c42e7384bb50fdd4064c78656b5c52b4f2e",
+    "finalSha256": "4645af8af7771b3696a6fbb2150a426e1dd987f132d31658f908524b73189961"
+  }
+]

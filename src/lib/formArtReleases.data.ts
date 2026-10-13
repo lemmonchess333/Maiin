@@ -642,6 +642,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 4,
   },
+  "seated-calf-raise": {
+    folder: "2026-10-13",
+    version: "anatomy-v3-2026-10-13-reviewed-seated-calf-v1",
+    width: 940,
+    height: 1310,
+    reference: 1,
+  },
   "seated-leg-curl": {
     folder: "2026-10-12",
     version: "anatomy-v3-2026-10-12-reviewed-seated-leg-curl-v1",

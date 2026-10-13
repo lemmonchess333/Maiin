@@ -108,7 +108,7 @@ import {
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
 import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
-import { validateSet } from "@/lib/setValidation";
+import { validateSet, type SetValidationWarn } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import {
   clampExerciseIndex,
@@ -204,6 +204,19 @@ function targetLoad(
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
+/** What a set's weight is checked against before it logs (Lift16): today's
+ *  plan, or a heavier weight already said yes to for this lift today, so
+ *  the second set at a confirmed weight doesn't ask again. */
+function weightToCheckAgainst(
+  exercise: { weight: number },
+  sets: readonly { completed: boolean; confirmedWeight?: number }[]
+): number {
+  return Math.max(
+    exercise.weight,
+    ...sets.map((set) => (set.completed ? (set.confirmedWeight ?? 0) : 0))
+  );
+}
+
 /** How long a new best stays on screen: past the undo window (4 s), so
  *  the lifter can look up from the bar and still catch it. */
 const NEW_BEST_MOMENT_MS = 6000;
@@ -214,6 +227,10 @@ interface SetLog {
   completed: boolean;
   type: SetType;
   rpe?: number;
+  /** A weight the person said yes to when it was far past today's plan
+   *  or their best (Lift16): the set counts at it, and isn't asked about
+   *  again. */
+  confirmedWeight?: number;
 }
 
 interface Props {
@@ -632,6 +649,15 @@ export default function WorkoutSession({
     initialDraft?.completionPending ?? false
   );
   const [showFinishEarly, setShowFinishEarly] = useState(false);
+  /* Lift16: a set far past today's plan or the best for its reps waits
+     for a yes. Kept after the question closes so the dialog's words
+     hold while it animates out. */
+  const [jumpQuestion, setJumpQuestion] = useState<{
+    exIdx: number;
+    setIdx: number;
+    warn: SetValidationWarn;
+  } | null>(null);
+  const [askingJump, setAskingJump] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
@@ -950,7 +976,7 @@ export default function WorkoutSession({
 
   // Row checkmarks and the primary CTA share validation, PRs, undo and
   // progression, including when a lifter completes sets out of order.
-  const completeSet = async (setIdx = currentSetIndex) => {
+  const completeSet = async (setIdx = currentSetIndex, confirmed = false) => {
     const set = currentSets[setIdx];
     if (!set) return;
     /* A set already marked complete is done. Completing it again re-ran
@@ -969,11 +995,11 @@ export default function WorkoutSession({
     // The validator decides:
     //   - block  → toast the message and bail; the set stays
     //              incomplete so the user can fix the value.
-    //   - warn   → still complete the set, but skip PR celebration
-    //              and prompt for explicit confirmation. The
-    //              implementation here takes the lighter path: we
-    //              still mark the set complete (the user did the
-    //              work), we just don't auto-persist it as a PR.
+    //   - warn   → ask first (Lift16): more than twice today's plan,
+    //              or 25% past the best for these reps. A set it
+    //              completes moves the plan, which follows the load
+    //              lifted, so a typo can't just skip the PR. A yes
+    //              completes it and it counts like any other set.
     //   - ok     → proceed.
     const exName = currentExercise.name;
     const repBucket = getRepBucket(set.reps || 0);
@@ -988,10 +1014,20 @@ export default function WorkoutSession({
       isBodyweight: (set.weight ?? 0) === 0 && !currentBucketPR,
       timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
+      plannedWeight: weightToCheckAgainst(currentExercise, currentSets),
     });
 
     if (!validation.ok) {
       toast.error(validation.message);
+      return;
+    }
+    if (validation.warn && !confirmed && set.confirmedWeight !== set.weight) {
+      setJumpQuestion({
+        exIdx: currentExIndex,
+        setIdx,
+        warn: validation.warn,
+      });
+      setAskingJump(true);
       return;
     }
 
@@ -999,21 +1035,17 @@ export default function WorkoutSession({
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[currentExIndex][setIdx].completed = true;
+      if (validation.warn)
+        updated[currentExIndex][setIdx].confirmedWeight = set.weight;
       return updated;
     });
 
     haptic(100);
 
-    // PR detection — only fires when (a) the validator didn't warn
-    // AND (b) checkSetPR identifies this as a PR. A `warn` from the
-    // validator (huge jump) means the user types a suspect value;
-    // we don't auto-celebrate it. They can confirm/re-enter from
-    // the History view if it really IS a PR.
+    // PR detection: a set past the validator's warn reaches here only
+    // once the person has said its weight is right.
     let prContext: NonNullable<typeof lastCompleted>["pr"] | undefined;
-    if (
-      !validation.warn &&
-      isSetEligibleForStrengthPr(set.type, currentExercise.repUnit)
-    ) {
+    if (isSetEligibleForStrengthPr(set.type, currentExercise.repUnit)) {
       const prResult = checkSetPR(
         exName,
         set.weight,
@@ -1065,10 +1097,6 @@ export default function WorkoutSession({
           }
         }
       }
-    } else if (validation.warn) {
-      // Surface the warn message so the user knows why no PR
-      // celebration fired. They can re-confirm via History edit.
-      toast.message(validation.warn.message);
     }
 
     // Track for undo. PR E: includes the prContext when this set
@@ -1095,10 +1123,8 @@ export default function WorkoutSession({
     if (isLastSet) {
       // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
       // total work for this exercise in one session. Quietly visible per
-      // the presentation policy: one toast, no mechanism talk. Gated on
-      // the validator like set PRs.
+      // the presentation policy: one toast, no mechanism talk.
       if (
-        !validation.warn &&
         isSetEligibleForStrengthPr(set.type, currentExercise.repUnit) &&
         !firedVolumePRs.current.has(exName)
       ) {
@@ -1170,10 +1196,12 @@ export default function WorkoutSession({
     setVolumeBest(next.volumeBest);
   };
 
-  const saveSetCorrection = async (values: {
-    weight: number;
-    reps: number;
-  }) => {
+  /** Saves an edited set, or hands back the question to ask first when
+   *  the new weight is far past the plan or the best (Lift16). */
+  const saveSetCorrection = async (
+    values: { weight: number; reps: number },
+    confirmed: boolean
+  ): Promise<SetValidationWarn | undefined> => {
     if (!editingSet || completionPendingRef.current || saved)
       throw new Error("This workout is already being saved.");
     const correctionUid = user?.uid;
@@ -1189,11 +1217,20 @@ export default function WorkoutSession({
       isBodyweight: values.weight === 0 && !best,
       timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
+      plannedWeight: weightToCheckAgainst(exercise, setLogs[exIdx] ?? []),
     });
     if (!validation.ok) throw new Error(validation.message);
+    if (validation.warn && !confirmed && set.confirmedWeight !== values.weight)
+      return validation.warn;
     const next = setLogs.map((sets, ei) =>
       sets.map((entry, si) =>
-        ei === exIdx && si === setIdx ? { ...entry, ...values } : entry
+        ei === exIdx && si === setIdx
+          ? {
+              ...entry,
+              ...values,
+              ...(validation.warn ? { confirmedWeight: values.weight } : {}),
+            }
+          : entry
       )
     );
     if (correctionUid && auth.currentUser?.uid !== correctionUid)
@@ -1204,8 +1241,8 @@ export default function WorkoutSession({
     setLastCompleted(null);
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     haptic();
-    if (validation.warn) toast.message(validation.warn.message);
-    else toast.success("Set updated");
+    toast.success("Set updated");
+    return undefined;
   };
 
   const handleUndo = () => {
@@ -2546,6 +2583,24 @@ export default function WorkoutSession({
           );
         })()}
       </div>
+
+      <ConfirmDialog
+        open={askingJump}
+        title={jumpQuestion?.warn.title ?? ""}
+        description={jumpQuestion?.warn.message}
+        confirmLabel={jumpQuestion?.warn.confirmLabel}
+        cancelLabel="Change it"
+        onCancel={() => {
+          setAskingJump(false);
+          if (jumpQuestion?.exIdx === currentExIndex)
+            setCurrentSetIndex(jumpQuestion.setIdx);
+        }}
+        onConfirm={() => {
+          setAskingJump(false);
+          if (jumpQuestion?.exIdx === currentExIndex)
+            void completeSet(jumpQuestion.setIdx, true);
+        }}
+      />
 
       <ConfirmDialog
         open={showFinishEarly}

@@ -3,7 +3,11 @@ import type { Workout } from "@/hooks/useWorkouts";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { db } from "@/lib/firebase";
-import { correctSavedWorkout } from "@/lib/workoutCorrection";
+import {
+  correctionToConfirm,
+  correctSavedWorkout,
+  type CorrectionQuestion,
+} from "@/lib/workoutCorrection";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
 import { toast } from "sonner";
 
@@ -31,6 +35,7 @@ export default function CorrectWorkoutSheet({
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const [error, setError] = useState("");
+  const [question, setQuestion] = useState<CorrectionQuestion | null>(null);
   const number = (value: string) => (value.trim() ? Number(value) : NaN);
   const changed =
     minutes !== String(workout.durationMinutes ?? 0) ||
@@ -41,8 +46,23 @@ export default function CorrectWorkoutSheet({
           set.reps !== String(workout.exercises[i].sets[j].reps)
       )
     );
-  async function save() {
+  async function save(confirmed: boolean) {
     if (pending.current || !changed) return;
+    const edits = {
+      durationMinutes: number(minutes),
+      exercises: sets.map((row) => ({
+        sets: row.map((set) => ({
+          weightKg: number(set.weightKg),
+          reps: number(set.reps),
+        })),
+      })),
+    };
+    // Lift16: a weight far past the set's plan asks first.
+    const asked = confirmed ? undefined : correctionToConfirm(workout, edits);
+    if (asked) {
+      setQuestion(asked);
+      return;
+    }
     pending.current = true;
     setSaving(true);
     setError("");
@@ -53,15 +73,7 @@ export default function CorrectWorkoutSheet({
         workout.id,
         workout.revision ?? 0,
         correctionId,
-        {
-          durationMinutes: number(minutes),
-          exercises: sets.map((row) => ({
-            sets: row.map((set) => ({
-              weightKg: number(set.weightKg),
-              reps: number(set.reps),
-            })),
-          })),
-        }
+        edits
       );
       toast.success("Workout corrected");
       onSaved();
@@ -82,6 +94,7 @@ export default function CorrectWorkoutSheet({
     field: "weightKg" | "reps",
     value: string
   ) {
+    setQuestion(null);
     setSets((before) =>
       before.map((row, ex) =>
         ex !== i
@@ -108,7 +121,7 @@ export default function CorrectWorkoutSheet({
         className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
-          void save();
+          void save(false);
         }}
       >
         <label
@@ -185,20 +198,48 @@ export default function CorrectWorkoutSheet({
             {error}
           </p>
         )}
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            fullWidth
-            disabled={saving}
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" fullWidth disabled={saving || !changed}>
-            {saving ? "Saving…" : "Save corrections"}
-          </Button>
-        </div>
+        {question ? (
+          <div className="space-y-3">
+            <div role="alert" className="space-y-1">
+              <p className="font-semibold">{question.title}</p>
+              <p className="text-sm text-muted-foreground">
+                {question.message}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                disabled={saving}
+                onClick={() => setQuestion(null)}
+              >
+                Change it
+              </Button>
+              <Button
+                fullWidth
+                disabled={saving}
+                onClick={() => void save(true)}
+              >
+                {saving ? "Saving…" : question.confirmLabel}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              disabled={saving}
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" fullWidth disabled={saving || !changed}>
+              {saving ? "Saving…" : "Save corrections"}
+            </Button>
+          </div>
+        )}
       </form>
     </Dialog>
   );

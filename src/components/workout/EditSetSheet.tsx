@@ -2,6 +2,13 @@ import { useId, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 
+/** The ask-first question (`SetValidationWarn`'s words). */
+interface SetQuestion {
+  title: string;
+  message: string;
+  confirmLabel: string;
+}
+
 export default function EditSetSheet({
   set,
   setName,
@@ -13,7 +20,13 @@ export default function EditSetSheet({
   /** The set as the workout screen names it: "set 2", "warm-up 1". */
   setName: string;
   timed: boolean;
-  onSave: (values: { weight: number; reps: number }) => Promise<void>;
+  /** Saves the set, or resolves to a question to ask first: a weight far
+   *  past today's plan or the best for these reps (Lift16). Saving again
+   *  with `confirmed` logs it. */
+  onSave: (
+    values: { weight: number; reps: number },
+    confirmed: boolean
+  ) => Promise<SetQuestion | undefined>;
   onClose: () => void;
 }) {
   const id = useId();
@@ -21,7 +34,38 @@ export default function EditSetSheet({
   const [reps, setReps] = useState(String(set.reps));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [question, setQuestion] = useState<SetQuestion | null>(null);
   const pending = useRef(false);
+  const save = async (confirmed: boolean) => {
+    if (pending.current) return;
+    if (!weight.trim() || !reps.trim()) {
+      setError("Enter a weight and a rep or time value.");
+      return;
+    }
+    pending.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      const asked = await onSave(
+        {
+          weight: Number(weight.replace(",", ".")),
+          reps: Number(reps.replace(",", ".")),
+        },
+        confirmed
+      );
+      if (asked) setQuestion(asked);
+      else onClose();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Couldn’t save your correction. Try again."
+      );
+    } finally {
+      pending.current = false;
+      setSaving(false);
+    }
+  };
   return (
     <BottomSheet
       open
@@ -36,32 +80,9 @@ export default function EditSetSheet({
     >
       <form
         className="p-4 space-y-4"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault();
-          if (pending.current) return;
-          if (!weight.trim() || !reps.trim()) {
-            setError("Enter a weight and a rep or time value.");
-            return;
-          }
-          pending.current = true;
-          setSaving(true);
-          setError(null);
-          try {
-            await onSave({
-              weight: Number(weight.replace(",", ".")),
-              reps: Number(reps.replace(",", ".")),
-            });
-            onClose();
-          } catch (cause) {
-            setError(
-              cause instanceof Error
-                ? cause.message
-                : "Couldn’t save your correction. Try again."
-            );
-          } finally {
-            pending.current = false;
-            setSaving(false);
-          }
+          void save(false);
         }}
       >
         <div className="grid grid-cols-2 gap-3">
@@ -71,7 +92,10 @@ export default function EditSetSheet({
               id={`${id}-weight`}
               inputMode="decimal"
               value={weight}
-              onChange={(event) => setWeight(event.target.value)}
+              onChange={(event) => {
+                setWeight(event.target.value);
+                setQuestion(null);
+              }}
               disabled={saving}
               aria-describedby={error ? `${id}-error` : undefined}
               className="ds-input min-h-11 font-mono tabular-nums"
@@ -83,7 +107,10 @@ export default function EditSetSheet({
               id={`${id}-reps`}
               inputMode="numeric"
               value={reps}
-              onChange={(event) => setReps(event.target.value)}
+              onChange={(event) => {
+                setReps(event.target.value);
+                setQuestion(null);
+              }}
               disabled={saving}
               aria-describedby={error ? `${id}-error` : undefined}
               className="ds-input min-h-11 font-mono tabular-nums"
@@ -99,12 +126,41 @@ export default function EditSetSheet({
             {error}
           </p>
         )}
-        <Button type="submit" fullWidth loading={saving}>
-          Save changes
-        </Button>
-        <Button variant="ghost" fullWidth disabled={saving} onClick={onClose}>
-          Cancel
-        </Button>
+        {question ? (
+          <>
+            <div role="alert" className="space-y-1">
+              <p className="font-semibold">{question.title}</p>
+              <p className="text-sm text-muted-foreground">
+                {question.message}
+              </p>
+            </div>
+            <Button fullWidth loading={saving} onClick={() => void save(true)}>
+              {question.confirmLabel}
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              disabled={saving}
+              onClick={() => setQuestion(null)}
+            >
+              Change it
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button type="submit" fullWidth loading={saving}>
+              Save changes
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              disabled={saving}
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+          </>
+        )}
       </form>
     </BottomSheet>
   );

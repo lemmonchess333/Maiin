@@ -1,0 +1,179 @@
+{
+  "exerciseId": "seated-calf-raise",
+  "version": "anatomy-v3-2026-10-13-reviewed-seated-calf-v1",
+  "width": 940,
+  "height": 1310,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-13T20:24:13.615252+00:00",
+  "reference": {
+    "path": "form-frames/seated-calf-raise/1.webp",
+    "sha256": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c"
+  },
+  "cueSha256": "75e543726d37111f3603d7255379ebd637c8c481148b1e52c044e9be39d69818",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 attached to all selected imagegen sources: bald faceless lean white-grey anatomy, neutral featureless pelvis, white trainers. No anatomical transforms, independent limb fitting or head/shoe grafts. Original sources, exact prompts and editable layers retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Complete 1024x1536 source scenes. Connected moving-unit window at(15,440), 990x660, uniformly normalized from1536x1024 with scale.64453125; no body-based fitting. One common empty-margin crop(60,80,1000,1390) gives940x1310 lossless delivery. Shared fixed equipment measured across six files."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native full-size stills and actual940x1310 playback inspected. Whole connected body/carriage generation naturally exposes previously occluded shoe and grip. Local source window includes connected forearms, torso, hips and complete legs; continuous upper boundary inspected. Slight source contour variation accepted under revised standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Generic plate-loaded seated calf machine. Shared floor/base, rear bearing, foot-platform front face and disengaged safety support assembled as equipment-only layers. Shared support swung rigidly24degrees about its original ground hinge. TKO722SC original assembly manual distinguishes separate safety bar from rear-pivoted power frame; illustration is not a branded exact replica."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Native source/contact crops and complete loops show both forefeet supported on the platform, knees under pads and hands on the moving grips. Lower shoes flatter than raised; earlier 2D transverse-line plane inference explicitly withdrawn. Scanline anchors verify fixed gear segments only; no calibrated3D ankle/contact claim."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Three generated physical states: lower, small near-top transition and raised. Heel and connected loaded carriage move together; shared ground gear/safety assembly remains fixed. Panatta official demonstrationDJkTjfR0Ono supplies actual lower/intermediate/raised pose references. Qualitative illustrated motion, not a clinical or3D mechanical calibration."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Calves primary#7B72E9; secondary empty. Source tint neutralized and reapplied using inherited luminance, shading and grey contours. Exact primary pixels measured in all three states; outside calf colour scope changed0. Colour ownership manually inspected at native scale."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Stretch/Rise/Squeeze/Hold/Lower/Reset with sourcePoseOrder1,2,3,3,2,1. Near-top state is not halfway: qualitative t0,.875,1,1,.875,0. Three physical poses honestly reused through six distinct file paths; controlled heel movement cues match the reviewed illustrations."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native-final-trace records actual940x1310 decoded playback of all six paths including6to1. Six lossless WebP files match their source crops exactly. Three multilayer OpenRaster files reopen pixel-exact; hashes disclose repeated poses."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light: all six decoded940x1310 paths and6to1 observed. Full figure/gear, captions, key and controls reviewed. Pause, manual selection, wrap and slower timing passed; final standard card and registered paths follow in integration validation. Final registered light review passed at390x844, all six and6to1; standard344x480 cutout, no staging transform/middleware; registered-review.json. Pause/manual wrap/slower timing passed, observed console errors0."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark: all six decoded paths and6to1 observed. Complete body/equipment and colour hierarchy reviewed; controls and observed console error count0. Final registered standard-card review follows in integration validation. Final registered dark review passed at390x844, all six and6to1; standard344x480 cutout, no staging transform/middleware; registered-review.json. Pause/manual wrap/slower timing passed, observed console errors0."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/seated-calf-raise/1.webp",
+      "sha256": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/2.webp",
+      "sha256": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/3.webp",
+      "sha256": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/4.webp",
+      "sha256": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/5.webp",
+      "sha256": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/6.webp",
+      "sha256": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": [
+    "Three genuine poses reused through six playback files; near-top state and uneven spacing disclosed.",
+    "Minor generated neutral contour and far-platform profile variation; no calibrated3D or precise halfway claim.",
+    "Contact interpretation uses actual pose references and full native motion, not imageY against a transverse line."
+  ],
+  "integrationValidation": "Registered native/mobile/standard-card review passed; all875 prior artwork and canonical unchanged. Local lint/art/drafts/cycles/build/dist-size passed. Windows full suite79failed/12888passed/409skipped; fresh clean6172 main83failed/12882passed/409skipped, all branch failure headers occur in baseline. Focused artwork/player276passed. Latest main integration and required Linux CI pending before merge/completion."
+}

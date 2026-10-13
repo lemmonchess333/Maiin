@@ -1,0 +1,46 @@
+[
+  {
+    "file": "1-lower-without-safety.png",
+    "nearHeelLeftWhiteEdge": {
+      "x": 337,
+      "medianY": 970.0,
+      "minY": 961,
+      "maxY": 980
+    },
+    "sha256": "010691fa36dbe22dc367bd8ae078b6d445757c867f0d78a1fb0c6c90b990ab3f",
+    "limits": "Neutral shoe silhouette landmark in a fixed ROI, not a 3D ankle-angle measurement or a semantic guarantee."
+  },
+  {
+    "file": "3-raised-without-safety.png",
+    "nearHeelLeftWhiteEdge": {
+      "x": 330,
+      "medianY": 930.0,
+      "minY": 921,
+      "maxY": 940
+    },
+    "sha256": "3cde442f1d9adb1f4a1f36ab83451c42e7384bb50fdd4064c78656b5c52b4f2e",
+    "limits": "Neutral shoe silhouette landmark in a fixed ROI, not a 3D ankle-angle measurement or a semantic guarantee."
+  },
+  {
+    "file": "middle-whole-scene-draft.png",
+    "nearHeelLeftWhiteEdge": {
+      "x": 330,
+      "medianY": 929.0,
+      "minY": 920,
+      "maxY": 939
+    },
+    "sha256": "87152ae4158953575f0a87febf3161ec2d8a00363eb105cced9445a5c0c19bac",
+    "limits": "Neutral shoe silhouette landmark in a fixed ROI, not a 3D ankle-angle measurement or a semantic guarantee."
+  },
+  {
+    "file": "middle-whole-scene-corrected-draft.png",
+    "nearHeelLeftWhiteEdge": {
+      "x": 327,
+      "medianY": 935.0,
+      "minY": 926,
+      "maxY": 944
+    },
+    "sha256": "2ad66d01bbfa310471906079b69c7e68030e93c01035e4fdaf7fc8ee3d4cc163",
+    "limits": "Neutral shoe silhouette landmark in a fixed ROI, not a 3D ankle-angle measurement or a semantic guarantee."
+  }
+]

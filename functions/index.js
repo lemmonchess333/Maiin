@@ -189,6 +189,11 @@ const {
   buildFoodTextRequest,
   FOOD_TEXT_MAX_CHARS,
 } = require("./lib/foodTextRequest");
+const {
+  foodModelUrl,
+  foodGenerationConfig,
+  foodResponseText,
+} = require("./lib/foodModel");
 
 // Module-load self-check: in deployed (non-emulator) functions,
 // the final resolved Stripe return-URL allowlist MUST include the
@@ -1400,10 +1405,7 @@ exports.analyzeFood = functions
           'Analyze this food image and provide nutritional estimates. Return ONLY a valid JSON object with this exact format, no other text: {"foodName": "name of the food/meal", "items": [{"name": "item name", "portionSize": "estimated portion", "calories": 0, "protein": 0, "carbs": 0, "fat": 0}], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high/medium/low"}' +
           ' If the image shows food packaging or a nutrition label, estimate from the label instead. If the image does not contain any food, drink, or food packaging, return exactly: {"foodName": "No food detected", "items": [], "totalCalories": 0, "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high"}';
 
-        const url =
-          "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-          projectId +
-          "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+        const url = foodModelUrl(projectId);
 
         const response = await fetch(url, {
           method: "POST",
@@ -1421,16 +1423,12 @@ exports.analyzeFood = functions
                 ],
               },
             ],
-            generationConfig: {
-              temperature: 0.1,
-              // 2048, was 1024: a busy multi-item plate costs ~60
-              // output tokens per item plus any prose the model wraps
-              // around the JSON, and a response truncated mid-JSON by
-              // the cap fails JSON.parse below — charging the user's
-              // rate-limit slot for a guaranteed 500. Flash output
-              // tokens are cheap; headroom is the fix.
-              maxOutputTokens: 2048,
-            },
+            // The model and its settings: lib/foodModel.js. A busy
+            // multi-item plate costs ~60 output tokens per item, and the
+            // model's thinking counts against the same cap, so the cap
+            // has headroom: a response cut off mid-JSON fails the parse
+            // below and charges the user's rate-limit slot for a 500.
+            generationConfig: foodGenerationConfig(),
           }),
         });
 
@@ -1447,17 +1445,9 @@ exports.analyzeFood = functions
         }
         functions.logger.info("analyzeFood.usage", vertexUsage(data));
 
-        let responseText = "";
-        if (
-          data.candidates &&
-          data.candidates[0] &&
-          data.candidates[0].content &&
-          data.candidates[0].content.parts
-        ) {
-          responseText = data.candidates[0].content.parts[0].text;
-        } else if (data.predictions && data.predictions[0]) {
-          responseText = data.predictions[0];
-        } else {
+        // The answer's text parts, the model's thinking left out.
+        const responseText = foodResponseText(data);
+        if (responseText === null) {
           console.error(
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })
@@ -1615,10 +1605,7 @@ exports.analyzeFoodText = functions
           .applicationDefault()
           .getAccessToken();
 
-        const url =
-          "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-          projectId +
-          "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
+        const url = foodModelUrl(projectId);
 
         // Instructions ride in systemInstruction; the description is the
         // sole user part, verbatim — the user text can never reach the
@@ -1644,15 +1631,8 @@ exports.analyzeFoodText = functions
         }
         functions.logger.info("analyzeFoodText.usage", vertexUsage(data));
 
-        let responseText = "";
-        if (
-          data.candidates &&
-          data.candidates[0] &&
-          data.candidates[0].content &&
-          data.candidates[0].content.parts
-        ) {
-          responseText = data.candidates[0].content.parts[0].text;
-        } else {
+        const responseText = foodResponseText(data);
+        if (responseText === null) {
           console.error(
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })

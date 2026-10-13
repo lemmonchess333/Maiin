@@ -175,8 +175,9 @@ test.describe("core user journeys", () => {
 
     // Fill the first set and mark it complete — the DONE circle for a
     // completed set leaves the "Mark set complete" state, so the
-    // remaining count drops by exactly one.
-    await page.getByLabel("Set 1 weight").first().fill("40");
+    // remaining count drops by exactly one. The weight stays the plan's:
+    // a typed one more than twice it asks first (Lift16), and the plan's
+    // weight depends on the lift the bootstrapped day opens with.
     await page.getByLabel("Set 1 reps").first().fill("8");
     const doneButtons = page.getByLabel("Mark set complete");
     const before = await doneButtons.count();
