@@ -29,6 +29,7 @@ import {
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import {
   balancePushPull,
+  accessoriesPastCeiling,
   hingeAccessoryPastCeiling,
   judgementLandmark,
   reconcileToLandmarks,
@@ -44,6 +45,7 @@ import {
 } from "./sessionFit";
 import {
   applyEquipmentFilterToWorkouts,
+  dropUnavailableAccessories,
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
@@ -1718,6 +1720,22 @@ function hingeDropHolds(
   after: WorkoutDay[],
   ceiling: (muscle: JudgementMuscle) => number
 ): boolean {
+  return dropHolds(before, after, ceiling, "Hamstrings");
+}
+
+/**
+ * Whether a week that has let a lift go for `muscle`'s ceiling, fitted and
+ * balanced again, is the one to keep: that muscle comes down, no muscle ends
+ * further over its ceiling, every muscle keeps its two days a week, and,
+ * when a floor is given, the muscle stays at it or above (Lift12).
+ */
+function dropHolds(
+  before: WorkoutDay[],
+  after: WorkoutDay[],
+  ceiling: (muscle: JudgementMuscle) => number,
+  muscle: JudgementMuscle,
+  floor?: (muscle: JudgementMuscle) => number
+): boolean {
   const overBy = (week: WorkoutDay[]) =>
     new Map(
       weeklyVolumeByJudgementMuscle(week).map((v) => [
@@ -1727,10 +1745,14 @@ function hingeDropHolds(
     );
   const was = overBy(before);
   const now = overBy(after);
+  const sets =
+    weeklyVolumeByJudgementMuscle(after).find((v) => v.muscle === muscle)
+      ?.sets ?? 0;
   return (
-    (now.get("Hamstrings") ?? 0) < (was.get("Hamstrings") ?? 0) &&
-    [...now].every(([muscle, by]) => by <= (was.get(muscle) ?? 0)) &&
-    keepsWeeklyFrequency(before, after)
+    (now.get(muscle) ?? 0) < (was.get(muscle) ?? 0) &&
+    [...now].every(([m, by]) => by <= (was.get(m) ?? 0)) &&
+    keepsWeeklyFrequency(before, after) &&
+    (floor === undefined || sets >= floor(muscle))
   );
 }
 
@@ -2021,6 +2043,13 @@ export function generateProgram(
       loadCtx,
       limits.barbellAtHome
     );
+    // Lift14: a supporting lift the kit can't do goes when its day trains
+    // the muscle with one it can.
+    workouts = dropUnavailableAccessories(
+      workouts,
+      limits.equipment,
+      limits.barbellAtHome
+    );
   }
   // Lift4 (5): each lift's sets, reps and progression come from its role
   // (`roleTable.ts`), once the identity passes have settled who is where;
@@ -2078,6 +2107,30 @@ export function generateProgram(
     if (!hingeDropHolds(settled, next, ceiling)) break;
     workouts = without;
     settled = next;
+  }
+  // Lift12: every muscle's ceiling is kept the same way. While a muscle sits
+  // over it once the week is balanced, a supporting lift of its own comes
+  // out (`accessoriesPastCeiling`), and the week is fitted and balanced
+  // again; it stays out only when that week is the better one and the
+  // muscle keeps its floor (`dropHolds`), and the next lift is tried when it
+  // isn't.
+  const floor = (m: JudgementMuscle) =>
+    judgementLandmark(primaryGoal, m, toExperience(experience)).low;
+  for (;;) {
+    let dropped = false;
+    for (const { instanceId, muscle } of accessoriesPastCeiling(
+      settled,
+      ceiling
+    )) {
+      const without = withoutLift(workouts, instanceId);
+      const next = settle(without);
+      if (!dropHolds(settled, next, ceiling, muscle, floor)) continue;
+      workouts = without;
+      settled = next;
+      dropped = true;
+      break;
+    }
+    if (!dropped) break;
   }
   workouts = settled;
 
