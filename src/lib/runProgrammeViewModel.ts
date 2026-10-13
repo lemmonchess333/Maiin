@@ -248,9 +248,8 @@ export type RunCardStatus =
  * The word before the date on Train's run card, for the selected day.
  * "Up next" belongs to one run: the first still to do from today. A later
  * one is "Upcoming", the lift half's word for a session after the next
- * (`LIFT_DAY_STATUS_LABEL`). Every run after tomorrow used to say "Up
- * next", so Wednesday's run and Saturday's both claimed it while
- * Tuesday's came first.
+ * (`LIFT_DAY_STATUS_LABEL`), so two runs in a week never both claim to be
+ * the next one.
  */
 export function runCardStatus(
   selectedKey: string,
