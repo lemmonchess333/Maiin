@@ -1989,3 +1989,67 @@ describe("ProgrammeRunSection — a race plan's weeks ahead (R23)", () => {
     expect(screen.queryByText("The weeks ahead")).not.toBeInTheDocument();
   });
 });
+
+describe("ProgrammeRunSection — one run is up next", () => {
+  /* Monday 19 October, with runs on Tuesday, Wednesday and Saturday. Every
+     run after tomorrow said "Up next", so Wednesday's and Saturday's both
+     claimed it while Tuesday's came first. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 19, 12, 0, 0));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const week = (tuesday: ScheduledRunDay["status"] = "planned") =>
+    makeProgramState([
+      makeRunDay({
+        id: "runday_tue",
+        date: "2026-10-20",
+        weekKey: "2026-10-19",
+        dayIndex: 2,
+        templateId: "easy_30",
+        status: tuesday,
+      }),
+      makeRunDay({
+        id: "runday_wed",
+        date: "2026-10-21",
+        weekKey: "2026-10-19",
+        dayIndex: 3,
+        templateId: "easy_30_strides",
+      }),
+      makeRunDay({
+        id: "runday_sat",
+        date: "2026-10-24",
+        weekKey: "2026-10-19",
+        dayIndex: 6,
+        templateId: "long_15k",
+        type: "long",
+      }),
+    ]);
+
+  const open = (name: string) =>
+    fireEvent.click(
+      within(screen.getByRole("tablist", { name: "Run week" })).getByRole(
+        "tab",
+        { name }
+      )
+    );
+
+  it("calls the runs after the next one upcoming", () => {
+    renderSection(commonProps(), week());
+    open("Easy 30");
+    expect(screen.getByRole("region", { name: /^Tomorrow · / })).toBeVisible();
+    open("Easy 30 + strides");
+    expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
+    open("Long 15K");
+    expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
+  });
+
+  it("moves Up next on when the run before is skipped", () => {
+    renderSection(commonProps(), week("skipped"));
+    open("Easy 30 + strides");
+    expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();
+    open("Long 15K");
+    expect(screen.getByRole("region", { name: /^Upcoming · / })).toBeVisible();
+  });
+});

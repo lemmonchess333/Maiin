@@ -164,6 +164,7 @@ import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
+  runCardStatus,
   runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
@@ -893,16 +894,15 @@ export default function ProgrammeRunSection({
     (heroState === "race-today" || heroState === "race-recent");
 
   // Selected-day card eyebrow — temporal status relative to the SELECTED
-  // date (Today / Tomorrow / Pending for a past-but-startable slot / weekday).
-  // The card always leads with the calendar date too (selectedDateLabel), so
-  // the user never loses their place after tapping around the selector.
-  const selectedEyebrow = (() => {
-    const tomorrowKey = localDateString(addLocalDays(new Date(), 1));
-    if (selectedDateKey === todayKeyDerivation) return "Due today";
-    if (selectedDateKey === tomorrowKey) return "Tomorrow";
-    if (selectedDateKey < todayKeyDerivation) return "Pending";
-    return "Up next";
-  })();
+  // date (Due today / Tomorrow / Pending for a past-but-startable slot / Up
+  // next for the first run still to do / Upcoming after it). The card
+  // always leads with the calendar date too (selectedDateLabel), so the
+  // user never loses their place after tapping around the selector.
+  const selectedEyebrow = runCardStatus(
+    selectedDateKey,
+    { today: todayKeyDerivation, tomorrow: tomorrowKeyDerivation },
+    runWindow
+  );
 
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.

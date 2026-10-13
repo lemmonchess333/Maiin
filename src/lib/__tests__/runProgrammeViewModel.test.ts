@@ -11,6 +11,7 @@ import {
   buildRaceCockpitViewModel,
   resolveRunPlanSurface,
   hasHybridInterference,
+  runCardStatus,
 } from "@/lib/runProgrammeViewModel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -208,5 +209,76 @@ describe("hasHybridInterference (scheduler's 'UI can flag it' note, wired)", () 
       false
     );
     expect(hasHybridInterference({ hasLift: true, runType: null })).toBe(false);
+  });
+});
+
+describe("runCardStatus", () => {
+  // A week from Monday 19 October: runs on Tuesday, Wednesday and Saturday.
+  const keys = { today: "2026-10-19", tomorrow: "2026-10-20" };
+  const day = (
+    dateKey: string,
+    run: "none" | "to do" | "done" | "skipped" = "none"
+  ) => ({
+    dateKey,
+    run: {
+      runDay: run === "none" ? null : { id: dateKey },
+      isCompleted: run === "done",
+      isTerminal: run === "done" || run === "skipped",
+    },
+  });
+  const week = [
+    day("2026-10-19"),
+    day("2026-10-20", "to do"),
+    day("2026-10-21", "to do"),
+    day("2026-10-22"),
+    day("2026-10-23"),
+    day("2026-10-24", "to do"),
+    day("2026-10-25"),
+  ];
+
+  it("says Up next for one run only: the first still to do", () => {
+    expect(runCardStatus("2026-10-20", keys, week)).toBe("Tomorrow");
+    expect(runCardStatus("2026-10-21", keys, week)).toBe("Upcoming");
+    expect(runCardStatus("2026-10-24", keys, week)).toBe("Upcoming");
+  });
+
+  it("gives Up next to a later run when nothing comes before it", () => {
+    const later = [
+      day("2026-10-19"),
+      day("2026-10-20"),
+      day("2026-10-21"),
+      day("2026-10-22", "to do"),
+      day("2026-10-23"),
+      day("2026-10-24", "to do"),
+    ];
+    expect(runCardStatus("2026-10-22", keys, later)).toBe("Up next");
+    expect(runCardStatus("2026-10-24", keys, later)).toBe("Upcoming");
+  });
+
+  it("passes over runs already done or skipped", () => {
+    const cleared = [
+      day("2026-10-19", "done"),
+      day("2026-10-20"),
+      day("2026-10-21", "skipped"),
+      day("2026-10-22", "to do"),
+    ];
+    expect(runCardStatus("2026-10-22", keys, cleared)).toBe("Up next");
+  });
+
+  it("counts today's run still to do as the one up next", () => {
+    const today = [day("2026-10-19", "to do"), ...week.slice(1)];
+    expect(runCardStatus("2026-10-19", keys, today)).toBe("Due today");
+    expect(runCardStatus("2026-10-21", keys, today)).toBe("Upcoming");
+  });
+
+  it("leaves a missed run from earlier in the week out of it", () => {
+    const missed = [
+      day("2026-10-17", "to do"),
+      day("2026-10-19"),
+      day("2026-10-20"),
+      day("2026-10-21", "to do"),
+    ];
+    expect(runCardStatus("2026-10-17", keys, missed)).toBe("Pending");
+    expect(runCardStatus("2026-10-21", keys, missed)).toBe("Up next");
   });
 });
