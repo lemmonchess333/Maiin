@@ -9,7 +9,10 @@ import {
 import type { Workout } from "@/hooks/useWorkouts";
 import CorrectWorkoutSheet from "../CorrectWorkoutSheet";
 const h = vi.hoisted(() => ({ save: vi.fn() }));
-vi.mock("@/lib/workoutCorrection", () => ({ correctSavedWorkout: h.save }));
+vi.mock("@/lib/workoutCorrection", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/workoutCorrection")>()),
+  correctSavedWorkout: h.save,
+}));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/hooks/useWorkoutDraft", () => ({
   createWorkoutCompletionId: () => "stable-correction",
@@ -67,4 +70,44 @@ it("retains corrections after failure, retries the same revision and accepts onl
   await act(async () => finish());
   await waitFor(() => expect(onSaved).toHaveBeenCalledOnce());
   expect(onClose).not.toHaveBeenCalled();
+});
+
+it("asks before saving a weight more than twice the set's plan (Lift16)", async () => {
+  h.save.mockResolvedValue(undefined);
+  const onSaved = vi.fn();
+  render(
+    <CorrectWorkoutSheet
+      uid="u1"
+      workout={
+        {
+          id: "lift",
+          revision: 1,
+          durationMinutes: 40,
+          exercises: [
+            {
+              exerciseId: "lateral-raise",
+              exerciseName: "Lateral Raise",
+              sets: [{ reps: 12, weightKg: 12.5, plannedWeightKg: 12.5 }],
+            },
+          ],
+        } as Workout
+      }
+      onClose={vi.fn()}
+      onSaved={onSaved}
+    />
+  );
+  fireEvent.change(screen.getByLabelText("Set 1 weight (kg)"), {
+    target: { value: "125" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save corrections" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "125 kg?This set was planned at 12.5 kg."
+  );
+  expect(h.save).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Change it" }));
+  expect(screen.queryByRole("alert")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Save corrections" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save 125 kg" }));
+  await waitFor(() => expect(onSaved).toHaveBeenCalled());
+  expect(h.save.mock.calls[0][5].exercises[0].sets[0].weightKg).toBe(125);
 });

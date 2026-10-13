@@ -23,6 +23,42 @@ export interface WorkoutEdits {
   exercises: { sets: { weightKg: number; reps: number }[] }[];
 }
 
+/** What a correction asks before it saves (Lift16). */
+export interface CorrectionQuestion {
+  title: string;
+  message: string;
+  confirmLabel: string;
+}
+
+/**
+ * The first weight this correction changes to more than twice what its set
+ * was planned at (or logged at, when that was more), as the question to ask
+ * before saving: the plan follows a corrected session as it follows a
+ * finished one, so a typo here moves next week's weight too.
+ */
+export function correctionToConfirm(
+  workout: Workout,
+  edits: WorkoutEdits
+): CorrectionQuestion | undefined {
+  for (const [i, exercise] of workout.exercises.entries())
+    for (const [j, set] of exercise.sets.entries()) {
+      const weight = edits.exercises[i]?.sets[j]?.weightKg;
+      if (weight === undefined || weight === set.weightKg) continue;
+      const planned = set.plannedWeightKg ?? 0;
+      const from = Math.max(planned, set.weightKg);
+      if (!(from > 0 && weight > 2 * from)) continue;
+      return {
+        title: `${weight} kg?`,
+        message:
+          from === planned
+            ? `This set was planned at ${planned} kg.`
+            : `It was logged at ${set.weightKg} kg.`,
+        confirmLabel: `Save ${weight} kg`,
+      };
+    }
+  return undefined;
+}
+
 /** Only performed facts can change; identity, date and prescription stay intact. */
 export function correctedWorkout(
   workout: Workout,
