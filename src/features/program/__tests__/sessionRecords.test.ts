@@ -66,6 +66,13 @@ describe("session record corrections", () => {
     });
   });
 
+  it("counts a jump the person said yes to (Lift16)", () => {
+    const after = rebuild([set(80, { confirmedWeight: 80 })]);
+    expect(after.map["Bench Press"]["8rm"]?.weight).toBe(80);
+    // A yes is for the weight it was given; a set edited since isn't.
+    expect(rebuild([set(85, { confirmedWeight: 80 })]).map).toEqual(baseline);
+  });
+
   it("excludes undone, warm-up, invalid, suspicious and timed sets", () => {
     const after = rebuild([
       set(65, { completed: false }),

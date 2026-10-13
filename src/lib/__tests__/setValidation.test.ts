@@ -142,6 +142,54 @@ describe("validateSet — huge-jump warn", () => {
   });
 });
 
+describe("validateSet — past today's plan (Lift16)", () => {
+  it("asks about more than twice the planned weight, first session included", () => {
+    const r = validateSet({ reps: 12, weight: 125, plannedWeight: 12.5 });
+    expect(r.ok).toBe(true);
+    if (r.ok)
+      expect(r.warn).toMatchObject({
+        kind: "past-plan",
+        title: "125 kg?",
+        message: "Today's plan is 12.5 kg.",
+        confirmLabel: "Log 125 kg",
+        fromKg: 12.5,
+        toKg: 125,
+      });
+  });
+
+  it("logs twice the plan, or anything under it, without asking", () => {
+    for (const weight of [25, 15, 5]) {
+      const r = validateSet({ reps: 12, weight, plannedWeight: 12.5 });
+      if (r.ok) expect(r.warn).toBeUndefined();
+    }
+  });
+
+  it("names the plan before the best when both are passed", () => {
+    const r = validateSet({
+      reps: 5,
+      weight: 205,
+      plannedWeight: 92.5,
+      currentBestForBucket: 95,
+    });
+    if (r.ok) expect(r.warn?.kind).toBe("past-plan");
+  });
+
+  it("asks against the best for these reps", () => {
+    const r = validateSet({ reps: 5, weight: 130, currentBestForBucket: 100 });
+    if (r.ok)
+      expect(r.warn).toMatchObject({
+        title: "130 kg?",
+        message: "Your best at these reps is 100 kg.",
+        confirmLabel: "Log 130 kg",
+      });
+  });
+
+  it("has no plan to compare with at 0 kg planned", () => {
+    const r = validateSet({ reps: 8, weight: 20, plannedWeight: 0 });
+    if (r.ok) expect(r.warn).toBeUndefined();
+  });
+});
+
 describe("validateSet — false-PR regression", () => {
   it("a fat-fingered 200kg over 100kg PR surfaces as warn, not silent acceptance", () => {
     // This is the exact pre-PR-E regression: a 200kg fat-finger over
