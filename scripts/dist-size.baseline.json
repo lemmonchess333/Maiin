@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6242321,
+  "total": 6244785,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2561,
@@ -60,7 +60,7 @@
     "clock": 170,
     "Collapse": 724,
     "commandOutbox": 1588,
-    "CommentPanels": 8861,
+    "CommentSheetFrame": 11325,
     "compass": 252,
     "CompletionExtras": 7353,
     "confetti.module": 10696,

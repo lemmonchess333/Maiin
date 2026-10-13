@@ -1,9 +1,11 @@
 /**
- * Comments on a Space post: someone else's comment can be reported (as a
- * `space_post_comment`, the id shape the server validates) and its author
- * blocked; a blocked author's comments are left out; your own comment is
- * deleted after a confirmation inside the sheet; and objectionable text is
- * refused with the sentence the server refuses it with.
+ * Comments on a Space post: the sheet is the feed's (its title with the
+ * card's count, its empty and failed states, its Send); someone else's
+ * comment can be reported (as a `space_post_comment`, the id shape the
+ * server validates) and its author blocked; a blocked author's comments are
+ * left out; your own comment is deleted after a confirmation inside the
+ * sheet; and objectionable text is refused with the sentence the server
+ * refuses it with.
  */
 import { vi, expect, it, describe, afterEach, beforeEach } from "vitest";
 import {
@@ -115,12 +117,44 @@ async function openSheet() {
         postId="p1"
         open
         onOpenChange={vi.fn()}
+        commentCount={2}
         onCountChange={onCountChange}
       />
     );
   });
   return { onCountChange };
 }
+
+describe("the sheet, as the feed's", () => {
+  it("is titled with the count the post's card shows", async () => {
+    await openSheet();
+    expect(screen.getByRole("dialog", { name: "Comments (2)" })).toBeVisible();
+  });
+
+  it("says a post with no comments has none, as the feed does", async () => {
+    H.getSpacePostComments.mockResolvedValue([]);
+    await openSheet();
+    expect(screen.getByText("No comments yet")).toBeInTheDocument();
+    expect(
+      screen.getByText("Be the first to leave a comment")
+    ).toBeInTheDocument();
+  });
+
+  it("says a failed read failed, not that there are none, and reads again", async () => {
+    H.getSpacePostComments.mockRejectedValueOnce(new Error("offline"));
+    await openSheet();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load comments"
+    );
+    expect(screen.queryByText("No comments yet")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    });
+    expect(H.getSpacePostComments).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Strong finish")).toBeInTheDocument();
+  });
+});
 
 describe("someone else's comment", () => {
   it("is reported as a space_post_comment, space:post:comment", async () => {
@@ -204,7 +238,7 @@ describe("the word filter", () => {
       target: { value: "this hill sucks" },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Post comment" }));
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
     });
     expect(toast.error).toHaveBeenCalledWith(OBJECTIONABLE_COMMENT_MESSAGE);
     expect(H.addSpacePostComment).not.toHaveBeenCalled();
@@ -223,7 +257,7 @@ describe("the word filter", () => {
       target: { value: "Nice one" },
     });
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Post comment" }));
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
     });
     expect(H.addSpacePostComment).toHaveBeenCalledTimes(1);
     expect(toast.error).toHaveBeenCalledWith(
@@ -242,6 +276,6 @@ describe("SpaceCommentSheet — a restricted account (S4e)", () => {
     await openSheet();
     expect(screen.getByText("Your account is restricted")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Add a comment…")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Post comment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
   });
 });
