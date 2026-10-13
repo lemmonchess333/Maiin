@@ -97,10 +97,12 @@ describe("fitSessionsToTime — a new plan, built to fit (Lift4 (5))", () => {
   // the first day's lifts may go.
   const twice = () => [fullBody(), { ...fullBody(), dayName: "Again" }];
 
-  it("then drops isolations before a main lift loses a set", () => {
+  it("then takes a main lift to two sets before a muscle loses its second day (Lift11)", () => {
+    // Every isolation here is its muscle's second day: the squat gives its
+    // third set and the calf raise stays.
     const [day] = fitSessionsToTime(twice(), 60);
     expect(shape(day)).toBe(
-      "bench-press 3, squat 3, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2"
+      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2"
     );
     expect(minutesOf(day, 60)).toBeLessThanOrEqual(60);
   });
@@ -141,8 +143,9 @@ describe("fitSessionsToTime — a new plan, built to fit (Lift4 (5))", () => {
   });
 
   it("drops a lift whose muscle is worked elsewhere before its last", () => {
-    // The calf raise is the week's only calf work, the crunch is not: at an
-    // hour the crunch goes and the calf raise stays.
+    // The calf raise is the week's only calf work, the crunch is not: once
+    // the main lifts are at two sets, the crunch goes and the calf raise
+    // stays.
     const other: WorkoutDay = {
       ...fullBody(),
       dayName: "Other",
@@ -150,7 +153,7 @@ describe("fitSessionsToTime — a new plan, built to fit (Lift4 (5))", () => {
         (e) => e.exerciseId !== "standing-calf-raise"
       ),
     };
-    const [fitted] = fitSessionsToTime([fullBody(), other], 60);
+    const [fitted] = fitSessionsToTime([fullBody(), other], 54);
     const ids = fitted.exercises.map((e) => e.exerciseId);
     expect(ids).toContain("standing-calf-raise");
     expect(ids).not.toContain("cable-crunch");
@@ -205,12 +208,11 @@ describe("fitSessionsToTime — every muscle on two days, and the lifts added fo
     exercises: [...fullBody().exercises, raise("own-raise")],
   });
 
-  it("lets an added lift go before the plan's own, and gives back the sets it took", () => {
-    // In 68 minutes the day's own six lifts fit with their isolations at two
-    // sets. Neither added lift fits however the sets are cut, and each
-    // muscle they work has the plan's own lift on the other day, so both
-    // go, and the day is fitted again without them: the compounds keep the
-    // third sets that were cut to make room.
+  it("lets an added lift that costs no muscle a day go first, and gives back the sets it took", () => {
+    // The leg press was added, and the squats work the quads on both days:
+    // it goes before anything else gives. The added raise is the side
+    // delts' second day (the other day has the plan's own), so it stays
+    // while a main lift gives its third set (Lift11).
     const extras = new Set(["leg", "raise"]);
     const day: WorkoutDay = {
       ...fullBody(),
@@ -227,10 +229,16 @@ describe("fitSessionsToTime — every muscle on two days, and the lifts added fo
     };
     const [fitted] = fitSessionsToTime([day, withRaise()], 68, extras);
     expect(shape(fitted)).toBe(
-      "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 2, standing-calf-raise 2"
+      "bench-press 3, squat 2, lat-pulldown 2, romanian-deadlift 2, cable-crunch 2, standing-calf-raise 2, lateral-raise 2"
     );
+    // Without the leg press from the start, the day comes out the same: no
+    // set stays cut for a lift that went.
+    const withoutLeg: WorkoutDay = {
+      ...day,
+      exercises: day.exercises.filter((e) => e.instanceId !== "leg"),
+    };
     expect(shape(fitted)).toBe(
-      shape(fitSessionsToTime([fullBody(), withRaise()], 68)[0])
+      shape(fitSessionsToTime([withoutLeg, withRaise()], 68, extras)[0])
     );
   });
 

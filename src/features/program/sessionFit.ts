@@ -14,20 +14,23 @@
  *   1. isolations' sets, down to two each, the largest first and then from
  *      the end of the day;
  *   2. other compounds' sets, down to two, the same way;
- *   3. isolations dropped, one at a time: first those whose muscles are
- *      still worked on two days a week (`weeklyFrequency.ts`), then the
- *      lifts added for the two days, then those whose muscles still get
- *      some direct work (their primary muscle's) in the week;
+ *   3. isolations dropped, one at a time, whose muscles are still worked on
+ *      two days a week (`weeklyFrequency.ts`), then any lift added for the
+ *      two days that costs no muscle a day;
  *   4. main lifts' sets, down to two, the day's first main lift last;
- *   5. other compounds dropped, on 3's first and last conditions;
- *   6. isolations, then other compounds, dropped, a muscle's last included.
+ *   5. isolations dropped: the lifts added for the two days, then those
+ *      whose muscles still get some direct work (their primary muscle's) in
+ *      the week;
+ *   6. other compounds dropped, on 3's condition and then on 5's last;
+ *   7. isolations, then other compounds, dropped, a muscle's last included.
  *
  * Time wins in the end, as the plan promised; a muscle's last direct lift is
  * only kept while something else can give way, so a plan keeps its one calf
- * slot while it can. A small muscle's second day gives way before a main
- * lift's sets do, so a short session never trades its main lifts for a
- * second day of lateral raises; a lift whose muscles are worked on two other
- * days goes before one that is a muscle's second. Credit from other lifts
+ * slot while it can. A main lift's third set gives way before a muscle's
+ * second day (Lift11): every muscle on two days a week is Lift4 (5)'s first
+ * rule and two sets its floor for a main lift, so a 45-minute session keeps
+ * the calves' and abs' second day while a main lift can go to two sets; a
+ * lift whose muscles are worked on two other days goes before either. Credit from other lifts
  * counts toward the two days, as the volume model counts it, but not as
  * direct work, or a leg curl's credit to the calves would let every calf
  * raise go. A drop takes the latest lift in the day whose going makes the
@@ -210,8 +213,8 @@ function kindOf(ex: ProgramExercise): Kind {
 
 /** What a drop must leave the week: each muscle's days (`weeklyFrequency`),
  *  its direct work, or nothing; or, for "extra", the lift must be one added
- *  for the two days. */
-type Keeps = "frequency" | "extra" | "coverage" | "nothing";
+ *  for the two days, and for "spare", one added that costs no muscle a day. */
+type Keeps = "frequency" | "spare" | "extra" | "coverage" | "nothing";
 
 /** Whether a drop leaves the week what `rule` asks: `dropped` is the lift,
  *  `without` the day after it. */
@@ -256,7 +259,9 @@ function fitDay(
       .map((_, i) => i)
       .filter(
         (i) =>
-          (keeps === "extra" || kindOf(exercises[i]) === kind) &&
+          (keeps === "extra" ||
+            keeps === "spare" ||
+            kindOf(exercises[i]) === kind) &&
           guard!(exercises[i], without(i), keeps)
       );
     if (candidates.length === 0) return false;
@@ -277,13 +282,14 @@ function fitDay(
     ...(guard
       ? [
           () => dropOne("isolation", "frequency"),
-          () => dropOne("isolation", "extra"),
-          () => dropOne("isolation", "coverage"),
+          () => dropOne("isolation", "spare"),
         ]
       : []),
     () => cutSet("main"),
     ...(guard
       ? [
+          () => dropOne("isolation", "extra"),
+          () => dropOne("isolation", "coverage"),
           () => dropOne("compound", "frequency"),
           () => dropOne("compound", "coverage"),
           () => dropOne("isolation", "nothing"),
@@ -358,6 +364,7 @@ export function fitSessionsToTime(
       if (![...trained].every((m) => after.has(m))) return false;
       if (keeps === "extra") return isExtra(dropped);
       if (keeps === "coverage") return true;
+      if (keeps === "spare" && !isExtra(dropped)) return false;
       const afterDays = daysPerMuscle(week);
       return [...frequency].every(
         ([m, n]) => (afterDays.get(m) ?? 0) >= Math.min(n, WEEKLY_FREQUENCY)

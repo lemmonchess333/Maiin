@@ -54,7 +54,10 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  * - `stall:deadlift` after misses: F23. After one session's last two sets
  *   came down to 132.5 kg, the 5-rep slot starts them there again, under
  *   its 155 kg, and doesn't step until all four go at 155: misses (F4) and
- *   lighter weeks between, March to June.
+ *   lighter weeks between, March to June. Since Lift11 this persona's
+ *   60-minute days hold the deadlift at two sets, and neither it nor the
+ *   hack squat waits long enough for the check to see; F23 itself is
+ *   unchanged.
  *
  * The easier days' `stall:overhead-press` (F9 on a press under the bar,
  * which an easier session held where it was) went with Pgm8 L15: the
@@ -72,7 +75,6 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "swaps-bench-keeps": ["acsm-heavy:bench-press"],
   "swaps-squat-today": ["acsm-size:quads", "stall:leg-press"],
   "replaces-row": ["acsm-heavy:seated-row", "stall:db-curl"],
-  "lighter-after-misses": ["stall:deadlift", "stall:hack-squat"],
   "hybrid-lighter-week": ["back-to-back", "spike", "volume-jump"],
   "half-moves-long-run": ["long-share", "spike", "under-dose", "volume-jump"],
   "dumbbell-easier-days": ["stall:db-curl"],
