@@ -1737,7 +1737,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Lower — Squat Focus",
     ],
     "prescription": [
-      "Pull — Lat Focus: pull-ups 3×3@0 | barbell-row 4×3@57.5 | lat-pulldown~ 2×6-10@50 | db-curl~ 2×6-10@7",
+      "Pull — Lat Focus: pull-ups 3×3@0 | barbell-row 4×3@57.5 | lat-pulldown~ 2×6-10@50 | db-curl~ 2×6-10@7 | lateral-raise~ 2×6-10@12.5",
       "Push — Chest Focus: bench-press 3×3@60 | overhead-press 3×3@37.5 | db-bench~ 2×6-10@20 | rope-tricep-pushdown~ 2×6-10@17.5 | lateral-raise~ 2×6-10@12.5",
       "Legs — Squat Focus: squat 4×5@92.5 | deadlift 3×5@107.5 | hack-squat~ 2×6-10@82.5 | cable-crunch~ 2×8-12@37.5",
       "Upper — Chest & Back: bench-press 3×7@60 | barbell-row 4×7@57.5 | overhead-press 4×7@37.5 | db-curl~ 2×10-14@7",
@@ -1756,9 +1756,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "LowerBack": "7 (ok)",
       "Quads": "12 (ok)",
       "RearDelts": "13 (ok)",
-      "SideDelts": "2 (LOW)",
+      "SideDelts": "4 (LOW)",
       "Triceps": "17 (HIGH)",
-      "UpperBack": "17 (HIGH)",
+      "UpperBack": "19 (HIGH)",
     },
   },
   {
@@ -1873,7 +1873,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Lower — Squat Focus",
     ],
     "prescription": [
-      "Pull — Lat Focus: pull-ups 3×3@0 | barbell-row 3×3@57.5 | lat-pulldown~ 3×6-10@50 | db-curl~ 2×6-10@7 | cable-curl~ 2×6-10@12.5",
+      "Pull — Lat Focus: pull-ups 3×3@0 | barbell-row 3×3@57.5 | lat-pulldown~ 3×6-10@50 | db-curl~ 2×6-10@7 | cable-curl~ 2×6-10@12.5 | lateral-raise~ 2×6-10@12.5",
       "Push — Chest Focus: bench-press 3×3@60 | overhead-press 3×3@37.5 | db-bench~ 2×6-10@20 | rope-tricep-pushdown~ 2×6-10@17.5 | overhead-extension~ 2×6-10@10 | lateral-raise~ 2×6-10@12.5",
       "Legs — Squat Focus: squat 3×5@92.5 | deadlift 3×5@107.5 | hack-squat~ 3×6-10@82.5 | cable-crunch~ 2×8-12@37.5 | standing-calf-raise~ 2×8-12@27.5",
       "Upper — Chest & Back: bench-press 3×7@60 | barbell-row 3×7@57.5 | overhead-press 3×7@37.5 | db-curl~ 2×10-14@7 | rope-tricep-pushdown~ 2×10-14@17.5",
@@ -1892,9 +1892,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "LowerBack": "6 (ok)",
       "Quads": "12 (ok)",
       "RearDelts": "12 (ok)",
-      "SideDelts": "4 (ok)",
+      "SideDelts": "6 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "14 (HIGH)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -2043,7 +2043,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Lower — Squat Focus",
     ],
     "prescription": [
-      "Pull — Lat Focus: pull-ups 3×3@0 | db-row 3×3@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 2×6-10@7 | hammer-curl~ 2×6-10@7",
+      "Pull — Lat Focus: pull-ups 3×3@0 | db-row 3×3@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 2×6-10@7 | hammer-curl~ 2×6-10@7 | lateral-raise~ 2×6-10@12.5",
       "Push — Chest Focus: incline-db-press 3×3@17.5 | db-shoulder-press 3×3@12.5 | db-bench~ 2×6-10@20 | overhead-extension~ 2×6-10@10 | tricep-dips~ 2×6-10@0 | lateral-raise~ 2×6-10@12.5",
       "Legs — Squat Focus: bulgarian-split 3×5@22.5 | db-rdl 3×5@27.5 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 3×7@20 | db-row 3×7@22.5 | db-shoulder-press 3×7@12.5 | db-curl~ 2×10-14@7 | overhead-extension~ 2×10-14@10",
@@ -2062,9 +2062,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "LowerBack": "6 (ok)",
       "Quads": "12 (ok)",
       "RearDelts": "9 (ok)",
-      "SideDelts": "6 (ok)",
+      "SideDelts": "8 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "14 (HIGH)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {
@@ -2213,7 +2213,7 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "Lower — Squat Focus",
     ],
     "prescription": [
-      "Pull — Lat Focus: pull-ups 3×3@0 | db-row 3×3@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 2×6-10@7 | hammer-curl~ 2×6-10@7",
+      "Pull — Lat Focus: pull-ups 3×3@0 | db-row 3×3@22.5 | chin-ups~ 3×6-10@0 | db-curl~ 2×6-10@7 | hammer-curl~ 2×6-10@7 | lateral-raise~ 2×6-10@12.5",
       "Push — Chest Focus: incline-db-press 3×3@17.5 | db-shoulder-press 3×3@12.5 | db-bench~ 2×6-10@20 | overhead-extension~ 2×6-10@10 | tricep-dips~ 2×6-10@0 | lateral-raise~ 2×6-10@12.5",
       "Legs — Squat Focus: bulgarian-split 3×5@22.5 | db-rdl 3×5@27.5 | goblet-squat~ 3×6-10@27.5 | leg-raise~ 3×8-12@0 | single-leg-calf-raise~ 3×8-12@0",
       "Upper — Chest & Back: db-bench 3×7@20 | db-row 3×7@22.5 | db-shoulder-press 3×7@12.5 | db-curl~ 2×10-14@7 | overhead-extension~ 2×10-14@10",
@@ -2232,9 +2232,9 @@ exports[`plan generation — golden sweep > matches the committed snapshot 1`] =
       "LowerBack": "6 (ok)",
       "Quads": "12 (ok)",
       "RearDelts": "9 (ok)",
-      "SideDelts": "6 (ok)",
+      "SideDelts": "8 (ok)",
       "Triceps": "20 (HIGH)",
-      "UpperBack": "14 (HIGH)",
+      "UpperBack": "16 (HIGH)",
     },
   },
   {

@@ -183,17 +183,27 @@ describe("extraPastCeiling — the table is a ceiling", () => {
     expect(extraPastCeiling(week(), extras, ceiling)).toBeUndefined();
   });
 
+  /** Two upper days whose raises were both added: the rows give the upper
+   *  back 6 sets, each raise 3 more. */
+  const bothAdded = () => [
+    upper("Upper A", [{ ...lateral(), instanceId: "first" }]),
+    upper("Upper B", [{ ...lateral(), instanceId: "second" }]),
+  ];
+  const added = new Set(["first", "second"]);
+
   it("never names a muscle's last direct lift", () => {
-    // Both raises were added, and the rows alone are past the upper back's
-    // ceiling: the latest raise goes, and the side delts keep the other.
-    const both = [
-      upper("Upper A", [{ ...lateral(), instanceId: "first" }]),
-      upper("Upper B", [{ ...lateral(), instanceId: "second" }]),
-    ];
-    const ceiling = (m: string) => (m === "UpperBack" ? 1 : 100);
-    const added = new Set(["first", "second"]);
-    expect(extraPastCeiling(both, added, ceiling)).toBe("second");
-    const left = [both[0], upper("Upper B", [])];
+    // The rows fill the upper back's ceiling and the raises take it past:
+    // the latest raise goes, and the side delts keep the other.
+    const ceiling = (m: string) => (m === "UpperBack" ? 6 : 100);
+    expect(extraPastCeiling(bothAdded(), added, ceiling)).toBe("second");
+    const left = [bothAdded()[0], upper("Upper B", [])];
     expect(extraPastCeiling(left, added, ceiling)).toBeUndefined();
+  });
+
+  it("names nothing for a ceiling the plan's own lifts are past already (Lift10)", () => {
+    // The rows alone are over the upper back's ceiling: taking a raise out
+    // would not bring it inside, and would leave the side delts one day.
+    const ceiling = (m: string) => (m === "UpperBack" ? 5 : 100);
+    expect(extraPastCeiling(bothAdded(), added, ceiling)).toBeUndefined();
   });
 });
