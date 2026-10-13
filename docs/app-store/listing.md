@@ -412,7 +412,10 @@ These are yours; none of them can be done from the code.
    planned routes stop being saved. Until then, answer the content-rights
    question with care.
 9. **Other settings.** Keep Google Signals off and Analytics unlinked
-   from Ads. Check that Vertex AI still serves `gemini-2.0-flash`.
+   from Ads. The food scan and typed meals call `gemini-3.8-flash`
+   (`functions/lib/foodModel.js`; Vertex retired `gemini-2.0-flash`, which
+   they called until Ship1): after the deploy, scan one meal and type one
+   on a Pro account and check both come back with foods.
 
 ### On a phone
 

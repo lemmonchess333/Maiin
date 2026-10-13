@@ -6,6 +6,28 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The food scan's model (Ship1, 2026-10-13)
+
+Affects: `analyzeFood` (a meal photo) and `analyzeFoodText` (a Pro typed
+meal), which now share `functions/lib/foodModel.js`. Both called
+`gemini-2.0-flash` by name, and Vertex AI retired it on 2026-06-01 (Google's
+model versions page lists it under retired models, replacement
+`gemini-3.1-flash-lite`), so both have likely answered "AI service error"
+since then. They now call `gemini-3.8-flash` in us-central1, with the
+settings a thinking model needs: thinking at LOW, the temperature at its
+default, a JSON answer and a cap with room for the thinking. Nothing here
+could call Vertex, so the first real request is the test.
+
+- [ ] **One photo scan and one typed meal, after the deploy.** On a Pro
+      account, scan a plate and type a meal: each comes back with foods and
+      macros in a few seconds. "AI service error" means Vertex refused the
+      request: the function's log has the status (`Vertex AI error:`); a
+      404 means the model isn't served in us-central1, a 400 names the
+      setting it refused.
+- [ ] **The usage log.** `analyzeFood.usage` in the functions log shows
+      the prompt and output tokens per scan; check one against the price
+      of 3.8 Flash before launch.
+
 ## The plan moves on with the day while the app stays open (2026-10-10)
 
 Affects: `useProgram` (`src/features/program/useProgram.ts`) and Home's
