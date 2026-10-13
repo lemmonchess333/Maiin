@@ -15,7 +15,8 @@ import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
-import { useUid } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
+import { startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -545,6 +546,14 @@ export default function Food() {
     [visibleTodaysMeals]
   );
 
+  /* The day the account began, as Home's strip and Analytics read it, so
+     the week strip draws no ring before it (Food10 (3)). */
+  const { profile: accountProfile } = useAuth();
+  const accountStartKey = useMemo(
+    () => startDayKey(accountProfile?.createdAt),
+    [accountProfile?.createdAt]
+  );
+
   /* The week strip. Each day's target as it stood is read over the same
      span as the meals, so the two move together and a week inside the
      last month never waits on a second read. The extra day covers the
@@ -563,8 +572,10 @@ export default function Food() {
         hiddenMealIds: pendingDeleteIds,
         snapshots: dayTargets,
         selectedTarget: dailyTargets.finalTarget,
+        startKey: accountStartKey,
       }),
     [
+      accountStartKey,
       selectedDate,
       todayStr,
       minDateStr,

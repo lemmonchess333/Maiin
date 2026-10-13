@@ -19,6 +19,7 @@ import {
 } from "@/lib/dateHelpers";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import type { DayTarget } from "@/lib/foodDays";
+import { beforeStart } from "@/lib/startDay";
 
 export interface FoodWeekDay {
   /** Local "YYYY-MM-DD". */
@@ -39,6 +40,10 @@ export interface FoodWeekDay {
   /** How far past the target the day went, as a share of it, capped at 1.
    *  0 when it did not go past. */
   over: number;
+  /** Before the account began, with nothing logged (Food10 (3)): drawn as
+   *  the bare date, as a future day is, since an empty ring would say
+   *  nothing was eaten on a day the app knows nothing about. */
+  beforeJoined: boolean;
 }
 
 interface WeekMeal extends MealTotalsInput {
@@ -66,6 +71,7 @@ export function foodWeek({
   hiddenMealIds,
   snapshots,
   selectedTarget,
+  startKey,
 }: {
   /** The day the page is showing. */
   selectedKey: string;
@@ -81,6 +87,8 @@ export function foodWeek({
   /** The calorie card's own target for the day in view, and for any day
    *  without a snapshot. */
   selectedTarget: number;
+  /** The day the account began (`startDayKey`), null while unknown. */
+  startKey?: string | null;
 }): FoodWeekDay[] {
   const start = parseLocalDate(foodWeekStart(selectedKey));
   const keys = Array.from({ length: 7 }, (_, i) =>
@@ -114,6 +122,21 @@ export function foodWeek({
         ? usable(selectedTarget)
         : (usable(snapshots.get(key)?.calories) ?? usable(selectedTarget));
     const eatenSafe = Math.max(0, eaten);
+    const beforeJoined = beforeStart(key, startKey) && eatenSafe === 0;
+    if (beforeJoined) {
+      return {
+        key,
+        isToday: key === todayKey,
+        isSelected: key === selectedKey,
+        isFuture,
+        isSelectable: key >= minKey && key <= todayKey,
+        eaten: 0,
+        target: null,
+        progress: null,
+        over: 0,
+        beforeJoined,
+      };
+    }
     return {
       key,
       isToday: key === todayKey,
@@ -127,6 +150,7 @@ export function foodWeek({
         target === null || eatenSafe <= target
           ? 0
           : Math.min((eatenSafe - target) / target, 1),
+      beforeJoined,
     };
   });
 }

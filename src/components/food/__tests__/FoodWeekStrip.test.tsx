@@ -13,6 +13,7 @@ function days({
   meals = [] as { id: string; date: string; totalCalories: number }[],
   snapshots = new Map<string, DayTarget>(),
   selectedTarget = 2000,
+  startKey = null as string | null,
 } = {}) {
   return foodWeek({
     selectedKey,
@@ -22,6 +23,7 @@ function days({
     hiddenMealIds: new Set(),
     snapshots,
     selectedTarget,
+    startKey,
   });
 }
 
@@ -153,5 +155,23 @@ describe("FoodWeekStrip", () => {
       dayButton(name).querySelector("circle")?.getAttribute("stroke");
     expect(track(/^Thursday 1 October/)).toBe("transparent");
     expect(track(/^Monday 28 September/)).not.toBe("transparent");
+  });
+
+  it("names a day before the account began as such, with no ring", () => {
+    render(
+      <FoodWeekStrip
+        days={days({ startKey: "2026-09-29" })}
+        onSelect={() => {}}
+      />
+    );
+    const track = (name: RegExp) =>
+      dayButton(name).querySelector("circle")?.getAttribute("stroke");
+    const monday = dayButton(/^Monday 28 September/);
+    expect(monday.getAttribute("aria-label")).toMatch(/, before you joined$/);
+    expect(track(/^Monday 28 September/)).toBe("transparent");
+    expect(
+      dayButton(/^Tuesday 29 September/).getAttribute("aria-label")
+    ).toMatch(/nothing logged/);
+    expect(track(/^Tuesday 29 September/)).not.toBe("transparent");
   });
 });
