@@ -638,7 +638,7 @@ export const EXERCISES: Exercise[] = [
     name: "Inverted Row",
     category: "Back",
     muscleGroup: "Mid Back",
-    secondaryMuscles: ["Lats", "Rhomboids", "Biceps", "Core"],
+    secondaryMuscles: ["Lats", "Rhomboids", "Rear Delts", "Biceps", "Core"],
     equipment: "Bodyweight",
     caloriesPerMinute: 7,
     instructions: [
