@@ -12,6 +12,7 @@ const H = vi.hoisted(() => ({
   loading: false,
   activeArgs: [] as boolean[],
   spacesReady: true,
+  entries: [] as { def: { id: string }; joined: boolean }[],
 }));
 vi.mock("@/hooks/useSuggestedPeople", () => ({
   useSuggestedPeople: (active: boolean) => {
@@ -26,7 +27,7 @@ vi.mock("@/hooks/useSuggestedPeople", () => ({
 }));
 vi.mock("@/features/spaces/useSpacesDirectory", () => ({
   useSpacesDirectory: () => ({
-    entries: [],
+    entries: H.entries,
     upcomingRaces: [],
     refresh: vi.fn(),
     ready: H.spacesReady,
@@ -50,6 +51,7 @@ beforeEach(() => {
   H.loading = false;
   H.activeArgs = [];
   H.spacesReady = true;
+  H.entries = [];
 });
 
 function renderPeople(blockedReady: boolean) {
@@ -81,6 +83,25 @@ it("says there is nobody to suggest once the list has answered empty", () => {
   expect(H.activeArgs).toContain(true);
   expect(screen.getByText("No suggestions yet")).toBeInTheDocument();
   expect(screen.queryByLabelText("Loading suggested people")).toBeNull();
+});
+
+it("asks someone in no space to join one, and someone in a space where suggestions come from", () => {
+  renderPeople(true);
+  expect(
+    screen.getByText(
+      "Follow people or join a space to start seeing suggestions."
+    )
+  ).toBeInTheDocument();
+  cleanup();
+  // The Social pass (2026-10-13): a member of a space was told to join
+  // one before they'd see suggestions.
+  H.entries = [{ def: { id: "womens-running" }, joined: true }];
+  renderPeople(true);
+  expect(
+    screen.getByText(
+      "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+    )
+  ).toBeInTheDocument();
 });
 
 it("lists suggestions with their reason once they arrive", () => {
