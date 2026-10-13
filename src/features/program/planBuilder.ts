@@ -74,6 +74,7 @@ import {
   balanceWeekVolume,
   generateProgram,
   expectedDayCount,
+  refitSessionsASaveOverran,
   oneSetFewer,
   raceWeekSession,
   resetToBaseSets,
@@ -566,11 +567,38 @@ function buildLiftProgram(input: LiftProgramInput): {
         : {}),
     }
   );
+  // Lift15: a new level never leaves a day over its length that fitted
+  // before it (`refitSessionsASaveOverran`). A level change only: an injury
+  // or a change of kit swaps lifts that come back when the injury or the kit
+  // does, and a cut made for the swap would outlast it. In an ordinary week
+  // only, as Lift7's rollover re-fit: a lighter week, a race week or a
+  // return's first week holds fewer sets than the plan's own already.
+  const kept = input.existingState;
+  const ordinaryWeek =
+    kept !== undefined &&
+    kept.currentPhase !== "deload" &&
+    kept.raceWeek === undefined &&
+    (kept.easingBack?.weeksLeft ?? 0) <= 0;
+  const keptLength =
+    relevel &&
+    !refit &&
+    ordinaryWeek &&
+    sessionMinutes !== undefined &&
+    existing
+      ? refitSessionsASaveOverran(
+          existing,
+          workouts,
+          input.primaryGoal,
+          toExperience(input.experience),
+          sessionMinutesFor(sessionMinutes)
+        )
+      : workouts;
   return {
     splitType: base.splitType,
     // New days or a new session length build the week's sets afresh, so a
     // week made lighter goes lighter again (`keepWeekLighter`).
-    workouts: !preserve || refit ? keepWeekLighter(input, workouts) : workouts,
+    workouts:
+      !preserve || refit ? keepWeekLighter(input, workouts) : keptLength,
     ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
   };
 }

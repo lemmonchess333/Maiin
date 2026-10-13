@@ -2725,9 +2725,57 @@ export function refitOutgrownSessions(
   experience: Experience | undefined,
   minutes: number
 ): WorkoutDay[] {
-  const outgrown = workouts.map((day) =>
-    warmupsOutgrewFit(day.exercises, minutes)
+  return keepRefitCuts(
+    workouts,
+    workouts.map((day) => warmupsOutgrewFit(day.exercises, minutes)),
+    goal,
+    experience,
+    minutes
   );
+}
+
+/**
+ * Lift15: a new level never leaves a day over its length that fitted
+ * before it. A level change sets how the main lifts progress (Lift4 (12)):
+ * an intermediate's heavier, lower-rep main lifts take more warm-ups, and
+ * nothing re-fitted the day, since a save re-fits only a new length and the
+ * rollover only a day its warm-ups outgrew. Such a day gets Lift7's re-fit:
+ * sets come off in the fit's order, a main lift keeps at least two, no lift
+ * is dropped, added or swapped. A day that was over before the save (lifts
+ * the person added, a short session the fit could not bring inside its
+ * length) is left as it is, as Lift7 leaves it.
+ */
+export function refitSessionsASaveOverran(
+  before: readonly WorkoutDay[],
+  after: WorkoutDay[],
+  goal: PrimaryGoal | undefined,
+  experience: Experience | undefined,
+  minutes: number
+): WorkoutDay[] {
+  return keepRefitCuts(
+    after,
+    after.map(
+      (day, d) =>
+        !sessionFits(day.exercises, minutes) &&
+        before[d] !== undefined &&
+        sessionFits(before[d].exercises, minutes)
+    ),
+    goal,
+    experience,
+    minutes
+  );
+}
+
+/** Re-fit the week to `minutes` and keep the re-fit's cuts to sets on the
+ *  days `which` names; every other day comes back as it was. */
+function keepRefitCuts(
+  workouts: WorkoutDay[],
+  which: readonly boolean[],
+  goal: PrimaryGoal | undefined,
+  experience: Experience | undefined,
+  minutes: number
+): WorkoutDay[] {
+  const outgrown = which;
   if (!outgrown.includes(true)) return workouts;
   const refitted = balanceWeekVolume(
     refitSessionsToTime(workouts, goal, experience, minutes),
