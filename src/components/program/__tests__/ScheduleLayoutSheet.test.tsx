@@ -12,7 +12,7 @@
  * queries use `screen` (document-wide).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, within } from "@testing-library/react";
 import ScheduleLayoutSheet from "../ScheduleLayoutSheet";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
@@ -175,5 +175,33 @@ describe("ScheduleLayoutSheet — PR-2 hydration on re-open", () => {
     );
     expect(screen.getAllByRole("button", { name: /Both/i }).length).toBe(3);
     expect(screen.queryAllByRole("button", { name: /: Run/i }).length).toBe(0);
+  });
+});
+
+describe("ScheduleLayoutSheet — the week it draws", () => {
+  function openSheet() {
+    render(
+      <ScheduleLayoutSheet
+        open={true}
+        onClose={() => {}}
+        profile={makeProfile()}
+        {...makeCallbacks()}
+      />
+    );
+  }
+
+  it("starts on Monday, as setup's preview and Train's run week do", () => {
+    openSheet();
+    const days = screen
+      .getAllByRole("button", { name: /Tap to change\.$/ })
+      .map((button) => button.getAttribute("aria-label")?.split(":")[0]);
+    expect(days).toEqual(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+  });
+
+  it("counts lift-and-run days as Both, the days' own word", () => {
+    openSheet();
+    const summary = screen.getByLabelText(/weekly layout summary/i);
+    expect(within(summary).getByText("Both")).toBeInTheDocument();
+    expect(within(summary).queryByText("Double")).not.toBeInTheDocument();
   });
 });
