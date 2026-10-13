@@ -81,8 +81,11 @@ export type LiftPurposeProgramme = Partial<
 export const FOCUS_PURPOSE: Record<PrimaryGoal, string> = {
   strength:
     "This session is built for strength: heavier main lifts for lower reps.",
+  /* No rep claim (Lift8 (3)): a heavier day's main lifts sit at 4–8, and
+     the heavier and lighter days are not named (N9), so "higher reps" was
+     false over half the week. The weekly sets hold on every day. */
   hypertrophy:
-    "This session is built for muscle growth: higher reps, and more weekly sets for each muscle.",
+    "This session is built for muscle growth: more weekly sets for each muscle.",
   fat_loss:
     "This session is built to keep your strength and muscle while you lose fat.",
   general:

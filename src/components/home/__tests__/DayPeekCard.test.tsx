@@ -993,7 +993,7 @@ describe("DayPeekCard — why this lift", () => {
     expect(screen.queryByText(/built for muscle growth/)).toBeNull();
     const why = await openWhy();
     expect(why).toHaveTextContent(
-      "This session is built for muscle growth: higher reps, and more weekly sets for each muscle."
+      "This session is built for muscle growth: more weekly sets for each muscle."
     );
     expect(why).toHaveTextContent(
       "Your plan builds for three weeks, then a lighter week follows."
