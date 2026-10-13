@@ -44,6 +44,7 @@ import {
 } from "./sessionFit";
 import {
   applyEquipmentFilterToWorkouts,
+  dropUnavailableAccessories,
   applyInjuryFiltersToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
@@ -2019,6 +2020,13 @@ export function generateProgram(
       injuries,
       experience,
       loadCtx,
+      limits.barbellAtHome
+    );
+    // Lift14: a supporting lift the kit can't do goes when its day trains
+    // the muscle with one it can.
+    workouts = dropUnavailableAccessories(
+      workouts,
+      limits.equipment,
       limits.barbellAtHome
     );
   }
