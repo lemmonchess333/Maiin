@@ -3,7 +3,7 @@
  * Phase 2: "the person's actions … as the commands the app sends"). Each is
  * one of the lifting or running personas tapping one thing more, so its
  * trace reads against theirs: Skip, a swap kept and one not, Train's
- * Replace Exercise, "Easier today" on dumbbells and on a light barbell, a
+ * Replace exercise, "Easier today" on dumbbells and on a light barbell, a
  * lighter week taken after a bad one (alone and with a race plan), and a
  * runner who moves the long run to Sunday, skips the runs they miss and
  * says "Not now" to falling behind.
@@ -60,7 +60,7 @@ export const SWAPS_FOR_TODAY: LiftPersona = {
   tracked: [...INTERMEDIATE_WOMAN.tracked, "leg-press"],
 };
 
-/** Train's "Replace Exercise" in week 2: a seated cable row for the
+/** Train's "Replace exercise" in week 2: a seated cable row for the
  *  barbell row. */
 export const REPLACES_ROW: LiftPersona = {
   ...NOVICE_MAN,
