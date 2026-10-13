@@ -130,6 +130,13 @@ describe("NotificationsSheet", () => {
   it("shows the empty state when there are no notifications", () => {
     renderSheet([]);
     expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    // In the app's own words (props, not kudos), and only what notifies
+    // by default: new followers are off until the person turns them on.
+    expect(
+      screen.getByText(
+        "Props and comments on your sessions, and news from your Circles and Spaces, show up here."
+      )
+    ).toBeInTheDocument();
   });
 
   it("shows a loading state instead of the empty state while loading", () => {
