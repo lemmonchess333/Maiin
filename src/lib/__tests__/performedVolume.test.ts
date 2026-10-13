@@ -105,6 +105,21 @@ describe("performedWeeklyVolume", () => {
     expect(chest.status).toBe("low");
   });
 
+  it("judges against the person's targets when it has them", () => {
+    // History reads the targets Train's volume card does: a floor lowered to
+    // what the person's days and time fit.
+    const fits = { mv: 2, low: 4, high: 20 };
+    const rows = performedWeeklyVolume([workout(midweek(1), [bench(4)])], {
+      weekKeys: [weekKey(1)],
+      primaryGoal: goal,
+      targets: new Map([["Chest", fits]]),
+    });
+    expect(chestOf(rows)).toMatchObject({ landmark: fits, status: "optimal" });
+    // A muscle the targets don't name keeps the goal's band.
+    const triceps = rows.find((r) => r.muscle === "Triceps")!;
+    expect(triceps.landmark).toEqual(judgementLandmark(goal, "Triceps"));
+  });
+
   it("counts working sets, not warm-ups or empty rows", () => {
     const rows = performedWeeklyVolume(
       [
