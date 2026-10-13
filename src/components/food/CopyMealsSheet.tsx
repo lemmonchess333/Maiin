@@ -261,7 +261,11 @@ export default function CopyMealsSheet({ sources, onClose, onSave }: Props) {
             {error}
           </p>
         )}
+        {/* The food orange, as the usual row's Log and the scan result's
+            are: the page's three ways to log food say it in one colour
+            (Food10 (2), DESIGN_GUIDE.md's button exceptions). */}
         <Button
+          variant="nutrition"
           fullWidth
           loading={saving}
           disabled={!valid}
