@@ -239,6 +239,14 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                under a floor is no longer a
                                                defect. The Weekly volume
                                                card judges what fits.
+       (judged, 1:1)     28 over / —         — Lift11: a muscle's second
+                                               day goes after a main lift's
+                                               third set, so the fit takes
+                                               fewer sets from the mains'
+                                               secondaries. The bound had
+                                               stayed at 43 while Lift9 and
+                                               the rows' lat and rear-delt
+                                               credit brought it to 29.
      Tighten whenever it improves; the test fails the moment a change makes
      it worse in the CURRENT unit. */
   it("D-VOL: ceiling violations are ratcheted and must only shrink", () => {
@@ -247,7 +255,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      43
+      28
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.
