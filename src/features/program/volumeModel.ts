@@ -943,6 +943,50 @@ export function hingeAccessoryPastCeiling(
 }
 
 /**
+ * The table is a ceiling for every muscle (Lift12): in a balanced week, the
+ * supporting lifts that could come out for the muscles over their ceilings,
+ * each with the muscle it would come out for. A lift's own muscle is its
+ * primary; the most-over muscle comes first, and of its lifts the biggest,
+ * then the latest in the week, so the week's first sessions keep theirs.
+ * Never a lift the week also has as a main lift.
+ *
+ * The reconciler cuts sets down to its floors and never takes a lift out;
+ * past those floors a muscle fed by the lifts that credit it as well (the
+ * triceps by every press, the biceps by every row) stays over, at up to two
+ * and a half times its ceiling in a beginner's six days. The generator
+ * takes one of these out only when the week, fitted and balanced again
+ * without it, is the better one (`generateProgram`).
+ */
+export function accessoriesPastCeiling(
+  workouts: readonly WorkoutDay[],
+  ceiling: (muscle: JudgementMuscle) => number
+): Array<{ instanceId: string; muscle: JudgementMuscle }> {
+  const over = weeklyVolumeByJudgementMuscle(workouts)
+    .map((v) => ({ muscle: v.muscle, by: v.sets - ceiling(v.muscle) }))
+    .filter((v) => v.by > 0)
+    .sort((a, b) => b.by - a.by || a.muscle.localeCompare(b.muscle));
+  if (over.length === 0) return [];
+  const lifts = workouts.filter((d) => !d.skipped).flatMap((d) => d.exercises);
+  const mains = new Set(
+    lifts.filter((ex) => ex.isAccessory !== true).map((ex) => ex.exerciseId)
+  );
+  return over.flatMap(({ muscle }) =>
+    lifts
+      .map((ex, i) => ({ ex, i }))
+      .filter(
+        ({ ex }) =>
+          ex.isAccessory === true &&
+          ex.instanceId !== undefined &&
+          (ex.sets ?? 0) > 0 &&
+          !mains.has(ex.exerciseId) &&
+          primaryJudgementForExercise(ex) === muscle
+      )
+      .sort((a, b) => (b.ex.sets ?? 0) - (a.ex.sets ?? 0) || b.i - a.i)
+      .map(({ ex }) => ({ instanceId: ex.instanceId!, muscle }))
+  );
+}
+
+/**
  * Working sets one session may hold. The time fit (`sessionFit.ts`) cuts to
  * it as well as to the session's minutes, and the push/pull balancer adds
  * nothing past it.
