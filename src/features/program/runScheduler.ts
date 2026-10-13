@@ -817,6 +817,8 @@ function pickLongTemplateId(input: {
    *  taper hold it (Run22 (1)), 0 when they hold none. Asked only by a
    *  taper week with a share. */
   buildLongestKm: () => number;
+  /** The plan's climb so far (Run23, `rampLongTierId`). */
+  climb: LongRunClimb;
 }): string {
   if (input.phase === "race") return "easy_30";
   if (input.phase === "taper") {
@@ -827,8 +829,67 @@ function pickLongTemplateId(input: {
       ? longTierForKm(longestKm * share, input.easyPaceSPerKm)
       : "easy_30";
   }
-  return longTierForKm(longRunKmForWeek(input), input.easyPaceSPerKm);
+  return rampLongTierId(input, input.climb);
 }
+
+/**
+ * Run23 — the ramp's long run for a base or build week, one rung at a time:
+ * never more than one tier above the longest the ramp gave any week before
+ * it. The ramp climbs a straight line and each week takes the tier at or
+ * below it, so a short block, whose line climbs several km a week, could
+ * pass a tier by: 8 to 12 km in a five-to-seven-week 10K, 20 to 30 km in a
+ * nine-week marathon, half again the longest run of the month. The single
+ * run far longer than the month's longest is the injury signal the evidence
+ * supports best (Frandsen 2025; decisions.md R7). A short block now peaks a
+ * rung lower, and the taper takes its share of that peak. Not a percentage
+ * cap: the step stays a rung of the plan's own ladder.
+ *
+ * Each week's rung depends on every week before it, so a plan keeps the
+ * climb as it goes (`climb`, one per `generateRacePlanV2` call, keyed by the
+ * ramp's inputs): the weeks cost one step each, not a walk from week 0.
+ */
+function rampLongTierId(
+  input: {
+    weekIndex: number;
+    totalWeeks: number;
+    baseLongKm: number;
+    peakLongKm: number;
+    taperWeeks: number;
+    volume: RunVolumePreset;
+    easyPaceSPerKm?: number | null;
+  },
+  climb: LongRunClimb
+): string {
+  const key = [
+    input.totalWeeks,
+    input.baseLongKm,
+    input.peakLongKm,
+    input.taperWeeks,
+    input.volume,
+    input.easyPaceSPerKm ?? "",
+  ].join("|");
+  let held = climb.get(key);
+  if (!held) climb.set(key, (held = { rungs: [], highest: -1 }));
+  const week = Math.max(0, input.weekIndex);
+  while (held.rungs.length <= week) {
+    const k = held.rungs.length;
+    const wanted = LONG_RUN_TIERS.findIndex(
+      (t) =>
+        t.id ===
+        longTierForKm(
+          longRunKmForWeek({ ...input, weekIndex: k }),
+          input.easyPaceSPerKm
+        )
+    );
+    const rung = k === 0 ? wanted : Math.min(wanted, held.highest + 1);
+    held.rungs.push(rung);
+    held.highest = Math.max(held.highest, rung);
+  }
+  return LONG_RUN_TIERS[held.rungs[week]].id;
+}
+
+/** Run23's climb for one plan: each ramp's rungs, week by week. */
+type LongRunClimb = Map<string, { rungs: number[]; highest: number }>;
 
 export interface StructuredWeekV2Input {
   /** The user's weekly type structure. Must be 7 entries. */
@@ -1179,6 +1240,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     !!input.newRunnerUntil &&
     localDateString(addLocalDays(weekStartDate, (blockWeek - startIndex) * 7)) <
       input.newRunnerUntil;
+  /** Run23: how far up the long-run ladder the block's weeks have climbed. */
+  const climb: LongRunClimb = new Map();
   /** Week `w` of the block, before the fits below (`fittedWeek`). A week
    *  behind the runner has a negative `offset`: the taper's walk of the
    *  build builds those (`taperBuild`). */
@@ -1329,6 +1392,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             volume: tuning.volume,
             easyPaceSPerKm: input.easyPaceSPerKm ?? null,
             buildLongestKm,
+            climb,
           }),
           type: phase === "taper" ? "easy" : "long",
           weekStart,
@@ -1369,6 +1433,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       volume: tuning.volume,
       easyPaceSPerKm: input.easyPaceSPerKm ?? null,
       buildLongestKm,
+      climb,
     });
     week.push(
       buildRunDayV2({
