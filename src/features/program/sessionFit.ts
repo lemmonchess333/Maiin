@@ -331,17 +331,32 @@ export function fitSessionsToTime(
   const days = [...workouts];
   const isExtra = (ex: ProgramExercise) =>
     ex.instanceId !== undefined && extras.has(ex.instanceId);
+  /* A muscle whose only direct work is added lifts (side delts in a full
+     body week: its lateral raises are both added for the two days) is
+     worked by them, so its last one is kept while something else can give
+     way, as any muscle's last direct lift is. Counted as added only, each
+     would go before a main lift lost a set, and the muscle would have none. */
+  const addedOnly = new Set(
+    [...trainedMuscles(days, new Set())].filter(
+      (m) => !trainedMuscles(days, extras).has(m)
+    )
+  );
+  const worked = (week: readonly WorkoutDay[]) => {
+    const all = trainedMuscles(week, new Set());
+    const base = trainedMuscles(week, extras);
+    return new Set([...all].filter((m) => base.has(m) || addedOnly.has(m)));
+  };
   const fitOne = (i: number): WorkoutDay => {
-    const trained = trainedMuscles(days, extras);
+    const trained = worked(days);
     const frequency = daysPerMuscle(days);
     return fitDay(days[i], minutes, (dropped, without, keeps) => {
       if (keeps === "nothing") return true;
-      if (keeps === "extra") return isExtra(dropped);
       const week = days.map((d, j) =>
         j === i ? { ...d, exercises: without } : d
       );
-      const after = trainedMuscles(week, extras);
+      const after = worked(week);
       if (![...trained].every((m) => after.has(m))) return false;
+      if (keeps === "extra") return isExtra(dropped);
       if (keeps === "coverage") return true;
       const afterDays = daysPerMuscle(week);
       return [...frequency].every(

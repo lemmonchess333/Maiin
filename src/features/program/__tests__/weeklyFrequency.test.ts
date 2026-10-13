@@ -182,4 +182,18 @@ describe("extraPastCeiling — the table is a ceiling", () => {
     const ceiling = (m: string) => (m === "Chest" ? 1 : 100);
     expect(extraPastCeiling(week(), extras, ceiling)).toBeUndefined();
   });
+
+  it("never names a muscle's last direct lift", () => {
+    // Both raises were added, and the rows alone are past the upper back's
+    // ceiling: the latest raise goes, and the side delts keep the other.
+    const both = [
+      upper("Upper A", [{ ...lateral(), instanceId: "first" }]),
+      upper("Upper B", [{ ...lateral(), instanceId: "second" }]),
+    ];
+    const ceiling = (m: string) => (m === "UpperBack" ? 1 : 100);
+    const added = new Set(["first", "second"]);
+    expect(extraPastCeiling(both, added, ceiling)).toBe("second");
+    const left = [both[0], upper("Upper B", [])];
+    expect(extraPastCeiling(left, added, ceiling)).toBeUndefined();
+  });
 });
