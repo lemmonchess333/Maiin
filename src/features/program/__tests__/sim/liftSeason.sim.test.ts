@@ -62,7 +62,8 @@ const KNOWN_RULE_FAILURES: Partial<Record<string, readonly Rule[]>> = {};
  *   Epley's, so the wait starts sooner, and shows in lifts Epley's let
  *   climb on: a light curl or pushdown at 17 reps, not 20. The dumbbell
  *   curls and presses Pgm8 L15 builds wait the same way (5 kg to 6 kg is
- *   20%), as the barbell ones under the bar did (F2).
+ *   20%), as the barbell ones under the bar did (F2), and so does the
+ *   lateral raise a week keeps as the side delts' only lift (Lift9).
  * - F4 `misses`: the plan's steps outrun a lifter who gains slowly or
  *   trains half the planned sessions. The over-55's press is no longer
  *   one: a 15 kg barbell press at her 15 kg 1RM, it is a 5 kg dumbbell
@@ -73,6 +74,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
   "novice-man": ["stall:db-curl"],
   "novice-woman": [
     "stall:db-shoulder-press",
+    "stall:lateral-raise",
     "stall:seated-calf-raise",
     "stall:standing-calf-raise",
   ],
@@ -98,6 +100,7 @@ const KNOWN_COACHING: Partial<Record<string, readonly string[]>> = {
     "misses:bench-press",
     "misses:deadlift",
     "stall:db-shoulder-press",
+    "stall:lateral-raise",
     "stall:seated-calf-raise",
     "stall:standing-calf-raise",
   ],

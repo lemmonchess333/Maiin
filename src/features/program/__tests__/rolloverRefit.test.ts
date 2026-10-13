@@ -392,11 +392,11 @@ describe("a day over its length for another reason (Lift7)", () => {
   });
 
   it("keeps a short session whose lifts are at two sets as it is, over", () => {
-    // At 45 minutes the heavier press and curl take a day past its length
-    // with every lift at two sets: the fit can't bring it inside, so
+    // In half an hour a stronger lifter's loads take the upper day past its
+    // length with every lift at two sets: the fit can't bring it inside, so
     // nothing is cut, nothing dropped, and its card's estimate says so.
-    const { state, profile } = build({ sessionMinutes: 45 });
-    const before = trainedHeavier(state);
+    const { state, profile } = build({ ...STRENGTH, sessionMinutes: 30 });
+    const before = trainedHeavier(state, STRONGER);
     const short = over(before).filter((name) =>
       dayNamed(before, name).exercises.every((ex) => ex.sets <= 2)
     );

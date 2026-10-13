@@ -164,7 +164,9 @@ export function twiceWeeklyAdditions(
  * that works a muscle over its ceiling, if any (its `instanceId`). A lateral
  * raise counts toward the upper back as well as the side delts, so a week
  * whose rows already fill the upper back's ceiling keeps its side delts on
- * one day.
+ * one day. A muscle's last direct lift is never one of these: a beginner's
+ * rows, over the upper back's ceiling on their own, would otherwise take
+ * both lateral raises and leave the side delts with nothing.
  */
 export function extraPastCeiling(
   workouts: readonly WorkoutDay[],
@@ -177,12 +179,22 @@ export function extraPastCeiling(
       .map((v) => v.muscle)
   );
   if (over.size === 0) return undefined;
-  return workouts
-    .flatMap((d) => d.exercises)
+  const lifts = workouts.flatMap((d) => d.exercises);
+  const notLast = (ex: ProgramExercise) => {
+    const muscle = primaryJudgementForExercise(ex);
+    return (
+      muscle === null ||
+      lifts.some(
+        (other) => other !== ex && primaryJudgementForExercise(other) === muscle
+      )
+    );
+  };
+  return lifts
     .filter(
       (ex) =>
         ex.instanceId !== undefined &&
         extras.has(ex.instanceId) &&
+        notLast(ex) &&
         weeklyVolumeByJudgementMuscle([{ exercises: [ex] }]).some((v) =>
           over.has(v.muscle)
         )

@@ -190,10 +190,26 @@ describe("fitSessionsToTime — every muscle on two days, and the lifts added fo
     expect(ids).not.toContain("cable-crunch");
   });
 
+  /** A lateral raise, the side delts' one lift. */
+  const raise = (instanceId: string) =>
+    ex("lateral-raise", 3, {
+      instanceId,
+      movementCategory: "vertical_push",
+      isAccessory: true,
+      weight: 10,
+    });
+  /** The full-body day with the plan's own lateral raise. */
+  const withRaise = (): WorkoutDay => ({
+    ...fullBody(),
+    dayName: "With a raise",
+    exercises: [...fullBody().exercises, raise("own-raise")],
+  });
+
   it("lets an added lift go before the plan's own, and gives back the sets it took", () => {
     // In 68 minutes the day's own six lifts fit with their isolations at two
-    // sets. Neither added lift fits however the sets are cut, so both go,
-    // and the day is fitted again without them: the compounds keep the
+    // sets. Neither added lift fits however the sets are cut, and each
+    // muscle they work has the plan's own lift on the other day, so both
+    // go, and the day is fitted again without them: the compounds keep the
     // third sets that were cut to make room.
     const extras = new Set(["leg", "raise"]);
     const day: WorkoutDay = {
@@ -206,21 +222,41 @@ describe("fitSessionsToTime — every muscle on two days, and the lifts added fo
           isAccessory: true,
           weight: 120,
         }),
-        ex("lateral-raise", 3, {
-          instanceId: "raise",
-          movementCategory: "vertical_push",
-          isAccessory: true,
-          weight: 10,
-        }),
+        raise("raise"),
       ],
     };
-    const [fitted] = fitSessionsToTime([day, fullBody()], 68, extras);
+    const [fitted] = fitSessionsToTime([day, withRaise()], 68, extras);
     expect(shape(fitted)).toBe(
       "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 2, standing-calf-raise 2"
     );
     expect(shape(fitted)).toBe(
-      shape(fitSessionsToTime([fullBody(), fullBody()], 68)[0])
+      shape(fitSessionsToTime([fullBody(), withRaise()], 68)[0])
     );
+  });
+
+  it("keeps an added lift that is a muscle's only direct work while something else can give way", () => {
+    // Nothing else in the week works the side delts: the added raise is
+    // their only lift, so it stays, and the day's other lifts give sets.
+    const day: WorkoutDay = {
+      ...fullBody(),
+      exercises: [...fullBody().exercises, raise("raise")],
+    };
+    const [fitted] = fitSessionsToTime(
+      [day, fullBody()],
+      68,
+      new Set(["raise"])
+    );
+    expect(fitted.exercises.map((e) => e.exerciseId)).toContain(
+      "lateral-raise"
+    );
+    expect(minutesOf(fitted, 68)).toBeLessThanOrEqual(68);
+    // …and in half an hour time wins.
+    const [short] = fitSessionsToTime(
+      [day, fullBody()],
+      30,
+      new Set(["raise"])
+    );
+    expect(minutesOf(short, 30)).toBeLessThanOrEqual(30);
   });
 
   it("never counts an added lift as a muscle's direct work", () => {
