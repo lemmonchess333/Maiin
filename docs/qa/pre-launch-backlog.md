@@ -905,6 +905,26 @@ orphan, so the list is genuinely mixed.
       documented fields of an exported interface three components take as a
       prop type.
 
+## The exercise pictures in the build (Ship1, 2026-10-13)
+
+Affects: every production build (`vite.config.ts`'s
+`shrinkFormFramesPlugin`, `scripts/art/shrink-form-frames.ts`). The 756
+reviewed frames in `public/form-frames` are mostly lossless WebP, 335 MB in
+all, and the iPhone app copies the build whole: the measured build was
+336 MB. A build now re-saves each lossless frame in its output as lossy
+WebP at quality 85 on the same canvas (32 MB; the build 51 MB). The
+reviewed files in `public/` are untouched, so their review records still
+match, and new art keeps arriving through the same review. The owner
+compared three frames before and after at 2× zoom on 2026-10-13.
+
+- [ ] **The App Store size.** After the first TestFlight upload, App Store
+      Connect's build size for an iPhone is in the tens of MB, not the
+      hundreds. Hundreds means the pictures went in as they are: check
+      that the iOS build ran `vite build`, whose log says
+      `form frames: N of M re-saved`.
+- [ ] **The pictures on a phone.** Play three exercises' form demos on
+      the phone: no blur, banding or blocky edges against the dark stage.
+
 ## Supplied form-card frames — origin ANSWERED, two things still open
 
 Affects: `public/form-frames/dips/*.webp`, `scripts/extract-form-frames.mjs`,
