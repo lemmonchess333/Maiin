@@ -443,7 +443,10 @@ export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v5: Lift4's one-time repairs — a load a swap carried onto a bodyweight
 // lift (`repairSwappedBodyweightLoad`), and every miss count, kept under
 // the old rule (`resetMissCount`). One-shot for the same reason.
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 5 as const;
+// v6: Lift8 (1)'s one-time reorder, a Full Body day leading with the lift
+// it is named for (`leadWithNamedLift`). One-shot, so a person's own order
+// stands afterwards.
+export const CURRENT_PROGRAM_SCHEMA_VERSION = 6 as const;
 
 /* ================================
    SCHEDULED RUN

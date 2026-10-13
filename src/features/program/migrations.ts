@@ -29,6 +29,7 @@
  */
 
 import type {
+  MovementCategory,
   LegacyScheduledRunStatus,
   ProgramExercise,
   ProgramState,
@@ -320,6 +321,37 @@ function roundOntoGrid(ex: ProgramExercise): ProgramExercise {
       };
 }
 
+/**
+ * One-time reorder (schema v6, Lift8 (1)): a Full Body day leads with the
+ * lift it is named for. The Squat Focus day opened with the bench press and
+ * the Deadlift Focus day with the overhead press; the builder now puts the
+ * squat and the deadlift first. A stored day whose first two slots are still
+ * in the old order swaps them, and nothing else: each exercise keeps its
+ * instanceId, so its weights and "last time" go with it. A day the person
+ * has reordered, or built themselves, is left as it is.
+ */
+const NAMED_LIFT_FIRST: Record<
+  string,
+  readonly [MovementCategory, MovementCategory]
+> = {
+  "Full Body — Squat Focus": ["horizontal_push", "knee_dominant"],
+  "Full Body — Deadlift Focus": ["vertical_push", "hip_dominant"],
+};
+
+function leadWithNamedLift(day: WorkoutDay): WorkoutDay {
+  const oldOrder = NAMED_LIFT_FIRST[day.dayName];
+  const [first, second, ...rest] = day.exercises;
+  if (
+    !oldOrder ||
+    day.isCustom ||
+    first?.movementCategory !== oldOrder[0] ||
+    second?.movementCategory !== oldOrder[1]
+  ) {
+    return day;
+  }
+  return { ...day, exercises: [second, first, ...rest] };
+}
+
 // PR-0b-iii: COMPLETED_STATUSES + isScheduledRunCompleted moved to
 // `src/lib/scheduledRunStatus.ts` so every consumer shares one
 // source of truth. The semantics here are unchanged.
@@ -479,8 +511,13 @@ export function migrateProgramState(
   // second every miss counted since, and the third an odd weight someone
   // lifts on purpose.
   const lift4OneShots = (state.programSchemaVersion ?? 1) < 5;
+  // One-shot too: run on every load, it would undo a person who moves the
+  // press back to the top.
+  const lift8Reorder = (state.programSchemaVersion ?? 1) < 6;
   let workoutsChanged = false;
-  const migratedWorkouts = state.workouts.map((day) => {
+  const migratedWorkouts = state.workouts.map((storedDay) => {
+    const day = lift8Reorder ? leadWithNamedLift(storedDay) : storedDay;
+    if (day !== storedDay) workoutsChanged = true;
     let dayChanged = false;
     const exercises = day.exercises.map((exercise) => {
       let next = exercise;

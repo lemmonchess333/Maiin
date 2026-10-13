@@ -142,10 +142,17 @@ describe("the swaps for a home gym keep every lift to two days a week", () => {
         barbellAtHome: true,
       });
       expect(pastTheCap(barbell), experience).toEqual([]);
+      // Past a beginner the posterior day leads with the Romanian deadlift
+      // (Lift8 (2)), so the deadlift's second day is the squat day's
+      // supporting hinge rather than a second heavy one.
       expect(daysWith(barbell, "deadlift"), experience).toEqual([
+        SQUAT_DAY,
         DEADLIFT_DAY,
-        POSTERIOR_DAY,
       ]);
+      expect(liftsOn(barbell, SQUAT_DAY), experience).toContain("deadlift~");
+      expect(liftsOn(barbell, POSTERIOR_DAY), experience).toContain(
+        "romanian-deadlift"
+      );
     }
   });
 

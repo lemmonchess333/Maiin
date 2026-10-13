@@ -2541,3 +2541,59 @@ describe("generateProgram with the person's limits", () => {
     }
   });
 });
+
+describe("Full Body — the named lift leads, one heavy deadlift (Lift8)", () => {
+  const leads = (days: number, experience?: "beginner" | "intermediate") =>
+    generateProgram(
+      days,
+      undefined,
+      "hypertrophy",
+      undefined,
+      undefined,
+      experience
+    ).workouts.map((d) => [d.dayName, d.exercises[0].exerciseId]);
+
+  it("opens the squat day with the squat and the deadlift day with the deadlift", () => {
+    expect(leads(2, "intermediate")).toEqual([
+      ["Full Body — Squat Focus", "squat"],
+      ["Full Body — Deadlift Focus", "deadlift"],
+    ]);
+  });
+
+  it("starts the posterior day on the Romanian deadlift past a beginner", () => {
+    expect(leads(3, "intermediate")[2]).toEqual([
+      "Full Body — Posterior Focus",
+      "romanian-deadlift",
+    ]);
+  });
+
+  it("keeps a beginner's deadlift on both of its days (L7)", () => {
+    expect(leads(3, "beginner")[2]).toEqual([
+      "Full Body — Posterior Focus",
+      "deadlift",
+    ]);
+  });
+
+  it("keeps the deadlift a stored posterior day already has", () => {
+    const beginner = generateProgram(
+      3,
+      undefined,
+      "hypertrophy",
+      undefined,
+      undefined,
+      "beginner"
+    ).workouts;
+    const again = generateProgram(
+      3,
+      beginner,
+      "hypertrophy",
+      undefined,
+      undefined,
+      "intermediate"
+    ).workouts;
+    expect(again[2].exercises[0].exerciseId).toBe("deadlift");
+    expect(again[2].exercises[0].instanceId).toBe(
+      beginner[2].exercises[0].instanceId
+    );
+  });
+});
