@@ -1,0 +1,38 @@
+[
+  {
+    "t": 0,
+    "label": "Stretch",
+    "cue": "Lower your heels under control.",
+    "image": "/final-frames/1.webp"
+  },
+  {
+    "t": 0.875,
+    "label": "Rise",
+    "cue": "Press through the balls of your feet.",
+    "image": "/final-frames/2.webp"
+  },
+  {
+    "t": 1,
+    "label": "Squeeze",
+    "cue": "Raise your heels; keep knees under pads.",
+    "image": "/final-frames/3.webp"
+  },
+  {
+    "t": 1,
+    "label": "Hold",
+    "cue": "Keep the contraction controlled.",
+    "image": "/final-frames/4.webp"
+  },
+  {
+    "t": 0.875,
+    "label": "Lower",
+    "cue": "Ease your heels down from the top.",
+    "image": "/final-frames/5.webp"
+  },
+  {
+    "t": 0,
+    "label": "Reset",
+    "cue": "Return to the lower heel position.",
+    "image": "/final-frames/6.webp"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "limits": "Manual whole connected ownership envelope plus brightness/hue checks supports but does not prove semantic preservation. Full native/layer/overlap review also required.",
+  "rows": [
+    {
+      "pose": "1-lower",
+      "brightEnvelopePixelsChanged": 0,
+      "purpleEnvelopePixelsChanged": 0,
+      "sourceSha256": "010691fa36dbe22dc367bd8ae078b6d445757c867f0d78a1fb0c6c90b990ab3f",
+      "assemblySha256": "52e844fac280eda094130cc7eb9e991b59aa915fa5eba31347c07f2b663aef75"
+    },
+    {
+      "pose": "3-raised",
+      "brightEnvelopePixelsChanged": 0,
+      "purpleEnvelopePixelsChanged": 0,
+      "sourceSha256": "3cde442f1d9adb1f4a1f36ab83451c42e7384bb50fdd4064c78656b5c52b4f2e",
+      "assemblySha256": "b05b8171e4380c9a8aaed32bd726af392f7b33e1afaa86c2380bb5bd89fcbf21"
+    }
+  ]
+}

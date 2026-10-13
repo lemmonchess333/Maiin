@@ -977,6 +977,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
     sha256: "f14c2f0a93d6e57f82ca4535c347a57479599d316229df0b716ff28ce0006c23",
   },
+  "seated-calf-raise": {
+    src: "form-art/seated-calf-raise.webp",
+    width: 344,
+    height: 480,
+    keyed: true,
+    source: "form-frames/seated-calf-raise/1.webp",
+    sourceSha256:
+      "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+    sha256: "4c6fb5a9ec6c6342fb1d37183a35b0b174c438b18edcc0387f00056d60252546",
+  },
   "seated-leg-curl": {
     src: "form-art/seated-leg-curl.webp",
     width: 416,

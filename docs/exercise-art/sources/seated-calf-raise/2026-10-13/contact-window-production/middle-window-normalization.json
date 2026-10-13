@@ -1,0 +1,9 @@
+{
+  "outputDimensions": [1536, 1024],
+  "nativeWindow": [990, 660],
+  "uniformScale": 0.64453125,
+  "insertionOrigin": [15, 440],
+  "bodyDependentFit": false,
+  "individualLimbTransform": false,
+  "status": "First local source remains too close to the raised endpoint; one correction next"
+}

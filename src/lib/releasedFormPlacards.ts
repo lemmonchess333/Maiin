@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "seated-calf-raise": placard(
+    "seated-calf-raise",
+    ["Calves"],
+    [],
+    [
+      [0, "Stretch", "Lower your heels under control."],
+      [0.875, "Rise", "Press through the balls of your feet."],
+      [1, "Squeeze", "Raise your heels; keep knees under pads."],
+      [1, "Hold", "Keep the contraction controlled."],
+      [0.875, "Lower", "Ease your heels down from the top."],
+      [0, "Reset", "Return to the lower heel position."],
+    ]
+  ),
   "jm-press": placard(
     "jm-press",
     ["Triceps"],

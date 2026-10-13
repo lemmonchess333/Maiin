@@ -1,0 +1,22 @@
+[
+  {
+    "file": "3-raised-without-safety.png",
+    "farRailEquipmentBoundingBox": {
+      "xMin": 584,
+      "xMax": 600,
+      "yMin": 984,
+      "yMax": 1023
+    },
+    "limits": "Same body-free far-end equipment ROI; neutral non-black silhouette, not a texture-shift fit."
+  },
+  {
+    "file": "middle-whole-scene-corrected-draft.png",
+    "farRailEquipmentBoundingBox": {
+      "xMin": 584,
+      "xMax": 599,
+      "yMin": 981,
+      "yMax": 1021
+    },
+    "limits": "Same body-free far-end equipment ROI; neutral non-black silhouette, not a texture-shift fit."
+  }
+]
