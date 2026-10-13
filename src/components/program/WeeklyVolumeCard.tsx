@@ -10,7 +10,11 @@ import {
   JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
 } from "@/features/program/volumeModel";
-import { weeklyVolumeTargets } from "@/features/program/volumeTargets";
+import {
+  targetKit,
+  weeklyVolumeTargets,
+  type TargetKit,
+} from "@/features/program/volumeTargets";
 import type {
   Experience,
   PrimaryGoal,
@@ -59,6 +63,7 @@ export default function WeeklyVolumeCard({
   primaryGoal,
   experience,
   sessionMinutes,
+  kit,
 }: {
   workouts: WorkoutDay[];
   primaryGoal?: PrimaryGoal;
@@ -66,6 +71,9 @@ export default function WeeklyVolumeCard({
   experience?: Experience;
   /** The session length the plan is built for. */
   sessionMinutes?: number;
+  /** The person's kit, injuries and bodyweight, as their profile holds
+   *  them: what fits is read from the plan these would build. */
+  kit?: Partial<TargetKit> | null;
 }) {
   /* Collapsed by default (owner declutter call, 2026-07-11): the full
      per-muscle table is standing scroll mass on the lift tab. The summary
@@ -80,8 +88,9 @@ export default function WeeklyVolumeCard({
         experience,
         days,
         sessionMinutes,
+        ...targetKit(kit),
       }),
-    [primaryGoal, experience, days, sessionMinutes]
+    [primaryGoal, experience, days, sessionMinutes, kit]
   );
   const volume = weeklyVolumeByJudgementMuscle(workouts);
   if (volume.length === 0) return null;

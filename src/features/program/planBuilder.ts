@@ -296,7 +296,12 @@ export interface PlanBuilderOutput {
 /* ─── Sub-builders ──────────────────────────────────────────────── */
 
 /** Produces the 7-day type structure (lift/run/both/rest). Pure. */
-function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
+function buildWeekSchedule(
+  input: Pick<
+    PlanBuilderInput,
+    "liftDays" | "runMode" | "weeklyRunDays" | "weekSchedule"
+  >
+): ScheduleDay[] {
   const runDays = input.runMode === "freeform" ? 0 : input.weeklyRunDays;
   return planWeekSchedule(input.liftDays, runDays, input.weekSchedule);
 }
@@ -339,7 +344,29 @@ function keepInjurySwaps(
  * role's numbers (`represcribeSwapped`), and its movement-specific
  * load/history is safely reinitialised.
  */
-function buildLiftProgram(input: PlanBuilderInput): {
+/** What the lift week is built from: the person's answers, and the plan
+ *  they have when there is one. */
+type LiftProgramInput = Pick<
+  PlanBuilderInput,
+  | "primaryGoal"
+  | "experience"
+  | "previousExperience"
+  | "sessionMinutes"
+  | "previousSessionMinutes"
+  | "bodyweightKg"
+  | "sex"
+  | "liftDays"
+  | "runMode"
+  | "weeklyRunDays"
+  | "weekSchedule"
+  | "equipment"
+  | "barbellAtHome"
+  | "injuries"
+  | "existingState"
+  | "preserveHistory"
+>;
+
+function buildLiftProgram(input: LiftProgramInput): {
   splitType: SplitType;
   workouts: WorkoutDay[];
   /** The session length the workouts are fitted to; absent for a plan
@@ -548,6 +575,36 @@ function buildLiftProgram(input: PlanBuilderInput): {
   };
 }
 
+/** The answers a first plan's lift week is built from (`freshLiftWeek`). */
+export type FreshLiftAnswers = Pick<
+  PlanBuilderInput,
+  | "primaryGoal"
+  | "experience"
+  | "sessionMinutes"
+  | "bodyweightKg"
+  | "sex"
+  | "liftDays"
+  | "equipment"
+  | "barbellAtHome"
+  | "injuries"
+>;
+
+/**
+ * The lift week a first plan built from these answers holds: the same
+ * build setup and a rebuild make, with no plan to keep. The volume cards
+ * read what the days and time can fit from it (`weeklyVolumeTargets`), so
+ * it has to be the person's own week, on their kit, injuries, level and
+ * bodyweight, not a generic one. The week's layout among run days only
+ * orders the days; the lifts and sets are the same.
+ */
+export function freshLiftWeek(answers: FreshLiftAnswers): WorkoutDay[] {
+  return buildLiftProgram({
+    ...answers,
+    runMode: "freeform",
+    weeklyRunDays: 0,
+  }).workouts;
+}
+
 /**
  * A rebuild inside a lighter week keeps the week lighter (the precedence
  * table in the lifting handoff): half the sets in a lighter week, with race
@@ -556,7 +613,7 @@ function buildLiftProgram(input: PlanBuilderInput): {
  * while it still read as lighter.
  */
 function keepWeekLighter(
-  input: PlanBuilderInput,
+  input: Pick<PlanBuilderInput, "existingState" | "preserveHistory">,
   workouts: WorkoutDay[]
 ): WorkoutDay[] {
   const kept = input.preserveHistory ? input.existingState : undefined;
