@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useWorkouts, type Workout } from "@/hooks/useWorkouts";
 import { useRunningStats, type RunSummaryItem } from "@/hooks/useRunningStats";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 
 export type RecentSession =
   | { kind: "workout"; workout: Workout }
@@ -35,4 +37,22 @@ export function useRecentSessions(): RecentSession[] {
       .sort((a, b) => sessionTime(b) - sessionTime(a))
       .slice(0, RECENT_SESSIONS_MAX);
   }, [workouts, runs]);
+}
+
+/** The session's day, so two like sessions can be told apart in the
+ *  list: "Today", "Yesterday", or "Sat 11 Oct". */
+export function recentSessionDay(a: RecentSession, now = new Date()): string {
+  const day =
+    a.kind === "run"
+      ? a.run.completedAt
+      : a.workout.date
+        ? parseLocalDate(a.workout.date)
+        : (a.workout.createdAt?.toDate?.() ?? null);
+  if (!day || Number.isNaN(day.getTime())) return "";
+  const key = localDateString(day);
+  if (key === localDateString(now)) return "Today";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (key === localDateString(yesterday)) return "Yesterday";
+  return formatShortWeekdayDayMonth(day);
 }

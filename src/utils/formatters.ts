@@ -80,6 +80,15 @@ export function formatDayMonthYear(d: Date): string {
   });
 }
 
+/** "Sat 11 Oct" — the short weekday form (a session's day in a list). */
+export function formatShortWeekdayDayMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 /** "Saturday 22 August" — the long weekday form (sheet subtitles). The
  *  en-GB order, like the two helpers above: an absent locale follows the
  *  DEVICE, so it renders "Saturday, August 22" on a US phone — the bug
