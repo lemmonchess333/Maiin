@@ -1,0 +1,38 @@
+[
+  {
+    "t": 0,
+    "label": "Set",
+    "cue": "Hold a shoulder-width grip above your chest.",
+    "image": "/final-frames/1.webp"
+  },
+  {
+    "t": 0.3,
+    "label": "Lower",
+    "cue": "Bend elbows; lower toward your upper chin.",
+    "image": "/final-frames/2.webp"
+  },
+  {
+    "t": 1,
+    "label": "Bottom",
+    "cue": "Keep the bar above your throat.",
+    "image": "/final-frames/3.webp"
+  },
+  {
+    "t": 1,
+    "label": "Hold",
+    "cue": "Stay supported; keep the bar controlled.",
+    "image": "/final-frames/4.webp"
+  },
+  {
+    "t": 0.3,
+    "label": "Extend",
+    "cue": "Drive your elbows forward and up.",
+    "image": "/final-frames/5.webp"
+  },
+  {
+    "t": 0,
+    "label": "Finish",
+    "cue": "Finish with both arms naturally extended.",
+    "image": "/final-frames/6.webp"
+  }
+]
