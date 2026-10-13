@@ -1,0 +1,176 @@
+[
+  {
+    "equipmentROI": "rearJournal",
+    "rectangle": [158, 800, 196, 836],
+    "bestWholeSceneShift": [0, 0],
+    "mae": 15.231437683105469,
+    "nextDistinctShifts": [
+      {
+        "mae": 16.748289108276367,
+        "dx": 0,
+        "dy": 1
+      },
+      {
+        "mae": 17.119800567626953,
+        "dx": -1,
+        "dy": 0
+      },
+      {
+        "mae": 19.401264190673828,
+        "dx": -1,
+        "dy": 1
+      },
+      {
+        "mae": 20.85308074951172,
+        "dx": -1,
+        "dy": -1
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  },
+  {
+    "equipmentROI": "nearPlatformFrontFace",
+    "rectangle": [380, 1046, 476, 1067],
+    "bestWholeSceneShift": [0, 0],
+    "mae": 6.888377666473389,
+    "nextDistinctShifts": [
+      {
+        "mae": 7.45466947555542,
+        "dx": 1,
+        "dy": 0
+      },
+      {
+        "mae": 7.574131011962891,
+        "dx": -1,
+        "dy": 0
+      },
+      {
+        "mae": 7.6489434242248535,
+        "dx": 0,
+        "dy": 1
+      },
+      {
+        "mae": 7.744205951690674,
+        "dx": 0,
+        "dy": -1
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  },
+  {
+    "equipmentROI": "farPlatformEnd",
+    "rectangle": [582, 1000, 602, 1020],
+    "bestWholeSceneShift": [16, -4],
+    "mae": 5.438254356384277,
+    "nextDistinctShifts": [
+      {
+        "mae": 5.519034385681152,
+        "dx": 15,
+        "dy": -4
+      },
+      {
+        "mae": 5.636954307556152,
+        "dx": 13,
+        "dy": -3
+      },
+      {
+        "mae": 5.648096561431885,
+        "dx": 14,
+        "dy": -3
+      },
+      {
+        "mae": 5.670380592346191,
+        "dx": 1,
+        "dy": 1
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  },
+  {
+    "equipmentROI": "rearFloorFoot",
+    "rectangle": [154, 1054, 256, 1089],
+    "bestWholeSceneShift": [0, 0],
+    "mae": 5.521749019622803,
+    "nextDistinctShifts": [
+      {
+        "mae": 6.673428058624268,
+        "dx": 1,
+        "dy": 0
+      },
+      {
+        "mae": 6.676357746124268,
+        "dx": 0,
+        "dy": -1
+      },
+      {
+        "mae": 6.683907985687256,
+        "dx": -1,
+        "dy": 0
+      },
+      {
+        "mae": 7.213207244873047,
+        "dx": -1,
+        "dy": -1
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  },
+  {
+    "equipmentROI": "groundSafetyHinge",
+    "rectangle": [530, 1101, 578, 1155],
+    "bestWholeSceneShift": [0, 0],
+    "mae": 0.0,
+    "nextDistinctShifts": [
+      {
+        "mae": 8.447815895080566,
+        "dx": 0,
+        "dy": 1
+      },
+      {
+        "mae": 8.858542442321777,
+        "dx": 0,
+        "dy": -1
+      },
+      {
+        "mae": 10.229447364807129,
+        "dx": -1,
+        "dy": 0
+      },
+      {
+        "mae": 10.356776237487793,
+        "dx": 1,
+        "dy": 0
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  },
+  {
+    "equipmentROI": "farFrontFloorBase",
+    "rectangle": [680, 1281, 790, 1380],
+    "bestWholeSceneShift": [0, 0],
+    "mae": 0.0,
+    "nextDistinctShifts": [
+      {
+        "mae": 3.19162654876709,
+        "dx": 1,
+        "dy": 0
+      },
+      {
+        "mae": 3.5147876739501953,
+        "dx": -1,
+        "dy": 0
+      },
+      {
+        "mae": 3.8476028442382812,
+        "dx": 0,
+        "dy": 1
+      },
+      {
+        "mae": 4.000941753387451,
+        "dx": 0,
+        "dy": -1
+      }
+    ],
+    "limits": "Equipment ROI only; region similarity is not proof of anatomical contact or calibrated 3D rigidity."
+  }
+]

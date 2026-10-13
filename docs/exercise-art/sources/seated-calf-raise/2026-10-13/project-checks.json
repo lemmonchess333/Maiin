@@ -1,0 +1,16 @@
+{
+  "localFullVerifyExitCode": 1,
+  "lintArtDraftsCyclesBuildDistSize": "passed",
+  "baselineCommit": "6172cedf4b6c541b7572245023e8323882ca4b58",
+  "baselineFailed": 83,
+  "branchFailed": 79,
+  "branchPassed": 12888,
+  "branchSkipped": 409,
+  "branchOnlyFailureHeaders": [],
+  "focusedArtworkPlayerTests": {
+    "files": 5,
+    "passed": 276,
+    "failed": 0
+  },
+  "requiredLinuxCI": "pending; do not merge before it passes exact integrated head"
+}

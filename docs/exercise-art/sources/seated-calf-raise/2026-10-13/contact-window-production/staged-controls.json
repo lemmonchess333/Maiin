@@ -1,0 +1,22 @@
+{
+  "pause": {
+    "playVisible": true,
+    "src": "/form-frames/seated-calf-raise/3.webp"
+  },
+  "selectSix": "/form-frames/seated-calf-raise/6.webp",
+  "nextWrap": "/form-frames/seated-calf-raise/1.webp",
+  "previousWrap": "/form-frames/seated-calf-raise/6.webp",
+  "slower": {
+    "pressed": "true",
+    "text": "Slower"
+  },
+  "slowerButton": {
+    "pressed": "true",
+    "text": "Slower"
+  },
+  "normalMedianMs": 1207,
+  "slowerMedianMs": 2408.5,
+  "slowerMeasuredRatio": 1.995443247721624,
+  "slowerTimingPassed": true,
+  "consoleErrorsObserved": 0
+}

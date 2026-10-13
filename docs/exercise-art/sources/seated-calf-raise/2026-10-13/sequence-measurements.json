@@ -1,0 +1,117 @@
+{
+  "scope": "Measured grey scanline segments inside documented windows verify fixed gear, not anatomical or3D landmarks.",
+  "scanWindows": {
+    "rearBearing": [738, 90, 150],
+    "frontFloor": [1280, 620, 740]
+  },
+  "frames": [
+    {
+      "path": "form-frames/seated-calf-raise/1.webp",
+      "sha256": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/2.webp",
+      "sha256": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/3.webp",
+      "sha256": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/4.webp",
+      "sha256": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/5.webp",
+      "sha256": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    },
+    {
+      "path": "form-frames/seated-calf-raise/6.webp",
+      "sha256": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+      "anchors": {
+        "rearBearingGreySegmentAt738": {
+          "x": 112,
+          "y": 738
+        },
+        "frontFloorGreySegmentAt1280": {
+          "x": 706,
+          "y": 1280
+        }
+      },
+      "invariantDimensions": {
+        "rearBearingGreySegmentWindowWidth": 38,
+        "frontFloorGreySegmentWindowWidth": 87
+      }
+    }
+  ]
+}
