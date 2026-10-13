@@ -29,7 +29,7 @@ import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
-import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
+import { dayFocusLabel, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import LiftRulesInfo from "@/components/program/LiftRulesInfo";
@@ -1733,7 +1733,7 @@ function ProgramInner() {
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
               >
                 <Repeat className="size-4 text-muted-foreground" /> Replace
-                Exercise
+                exercise
               </button>
               <button
                 type="button"
@@ -1778,9 +1778,12 @@ function ProgramInner() {
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
         open={showSkipConfirm}
+        /* The day as the workout and finish screens name it ("Full Body ·
+           Squat focus"), not its stored name ("Full Body — Squat Focus"),
+           which the card above never shows. */
         sessionName={
           skipTargetDay !== null
-            ? (displayWorkouts[skipTargetDay]?.dayName ?? "")
+            ? liftDayLine(displayWorkouts[skipTargetDay]?.dayName ?? "")
             : ""
         }
         onConfirm={async () => {

@@ -190,7 +190,7 @@ export interface PersonActions {
     replacementId: string;
     keep: boolean;
   };
-  /** Train's "Replace Exercise" in the plan in this week
+  /** Train's "Replace exercise" in the plan in this week
    *  (`replaceExercise`). */
   replace?: { week: number; exerciseId: string; replacementId: string };
   /** "Take a lighter week" from Train's menu, where it offers one, after a
@@ -1265,7 +1265,7 @@ export function simulateLiftSeason(
             )
           : undefined;
         if (pre && old?.instanceId) {
-          // Train's "Replace Exercise" (`replaceExerciseInDay`).
+          // Train's "Replace exercise" (`replaceExerciseInDay`).
           const calibrated = weightAfterExerciseSwap(
             old,
             replace.replacementId,
