@@ -29,10 +29,10 @@ const lift = (over: Partial<LiftProgressRow> = {}): LiftProgressRow => ({
 describe("liftingLine", () => {
   it("leads with this week's new bests", () => {
     expect(liftingLine([lift({ newBest: set, direction: "up" }), lift()])).toBe(
-      "1 new best this week"
+      "1 new best in the last 7 days"
     );
     expect(liftingLine([lift({ newBest: set }), lift({ newBest: set })])).toBe(
-      "2 new bests this week"
+      "2 new bests in the last 7 days"
     );
   });
 

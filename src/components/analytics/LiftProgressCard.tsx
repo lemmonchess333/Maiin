@@ -91,8 +91,11 @@ export default function LiftProgressCard({
                 className="@max-[16em]:hidden"
               />
               <div className="min-w-[min(100%,8em)] flex-1">
-                <p className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-foreground">
+                {/* The name wraps and the chip moves under it: truncated
+                    beside a "New best" chip, "Romanian Deadlift" read
+                    "Romanian D…" on a phone. */}
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className="min-w-0 break-words text-sm font-semibold text-foreground">
                     {row.name}
                   </span>
                   {row.newBest && <NewRecordChip label="New best" />}

@@ -7,7 +7,7 @@
  * to say keeps its plain description.
  */
 import type { AnalyticsPage } from "./AnalyticsGoDeeper";
-import type { LiftProgressRow } from "@/lib/liftProgress";
+import { NEW_BEST_DAYS, type LiftProgressRow } from "@/lib/liftProgress";
 import type { PaceByKindRow } from "@/lib/runInsights";
 import { paceIn, paceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
 import { distanceLabel } from "@/lib/runLabels";
@@ -21,7 +21,9 @@ const plural = (n: number, one: string, many: string) =>
 export function liftingLine(rows: readonly LiftProgressRow[]): string | null {
   const newBests = rows.filter((r) => r.newBest).length;
   if (newBests > 0)
-    return `${plural(newBests, "new best", "new bests")} this week`;
+    // The PRs tab's window, not the calendar week: on a Tuesday "this week"
+    // claimed Saturday's bests.
+    return `${plural(newBests, "new best", "new bests")} in the last ${NEW_BEST_DAYS} days`;
   const up = rows.filter((r) => !r.holding && r.direction === "up").length;
   const holding = rows.filter((r) => r.holding).length;
   const parts = [
