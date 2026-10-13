@@ -17,7 +17,7 @@
  */
 import type { Page, Route } from "@playwright/test";
 import { getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { createRequire } from "node:module";
 import { onRealClock } from "./nodeClock";
@@ -77,19 +77,46 @@ function errorReply(error: unknown) {
   };
 }
 
+/**
+ * The caller's ID token, as the emulator verifies it. Against the emulator
+ * the Admin SDK checks every token for revocation by its `auth_time`, and
+ * the emulator's sign-up stamps that a moment before the account's
+ * `validSince`: when a second ends between the two, every token from that
+ * sign-in reads as revoked, though the emulator, which checks `iat`,
+ * accepts it. Such a token is taken as the emulator takes it.
+ */
+async function verifiedCaller(bearer: string): Promise<DecodedIdToken> {
+  const { auth } = emulatorAdmin();
+  try {
+    // The emulator mints tokens at the real time; checked against a moved
+    // clock, every one would read as expired.
+    return await onRealClock(() => auth.verifyIdToken(bearer));
+  } catch (error) {
+    if ((error as { code?: string }).code !== "auth/id-token-revoked")
+      throw error;
+    const claims = JSON.parse(
+      Buffer.from(bearer.split(".")[1] ?? "", "base64url").toString()
+    ) as DecodedIdToken;
+    const { tokensValidAfterTime } = await auth.getUser(claims.sub);
+    if (
+      tokensValidAfterTime !== undefined &&
+      claims.iat * 1000 < new Date(tokensValidAfterTime).getTime()
+    )
+      throw error;
+    return { ...claims, uid: claims.sub };
+  }
+}
+
 async function answer(route: Route, name: string, handler: CallableHandler) {
   if (route.request().method() === "OPTIONS") {
     await route.fulfill({ status: 204, headers: CORS });
     return;
   }
-  const { auth } = emulatorAdmin();
   const bearer = (route.request().headers().authorization ?? "").replace(
     /^Bearer /,
     ""
   );
-  // The emulator mints tokens at the real time; checked against a moved
-  // clock, every one would read as expired.
-  const token = await onRealClock(() => auth.verifyIdToken(bearer));
+  const token = await verifiedCaller(bearer);
   try {
     const result = await handler.run(route.request().postDataJSON().data, {
       auth: { uid: token.uid, token },
