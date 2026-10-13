@@ -234,3 +234,31 @@ describe("foodWeek — the ring", () => {
     expect(days[2].over).toBe(1);
   });
 });
+
+describe("foodWeek — the days before the account began", () => {
+  it("draws no target or ring on an empty day before the start", () => {
+    const days = week({ startKey: "2026-09-30" });
+    const monday = days[0];
+    expect(monday.beforeJoined).toBe(true);
+    expect(monday.target).toBeNull();
+    expect(monday.progress).toBeNull();
+    expect(monday.isSelectable).toBe(true);
+    expect(days[2].beforeJoined).toBe(false);
+    expect(days[2].target).toBe(2000);
+  });
+
+  it("keeps a day before the start that has food logged on it", () => {
+    const days = week({
+      startKey: "2026-09-30",
+      meals: [meal("m1", "2026-09-28", 600)],
+    });
+    expect(days[0].beforeJoined).toBe(false);
+    expect(days[0].eaten).toBe(600);
+    expect(days[0].target).toBe(2000);
+  });
+
+  it("marks nothing while the start day is unknown", () => {
+    expect(week({ startKey: null }).some((d) => d.beforeJoined)).toBe(false);
+    expect(week().some((d) => d.beforeJoined)).toBe(false);
+  });
+});

@@ -17,6 +17,7 @@ const STROKE = 3;
  */
 function eatingLabel(day: FoodWeekDay): string {
   if (day.isFuture || !day.isSelectable) return "";
+  if (day.beforeJoined) return ", before you joined";
   if (day.eaten <= 0) return ", nothing logged";
   const eaten = formatCalories(day.eaten);
   if (day.target === null) return `, ${eaten} ${CALORIE_UNIT}`;
@@ -62,7 +63,9 @@ export default function FoodWeekStrip({
     >
       {days.map((day) => {
         const date = parseLocalDate(day.key);
-        const drawn = day.isSelectable;
+        /* A day before the account began reads as a future day does:
+           the bare date, no track (Food10 (3)). */
+        const drawn = day.isSelectable && !day.beforeJoined;
         return (
           <button
             type="button"
