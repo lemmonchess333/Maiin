@@ -330,8 +330,9 @@ describe("the taper's long run steps down from the longest the build held (Run22
 
   it("a compressed plan whose time limit holds the build short takes its shares of that", () => {
     // A 90-minute limit holds a marathon's long runs to 15 km; a race this
-    // close builds to the 25 km peak without one.
-    for (const weeks of [6, 8, 11]) {
+    // close builds to the 25 km peak without one. Six weeks out no longer
+    // does: climbing a rung a week (Run23), its build reaches 15 km itself.
+    for (const weeks of [8, 11]) {
       const p = built("marathon", weeks, timeLimited);
       const out = fromRaceWeek(p);
       const longest = buildLongest(p, "marathon");
@@ -419,9 +420,13 @@ describe("the taper's long run steps down from the longest the build held (Run22
     ];
     for (const weeks of [8, 17, 29, 43])
       for (const [label, more, three, two] of marathons) {
+        // Eight weeks is too few for a 5:00/km runner to climb a rung a week
+        // to 30 km (Run23): the build peaks at 25, and the taper takes 15 and
+        // 15 of that.
+        const short = weeks === 8 && label === "a 5:00/km easy pace";
         const out = fromRaceWeek(built("marathon", weeks, more));
         const at = `a marathon ${weeks} weeks out, ${label}`;
-        expect(longKm(out(3)), at).toBe(three);
+        expect(longKm(out(3)), at).toBe(short ? 15 : three);
         expect(longKm(out(2)), at).toBe(two);
       }
     const halves: [string, Partial<RacePlanV2Input>, number][] = [

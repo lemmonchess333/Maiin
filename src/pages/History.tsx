@@ -40,6 +40,7 @@ import {
 } from "@/lib/trainingWeeks";
 import LiftProgressCard from "@/components/analytics/LiftProgressCard";
 import MuscleVolumeCard from "@/components/analytics/MuscleVolumeCard";
+import { volumeTargetsFor } from "@/features/program/volumeTargets";
 import RunPaceCard from "@/components/analytics/RunPaceCard";
 import FastestKilometresCard from "@/components/analytics/FastestKilometresCard";
 import WeightRateCard from "@/components/analytics/WeightRateCard";
@@ -777,13 +778,21 @@ export default function History() {
      focus, the range's sets, and the weekly average the volume bars stand
      against. */
   const liftGoal = profile?.primaryGoal as PrimaryGoal | undefined;
+  // What Train's volume card judges each muscle against, so the two never
+  // disagree: the band at the person's level, its floor lowered to what
+  // their days and time fit.
+  const muscleTargets = useMemo(
+    () => (profile ? volumeTargetsFor(profile) : undefined),
+    [profile]
+  );
   const liftingInsight = useMemo(
     () =>
       liftingPageFigures(workouts, range, {
         primaryGoal: liftGoal,
+        targets: muscleTargets,
         bins: periodSummary.bins,
       }),
-    [workouts, range, liftGoal, periodSummary.bins]
+    [workouts, range, liftGoal, muscleTargets, periodSummary.bins]
   );
 
   /* The Running page's reading of the range (`runningPageInsight`): pace
@@ -1809,9 +1818,9 @@ export default function History() {
                         </p>
                         <p className="text-caption text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
-                          {lifetimeTotals.liftCount === 1
-                            ? "session"
-                            : "sessions"}
+                          {/* "lifts", as the tile beside it says "runs":
+                              the range card's "sessions" counts both. */}
+                          {lifetimeTotals.liftCount === 1 ? "lift" : "lifts"}
                         </p>
                       </Card>
                       <Card size="compact" className="text-center">

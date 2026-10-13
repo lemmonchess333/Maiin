@@ -1096,7 +1096,12 @@ export default function Home() {
         >
           <Card className="space-y-4">
             <SectionErrorBoundary sectionName="week-summary">
-              <WeekSummary counts={weekCounts} />
+              <WeekSummary
+                counts={weekCounts}
+                runner={
+                  !!profile?.runFrequency && profile.runFrequency !== "none"
+                }
+              />
             </SectionErrorBoundary>
             <div className="border-t border-border pt-3">
               <TrackSectionView section="hero">

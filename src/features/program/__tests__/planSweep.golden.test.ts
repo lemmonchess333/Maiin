@@ -239,6 +239,23 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
                                                under a floor is no longer a
                                                defect. The Weekly volume
                                                card judges what fits.
+       (judged, 1:1)     28 over / —         — Lift11: a muscle's second
+                                               day goes after a main lift's
+                                               third set, so the fit takes
+                                               fewer sets from the mains'
+                                               secondaries. The bound had
+                                               stayed at 43 while Lift9 and
+                                               the rows' lat and rear-delt
+                                               credit brought it to 29.
+       (judged, 1:1)     20 over / —         — Lift12: past the
+                                               reconciler's floors, a new
+                                               plan lets a supporting lift
+                                               of an over muscle's own go
+                                               when the week is the better
+                                               for it. What stays over is
+                                               fed through secondaries the
+                                               muscle's two days need: the
+                                               upper back by the rows.
      Tighten whenever it improves; the test fails the moment a change makes
      it worse in the CURRENT unit. */
   it("D-VOL: ceiling violations are ratcheted and must only shrink", () => {
@@ -247,7 +264,7 @@ describe("KNOWN_DEFECTS — asserted so the snapshot is not read as approval", (
     ).length;
 
     expect(high, `${high} configs over a landmark ceiling`).toBeLessThanOrEqual(
-      43
+      20
     );
 
     // …and it is genuinely not solved, so the ratchet is never read as a pass.

@@ -17,8 +17,19 @@ interface Column {
  * runner who does not lift is not shown "0 of 0 lifts" every week. Food
  * is always shown: it is the one every week has. Each bar is the share of
  * the plan done, full once the plan is met.
+ *
+ * A runner always sees Runs (Home4 (1)): on a free-run plan nothing is
+ * planned, and the column would otherwise appear only after the week's
+ * first run.
  */
-export default function WeekSummary({ counts }: { counts: WeekSummaryCounts }) {
+export default function WeekSummary({
+  counts,
+  runner = false,
+}: {
+  counts: WeekSummaryCounts;
+  /** The person runs (setup's `runFrequency` is not "none"). */
+  runner?: boolean;
+}) {
   const columns: Column[] = [];
   if (counts.lifts.planned !== null || counts.lifts.done > 0)
     columns.push({
@@ -28,7 +39,7 @@ export default function WeekSummary({ counts }: { counts: WeekSummaryCounts }) {
       of: counts.lifts.planned,
       fill: "hsl(var(--lifting))",
     });
-  if (counts.runs.planned !== null || counts.runs.done > 0)
+  if (runner || counts.runs.planned !== null || counts.runs.done > 0)
     columns.push({
       key: "runs",
       label: "Runs",
