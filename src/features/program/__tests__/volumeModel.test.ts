@@ -10,6 +10,7 @@ import {
   balancePushPull,
   reconcileToLandmarks,
   hingeAccessoryPastCeiling,
+  accessoriesPastCeiling,
   primaryJudgementForExercise,
   toCanonical,
   type JudgementMuscle,
@@ -778,5 +779,65 @@ describe("judgement layer — per-head classification", () => {
       weeklyVolumeByJudgementMuscle(week).find((v) => v.muscle === "FrontDelts")
         ?.sets
     ).toBe(3);
+  });
+});
+
+describe("accessoriesPastCeiling — every muscle's ceiling (Lift12)", () => {
+  const bench = (sets: number) =>
+    ex({
+      exerciseId: "bench-press",
+      movementCategory: "horizontal_push",
+      sets,
+    });
+  const pushdown = (sets: number, instanceId: string) =>
+    ex({
+      exerciseId: "rope-tricep-pushdown",
+      movementCategory: "arms_triceps",
+      isAccessory: true,
+      sets,
+      instanceId,
+    });
+  const curl = (sets: number, instanceId: string) =>
+    ex({
+      exerciseId: "db-curl",
+      movementCategory: "arms_biceps",
+      isAccessory: true,
+      sets,
+      instanceId,
+    });
+  const week = () => [
+    day([bench(3), pushdown(2, "first-pushdown"), curl(2, "curl")]),
+    day([bench(3), pushdown(3, "second-pushdown")]),
+  ];
+
+  it("names nothing while every muscle is within its ceiling", () => {
+    expect(accessoriesPastCeiling(week(), () => 100)).toEqual([]);
+  });
+
+  it("names a muscle's own supporting lifts, the biggest and then the latest first", () => {
+    // The triceps read the bench's sets and the pushdowns': past a ceiling
+    // of 6, the pushdowns may go, never the bench, and never the curl.
+    const ceiling = (m: JudgementMuscle) => (m === "Triceps" ? 6 : 100);
+    expect(accessoriesPastCeiling(week(), ceiling)).toEqual([
+      { instanceId: "second-pushdown", muscle: "Triceps" },
+      { instanceId: "first-pushdown", muscle: "Triceps" },
+    ]);
+  });
+
+  it("puts the most-over muscle first", () => {
+    const ceiling = (m: JudgementMuscle) =>
+      m === "Triceps" ? 10 : m === "Biceps" ? 0 : 100;
+    expect(
+      accessoriesPastCeiling(week(), ceiling).map((c) => c.muscle)
+    ).toEqual(["Biceps", "Triceps", "Triceps"]);
+  });
+
+  it("never names a lift the week also has as a main lift", () => {
+    const asMain = [
+      day([bench(3), { ...pushdown(2, "kept"), isAccessory: undefined }]),
+      day([pushdown(2, "same-lift")]),
+    ];
+    const ceiling = (m: JudgementMuscle) => (m === "Triceps" ? 1 : 100);
+    expect(accessoriesPastCeiling(asMain, ceiling)).toEqual([]);
   });
 });

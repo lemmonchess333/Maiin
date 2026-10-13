@@ -17,6 +17,7 @@ import {
   type StartingLoadContext,
 } from "./startingLoads";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
+import { primaryJudgementForExercise } from "./volumeModel";
 
 /**
  * How many times the week has each lift, kept as a filter swaps them, so a
@@ -471,4 +472,51 @@ export function applyEquipmentFilterToWorkouts(
     out[d].exercises[e] = swapFor(ex, usedByDay[d]);
   }
   return out;
+}
+
+/**
+ * Lift14 — a new plan drops a supporting lift the person's kit can't do when
+ * its day already trains the same muscle with one it can.
+ *
+ * The equipment filter keeps a lift with no fitting alternative and flags it
+ * ("needs equipment you don't have — replace it manually"). With an injury
+ * and home or minimal kit that happens where the one safe lift the kit
+ * allows is already on the day: an elbow keeps a cable pushdown beside its
+ * kickbacks and a cable pulldown beside its inverted rows, a knee and back a
+ * barbell hip thrust beside a glute bridge. A lift the person can't do is no
+ * part of the session, and the day's other lift already gives the muscle its
+ * work. A main lift, or a supporting lift whose muscle nothing else on the
+ * day trains, keeps the flag.
+ *
+ * New plans only (`generateProgram`): a plan the person has is matched to
+ * its saved state slot by slot, so a kit change there keeps the flag rather
+ * than move every later lift's history up a place.
+ */
+export function dropUnavailableAccessories(
+  workouts: readonly WorkoutDay[],
+  equipment: string | undefined,
+  barbellAtHome?: boolean
+): WorkoutDay[] {
+  const kit = ownedKit(equipment, barbellAtHome);
+  if (!kit) return [...workouts];
+  const owned = (id: string) => {
+    const eq = getExerciseById(id)?.equipment;
+    return eq === undefined || kit.has(eq);
+  };
+  return workouts.map((day) => {
+    const kept = day.exercises.filter((ex) => {
+      if (!ex.isAccessory || owned(ex.exerciseId)) return true;
+      const muscle = primaryJudgementForExercise(ex);
+      return !day.exercises.some(
+        (other) =>
+          other !== ex &&
+          owned(other.exerciseId) &&
+          muscle !== null &&
+          primaryJudgementForExercise(other) === muscle
+      );
+    });
+    return kept.length === day.exercises.length
+      ? day
+      : { ...day, exercises: kept };
+  });
 }
