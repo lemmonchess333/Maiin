@@ -1,0 +1,137 @@
+{
+  "scope": "Fixed source pixel scanlines and dimensions, not calibrated joint centres or anatomical measurements. Combined with native/contact/mechanics review.",
+  "frames": [
+    {
+      "path": "form-frames/jm-press/1.webp",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/2.webp",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/3.webp",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/4.webp",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/5.webp",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/6.webp",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+[
+  {
+    "pose": "top",
+    "editableReopenedExact": true,
+    "outsideUpperBodyColourScopeChanged": 0,
+    "fixedLowerSceneChanged": 0,
+    "exactPrimaryPixels": 3123,
+    "exactSecondaryPixels": 6064,
+    "sourceComponents": [
+      {
+        "pixels": 1283,
+        "bbox": [760, 248, 792, 358],
+        "meanSourceChroma": 158.66874512860483,
+        "role": "primary visible triceps"
+      },
+      {
+        "pixels": 2065,
+        "bbox": [546, 272, 577, 383],
+        "meanSourceChroma": 161.4997578692494,
+        "role": "primary visible triceps"
+      },
+      {
+        "pixels": 3173,
+        "bbox": [654, 315, 740, 382],
+        "meanSourceChroma": 76.96848408446266,
+        "role": "secondary chest/source cap"
+      },
+      {
+        "pixels": 2537,
+        "bbox": [603, 337, 671, 395],
+        "meanSourceChroma": 78.51044540796217,
+        "role": "secondary chest/source cap"
+      }
+    ],
+    "deltoidMasks": [
+      [
+        [532, 373],
+        [548, 360],
+        [566, 365],
+        [584, 386],
+        [589, 404],
+        [577, 418],
+        [552, 424],
+        [536, 410],
+        [530, 391]
+      ],
+      [
+        [749, 351],
+        [765, 343],
+        [783, 354],
+        [783, 375],
+        [772, 391],
+        [753, 386],
+        [746, 370]
+      ]
+    ],
+    "anatomyTransforms": false,
+    "status": "Native muscle-ownership/contour review pending",
+    "sha256": "4cb25305162c7455106276798454ba8ab5e1a65fbcc7f2be8e41fc872bd88c1c"
+  },
+  {
+    "pose": "middle",
+    "editableReopenedExact": true,
+    "outsideUpperBodyColourScopeChanged": 0,
+    "fixedLowerSceneChanged": 0,
+    "exactPrimaryPixels": 3331,
+    "exactSecondaryPixels": 5863,
+    "sourceComponents": [
+      {
+        "pixels": 1254,
+        "bbox": [761, 280, 808, 375],
+        "meanSourceChroma": 157.6451355661882,
+        "role": "primary visible triceps"
+      },
+      {
+        "pixels": 2323,
+        "bbox": [552, 312, 595, 402],
+        "meanSourceChroma": 153.4106758501937,
+        "role": "primary visible triceps"
+      },
+      {
+        "pixels": 2970,
+        "bbox": [654, 323, 739, 383],
+        "meanSourceChroma": 81.48552188552189,
+        "role": "secondary chest/source cap"
+      },
+      {
+        "pixels": 2172,
+        "bbox": [608, 344, 671, 395],
+        "meanSourceChroma": 84.87246777163904,
+        "role": "secondary chest/source cap"
+      }
+    ],
+    "deltoidMasks": [
+      [
+        [527, 392],
+        [540, 376],
+        [559, 378],
+        [576, 393],
+        [582, 418],
+        [567, 432],
+        [545, 431],
+        [529, 417]
+      ],
+      [
+        [746, 362],
+        [768, 355],
+        [788, 373],
+        [788, 395],
+        [772, 408],
+        [750, 397],
+        [741, 382]
+      ]
+    ],
+    "anatomyTransforms": false,
+    "status": "Native muscle-ownership/contour review pending",
+    "sha256": "de77e403c3ca2bda77b021d721466e69ba0a39d1f3e373e25298398a13848490"
+  },
+  {
+    "pose": "bottom",
+    "editableReopenedExact": true,
+    "outsideUpperBodyColourScopeChanged": 0,
+    "fixedLowerSceneChanged": 0,
+    "exactPrimaryPixels": 4452,
+    "exactSecondaryPixels": 2687,
+    "sourceComponents": [
+      {
+        "pixels": 2629,
+        "bbox": [624, 351, 728, 394],
+        "meanSourceChroma": 73.01787751996957,
+        "role": "secondary chest/source cap"
+      },
+      {
+        "pixels": 262,
+        "bbox": [580, 370, 596, 390],
+        "meanSourceChroma": 69.40839694656489,
+        "role": "secondary chest/source cap"
+      },
+      {
+        "pixels": 1882,
+        "bbox": [748, 403, 823, 446],
+        "meanSourceChroma": 135.3453772582359,
+        "role": "primary visible triceps"
+      },
+      {
+        "pixels": 2766,
+        "bbox": [553, 431, 661, 474],
+        "meanSourceChroma": 129.4515545914678,
+        "role": "primary visible triceps"
+      }
+    ],
+    "deltoidMasks": [
+      [
+        [519, 385],
+        [527, 372],
+        [550, 369],
+        [571, 378],
+        [585, 395],
+        [581, 413],
+        [565, 422],
+        [540, 416],
+        [522, 402]
+      ],
+      [
+        [735, 383],
+        [753, 384],
+        [771, 397],
+        [777, 414],
+        [764, 428],
+        [747, 417],
+        [735, 401]
+      ]
+    ],
+    "anatomyTransforms": false,
+    "status": "Native muscle-ownership/contour review pending",
+    "sha256": "181a3d837b1b15b0c2f2feb84ca3fa370081802358de171deda426a51b335b71"
+  }
+]

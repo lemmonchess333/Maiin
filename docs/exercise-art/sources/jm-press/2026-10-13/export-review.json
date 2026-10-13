@@ -1,0 +1,54 @@
+{
+  "exerciseId": "jm-press",
+  "distinctPoses": 3,
+  "sourcePoseOrder": ["top", "middle", "bottom", "bottom", "middle", "top"],
+  "crop": [260, 0, 1095, 1024],
+  "width": 835,
+  "height": 1024,
+  "frames": [
+    {
+      "frame": 1,
+      "pose": "top",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111"
+    },
+    {
+      "frame": 2,
+      "pose": "middle",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df"
+    },
+    {
+      "frame": 3,
+      "pose": "bottom",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105"
+    },
+    {
+      "frame": 4,
+      "pose": "bottom",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105"
+    },
+    {
+      "frame": 5,
+      "pose": "middle",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df"
+    },
+    {
+      "frame": 6,
+      "pose": "top",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111"
+    }
+  ],
+  "reopenedEditableExportsExact": true,
+  "losslessFramesExact": true,
+  "cardOpaqueSourcePixelsExact": true,
+  "cardSha256": "5841502c9dc0c440652a5da15a96bc607164e8322c9bf17dcfdf6e5cd78160b7",
+  "disclosures": [
+    "Three physical poses across six separate playback paths.",
+    "Middle is early descent, not calibrated half travel; about.3progress used as qualitative cue phase.",
+    "No anatomical transforms or individual fitting; generated window uniformly returned from2x inspection zoom at(280,0).",
+    "Upper-torso neutral contour variations retained after contiguous selection/native pair review, not asserted pixel-identical to folded master.",
+    "Original full-size source plate pixels restored with equipment-only rigid rotation/translation; no plate rescaling.",
+    "Native full six-step and actual app/card/mobile/controls review still required before approval."
+  ],
+  "status": "Prepared outside production; not complete or registered.",
+  "cardBackgroundNoiseRemoved": true
+}

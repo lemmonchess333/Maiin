@@ -425,6 +425,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 480,
     reference: 1,
   },
+  "jm-press": {
+    folder: "2026-10-13",
+    version: "anatomy-v3-2026-10-13-reviewed-jm-press-v1",
+    width: 835,
+    height: 1024,
+    reference: 1,
+  },
   "jump-rope": {
     folder: "2026-10-09",
     version: "anatomy-v3-2026-10-09-jump-rope-v1",

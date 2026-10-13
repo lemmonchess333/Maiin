@@ -1,0 +1,205 @@
+{
+  "exerciseId": "jm-press",
+  "version": "anatomy-v3-2026-10-13-reviewed-jm-press-v1",
+  "width": 835,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-13T13:45:36.569798+00:00",
+  "reference": {
+    "path": "form-frames/jm-press/1.webp",
+    "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111"
+  },
+  "cueSha256": "87a48b0e12fd33038deb8110c6c98ef0047d5f04637c7b9b6b36bcc8800824fe",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Strict athlete-anatomy-v3 canonical attached to all generation edits; one bald faceless lean white-grey athlete with white trainers and neutral featureless pelvis. Original visible head protected outside natural arm occlusion. Sources, prompts and hashes retained; no anatomical transforms or grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same1536x1024 full source canvas; local768x512 window at(280,0) uniformly returned from2x inspection, no independent fitting. Same empty-margin crop(260,0,1095,1024) yields835x1024 with no resampling of the assembled frame. Fixed lower source fromy512 is exact across poses."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native original-size stills, contiguous-source selection comparison, provisional pair and final835x1024 six-step browser loop reviewed. Mask cuts caused black chest gap; selecting the already-generated connected exposed upper torso removes gaps/doubled contours. Source neutral upper-torso contour variation retained, not asserted pixel-identical to folded pose. Arms bend/extend coherently, one connected body; lower body remains exact."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One original modest plate per side reused at unchanged size; only equipment rigid rotation/translation and neutral shaft joins. Source plate silhouettes selected without bench/anatomy; isolated gear regions inspected. Hands/arms unchanged by this finishing step. Same plate pixels and plate-crop dimensions across poses; source projected bar angle varies. equipment-review.json and native/app playback."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Closed hands remain attached to shaft through Set/Lower/Bottom/Hold/Extend/Finish. Bar approaches upper chin/throat without touching down; supported head/back and planted feet remain visually steady. Natural near-arm head occlusion at extension. Fixed shoe/bench scanlines and exact lower scene verify compositing only, not calibrated joint/contact measurements."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Controlled hybrid bench/skullcrusher path: both elbows bend forward toward upper chin and extend, bar/plates move with both closed grips. Plate size restored rather than changing with generated pose. Same supported lower scene, no anatomical fitting. Near/far projected early-descent travel about27percent; perspective illustration is not a calibrated3D rigidity or activation certificate."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Triceps primary#7B72E9; chest/front deltoids secondary#9590E0; biceps/forearms and other anatomy neutral. Source coloured components and positive front-deltoid masks reviewed at native scale, with inherited neutral highlights and grey contours. Exact palette pixels measured. Ownership is anatomical pose inference, not certified segmentation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six concise catalogue-aligned cues; three physical poses1,2,3,3,2,1. Middle is early descent, not claimed half travel, with qualitative t0,.3,1,1,.3,0. No throat touch-down cue. SourcePoseOrder and duplicate hashes honestly disclose reuse."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six lossless835x1024 files decoded at actual835x1024 native playback including6to1; native-final-trace.json. Three multilayer OpenRaster files reopen exactly and cropped exports match delivered frame pixels. Same image hashes across stage and registration."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Registered ExerciseFormContent at 390 x 844 in light mode: all six production paths decoded, 6 to 1 loop observed, complete body/bar/plates and readable captions/key. Actual standard generated 409 x 480 card reviewed. Pause, manual 1 to 6 and 6 to 1, and slower playback passed; observed console has zero errors. Evidence: integrated-light.png, integrated-light-trace.json, integrated-controls.json and integrated-console.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Registered ExerciseFormContent at 390 x 844 in dark mode: all six production paths decoded, 6 to 1 loop observed, complete body/bar/plates and readable captions/key. Actual standard generated 409 x 480 card reviewed. Pause, manual 1 to 6 and 6 to 1, and slower playback passed; observed console has zero errors. Evidence: integrated-dark.png, integrated-dark-trace.json, integrated-controls.json and integrated-console.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/jm-press/1.webp",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/2.webp",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/3.webp",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/4.webp",
+      "sha256": "86a3a72f7c49092caae1e14bf98720f10935b1036c84612cd206a2165004b105",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/5.webp",
+      "sha256": "d876b2ccdc07df09f473864ee422e430c2892aace1ba430ced75de01008223df",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    },
+    {
+      "path": "form-frames/jm-press/6.webp",
+      "sha256": "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111",
+      "anchors": {
+        "nearShoeLeftEdgeAt900": {
+          "x": 445,
+          "y": 900
+        },
+        "farShoeRightEdgeAt805": {
+          "x": 786,
+          "y": 805
+        },
+        "benchPadLeftEdgeAt620": {
+          "x": 509,
+          "y": 620
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWhiteWidthAt900": 66,
+        "benchPadGreyWidthAt620": 106
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": [
+    "Three physical poses across six separate playback files; early-descent middle and uneven spacing disclosed.",
+    "Generated upper-torso neutral contours vary slightly; source-selection repair preserves continuity and fixed lower scene, not exact original torso shading.",
+    "Natural arm occlusion of supported head at lockout.",
+    "Equipment-only plate restoration uses original pixels, unchanged size, with small projected bar-angle variation and neutral shaft joins. No calibrated3D claim.",
+    "Front-deltoid colour ownership is pose-based anatomical inference; neutral highlights/grey contours retained."
+  ],
+  "integrationValidation": "Native and registered mobile/card review passed; project verification and required CI pending before completion and merge."
+}

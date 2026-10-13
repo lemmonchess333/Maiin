@@ -647,6 +647,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "fcf24678e1f96464374b8b05133d896fe2ceaf51800683c461e06bf88d76d713",
     sha256: "5c2cb012d3c80a1b96a7387a9f6b91c31612e9d23836f5b48f39da21994ce0fb",
   },
+  "jm-press": {
+    src: "form-art/jm-press.webp",
+    width: 409,
+    height: 480,
+    keyed: true,
+    source: "form-frames/jm-press/1.webp",
+    sourceSha256:
+      "81b9d94d38b3fd1423bda52994b28fd98936105d8ef52094eeef55eaddeae111",
+    sha256: "e54af7cdd3faf276817541516d4d8d2551dba87b8d549ec00693166d2eb55027",
+  },
   "jump-rope": {
     src: "form-art/jump-rope.webp",
     width: 190,

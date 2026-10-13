@@ -1,0 +1,27 @@
+{
+  "sourceImagegenId": "23eb9742-3338-476b-b38f-be66913f8377",
+  "sourceSha256": "45aee7db581cdceb53fe7828c036d3cdab8041ce5c5693a1ac022be8c297518e",
+  "placement": [280, 0],
+  "sourceUniformUndoPreviewZoom": 0.5,
+  "newGeneration": false,
+  "anatomyTransforms": false,
+  "individualLimbFitting": false,
+  "newSelection": "Existing contiguous generated exposed upper-torso surface already inside window; replaces mask cuts through pectoral and abdominal contours. No synthesized or repainted anatomy.",
+  "chestSelection": [
+    [590, 349],
+    [641, 335],
+    [694, 332],
+    [737, 344],
+    [760, 392],
+    [778, 450],
+    [794, 485],
+    [784, 511],
+    [646, 511],
+    [610, 494],
+    [584, 471],
+    [572, 429]
+  ],
+  "outsideSelectionPixelsChanged": 0,
+  "fixedLowerScenePixelsChanged": 0,
+  "status": "Native mask-selection review only; not approved."
+}

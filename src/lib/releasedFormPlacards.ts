@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "jm-press": placard(
+    "jm-press",
+    ["Triceps"],
+    ["Chest", "Front Delts"],
+    [
+      [0, "Set", "Hold a shoulder-width grip above your chest."],
+      [0.3, "Lower", "Bend elbows; lower toward your upper chin."],
+      [1, "Bottom", "Keep the bar above your throat."],
+      [1, "Hold", "Stay supported; keep the bar controlled."],
+      [0.3, "Extend", "Drive your elbows forward and up."],
+      [0, "Finish", "Finish with both arms naturally extended."],
+    ]
+  ),
   "smith-bench-press": placard(
     "smith-bench-press",
     ["Chest"],
