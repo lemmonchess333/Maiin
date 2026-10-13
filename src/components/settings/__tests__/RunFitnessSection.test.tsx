@@ -40,6 +40,12 @@ describe("RunFitnessSection", () => {
   it("prompts to set fitness when no benchmark", () => {
     renderWith({ runFitness: null });
     expect(screen.getByText("Set your fitness")).toBeInTheDocument();
+    // In British spelling, as "personalised paces" are below.
+    expect(
+      screen.getByText(
+        "Add a recent race and we'll personalise every run pace to you."
+      )
+    ).toBeInTheDocument();
   });
 
   it("shows VDOT + personalised paces when a benchmark exists", () => {
