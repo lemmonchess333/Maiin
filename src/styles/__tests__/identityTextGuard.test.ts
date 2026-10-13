@@ -95,7 +95,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-09-27: 44 → 43. DS3's weekly recap: its week-in-numbers card
   // marks each number with a coloured rule, not an icon, so the old
   // page's footprints icon went.
-  running: 43, // Calendar status icons now use the strong colour step.
+  // 43 → 42. The feed's run card draws its distance once, where it had
+  // one line for a run and another for a run with a workout.
+  running: 42, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
