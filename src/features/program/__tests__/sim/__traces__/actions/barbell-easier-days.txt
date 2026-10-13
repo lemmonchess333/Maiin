@@ -174,8 +174,8 @@ w22 2026-08-03  plan week 22 progression  3/3 sessions  50–53 min
   deadlift           plan 60 × 8 × 3  1RM 73.0 logged 76.0  57.5×[8,8,8] step | 60×[8,8,6] LOWERED
   db-shoulder-press  plan 5 × 15 × 3  1RM 7.6 logged 7.5  5×[15,15,15] hold
   sets/days: Chest 8/3 · FrontDelts 8/3 · RearDelts 8/3 · Triceps 8/3 · Lats 8/3 · UpperBack 9/2 · LowerBack 6/2 · Biceps 10/3 · Quads 7/3 · Hamstrings 13/3 · Glutes 13/3 · Calves 4/2 · Abs 4/2
-  · 2026-08-05: took bench-press down to 22.5 kg (plan 30 × 8)
   · 2026-08-05: took squat down to 42.5 kg (plan 52.5 × 8)
+  · 2026-08-05: took bench-press down to 22.5 kg (plan 30 × 8)
 
 w23 2026-08-10  plan week 23 progression  3/3 sessions  36–52 min
   squat              plan 47.5 × 8 × 3  1RM 61.1 logged 57.0  52.5×[2] 45×[8,8] step | 37.5×[9,9] reps

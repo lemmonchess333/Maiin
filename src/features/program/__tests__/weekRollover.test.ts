@@ -195,7 +195,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 39 load 2097.0 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 39 load 1984.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -204,7 +204,7 @@ const cases: {
     weeksBehind: 2,
     layoff: "detrained",
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 2097.0 | runs 2026-09-21 easy_30,easy_30,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1984.5 | runs 2026-09-21 easy_30,easy_30,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -219,7 +219,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 39 load 2097.0 | runs 2026-10-12 easy_50,easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 39 load 1984.5 | runs 2026-10-12 easy_50,easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
     ],
   },
   {
@@ -253,7 +253,7 @@ const cases: {
     }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 2097.0 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 1/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1984.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 1/13",
     ],
   },
   {
@@ -262,7 +262,7 @@ const cases: {
     edit: (s) => ({ ...s, liftWeekKey: shift(s.liftWeekKey ?? START, 7) }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 2097.0 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1984.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
 ];

@@ -100,8 +100,8 @@ w12 2026-05-25  plan week 12 progression  3/3 sessions  59–59 min
   overhead-press  plan 37.5 × 5 × 3  1RM 44.9 logged 42.7  40×[2] 35×[5,5] own
   seated-row      plan 40 × 7 × 3  1RM 51.2 logged 48.0  40×[6,6,6] reps
   sets/days: Chest 8/3 · FrontDelts 8/3 · RearDelts 7/3 · Triceps 8/3 · Lats 4/2 · UpperBack 9/2 · LowerBack 6/2 · Biceps 9/3 · Quads 7/3 · Hamstrings 13/3 · Glutes 13/3 · Calves 4/2 · Abs 4/2
-  · 2026-05-27: took overhead-press down to 35 kg (plan 40 × 5)
   · 2026-05-27: took deadlift down to 85 kg (plan 97.5 × 5)
+  · 2026-05-27: took overhead-press down to 35 kg (plan 40 × 5)
 
 w13 2026-06-01  plan week 13 progression  3/3 sessions  57–58 min
   squat           plan 82.5 × 5 × 3  1RM 90.8 logged 93.3  80×[5,5] 67.5×[5] step | 65×[7,7] reps
@@ -160,8 +160,8 @@ w19 2026-07-13  plan week 19 progression  3/3 sessions  57–59 min
   overhead-press  plan 40 × 5 × 3  1RM 47.6 logged 43.8  45×[0] 37.5×[5,5] own
   seated-row      plan 42.5 × 9 × 3  1RM 54.1 logged 53.8  42.5×[8,8,8] reps
   sets/days: Chest 7/3 · FrontDelts 7/3 · RearDelts 7/3 · Triceps 7/3 · Lats 4/2 · UpperBack 9/2 · LowerBack 6/2 · Biceps 9/3 · Quads 7/3 · Hamstrings 13/3 · Glutes 13/3 · Calves 4/2 · Abs 4/2
-  · 2026-07-15: took overhead-press down to 37.5 kg (plan 45 × 5)
   · 2026-07-15: took deadlift down to 97.5 kg (plan 112.5 × 5)
+  · 2026-07-15: took overhead-press down to 37.5 kg (plan 45 × 5)
 
 w20 2026-07-20  plan week 20 progression  3/3 sessions  57–58 min
   squat           plan 77.5 × 5 × 3  1RM 97.0 logged 99.2  85×[5,3,0] LOWERED | 67.5×[9,9] reps
@@ -186,8 +186,8 @@ w22 2026-08-03  plan week 22 progression  3/3 sessions  59–60 min
   overhead-press  plan 40 × 5 × 3  1RM 48.6 logged 45.3  42.5×[2] 37.5×[5,5] own
   seated-row      plan 42.5 × 10 × 3  1RM 55.3 logged 55.3  42.5×[9,7,5] hold
   sets/days: Chest 8/3 · FrontDelts 8/3 · RearDelts 7/3 · Triceps 8/3 · Lats 4/2 · UpperBack 7/2 · LowerBack 4/2 · Biceps 9/3 · Quads 7/3 · Hamstrings 11/3 · Glutes 11/3 · Calves 4/2 · Abs 4/2
-  · 2026-08-05: took overhead-press down to 37.5 kg (plan 42.5 × 5)
   · 2026-08-05: took deadlift down to 102.5 kg (plan 105 × 5)
+  · 2026-08-05: took overhead-press down to 37.5 kg (plan 42.5 × 5)
 
 w23 2026-08-10  plan week 23 progression  3/3 sessions  57–58 min
   squat           plan 85 × 5 × 3  1RM 99.0 logged 96.3  82.5×[5,5,5] step | 70×[7,7] reps
