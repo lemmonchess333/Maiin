@@ -23,6 +23,7 @@
  */
 
 import leoProfanity from "leo-profanity";
+import { containsHateTerm } from "./hateTerms";
 
 // leo-profanity's default English dictionary loads on first
 // import. No need to call `loadDictionary` ourselves.
@@ -35,7 +36,7 @@ import leoProfanity from "leo-profanity";
  */
 export function containsProfanity(text: unknown): boolean {
   if (typeof text !== "string" || !text.trim()) return false;
-  return leoProfanity.check(text);
+  return leoProfanity.check(text) || containsHateTerm(text);
 }
 
 /**

@@ -21,6 +21,7 @@
  */
 
 const { isCalendarDate } = require("./dateUtils");
+const { displayNameRefusal } = require("./objectionableText");
 
 const GOAL_SPACE_MAX_MEMBERS = 8;
 const GOAL_SPACE_TEXT_MAX = 200;
@@ -132,6 +133,10 @@ async function createGoalSpace({
   if (!title) {
     throw new GoalSpaceError("invalid-argument", "title required");
   }
+  // A Circle's name is shown to everyone invited to it, so it is held to
+  // the word filter a display name is, with the same sentence.
+  const refusal = displayNameRefusal(title);
+  if (refusal) throw new GoalSpaceError("invalid-argument", refusal);
   // Same validator as the `continue` path in goalSpaceLifecycle: the two
   // write paths for this one field disagreed, and create was the weaker —
   // regex only, so a 30 February was stored verbatim. Create's contract is

@@ -173,6 +173,23 @@ describe("with circles", () => {
     );
   });
 
+  it("a note the word filter refuses is never sent, and stays to reword", () => {
+    const hook = hookValue({ circles: [summary("c1", "Block", true)] });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    renderSheet();
+
+    fireEvent.change(screen.getByLabelText("Note"), {
+      target: { value: "Sieg heil" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /share to circle/i }));
+
+    expect(hook.publishEvent).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith(
+      "This note contains objectionable language. Reword it and try again."
+    );
+    expect(screen.getByLabelText("Note")).toHaveValue("Sieg heil");
+  });
+
   it("a failed publish keeps the sheet open with the note intact", async () => {
     const hook = hookValue({
       circles: [summary("c1", "Block", true)],
