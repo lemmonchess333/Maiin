@@ -67,7 +67,7 @@ function seasonFor(now) {
     return {
       name: "Spring Reset",
       description:
-        "Longest consistency streak — days with any logged activity",
+        "Log something every day you can. Your longest run of days counts.",
       metric: "streak_days",
       icon: "sprout",
       tiers: { bronze: 5, silver: 14, gold: 30 },
@@ -76,7 +76,7 @@ function seasonFor(now) {
   if (month >= 5 && month <= 7) {
     return {
       name: "Summer Shred",
-      description: "Combined workout count + km run",
+      description: "Every workout and every run counts.",
       metric: "combined_score",
       icon: "sun",
       tiers: { bronze: 20, silver: 50, gold: 100 },
@@ -85,7 +85,7 @@ function seasonFor(now) {
   if (month >= 8 && month <= 10) {
     return {
       name: "Autumn Push",
-      description: "Hybrid score: km x 100 + volume kg x 0.1",
+      description: "Running and lifting both count, toward one score.",
       metric: "hybrid_score",
       icon: "leaf",
       tiers: { bronze: 500, silver: 2000, gold: 5000 },
@@ -93,7 +93,7 @@ function seasonFor(now) {
   }
   return {
     name: "Winter Bulk",
-    description: "Highest total volume lifted (kg)",
+    description: "Everything you lift this season adds up.",
     metric: "total_volume",
     icon: "snowflake",
     tiers: { bronze: 5000, silver: 25000, gold: 50000 },
@@ -144,7 +144,7 @@ function buildCurrentChallenges(now = new Date()) {
     {
       id: `weekly-${ymd(weekStart)}`,
       name: "Weekly Warrior",
-      description: "Log workouts this week (Mon-Sun)",
+      description: "Train this week, Monday to Sunday.",
       type: "weekly",
       metric: "workout_count",
       icon: "trophy",
@@ -155,7 +155,7 @@ function buildCurrentChallenges(now = new Date()) {
     {
       id: `monthly-${ymd(monthStart)}`,
       name: `${monthName} Mileage`,
-      description: "Total km run this month",
+      description: "Every run this month adds up.",
       type: "monthly",
       metric: "total_km",
       icon: "footprints",
@@ -174,7 +174,7 @@ function buildCurrentChallenges(now = new Date()) {
       // Push, which now also progresses thanks to the Soc8 trigger sync.)
       id: `global-monthly-${ymd(monthStart)}`,
       name: `${monthName} Hybrid Hero`,
-      description: "Km run + kg lifted, combined — show up however you train",
+      description: "Running and lifting both count. Train however you like.",
       type: "monthly",
       metric: "hybrid_score",
       icon: "trophy",
@@ -199,7 +199,7 @@ function buildCurrentChallenges(now = new Date()) {
       // sync path in index.js MIN-updates currentValue for fastest_effort.
       id: `fastest-5k-${ymd(monthStart)}`,
       name: "Fastest 5K",
-      description: "Quickest 5 km this month — set your benchmark",
+      description: "Your fastest 5K this month.",
       type: "monthly",
       metric: "fastest_effort",
       icon: "footprints",
@@ -215,7 +215,7 @@ function buildCurrentChallenges(now = new Date()) {
       // tier logic doesn't break.
       id: `group-goal-${ymd(monthStart)}`,
       name: "Together: 1,000 km",
-      description: "Combined distance from everyone running this month",
+      description: "Every run from everyone this month adds up.",
       type: "monthly",
       metric: "total_km",
       icon: "footprints",
