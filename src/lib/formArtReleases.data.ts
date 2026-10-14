@@ -446,6 +446,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 1,
   },
+  "kettlebell-swing": {
+    folder: "2026-10-14",
+    version: "anatomy-v3-2026-10-14-retained-kettlebell-cycle-v1",
+    width: 690,
+    height: 1008,
+    reference: 3,
+  },
   "l-sit": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

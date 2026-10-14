@@ -1,0 +1,91 @@
+{
+  "status": "independent-prepared-card-review-passed-integrated-mobile-pending",
+  "reviewer": "pullup_source_rescue independent reviewer",
+  "scope": "Read-only review; only diagnostics and this report are written outside repo/public. No image/card/source edits.",
+  "hashes": {
+    "final-frames\\3.webp": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+    "1-framed.png": "ba27273937d489ffec03ba0357a9f14227cf4d106b67eb26966b5c5458e3b46b",
+    "prepared-card-source.png": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+    "card-cutout.webp": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+    "card-cutout-before-floor-cleanup.webp": "9d0c8cf8a6a50c78033f26ec5aefa7deb8323c2b000795a86cad5981d295bae2",
+    "stage-prepared-card.mts": "e4130178460cc279cd243c2f09eec42362fbd28e1a4fdcd4ccc5fada2839e204",
+    "staged-card-provenance.json": "a699456065e2e6b016ab04f87be1a446cc15d6c92014e6513327102ec28688fe"
+  },
+  "sourceDimensions": [690, 1008],
+  "cardDimensions": [307, 480],
+  "proof": {
+    "frame3DecodedExactlyMatchesFramedPNG": true,
+    "preparedRGBExactlyMatchesFrame3": true,
+    "preparedMatchesIndependentlyReproducedAlphaOnlyCorrection": true,
+    "upperBodyAndBellAlphaAboveY810ExactlyStandardKey": true,
+    "alphaChangeCount": 88384,
+    "alphaChangeBoundingBoxInclusive": [0, 829, 689, 1007],
+    "alphaOnlyReducedNotIncreased": true,
+    "allBrightOriginalRGBPixelsRetainedFullyOpaque": true,
+    "brightOriginalRGBPixelCount": 148087,
+    "lowerBrightPixelCount": 21954,
+    "lowerBrightOriginalPixelsRemoved": 0,
+    "lowerTwoPixelGrownSeedRegionExactlyRetainsStandardAlpha": true,
+    "paddedNativeExtractionBoxExclusive": [46, 0, 690, 1008],
+    "cardRGBPixelEqualityNotClaimed": "307x480 card is Lanczos-downscaled and lossy WebP quality82/alpha90; RGB exactness is established at the native prepared PNG, not the resized card."
+  },
+  "visualReview": {
+    "method": "view_image at original dimensions on prepared native source, current card, original pre-cleanup card, source 1-framed.png, white and #17171B composites, and 160px-height review composites.",
+    "fullLowerLegsAndTrainers": {
+      "passed": true,
+      "evidence": "Both calves/ankles, full near and far trainers, heels, toe caps and outsole contours remain intact at native 690x1008 and card 307x480. No missing leg section or visible silhouette notch at the y810 transition. The cleanup retains a thin inherited dark shoe outline; it does not redraw a shoe."
+    },
+    "lightCardAppearance": {
+      "passed": true,
+      "evidence": "On white, the full canonical no-shorts figure, hands/handle and bell are readable. The previous broad black floor slab is absent. Fine grey anatomical shading and trainer details remain visible. The light upper-body standard-key edge is thin at native size and does not form a material background patch in the 307x480 or 160px-height views."
+    },
+    "darkCardAppearance": {
+      "passed": true,
+      "evidence": "On actual dark-card #17171B, the pale body, purple fields, complete white trainers and ordinary dark bell retain their outlines. No slab or residual floor shadow is visible. The dark bell has naturally lower contrast than the body but remains recognizable with its inherited metallic highlights; this correction leaves its alpha unchanged."
+    },
+    "noHumanAnatomyOrPoseChanged": {
+      "passed": true,
+      "evidence": "Exact native RGB equality plus unchanged upper alpha and native light/dark visual inspection show no reshaped body, new clothing, changed pose, limb graft, or new trainer contour. The modification reduces background alpha only. Lower dark outline retention is also visually checked rather than inferred from the bright-pixel statistic alone."
+    },
+    "reviewOnly160pxDisplay": {
+      "passed": true,
+      "evidence": "At approximately the staged h-40 card display, both trainers and the entire figure remain visible on white and dark-card backgrounds. These local composites supplement rather than replace root actual integrated mobile review."
+    }
+  },
+  "diagnostics": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-prepared-white.png",
+      "sha256": "a2ca888591387b1a92451bac1adc5e594be8fad17336401b1889e28e144aabb9",
+      "purpose": "Review-only alpha composite; no production image modification."
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-cutout-white.png",
+      "sha256": "d6bf1893fffc552eff05a55df83b44d2101cc4bb9d3b58697f5915f5ede12c05",
+      "purpose": "Review-only alpha composite; no production image modification."
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-160px-white.png",
+      "sha256": "b94c64b870ccb4af88beb7e40b2d106300e4f7656bfa2738bf6eea7c16979e60",
+      "purpose": "Review-only approximation of h-40 card display; actual integrated CUA review remains pending."
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-prepared-dark-card.png",
+      "sha256": "aaec3d5845080042e8a1842e3dc3892a955c5297964662c9465ebb40fbaea2e6",
+      "purpose": "Review-only alpha composite; no production image modification."
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-cutout-dark-card.png",
+      "sha256": "34695997ac409d4def8db9ba889b23b3cd0300cf11937246aba4ebab71a96f5c",
+      "purpose": "Review-only alpha composite; no production image modification."
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\prepared-card-review-160px-dark-card.png",
+      "sha256": "e66905866c17878061d4d59b9e1085fa99ec9302ae965697704d5726ed9583ed",
+      "purpose": "Review-only approximation of h-40 card display; actual integrated CUA review remains pending."
+    }
+  ],
+  "limitations": [
+    "Bright-pixel retention is a preservation check, not alone proof that every dark contour is part of anatomy. Native light/dark inspection is separately required.",
+    "Actual application mobile light/dark card review belongs to root."
+  ]
+}

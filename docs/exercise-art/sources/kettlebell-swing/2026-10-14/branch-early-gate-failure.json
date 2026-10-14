@@ -1,0 +1,32 @@
+{
+  "phase": "branch",
+  "head": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "startedAt": "2026-10-14T20:35:45.810346+00:00",
+  "finishedAt": "2026-10-14T20:36:52.603248+00:00",
+  "exitCode": 1,
+  "failedGate": "lint",
+  "errors": [
+    {
+      "path": "docs/exercise-art/sources/kettlebell-swing/2026-10-14/integrated-review.tsx",
+      "line": 6,
+      "column": 10,
+      "rule": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file has exports. Move your component(s) to a separate file"
+    },
+    {
+      "path": "docs/exercise-art/sources/kettlebell-swing/2026-10-14/mobile-review.tsx",
+      "line": 6,
+      "column": 10,
+      "rule": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file has exports. Move your component(s) to a separate file"
+    }
+  ],
+  "laterGatesRun": false,
+  "unitSuiteRun": false,
+  "freshBaselineUnitComparisonComplete": false,
+  "inputStatePreserved": true,
+  "snapshotRestoredFromExactBytes": false,
+  "snapshotFinalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "remedy": "Fix actual lint failure without suppressing rules; repeat full verify only after reviewed inputs stable, with a new evidence prefix",
+  "productionEditsByThisAgent": false
+}

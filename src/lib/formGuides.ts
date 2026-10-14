@@ -39,6 +39,8 @@ export interface FormBeat {
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
   beats: readonly FormBeat[];
+  /** Preparation before the depicted movement cycle, kept separate from cues. */
+  authoredSetupInstructions?: readonly string[];
   /** The muscle key for SUPPLIED art. The catalogue names the muscle
    *  groups an exercise trains, which is a true statement about the
    *  exercise and not necessarily about the picture: the dips card
@@ -476,6 +478,13 @@ export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
   if (!placard || placard.beats.length !== 6 || !artwork) return null;
   return placard.beats.every((beat, i) => beat.image === artwork.frames[i])
     ? placard.beats
+    : null;
+}
+
+/** Preparation is shown only alongside the exercise's released placard. */
+export function getFormSetup(exerciseId: string): readonly string[] | null {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.authoredSetupInstructions ?? null)
     : null;
 }
 

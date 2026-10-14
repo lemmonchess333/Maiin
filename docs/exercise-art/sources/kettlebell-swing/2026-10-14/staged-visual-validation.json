@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "reviewedAt": "2026-10-14T20:26:42.552353+00:00",
+  "exerciseId": "kettlebell-swing",
+  "status": "staged native/mobile/card acceptance; integrated public paths/project/CI/actualmerge pending",
+  "canonicalWithoutShorts": true,
+  "physicalPoses": 3,
+  "sourcePoseOrder": [2, 3, 1, 1, 3, 2],
+  "newImageRequests": 0,
+  "nativeActualDimensions": [690, 1008],
+  "nativeManualFrames": 6,
+  "nativeTimedLoop6to1": true,
+  "mobile": {
+    "dark": {
+      "viewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "observations": 11
+    },
+    "light": {
+      "viewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "observations": 8
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/kettlebell-swing/6.webp",
+    "nextWrap": "/form-frames/kettlebell-swing/1.webp",
+    "previousWrap": "/form-frames/kettlebell-swing/6.webp",
+    "slowerPressed": "true",
+    "slowerStartedAfterMs": 0,
+    "consoleErrors": [],
+    "timing": {
+      "normalMedianMs": 1206.0,
+      "slowerMedianMs": 2412.0,
+      "ratio": 2.0
+    }
+  },
+  "card": {
+    "dimensions": [307, 480],
+    "sha256": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+    "preparedSourceSha256": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+    "backgroundOnlyCleanup": true,
+    "completeTrainerContoursRetained": true
+  },
+  "preparationVisible": "Actual Preparation paragraph in both mobile themes contains exact catalogue first2instructions; six cues describe the held continuous swing, never a depicted floorpickup/park.",
+  "mechanics": "Hip hinge/hike, forward hip drive, upright chest-height float and reversed controlled return. Original feet, body, bell and grips unchanged; partly occluded hike hand/handle join judged plausibly continuous in native loop, not individually exposed or metrically proven.",
+  "quality": "Same canonical no-shorts anatomy, white trainers, smooth featureless pelvis and inherited fine neutral shading. Exact glutes/hamstrings primary and abs/lowerback secondary fields; original contour information only, no new gradient or anatomy repair.",
+  "editablesReopenedExact": 3,
+  "completionCredit": false,
+  "reviewedAssetHashes": {
+    "1-framed.png": "ba27273937d489ffec03ba0357a9f14227cf4d106b67eb26966b5c5458e3b46b",
+    "2-framed.png": "ff8af8b6e6bde9d560945e423e7f61e421d9ba24e5e0a31cdb5a676561f952c6",
+    "3-framed.png": "6eabe75af926eaae4497deca36f0be8a3dbb966839b2a71337167a0fc56b75fe",
+    "1-framed.ora": "7bc00c115eeaf0ca965c969ccda44f0da6d120b4458753ebbeaa8ad1c7ddfacb",
+    "2-framed.ora": "a85109fde3bfe1f4fb0f67e16ed18aa2063b53c4a421813267d5c8aaba0f1729",
+    "3-framed.ora": "3bdb6be39d4395bf2bf46e897ea084586ce0b94bb8deeeb5cae94ac78833c484",
+    "card-cutout.webp": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+    "prepared-card-source.png": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+    "draft-beats.json": "30c5f7bf5eb97af923f1268e02135e14d5681b8df442c61d9910a0aaa87dccbc",
+    "mobile-review.tsx": "b73a65429cc60ca95a379a149758f940cba6eca12341206fb51009414a3c2721",
+    "review-vite.config.mjs": "374a540406da20334cd267f7798ecfea67954a2bfca1f1a08fd38414278f8bed",
+    "native-manual-trace.json": "eb442ff18223752cb092ff4b6f0bac3fda57cc5767825b5a33e49106b8eea2bd",
+    "native-timed-trace.json": "11abdcc9be2fd591a7952eaa35fc9f74d1c3bbc74146e0f658d2bb1829f7be53",
+    "staged-dark-trace.json": "af61989713948a71fed99607d5c08091b80ab0ce5285aa75d8f02b65befc2000",
+    "staged-light-trace.json": "2452e901338f33199c36f76466acccee0d6ed3189f959bd4c8c3f7473e55a00a",
+    "staged-slower-trace.json": "6fb3abfdbfe374c054846a5c9fdb8bef7867a76c2192804c7ffe897af356f9fe",
+    "staged-controls.json": "5e37cfd5bf020b03ea70e75e1de2ced226fd2fec508ba850dd8ec7c6829d1eb2"
+  }
+}
