@@ -300,8 +300,10 @@ export function ChallengeCard({
             <Clock className="size-3" aria-hidden />
             {timeLeft}
           </SectionLabel>
+          {/* Two lines before it gives way: at 320 px and 135% text one
+              line cut "July Distance Club" to "July Distan…". */}
           <p
-            className={`text-lg font-bold leading-tight truncate mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
+            className={`text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
           >
             {challenge.name}
           </p>
@@ -412,7 +414,7 @@ export function ChallengeCard({
             onClick={handleJoin}
             loading={busy === "joining"}
           >
-            {busy === "joining" ? "Joining…" : "Join Challenge"}
+            {busy === "joining" ? "Joining…" : "Join challenge"}
           </Button>
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.

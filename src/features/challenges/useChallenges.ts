@@ -1,3 +1,4 @@
+import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { useState, useEffect, useCallback } from "react";
 import {
   collection,
@@ -402,6 +403,7 @@ export function useChallenges() {
             joinedAt: Timestamp.now(),
           },
         }));
+        trackSocialEvent("challenge_joined", { challengeId });
       } catch (error) {
         logger.error("[Challenges] Join failed:", error);
         toast.error("Couldn't join the challenge. Try again.");
