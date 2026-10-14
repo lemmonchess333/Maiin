@@ -44,6 +44,7 @@ function setup() {
   );
   render(
     <AdjustWeekSheet
+      unit="km"
       open
       onClose={vi.fn()}
       runDays={[]}
@@ -105,6 +106,7 @@ describe("AdjustWeekSheet — crowded intent previews the generator's timing", (
     vi.setSystemTime(today);
     render(
       <AdjustWeekSheet
+        unit="km"
         open
         onClose={vi.fn()}
         runDays={[]}
@@ -170,6 +172,7 @@ function openEaser(props: {
 }) {
   render(
     <AdjustWeekSheet
+      unit="km"
       open
       onClose={props.onClose ?? vi.fn()}
       runDays={RUN_DAYS}
@@ -608,7 +611,14 @@ describe("AdjustWeekSheet — preview safety", () => {
 
   it("opens Undo instead of an impossible ease preview from a stale nudge", () => {
     const props = previewProps();
-    render(<AdjustWeekSheet {...props} easedThisWeek initialIntent="easier" />);
+    render(
+      <AdjustWeekSheet
+        unit="km"
+        {...props}
+        easedThisWeek
+        initialIntent="easier"
+      />
+    );
     expect(
       screen.getByRole("button", { name: "Undo easier week" })
     ).toBeEnabled();
@@ -618,14 +628,14 @@ describe("AdjustWeekSheet — preview safety", () => {
 
   it("withdraws the ease preview if another client has already eased the week", () => {
     const props = previewProps();
-    const { rerender } = render(<AdjustWeekSheet {...props} />);
+    const { rerender } = render(<AdjustWeekSheet unit="km" {...props} />);
     fireEvent.click(
       screen.getByRole("button", { name: /I need easier running/ })
     );
     expect(
       screen.getByRole("button", { name: "Ease this week" })
     ).toBeEnabled();
-    rerender(<AdjustWeekSheet {...props} easedThisWeek />);
+    rerender(<AdjustWeekSheet unit="km" {...props} easedThisWeek />);
     expect(screen.queryByRole("button", { name: "Ease this week" })).toBeNull();
     expect(
       screen.getByRole("button", { name: "Undo easier week" })
@@ -643,7 +653,7 @@ describe("AdjustWeekSheet — preview safety", () => {
       status: string;
       date: string;
     }>;
-    const { rerender } = render(<AdjustWeekSheet {...props} />);
+    const { rerender } = render(<AdjustWeekSheet unit="km" {...props} />);
     fireEvent.click(
       screen.getByRole("button", { name: /I need easier running/ })
     );
@@ -651,7 +661,9 @@ describe("AdjustWeekSheet — preview safety", () => {
       ...originalDays,
       { ...originalDays[0], id: "unseen-run", dayIndex: 6, date: "2999-01-06" },
     ];
-    rerender(<AdjustWeekSheet {...props} runDays={updatedDays as never} />);
+    rerender(
+      <AdjustWeekSheet unit="km" {...props} runDays={updatedDays as never} />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Ease this week" }));
     await vi.waitFor(() =>
       expect(props.applyEaseWeek).toHaveBeenCalledTimes(1)
@@ -671,6 +683,7 @@ describe("AdjustWeekSheet — a new runner's week", () => {
     const weekKey = localWeekKey(new Date());
     render(
       <AdjustWeekSheet
+        unit="km"
         open
         onClose={vi.fn()}
         runDays={[

@@ -40,6 +40,7 @@ import {
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
 import {
@@ -112,7 +113,10 @@ function standsInForLongRun(day: ScheduledRunDay): boolean {
 export function weekHolds(
   runDays: readonly ScheduledRunDay[],
   context: {
-    profile: Pick<UserProfile, "runMode" | "raceGoal" | "runFitness">;
+    profile: Pick<
+      UserProfile,
+      "runMode" | "raceGoal" | "runFitness" | "preferredDistanceUnit"
+    >;
     /** The run plan's record for that week (its `currentWeek`). */
     runPlan: RunPlan | null | undefined;
   }
@@ -125,7 +129,8 @@ export function weekHolds(
     templateId: template.id,
     name: runSessionName(
       template,
-      racePaceWorkFor(template, context.profile, context.runPlan)
+      racePaceWorkFor(template, context.profile, context.runPlan),
+      resolveDistanceUnit(context.profile.preferredDistanceUnit)
     ),
   });
   const race = runs.find((run) => run.template.type === "race");

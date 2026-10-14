@@ -34,15 +34,23 @@ describe("runStripLabel", () => {
   // Run21 (2): the week strip names the session. "30m" said neither that a
   // run was easy nor that it ended with strides.
   it("names the session, so an easy run and one with strides read apart", () => {
-    expect(runStripLabel(tmpl("easy_30"))).toBe("Easy 30");
-    expect(runStripLabel(tmpl("easy_30_strides"))).toBe("Easy 30 + strides");
-    expect(runStripLabel(tmpl("tempo_20"))).toBe("20 Min Tempo");
-    expect(runStripLabel(tmpl("5x1k"))).toBe("5×1K Intervals");
-    expect(runStripLabel(tmpl("long_15k"))).toBe("Long 15K");
-    expect(runStripLabel(tmpl("marathon_race"))).toBe("Marathon Race");
+    expect(runStripLabel(tmpl("easy_30"), "km")).toBe("Easy 30");
+    expect(runStripLabel(tmpl("easy_30_strides"), "km")).toBe(
+      "Easy 30 + strides"
+    );
+    expect(runStripLabel(tmpl("tempo_20"), "km")).toBe("20 Min Tempo");
+    expect(runStripLabel(tmpl("5x1k"), "km")).toBe("5×1K Intervals");
+    expect(runStripLabel(tmpl("long_15k"), "km")).toBe("Long 15K");
+    expect(runStripLabel(tmpl("marathon_race"), "km")).toBe("Marathon Race");
   });
   it("falls back to 'Run' when no template", () => {
-    expect(runStripLabel(null)).toBe("Run");
+    expect(runStripLabel(null, "km")).toBe("Run");
+  });
+
+  it("names a long run in miles for a reader in miles, and nothing else", () => {
+    expect(runStripLabel(tmpl("long_15k"), "mi")).toBe("Long 9.3 mi");
+    expect(runStripLabel(tmpl("easy_30"), "mi")).toBe("Easy 30");
+    expect(runStripLabel(tmpl("5x1k"), "mi")).toBe("5×1K Intervals");
   });
 });
 

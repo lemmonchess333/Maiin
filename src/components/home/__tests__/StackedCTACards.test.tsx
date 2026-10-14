@@ -136,7 +136,7 @@ const restDay = (
 function renderCards(session: TodaySession = bothDay(), navigate = vi.fn()) {
   return render(
     <MemoryRouter>
-      <StackedCTACards session={session} navigate={navigate} />
+      <StackedCTACards unit="km" session={session} navigate={navigate} />
     </MemoryRouter>
   );
 }

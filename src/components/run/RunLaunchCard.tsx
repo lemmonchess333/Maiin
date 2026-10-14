@@ -77,9 +77,9 @@ export default function RunLaunchCard({
   onBack,
   purpose,
 }: RunLaunchCardProps) {
-  const name = runSessionName(workout, racePace);
-  const about = runSessionAbout(workout, { racePace });
   const unit = useDistanceUnit();
+  const name = runSessionName(workout, racePace, unit);
+  const about = runSessionAbout(workout, { racePace });
 
   const target = prefill.target;
   // Primary metric shown next to the name: distance or a timed target.

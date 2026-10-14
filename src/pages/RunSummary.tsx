@@ -108,7 +108,7 @@ import {
   type SaveStatus,
 } from "../lib/runGuards";
 import { getDistanceComparison } from "@/lib/funComparisons";
-import { elevationLabel } from "@/lib/runLabels";
+import { elevationLabel, runTemplateName } from "@/lib/runLabels";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 
@@ -786,7 +786,7 @@ export default function RunSummary() {
     const tmplId = pm.plannedTemplateId || pm.actualTemplateId;
     if (!tmplId) return null;
     const tmpl = RUN_TEMPLATES.find((t) => t.id === tmplId);
-    return tmpl?.name ?? null;
+    return tmpl ? runTemplateName(tmpl.name, unit) : null;
   })();
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
@@ -1823,7 +1823,7 @@ export default function RunSummary() {
                 if (!template) return null;
                 return (
                   <p className="text-sm text-muted-foreground">
-                    Next run: {template.name} —{" "}
+                    Next run: {runTemplateName(template.name, unit)} —{" "}
                     {new Date(`${next.date}T12:00:00`).toLocaleDateString(
                       "en-GB",
                       { weekday: "long" }

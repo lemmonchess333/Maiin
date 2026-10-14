@@ -12,7 +12,9 @@
  * A session's physiology name, where coaches use one, is its own last line
  * (`alsoCalled`, Run21 (2)), so the other lines never need it.
  */
+import type { DistanceUnit } from "./distanceUnits";
 import type { RacePaceWork } from "./racePace";
+import { runTemplateName } from "./runLabels";
 import {
   isRunWalkTemplateId,
   RUN_WALK_TEMPLATE_IDS,
@@ -141,13 +143,16 @@ const LONGER_EASY_MINUTES = 60;
  */
 export function runSessionName(
   template: Pick<RunTemplate, "name"> | null | undefined,
-  racePace?: RacePaceWork | null,
+  racePace: RacePaceWork | null | undefined,
+  /** The reader's unit: a long run is named in it (`runTemplateName`). */
+  unit: DistanceUnit,
   fallback = "Run"
 ): string {
   if (!template) return fallback;
-  if (racePace?.kind === "finish") return `${template.name} with race pace`;
-  if (racePace?.kind === "tempo") return `${template.name} at race pace`;
-  return template.name;
+  const name = runTemplateName(template.name, unit);
+  if (racePace?.kind === "finish") return `${name} with race pace`;
+  if (racePace?.kind === "tempo") return `${name} at race pace`;
+  return name;
 }
 
 export function runSessionAbout(

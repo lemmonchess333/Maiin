@@ -76,6 +76,7 @@ describe("the run card keeps its date-pinned register", () => {
     // date, so this line is correct and the asymmetry is the point.
     render(
       <RunCTACard
+        unit="km"
         todayRun={{ templateId: "easy_30" } as never}
         navigate={vi.fn()}
       />

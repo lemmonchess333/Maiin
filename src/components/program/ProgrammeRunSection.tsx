@@ -737,12 +737,12 @@ export default function ProgrammeRunSection({
           // a fixed frame on both, so position disambiguates S/S and T/T.
           topLabel: format(date, "EEEEE"),
           center: String(date.getDate()),
-          bottomLabel: hasRun ? runStripLabel(run.template) : "",
+          bottomLabel: hasRun ? runStripLabel(run.template, unit) : "",
           status,
           isToday: d.dateKey === todayKeyDerivation,
         };
       }),
-    [runWindow, todayKeyDerivation]
+    [runWindow, todayKeyDerivation, unit]
   );
 
   /* The SELECTED day for the command card — taken straight from the
@@ -807,7 +807,7 @@ export default function ProgrammeRunSection({
     profile,
     programState?.runPlan
   );
-  const selectedName = runSessionName(selectedTemplate, selectedRacePace);
+  const selectedName = runSessionName(selectedTemplate, selectedRacePace, unit);
   const selectedPurpose =
     selectedTemplate && selectedRun.runDay
       ? runSessionPresentation({
@@ -1878,6 +1878,7 @@ export default function ProgrammeRunSection({
       {raceGoal && (
         <AdjustWeekSheet
           open={adjustOpen}
+          unit={unit}
           onClose={() => setAdjustOpen(false)}
           newRunnerUntil={newRunnerUntil}
           initialIntent={adjustInitialIntent}

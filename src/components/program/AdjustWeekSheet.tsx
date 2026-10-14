@@ -35,6 +35,8 @@ import { logger } from "@/lib/logger";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { clearEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek, type EasySwap } from "@/lib/adjustWeek";
+import { runTemplateName } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { track } from "@/lib/programAnalytics";
 import {
   classifyRaceTiming,
@@ -53,6 +55,8 @@ type Step =
 
 interface AdjustWeekSheetProps {
   open: boolean;
+  /** The reader's unit: a long run is named in it. */
+  unit: DistanceUnit;
   onClose: () => void;
   runDays: ScheduledRunDay[];
   raceGoal: {
@@ -166,6 +170,7 @@ function applyStepInputs(current: Step, inputs: StepInputs): Step {
 
 export default function AdjustWeekSheet({
   open,
+  unit,
   onClose,
   runDays,
   raceGoal,
@@ -481,14 +486,14 @@ export default function AdjustWeekSheet({
                     className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm"
                   >
                     <span className="text-muted-foreground line-through">
-                      {s.fromName}
+                      {runTemplateName(s.fromName, unit)}
                     </span>
                     <ArrowRight
                       className="size-3.5 text-muted-foreground shrink-0"
                       aria-hidden="true"
                     />
                     <span className="font-semibold text-foreground">
-                      {s.toName}
+                      {runTemplateName(s.toName, unit)}
                     </span>
                   </li>
                 ))}

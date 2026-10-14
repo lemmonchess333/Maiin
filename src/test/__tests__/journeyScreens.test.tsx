@@ -225,7 +225,7 @@ describe("Train's two halves and the run week", () => {
 
   it("labels each day's run with the function the journeys read it by", () => {
     expect(source("components/program/ProgrammeRunSection.tsx")).toContain(
-      `bottomLabel: hasRun ? ${runWeekLabel.name}(run.template) : ""`
+      `bottomLabel: hasRun ? ${runWeekLabel.name}(run.template, unit) : ""`
     );
   });
 

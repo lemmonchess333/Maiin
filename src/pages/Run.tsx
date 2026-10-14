@@ -567,7 +567,7 @@ export default function Run() {
     return {
       metadata: result.metadata,
       prefill: result.prefill as Partial<RunConfig>,
-      strip: deriveStrip(result.metadata, programState?.runPlan),
+      strip: deriveStrip(result.metadata, programState?.runPlan, unit),
     };
   }, [
     isFreeformUser,
@@ -1404,7 +1404,7 @@ export default function Run() {
                 programContext={planDecision.strip}
                 sessionName={
                   launchWorkout
-                    ? runSessionName(launchWorkout, launchRacePace)
+                    ? runSessionName(launchWorkout, launchRacePace, unit)
                     : undefined
                 }
                 savedPreferences={{

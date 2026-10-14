@@ -34,7 +34,9 @@ import {
   runTypeTitle,
   runTitle,
   noSplitsReason,
+  runTemplateName,
 } from "../runLabels";
+import { RUN_TEMPLATES } from "../workoutTemplates";
 
 describe("paceLabel", () => {
   it("formats sub-minute pace as M:SS /km", () => {
@@ -458,5 +460,43 @@ describe("noSplitsReason", () => {
 
   it("says a run with no route has none to cut", () => {
     expect(noSplitsReason(false, 5000, "km")).toBe("No GPS route");
+  });
+});
+
+describe("runTemplateName", () => {
+  it("leaves every name alone for a reader in kilometres", () => {
+    for (const t of RUN_TEMPLATES)
+      expect(runTemplateName(t.name, "km")).toBe(t.name);
+  });
+
+  it("names each long run's rung in miles for a reader in miles", () => {
+    expect(runTemplateName("Long 6K", "mi")).toBe("Long 3.7 mi");
+    expect(runTemplateName("Long 8K", "mi")).toBe("Long 5.0 mi");
+    expect(runTemplateName("Long 30K", "mi")).toBe("Long 18.6 mi");
+  });
+
+  it("converts a long run inside a longer name", () => {
+    expect(runTemplateName("Long 12K with race pace", "mi")).toBe(
+      "Long 7.5 mi with race pace"
+    );
+    expect(runTemplateName("Lower and Long 6K", "mi")).toBe(
+      "Lower and Long 3.7 mi"
+    );
+  });
+
+  it("keeps intervals, races and timed runs as they are called in miles too", () => {
+    for (const name of [
+      "5×1K Intervals",
+      "5K Race",
+      "10K Race",
+      "Easy 30",
+      "20 Min Tempo",
+    ])
+      expect(runTemplateName(name, "mi")).toBe(name);
+  });
+
+  it("leaves no template's name in kilometres for a reader in miles", () => {
+    for (const t of RUN_TEMPLATES)
+      expect(runTemplateName(t.name, "mi"), t.name).not.toMatch(/^Long \d+K/);
   });
 });

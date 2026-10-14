@@ -95,6 +95,7 @@ import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -961,6 +962,7 @@ export default function Home() {
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
                 session={session}
+                unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);

@@ -60,7 +60,7 @@ import {
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
 import { racePaceWorkFor } from "@/lib/racePace";
 import { sessionFuelingLine } from "@/lib/fueling";
-import { sessionPaceDisplay } from "@/lib/runLabels";
+import { runTemplateName, sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   planningEasyPaceSPerKm,
@@ -391,7 +391,7 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {runSessionName(selectedRunTemplate, selectedRacePace)}
+                  {runSessionName(selectedRunTemplate, selectedRacePace, unit)}
                 </p>
                 {/* Run21 (2): the session's one feel line. Its shape is
                     "What it is", in "Why this run" below. */}
@@ -507,7 +507,7 @@ export default function DayActionSheet({
                 >
                   {RUN_TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} ({t.type})
+                      {runTemplateName(t.name, unit)} ({t.type})
                     </option>
                   ))}
                 </select>
