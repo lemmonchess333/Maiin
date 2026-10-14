@@ -26,6 +26,15 @@ export function resolveLiftUnit(value: unknown): LiftUnit {
   return value === "lbs" ? "lbs" : "kg";
 }
 
+/** Setup's lifting unit, from the body-weight unit picked there: lb for lb.
+ *  Stone is kg, since the people who weigh in in stone lift in kg (the
+ *  reason the setting is its own). Settings → Units changes it. */
+export function liftUnitForBodyWeight(
+  bodyWeightUnit: "kg" | "lbs" | "st" | undefined
+): LiftUnit {
+  return bodyWeightUnit === "lbs" ? "lbs" : "kg";
+}
+
 /** How the unit is written after a number: "kg" or "lb". */
 export function liftUnitLabel(unit: LiftUnit): "kg" | "lb" {
   return unit === "lbs" ? "lb" : "kg";
