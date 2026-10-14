@@ -4,7 +4,7 @@ import TrajectoryCard from "../TrajectoryCard";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { PersonalTrajectory } from "@/lib/personalTrajectory";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 /* Lift18: the week's lifting figure is the reader's own, so it reads in
    their unit. Stored as kg. */
@@ -26,14 +26,14 @@ const renderIn = (unit: LiftUnit) =>
 describe("TrajectoryCard's lifting figure", () => {
   it("reads in kg by default", () => {
     renderIn("kg");
-    expect(screen.getByText(group(4500))).toBeInTheDocument();
+    expect(screen.getByText(groupText(4500))).toBeInTheDocument();
     expect(screen.getByText("kg")).toBeInTheDocument();
   });
 
   it("reads in lb for an lb lifter", () => {
     renderIn("lbs");
     // 4,500 kg is 9,921 lb.
-    expect(screen.getByText(group(9921))).toBeInTheDocument();
+    expect(screen.getByText(groupText(9921))).toBeInTheDocument();
     expect(screen.getByText("lb")).toBeInTheDocument();
     expect(screen.queryByText("kg")).not.toBeInTheDocument();
   });

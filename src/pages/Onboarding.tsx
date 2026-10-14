@@ -63,6 +63,7 @@ import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
+import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
@@ -277,6 +278,7 @@ export default function Onboarding() {
     "kg" | "lbs" | "st"
   >(draft?.weightDisplayUnit ?? draft?.weightUnit ?? "kg");
   const weightUnit = weightDisplayUnit === "st" ? "lbs" : weightDisplayUnit;
+  const liftUnit = liftUnitForBodyWeight(weightDisplayUnit);
   const [metricsValid, setMetricsValid] = useState(true);
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
   const trainingWhy = draft?.trainingWhy ?? "";
@@ -451,6 +453,7 @@ export default function Onboarding() {
           barbellAtHome: equipment !== "full_gym" && barbellAtHome,
           smallPlates,
           raceLegTrim,
+          weightDisplayUnit,
         },
         goalPlan.fitnessGoal,
         currentDate,
@@ -477,6 +480,7 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      weightDisplayUnit,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
@@ -622,6 +626,7 @@ export default function Onboarding() {
         weeklyRateKg: goalPlan.effectiveRateKgPerWeek,
         preferredHeightUnit: heightUnit,
         preferredWeightUnit: weightUnit,
+        liftingWeightUnit: liftUnit,
         primaryGoal,
         experience,
         daysPerWeek,
@@ -1399,7 +1404,7 @@ export default function Onboarding() {
                     <div>
                       <p className="text-sm text-foreground">Small plates</p>
                       <p className="text-xs text-muted-foreground">
-                        {smallPlatesHint("kg")}
+                        {smallPlatesHint(liftUnit)}
                       </p>
                     </div>
                     <Toggle

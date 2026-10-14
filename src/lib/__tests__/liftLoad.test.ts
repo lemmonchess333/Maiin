@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  liftUnitForBodyWeight,
   formatLoad,
   liftUnitLabel,
   loadIn,
@@ -48,5 +49,14 @@ describe("wholeLoadIn (Lift18)", () => {
     expect(wholeLoadIn(100, "lbs")).toBe(220);
     expect(wholeLoadIn(102.4, "kg")).toBe(102);
     expect(wholeLoadIn(Number.NaN, "lbs")).toBe(0);
+  });
+});
+
+describe("liftUnitForBodyWeight", () => {
+  it("is lb for lb, and kg for kg, stone and an unanswered setup", () => {
+    expect(liftUnitForBodyWeight("lbs")).toBe("lbs");
+    expect(liftUnitForBodyWeight("kg")).toBe("kg");
+    expect(liftUnitForBodyWeight("st")).toBe("kg");
+    expect(liftUnitForBodyWeight(undefined)).toBe("kg");
   });
 });
