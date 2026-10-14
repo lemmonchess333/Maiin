@@ -53,4 +53,33 @@ test.describe("back-to-dismiss (web)", () => {
     expect(page.url()).toBe(urlBefore);
     await expect(page.locator("h1", { hasText: "Food" })).toBeVisible();
   });
+
+  test("a sheet that hands off to the next still closes on back, and the page stays", async ({
+    page,
+  }) => {
+    // Circles' template chooser closes as its form opens. The chooser's
+    // close used to call back() before the form's sentinel was pushed, and
+    // the browser ran the back first, onto Social's own entry: back then
+    // left Social, and starting a Circle took the person Home.
+    await page.goto("/");
+    await page.getByRole("link", { name: "Social" }).first().click();
+    await expect(page).toHaveURL(/\/social/);
+    await page.getByRole("radio", { name: "Together" }).click();
+    await page.getByRole("button", { name: "Start a circle" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^Strength Block/ })
+      .click();
+    const name = page.getByRole("textbox", { name: "Circle name" });
+    await expect(name).toBeVisible();
+    const urlBefore = page.url();
+
+    await page.goBack();
+
+    await expect(name).toBeHidden();
+    expect(page.url()).toBe(urlBefore);
+    await expect(
+      page.getByRole("button", { name: "Start a circle" })
+    ).toBeVisible();
+  });
 });

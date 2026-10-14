@@ -12,14 +12,31 @@ import {
 } from "../webBackController";
 
 function fakePort() {
-  const port: HistoryPort & { pushes: number; backs: number } = {
+  const deferred: (() => void)[] = [];
+  const port: HistoryPort & {
+    pushes: number;
+    backs: number;
+    href: string;
+    /** Runs what was deferred: the end of the task, after its effects. */
+    settle(): void;
+  } = {
     pushes: 0,
     backs: 0,
+    href: "/social",
     pushSentinel() {
       this.pushes++;
     },
     back() {
       this.backs++;
+    },
+    defer(fn) {
+      deferred.push(fn);
+    },
+    url() {
+      return this.href;
+    },
+    settle() {
+      for (const fn of deferred.splice(0)) fn();
     },
   };
   return port;
@@ -48,6 +65,8 @@ describe("webBackController", () => {
     c.onOpen();
     // Close via X / backdrop / drag (not back, not navigation).
     c.onClose(false, false);
+    expect(port.backs).toBe(0); // not before the task's opens have had it
+    port.settle();
     expect(port.backs).toBe(1); // consumed the dangling sentinel
     expect(c._count()).toBe(0);
     // The history.back() we issued fires a popstate — it must be ignored.
@@ -100,6 +119,7 @@ describe("webBackController", () => {
     c.onOpen(); // A
     c.onOpen(); // B
     c.onClose(false, false); // B closed in place → consumes one sentinel
+    port.settle();
     expect(port.backs).toBe(1);
     expect(c._count()).toBe(1);
     expect(c.onPop()).toBe("ignore"); // B's self-pop
@@ -107,5 +127,70 @@ describe("webBackController", () => {
     expect(c.onPop()).toBe("close-top");
     c.onClose(true, false);
     expect(c._count()).toBe(0);
+  });
+  it("a sheet handing off to the next keeps one sentinel and pops nothing", () => {
+    // A chooser closes and its form opens in the same commit. Consumed at
+    // once, the close's back() ran after the form's pushState and landed on
+    // the route's entry; the form's close then went back past the route.
+    const port = fakePort();
+    const c = createWebBackController(port);
+    c.onOpen(); // the chooser
+    c.onClose(false, false); // chosen: it closes…
+    c.onOpen(); // …and the form opens
+    port.settle();
+    expect(port.pushes).toBe(1);
+    expect(port.backs).toBe(0);
+    expect(c._count()).toBe(1);
+
+    // The form closes in place and hands off to its confirmation.
+    c.onClose(false, false);
+    c.onOpen();
+    port.settle();
+    expect(port.pushes).toBe(1);
+    expect(port.backs).toBe(0);
+
+    // The user's back closes the confirmation, and nothing is left.
+    expect(c.onPop()).toBe("close-top");
+    c.onClose(true, false);
+    port.settle();
+    expect(c._count()).toBe(0);
+    expect(port.backs).toBe(0);
+    expect(c.onPop()).toBe("ignore");
+  });
+
+  it("two closes and one open in a task pop one sentinel", () => {
+    const port = fakePort();
+    const c = createWebBackController(port);
+    c.onOpen();
+    c.onOpen();
+    c.onClose(false, false);
+    c.onClose(false, false);
+    c.onOpen();
+    port.settle();
+    expect(port.pushes).toBe(2);
+    expect(port.backs).toBe(1);
+    expect(c._count()).toBe(1);
+    expect(c.onPop()).toBe("ignore"); // that pop was ours
+  });
+
+  it("a navigation made after an in-place close is not undone", () => {
+    const port = fakePort();
+    const c = createWebBackController(port);
+    c.onOpen();
+    c.onClose(false, false); // closed in place…
+    port.href = "/space/lifters"; // …then, in the same task, the app navigated
+    port.settle();
+    expect(port.backs).toBe(0);
+    expect(c.onPop()).toBe("ignore"); // the sentinel rides as a middle entry
+  });
+
+  it("a user back that pops a sentinel not yet consumed closes nothing more", () => {
+    const port = fakePort();
+    const c = createWebBackController(port);
+    c.onOpen();
+    c.onClose(false, false);
+    expect(c.onPop()).toBe("ignore"); // the user's back took the sentinel
+    port.settle();
+    expect(port.backs).toBe(0); // so nothing goes back past the route
   });
 });

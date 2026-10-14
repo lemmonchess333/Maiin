@@ -28,6 +28,11 @@ export interface HistoryPort {
   pushSentinel(): void;
   /** Pop one entry (history.back()) to consume a dangling sentinel. */
   back(): void;
+  /** Run `fn` once the overlay changes in hand have settled (the provider: a
+   *  microtask, after the effects that closed and opened overlays). */
+  defer(fn: () => void): void;
+  /** The page's URL, to tell a navigation made after an overlay closed. */
+  url(): string;
 }
 
 export type PopResult = "close-top" | "ignore";
@@ -59,10 +64,38 @@ export function createWebBackController(port: HistoryPort): WebBackController {
   // history.back()s WE initiated (to consume a dangling sentinel), whose
   // resulting popstate must be ignored rather than treated as a user back.
   let pendingSelfPops = 0;
+  // Sentinels whose overlay closed in place and that are not consumed yet,
+  // with the URL at the close. An overlay that opens before they are takes
+  // one over rather than pushing its own: a sheet that hands off to the next
+  // (a chooser to its form, a form to its confirmation) closes one and
+  // opens the other in the same commit. Consumed at once, the close's
+  // back() was still queued when the open's pushState ran, and the browser
+  // ran the back first, onto the route's own entry: the new sheet's
+  // sentinel was never the current entry, and its close then went back
+  // past the route. Starting a Circle took the person to the page before
+  // Social.
+  const dangling: string[] = [];
+  let flushQueued = false;
+
+  const flush = () => {
+    flushQueued = false;
+    while (dangling.length > 0) {
+      const closedAt = dangling.pop();
+      // The app navigated since the close: the sentinel rides as a middle
+      // entry, as for an overlay closed by the navigation itself.
+      if (closedAt !== port.url()) continue;
+      pendingSelfPops++;
+      port.back();
+    }
+  };
 
   return {
     onOpen() {
       sentinels++;
+      if (dangling.length > 0) {
+        dangling.pop(); // a hand-off: the closed overlay's sentinel guards this one
+        return;
+      }
       port.pushSentinel();
     },
 
@@ -71,15 +104,23 @@ export function createWebBackController(port: HistoryPort): WebBackController {
       if (sentinels <= 0) return;
       sentinels--;
       if (wasNavigation) return; // sentinel rides as a middle entry; don't undo the nav
-      // In-place close (X / backdrop / drag): consume the now-dangling sentinel.
-      pendingSelfPops++;
-      port.back();
+      // In-place close (X / backdrop / drag): consume the now-dangling
+      // sentinel once this task's opens have had the chance to take it.
+      dangling.push(port.url());
+      if (!flushQueued) {
+        flushQueued = true;
+        port.defer(flush);
+      }
     },
 
     onPop() {
       if (pendingSelfPops > 0) {
         pendingSelfPops--;
         return "ignore"; // our own consume
+      }
+      if (dangling.length > 0) {
+        dangling.pop(); // the user popped a sentinel we had yet to consume
+        return "ignore";
       }
       if (sentinels > 0) {
         sentinels--; // the user popped a sentinel
