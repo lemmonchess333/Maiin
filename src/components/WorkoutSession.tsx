@@ -153,6 +153,14 @@ import type { SessionShareAction } from "@/lib/sessionPost";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
+import {
+  formatLoad,
+  liftUnitLabel,
+  loadIn,
+  loadToKg,
+  type LiftUnit,
+} from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -174,18 +182,19 @@ interface WorkoutDay {
 const lowerFirst = (text: string) =>
   text.charAt(0).toLowerCase() + text.slice(1);
 
-/** Last session's set as the Previous column shows it: "60 × 8", and on a
- *  bodyweight lift "+10 × 8" for load added (Pgm8 L6, as Train's "+10 kg")
- *  or "BW × 12" for none. */
+/** Last session's set as the Previous column shows it, in the lifter's
+ *  unit: "60 × 8", and on a bodyweight lift "+10 × 8" for load added
+ *  (Pgm8 L6, as Train's "+10 kg") or "BW × 12" for none. */
 function previousLabel(
   prev: { weight: number; reps: number } | undefined,
   timed: boolean,
-  bodyweight: boolean
+  bodyweight: boolean,
+  unit: LiftUnit
 ): string | null {
   if (!prev) return null;
   if (timed) return `${prev.reps} s`;
   if (prev.weight > 0)
-    return `${bodyweight ? "+" : ""}${prev.weight} × ${prev.reps}`;
+    return `${bodyweight ? "+" : ""}${loadIn(prev.weight, unit)} × ${prev.reps}`;
   return bodyweight ? `BW × ${prev.reps}` : null;
 }
 
@@ -193,12 +202,13 @@ function previousLabel(
  *  bodyweight lift's load added, which the plan follows, as
  *  " @ Bodyweight + 10 kg" (Pgm8 L6). */
 function targetLoad(
-  exercise: Pick<ProgramExercise, "exerciseId" | "weight">
+  exercise: Pick<ProgramExercise, "exerciseId" | "weight">,
+  unit: LiftUnit
 ): string {
   const bodyweight =
     getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
   if (exercise.weight > 0)
-    return ` @ ${bodyweight ? "Bodyweight + " : ""}${exercise.weight} kg`;
+    return ` @ ${bodyweight ? "Bodyweight + " : ""}${formatLoad(exercise.weight, unit)}`;
   return bodyweight ? " @ Bodyweight" : "";
 }
 
@@ -295,6 +305,8 @@ export default function WorkoutSession({
   hardRunBefore,
 }: Props) {
   const { user, profile } = useAuth();
+  // Loads are stored in kg; the lifter reads and types them in this unit.
+  const liftUnit = useLiftUnit();
   const [initialDay] = useState(incomingDay);
   const { awardEventBadge, awardEventBadges } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
@@ -1015,6 +1027,7 @@ export default function WorkoutSession({
       timed: currentExercise.repUnit === "seconds",
       currentBestForBucket: currentBucketPR?.weight,
       plannedWeight: weightToCheckAgainst(currentExercise, currentSets),
+      unit: liftUnit,
     });
 
     if (!validation.ok) {
@@ -1218,6 +1231,7 @@ export default function WorkoutSession({
       timed: exercise.repUnit === "seconds",
       currentBestForBucket: best?.weight,
       plannedWeight: weightToCheckAgainst(exercise, setLogs[exIdx] ?? []),
+      unit: liftUnit,
     });
     if (!validation.ok) throw new Error(validation.message);
     if (validation.warn && !confirmed && set.confirmedWeight !== values.weight)
@@ -1620,6 +1634,7 @@ export default function WorkoutSession({
             setName(setLogs[editingSet.exIdx], editingSet.setIdx)
           )}
           timed={day.exercises[editingSet.exIdx]?.repUnit === "seconds"}
+          unit={liftUnit}
           onSave={saveSetCorrection}
           onClose={() => setEditingSet(null)}
         />
@@ -2012,7 +2027,7 @@ export default function WorkoutSession({
                     Previous
                   </div>
                   <div className="flex items-center justify-center">
-                    kg
+                    {liftUnitLabel(liftUnit)}
                     <button
                       type="button"
                       aria-label="Plate calculator"
@@ -2047,7 +2062,8 @@ export default function WorkoutSession({
                   const priorLabel = previousLabel(
                     prior,
                     isTimedExercise,
-                    isBWExercise
+                    isBWExercise,
+                    liftUnit
                   );
                   const canFill = prior != null && priorLabel != null;
                   const isBest = [...prResults.values()].some(
@@ -2149,7 +2165,7 @@ export default function WorkoutSession({
                         <input
                           type="number"
                           inputMode="decimal"
-                          value={set.weight || ""}
+                          value={loadIn(set.weight, liftUnit) || ""}
                           placeholder={
                             set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""
                           }
@@ -2159,7 +2175,7 @@ export default function WorkoutSession({
                               currentExIndex,
                               setIdx,
                               "weight",
-                              Number(e.target.value) || 0
+                              loadToKg(Number(e.target.value) || 0, liftUnit)
                             )
                           }
                           disabled={set.completed}
@@ -2283,7 +2299,7 @@ export default function WorkoutSession({
             <p>
               Target: {currentExercise.sets}&times;
               {formatRepTarget(currentExercise)}
-              {targetLoad(currentExercise)}
+              {targetLoad(currentExercise, liftUnit)}
             </p>
             <LoweredLine exercise={currentExercise} />
             <StretchedLine exercise={currentExercise} />

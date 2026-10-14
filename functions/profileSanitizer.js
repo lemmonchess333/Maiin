@@ -188,6 +188,8 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   weightKg: (v) => cleanNumber(v, { min: 30, max: 300 }),
   preferredHeightUnit: (v) => cleanEnum(v, ["cm", "ft"]),
   preferredWeightUnit: (v) => cleanEnum(v, ["kg", "lbs"]),
+  // Display-only (Lift18): lifting loads stay stored in kg.
+  liftingWeightUnit: (v) => cleanEnum(v, ["kg", "lbs"]),
   // Display-only: run distances/paces stay stored in metres and sec/km.
   preferredDistanceUnit: (v) => cleanEnum(v, ["km", "mi"]),
 

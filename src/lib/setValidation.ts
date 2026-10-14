@@ -43,6 +43,8 @@
  *   first session, which has no best to compare against.
  */
 
+import { formatLoad, liftUnitLabel, loadIn, type LiftUnit } from "./liftLoad";
+
 export type SetValidationResult =
   | { ok: true; normalized: { reps: number; weight: number }; warn?: undefined }
   | {
@@ -85,6 +87,9 @@ export interface SetValidationInput {
   /** Override the jump-warn ratio. Default 1.25 (> 25% over PR
    *  triggers warn). */
   jumpWarnRatio?: number;
+  /** The unit the messages speak (Lift18); kg when absent. Every weight
+   *  above, and every number checked, is kg whatever this says. */
+  unit?: LiftUnit;
 }
 
 const REP_MAX = 100;
@@ -109,6 +114,7 @@ function toFiniteNumber(raw: unknown): number | null {
 }
 
 export function validateSet(input: SetValidationInput): SetValidationResult {
+  const unit = input.unit ?? "kg";
   const reps = toFiniteNumber(input.reps);
   const timed = input.timed === true;
   if (reps === null) {
@@ -180,7 +186,9 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return {
       ok: false,
       severity: "block",
-      message: `Weight looks too high (max ${WEIGHT_MAX_KG} kg). Check the value.`,
+      message: `Weight looks too high (max ${Math.floor(
+        loadIn(WEIGHT_MAX_KG, unit)
+      ).toLocaleString("en-GB")} ${liftUnitLabel(unit)}). Check the value.`,
     };
   }
 
@@ -197,9 +205,9 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
         warn: {
           severity: "warn",
           kind: "past-plan",
-          title: `${weight} kg?`,
-          message: `Today's plan is ${planned} kg.`,
-          confirmLabel: `Log ${weight} kg`,
+          title: `${formatLoad(weight, unit)}?`,
+          message: `Today's plan is ${formatLoad(planned, unit)}.`,
+          confirmLabel: `Log ${formatLoad(weight, unit)}`,
           fromKg: planned,
           toKg: weight,
           ratio,
@@ -217,9 +225,9 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
         warn: {
           severity: "warn",
           kind: "huge-jump",
-          title: `${weight} kg?`,
-          message: `Your best at these reps is ${currentBest} kg.`,
-          confirmLabel: `Log ${weight} kg`,
+          title: `${formatLoad(weight, unit)}?`,
+          message: `Your best at these reps is ${formatLoad(currentBest, unit)}.`,
+          confirmLabel: `Log ${formatLoad(weight, unit)}`,
           fromKg: currentBest,
           toKg: weight,
           ratio,

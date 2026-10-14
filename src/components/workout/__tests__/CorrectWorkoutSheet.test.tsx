@@ -42,6 +42,7 @@ it("retains corrections after failure, retries the same revision and accepts onl
           ],
         } as Workout
       }
+      unit="kg"
       onClose={onClose}
       onSaved={onSaved}
     />
@@ -92,6 +93,7 @@ it("asks before saving a weight more than twice the set's plan (Lift16)", async 
           ],
         } as Workout
       }
+      unit="kg"
       onClose={vi.fn()}
       onSaved={onSaved}
     />
@@ -110,4 +112,49 @@ it("asks before saving a weight more than twice the set's plan (Lift16)", async 
   fireEvent.click(await screen.findByRole("button", { name: "Save 125 kg" }));
   await waitFor(() => expect(onSaved).toHaveBeenCalled());
   expect(h.save.mock.calls[0][5].exercises[0].sets[0].weightKg).toBe(125);
+});
+
+it("in lb, shows and asks in lb and saves kg; an untouched weight keeps its kg (Lift18)", async () => {
+  h.save.mockResolvedValue(undefined);
+  const onSaved = vi.fn();
+  render(
+    <CorrectWorkoutSheet
+      uid="u1"
+      workout={
+        {
+          id: "lift",
+          revision: 1,
+          durationMinutes: 40,
+          exercises: [
+            {
+              exerciseId: "bench",
+              exerciseName: "Bench",
+              sets: [
+                { reps: 5, weightKg: 60, plannedWeightKg: 60 },
+                { reps: 5, weightKg: 60, plannedWeightKg: 60 },
+              ],
+            },
+          ],
+        } as Workout
+      }
+      unit="lbs"
+      onClose={vi.fn()}
+      onSaved={onSaved}
+    />
+  );
+  // A kg set read in lb.
+  expect(screen.getByLabelText("Set 1 weight (lb)")).toHaveValue(132.3);
+  fireEvent.change(screen.getByLabelText("Set 2 weight (lb)"), {
+    target: { value: "300" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save corrections" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "300 lb?This set was planned at 132.3 lb."
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "Save 300 lb" }));
+  await waitFor(() => expect(onSaved).toHaveBeenCalled());
+  const [first, second] = h.save.mock.calls[0][5].exercises[0].sets;
+  expect(first.weightKg).toBe(60);
+  expect(second.weightKg).toBeCloseTo(136.08, 2);
+  expect(h.save.mock.calls[0][6]).toBe("lbs");
 });

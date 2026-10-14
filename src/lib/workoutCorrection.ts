@@ -10,6 +10,7 @@ import { estimateLiftBurn, selectLiftMET } from "./workoutBurn";
 import { stripUndefined } from "./firestoreGuards";
 import { invalidateLiftRecords } from "./liftRecordsStore";
 import { validateSet } from "./setValidation";
+import { formatLoad, type LiftUnit } from "./liftLoad";
 import { sameStoredValue } from "@/features/program/stateTransition";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -34,11 +35,13 @@ export interface CorrectionQuestion {
  * The first weight this correction changes to more than twice what its set
  * was planned at (or logged at, when that was more), as the question to ask
  * before saving: the plan follows a corrected session as it follows a
- * finished one, so a typo here moves next week's weight too.
+ * finished one, so a typo here moves next week's weight too. The weights
+ * are kg; `unit` is the one the question speaks (Lift18).
  */
 export function correctionToConfirm(
   workout: Workout,
-  edits: WorkoutEdits
+  edits: WorkoutEdits,
+  unit: LiftUnit = "kg"
 ): CorrectionQuestion | undefined {
   for (const [i, exercise] of workout.exercises.entries())
     for (const [j, set] of exercise.sets.entries()) {
@@ -48,12 +51,12 @@ export function correctionToConfirm(
       const from = Math.max(planned, set.weightKg);
       if (!(from > 0 && weight > 2 * from)) continue;
       return {
-        title: `${weight} kg?`,
+        title: `${formatLoad(weight, unit)}?`,
         message:
           from === planned
-            ? `This set was planned at ${planned} kg.`
-            : `It was logged at ${set.weightKg} kg.`,
-        confirmLabel: `Save ${weight} kg`,
+            ? `This set was planned at ${formatLoad(planned, unit)}.`
+            : `It was logged at ${formatLoad(set.weightKg, unit)}.`,
+        confirmLabel: `Save ${formatLoad(weight, unit)}`,
       };
     }
   return undefined;
@@ -62,7 +65,8 @@ export function correctionToConfirm(
 /** Only performed facts can change; identity, date and prescription stay intact. */
 export function correctedWorkout(
   workout: Workout,
-  edits: WorkoutEdits
+  edits: WorkoutEdits,
+  unit: LiftUnit = "kg"
 ): Workout {
   if (
     !Number.isFinite(edits.durationMinutes) ||
@@ -84,6 +88,7 @@ export function correctedWorkout(
           const result = validateSet({
             weight: edit.weightKg,
             reps: exercise.repUnit === "seconds" ? 1 : edit.reps,
+            unit,
           });
           if (!result.ok) throw new Error(result.message);
           if (
@@ -139,7 +144,9 @@ export async function correctSavedWorkout(
   id: string,
   expectedRevision: number,
   correctionId: string,
-  edits: WorkoutEdits
+  edits: WorkoutEdits,
+  /** The unit a refusal speaks; `edits` are kg either way. */
+  unit: LiftUnit = "kg"
 ): Promise<void> {
   const { auth } = await import("./firebase");
   const assertOwner = () => {
@@ -162,7 +169,7 @@ export async function correctSavedWorkout(
       throw new Error(
         "This workout changed elsewhere. Reopen it to review the latest version."
       );
-    const next = correctedWorkout(stored, edits);
+    const next = correctedWorkout(stored, edits, unit);
     const saved = stored.programmeCompletion;
     const program = saved ? await transaction.get(programRef) : null;
     assertOwner();

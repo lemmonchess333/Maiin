@@ -67,6 +67,8 @@ vi.mock("@/lib/restTimerNotification", () => ({
   cancelRestEndNotification: vi.fn(),
 }));
 import WorkoutSession from "../WorkoutSession";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
+import type { LiftUnit } from "@/lib/liftLoad";
 
 type CompleteDay = ComponentProps<typeof WorkoutSession>["onCompleteDay"];
 const receipt = (): LiftCompletionReceipt => ({
@@ -81,30 +83,32 @@ const receipt = (): LiftCompletionReceipt => ({
   sync: Promise.resolve("synced"),
 });
 
-function openSession() {
+function openSession(unit: LiftUnit = "kg") {
   const complete = vi.fn<CompleteDay>(async () => receipt());
   render(
-    <WorkoutSession
-      day={{
-        dayName: "Shoulders",
-        dayType: "upper",
-        completed: false,
-        exercises: [
-          {
-            exerciseId: "lateral-raise",
-            name: "Lateral Raise",
-            instanceId: "raise-1",
-            sets: 2,
-            reps: 12,
-            weight: 12.5,
-            restSeconds: 0,
-          } as ProgramExercise,
-        ],
-      }}
-      dayIndex={0}
-      onCompleteDay={complete}
-      onClose={vi.fn()}
-    />
+    <LiftUnitContext value={unit}>
+      <WorkoutSession
+        day={{
+          dayName: "Shoulders",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "lateral-raise",
+              name: "Lateral Raise",
+              instanceId: "raise-1",
+              sets: 2,
+              reps: 12,
+              weight: 12.5,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={complete}
+        onClose={vi.fn()}
+      />
+    </LiftUnitContext>
   );
   return complete;
 }
@@ -210,5 +214,57 @@ describe("a set far past today's plan", () => {
     expect(
       screen.getByRole("spinbutton", { name: "Set 1 weight" })
     ).toHaveValue(125);
+  });
+});
+
+describe("a lifter who lifts in lb (Lift18)", () => {
+  it("reads, types and is asked in lb, and the session keeps kg", async () => {
+    const complete = openSession("lbs");
+    // 12.5 kg planned, read in lb.
+    expect(screen.getByText(/@ 27\.6 lb/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveValue(27.6);
+    tick("Warm-up 1");
+    tick("Warm-up 2");
+    typeWeight("Set 1", 135);
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveValue(135);
+    tick("Set 1");
+    const question = await screen.findByRole("alertdialog", {
+      name: "135 lb?",
+    });
+    expect(question).toHaveTextContent("Today's plan is 27.6 lb.");
+    fireEvent.click(screen.getByRole("button", { name: "Log 135 lb" }));
+    await vi.waitFor(() => expect(done("Set 1")).toBe(true));
+    tick("Set 2");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save workout" })
+    );
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const logged = complete.mock.calls[0][1].setLogs[0].filter(
+      (set) => set.weight > 50
+    );
+    expect(logged).toHaveLength(1);
+    expect(logged[0].weight).toBeCloseTo(61.235, 3);
+  });
+
+  it("edits a done set in lb", async () => {
+    openSession("lbs");
+    tick("Set 1");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    );
+    const weight = await screen.findByLabelText("Weight (lb)");
+    expect(weight).toHaveValue("27.6");
+    fireEvent.change(weight, { target: { value: "30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByLabelText("Weight (lb)")).toBeNull()
+    );
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveValue(30);
   });
 });
