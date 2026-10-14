@@ -17,6 +17,22 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "ab-wheel": placard(
+    "ab-wheel",
+    ["Core"],
+    ["Lats", "Shoulders"],
+    [
+      [0, "Brace", "Brace core; tuck pelvis; keep back neutral."],
+      [0.5, "Roll", "Roll forward with straight arms; knees planted."],
+      [1, "Reach", "Reach only while your back stays neutral."],
+      [1, "Hold", "Hold your brace without sagging."],
+      [0.5, "Return", "Pull back with abs; keep elbows straight."],
+      [0, "Reset", "Reset under shoulders without sitting on heels."],
+    ],
+    [
+      "Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+    ]
+  ),
   "kettlebell-swing": placard(
     "kettlebell-swing",
     ["Glutes", "Hamstrings"],

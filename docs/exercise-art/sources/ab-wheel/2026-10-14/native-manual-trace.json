@@ -1,0 +1,50 @@
+[
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 1 — Brace core; tuck pelvis; keep back neutral.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/1.webp",
+    "viewport": [1536, 1120]
+  },
+  {
+    "complete": true,
+    "cue": "Beat 2 / pose 2 — Roll forward with straight arms; knees planted.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/2.webp",
+    "viewport": [1536, 1120]
+  },
+  {
+    "complete": true,
+    "cue": "Beat 3 / pose 3 — Reach only while your back stays neutral.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/3.webp",
+    "viewport": [1536, 1120]
+  },
+  {
+    "complete": true,
+    "cue": "Beat 4 / pose 3 — Hold your brace without sagging.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/4.webp",
+    "viewport": [1536, 1120]
+  },
+  {
+    "complete": true,
+    "cue": "Beat 5 / pose 2 — Pull back with abs; keep elbows straight.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/5.webp",
+    "viewport": [1536, 1120]
+  },
+  {
+    "complete": true,
+    "cue": "Beat 6 / pose 1 — Reset under shoulders without sitting on heels.",
+    "display": [1448, 924],
+    "natural": [1448, 924],
+    "src": "http://127.0.0.1:8780/final-frames/6.webp",
+    "viewport": [1536, 1120]
+  }
+]

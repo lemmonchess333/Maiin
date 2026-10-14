@@ -1,0 +1,61 @@
+{
+  "reference": "form-frames/ab-wheel/1.webp",
+  "frameSha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+  "framedPngSha256": "e844927f544c14339e475a91c07f2cb7e9eaf58f0d91a9272ad2a97a5dc653ed",
+  "preparedSourceSha256": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+  "normalKeyedSourceSha256": "add3792f669afc9289d756a2ae9162ab4a06cb32107ab807ec997ac4627dd6e5",
+  "dimensions": [1448, 924],
+  "originalRgbExact": true,
+  "brightNativePixels": 283905,
+  "allBrightNativePixelsOpaque": true,
+  "darkGearPadKeyedAlphaPreserved": true,
+  "bottomFloorBandTransparent": true,
+  "changedAlphaPixelsVsNormalKey": 45091,
+  "bodyPoseOrEquipmentRgbEdited": false,
+  "fromNativeFramedY": 600,
+  "brightSeed": 110,
+  "closeRadius": 1,
+  "growRadius": 2,
+  "protectedExistingEquipmentPolygons": {
+    "wheel": [
+      [708, 679],
+      [729, 680],
+      [751, 688],
+      [772, 702],
+      [788, 724],
+      [799, 753],
+      [804, 784],
+      [801, 811],
+      [791, 839],
+      [777, 861],
+      [757, 873],
+      [735, 876],
+      [711, 869],
+      [691, 854],
+      [675, 831],
+      [664, 804],
+      [660, 777],
+      [662, 750],
+      [671, 722],
+      [684, 699]
+    ],
+    "axle": [
+      [583, 762],
+      [879, 750],
+      [880, 785],
+      [583, 797]
+    ],
+    "pad": [
+      [187, 802],
+      [226, 794],
+      [382, 794],
+      [521, 794],
+      [543, 803],
+      [543, 831],
+      [521, 837],
+      [358, 859],
+      [187, 835]
+    ]
+  },
+  "maskMeaning": "Retain only original keyed alpha inside reviewed gear/pad shapes. No equipment RGB is drawn or transformed."
+}

@@ -1,0 +1,1255 @@
+{
+  "phase": "branch-full-verify-versus-fresh-baseline",
+  "prefix": "branch",
+  "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "branchHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "overallGreen": false,
+  "exitCode": 1,
+  "comparisonComplete": true,
+  "comparisonValid": true,
+  "unitSummariesPresent": true,
+  "summaryTotalsValid": true,
+  "allNormalVerifyStagesPresent": true,
+  "failureHeaderFileAccountingComplete": true,
+  "noAdditionalFailureIdentities": false,
+  "failedCountsMatchBaseline": false,
+  "sameFailureIdentitySet": false,
+  "baselineEquivalentFailures": false,
+  "newFailureIdentities": [
+    "FAIL  |node| src/features/program/__tests__/trainingBlock.timezone.test.ts > training block calendar dates across timezones > keeps week boundaries, progression holds and end dates in UTC",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats \u2014 the caption is a claim about the frame > the loop closes from the start pose or a controlled return towards it",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+    "FAIL  |node| src/lib/__tests__/formArtOwnerRelease.test.ts > owner-authorized artwork activation > releases every approved set as its review recorded it, with its cues live",
+    "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value"
+  ],
+  "resolvedFailureIdentities": [
+    "FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > never tells a reader the week starts on Sunday",
+    "FAIL  |root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes"
+  ],
+  "unchangedFailureIdentities": [
+    "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal \u2014 photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode",
+    "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > every bar caps its width, or is listed as exempt with a reason",
+    "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > every exemption names a file that still has a bar in it",
+    "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > finds the chart files (a scan that matches nothing proves nothing)",
+    "FAIL  |dom| src/components/analytics/__tests__/chartStyleGuard.test.ts > Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)",
+    "FAIL  |dom| src/components/settings/__tests__/DataExportSection.test.tsx > user-facing copy is sentence case > no Title Case labels outside the closed list",
+    "FAIL  |dom| src/features/goalSpace/__tests__/joinRejection.test.ts > the mapping tracks the server > covers every refusal reachable from the join path",
+    "FAIL  |dom| src/hooks/__tests__/firestoreHookCoverage.test.ts > Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock",
+    "FAIL  |dom| src/styles/__tests__/paletteClassGuard.test.ts > no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette",
+    "FAIL  |dom| src/styles/__tests__/rangeInputContract.test.ts > range input \u2014 the app's only drag control > every range input in the app goes through the primitive",
+    "FAIL  |dom| src/styles/__tests__/rgbaColourGuard.test.ts > no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals",
+    "FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+    "FAIL  |node| src/features/program/__tests__/racePlanSafetySweep.test.ts > race plans \u2014 nothing is scheduled after race day > holds across every distance, race date and weekday",
+    "FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > claims no feature the app doesn't have",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes the trial length the paywall offers",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > description fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > keywords fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > name fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > promotional-text fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > puts a text box straight after every marker",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > review-notes fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > subtitle fits Apple's limit",
+    "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes",
+    "FAIL  |node| src/lib/__tests__/basemap.test.ts > every map carries the credit > finds the maps (the scan reaches them)",
+    "FAIL  |node| src/lib/__tests__/calorieUnitGate.test.ts > the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand",
+    "FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md \u2014 the deploy workflows > finds the workflows and the section",
+    "FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md \u2014 the deploy workflows > says a push to main runs a workflow only when it does",
+    "FAIL  |node| src/lib/__tests__/componentReachability.test.ts > component reachability (src/components + src/features) > no NEW component is rendered by nothing",
+    "FAIL  |node| src/lib/__tests__/copyCasing.test.ts > user-facing copy is sentence case > no Title Case labels outside the closed list",
+    "FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists",
+    "FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > D15 \u00b7 DS invariant \u2014 touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)",
+    "FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > DS ratchets \u2014 surface-level drift > the section-tier label appears only on the two Food surfaces",
+    "FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no display surface formats a distance by hand",
+    "FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit",
+    "FAIL  |node| src/lib/__tests__/effectiveTargetsSingleSource.test.ts > useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook",
+    "FAIL  |node| src/lib/__tests__/firestoreWriteGuard.test.ts > guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK",
+    "FAIL  |node| src/lib/__tests__/functionsScheduleUtcGuard.test.ts > scheduled-function UTC enforcement > the file scan itself isn't vacuous",
+    "FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > has no unpinned dead properties",
+    "FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > pins only properties that still exist",
+    "FAIL  |node| src/lib/__tests__/iosPrivacyDeclarations.test.ts > SDKs \u2014 nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config",
+    "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]",
+    "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+    "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff \u2014 local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+    "FAIL  |node| src/lib/__tests__/legalCopyClaims.test.ts > Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else",
+    "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site",
+    "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC",
+    "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > still sees the pattern at all",
+    "FAIL  |node| src/lib/__tests__/localDayKeyGuard.test.ts > a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()",
+    "FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global",
+    "FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)",
+    "FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > no unscoped key holds per-account state",
+    "FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name",
+    "FAIL  |node| src/lib/__tests__/mealActiveSingleSource.test.ts > HOME-MEALS-01 \u2014 one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist",
+    "FAIL  |node| src/lib/__tests__/perfDocMirrorGuard.test.ts > the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand",
+    "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN \u2014 UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+    "FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine \u2014 production consumers > the app imports only the two non-scoring helpers",
+    "FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine \u2014 production consumers > the seeds are the only non-test callers of the scoring pipeline",
+    "FAIL  |node| src/lib/__tests__/rechartsMockCompleteness.test.ts > a wholesale recharts mock exports what its component imports > is looking at something",
+    "FAIL  |node| src/lib/__tests__/requiredCheckComposition.test.ts [ src/lib/__tests__/requiredCheckComposition.test.ts ]",
+    "FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved runs have one reader > no src file outside the allow-list queries the collection",
+    "FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved workouts have one reader > no src file outside the allow-list queries the collection",
+    "FAIL  |node| src/lib/__tests__/settingsSectionCoverage.test.ts > settings section analytics coverage > no SETTINGS surface emits a section the union does not declare",
+    "FAIL  |node| src/lib/__tests__/storageDeployIamCheck.test.ts [ src/lib/__tests__/storageDeployIamCheck.test.ts ]",
+    "FAIL  |node| src/lib/__tests__/stylesUsage.test.ts > src/styles class usage > scans a plausible number of declarations (guards a broken scan)",
+    "FAIL  |node| src/lib/__tests__/symbolReachability.test.ts > symbol-level reachability > the pinned list stays honest \u2014 no entry that is now reachable",
+    "FAIL  |node| src/lib/__tests__/transitionalExpiry.test.ts > deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/",
+    "FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+    "FAIL  |node| src/lib/__tests__/workoutBurn.test.ts > one run-burn formula > 1.036 appears exactly once in production src/",
+    "FAIL  |node| src/lib/__tests__/writeOnlyProfileFields.test.ts > write-only profile fields > scans enough source to mean something",
+    "FAIL  |node| src/utils/__tests__/timeTreatment.test.ts > one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives",
+    "FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')",
+    "FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code",
+    "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+    "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+    "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]"
+  ],
+  "changedDetailsForExistingFailures": [
+    {
+      "identity": "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+      "baseline": [
+        "AssertionError: src/lib/formArtReleases.data.ts is not what the release records say: run npm run art:releases: expected false to be true // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branch": [
+        "Error: Test timed out in 5000ms.",
+        "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+        "\u276f scripts/art/form-art-releases.test.ts:51:3"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/92]\u23af",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/95]\u23af",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/92]\u23af",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/95]\u23af",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ]
+    }
+  ],
+  "baselineTestFiles": {
+    "failed": 55,
+    "passed": 1114,
+    "skipped": 10,
+    "total": 1179
+  },
+  "baselineTests": {
+    "failed": 87,
+    "passed": 13130,
+    "skipped": 409,
+    "total": 13626
+  },
+  "branchResult": {
+    "testFiles": {
+      "failed": 58,
+      "passed": 1111,
+      "skipped": 10,
+      "total": 1179
+    },
+    "tests": {
+      "failed": 90,
+      "passed": 13129,
+      "skipped": 409,
+      "total": 13628
+    },
+    "verbatimSummary": [
+      "Test Files  58 failed | 1111 passed | 10 skipped (1179)",
+      "Tests  90 failed | 13129 passed | 409 skipped (13628)",
+      "Duration  941.88s (environment 45%, import 26%, tests 14%, setup 12%, transform 2%, worker 1%)"
+    ],
+    "failures": [
+      {
+        "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+        "project": "root-node",
+        "file": "scripts/write-functions-env.test.ts",
+        "suiteImportFailure": true,
+        "firstDetailLines": [
+          "SyntaxError: Invalid or unexpected token",
+          "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[1/95]\u23af",
+          "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+        "project": "root-node",
+        "file": "scripts/ios/asc-signing.test.ts",
+        "suiteImportFailure": true,
+        "firstDetailLines": [
+          "SyntaxError: Invalid or unexpected token",
+          "\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af[2/95]\u23af",
+          "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]",
+        "project": "node",
+        "file": "src/lib/__tests__/iosProjectWiring.test.ts",
+        "suiteImportFailure": true,
+        "firstDetailLines": [
+          "Error: file reference 504EC3101FED79650016851F missing",
+          "\u276f src/lib/__tests__/iosProjectWiring.test.ts:96:13",
+          "94|     );"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/requiredCheckComposition.test.ts [ src/lib/__tests__/requiredCheckComposition.test.ts ]",
+        "project": "node",
+        "file": "src/lib/__tests__/requiredCheckComposition.test.ts",
+        "suiteImportFailure": true,
+        "firstDetailLines": [
+          "AssertionError: ci.yml has no job named \"unit\": expected -1 to be greater than -1",
+          "\u276f jobBody src/lib/__tests__/requiredCheckComposition.test.ts:49:54",
+          "47|   const lines = ci.split(\"\\n\");"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/storageDeployIamCheck.test.ts [ src/lib/__tests__/storageDeployIamCheck.test.ts ]",
+        "project": "node",
+        "file": "src/lib/__tests__/storageDeployIamCheck.test.ts",
+        "suiteImportFailure": true,
+        "firstDetailLines": [
+          "AssertionError: no job named \"deploy\": expected -1 to be greater than -1",
+          "\u276f jobBody src/lib/__tests__/storageDeployIamCheck.test.ts:41:43",
+          "39|   const lines = source.split(\"\\n\");"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value",
+        "project": "root-node",
+        "file": "scripts/release-debug-token.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f scripts/release-debug-token.test.ts:28:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+        "project": "root-node",
+        "file": "scripts/art/form-art-releases.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f scripts/art/form-art-releases.test.ts:51:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch\u2026' // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch\u2026' // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal \u2014 photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode",
+        "project": "dom",
+        "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          "\u276f src/test/setup.ts:41:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/hooks/__tests__/firestoreHookCoverage.test.ts > Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock",
+        "project": "dom",
+        "file": "src/hooks/__tests__/firestoreHookCoverage.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Use bare vi.mock(\"firebase/firestore\") + seedFirestore() instead. If the fake lacks behaviour you need, extend src/test/firestoreFake.ts.: expected [ Array(1) ] to deeply equal [ Array(1) ]",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/styles/__tests__/paletteClassGuard.test.ts > no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette",
+        "project": "dom",
+        "file": "src/styles/__tests__/paletteClassGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: raw Tailwind palette class \u2014 use a Tropos token (token class on themed surfaces; fixed THEME.* via style on the always-dark run surface). If a site is a genuinely designed micro-palette, add the FILE to EXEMPT with its reason:",
+          "pages\\dev\\BrandBakeoff.tsx:332 bg-neutral-200",
+          "pages\\dev\\BrandBakeoff.tsx:338 bg-neutral-800: expected [ \u2026(2) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/styles/__tests__/rangeInputContract.test.ts > range input \u2014 the app's only drag control > every range input in the app goes through the primitive",
+        "project": "dom",
+        "file": "src/styles/__tests__/rangeInputContract.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: these render a raw range input, so `--range-pct` is unset and the track paints all-groove. Use `<RangeInput>`.: expected [ Array(1) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/styles/__tests__/rgbaColourGuard.test.ts > no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals",
+        "project": "dom",
+        "file": "src/styles/__tests__/rgbaColourGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: hardcoded coloured rgba() \u2014 the hex ESLint rule cannot see these (no '#', and it only reads style={} attributes). Use hsl(var(--token) / a) on themed surfaces, `${THEME.x}NN` for a fixed Tropos colour, or add the FILE to EXEMPT with its reason:",
+          "components\\home\\WaterCard.tsx:241 rgba(82, 163, 189\u2026)",
+          "components\\home\\WaterCard.tsx:244 rgba(30, 120, 155\u2026)"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > finds the chart files (a scan that matches nothing proves nothing)",
+        "project": "dom",
+        "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ \u2026(2) ] to include 'components/progress/CalorieBalanceCha\u2026'",
+          "\u276f src/components/analytics/__tests__/chartBarWidth.test.ts:78:19",
+          "76|     // table now (`components/run/SplitsTable`), its bars plain divs."
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > every bar caps its width, or is listed as exempt with a reason",
+        "project": "dom",
+        "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: uncapped Recharts bars: expected [ \u2026(2) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars \u2014 width is constrained > every exemption names a file that still has a bar in it",
+        "project": "dom",
+        "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: exemptions for files with no Recharts bar: expected [ Array(1) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/analytics/__tests__/chartStyleGuard.test.ts > Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)",
+        "project": "dom",
+        "file": "src/components/analytics/__tests__/chartStyleGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ \u2026(8) ] to include 'components/progress/TrendWeight.tsx'",
+          "\u276f src/components/analytics/__tests__/chartStyleGuard.test.ts:65:19",
+          "63|   it(\"finds the chart files (a scan that matches nothing proves nothin\u2026"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/components/settings/__tests__/DataExportSection.test.tsx > user-facing copy is sentence case > no Title Case labels outside the closed list",
+        "project": "dom",
+        "file": "src/components/settings/__tests__/DataExportSection.test.tsx",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Title Case in user-facing copy. Sentence case is the rule \u2014 see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit.",
+          "src\\pages\\dev\\FormMotionLab.tsx:163  \"Form Motion Lab\": expected [ Array(1) ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |dom| src/features/goalSpace/__tests__/joinRejection.test.ts > the mapping tracks the server > covers every refusal reachable from the join path",
+        "project": "dom",
+        "file": "src/features/goalSpace/__tests__/joinRejection.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: goalSpaceMembership.js can refuse a join for reasons joinRejection.ts has no sentence for, so they reach the user as the fallback. Add a BY_MESSAGE row for each.: expected [ 'memberUid required', \u2026(5) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/utils/__tests__/timeTreatment.test.ts > one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives",
+        "project": "node",
+        "file": "src/utils/__tests__/timeTreatment.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "TypeError: .toMatch() expects to receive a string, but got undefined",
+          "\u276f src/utils/__tests__/timeTreatment.test.ts:226:24",
+          "224|   it(\"names a home that is where formatTimeOfDay lives\", () => {"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code",
+        "project": "node",
+        "file": "src/utils/__tests__/unitTreatment.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: unspaced unit \u2014 the app writes '60 kg' / '5.2 km' (space before the unit). If a site is a genuinely deliberate compact variant, document it at the site and add the FILE to EXEMPT here:",
+          "components\\program\\DayActionSheet.tsx:222 // the meta pill (e.g. \"10km \u00b7 5:25\u20135:45 /km\"). Band-first via the shared",
+          "components\\run\\RunMap.tsx:86 // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark)."
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')",
+        "project": "node",
+        "file": "src/utils/__tests__/unitTreatment.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: pace glued to its unit \u2014 the app writes '5:34 /km' (a space before the unit; a range '5:05\u20135:12 /km', unit once). Use `paceLabel` / `paceBandLabel` from runLabels, or put {\" \"} before the unit in JSX:",
+          "lib\\gps.ts:559 // splitTime = 0 \u2192 bogus \"1km in 0:00\" (0:00/km pace) splits.: expected [ Array(1) ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: name: expected +0 to be 1 // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > puts a text box straight after every marker",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected +0 to be 10 // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > name fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"name\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > subtitle fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"subtitle\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > promotional-text fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"promotional-text\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > description fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"description\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > keywords fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"keywords\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > review-notes fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"review-notes\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"iap-monthly-name\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"iap-monthly-description\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"iap-yearly-name\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"iap-yearly-description\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"keywords\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"description\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes the trial length the paywall offers",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected 0 to be greater than 0",
+          "\u276f src/lib/__tests__/appStoreListing.test.ts:139:27",
+          "137|       (m) => m[1]"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"review-notes\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > claims no feature the app doesn't have",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: expected one \"name\" field in the listing",
+          "\u276f field src/lib/__tests__/appStoreListing.test.ts:64:11",
+          "62|   const values = FIELDS.get(key);"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes",
+        "project": "node",
+        "file": "src/lib/__tests__/appStoreListing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "TypeError: Cannot read properties of undefined (reading 'split')",
+          "\u276f labelRows src/lib/__tests__/appStoreListing.test.ts:244:32",
+          "242|     const section = LISTING.split(\"### Data linked to you\")[1].split(\"\u2026"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/basemap.test.ts > every map carries the credit > finds the maps (the scan reaches them)",
+        "project": "node",
+        "file": "src/lib/__tests__/basemap.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ \u2026(2) ] to deeply equal [ \u2026(2) ]",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats \u2014 the caption is a claim about the frame > the loop closes from the start pose or a controlled return towards it",
+        "project": "node",
+        "file": "src/lib/__tests__/bodyRig.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: ab-wheel: return direction: expected -0.19999999999999996 to be greater than 0",
+          "\u276f src/lib/__tests__/bodyRig.test.ts:4964:9",
+          "4962|         (last - previous) * (first - last),"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+        "project": "node",
+        "file": "src/lib/__tests__/bodyRig.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/lib/__tests__/bodyRig.test.ts:5109:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/calorieUnitGate.test.ts > the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand",
+        "project": "node",
+        "file": "src/lib/__tests__/calorieUnitGate.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Render the calorie unit with CALORIE_UNIT from src/utils/formatNutrition.ts. A literal here is how the app came to show \"cal\" on one card and \"kcal\" on the next:",
+          "src\\pages\\dev\\BrandBakeoff.tsx:100  / 2,200 kcal: expected [ Array(1) ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md \u2014 the deploy workflows > finds the workflows and the section",
+        "project": "node",
+        "file": "src/lib/__tests__/claudeMdFreshness.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [] to include 'push'",
+          "\u276f src/lib/__tests__/claudeMdFreshness.test.ts:477:47",
+          "475|     expect(deployWorkflows).toContain(\"deploy-production.yml\");"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md \u2014 the deploy workflows > says a push to main runs a workflow only when it does",
+        "project": "node",
+        "file": "src/lib/__tests__/claudeMdFreshness.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: The CI/CD bullets for deploy-production.yml disagree with their workflows about running on push. An agent follows the bullet.: expected [ 'deploy-production.yml' ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/componentReachability.test.ts > component reachability (src/components + src/features) > no NEW component is rendered by nothing",
+        "project": "node",
+        "file": "src/lib/__tests__/componentReachability.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Component(s) that nothing renders. A component nobody renders is indistinguishable from a shipped feature when you read it \u2014 that is the cost, not the bytes. Either render it, or delete it with its tests. Do NOT add it to KNOWN_ORPHAN_COMPONENTS; that list is delete-only.: expected [ \u2026(347) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/copyCasing.test.ts > user-facing copy is sentence case > no Title Case labels outside the closed list",
+        "project": "node",
+        "file": "src/lib/__tests__/copyCasing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Title Case in user-facing copy. Sentence case is the rule \u2014 see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit.",
+          "src\\pages\\dev\\FormMotionLab.tsx:163  \"Form Motion Lab\": expected [ Array(1) ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists",
+        "project": "node",
+        "file": "src/lib/__tests__/deadPathReferences.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/lib/__tests__/deadPathReferences.test.ts:162:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > D15 \u00b7 DS invariant \u2014 touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)",
+        "project": "node",
+        "file": "src/lib/__tests__/designSystemInvariants.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: hand-rolled role=switch: 2 violations, baseline 0. A change ADDED violations. Route the new control/number through the primitive / add the missing class, or justify and bump the baseline.",
+          "src\\components\\ui\\Toggle.tsx (2): expected 2 to be less than or equal to 0",
+          "\u276f expectRatchet src/lib/__tests__/designSystemInvariants.test.ts:127:5"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > DS ratchets \u2014 surface-level drift > the section-tier label appears only on the two Food surfaces",
+        "project": "node",
+        "file": "src/lib/__tests__/designSystemInvariants.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: tier=\"section\" outside the Food carve-out \u2014 head the group with <SectionHeading> (size \"compact\" in a sheet, card or form):",
+          "src\\components\\food\\FoodSuggestionsDropdown.tsx",
+          "src\\components\\food\\HeroDrillDownSheet.tsx: expected [ \u2026(2) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no display surface formats a distance by hand",
+        "project": "node",
+        "file": "src/lib/__tests__/distanceUnitGate.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Format run distances with distanceLabel / distanceLabel2 / distanceValue / nearDistanceLabel from src/lib/runLabels.ts \u2014 they take the unit as a REQUIRED argument, so a miles reader can't be silently left on km. If a surface must stay metric, mark it at the point of use with SPLIT_LAP_IS_METRIC or SHARE_CARD_IS_METRIC:",
+          "src\\test\\sim\\runSeason.ts:319  ? `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`",
+          "src\\test\\sim\\runSeason.ts:320  : `a tempo's work, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distance: expected [ \u2026(2) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit",
+        "project": "node",
+        "file": "src/lib/__tests__/distanceUnitGate.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These fields hold KILOMETRES the user actually ran. Render them with storedKmLabel(km, unit, true, 1) from src/lib/runLabels.ts so a miles reader sees their own unit \u2014 a hardcoded \"km\" beside one of these shows the metric figure to everyone:",
+          "src\\test\\sim\\liftSeason.ts:1007  `${result.record.templateId}: ${result.record.done.km.toFixed(1)} km at ${String(Math.roun",
+          "src\\test\\sim\\runTrace.ts:40  return `${DAY[parseLocalDate(r.date).getDay()]} ${r.templateId} ${r.done.km.toFixed(1)} km: expected [ \u2026(2) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/effectiveTargetsSingleSource.test.ts > useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook",
+        "project": "node",
+        "file": "src/lib/__tests__/effectiveTargetsSingleSource.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These files import getAdjustedTargets directly, re-deriving the day's macros instead of reading useEffectiveTargets. Route the display through the hook, or (if genuinely a new derivation source) add the file to ALLOWED_SPLITTER_IMPORTERS with a justification.",
+          "src\\hooks\\useEffectiveTargets.ts: expected [ 'src\\hooks\\useEffectiveTargets.ts' ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/firestoreWriteGuard.test.ts > guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK",
+        "project": "node",
+        "file": "src/lib/__tests__/firestoreWriteGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Raw Firestore write(s) found. Route through addDocGuarded / setDocGuarded / updateDocGuarded / deleteDocGuarded (src/lib/firestoreWrite.ts) \u2014 they strip undefined and survive offline-queue replay. If this is a new legitimate low-level writer, add it to ALLOWLIST with a reason.",
+          "src\\lib\\offlineQueue.ts:373",
+          "src\\lib\\offlineQueue.ts:376"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/formArtOwnerRelease.test.ts > owner-authorized artwork activation > releases every approved set as its review recorded it, with its cues live",
+        "project": "node",
+        "file": "src/lib/__tests__/formArtOwnerRelease.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 30000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/lib/__tests__/formArtOwnerRelease.test.ts:73:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/functionsScheduleUtcGuard.test.ts > scheduled-function UTC enforcement > the file scan itself isn't vacuous",
+        "project": "node",
+        "file": "src/lib/__tests__/functionsScheduleUtcGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected false to be true // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > has no unpinned dead properties",
+        "project": "node",
+        "file": "src/lib/__tests__/hookSurfaceReachability.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ Array(1) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > pins only properties that still exist",
+        "project": "node",
+        "file": "src/lib/__tests__/hookSurfaceReachability.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ \u2026(4) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/iosPrivacyDeclarations.test.ts > SDKs \u2014 nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config",
+        "project": "node",
+        "file": "src/lib/__tests__/iosPrivacyDeclarations.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected '// swift-tools-version: 6.1\\r\\nimport\u2026' to match /^\\/\\/ swift-tools-version: 6\\.1\\n/\\",
+          "- Expected:",
+          "/^\\/\\/ swift-tools-version: 6\\.1\\n/"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff \u2014 local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+        "project": "node",
+        "file": "src/lib/__tests__/leaderboard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+          "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+        "project": "node",
+        "file": "src/lib/__tests__/leaderboard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/lib/__tests__/leaderboard.test.ts:65:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/legalCopyClaims.test.ts > Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else",
+        "project": "node",
+        "file": "src/lib/__tests__/legalCopyClaims.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ Array(1) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > still sees the pattern at all",
+        "project": "node",
+        "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected false to be true // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site",
+        "project": "node",
+        "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: SPAN_ONLY entries matching no site: expected [ \u2026(6) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC",
+        "project": "node",
+        "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These parse a \"YYYY-MM-DD\" key as UTC midnight. Rendered through toLocaleDateString they print the PREVIOUS day for every user at a negative UTC offset \u2014 and never for a UK developer, which is why five of these shipped. Use parseLocalDate() from @/lib/dateHelpers, or the + \"T12:00:00\" noon anchor. If the value is only ever used in a SPAN (later \u2212 earlier), classify it in SPAN_ONLY with the reason:",
+          "src\\utils\\weightTrend.ts:64  new Date(a.date)",
+          "src\\utils\\weightTrend.ts:64  new Date(b.date)"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localDayKeyGuard.test.ts > a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()",
+        "project": "node",
+        "file": "src/lib/__tests__/localDayKeyGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ Array(1) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)",
+        "project": "node",
+        "file": "src/lib/__tests__/localStorageGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ 'src\\App.tsx', \u2026(967) ] to include 'src/lib/localStore.ts'",
+          "\u276f src/lib/__tests__/localStorageGuard.test.ts:76:19",
+          "74|   it(\"scans a sane number of files (the walk isn't silently empty)\", (\u2026"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global",
+        "project": "node",
+        "file": "src/lib/__tests__/localStorageGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Raw localStorage reference(s) found. Route through readString / writeString / remove / readJson / writeJson (src/lib/localStore.ts) \u2014 the door never throws and reports whether a write landed. There is no allow-list to extend; if the door cannot express the need, extend the door.",
+          "src\\lib\\localStore.ts:22",
+          "public\\init.js:22: expected [ 'src\\lib\\localStore.ts:22', \u2026(1) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name",
+        "project": "node",
+        "file": "src/lib/__tests__/localStorageUidScoping.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected ProgrammeRunSection to still call the storage door: expected undefined to be truthy",
+          "- Expected:",
+          "true"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > no unscoped key holds per-account state",
+        "project": "node",
+        "file": "src/lib/__tests__/localStorageUidScoping.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: localStorage is per-DEVICE, so an unscoped key is shared by every account on the phone. Prefer useDismissOnce; use useUidForStorageKey() for raw access. If the state really belongs to the DEVICE, add it to DEVICE_SCOPED with the reason:",
+          "src\\lib\\runResumeStorage.ts:211  remove(LEGACY_RUN_RESUME_KEY)",
+          "src\\lib\\shareDefaults.ts:121  remove(`${DEVICE_KEY_PREFIX}.${type}`)"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/mealActiveSingleSource.test.ts > HOME-MEALS-01 \u2014 one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist",
+        "project": "node",
+        "file": "src/lib/__tests__/mealActiveSingleSource.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: hand-written soft-delete rule \u2014 call isActiveMealDoc / activeMealDocs from @/lib/mealTotals instead. If this site genuinely asks a different question (e.g. the restore archive), add it to ALLOWED_RAW_RULE with the reason:",
+          "src\\hooks\\useMeals.ts",
+          "src\\lib\\mealTotals.ts: expected [ 'src\\hooks\\useMeals.ts', \u2026(1) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/perfDocMirrorGuard.test.ts > the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand",
+        "project": "node",
+        "file": "src/lib/__tests__/perfDocMirrorGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These read a performance-doc mirror that NO writer emits, so they resolve to undefined forever. Use resolveLoadBand() / resolveDeloadRecommended() from @/lib/performanceDocFields \u2014 both are total, and the band derivation reproduces the stored value exactly (computeLoadBand is the same pure function the writers used).",
+          "src\\lib\\performanceDocFields.ts:93  if (typeof doc?.flags?.deloadRecommended === \"boolean\") {",
+          "src\\lib\\performanceDocFields.ts:94  return doc.flags.deloadRecommended;"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN \u2014 UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+        "project": "node",
+        "file": "src/lib/__tests__/performanceEngine.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+          "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine \u2014 production consumers > the app imports only the two non-scoring helpers",
+        "project": "node",
+        "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected { \u2026(2) } to deeply equal { \u2026(2) }",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine \u2014 production consumers > the seeds are the only non-test callers of the scoring pipeline",
+        "project": "node",
+        "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected { \u2026(2) } to deeply equal { \u2026(2) }",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/rechartsMockCompleteness.test.ts > a wholesale recharts mock exports what its component imports > is looking at something",
+        "project": "node",
+        "file": "src/lib/__tests__/rechartsMockCompleteness.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected [ \u2026(6) ] to include 'src/components/analytics/__tests__/pi\u2026'",
+          "\u276f src/lib/__tests__/rechartsMockCompleteness.test.ts:184:38",
+          "182|        stop one level down. */"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved runs have one reader > no src file outside the allow-list queries the collection",
+        "project": "node",
+        "file": "src/lib/__tests__/savedSessionsReaderGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Read saved runs through src/lib/savedRuns.ts (fetchSavedRuns, SAVED_RUNS) or useSavedRuns. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced.",
+          "src\\lib\\runCompletion.ts:277",
+          "src\\lib\\savedRuns.ts:282: expected [ Array(2) ] to deeply equal []"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved workouts have one reader > no src file outside the allow-list queries the collection",
+        "project": "node",
+        "file": "src/lib/__tests__/savedSessionsReaderGuard.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: Read saved workouts through src/lib/savedWorkouts.ts (fetchSavedWorkouts, SAVED_WORKOUTS) or useSavedSessions. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced.",
+          "src\\lib\\savedWorkouts.ts:235: expected [ 'src\\lib\\savedWorkouts.ts:235' ] to deeply equal []",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/settingsSectionCoverage.test.ts > settings section analytics coverage > no SETTINGS surface emits a section the union does not declare",
+        "project": "node",
+        "file": "src/lib/__tests__/settingsSectionCoverage.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected 0 to be greater than 0",
+          "\u276f src/lib/__tests__/settingsSectionCoverage.test.ts:128:28",
+          "126|     // Guard the guard: a directory filter that matched nothing would \u2026"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/stylesUsage.test.ts > src/styles class usage > scans a plausible number of declarations (guards a broken scan)",
+        "project": "node",
+        "file": "src/lib/__tests__/stylesUsage.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected 'src\\styles\\animations.css' to match /^src\\/styles\\//styles\\",
+          "- Expected:",
+          "/^src\\/styles\\//"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/symbolReachability.test.ts > symbol-level reachability > the pinned list stays honest \u2014 no entry that is now reachable",
+        "project": "node",
+        "file": "src/lib/__tests__/symbolReachability.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These are pinned as orphans but are now reachable (or gone). Remove them from KNOWN_ORPHAN_EXPORTS \u2014 the list is delete-only.: expected [ \u2026(19) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/transitionalExpiry.test.ts > deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/",
+        "project": "node",
+        "file": "src/lib/__tests__/transitionalExpiry.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: These files mark code as TRANSITIONAL but name no condition anything checks. Add a DEFERRED row in this file saying what removes the branch and when \u2014 or, if the code is not actually transitional, say what it is instead of marking it for a removal nobody will make.: expected [ \u2026(2) ] to deeply equal []",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+        "project": "node",
+        "file": "src/lib/__tests__/weekAnchorProse.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected false to be true // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/workoutBurn.test.ts > one run-burn formula > 1.036 appears exactly once in production src/",
+        "project": "node",
+        "file": "src/lib/__tests__/workoutBurn.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: The run-burn coefficient must have ONE home (workoutBurn.ts). Call estimateRunBurn \u2014 or estimateRunCalories for a distance in metres \u2014 rather than repeating it. Sites found:",
+          "src\\lib\\workoutBurn.ts:81: expected [ 'src\\lib\\workoutBurn.ts' ] to deeply equal [ 'src/lib/workoutBurn.ts' ]",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/writeOnlyProfileFields.test.ts > write-only profile fields > scans enough source to mean something",
+        "project": "node",
+        "file": "src/lib/__tests__/writeOnlyProfileFields.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected false to be true // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+        "project": "node",
+        "file": "src/features/program/__tests__/generatorAudit.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/features/program/__tests__/racePlanSafetySweep.test.ts > race plans \u2014 nothing is scheduled after race day > holds across every distance, race date and weekday",
+        "project": "node",
+        "file": "src/features/program/__tests__/racePlanSafetySweep.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          "\u276f src/features/program/__tests__/racePlanSafetySweep.test.ts:127:3"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/features/program/__tests__/trainingBlock.timezone.test.ts > training block calendar dates across timezones > keeps week boundaries, progression holds and end dates in UTC",
+        "project": "node",
+        "file": "src/features/program/__tests__/trainingBlock.timezone.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: spawnSync C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe ETIMEDOUT",
+          "\u276f src/features/program/__tests__/trainingBlock.timezone.test.ts:17:22",
+          "15|     \"keeps week boundaries, progression holds and end dates in %s\","
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+        "project": "node",
+        "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "Ignored nodes: comments, script, style",
+          "<html>"
+        ]
+      }
+    ],
+    "failureHeaderCount": 95,
+    "stagesInvoked": [
+      "lint",
+      "check:form-art",
+      "check:form-drafts",
+      "check:cycles",
+      "build",
+      "check:dist-size",
+      "test"
+    ],
+    "logSha256": "cff94bf7b6ca8cb1176d5c225ec1b05e1963b55903c0ad832519cfdd0c18c9f7"
+  },
+  "inputBytesUnchanged": true,
+  "inputStatePreserved": true,
+  "snapshotRestoredFromExactCurrentBytes": true,
+  "meaning": "An exit1run remains non-green even with identical baseline failures. No summary means unit comparison incomplete, not resolved baseline failures. Changed error details need review."
+}

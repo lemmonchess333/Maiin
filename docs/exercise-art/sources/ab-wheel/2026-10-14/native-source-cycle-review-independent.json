@@ -1,0 +1,174 @@
+{
+  "reviewedAt": "2026-10-14T22:19:03.298570+00:00",
+  "reviewer": "other_retained_pose_rescue",
+  "exerciseId": "ab-wheel",
+  "status": "native-three-source-controlled-rollout-cycle-physical-pass; field-finishing-and-release-gates-pending",
+  "scope": "Independent native1536x1024 original source review of Brace/Roll/Reach against previously inspected canonical FA56. Source poses are intact. No image requests, source pixel edits, publication/counters or complete release acceptance by this reviewer.",
+  "sources": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\master-brace-original.png",
+      "sha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+      "nativeDimensions": [1536, 1024]
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\roll-original.png",
+      "sha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+      "nativeDimensions": [1536, 1024]
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\reach-original.png",
+      "sha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+      "nativeDimensions": [1536, 1024]
+    }
+  ],
+  "physicalCycleScope": {
+    "completeControlledOutwardAndReturnConfigurations": true,
+    "sourceOrderForSixBeatPaths": [1, 2, 3, 3, 2, 1],
+    "honestStates": [
+      "Brace: kneeling pad support, wheel under/slightly ahead of shoulders, long arms, braced trunk.",
+      "Roll: materially advanced wheel travel and hip opening, lower trunk, same kneeling support. It is not represented as a quarter-range pose.",
+      "Reach: farther/lower controlled rollout with extended arms and neutral continuous trunk, followed by the same configurations in controlled reverse."
+    ],
+    "endpointScope": "Reach is a controlled shorter-range endpoint, not a demonstrated fully horizontal or perfectly straight shoulder-hip-knee lockout. Residual hip flexion remains visible. The catalogue permits the longest range the person can control; cues must teach neutral spine/brace/control rather than falsely describing a perfect straight-line endpoint.",
+    "criticalMovementNotOmitted": "Three genuine wheel/trunk positions show the whole selected controlled range and its reverse. No arm stroke, change of support or unrepresented dynamic requirement is discarded. This static scope judgment still needs actual six-path native loop review."
+  },
+  "nativePhysicalChecks": {
+    "identityAndWholeAnatomy": {
+      "passed": true,
+      "evidence": "Same bald faceless lean pale anatomical adult, fine neutral shading/contours, smooth neutral featureless pelvis without shorts or garment seam, and complete white trainers. Both arm and leg chains are continuous. Modest source head/contour projection redraw is present; no gross identity/scale or detached-limb defect was identified."
+    },
+    "neutralSpineAndHipProgression": {
+      "passed": true,
+      "evidence": "Trunk lowers through progressively farther wheel positions and hip opening without obvious lumbar sag, abdominal collapse or extreme backward arch. Knees remain supported and torso clear of floor. Reach retains hip flexion and must not be described as perfectly linear/full horizontal; it remains a controlled limited-range rollout rather than a new exercise."
+    },
+    "straightArmsAndVisibleGripping": {
+      "passed": true,
+      "evidence": "Both long arms maintain broadly extended elbows; each closed fist wraps its own grip on the same single transverse axle. No hand detachment, extra shaft, switched handle, body-part seam or unsupported wrist is visible in Reach or across the sources."
+    },
+    "groundedSupportsAndFixedScene": {
+      "passed": true,
+      "evidence": "Both knees contact the same low pad in all three sources; rear lower legs/trainers remain at the original support scene. Wheel has a visible floor contact/shadow in each position. Source lower/pad pixels are redrawn and are not claimed exact. Small inspected neutral silhouette shifts do not show significant knee sliding or support loss."
+    },
+    "cameraAndFullFrame": {
+      "passed": true,
+      "evidence": "All originals are1536x1024, same oblique camera/framing, and whole athlete/pad/wheel remains inside the source canvas. Reach far grip remains inside the right edge with margin. Do not infer a new ground plane from the wheel moving slightly down in the projected forward path."
+    },
+    "ordinaryEquipment": {
+      "passed": true,
+      "evidence": "Same ordinary broad-tread single wheel, central hub, two axle grips and one pad. Wheel projected height remains around195-200px; tread/spoke/hand contours and projected axial ends redraw modestly. No gross wheel doubling, new machine, extra ring/handle or obvious grip-span inflation appears. This is native visual consistency, not a calibrated3D diameter/no-slip/contact invariant claim."
+    }
+  },
+  "fixedSupportReadOnlyDiagnostics": {
+    "method": "Neutral bright minimumRGB>125 and channel spread<24; source1 ROI compared with source2/3 over+/-8px integer offsets. No transformations made. Redraw/shading affect masks, so these are supporting local silhouette diagnostics, not physical joint centres, exact floor anchors or automatic acceptance.",
+    "measurements": [
+      {
+        "pose": "roll-original.png",
+        "region": "rearTrainers",
+        "nativeROI": [64, 626, 286, 829],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [0, 0],
+          "binaryIoU": 0.9510535921685748
+        }
+      },
+      {
+        "pose": "roll-original.png",
+        "region": "nearKneeSupportBand",
+        "nativeROI": [358, 789, 440, 834],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [1, 1],
+          "binaryIoU": 0.9881546134663342
+        }
+      },
+      {
+        "pose": "roll-original.png",
+        "region": "farKneeSupportBand",
+        "nativeROI": [476, 786, 552, 821],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [3, 1],
+          "binaryIoU": 0.9538539553752535
+        }
+      },
+      {
+        "pose": "reach-original.png",
+        "region": "rearTrainers",
+        "nativeROI": [64, 626, 286, 829],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [-1, -3],
+          "binaryIoU": 0.9319942234475516
+        }
+      },
+      {
+        "pose": "reach-original.png",
+        "region": "nearKneeSupportBand",
+        "nativeROI": [358, 789, 440, 834],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [-2, -2],
+          "binaryIoU": 0.9817450495049505
+        }
+      },
+      {
+        "pose": "reach-original.png",
+        "region": "farKneeSupportBand",
+        "nativeROI": [476, 786, 552, 821],
+        "readOnlyBestBrightSilhouetteMatch": {
+          "integerOffset": [0, 0],
+          "binaryIoU": 0.946041351487645
+        }
+      }
+    ],
+    "pixelExactClaim": false
+  },
+  "muscleFieldFinishing": {
+    "finalPaletteOrRolePass": false,
+    "primary": "Core/abdominal-oblique source fields should finish #7B72E9.",
+    "secondary": "Clearly identified shoulder caps and genuine lateral-back/lat source fields should finish #9590E0.",
+    "neutral": "Triceps/upper-arm shafts, chest, forearms, pelvis, legs, hands, trainers and ordinary apparatus should retain source-consistent neutral rendering.",
+    "nativeApproximateInspectionRois": [
+      {
+        "pose": "master-brace-original.png",
+        "primaryCoreApproxRoi": [478, 386, 741, 565],
+        "nearDeltoidSecondaryApproxRoi": [506, 195, 675, 370],
+        "farDeltoidSecondaryApproxRoi": [786, 240, 853, 356],
+        "axillaryLateralBackOrProximalArmReviewRoi": [480, 282, 548, 404],
+        "clearNeutralUpperArmGuardRoi": [548, 363, 658, 535]
+      },
+      {
+        "pose": "roll-original.png",
+        "primaryCoreApproxRoi": [625, 439, 855, 584],
+        "nearDeltoidSecondaryApproxRoi": [764, 302, 910, 455],
+        "farDeltoidSecondaryApproxRoi": [1009, 347, 1084, 459],
+        "axillaryLateralBackOrProximalArmReviewRoi": [667, 316, 792, 445],
+        "clearNeutralUpperArmGuardRoi": [818, 437, 951, 574]
+      },
+      {
+        "pose": "reach-original.png",
+        "primaryCoreApproxRoi": [674, 519, 955, 647],
+        "nearDeltoidSecondaryApproxRoi": [870, 409, 1022, 536],
+        "farDeltoidSecondaryApproxRoi": [1073, 481, 1167, 537],
+        "axillaryLateralBackOrProximalArmReviewRoi": [744, 396, 901, 534],
+        "clearNeutralUpperArmGuardRoi": [893, 514, 1118, 666]
+      }
+    ],
+    "roiMeaning": "Bounding inspection regions only. They are not masks: white arms/chest and neighbouring role fields overlap these boxes. Follow actual source contours and preserve all geometry, fine inherited shading, contacts and equipment.",
+    "suspectedUpperArmPurpleFinding": {
+      "entireWedgeDefinitivelyTriceps": false,
+      "evidence": "The purple wedge behind the near deltoid sits at the posterior shoulder/axillary arm-trunk junction. Its torso-side area remains behind the shoulder while the clear humeral/upper-arm shaft runs forward and is already neutral. Whole-wedge triceps identification is not established from purple intensity alone; part may be genuine lateral-back/lat tissue.",
+      "requiredAction": "Split any true arm-side/triceps spill from the torso-side lat field using source contour continuity. Neutralize only verified arm tissue by colour/shading finishing; keep genuine lat tissue secondary. Do not indiscriminately neutralize the whole axillary wedge or relabel its entire area as Lats. Narrow boundary judgment remains a finishing gate.",
+      "anatomyReference": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-5-muscles-of-the-pectoral-girdle-and-upper-limbs",
+      "referenceScope": "Official OpenStax distinguishes the axial/back latissimus from posterior upper-arm triceps. Applying that distinction to this generated source wedge is an explicitly limited visual inference; the reference is not proof of a pixel segmentation."
+    }
+  },
+  "significantPhysicalDefects": [],
+  "decisionsNotMade": [
+    "Final colour/role-boundary approval",
+    "Exact real-anchor/equipment dimension measurement acceptance",
+    "Actual native six-beat playback and6to1 closure",
+    "Mobile light/dark/card review",
+    "Editable/provenance/project gates and merge",
+    "Completion credit"
+  ],
+  "recommendation": "Proceed to one source-consistent colour/contour finishing pass and actual native loop review of this selected controlled range. Keep the sources intact, retain honest endpoint/uneven-state descriptions, and do not regenerate anatomy for palette-only differences.",
+  "newImageRequestsByReviewer": 0,
+  "pixelEditsByReviewer": 0,
+  "completionCredit": 0
+}

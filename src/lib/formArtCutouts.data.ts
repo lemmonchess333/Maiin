@@ -17,6 +17,16 @@ export interface FormArtCutout {
 }
 
 export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
+  "ab-wheel": {
+    src: "form-art/ab-wheel.webp",
+    width: 480,
+    height: 479,
+    keyed: false,
+    source: "form-frames/ab-wheel/1.webp",
+    sourceSha256:
+      "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    sha256: "f0b3ed7b9052c8f413dfecf6ee972b51ea66b86035038c61abadbb055ea5f0db",
+  },
   "arnold-press": {
     src: "form-art/arnold-press.webp",
     width: 281,

@@ -1,0 +1,32 @@
+{
+  "preparedAt": "2026-10-14T22:30:53.835565+00:00",
+  "status": "prepared-not-run-awaiting-root-frozen-registered-inputs",
+  "helperPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\checks\\branch-verify-tools.py",
+  "helperSha256": "ef8c673c8b589f891d07a43792621c723e06ff32cf4e7cd9d0d952bccec7402b",
+  "copiedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\checks\\branch-verify-tools.py",
+  "copiedFromSha256": "42179d5418f8db1490105e46c25265d884fc32bc9ec4dfbec069b5f67c0c6420",
+  "baselineDirectory": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\baseline",
+  "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "baselineLogSha256": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+  "baselineFailureIdentitiesSha256": "1d645e87095129e908e33067abfe3cc17ed8e548a630aa7569a0b9cc54fbb71a",
+  "actualFreshTests": {
+    "failed": 87,
+    "passed": 13130,
+    "skipped": 409,
+    "total": 13626
+  },
+  "actualFreshTestFiles": {
+    "failed": 55,
+    "passed": 1114,
+    "skipped": 10,
+    "total": 1179
+  },
+  "failureFileAccountingComplete": true,
+  "gitExecutable": "C:/Program Files/Git/bin/git.exe",
+  "bashFirstFromCorrectPATH": "C:/Program Files/Git/bin/bash.exe",
+  "normalInvocation": "npm run verify",
+  "syntaxAndFreshBaselineReadVerified": true,
+  "candidateVerifyStarted": false,
+  "noRepoEdits": true,
+  "baselineLogAndIdentityHashesPinnedInHelper": true
+}

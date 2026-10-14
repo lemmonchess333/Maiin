@@ -1,0 +1,31 @@
+{
+  "head": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "branch": "main",
+  "initialStatus": [],
+  "versions": {
+    "node": "v24.19.0",
+    "npm": "11.21.0",
+    "git": "git version 2.53.0.windows.1"
+  },
+  "pathPrefixes": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin",
+    "C:/Program Files/Git/bin"
+  ],
+  "resolvedExecutables": {
+    "node": "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.EXE",
+    "npm": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin\\npm.CMD",
+    "npm.cmd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin\\npm.cmd",
+    "git": "C:/Program Files/Git/bin\\git.EXE",
+    "bash": "C:/Program Files/Git/bin\\bash.EXE"
+  },
+  "npmCliSha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+  "npmCommandShimSha256": "fc3de6ac927a26588270b4a34e396f2820fdecdea0391edb0efbc306df839841",
+  "reusedHelperPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\checks\\branch-verify-tools.py",
+  "reusedHelperSha256": "42179d5418f8db1490105e46c25265d884fc32bc9ec4dfbec069b5f67c0c6420",
+  "oldResultDataImported": false,
+  "snapshotPath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+  "snapshotBeforeSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "inputFileCount": 7863,
+  "inputManifestSha256": "4f70b79784884cd2d981cbb8ec0b6148c5eef1381ed08c61a1b7fa824d3f4e4b"
+}

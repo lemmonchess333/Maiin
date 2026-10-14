@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "ab-wheel.png",
+  "imageSha256": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+  "reference": "form-frames/ab-wheel/1.webp",
+  "referenceSha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+  "method": "Exact native frame1 RGB; reviewed alpha-only floor/background cleanup preserving bright body/trainers and dark wheel/axle/pad, followed by unchanged standard card generator.",
+  "reviewEvidence": "Independent prepared-card proofs/light/dark/160px passes and actual staged390x844 light/dark card; registered card review pending."
+}

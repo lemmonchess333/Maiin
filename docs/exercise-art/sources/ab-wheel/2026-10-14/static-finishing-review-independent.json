@@ -1,0 +1,208 @@
+{
+  "reviewedAt": "2026-10-14T22:33:49.683147+00:00",
+  "status": "passed-static-finishing-only",
+  "allStaticChecksPassed": true,
+  "poses": [
+    {
+      "pose": 1,
+      "source": "master-brace-original.png",
+      "sourceSha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+      "nativeFinishedSha256": "48ee1162be68dd7eb467fd019ee50b6e2e4434a9b294434f872c6bcb6759eb4d",
+      "framedSha256": "e844927f544c14339e475a91c07f2cb7e9eaf58f0d91a9272ad2a97a5dc653ed",
+      "oraSha256": "bff716760bd1f77abc88b247b69c407fe8412dc5ea89637f0b7e6b982e35a209",
+      "nativeDimensions": [1536, 1024],
+      "framedDimensions": [1448, 924],
+      "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+      "changedOutsideColourLayerAlpha": 0,
+      "originalAlphaExact": true,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryPixels": 15215,
+      "exactSecondaryPixels": 25709,
+      "guardedNeutralSamples": [
+        {
+          "region": "headInterior",
+          "nativeROI": [756, 50, 862, 195],
+          "rgbaExact": true
+        },
+        {
+          "region": "neutralHumeralInterior",
+          "nativeROI": [600, 382, 635, 490],
+          "rgbaExact": true
+        },
+        {
+          "region": "rearTrainers",
+          "nativeROI": [55, 620, 290, 840],
+          "rgbaExact": true
+        },
+        {
+          "region": "padAndKneeBand",
+          "nativeROI": [233, 780, 596, 868],
+          "rgbaExact": true
+        },
+        {
+          "region": "wheelAndGrips",
+          "nativeROI": [630, 680, 930, 890],
+          "rgbaExact": true
+        }
+      ]
+    },
+    {
+      "pose": 2,
+      "source": "roll-original.png",
+      "sourceSha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+      "nativeFinishedSha256": "5aa537605b36687bfe5f08d42570d5d88de716e81a0f5429774ac0e851704c93",
+      "framedSha256": "0e5410ad55c4fae5e0c9c889372c13fb93c7f693a7f8ad78662639f2f539c373",
+      "oraSha256": "57207dd1306fd1632920a74e46f9d401fb55b86c6ff480755c0e64ac835b6d90",
+      "nativeDimensions": [1536, 1024],
+      "framedDimensions": [1448, 924],
+      "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+      "changedOutsideColourLayerAlpha": 0,
+      "originalAlphaExact": true,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryPixels": 18188,
+      "exactSecondaryPixels": 27270,
+      "guardedNeutralSamples": [
+        {
+          "region": "headInterior",
+          "nativeROI": [978, 171, 1087, 300],
+          "rgbaExact": true
+        },
+        {
+          "region": "neutralHumeralInterior",
+          "nativeROI": [862, 470, 913, 521],
+          "rgbaExact": true
+        },
+        {
+          "region": "rearTrainers",
+          "nativeROI": [55, 620, 290, 840],
+          "rgbaExact": true
+        },
+        {
+          "region": "padAndKneeBand",
+          "nativeROI": [233, 780, 596, 868],
+          "rgbaExact": true
+        },
+        {
+          "region": "wheelAndGrips",
+          "nativeROI": [1010, 690, 1310, 909],
+          "rgbaExact": true
+        }
+      ]
+    },
+    {
+      "pose": 3,
+      "source": "reach-original.png",
+      "sourceSha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+      "nativeFinishedSha256": "08fb3fcf7a2dcf04b7bf020ab12ab6487743b7c0d70fb2f2ad7476668ddce9ee",
+      "framedSha256": "70e5b22d52013308b15438c3ef33775424bc297ba38e25dd756a42cedd89ead1",
+      "oraSha256": "b02b83d67bd467f87163509d328d3e4eaa648e67c6a922c7552ff30425b762c1",
+      "nativeDimensions": [1536, 1024],
+      "framedDimensions": [1448, 924],
+      "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+      "changedOutsideColourLayerAlpha": 0,
+      "originalAlphaExact": true,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryPixels": 17619,
+      "exactSecondaryPixels": 25010,
+      "guardedNeutralSamples": [
+        {
+          "region": "headInterior",
+          "nativeROI": [1080, 333, 1180, 457],
+          "rgbaExact": true
+        },
+        {
+          "region": "neutralHumeralInterior",
+          "nativeROI": [980, 550, 1015, 575],
+          "rgbaExact": true
+        },
+        {
+          "region": "rearTrainers",
+          "nativeROI": [55, 620, 290, 840],
+          "rgbaExact": true
+        },
+        {
+          "region": "padAndKneeBand",
+          "nativeROI": [233, 780, 596, 868],
+          "rgbaExact": true
+        },
+        {
+          "region": "wheelAndGrips",
+          "nativeROI": [1210, 710, 1495, 925],
+          "rgbaExact": true
+        }
+      ]
+    }
+  ],
+  "frames": [
+    {
+      "beat": 1,
+      "sourcePose": 1,
+      "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+      "decodedMatchesFramed": true
+    },
+    {
+      "beat": 2,
+      "sourcePose": 2,
+      "sha256": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+      "decodedMatchesFramed": true
+    },
+    {
+      "beat": 3,
+      "sourcePose": 3,
+      "sha256": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+      "decodedMatchesFramed": true
+    },
+    {
+      "beat": 4,
+      "sourcePose": 3,
+      "sha256": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+      "decodedMatchesFramed": true
+    },
+    {
+      "beat": 5,
+      "sourcePose": 2,
+      "sha256": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+      "decodedMatchesFramed": true
+    },
+    {
+      "beat": 6,
+      "sourcePose": 1,
+      "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+      "decodedMatchesFramed": true
+    }
+  ],
+  "commonCrop": [48, 8, 1496, 932],
+  "newGradient": false,
+  "geometryOrEquipmentTransforms": false,
+  "visualChecks": {
+    "modelQualityPreserved": {
+      "passed": true,
+      "evidence": "Canonical no-shorts faceless anatomy, neutral featureless pelvis and full white trainers remain intact. Fine inherited neutral shading, original grips/supports and whole pose proportions are preserved."
+    },
+    "roleBoundaries": {
+      "passed": true,
+      "evidence": "Core is primary; shoulder caps and lateral trunk are secondary. Colour fields follow existing contours behind neutral humeral shafts. No strong triceps/extra-field, chest/forearm/leg spill or newly painted human silhouette is visible. Axillary wedge remains source lateral-trunk tissue; no blanket arm recolouring was introduced."
+    },
+    "paletteAndContours": {
+      "passed": true,
+      "evidence": "All3poses contain exact#7B72E9primary and#9590E0secondary core fields, stronger core/lighter stabilizers, fine source-derived grey contours and no new broad gradient. Thin inherited antialias/highlight transitions remain."
+    },
+    "framingAndContacts": {
+      "passed": true,
+      "evidence": "Common unscaled crop retains heads, both full trainers, knee pad, wheel and both grips including Reach far grip with margin; original physical source/contact/range scope remains unchanged."
+    },
+    "honestThreePoseReuse": {
+      "passed": true,
+      "evidence": "Six distinct lossless paths decode exactly to three framed poses in[1,2,3,3,2,1]. No six-unique-pose claim."
+    }
+  },
+  "sourceFieldLimit": "Neutral preservation is independently checked outside original authored colour-layer alpha, and with guarded neutral interiors; this is not a claimed medical pixel segmentation. Broad early head/arm rectangles overlapped existing deltoid/core fields, so their differences were contaminated probes; corrected neutral interior samples match exactly.",
+  "pending": [
+    "Actual native/player/mobile integrated reviews",
+    "Final project/release/CI/merge gates"
+  ],
+  "completionCredit": 0
+}

@@ -1,0 +1,15 @@
+{
+  "selectSix": "/form-frames/ab-wheel/6.webp",
+  "nextWrap": "/form-frames/ab-wheel/1.webp",
+  "previousWrap": "/form-frames/ab-wheel/6.webp",
+  "slowerPressed": "true",
+  "consoleErrors": [],
+  "preparation": "Preparation: Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+  "pauseObserved": true,
+  "viewport": [390, 844],
+  "card": {
+    "complete": true,
+    "natural": [480, 479],
+    "src": "/form-art/ab-wheel.webp"
+  }
+}

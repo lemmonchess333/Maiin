@@ -1,0 +1,28 @@
+[
+  {
+    "t": 0,
+    "label": "Brace",
+    "cue": "Brace core; tuck pelvis; keep back neutral."
+  },
+  {
+    "t": 0.2,
+    "label": "Roll",
+    "cue": "Roll forward with straight arms; knees planted."
+  },
+  {
+    "t": 0.4,
+    "label": "Reach",
+    "cue": "Reach only while your back stays neutral."
+  },
+  { "t": 0.6, "label": "Hold", "cue": "Hold your brace without sagging." },
+  {
+    "t": 0.8,
+    "label": "Return",
+    "cue": "Pull back with abs; keep elbows straight."
+  },
+  {
+    "t": 1,
+    "label": "Reset",
+    "cue": "Reset under shoulders without sitting on heels."
+  }
+]
