@@ -27,6 +27,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { formatChallengeValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { challengeEditorialImage } from "@/lib/editorialImages";
@@ -108,6 +109,7 @@ function TierMarker({
   achieved: boolean;
 }) {
   const liftUnit = useLiftUnit();
+  const distanceUnit = useDistanceUnit();
   /* fastest_effort is lower-is-better: gold is the SMALLEST threshold and
      `max` (= tiers.gold) is below every other tier, so the higher-is-better
      `value / max` put bronze at 140% and silver at 120% — clamped, all
@@ -161,7 +163,7 @@ function TierMarker({
       <span
         className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "text-foreground" : "text-muted-foreground"}`}
       >
-        {formatChallengeValue(metric, value, liftUnit)}
+        {formatChallengeValue(metric, value, liftUnit, distanceUnit)}
       </span>
     </div>
   );
@@ -176,6 +178,7 @@ export function ChallengeCard({
   onLeave,
 }: ChallengeCardProps) {
   const liftUnit = useLiftUnit();
+  const distanceUnit = useDistanceUnit();
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
   const handleJoin = async () => {
@@ -382,7 +385,8 @@ export function ChallengeCard({
                     {formatChallengeValue(
                       challenge.metric,
                       p.currentValue,
-                      liftUnit
+                      liftUnit,
+                      distanceUnit
                     )}
                   </span>
                   {tier && (
@@ -446,10 +450,17 @@ export function ChallengeCard({
                     {formatChallengeValue(
                       challenge.metric,
                       collectiveTotal,
-                      liftUnit
+                      liftUnit,
+                      distanceUnit
                     )}
                   </span>{" "}
-                  / {formatChallengeValue(challenge.metric, target, liftUnit)}{" "}
+                  /{" "}
+                  {formatChallengeValue(
+                    challenge.metric,
+                    target,
+                    liftUnit,
+                    distanceUnit
+                  )}{" "}
                   together
                 </p>
                 <p className="text-caption text-center text-muted-foreground">
@@ -457,7 +468,8 @@ export function ChallengeCard({
                   {formatChallengeValue(
                     challenge.metric,
                     currentValue,
-                    liftUnit
+                    liftUnit,
+                    distanceUnit
                   )}
                 </p>
               </div>
@@ -478,7 +490,7 @@ export function ChallengeCard({
           <div className="space-y-1.5">
             <p className="text-sm text-muted-foreground">
               {nextTier && nextValue
-                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit)}`
+                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
                 : "Log your first qualifying activity to start the board"}
             </p>
           </div>
@@ -584,7 +596,8 @@ export function ChallengeCard({
                   {formatChallengeValue(
                     challenge.metric,
                     currentValue,
-                    liftUnit
+                    liftUnit,
+                    distanceUnit
                   )}
                 </span>
               ) : nextTier && nextValue ? (
@@ -594,12 +607,18 @@ export function ChallengeCard({
                     {formatChallengeValue(
                       challenge.metric,
                       currentValue,
-                      liftUnit
+                      liftUnit,
+                      distanceUnit
                     )}
                   </span>
                   {" — "}
                   {TIER_LABELS[nextTier]} at{" "}
-                  {formatChallengeValue(challenge.metric, nextValue, liftUnit)}
+                  {formatChallengeValue(
+                    challenge.metric,
+                    nextValue,
+                    liftUnit,
+                    distanceUnit
+                  )}
                 </span>
               ) : (
                 <span>
@@ -607,7 +626,8 @@ export function ChallengeCard({
                   {formatChallengeValue(
                     challenge.metric,
                     currentValue,
-                    liftUnit
+                    liftUnit,
+                    distanceUnit
                   )}
                 </span>
               )}
@@ -669,7 +689,8 @@ export function ChallengeCard({
                       {formatChallengeValue(
                         challenge.metric,
                         p.currentValue,
-                        liftUnit
+                        liftUnit,
+                        distanceUnit
                       )}
                     </span>
                     {tier && (

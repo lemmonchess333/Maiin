@@ -11,6 +11,7 @@ import {
 } from "./useChallenges";
 import { formatChallengeValue as formatValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
   bronze: "Bronze",
@@ -39,6 +40,7 @@ export function ChallengeFinaleCard({
   selfUid?: string;
 }) {
   const liftUnit = useLiftUnit();
+  const distanceUnit = useDistanceUnit();
   const { dismissed, dismiss } = useDismissOnce(
     `challenge-finale-${challenge.id}`
   );
@@ -84,7 +86,8 @@ export function ChallengeFinaleCard({
                   {formatValue(
                     challenge.metric,
                     myProgress.currentValue,
-                    liftUnit
+                    liftUnit,
+                    distanceUnit
                   )}
                 </span>
               </>
@@ -95,7 +98,8 @@ export function ChallengeFinaleCard({
                   {formatValue(
                     challenge.metric,
                     myProgress.currentValue,
-                    liftUnit
+                    liftUnit,
+                    distanceUnit
                   )}
                 </span>
               </>
