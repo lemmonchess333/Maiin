@@ -407,3 +407,48 @@ describe("featured circle change", () => {
     ).toBeInTheDocument();
   });
 });
+
+/* Together pass: a Circle of one shows no focus pulse. "1 of 1 focusing
+   this week" sat above the prompt to invite someone. */
+describe("a Circle of one", () => {
+  it("has no focus pulse", async () => {
+    const thisWeek = localWeekKey();
+    const loadDetail = vi.fn(() =>
+      Promise.resolve({
+        members: [
+          {
+            uid: "me",
+            displayName: "me",
+            photoURL: null,
+            role: "owner" as const,
+            joinedAt: 1,
+          },
+        ],
+        events: [
+          {
+            id: `me_${thisWeek}`,
+            uid: "me",
+            kind: "weekly_check_in" as const,
+            text: null,
+            weekKey: thisWeek,
+            weeklyFocus: "strength" as const,
+            supporterIds: [],
+            createdAt: 1,
+          },
+        ],
+      })
+    );
+    mockUseGoalSpaces.mockImplementation(() =>
+      hookValue({ circles: [circle("solo", "Just Me")], loadDetail })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText("Just Me")).toBeInTheDocument();
+    await waitFor(() => expect(loadDetail).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/focusing this week/)).not.toBeInTheDocument();
+  });
+});
