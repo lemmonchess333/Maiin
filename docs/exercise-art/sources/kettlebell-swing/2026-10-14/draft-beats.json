@@ -1,0 +1,44 @@
+[
+  {
+    "t": 0,
+    "label": "Hike",
+    "cue": "Hinge back; guide bell between your legs.",
+    "image": "/form-frames/kettlebell-swing/1.webp",
+    "sourcePose": 2
+  },
+  {
+    "t": 0.5,
+    "label": "Drive",
+    "cue": "Drive through your feet and extend hips.",
+    "image": "/form-frames/kettlebell-swing/2.webp",
+    "sourcePose": 3
+  },
+  {
+    "t": 1,
+    "label": "Float",
+    "cue": "Let the bell float to chest height.",
+    "image": "/form-frames/kettlebell-swing/3.webp",
+    "sourcePose": 1
+  },
+  {
+    "t": 1,
+    "label": "Brace",
+    "cue": "Brace your abs without leaning back.",
+    "image": "/form-frames/kettlebell-swing/4.webp",
+    "sourcePose": 1
+  },
+  {
+    "t": 0.5,
+    "label": "Return",
+    "cue": "Let the bell fall; keep arms relaxed.",
+    "image": "/form-frames/kettlebell-swing/5.webp",
+    "sourcePose": 3
+  },
+  {
+    "t": 0,
+    "label": "Reset",
+    "cue": "Hinge back as bell passes your legs.",
+    "image": "/form-frames/kettlebell-swing/6.webp",
+    "sourcePose": 2
+  }
+]

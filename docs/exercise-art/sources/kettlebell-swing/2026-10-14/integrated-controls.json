@@ -1,0 +1,14 @@
+{
+  "selectSix": "/form-frames/kettlebell-swing/6.webp",
+  "nextWrap": "/form-frames/kettlebell-swing/1.webp",
+  "previousWrap": "/form-frames/kettlebell-swing/6.webp",
+  "slowerPressed": "true",
+  "consoleErrors": [],
+  "pauseObserved": true,
+  "preparation": "Preparation: Stand with feet shoulder-width, bell on the floor a foot in front of you. Hinge at the hips and grip the handle with both hands, back flat.",
+  "card": {
+    "complete": true,
+    "natural": [307, 480],
+    "src": "/form-art/kettlebell-swing.webp"
+  }
+}

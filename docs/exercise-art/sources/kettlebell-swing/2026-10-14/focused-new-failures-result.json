@@ -1,0 +1,170 @@
+{
+  "phase": "focused-new-failures",
+  "status": "terminal",
+  "startedAt": "2026-10-14T20:56:29.325499+00:00",
+  "head": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "initialStatus": [
+    " M src/components/ExerciseFormContent.tsx",
+    " M src/components/__tests__/ExerciseFormContent.lifecycle.test.tsx",
+    " M src/components/__tests__/ExerciseFormContent.test.tsx",
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/formGuides.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.json",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.png",
+    "?? docs/exercise-art/releases/2026-10-14/kettlebell-swing.json",
+    "?? docs/exercise-art/sources/kettlebell-swing/",
+    "?? masters/kettlebell-swing/",
+    "?? public/form-art/kettlebell-swing.webp",
+    "?? public/form-frames/kettlebell-swing/",
+    "?? src/lib/__tests__/formGuides.setup.test.ts"
+  ],
+  "targets": [
+    "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+    "src/features/program/__tests__/useProgramWriters.test.ts",
+    "scripts/ci/install-playwright-chromium.test.ts"
+  ],
+  "command": "npm run test -- src/components/__tests__/FoodCameraModal.photoLock.test.tsx src/features/program/__tests__/useProgramWriters.test.ts scripts/ci/install-playwright-chromium.test.ts",
+  "bashResolvedUnderBaselinePath": "C:/Program Files/Git/bin\\bash.EXE",
+  "pathPrefixes": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin",
+    "C:/Program Files/Git/bin"
+  ],
+  "snapshotBeforeSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "afterRunStatus": [
+    " M src/components/ExerciseFormContent.tsx",
+    " M src/components/__tests__/ExerciseFormContent.lifecycle.test.tsx",
+    " M src/components/__tests__/ExerciseFormContent.test.tsx",
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/formGuides.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.json",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.png",
+    "?? docs/exercise-art/releases/2026-10-14/kettlebell-swing.json",
+    "?? docs/exercise-art/sources/kettlebell-swing/",
+    "?? masters/kettlebell-swing/",
+    "?? public/form-art/kettlebell-swing.webp",
+    "?? public/form-frames/kettlebell-swing/",
+    "?? src/lib/__tests__/formGuides.setup.test.ts"
+  ],
+  "snapshotRestoredFromExactBytes": false,
+  "finishedAt": "2026-10-14T20:56:53.719123+00:00",
+  "exitCode": 1,
+  "finalHead": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "finalStatus": [
+    " M src/components/ExerciseFormContent.tsx",
+    " M src/components/__tests__/ExerciseFormContent.lifecycle.test.tsx",
+    " M src/components/__tests__/ExerciseFormContent.test.tsx",
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/formGuides.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.json",
+    "?? docs/exercise-art/cutout-sources/kettlebell-swing.png",
+    "?? docs/exercise-art/releases/2026-10-14/kettlebell-swing.json",
+    "?? docs/exercise-art/sources/kettlebell-swing/",
+    "?? masters/kettlebell-swing/",
+    "?? public/form-art/kettlebell-swing.webp",
+    "?? public/form-frames/kettlebell-swing/",
+    "?? src/lib/__tests__/formGuides.setup.test.ts"
+  ],
+  "snapshotFinalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "unexpectedFileByteChanges": [],
+  "inputBytesUnchanged": true,
+  "actualTestResult": {
+    "testFiles": {
+      "failed": 1,
+      "passed": 2,
+      "skipped": 0,
+      "total": 3
+    },
+    "tests": {
+      "failed": 6,
+      "passed": 98,
+      "skipped": 5,
+      "total": 109
+    },
+    "verbatimSummary": [
+      "Test Files  1 failed | 2 passed (3)",
+      "Tests  6 failed | 98 passed | 5 skipped (109)",
+      "Duration  11.53s (tests 61%, environment 23%, import 9%, setup 4%, transform 2%)"
+    ],
+    "failures": [
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "- Expected"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch\u2026' // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+        "project": "root-node",
+        "file": "scripts/ci/install-playwright-chromium.test.ts",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch\u2026' // Object.is equality",
+          "- Expected",
+          "+ Received"
+        ]
+      }
+    ],
+    "failureHeaderCount": 6,
+    "stagesInvoked": ["test"],
+    "logSha256": "4613ea1ea49f4f488cab6c40ca9196bf9d9eb378414861b2b269bb4609c1fde2"
+  },
+  "newFailureFileHeaders": [],
+  "bothNewFailureSuitesPassed": true,
+  "inputStatePreserved": true
+}

@@ -677,6 +677,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2a89a4ddcf0c5b1e68194b1c0211b50f2360e82f5f012ed11d10fac30672b30d",
     sha256: "43805f2f056236e0c86b4f693a2d0e25d26ae672b23e86645128e6d8ac2c48de",
   },
+  "kettlebell-swing": {
+    src: "form-art/kettlebell-swing.webp",
+    width: 307,
+    height: 480,
+    keyed: false,
+    source: "form-frames/kettlebell-swing/3.webp",
+    sourceSha256:
+      "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+    sha256: "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+  },
   "l-sit": {
     src: "form-art/l-sit.webp",
     width: 480,

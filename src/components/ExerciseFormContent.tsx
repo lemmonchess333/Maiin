@@ -12,7 +12,7 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getDemoMuscleKey, getFormBeats } from "@/lib/formGuides";
+import { getDemoMuscleKey, getFormBeats, getFormSetup } from "@/lib/formGuides";
 import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import { Button } from "@/components/ui/Button";
@@ -42,6 +42,8 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
   const beats = exerciseId ? getFormBeats(exerciseId) : null;
+  const setupInstructions =
+    beats && exerciseId ? getFormSetup(exerciseId) : null;
   const [legacyGuide, setLegacyGuide] = useState<string | null>(null);
   const hasLocalGuide =
     beats !== null || (exerciseId !== undefined && legacyGuide === exerciseId);
@@ -171,8 +173,9 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
      can follow the animation down the list. They replace the
      catalogue's prose steps rather than sitting beside them — two
      numbered lists describing one movement is the duplication the
-     layout exists to remove. The catalogue's tip and common mistakes
-     still render below, unchanged. */
+     layout exists to remove. Authored preparation stays separate from
+     the depicted cycle. The catalogue's tip and common mistakes still
+     render below, unchanged. */
   const steps = beats ? beats.map((b) => b.cue) : demo.instructions;
   const collapsedSteps = beats ? steps.length : COLLAPSED_STEPS;
 
@@ -379,6 +382,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       {steps.length > 0 && (
         <div className="mt-6">
           <p className="text-lg font-bold text-foreground">Instructions</p>
+          {setupInstructions && setupInstructions.length > 0 && (
+            <p className="mt-3 text-body text-foreground/80 leading-relaxed">
+              <span className="font-semibold">Preparation: </span>
+              {setupInstructions.join(" ")}
+            </p>
+          )}
           <div className="flex flex-col gap-4 mt-3">
             {(showInstructions ? steps : steps.slice(0, collapsedSteps)).map(
               (step, i) => {

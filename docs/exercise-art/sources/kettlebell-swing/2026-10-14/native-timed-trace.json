@@ -1,0 +1,130 @@
+[
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 2 — Hinge back; guide bell between your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/1.webp",
+    "ms": 499
+  },
+  {
+    "complete": true,
+    "cue": "Beat 2 / pose 3 — Drive through your feet and extend hips.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/2.webp",
+    "ms": 994
+  },
+  {
+    "complete": true,
+    "cue": "Beat 3 / pose 1 — Let the bell float to chest height.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/3.webp",
+    "ms": 1580
+  },
+  {
+    "complete": true,
+    "cue": "Beat 3 / pose 1 — Let the bell float to chest height.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/3.webp",
+    "ms": 2069
+  },
+  {
+    "complete": true,
+    "cue": "Beat 4 / pose 1 — Brace your abs without leaning back.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/4.webp",
+    "ms": 2571
+  },
+  {
+    "complete": true,
+    "cue": "Beat 5 / pose 3 — Let the bell fall; keep arms relaxed.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/5.webp",
+    "ms": 3087
+  },
+  {
+    "complete": true,
+    "cue": "Beat 6 / pose 2 — Hinge back as bell passes your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/6.webp",
+    "ms": 3657
+  },
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 2 — Hinge back; guide bell between your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/1.webp",
+    "ms": 4188
+  },
+  {
+    "complete": true,
+    "cue": "Beat 2 / pose 3 — Drive through your feet and extend hips.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/2.webp",
+    "ms": 4716
+  },
+  {
+    "complete": true,
+    "cue": "Beat 3 / pose 1 — Let the bell float to chest height.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/3.webp",
+    "ms": 5260
+  },
+  {
+    "complete": true,
+    "cue": "Beat 4 / pose 1 — Brace your abs without leaning back.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/4.webp",
+    "ms": 5778
+  },
+  {
+    "complete": true,
+    "cue": "Beat 5 / pose 3 — Let the bell fall; keep arms relaxed.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/5.webp",
+    "ms": 6408
+  },
+  {
+    "complete": true,
+    "cue": "Beat 6 / pose 2 — Hinge back as bell passes your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/6.webp",
+    "ms": 7016
+  },
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 2 — Hinge back; guide bell between your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/1.webp",
+    "ms": 7557
+  },
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 2 — Hinge back; guide bell between your legs.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/1.webp",
+    "ms": 8034
+  },
+  {
+    "complete": true,
+    "cue": "Beat 2 / pose 3 — Drive through your feet and extend hips.",
+    "display": [690, 1008],
+    "natural": [690, 1008],
+    "src": "http://127.0.0.1:8774/final-frames/2.webp",
+    "ms": 8515
+  }
+]

@@ -1,0 +1,107 @@
+{
+  "reviewedAt": "2026-10-14T20:59:48.109975+00:00",
+  "baselineHead": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "testedWorkingTreeHead": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "command": "npm run verify",
+  "baselineWindowsTests": {
+    "failed": 81,
+    "passed": 13130,
+    "skipped": 409,
+    "total": 13620
+  },
+  "branchWindowsTests": {
+    "failed": 81,
+    "passed": 13136,
+    "skipped": 409,
+    "total": 13626
+  },
+  "fullWindowsGreen": false,
+  "lintArtworkDraftCyclesBuildSizePassed": true,
+  "allNormalVerifyStagesPresent": true,
+  "newFailureIdentities": [
+    "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+    "FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)"
+  ],
+  "newFailureSuitesPassedFocused": true,
+  "focusedTotals": {
+    "failed": 6,
+    "passed": 98,
+    "skipped": 5,
+    "total": 109
+  },
+  "resolvedFailureIdentities": [
+    "FAIL  |root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes",
+    "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records"
+  ],
+  "changedExistingFailureDetails": [
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+      "baseline": [
+        "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branch": [
+        "AssertionError: expected undefined to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "- Expected:",
+        "\"npx playwright install --with-deps chromium"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+      "baseline": [
+        "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branch": [
+        "AssertionError: expected undefined to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "- Expected:",
+        "\"npx playwright install --with-deps chromium webkit"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+      "baseline": [
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "- Expected"
+      ],
+      "branch": [
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "AssertionError: expected null to be 2 // Object.is equality",
+        "- Expected:"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+      "baseline": [
+        "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branch": [
+        "AssertionError: expected null to be 2 // Object.is equality",
+        "- Expected:",
+        "2"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+      "baseline": [
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "AssertionError: expected 3221225794 to be 2 // Object.is equality"
+      ],
+      "branch": [
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+        "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+        "AssertionError: expected null to be 2 // Object.is equality"
+      ]
+    }
+  ],
+  "inputBytesUnchanged": true,
+  "snapshotRestoredExactToPreRun": true,
+  "comparisonNote": "Full Windows exit1 remains non-green: two baseline generator-byte failures resolved, two new full-run failures passed their normal whole-file focused run. Five existing helper detail changes were caused by an omitted Git Bash PATH entry in this runner; focused correct-baseline-PATH run restores the same baseline helper failure details. No tests, limits, skips or app code changed to obtain focused results.",
+  "remaining": "Required current-head unit/emulator-tests CI and actualmerge before completion credit."
+}
