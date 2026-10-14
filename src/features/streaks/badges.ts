@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import type { LiftUnit } from "@/lib/liftLoad";
 
 export type BadgeTier = "bronze" | "silver" | "gold" | "platinum";
 
@@ -433,6 +434,24 @@ export const CATEGORY_LABELS: Record<BadgeDef["category"], string> = {
   nutrition: "Nutrition",
   hybrid: "Hybrid",
 };
+
+/** The plate clubs in an lb lifter's plates (Lift18). They are earned at
+ *  60, 100 and 140 kg (`liftWeightMilestones.ts`), and 135, 225 and 315 lb
+ *  are each at or above those, so the lb copy never asks for less than the
+ *  badge does. */
+const LB_DESCRIPTIONS: Readonly<Record<string, string>> = {
+  plate_club: "Lift 135 lb on any compound",
+  two_plate: "Lift 225 lb on any compound",
+  three_plate: "Lift 315 lb on any compound",
+};
+
+/** What a badge asks for, in the reader's lifting unit. */
+export function badgeDescription(
+  badge: { id: string; description: string },
+  unit: LiftUnit
+): string {
+  return (unit === "lbs" && LB_DESCRIPTIONS[badge.id]) || badge.description;
+}
 
 export function initBadges(): EarnedBadge[] {
   return BADGE_DEFINITIONS.map((b) => ({ ...b, earnedAt: null }));

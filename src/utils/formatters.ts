@@ -24,12 +24,6 @@ export function formatVolume(
   return { value: String(Math.round(amount)), unit };
 }
 
-/** A set's load: "BW" for bodyweight (0 kg), else "60 kg" / "62.5 kg". */
-export function formatLoadKg(kg: number): string {
-  if (kg === 0) return "BW";
-  return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
-}
-
 /**
  * Abbreviate a number with a "k" suffix past 1000 (e.g. 1500 -> "1.5k",
  * 500 -> "500"). The single home for the thousands-abbreviation that was

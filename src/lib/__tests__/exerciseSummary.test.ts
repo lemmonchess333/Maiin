@@ -129,3 +129,41 @@ describe("formatExerciseSummary", function () {
     ).toBe("—");
   });
 });
+
+/* Lift18: the reader's unit. The kg summary a post stores is the fallback
+   for a post with no figures; rows with figures are written again for
+   whoever reads them. */
+describe("formatExerciseSummary in the reader's unit", () => {
+  const set = { setCount: 3, targetReps: 8, exerciseId: "bench-press" };
+  it("is kg unless asked otherwise", () => {
+    expect(formatExerciseSummary({ ...set, targetWeightKg: 60 })).toBe(
+      "3×8×60 kg"
+    );
+    expect(formatExerciseSummary({ ...set, targetWeightKg: 62.5 }, "kg")).toBe(
+      "3×8×62.5 kg"
+    );
+  });
+
+  it("reads lb, whole on the lb kit and to a tenth off it", () => {
+    expect(
+      formatExerciseSummary({ ...set, targetWeightKg: 135 / 2.20462 }, "lbs")
+    ).toBe("3×8×135 lb");
+    expect(formatExerciseSummary({ ...set, targetWeightKg: 60 }, "lbs")).toBe(
+      "3×8×132.3 lb"
+    );
+  });
+
+  it("leaves BW and holds alone", () => {
+    expect(
+      formatExerciseSummary(
+        {
+          setCount: 3,
+          targetReps: 10,
+          targetWeightKg: 0,
+          exerciseId: "pull-ups",
+        },
+        "lbs"
+      )
+    ).toBe("3×10 BW");
+  });
+});

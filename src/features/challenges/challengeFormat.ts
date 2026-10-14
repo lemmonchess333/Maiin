@@ -1,3 +1,5 @@
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+
 /**
  * Challenge progress-value formatting — the ONE copy. This function lived
  * byte-identical in ChallengeCard and ChallengeFinaleCard (the 2026-08-22
@@ -6,10 +8,15 @@
  * here instead.
  *
  * fastest_effort: seconds → "m:ss". group_goal / total_km: kilometres.
- * total_volume: kilograms. Units are SPACED ("5.2 km", "12,840 kg") —
- * the app's one unit treatment.
+ * total_volume: kilograms, shown in the reader's lifting unit (Lift18;
+ * "28,307 lb"). Units are SPACED ("5.2 km", "12,840 kg") — the app's one
+ * unit treatment.
  */
-export function formatChallengeValue(metric: string, value: number): string {
+export function formatChallengeValue(
+  metric: string,
+  value: number,
+  liftUnit: LiftUnit = "kg"
+): string {
   if (metric === "fastest_effort") {
     if (value <= 0) return "—";
     const m = Math.floor(value / 60);
@@ -18,6 +25,6 @@ export function formatChallengeValue(metric: string, value: number): string {
   }
   if (metric === "total_km") return `${value.toFixed(1)} km`;
   if (metric === "total_volume")
-    return `${Math.round(value).toLocaleString()} kg`;
+    return `${Math.round(liftVolumeIn(value, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`;
   return Math.round(value).toLocaleString();
 }

@@ -59,3 +59,22 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
     expect(result.local).not.toBe(result.utc); // fix is load-bearing in this TZ
   });
 });
+
+/* Lift18: the volume board ranks stored kg; an lb reader reads lb. */
+describe("boardFigure", () => {
+  it("converts the volume board, and only that one", async () => {
+    const { boardFigure } = await import("../leaderboard");
+    expect(boardFigure("weekly_volume", 4500, "kg")).toEqual({
+      value: 4500,
+      unit: "kg",
+    });
+    expect(boardFigure("weekly_volume", 4500, "lbs")).toEqual({
+      value: 9921,
+      unit: "lb",
+    });
+    expect(boardFigure("weekly_workouts", 4, "lbs")).toEqual({
+      value: 4,
+      unit: "sessions",
+    });
+  });
+});

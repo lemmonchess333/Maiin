@@ -7,8 +7,10 @@ import {
   BADGE_ICONS,
   CATEGORY_LABELS,
   TIER_COLORS,
+  badgeDescription,
   type BadgeDef,
 } from "./badges";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { BadgeHex } from "./BadgeHex";
 import { ProgressRing } from "./BadgeProgressRing";
 import { badgeProgress, nearestBadge } from "./badgeProgress";
@@ -54,6 +56,7 @@ export function BadgeGrid() {
     earnedBadges,
     badgeProgressCtx,
   } = useStreaks();
+  const liftUnit = useLiftUnit();
 
   const categories = Object.keys(CATEGORY_LABELS) as BadgeDef["category"][];
 
@@ -97,7 +100,7 @@ export function BadgeGrid() {
               {next.def.name}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {next.def.description}
+              {badgeDescription(next.def, liftUnit)}
             </p>
             <ProgressBar
               pct={next.progress.pct}
@@ -244,7 +247,7 @@ export function BadgeGrid() {
                       />
                     ) : (
                       <p className="text-caption text-muted-foreground mt-1 line-clamp-2">
-                        {badge.description}
+                        {badgeDescription(badge, liftUnit)}
                       </p>
                     )}
                   </motion.div>

@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { formatClock, formatLoadKg } from "@/utils/formatters";
+import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
@@ -16,6 +16,8 @@ import {
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
 import { liftPostRows } from "../../lib/liftPost";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { movementCategoryLabel } from "../../lib/exerciseMovementCategory";
 import CommentSheet from "./CommentSheet";
 import SaveRoutineSheet from "./SaveRoutineSheet";
@@ -80,6 +82,12 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
      whoever is reading it, which is what every social running app does. */
   const unit = useDistanceUnit();
+  /* Lift18: someone else's loads in the reader's unit, as their distance
+     is. Posts store kg. */
+  const liftUnit = useLiftUnit();
+  const volumeFigure = (kg: number) =>
+    Math.round(liftVolumeIn(kg, liftUnit)).toLocaleString();
+  const volumeLabel = `${liftUnitLabel(liftUnit)} volume`;
   const { addBlocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
@@ -206,7 +214,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
-  const exercises = liftPostRows(activity?.exercises);
+  const exercises = liftPostRows(activity?.exercises, liftUnit);
   const prCount = activity?.prCount as number | undefined;
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
@@ -266,9 +274,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       {showVolumeOverlay && (
         <div className="absolute bottom-3 left-4">
           <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
-            {Math.round(activity?.totalVolume ?? 0).toLocaleString()}
+            {volumeFigure(activity?.totalVolume ?? 0)}
           </p>
-          <SectionLabel className="mt-0.5">kg volume</SectionLabel>
+          <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
         </div>
       )}
       {showPrChip && (
@@ -520,9 +528,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                matches it so the two paths agree. */
             <div className="min-w-0">
               <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting whitespace-nowrap">
-                {Math.round(activity.totalVolume ?? 0).toLocaleString()}
+                {volumeFigure(activity.totalVolume ?? 0)}
               </p>
-              <SectionLabel className="mt-0.5">kg volume</SectionLabel>
+              <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
           {(activity.exerciseCount ?? 0) > 0 && (
@@ -679,8 +687,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? formatLoadKg(
-                    (feedItem.prWeight || activity?.prWeight) as number
+                ? formatLoad(
+                    (feedItem.prWeight || activity?.prWeight) as number,
+                    liftUnit
                   )
                 : ""}
             </p>

@@ -7,11 +7,13 @@ import { db } from "../../lib/firebase";
 import {
   buildLeaderboard,
   CHALLENGE_LABELS,
+  boardFigure,
   type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
 import { Skeleton } from "../LoadingSkeleton";
 import LeaderboardRow from "./LeaderboardRow";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import EmptyState from "@/components/ui/EmptyState";
 import { SOCIAL_GATES, shouldShowLeaderboard } from "@/lib/socialGates";
 import { topPercent } from "@/features/challenges/useChallengePercentile";
@@ -21,8 +23,8 @@ interface EnrichedEntry extends LeaderboardEntry {
 }
 
 /* Tab ORDER is this surface's own (hybrid first, the one the card shows);
-   the name and unit are not — they come from `CHALLENGE_LABELS`, which is
-   the only copy. Two surfaces each carrying their own table is what let
+   the name and unit are not — they come from `CHALLENGE_LABELS` (the unit
+   through `boardFigure`), which is the only copy. Two surfaces each carrying their own table is what let
    two of the four names drift apart unnoticed. */
 const TAB_ORDER: ChallengeType[] = [
   "weekly_hybrid",
@@ -33,7 +35,6 @@ const TAB_ORDER: ChallengeType[] = [
 const TABS = TAB_ORDER.map((key) => ({
   key,
   label: CHALLENGE_LABELS[key].title,
-  unit: CHALLENGE_LABELS[key].unit,
 }));
 
 /** One board's entries with activity this week, each named from the
@@ -102,7 +103,8 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
     };
   }, [user, activeTab, boardKey]);
 
-  const currentUnit = TABS.find((t) => t.key === activeTab)?.unit || "pts";
+  const liftUnit = useLiftUnit();
+  const figure = (value: number) => boardFigure(activeTab, value, liftUnit);
 
   // SOCIAL S4 — a vs-others leaderboard only earns its place at a ≥20
   // athlete cohort, and even then is percentile/neighbourhood-framed
@@ -213,8 +215,8 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
               uid={entry.uid}
               name={entry.name}
               photoURL={entry.photoURL}
-              value={entry.value}
-              unit={currentUnit}
+              value={figure(entry.value).value}
+              unit={figure(entry.value).unit}
               isSelf={entry.uid === user?.uid}
               selfInitial={
                 profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)

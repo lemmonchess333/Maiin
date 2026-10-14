@@ -26,6 +26,7 @@ import {
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import { formatChallengeValue } from "./challengeFormat";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { challengeEditorialImage } from "@/lib/editorialImages";
@@ -106,6 +107,7 @@ function TierMarker({
   metric: string;
   achieved: boolean;
 }) {
+  const liftUnit = useLiftUnit();
   /* fastest_effort is lower-is-better: gold is the SMALLEST threshold and
      `max` (= tiers.gold) is below every other tier, so the higher-is-better
      `value / max` put bronze at 140% and silver at 120% — clamped, all
@@ -159,7 +161,7 @@ function TierMarker({
       <span
         className={`text-xs mt-0.5 font-medium font-mono tabular-nums whitespace-nowrap ${labelShift} ${achieved ? "text-foreground" : "text-muted-foreground"}`}
       >
-        {formatChallengeValue(metric, value)}
+        {formatChallengeValue(metric, value, liftUnit)}
       </span>
     </div>
   );
@@ -173,6 +175,7 @@ export function ChallengeCard({
   onJoin,
   onLeave,
 }: ChallengeCardProps) {
+  const liftUnit = useLiftUnit();
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
   const handleJoin = async () => {
@@ -376,7 +379,11 @@ export function ChallengeCard({
                     {p.displayName || "Athlete"}
                   </span>
                   <span className="font-medium font-mono tabular-nums">
-                    {formatChallengeValue(challenge.metric, p.currentValue)}
+                    {formatChallengeValue(
+                      challenge.metric,
+                      p.currentValue,
+                      liftUnit
+                    )}
                   </span>
                   {tier && (
                     <div
@@ -436,13 +443,22 @@ export function ChallengeCard({
                 </div>
                 <p className="text-xs text-center font-mono tabular-nums text-muted-foreground">
                   <span className="text-foreground font-semibold">
-                    {formatChallengeValue(challenge.metric, collectiveTotal)}
+                    {formatChallengeValue(
+                      challenge.metric,
+                      collectiveTotal,
+                      liftUnit
+                    )}
                   </span>{" "}
-                  / {formatChallengeValue(challenge.metric, target)} together
+                  / {formatChallengeValue(challenge.metric, target, liftUnit)}{" "}
+                  together
                 </p>
                 <p className="text-caption text-center text-muted-foreground">
                   You contributed{" "}
-                  {formatChallengeValue(challenge.metric, currentValue)}
+                  {formatChallengeValue(
+                    challenge.metric,
+                    currentValue,
+                    liftUnit
+                  )}
                 </p>
               </div>
             );
@@ -462,7 +478,7 @@ export function ChallengeCard({
           <div className="space-y-1.5">
             <p className="text-sm text-muted-foreground">
               {nextTier && nextValue
-                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue)}`
+                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit)}`
                 : "Log your first qualifying activity to start the board"}
             </p>
           </div>
@@ -565,22 +581,34 @@ export function ChallengeCard({
                     Gold achieved!
                   </span>
                   {" — "}
-                  {formatChallengeValue(challenge.metric, currentValue)}
+                  {formatChallengeValue(
+                    challenge.metric,
+                    currentValue,
+                    liftUnit
+                  )}
                 </span>
               ) : nextTier && nextValue ? (
                 <span>
                   You&apos;re at{" "}
                   <span className="font-semibold text-foreground">
-                    {formatChallengeValue(challenge.metric, currentValue)}
+                    {formatChallengeValue(
+                      challenge.metric,
+                      currentValue,
+                      liftUnit
+                    )}
                   </span>
                   {" — "}
                   {TIER_LABELS[nextTier]} at{" "}
-                  {formatChallengeValue(challenge.metric, nextValue)}
+                  {formatChallengeValue(challenge.metric, nextValue, liftUnit)}
                 </span>
               ) : (
                 <span>
                   Progress:{" "}
-                  {formatChallengeValue(challenge.metric, currentValue)}
+                  {formatChallengeValue(
+                    challenge.metric,
+                    currentValue,
+                    liftUnit
+                  )}
                 </span>
               )}
             </p>
@@ -638,7 +666,11 @@ export function ChallengeCard({
                       {p.displayName || "Athlete"}
                     </span>
                     <span className="font-medium font-mono tabular-nums">
-                      {formatChallengeValue(challenge.metric, p.currentValue)}
+                      {formatChallengeValue(
+                        challenge.metric,
+                        p.currentValue,
+                        liftUnit
+                      )}
                     </span>
                     {tier && (
                       <span

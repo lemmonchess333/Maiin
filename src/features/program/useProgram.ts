@@ -1298,6 +1298,7 @@ export function useProgram() {
           displayName: profile?.displayName,
           photoURL: profile?.photoURL,
         },
+        liftUnit: resolveLiftUnit(profile?.liftingWeightUnit),
         source: "programme",
         completionId: sessionData.completionId,
         startedAt: sessionData.startedAt,
