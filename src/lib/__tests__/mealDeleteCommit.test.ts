@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * A soft-delete that fails must give the row — and its calories — back.
  *
@@ -156,6 +157,55 @@ describe("deleteAfterUndoWindow", () => {
     expect(d.show).not.toHaveBeenCalled();
   });
 
+  function hidePage() {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }
+  afterEach(() => {
+    // The page is visible again for the next test: jsdom's own getter.
+    delete (document as { visibilityState?: unknown }).visibilityState;
+  });
+
+  it("deletes at once when the app is left inside the window", () => {
+    // The timer dies with the page: closing the app inside the window used
+    // to leave the meal in the diary, though it had gone from the screen.
+    const d = windowDeps();
+    const undo = deleteAfterUndoWindow(["a", "b"], d);
+    vi.advanceTimersByTime(1000);
+    hidePage();
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    expect(d.commit).toHaveBeenCalledWith(["a", "b"]);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    undo();
+    expect(d.show).not.toHaveBeenCalled();
+  });
+
+  it("deletes at once when the page is unloaded inside the window", () => {
+    const d = windowDeps();
+    deleteAfterUndoWindow(["a"], d);
+    window.dispatchEvent(new Event("pagehide"));
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves an undone or finished delete alone when the app is left", () => {
+    const d = windowDeps();
+    const undo = deleteAfterUndoWindow(["a"], d);
+    undo();
+    deleteAfterUndoWindow(["b"], d);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    hidePage();
+    window.dispatchEvent(new Event("pagehide"));
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    expect(d.commit).toHaveBeenCalledWith(["b"]);
+  });
+
   it("keeps each delete's window to itself", () => {
     const d = windowDeps();
     const undoFirst = deleteAfterUndoWindow(["a"], d);
@@ -188,6 +238,8 @@ describe("Food.tsx routes its deletes through the commit", () => {
     // One window, which commits through the one recovery path.
     expect(food.match(/deleteAfterUndoWindow\(/g)?.length).toBe(1);
     expect(food.match(/commitDeletes\(/g)?.length).toBe(1);
+    // A delete written early, as the app is left, takes its toast with it.
+    expect(food).toMatch(/commit: \(ids\) => \{\s*toast\.dismiss\(toastId\);/);
     // Every Undo toast lasts exactly as long as its window.
     expect(food.match(/duration: MEAL_UNDO_WINDOW_MS/g)?.length).toBe(2);
   });

@@ -449,8 +449,14 @@ export default function Food() {
 
   /* Hide the entries now, delete them when the undo window closes, and
      hand back the toast's Undo. Deleting a row and stepping its servings
-     down both come here. */
-  const hideThenDelete = (mealIds: string[], foodName: string) =>
+     down both come here. Leaving the app writes the delete early, and the
+     toast `toastId` names goes with it: sonner holds a toast while the
+     page is hidden, and its Undo would come back with nothing to undo. */
+  const hideThenDelete = (
+    mealIds: string[],
+    foodName: string,
+    toastId: string
+  ) =>
     deleteAfterUndoWindow(mealIds, {
       hide: (ids) =>
         setPendingDeleteIds((prev) => {
@@ -469,7 +475,10 @@ export default function Food() {
       // harmless no-op filter on entries that no longer exist. Clearing
       // them before that snapshot arrives flashes the rows back into the
       // list. `commitDeletes` clears only the ids whose write REJECTED.
-      commit: (ids) => void commitDeletes([...ids], foodName),
+      commit: (ids) => {
+        toast.dismiss(toastId);
+        void commitDeletes([...ids], foodName);
+      },
     });
 
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
@@ -1252,9 +1261,11 @@ export default function Food() {
            this, stepping a count down was irreversible. */
         const removes = currentCount - targetCount;
         const toRemove = groupMeals.slice(-removes);
+        const toastId = `food-edit-${foodName}`;
         const undo = hideThenDelete(
           toRemove.map((m) => m.id),
-          foodName
+          foodName,
+          toastId
         );
         setEditingGroup(null);
         setOpenRowId(null);
@@ -1262,7 +1273,7 @@ export default function Food() {
         toast.success(
           `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
           {
-            id: `food-edit-${foodName}`,
+            id: toastId,
             action: { label: "Undo", onClick: undo },
             duration: MEAL_UNDO_WINDOW_MS,
           }
@@ -1315,7 +1326,8 @@ export default function Food() {
       });
     }
 
-    const undo = hideThenDelete(mealIds, foodName);
+    const toastId = `food-delete-${mealIds[0]}`;
+    const undo = hideThenDelete(mealIds, foodName, toastId);
     setOpenRowId(null);
 
     // Pluralised when the group held multiple servings so the user knows
@@ -1326,6 +1338,7 @@ export default function Food() {
         : `${mealIds.length} servings of ${foodName} deleted`;
 
     toast(message, {
+      id: toastId,
       action: { label: "Undo", onClick: undo },
       duration: MEAL_UNDO_WINDOW_MS,
     });
