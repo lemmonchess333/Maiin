@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "scope": "Actual registered target paths/card/components with current main styles; not yet committed or merged.",
+  "nativeActualDimensions": [856, 1008],
+  "nativeManualFrames": 6,
+  "nativeTimedLoop6to1": true,
+  "mobile": {
+    "dark": {
+      "viewport": [390, 844],
+      "qualifyingObservations": 7,
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true
+    },
+    "light": {
+      "viewport": [390, 844],
+      "qualifyingObservations": 8,
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/rear-delt-machine-fly/6.webp",
+    "nextWrap": "/form-frames/rear-delt-machine-fly/1.webp",
+    "previousWrap": "/form-frames/rear-delt-machine-fly/6.webp",
+    "slowerPressed": "true",
+    "slowerStartedAfterMs": 120096,
+    "consoleErrors": [],
+    "timing": {
+      "normalMedianMs": 1209.0,
+      "slowerMedianMs": 2407.5,
+      "ratio": 1.9913151364764268
+    }
+  },
+  "physicalPoses": 3,
+  "targetPosesSeparatelyAuthored": 0,
+  "framesByteExactToApprovedSource": 6,
+  "editablesReopenedExact": 3,
+  "sourceExercise": "reverse-pec-deck",
+  "targetExercise": "rear-delt-machine-fly",
+  "sourceCardDimensions": [350, 480],
+  "sourceCardSha256": "0d95f217fc02eb026bce9a970e475f4f4e48f74a8c8116c06e67d4e416a7581d",
+  "imageRequests": 0,
+  "imagePixelsChanged": 0,
+  "visualFinding": "Same approved anatomy-v3 athlete, primary/secondary colours, neutral shading and apparatus. Chest supported, shoulders down, soft elbows, connected grips and planted trainers through outward sweep and reversed return. Native/full actual mobile light-dark checked.",
+  "remaining": "Full branch verification/baseline comparison, source hashes/normal hooks, PR required CI and actual merge before completion credit.",
+  "standardCardByteExactToApprovedSource": true,
+  "priorArtworkPreserved": 889
+}

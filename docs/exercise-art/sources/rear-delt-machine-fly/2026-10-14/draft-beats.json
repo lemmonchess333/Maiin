@@ -1,0 +1,38 @@
+[
+  {
+    "t": 0,
+    "label": "Reach",
+    "cue": "Keep your chest against the pad.",
+    "image": "/form-frames/rear-delt-machine-fly/1.webp"
+  },
+  {
+    "t": 0.5,
+    "label": "Open",
+    "cue": "Open both arms with elbows softly bent.",
+    "image": "/form-frames/rear-delt-machine-fly/2.webp"
+  },
+  {
+    "t": 1,
+    "label": "Squeeze",
+    "cue": "Spread the handles; keep your shoulders down.",
+    "image": "/form-frames/rear-delt-machine-fly/3.webp"
+  },
+  {
+    "t": 1,
+    "label": "Hold",
+    "cue": "Hold wide without arching or shrugging.",
+    "image": "/form-frames/rear-delt-machine-fly/4.webp"
+  },
+  {
+    "t": 0.5,
+    "label": "Return",
+    "cue": "Return slowly; keep your elbows softly bent.",
+    "image": "/form-frames/rear-delt-machine-fly/5.webp"
+  },
+  {
+    "t": 0,
+    "label": "Reset",
+    "cue": "Keep tension as the handles return.",
+    "image": "/form-frames/rear-delt-machine-fly/6.webp"
+  }
+]

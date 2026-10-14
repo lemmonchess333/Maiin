@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "rear-delt-machine-fly": placard(
+    "rear-delt-machine-fly",
+    ["Rear Delts"],
+    ["Rhomboids", "Traps"],
+    [
+      [0, "Reach", "Keep your chest against the pad."],
+      [0.5, "Open", "Open both arms with elbows softly bent."],
+      [1, "Squeeze", "Spread the handles; keep your shoulders down."],
+      [1, "Hold", "Hold wide without arching or shrugging."],
+      [0.5, "Return", "Return slowly; keep your elbows softly bent."],
+      [0, "Reset", "Keep tension as the handles return."],
+    ]
+  ),
   deadlift: placard(
     "deadlift",
     ["Glutes", "Hamstrings"],
