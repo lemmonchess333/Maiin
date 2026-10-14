@@ -401,7 +401,7 @@ export function ChallengeCard({
             onClick={handleJoin}
             loading={busy === "joining"}
           >
-            {busy === "joining" ? "Joining…" : "Join Challenge"}
+            {busy === "joining" ? "Joining…" : "Join challenge"}
           </Button>
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.

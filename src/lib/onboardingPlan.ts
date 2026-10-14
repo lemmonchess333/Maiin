@@ -6,6 +6,7 @@ import type { Goal } from "@/features/program/programTypes";
 import type { OnboardingDraft, OnboardingActivity } from "./onboardingDraft";
 import { resolveOnboardingRunMode } from "./onboardingRunMode";
 import { MIN_RACE_RUN_DAYS } from "./raceGoalPlanner";
+import { liftUnitForBodyWeight } from "./liftLoad";
 
 /**
  * The review and the commit consume this SAME result. Every new plan comes
@@ -32,6 +33,7 @@ export function buildOnboardingPlan(
     | "barbellAtHome"
     | "smallPlates"
     | "raceLegTrim"
+    | "weightDisplayUnit"
   >,
   nutritionPhase: Goal,
   currentDate: string,
@@ -65,6 +67,8 @@ export function buildOnboardingPlan(
     sessionMinutes: draft.sessionMinutes,
     barbellAtHome: draft.barbellAtHome,
     smallPlates: draft.smallPlates,
+    // Lift18: the kit the loads round to, from the body-weight unit.
+    loadUnit: liftUnitForBodyWeight(draft.weightDisplayUnit),
     // Lift4 (10): asked with a race, of someone who lifts; yes unless
     // answered for Support my running, no unless answered otherwise.
     ...(runMode === "race_prep" && draft.daysPerWeek > 0

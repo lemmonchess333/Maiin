@@ -245,7 +245,12 @@ export function ChallengeList({
     ctaLabel,
     ctaTo,
     goalMet,
-  } = getWeeklyAccountability({ myWeeklyCount, othersTrained, target });
+  } = getWeeklyAccountability({
+    myWeeklyCount,
+    othersTrained,
+    target,
+    ...(weeklyCh && !weeklyJoined ? { unjoined: { name: weeklyCh.name } } : {}),
+  });
 
   return (
     <div className="space-y-4">
