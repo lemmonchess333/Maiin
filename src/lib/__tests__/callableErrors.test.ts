@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { describeRejection, stripCallablePrefix } from "../callableErrors";
+import {
+  describeRejection,
+  isRateLimitedRejection,
+  stripCallablePrefix,
+} from "../callableErrors";
 
 describe("stripCallablePrefix", () => {
   it("drops the FirebaseError and failed-precondition prefixes, keeping the sentence", () => {
@@ -64,5 +68,20 @@ describe("describeRejection", () => {
     expect(
       describeRejection({ code: "functions/failed-precondition", message: "" })
     ).toBeNull();
+  });
+});
+
+describe("isRateLimitedRejection", () => {
+  it("is a call refused for coming too often, and nothing else", () => {
+    expect(
+      isRateLimitedRejection({
+        code: "functions/resource-exhausted",
+        message: "Too many attempts. Please wait.",
+      })
+    ).toBe(true);
+    expect(isRateLimitedRejection({ code: "resource-exhausted" })).toBe(true);
+    expect(isRateLimitedRejection({ code: "functions/internal" })).toBe(false);
+    expect(isRateLimitedRejection(new Error("offline"))).toBe(false);
+    expect(isRateLimitedRejection(undefined)).toBe(false);
   });
 });

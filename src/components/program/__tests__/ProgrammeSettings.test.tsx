@@ -28,6 +28,8 @@ import {
 import { MemoryRouter, useLocation } from "react-router-dom";
 import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
+import { toast } from "@/lib/toast";
+import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -175,6 +177,24 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
       distance: "half",
       targetDate: "2027-03-01",
     });
+  });
+
+  it("a save refused for coming too often says to wait, and keeps the change", async () => {
+    configureSpy.mockRejectedValueOnce(
+      Object.assign(new Error("Too many attempts. Please wait."), {
+        code: "functions/resource-exhausted",
+      })
+    );
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(PLAN_SAVES_TOO_OFTEN)
+    );
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).toBeInTheDocument();
   });
 
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {

@@ -1,5 +1,9 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  isRateLimitedRejection,
+  PLAN_SAVES_TOO_OFTEN,
+} from "@/lib/callableErrors";
+import {
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
@@ -596,7 +600,9 @@ export default function RunPlanSettings({
       toast.error(
         conflict
           ? "Your programme changed. Reopen settings to review the latest plan before saving."
-          : "Couldn't save your run plan. Try again.",
+          : isRateLimitedRejection(e)
+            ? PLAN_SAVES_TOO_OFTEN
+            : "Couldn't save your run plan. Try again.",
         {
           id: "run-plan",
         }

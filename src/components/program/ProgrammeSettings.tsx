@@ -35,6 +35,10 @@
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
  * ScheduleLayoutSheet — both views link to it.
  */
+import {
+  isRateLimitedRejection,
+  PLAN_SAVES_TOO_OFTEN,
+} from "@/lib/callableErrors";
 import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -766,6 +770,8 @@ export default function ProgrammeSettings({
         code === "invalid-argument"
       ) {
         toast.error("Plan didn't validate. Try a different combination.");
+      } else if (isRateLimitedRejection(err)) {
+        toast.error(PLAN_SAVES_TOO_OFTEN);
       } else {
         toast.error("Couldn't save your plan. Try again.");
       }
