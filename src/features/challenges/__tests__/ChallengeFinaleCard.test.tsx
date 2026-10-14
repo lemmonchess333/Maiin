@@ -1,7 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { ChallengeFinaleCard } from "../ChallengeFinaleCard";
 import type { Challenge, ChallengeParticipant } from "../useChallenges";
+
+vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 
 /* Together pass: an ended challenge says where the person finished only
    among three or more, as the live card's count does. "#1 of 1" ranked
