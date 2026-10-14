@@ -449,10 +449,17 @@
 
 /* Defensive no-horizontal-scroll rail. A single negative-margin chip
    scroller used to leak and trigger page-level horizontal scroll on
-   iPhone SE widths. Clamp it here instead of patching each site. */
+   iPhone SE widths. Clamp it here instead of patching each site.
+   `clip`, not `hidden`: hidden on body also makes it scroll vertically,
+   so body becomes a scroll box as tall as the page that never scrolls,
+   and every `sticky` bar inside it stayed where it was in the page
+   instead of pinning (Programme's Save changes sat below the last
+   setting). Clip clamps the same overflow without being a scroll box.
+   iOS 15, which has no clip, keeps hidden. */
 html,
 body {
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ─── SCROLLBAR SUPPRESSION (app shell) ─────────────────────

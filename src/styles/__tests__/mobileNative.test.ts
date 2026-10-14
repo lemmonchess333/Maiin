@@ -76,6 +76,14 @@ function openingTag(src: string, start: number): string {
 }
 
 describe("mobile-native platform layer", () => {
+  it("clips the page's sideways overflow without stopping sticky bars", () => {
+    // overflow-x: hidden on body makes body a scroll box that never
+    // scrolls, and a sticky bar inside it never pins. Clip comes last so
+    // it wins where it is supported; hidden stays for iOS 15.
+    const rail = css.match(/html,\s*body\s*\{([^}]*)\}/);
+    expect(rail?.[1]).toMatch(/overflow-x:\s*hidden;\s*overflow-x:\s*clip;/);
+  });
+
   it("turns the tap flash off at the root", () => {
     expect(css).toMatch(
       /(^|\n)html\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/
