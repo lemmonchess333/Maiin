@@ -24,6 +24,7 @@
  */
 
 const leoProfanity = require("leo-profanity");
+const { containsHateTerm } = require("./lib/hateTerms");
 
 /**
  * Predicate: does `text` contain any blocked word?
@@ -32,7 +33,7 @@ const leoProfanity = require("leo-profanity");
  */
 function containsProfanity(text) {
   if (typeof text !== "string" || !text.trim()) return false;
-  return leoProfanity.check(text);
+  return leoProfanity.check(text) || containsHateTerm(text);
 }
 
 /**
