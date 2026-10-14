@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "scope": "Staged actual component/native source review, not release completion",
+  "mobile": [
+    {
+      "theme": "dark",
+      "viewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 93
+    },
+    {
+      "theme": "light",
+      "viewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 112
+    }
+  ],
+  "controls": {
+    "pausePlayVisible": true,
+    "selectSix": "/form-frames/deadlift/6.webp",
+    "nextWrap": "/form-frames/deadlift/1.webp",
+    "previousWrap": "/form-frames/deadlift/6.webp",
+    "slowerPressed": "true",
+    "consoleErrors": [],
+    "timing": {
+      "normalMedianMs": 1206,
+      "slowerMedianMs": 2406,
+      "slowerFrames": [
+        "/form-frames/deadlift/6.webp",
+        "/form-frames/deadlift/1.webp",
+        "/form-frames/deadlift/2.webp",
+        "/form-frames/deadlift/3.webp",
+        "/form-frames/deadlift/4.webp",
+        "/form-frames/deadlift/5.webp"
+      ],
+      "slowerObservations": 115,
+      "ratio": 1.9950248756218905
+    }
+  },
+  "native": "Six actual WebP paths decoded at natural/rendered940x940;6to1 manual return inspected. Final three original stills and inherited shading reviewed.",
+  "identity": "Same canonical bald faceless lean white-grey anatomy, neutral pelvis and white trainers; complete originals retained",
+  "minorFindings": [
+    "Three genuine physical poses; floor/lockout pauses and return reuse disclosed.",
+    "Original shoe/toe contours and projected neutral muscle contours vary slightly; both posterior sole envelopes remain within1px after uniform whole-scene translations.",
+    "Projected shaft-angle variation and grey join shade variation retained; copied plate/end pixels and actual dimensions checked, not3D calibration."
+  ],
+  "remaining": "Registered paths/standard card/full project checks/required CI and merge before completion credit"
+}

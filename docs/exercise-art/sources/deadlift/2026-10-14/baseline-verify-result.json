@@ -1,0 +1,10 @@
+{
+  "finishedAt": "2026-10-14T10:48:45.0461333Z",
+  "exitCode": 1,
+  "phase": "baseline",
+  "head": "d16e00d77eea6bcb3526c2a21e14c48cbaa8663a",
+  "finalStatus": [
+    " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap"
+  ],
+  "status": "terminal"
+}

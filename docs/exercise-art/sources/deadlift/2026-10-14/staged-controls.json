@@ -1,0 +1,22 @@
+{
+  "pausePlayVisible": true,
+  "selectSix": "/form-frames/deadlift/6.webp",
+  "nextWrap": "/form-frames/deadlift/1.webp",
+  "previousWrap": "/form-frames/deadlift/6.webp",
+  "slowerPressed": "true",
+  "consoleErrors": [],
+  "timing": {
+    "normalMedianMs": 1206,
+    "slowerMedianMs": 2406,
+    "slowerFrames": [
+      "/form-frames/deadlift/6.webp",
+      "/form-frames/deadlift/1.webp",
+      "/form-frames/deadlift/2.webp",
+      "/form-frames/deadlift/3.webp",
+      "/form-frames/deadlift/4.webp",
+      "/form-frames/deadlift/5.webp"
+    ],
+    "slowerObservations": 115,
+    "ratio": 1.9950248756218905
+  }
+}

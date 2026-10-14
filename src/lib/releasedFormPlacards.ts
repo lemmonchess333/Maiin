@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  deadlift: placard(
+    "deadlift",
+    ["Glutes", "Hamstrings"],
+    ["Erectors", "Traps"],
+    [
+      [1, "Set", "Bar over midfoot; grip outside your shins."],
+      [1, "Brace", "Brace your trunk; keep both arms straight."],
+      [0.3, "Clear knees", "Drive up; keep the bar close."],
+      [0, "Stand", "Stand tall; avoid leaning back or shrugging."],
+      [0, "Control", "Hold your grip; control the return."],
+      [0.3, "Lower", "Hinge back; guide the bar along legs."],
+    ]
+  ),
   "seated-calf-raise": placard(
     "seated-calf-raise",
     ["Calves"],

@@ -1,0 +1,31 @@
+{
+  "baselineHead": "d16e00d77eea6bcb3526c2a21e14c48cbaa8663a",
+  "baselineFullWindows": {
+    "failed": 74,
+    "passed": 12927,
+    "skipped": 409
+  },
+  "finalFullWindows": {
+    "failed": 74,
+    "passed": 12929,
+    "skipped": 409
+  },
+  "lintPassed": true,
+  "artworkAuditPassed": true,
+  "draftAuditPassed": true,
+  "cyclesPassed": true,
+  "buildPassed": true,
+  "distSizePassed": true,
+  "focused": {
+    "files": 5,
+    "passed": 434,
+    "failed": 0
+  },
+  "isolatedFinal": {
+    "files": 3,
+    "passed": 106,
+    "failed": 0
+  },
+  "comparison": "72 persistent failures match the fresh cleanD16 baseline. Two baseline manifest-byte failures resolved through normal generators. Two additional final full-run timing failures passed isolated reruns; do not label them pre-existing. Full Windows verification remains non-green. Required Linux CI must pass before merge.",
+  "remaining": "Required CI and actual merge; no completion credit yet"
+}

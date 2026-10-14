@@ -1,0 +1,113 @@
+{
+  "scope": "Posterior sole envelope bounds and exact plate-column spans; projected raster diagnostics, not3D joint centres.",
+  "frames": [
+    {
+      "path": "form-frames/deadlift/1.webp",
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 333,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 443,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/2.webp",
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 333,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 443,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/3.webp",
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 879
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/4.webp",
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/5.webp",
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/6.webp",
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 879
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    }
+  ]
+}
