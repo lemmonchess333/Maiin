@@ -90,7 +90,9 @@ export function ChallengeFinaleCard({
                 </span>
               </>
             )}
-            {rankIdx >= 0 && (
+            {/* A place among three or more, as the live card's count waits
+                for three: "#1 of 1" ranks nobody. */}
+            {rankIdx >= 0 && challenge.participantCount >= 3 && (
               <>
                 {" · "}
                 <span className="font-mono tabular-nums">
