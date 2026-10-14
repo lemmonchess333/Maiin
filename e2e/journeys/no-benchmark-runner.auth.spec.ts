@@ -100,15 +100,15 @@ async function expectTrainExplains(
   await openTrainRun(page);
   await expect(
     page.getByRole("tablist", { name: TRAIN.runWeek }).getByRole("tab", {
-      name: runWeekTabName(runWeekLabel(template), "today"),
+      name: runWeekTabName(runWeekLabel(template, "km"), "today"),
       exact: true,
     })
   ).toBeVisible();
   const card = page.getByRole("region", {
-    name: new RegExp(`— ${runSessionName(template)}$`),
+    name: new RegExp(`— ${runSessionName(template, null, "km")}$`),
   });
   await expect(card.getByRole("heading", { level: 3 })).toHaveText(
-    runSessionName(template)
+    runSessionName(template, null, "km")
   );
   await expect(
     card.getByText(about.feel, { exact: true }),
@@ -165,7 +165,7 @@ test("a runner with no benchmark, through every surface that explains a planned 
     const longDose = runDoseLine(long, null);
     expect(longDose, "a long run's dose with no pace").not.toMatch(/min/);
     await expect(
-      page.getByText(runSessionName(long), { exact: true }).first()
+      page.getByText(runSessionName(long, null, "km"), { exact: true }).first()
     ).toBeVisible();
     await expect(page.getByText(longDose, { exact: true })).toBeVisible();
     await expect(page.getByText(PACE), "no pace on Home").toHaveCount(0);
@@ -187,7 +187,9 @@ test("a runner with no benchmark, through every surface that explains a planned 
     // Home: its name and its time, the prescription.
     await openTab(page, TABS.home);
     await expect(
-      page.getByText(runSessionName(session), { exact: true }).first()
+      page
+        .getByText(runSessionName(session, null, "km"), { exact: true })
+        .first()
     ).toBeVisible();
     await expect(
       page.getByText(runDoseLine(session, null), { exact: true })
@@ -203,7 +205,10 @@ test("a runner with no benchmark, through every surface that explains a planned 
       .getByRole("button", { name: RUN.homeStart, exact: true })
       .click();
     await expect(
-      page.getByRole("heading", { name: runSessionName(session), level: 1 })
+      page.getByRole("heading", {
+        name: runSessionName(session, null, "km"),
+        level: 1,
+      })
     ).toBeVisible();
     // One line says how it should feel, its effort word first (E2c). R2's
     // own effort line beside it said the same thing again ("Hard, and even

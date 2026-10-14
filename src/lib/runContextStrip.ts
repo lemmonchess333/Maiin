@@ -10,7 +10,8 @@
  */
 import { RUN_TEMPLATES } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
-import { formatRaceDistance } from "./runLabels";
+import type { DistanceUnit } from "./distanceUnits";
+import { formatRaceDistance, runTemplateName } from "./runLabels";
 import type { RunPlanMetadata } from "./runPlanMetadata";
 
 /**
@@ -64,7 +65,9 @@ export function deriveStrip(
         totalWeeks?: number;
         currentWeek?: number;
       }
-    | undefined
+    | undefined,
+  /** The reader's unit: today's long run is named in it. */
+  unit: DistanceUnit
 ): ProgramContextStrip | null {
   // Freeform / fallback cases get no strip.
   if (metadata.planMode === "freeform") return null;
@@ -132,7 +135,7 @@ export function deriveStrip(
       );
       return {
         kind: "structured_today",
-        todayLabel: todayTemplate?.name,
+        todayLabel: todayTemplate && runTemplateName(todayTemplate.name, unit),
       };
     }
   }

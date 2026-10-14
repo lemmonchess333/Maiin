@@ -17,6 +17,8 @@
  */
 
 import type { RunTemplate } from "@/lib/workoutTemplates";
+import type { DistanceUnit } from "@/lib/distanceUnits";
+import { runTemplateName } from "@/lib/runLabels";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
@@ -63,9 +65,10 @@ export function raceDistanceLabel(distance: string): string {
  * strides.
  */
 export function runStripLabel(
-  template: RunTemplate | null | undefined
+  template: RunTemplate | null | undefined,
+  unit: DistanceUnit
 ): string {
-  return template?.name ?? "Run";
+  return template ? runTemplateName(template.name, unit) : "Run";
 }
 
 /**

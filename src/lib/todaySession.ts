@@ -21,6 +21,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
 import { liftDayLine } from "@/lib/liftDayLabel";
@@ -299,7 +300,8 @@ function tomorrowSession(
   const runName = runDay
     ? runSessionName(
         runTemplate,
-        racePaceWorkFor(runTemplate, profile, programState?.runPlan)
+        racePaceWorkFor(runTemplate, profile, programState?.runPlan),
+        resolveDistanceUnit(profile?.preferredDistanceUnit)
       )
     : (next.scheduleType === "run" || next.scheduleType === "both") &&
         !nextWeekWritten

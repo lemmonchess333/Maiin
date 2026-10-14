@@ -8,6 +8,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
@@ -31,6 +32,7 @@ export default function RunCTACard({
   eyebrowLabel,
   completed,
   dose,
+  unit,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -45,6 +47,8 @@ export default function RunCTACard({
   completed?: boolean;
   /** The session's dose, as `todaySession` decided it (Run21 (5)). */
   dose?: string | null;
+  /** The reader's unit: a long run is named in it. */
+  unit: DistanceUnit;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -53,7 +57,7 @@ export default function RunCTACard({
     : null;
   /* A run day with no planned run yet (a new plan, or a legacy schedule)
      is a free run, the name Train's Run tab gives the same choice. */
-  const runLabel = runSessionName(tmpl, racePace, "Free run");
+  const runLabel = runSessionName(tmpl, racePace, unit, "Free run");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy

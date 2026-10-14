@@ -199,10 +199,19 @@ describe("a long run that finishes at race pace (Run21 (2))", () => {
   });
 
   it("is named for it: Appendix B's 'Long run with race pace'", () => {
-    expect(runSessionName(long15, FINISH)).toBe("Long 15K with race pace");
-    expect(runSessionName(long15, null)).toBe("Long 15K");
-    expect(runSessionName(undefined, null)).toBe("Run");
-    expect(runSessionName(undefined, null, "Free run")).toBe("Free run");
+    expect(runSessionName(long15, FINISH, "km")).toBe(
+      "Long 15K with race pace"
+    );
+    expect(runSessionName(long15, null, "km")).toBe("Long 15K");
+    expect(runSessionName(undefined, null, "km")).toBe("Run");
+    expect(runSessionName(undefined, null, "km", "Free run")).toBe("Free run");
+  });
+
+  it("is named in miles for a reader in miles", () => {
+    expect(runSessionName(long15, FINISH, "mi")).toBe(
+      "Long 9.3 mi with race pace"
+    );
+    expect(runSessionName(long15, null, "mi")).toBe("Long 9.3 mi");
   });
 });
 
@@ -233,7 +242,7 @@ describe("a tempo at the goal race pace (Run21 (2), Run21 (3))", () => {
   });
 
   it("is named for it", () => {
-    expect(runSessionName(tempo("tempo_20"), TEMPO)).toBe(
+    expect(runSessionName(tempo("tempo_20"), TEMPO, "km")).toBe(
       "20 Min Tempo at race pace"
     );
   });

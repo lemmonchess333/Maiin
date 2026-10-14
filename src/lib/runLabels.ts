@@ -202,6 +202,28 @@ export function distanceLabel2(distanceM: number, unit: DistanceUnit): string {
   return `${distanceValue(distanceM, unit, 2)} ${distanceUnitLabel(unit)}`;
 }
 
+/** Each long run's name: its rung, in kilometres ("Long 6K"). */
+const LONG_RUN_NAME = /\bLong (\d+(?:\.\d+)?)K\b/g;
+
+/**
+ * A run's name in the reader's unit. The long runs are named by their
+ * distance in kilometres, one rung a name ("Long 6K" … "Long 30K"), and a
+ * reader in miles read "Long 6K" on Train's week, Home's card and the run
+ * screens beside every other distance in miles. Each "Long NK" in `text`
+ * becomes the same distance in miles ("Long 3.7 mi"), so a name with more
+ * around it ("Long 12K with race pace", "Lower and Long 6K") converts too.
+ * Intervals ("4×1K Intervals") and races ("5K Race") keep their names: a
+ * 1K repeat and a 5K race are called that in miles as well.
+ */
+export function runTemplateName(text: string, unit: DistanceUnit): string {
+  if (unit !== "mi") return text;
+  return text.replace(
+    LONG_RUN_NAME,
+    (_long, km: string) =>
+      `Long ${distanceValue(Number(km) * 1000, unit)} ${distanceUnitLabel(unit)}`
+  );
+}
+
 /**
  * A stored-KILOMETRE quantity, in the reader's unit — shoe mileage and the
  * weekly aggregates, which are the two places this app keeps kilometres

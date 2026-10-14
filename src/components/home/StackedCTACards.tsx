@@ -8,6 +8,7 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 
 const stagger = {
   hidden: {},
@@ -37,10 +38,13 @@ const fadeUp = {
 export default function StackedCTACards({
   session,
   navigate,
+  unit,
 }: {
   /** Today's session, as `todaySession` decided it. */
   session: TodaySession;
   navigate: (p: string) => void;
+  /** The reader's unit: a long run is named in it. */
+  unit: DistanceUnit;
 }) {
   const { lift, run, rest } = session;
 
@@ -97,6 +101,7 @@ export default function StackedCTACards({
             navigate={navigate}
             isFirst={run.isFirst}
             dose={run.dose}
+            unit={unit}
           />
         </motion.div>
       )}
@@ -128,6 +133,7 @@ export default function StackedCTACards({
               todayRun={null}
               navigate={navigate}
               eyebrowLabel="Run when it suits you"
+              unit={unit}
             />
           ) : rest.kind === "first-meal" ? (
             <FirstMealCard navigate={navigate} />

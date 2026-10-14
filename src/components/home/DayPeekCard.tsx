@@ -213,6 +213,7 @@ export default function DayPeekCard({
   onManage?: (dateKey: string) => void;
 }) {
   const navigate = useNavigate();
+  const unit = useDistanceUnit();
   // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
   // local handling (the parent doesn't need to know about overflow).
   const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
@@ -323,7 +324,7 @@ export default function DayPeekCard({
     profile,
     programState?.runPlan
   );
-  const runName = runSessionName(runTemplate, runRacePace);
+  const runName = runSessionName(runTemplate, runRacePace, unit);
   const runAbout = runTemplate
     ? runSessionAbout(runTemplate, { racePace: runRacePace })
     : null;
