@@ -231,3 +231,19 @@ describe("buildUpcomingChallenges — one UTC day of lookahead", () => {
     expect(challengeContainsActivityDate(august, "2026-08-01")).toBe(true);
   });
 });
+
+/* Together pass: a description is what a person reads under the
+   challenge's name. No formulas, no units (a person reads miles or lb),
+   and a full sentence. */
+describe("challenge descriptions", () => {
+  const months = Array.from({ length: 12 }, (_, m) =>
+    buildCurrentChallenges(new Date(Date.UTC(2026, m, 15)))
+  ).flat();
+  it.each(months.map((c) => [c.name, c.description]))(
+    "%s reads as a sentence: %s",
+    (_name, description) => {
+      expect(description).toMatch(/^[A-Z].*\.$/);
+      expect(description).not.toMatch(/\bx\b|\+|\bkm\b|\bkg\b|\(/);
+    }
+  );
+});
