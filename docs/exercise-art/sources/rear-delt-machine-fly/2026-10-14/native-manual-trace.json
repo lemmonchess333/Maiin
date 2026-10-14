@@ -1,0 +1,44 @@
+[
+  {
+    "caption": "Beat 1 / pose 1 — Keep your chest against the pad.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/1.webp"
+  },
+  {
+    "caption": "Beat 2 / pose 2 — Open both arms with elbows softly bent.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/2.webp"
+  },
+  {
+    "caption": "Beat 3 / pose 3 — Spread the handles; keep your shoulders down.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/3.webp"
+  },
+  {
+    "caption": "Beat 4 / pose 3 — Hold wide without arching or shrugging.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/4.webp"
+  },
+  {
+    "caption": "Beat 5 / pose 2 — Return slowly; keep your elbows softly bent.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/5.webp"
+  },
+  {
+    "caption": "Beat 6 / pose 1 — Keep tension as the handles return.",
+    "complete": true,
+    "display": [856, 1008],
+    "natural": [856, 1008],
+    "src": "http://127.0.0.1:8771/final-frames/6.webp"
+  }
+]

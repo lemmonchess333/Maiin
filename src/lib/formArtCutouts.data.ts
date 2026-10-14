@@ -917,6 +917,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a05a116bae33ce082c180a385ec8da776dbda9072685af1aa17d9cf7da438387",
     sha256: "7a20c1c57d3cc4ce325a24f7fb61552b5015ce46ccbaa44b67f51d312e7915b0",
   },
+  "rear-delt-machine-fly": {
+    src: "form-art/rear-delt-machine-fly.webp",
+    width: 350,
+    height: 480,
+    keyed: true,
+    source: "form-frames/rear-delt-machine-fly/1.webp",
+    sourceSha256:
+      "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+    sha256: "0d95f217fc02eb026bce9a970e475f4f4e48f74a8c8116c06e67d4e416a7581d",
+  },
   "reverse-barbell-curl": {
     src: "form-art/reverse-barbell-curl.webp",
     width: 315,

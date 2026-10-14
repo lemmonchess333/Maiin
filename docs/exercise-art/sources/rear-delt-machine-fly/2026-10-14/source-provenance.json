@@ -1,0 +1,34 @@
+{
+  "exerciseId": "reverse-pec-deck",
+  "toolMode": "built-in image_gen edit plus user-authorized same-coordinate composites/equipment/colour finishing",
+  "canonicalReference": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": [
+    {
+      "pose": 1,
+      "path": "1-elevated-master.png",
+      "generationId": "23eb16bc-b123-4668-9ba3-2fd1cc3243ce",
+      "prompt": "elevated-master-correction-prompt.txt"
+    },
+    {
+      "pose": 2,
+      "path": "2-photo-grounded-middle.png",
+      "generationId": "4986d8ce-fc6b-499b-a41c-aeb9572ffac6",
+      "prompt": "2-photo-grounded-middle-prompt.txt"
+    },
+    {
+      "pose": 3,
+      "path": "3-elevated-open.png",
+      "generationId": "a6bdea6b-64f1-4038-952f-18b91202bf0e",
+      "prompt": "3-elevated-open-prompt.txt"
+    }
+  ],
+  "finishing": [
+    "articulated-equipment.py",
+    "finish.py",
+    "draft-audit.json",
+    "framing.json",
+    "editable-verification.json"
+  ],
+  "status": "Reviewed, locally registered and complete; final-verification.json records full-suite limitation."
+}

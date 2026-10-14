@@ -1,0 +1,7 @@
+{
+  "commonCrop": [344, 0, 1200, 1008],
+  "size": [856, 1008],
+  "finalScale": 1,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "noAnatomyTransform": true
+}

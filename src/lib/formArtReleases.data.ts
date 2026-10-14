@@ -607,6 +607,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 1,
   },
+  "rear-delt-machine-fly": {
+    folder: "2026-10-14",
+    version: "anatomy-v3-2026-10-14-reviewed-equivalent-rear-delt-fly-v1",
+    width: 856,
+    height: 1008,
+    reference: 1,
+  },
   "reverse-barbell-curl": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

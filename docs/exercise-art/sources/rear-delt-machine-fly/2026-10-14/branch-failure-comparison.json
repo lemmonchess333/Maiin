@@ -1,0 +1,13 @@
+{
+  "baselineHeaders": 79,
+  "fullWindowsGreen": false,
+  "baselineOnly": [
+    "|root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes",
+    "|root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records"
+  ],
+  "baselineHead": "26326d712111a3f8cb80fc825d037fef976ee5de",
+  "branchHeaders": 78,
+  "branchOnly": [
+    "|node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists"
+  ]
+}
