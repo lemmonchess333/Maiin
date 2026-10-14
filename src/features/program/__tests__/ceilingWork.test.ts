@@ -10,6 +10,11 @@
  * without it, is the better one: that muscle comes down, no muscle ends
  * further over, every muscle keeps its two days and the muscle its floor.
  * End to end through `buildPlan`, as the L7 suite does for the hamstrings.
+ *
+ * Lift17: a lift goes only while every session keeps three. The trims took
+ * one day's supporting lifts one after another, so a Pull — Row Focus kept
+ * a single row; the arms now stop at 11 triceps and 15 biceps sets, under
+ * twice their ceiling where they had been over it, and the curl stays.
  */
 import { describe, it, expect } from "vitest";
 
@@ -48,9 +53,7 @@ const setsOf = (muscle: JudgementMuscle) =>
 describe("a beginner's six days at home (Lift12)", () => {
   it("brings the arms down from more than twice their ceiling", () => {
     for (const muscle of ["Triceps", "Biceps"] as const) {
-      expect(setsOf(muscle), muscle).toBeLessThanOrEqual(
-        band(muscle).high * 1.25
-      );
+      expect(setsOf(muscle), muscle).toBeLessThan(band(muscle).high * 2);
       expect(setsOf(muscle), muscle).toBeGreaterThanOrEqual(band(muscle).low);
     }
   });
@@ -61,10 +64,10 @@ describe("a beginner's six days at home (Lift12)", () => {
     }
   });
 
-  it("keeps every day's main lift, and more than one lift a day", () => {
+  it("keeps every day's main lift, and three lifts a day (Lift17)", () => {
     for (const day of workouts) {
       expect(day.exercises[0].isAccessory, day.dayName).not.toBe(true);
-      expect(day.exercises.length, day.dayName).toBeGreaterThanOrEqual(2);
+      expect(day.exercises.length, day.dayName).toBeGreaterThanOrEqual(3);
     }
   });
 });

@@ -1724,10 +1724,34 @@ function hingeDropHolds(
 }
 
 /**
+ * The fewest lifts a session is left with when a lift goes for a ceiling
+ * (Lift17). The trims judge the week, so on six days, where each muscle's
+ * ceiling is shared by more sessions, they took one day's supporting lifts
+ * one after another: a beginner's Pull — Row Focus kept one lift, three
+ * sets, at 60 minutes. A session the person set an hour aside for is
+ * three lifts or more; a muscle can sit a few sets over its ceiling.
+ */
+const SESSION_LIFT_FLOOR = 3;
+
+/** Whether every session of `after` keeps `SESSION_LIFT_FLOOR` lifts, or as
+ *  many as it had in `before` when it had fewer. */
+function keepsSessionsWhole(
+  before: WorkoutDay[],
+  after: WorkoutDay[]
+): boolean {
+  return after.every(
+    (day, i) =>
+      day.exercises.length >=
+      Math.min(SESSION_LIFT_FLOOR, before[i]?.exercises.length ?? 0)
+  );
+}
+
+/**
  * Whether a week that has let a lift go for `muscle`'s ceiling, fitted and
  * balanced again, is the one to keep: that muscle comes down, no muscle ends
- * further over its ceiling, every muscle keeps its two days a week, and,
- * when a floor is given, the muscle stays at it or above (Lift12).
+ * further over its ceiling, every muscle keeps its two days a week, every
+ * session keeps three lifts (Lift17), and, when a floor is given, the
+ * muscle stays at it or above (Lift12).
  */
 function dropHolds(
   before: WorkoutDay[],
@@ -1752,6 +1776,7 @@ function dropHolds(
     (now.get(muscle) ?? 0) < (was.get(muscle) ?? 0) &&
     [...now].every(([m, by]) => by <= (was.get(m) ?? 0)) &&
     keepsWeeklyFrequency(before, after) &&
+    keepsSessionsWhole(before, after) &&
     (floor === undefined || sets >= floor(muscle))
   );
 }
