@@ -34,6 +34,8 @@
  * was added, removed or swapped mid-block.
  */
 
+import type { LiftUnit } from "@/lib/liftLoad";
+import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import {
   assignDayRoles,
   dayRoleOf,
@@ -79,12 +81,16 @@ import type {
 export function scaleLoadForReps(
   weight: number,
   fromReps: number,
-  toReps: number
+  toReps: number,
+  /** The lifter's kit (Lift18): 2.5 kg steps, or 5 lb. */
+  unit: LiftUnit = "kg"
 ): number {
   if (!Number.isFinite(weight) || weight <= 0) return 0;
   if (!Number.isFinite(fromReps) || !Number.isFinite(toReps)) return weight;
   if (toReps <= fromReps) return weight;
   const ratio = (1 + fromReps / 30) / (1 + toReps / 30);
+  if (unit === "lbs")
+    return lbToKg(Math.round(kgToLb(weight * ratio) / 5 + 1e-9) * 5);
   return Math.round((weight * ratio) / 2.5) * 2.5;
 }
 
@@ -100,7 +106,9 @@ export function scaleLoadForReps(
 export function represcribeWorkouts(
   workouts: readonly WorkoutDay[],
   goal: PrimaryGoal,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  /** The plan's kit (`settings.loadUnit`, Lift18). */
+  unit: LiftUnit = "kg"
 ): WorkoutDay[] {
   // Undulation follows each session's own role, kept with it as the week's
   // order carries over (`dayRoleOf`). An older plan keeps none, so its roles
@@ -145,7 +153,7 @@ export function represcribeWorkouts(
         baseReps: reps,
         // A range climbs; a fixed target steps whenever every set reaches it.
         progressionType: row.top === undefined ? "linear" : "double",
-        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps),
+        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps, unit),
         // Failure counters accumulated against a rep target that no longer
         // exists are not evidence of anything.
         consecutiveFailures: 0,
@@ -181,9 +189,10 @@ export function represcribeWorkouts(
 export function represcribeMainLifts(
   workouts: readonly WorkoutDay[],
   goal: PrimaryGoal,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  unit: LiftUnit = "kg"
 ): WorkoutDay[] {
-  const fresh = represcribeWorkouts(workouts, goal, experience);
+  const fresh = represcribeWorkouts(workouts, goal, experience, unit);
   return fresh.map((day, d) => ({
     ...day,
     exercises: day.exercises.map((ex, e) => {
@@ -252,9 +261,10 @@ export function represcribeSwapped(
   before: readonly WorkoutDay[],
   after: readonly WorkoutDay[],
   goal: PrimaryGoal,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  unit: LiftUnit = "kg"
 ): WorkoutDay[] {
-  const fresh = represcribeWorkouts(after, goal, experience);
+  const fresh = represcribeWorkouts(after, goal, experience, unit);
   return after.map((day, d) => ({
     ...day,
     exercises: day.exercises.map((ex, e) => {

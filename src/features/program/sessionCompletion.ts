@@ -284,7 +284,8 @@ export function applySessionProgression(
                   read,
                   settings.smallPlates,
                   session.afterHardRun && loadsTheLegs(start) ? 0.5 : 1,
-                  session.date
+                  session.date,
+                  settings.loadUnit ?? "kg"
                 );
               } else {
                 // A held week keeps the prescription and records the

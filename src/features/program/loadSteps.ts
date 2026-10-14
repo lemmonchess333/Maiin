@@ -1,4 +1,6 @@
 import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { kgToLb, lbToKg } from "@/lib/weightUnits";
 
 /**
  * How a loaded lift's weight moves (Lift4 (6)): by the equipment it is lifted
@@ -12,6 +14,15 @@ import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
  *   kettlebell  the next bell: 2 kg steps to 32 kg, then 4 kg
  *   belt        a bodyweight lift's added load (Pgm8 L6), one plate at a
  *               time: 2.5 kg; 1.25 kg with small plates
+ *
+ * In lb (Lift18), a lifter's loads round to lb kit, still stored as kg:
+ *
+ *   barbell     5 lb, a 2.5 lb plate a side; 2.5 lb with small plates
+ *   dumbbells   3, 5, 8, 10, 12, 15 lb, then every 5 lb
+ *   machine or
+ *   cable stack 5 lb
+ *   kettlebell  the kg bells, which are sold in kg even where lb is the unit
+ *   belt        5 lb; 2.5 lb with small plates
  *
  * A lift the catalogue doesn't know steps as a stack does. A step of more
  * than about 15% of the weight is never taken on its own
@@ -93,29 +104,67 @@ const range = (from: number, to: number, step: number) =>
     (_, i) => from + i * step
   );
 
-const DUMBBELLS = ladder([...range(1, 10, 1), ...range(12.5, 50, 2.5)]);
+/** A grid of lb weights, taking and giving kg: what a load in lb rounds to,
+ *  stored as the exact kg of that many lb, so 135 lb stays 135 lb. */
+function inLb(grid: LoadGrid): LoadGrid {
+  return {
+    above: (kg) => lbToKg(grid.above(kgToLb(kg))),
+    below: (kg) => lbToKg(grid.below(kgToLb(kg))),
+    nearest: (kg) => lbToKg(grid.nearest(kgToLb(kg))),
+  };
+}
+
+/** A barbell's step in lb, and with small plates (Lift18). */
+export const BARBELL_STEP_LB = 5;
+export const SMALL_PLATES_STEP_LB = 2.5;
+
+interface Kit {
+  plates: LoadGrid;
+  smallPlates: LoadGrid;
+  dumbbells: LoadGrid;
+  kettlebells: LoadGrid;
+  stack: LoadGrid;
+}
+
 const KETTLEBELLS = ladder([...range(4, 32, 2), ...range(36, 48, 4)]);
-const PLATES = uniform(BARBELL_STEP_KG);
-const SMALL_PLATES = uniform(SMALL_PLATES_STEP_KG);
-const STACK = uniform(2.5);
+
+const KIT: Record<LiftUnit, Kit> = {
+  kg: {
+    plates: uniform(BARBELL_STEP_KG),
+    smallPlates: uniform(SMALL_PLATES_STEP_KG),
+    dumbbells: ladder([...range(1, 10, 1), ...range(12.5, 50, 2.5)]),
+    kettlebells: KETTLEBELLS,
+    stack: uniform(2.5),
+  },
+  lbs: {
+    plates: inLb(uniform(BARBELL_STEP_LB)),
+    smallPlates: inLb(uniform(SMALL_PLATES_STEP_LB)),
+    dumbbells: inLb(ladder([3, 5, 8, 10, 12, 15, ...range(20, 120, 5)])),
+    kettlebells: KETTLEBELLS,
+    stack: inLb(uniform(5)),
+  },
+};
 
 /** The grid of a lift whose equipment the catalogue names, or null. A
  *  bodyweight lift has none of its own: its load goes on a belt
- *  (`loadGridFor`). */
+ *  (`loadGridFor`). `unit` is the lifter's kit (Lift18), from the plan's
+ *  `settings.loadUnit`. */
 export function equipmentGridFor(
   exerciseId: string | undefined,
-  smallPlates: boolean
+  smallPlates: boolean,
+  unit: LiftUnit = "kg"
 ): LoadGrid | null {
+  const kit = KIT[unit];
   switch (exerciseId ? getExerciseById(exerciseId)?.equipment : undefined) {
     case "Barbell":
-      return smallPlates ? SMALL_PLATES : PLATES;
+      return smallPlates ? kit.smallPlates : kit.plates;
     case "Dumbbells":
-      return DUMBBELLS;
+      return kit.dumbbells;
     case "Kettlebell":
-      return KETTLEBELLS;
+      return kit.kettlebells;
     case "Machine":
     case "Cable Machine":
-      return STACK;
+      return kit.stack;
     default:
       return null;
   }
@@ -129,13 +178,15 @@ export function equipmentGridFor(
  */
 export function loadGridFor(
   exerciseId: string | undefined,
-  smallPlates: boolean
+  smallPlates: boolean,
+  unit: LiftUnit = "kg"
 ): LoadGrid {
-  const grid = equipmentGridFor(exerciseId, smallPlates);
+  const grid = equipmentGridFor(exerciseId, smallPlates, unit);
   if (grid) return grid;
+  const kit = KIT[unit];
   if (isBodyweightExerciseId(exerciseId))
-    return smallPlates ? SMALL_PLATES : PLATES;
-  return STACK;
+    return smallPlates ? kit.smallPlates : kit.plates;
+  return kit.stack;
 }
 
 /** The next weight up, when it is no more than about 15% heavier. */

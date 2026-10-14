@@ -59,9 +59,15 @@ const cf = require("../../../../functions/lib/represcribe") as {
   represcribeWorkouts: (
     workouts: unknown,
     goal: string,
-    experience: string | undefined
+    experience: string | undefined,
+    unit?: "kg" | "lbs"
   ) => WorkoutDay[];
-  scaleLoadForReps: (w: number, from: number, to: number) => number;
+  scaleLoadForReps: (
+    w: number,
+    from: number,
+    to: number,
+    unit?: "kg" | "lbs"
+  ) => number;
   withRoleNumbers: (
     workouts: unknown,
     dayIndex: number,
@@ -320,6 +326,15 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             `w=${w} ${from}->${to}`
           ).toBe(scaleLoadForReps(w, from, to));
         }
+    // On an lb kit (Lift18), the same 5 lb steps on both sides, the half
+    // nudged up the same way.
+    for (const w of [...weights, 135 / 2.20462, 225 / 2.20462])
+      for (const from of reps)
+        for (const to of reps)
+          expect(
+            cf.scaleLoadForReps(w, from, to, "lbs"),
+            `lb w=${w} ${from}->${to}`
+          ).toBe(scaleLoadForReps(w, from, to, "lbs"));
     // Non-finite inputs take the early returns on both sides.
     expect(cf.scaleLoadForReps(NaN, 8, 12)).toBe(scaleLoadForReps(NaN, 8, 12));
     expect(cf.scaleLoadForReps(60, NaN, 12)).toBe(
@@ -343,6 +358,10 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             cf.represcribeWorkouts(week(days), goal, experience),
             `goal=${goal} exp=${experience} days=${days}`
           ).toEqual(represcribeWorkouts(week(days), goal, experience));
+          expect(
+            cf.represcribeWorkouts(week(days), goal, experience, "lbs"),
+            `lb goal=${goal} exp=${experience} days=${days}`
+          ).toEqual(represcribeWorkouts(week(days), goal, experience, "lbs"));
         }
       }
     }

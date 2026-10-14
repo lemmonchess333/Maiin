@@ -202,12 +202,18 @@ function usesUndulation(experience) {
   return toExperience(experience) !== "beginner";
 }
 
-/** Mirror of represcribe.ts scaleLoadForReps (Epley-shaped load rescale). */
-function scaleLoadForReps(weight, fromReps, toReps) {
+/** Mirror of src/lib/weightUnits.ts LB_PER_KG. */
+const LB_PER_KG = 2.20462;
+
+/** Mirror of represcribe.ts scaleLoadForReps (Epley-shaped load rescale):
+ *  2.5 kg steps, or 5 lb for a plan whose kit is lb (Lift18). */
+function scaleLoadForReps(weight, fromReps, toReps, unit = "kg") {
   if (!Number.isFinite(weight) || weight <= 0) return 0;
   if (!Number.isFinite(fromReps) || !Number.isFinite(toReps)) return weight;
   if (toReps <= fromReps) return weight;
   const ratio = (1 + fromReps / 30) / (1 + toReps / 30);
+  if (unit === "lbs")
+    return (Math.round((weight * ratio * LB_PER_KG) / 5 + 1e-9) * 5) / LB_PER_KG;
   return Math.round((weight * ratio) / 2.5) * 2.5;
 }
 
@@ -223,7 +229,7 @@ function makeBlockId(startDate, createdAt) {
  * Mirror of represcribe.ts represcribeWorkouts — re-derive a week's
  * prescription for `goal`, preserving everything else.
  */
-function represcribeWorkouts(workouts, goal, experience) {
+function represcribeWorkouts(workouts, goal, experience, unit = "kg") {
   const list = Array.isArray(workouts) ? workouts : [];
   // Undulation follows each session's own role, kept with it as the week's
   // order carries over; an older plan's come from the days' positions and
@@ -263,7 +269,7 @@ function represcribeWorkouts(workouts, goal, experience) {
         baseReps: reps,
         // A range climbs; a fixed target steps whenever every set reaches it.
         progressionType: row.top === undefined ? "linear" : "double",
-        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps),
+        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps, unit),
         // Failure counters accumulated against a rep target that no longer
         // exists are not evidence of anything.
         consecutiveFailures: 0,

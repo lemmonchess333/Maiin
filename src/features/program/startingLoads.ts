@@ -15,8 +15,9 @@
  */
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
-import { BAR_KG } from "./warmupRamp";
-import { equipmentGridFor } from "./loadSteps";
+import { BAR_KG, barWeight } from "./warmupRamp";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { equipmentGridFor, loadGridFor } from "./loadSteps";
 import { contraindicatedFor } from "./injurySubstitutions";
 import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
 
@@ -47,6 +48,9 @@ export interface StartingLoadContext {
    *  movement (`sexFactor`); anything non-female is treated as the
    *  male/default. */
   sex?: string;
+  /** The lifter's unit (Lift18): an lb lifter's starts are weights their lb
+   *  kit makes. Kg when absent. */
+  unit?: LiftUnit;
 }
 
 // Working-weight as a fraction of bodyweight, by movement pattern × experience.
@@ -89,14 +93,27 @@ function sexFactor(sex: string | undefined): number {
  * guard for every call site.
  */
 export function loadContextFrom(
-  p: { weightKg?: number; experience?: string; sex?: string } | null | undefined
+  p:
+    | {
+        weightKg?: number;
+        experience?: string;
+        sex?: string;
+        liftingWeightUnit?: string;
+      }
+    | null
+    | undefined
 ): StartingLoadContext | undefined {
   if (!p || !p.weightKg || p.weightKg <= 0) return undefined;
   const experience: Experience =
     p.experience === "intermediate" || p.experience === "advanced"
       ? p.experience
       : "beginner";
-  return { bodyweightKg: p.weightKg, experience, sex: p.sex };
+  return {
+    bodyweightKg: p.weightKg,
+    experience,
+    sex: p.sex,
+    ...(p.liftingWeightUnit === "lbs" ? { unit: "lbs" as const } : {}),
+  };
 }
 
 /**
@@ -253,6 +270,12 @@ export function startingWeightForExercise(
 
   const raw = repScaledSeed(base * factor, targetReps, repUnit);
   if (raw <= 0) return 0;
+  if (ctx.unit === "lbs") {
+    // A start an lb lifter's kit makes (Lift18): the lift's own lb grid,
+    // the plates, the rack or the stack, never under its first step.
+    const grid = loadGridFor(exerciseId, false, "lbs");
+    return Math.max(grid.above(0), grid.nearest(raw));
+  }
   const rounded = Math.max(2.5, Math.round(raw / 2.5) * 2.5);
   // Dumbbells and kettlebells come in their own weights (`loadSteps.ts`): a
   // rack of dumbbells goes 7, 8 kg, so a 7.5 kg start is one nobody can pick
@@ -319,7 +342,13 @@ export function weightAfterExerciseSwap(
           ex.reps,
           ex.repUnit
         );
-  return { weight, movementCategory: targetCategory };
+  // A ratio-scaled weight lands on the 2.5 kg step; an lb lifter's goes to
+  // the new lift's own lb kit instead (Lift18). A fresh seed already does.
+  const onKit =
+    scaled > 0 && ctx?.unit === "lbs"
+      ? loadGridFor(toExerciseId, false, "lbs").nearest(scaled)
+      : weight;
+  return { weight: onKit, movementCategory: targetCategory };
 }
 
 /** Who a plan with no bodyweight is estimated for: the light end of adults,
@@ -511,7 +540,7 @@ function noneUnderTheBar(
       exercises: day.exercises.map((ex) => {
         if (
           ex.weight <= 0 ||
-          ex.weight >= BAR_KG ||
+          ex.weight >= barWeight(ctx.unit ?? "kg") - 1e-9 ||
           getExerciseById(ex.exerciseId)?.equipment !== "Barbell" ||
           (ex.instanceId !== undefined && own.has(ex.instanceId)) ||
           (ex.performanceHistory ?? []).some((r) => (r.weight ?? 0) > 0)
@@ -540,9 +569,9 @@ function noneUnderTheBar(
         if (!version || weight <= 0)
           return {
             ...ex,
-            weight: BAR_KG,
-            lastSuccessfulWeight: BAR_KG,
-            lastAttemptedWeight: BAR_KG,
+            weight: barWeight(ctx.unit ?? "kg"),
+            lastSuccessfulWeight: barWeight(ctx.unit ?? "kg"),
+            lastAttemptedWeight: barWeight(ctx.unit ?? "kg"),
           };
         inDay.add(version);
         weekly.set(ex.exerciseId, (weekly.get(ex.exerciseId) ?? 1) - 1);

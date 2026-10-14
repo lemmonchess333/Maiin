@@ -205,6 +205,16 @@ function invalidCommand(message) {
 /** The weeks of a return after a break (client `EASING_BACK_WEEKS`). */
 const EASING_BACK_WEEKS = 2;
 
+/** The plan's kit (Lift18): "lbs" when its plates and rack are in lb, else
+ *  kg. Mirror of src/features/program/programTypes.ts settings.loadUnit. */
+function loadUnitOf(state) {
+  return state && isPlainObject(state.settings) && state.settings.loadUnit === "lbs"
+    ? "lbs"
+    : "kg";
+}
+
+const LOAD_UNITS = new Set(["kg", "lbs"]);
+
 function isPlainObject(value) {
   return (
     typeof value === "object" &&
@@ -735,7 +745,7 @@ const KIND_VALIDATORS = {
       command.settings,
       "settings",
       ["autoProgression"],
-      ["smallPlates", "microloading"]
+      ["smallPlates", "microloading", "loadUnit"]
     );
     if (command.settings.microloading !== undefined) {
       assertBoolean(command.settings.microloading, "settings.microloading");
@@ -750,6 +760,17 @@ const KIND_VALIDATORS = {
             smallPlates: assertBoolean(
               command.settings.smallPlates,
               "settings.smallPlates"
+            ),
+          }
+        : {}),
+      // Lift18: the kit the plan's loads round to, the engine's copy of
+      // the profile's liftingWeightUnit.
+      ...(command.settings.loadUnit !== undefined
+        ? {
+            loadUnit: assertEnum(
+              command.settings.loadUnit,
+              "settings.loadUnit",
+              LOAD_UNITS
             ),
           }
         : {}),
@@ -1517,7 +1538,8 @@ function startTrainingBlock(state, profile, command, now) {
         : represcribeWorkouts(
             workouts,
             command.focus,
-            toExperience(profile && profile.experience)
+            toExperience(profile && profile.experience),
+            loadUnitOf(state)
           ),
     trainingBlock: block,
   };
@@ -1553,7 +1575,8 @@ function releaseTrainingBlock(state, profile, command) {
         ? represcribeWorkouts(
             workouts,
             block.goalBefore,
-            toExperience(profile && profile.experience)
+            toExperience(profile && profile.experience),
+            loadUnitOf(state)
           )
         : workouts,
   };
@@ -2350,6 +2373,13 @@ function applyProgramCommand({ state, profile, command, now }) {
           smallPlates:
             validated.settings.smallPlates ??
             current.settings.smallPlates === true,
+          // An app from before Lift18 sends no unit; the plan keeps its own.
+          ...((validated.settings.loadUnit ?? current.settings.loadUnit)
+            ? {
+                loadUnit:
+                  validated.settings.loadUnit ?? current.settings.loadUnit,
+              }
+            : {}),
         },
       };
       break;

@@ -41,7 +41,8 @@ import type { ProgramExercise, WorkoutDay } from "./programTypes";
 import { estimateSessionMinutes, type ExpressPlan } from "./expressSession";
 import { loadGridFor } from "./loadSteps";
 import type { RestContext } from "./restTime";
-import { BAR_KG } from "./warmupRamp";
+import { barWeight } from "./warmupRamp";
+import type { LiftUnit } from "@/lib/liftLoad";
 
 /** A primary/compound never goes below 2 sets on an easier day. */
 export const EASIER_PRIMARY_MIN_SETS = 2;
@@ -61,14 +62,16 @@ export const EASIER_LOAD_SHARE = 0.85;
  */
 export function easierWeight(
   ex: Pick<ProgramExercise, "exerciseId" | "weight">,
-  smallPlates: boolean
+  smallPlates: boolean,
+  /** The lifter's kit (Lift18, `settings.loadUnit`). */
+  unit: LiftUnit = "kg"
 ): number {
   if (!(ex.weight > 0)) return ex.weight;
-  const easier = loadGridFor(ex.exerciseId, smallPlates).nearest(
+  const easier = loadGridFor(ex.exerciseId, smallPlates, unit).nearest(
     ex.weight * EASIER_LOAD_SHARE
   );
   return getExerciseById(ex.exerciseId)?.equipment === "Barbell"
-    ? Math.max(easier, Math.min(ex.weight, BAR_KG))
+    ? Math.max(easier, Math.min(ex.weight, barWeight(unit)))
     : easier;
 }
 
@@ -93,8 +96,9 @@ export function buildEasierSession(
   day: WorkoutDay,
   /** Prices the estimate as the session's timer will rest. */
   rest: RestContext = {},
-  /** The plan's "I have small plates" (`settings.smallPlates`). */
-  options: { smallPlates?: boolean } = {}
+  /** The plan's "I have small plates" (`settings.smallPlates`) and kit
+   *  (`settings.loadUnit`). */
+  options: { smallPlates?: boolean; loadUnit?: LiftUnit } = {}
 ): EasierPlan {
   const adjustments: EasierAdjustments = { setsReduced: 0, loadsReduced: 0 };
   const exercises: ProgramExercise[] = day.exercises.map((ex) => {
@@ -103,7 +107,11 @@ export function buildEasierSession(
         ? EASIER_ACCESSORY_MIN_SETS
         : EASIER_PRIMARY_MIN_SETS;
     const sets = Math.max(floor, ex.sets - 1);
-    const weight = easierWeight(ex, options.smallPlates === true);
+    const weight = easierWeight(
+      ex,
+      options.smallPlates === true,
+      options.loadUnit ?? "kg"
+    );
     if (sets !== ex.sets) adjustments.setsReduced += 1;
     if (weight !== ex.weight) adjustments.loadsReduced += 1;
     return { ...ex, sets, weight };

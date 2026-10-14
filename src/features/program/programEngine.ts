@@ -9,6 +9,7 @@ import type {
   SplitType,
   WorkoutDay,
 } from "./programTypes";
+import type { LiftUnit } from "@/lib/liftLoad";
 import { generateInstanceId, loweringOf } from "./programTypes";
 import {
   calendarLighterWeek,
@@ -2243,7 +2244,10 @@ export function applyProgression(
   /** The session's local date (yyyy-MM-dd) for its history record, so the
    *  record belongs to the day the session started (Lift3) and the engine
    *  reads no clock. Today when absent. */
-  date: string = format(new Date(), "yyyy-MM-dd")
+  date: string = format(new Date(), "yyyy-MM-dd"),
+  /** The lifter's kit (Lift18, `settings.loadUnit`): the weight steps on
+   *  lb plates and an lb rack. */
+  unit: LiftUnit = "kg"
 ): ProgramExercise {
   const record = {
     date,
@@ -2332,7 +2336,7 @@ export function applyProgression(
   // A bodyweight lift's plate is always taken (Pgm8 L6): the weight it moves
   // is the person as well as the belt, and a 2.5 kg plate is 15% only of
   // 16.7 kg, so its target never stretches.
-  const grid = loadGridFor(exercise.exerciseId, smallPlates);
+  const grid = loadGridFor(exercise.exerciseId, smallPlates, unit);
   const stepOrStretch = (top: number) => {
     const next = isBodyweight
       ? grid.above(anchor)
@@ -2584,7 +2588,9 @@ export function applySessionSets(
   /** How much a miss counts (`applyProgression`). */
   missCounts = 1,
   /** The session's local date for its history record (`applyProgression`). */
-  date: string = format(new Date(), "yyyy-MM-dd")
+  date: string = format(new Date(), "yyyy-MM-dd"),
+  /** The lifter's kit (`applyProgression`). */
+  unit: LiftUnit = "kg"
 ): ProgramExercise {
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const reps = recordedReps(read);
@@ -2603,7 +2609,8 @@ export function applySessionSets(
         smallPlates,
         hardestEffort(read),
         missCounts,
-        date
+        date,
+        unit
       ),
       reps
     );
@@ -2626,7 +2633,7 @@ export function applySessionSets(
     if (outcome === "miss") return progressed(climbing);
     const weight = Math.min(
       lowering.from,
-      loadGridFor(exercise.exerciseId, smallPlates).above(lifted)
+      loadGridFor(exercise.exerciseId, smallPlates, unit).above(lifted)
     );
     return {
       ...recorded(
@@ -3092,7 +3099,11 @@ export function advanceWeek(
     workouts = [...workouts.slice(upNext), ...workouts.slice(0, upNext)];
   }
   if (raceWeek === "race") {
-    workouts = raceWeekSession(workouts, state.settings?.smallPlates === true);
+    workouts = raceWeekSession(
+      workouts,
+      state.settings?.smallPlates === true,
+      state.settings?.loadUnit ?? "kg"
+    );
   }
 
   // The retired per-muscle recovery session's list (Lift4 (13)): nothing
@@ -3183,7 +3194,8 @@ export function withRaceLegTrim(
  */
 export function raceWeekSession(
   workouts: WorkoutDay[],
-  smallPlates: boolean
+  smallPlates: boolean,
+  unit: LiftUnit
 ): WorkoutDay[] {
   return workouts.map((day, index) =>
     index > 0
@@ -3194,7 +3206,7 @@ export function raceWeekSession(
             if (!loadsTheLegs(ex) || !(ex.weight > 0)) return ex;
             if ((ex.preDeloadWeight ?? 0) > ex.weight) return ex;
             const light = lighterBy(
-              loadGridFor(ex.exerciseId, smallPlates),
+              loadGridFor(ex.exerciseId, smallPlates, unit),
               ex.weight,
               0.5
             );
@@ -3229,6 +3241,7 @@ export function raceWeekSession(
  */
 export function easeBackIn(state: ProgramState, share: number): ProgramState {
   const smallPlates = state.settings?.smallPlates === true;
+  const unit = state.settings?.loadUnit ?? "kg";
   const workouts =
     state.currentPhase === "deload"
       ? state.workouts
@@ -3238,7 +3251,7 @@ export function easeBackIn(state: ProgramState, share: number): ProgramState {
     workouts: workouts.map((day) => ({
       ...day,
       exercises: day.exercises.map((ex) =>
-        easedBack({ ...ex, consecutiveFailures: 0 }, share, smallPlates)
+        easedBack({ ...ex, consecutiveFailures: 0 }, share, smallPlates, unit)
       ),
     })),
     easingBack: { weeksLeft: EASING_BACK_WEEKS },
@@ -3249,7 +3262,8 @@ export function easeBackIn(state: ProgramState, share: number): ProgramState {
 function easedBack(
   ex: ProgramExercise,
   share: number,
-  smallPlates: boolean
+  smallPlates: boolean,
+  unit: LiftUnit
 ): ProgramExercise {
   if (climbsInReps(ex.exerciseId, ex.weight)) {
     const timed = ex.repUnit === "seconds";
@@ -3262,7 +3276,7 @@ function easedBack(
   // A loaded lift with nothing lighter to go to keeps its weight; a
   // bodyweight lift's load comes down to none, the body alone (Pgm8 L6).
   const toNone = isBodyweightExerciseId(ex.exerciseId);
-  const grid = loadGridFor(ex.exerciseId, smallPlates);
+  const grid = loadGridFor(ex.exerciseId, smallPlates, unit);
   const climbing = loweringOf(ex);
   const { stretched: _line, ...lift } = ex;
   // Race week's legs are lighter for the week already, with the weight

@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   liftRules,
   liftRulesContext,
-  SMALL_PLATES_HINT,
+  smallPlatesHint,
   type LiftRule,
 } from "../liftRules";
 import {
@@ -81,8 +81,12 @@ describe("liftRules", () => {
   it("says what small plates change: a barbell's step and a belt's (Pgm8 L6)", () => {
     // Under the switch in setup and in Programme settings. It said
     // "Barbell lifts" alone, and the setting now steps a belt too.
-    expect(SMALL_PLATES_HINT).toBe(
+    expect(smallPlatesHint("kg")).toBe(
       "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+    );
+    // On an lb kit (Lift18), the lb steps.
+    expect(smallPlatesHint("lbs")).toBe(
+      "Barbell lifts and weight on a belt go up 2.5 lb at a time instead of 5 lb."
     );
     // The two numbers are the steps the engine takes, on both.
     for (const lift of ["bench-press", "pull-ups"]) {

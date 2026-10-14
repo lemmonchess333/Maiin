@@ -1,4 +1,5 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import type { LiftUnit } from "@/lib/liftLoad";
 import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
@@ -220,6 +221,10 @@ export interface PlanBuilderInput {
    *  the person has keeps the setting it has. */
   smallPlates?: boolean;
 
+  /** Lift18: the lifter's kit is in lb, for a new plan's settings and its
+   *  starting loads; a plan the person has keeps the setting it has. */
+  loadUnit?: LiftUnit;
+
   injuries: string[];
 
   /** REQUIRED for determinism. Local YYYY-MM-DD. Never read wall
@@ -365,6 +370,7 @@ type LiftProgramInput = Pick<
   | "injuries"
   | "existingState"
   | "preserveHistory"
+  | "loadUnit"
 >;
 
 function buildLiftProgram(input: LiftProgramInput): {
@@ -379,6 +385,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     weightKg: input.bodyweightKg,
     experience: input.experience,
     sex: input.sex,
+    liftingWeightUnit:
+      input.existingState?.settings?.loadUnit ?? input.loadUnit,
   });
   const sameDayCount =
     !!existing &&
@@ -493,7 +501,8 @@ function buildLiftProgram(input: LiftProgramInput): {
       input.barbellAtHome
     ),
     input.primaryGoal,
-    toExperience(input.experience)
+    toExperience(input.experience),
+    input.existingState?.settings?.loadUnit ?? input.loadUnit
   );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
@@ -530,7 +539,8 @@ function buildLiftProgram(input: LiftProgramInput): {
     ? represcribeMainLifts(
         fitted,
         input.existingState?.primaryGoal ?? input.primaryGoal,
-        toExperience(input.experience)
+        toExperience(input.experience),
+        input.existingState?.settings?.loadUnit ?? input.loadUnit
       )
     : fitted;
   // Template-seeded onboarding takes the preserve branch above. Those rows
@@ -649,7 +659,11 @@ function keepWeekLighter(
   if (kept.currentPhase === "deload") {
     const lighter = applyDeload(workouts);
     return kept.raceWeek === "race"
-      ? raceWeekSession(lighter, kept.settings?.smallPlates === true)
+      ? raceWeekSession(
+          lighter,
+          kept.settings?.smallPlates === true,
+          kept.settings?.loadUnit ?? "kg"
+        )
       : lighter;
   }
   return firstWeekBack(kept) ? oneSetFewer(workouts) : workouts;
@@ -984,6 +998,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
       ...(input.smallPlates !== undefined
         ? { smallPlates: input.smallPlates }
         : {}),
+      ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
     },
     weekHistory:
       input.preserveHistory && input.existingState
