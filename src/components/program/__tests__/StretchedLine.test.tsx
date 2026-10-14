@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import StretchedLine from "../StretchedLine";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 
 type Shown = Pick<
@@ -27,6 +28,17 @@ describe("StretchedLine — the one line when a target climbs past its range (Pg
   it("names how far the reps go, on which weight, and the jump to the next", () => {
     expect(line(raise())).toHaveTextContent(
       "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
+    );
+  });
+
+  it("names the weights in lb for a lifter who lifts in lb (Lift18)", () => {
+    const { container } = render(
+      <LiftUnitContext value="lbs">
+        <StretchedLine exercise={raise()} />
+      </LiftUnitContext>
+    );
+    expect(container).toHaveTextContent(
+      "Up to 19 reps on 22 lb: 27.6 lb is a big jump"
     );
   });
 

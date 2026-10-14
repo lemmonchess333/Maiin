@@ -1,4 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { RotateCcw, Trophy } from "lucide-react";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { Button } from "@/components/ui/Button";
@@ -33,12 +35,12 @@ function repsWord(reps: number): string {
 }
 
 /** What a screen reader hears: the figures in words, not "80 kg × 8". */
-function spoken({ exerciseName, result }: NewBest): string {
+function spoken({ exerciseName, result }: NewBest, unit: LiftUnit): string {
   const previous = result.previousBest;
   const beat = previous
-    ? ` Previous best ${previous.weight} kg for ${previous.reps} ${repsWord(previous.reps)}.`
+    ? ` Previous best ${formatLoad(previous.weight, unit)} for ${previous.reps} ${repsWord(previous.reps)}.`
     : "";
-  return `New best on ${exerciseName}: ${result.weight} kg for ${result.reps} ${repsWord(result.reps)}.${beat}`;
+  return `New best on ${exerciseName}: ${formatLoad(result.weight, unit)} for ${result.reps} ${repsWord(result.reps)}.${beat}`;
 }
 
 /**
@@ -73,12 +75,13 @@ export default function NewBestMoment({
   className?: string;
 }) {
   const reducedMotion = useReducedMotion();
+  const liftUnit = useLiftUnit();
   const previous = moment?.result.previousBest ?? null;
   const when = previous ? whenSet(previous) : null;
   return (
     <>
       <p role="status" className="sr-only">
-        {moment ? spoken(moment) : ""}
+        {moment ? spoken(moment, liftUnit) : ""}
       </p>
       <AnimatePresence>
         {moment && (
@@ -105,7 +108,8 @@ export default function NewBestMoment({
                 {moment.exerciseName}
               </p>
               <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
-                {moment.result.weight} kg × {moment.result.reps}
+                {formatLoad(moment.result.weight, liftUnit)} ×{" "}
+                {moment.result.reps}
               </p>
               {previous && (
                 <p className="text-xs text-muted-foreground">
@@ -113,7 +117,7 @@ export default function NewBestMoment({
                       to hold one line beside the Undo. */}
                   Was{" "}
                   <span className="whitespace-nowrap font-mono tabular-nums">
-                    {previous.weight} kg × {previous.reps}
+                    {formatLoad(previous.weight, liftUnit)} × {previous.reps}
                   </span>
                   {when && (
                     <>

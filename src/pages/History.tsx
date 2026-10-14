@@ -84,6 +84,8 @@ import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { distanceLabel } from "@/lib/runLabels";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import {
@@ -577,6 +579,7 @@ export default function History() {
   );
   const { startKey, joinedInRange } = range;
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
    * three disciplines may use it — the period summary counts runs and
@@ -832,10 +835,14 @@ export default function History() {
       metric: "volume",
       value:
         liftingData.liftVolume > 0
-          ? formatVolume(liftingData.liftVolume).value
+          ? formatVolume(liftingData.liftVolume, liftUnit).value
           : "0",
-      unit: "kg lifted",
-      change: volumeChange(liftingData.liftVolume, liftingData.prevLiftVolume),
+      unit: `${liftUnitLabel(liftUnit)} lifted`,
+      change: volumeChange(
+        liftingData.liftVolume,
+        liftingData.prevLiftVolume,
+        liftUnit
+      ),
     },
     {
       metric: "distance",
@@ -981,6 +988,7 @@ export default function History() {
   const runningHasLifetime = lifetimeTotals.runCount > 0;
   const runningHasWindow = runs.length > 0;
   const liftingHasLifetime = lifetimeTotals.liftCount > 0;
+  const lifetimeVolume = formatVolume(lifetimeTotals.liftVolume, liftUnit);
   const liftingHasWindow = liftingData.liftCount > 0;
   const nutritionHasLifetime = lifetimeTotals.daysLogged > 0;
   const nutritionHasWindow = nutrition.avgCalories > 0;
@@ -1459,11 +1467,12 @@ export default function History() {
                           volumeKg: liftingData.liftVolume,
                           sessions: liftingData.liftCount,
                           sets: liftingInsight.sets,
+                          unit: liftUnit,
                         })}
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="lifting"
-                        reading={liftingBins}
+                        reading={liftingBins(liftUnit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "volume",
@@ -1471,11 +1480,15 @@ export default function History() {
                             value: b.volumeKg,
                           })
                         }
-                        average={liftingInsight.averageKg}
+                        average={
+                          liftingInsight.averageKg === null
+                            ? null
+                            : liftVolumeIn(liftingInsight.averageKg, liftUnit)
+                        }
                         averageText={
                           liftingInsight.averageKg === null
                             ? ""
-                            : `${abbreviateK(liftingInsight.averageKg)} kg`
+                            : `${abbreviateK(liftVolumeIn(liftingInsight.averageKg, liftUnit))} ${liftUnitLabel(liftUnit)}`
                         }
                       />
                     </SectionErrorBoundary>
@@ -1808,11 +1821,11 @@ export default function History() {
                       <Card size="compact" className="text-center">
                         <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                         <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {formatVolume(lifetimeTotals.liftVolume).value}
-                          {formatVolume(lifetimeTotals.liftVolume).unit && " "}
-                          {formatVolume(lifetimeTotals.liftVolume).unit && (
+                          {lifetimeVolume.value}
+                          {lifetimeVolume.unit && " "}
+                          {lifetimeVolume.unit && (
                             <span className="text-xs font-medium">
-                              {formatVolume(lifetimeTotals.liftVolume).unit}
+                              {lifetimeVolume.unit}
                             </span>
                           )}
                         </p>

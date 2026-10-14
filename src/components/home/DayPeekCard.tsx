@@ -1,4 +1,7 @@
 import RunAbout from "@/components/run/RunAbout";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
+import { abbreviateK } from "@/utils/formatters";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
@@ -214,6 +217,7 @@ export default function DayPeekCard({
 }) {
   const navigate = useNavigate();
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
   // local handling (the parent doesn't need to know about overflow).
   const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
@@ -473,9 +477,7 @@ export default function DayPeekCard({
                         {totalMinutes > 0 ? `${totalMinutes} min` : ""}
                         {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
                         {tonnage > 0
-                          ? tonnage >= 1000
-                            ? (tonnage / 1000).toFixed(1) + "k kg"
-                            : Math.round(tonnage) + " kg"
+                          ? `${abbreviateK(liftVolumeIn(tonnage, liftUnit))} ${liftUnitLabel(liftUnit)}`
                           : ""}
                       </span>
                     )}

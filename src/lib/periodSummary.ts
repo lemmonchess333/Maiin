@@ -10,6 +10,7 @@
  * rings card this replaced (PeriodOverview), which carried the reasoning
  * first.
  */
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import {
   binKeyForDate,
   formatBinLabel,
@@ -255,20 +256,24 @@ export function countChange(
  * figure above it cannot show.
  */
 
-/** A change in kilograms lifted: "850 kg", "3.4k kg". */
+/** A change in weight lifted, in the lifter's unit: "850 kg", "3.4k kg",
+ *  "1.9k lb". */
 export function volumeChange(
   currentKg: number,
-  previousKg: number | null
+  previousKg: number | null,
+  unit: LiftUnit
 ): SummaryChange | null {
   if (previousKg === null) return null;
-  const diff = currentKg - previousKg;
-  // The figure reads "52.8k" past a tonne, so it moves in 100 kg steps.
-  const step = Math.max(currentKg, previousKg) >= 1000 ? 100 : 1;
+  const current = liftVolumeIn(currentKg, unit);
+  const previous = liftVolumeIn(previousKg, unit);
+  const diff = current - previous;
+  // The figure reads "52.8k" past a thousand, so it moves in steps of 100.
+  const step = Math.max(current, previous) >= 1000 ? 100 : 1;
   const amount = Math.round(Math.abs(diff) / step) * step;
   if (amount === 0) return null;
   return {
     direction: diff > 0 ? "up" : "down",
-    text: `${abbreviateK(amount)} kg`,
+    text: `${abbreviateK(amount)} ${liftUnitLabel(unit)}`,
   };
 }
 

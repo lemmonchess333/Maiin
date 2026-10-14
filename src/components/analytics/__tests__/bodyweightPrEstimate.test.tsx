@@ -64,7 +64,7 @@ describe("bodyweight PR rows carry no one-rep-max estimate", () => {
   it("does not print the band the estimator would have produced", () => {
     // Pinned against the helper's real output rather than a literal, so
     // the test still bites if the Epley spread is retuned.
-    const band = formatOneRepMaxRange(estimate1RMRange(20, 5)!);
+    const band = formatOneRepMaxRange(estimate1RMRange(20, 5)!, "kg");
     renderPRs([{ name: BODYWEIGHT, weight: 20, reps: 5 }]);
     expect(screen.queryByText(new RegExp(band))).not.toBeInTheDocument();
   });

@@ -47,3 +47,23 @@ export function loadToKg(value: number, unit: LiftUnit): number {
 export function formatLoad(kg: number, unit: LiftUnit): string {
   return `${loadIn(kg, unit)} ${liftUnitLabel(unit)}`;
 }
+
+/** An estimate (a 1RM) as a whole number in the lifter's unit, rounded once
+ *  from the exact conversion: through `loadIn`'s tenth, 100 kg read 221 lb. */
+export function wholeLoadIn(kg: number, unit: LiftUnit): number {
+  if (!Number.isFinite(kg)) return 0;
+  return Math.round(unit === "lbs" ? kgToLb(kg) : kg);
+}
+
+/** A set's load: "BW" for a bodyweight set with nothing added, else as
+ *  `formatLoad`. */
+export function formatSetLoad(kg: number, unit: LiftUnit): string {
+  return kg === 0 ? "BW" : formatLoad(kg, unit);
+}
+
+/** Volume (load × reps, stored as kg) in the lifter's unit, unrounded: the
+ *  caller rounds or abbreviates it as its figure needs. */
+export function liftVolumeIn(kg: number, unit: LiftUnit): number {
+  if (!Number.isFinite(kg)) return 0;
+  return unit === "lbs" ? kgToLb(kg) : kg;
+}

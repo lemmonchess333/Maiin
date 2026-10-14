@@ -39,10 +39,15 @@ describe("counts read as English", () => {
       unit: "km",
     });
     expect(one.map((f) => f.label)).toEqual(["km run", "run", "time"]);
-    const lifts = liftingFigures({ volumeKg: 900, sessions: 1, sets: 1 });
+    const lifts = liftingFigures({
+      volumeKg: 900,
+      sessions: 1,
+      sets: 1,
+      unit: "kg",
+    });
     expect(lifts.map((f) => f.label)).toEqual(["kg lifted", "session", "set"]);
     expect(
-      liftingFigures({ volumeKg: 900, sessions: 2, sets: 9 }).map(
+      liftingFigures({ volumeKg: 900, sessions: 2, sets: 9, unit: "kg" }).map(
         (f) => f.label
       )
     ).toEqual(["kg lifted", "sessions", "sets"]);
@@ -50,11 +55,24 @@ describe("counts read as English", () => {
 
   it("in a bar's reading", () => {
     expect(runningBins("km").countText(bin({ runs: 1 }))).toBe("1 run");
-    expect(liftingBins.countText(bin({ lifts: 2 }))).toBe("2 sessions");
+    expect(liftingBins("kg").countText(bin({ lifts: 2 }))).toBe("2 sessions");
   });
 });
 
 describe("units", () => {
+  it("are the lifter's on a lift's figures and bars (Lift18)", () => {
+    const lb = liftingFigures({
+      volumeKg: 1000,
+      sessions: 1,
+      sets: 3,
+      unit: "lbs",
+    });
+    expect(lb[0]).toEqual({ value: "2.2k", label: "lb lifted" });
+    const bars = liftingBins("lbs");
+    expect(bars.amount(bin({ volumeKg: 1000 }))).toBeCloseTo(2204.62);
+    expect(bars.describe(2204.62)).toBe("2.2k lb");
+  });
+
   it("are the reader's on a run's figures and bars", () => {
     const miles = runningFigures({
       distanceM: 16_093.44,
@@ -69,7 +87,7 @@ describe("units", () => {
   });
 
   it("are spaced, and time reads as time", () => {
-    expect(liftingBins.describe(12_300)).toBe("12.3k kg");
+    expect(liftingBins("kg").describe(12_300)).toBe("12.3k kg");
     expect(
       runningFigures({
         distanceM: 42_000,

@@ -11,20 +11,22 @@ import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { T1_SPARKLINE_MIN_POINTS } from "@/lib/dataConfidence";
+import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 
 const day = (key: string) => formatDayMonth(parseLocalDate(key));
-const setText = (set: { weight: number; reps: number }) =>
-  `${set.weight} kg × ${set.reps}`;
+const setText = (set: { weight: number; reps: number }, unit: LiftUnit) =>
+  `${formatLoad(set.weight, unit)} × ${set.reps}`;
 
 /** Where the lift stands, in one line of plain words. */
-function statusLine(row: LiftProgressRow): string {
+function statusLine(row: LiftProgressRow, unit: LiftUnit): string {
   if (row.holding) {
     const n = row.holding.sessionsSince;
     return `No new best since ${day(row.holding.best.date)} · ${n} ${
       n === 1 ? "session" : "sessions"
     }`;
   }
-  const from = `${setText(row.first)} on ${day(row.first.date)}`;
+  const from = `${setText(row.first, unit)} on ${day(row.first.date)}`;
   if (row.direction === "up") return `Up from ${from}`;
   if (row.direction === "down") return `Down from ${from}`;
   return `Level with ${from}`;
@@ -58,6 +60,7 @@ export default function LiftProgressCard({
   hasSessions?: boolean;
 }) {
   const [showAll, setShowAll] = useState(false);
+  const liftUnit = useLiftUnit();
   if (rows.length === 0 && !hasSessions) return null;
   const shown = showAll ? rows : rows.slice(0, LIFT_PROGRESS_SHOWN);
   const hidden = rows.length - LIFT_PROGRESS_SHOWN;
@@ -104,12 +107,12 @@ export default function LiftProgressCard({
                   className="mt-0.5 text-xs text-muted-foreground"
                   data-testid="lift-status"
                 >
-                  {statusLine(row)}
+                  {statusLine(row, liftUnit)}
                 </p>
               </div>
               <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
                 <span className="text-sm font-bold font-mono tabular-nums text-foreground">
-                  {setText(row.latest)}
+                  {setText(row.latest, liftUnit)}
                 </span>
                 {row.series.length >= T1_SPARKLINE_MIN_POINTS && (
                   <Sparkline

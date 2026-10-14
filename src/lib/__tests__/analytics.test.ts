@@ -63,7 +63,9 @@ describe("estimate1RMRange", () => {
     const r = estimate1RMRange(100, 1);
     expect(r).toEqual({ point: 100, low: 100, high: 100, spread: 0 });
     // …and it formats without a range, because a span would be a lie.
-    expect(formatOneRepMaxRange(r!)).toBe("100 kg");
+    expect(formatOneRepMaxRange(r!, "kg")).toBe("100 kg");
+    // In whole lb for a lifter who lifts in lb (Lift18).
+    expect(formatOneRepMaxRange(r!, "lbs")).toBe("220 lb");
   });
 
   it("widens monotonically with the rep count", () => {
@@ -124,9 +126,9 @@ describe("estimate1RMRange", () => {
     const r = estimate1RMRange(100, 8)!;
     expect(r.low).toBeLessThan(r.point);
     expect(r.high).toBeGreaterThan(r.point);
-    expect(formatOneRepMaxRange(r)).toBe(`${r.low}–${r.high} kg`);
+    expect(formatOneRepMaxRange(r, "kg")).toBe(`${r.low}–${r.high} kg`);
     // An en dash, not a hyphen — a hyphen between numerals reads as a minus.
-    expect(formatOneRepMaxRange(r)).toContain("–");
-    expect(formatOneRepMaxRange(r)).not.toContain("-");
+    expect(formatOneRepMaxRange(r, "kg")).toContain("–");
+    expect(formatOneRepMaxRange(r, "kg")).not.toContain("-");
   });
 });

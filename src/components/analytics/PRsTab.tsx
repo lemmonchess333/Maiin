@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { formatLoad, liftUnitLabel } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
@@ -78,6 +80,7 @@ interface PRsTabProps {
 }
 
 function LiftPRRow({ pr }: { pr: LiftPR }) {
+  const liftUnit = useLiftUnit();
   /* A RANGE, not a point (handoff 12). This row used to render a bare
      `~N kg 1RM`, which gives an estimate inferred from a set of 15 exactly
      the same authority as one inferred from a set of 3 — and Schoenfeld p.92
@@ -115,11 +118,13 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
             {isBW && pr.weight === 0 ? (
               "BW"
             ) : isBW && pr.weight > 0 ? (
-              `+${pr.weight} kg`
+              `+${formatLoad(pr.weight, liftUnit)}`
             ) : pr.weight > 0 ? (
-              `${pr.weight} kg`
+              formatLoad(pr.weight, liftUnit)
             ) : (
-              <span className="text-muted-foreground">— kg</span>
+              <span className="text-muted-foreground">
+                — {liftUnitLabel(liftUnit)}
+              </span>
             )}{" "}
             × {pr.reps}
           </p>
@@ -141,7 +146,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
               still fully shown above. */}
           {isBW ? null : e1rm ? (
             <p className="text-xs text-muted-foreground font-mono tabular-nums">
-              ~{formatOneRepMaxRange(e1rm)} 1RM
+              ~{formatOneRepMaxRange(e1rm, liftUnit)} 1RM
             </p>
           ) : null}
         </div>

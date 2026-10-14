@@ -7,6 +7,8 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
 import LoweredLine from "./LoweredLine";
 import StretchedLine from "./StretchedLine";
+import { liftUnitLabel, loadIn } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 
 /**
  * One exercise on Train's day list: its picture, its name, the
@@ -51,6 +53,7 @@ export default function ExerciseRowSummary({
   showNotes?: boolean;
   thumbSize?: "sm" | "md";
 }) {
+  const liftUnit = useLiftUnit();
   const isBW = getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
   return (
     /* The drawing gives its room to the name once the row is under 10em
@@ -76,9 +79,10 @@ export default function ExerciseRowSummary({
             <>
               {" · "}
               <span className="font-mono tabular-nums">
-                {isBW ? `+${exercise.weight}` : exercise.weight}
+                {isBW ? "+" : ""}
+                {loadIn(exercise.weight, liftUnit)}
               </span>
-              {" kg"}
+              {` ${liftUnitLabel(liftUnit)}`}
             </>
           ) : null}
         </p>
@@ -123,6 +127,7 @@ function LastSetsLine({
   timed: boolean;
   bodyweight: boolean;
 }) {
+  const liftUnit = useLiftUnit();
   const reps = sets.map((set) => set.reps);
   if (timed) return <Numbers values={reps} unit="s" />;
   return groupLastSets(sets).map((group, index) => (
@@ -131,9 +136,10 @@ function LastSetsLine({
       {group.weightKg > 0 ? (
         <>
           <span className="font-mono tabular-nums">
-            {bodyweight ? `+${group.weightKg}` : group.weightKg}
+            {bodyweight ? "+" : ""}
+            {loadIn(group.weightKg, liftUnit)}
           </span>{" "}
-          kg
+          {liftUnitLabel(liftUnit)}
         </>
       ) : bodyweight ? (
         "BW"

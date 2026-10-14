@@ -14,6 +14,7 @@ import {
   type DistanceUnit,
 } from "./distanceUnits";
 import { abbreviateK, formatDistance, formatVolume } from "@/utils/formatters";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import { T5_BARS_MIN_COUNT } from "./dataConfidence";
 
 export interface TrainingFigure {
@@ -58,13 +59,18 @@ export function liftingFigures({
   volumeKg,
   sessions,
   sets,
+  unit,
 }: {
   volumeKg: number;
   sessions: number;
   sets: number;
+  unit: LiftUnit;
 }): TrainingFigure[] {
   return [
-    { value: formatVolume(volumeKg).value, label: "kg lifted" },
+    {
+      value: formatVolume(volumeKg, unit).value,
+      label: `${liftUnitLabel(unit)} lifted`,
+    },
     { value: String(sessions), label: noun(sessions, "session", "sessions") },
     { value: String(sets), label: noun(sets, "set", "sets") },
   ];
@@ -91,13 +97,17 @@ export function runningFigures({
   ];
 }
 
-export const liftingBins: BinReading = {
-  amount: (bin) => bin.volumeKg,
-  describe: (kg) => `${abbreviateK(kg)} kg`,
-  count: (bin) => bin.lifts,
-  countText: (bin) => countOf(bin.lifts, "session", "sessions"),
-  chartCaveat: `Log ${T5_BARS_MIN_COUNT} lifts to see the chart`,
-};
+/** The volume bars in the lifter's unit (Lift18), as `runningBins` reads
+ *  distance in the runner's. */
+export function liftingBins(unit: LiftUnit): BinReading {
+  return {
+    amount: (bin) => liftVolumeIn(bin.volumeKg, unit),
+    describe: (value) => `${abbreviateK(value)} ${liftUnitLabel(unit)}`,
+    count: (bin) => bin.lifts,
+    countText: (bin) => countOf(bin.lifts, "session", "sessions"),
+    chartCaveat: `Log ${T5_BARS_MIN_COUNT} lifts to see the chart`,
+  };
+}
 
 /** The distance bars in the reader's unit: a mile-preferring runner reads
  *  miles on the bars, the average and the reading alike. */

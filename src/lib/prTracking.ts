@@ -8,6 +8,7 @@
  */
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { epley1RMExact } from "@/lib/analytics";
+import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 
 export type RepBucket = "1rm" | "3rm" | "5rm" | "8rm" | "10rm";
 
@@ -264,12 +265,15 @@ export function checkSetPR(
   return null;
 }
 
-export function setPRDescription(result: SetPR): string {
+/** The sentence under a new best, its loads in the lifter's unit. */
+export function setPRDescription(result: SetPR, unit: LiftUnit): string {
   const previous = result.previousBest;
+  const load = (kg: number) => formatLoad(kg, unit);
   if (result.kind === "best" && previous) {
-    return `${result.weight} kg × ${result.reps} is a new best (was ${previous.weight} kg × ${previous.reps}).`;
+    return `${load(result.weight)} × ${result.reps} is a new best (was ${load(previous.weight)} × ${previous.reps}).`;
   }
-  if (!previous) return `First logged at ${result.weight} kg × ${result.reps}.`;
+  if (!previous)
+    return `First logged at ${load(result.weight)} × ${result.reps}.`;
   const range: Record<RepBucket, string> = {
     "1rm": "1 rep",
     "3rm": "2–3 reps",
@@ -277,7 +281,7 @@ export function setPRDescription(result: SetPR): string {
     "8rm": "6–8 reps",
     "10rm": "9+ reps",
   };
-  return `First time at ${range[result.bucket]}. Your best stays ${previous.weight} kg × ${previous.reps}.`;
+  return `First time at ${range[result.bucket]}. Your best stays ${load(previous.weight)} × ${previous.reps}.`;
 }
 
 /* ================================

@@ -14,38 +14,52 @@ import {
 
 describe("formatVolume", () => {
   it("returns dash for zero", () => {
-    expect(formatVolume(0)).toEqual({ value: "\u2014", unit: "" });
+    expect(formatVolume(0, "kg")).toEqual({ value: "\u2014", unit: "" });
   });
 
   it("returns dash for negative", () => {
-    expect(formatVolume(-100)).toEqual({ value: "\u2014", unit: "" });
+    expect(formatVolume(-100, "kg")).toEqual({ value: "\u2014", unit: "" });
   });
 
   it("formats sub-1000 with kg unit", () => {
-    expect(formatVolume(500)).toEqual({ value: "500", unit: "kg" });
+    expect(formatVolume(500, "kg")).toEqual({ value: "500", unit: "kg" });
   });
 
   it("rounds sub-1000 values", () => {
-    expect(formatVolume(892.7)).toEqual({ value: "893", unit: "kg" });
+    expect(formatVolume(892.7, "kg")).toEqual({ value: "893", unit: "kg" });
   });
 
   it("formats 1000+ with k suffix and kg unit", () => {
-    expect(formatVolume(1000)).toEqual({ value: "1.0k", unit: "kg" });
+    expect(formatVolume(1000, "kg")).toEqual({ value: "1.0k", unit: "kg" });
   });
 
   it("formats 1500 as 1.5k", () => {
-    expect(formatVolume(1500)).toEqual({ value: "1.5k", unit: "kg" });
+    expect(formatVolume(1500, "kg")).toEqual({ value: "1.5k", unit: "kg" });
   });
 
   it("formats large volumes", () => {
-    expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
+    expect(formatVolume(14020, "kg")).toEqual({ value: "14.0k", unit: "kg" });
   });
 
   it("formats a lifetime's volume in millions, never as thousands of k", () => {
-    expect(formatVolume(999_900)).toEqual({ value: "999.9k", unit: "kg" });
-    expect(formatVolume(999_960)).toEqual({ value: "1.0M", unit: "kg" });
-    expect(formatVolume(1_500_000)).toEqual({ value: "1.5M", unit: "kg" });
-    expect(formatVolume(12_345_600)).toEqual({ value: "12.3M", unit: "kg" });
+    expect(formatVolume(999_900, "kg")).toEqual({
+      value: "999.9k",
+      unit: "kg",
+    });
+    expect(formatVolume(999_960, "kg")).toEqual({ value: "1.0M", unit: "kg" });
+    expect(formatVolume(1_500_000, "kg")).toEqual({
+      value: "1.5M",
+      unit: "kg",
+    });
+    expect(formatVolume(12_345_600, "kg")).toEqual({
+      value: "12.3M",
+      unit: "kg",
+    });
+  });
+
+  it("reads in lb for a lifter who lifts in lb (Lift18)", () => {
+    expect(formatVolume(100, "lbs")).toEqual({ value: "220", unit: "lb" });
+    expect(formatVolume(1000, "lbs")).toEqual({ value: "2.2k", unit: "lb" });
   });
 });
 
