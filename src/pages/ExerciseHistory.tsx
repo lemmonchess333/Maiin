@@ -14,6 +14,7 @@ import {
   liftUnitLabel,
   liftVolumeIn,
   loadIn,
+  wholeLoadIn,
 } from "@/lib/liftLoad";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
@@ -236,7 +237,8 @@ export default function ExerciseHistory() {
     );
     const totalSets = allSessions.reduce((t, s) => t + s.sets.length, 0);
     return {
-      best1RM: Math.round(best1RM),
+      // Rounded where it is shown, once, in the lifter's unit.
+      best1RM,
       maxReps,
       longestHold,
       totalSessions: allSessions.length,
@@ -256,7 +258,7 @@ export default function ExerciseHistory() {
         value =
           metric === "Volume" ? liftVolumeIn(s.volume, liftUnit) : s.totalReps;
       } else if (metric === "1RM") {
-        value = Math.round(loadIn(s.e1rm, liftUnit));
+        value = wholeLoadIn(s.e1rm, liftUnit);
       } else if (metric === "Max Weight") {
         value = loadIn(s.maxWeight, liftUnit);
       } else {
@@ -388,7 +390,7 @@ export default function ExerciseHistory() {
                   : isBodyweight
                     ? headerStats.maxReps || "—"
                     : headerStats.best1RM
-                      ? `${Math.round(loadIn(headerStats.best1RM, liftUnit))}`
+                      ? `${wholeLoadIn(headerStats.best1RM, liftUnit)}`
                       : "—"}
                 {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
                   <>

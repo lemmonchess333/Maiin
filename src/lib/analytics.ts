@@ -7,7 +7,7 @@
  * calls is a helper nobody has checked against the current data shapes
  * (ADR-0008 — its worked example was this file's 20 orphaned exports).
  */
-import { liftUnitLabel, loadIn, type LiftUnit } from "./liftLoad";
+import { liftUnitLabel, wholeLoadIn, type LiftUnit } from "./liftLoad";
 
 /* ================================
    EPLEY 1RM
@@ -154,8 +154,7 @@ export function formatOneRepMaxRange(
   unit: LiftUnit
 ): string {
   // An estimate, so whole lb: "209–231 lb", never "209.4–231.5 lb".
-  const n = (kg: number) =>
-    unit === "lbs" ? Math.round(loadIn(kg, unit)) : kg;
+  const n = (kg: number) => (unit === "lbs" ? wholeLoadIn(kg, unit) : kg);
   const label = liftUnitLabel(unit);
   return r.spread === 0
     ? `${n(r.point)} ${label}`

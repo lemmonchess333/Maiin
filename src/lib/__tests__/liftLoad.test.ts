@@ -5,6 +5,7 @@ import {
   loadIn,
   loadToKg,
   resolveLiftUnit,
+  wholeLoadIn,
 } from "../liftLoad";
 
 describe("liftLoad (Lift18)", () => {
@@ -39,5 +40,13 @@ describe("liftLoad (Lift18)", () => {
   it("a load that isn't a number reads as nothing", () => {
     expect(loadIn(Number.NaN, "lbs")).toBe(0);
     expect(loadIn(Number.POSITIVE_INFINITY, "kg")).toBe(0);
+  });
+});
+
+describe("wholeLoadIn (Lift18)", () => {
+  it("rounds an estimate once, from kg", () => {
+    expect(wholeLoadIn(100, "lbs")).toBe(220);
+    expect(wholeLoadIn(102.4, "kg")).toBe(102);
+    expect(wholeLoadIn(Number.NaN, "lbs")).toBe(0);
   });
 });

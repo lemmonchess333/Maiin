@@ -33,7 +33,7 @@ describe("the bodyweight metric pill", () => {
     // The anchor. If this ever stops being reps, the label below is
     // wrong again and this test should be what says so.
     expect(page).toMatch(
-      /isBodyweight\s*\)\s*\{\s*value = metric === "Volume" \? s\.volume : s\.totalReps;/
+      /isBodyweight\s*\)\s*\{\s*value =\s*metric === "Volume"\s*\?\s*liftVolumeIn\(s\.volume, liftUnit\)\s*:\s*s\.totalReps;/
     );
   });
 
@@ -52,7 +52,7 @@ describe("the bodyweight metric pill", () => {
        correct name off barbell work, whose option really does chart an
        estimated one-rep max. */
     expect(page).toMatch(
-      /metric === "1RM"\s*\)\s*\{\s*value = Math\.round\(s\.e1rm\)/
+      /metric === "1RM"\s*\)\s*\{\s*value = wholeLoadIn\(s\.e1rm, liftUnit\)/
     );
     expect(page).toMatch(/\["1RM", "Max Weight", "Volume"\]/);
   });
