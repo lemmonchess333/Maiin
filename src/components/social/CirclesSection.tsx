@@ -64,6 +64,10 @@ import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
+import {
+  containsProfanity,
+  OBJECTIONABLE_NAME_MESSAGE,
+} from "@/lib/profanityFilter";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -563,8 +567,14 @@ export default function CirclesSection({
 
   const create = async () => {
     if (refused()) return;
-    setBusy(true);
     const trimmed = title.trim();
+    // Everyone invited reads the name, so it meets the word filter a
+    // display name does; the server refuses it with the same sentence.
+    if (containsProfanity(trimmed)) {
+      toast.error(OBJECTIONABLE_NAME_MESSAGE);
+      return;
+    }
+    setBusy(true);
     const res = await createCircle({
       type: template,
       title: trimmed,

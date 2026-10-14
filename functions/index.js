@@ -7382,6 +7382,18 @@ exports.onGoalSpaceEventCreated = functions
   .onCreate(async (snap, context) => {
     const { spaceId, eventId } = context.params;
     const event = snap.data() || {};
+    // A member writes an event's note straight to Firestore, where the
+    // rules can bound its length but cannot read it. One the word filter
+    // refuses comes out before anyone is told of it, as a feed comment
+    // does (onCommentCreated); the app refuses it first.
+    if (profanityFilter.containsProfanity(event.text)) {
+      await snap.ref.delete();
+      functions.logger.info("onGoalSpaceEventCreated.removed_objectionable", {
+        spaceId,
+        eventId,
+      });
+      return null;
+    }
     const authorUid = event.uid;
     const notifType = CIRCLE_EVENT_NOTIFICATION_TYPES[event.kind];
     if (!authorUid || !notifType) return null; // non-notifying kind

@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { GOAL_SPACE_TEXT_MAX } from "@/features/goalSpace/goalSpaceTypes";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { containsProfanity } from "@/lib/profanityFilter";
 import RestrictedNotice from "./RestrictedNotice";
 
 interface CircleShareSheetProps {
@@ -65,6 +66,14 @@ export default function CircleShareSheet({
 
   const share = async () => {
     if (!selectedId || busy || isRestricted) return;
+    // The server takes a refused note back out (onGoalSpaceEventCreated);
+    // saying so here keeps the person's words in the box to reword.
+    if (containsProfanity(note)) {
+      toast.error(
+        "This note contains objectionable language. Reword it and try again."
+      );
+      return;
+    }
     haptic("light");
     setBusy(true);
     const ok = await publishEvent(

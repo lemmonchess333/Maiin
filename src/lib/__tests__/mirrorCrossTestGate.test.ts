@@ -142,6 +142,10 @@ const PINNED: Record<string, string> = {
   // person, one sentence either way.
   "functions/lib/objectionableText.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // The hate terms both filters add to leo-profanity's list, written by hand
+  // on each side, so the lists are compared as well as the corpus.
+  "functions/lib/hateTerms.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
   // Report targets: the types and id shapes the server validates, which the
   // client builds (REPORT_TARGET_TYPES, reportTargetIds.ts). A mismatch
   // refuses every report of that kind.
