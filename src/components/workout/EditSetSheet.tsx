@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { liftUnitLabel, loadIn, loadToKg, type LiftUnit } from "@/lib/liftLoad";
 
 /** The ask-first question (`SetValidationWarn`'s words). */
 interface SetQuestion {
@@ -13,13 +14,17 @@ export default function EditSetSheet({
   set,
   setName,
   timed,
+  unit,
   onSave,
   onClose,
 }: {
+  /** The set as logged, its weight in kg. */
   set: { weight: number; reps: number };
   /** The set as the workout screen names it: "set 2", "warm-up 1". */
   setName: string;
   timed: boolean;
+  /** The unit the weight is shown and typed in; `onSave` gets kg. */
+  unit: LiftUnit;
   /** Saves the set, or resolves to a question to ask first: a weight far
    *  past today's plan or the best for these reps (Lift16). Saving again
    *  with `confirmed` logs it. */
@@ -30,7 +35,8 @@ export default function EditSetSheet({
   onClose: () => void;
 }) {
   const id = useId();
-  const [weight, setWeight] = useState(String(set.weight));
+  const [shownWeight] = useState(() => String(loadIn(set.weight, unit)));
+  const [weight, setWeight] = useState(shownWeight);
   const [reps, setReps] = useState(String(set.reps));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +54,12 @@ export default function EditSetSheet({
     try {
       const asked = await onSave(
         {
-          weight: Number(weight.replace(",", ".")),
+          // Untouched, it keeps the kg it was logged at: a kg set read
+          // in lb ("132.3") would otherwise come back 10 g heavier.
+          weight:
+            weight === shownWeight
+              ? set.weight
+              : loadToKg(Number(weight.replace(",", ".")), unit),
           reps: Number(reps.replace(",", ".")),
         },
         confirmed
@@ -87,7 +98,7 @@ export default function EditSetSheet({
       >
         <div className="grid grid-cols-2 gap-3">
           <label htmlFor={`${id}-weight`} className="space-y-2 text-sm">
-            <span>Weight (kg)</span>
+            <span>Weight ({liftUnitLabel(unit)})</span>
             <input
               id={`${id}-weight`}
               inputMode="decimal"

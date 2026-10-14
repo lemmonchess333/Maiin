@@ -143,6 +143,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
 | `liftRecordsStore.ts`   | Best-lift map: load or rebuild, checked commit, invalidation   |
+| `liftLoad.ts`           | Lifting loads in the lifter's unit: stored kg, shown kg or lb  |
 | `scheduleUtils.ts`      | Weekly schedule generation (lift/run/rest)                     |
 | `exercises.ts`          | Exercise database                                              |
 | `workoutTemplates.ts`   | Workout template library                                       |

@@ -190,6 +190,45 @@ describe("validateSet — past today's plan (Lift16)", () => {
   });
 });
 
+describe("validateSet — the lifter's unit (Lift18)", () => {
+  it("checks kg and asks in lb", () => {
+    const r = validateSet({
+      reps: 5,
+      weight: 136.08,
+      plannedWeight: 61.235,
+      unit: "lbs",
+    });
+    if (r.ok)
+      expect(r.warn).toMatchObject({
+        title: "300 lb?",
+        message: "Today's plan is 135 lb.",
+        confirmLabel: "Log 300 lb",
+        fromKg: 61.235,
+        toKg: 136.08,
+      });
+  });
+
+  it("asks against the best in lb", () => {
+    const r = validateSet({
+      reps: 5,
+      weight: 130,
+      currentBestForBucket: 100,
+      unit: "lbs",
+    });
+    if (r.ok)
+      expect(r.warn?.message).toBe("Your best at these reps is 220.5 lb.");
+  });
+
+  it("says the cap in lb", () => {
+    const r = validateSet({ reps: 5, weight: 501, unit: "lbs" });
+    expect(r.ok).toBe(false);
+    if (!r.ok)
+      expect(r.message).toBe(
+        `Weight looks too high (max ${(1102).toLocaleString("en-GB")} lb). Check the value.`
+      );
+  });
+});
+
 describe("validateSet — false-PR regression", () => {
   it("a fat-fingered 200kg over 100kg PR surfaces as warn, not silent acceptance", () => {
     // This is the exact pre-PR-E regression: a 200kg fat-finger over

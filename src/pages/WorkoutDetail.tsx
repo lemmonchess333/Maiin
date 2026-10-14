@@ -55,6 +55,7 @@ import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import {
   workoutTonnageKg,
   workoutTitle,
@@ -179,6 +180,7 @@ function WorkoutDetailContent() {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const liftUnit = useLiftUnit();
 
   const {
     status,
@@ -390,6 +392,7 @@ function WorkoutDetailContent() {
         <CorrectWorkoutSheet
           uid={user.uid}
           workout={workout}
+          unit={liftUnit}
           onClose={() => setEditOpen(false)}
           onSaved={() => {
             setEditOpen(false);

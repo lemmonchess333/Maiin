@@ -272,6 +272,10 @@ export interface SubscriptionTrial {
 /** User preferences and settings */
 export interface UserProfilePreferences {
   preferredWeightUnit: "kg" | "lbs";
+  /** The unit lifting loads are shown and typed in (Lift18); missing reads
+   *  as kg. Storage stays kg — see src/lib/liftLoad.ts. Its own setting,
+   *  not preferredWeightUnit: a lifter who weighs in in stone lifts in kg. */
+  liftingWeightUnit?: "kg" | "lbs";
   preferredHeightUnit: "cm" | "ft";
   /** Display unit for run distance and pace. Storage stays metric always
    *  — see src/lib/distanceUnits.ts. Elevation is NOT covered yet (feet
