@@ -388,6 +388,31 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     );
   });
 
+  it("counts the same lift days in Current setup and the weekly layout when they change while it is open", () => {
+    const page = (weeklyWorkoutsTarget: number) => (
+      <MemoryRouter>
+        <ProgrammeSettings
+          variant="overview"
+          profile={makeProfile({ weeklyWorkoutsTarget })}
+          programState={programState}
+          readiness="ready"
+          updateSettings={vi.fn()}
+          regenerateProgram={vi.fn()}
+          refreshProfile={vi.fn().mockResolvedValue(undefined)}
+          onOpenWeeklyLayout={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+    const { rerender } = render(page(3));
+    const layout = () => screen.getByRole("button", { name: /weekly layout/i });
+    expect(screen.getByText(/3 lift days/)).toBeInTheDocument();
+    expect(layout()).toHaveTextContent("3 lift");
+
+    rerender(page(5));
+    expect(screen.getByText(/5 lift days/)).toBeInTheDocument();
+    expect(layout()).toHaveTextContent("5 lift");
+  });
+
   it("opens the weekly layout editor", () => {
     const { onOpenWeeklyLayout } = setup({}, "overview");
     fireEvent.click(screen.getByRole("button", { name: /weekly layout/i }));

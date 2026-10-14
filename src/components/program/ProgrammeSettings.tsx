@@ -595,7 +595,11 @@ export default function ProgrammeSettings({
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
-  const weekLiftDays = liftDays;
+  // The Programme page edits nothing, so it counts the SAVED lift days, as
+  // its Current setup line does. The draft is a copy taken when the page
+  // opened: a lift-day count saved while it was open left the page saying
+  // "5 lift days" over a "3 lift" layout.
+  const weekLiftDays = variant === "overview" ? saved.liftDays : liftDays;
   const weekRunDays = effectiveRunDays;
   const weekDoubleDays = Math.max(0, weekLiftDays + weekRunDays - 7);
   const weekRestDays = Math.max(0, 7 - weekLiftDays - weekRunDays);
