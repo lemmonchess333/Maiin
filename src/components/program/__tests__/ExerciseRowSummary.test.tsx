@@ -128,6 +128,28 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).not.toHaveTextContent("kg");
   });
 
+  it("reads a kettlebell in whole lb, as the bell is labelled (Lift18)", () => {
+    const { container } = render(
+      <LiftUnitContext value="lbs">
+        <ExerciseRowSummary
+          exercise={exercise({
+            exerciseId: "kettlebell-swing",
+            name: "Kettlebell Swing",
+            weight: 16,
+            reps: 15,
+          })}
+          lastSets={[
+            { weightKg: 16, reps: 15 },
+            { weightKg: 16, reps: 15 },
+          ]}
+        />
+      </LiftUnitContext>
+    );
+    expect(container).toHaveTextContent("· 35 lb");
+    expect(container).toHaveTextContent("Last: 35 lb × 15, 15");
+    expect(container).not.toHaveTextContent("35.3");
+  });
+
   it("states a climbing lift's range, and a fixed lift's target (Lift4 (3))", () => {
     const { container, rerender } = render(
       <ExerciseRowSummary

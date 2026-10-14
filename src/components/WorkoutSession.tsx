@@ -153,13 +153,12 @@ import type { SessionShareAction } from "@/lib/sessionPost";
 import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
+import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
 import {
-  formatLoad,
-  liftUnitLabel,
-  loadIn,
-  loadToKg,
-  type LiftUnit,
-} from "@/lib/liftLoad";
+  formatKitLoad,
+  kitLoadIn,
+  kitLoadToKg,
+} from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
@@ -189,12 +188,13 @@ function previousLabel(
   prev: { weight: number; reps: number } | undefined,
   timed: boolean,
   bodyweight: boolean,
-  unit: LiftUnit
+  unit: LiftUnit,
+  exerciseId: string | undefined
 ): string | null {
   if (!prev) return null;
   if (timed) return `${prev.reps} s`;
   if (prev.weight > 0)
-    return `${bodyweight ? "+" : ""}${loadIn(prev.weight, unit)} × ${prev.reps}`;
+    return `${bodyweight ? "+" : ""}${kitLoadIn(prev.weight, unit, exerciseId)} × ${prev.reps}`;
   return bodyweight ? `BW × ${prev.reps}` : null;
 }
 
@@ -208,7 +208,7 @@ function targetLoad(
   const bodyweight =
     getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
   if (exercise.weight > 0)
-    return ` @ ${bodyweight ? "Bodyweight + " : ""}${formatLoad(exercise.weight, unit)}`;
+    return ` @ ${bodyweight ? "Bodyweight + " : ""}${formatKitLoad(exercise.weight, unit, exercise.exerciseId)}`;
   return bodyweight ? " @ Bodyweight" : "";
 }
 
@@ -1639,6 +1639,7 @@ export default function WorkoutSession({
           )}
           timed={day.exercises[editingSet.exIdx]?.repUnit === "seconds"}
           unit={liftUnit}
+          exerciseId={day.exercises[editingSet.exIdx]?.exerciseId}
           onSave={saveSetCorrection}
           onClose={() => setEditingSet(null)}
         />
@@ -2067,7 +2068,8 @@ export default function WorkoutSession({
                     prior,
                     isTimedExercise,
                     isBWExercise,
-                    liftUnit
+                    liftUnit,
+                    currentExercise.exerciseId
                   );
                   const canFill = prior != null && priorLabel != null;
                   const isBest = [...prResults.values()].some(
@@ -2169,7 +2171,13 @@ export default function WorkoutSession({
                         <input
                           type="number"
                           inputMode="decimal"
-                          value={loadIn(set.weight, liftUnit) || ""}
+                          value={
+                            kitLoadIn(
+                              set.weight,
+                              liftUnit,
+                              currentExercise.exerciseId
+                            ) || ""
+                          }
                           placeholder={
                             set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""
                           }
@@ -2179,7 +2187,11 @@ export default function WorkoutSession({
                               currentExIndex,
                               setIdx,
                               "weight",
-                              loadToKg(Number(e.target.value) || 0, liftUnit)
+                              kitLoadToKg(
+                                Number(e.target.value) || 0,
+                                liftUnit,
+                                currentExercise.exerciseId
+                              )
                             )
                           }
                           disabled={set.completed}

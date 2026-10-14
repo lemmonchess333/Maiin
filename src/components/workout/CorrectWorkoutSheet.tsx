@@ -10,7 +10,8 @@ import {
 } from "@/lib/workoutCorrection";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
 import { toast } from "sonner";
-import { liftUnitLabel, loadIn, loadToKg, type LiftUnit } from "@/lib/liftLoad";
+import { liftUnitLabel, loadIn, type LiftUnit } from "@/lib/liftLoad";
+import { kitLoadIn, kitLoadToKg } from "@/features/program/loadSteps";
 
 export default function CorrectWorkoutSheet({
   uid,
@@ -31,7 +32,7 @@ export default function CorrectWorkoutSheet({
   // Each weight as first shown, in the lifter's unit.
   const [shown] = useState(() =>
     workout.exercises.map((ex) =>
-      ex.sets.map((set) => String(loadIn(set.weightKg, unit)))
+      ex.sets.map((set) => String(kitLoadIn(set.weightKg, unit, ex.exerciseId)))
     )
   );
   const [sets, setSets] = useState(() =>
@@ -67,7 +68,11 @@ export default function CorrectWorkoutSheet({
           weightKg:
             set.weight === shown[i][j]
               ? workout.exercises[i].sets[j].weightKg
-              : loadToKg(number(set.weight), unit),
+              : kitLoadToKg(
+                  number(set.weight),
+                  unit,
+                  workout.exercises[i].exerciseId
+                ),
           reps: number(set.reps),
         })),
       })),

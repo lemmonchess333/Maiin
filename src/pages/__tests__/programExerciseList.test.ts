@@ -137,12 +137,13 @@ describe("a bodyweight lift's load reads as weight added to it", () => {
   it("marks a bodyweight lift's load as added, in the last sets and the prescription alike", () => {
     expect(summary).toMatch(/bodyweight=\{isBW\}/);
     const line = summary.slice(summary.indexOf("function LastSetsLine"));
-    // The plus, then the load in the lifter's unit (Lift18).
+    // The plus, then the load in the lifter's unit on the lift's own kit
+    // (Lift18: a kettlebell reads in whole lb).
     expect(line).toMatch(
-      /bodyweight \? "\+" : ""\}\s*\{loadIn\(group\.weightKg, liftUnit\)\}/
+      /bodyweight \? "\+" : ""\}\s*\{kitLoadIn\(group\.weightKg, liftUnit, exerciseId\)\}/
     );
     expect(summary).toMatch(
-      /isBW \? "\+" : ""\}\s*\{loadIn\(exercise\.weight, liftUnit\)\}/
+      /isBW \? "\+" : ""\}\s*\{kitLoadIn\(\s*exercise\.weight,\s*liftUnit,\s*exercise\.exerciseId\s*\)\}/
     );
   });
 

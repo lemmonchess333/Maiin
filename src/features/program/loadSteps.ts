@@ -1,5 +1,11 @@
 import { getExerciseById, isBodyweightExerciseId } from "@/lib/exercises";
-import type { LiftUnit } from "@/lib/liftLoad";
+import {
+  liftUnitLabel,
+  loadIn,
+  loadToKg,
+  wholeLoadIn,
+  type LiftUnit,
+} from "@/lib/liftLoad";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 
 /**
@@ -149,6 +155,53 @@ const KIT: Record<LiftUnit, Kit> = {
  *  bodyweight lift has none of its own: its load goes on a belt
  *  (`loadGridFor`). `unit` is the lifter's kit (Lift18), from the plan's
  *  `settings.loadUnit`. */
+const isKettlebell = (exerciseId: string | undefined) =>
+  !!exerciseId && getExerciseById(exerciseId)?.equipment === "Kettlebell";
+
+/**
+ * A load as the lifter reads it on the lift's own kit (Lift18). Kettlebells
+ * keep their kg sizes, and an lb lifter reads a bell in whole lb, as they
+ * are labelled where lb is the unit: the 16 kg bell is 35 lb, not 35.3.
+ * Every other load reads as `loadIn` gives it, so a load off the lb kit
+ * still shows its tenth.
+ */
+export function kitLoadIn(
+  kg: number,
+  unit: LiftUnit,
+  exerciseId: string | undefined
+): number {
+  return unit === "lbs" && isKettlebell(exerciseId)
+    ? wholeLoadIn(kg, unit)
+    : loadIn(kg, unit);
+}
+
+/** `kitLoadIn` with its unit: "35 lb", "132.3 lb", "60 kg". */
+export function formatKitLoad(
+  kg: number,
+  unit: LiftUnit,
+  exerciseId: string | undefined
+): string {
+  return `${kitLoadIn(kg, unit, exerciseId)} ${liftUnitLabel(unit)}`;
+}
+
+/**
+ * A load typed in the lifter's unit, as the kg it is stored as. On a
+ * kettlebell in lb, a whole number that names a bell is that bell: 35 is
+ * the 16 kg bell, so a bell typed as it reads stays the bell, and the plan
+ * steps to the next one rather than from 15.9 kg to 16. Any other number is
+ * the exact kg it converts to.
+ */
+export function kitLoadToKg(
+  value: number,
+  unit: LiftUnit,
+  exerciseId: string | undefined
+): number {
+  const kg = loadToKg(value, unit);
+  if (unit !== "lbs" || !isKettlebell(exerciseId)) return kg;
+  const bell = KETTLEBELLS.nearest(kg);
+  return Math.abs(kgToLb(bell) - value) < 0.5 ? bell : kg;
+}
+
 export function equipmentGridFor(
   exerciseId: string | undefined,
   smallPlates: boolean,
