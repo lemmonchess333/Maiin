@@ -30,6 +30,7 @@
  * create sheet opens prefilled.
  */
 
+import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Copy, Users } from "lucide-react";
@@ -539,6 +540,7 @@ export default function CirclesSection({
           text,
           url: window.location.origin,
         });
+        trackSocialEvent("circle_invite_sent", { inviteMethod: "share" });
       } catch {
         /* user cancelled */
       }
@@ -548,6 +550,7 @@ export default function CirclesSection({
           `${text} ${window.location.origin}`
         );
         toast.success("Invite copied.");
+        trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
       } catch {
         toast.error("Couldn't copy. Long-press the code to select it.");
       }
@@ -560,6 +563,7 @@ export default function CirclesSection({
         inviteString(h.spaceId, h.inviteCode)
       );
       toast.success("Invite code copied.");
+      trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
     } catch {
       toast.error("Couldn't copy. Long-press the code to select it.");
     }
@@ -586,6 +590,7 @@ export default function CirclesSection({
       setShowCreate(false);
       setTitle("");
       setPendingTargetDate(null);
+      trackSocialEvent("circle_created", { circleType: template });
       // Straight into the invite hand-off — a circle of one isn't done.
       setInviteHandoff({ title: trimmed, ...res });
     } else {
@@ -609,6 +614,7 @@ export default function CirclesSection({
       setShowJoin(false);
       setJoinInput("");
       toast.success("You're in.");
+      trackSocialEvent("circle_joined");
     } else {
       // The server distinguishes a full circle, a closed one, a wrong code
       // and a tripped limiter; `describeJoinRejection` turns each into a
@@ -1319,7 +1325,12 @@ export default function CirclesSection({
                         ?.writeText(
                           inviteString(detailOf.space.id, detailOf.inviteCode!)
                         )
-                        .then(() => toast.success("Invite code copied."))
+                        .then(() => {
+                          toast.success("Invite code copied.");
+                          trackSocialEvent("circle_invite_sent", {
+                            inviteMethod: "copy",
+                          });
+                        })
                         .catch(() =>
                           toast.error("Couldn't copy. Long-press to select it.")
                         );

@@ -31,6 +31,10 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const trackSocial = vi.fn();
+vi.mock("@/lib/socialAnalytics", () => ({
+  track: (...args: unknown[]) => trackSocial(...args),
+}));
 
 const mockUseGoalSpaces = vi.fn();
 vi.mock("@/features/goalSpace/useGoalSpaces", () => ({
@@ -229,6 +233,16 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /copy code/i }));
     await waitFor(() =>
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith("K7P4-9M2H")
+    );
+    // Together pass: the start and the invite are what the page is
+    // judged by, so both are counted.
+    expect(trackSocial).toHaveBeenCalledWith("circle_created", {
+      circleType: "strength_block",
+    });
+    await waitFor(() =>
+      expect(trackSocial).toHaveBeenCalledWith("circle_invite_sent", {
+        inviteMethod: "copy",
+      })
     );
   });
 });

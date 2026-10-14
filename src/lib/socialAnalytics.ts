@@ -31,7 +31,15 @@ export type SocialEvent =
   /** A follow from the feed: a post's Follow link, or the People to
    *  follow row. People search and profiles are not counted
    *  here; this measures whether following from content gets used. */
-  | "social_follow";
+  | "social_follow"
+  /** Together pass: the page's conversions. A challenge joined, a Circle
+   *  started or joined, and an invite sent (shared through the system
+   *  sheet or copied). Join rate and invite rate are what a change to
+   *  the Together page is judged by after release. */
+  | "challenge_joined"
+  | "circle_created"
+  | "circle_joined"
+  | "circle_invite_sent";
 
 /* SOCIAL-HOME-01: "together" + "feed" are the live tabs; "find"
    remains as a legacy value so historical events stay queryable
@@ -67,6 +75,13 @@ export interface SocialEventMetadata {
   destination?: "instagram" | "sheet";
   /** social_follow: where in the feed the follow came from. */
   followSource?: "post" | "people_row";
+  /** challenge_joined: the challenge's id ("weekly-2026-10-12",
+   *  "monthly-2026-10"), whose prefix names its kind. */
+  challengeId?: string;
+  /** circle_created: the Circle's template. */
+  circleType?: string;
+  /** circle_invite_sent: how the invite left the app. */
+  inviteMethod?: "share" | "copy";
 }
 
 export function track(
