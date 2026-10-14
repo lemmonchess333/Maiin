@@ -294,8 +294,10 @@ export function ChallengeCard({
             <Clock className="size-3" aria-hidden />
             {timeLeft}
           </SectionLabel>
+          {/* Two lines before it gives way: at 320 px and 135% text one
+              line cut "July Distance Club" to "July Distan…". */}
           <p
-            className={`text-lg font-bold leading-tight truncate mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
+            className={`text-lg font-bold leading-tight line-clamp-2 break-words mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
           >
             {challenge.name}
           </p>
