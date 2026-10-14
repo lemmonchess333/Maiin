@@ -212,3 +212,43 @@ describe("supported running-only plans", () => {
     expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 4, 5, 7]);
   });
 });
+
+/* Lift18: setup's lifting unit follows the body-weight unit picked there,
+   except stone, which lifts in kg. The plan's kit and the profile's unit
+   are written together, and both reach the server as sent. */
+describe("the lifting unit a new plan starts on", () => {
+  it.each([
+    ["lbs", "lbs"],
+    ["kg", "kg"],
+    ["st", "kg"],
+  ] as const)("weighed in %s, lifts in %s", (weightDisplayUnit, unit) => {
+    const plan = buildOnboardingPlan(
+      { ...draft, weightDisplayUnit },
+      "recomp",
+      today
+    );
+    expect(plan.programState.settings?.loadUnit).toBe(unit);
+    const programState = sanitizeProgramState(plan.programState).value;
+    expect(programState.settings.loadUnit).toBe(unit);
+    expect(
+      sanitizeProfileData({ liftingWeightUnit: unit }).liftingWeightUnit
+    ).toBe(unit);
+  });
+
+  it("starts an lb lifter's loads on the lb kit", () => {
+    const plan = buildOnboardingPlan(
+      { ...draft, weightDisplayUnit: "lbs" },
+      "recomp",
+      today
+    );
+    const loaded = plan.programState.workouts
+      .flatMap((day) => day.exercises)
+      .filter((exercise) => exercise.weight > 0);
+    expect(loaded.length).toBeGreaterThan(0);
+    for (const exercise of loaded) {
+      const lb = Math.round(exercise.weight * 2.20462 * 1000) / 1000;
+      // On a 5 lb step, or the lb dumbbell rack's 3, 8 or 12.
+      expect(lb % 5 === 0 || [3, 8, 12].includes(lb)).toBe(true);
+    }
+  });
+});

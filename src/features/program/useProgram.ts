@@ -187,6 +187,7 @@ import { enqueueCommand, isTransportFailure } from "./commandOutbox";
 import { repUnitForExerciseId } from "./repUnits";
 import { getExerciseById } from "@/lib/exercises";
 import { sendProgramCommand } from "./programCommandClient";
+import { resolveLiftUnit, type LiftUnit } from "@/lib/liftLoad";
 import {
   APPLIED,
   FAILED,
@@ -2037,7 +2038,10 @@ export function useProgram() {
 
   // Update settings
   const updateSettings = useCallback(
-    async (updates: Partial<ProgramSettings>): Promise<ProgramOutcome> => {
+    async (
+      updates: Partial<ProgramSettings>,
+      declinedMessage: string | null = "Couldn't save that setting."
+    ): Promise<ProgramOutcome> => {
       if (!programState) return FAILED;
       const current = programState.settings ?? DEFAULT_PROGRAM_SETTINGS;
       const newSettings = { ...current, ...updates };
@@ -2056,11 +2060,34 @@ export function useProgram() {
           },
         },
         (state) => ({ ...state, settings: newSettings }),
-        "Couldn't save that setting."
+        declinedMessage
       );
     },
     [programState, runProgramCommand]
   );
+
+  /* Lift18: the engine rounds to `settings.loadUnit`, its copy of the
+     profile's `liftingWeightUnit` (the STATUS line on the Lift18 row says
+     why there are two). Whenever the two differ, the copy is put right
+     from the profile: a switch in Settings, or a write that landed on one
+     and not the other. Missing reads kg on both sides, so a plan that has
+     never seen the setting is never written. Silent, as a background write
+     should be. A refused write is not retried for the same unit while
+     this screen is open, so it can't loop; the next open tries again. */
+  const loadUnitHealing = useRef<LiftUnit | null>(null);
+  useEffect(() => {
+    if (!programState || !profile) return;
+    if (!mirrorReady) return;
+    if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
+      return;
+    const want = resolveLiftUnit(profile.liftingWeightUnit);
+    if ((programState.settings?.loadUnit ?? "kg") === want) return;
+    // Not cleared when the two agree: a refusal rolls the optimistic copy
+    // back, and a cleared guard would send it again.
+    if (loadUnitHealing.current === want) return;
+    loadUnitHealing.current = want;
+    void updateSettings({ loadUnit: want }, null);
+  }, [programState, profile, mirrorReady, updateSettings]);
 
   // Regenerate program (goal or split change).
   //

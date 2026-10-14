@@ -836,18 +836,22 @@ export default function CirclesSection({
               )}
             </p>
             {/* Chosen-focus pulse — a count, never a ranking. */}
-            {featuredDetail && featuredFocusCount > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                <span className="font-mono tabular-nums">
-                  {featuredFocusCount}
-                </span>{" "}
-                of{" "}
-                <span className="font-mono tabular-nums">
-                  {featuredDetail.members.length}
-                </span>{" "}
-                focusing this week
-              </p>
-            )}
+            {/* Not in a Circle of one, where "1 of 1 focusing" sits above
+                the prompt to invite someone. */}
+            {featuredDetail &&
+              featuredDetail.members.length >= 2 &&
+              featuredFocusCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className="font-mono tabular-nums">
+                    {featuredFocusCount}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-mono tabular-nums">
+                    {featuredDetail.members.length}
+                  </span>{" "}
+                  focusing this week
+                </p>
+              )}
           </button>
           {isTargetReached(featured.space, uid) ? (
             /* CIRCLE-TARGET-LIFECYCLE — the deadline arrived. The owner
