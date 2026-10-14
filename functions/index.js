@@ -2631,7 +2631,16 @@ exports.rolloverChallenges = functions
         try {
           const ref = db.collection("challenges").doc(def.id);
           const snap = await ref.get();
-          if (snap.exists) continue;
+          if (snap.exists) {
+            // Words only: a description rewritten here reaches a challenge
+            // already running (the Together pass rewrote "Hybrid score:
+            // km x 100 + …" while Autumn Push was live). Nothing else on an
+            // existing challenge changes.
+            if (snap.get("description") !== def.description) {
+              await ref.update({ description: def.description });
+            }
+            continue;
+          }
           const { id: _id, startDate, endDate, ...rest } = def;
           await ref.set({
             ...rest,
