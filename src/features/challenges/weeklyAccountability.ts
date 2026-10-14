@@ -34,8 +34,29 @@ export function getWeeklyAccountability(input: {
   othersTrained: number;
   /** Weekly session target (challenge bronze tier; default 2). */
   target: number;
+  /** The week's challenge, when there is one the person hasn't joined.
+   *  Its Join button stands under this text, so the text names the
+   *  challenge and the week's count rather than a verdict ("You've hit
+   *  your 2-session week" read as done above "Join challenge"). */
+  unjoined?: { name: string };
 }): WeeklyAccountability {
-  const { myWeeklyCount, othersTrained, target } = input;
+  const { myWeeklyCount, othersTrained, target, unjoined } = input;
+
+  if (unjoined) {
+    const plural = (n: number) => (n === 1 ? "session" : "sessions");
+    return {
+      title: unjoined.name,
+      sub:
+        myWeeklyCount === 0
+          ? `Train ${target} times this week.`
+          : myWeeklyCount >= target
+            ? `${myWeeklyCount} ${plural(myWeeklyCount)} this week.`
+            : `${myWeeklyCount} of ${target} sessions this week.`,
+      ctaLabel: "Join challenge",
+      ctaTo: "/social",
+      goalMet: false,
+    };
+  }
 
   // State C — goal met: say so, and point at progress, not "do more".
   if (myWeeklyCount >= target) {

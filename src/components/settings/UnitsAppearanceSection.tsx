@@ -1,4 +1,12 @@
-import { Palette, Weight, Ruler, Moon, EyeOff, Footprints } from "lucide-react";
+import {
+  Palette,
+  Weight,
+  Ruler,
+  Moon,
+  EyeOff,
+  Footprints,
+  Dumbbell,
+} from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
@@ -6,12 +14,14 @@ import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { haptic } from "@/lib/haptic";
 import type { UserProfile } from "@/lib/auth";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 
 interface UnitsAppearanceSectionProps {
   profile: UserProfile;
   toggleUnit: (
     key:
       | "preferredWeightUnit"
+      | "liftingWeightUnit"
       | "preferredHeightUnit"
       | "preferredDistanceUnit",
     current: string
@@ -34,6 +44,7 @@ export default function UnitsAppearanceSection({
   inline = false,
 }: UnitsAppearanceSectionProps) {
   const theme = profile.darkMode ? "dark" : "light";
+  const liftUnit = resolveLiftUnit(profile.liftingWeightUnit);
   return (
     <AccordionSection
       inline={inline}
@@ -42,7 +53,7 @@ export default function UnitsAppearanceSection({
       subtitle="Weight, distance, height, theme"
     >
       <div className="space-y-4">
-        <SettingsGroup title="Units" footer="Lifting loads are always in kg.">
+        <SettingsGroup title="Units">
           <SettingsRow
             icon={Weight}
             label="Body weight"
@@ -67,6 +78,34 @@ export default function UnitsAppearanceSection({
                     "preferredWeightUnit",
                     profile.preferredWeightUnit
                   );
+                }}
+              />
+            }
+          />
+          {/* Lift18: its own switch, not body weight's. Someone who weighs
+              in in stone lifts in kg. Loads stay stored in kg; this is
+              how they read, and the plates the plan rounds to. */}
+          <SettingsRow
+            icon={Dumbbell}
+            label="Lifting loads"
+            description="Sets, targets, plates and bests"
+            trailing={
+              <SegmentedControl
+                className={CONTROL}
+                ariaLabel="Lifting load unit"
+                options={[
+                  { value: "kg", label: "kg" },
+                  { value: "lbs", label: "lb" },
+                ]}
+                value={liftUnit}
+                onChange={(next) => {
+                  if (next === liftUnit) return;
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "lifting_unit",
+                    value: next,
+                  });
+                  toggleUnit("liftingWeightUnit", liftUnit);
                 }}
               />
             }

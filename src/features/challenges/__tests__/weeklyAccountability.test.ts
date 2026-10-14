@@ -112,3 +112,44 @@ describe("getWeeklyAccountability", () => {
     expect(c.title).toMatch(/hit your/);
   });
 });
+
+/* Together pass: the week's challenge, not joined yet. Its Join button sits
+   under this text, so the text names the challenge and counts the week;
+   it never says the week is done. */
+describe("a weekly challenge not joined yet", () => {
+  const unjoined = { name: "Weekly Warrior" };
+  it("names the challenge and the week's count", () => {
+    expect(
+      getWeeklyAccountability({
+        myWeeklyCount: 0,
+        othersTrained: 3,
+        target: 2,
+        unjoined,
+      })
+    ).toMatchObject({
+      title: "Weekly Warrior",
+      sub: "Train 2 times this week.",
+    });
+    expect(
+      getWeeklyAccountability({
+        myWeeklyCount: 1,
+        othersTrained: 0,
+        target: 2,
+        unjoined,
+      }).sub
+    ).toBe("1 of 2 sessions this week.");
+  });
+
+  it("never says the week is done above Join", () => {
+    const shown = getWeeklyAccountability({
+      myWeeklyCount: 3,
+      othersTrained: 0,
+      target: 2,
+      unjoined,
+    });
+    expect(shown.title).toBe("Weekly Warrior");
+    expect(shown.sub).toBe("3 sessions this week.");
+    expect(`${shown.title} ${shown.sub}`).not.toMatch(/hit|done/i);
+    expect(shown.goalMet).toBe(false);
+  });
+});
