@@ -1,3 +1,9 @@
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  spokenDistanceUnit,
+} from "@/lib/distanceUnits";
 import { Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import type { Challenge, ChallengeParticipant } from "./useChallenges";
@@ -24,12 +30,16 @@ export default function CollectivePulse({
   challenge: Challenge;
   leaderboard?: ChallengeParticipant[];
 }) {
+  // The reader's distance unit; the board stores kilometres.
+  const unit = useDistanceUnit();
   const target = challenge.collectiveTarget ?? 0;
   if (target <= 0) return null;
   // Same source the collective ChallengeCard uses: the loaded board
   // (top 20) — an approximation that matches the card's own maths.
   const total = leaderboard.reduce((s, p) => s + (p.currentValue || 0), 0);
   const pct = Math.min((total / target) * 100, 100);
+  const shown = (km: number) => distanceIn(km * 1000, unit);
+  const label = distanceUnitLabel(unit);
 
   return (
     <div className="p-3.5 rounded-xl bg-card border border-border/40">
@@ -48,16 +58,16 @@ export default function CollectivePulse({
             {total > 0 ? (
               <>
                 <span className="font-mono tabular-nums font-semibold text-foreground">
-                  {total.toFixed(1)}
+                  {shown(total).toFixed(1)}
                 </span>{" "}
                 of{" "}
                 <span className="font-mono tabular-nums">
-                  {target.toLocaleString()}
+                  {Math.round(shown(target)).toLocaleString()}
                 </span>{" "}
-                km · every run counts
+                {label} · every run counts
               </>
             ) : (
-              "Every run counts — the first km starts the board"
+              `Every run counts — the first ${label} starts the board`
             )}
           </p>
         </div>
@@ -68,7 +78,7 @@ export default function CollectivePulse({
         aria-valuenow={Math.round(total)}
         aria-valuemin={0}
         aria-valuemax={target}
-        aria-label={`Community total: ${total.toFixed(1)} of ${target} kilometres`}
+        aria-label={`Community total: ${shown(total).toFixed(1)} of ${Math.round(shown(target))} ${spokenDistanceUnit(unit, 2)}`}
       >
         <div
           className="h-full rounded-full"

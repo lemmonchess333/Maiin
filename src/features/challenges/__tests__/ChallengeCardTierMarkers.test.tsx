@@ -20,6 +20,8 @@ import { groupText } from "@/test/localeGrouping";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+// The card reads the distance unit from the profile (km here).
+vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "km" }));
 vi.mock("../useChallengePercentile", () => ({
   useChallengePercentile: () => null,
 }));
