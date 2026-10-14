@@ -189,3 +189,55 @@ describe("liftPostRows — every post in the feed", () => {
     expect(liftPostRows({ name: "Bench" })).toEqual([]);
   });
 });
+
+/* Lift18: the post stores kg; who reads it decides the unit. */
+describe("a lift post read in lb", () => {
+  it("rows with figures are written in the reader's unit", () => {
+    const rows = liftPostRows(
+      [
+        {
+          name: "Bench Press",
+          exerciseId: "bench-press",
+          summary: "3×8×60 kg",
+          setCount: 3,
+          targetReps: 8,
+          targetWeightKg: 60,
+        },
+      ],
+      "lbs"
+    );
+    expect(rows[0].summary).toBe("3×8×132.3 lb");
+    expect(rows[0].structured?.targetWeightKg).toBe(60);
+  });
+
+  it("the oldest rows, with only a summary, keep what they say", () => {
+    expect(
+      liftPostRows([{ name: "Squat", summary: "5 x 5 100kg" }], "lbs")[0]
+        .summary
+    ).toBe("5 x 5 100kg");
+  });
+
+  it("the share sheet's preview gives the volume in the lifter's unit", () => {
+    const lift: LiftForPost = {
+      title: "Upper",
+      durationMinutes: 40,
+      exercises: [
+        {
+          exerciseName: "Bench Press",
+          exerciseId: "bench-press",
+          sets: [
+            { reps: 10, weightKg: 100, completed: true },
+            { reps: 10, weightKg: 100, completed: true },
+          ],
+        } as unknown as WorkoutExercise,
+      ],
+    };
+    // 2,000 kg is 4,409 lb.
+    expect(liftPostPreview(lift, "lbs").meta.join(" · ")).toContain(
+      `${group(4409)} lb volume`
+    );
+    expect(liftPostPreview(lift).meta.join(" · ")).toContain(
+      `${group(2000)} kg volume`
+    );
+  });
+});

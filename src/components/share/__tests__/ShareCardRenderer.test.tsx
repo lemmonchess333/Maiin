@@ -187,6 +187,40 @@ describe("ShareCardRenderer", () => {
     expect(screen.queryByText(/Back Squat/)).toBeNull();
   });
 
+  /* Lift18: the volume in the SHARER's lifting unit, as the distance is
+     in theirs. 12,400 kg is 27,337 lb. */
+  it("LIFT reads the volume in the sharer's lifting unit", () => {
+    const { container, unmount } = render(
+      <ShareCardRenderer
+        data={{ ...base, template: "lift" }}
+        offscreen={false}
+      />
+    );
+    expect(container.textContent).toContain("12.4t");
+    unmount();
+    const lb = render(
+      <ShareCardRenderer
+        data={{ ...base, template: "lift", liftUnit: "lbs" }}
+        offscreen={false}
+      />
+    );
+    expect(lb.container.textContent).toContain("27.3k lb");
+    expect(lb.container.textContent).not.toContain("12.4t");
+    lb.unmount();
+    const small = render(
+      <ShareCardRenderer
+        data={{
+          ...base,
+          template: "lift",
+          liftUnit: "lbs",
+          totalVolumeKg: 400,
+        }}
+        offscreen={false}
+      />
+    );
+    expect(small.container.textContent).toContain("882 lb");
+  });
+
   it("HYBRID surfaces the combined lift + run rhythm (the differentiator)", () => {
     render(
       <ShareCardRenderer

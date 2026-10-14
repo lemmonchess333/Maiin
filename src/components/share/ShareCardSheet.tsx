@@ -22,6 +22,7 @@ import ShareCardRenderer, {
 } from "@/components/share/ShareCardRenderer";
 import type { GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 
 /**
  * ShareCardSheet (SOCIAL S1, PR3) — the customization + export surface.
@@ -120,6 +121,7 @@ export function ShareCardSheet({
   extras?: ReactNode;
 }) {
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   const [format, setFormat] = useState<ShareFormat>("story");
   const [background, setBackground] = useState<ShareBackground>("brand");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -173,6 +175,7 @@ export function ShareCardSheet({
     /* The SHARER's unit — the card is a fixed image, so it cannot depend
        on who opens it. */
     unit,
+    liftUnit,
     template: data.template,
     format,
     background,

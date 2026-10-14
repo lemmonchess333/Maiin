@@ -70,8 +70,9 @@ export function formatSetLoad(kg: number, unit: LiftUnit): string {
   return kg === 0 ? "BW" : formatLoad(kg, unit);
 }
 
-/** Volume (load × reps, stored as kg) in the lifter's unit, unrounded: the
- *  caller rounds or abbreviates it as its figure needs. */
+/** A kg quantity that is not one load (volume, load × reps, or the gap
+ *  between two loads) in the lifter's unit, unrounded: the caller rounds or
+ *  abbreviates it as its figure needs. */
 export function liftVolumeIn(kg: number, unit: LiftUnit): number {
   if (!Number.isFinite(kg)) return 0;
   return unit === "lbs" ? kgToLb(kg) : kg;

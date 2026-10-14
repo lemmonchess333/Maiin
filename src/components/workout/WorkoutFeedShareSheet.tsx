@@ -31,6 +31,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import type { Workout } from "@/hooks/useWorkouts";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -62,6 +63,7 @@ export default function WorkoutFeedShareSheet({
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const held = gate.needsVerification || isRestricted;
   const [caption, setCaption] = useState("");
+  const liftUnit = useLiftUnit();
   const [posting, setPosting] = useState(false);
 
   const captionIsProfane = containsProfanity(caption);
@@ -70,7 +72,7 @@ export default function WorkoutFeedShareSheet({
     exercises: workout.exercises ?? [],
     durationMinutes: workout.durationMinutes ?? 0,
   };
-  const preview = liftPostPreview(lift);
+  const preview = liftPostPreview(lift, liftUnit);
 
   const share = async (visibility: "followers" | "public") => {
     // Held while the email is unverified or the account is restricted —

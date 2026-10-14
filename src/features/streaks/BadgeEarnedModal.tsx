@@ -3,7 +3,14 @@ import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
-import { BADGE_ART, BADGE_ICONS, SEAL_ART, TIER_COLORS } from "./badges";
+import {
+  BADGE_ART,
+  BADGE_ICONS,
+  SEAL_ART,
+  TIER_COLORS,
+  badgeDescription,
+} from "./badges";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { BadgeHex } from "./BadgeHex";
 import { TIER_PALETTES } from "./tierPalettes";
 import { SealFace, SealShards, SealSweep, SealDust } from "./BadgeSeal";
@@ -86,6 +93,7 @@ export function BadgeEarnedContent({
   inline?: boolean;
 }) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(!inline);
+  const liftUnit = useLiftUnit();
   const sealBtnRef = useRef<HTMLButtonElement>(null);
   const reduce = useReducedMotion();
   const [taps, setTaps] = useState(0);
@@ -493,7 +501,7 @@ export function BadgeEarnedContent({
               </p>
               <p className="text-xl font-bold text-foreground">{badge.name}</p>
               <p className="text-sm text-muted-foreground">
-                {badge.description}
+                {badgeDescription(badge, liftUnit)}
               </p>
               {badge.id === "first_step" && (
                 <p

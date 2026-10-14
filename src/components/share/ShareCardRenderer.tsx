@@ -9,6 +9,7 @@ import {
 } from "@/lib/distanceUnits";
 import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 
 /** `12.3km` — the compact no-space form this card's small stats use. */
 function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
@@ -70,6 +71,9 @@ export interface ShareCardRenderData {
    * who happens to open it, which a PNG cannot do anyway.
    */
   unit: DistanceUnit;
+  /** The SHARER's lifting unit (Lift18), for the same reason. Kg when
+   *  missing. */
+  liftUnit?: LiftUnit;
   template: ShareTemplate;
   format: ShareFormat;
   background: ShareBackground;
@@ -160,8 +164,15 @@ function fmtDuration(sec?: number): string {
   return sec == null ? "--" : formatClock(sec);
 }
 
-function fmtVolume(kg?: number): string {
+function fmtVolume(kg?: number, liftUnit: LiftUnit = "kg"): string {
   if (!kg) return "0";
+  if (liftUnit === "lbs") {
+    // No lb counterpart to the tonne, so thousands read "27.1k lb".
+    const lb = liftVolumeIn(kg, liftUnit);
+    return lb >= 1000
+      ? `${(lb / 1000).toFixed(1)}k lb`
+      : `${Math.round(lb)} lb`;
+  }
   return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
 }
 
@@ -475,7 +486,7 @@ function RecapTemplate({
         )}
         {show("liftVolume") && (
           <Stat
-            value={fmtVolume(data.totalVolumeKg)}
+            value={fmtVolume(data.totalVolumeKg, data.liftUnit)}
             label="lifted"
             scale={scale}
             color={LIFT_PURPLE}
@@ -665,7 +676,7 @@ function LiftTemplate({
       )}
       {show("volume") && (
         <Hero
-          value={fmtVolume(data.totalVolumeKg)}
+          value={fmtVolume(data.totalVolumeKg, data.liftUnit)}
           label="total volume"
           color="#ffffff"
           scale={scale}
@@ -739,7 +750,7 @@ function HybridTemplate({
       >
         {show("liftVolume") && (
           <Hero
-            value={fmtVolume(data.totalVolumeKg)}
+            value={fmtVolume(data.totalVolumeKg, data.liftUnit)}
             label="lifted"
             color={LIFT_PURPLE}
             scale={scale * 0.62}

@@ -4,6 +4,7 @@ import { isVolumeEligible } from "./runStatsEligibility";
 import { localDateString, startOfLocalWeek } from "./dateHelpers";
 import { fetchSavedRuns } from "./savedRuns";
 import { fetchSavedWorkouts, workoutTonnageKg } from "./savedWorkouts";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 
 export interface LeaderboardEntry {
   uid: string;
@@ -54,6 +55,21 @@ export const CHALLENGE_LABELS: Record<
   weekly_distance: { title: "Running Distance", unit: "km" },
   weekly_workouts: { title: "Workouts", unit: "sessions" },
 };
+
+/** A board's figure as the reader reads it. The volume board ranks stored
+ *  kg; an lb reader sees lb (Lift18). The order is the same either way. */
+export function boardFigure(
+  challenge: ChallengeType,
+  value: number,
+  liftUnit: LiftUnit
+): { value: number; unit: string } {
+  if (challenge === "weekly_volume")
+    return {
+      value: Math.round(liftVolumeIn(value, liftUnit)),
+      unit: liftUnitLabel(liftUnit),
+    };
+  return { value, unit: CHALLENGE_LABELS[challenge].unit };
+}
 
 export async function buildLeaderboard(
   currentUid: string,
