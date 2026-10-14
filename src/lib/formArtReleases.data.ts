@@ -285,6 +285,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 3,
   },
+  deadlift: {
+    folder: "2026-10-14",
+    version: "anatomy-v3-2026-10-14-reviewed-original-deadlift-v1",
+    width: 940,
+    height: 940,
+    reference: 1,
+  },
   "decline-bench": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",

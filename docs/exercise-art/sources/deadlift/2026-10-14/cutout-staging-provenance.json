@@ -1,0 +1,7 @@
+{
+  "originalProjectScript": "scripts/art/cut-out-form-art.ts",
+  "originalScriptSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "pixelAlgorithmChanged": false,
+  "adaptations": "Only dependency paths, staging input registry and staging output root changed; full project cutout algorithm preserved",
+  "productionFilesTouched": false
+}

@@ -427,6 +427,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
     sha256: "a008d93007f511768e47bbc5dc20f3421e0c8082c22822ec4e151cac1a83be20",
   },
+  deadlift: {
+    src: "form-art/deadlift.webp",
+    width: 480,
+    height: 355,
+    keyed: true,
+    source: "form-frames/deadlift/1.webp",
+    sourceSha256:
+      "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+    sha256: "4682b99cc6b207ebeb0186d460758601270d229bce4e22bf9b1182465e9dcfa8",
+  },
   "decline-bench": {
     src: "form-art/decline-bench.webp",
     width: 480,

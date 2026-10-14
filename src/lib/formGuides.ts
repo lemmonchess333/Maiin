@@ -379,29 +379,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
    * bodyRig.test.ts check the labels against that, not against a
    * convention assumed here. */
 
-  deadlift: {
-    beats: [
-      { t: 1, label: "Set up", cue: "Bar over mid-foot, shins close." },
-      {
-        t: 0.8,
-        label: "Take the slack",
-        cue: "Chest up, lats tight, arms straight.",
-      },
-      {
-        t: 0.5,
-        label: "Break the floor",
-        cue: "Push the legs, bar stays against you.",
-      },
-      {
-        t: 0.25,
-        label: "Past the knees",
-        cue: "Hips and shoulders rise together.",
-      },
-      { t: 0, label: "Lockout", cue: "Stand tall, glutes squeezed." },
-      { t: 1, label: "Return", cue: "Hips back first, then bend the knees." },
-    ],
-  },
-
   "pull-ups": {
     beats: [
       { t: 0, label: "Dead hang", cue: "Arms straight, shoulders active." },

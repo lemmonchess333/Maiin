@@ -1,0 +1,21 @@
+{
+  "status": "terminal",
+  "head": "d16e00d77eea6bcb3526c2a21e14c48cbaa8663a",
+  "phase": "final",
+  "finalStatus": [
+    " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+    " M src/lib/__tests__/formArtCutouts.test.ts",
+    " M src/lib/__tests__/formArtOwnerRelease.test.ts",
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/formGuides.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/releases/2026-10-14/",
+    "?? docs/exercise-art/sources/deadlift/",
+    "?? masters/deadlift/",
+    "?? public/form-art/deadlift.webp",
+    "?? public/form-frames/deadlift/"
+  ],
+  "exitCode": 1,
+  "finishedAt": "2026-10-14T11:48:02.8237602Z"
+}
