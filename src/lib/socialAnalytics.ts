@@ -75,8 +75,8 @@ export interface SocialEventMetadata {
   destination?: "instagram" | "sheet";
   /** social_follow: where in the feed the follow came from. */
   followSource?: "post" | "people_row";
-  /** challenge_joined: the challenge's id ("weekly-2026-10-12",
-   *  "monthly-2026-10"), whose prefix names its kind. */
+  /** challenge_joined: the challenge's id, whose prefix ("weekly-",
+   *  "monthly-") names its kind. */
   challengeId?: string;
   /** circle_created: the Circle's template. */
   circleType?: string;
