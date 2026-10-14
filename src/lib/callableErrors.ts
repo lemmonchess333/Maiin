@@ -38,3 +38,16 @@ export function describeRejection(err: unknown): string | null {
   }
   return null;
 }
+
+/** Whether a callable refused the call for coming too often
+ *  (`resource-exhausted`): trying again at once is refused too. */
+export function isRateLimitedRejection(err: unknown): boolean {
+  return String((err as { code?: unknown })?.code ?? "").endsWith(
+    "resource-exhausted"
+  );
+}
+
+/** What a plan save refused for coming too often says, in place of
+ *  "Try again", which would be refused as well. */
+export const PLAN_SAVES_TOO_OFTEN =
+  "You've changed your plan a lot in the last few minutes. Wait a few minutes, then save again.";

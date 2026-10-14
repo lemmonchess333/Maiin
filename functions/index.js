@@ -971,10 +971,12 @@ exports.configurePlan = functions
       uid
     );
 
-    // Same rate-limit envelope as onboarding. The Configure Plan
-    // wizard is a deliberate user action with a confirm step, not a
-    // hot path, so 5/10min is plenty even on retake flows.
-    const limited = await isRateLimited(uid, "configurePlan", 5, 600_000);
+    // Every Lift plan and Run plan save comes through here, not only the
+    // setup wizard it was first written for, so the onboarding envelope
+    // (5 in 10 minutes) refused a person's sixth settings change in a
+    // row. 30 in 10 minutes is more than a person makes and still bounds
+    // a scripted client.
+    const limited = await isRateLimited(uid, "configurePlan", 30, 600_000);
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
