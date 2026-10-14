@@ -9,13 +9,8 @@ import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
 import { formatDayMonth } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
-import {
-  formatSetLoad,
-  liftUnitLabel,
-  liftVolumeIn,
-  loadIn,
-  wholeLoadIn,
-} from "@/lib/liftLoad";
+import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
+import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -260,13 +255,21 @@ export default function ExerciseHistory() {
       } else if (metric === "1RM") {
         value = wholeLoadIn(s.e1rm, liftUnit);
       } else if (metric === "Max Weight") {
-        value = loadIn(s.maxWeight, liftUnit);
+        value = kitLoadIn(s.maxWeight, liftUnit, exercise?.id);
       } else {
         value = liftVolumeIn(s.volume, liftUnit);
       }
       return { date: s.date, value, isPR: prDates.has(s.date) };
     });
-  }, [filteredSessions, metric, isBodyweight, isTimed, prDates, liftUnit]);
+  }, [
+    filteredSessions,
+    metric,
+    isBodyweight,
+    isTimed,
+    prDates,
+    liftUnit,
+    exercise?.id,
+  ]);
 
   // For BW exercises the toggle simplifies to Reps / Volume — no
   // weight-based option makes sense when the weight is implicit. The
@@ -466,7 +469,7 @@ export default function ExerciseHistory() {
                     <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
                       {isBodyweight && pr.weightKg === 0
                         ? "BW"
-                        : `${loadIn(pr.weightKg, liftUnit)}`}
+                        : `${kitLoadIn(pr.weightKg, liftUnit, exercise?.id)}`}
                       {pr.weightKg > 0 && !isBodyweight && (
                         <>
                           {" "}
@@ -618,7 +621,7 @@ export default function ExerciseHistory() {
                           {s.topSet
                             ? isTimed
                               ? `${s.topSet.reps}s`
-                              : `${formatSetLoad(s.topSet.weightKg, liftUnit)} × ${s.topSet.reps}`
+                              : `${s.topSet.weightKg === 0 ? "BW" : formatKitLoad(s.topSet.weightKg, liftUnit, exercise?.id)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
                         {delta != null && delta !== 0 && (
@@ -634,7 +637,7 @@ export default function ExerciseHistory() {
                             {delta > 0 ? "+" : ""}
                             {isTimed
                               ? `${delta} s`
-                              : `${loadIn(delta, liftUnit)} ${unitLabel}`}{" "}
+                              : `${kitLoadIn(delta, liftUnit, exercise?.id)} ${unitLabel}`}{" "}
                             from last
                           </p>
                         )}

@@ -7,7 +7,8 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import ExerciseThumb from "./ExerciseThumb";
 import LoweredLine from "./LoweredLine";
 import StretchedLine from "./StretchedLine";
-import { liftUnitLabel, loadIn } from "@/lib/liftLoad";
+import { liftUnitLabel } from "@/lib/liftLoad";
+import { kitLoadIn } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 
 /**
@@ -80,7 +81,7 @@ export default function ExerciseRowSummary({
               {" · "}
               <span className="font-mono tabular-nums">
                 {isBW ? "+" : ""}
-                {loadIn(exercise.weight, liftUnit)}
+                {kitLoadIn(exercise.weight, liftUnit, exercise.exerciseId)}
               </span>
               {` ${liftUnitLabel(liftUnit)}`}
             </>
@@ -93,6 +94,7 @@ export default function ExerciseRowSummary({
               sets={lastSets}
               timed={exercise.repUnit === "seconds"}
               bodyweight={isBW}
+              exerciseId={exercise.exerciseId}
             />
           </p>
         )}
@@ -122,10 +124,12 @@ function LastSetsLine({
   sets,
   timed,
   bodyweight,
+  exerciseId,
 }: {
   sets: readonly LastSet[];
   timed: boolean;
   bodyweight: boolean;
+  exerciseId: string | undefined;
 }) {
   const liftUnit = useLiftUnit();
   const reps = sets.map((set) => set.reps);
@@ -137,7 +141,7 @@ function LastSetsLine({
         <>
           <span className="font-mono tabular-nums">
             {bodyweight ? "+" : ""}
-            {loadIn(group.weightKg, liftUnit)}
+            {kitLoadIn(group.weightKg, liftUnit, exerciseId)}
           </span>{" "}
           {liftUnitLabel(liftUnit)}
         </>

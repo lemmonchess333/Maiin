@@ -25,7 +25,8 @@
 
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { isTimedExerciseId } from "@/features/program/repUnits";
-import { liftUnitLabel, loadIn, type LiftUnit } from "@/lib/liftLoad";
+import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { kitLoadIn } from "@/features/program/loadSteps";
 
 export interface ExerciseSummaryInput {
   setCount: number;
@@ -59,7 +60,8 @@ export function formatExerciseSummary(
       ? `${sets}×${reps} BW`
       : `${sets}×${reps}`;
   }
-  const shown = unit === "lbs" ? loadIn(weight, unit) : weight;
+  const shown =
+    unit === "lbs" ? kitLoadIn(weight, unit, input.exerciseId) : weight;
   // Drop trailing .0 on round weights so "100 kg" doesn't become "100.0 kg".
   const weightStr = Number.isInteger(shown) ? String(shown) : shown.toFixed(1);
   // Spaced unit — the app's one unit treatment ("60 kg", never "60kg").
