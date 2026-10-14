@@ -52,6 +52,9 @@ export type SettingsToggle =
   | "weekly_summary_email"
   | "default_visibility"
   | "weight_unit"
+  /** Lifting loads (kg ↔ lb, Lift18): its own control, not body weight's,
+   *  so it has its own name in the stream. */
+  | "lifting_unit"
   /** HEIGHT (cm ↔ ft). It emitted `distance_unit` from the day it was
    *  written, which was harmless only while nothing else could claim that
    *  name. A real run-distance toggle now can, and the two would have been
