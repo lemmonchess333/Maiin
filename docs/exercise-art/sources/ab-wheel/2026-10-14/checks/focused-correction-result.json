@@ -1,0 +1,129 @@
+{
+  "phase": "normal-whole-file-focus-after-actual-correction",
+  "status": "terminal",
+  "startedAt": "2026-10-14T23:10:29.841318+00:00",
+  "head": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "initialStatus": [
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.json",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.png",
+    "?? docs/exercise-art/releases/2026-10-14/ab-wheel.json",
+    "?? docs/exercise-art/sources/ab-wheel/",
+    "?? masters/ab-wheel/",
+    "?? public/form-art/ab-wheel.webp",
+    "?? public/form-frames/ab-wheel/"
+  ],
+  "targets": [
+    "src/lib/__tests__/bodyRig.test.ts",
+    "src/lib/__tests__/formArtOwnerRelease.test.ts",
+    "scripts/art/form-art-releases.test.ts",
+    "src/features/program/__tests__/trainingBlock.timezone.test.ts",
+    "scripts/release-debug-token.test.ts"
+  ],
+  "command": "npm run test -- src/lib/__tests__/bodyRig.test.ts src/lib/__tests__/formArtOwnerRelease.test.ts scripts/art/form-art-releases.test.ts src/features/program/__tests__/trainingBlock.timezone.test.ts scripts/release-debug-token.test.ts",
+  "actualInvocation": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\npm\\bin\\npm-cli.js",
+    "run",
+    "test",
+    "--",
+    "src/lib/__tests__/bodyRig.test.ts",
+    "src/lib/__tests__/formArtOwnerRelease.test.ts",
+    "scripts/art/form-art-releases.test.ts",
+    "src/features/program/__tests__/trainingBlock.timezone.test.ts",
+    "scripts/release-debug-token.test.ts"
+  ],
+  "pathPrefixes": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin",
+    "C:/Program Files/Git/bin"
+  ],
+  "resolvedExecutables": {
+    "node": "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.EXE",
+    "npm": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin\\npm.CMD",
+    "npm.cmd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\.bin\\npm.cmd",
+    "git": "C:/Program Files/Git/bin\\git.EXE",
+    "bash": "C:/Program Files/Git/bin\\bash.EXE"
+  },
+  "testNameFilters": false,
+  "retryAdded": false,
+  "timeoutChanges": false,
+  "firstFullLogSha256": "cff94bf7b6ca8cb1176d5c225ec1b05e1963b55903c0ad832519cfdd0c18c9f7",
+  "freshBaselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "freshBaselineLogSha256": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+  "actualCorrection": {
+    "file": "src/lib/releasedFormPlacards.ts",
+    "beforeT": [0, 0.2, 0.4, 0.6, 0.8, 1],
+    "afterT": [0, 0.5, 1, 1, 0.5, 0],
+    "onlyNumericPositionsChangedProvenByReconstructionHash": true,
+    "beforeFileSha256": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+    "afterFileSha256": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "allOtherFrozenFileBytesUnchanged": true,
+    "imagesLabelsCuesSetupUnchanged": true
+  },
+  "snapshotBeforeSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "elapsedSeconds": 35.34,
+  "afterRunStatus": [
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.json",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.png",
+    "?? docs/exercise-art/releases/2026-10-14/ab-wheel.json",
+    "?? docs/exercise-art/sources/ab-wheel/",
+    "?? masters/ab-wheel/",
+    "?? public/form-art/ab-wheel.webp",
+    "?? public/form-frames/ab-wheel/"
+  ],
+  "snapshotRestoredFromExactBytes": false,
+  "finishedAt": "2026-10-14T23:11:13.552392+00:00",
+  "exitCode": 0,
+  "finalHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "finalStatus": [
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.json",
+    "?? docs/exercise-art/cutout-sources/ab-wheel.png",
+    "?? docs/exercise-art/releases/2026-10-14/ab-wheel.json",
+    "?? docs/exercise-art/sources/ab-wheel/",
+    "?? masters/ab-wheel/",
+    "?? public/form-art/ab-wheel.webp",
+    "?? public/form-frames/ab-wheel/"
+  ],
+  "snapshotFinalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "unexpectedFileByteChanges": [],
+  "inputBytesUnchanged": true,
+  "actualTestResult": {
+    "testFiles": {
+      "failed": 0,
+      "passed": 5,
+      "skipped": 0,
+      "total": 5
+    },
+    "tests": {
+      "failed": 0,
+      "passed": 100,
+      "skipped": 0,
+      "total": 100
+    },
+    "verbatimSummary": [
+      "Test Files  5 passed (5)",
+      "Tests  100 passed (100)",
+      "Duration  16.40s (tests 75%, setup 15%, import 4%, transform 4%, worker 1%)"
+    ],
+    "failures": [],
+    "failureHeaderCount": 0,
+    "stagesInvoked": ["test"],
+    "logSha256": "b093be98ebb3ff464495e294d1ccbd6fad4d4bfa7480da6e86a2cceab6976bb9"
+  },
+  "completeFiveWholeFileResult": true,
+  "inputStatePreserved": true,
+  "allFiveWholeFilesPassed": true,
+  "firstFullRunRemainsNonGreen": true,
+  "actualRegressionDisposition": "fixed-whole-file-pass-reviewed",
+  "timeoutDisposition": "normal-whole-file-nonreproduction",
+  "limitations": "Passing this normal batch does not relabel the first full run green or its new timeout cases pre-existing. Root reviews the evidence; final full current-head required CI remains mandatory."
+}

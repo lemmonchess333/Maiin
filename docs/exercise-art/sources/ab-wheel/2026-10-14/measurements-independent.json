@@ -1,0 +1,229 @@
+{
+  "exerciseId": "ab-wheel",
+  "reviewer": "independent native measurement review",
+  "scope": "Original native pixels and visual source review only. No source edits, anatomical transforms, generated pixels, registration, public assets or completion credit.",
+  "sources": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\master-brace-original.png",
+      "sha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+      "nativeSize": [1536, 1024],
+      "mode": "RGB"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\roll-original.png",
+      "sha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+      "nativeSize": [1536, 1024],
+      "mode": "RGB"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\reach-original.png",
+      "sha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+      "nativeSize": [1536, 1024],
+      "mode": "RGB"
+    }
+  ],
+  "canonical": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "visuallyInspected": true
+  },
+  "sourceOrder": ["Brace", "Roll", "Reach"],
+  "units": "native raster pixels; dimensions are projected visible contours, not 3D calibration",
+  "proposedCommonCrop": {
+    "boxXYXY": [48, 8, 1496, 932],
+    "size": [1448, 924],
+    "status": "Coordinate conversion only; crop authoring and final asset recheck owned by parent. All dimensions unchanged."
+  },
+  "proposedReleaseFixedAnchors": [
+    {
+      "name": "Exposed upper-right outer knee-pad edge",
+      "nativePoints": [
+        [588, 810],
+        [588, 810],
+        [588, 810]
+      ],
+      "expectedCropPoints": [
+        [540, 802],
+        [540, 802],
+        [540, 802]
+      ],
+      "maxPairwiseEuclideanDriftPx": 0.0,
+      "limitPx": 1,
+      "pass": true,
+      "method": "Rightmost qualifying pixel in the exposed right pad ROI, then first qualifying y at that x. Actual pad boundary, not a canvas coordinate.",
+      "roiXYXY": [575, 802, 600, 846],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      }
+    },
+    {
+      "name": "Midpoint of exposed frontmost lower rounded knee-pad edge plateau",
+      "nativePoints": [
+        [383.0, 863],
+        [383.5, 863],
+        [383.5, 863]
+      ],
+      "expectedCropPoints": [
+        [335.0, 855],
+        [335.5, 855],
+        [335.5, 855]
+      ],
+      "maxPairwiseEuclideanDriftPx": 0.5,
+      "limitPx": 1,
+      "pass": true,
+      "method": "Lowest qualifying pad row in exposed front pad ROI; midpoint of its qualifying x range. The rounded front corner has a real visible plateau, so a half-pixel midpoint is retained without rounding.",
+      "roiXYXY": [350, 845, 460, 880],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      },
+      "sensitivity": {
+        "threshold45Points": [
+          [383.0, 863],
+          [383.5, 863],
+          [383.0, 863]
+        ],
+        "threshold50Points": [
+          [382.5, 863],
+          [383.5, 863],
+          [383.0, 863]
+        ],
+        "interpretation": "Threshold40/45/50 gives the same y863 and front midpoint within1px across all sources and sampled thresholds. Thresholds20-35 can capture floor/shadow; those points are rejected as pad features."
+      }
+    }
+  ],
+  "proposedReleaseInvariantDimensions": [
+    {
+      "name": "Projected full visible pad horizontal extent",
+      "valuesPx": [352, 351, 352],
+      "maxDeviationFromBracePercent": 0.2840909090909091,
+      "limitPercent": 1,
+      "pass": true,
+      "method": "Rightmost exposed pad x minus leftmost exposed pad x, common neutral threshold40. Measures actual pad footprint extent.",
+      "roisXYXY": [
+        [230, 808, 258, 849],
+        [575, 802, 600, 846]
+      ],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      },
+      "caveat": "Leftmost y is unstable on a rounded antialiased edge and is not selected as a fixed anchor."
+    },
+    {
+      "name": "Projected exposed bright-neutral tyre vertical contour span",
+      "valuesPx": [193, 193, 193],
+      "topYs": [686, 700, 717],
+      "bottomYs": [879, 893, 910],
+      "maxDeviationFromBracePercent": 0.0,
+      "limitPercent": 1,
+      "pass": true,
+      "method": "At least10 consecutive neutral tyre pixels in each qualifying row, common brightness threshold30, outer top/bottom exposed tyre ROIs. Run filter excludes isolated human-outline anti-alias pixels.",
+      "roisBySource": [
+        [
+          [735, 675, 799, 712],
+          [730, 865, 826, 899]
+        ],
+        [
+          [1130, 689, 1197, 733],
+          [1130, 880, 1226, 915]
+        ],
+        [
+          [1330, 705, 1397, 754],
+          [1310, 900, 1411, 936]
+        ]
+      ],
+      "pixelRule": {
+        "minRGB": 30,
+        "maxRGB": 140,
+        "maxChannelSpread": 12,
+        "minimumContiguousHorizontalRun": 10
+      },
+      "sensitivity": {
+        "threshold35SpansPx": [192, 193, 193],
+        "maxDeviationFromBracePercent": 0.5208333333333333,
+        "interpretation": "193px at threshold30 across all3; threshold35 yields192/193/193px, within1%. Threshold40 erodes the dark lower tyre rim and is unsuitable for this contour."
+      },
+      "caveat": "This is a consistently defined visible raster tyre contour. It is not a true3D radius, unoccluded geometric diameter, axle length or calibrated grip-width claim."
+    }
+  ],
+  "additionalPadDiagnostic": {
+    "name": "Frontmost lower corner to upper-right corner projected distance",
+    "valuesPx": [211.74040710265956, 211.25636085098125, 211.25636085098125],
+    "maxDeviationFromBracePercent": 0.22860362757478986,
+    "status": "Additional observed pad footprint measurement; not needed as the second proposed release dimension."
+  },
+  "rawOutOfLimitDiagnosticsRetained": {
+    "nearTrainerBrightToeMidpoints": {
+      "points": [
+        [108.5, 825],
+        [109.0, 826],
+        [108.5, 825]
+      ],
+      "maxPairwiseEuclideanDriftPx": 1.118033988749895,
+      "strict1pxPass": false
+    },
+    "farTrainerBrightToeMidpoints": {
+      "points": [
+        [187.0, 814],
+        [187.0, 815],
+        [186.5, 815]
+      ],
+      "maxPairwiseEuclideanDriftPx": 1.118033988749895,
+      "strict1pxPass": false
+    },
+    "nearTrainerProjectedBrightVerticalSpan": {
+      "valuesPx": [185, 187, 188],
+      "maxDeviationFromBracePercent": 1.6216216216216217,
+      "strict1percentPass": false
+    },
+    "farTrainerProjectedBrightVerticalSpan": {
+      "valuesPx": [184, 186, 188],
+      "maxDeviationFromBracePercent": 2.1739130434782608,
+      "strict1percentPass": false
+    },
+    "shoeDiagnosticInterpretation": "These brightness extrema show genuine small contour redraw/heel-pitch variation. They are not selected as release anchors/dimensions and must not be represented as passing1px/1%. The visible trainers remain supported without distracting sliding; no anatomy fitting was used.",
+    "visibleAxleEndcapProjectedHorizontalSpan": {
+      "valuesPx": [289, 277, 260],
+      "maxDeviationFromBracePercent": 10.034602076124568,
+      "strict1percentPass": false,
+      "method": "Neutral threshold30 near exposed left cap xmin to far exposed right cap xmax, using native endcap ROIs in equipment-readonly-extraction.json.",
+      "interpretation": "A real10.03%2D shortening of exposed endcap extent; not proof of changing3D shaft length. No camera/yaw explanation is established. It is minor exposed-tip/projection drawing variation visually: both grips remain around one axle, connected to one hub, with a comparable tyre and no gross equipment/contact break."
+    },
+    "kneeContours": "Independent cycle reviewer recorded near silhouette around(+1,+1),far(+3,+1) versus Brace. These exceed a blanket1px contour claim, remain small visible redraws, and are disclosed. This review does not force knee locations into1px."
+  },
+  "rejectedMeasurementAttempts": [
+    "Leftmost pad bright pixel y varies822/815/818 on rounded edge; unsuitable as fixed anchor.",
+    "First wheel neutral pixel without a contiguous run is contaminated by human forearm contour anti-aliases; initial top/bottom spans in equipment-readonly-extraction.json are not wheel-radius measurements.",
+    "Threshold20-35 lower pad ROI can capture the floor shadow to its ROI boundary; rejected, not accepted as a pad anchor.",
+    "Projected head bounding-box height varies with head pitch and visible chin/neck articulation; it cannot establish an invariant skull length."
+  ],
+  "nativePhysicalReview": {
+    "sequence": "Three genuinely different intact configurations: upright kneeling brace, mid rollout with shoulder/hip travel, and longer controlled reach; reverse reuse is truthful for a controlled return.",
+    "endpoint": "Reach retains residual hip flexion and a neutral braced trunk. Do not label perfectly straight or fully horizontal. It visibly stays clear of the floor without lumbar sag or chest collapse.",
+    "contacts": "Both knees remain supported on the pad; rear trainers rest behind them; both hands appear to retain closed grips on the single axle/hub throughout. Forward wheel y travel follows the oblique ground plane and is not alone evidence of losing floor contact.",
+    "identity": "Native full sources and FA56 were visually inspected. Same bald faceless lean pale anatomical identity, no shorts or waistband, smooth neutral featureless pelvis and white trainers. No gross head/body scale switch or malformed joint/limb is apparent. Head pitch and limb foreshortening change; exact3D proportions cannot be proved from2D rasters.",
+    "equipment": "One tyre with comparable visible contour dimensions and persistent hub/grips. Exposed shaft tips shorten in projection; minor drawing variation is present and disclosed, not an exact rigid-shaft pass.",
+    "colour": "Native source palette is not certified as final exact primary/secondary release colours. Ordinary approved colour/contour finishing and final native/mobile review remain separate gates.",
+    "judgment": "Native physical sequence is usable for a controlled-range kneeling rollout proposal under the revised allowance for small nondistracting contour variation. Raw source pad anchors and measured pad/tyre projected dimensions satisfy the proposed1px/1% checks. This is not final release acceptance."
+  },
+  "sourceIntegrity": {
+    "sha256CheckedBeforeReport": true,
+    "humanPixelEdits": false,
+    "gearEdits": false,
+    "imageGeneration": false,
+    "publicEdits": false
+  },
+  "evidenceFiles": [
+    "measure-native-readonly.py",
+    "native-readonly-extraction.json",
+    "equipment-readonly-extraction.json",
+    "measure-pad-features-readonly.py",
+    "pad-feature-readonly-extraction.json",
+    "wheel-run-readonly-extraction.json"
+  ]
+}

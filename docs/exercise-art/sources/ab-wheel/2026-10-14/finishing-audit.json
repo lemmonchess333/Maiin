@@ -1,0 +1,44 @@
+[
+  {
+    "pose": 1,
+    "source": "master-brace-original.png",
+    "sourceSha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+    "anatomyGeometryTransform": false,
+    "equipmentPixelsChanged": false,
+    "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+    "commonCrop": [48, 8, 1496, 932],
+    "dimensions": [1448, 924],
+    "newGradient": false,
+    "exactPrimaryPixels": 15215,
+    "exactSecondaryPixels": 25709,
+    "reopenedOraExact": true
+  },
+  {
+    "pose": 2,
+    "source": "roll-original.png",
+    "sourceSha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+    "anatomyGeometryTransform": false,
+    "equipmentPixelsChanged": false,
+    "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+    "commonCrop": [48, 8, 1496, 932],
+    "dimensions": [1448, 924],
+    "newGradient": false,
+    "exactPrimaryPixels": 18188,
+    "exactSecondaryPixels": 27270,
+    "reopenedOraExact": true
+  },
+  {
+    "pose": 3,
+    "source": "reach-original.png",
+    "sourceSha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+    "anatomyGeometryTransform": false,
+    "equipmentPixelsChanged": false,
+    "allNeutralPixelsOutsideExistingColourFieldsExact": true,
+    "commonCrop": [48, 8, 1496, 932],
+    "dimensions": [1448, 924],
+    "newGradient": false,
+    "exactPrimaryPixels": 17619,
+    "exactSecondaryPixels": 25010,
+    "reopenedOraExact": true
+  }
+]

@@ -1,0 +1,15 @@
+Use case: scientific-educational.
+Asset type: an intact whole-athlete exercise master for the existing Tropos exercise demonstration catalogue.
+Input image 1 is the sole athlete identity, anatomical proportions, trainer design and rendering-style authority. It is a reference, not a clothed image to retouch. Create one new whole pose of that same athlete.
+
+Scene: plain black studio backdrop, one thin small neutral grey knee pad on an unobtrusive horizontal floor. Landscape composition with generous empty space to the right for a later forward rollout, full head, body, both knees and both white trainers included. No text, labels, arrows or UI.
+
+Pose: the starting BRACE position of a kneeling two-hand AB WHEEL ROLLOUT. Athlete faces right in a near-side three-quarter front view that clearly shows the near abdominal surface and both separate closed hand grips. Both knees planted hip-width on the pad. Both shins and white trainers rest behind the knees. Hips over and slightly ahead of the knees, never sitting on heels. Lean forward with a neutral braced spine. Straight elbows, hands on the two opposite handles of one compact wheel directly under the shoulders. Wrists aligned with the rigid transverse axle. Each hand firmly wraps its own handle; the wheel sits between the hands. Head follows the neutral neck and looks down toward the wheel.
+
+Equipment: one realistic modest single dark-grey rubber ab wheel, circular round tyre, rigid steel axle and two identical short dark neutral handles. Tyre bottom touches the floor. Constant physical wheel shape, no huge load or extra wheels, no brands.
+
+Athlete: exactly the reference's bald faceless lean light-grey/white adult anatomical mannequin, the same detailed fine contours, pale neutral modelling and full white trainers. Preserve body proportions, head shape, shoulder width and slim limbs. Keep the reference's smooth neutral featureless pelvic surface and visible anatomical thighs/hips; no shorts, garment seam, waistband or underwear outline, no genital detail or central slit. No muscle inflation, no photoreal skin or new stylised body.
+
+Muscle fields: primary abdominal/core muscles including visible rectus abdominis and obliques use the existing strongest purple #7B72E9; secondary visible lats and deltoids use existing lighter lilac #9590E0. All other anatomy remains the canonical neutral pale grey/white, including chest, arms and legs. Keep fine inherited contour and pale neutral shading visible in each field. No broad new gradient, no glow, no purple tint across unrelated anatomy.
+
+This is one clean high-resolution pose, not a grid, storyboard or collage. Keep the camera fixed and the pad/shins/trainers clearly grounded so this source can anchor adjacent rollout poses. Sharp unclipped line work, no painterly blur, no extra fingers or disconnected joints.
