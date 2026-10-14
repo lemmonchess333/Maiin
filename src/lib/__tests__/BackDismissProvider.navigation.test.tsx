@@ -41,7 +41,7 @@ it.each([
   ).toBe(destination);
 });
 
-it("still consumes the overlay entry when closing without navigation", () => {
+it("still consumes the overlay entry when closing without navigation", async () => {
   const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
   const { rerender } = render(
     <BackDismissProvider>
@@ -53,5 +53,30 @@ it("still consumes the overlay entry when closing without navigation", () => {
       <Overlay open={false} />
     </BackDismissProvider>
   );
+  await Promise.resolve();
+  expect(back).toHaveBeenCalledTimes(1);
+});
+
+it("hands one overlay's entry to the next when one closes as the other opens", async () => {
+  // A chooser closing into its form: consumed at once, the close's back()
+  // ran after the form's pushState and popped the route's own entry, so
+  // closing the form went back past the page.
+  const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+  const push = vi.spyOn(window.history, "pushState");
+  const view = (chooser: boolean, form: boolean) => (
+    <BackDismissProvider>
+      <Overlay open={chooser} />
+      <Overlay open={form} />
+    </BackDismissProvider>
+  );
+  const { rerender } = render(view(true, false));
+  expect(push).toHaveBeenCalledTimes(1);
+  rerender(view(false, true));
+  await Promise.resolve();
+  expect(push).toHaveBeenCalledTimes(1);
+  expect(back).not.toHaveBeenCalled();
+
+  rerender(view(false, false));
+  await Promise.resolve();
   expect(back).toHaveBeenCalledTimes(1);
 });
