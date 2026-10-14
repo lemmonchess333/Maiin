@@ -8,6 +8,8 @@
  * up to it (DS3) and still write every step as the static figure is
  * written.
  */
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
+
 export interface LiftFigure {
   to: number;
   format: (n: number) => string;
@@ -39,13 +41,21 @@ export function durationFigure(minutes: number): LiftFigure {
   };
 }
 
-/** The work done: kg lifted. A bodyweight session lifts no load the app
- *  can weigh, and "0 kg lifted" over a set of pull-ups reads as nothing
- *  done, so its reps take the place. The caller leaves holds out of both:
- *  their `reps` are seconds. */
-export function workFigure(volumeKg: number, reps: number): LiftFigure {
+/** The work done: kg (or lb) lifted. A bodyweight session lifts no load
+ *  the app can weigh, and "0 kg lifted" over a set of pull-ups reads as
+ *  nothing done, so its reps take the place. The caller leaves holds out of
+ *  both: their `reps` are seconds. */
+export function workFigure(
+  volumeKg: number,
+  reps: number,
+  unit: LiftUnit
+): LiftFigure {
   return volumeKg > 0 || reps === 0
-    ? { to: volumeKg, format: groupedFigure, unit: "kg lifted" }
+    ? {
+        to: liftVolumeIn(volumeKg, unit),
+        format: groupedFigure,
+        unit: `${liftUnitLabel(unit)} lifted`,
+      }
     : { to: reps, format: groupedFigure, unit: reps === 1 ? "rep" : "reps" };
 }
 

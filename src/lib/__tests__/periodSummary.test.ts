@@ -289,27 +289,33 @@ describe("the changes", () => {
   it("says nothing when the range before is unknown", () => {
     // A failed read is not a range with no sessions.
     expect(countChange(3, null)).toBeNull();
-    expect(volumeChange(52800, null)).toBeNull();
+    expect(volumeChange(52800, null, "kg")).toBeNull();
     expect(distanceChange(52000, null, "km")).toBeNull();
   });
 
   it("states a change in kilograms as kilograms, not a percentage", () => {
-    expect(volumeChange(52800, 56200)).toEqual({
+    expect(volumeChange(52800, 56200, "kg")).toEqual({
       direction: "down",
       text: "3.4k kg",
     });
-    expect(volumeChange(900, 600)).toEqual({ direction: "up", text: "300 kg" });
+    expect(volumeChange(900, 600, "kg")).toEqual({
+      direction: "up",
+      text: "300 kg",
+    });
   });
 
   it("moves kilograms in the steps the figure shows", () => {
     // Past a tonne the figure reads "52.8k", so 40 kg is no visible move.
-    expect(volumeChange(52840, 52800)).toBeNull();
-    expect(volumeChange(52860, 52800)).toEqual({
+    expect(volumeChange(52840, 52800, "kg")).toBeNull();
+    expect(volumeChange(52860, 52800, "kg")).toEqual({
       direction: "up",
       text: "100 kg",
     });
     // Under a tonne every kilogram shows.
-    expect(volumeChange(640, 600)).toEqual({ direction: "up", text: "40 kg" });
+    expect(volumeChange(640, 600, "kg")).toEqual({
+      direction: "up",
+      text: "40 kg",
+    });
   });
 
   it("states a change in distance in the reader's unit", () => {
@@ -329,7 +335,15 @@ describe("the changes", () => {
   });
 
   it("counts an amount from an empty range before, as a count does", () => {
-    expect(volumeChange(2200, 0)).toEqual({ direction: "up", text: "2.2k kg" });
+    expect(volumeChange(2200, 0, "kg")).toEqual({
+      direction: "up",
+      text: "2.2k kg",
+    });
+    // In lb for a lifter who lifts in lb (Lift18): 1,000 kg is 2.2k lb.
+    expect(volumeChange(2000, 1000, "lbs")).toEqual({
+      direction: "up",
+      text: "2.2k lb",
+    });
     expect(distanceChange(5000, 0, "km")).toEqual({
       direction: "up",
       text: "5.0 km",

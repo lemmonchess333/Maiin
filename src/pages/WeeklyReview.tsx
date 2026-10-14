@@ -27,6 +27,13 @@ import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import {
+  formatLoad,
+  liftUnitLabel,
+  liftVolumeIn,
+  loadIn,
+} from "@/lib/liftLoad";
 
 /** How long the recap's counts take: the Food ring's count, not the
  *  counter's slower default, so they land before the eye moves on. */
@@ -109,6 +116,7 @@ function YourWeek({
   onShare: (() => void) | null;
 }) {
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   const { training, nutrition, body, headline, firstDays } = review;
   return (
     <div className="flex flex-1 flex-col">
@@ -157,11 +165,11 @@ function YourWeek({
             rule="bg-lifting"
             value={
               <AnimatedNumber
-                value={training.lifts.tonnageKg}
+                value={liftVolumeIn(training.lifts.tonnageKg, liftUnit)}
                 duration={COUNT_SECONDS}
               />
             }
-            caption="kg lifted"
+            caption={`${liftUnitLabel(liftUnit)} lifted`}
           />
         )}
         {training?.runs && (
@@ -324,6 +332,7 @@ function BestMoment({
   next: () => void;
 }) {
   const more = Math.max(0, count - 1);
+  const liftUnit = useLiftUnit();
   return (
     <div className="flex flex-1 flex-col">
       <h2 className="text-sm font-semibold text-achievement-strong">
@@ -340,11 +349,11 @@ function BestMoment({
         <p className="text-h2 font-bold text-foreground">{best.exerciseName}</p>
         <p className="text-foreground">
           <span className="text-display font-extrabold font-mono tabular-nums">
-            {best.weight}
+            {loadIn(best.weight, liftUnit)}
           </span>
           <span className="text-xl font-semibold text-muted-foreground">
             {" "}
-            kg ×{" "}
+            {liftUnitLabel(liftUnit)} ×{" "}
           </span>
           <span className="text-display font-extrabold font-mono tabular-nums">
             {best.reps}
@@ -354,7 +363,8 @@ function BestMoment({
           <p className="text-sm text-muted-foreground">
             Previous best{" "}
             <span className="font-mono tabular-nums">
-              {best.previous.weight} kg × {best.previous.reps}
+              {formatLoad(best.previous.weight, liftUnit)} ×{" "}
+              {best.previous.reps}
             </span>
             , {formatDayMonth(parseLocalDate(best.previous.date))}
           </p>

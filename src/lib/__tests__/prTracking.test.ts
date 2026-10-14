@@ -133,8 +133,11 @@ describe("checkSetPR — honest strength comparisons", () => {
   it("names a lighter new range without claiming improved strength", () => {
     const result = checkSetPR("Row", 32.5, 10, history, counts)!;
     expect(result.kind).toBe("bucket-first");
-    expect(setPRDescription(result)).toBe(
+    expect(setPRDescription(result, "kg")).toBe(
       "First time at 9+ reps. Your best stays 60 kg × 8."
+    );
+    expect(setPRDescription(result, "lbs")).toBe(
+      "First time at 9+ reps. Your best stays 132.3 lb × 8."
     );
   });
   it("does not celebrate a weaker improvement within an existing range", () => {
@@ -178,7 +181,7 @@ describe("checkSetPR — honest strength comparisons", () => {
   it("names a first logged set without a fabricated comparison", () => {
     const result = checkSetPR("Row", 60, 8, {}, counts)!;
     expect(result.kind).toBe("bucket-first");
-    expect(setPRDescription(result)).toBe("First logged at 60 kg × 8.");
+    expect(setPRDescription(result, "kg")).toBe("First logged at 60 kg × 8.");
   });
   it.each([
     [60, 8],

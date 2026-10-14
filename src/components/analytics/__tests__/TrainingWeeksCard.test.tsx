@@ -345,14 +345,19 @@ describe("too few sessions for a chart", () => {
       <TrainingWeeksCard
         title="Volume"
         subtitle="Last 30 days"
-        figures={liftingFigures({ volumeKg: 8200, sessions: 2, sets: 30 })}
+        figures={liftingFigures({
+          volumeKg: 8200,
+          sessions: 2,
+          sets: 30,
+          unit: "kg",
+        })}
         bins={[
           bin("2026-09-14", { lifts: 1, volumeKg: 4000 }),
           bin("2026-09-21", { lifts: 1, volumeKg: 4200 }, true),
         ]}
         granularity="weekly"
         sport="lifting"
-        reading={liftingBins}
+        reading={liftingBins("kg")}
         average={null}
         averageText=""
       />

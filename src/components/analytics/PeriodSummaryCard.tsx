@@ -1,4 +1,6 @@
 import { useRef, useState, type KeyboardEvent } from "react";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import Card from "@/components/ui/Card";
 import {
   distanceIn,
@@ -41,9 +43,10 @@ function sessionsPhrase(lifts: number, runs: number): string {
   return parts.join(" and ");
 }
 
-/** A bin's kilograms as the figure writes them: "12.3k kg", "850 kg". */
-function kgPhrase(kg: number): string {
-  return `${abbreviateK(kg)} kg`;
+/** A bin's weight lifted as the figure writes it, in the lifter's unit:
+ *  "12.3k kg", "850 kg", "1.9k lb". */
+function volumePhrase(kg: number, unit: LiftUnit): string {
+  return `${abbreviateK(liftVolumeIn(kg, unit))} ${liftUnitLabel(unit)}`;
 }
 
 function distancePhrase(metres: number, unit: DistanceUnit): string {
@@ -98,6 +101,7 @@ export default function PeriodSummaryCard({
   /** The reader's distance unit, for the distance bars' description. */
   distanceUnit: DistanceUnit;
 }) {
+  const liftUnit = useLiftUnit();
   const [metric, setMetric] = useState<SummaryMetric>("sessions");
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -128,7 +132,8 @@ export default function PeriodSummaryCard({
 
   const describeBin = (b: SummaryBin) => {
     const label = summaryBinLabel(b, granularity);
-    if (metric === "volume") return `${label}: ${kgPhrase(b.volumeKg)}`;
+    if (metric === "volume")
+      return `${label}: ${volumePhrase(b.volumeKg, liftUnit)}`;
     if (metric === "distance")
       return `${label}: ${distancePhrase(b.distanceM, distanceUnit)}`;
     return (
@@ -394,7 +399,9 @@ export default function PeriodSummaryCard({
             {metric !== "distance" && (
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-lifting" />
-                {metric === "volume" ? "kg lifted" : "Lifts"}
+                {metric === "volume"
+                  ? `${liftUnitLabel(liftUnit)} lifted`
+                  : "Lifts"}
               </span>
             )}
             {metric !== "volume" && (

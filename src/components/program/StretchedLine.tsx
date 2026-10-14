@@ -1,3 +1,5 @@
+import { liftUnitLabel, loadIn } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import {
   stretchOf,
   type ProgramExercise,
@@ -24,6 +26,7 @@ export default function StretchedLine({
   >;
   className?: string;
 }) {
+  const liftUnit = useLiftUnit();
   const stretched = stretchOf(exercise);
   if (!stretched) return null;
   const heavier =
@@ -34,10 +37,12 @@ export default function StretchedLine({
     <span className="font-mono tabular-nums">{value}</span>
   );
   const unit = exercise.repUnit === "seconds" ? "s" : " reps";
+  const label = liftUnitLabel(liftUnit);
   return (
     <p className={className}>
       Up to {n(stretched.ceiling)}
-      {unit} on {n(stretched.weight)} kg: {n(stretched.next)} kg is a big jump
+      {unit} on {n(loadIn(stretched.weight, liftUnit))} {label}:{" "}
+      {n(loadIn(stretched.next, liftUnit))} {label} is a big jump
     </p>
   );
 }

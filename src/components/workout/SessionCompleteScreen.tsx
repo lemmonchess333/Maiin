@@ -20,6 +20,8 @@ import { motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
+import { formatLoad } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SessionShareAction } from "@/lib/sessionPost";
 
@@ -71,6 +73,7 @@ export default function SessionCompleteScreen({
   onEdit,
   onClose,
 }: SessionCompleteScreenProps) {
+  const liftUnit = useLiftUnit();
   const heading =
     saveStatus === "queued"
       ? "Saved on this phone"
@@ -143,7 +146,7 @@ export default function SessionCompleteScreen({
         .reduce((t, s) => t + s.reps, 0)
     );
   }, 0);
-  const work = workFigure(totalVolume, totalReps);
+  const work = workFigure(totalVolume, totalReps, liftUnit);
 
   // WORKING sets only. This was the one header stat that did not exclude
   // warm-ups, so it counted the auto-generated ramp that VOLUME and the
@@ -313,14 +316,17 @@ export default function SessionCompleteScreen({
                       {name}
                     </p>
                     <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
-                      {result.weight} kg × {result.reps}
+                      {formatLoad(result.weight, liftUnit)} × {result.reps}
                     </p>
                     {result.bestBeforeSession && (
                       <p className="text-xs text-muted-foreground">
                         Was{" "}
                         <span className="font-mono tabular-nums">
-                          {result.bestBeforeSession.weight} kg ×{" "}
-                          {result.bestBeforeSession.reps}
+                          {formatLoad(
+                            result.bestBeforeSession.weight,
+                            liftUnit
+                          )}{" "}
+                          × {result.bestBeforeSession.reps}
                         </span>
                       </p>
                     )}
@@ -359,7 +365,9 @@ export default function SessionCompleteScreen({
               <p key={key} className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{name}</span>
                 {" · "}
-                <InlineNumerals>{setPRDescription(result)}</InlineNumerals>
+                <InlineNumerals>
+                  {setPRDescription(result, liftUnit)}
+                </InlineNumerals>
               </p>
             ))}
           </Card>
@@ -480,7 +488,7 @@ export default function SessionCompleteScreen({
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                       {ex.bestWeight > 0
-                        ? `${ex.bestWeight} kg × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                        ? `${formatLoad(ex.bestWeight, liftUnit)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
                         : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
                     </p>
                     <p

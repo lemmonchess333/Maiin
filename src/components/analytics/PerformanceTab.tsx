@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
@@ -323,6 +324,7 @@ export default function PerformanceTab({
 } = {}) {
   const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
     usePerformanceWeeks(12);
+  const liftUnit = useLiftUnit();
   const [showTechnical, setShowTechnical] = useState(false);
 
   if (loading) {
@@ -394,6 +396,7 @@ export default function PerformanceTab({
      app never records. */
   const weekBreakdown = performanceWeekBreakdown(currentWeek, {
     distanceUnit,
+    liftUnit,
     establishing,
   });
   const runSuggestions =

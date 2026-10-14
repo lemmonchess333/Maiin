@@ -21,7 +21,11 @@ const AGG = {
   avgDailyProtein: 147.6,
 };
 const BASE = { liftTonnage: 13700, runKm: 26, weeksUsed: 4 };
-const KM = { distanceUnit: "km" as const, establishing: false };
+const KM = {
+  distanceUnit: "km" as const,
+  liftUnit: "kg" as const,
+  establishing: false,
+};
 
 describe("performanceWeekBreakdown", () => {
   it("states the week's lifting and running beside the usual week", () => {
@@ -134,6 +138,16 @@ describe("performanceWeekBreakdown", () => {
     // The bar compares like with like.
     expect(running.value).toBeCloseTo(20.13, 1);
     expect(running.usual).toBeCloseTo(16.16, 1);
+  });
+
+  it("writes lifting in the lifter's unit, the bar still kg (Lift18)", () => {
+    const { measures } = performanceWeekBreakdown(
+      { aggregates: AGG, baseline: BASE },
+      { ...KM, liftUnit: "lbs" }
+    );
+    const lifting = measures.find((m) => m.key === "lifting")!;
+    expect(lifting.usualText).toBe("30.2k lb");
+    expect(lifting.usual).toBe(13700);
   });
 
   it("has no food line without a logged day, and caps days at seven", () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ExerciseRowSummary from "../ExerciseRowSummary";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import ExerciseThumb from "../ExerciseThumb";
 
 function exercise(over: Record<string, unknown> = {}) {
@@ -95,6 +96,36 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent(
       "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
     );
+  });
+
+  it("reads its loads in lb for a lifter who lifts in lb (Lift18)", () => {
+    const { container } = render(
+      <LiftUnitContext value="lbs">
+        <ExerciseRowSummary
+          exercise={exercise({
+            weight: 90,
+            reps: 5,
+            lowered: {
+              exerciseId: "bench-press",
+              from: 100,
+              unit: "kg",
+              target: 5,
+            },
+          })}
+          lastSets={[
+            { weightKg: 100, reps: 4 },
+            { weightKg: 100, reps: 4 },
+            { weightKg: 90, reps: 5 },
+          ]}
+        />
+      </LiftUnitContext>
+    );
+    expect(container).toHaveTextContent("· 198.4 lb");
+    expect(container).toHaveTextContent("Last: 220.5 lb × 4, 4 · 198.4 lb × 5");
+    expect(container).toHaveTextContent(
+      "Down from 220.5 lb: two sessions under 5 reps"
+    );
+    expect(container).not.toHaveTextContent("kg");
   });
 
   it("states a climbing lift's range, and a fixed lift's target (Lift4 (3))", () => {

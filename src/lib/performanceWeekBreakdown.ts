@@ -16,6 +16,7 @@
  * is only offered once two such weeks exist, and never while the score is
  * still establishing its baseline.
  */
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 import type { Baseline, WeeklyAggregates } from "./performanceTypes";
 import {
   distanceIn,
@@ -62,8 +63,8 @@ function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-function kgText(kg: number): string {
-  return `${abbreviateK(kg)} kg`;
+function tonnageText(kg: number, unit: LiftUnit): string {
+  return `${abbreviateK(liftVolumeIn(kg, unit))} ${liftUnitLabel(unit)}`;
 }
 
 function distanceText(km: number, unit: DistanceUnit): string {
@@ -77,6 +78,8 @@ export function performanceWeekBreakdown(
   },
   options: {
     distanceUnit: DistanceUnit;
+    /** The lifter's unit for the tonnage's words; the figures stay kg. */
+    liftUnit: LiftUnit;
     /** The score is still establishing: no usual week to compare with. */
     establishing: boolean;
   }
@@ -98,9 +101,10 @@ export function performanceWeekBreakdown(
       key: "lifting",
       label: "Lifting",
       value: tonnage,
-      valueText: kgText(tonnage),
+      valueText: tonnageText(tonnage, options.liftUnit),
       usual: usualTonnage > 0 ? usualTonnage : null,
-      usualText: usualTonnage > 0 ? kgText(usualTonnage) : null,
+      usualText:
+        usualTonnage > 0 ? tonnageText(usualTonnage, options.liftUnit) : null,
       detail:
         liftSessions > 0
           ? plural(liftSessions, "session", "sessions")

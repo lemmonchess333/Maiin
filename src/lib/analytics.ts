@@ -7,6 +7,7 @@
  * calls is a helper nobody has checked against the current data shapes
  * (ADR-0008 — its worked example was this file's 20 orphaned exports).
  */
+import { liftUnitLabel, loadIn, type LiftUnit } from "./liftLoad";
 
 /* ================================
    EPLEY 1RM
@@ -148,6 +149,15 @@ export function estimate1RMRange(
  * An en dash, not a hyphen: the range is a span, and the hyphen reads as a
  * minus sign next to numerals.
  */
-export function formatOneRepMaxRange(r: OneRepMaxRange): string {
-  return r.spread === 0 ? `${r.point} kg` : `${r.low}–${r.high} kg`;
+export function formatOneRepMaxRange(
+  r: OneRepMaxRange,
+  unit: LiftUnit
+): string {
+  // An estimate, so whole lb: "209–231 lb", never "209.4–231.5 lb".
+  const n = (kg: number) =>
+    unit === "lbs" ? Math.round(loadIn(kg, unit)) : kg;
+  const label = liftUnitLabel(unit);
+  return r.spread === 0
+    ? `${n(r.point)} ${label}`
+    : `${n(r.low)}–${n(r.high)} ${label}`;
 }
