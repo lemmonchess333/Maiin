@@ -127,7 +127,7 @@ import {
   setOrdinal,
   type SetType,
 } from "@/features/program/setLabels";
-import { platesPerSide } from "@/lib/plateMath";
+import { platesInKit } from "@/lib/plateMath";
 import {
   useWorkoutDraft,
   computeDraftIdentity,
@@ -385,7 +385,7 @@ export default function WorkoutSession({
     // body part (N7's scoping rule). They're ordinary rows carrying the
     // existing `warmup` type (N11), so every volume/PR/calorie path that
     // already filters on that type excludes them for free.
-    return buildInitialSetLogs(day.exercises);
+    return buildInitialSetLogs(day.exercises, liftUnit);
   });
   /* The rows a skipped exercise set aside (Lift4 (11)), by its place in the
      session: out of the counts and the cursor's way until "Don't skip"
@@ -805,8 +805,8 @@ export default function WorkoutSession({
     if (!currentExercise || currentExercise.weight <= 0) return null;
     if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
       return null;
-    return platesPerSide(currentExercise.weight);
-  }, [currentExercise]);
+    return platesInKit(currentExercise.weight, liftUnit);
+  }, [currentExercise, liftUnit]);
 
   const currentSets = setLogs[currentExIndex] ?? [];
   // Warm-ups are optional, so the session's progress counts the sets that
@@ -1322,7 +1322,11 @@ export default function WorkoutSession({
     setSetLogs((logs) =>
       logs.map((rows, i) =>
         i === index
-          ? startingSetRows(buildInitialSetLogs([exercise])[0], exercise, last)
+          ? startingSetRows(
+              buildInitialSetLogs([exercise], liftUnit)[0],
+              exercise,
+              last
+            )
           : rows
       )
     );
@@ -1541,7 +1545,7 @@ export default function WorkoutSession({
       swaps: [],
     }));
     setSkippedRows({});
-    setSetLogs(buildInitialSetLogs(planned));
+    setSetLogs(buildInitialSetLogs(planned, liftUnit));
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
@@ -2308,12 +2312,12 @@ export default function WorkoutSession({
               <p className="font-mono tabular-nums">
                 Per side:{" "}
                 {plateLoad.perSide
-                  .flatMap(({ plateKg, count }) =>
-                    Array<number>(count).fill(plateKg)
+                  .flatMap(({ plate, count }) =>
+                    Array<number>(count).fill(plate)
                   )
                   .join(" + ")}
-                {plateLoad.remainderKg > 0 &&
-                  ` · ${plateLoad.remainderKg} kg short`}
+                {plateLoad.remainder > 0 &&
+                  ` · ${plateLoad.remainder} ${liftUnitLabel(liftUnit)} short`}
               </p>
             )}
           </div>

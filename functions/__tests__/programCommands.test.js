@@ -411,6 +411,28 @@ describe("preconditionless commands", () => {
     });
   });
 
+  it("setProgramSettings takes the plan's kit, kg or lb (Lift18)", () => {
+    expect(
+      assertClientProgramCommand({
+        kind: "setProgramSettings",
+        commandId: CMD_ID,
+        settings: {
+          autoProgression: true,
+          smallPlates: false,
+          loadUnit: "lbs",
+        },
+      })
+    ).toMatchObject({
+      settings: { autoProgression: true, smallPlates: false, loadUnit: "lbs" },
+    });
+    for (const loadUnit of ["lb", "st", 2, null])
+      expectRejected({
+        kind: "setProgramSettings",
+        commandId: CMD_ID,
+        settings: { autoProgression: true, loadUnit },
+      });
+  });
+
   it("setProgramSettings still takes an older app's microloading, and drops it", () => {
     const validated = assertClientProgramCommand({
       kind: "setProgramSettings",
@@ -929,6 +951,28 @@ describe("preconditionless field commands", () => {
     expect(state.settings).toEqual({
       autoProgression: false,
       smallPlates: true,
+    });
+  });
+
+  it("setProgramSettings keeps the plan's kit when an older app sends none", () => {
+    const first = apply({
+      kind: "setProgramSettings",
+      commandId: CMD,
+      settings: { autoProgression: true, smallPlates: false, loadUnit: "lbs" },
+    }).state;
+    expect(first.settings.loadUnit).toBe("lbs");
+    const { state } = apply(
+      {
+        kind: "setProgramSettings",
+        commandId: `${CMD}-old`,
+        settings: { autoProgression: true, smallPlates: true },
+      },
+      first
+    );
+    expect(state.settings).toEqual({
+      autoProgression: true,
+      smallPlates: true,
+      loadUnit: "lbs",
     });
   });
 

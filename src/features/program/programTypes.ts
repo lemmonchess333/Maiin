@@ -2,6 +2,7 @@
    PROGRAM ENGINE TYPES
 ================================ */
 
+import type { LiftUnit } from "@/lib/liftLoad";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
 /* MovementCategory lives in lib/exerciseMovementCategory.ts (the module
@@ -336,6 +337,15 @@ export interface ProgramSettings {
    * nothing reads.
    */
   smallPlates: boolean;
+  /**
+   * Lift18: the lifter's plates, rack and stacks are in lb, so loads round
+   * to them (`loadSteps.ts`). The engine's copy of the profile's
+   * `liftingWeightUnit`, which the screens read: the engine runs from a
+   * ProgramState alone (the rollover, a corrected session, race week,
+   * easing back in). Missing is kg; one control writes both, and useProgram
+   * puts this right when it differs.
+   */
+  loadUnit?: LiftUnit;
 }
 
 /** A new plan's settings. */
@@ -1145,6 +1155,10 @@ export function normalizeProgramState(
     settings: {
       autoProgression: state.settings?.autoProgression ?? true,
       smallPlates: state.settings?.smallPlates === true,
+      ...(state.settings?.loadUnit === "lbs" ||
+      state.settings?.loadUnit === "kg"
+        ? { loadUnit: state.settings.loadUnit }
+        : {}),
     },
     weekHistory: state.weekHistory ?? [],
     ...(resolvedPrimaryGoal !== undefined && {

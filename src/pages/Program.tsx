@@ -1381,6 +1381,7 @@ function ProgramInner() {
                                     smallPlates:
                                       programState.settings?.smallPlates ===
                                       true,
+                                    loadUnit: programState.settings?.loadUnit,
                                   }
                                 )
                               )}
@@ -1814,6 +1815,7 @@ function ProgramInner() {
         timeBudgetMinutes={usualBudget}
         rest={restContext}
         smallPlates={programState.settings?.smallPlates === true}
+        loadUnit={programState.settings?.loadUnit}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1872,6 +1874,7 @@ function ProgramInner() {
               : sessionVariant === "easier_today"
                 ? buildEasierSession(storedDay, restContext, {
                     smallPlates: programState.settings?.smallPlates === true,
+                    loadUnit: programState.settings?.loadUnit,
                   })
                 : sessionVariant === "time_budget"
                   ? buildTimeBudgetSession(

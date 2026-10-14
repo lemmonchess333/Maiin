@@ -34,6 +34,8 @@
 import type { ProgramExercise } from "./programTypes";
 import { primaryCanonicalForExercise } from "./volumeModel";
 import { getExerciseById } from "@/lib/exercises";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { kgToLb, lbToKg } from "@/lib/weightUnits";
 
 export interface WarmupSet {
   weight: number;
@@ -42,6 +44,13 @@ export interface WarmupSet {
 
 /** An empty barbell. Also the floor — there is nothing to ramp up from below it. */
 export const BAR_KG = 20;
+/** An empty barbell where the plates are in lb (Lift18). */
+export const BAR_LB = 45;
+
+/** The bar in the lifter's kit, in kg: 20 kg, or 45 lb. */
+export function barWeight(unit: LiftUnit): number {
+  return unit === "lbs" ? lbToKg(BAR_LB) : BAR_KG;
+}
 
 /** Load at or above which the bar itself is worth a dedicated first set. */
 const BAR_SET_MIN_WORKING_KG = 50;
@@ -62,6 +71,14 @@ const NEAR_WORKING_MAX_REPS = 6;
 const roundToIncrement = (kg: number, increment: number) =>
   Math.round(kg / increment) * increment;
 
+/** A warm-up's weight on the kit's plates: 2.5 kg, or 5 lb. The lb side
+ *  nudges a half up, so 70% of 225 lb (157.5, or 157.4999… once through
+ *  kg) is 160, as it would be written down. */
+const roundToKit = (kg: number, unit: LiftUnit) =>
+  unit === "lbs"
+    ? lbToKg(Math.round(kgToLb(kg) / 5 + 1e-9) * 5)
+    : roundToIncrement(kg, 2.5);
+
 /**
  * The ramp for one lift, from its working weight, and its working reps when
  * they are known. Empty when there is nothing sensible to ramp: bodyweight
@@ -70,17 +87,20 @@ const roundToIncrement = (kg: number, increment: number) =>
 export function warmupRamp(
   workingWeight: number,
   equipment = "Barbell",
-  workingReps?: number
+  workingReps?: number,
+  /** The lifter's kit (Lift18): a 45 lb bar and 5 lb steps in lb. */
+  unit: LiftUnit = "kg"
 ): WarmupSet[] {
   if (!Number.isFinite(workingWeight) || workingWeight <= 0) return [];
   if (equipment === "Bodyweight") return [];
 
   const isBarbell = equipment === "Barbell";
-  if (isBarbell && workingWeight <= BAR_KG) return [];
+  const bar = barWeight(unit);
+  if (isBarbell && workingWeight <= bar) return [];
 
   const out: WarmupSet[] = [];
   if (isBarbell && workingWeight >= BAR_SET_MIN_WORKING_KG) {
-    out.push({ weight: BAR_KG, reps: 10 });
+    out.push({ weight: bar, reps: 10 });
   }
   const heavy =
     workingReps !== undefined &&
@@ -89,11 +109,11 @@ export function warmupRamp(
   for (const { pct, reps } of heavy
     ? [...RAMP_STEPS, NEAR_WORKING_STEP]
     : RAMP_STEPS) {
-    // Barbell work stays on the existing 2.5 kg plate grid. Dumbbells,
+    // Barbell work stays on the plate grid (2.5 kg, or 5 lb). Dumbbells,
     // machines and cables use the same conservative grid, but crucially have
-    // no imaginary 20 kg bar floor.
-    const weight = roundToIncrement(workingWeight * pct, 2.5);
-    const aboveFloor = isBarbell ? weight > BAR_KG : weight > 0;
+    // no imaginary bar floor.
+    const weight = roundToKit(workingWeight * pct, unit);
+    const aboveFloor = isBarbell ? weight > bar : weight > 0;
     if (
       aboveFloor &&
       weight < workingWeight &&
@@ -105,7 +125,7 @@ export function warmupRamp(
   // A light barbell lift can end up with nothing above the bar; give it the
   // empty bar. Non-barbell movements keep their percentage ramp instead.
   if (out.length === 0 && isBarbell) {
-    out.push({ weight: BAR_KG, reps: 10 });
+    out.push({ weight: bar, reps: 10 });
   }
   return out;
 }
@@ -123,7 +143,9 @@ export interface InitialSessionSet {
  * testable without rendering the full workout screen.
  */
 export function buildInitialSetLogs(
-  exercises: ProgramExercise[]
+  exercises: ProgramExercise[],
+  /** The lifter's kit, which the warm-ups' weights round to (Lift18). */
+  unit: LiftUnit = "kg"
 ): InitialSessionSet[][] {
   const ramps = warmupTargets(exercises);
   return exercises.map((ex, i) => [
@@ -131,7 +153,8 @@ export function buildInitialSetLogs(
       ? warmupRamp(
           ex.weight,
           getExerciseById(ex.exerciseId)?.equipment,
-          ex.repUnit === "seconds" ? undefined : ex.reps
+          ex.repUnit === "seconds" ? undefined : ex.reps,
+          unit
         ).map((set) => ({
           ...set,
           completed: false,

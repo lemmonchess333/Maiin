@@ -2050,6 +2050,9 @@ export function useProgram() {
           settings: {
             autoProgression: newSettings.autoProgression,
             smallPlates: newSettings.smallPlates,
+            ...(newSettings.loadUnit !== undefined
+              ? { loadUnit: newSettings.loadUnit }
+              : {}),
           },
         },
         (state) => ({ ...state, settings: newSettings }),
@@ -3091,7 +3094,8 @@ export function useProgram() {
               : represcribeWorkouts(
                   state.workouts,
                   input.focus,
-                  toExperience(profile?.experience)
+                  toExperience(profile?.experience),
+                  state.settings?.loadUnit
                 ),
         }),
         "Couldn't start that block."
@@ -3132,7 +3136,8 @@ export function useProgram() {
               ? represcribeWorkouts(
                   state.workouts,
                   block.goalBefore,
-                  toExperience(profile?.experience)
+                  toExperience(profile?.experience),
+                  state.settings?.loadUnit
                 )
               : state.workouts,
         };
