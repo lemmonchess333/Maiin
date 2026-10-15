@@ -1,0 +1,13 @@
+{
+  "normalUpdateCommand": "node scripts/check-dist-size.mjs --update",
+  "beforeExitCode": 1,
+  "afterExitCode": 0,
+  "oldChunkBytes": 74740,
+  "newChunkBytes": 78929,
+  "oldTotalBytes": 6246966,
+  "newTotalBytes": 6251155,
+  "allOtherBaselinesUnchanged": true,
+  "toleranceAndCheckerUnchanged": true,
+  "reason": "Measured guide text and owner-release data for the new Overhead Extension guide; other chunk budgets are preserved.",
+  "baselineSha256": "8a0a5b5521a10f9ad8424894cbc87232e9c4fab1069b9c6325229f96977ec18c"
+}

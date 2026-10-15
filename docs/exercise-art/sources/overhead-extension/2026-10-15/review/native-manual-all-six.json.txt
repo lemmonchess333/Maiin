@@ -1,0 +1,92 @@
+[
+  [
+    {
+      "alt": "Overhead Tricep Extension, Reset",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/6.webp"
+    }
+  ],
+  [
+    {
+      "alt": "Overhead Tricep Extension, Top",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/1.webp"
+    }
+  ],
+  [
+    {
+      "alt": "Overhead Tricep Extension, Brace",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/2.webp"
+    }
+  ],
+  [
+    {
+      "alt": "Overhead Tricep Extension, Lower",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/3.webp"
+    }
+  ],
+  [
+    {
+      "alt": "Overhead Tricep Extension, Bottom",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/4.webp"
+    }
+  ],
+  [
+    {
+      "alt": "Overhead Tricep Extension, Extend",
+      "complete": true,
+      "display": [
+        461,
+        1547
+      ],
+      "natural": [
+        461,
+        1547
+      ],
+      "src": "/draft/frames/5.webp"
+    }
+  ]
+]

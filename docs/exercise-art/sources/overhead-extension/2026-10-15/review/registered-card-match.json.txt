@@ -1,0 +1,10 @@
+{
+  "normalCommand": "npm run art:cutouts -- --only=overhead-extension",
+  "previewMatchesRegisteredExact": true,
+  "sha256": "c3453eee07f245f0f4aa117e69364f570b91cb67ff375a6aa13c9b61ccd76e7d",
+  "reference": "form-frames/overhead-extension/3.webp",
+  "width": 163,
+  "height": 480,
+  "bytes": 15320,
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f"
+}

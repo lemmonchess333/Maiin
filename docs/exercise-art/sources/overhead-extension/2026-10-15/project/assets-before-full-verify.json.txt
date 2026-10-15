@@ -1,0 +1,11 @@
+{
+  "docs/exercise-art/releases/2026-10-15/overhead-extension.json": "75b0654a238c06e2e5f352fd5737fa8d5507022881092fa2d1af329cb76c9fc5",
+  "masters/overhead-extension/1.png": "288ac4bedb92b5a0d9d6a829dd05d11c478811dfc19c9602885c506268848c92",
+  "public/form-art/overhead-extension.webp": "c3453eee07f245f0f4aa117e69364f570b91cb67ff375a6aa13c9b61ccd76e7d",
+  "public/form-frames/overhead-extension/1.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+  "public/form-frames/overhead-extension/2.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+  "public/form-frames/overhead-extension/3.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+  "public/form-frames/overhead-extension/4.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+  "public/form-frames/overhead-extension/5.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+  "public/form-frames/overhead-extension/6.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+}

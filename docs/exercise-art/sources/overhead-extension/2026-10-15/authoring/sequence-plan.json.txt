@@ -1,0 +1,81 @@
+{
+  "exerciseId": "overhead-extension",
+  "name": "Overhead Tricep Extension",
+  "sourceScope": "Candidate: two intact retained poses, one integer whole-frame translation and colour-only finishing. No new image requests, anatomical warping, resizing, or grafts. Not accepted or registered.",
+  "primary": [
+    "Triceps"
+  ],
+  "secondary": [
+    "Front Delts"
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "commonCrop": [
+    277,
+    254,
+    738,
+    1801
+  ],
+  "dimensions": [
+    461,
+    1547
+  ],
+  "setup": [
+    "Stand or sit, hold one dumbbell with both hands straight overhead.",
+    "Keep elbows close to your ears and pointed at the ceiling."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Top",
+      "cue": "Hold the dumbbell overhead with both hands."
+    },
+    {
+      "t": 0,
+      "label": "Brace",
+      "cue": "Keep your core braced and elbows up."
+    },
+    {
+      "t": 1,
+      "label": "Lower",
+      "cue": "Bend elbows; lower the dumbbell behind head."
+    },
+    {
+      "t": 1,
+      "label": "Bottom",
+      "cue": "Keep your upper arms beside your head."
+    },
+    {
+      "t": 0,
+      "label": "Extend",
+      "cue": "Straighten your elbows and squeeze your triceps."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Keep the dumbbell steady at full extension."
+    }
+  ],
+  "findingsPendingReview": [
+    "Residual source head/shoe outline and position differences after global placement.",
+    "Upper arms and elbows are not pixel-fixed; native and playback form assessment required.",
+    "Two physical endpoints only; no continuous path or six unique poses."
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "draft/frames/2.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "draft/frames/3.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "draft/frames/4.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "draft/frames/5.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "draft/frames/6.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+  },
+  "releaseApproved": false,
+  "completionCredit": false
+}

@@ -1,0 +1,184 @@
+{
+  "exerciseId": "overhead-extension",
+  "version": "anatomy-v3-2026-10-15-retained-overhead-two-endpoint-v1",
+  "width": 461,
+  "height": 1547,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Parent actual native, card, registered mobile and playback review under user-approved minor-findings relaxation",
+  "reviewedAt": "2026-10-15T16:03:42.881361+00:00",
+  "recordStage": "Actual integrated review complete; project verification and publication separately gated",
+  "reference": {
+    "path": "form-frames/overhead-extension/3.webp",
+    "sha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7"
+  },
+  "cueSha256": "c87ec4e1d414a16ed62ea16af0b9bb75f3d6a1b4ed034ad8d0416409fd804fef",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent compared the canonical FA56 and both intact native poses. Lean bald faceless white-grey athlete, featureless pelvis, broad-band white trainers and fine contours/shading retained; slight source head/shoe outline variation remains disclosed."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Common461x1547 crop[277,254,738,1801]. The top source receives one whole-frame integer translation[-13,+37], no added resizing or independent body-part fitting. The historical top formatting included uniform whole-frame normalization, retained separately."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native complete top and bent-elbow endpoints preserve all original human geometry. Top colour overlay changes only existing tinted compartments; every outside pixel is unchanged. No anatomical warp, graft, invented joint or hidden anatomy reconstruction."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: One vertical dumbbell with two round heads and a straight handle in both sources. Both hands support the upper end; neutral source equipment is unchanged. Small projected size and surface differences remain findings, not rigid3D certification."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Both hands remain on their original dumbbell contact regions; both complete trainers remain on the floor. Whole-frame placement improves common lower-body alignment; residual source shoe/head/upper-arm differences remain, with no claimed pixel-fixed anchors."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Top shows extended elbows; bottom shows both forearms folded behind the head while upper arms stay raised beside it. Weight clears the head. Original upper-arm positions vary; exact fixed-joint or calibrated mechanical equivalence is not certified."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Triceps primary#7B72E9, Front Delts secondary#9590E0. Only existing chromatic fields are remapped; neutral muscle shading and contours remain. Source ownership windows and exact outside-pixel preservation proof are archived."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent selected all six actual ExerciseFormContent instruction buttons in light and dark; labels, cues and public image paths match the recorded two-endpoint sequence. Both preparation sentences match the catalogue. Normal card uses the reviewed bottom reference3."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native and registered390x844 traces include all six decoded paths and automatic6-to-1 wraps. Parent observed pause, manual selection, next6-to-1 and previous1-to-6. Registered slower steps approximately2405-2422ms versus normal approximately1200ms. Only two physical endpoint drawings are claimed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual unchanged ExerciseFormContent at verified390x844 light: full athlete, dumbbell and trainers; standard reference3 card; prescribed muscle key, exact catalogue preparation, all six cue selections and controls reviewed. No horizontal overflow. Registered browser warnings/errors empty. Normal exported card is byte-identical to the480/160preview."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual unchanged ExerciseFormContent at verified390x844 dark: full athlete, dumbbell and trainers; standard reference3 card; prescribed muscle key, exact catalogue preparation, all six cue selections and controls reviewed. No horizontal overflow. Registered browser warnings/errors empty. Normal exported card is byte-identical to the480/160preview."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-extension/1.webp",
+      "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db"
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/2.webp",
+      "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db"
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/3.webp",
+      "sha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/4-framed.png",
+        "sha256": "288ac4bedb92b5a0d9d6a829dd05d11c478811dfc19c9602885c506268848c92"
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/4.webp",
+      "sha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/4-framed.png",
+        "sha256": "288ac4bedb92b5a0d9d6a829dd05d11c478811dfc19c9602885c506268848c92"
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/5.webp",
+      "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db"
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/6.webp",
+      "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 4, 4, 1, 1],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "setup": [
+    "Stand or sit, hold one dumbbell with both hands straight overhead.",
+    "Keep elbows close to your ears and pointed at the ceiling."
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User through continuing completion/merge request and prior explicit slight-requirements relaxation.",
+    "instruction": "User approved a relaxed-requirements trial, then instructed continuation, preservation of the current model without shorts, and no repeated routine approvals.",
+    "context": "Local integration under the existing owner-with-findings route; all strict checks remain null. Final integrated review, project checks and CI/merge are separate completion gates."
+  },
+  "findings": [
+    "Residual source head/shoe outlines, proportions and placement differ slightly after integer whole-frame registration; no independent body-part fitting is used.",
+    "Original upper-arm/elbow positions vary between the two endpoints; they remain raised beside the head, but exact fixed-joint mechanics are not certified.",
+    "Original neutral dumbbell head/handle rendering and projected dimensions vary modestly; no calibrated rigid3D equivalence claim.",
+    "Two physical endpoints repeat across six distinct instruction paths; no separately drawn intermediate or continuous trajectory."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent compared the canonical FA56 and both intact native poses. Lean bald faceless white-grey athlete, featureless pelvis, broad-band white trainers and fine contours/shading retained; slight source head/shoe outline variation remains disclosed."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Common461x1547 crop[277,254,738,1801]. The top source receives one whole-frame integer translation[-13,+37], no added resizing or independent body-part fitting. The historical top formatting included uniform whole-frame normalization, retained separately."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Native complete top and bent-elbow endpoints preserve all original human geometry. Top colour overlay changes only existing tinted compartments; every outside pixel is unchanged. No anatomical warp, graft, invented joint or hidden anatomy reconstruction."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "One vertical dumbbell with two round heads and a straight handle in both sources. Both hands support the upper end; neutral source equipment is unchanged. Small projected size and surface differences remain findings, not rigid3D certification."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Both hands remain on their original dumbbell contact regions; both complete trainers remain on the floor. Whole-frame placement improves common lower-body alignment; residual source shoe/head/upper-arm differences remain, with no claimed pixel-fixed anchors."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Top shows extended elbows; bottom shows both forearms folded behind the head while upper arms stay raised beside it. Weight clears the head. Original upper-arm positions vary; exact fixed-joint or calibrated mechanical equivalence is not certified."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Triceps primary#7B72E9, Front Delts secondary#9590E0. Only existing chromatic fields are remapped; neutral muscle shading and contours remain. Source ownership windows and exact outside-pixel preservation proof are archived."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent selected all six actual ExerciseFormContent instruction buttons in light and dark; labels, cues and public image paths match the recorded two-endpoint sequence. Both preparation sentences match the catalogue. Normal card uses the reviewed bottom reference3."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Native and registered390x844 traces include all six decoded paths and automatic6-to-1 wraps. Parent observed pause, manual selection, next6-to-1 and previous1-to-6. Registered slower steps approximately2405-2422ms versus normal approximately1200ms. Only two physical endpoint drawings are claimed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at verified390x844 light: full athlete, dumbbell and trainers; standard reference3 card; prescribed muscle key, exact catalogue preparation, all six cue selections and controls reviewed. No horizontal overflow. Registered browser warnings/errors empty. Normal exported card is byte-identical to the480/160preview."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at verified390x844 dark: full athlete, dumbbell and trainers; standard reference3 card; prescribed muscle key, exact catalogue preparation, all six cue selections and controls reviewed. No horizontal overflow. Registered browser warnings/errors empty. Normal exported card is byte-identical to the480/160preview."
+    }
+  },
+  "integrationValidation": "Actual native and registered390x844 light/dark, six selections, normal/slower loops, wrap controls and standard card reviewed. All strict statuses remain null; source findings remain explicit. Project checks, CI and merge remain separate gates.",
+  "publicationGate": "Counts only after actual final review, required checks, CI, merge and preservation audit."
+}
