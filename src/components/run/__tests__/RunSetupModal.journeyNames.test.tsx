@@ -9,6 +9,8 @@
  * run done on one is still the planned run.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { useState } from "react";
+import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import {
   cleanup,
   fireEvent,
@@ -170,15 +172,21 @@ describe("a run onto the treadmill, by the journeys' names", () => {
 
   it("the treadmill screen takes the distance and saves", () => {
     const onSave = vi.fn();
-    render(
-      <TreadmillMode
-        elapsed={36 * 60}
-        formatTime={String}
-        onSave={onSave}
-        onDiscard={vi.fn()}
-      />
-    );
-    fireEvent.change(screen.getByRole("spinbutton", { name: RUN.distance }), {
+    function Entry() {
+      const [draft, setDraft] = useState<ManualDistanceDraft | null>(null);
+      return (
+        <TreadmillMode
+          elapsed={36 * 60}
+          formatTime={String}
+          onSave={onSave}
+          onDiscard={vi.fn()}
+          distanceDraft={draft}
+          onDistanceDraftChange={setDraft}
+        />
+      );
+    }
+    render(<Entry />);
+    fireEvent.change(screen.getByRole("textbox", { name: RUN.distance }), {
       target: { value: "6" },
     });
     fireEvent.click(screen.getByRole("button", { name: RUN.saveTreadmill }));

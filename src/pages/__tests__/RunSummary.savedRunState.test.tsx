@@ -127,6 +127,12 @@ import { benchmarkEffortOf, type EffortRun } from "@/lib/benchmarkEfforts";
 import { writeString } from "@/lib/localStore";
 import { pendingDocumentWrites } from "@/lib/offlineQueue";
 import {
+  readStoredRun,
+  writeStoredRun,
+  RUN_RESUME_SCHEMA_VERSION,
+} from "@/lib/runResumeStorage";
+import { DEFAULT_CONFIG } from "@/components/run/runConfigDefaults";
+import {
   deferReads,
   releaseAllReads,
   resetFirestore,
@@ -372,6 +378,50 @@ describe("RunSummary — Save", () => {
     expect(
       screen.getByText("Saved on this phone · waiting to sync")
     ).toBeInTheDocument();
+  });
+
+  it("retains the distance draft until durable acceptance, including a refused queue write", async () => {
+    const now = Date.now();
+    expect(
+      writeStoredRun("runner", {
+        v: RUN_RESUME_SCHEMA_VERSION,
+        config: { ...DEFAULT_CONFIG, activityType: "manual" },
+        startedAt: now - 1_500_000,
+        accumulatedSeconds: 1500,
+        isRunning: false,
+        phase: "paused",
+        points: [],
+        lastWriteAt: now,
+        manualDistanceDraft: { version: 1, raw: "3.10", unit: "mi" },
+      })
+    ).toBe(true);
+    renderUnsaved();
+    expect(readStoredRun("runner")?.manualDistanceDraft?.raw).toBe("3.10");
+    const originalSet = Storage.prototype.setItem;
+    const refused = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(function (this: Storage, key, value) {
+        if (key === "tropos_offline_queue")
+          throw new DOMException("quota", "QuotaExceededError");
+        return originalSet.call(this, key, value);
+      });
+    try {
+      fireEvent.click(await screen.findByRole("button", { name: RUN.save }));
+      expect(
+        await screen.findByRole("button", { name: "Retry" })
+      ).toBeInTheDocument();
+      expect(queued()).toHaveLength(0);
+      expect(readStoredRun("runner")?.manualDistanceDraft?.raw).toBe("3.10");
+      refused.mockRestore();
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(
+        await screen.findByRole("button", { name: RUN.done })
+      ).toBeInTheDocument();
+      expect(queued()).toHaveLength(1);
+      expect(readStoredRun("runner")).toBeNull();
+    } finally {
+      refused.mockRestore();
+    }
   });
 
   it("saves the run once when a Retry follows a later step's failure", async () => {

@@ -65,6 +65,7 @@ import {
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "../lib/runResumeStorage";
+import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
 import {
@@ -292,6 +293,17 @@ export default function Run() {
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [manualDistanceDraft, setManualDistanceDraft] =
+    useState<ManualDistanceDraft | null>(null);
+  const manualDistanceDraftRef = useRef<ManualDistanceDraft | null>(null);
+  const replaceManualDistanceDraft = useCallback(
+    (draft: ManualDistanceDraft | null) => {
+      // The immediate checkpoint writer must see the edit before React commits.
+      manualDistanceDraftRef.current = draft;
+      setManualDistanceDraft(draft);
+    },
+    []
+  );
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Latest timer, held in a ref so the auto-pause effect can call pause/resume
@@ -746,6 +758,7 @@ export default function Run() {
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
+    replaceManualDistanceDraft(null);
     audioCues.prime();
     await wakeLock.request();
     // Phase B1: finalise plan metadata against the user's actual
@@ -787,10 +800,11 @@ export default function Run() {
 
   // ─── Phase B3: persistence write + restore handlers ─────────────
   //
-  // `writeSnapshot` is called from two places:
+  // `writeSnapshot` is called from three places:
   //   1. The periodic-write interval (every 5s while active/paused).
   //   2. The visibilitychange→hidden handler (immediate write before
   //      the OS suspends the page).
+  //   3. Manual-distance edits (synchronous, including while paused).
   //
   // It's a no-op when there's no run in flight (runConfig null, or
   // phase is waiting/acquiring/countdown/finished). The write itself
@@ -812,12 +826,24 @@ export default function Run() {
       lastWriteAt: Date.now(),
       phase: phase === "paused" ? "paused" : "active",
       ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
+      ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
+        ? { manualDistanceDraft: manualDistanceDraftRef.current }
+        : {}),
     };
     const saved = writeStoredRun(uid, snapshot);
     // A boolean state bails out on repeated failures/successes. Updating a
     // timestamp here would itself re-render and schedule another write.
     setSnapshotWriteFailed(!saved);
   }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
+
+  const handleManualDistanceDraftChange = useCallback(
+    (draft: ManualDistanceDraft) => {
+      replaceManualDistanceDraft(draft.raw === "" ? null : draft);
+      // Persist the latest keystroke synchronously, including while paused.
+      writeSnapshot();
+    },
+    [replaceManualDistanceDraft, writeSnapshot]
+  );
 
   // Periodic write: every 5s while a run is in flight. The interval
   // re-arms whenever the deps change (e.g. pause flips phase) so the
@@ -857,6 +883,11 @@ export default function Run() {
     if (!resumePrompt) return;
     audioCues.prime();
     await wakeLock.request();
+    replaceManualDistanceDraft(
+      requiresManualDistance(resumePrompt.config)
+        ? (resumePrompt.manualDistanceDraft ?? null)
+        : null
+    );
     const coachingRestored = !!(
       resumeCoaching?.checkpoint &&
       resumeCoaching.segments &&
@@ -945,19 +976,30 @@ export default function Run() {
       gps.start();
     }
     haptic("medium");
-  }, [resumePrompt, resumeCoaching, player, timer, gps, audioCues, wakeLock]);
+  }, [
+    resumePrompt,
+    resumeCoaching,
+    player,
+    timer,
+    gps,
+    audioCues,
+    wakeLock,
+    replaceManualDistanceDraft,
+  ]);
 
   const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
     if (profileUid) clearStoredRun(profileUid);
+    replaceManualDistanceDraft(null);
     setResumePrompt(null);
-  }, [profileUid]);
+  }, [profileUid, replaceManualDistanceDraft]);
 
   const handleDiscardFromPrompt = useCallback(() => {
     if (profileUid) clearStoredRun(profileUid);
+    replaceManualDistanceDraft(null);
     setResumePrompt(null);
     navigate("/");
-  }, [navigate, profileUid]);
+  }, [navigate, profileUid, replaceManualDistanceDraft]);
 
   // Count seconds spent in acquiring phase
   useEffect(() => {
@@ -1333,6 +1375,7 @@ export default function Run() {
        originally entered the acquiring phase and don't need to fire
        again. */
     gps.stop();
+    replaceManualDistanceDraft(null);
     setRunConfig((prev) =>
       prev
         ? {
@@ -1347,7 +1390,7 @@ export default function Run() {
     dispatch({ type: "MANUAL_FALLBACK" });
     timer.start();
     haptic("heavy");
-  }, [gps, timer, sessionSegments]);
+  }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -1790,6 +1833,8 @@ export default function Run() {
               isPaused={phase === "paused"}
               onPause={handlePause}
               onResume={handleResume}
+              distanceDraft={manualDistanceDraft}
+              onDistanceDraftChange={handleManualDistanceDraftChange}
               sessionGuidance={
                 sessionSegments ? (
                   <IntervalStepShell
@@ -1810,7 +1855,11 @@ export default function Run() {
                 finishRun(distance);
               }}
               onDiscard={() => {
+                // A draft reset can render before navigation unmounts Run.
+                // Retire the writer before clearing the discarded checkpoint.
+                startedAtRef.current = null;
                 if (profile?.uid) clearStoredRun(profile.uid);
+                replaceManualDistanceDraft(null);
                 navigate("/");
               }}
             />

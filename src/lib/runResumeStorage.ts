@@ -45,6 +45,10 @@ import {
   parseSessionPlayerCheckpoint,
   type SessionPlayerCheckpoint,
 } from "./sessionPlayerCheckpoint";
+import {
+  parseManualDistanceDraft,
+  type ManualDistanceDraft,
+} from "./manualDistanceDraft";
 /* RunConfig's canonical home is runConfigDefaults.ts (pure module, no
  * UI imports — RunSetupModal only re-exports it). Importing the pure
  * module keeps storage/auth off the UI layer (2026-07-11 audit batch 3:
@@ -122,6 +126,8 @@ export interface StoredRun {
   phase: "active" | "paused";
   /** Undefined on legacy snapshots; null means optional coaching was invalid. */
   playerCheckpoint?: SessionPlayerCheckpoint | null;
+  /** Optional raw manual/treadmill input, in the unit the runner typed. */
+  manualDistanceDraft?: ManualDistanceDraft;
 }
 
 /** The small record stored at the META key — everything in StoredRun
@@ -137,6 +143,7 @@ interface StoredMeta {
   pointCount: number;
   chunkCount: number;
   playerCheckpoint?: unknown;
+  manualDistanceDraft?: unknown;
 }
 
 function chunkCountFor(pointCount: number): number {
@@ -220,6 +227,9 @@ export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
     chunkCount: newChunks,
     ...(snapshot.playerCheckpoint !== undefined
       ? { playerCheckpoint: snapshot.playerCheckpoint }
+      : {}),
+    ...(snapshot.manualDistanceDraft !== undefined
+      ? { manualDistanceDraft: snapshot.manualDistanceDraft }
       : {}),
   };
   return writeJson(runResumeKey(uid), meta);
@@ -315,6 +325,10 @@ export function readStoredRun(
     return null;
   }
 
+  const manualDistanceDraft = parseManualDistanceDraft(
+    parsed.manualDistanceDraft
+  );
+
   return {
     v: parsed.v,
     config: parsed.config,
@@ -331,6 +345,7 @@ export function readStoredRun(
           ),
         }
       : {}),
+    ...(manualDistanceDraft ? { manualDistanceDraft } : {}),
   };
 }
 

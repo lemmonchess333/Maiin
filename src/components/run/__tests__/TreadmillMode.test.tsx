@@ -2,10 +2,28 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import TreadmillMode from "../TreadmillMode";
 import { formatClock } from "@/utils/formatters";
+import { useState, type ComponentProps } from "react";
+import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 
 const h = vi.hoisted(() => ({ unit: "km" as "km" | "mi" }));
 vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => h.unit }));
 afterEach(cleanup);
+
+function Entry(
+  props: Omit<
+    ComponentProps<typeof TreadmillMode>,
+    "distanceDraft" | "onDistanceDraftChange"
+  >
+) {
+  const [draft, setDraft] = useState<ManualDistanceDraft | null>(null);
+  return (
+    <TreadmillMode
+      {...props}
+      distanceDraft={draft}
+      onDistanceDraftChange={setDraft}
+    />
+  );
+}
 
 it("distinguishes elapsed time from a matching session countdown", () => {
   const props = {
@@ -14,12 +32,12 @@ it("distinguishes elapsed time from a matching session countdown", () => {
     onDiscard: vi.fn(),
     sessionGuidance: <p>30:00</p>,
   };
-  const view = render(<TreadmillMode {...props} elapsed={0} />);
+  const view = render(<Entry {...props} elapsed={0} />);
   expect(screen.getByText("30:00")).toBeVisible();
   const elapsed = screen.getByRole("timer", { name: "Elapsed time" });
   expect(elapsed).toHaveTextContent(/^0:00$/);
   expect(elapsed).not.toHaveTextContent(/^30:\d\d$/);
-  view.rerender(<TreadmillMode {...props} elapsed={1800} />);
+  view.rerender(<Entry {...props} elapsed={1800} />);
   expect(screen.getAllByText("30:00")).toHaveLength(2);
   expect(screen.getByRole("timer", { name: "Elapsed time" })).toHaveTextContent(
     /^30:00$/
@@ -36,14 +54,14 @@ describe("typed run distance", () => {
       h.unit = unit;
       const onSave = vi.fn();
       render(
-        <TreadmillMode
+        <Entry
           elapsed={900}
           formatTime={String}
           onSave={onSave}
           onDiscard={vi.fn()}
         />
       );
-      const input = screen.getByRole("spinbutton", {
+      const input = screen.getByRole("textbox", {
         name: "Distance from treadmill",
       });
       const save = screen.getByRole("button", { name: "Save Treadmill Run" });
