@@ -17,6 +17,41 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "single-leg-calf-raise": placard(
+    "single-leg-calf-raise",
+    ["Calves"],
+    ["Soleus"],
+    [
+      [0, "Low", "Lower heel slightly below the step."],
+      [0, "Brace", "Keep your knee straight; balance lightly."],
+      [1, "Top", "Rise onto your toes without pulling."],
+      [1, "Hold", "Pause tall; squeeze your working calf."],
+      [0, "Lower", "Lower slowly through the shown range."],
+      [0, "Reset", "Reset below step; keep forefoot planted."],
+    ],
+    [
+      "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
+      "Hold a wall or rail for balance only — don't pull yourself up with it.",
+    ]
+  ),
+  "side-plank": placard(
+    "side-plank",
+    ["Obliques"],
+    ["Core", "Shoulders"],
+    [
+      [1, "Support", "Keep your elbow beneath your shoulder."],
+      [1, "Stack", "Keep your feet stacked and steady."],
+      [1, "Align", "Keep head, hips and feet aligned."],
+      [1, "Brace", "Keep your hips raised and core braced."],
+      [1, "Breathe", "Breathe normally without dropping your hips."],
+      [1, "Time", "Hold for time; then repeat opposite side."],
+    ],
+    [
+      "Lie on your side with your forearm on the floor, elbow under your shoulder.",
+      "Stack your feet (or stagger for easier) and brace your core.",
+      "Lift your hips off the floor into a straight line from head to feet.",
+    ]
+  ),
   "overhead-extension": placard(
     "overhead-extension",
     ["Triceps"],

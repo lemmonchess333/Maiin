@@ -1,0 +1,9 @@
+import { createRoot } from 'react-dom/client';
+import { useState } from 'react';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormFrames from '../../Maiin-burpees/src/components/ExerciseFormFrames';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+import plan from './sequence-plan.json';
+const beats=plan.beats.map(({t,label,cue},index)=>({t,label,cue,image:`draft/frames/${index+1}.webp`}));
+function Review(){const [index,setIndex]=useState(0);return <main className="min-h-screen bg-background text-foreground p-4"><div style={{maxWidth:390,margin:'0 auto'}} className="space-y-3"><h1 className="text-h2 font-bold">Single-Leg Calf Raise</h1><ThemeControl/><p>Unregistered two-endpoint candidate</p><ExerciseFormFrames name="Single-Leg Calf Raise" beats={beats} onStep={setIndex}/><p>{beats[index].cue}</p><CardViews src="/draft/card.webp"/><PlaybackEvidence/></div></main>}
+const root=createRoot(document.getElementById('root')!);root.render(<Review/>);if(import.meta.hot)import.meta.hot.dispose(()=>root.unmount());

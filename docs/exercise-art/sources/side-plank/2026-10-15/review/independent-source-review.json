@@ -1,0 +1,151 @@
+{
+  "status": "independent-read-only-source-and-static-scope-review-complete",
+  "createdAtUtc": "2026-10-15T19:13:43.190654+00:00",
+  "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\side-plank\\retained-static-hold-20261015",
+  "filesReadBeforeAndAfter": {
+    "draft-file-hashes.json": "cf8fb54429589f6d65fb729e3395804b1e1a55427a1c1e49744f5bb9d9be24cd",
+    "draft/1-framed.ora": "91dbe1ef239c11961e9e74954f61fcebc00a40f8e0ebcaa67be87f7863e12f09",
+    "draft/1-framed.png": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98",
+    "draft/1-inherited-contours-and-shading-layer.png": "2b5a4278161b8a4b9e70b4cc2261550a100c655806e845363c6f2a2544a65fc0",
+    "draft/1-native-finished.png": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+    "draft/1-native.ora": "c960c1bde71d3dd0737866b967d5c4c35d07f22d27be8919f42815669fee34cb",
+    "draft/1-palette-layer.png": "e061dadc3b121b0bb4afda68536f3a91ec5ebcb54146922524333498dc280150",
+    "draft/frames/1.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/2.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/3.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/4.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/5.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/6.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/masks/actual-changed-pixels.png": "c9721083a81e932be7150885afe2b5044fcd6d05f51b6fa0200287bbadde4e11",
+    "draft/masks/opaque-source-field-interior.png": "b2679e4f1b99f09c7a94ce7934049a4936fab873d6f83d578947aea2c4464ab9",
+    "draft/masks/primary-role-within-existing-fields.png": "141c8db09f11ae09840dea04765d16fb3c02c9df3e35fbf4cc7f3bdd314d58fc",
+    "draft/masks/secondary-role-within-existing-fields.png": "9a4e970c0c1e9537e54309cf4c45c066af8760319291cbbd0783153e52a77554",
+    "draft/masks/source-colour-alpha.png": "bbac0ec86c50b5e84982ffe03c68665fe998f166f55c0740186c44cc02e307a0",
+    "draft/masks/source-existing-colour-support.png": "2577fea77842241d557bbdf7e12a7fcfc9789fb390afaebd798cd62ec268be6c",
+    "draft/originals/historical-generation.md": "4bc3f088e32fab21e2b8044ed243efac8a4ea8f1c5d8b83116335f85e2eac167",
+    "draft/originals/historical-side-plank-plan.json": "53bbf17aeaf0bbf36e293814e610620550d6fe76b3bfe6e0b359882ab742346e",
+    "draft/originals/historical-side-plank-provenance.json": "2a527f8e4d19f783de1273f3247429b9a4a17e6ac3a95d662b1eb4a15e12ffa8",
+    "draft/originals/historical-side-plank-registration.json": "404acf1c2892a11d7745335399956a2dae8255bfab1560e0787aea7ee04bf7fd",
+    "draft/originals/raised-contact-drift.png": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+    "draft/pixel-and-editable-proof.json": "d30c9de9f0caf2f09cd7f778946279f90093152be3b4905e3e94930b3bc32bc2",
+    "draft/reference.png": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da",
+    "palette-recipe.json": "648d85bd8fbdca9c8b64d411ddd7004ee578d6c832022abb0e8ddffce240abcd",
+    "reproduce.py": "a7bf7f392d5c7bb34ad7059c4143189cf6f12fd1da05b1520a8f5923fa7b82e9",
+    "sequence-plan.json": "1b709e4216adc80a963417f65d16f29e0375de3c228ba3412757f51b0fe50bbd",
+    "source-provenance.json": "0f63ab02ffa1d6fc3e9a82bb7cffc2a5fb04d1c0f38dc48fd2f0e01540f1e005",
+    "verify-draft.py": "b6a1653ee6665b44cb5bf5708ccfd4d1dc20e0cc7bdaf170f6872202448451d4"
+  },
+  "reviewedNativeOriginalSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "reviewedNativeFinalSha256": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+  "existingVerifier": {
+    "path": "verify-draft.py",
+    "sha256": "b6a1653ee6665b44cb5bf5708ccfd4d1dc20e0cc7bdaf170f6872202448451d4",
+    "exitCode": 0,
+    "stdoutSha256": "88adcb0bcc1531920c399550c6bd6ad2a0f370cf2f8174e1f9ad90d451536aee",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "actualOutput": {
+      "scope": "read-only draft integrity; not semantic/native/mobile/release approval",
+      "pinnedDraftFilesVerified": 25,
+      "originalEvidenceFilesVerified": 5,
+      "physicalPoses": 1,
+      "decodedSize": [
+        1480,
+        696
+      ],
+      "oraFilesReopenedExact": 2,
+      "losslessFrameFilesVerified": 6,
+      "allOutsideExistingSourceColourRgbaExact": true,
+      "allContactTrainerPixelsExact": true,
+      "nativeAndCommonCropLayersExact": true,
+      "frameSha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "newImageRequests": 0,
+      "filesWrittenByVerifier": 0,
+      "releaseApproved": false
+    }
+  },
+  "independentPixelChecks": {
+    "sourcePurpleSupportPixels": 67474,
+    "actualChangedPixels": 67379,
+    "allChangesInsideOriginalPurpleSupport": true,
+    "allOriginalNeutralPixelsOutsideSupportExact": true,
+    "sourceAlphaExact": true,
+    "allContactFootwearPixelsExact": true,
+    "geometryCoordinatesUnchanged": true,
+    "allSixWebPsLosslessVp8L": true,
+    "packagePinnedBytesUnchangedByAudit": true
+  },
+  "sourceHistoryExact": [
+    {
+      "copy": "draft/originals/raised-contact-drift.png",
+      "original": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\raised-contact-drift.png",
+      "sha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+      "byteExact": true
+    },
+    {
+      "copy": "draft/originals/historical-side-plank-provenance.json",
+      "original": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\provenance.json",
+      "sha256": "2a527f8e4d19f783de1273f3247429b9a4a17e6ac3a95d662b1eb4a15e12ffa8",
+      "byteExact": true
+    },
+    {
+      "copy": "draft/originals/historical-side-plank-plan.json",
+      "original": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\plan.json",
+      "sha256": "53bbf17aeaf0bbf36e293814e610620550d6fe76b3bfe6e0b359882ab742346e",
+      "byteExact": true
+    },
+    {
+      "copy": "draft/originals/historical-side-plank-registration.json",
+      "original": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\registration.json",
+      "sha256": "404acf1c2892a11d7745335399956a2dae8255bfab1560e0787aea7ee04bf7fd",
+      "byteExact": true
+    },
+    {
+      "copy": "draft/originals/historical-generation.md",
+      "original": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\GENERATION.md",
+      "sha256": "4bc3f088e32fab21e2b8044ed243efac8a4ea8f1c5d8b83116335f85e2eac167",
+      "byteExact": true
+    }
+  ],
+  "historicalPlanPinExplanation": {
+    "retainedCurrentOriginalBytesSha256": "53bbf17aeaf0bbf36e293814e610620550d6fe76b3bfe6e0b359882ab742346e",
+    "historicalProvenanceLfSha256": "56ad4789f626997be8172cca2a452d991c64ec385b55cdccdc00c1de1fcfc83a",
+    "exactCrLfToLfOnlySha256": "56ad4789f626997be8172cca2a452d991c64ec385b55cdccdc00c1de1fcfc83a",
+    "resolution": "The exact copied current source plan uses CRLF; newline-only LF representation exactly matches the historical recorded pin. No metadata bytes were rewritten."
+  },
+  "nativeVisualObservations": {
+    "support": "Full lower forearm/elbow footprint reads clearly on the floor; closed fist is joined to that visible forearm, supporting upperarm rises toward the shoulder. This is distinct from later foreshortened2-master source.",
+    "body": "Raised hips and extended stacked legs form a plausible side-plank line; no knee-supported substitution or material obvious limb-proportion defect observed.",
+    "model": "Recognizable FA56 bald featureless white-grey anatomy and no shorts; trainer straps and source shading differ in detail. These are explicitly disclosed identity findings, not exact model equality.",
+    "palette": "Original saturated side/lower oblique fields now use primary basis; original rectus/core and shoulder fields use secondary basis. The final faint upper-deltoid wash stays faint. Existing contours/highlight islands remain; no material new boundary gap or neutral anatomy recolouring observed."
+  },
+  "staticScope": {
+    "catalogueExplicitlyTimedHold": true,
+    "setupThreeCatalogueInstructionsExact": true,
+    "afterHoldCatalogueInstructionExact": true,
+    "onePhysicalPoseHonestlyDisclosed": true,
+    "sixPathsOneIdenticalHold": true,
+    "allBeatTOne": true,
+    "cueWordCounts": [
+      6,
+      6,
+      6,
+      7,
+      6,
+      7
+    ],
+    "noIllustratedLiftLowerSwitchClaim": true,
+    "interpretation": "Entry and side-switch are written setup/recovery; every displayed cue describes sustaining the single timed isometric hold. The obsolete multi-pose contact-drift gate is not represented as resolved motion."
+  },
+  "materialFindings": [],
+  "disclosedFindingsRetained": [
+    "Trainer strap/source shading differences vs global canonical",
+    "One physical hold only, no entry/exit/side-switch imagery",
+    "Original prompt/request id unavailable; genuine historical summary explicitly not verbatim",
+    "Old low-to-raised contact drift remains historical; no moving pair is claimed"
+  ],
+  "scopeLimits": [
+    "Independent source/static-scope integrity review only; parent owns final UI/native/card acceptance and production release",
+    "No repo/package files written; only this separate audit folder receives proof",
+    "No tests, generation, registration, publication or completion credit"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "artifactName": "side-draft-native-dimensions.json",
+  "observation": {
+    "display": [
+      1480,
+      696
+    ],
+    "natural": [
+      1480,
+      696
+    ],
+    "source": "/draft/frames/2.webp",
+    "viewport": [
+      1580,
+      1200
+    ]
+  }
+}

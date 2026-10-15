@@ -1,0 +1,30 @@
+{
+  "scope": "Completed parent-directed arithmetic correction only; no new art/body/contact modification or semantic acceptance",
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "beforeFinishedSha256": "bedd28dd156ba89b5997bde64af44954f08dd2eac089ba96a4133a8723c46338",
+  "finalFinishedSha256": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+  "sourceComponentPixels": 6996,
+  "changedPixels": 6615,
+  "allOtherFinishedPixelsRgbaExact": true,
+  "independentDetailLayerByteExact": true,
+  "independentDetailLayerSha256": "2b5a4278161b8a4b9e70b4cc2261550a100c655806e845363c6f2a2544a65fc0",
+  "nativeBoxExclusive": [
+    350,
+    215,
+    500,
+    325
+  ],
+  "alphaMath": "round(255*clip((max(sourceRGB)-min(sourceRGB))/80,0,1)) in the original existing upper-delt component only; all stronger/core fields and detail layer unchanged",
+  "canonicalSecondaryChroma": 80,
+  "noNewGradientOrNoise": true,
+  "literalNativeCropsNoRescale": true,
+  "proofs": {
+    "upper-delt-colour-alpha-native-crop.png": "dc5e2b485f8580bfe0548c125bb2f7124be0b6e71d08c67c9a59989db66f4f0c",
+    "upper-delt-final-source-strength-alpha-native-crop.png": "5bf96829dd9e69ebc59d2c5d255ba09c4b99129b9ae611d830a2762acbff6c12",
+    "upper-delt-final-source-strength-native-crop.png": "82ac2d32c0b6f751400640003e77b0ad7862eb89488a2dea525af50fa6b94abc",
+    "upper-delt-finished-native-crop.png": "adc6972b82a2cebf423198be4207893fa7c86c8d59b9393b1ceab41ba9010791",
+    "upper-delt-original-native-crop.png": "6aa68714e7e58f074415ebb9407d0e353b5d9edf4dbd4a4c8fc320beb6c54398"
+  },
+  "nativeVisualReviewPendingParent": true,
+  "releaseApproved": false
+}

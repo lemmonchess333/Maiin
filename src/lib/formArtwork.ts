@@ -75,12 +75,27 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Seven
+ * reviewed; they do not claim to pass the new consistency standard. Nine
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "single-leg-calf-raise": {
+    ...existing("single-leg-calf-raise", 626, 1209),
+    reference: "form-frames/single-leg-calf-raise/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-single-leg-calf-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
+  },
+  "side-plank": {
+    ...existing("side-plank", 1480, 696),
+    reference: "form-frames/side-plank/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-side-plank-timed-hold-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/side-plank.json",
+  },
   "overhead-extension": {
     ...existing("overhead-extension", 461, 1547),
     reference: "form-frames/overhead-extension/3.webp",

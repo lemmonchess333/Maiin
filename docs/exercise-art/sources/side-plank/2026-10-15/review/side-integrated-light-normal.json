@@ -1,0 +1,157 @@
+{
+  "artifactName": "side-integrated-light-normal.json",
+  "observations": [
+    {
+      "ms": 149746,
+      "src": "/form-frames/side-plank/2.webp",
+      "alt": "Side Plank, Stack",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "STACK 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 150952,
+      "src": "/form-frames/side-plank/3.webp",
+      "alt": "Side Plank, Align",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "ALIGN 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 152159,
+      "src": "/form-frames/side-plank/4.webp",
+      "alt": "Side Plank, Brace",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BRACE 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 153365,
+      "src": "/form-frames/side-plank/5.webp",
+      "alt": "Side Plank, Breathe",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BREATHE 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 154571,
+      "src": "/form-frames/side-plank/6.webp",
+      "alt": "Side Plank, Time",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "TIME 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 155777,
+      "src": "/form-frames/side-plank/1.webp",
+      "alt": "Side Plank, Support",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SUPPORT 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 156983,
+      "src": "/form-frames/side-plank/2.webp",
+      "alt": "Side Plank, Stack",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "STACK 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 158186,
+      "src": "/form-frames/side-plank/3.webp",
+      "alt": "Side Plank, Align",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "ALIGN 3/6\n\nPause\nNormal"
+    }
+  ]
+}
