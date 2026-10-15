@@ -1,0 +1,121 @@
+{
+  "status": "actual-new-cue-length-regression-unresolved",
+  "reviewedAt": "2026-10-15T13:01:21.871180+00:00",
+  "comparisonPath": "face-pulls-final-sized-2efdec417-failure-comparison-independent.json",
+  "comparisonSha256": "4226de7e2b583e7c02eb136347e4fe18df535f4411cd537bf0179e9d63563721",
+  "fullNormalRunStillNonGreen": true,
+  "normalSevenStagesCompleted": true,
+  "measuredBaseline": {
+    "failedFiles": 52,
+    "failedTests": 77,
+    "failureHeaders": 82
+  },
+  "measuredCandidate": {
+    "failedFiles": 50,
+    "failedTests": 75,
+    "failureHeaders": 80
+  },
+  "identityComparisonCounts": {
+    "added": 1,
+    "removed": 3,
+    "changedDiagnostics": 0,
+    "identicalDiagnostics": 79
+  },
+  "additionalFailure": {
+    "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+    "baseline": null,
+    "candidate": {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+      "project": "node",
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "kind": "test",
+      "case": "form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+      "headerLine": 1416,
+      "headerRawSha256": "b8609c1e6e35ad8c5b71c2c46b542546672908d34b91cddf080c623a46b79fe9",
+      "diagnostic": {
+        "startLine": 1417,
+        "endLineInclusive": 1424,
+        "byteStart": 98499,
+        "byteEndExclusive": 98971,
+        "rawSha256": "cc7fef4778b2e71ad7fe1f699c9bc684a288fce633eeb2a55559aeb40fc36087",
+        "firstOwnLine": "AssertionError: face-pulls \"Reach\": 10 words: expected 10 to be less than or equal to 7"
+      },
+      "firstThreeOwnLines": [
+        "AssertionError: face-pulls \"Reach\": 10 words: expected 10 to be less than or equal to 7",
+        " ❯ src/lib/__tests__/bodyRig.test.ts:4817:61",
+        "    4815|       for (const b of getAuthoredBeats(id)!) {"
+      ]
+    }
+  },
+  "disposition": "Real authored content regression against the unchanged reading-dwell contract; no timeout, baseline/pre-existing, or focus-nonreproduction classification applies.",
+  "contract": {
+    "source": "src/lib/exerciseTempo.ts:240",
+    "name": "PLACARD_CUE_WORDS",
+    "value": 7,
+    "assertion": "src/lib/__tests__/bodyRig.test.ts:4817",
+    "reason": "Animation dwell is derived from the cue width; overlong cues scroll past unread."
+  },
+  "testedSourceHashes": {
+    "src/lib/exerciseTempo.ts": "41e5b9d6bf2b0abb14eadef12ffcfa28b4fedaa412368fedfc2bf9f5596ed45d",
+    "src/lib/__tests__/bodyRig.test.ts": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b",
+    "src/lib/releasedFormPlacards.ts": "d50ab4bd5dab7add986a4aaac1263bf1ee23001666e49e5aa0fec59ad4e5a5a7"
+  },
+  "originalAuthoredCueCounts": [
+    {
+      "label": "Reach",
+      "cue": "Begin with arms extended straight toward the pulley, palms down.",
+      "whitespaceWords": 10,
+      "withinExistingSevenWordLimit": false
+    },
+    {
+      "label": "Brace",
+      "cue": "Keep your stance steady and your shoulder blades set.",
+      "whitespaceWords": 9,
+      "withinExistingSevenWordLimit": false
+    },
+    {
+      "label": "Rotate",
+      "cue": "Pull toward your face, separating the grips past your ears.",
+      "whitespaceWords": 10,
+      "withinExistingSevenWordLimit": false
+    },
+    {
+      "label": "Squeeze",
+      "cue": "Hold the finish with elbows high and knuckles up.",
+      "whitespaceWords": 9,
+      "withinExistingSevenWordLimit": false
+    },
+    {
+      "label": "Return",
+      "cue": "Return slowly, keeping your elbows high.",
+      "whitespaceWords": 6,
+      "withinExistingSevenWordLimit": true
+    },
+    {
+      "label": "Reset",
+      "cue": "Finish with arms extended and keep cable tension.",
+      "whitespaceWords": 8,
+      "withinExistingSevenWordLimit": false
+    }
+  ],
+  "requiredFixScope": "Shorten only overlong Face Pulls cues; preserve existing labels, t coordinates, setup, muscles, images, crop, equipment and model. Update actual cue hash and separately review the exact caption-only evidence chain.",
+  "requiredNormalCompleteFileCohort": [
+    "src/lib/__tests__/bodyRig.test.ts",
+    "src/lib/__tests__/formArtOwnerRelease.test.ts",
+    "src/lib/__tests__/formArtwork.test.ts",
+    "src/lib/__tests__/formArtCutouts.test.ts",
+    "scripts/art/form-art-releases.test.ts"
+  ],
+  "cohortResult": null,
+  "removedFailureIdsOnlyNoFixedClaim": [
+    "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+    "node|src/features/program/__tests__/racePlanSafetySweep.test.ts|race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+    "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas"
+  ],
+  "otherSharedFailures": "79 exact canonical IDs retain byte-identical own diagnostics in these two measured runs only.",
+  "unresolvedAdditionalFailureIdentities": [
+    "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in"
+  ],
+  "testsRunByReviewer": false,
+  "sourceOrTestsEdited": false
+}

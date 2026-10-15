@@ -1,0 +1,2778 @@
+
+> tropos@1.2.0 verify
+> npm run lint && npm run check:form-art && npm run check:form-drafts && npm run check:cycles && npm run build && npm run check:dist-size && npm run test
+
+
+> tropos@1.2.0 lint
+> eslint . --max-warnings 0
+
+
+> tropos@1.2.0 check:form-art
+> node --import tsx scripts/audit-form-art.ts
+
+{
+  "catalogue": 152,
+  "inScope": 141,
+  "existingSets": 6,
+  "newlyApproved": 122,
+  "ownerReleasedWithFindings": 6,
+  "releasedBytes": 354441624,
+  "errors": []
+}
+
+> tropos@1.2.0 check:form-drafts
+> node --import tsx scripts/audit-form-drafts.ts
+
+{
+  "draftSets": 29,
+  "selectedFrames": 174,
+  "uniquePoses": 103,
+  "nativeBytes": 172295976,
+  "releaseApproved": false,
+  "errors": []
+}
+
+> tropos@1.2.0 check:cycles
+> madge --circular --extensions ts,tsx --ts-config tsconfig.app.json src
+
+- Finding files
+Processed 2167 files (15.7s) (8 warnings)
+
+√ No circular dependency found!
+
+
+> tropos@1.2.0 build
+> tsc -b && vite build && node scripts/stamp-sw.mjs
+
+vite v7.3.6 building client environment for production...
+<script src="/Maiin/init.js"> in "/index.html" can't be bundled without type="module" attribute
+transforming...
+✓ 4510 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/core/dist/index.js is dynamically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/hooks/useEmailVerificationGate.ts but also statically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/analytics/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/analytics/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/app-check/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/app-check/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/authentication/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/authentication/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/app/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/app/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/filesystem/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/filesystem/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/haptics/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/haptics/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/local-notifications/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/local-notifications/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/status-bar/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/text-zoom/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@revenuecat/purchases-capacitor/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@revenuecat/purchases-capacitor/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-health/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-live-activities/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-live-activities/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/nativeLocationSettings.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/nativeLocationSource.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/notifications.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/platform.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/purchaseProvider.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/reauth.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/revenuecat.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/pushNotifications.ts is dynamically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/App.tsx but also statically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/components/settings/AccountSection.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/components/settings/NotificationsSection.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/hooks/usePushTokenRefresh.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/auth.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/pages/SettingsIndex.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/pages/settings/SettingsNotifications.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/assets/plus-jakarta-sans-cyrillic-ext-wght-normal-lLTsRRxN.woff2    1.72 kB
+dist/assets/plus-jakarta-sans-vietnamese-wght-normal-qRpaaN48.woff2      8.35 kB
+dist/index.html                                                          9.58 kB │ gzip:   3.63 kB
+dist/assets/archivo-vietnamese-wght-normal-XAtsl5Q_.woff2               13.24 kB
+dist/assets/plus-jakarta-sans-latin-ext-wght-normal-DmpS2jIq.woff2      21.73 kB
+dist/assets/space-womens-running-BNTkuui5.webp                          22.86 kB
+dist/assets/plus-jakarta-sans-latin-wght-normal-eXO_dkmS.woff2          27.35 kB
+dist/assets/archivo-latin-ext-wght-normal-C4zznr8T.woff2                32.61 kB
+dist/assets/archivo-latin-wght-normal-E0tuGl4L.woff2                    34.93 kB
+dist/assets/space-runners-CrNtPy8j.webp                                 36.39 kB
+dist/assets/space-brighton-marathon-Cl88645s.webp                       48.91 kB
+dist/assets/space-supernova-forth-5k-H8rUYryS.webp                      57.71 kB
+dist/assets/space-new-to-tropos-CwVD7HAC.webp                           64.08 kB
+dist/assets/space-great-birmingham-run-cj45njRA.webp                    77.68 kB
+dist/assets/space-cardiff-half-BQxTdImT.webp                            82.70 kB
+dist/assets/challenge-hybrid-C6vDtJYf.webp                              85.08 kB
+dist/assets/space-seville-marathon-DPti4-VY.webp                        85.71 kB
+dist/assets/rigatoni-B43J6MH8.webp                                      89.64 kB
+dist/assets/space-travel-racecations-BHIYUQBX.webp                      91.70 kB
+dist/assets/space-leeds-10k-oAZv9VNW.webp                               93.56 kB
+dist/assets/space-oxford-half-Cnvb_CN2.webp                             93.69 kB
+dist/assets/space-bournemouth-5k-CwlLVg1m.webp                         103.62 kB
+dist/assets/space-dublin-marathon-CtJZCvgm.webp                        103.68 kB
+dist/assets/challenge-run-DvZYWRgV.webp                                103.87 kB
+dist/assets/space-tokyo-marathon-BZFCeBPX.webp                         104.86 kB
+dist/assets/space-valencia-half-BQYzNUhd.webp                          106.04 kB
+dist/assets/space-lifters-BKKolXD9.webp                                106.75 kB
+dist/assets/space-sheffield-half-BE1yhXHy.webp                         107.85 kB
+dist/assets/space-chicago-marathon-BjSXh8kk.webp                       108.10 kB
+dist/assets/space-houston-marathon-DtwTB7LC.webp                       108.81 kB
+dist/assets/space-race-to-the-stones-100k-BspNv8lY.webp                108.89 kB
+dist/assets/space-leeds-marathon-CPQ509zh.webp                         109.01 kB
+dist/assets/space-milton-keynes-marathon-DtpWEZnk.webp                 110.17 kB
+dist/assets/space-york-10k-Bia718ZA.webp                               111.17 kB
+dist/assets/space-sydney-marathon-B2akOY_r.webp                        111.31 kB
+dist/assets/space-lincoln-10k-2fyEHAPo.webp                            111.36 kB
+dist/assets/space-paris-marathon-BDGaNQg2.webp                         111.49 kB
+dist/assets/space-bath-half-BlC8LPHE.webp                              113.99 kB
+dist/assets/space-southampton-marathon-C-zBsuNP.webp                   114.24 kB
+dist/assets/space-edinburgh-5k-CGoNWd8S.webp                           114.28 kB
+dist/assets/space-great-manchester-run-BQ_SAMLu.webp                   114.62 kB
+dist/assets/space-brighton-half-B9wDxj4y.webp                          115.07 kB
+dist/assets/space-newport-marathon-C6LHkd2m.webp                       115.08 kB
+dist/assets/space-cambridge-half-BYKW-CnV.webp                         115.62 kB
+dist/assets/space-barcelona-marathon-B4HihaAd.webp                     116.08 kB
+dist/assets/space-triathlon-multisport-CWBug572.webp                   116.23 kB
+dist/assets/space-supernova-kelpies-5k-vjpF_raq.webp                   116.29 kB
+dist/assets/space-great-bristol-10k-B2VsiBe_.webp                      117.17 kB
+dist/assets/space-loch-ness-marathon-ZEruPUU1.webp                     117.25 kB
+dist/assets/space-copenhagen-marathon-lbkN0ECL.webp                    117.26 kB
+dist/assets/space-chiltern-50-BCdJsGsn.webp                            117.32 kB
+dist/assets/space-belfast-marathon-DGWf3m1j.webp                       117.49 kB
+dist/assets/space-chester-marathon-B0SE9pGX.webp                       117.76 kB
+dist/assets/space-river-ness-5k-D7o5r7NS.webp                          118.50 kB
+dist/assets/space-amsterdam-marathon-IWuAZSSf.webp                     118.55 kB
+dist/assets/space-new-york-city-marathon-4qp-8uni.webp                 118.63 kB
+dist/assets/space-manchester-marathon-C5GgVvIw.webp                    118.94 kB
+dist/assets/space-rotterdam-marathon-C7wY-pjk.webp                     119.04 kB
+dist/assets/space-boston-marathon-CwMcALzV.webp                        119.45 kB
+dist/assets/space-race-to-the-king-100k-Bjmx8hti.webp                  119.53 kB
+dist/assets/space-berlin-marathon-CMhIM9cK.webp                        119.83 kB
+dist/assets/space-edinburgh-marathon-xjzEGnA2.webp                     142.29 kB
+dist/assets/space-london-10000-BsnREMRE.webp                           152.43 kB
+dist/assets/space-london-marathon-BgIsVMge.webp                        155.97 kB
+dist/assets/space-the-big-half-C0rS53OJ.webp                           166.76 kB
+dist/assets/space-great-north-run-Dm97jwbT.webp                        169.45 kB
+dist/assets/space-trail-running-DniSacg4.webp                          172.49 kB
+dist/assets/space-royal-parks-half-Cfr6cLUX.webp                       250.32 kB
+dist/assets/maplibre-gl-worker-B8OLt8TZ.js                             468.84 kB
+dist/assets/basemap-C_vZZIuC.css                                         1.64 kB │ gzip:   0.50 kB
+dist/assets/maplibre-JR8eJ17e.css                                       83.02 kB │ gzip:  10.52 kB
+dist/assets/index-CrVxTQUm.css                                         141.62 kB │ gzip:  23.06 kB
+dist/assets/activityPost-CrytWlMR.js                                     0.03 kB │ gzip:   0.05 kB
+dist/assets/resolveProgramGoalMirror-Cnn4Z2Xl.js                         0.06 kB │ gzip:   0.08 kB
+dist/assets/socialAnalytics-DQRpX9hh.js                                  0.09 kB │ gzip:   0.11 kB
+dist/assets/paywallAnalytics-BlkrmK6B.js                                 0.09 kB │ gzip:   0.11 kB
+dist/assets/minus-BDQQcVLE.js                                            0.12 kB │ gzip:   0.13 kB
+dist/assets/sessionSetPolicy-DksYLSYq.js                                 0.12 kB │ gzip:   0.11 kB
+dist/assets/check-CHMkpkOG.js                                            0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-down-Do5vaoln.js                                     0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-up-BCdYa9pC.js                                       0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-right-Cw5pnHbX.js                                    0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-left-43lUIWq1.js                                     0.13 kB │ gzip:   0.15 kB
+dist/assets/formatNutrition-Bd9iZHFQ.js                                  0.14 kB │ gzip:   0.12 kB
+dist/assets/mountain-B-R5hYGp.js                                         0.14 kB │ gzip:   0.15 kB
+dist/assets/nutritionPhase-B9XwdTGx.js                                   0.14 kB │ gzip:   0.14 kB
+dist/assets/listFormat-DX74318Y.js                                       0.15 kB │ gzip:   0.13 kB
+dist/assets/plus-BuiJNGAi.js                                             0.15 kB │ gzip:   0.15 kB
+dist/assets/x-CIHo6y5s.js                                                0.16 kB │ gzip:   0.15 kB
+dist/assets/arrow-left-CwiExP-x.js                                       0.17 kB │ gzip:   0.16 kB
+dist/assets/useDistanceUnit-DHT1dLXG.js                                  0.17 kB │ gzip:   0.16 kB
+dist/assets/clock-DjaWeJJn.js                                            0.17 kB │ gzip:   0.17 kB
+dist/assets/search-DuAij60M.js                                           0.18 kB │ gzip:   0.17 kB
+dist/assets/trending-up-Cg9-7opZ.js                                      0.18 kB │ gzip:   0.17 kB
+dist/assets/repTarget-CUInAiN8.js                                        0.18 kB │ gzip:   0.18 kB
+dist/assets/circle-check-3a4zUBW5.js                                     0.18 kB │ gzip:   0.17 kB
+dist/assets/trending-down-DHxxfgr-.js                                    0.18 kB │ gzip:   0.17 kB
+dist/assets/ban-rME_jflx.js                                              0.18 kB │ gzip:   0.17 kB
+dist/assets/index-CGlT3WdS.js                                            0.19 kB │ gzip:   0.17 kB
+dist/assets/play-BtSWH-cW.js                                             0.19 kB │ gzip:   0.18 kB
+dist/assets/user-CofOtcSZ.js                                             0.20 kB │ gzip:   0.18 kB
+dist/assets/flame-BvrLkqUu.js                                            0.20 kB │ gzip:   0.18 kB
+dist/assets/rotate-ccw-BmFISdd2.js                                       0.20 kB │ gzip:   0.18 kB
+dist/assets/repUnits-r0H5JM0l.js                                         0.20 kB │ gzip:   0.16 kB
+dist/assets/info-WKoRzs8R.js                                             0.21 kB │ gzip:   0.18 kB
+dist/assets/lock-DE1osXa5.js                                             0.21 kB │ gzip:   0.19 kB
+dist/assets/mail-Bzpb7OtY.js                                             0.21 kB │ gzip:   0.20 kB
+dist/assets/useSavedRuns-gm1a9GTy.js                                     0.22 kB │ gzip:   0.18 kB
+dist/assets/RunTemplateIcon-BHmcHAsN.js                                  0.22 kB │ gzip:   0.19 kB
+dist/assets/target-D2x27cuT.js                                           0.23 kB │ gzip:   0.16 kB
+dist/assets/InlineNumerals-CNh71Q9c.js                                   0.23 kB │ gzip:   0.20 kB
+dist/assets/log-out-B-cpzT79.js                                          0.23 kB │ gzip:   0.19 kB
+dist/assets/download-Csq3QHoP.js                                         0.23 kB │ gzip:   0.19 kB
+dist/assets/timer-Cxjfg-mb.js                                            0.24 kB │ gzip:   0.19 kB
+dist/assets/globe-CwwBxLQc.js                                            0.24 kB │ gzip:   0.19 kB
+dist/assets/circle-alert-BGattJhY.js                                     0.25 kB │ gzip:   0.19 kB
+dist/assets/compass-gaPveIdq.js                                          0.25 kB │ gzip:   0.21 kB
+dist/assets/external-link-Bf-Vp0JU.js                                    0.25 kB │ gzip:   0.20 kB
+dist/assets/flag-TpnIkPhF.js                                             0.26 kB │ gzip:   0.21 kB
+dist/assets/route-BE38Fb6C.js                                            0.26 kB │ gzip:   0.20 kB
+dist/assets/eye-DvBMkYy1.js                                              0.26 kB │ gzip:   0.20 kB
+dist/assets/heart-BvAot9a_.js                                            0.26 kB │ gzip:   0.22 kB
+dist/assets/map-pin-BHNpcWCq.js                                          0.26 kB │ gzip:   0.23 kB
+dist/assets/utensils-D-3FP0iz.js                                         0.26 kB │ gzip:   0.21 kB
+dist/assets/index-D-9G5U5J.js                                            0.26 kB │ gzip:   0.22 kB
+dist/assets/zap-IPY-qqxB.js                                              0.26 kB │ gzip:   0.21 kB
+dist/assets/triangle-alert-B88ZNtY8.js                                   0.27 kB │ gzip:   0.22 kB
+dist/assets/leaf-dtA2AapW.js                                             0.27 kB │ gzip:   0.23 kB
+dist/assets/macroInfeasibility-Fhi8W0NI.js                               0.27 kB │ gzip:   0.23 kB
+dist/assets/shield-DUCD_wr0.js                                           0.27 kB │ gzip:   0.23 kB
+dist/assets/award-DdswNX6p.js                                            0.28 kB │ gzip:   0.23 kB
+dist/assets/pen-line-Do4v_b32.js                                         0.28 kB │ gzip:   0.23 kB
+dist/assets/runDose-z8k_G_9V.js                                          0.29 kB │ gzip:   0.23 kB
+dist/assets/calendar-check-PXKrbInV.js                                   0.31 kB │ gzip:   0.23 kB
+dist/assets/users-BBnu9xKn.js                                            0.31 kB │ gzip:   0.23 kB
+dist/assets/chartStyles-Dg35BsPg.js                                      0.31 kB │ gzip:   0.25 kB
+dist/assets/user-x-m7LOxcKJ.js                                           0.31 kB │ gzip:   0.23 kB
+dist/assets/mealSlots-C3pAD53H.js                                        0.31 kB │ gzip:   0.23 kB
+dist/assets/apple-CpMk-C8R.js                                            0.32 kB │ gzip:   0.23 kB
+dist/assets/BlockAwareAvatar-DsNy90s4.js                                 0.32 kB │ gzip:   0.23 kB
+dist/assets/raceRest-2c3poDio.js                                         0.32 kB │ gzip:   0.26 kB
+dist/assets/mail-warning-CobB0BgI.js                                     0.33 kB │ gzip:   0.24 kB
+dist/assets/activationTracker-B0_gHgnB.js                                0.33 kB │ gzip:   0.27 kB
+dist/assets/trash-2-BpHgPQ7l.js                                          0.33 kB │ gzip:   0.22 kB
+dist/assets/ChartAreaGradient-cpoTTwML.js                                0.33 kB │ gzip:   0.23 kB
+dist/assets/scale-2T0eA9lB.js                                            0.33 kB │ gzip:   0.22 kB
+dist/assets/SectionLabel-DPkvDzWY.js                                     0.33 kB │ gzip:   0.24 kB
+dist/assets/programCommandClient-hvby1tQK.js                             0.33 kB │ gzip:   0.24 kB
+dist/assets/camera-BZ-F8sfH.js                                           0.34 kB │ gzip:   0.25 kB
+dist/assets/shield-alert-DSGI6gfK.js                                     0.35 kB │ gzip:   0.26 kB
+dist/assets/socialPreferenceKeys-1mY5KjXy.js                             0.36 kB │ gzip:   0.22 kB
+dist/assets/share-2-1jG3QuEb.js                                          0.36 kB │ gzip:   0.24 kB
+dist/assets/crown-C13De93i.js                                            0.36 kB │ gzip:   0.26 kB
+dist/assets/utensils-crossed-WnzTo8js.js                                 0.36 kB │ gzip:   0.26 kB
+dist/assets/photoScreen-CacDIZ75.js                                      0.37 kB │ gzip:   0.28 kB
+dist/assets/workoutBurn-B3skpSQ_.js                                      0.37 kB │ gzip:   0.26 kB
+dist/assets/useDismissOnce-CIZtU9c-.js                                   0.37 kB │ gzip:   0.26 kB
+dist/assets/beef-BvHL2hmX.js                                             0.38 kB │ gzip:   0.29 kB
+dist/assets/savedSessions-B0e6LU3n.js                                    0.39 kB │ gzip:   0.27 kB
+dist/assets/clipboard-list-wgvKVvuH.js                                   0.41 kB │ gzip:   0.26 kB
+dist/assets/index-BOgJM4Ph.js                                            0.42 kB │ gzip:   0.29 kB
+dist/assets/scheduledRunStatus-GpSlzkNe.js                               0.43 kB │ gzip:   0.20 kB
+dist/assets/eye-off-BK1jY0Pb.js                                          0.43 kB │ gzip:   0.27 kB
+dist/assets/medal-WNxOYlo1.js                                            0.44 kB │ gzip:   0.28 kB
+dist/assets/footprints-C-hefPx2.js                                       0.45 kB │ gzip:   0.30 kB
+dist/assets/repeat-C9-qU5OM.js                                           0.46 kB │ gzip:   0.30 kB
+dist/assets/wifi-off-D5AEya9j.js                                         0.46 kB │ gzip:   0.27 kB
+dist/assets/raceBrowse-c_ZQm4B0.js                                       0.46 kB │ gzip:   0.28 kB
+dist/assets/RestrictedNotice-B_siC_Zm.js                                 0.47 kB │ gzip:   0.31 kB
+dist/assets/star-CWSZklUP.js                                             0.47 kB │ gzip:   0.29 kB
+dist/assets/sun-CN3J8yjf.js                                              0.47 kB │ gzip:   0.26 kB
+dist/assets/analytics-BCj1N27t.js                                        0.48 kB │ gzip:   0.32 kB
+dist/assets/routeSegments-CfNJfPXD.js                                    0.48 kB │ gzip:   0.31 kB
+dist/assets/startDay-C5OE3fNZ.js                                         0.48 kB │ gzip:   0.32 kB
+dist/assets/settings-CvD0Kj2L.js                                         0.49 kB │ gzip:   0.26 kB
+dist/assets/RangeInput-iMfg58dn.js                                       0.49 kB │ gzip:   0.33 kB
+dist/assets/mealTotals-CqV_7cUI.js                                       0.49 kB │ gzip:   0.29 kB
+dist/assets/sparkles-DhuFV_4n.js                                         0.50 kB │ gzip:   0.28 kB
+dist/assets/calendar-days-Dj17cJ6r.js                                    0.50 kB │ gzip:   0.27 kB
+dist/assets/useOnlineStatus-Db6YVpEV.js                                  0.50 kB │ gzip:   0.29 kB
+dist/assets/callableErrors-CaS6BcJU.js                                   0.50 kB │ gzip:   0.31 kB
+dist/assets/palette-F2IEyyZt.js                                          0.51 kB │ gzip:   0.28 kB
+dist/assets/StatFigure-DV3tFB45.js                                       0.52 kB │ gzip:   0.34 kB
+dist/assets/index-DRul9u1V.js                                            0.52 kB │ gzip:   0.31 kB
+dist/assets/firestoreWrite-BEfOnIul.js                                   0.53 kB │ gzip:   0.31 kB
+dist/assets/AnimatedNumber-CiLgAWNA.js                                   0.54 kB │ gzip:   0.37 kB
+dist/assets/api-ntDx4rJM.js                                              0.55 kB │ gzip:   0.35 kB
+dist/assets/Card-CNHro4e8.js                                             0.55 kB │ gzip:   0.33 kB
+dist/assets/useLocalDateKey-DprzQxlW.js                                  0.55 kB │ gzip:   0.34 kB
+dist/assets/index-DKcf5fcy.js                                            0.56 kB │ gzip:   0.31 kB
+dist/assets/dumbbell-DHAPMXAY.js                                         0.56 kB │ gzip:   0.30 kB
+dist/assets/useInViewOnce-h6-IX80V.js                                    0.56 kB │ gzip:   0.33 kB
+dist/assets/index-CRAM-USd.js                                            0.56 kB │ gzip:   0.32 kB
+dist/assets/chartGranularity-CqisSFRf.js                                 0.58 kB │ gzip:   0.35 kB
+dist/assets/benchmarkEfforts-BVzF1gCm.js                                 0.60 kB │ gzip:   0.36 kB
+dist/assets/useMacroPalette-CGxEijYp.js                                  0.60 kB │ gzip:   0.36 kB
+dist/assets/firebase-BdYQM3Y5.js                                         0.62 kB │ gzip:   0.42 kB
+dist/assets/useCountUp-D9UoX0ec.js                                       0.62 kB │ gzip:   0.42 kB
+dist/assets/SectionHeading-DNO5SErE.js                                   0.63 kB │ gzip:   0.38 kB
+dist/assets/ios-BXqBLL4R.js                                              0.65 kB │ gzip:   0.37 kB
+dist/assets/realignCopy-DitNA1kN.js                                      0.68 kB │ gzip:   0.45 kB
+dist/assets/muscleGroupTaxonomy-CVlQz427.js                              0.68 kB │ gzip:   0.35 kB
+dist/assets/displayName-vO1Gin9t.js                                      0.68 kB │ gzip:   0.42 kB
+dist/assets/web-DgkSJUtS.js                                              0.72 kB │ gzip:   0.26 kB
+dist/assets/Collapse-BqXV1wj1.js                                         0.72 kB │ gzip:   0.44 kB
+dist/assets/aiConsent-DQGtNbq6.js                                        0.73 kB │ gzip:   0.42 kB
+dist/assets/runStatsEligibility-B2SRxGKY.js                              0.73 kB │ gzip:   0.40 kB
+dist/assets/index-BUMprQoV.js                                            0.75 kB │ gzip:   0.45 kB
+dist/assets/screenBand-DECS57zu.js                                       0.76 kB │ gzip:   0.46 kB
+dist/assets/performanceDocFields-CqhoHVUf.js                             0.77 kB │ gzip:   0.43 kB
+dist/assets/BodyMapGlow-C6NCVwj7.js                                      0.78 kB │ gzip:   0.49 kB
+dist/assets/basemap-54TvjztM.js                                          0.81 kB │ gzip:   0.47 kB
+dist/assets/hrZones-MskaJo2G.js                                          0.82 kB │ gzip:   0.51 kB
+dist/assets/useChallengePercentile-DdkBftl4.js                           0.82 kB │ gzip:   0.52 kB
+dist/assets/SustainedOfflineBanner-FilSiDXc.js                           0.86 kB │ gzip:   0.53 kB
+dist/assets/useBlockedUsers-rlABIwme.js                                  0.89 kB │ gzip:   0.48 kB
+dist/assets/ExerciseThumb-BequDbLe.js                                    0.89 kB │ gzip:   0.54 kB
+dist/assets/ConfirmDialog-eto7Mu2-.js                                    0.89 kB │ gzip:   0.45 kB
+dist/assets/volumeTargets-DR0NodSv.js                                    0.90 kB │ gzip:   0.50 kB
+dist/assets/fueling-C_zCQ50q.js                                          0.91 kB │ gzip:   0.57 kB
+dist/assets/useScanUsage-BL7FBdGD.js                                     0.91 kB │ gzip:   0.56 kB
+dist/assets/index-rfWxrVY_.js                                            0.94 kB │ gzip:   0.50 kB
+dist/assets/web-BKwvgCEq.js                                              0.94 kB │ gzip:   0.45 kB
+dist/assets/subscription-Bt0pKbYS.js                                     0.96 kB │ gzip:   0.48 kB
+dist/assets/dateHelpers-CVc5yDdO.js                                      0.97 kB │ gzip:   0.44 kB
+dist/assets/waterUnits-CgazG9a0.js                                       0.97 kB │ gzip:   0.47 kB
+dist/assets/sharePhoto-DAx0A2BN.js                                       0.97 kB │ gzip:   0.56 kB
+dist/assets/runPlanResolver-hDUL-mzE.js                                  0.99 kB │ gzip:   0.46 kB
+dist/assets/useDailyTargetsInRange-C7NoLkQw.js                           1.00 kB │ gzip:   0.59 kB
+dist/assets/RouteScene-B0x89g0g.js                                       1.03 kB │ gzip:   0.63 kB
+dist/assets/routePace-CYA8VS-I.js                                        1.03 kB │ gzip:   0.62 kB
+dist/assets/web-CJc0BXuU.js                                              1.05 kB │ gzip:   0.53 kB
+dist/assets/runGuards-CXfY8xfV.js                                        1.05 kB │ gzip:   0.42 kB
+dist/assets/index-ByjjQVrK.js                                            1.07 kB │ gzip:   0.60 kB
+dist/assets/Avatar-CH7zcGsi.js                                           1.09 kB │ gzip:   0.71 kB
+dist/assets/shareFile-yfD2I6I7.js                                        1.09 kB │ gzip:   0.54 kB
+dist/assets/usePullToRefresh-ufKvJDsu.js                                 1.12 kB │ gzip:   0.61 kB
+dist/assets/MealMacroBar-Dq4JpMCV.js                                     1.16 kB │ gzip:   0.61 kB
+dist/assets/PageShell-BKehEePh.js                                        1.21 kB │ gzip:   0.62 kB
+dist/assets/useRunningStats-e5xsVkJ9.js                                  1.21 kB │ gzip:   0.66 kB
+dist/assets/useHeartRate-DZVy-jgp.js                                     1.22 kB │ gzip:   0.66 kB
+dist/assets/muscleFigureSvg-oN4k4xFz.js                                  1.23 kB │ gzip:   0.68 kB
+dist/assets/useLifetimeRunStats-G_dU2jBz.js                              1.25 kB │ gzip:   0.73 kB
+dist/assets/useTrialReminder-CfyHmCEP.js                                 1.26 kB │ gzip:   0.72 kB
+dist/assets/racePace-SdbF5gV2.js                                         1.28 kB │ gzip:   0.63 kB
+dist/assets/haptic-CGz0kZpa.js                                           1.28 kB │ gzip:   0.65 kB
+dist/assets/liftLayoff-cWfT0RRc.js                                       1.30 kB │ gzip:   0.63 kB
+dist/assets/useHiddenActivities-9NiDLUV4.js                              1.32 kB │ gzip:   0.60 kB
+dist/assets/SectionErrorBoundary-DzoPaaok.js                             1.33 kB │ gzip:   0.69 kB
+dist/assets/useCalorieRingMode-C-x5I_Vl.js                               1.37 kB │ gzip:   0.78 kB
+dist/assets/VerifyEmailNotice-C_VjvSvb.js                                1.38 kB │ gzip:   0.71 kB
+dist/assets/useSavedSessions-Bn5Y3azF.js                                 1.38 kB │ gzip:   0.78 kB
+dist/assets/SettingsSection-Cihodqc-.js                                  1.38 kB │ gzip:   0.71 kB
+dist/assets/Toggle-Bn2VkHaM.js                                           1.39 kB │ gzip:   0.76 kB
+dist/assets/MiniMuscleFigure-DRP2Jso2.js                                 1.42 kB │ gzip:   0.81 kB
+dist/assets/usePrivacyZones-7BcOowxn.js                                  1.43 kB │ gzip:   0.76 kB
+dist/assets/subscriptionTrial-9olX2axF.js                                1.45 kB │ gzip:   0.75 kB
+dist/assets/LiftRulesSheet-NdJqDbRg.js                                   1.50 kB │ gzip:   0.72 kB
+dist/assets/Tooltip-Dn2oP_O7.js                                          1.50 kB │ gzip:   0.90 kB
+dist/assets/authErrors-CabkJlPh.js                                       1.57 kB │ gzip:   0.66 kB
+dist/assets/commandOutbox-XtMduFKY.js                                    1.59 kB │ gzip:   0.74 kB
+dist/assets/tdee-DBedOzLs.js                                             1.60 kB │ gzip:   0.81 kB
+dist/assets/formatters-g_bRutAW.js                                       1.60 kB │ gzip:   0.71 kB
+dist/assets/mealConstants-BeorptSA.js                                    1.61 kB │ gzip:   0.76 kB
+dist/assets/AccordionSection-C6nNUl8-.js                                 1.61 kB │ gzip:   0.77 kB
+dist/assets/IconButton-BbL4vDBq.js                                       1.62 kB │ gzip:   0.73 kB
+dist/assets/muscleTaxonomy-BzyMO5SO.js                                   1.62 kB │ gzip:   0.63 kB
+dist/assets/runReschedule-B0bphL10.js                                    1.68 kB │ gzip:   0.82 kB
+dist/assets/bodyweightLogs-Bn17X0nG.js                                   1.69 kB │ gzip:   0.79 kB
+dist/assets/runProgrammeViewModel-CyWso-xA.js                            1.69 kB │ gzip:   0.95 kB
+dist/assets/useWorkouts-DByVX_6B.js                                      1.70 kB │ gzip:   0.97 kB
+dist/assets/EmptyState-r_qngnWy.js                                       1.70 kB │ gzip:   0.85 kB
+dist/assets/ChoiceArt--kNsReCR.js                                        1.71 kB │ gzip:   0.82 kB
+dist/assets/web-MvpRa9Jg.js                                              1.72 kB │ gzip:   0.69 kB
+dist/assets/useRestrictedStatus-DppKxtAY.js                              1.77 kB │ gzip:   0.91 kB
+dist/assets/savedRoutines-01Vth_qs.js                                    1.81 kB │ gzip:   0.77 kB
+dist/assets/goalWeightPlan-BnkFL09b.js                                   1.82 kB │ gzip:   0.80 kB
+dist/assets/shareComposer-RL_q3JLV.js                                    1.86 kB │ gzip:   0.93 kB
+dist/assets/OneTimeMaintenance-CgpMwa0E.js                               1.89 kB │ gzip:   0.92 kB
+dist/assets/Banner-Cet9P9Lb.js                                           1.92 kB │ gzip:   0.87 kB
+dist/assets/web-Doz4l1fC.js                                              1.93 kB │ gzip:   0.71 kB
+dist/assets/purchaseProvider-DXTXLEdb.js                                 1.93 kB │ gzip:   0.96 kB
+dist/assets/ChoiceSheet-CsgIjtNN.js                                      1.94 kB │ gzip:   1.01 kB
+dist/assets/HomeProgramController-c1uzikgi.js                            1.94 kB │ gzip:   0.95 kB
+dist/assets/performanceLine-DCv-r-cx.js                                  1.99 kB │ gzip:   0.92 kB
+dist/assets/WeekPulseView-C5_30gWo.js                                    2.00 kB │ gzip:   0.74 kB
+dist/assets/polyline-783kDZ4m.js                                         2.05 kB │ gzip:   1.07 kB
+dist/assets/SettingsList-BVIlJd3f.js                                     2.09 kB │ gzip:   0.95 kB
+dist/assets/SegmentedControl-CmivRRkJ.js                                 2.10 kB │ gzip:   1.08 kB
+dist/assets/useDailyNutritionSnapshot-Cx8nxAUF.js                        2.13 kB │ gzip:   1.06 kB
+dist/assets/savedWorkouts-BvnQPODo.js                                    2.15 kB │ gzip:   1.08 kB
+dist/assets/ExerciseProgressChart-DMcCFPva.js                            2.24 kB │ gzip:   1.13 kB
+dist/assets/TabIcons-DGO82HoN.js                                         2.26 kB │ gzip:   0.84 kB
+dist/assets/BadgeHex-BdOt9a6I.js                                         2.31 kB │ gzip:   1.05 kB
+dist/assets/ShoeMileageSection-vx4oNcSP.js                               2.38 kB │ gzip:   1.12 kB
+dist/assets/DailyLogsProvider-DTKMzFL5.js                                2.45 kB │ gzip:   1.05 kB
+dist/assets/usePerformance-DqGVIWWs.js                                   2.47 kB │ gzip:   1.20 kB
+dist/assets/useShoes-Cuwp8246.js                                         2.50 kB │ gzip:   1.16 kB
+dist/assets/liftPost-BhlRblBb.js                                         2.56 kB │ gzip:   1.15 kB
+dist/assets/accountSecurity-ujGgOfbZ.js                                  2.56 kB │ gzip:   1.17 kB
+dist/assets/loadSteps-CoYCDKso.js                                        2.63 kB │ gzip:   1.27 kB
+dist/assets/programTypes-D_ESYA_i.js                                     2.65 kB │ gzip:   1.09 kB
+dist/assets/weekPrescription-1XyBnq5b.js                                 2.67 kB │ gzip:   1.22 kB
+dist/assets/prTracking-DD8Tje2g.js                                       2.77 kB │ gzip:   1.18 kB
+dist/assets/onboardingDraft-DnlIqwiY.js                                  2.92 kB │ gzip:   1.28 kB
+dist/assets/SettingsHealth-DK7YMDIA.js                                   3.01 kB │ gzip:   1.15 kB
+dist/assets/useSteps-Wzd4pM2V.js                                         3.03 kB │ gzip:   1.40 kB
+dist/assets/useSessionDoc-C0qAGjQl.js                                    3.08 kB │ gzip:   1.61 kB
+dist/assets/CircleShareSheet-DxVMHwRc.js                                 3.10 kB │ gzip:   1.48 kB
+dist/assets/Support-BBICqkJf.js                                          3.10 kB │ gzip:   1.27 kB
+dist/assets/SettingsWorkoutPrefs-CDBzsvc8.js                             3.13 kB │ gzip:   1.19 kB
+dist/assets/waterActions-6My4g62C.js                                     3.15 kB │ gzip:   1.51 kB
+dist/assets/Dialog-BL1460yJ.js                                           3.16 kB │ gzip:   1.43 kB
+dist/assets/runLabels-D9i91ZsS.js                                        3.16 kB │ gzip:   1.31 kB
+dist/assets/PaceInsightCard-BAAT_JXa.js                                  3.18 kB │ gzip:   1.58 kB
+dist/assets/GuideHint-LOrnPuuS.js                                        3.21 kB │ gzip:   1.63 kB
+dist/assets/raceEventOverrides-DJGa-zwL.js                               3.30 kB │ gzip:   1.51 kB
+dist/assets/SettingsSubscription-CNAqeWJ6.js                             3.37 kB │ gzip:   1.19 kB
+dist/assets/notifications-CE_-56_S.js                                    3.45 kB │ gzip:   1.32 kB
+dist/assets/sessionDelete-B7eNg0kB.js                                    3.50 kB │ gzip:   1.60 kB
+dist/assets/weightTrend-CrIQek5H.js                                      3.50 kB │ gzip:   1.53 kB
+dist/assets/weeklyReviewViewModel-BtaGP1jR.js                            3.51 kB │ gzip:   1.66 kB
+dist/assets/trainingBlock-cJom8U4m.js                                    3.51 kB │ gzip:   1.55 kB
+dist/assets/web-BbtmuvUI.js                                              3.54 kB │ gzip:   1.16 kB
+dist/assets/SettingsData-CY-PN-Tg.js                                     3.61 kB │ gzip:   1.77 kB
+dist/assets/SettingsSupportLegal-D8XKjJ1G.js                             3.71 kB │ gzip:   1.18 kB
+dist/assets/SettingsTraining-Bv7RUFBH.js                                 3.73 kB │ gzip:   1.73 kB
+dist/assets/liftRules-ChfABEYj.js                                        3.74 kB │ gzip:   1.82 kB
+dist/assets/shareRoute-DGQi4Rwv.js                                       3.89 kB │ gzip:   1.90 kB
+dist/assets/foodPhotoStore-CFKLosqm.js                                   3.89 kB │ gzip:   1.82 kB
+dist/assets/routeQuality-CccILJ19.js                                     3.89 kB │ gzip:   1.83 kB
+dist/assets/SavedRunKudos-CwSQ7pO_.js                                    4.03 kB │ gzip:   1.85 kB
+dist/assets/adaptiveTarget-2EzuO-Il.js                                   4.06 kB │ gzip:   1.60 kB
+dist/assets/MuscleHeatMap-BbAHF4hy.js                                    4.06 kB │ gzip:   1.68 kB
+dist/assets/liftFigures-B_F4Ge_0.js                                      4.11 kB │ gzip:   1.75 kB
+dist/assets/sessionCompletion-BQM5gAlC.js                                4.12 kB │ gzip:   1.72 kB
+dist/assets/SessionLengthLabel-DdUFRRpA.js                               4.15 kB │ gzip:   1.81 kB
+dist/assets/runPaces-BAEtMMxi.js                                         4.19 kB │ gzip:   1.76 kB
+dist/assets/liftCompletion-BzSDp8jj.js                                   4.26 kB │ gzip:   1.88 kB
+dist/assets/weightQueue-COo3hUTt.js                                      4.33 kB │ gzip:   1.94 kB
+dist/assets/firstGuide-DDmDGOGc.js                                       4.54 kB │ gzip:   1.83 kB
+dist/assets/SettingsRecentlyDeleted-CCpXNNrr.js                          4.61 kB │ gzip:   1.91 kB
+dist/assets/CalorieBalanceChart-Cckz6qDS.js                              4.80 kB │ gzip:   2.16 kB
+dist/assets/raceGoalPlanner-BZ3tMcAh.js                                  4.83 kB │ gzip:   2.32 kB
+dist/assets/WeightScaleDial-npNVrOGh.js                                  4.86 kB │ gzip:   2.24 kB
+dist/assets/SettingsUnitsAppearance-CY7j45Fl.js                          4.95 kB │ gzip:   1.85 kB
+dist/assets/SettingsIndex-Bszfhann.js                                    5.05 kB │ gzip:   2.34 kB
+dist/assets/LegacyExerciseRigDemo-DnZNn096.js                            5.25 kB │ gzip:   2.24 kB
+dist/assets/trainingWeek-BBP90u8G.js                                     5.51 kB │ gzip:   2.47 kB
+dist/assets/ShareComposerSheet-DlcWNRgC.js                               5.53 kB │ gzip:   2.40 kB
+dist/assets/useWeeklyReview-MCrlPKtF.js                                  5.73 kB │ gzip:   2.58 kB
+dist/assets/runPlanMetadata-DzEMUfp2.js                                  5.77 kB │ gzip:   1.84 kB
+dist/assets/MacroDistribution-CuWsOehK.js                                5.81 kB │ gzip:   2.67 kB
+dist/assets/Diagnostics-CKZTU_ae.js                                      5.97 kB │ gzip:   1.96 kB
+dist/assets/exerciseMovementCategory-BsdgfGtR.js                         6.15 kB │ gzip:   1.77 kB
+dist/assets/gps-JuNbHGPL.js                                              6.23 kB │ gzip:   2.78 kB
+dist/assets/Routine-B3ZKEg8Q.js                                          6.38 kB │ gzip:   2.99 kB
+dist/assets/runSpacing-D7OaS3KQ.js                                       6.45 kB │ gzip:   2.79 kB
+dist/assets/FullLeaderboard-Ce6AYBBs.js                                  6.55 kB │ gzip:   3.10 kB
+dist/assets/ManualFoodLogger-BfWn_Jx-.js                                 6.59 kB │ gzip:   3.07 kB
+dist/assets/SettingsAvatar-DKaAysx5.js                                   6.65 kB │ gzip:   2.83 kB
+dist/assets/gradeAdjustedPace-NF9IxSTa.js                                6.72 kB │ gzip:   2.52 kB
+dist/assets/GuideWalk-C6_Rw3CE.js                                        6.87 kB │ gzip:   2.90 kB
+dist/assets/SettingsLiftPlan-BFKCPsWt.js                                 6.89 kB │ gzip:   3.10 kB
+dist/assets/useGoalSpaces-CBka3_X2.js                                    6.99 kB │ gzip:   2.84 kB
+dist/assets/SettingsProfile-CxlQ_H0g.js                                  7.06 kB │ gzip:   2.49 kB
+dist/assets/ProModal-BtHRkMCA.js                                         7.19 kB │ gzip:   2.81 kB
+dist/assets/MacroColumn-Cw0ePPtD.js                                      7.24 kB │ gzip:   2.98 kB
+dist/assets/CompletionExtras-BqVhpk0B.js                                 7.35 kB │ gzip:   3.07 kB
+dist/assets/BadgeGrid-BPm4CxnG.js                                        7.38 kB │ gzip:   2.85 kB
+dist/assets/socialApi-1eTRPTKE.js                                        7.43 kB │ gzip:   2.41 kB
+dist/assets/ScheduleLayoutSheet-TuiZLsQS.js                              7.46 kB │ gzip:   2.92 kB
+dist/assets/RoutePlannerSheet-CYQvF60H.js                                7.54 kB │ gzip:   3.13 kB
+dist/assets/LiftPurpose-Drgkabk6.js                                      7.64 kB │ gzip:   3.51 kB
+dist/assets/badges-COQNExiO.js                                           7.93 kB │ gzip:   2.76 kB
+dist/assets/TermsOfService-D1WjSLSk.js                                   8.01 kB │ gzip:   2.71 kB
+dist/assets/useMeals-CqInvWjC.js                                         8.13 kB │ gzip:   3.40 kB
+dist/assets/TrendWeight-DKwaQhae.js                                      8.35 kB │ gzip:   3.60 kB
+dist/assets/planBuilder-D9aiBY3A.js                                      8.65 kB │ gzip:   2.88 kB
+dist/assets/PRsTab-DlkgzlqV.js                                           8.74 kB │ gzip:   3.41 kB
+dist/assets/AdminModeration-CihK5144.js                                  8.79 kB │ gzip:   2.83 kB
+dist/assets/web-BRsRBVnz.js                                              8.81 kB │ gzip:   3.04 kB
+dist/assets/RunMap-CbDZxT37.js                                           9.34 kB │ gzip:   3.43 kB
+dist/assets/offlineQueue-DrAQlV5m.js                                     9.35 kB │ gzip:   3.71 kB
+dist/assets/PerformanceSection-_ahC35PH.js                               9.55 kB │ gzip:   3.29 kB
+dist/assets/bodyModelData-B2QOph28.js                                    9.77 kB │ gzip:   2.81 kB
+dist/assets/AdjustWeekSheet-Cx75FJQr.js                                  9.87 kB │ gzip:   3.75 kB
+dist/assets/scheduleUtils-CYTZAbrK.js                                    9.99 kB │ gzip:   2.57 kB
+dist/assets/ExercisePicker-ld2ZCXZi.js                                  10.23 kB │ gzip:   3.93 kB
+dist/assets/SettingsPrivacy-BRt6q7QV.js                                 10.47 kB │ gzip:   3.70 kB
+dist/assets/RemindersProvider-QRuMajGz.js                               10.51 kB │ gzip:   4.05 kB
+dist/assets/confetti.module-C2jkTI5u.js                                 10.70 kB │ gzip:   4.29 kB
+dist/assets/RunDetail-jeYXX86V.js                                       11.01 kB │ gzip:   4.42 kB
+dist/assets/runTemplateIcons-DwFCvWAH.js                                11.13 kB │ gzip:   4.55 kB
+dist/assets/CommentSheetFrame-BlA-c9n3.js                               11.33 kB │ gzip:   4.15 kB
+dist/assets/SettingsShoes-qyAAX5RX.js                                   11.70 kB │ gzip:   3.83 kB
+dist/assets/ExerciseHistory-7UdkKKWO.js                                 11.84 kB │ gzip:   4.31 kB
+dist/assets/useEffectiveTargets-DoWfiw8y.js                             11.94 kB │ gzip:   4.82 kB
+dist/assets/Login-CZfzc6xN.js                                           11.95 kB │ gzip:   4.09 kB
+dist/assets/web-CL5e4bop.js                                             12.45 kB │ gzip:   2.92 kB
+dist/assets/DayActionSheet-BPIEMNDs.js                                  13.45 kB │ gzip:   4.37 kB
+dist/assets/BadgeEarnedModal-CY3quykj.js                                13.46 kB │ gzip:   4.79 kB
+dist/assets/SettingsNotifications-Bx2FbNhu.js                           13.60 kB │ gzip:   4.62 kB
+dist/assets/index-BeoRn2gJ.js                                           13.73 kB │ gzip:   5.41 kB
+dist/assets/useStreaks-7D2qcZaz.js                                      14.08 kB │ gzip:   5.30 kB
+dist/assets/body-highlighter-DcYDm2uM.js                                14.27 kB │ gzip:   4.54 kB
+dist/assets/ShareCardSheet-DQiGwR2t.js                                  14.42 kB │ gzip:   4.98 kB
+dist/assets/UserProfile-zj2bCSrw.js                                     15.35 kB │ gzip:   6.06 kB
+dist/assets/SettingsNutrition-BUr49P-s.js                               15.52 kB │ gzip:   5.16 kB
+dist/assets/formArtwork-BtgjF3G9.js                                     15.62 kB │ gzip:   2.61 kB
+dist/assets/Upgrade-B5S8Atik.js                                         15.71 kB │ gzip:   5.40 kB
+dist/assets/spaceTypes-D6zZiGhI.js                                      16.02 kB │ gzip:   4.83 kB
+dist/assets/savedRuns-CdXtsuln.js                                       17.47 kB │ gzip:   6.43 kB
+dist/assets/nextUpCursor-_dYNcH4w.js                                    18.68 kB │ gzip:   6.50 kB
+dist/assets/SettingsAccount-CzuWakUd.js                                 19.11 kB │ gzip:   6.39 kB
+dist/assets/WorkoutDetail-CgSadCLy.js                                   19.19 kB │ gzip:   7.38 kB
+dist/assets/PerformanceTab-BKGXXvyM.js                                  19.51 kB │ gzip:   7.20 kB
+dist/assets/Layout-C6IO0JSj.js                                          19.85 kB │ gzip:   8.73 kB
+dist/assets/WeeklyReview-BkND8mI0.js                                    19.86 kB │ gzip:   6.58 kB
+dist/assets/spaceDefs-BAIOn2Ts.js                                       19.96 kB │ gzip:   4.27 kB
+dist/assets/represcribe-B3_Zwhal.js                                     22.12 kB │ gzip:   7.93 kB
+dist/assets/PrivacyPolicy-2i6ynV8j.js                                   22.25 kB │ gzip:   6.56 kB
+dist/assets/ProgrammeSettings-CKhEo1I1.js                               22.34 kB │ gzip:   7.66 kB
+dist/assets/date-fns-C6xP0GBg.js                                        23.86 kB │ gzip:   7.15 kB
+dist/assets/ProgressPhotos-CGELmIP3.js                                  26.11 kB │ gzip:   9.75 kB
+dist/assets/Space-C-sS1mhx.js                                           27.05 kB │ gzip:  10.21 kB
+dist/assets/ChallengeList-ydDoBN9n.js                                   27.88 kB │ gzip:   9.38 kB
+dist/assets/floating-ui.react-D2_BK2-_.js                               31.39 kB │ gzip:  11.96 kB
+dist/assets/ProPreview-4aPK6WRz.js                                      34.49 kB │ gzip:  10.47 kB
+dist/assets/useProgram-DNI9Oby_.js                                      34.72 kB │ gzip:  11.23 kB
+dist/assets/usePartnerStreak-C0FZa17d.js                                35.08 kB │ gzip:  11.12 kB
+dist/assets/RunSummary-DI9GlmTm.js                                      35.38 kB │ gzip:  13.02 kB
+dist/assets/formArtCutouts-5t9XnyWX.js                                  37.65 kB │ gzip:  13.22 kB
+dist/assets/FoodAnalyzer-D4yfRiwU.js                                    39.64 kB │ gzip:  12.75 kB
+dist/assets/Onboarding-hh4rRaVz.js                                      42.97 kB │ gzip:  13.87 kB
+dist/assets/SettingsRunPlan-Bt7M2lat.js                                 44.91 kB │ gzip:  13.61 kB
+dist/assets/BottomSheet-my_2k7ii.js                                     62.62 kB │ gzip:  19.87 kB
+dist/assets/programEngine-DI3s-Z61.js                                   63.12 kB │ gzip:  18.16 kB
+dist/assets/WorkoutSession-Bo3Jh10s.js                                  64.82 kB │ gzip:  21.74 kB
+dist/assets/ExerciseFormContent-CnwjsAp-.js                             78.56 kB │ gzip:  21.39 kB
+dist/assets/Social-D_ncgiUp.js                                          78.85 kB │ gzip:  24.53 kB
+dist/assets/exercises-B7UYZ3tS.js                                       90.23 kB │ gzip:  21.05 kB
+dist/assets/History-BQXSZZGK.js                                         97.57 kB │ gzip:  31.11 kB
+dist/assets/profanityFilter-Dddm7aun.js                                 99.23 kB │ gzip:  25.18 kB
+dist/assets/Home-1e8BO46X.js                                           110.30 kB │ gzip:  34.96 kB
+dist/assets/Run-CZ4YtOOs.js                                            120.72 kB │ gzip:  35.70 kB
+dist/assets/Food-fIQW6px_.js                                           131.75 kB │ gzip:  41.11 kB
+dist/assets/bodyRig-zQB0BmNw.js                                        134.93 kB │ gzip:  30.75 kB
+dist/assets/motion-BIv7XAAr.js                                         135.63 kB │ gzip:  44.90 kB
+dist/assets/Program-DQPOz6_1.js                                        153.47 kB │ gzip:  50.07 kB
+dist/assets/index-BN_5mA0J.js                                          175.22 kB │ gzip:  57.58 kB
+dist/assets/firebase-auth-DY41GLch.js                                  185.53 kB │ gzip:  55.08 kB
+dist/assets/vendor-CsEZWYAx.js                                         237.18 kB │ gzip:  76.18 kB
+dist/assets/firebase-db-BJckLLAA.js                                    378.33 kB │ gzip: 116.00 kB
+dist/assets/charts-D2OnuC-o.js                                         401.24 kB │ gzip: 115.62 kB
+dist/assets/barcode-iPjrJSYw.js                                        415.98 kB │ gzip: 108.68 kB
+dist/assets/maplibre-Ch2Ooc8S.js                                       946.58 kB │ gzip: 248.70 kB
+✓ built in 19.29s
+form frames: 750 of 804 re-saved, 354.4 MB → 34.1 MB
+[stamp-sw] stamped dist/sw.js with build 2efdec417e43
+
+> tropos@1.2.0 check:dist-size
+> node scripts/check-dist-size.mjs
+
+check-dist-size: 369 chunks, 6116.3 kB total (baseline 6100.6 kB).
+  new small chunks (add to the baseline when convenient):
+    loadSteps: new 2.6 kB chunk
+    photoScreen: new 0.4 kB chunk
+  smaller than baseline (lower it to lock in):
+    usePartnerStreak: 37.2 kB → 34.3 kB (-8.0%)
+    weightUnits: gone (was 0.4 kB) — remove it from the baseline
+check-dist-size: OK
+
+> tropos@1.2.0 test
+> node scripts/run-unit-tests.mjs run
+
+
+ RUN  v5.0.4 C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees
+
+ ❯ |dom| src/components/analytics/__tests__/chartStyleGuard.test.ts (4 tests | 1 failed) 45ms
+   ❯ Recharts charts share one tick and one tooltip (4)
+     × finds the chart files (a scan that matches nothing proves nothing) 17ms
+ ❯ |dom| src/components/analytics/__tests__/chartBarWidth.test.ts (4 tests | 3 failed) 46ms
+   ❯ Recharts bars — width is constrained (4)
+     × finds the chart files (a scan that matches nothing proves nothing) 19ms
+     × every bar caps its width, or is listed as exempt with a reason 13ms
+     × every exemption names a file that still has a bar in it 2ms
+ ❯ |dom| src/features/goalSpace/__tests__/joinRejection.test.ts (9 tests | 1 failed) 70ms
+   ❯ the mapping tracks the server (2)
+     × covers every refusal reachable from the join path 18ms
+ ❯ |dom| src/styles/__tests__/rangeInputContract.test.ts (9 tests | 1 failed) 449ms
+   ❯ range input — the app's only drag control (9)
+     × every range input in the app goes through the primitive 213ms
+ ❯ |dom| src/hooks/__tests__/firestoreHookCoverage.test.ts (6 tests | 1 failed) 471ms
+   ❯ Firestore hook coverage (6)
+     × no NEW suite hand-rolls its own firebase/firestore mock 265ms
+ ❯ |dom| src/styles/__tests__/paletteClassGuard.test.ts (2 tests | 1 failed) 520ms
+   ❯ no raw Tailwind palette colour classes (2)
+     × colours come from Tropos tokens, not the stock palette 514ms
+ ❯ |dom| src/styles/__tests__/rgbaColourGuard.test.ts (3 tests | 1 failed) 781ms
+   ❯ no hardcoded coloured rgba() (3)
+     × colours come from tokens, not decimal rgba literals 768ms
+ ❯ |dom| src/components/settings/__tests__/DataExportSection.test.tsx (14 tests | 1 failed) 2278ms
+   ❯ user-facing copy is sentence case (3)
+     × no Title Case labels outside the closed list 668ms
+Not implemented: HTMLMediaElement's play() method
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+stderr | src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used
+Error: Couldn't create canvas for visual element scan.
+    at BrowserMultiFormatReader.BrowserCodeReader.scan (C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees\node_modules\@zxing\browser\cjs\readers\BrowserCodeReader.js:1104:19)
+    at BrowserMultiFormatReader.<anonymous> (C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees\node_modules\@zxing\browser\cjs\readers\BrowserCodeReader.js:857:52)
+    at step (C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees\node_modules\@zxing\browser\cjs\readers\BrowserCodeReader.js:44:23)
+    at Object.next (C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees\node_modules\@zxing\browser\cjs\readers\BrowserCodeReader.js:25:53)
+    at fulfilled (C:\Users\myles\Documents\Codex\2026-10-04\lg\work\Maiin-burpees\node_modules\@zxing\browser\cjs\readers\BrowserCodeReader.js:16:58)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+ ❯ |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx (9 tests | 1 failed) 13713ms
+   ❯ FoodCameraModal — photo scanning not on the tier (6)
+     × names the offer the way the Pro line under the composer does once the trial is used 11453ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+node:internal/modules/esm/load:193
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)
+    at defaultLoadSync (node:internal/modules/esm/load:146:3)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at loadWithHooks (node:internal/modules/customization_hooks:374:18)
+    at #loadSync (node:internal/modules/esm/loader:825:16)
+    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v24.19.0
+ ❯ |node| src/lib/__tests__/performanceEngineConsumers.test.ts (4 tests | 2 failed) 621ms
+   ❯ client PI engine — production consumers (4)
+     × the app imports only the two non-scoring helpers 416ms
+     × the seeds are the only non-test callers of the scoring pipeline 84ms
+ ❯ |node| src/lib/__tests__/bodyRig.test.ts (83 tests | 1 failed) 3017ms
+   ❯ form beats — the caption is a claim about the frame (7)
+     × every cue fits the hold it is read in 19ms
+ ❯ |node| src/lib/__tests__/localStorageUidScoping.test.ts (6 tests | 2 failed) 1675ms
+   ❯ localStorage keys are uid-scoped (6)
+     × resolves a key through a same-file const rather than guessing from its name 10ms
+     × no unscoped key holds per-account state 9ms
+ ❯ |node| src/lib/__tests__/iosPrivacyDeclarations.test.ts (19 tests | 1 failed) 1409ms
+   ❯ SDKs — nothing that tracks is built in (6)
+     × the committed Package.swift is the one cap sync writes from that config 9ms
+ ❯ |node| src/lib/__tests__/designSystemInvariants.test.ts (24 tests | 2 failed) 1575ms
+   ❯ D15 · DS invariant — touch-target primitive (44px floor) (4)
+     × hand-rolled role=switch toggles do not increase (use the Toggle primitive) 134ms
+   ❯ DS ratchets — surface-level drift (18)
+     × the section-tier label appears only on the two Food surfaces 112ms
+ ❯ |node| src/utils/__tests__/unitTreatment.test.ts (2 tests | 2 failed) 1268ms
+   ❯ one unit treatment (spaced: '60 kg', '5.2 km') (2)
+     × no unspaced kg/km value+unit adjacency in rendered code 667ms
+     × no pace glued to its unit ('5:34 /km', never '5:34/km') 598ms
+ ❯ |node| src/lib/__tests__/weekAnchorProse.test.ts (2 tests | 1 failed) 999ms
+   ❯ week-anchor prose (2)
+     × scans both sides of the mirror, and a non-trivial number of files 14ms
+ ❯ |node| src/lib/__tests__/transitionalExpiry.test.ts (3 tests | 1 failed) 4710ms
+   ❯ deferred removals expire (3)
+     × registers every TRANSITIONAL marker in src/ and functions/ 4674ms
+ ❯ |node| src/lib/__tests__/leaderboard.test.ts (3 tests | 1 failed) 5232ms
+   ❯ leaderboard weekly cutoff — local vs UTC date string (2)
+     × uses the LOCAL date of `since` under a positive-offset TZ (regression) 1073ms
+ ❯ |node| src/lib/__tests__/componentReachability.test.ts (4 tests | 1 failed) 3603ms
+   ❯ component reachability (src/components + src/features) (4)
+     × no NEW component is rendered by nothing 1989ms
+ ❯ |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts (4 tests | 2 failed) 799ms
+   ❯ saved runs have one reader (2)
+     × no src file outside the allow-list queries the collection 376ms
+   ❯ saved workouts have one reader (2)
+     × no src file outside the allow-list queries the collection 399ms
+ ❯ |node| src/lib/__tests__/distanceUnitGate.test.ts (6 tests | 2 failed) 931ms
+   ❯ run distances are formatted through runLabels, not inline (6)
+     × no display surface formats a distance by hand 446ms
+     × no surface prints a logged aggregate with a hardcoded unit 477ms
+ ❯ |node| src/utils/__tests__/timeTreatment.test.ts (39 tests | 1 failed) 805ms
+   ❯ one time of day (24-hour HH:mm, via formatTimeOfDay) (5)
+     × names a home that is where formatTimeOfDay lives 639ms
+ ❯ |node| src/lib/__tests__/mealActiveSingleSource.test.ts (5 tests | 1 failed) 679ms
+   ❯ HOME-MEALS-01 — one owner for 'does this meal count?' (5)
+     × nothing hand-writes the soft-delete rule outside the allowlist 669ms
+ ❯ |node| src/lib/__tests__/calorieUnitGate.test.ts (3 tests | 1 failed) 586ms
+   ❯ the calorie unit comes from CALORIE_UNIT (3)
+     × no surface writes the calorie unit by hand 563ms
+ ❯ |node| src/lib/__tests__/localDayKeyGuard.test.ts (2 tests | 1 failed) 521ms
+   ❯ a day key is derived locally, never from the UTC clock (2)
+     × no src/ file slices a day key off new Date().toISOString() 516ms
+ ❯ |node| src/lib/__tests__/copyCasing.test.ts (3 tests | 1 failed) 677ms
+   ❯ user-facing copy is sentence case (3)
+     × no Title Case labels outside the closed list 662ms
+ ❯ |node| src/lib/__tests__/legalCopyClaims.test.ts (30 tests | 1 failed) 537ms
+   ❯ Apple Health is read-only, and its count is never kept (3)
+     × the one HealthKit module asks to read steps and nothing else 504ms
+ ❯ |node| src/lib/__tests__/workoutBurn.test.ts (18 tests | 1 failed) 449ms
+   ❯ one run-burn formula (1)
+     × 1.036 appears exactly once in production src/ 439ms
+ ❯ |node| src/lib/__tests__/effectiveTargetsSingleSource.test.ts (3 tests | 1 failed) 480ms
+   ❯ useEffectiveTargets single-source (D11) (3)
+     × the day-type macro splitter is imported only by the canonical hook 472ms
+ ❯ |node| src/lib/__tests__/firestoreWriteGuard.test.ts (2 tests | 1 failed) 484ms
+   ❯ guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) (2)
+     × no src file outside the allow-list calls the raw write SDK 480ms
+node:internal/modules/esm/load:193
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)
+    at defaultLoadSync (node:internal/modules/esm/load:146:3)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at loadWithHooks (node:internal/modules/customization_hooks:374:18)
+    at #loadSync (node:internal/modules/esm/loader:825:16)
+    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v24.19.0
+ ❯ |node| src/lib/__tests__/performanceEngine.test.ts (70 tests | 1 failed) 602ms
+   ❯ localWeekKey / weekKeyMinusN — UTC/local drift (1)
+     × localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ 571ms
+ ❯ |node| src/lib/__tests__/perfDocMirrorGuard.test.ts (2 tests | 1 failed) 572ms
+   ❯ the never-written performance mirrors are read only by the resolver (2)
+     × no file outside the resolver reads flags.deloadRecommended or labels.loadBand 559ms
+ ❯ |node| src/lib/__tests__/claudeMdFreshness.test.ts (25 tests | 2 failed) 206ms
+   ❯ CLAUDE.md — the deploy workflows (3)
+     × finds the workflows and the section 26ms
+     × says a push to main runs a workflow only when it does 121ms
+ ❯ |node| src/lib/__tests__/settingsSectionCoverage.test.ts (3 tests | 1 failed) 136ms
+   ❯ settings section analytics coverage (3)
+     × no SETTINGS surface emits a section the union does not declare 117ms
+ ❯ |node| src/lib/__tests__/hookSurfaceReachability.test.ts (5 tests | 2 failed) 118ms
+   ❯ hook return surfaces are reachable (5)
+     × has no unpinned dead properties 97ms
+     × pins only properties that still exist 3ms
+ ❯ |node| src/lib/__tests__/localStorageGuard.test.ts (4 tests | 2 failed) 482ms
+   ❯ single-door enforcement (no raw localStorage outside localStore.ts) (4)
+     × scans a sane number of files (the walk isn't silently empty) 11ms
+     × no file outside the door references the localStorage global 461ms
+ ❯ |node| src/lib/__tests__/appStoreListing.test.ts (25 tests | 18 failed) 40ms
+   ❯ App Store listing: the pasteable fields (14)
+     × has each field exactly once, and only fields with a known limit 14ms
+     × puts a text box straight after every marker 4ms
+     × name fits Apple's limit 1ms
+     × subtitle fits Apple's limit 1ms
+     × promotional-text fits Apple's limit 1ms
+     × description fits Apple's limit 1ms
+     × keywords fits Apple's limit 0ms
+     × review-notes fits Apple's limit 0ms
+     × iap-monthly-name fits Apple's limit 0ms
+     × iap-monthly-description fits Apple's limit 1ms
+     × iap-yearly-name fits Apple's limit 0ms
+     × iap-yearly-description fits Apple's limit 0ms
+     × separates keywords with bare commas and spends no bytes twice 0ms
+     × links the Terms and the Privacy Policy from the description 0ms
+   ❯ App Store listing: claims the code can contradict (6)
+     × quotes the trial length the paywall offers 1ms
+     × quotes how long the phone keeps meal photos 1ms
+     × claims no feature the app doesn't have 1ms
+   ❯ App Store listing: the privacy label and the privacy manifest agree (2)
+     × declares exactly the label's data types, for the label's purposes 1ms
+ ❯ |node| src/lib/__tests__/basemap.test.ts (14 tests | 1 failed) 300ms
+   ❯ every map carries the credit (4)
+     × finds the maps (the scan reaches them) 13ms
+ ❯ |node| src/lib/__tests__/localDateKeyParsing.test.ts (5 tests | 3 failed) 24ms
+   ❯ date keys are parsed locally, not as UTC midnight (5)
+     × still sees the pattern at all 13ms
+     × every classified entry still corresponds to a real site 4ms
+     × no unclassified site parses a date key as UTC 2ms
+ ❯ |node| src/lib/__tests__/writeOnlyProfileFields.test.ts (5 tests | 1 failed) 73ms
+   ❯ write-only profile fields (5)
+     × scans enough source to mean something 15ms
+ ❯ |node| src/lib/__tests__/functionsScheduleUtcGuard.test.ts (4 tests | 1 failed) 17ms
+   ❯ scheduled-function UTC enforcement (4)
+     × the file scan itself isn't vacuous 11ms
+ ❯ |node| src/lib/__tests__/requiredCheckComposition.test.ts (0 test)
+ ❯ |node| src/lib/__tests__/storageDeployIamCheck.test.ts (0 test)
+ ❯ |node| src/lib/__tests__/iosProjectWiring.test.ts (0 test)
+ ❯ |node| src/lib/__tests__/rechartsMockCompleteness.test.ts (3 tests | 1 failed) 16ms
+   ❯ a wholesale recharts mock exports what its component imports (3)
+     × is looking at something 10ms
+ ❯ |node| src/lib/__tests__/symbolReachability.test.ts (3 tests | 1 failed) 28ms
+   ❯ symbol-level reachability (3)
+     × the pinned list stays honest — no entry that is now reachable 14ms
+ ❯ |node| src/lib/__tests__/stylesUsage.test.ts (3 tests | 1 failed) 16ms
+   ❯ src/styles class usage (3)
+     × scans a plausible number of declarations (guards a broken scan) 12ms
+ ❯ |node| src/lib/__tests__/deadPathReferences.test.ts (3 tests | 1 failed) 14150ms
+   ❯ dead file references in production comments (3)
+     × every path cited in a comment names a file that still exists 13249ms
+ ❯ |root-node| scripts/write-functions-env.test.ts (0 test)
+ ❯ |root-node| scripts/ios/asc-signing.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]
+SyntaxError: Invalid or unexpected token
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/80]⎯
+
+ FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]
+SyntaxError: Invalid or unexpected token
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/80]⎯
+
+ FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]
+Error: file reference 504EC3101FED79650016851F missing
+ ❯ src/lib/__tests__/iosProjectWiring.test.ts:96:13
+     94|     );
+     95|     if (!variantGroup)
+     96|       throw new Error(`file reference ${buildFile[1]} missing`);
+       |             ^
+     97|     return variantGroup[1];
+     98|   });
+ ❯ bundledResourcePaths src/lib/__tests__/iosProjectWiring.test.ts:71:23
+ ❯ src/lib/__tests__/iosProjectWiring.test.ts:102:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/80]⎯
+
+ FAIL  |node| src/lib/__tests__/requiredCheckComposition.test.ts [ src/lib/__tests__/requiredCheckComposition.test.ts ]
+AssertionError: ci.yml has no job named "unit": expected -1 to be greater than -1
+ ❯ jobBody src/lib/__tests__/requiredCheckComposition.test.ts:49:54
+     47|   const lines = ci.split("\n");
+     48|   const start = lines.findIndex((l) => l === `  ${name}:`);
+     49|   expect(start, `ci.yml has no job named "${name}"`).toBeGreaterThan(-…
+       |                                                      ^
+     50|   const rest = lines.slice(start + 1);
+     51|   const end = rest.findIndex((l) => /^ {2}[a-z][\w-]*:\s*$/.test(l));
+ ❯ src/lib/__tests__/requiredCheckComposition.test.ts:56:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/80]⎯
+
+ FAIL  |node| src/lib/__tests__/storageDeployIamCheck.test.ts [ src/lib/__tests__/storageDeployIamCheck.test.ts ]
+AssertionError: no job named "deploy": expected -1 to be greater than -1
+ ❯ jobBody src/lib/__tests__/storageDeployIamCheck.test.ts:41:43
+     39|   const lines = source.split("\n");
+     40|   const start = lines.findIndex((l) => l === `  ${name}:`);
+     41|   expect(start, `no job named "${name}"`).toBeGreaterThan(-1);
+       |                                           ^
+     42|   const rest = lines.slice(start + 1);
+     43|   const end = rest.findIndex((l) => /^ {2}[a-z][\w-]*:\s*$/.test(l));
+ ❯ src/lib/__tests__/storageDeployIamCheck.test.ts:62:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/80]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 75 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/test/setup.ts:41:3
+     39|  */
+     40| if (typeof document !== "undefined") {
+     41|   afterEach(async () => {
+       |   ^
+     42|     /* Bail under fake timers. Awaiting a real `setTimeout` while a fa…
+     43|      * clock is installed would never resolve — the hook would hang and
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/80]⎯
+
+ FAIL  |dom| src/hooks/__tests__/firestoreHookCoverage.test.ts > Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock
+AssertionError: Use bare vi.mock("firebase/firestore") + seedFirestore() instead. If the fake lacks behaviour you need, extend src/test/firestoreFake.ts.: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "src/lib/__tests__/firestoreWrite.test.ts",
++   "src\\lib\\__tests__\\firestoreWrite.test.ts",
+  ]
+
+ ❯ src/hooks/__tests__/firestoreHookCoverage.test.ts:250:7
+    248|       `Use bare vi.mock("firebase/firestore") + seedFirestore() instea…
+    249|         `the fake lacks behaviour you need, extend src/test/firestoreF…
+    250|     ).toEqual([...PERMANENT_INLINE_MOCKS, ...LEGACY_INLINE_MOCKS].sort…
+       |       ^
+    251|   });
+    252| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/80]⎯
+
+ FAIL  |dom| src/styles/__tests__/paletteClassGuard.test.ts > no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette
+AssertionError: raw Tailwind palette class — use a Tropos token (token class on themed surfaces; fixed THEME.* via style on the always-dark run surface). If a site is a genuinely designed micro-palette, add the FILE to EXEMPT with its reason:
+pages\dev\BrandBakeoff.tsx:332 bg-neutral-200
+pages\dev\BrandBakeoff.tsx:338 bg-neutral-800: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "pages\\dev\\BrandBakeoff.tsx:332 bg-neutral-200",
++   "pages\\dev\\BrandBakeoff.tsx:338 bg-neutral-800",
++ ]
+
+ ❯ src/styles/__tests__/paletteClassGuard.test.ts:78:7
+     76|         "the FILE to EXEMPT with its reason:\n" +
+     77|         hits.join("\n")
+     78|     ).toEqual([]);
+       |       ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/80]⎯
+
+ FAIL  |dom| src/styles/__tests__/rangeInputContract.test.ts > range input — the app's only drag control > every range input in the app goes through the primitive
+AssertionError: these render a raw range input, so `--range-pct` is unset and the track paints all-groove. Use `<RangeInput>`.: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\components\\ui\\RangeInput.tsx",
++ ]
+
+ ❯ src/styles/__tests__/rangeInputContract.test.ts:166:7
+    164|       "these render a raw range input, so `--range-pct` is unset and t…
+    165|         "track paints all-groove. Use `<RangeInput>`."
+    166|     ).toEqual([]);
+       |       ^
+    167|   });
+    168|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/80]⎯
+
+ FAIL  |dom| src/styles/__tests__/rgbaColourGuard.test.ts > no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals
+AssertionError: hardcoded coloured rgba() — the hex ESLint rule cannot see these (no '#', and it only reads style={} attributes). Use hsl(var(--token) / a) on themed surfaces, `${THEME.x}NN` for a fixed Tropos colour, or add the FILE to EXEMPT with its reason:
+components\home\WaterCard.tsx:241 rgba(82, 163, 189…)
+components\home\WaterCard.tsx:244 rgba(30, 120, 155…)
+components\home\WaterCard.tsx:244 rgba(58, 153, 186…)
+components\home\WaterCard.tsx:244 rgba(82, 163, 189…)
+components\home\WaterCard.tsx:470 rgba(82, 163, 189…)
+components\home\WaterWave.tsx:71 rgba(78, 195, 220…)
+components\home\WaterWave.tsx:71 rgba(58, 153, 186…)
+components\home\WaterWave.tsx:73 rgba(78, 195, 220…)
+components\home\WaterWave.tsx:73 rgba(58, 153, 186…)
+lib\theme.ts:113 rgba(123, 114, 233…): expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "components\\home\\WaterCard.tsx:241 rgba(82, 163, 189…)",
++   "components\\home\\WaterCard.tsx:244 rgba(30, 120, 155…)",
++   "components\\home\\WaterCard.tsx:244 rgba(58, 153, 186…)",
++   "components\\home\\WaterCard.tsx:244 rgba(82, 163, 189…)",
++   "components\\home\\WaterCard.tsx:470 rgba(82, 163, 189…)",
++   "components\\home\\WaterWave.tsx:71 rgba(78, 195, 220…)",
++   "components\\home\\WaterWave.tsx:71 rgba(58, 153, 186…)",
++   "components\\home\\WaterWave.tsx:73 rgba(78, 195, 220…)",
++   "components\\home\\WaterWave.tsx:73 rgba(58, 153, 186…)",
++   "lib\\theme.ts:113 rgba(123, 114, 233…)",
++ ]
+
+ ❯ src/styles/__tests__/rgbaColourGuard.test.ts:152:7
+    150|         "reason:\n" +
+    151|         hits.join("\n")
+    152|     ).toEqual([]);
+       |       ^
+    153|   });
+    154|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/80]⎯
+
+ FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > finds the chart files (a scan that matches nothing proves nothing)
+AssertionError: expected [ …(2) ] to include 'components/progress/CalorieBalanceCha…'
+ ❯ src/components/analytics/__tests__/chartBarWidth.test.ts:78:19
+     76|     // table now (`components/run/SplitsTable`), its bars plain divs.
+     77|     expect(files.length).toBeGreaterThanOrEqual(2);
+     78|     expect(files).toContain("components/progress/CalorieBalanceChart.t…
+       |                   ^
+     79|     expect(files).toContain("components/analytics/TrainingLoadCard.tsx…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/80]⎯
+
+ FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > every bar caps its width, or is listed as exempt with a reason
+AssertionError: uncapped Recharts bars: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "components\\analytics\\TrainingLoadCard.tsx: <Bar dataKey=\"runLoad\" stackId=\"day\" fill={THEME.running} fi…",
++   "components\\analytics\\TrainingLoadCard.tsx: <Bar dataKey=\"liftLoad\" stackId=\"day\" fill={THEME.brand} fil…",
++ ]
+
+ ❯ src/components/analytics/__tests__/chartBarWidth.test.ts:96:48
+     94|       }
+     95|     }
+     96|     expect(uncapped, "uncapped Recharts bars").toEqual([]);
+       |                                                ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/80]⎯
+
+ FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > every exemption names a file that still has a bar in it
+AssertionError: exemptions for files with no Recharts bar: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "components/analytics/TrainingLoadCard.tsx",
++ ]
+
+ ❯ src/components/analytics/__tests__/chartBarWidth.test.ts:102:64
+    100|     /* An exemption outliving its chart is the same rot one level down…
+    101|     const stale = Object.keys(EXEMPT).filter((f) => !files.includes(f)…
+    102|     expect(stale, "exemptions for files with no Recharts bar").toEqual…
+       |                                                                ^
+    103|   });
+    104| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/80]⎯
+
+ FAIL  |dom| src/components/analytics/__tests__/chartStyleGuard.test.ts > Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)
+AssertionError: expected [ …(8) ] to include 'components/progress/TrendWeight.tsx'
+ ❯ src/components/analytics/__tests__/chartStyleGuard.test.ts:65:19
+     63|   it("finds the chart files (a scan that matches nothing proves nothin…
+     64|     expect(files.length).toBeGreaterThanOrEqual(8);
+     65|     expect(files).toContain("components/progress/TrendWeight.tsx");
+       |                   ^
+     66|     expect(files).toContain("components/progress/CalorieBalanceChart.t…
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/80]⎯
+
+ FAIL  |dom| src/components/settings/__tests__/DataExportSection.test.tsx > user-facing copy is sentence case > no Title Case labels outside the closed list
+AssertionError: Title Case in user-facing copy. Sentence case is the rule — see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit.
+src\pages\dev\FormMotionLab.tsx:163  "Form Motion Lab": expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\pages\\dev\\FormMotionLab.tsx:163  \"Form Motion Lab\"",
++ ]
+
+ ❯ src/lib/__tests__/copyCasing.test.ts:227:7
+    225|             `here and to the table in that doc, in the same commit.\n`…
+    226|             bad.join("\n")
+    227|     ).toEqual([]);
+       |       ^
+    228|   });
+    229| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/80]⎯
+
+ FAIL  |dom| src/features/goalSpace/__tests__/joinRejection.test.ts > the mapping tracks the server > covers every refusal reachable from the join path
+AssertionError: goalSpaceMembership.js can refuse a join for reasons joinRejection.ts has no sentence for, so they reach the user as the fallback. Add a BY_MESSAGE row for each.: expected [ 'memberUid required', …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "memberUid required",
++   "owner only",
++   "unknown goal space type",
++   "title required",
++   "memberUid required",
++   "owner only",
++ ]
+
+ ❯ src/features/goalSpace/__tests__/joinRejection.test.ts:155:7
+    153|         "has no sentence for, so they reach the user as the fallback. …
+    154|         "BY_MESSAGE row for each."
+    155|     ).toEqual([]);
+       |       ^
+    156|   });
+    157|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/80]⎯
+
+ FAIL  |node| src/utils/__tests__/timeTreatment.test.ts > one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ src/utils/__tests__/timeTreatment.test.ts:226:24
+    224|   it("names a home that is where formatTimeOfDay lives", () => {
+    225|     const home = sources().find((s) => s.rel === HOME);
+    226|     expect(home?.code).toMatch(/export function formatTimeOfDay\(/);
+       |                        ^
+    227|   });
+    228|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/80]⎯
+
+ FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code
+AssertionError: unspaced unit — the app writes '60 kg' / '5.2 km' (space before the unit). If a site is a genuinely deliberate compact variant, document it at the site and add the FILE to EXEMPT here:
+components\program\DayActionSheet.tsx:222 // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
+components\run\RunMap.tsx:86 // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).
+components\settings\ProfileInfoSection.tsx:90 // getAdjustedTargets silently rebases to 70kg — two consumers
+components\share\ShareCardRenderer.tsx:176 return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;
+components\workout\SessionCompleteScreen.tsx:154 // "Cable Crunch 2/2 sets" and 240kg reported SETS 4. Three numbers, one
+components\WorkoutSession.tsx:1005 // 200kg over a 100kg PR all became permanent state.
+features\program\programEngine.ts:2278 // a fresh Lat Pulldown or Leg Press at 0kg got progressed via the
+features\program\programEngine.ts:2280 // in history as "BW × 10" with 0kg volume.
+features\program\startingLoads.ts:426 // Overhead Press prescribed at 0 kg, a session totalling "0kg VOLUME",
+features\program\startingLoads.ts:427 // and a plateau modal reporting "you've been at 0kg for 3 sessions".
+hooks\useHomeData.ts:178 // non-countable runs so a saved-anyway "too-fast" 20km / 0:08
+hooks\useShoes.ts:175 // 20km/0:08 "too-fast" save inflate the shoe by 20km and
+lib\exerciseSummary.ts:58 // — a Leg Press at 0kg is uncalibrated, not bodyweight.
+lib\exerciseSummary.ts:67 // Spaced unit — the app's one unit treatment ("60 kg", never "60kg").
+lib\gps.ts:559 // splitTime = 0 → bogus "1km in 0:00" (0:00/km pace) splits.
+lib\nlFoodParser.ts:1761 // Mass: "200g chicken" / "1.5kg rice" / "200 g chicken"
+lib\performanceEngine.ts:118 // On a cut: losing up to 1kg/week is expected and healthy
+lib\performanceEngine.ts:127 // On a bulk: gaining up to 0.5kg/week is expected: expected [ …(18) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "components\\program\\DayActionSheet.tsx:222 // the meta pill (e.g. \"10km · 5:25–5:45 /km\"). Band-first via the shared",
++   "components\\run\\RunMap.tsx:86 // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).",
++   "components\\settings\\ProfileInfoSection.tsx:90 // getAdjustedTargets silently rebases to 70kg — two consumers",
++   "components\\share\\ShareCardRenderer.tsx:176 return kg >= 1000 ? `${(kg / 1000).toFixed(1)}t` : `${Math.round(kg)}kg`;",
++   "components\\workout\\SessionCompleteScreen.tsx:154 // \"Cable Crunch 2/2 sets\" and 240kg reported SETS 4. Three numbers, one",
++   "components\\WorkoutSession.tsx:1005 // 200kg over a 100kg PR all became permanent state.",
++   "features\\program\\programEngine.ts:2278 // a fresh Lat Pulldown or Leg Press at 0kg got progressed via the",
++   "features\\program\\programEngine.ts:2280 // in history as \"BW × 10\" with 0kg volume.",
++   "features\\program\\startingLoads.ts:426 // Overhead Press prescribed at 0 kg, a session totalling \"0kg VOLUME\",",
++   "features\\program\\startingLoads.ts:427 // and a plateau modal reporting \"you've been at 0kg for 3 sessions\".",
++   "hooks\\useHomeData.ts:178 // non-countable runs so a saved-anyway \"too-fast\" 20km / 0:08",
++   "hooks\\useShoes.ts:175 // 20km/0:08 \"too-fast\" save inflate the shoe by 20km and",
++   "lib\\exerciseSummary.ts:58 // — a Leg Press at 0kg is uncalibrated, not bodyweight.",
++   "lib\\exerciseSummary.ts:67 // Spaced unit — the app's one unit treatment (\"60 kg\", never \"60kg\").",
++   "lib\\gps.ts:559 // splitTime = 0 → bogus \"1km in 0:00\" (0:00/km pace) splits.",
++   "lib\\nlFoodParser.ts:1761 // Mass: \"200g chicken\" / \"1.5kg rice\" / \"200 g chicken\"",
++   "lib\\performanceEngine.ts:118 // On a cut: losing up to 1kg/week is expected and healthy",
++   "lib\\performanceEngine.ts:127 // On a bulk: gaining up to 0.5kg/week is expected",
++ ]
+
+ ❯ src/utils/__tests__/unitTreatment.test.ts:95:7
+     93|         "document it at the site and add the FILE to EXEMPT here:\n" +
+     94|         hits.join("\n")
+     95|     ).toEqual([]);
+       |       ^
+     96|   });
+     97|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/80]⎯
+
+ FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')
+AssertionError: pace glued to its unit — the app writes '5:34 /km' (a space before the unit; a range '5:05–5:12 /km', unit once). Use `paceLabel` / `paceBandLabel` from runLabels, or put {" "} before the unit in JSX:
+lib\gps.ts:559 // splitTime = 0 → bogus "1km in 0:00" (0:00/km pace) splits.: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "lib\\gps.ts:559 // splitTime = 0 → bogus \"1km in 0:00\" (0:00/km pace) splits.",
++ ]
+
+ ❯ src/utils/__tests__/unitTreatment.test.ts:134:7
+    132|         "JSX:\n" +
+    133|         hits.join("\n")
+    134|     ).toEqual([]);
+       |       ^
+    135|   });
+    136| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit
+AssertionError: name: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/lib/__tests__/appStoreListing.test.ts:75:49
+     73|   it("has each field exactly once, and only fields with a known limit"…
+     74|     for (const key of Object.keys(LIMITS)) {
+     75|       expect(FIELDS.get(key)?.length ?? 0, key).toBe(1);
+       |                                                 ^
+     76|     }
+     77|     for (const key of FIELDS.keys()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > puts a text box straight after every marker
+AssertionError: expected +0 to be 10 // Object.is equality
+
+- Expected
++ Received
+
+- 10
++ 0
+
+ ❯ src/lib/__tests__/appStoreListing.test.ts:87:26
+     85|     const markers = LISTING.match(/<!-- field: /g) ?? [];
+     86|     const boxes = [...FIELDS.values()].flat();
+     87|     expect(boxes.length).toBe(markers.length);
+       |                          ^
+     88|   });
+     89|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > name fits Apple's limit
+Error: expected one "name" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > subtitle fits Apple's limit
+Error: expected one "subtitle" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > promotional-text fits Apple's limit
+Error: expected one "promotional-text" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > description fits Apple's limit
+Error: expected one "description" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > keywords fits Apple's limit
+Error: expected one "keywords" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > review-notes fits Apple's limit
+Error: expected one "review-notes" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit
+Error: expected one "iap-monthly-name" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit
+Error: expected one "iap-monthly-description" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit
+Error: expected one "iap-yearly-name" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit
+Error: expected one "iap-yearly-description" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:93:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice
+Error: expected one "keywords" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:100:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description
+Error: expected one "description" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:122:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes the trial length the paywall offers
+AssertionError: expected 0 to be greater than 0
+ ❯ src/lib/__tests__/appStoreListing.test.ts:139:27
+    137|       (m) => m[1]
+    138|     );
+    139|     expect(quoted.length).toBeGreaterThan(0);
+       |                           ^
+    140|     for (const days of quoted) expect(days).toBe(paywall![1]);
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos
+Error: expected one "review-notes" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:146:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > claims no feature the app doesn't have
+Error: expected one "name" field in the listing
+ ❯ field src/lib/__tests__/appStoreListing.test.ts:64:11
+     62|   const values = FIELDS.get(key);
+     63|   if (!values || values.length !== 1) {
+     64|     throw new Error(`expected one "${key}" field in the listing`);
+       |           ^
+     65|   }
+     66|   return values[0];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:184:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/80]⎯
+
+ FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes
+TypeError: Cannot read properties of undefined (reading 'split')
+ ❯ labelRows src/lib/__tests__/appStoreListing.test.ts:244:32
+    242|     const section = LISTING.split("### Data linked to you")[1].split("…
+    243|     const rows = new Map<string, string[]>();
+    244|     for (const line of section.split("\n").slice(2)) {
+       |                                ^
+    245|       const [, , type, purposes] = line.split("|").map((c) => c.trim()…
+    246|       const key = APPLE_KEY[type];
+ ❯ src/lib/__tests__/appStoreListing.test.ts:289:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/80]⎯
+
+ FAIL  |node| src/lib/__tests__/basemap.test.ts > every map carries the credit > finds the maps (the scan reaches them)
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "src/components/run/RoutePlannerSheet.tsx",
+-   "src/components/run/RunMap.tsx",
++   "src\\components\\run\\RoutePlannerSheet.tsx",
++   "src\\components\\run\\RunMap.tsx",
+  ]
+
+ ❯ src/lib/__tests__/basemap.test.ts:99:63
+     97|
+     98|   it("finds the maps (the scan reaches them)", () => {
+     99|     expect(builders.map((f) => relative(repoRoot, f)).sort()).toEqual([
+       |                                                               ^
+    100|       "src/components/run/RoutePlannerSheet.tsx",
+    101|       "src/components/run/RunMap.tsx",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/80]⎯
+
+ FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > every cue fits the hold it is read in
+AssertionError: face-pulls "Reach": 10 words: expected 10 to be less than or equal to 7
+ ❯ src/lib/__tests__/bodyRig.test.ts:4817:61
+    4815|       for (const b of getAuthoredBeats(id)!) {
+    4816|         const words = b.cue.trim().split(/\s+/).length;
+    4817|         expect(words, `${id} "${b.label}": ${words} words`).toBeLessTh…
+       |                                                             ^
+    4818|           PLACARD_CUE_WORDS
+    4819|         );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/80]⎯
+
+ FAIL  |node| src/lib/__tests__/calorieUnitGate.test.ts > the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand
+AssertionError: Render the calorie unit with CALORIE_UNIT from src/utils/formatNutrition.ts. A literal here is how the app came to show "cal" on one card and "kcal" on the next:
+  src\pages\dev\BrandBakeoff.tsx:100  / 2,200 kcal: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\pages\\dev\\BrandBakeoff.tsx:100  / 2,200 kcal",
++ ]
+
+ ❯ src/lib/__tests__/calorieUnitGate.test.ts:119:7
+    117|         `to show "cal" on one card and "kcal" on the next:\n  ` +
+    118|         hits.join("\n  ")
+    119|     ).toEqual([]);
+       |       ^
+    120|   });
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/80]⎯
+
+ FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md — the deploy workflows > finds the workflows and the section
+AssertionError: expected [] to include 'push'
+ ❯ src/lib/__tests__/claudeMdFreshness.test.ts:477:47
+    475|     expect(deployWorkflows).toContain("deploy-production.yml");
+    476|     expect(cicd.length).toBeGreaterThan(0);
+    477|     expect(triggers("deploy-production.yml")).toContain("push");
+       |                                               ^
+    478|   });
+    479|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/80]⎯
+
+ FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md — the deploy workflows > says a push to main runs a workflow only when it does
+AssertionError: The CI/CD bullets for deploy-production.yml disagree with their workflows about running on push. An agent follows the bullet.: expected [ 'deploy-production.yml' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "deploy-production.yml",
++ ]
+
+ ❯ src/lib/__tests__/claudeMdFreshness.test.ts:500:7
+    498|       `The CI/CD bullets for ${wrong.join(", ")} disagree with their `…
+    499|         `workflows about running on push. An agent follows the bullet.`
+    500|     ).toEqual([]);
+       |       ^
+    501|   });
+    502| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/80]⎯
+
+ FAIL  |node| src/lib/__tests__/componentReachability.test.ts > component reachability (src/components + src/features) > no NEW component is rendered by nothing
+AssertionError: Component(s) that nothing renders. A component nobody renders is indistinguishable from a shipped feature when you read it — that is the cost, not the bytes. Either render it, or delete it with its tests. Do NOT add it to KNOWN_ORPHAN_COMPONENTS; that list is delete-only.: expected [ …(347) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\components\\AccordionSection.tsx",
++   "src\\components\\analytics\\AnalyticsGoDeeper.tsx",
++   "src\\components\\analytics\\AnalyticsMuscles.tsx",
++   "src\\components\\analytics\\AnalyticsTrends.tsx",
++   "src\\components\\analytics\\ChartAreaGradient.tsx",
++   "src\\components\\analytics\\ElevationProfile.tsx",
++   "src\\components\\analytics\\ExerciseProgressChart.tsx",
++   "src\\components\\analytics\\FastestKilometresCard.tsx",
++   "src\\components\\analytics\\FoodDaysCard.tsx",
++   "src\\components\\analytics\\HistoryOfflineBanner.tsx",
++   "src\\components\\analytics\\LiftProgressCard.tsx",
++   "src\\components\\analytics\\MacroDistribution.tsx",
++   "src\\components\\analytics\\MuscleHeatMap.tsx",
++   "src\\components\\analytics\\MuscleVolumeCard.tsx",
++   "src\\components\\analytics\\PerformanceIndexChart.tsx",
++   "src\\components\\analytics\\PerformanceOverviewCard.tsx",
++   "src\\components\\analytics\\PerformanceSection.tsx",
++   "src\\components\\analytics\\PerformanceTab.tsx",
++   "src\\components\\analytics\\PerformanceWeekBreakdown.tsx",
++   "src\\components\\analytics\\PeriodSummaryCard.tsx",
++   "src\\components\\analytics\\PRCard.tsx",
++   "src\\components\\analytics\\PRsTab.tsx",
++   "src\\components\\analytics\\RacePredictionsCard.tsx",
++   "src\\components\\analytics\\RunPaceCard.tsx",
++   "src\\components\\analytics\\SectionEmptyCTA.tsx",
++   "src\\components\\analytics\\Sparkline.tsx",
++   "src\\components\\analytics\\StatCard.tsx",
++   "src\\components\\analytics\\TimeRangePills.tsx",
++   "src\\components\\analytics\\TrainingLoadCard.tsx",
++   "src\\components\\analytics\\TrainingWeeksCard.tsx",
++   "src\\components\\analytics\\WeeklyReviewRow.tsx",
++   "src\\components\\analytics\\WeightRateCard.tsx",
++   "src\\components\\AuthSessionBoundary.tsx",
++   "src\\components\\Avatar.tsx",
++   "src\\components\\BodyMapGlow.tsx",
++   "src\\components\\BottomNavigation.tsx",
++   "src\\components\\EducationLaneProvider.tsx",
++   "src\\components\\ExerciseDemoPlayer.tsx",
++   "src\\components\\ExerciseFormContent.tsx",
++   "src\\components\\ExerciseFormFrames.tsx",
++   "src\\components\\ExerciseRigDemo.tsx",
++   "src\\components\\food\\AdaptiveWarmupBar.tsx",
++   "src\\components\\food\\AiConsentSheet.tsx",
++   "src\\components\\food\\CalorieRing.tsx",
++   "src\\components\\food\\CopyMealsSheet.tsx",
++   "src\\components\\food\\EditServingsSheet.tsx",
++   "src\\components\\food\\FoodComposerCard.tsx",
++   "src\\components\\food\\FoodConsistencyCard.tsx",
++   "src\\components\\food\\FoodDateBar.tsx",
++   "src\\components\\food\\FoodHeroCard.tsx",
++   "src\\components\\food\\FoodOfflineBanner.tsx",
++   "src\\components\\food\\FoodProHint.tsx",
++   "src\\components\\food\\FoodRow.tsx",
++   "src\\components\\food\\FoodSuggestionsDropdown.tsx",
++   "src\\components\\food\\FoodTimeline.tsx",
++   "src\\components\\food\\FoodWeekStrip.tsx",
++   "src\\components\\food\\HeroDrillDownSheet.tsx",
++   "src\\components\\food\\MacroColumn.tsx",
++   "src\\components\\food\\MealMacroBar.tsx",
++   "src\\components\\food\\QuickMealPortionSheet.tsx",
++   "src\\components\\food\\scanButtonOverrides.tsx",
++   "src\\components\\food\\ScanGrow.tsx",
++   "src\\components\\food\\ScanProButton.tsx",
++   "src\\components\\food\\ScanQuotaIndicator.tsx",
++   "src\\components\\FoodAnalyzer.tsx",
++   "src\\components\\FoodCameraModal.tsx",
++   "src\\components\\guide\\GuideHint.tsx",
++   "src\\components\\guide\\GuideMark.tsx",
++   "src\\components\\guide\\GuideWalk.tsx",
++   "src\\components\\home\\ContextualTipBanner.tsx",
++   "src\\components\\home\\DayPeekCard.tsx",
++   "src\\components\\home\\FirstMealCard.tsx",
++   "src\\components\\home\\FirstWeekCard.tsx",
++   "src\\components\\home\\GoalReachedSheet.tsx",
++   "src\\components\\home\\LiftCTACard.tsx",
++   "src\\components\\home\\NewBadgeRow.tsx",
++   "src\\components\\home\\PerformanceHeroCard.tsx",
++   "src\\components\\home\\RestDayCard.tsx",
++   "src\\components\\home\\RunCTACard.tsx",
++   "src\\components\\home\\StackedCTACards.tsx",
++   "src\\components\\home\\StepsPrimingModal.tsx",
++   "src\\components\\home\\TodayEnergy.tsx",
++   "src\\components\\home\\TrackSectionView.tsx",
++   "src\\components\\home\\TrialEndedDialog.tsx",
++   "src\\components\\home\\TrialEndingStrip.tsx",
++   "src\\components\\home\\VerifyEmailBanner.tsx",
++   "src\\components\\home\\WaterBubbles.tsx",
++   "src\\components\\home\\WaterCard.tsx",
++   "src\\components\\home\\WaterContainerIcon.tsx",
++   "src\\components\\home\\WaterSizeSheet.tsx",
++   "src\\components\\home\\WaterWave.tsx",
++   "src\\components\\home\\WeeklyReviewEntry.tsx",
++   "src\\components\\home\\WeekStrip.tsx",
++   "src\\components\\home\\WeekSummary.tsx",
++   "src\\components\\home\\WeightLogSheet.tsx",
++   "src\\components\\home\\WeightScaleDial.tsx",
++   "src\\components\\home\\WeightStepsTiles.tsx",
++   "src\\components\\icons\\Avocado.tsx",
++   "src\\components\\icons\\TabIcons.tsx",
++   "src\\components\\LaunchSplash.tsx",
++   "src\\components\\Layout.tsx",
++   "src\\components\\LegacyExerciseRigDemo.tsx",
++   "src\\components\\LoadingSkeleton.tsx",
++   "src\\components\\ManualFoodLogger.tsx",
++   "src\\components\\MinVersionGate.tsx",
++   "src\\components\\MuscleKey.tsx",
++   "src\\components\\NotificationBubble.tsx",
++   "src\\components\\nutrition\\ServingSizeDrawer.tsx",
++   "src\\components\\onboarding\\BodyInputs.tsx",
++   "src\\components\\onboarding\\ChoiceArt.tsx",
++   "src\\components\\onboarding\\OptionCard.tsx",
++   "src\\components\\onboarding\\WeekPreview.tsx",
++   "src\\components\\OneTimeMaintenance.tsx",
++   "src\\components\\paywall\\PaywallLegalLinks.tsx",
++   "src\\components\\paywall\\PlanPicker.tsx",
++   "src\\components\\paywall\\ProDemoVideo.tsx",
++   "src\\components\\paywall\\ProPreview.tsx",
++   "src\\components\\paywall\\RenewalDisclosure.tsx",
++   "src\\components\\paywall\\ScanDemo.tsx",
++   "src\\components\\program\\AdjustWeekSheet.tsx",
++   "src\\components\\program\\CurrentProgrammeSummary.tsx",
++   "src\\components\\program\\DayActionSheet.tsx",
++   "src\\components\\program\\DeloadBanner.tsx",
++   "src\\components\\program\\EaseWeekNudgeCard.tsx",
++   "src\\components\\program\\ExercisePicker.tsx",
++   "src\\components\\program\\ExerciseRowSummary.tsx",
++   "src\\components\\program\\ExerciseThumb.tsx",
++   "src\\components\\program\\ExperienceSuggestionCard.tsx",
++   "src\\components\\program\\ExpressSessionSheet.tsx",
++   "src\\components\\program\\ExtrasExpandSheet.tsx",
++   "src\\components\\program\\FellBehindSheet.tsx",
++   "src\\components\\program\\LiftPurpose.tsx",
++   "src\\components\\program\\LiftReturnSheet.tsx",
++   "src\\components\\program\\LiftRulesInfo.tsx",
++   "src\\components\\program\\LiftRulesSheet.tsx",
++   "src\\components\\program\\LoweredLine.tsx",
++   "src\\components\\program\\PendingChangesSummary.tsx",
++   "src\\components\\program\\PhaseRail.tsx",
++   "src\\components\\program\\ProgrammeRunSection.tsx",
++   "src\\components\\program\\ProgrammeSettings.tsx",
++   "src\\components\\program\\ProgrammeSettingsGroup.tsx",
++   "src\\components\\program\\ProgrammeWeekSelector.tsx",
++   "src\\components\\program\\ProgramOfflineBanner.tsx",
++   "src\\components\\program\\RaceCockpitCard.tsx",
++   "src\\components\\program\\RaceDayPlanCard.tsx",
++   "src\\components\\program\\RaceGoalPlanner.tsx",
++   "src\\components\\program\\RaceWeeksAhead.tsx",
++   "src\\components\\program\\RunPlanSettings.tsx",
++   "src\\components\\program\\SavedRoutinesSection.tsx",
++   "src\\components\\program\\ScheduleLayoutSheet.tsx",
++   "src\\components\\program\\SessionCommandCard.tsx",
++   "src\\components\\program\\SessionLengthLabel.tsx",
++   "src\\components\\program\\SkipConfirmSheet.tsx",
++   "src\\components\\program\\StretchedLine.tsx",
++   "src\\components\\program\\TrackProgrammeSectionView.tsx",
++   "src\\components\\program\\TrainingBlockCard.tsx",
++   "src\\components\\program\\useLiftRulesSheet.tsx",
++   "src\\components\\program\\WeeklyVolumeCard.tsx",
++   "src\\components\\program\\WeekPhaseRow.tsx",
++   "src\\components\\progress\\CalorieBalanceChart.tsx",
++   "src\\components\\progress\\ProgressPhotoCompareSheet.tsx",
++   "src\\components\\progress\\ProgressPhotoDaySheet.tsx",
++   "src\\components\\progress\\ProgressPhotos.tsx",
++   "src\\components\\progress\\ProgressPhotoThumb.tsx",
++   "src\\components\\progress\\TrendWeight.tsx",
++   "src\\components\\ProModal.tsx",
++   "src\\components\\review\\MomentumCheckinCard.tsx",
++   "src\\components\\review\\RecapStory.tsx",
++   "src\\components\\RouteErrorBoundary.tsx",
++   "src\\components\\run\\BackToStartChip.tsx",
++   "src\\components\\run\\BestEffortsCard.tsx",
++   "src\\components\\run\\EditDistance.tsx",
++   "src\\components\\run\\GhostDeltaChip.tsx",
++   "src\\components\\run\\GpxImportButton.tsx",
++   "src\\components\\run\\GuidedRunOverlay.tsx",
++   "src\\components\\run\\GuidedRunPicker.tsx",
++   "src\\components\\run\\HoldToFinishButton.tsx",
++   "src\\components\\run\\IntervalStepShell.tsx",
++   "src\\components\\run\\NonRaceGoalProgress.tsx",
++   "src\\components\\run\\NonRaceGoalSettings.tsx",
++   "src\\components\\run\\PaceInsightCard.tsx",
++   "src\\components\\run\\PaceLegend.tsx",
++   "src\\components\\run\\PaceZoneBar.tsx",
++   "src\\components\\run\\RecentRunningContext.tsx",
++   "src\\components\\run\\RouteFollowChip.tsx",
++   "src\\components\\run\\RoutePlannerSheet.tsx",
++   "src\\components\\run\\RoutePreviewSheet.tsx",
++   "src\\components\\run\\RouteSetupSection.tsx",
++   "src\\components\\run\\RunAbout.tsx",
++   "src\\components\\run\\RunAvailabilitySettings.tsx",
++   "src\\components\\run\\RunBackgroundGrantNote.tsx",
++   "src\\components\\run\\RunBottomSheet.tsx",
++   "src\\components\\run\\RunLaunchCard.tsx",
++   "src\\components\\run\\RunMap.tsx",
++   "src\\components\\run\\RunMapLazy.tsx",
++   "src\\components\\run\\RunningBaselineSettings.tsx",
++   "src\\components\\run\\RunPlanPurpose.tsx",
++   "src\\components\\run\\RunPurpose.tsx",
++   "src\\components\\run\\RunResumePrompt.tsx",
++   "src\\components\\run\\RunSetupModal.tsx",
++   "src\\components\\run\\RunSetupSkeleton.tsx",
++   "src\\components\\run\\RunStatGrid.tsx",
++   "src\\components\\run\\RunTemplateIcon.tsx",
++   "src\\components\\run\\RunTilePicker.tsx",
++   "src\\components\\run\\SessionStructureView.tsx",
++   "src\\components\\run\\ShoeMileageSection.tsx",
++   "src\\components\\run\\ShoeSelector.tsx",
++   "src\\components\\run\\SplitsTable.tsx",
++   "src\\components\\run\\TreadmillMode.tsx",
++   "src\\components\\SectionErrorBoundary.tsx",
++   "src\\components\\session\\DeleteSessionAction.tsx",
++   "src\\components\\session\\SessionLoadState.tsx",
++   "src\\components\\settings\\AccountSection.tsx",
++   "src\\components\\settings\\ActivityNotificationsGroup.tsx",
++   "src\\components\\settings\\AiUsageSection.tsx",
++   "src\\components\\settings\\CalorieTargetOverride.tsx",
++   "src\\components\\settings\\DataExportSection.tsx",
++   "src\\components\\settings\\HealthSection.tsx",
++   "src\\components\\settings\\HeartRateZonesSection.tsx",
++   "src\\components\\settings\\NotificationsSection.tsx",
++   "src\\components\\settings\\NutritionSection.tsx",
++   "src\\components\\settings\\PrivacySection.tsx",
++   "src\\components\\settings\\ProfileInfoSection.tsx",
++   "src\\components\\settings\\RestrictionExplainer.tsx",
++   "src\\components\\settings\\RunFitnessSection.tsx",
++   "src\\components\\settings\\SecuritySection.tsx",
++   "src\\components\\settings\\SettingsAvatar.tsx",
++   "src\\components\\settings\\SettingsList.tsx",
++   "src\\components\\settings\\SettingsOfflineBanner.tsx",
++   "src\\components\\settings\\SettingsSection.tsx",
++   "src\\components\\settings\\ShareDefaultsRow.tsx",
++   "src\\components\\settings\\ShoesManager.tsx",
++   "src\\components\\settings\\ShoesSection.tsx",
++   "src\\components\\settings\\SupportLegalSection.tsx",
++   "src\\components\\settings\\TrackSettingsSectionView.tsx",
++   "src\\components\\settings\\UnitsAppearanceSection.tsx",
++   "src\\components\\settings\\WorkoutPrefsSection.tsx",
++   "src\\components\\share\\ShareCardRenderer.tsx",
++   "src\\components\\share\\ShareCardSheet.tsx",
++   "src\\components\\social\\ActivityCard.tsx",
++   "src\\components\\social\\BlockAwareAvatar.tsx",
++   "src\\components\\social\\CircleShareSheet.tsx",
++   "src\\components\\social\\CirclesSection.tsx",
++   "src\\components\\social\\CircleWeeklyFocusSheet.tsx",
++   "src\\components\\social\\CommentPanels.tsx",
++   "src\\components\\social\\CommentSheet.tsx",
++   "src\\components\\social\\CommentSheetFrame.tsx",
++   "src\\components\\social\\ExerciseCompareSheet.tsx",
++   "src\\components\\social\\FollowButton.tsx",
++   "src\\components\\social\\FollowsYouBadge.tsx",
++   "src\\components\\social\\FullLeaderboard.tsx",
++   "src\\components\\social\\InlineFollow.tsx",
++   "src\\components\\social\\LeaderboardCard.tsx",
++   "src\\components\\social\\LeaderboardRow.tsx",
++   "src\\components\\social\\MiniMuscleFigure.tsx",
++   "src\\components\\social\\NotificationsSheet.tsx",
++   "src\\components\\social\\PartnerReadyBadge.tsx",
++   "src\\components\\social\\PeopleToFollowRow.tsx",
++   "src\\components\\social\\PostCompletionKudos.tsx",
++   "src\\components\\social\\ReportForm.tsx",
++   "src\\components\\social\\ReportModal.tsx",
++   "src\\components\\social\\RestrictedNotice.tsx",
++   "src\\components\\social\\RouteScene.tsx",
++   "src\\components\\social\\SavedRunKudos.tsx",
++   "src\\components\\social\\SaveRoutineSheet.tsx",
++   "src\\components\\social\\ShareComposerSheet.tsx",
++   "src\\components\\social\\TrajectoryCard.tsx",
++   "src\\components\\social\\VerifyEmailNotice.tsx",
++   "src\\components\\social\\views\\CommunityView.tsx",
++   "src\\components\\social\\views\\FeedView.tsx",
++   "src\\components\\social\\views\\PeopleView.tsx",
++   "src\\components\\SortableExerciseRow.tsx",
++   "src\\components\\StreakFlame.tsx",
++   "src\\components\\SurfaceCoordinatorProvider.tsx",
++   "src\\components\\ToastProvider.tsx",
++   "src\\components\\TrialDetails.tsx",
++   "src\\components\\TrialTimeline.tsx",
++   "src\\components\\ui\\AnimatedNumber.tsx",
++   "src\\components\\ui\\ArrivalFade.tsx",
++   "src\\components\\ui\\Banner.tsx",
++   "src\\components\\ui\\BottomSheet.tsx",
++   "src\\components\\ui\\BrandMark.tsx",
++   "src\\components\\ui\\Button.tsx",
++   "src\\components\\ui\\Card.tsx",
++   "src\\components\\ui\\ChoiceSheet.tsx",
++   "src\\components\\ui\\Collapse.tsx",
++   "src\\components\\ui\\ConfirmDialog.tsx",
++   "src\\components\\ui\\Dialog.tsx",
++   "src\\components\\ui\\EmptyState.tsx",
++   "src\\components\\ui\\ErrorState.tsx",
++   "src\\components\\ui\\IconButton.tsx",
++   "src\\components\\ui\\InlineNumerals.tsx",
++   "src\\components\\ui\\MetaLine.tsx",
++   "src\\components\\ui\\PageShell.tsx",
++   "src\\components\\ui\\ProgressRing.tsx",
++   "src\\components\\ui\\PurposeDisclosure.tsx",
++   "src\\components\\ui\\RangeInput.tsx",
++   "src\\components\\ui\\RunControlButton.tsx",
++   "src\\components\\ui\\SectionHeading.tsx",
++   "src\\components\\ui\\SectionLabel.tsx",
++   "src\\components\\ui\\SegmentedControl.tsx",
++   "src\\components\\ui\\Spinner.tsx",
++   "src\\components\\ui\\StatFigure.tsx",
++   "src\\components\\ui\\SustainedOfflineBanner.tsx",
++   "src\\components\\ui\\Toggle.tsx",
++   "src\\components\\ui\\Tooltip.tsx",
++   "src\\components\\WeekPulseCard.tsx",
++   "src\\components\\WeekPulseView.tsx",
++   "src\\components\\workout\\CompactRestTimer.tsx",
++   "src\\components\\workout\\CompletionExtras.tsx",
++   "src\\components\\workout\\CorrectWorkoutSheet.tsx",
++   "src\\components\\workout\\EditSetSheet.tsx",
++   "src\\components\\workout\\ExerciseMenuSheet.tsx",
++   "src\\components\\workout\\KeepSwapSheet.tsx",
++   "src\\components\\workout\\NewBestMoment.tsx",
++   "src\\components\\workout\\PlateCalculatorSheet.tsx",
++   "src\\components\\workout\\SessionBadge.tsx",
++   "src\\components\\workout\\SessionCompleteScreen.tsx",
++   "src\\components\\workout\\SessionShareRow.tsx",
++   "src\\components\\workout\\SetCheck.tsx",
++   "src\\components\\workout\\SetTypeChip.tsx",
++   "src\\components\\workout\\WorkoutFeedShareSheet.tsx",
++   "src\\components\\workout\\WorkoutHistoryList.tsx",
++   "src\\components\\workout\\WorkoutProgress.tsx",
++   "src\\components\\workout\\WorkoutRestTimer.tsx",
++   "src\\components\\WorkoutSession.tsx",
++   "src\\features\\challenges\\ChallengeCard.tsx",
++   "src\\features\\challenges\\ChallengeFinaleCard.tsx",
++   "src\\features\\challenges\\ChallengeList.tsx",
++   "src\\features\\challenges\\CollectivePulse.tsx",
++   "src\\features\\partnerStreak\\PartnerStreakCard.tsx",
++   "src\\features\\program\\HomeProgramController.tsx",
++   "src\\features\\program\\useHomeProgram.tsx",
++   "src\\features\\spaces\\RaceFilterChips.tsx",
++   "src\\features\\spaces\\RaceFilters.tsx",
++   "src\\features\\spaces\\RaceIdentityToggle.tsx",
++   "src\\features\\spaces\\SpaceCommentSheet.tsx",
++   "src\\features\\spaces\\SpacePostCard.tsx",
++   "src\\features\\spaces\\SpacePostComposer.tsx",
++   "src\\features\\spaces\\SpacesDirectory.tsx",
++   "src\\features\\spaces\\TrainingForChip.tsx",
++   "src\\features\\streaks\\BadgeEarnedModal.tsx",
++   "src\\features\\streaks\\BadgeGrid.tsx",
++   "src\\features\\streaks\\BadgeHex.tsx",
++   "src\\features\\streaks\\BadgeProgressRing.tsx",
++   "src\\features\\streaks\\BadgeSeal.tsx",
++   "src\\features\\streaks\\useStreaks.tsx",
++ ]
+
+ ❯ src/lib/__tests__/componentReachability.test.ts:176:7
+    174|         `its tests. Do NOT add it to KNOWN_ORPHAN_COMPONENTS; that lis…
+    175|         `delete-only.`
+    176|     ).toEqual([]);
+       |       ^
+    177|   });
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/80]⎯
+
+ FAIL  |node| src/lib/__tests__/copyCasing.test.ts > user-facing copy is sentence case > no Title Case labels outside the closed list
+AssertionError: Title Case in user-facing copy. Sentence case is the rule — see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit.
+src\pages\dev\FormMotionLab.tsx:163  "Form Motion Lab": expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\pages\\dev\\FormMotionLab.tsx:163  \"Form Motion Lab\"",
++ ]
+
+ ❯ src/lib/__tests__/copyCasing.test.ts:227:7
+    225|             `here and to the table in that doc, in the same commit.\n`…
+    226|             bad.join("\n")
+    227|     ).toEqual([]);
+       |       ^
+    228|   });
+    229| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/80]⎯
+
+ FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/lib/__tests__/deadPathReferences.test.ts:162:3
+    160|   });
+    161|
+    162|   it("every path cited in a comment names a file that still exists", (…
+       |   ^
+    163|     const dead = findDeadRefs();
+    164|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/80]⎯
+
+ FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > D15 · DS invariant — touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)
+AssertionError: hand-rolled role=switch: 2 violations, baseline 0. A change ADDED violations. Route the new control/number through the primitive / add the missing class, or justify and bump the baseline.
+  src\components\ui\Toggle.tsx (2): expected 2 to be less than or equal to 0
+ ❯ expectRatchet src/lib/__tests__/designSystemInvariants.test.ts:127:5
+    125|       `violations. Route the new control/number through the primitive …
+    126|       `the missing class, or justify and bump the baseline.\n  ${offen…
+    127|   ).toBeLessThanOrEqual(baseline);
+       |     ^
+    128|   if (total < baseline) {
+    129|     // Not a failure — a nudge. The win is real; lock it in.
+ ❯ src/lib/__tests__/designSystemInvariants.test.ts:148:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/80]⎯
+
+ FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > DS ratchets — surface-level drift > the section-tier label appears only on the two Food surfaces
+AssertionError: tier="section" outside the Food carve-out — head the group with <SectionHeading> (size "compact" in a sheet, card or form):
+  src\components\food\FoodSuggestionsDropdown.tsx
+  src\components\food\HeroDrillDownSheet.tsx: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\components\\food\\FoodSuggestionsDropdown.tsx",
++   "src\\components\\food\\HeroDrillDownSheet.tsx",
++ ]
+
+ ❯ src/lib/__tests__/designSystemInvariants.test.ts:528:7
+    526|         `<SectionHeading> (size "compact" in a sheet, card or form):\n…
+    527|         outside.join("\n  ")
+    528|     ).toEqual([]);
+       |       ^
+    529|   });
+    530|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/80]⎯
+
+ FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no display surface formats a distance by hand
+AssertionError: Format run distances with distanceLabel / distanceLabel2 / distanceValue / nearDistanceLabel from src/lib/runLabels.ts — they take the unit as a REQUIRED argument, so a miles reader can't be silently left on km. If a surface must stay metric, mark it at the point of use with SPLIT_LAP_IS_METRIC or SHARE_CARD_IS_METRIC:
+  src\test\sim\runSeason.ts:319  ? `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`
+  src\test\sim\runSeason.ts:320  : `a tempo's work, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distance: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\test\\sim\\runSeason.ts:319  ? `a race, ${(effort.distanceM / 1000).toFixed(1)} km in ${paceText(effort.timeS)}`",
++   "src\\test\\sim\\runSeason.ts:320  : `a tempo's work, ${paceText(effort.timeS)} at ${paceText((effort.timeS / effort.distance",
++ ]
+
+ ❯ src/lib/__tests__/distanceUnitGate.test.ts:196:7
+    194|         `SHARE_CARD_IS_METRIC:\n  ` +
+    195|         hits.join("\n  ")
+    196|     ).toEqual([]);
+       |       ^
+    197|   });
+    198|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/80]⎯
+
+ FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit
+AssertionError: These fields hold KILOMETRES the user actually ran. Render them with storedKmLabel(km, unit, true, 1) from src/lib/runLabels.ts so a miles reader sees their own unit — a hardcoded "km" beside one of these shows the metric figure to everyone:
+  src\test\sim\liftSeason.ts:1007  `${result.record.templateId}: ${result.record.done.km.toFixed(1)} km at ${String(Math.roun
+  src\test\sim\runTrace.ts:40  return `${DAY[parseLocalDate(r.date).getDay()]} ${r.templateId} ${r.done.km.toFixed(1)} km: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\test\\sim\\liftSeason.ts:1007  `${result.record.templateId}: ${result.record.done.km.toFixed(1)} km at ${String(Math.roun",
++   "src\\test\\sim\\runTrace.ts:40  return `${DAY[parseLocalDate(r.date).getDay()]} ${r.templateId} ${r.done.km.toFixed(1)} km",
++ ]
+
+ ❯ src/lib/__tests__/distanceUnitGate.test.ts:221:7
+    219|         `these shows the metric figure to everyone:\n  ` +
+    220|         hits.join("\n  ")
+    221|     ).toEqual([]);
+       |       ^
+    222|   });
+    223|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/80]⎯
+
+ FAIL  |node| src/lib/__tests__/effectiveTargetsSingleSource.test.ts > useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook
+AssertionError: These files import getAdjustedTargets directly, re-deriving the day's macros instead of reading useEffectiveTargets. Route the display through the hook, or (if genuinely a new derivation source) add the file to ALLOWED_SPLITTER_IMPORTERS with a justification.
+  src\hooks\useEffectiveTargets.ts: expected [ 'src\hooks\useEffectiveTargets.ts' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\hooks\\useEffectiveTargets.ts",
++ ]
+
+ ❯ src/lib/__tests__/effectiveTargetsSingleSource.test.ts:82:7
+     80|         `hook, or (if genuinely a new derivation source) add the file …
+     81|         `ALLOWED_SPLITTER_IMPORTERS with a justification.\n  ${offende…
+     82|     ).toEqual([]);
+       |       ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/80]⎯
+
+ FAIL  |node| src/lib/__tests__/firestoreWriteGuard.test.ts > guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK
+AssertionError: Raw Firestore write(s) found. Route through addDocGuarded / setDocGuarded / updateDocGuarded / deleteDocGuarded (src/lib/firestoreWrite.ts) — they strip undefined and survive offline-queue replay. If this is a new legitimate low-level writer, add it to ALLOWLIST with a reason.
+  src\lib\offlineQueue.ts:373
+  src\lib\offlineQueue.ts:376
+  src\lib\offlineQueue.ts:451
+  src\lib\offlineQueue.ts:470: expected [ 'src\lib\offlineQueue.ts:373', …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\offlineQueue.ts:373",
++   "src\\lib\\offlineQueue.ts:376",
++   "src\\lib\\offlineQueue.ts:451",
++   "src\\lib\\offlineQueue.ts:470",
++ ]
+
+ ❯ src/lib/__tests__/firestoreWriteGuard.test.ts:82:7
+     80|         `strip undefined and survive offline-queue replay. If this is …
+     81|         `legitimate low-level writer, add it to ALLOWLIST with a reaso…
+     82|     ).toEqual([]);
+       |       ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/80]⎯
+
+ FAIL  |node| src/lib/__tests__/functionsScheduleUtcGuard.test.ts > scheduled-function UTC enforcement > the file scan itself isn't vacuous
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/__tests__/functionsScheduleUtcGuard.test.ts:65:67
+     63|     // assertion below pass on an empty string.
+     64|     expect(SOURCES.length).toBeGreaterThan(1);
+     65|     expect(SOURCES.some((f) => f.endsWith("functions/index.js"))).toBe…
+       |                                                                   ^
+     66|   });
+     67|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/80]⎯
+
+ FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > has no unpinned dead properties
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\hooks\\useHiddenActivities.ts:unhide",
++ ]
+
+ ❯ src/lib/__tests__/hookSurfaceReachability.test.ts:180:21
+    178|       .filter((k) => !PINNED_HOOK_PROPERTIES.includes(k))
+    179|       .sort();
+    180|     expect(orphans).toEqual([]);
+       |                     ^
+    181|   });
+    182|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/80]⎯
+
+ FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > pins only properties that still exist
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/hooks/useWorkouts.ts:saveWorkout",
++   "src/hooks/useEffectiveTargets.ts:baseTarget",
++   "src/hooks/useEffectiveTargets.ts:isRunDay",
++   "src/hooks/useHiddenActivities.ts:unhide",
++ ]
+
+ ❯ src/lib/__tests__/hookSurfaceReachability.test.ts:203:21
+    201|       return !PROPS.some((p) => p.file === file && p.prop === prop);
+    202|     });
+    203|     expect(missing).toEqual([]);
+       |                     ^
+    204|   });
+    205| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/80]⎯
+
+ FAIL  |node| src/lib/__tests__/iosPrivacyDeclarations.test.ts > SDKs — nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config
+AssertionError: expected '// swift-tools-version: 6.1\r\nimport…' to match /^\/\/ swift-tools-version: 6\.1\n/\
+
+- Expected:
+/^\/\/ swift-tools-version: 6\.1\n/
+
++ Received:
+"// swift-tools-version: 6.1
+import PackageDescription
+
+// DO NOT MODIFY THIS FILE - managed by Capacitor CLI commands
+let package = Package(
+    name: \"CapApp-SPM\",
+    platforms: [.iOS(.v15)],
+    products: [
+        .library(
+            name: \"CapApp-SPM\",
+            targets: [\"CapApp-SPM\"])
+    ],
+    dependencies: [
+        .package(url: \"https://github.com/ionic-team/capacitor-swift-pm.git\", exact: \"8.4.3\"),
+        .package(name: \"CapacitorCommunityBackgroundGeolocation\", path: \"../../../node_modules/@capacitor-community/background-geolocation\"),
+        .package(name: \"CapacitorFirebaseAnalytics\", path: \"../../../node_modules/@capacitor-firebase/analytics\", traits: [\"AnalyticsWithoutAdIdSupport\"]),
+        .package(name: \"CapacitorFirebaseAppCheck\", path: \"symlinks/CapacitorFirebaseAppCheck\"),
+        .package(name: \"CapacitorFirebaseAuthentication\", path: \"../../../node_modules/@capacitor-firebase/authentication\", traits: [\"Google\"]),
+        .package(name: \"CapacitorApp\", path: \"../../../node_modules/@capacitor/app\"),
+        .package(name: \"CapacitorCamera\", path: \"../../../node_modules/@capacitor/camera\"),
+        .package(name: \"CapacitorFilesystem\", path: \"../../../node_modules/@capacitor/filesystem\"),
+        .package(name: \"CapacitorGeolocation\", path: \"../../../node_modules/@capacitor/geolocation\"),
+        .package(name: \"CapacitorHaptics\", path: \"../../../node_modules/@capacitor/haptics\"),
+        .package(name: \"CapacitorLocalNotifications\", path: \"../../../node_modules/@capacitor/local-notifications\"),
+        .package(name: \"CapacitorPreferences\", path: \"../../../node_modules/@capacitor/preferences\"),
+        .package(name: \"CapacitorSplashScreen\", path: \"../../../node_modules/@capacitor/splash-screen\"),
+        .package(name: \"CapacitorStatusBar\", path: \"../../../node_modules/@capacitor/status-bar\"),
+        .package(name: \"CapacitorTextZoom\", path: \"../../../node_modules/@capacitor/text-zoom\"),
+        .package(name: \"RevenuecatPurchasesCapacitor\", path: \"../../../node_modules/@revenuecat/purchases-capacitor\"),
+        .package(name: \"CapacitorHealth\", path: \"../../../node_modules/capacitor-health\"),
+        .package(name: \"CapacitorLiveActivities\", path: \"../../../node_modules/capacitor-live-activities\")
+    ],
+    targets: [
+        .target(
+            name: \"CapApp-SPM\",
+            dependencies: [
+                .product(name: \"Capacitor\", package: \"capacitor-swift-pm\"),
+                .product(name: \"Cordova\", package: \"capacitor-swift-pm\"),
+                .product(name: \"CapacitorCommunityBackgroundGeolocation\", package: \"CapacitorCommunityBackgroundGeolocation\"),
+                .product(name: \"CapacitorFirebaseAnalytics\", package: \"CapacitorFirebaseAnalytics\"),
+                .product(name: \"CapacitorFirebaseAppCheck\", package: \"CapacitorFirebaseAppCheck\"),
+                .product(name: \"CapacitorFirebaseAuthentication\", package: \"CapacitorFirebaseAuthentication\"),
+                .product(name: \"CapacitorApp\", package: \"CapacitorApp\"),
+                .product(name: \"CapacitorCamera\", package: \"CapacitorCamera\"),
+                .product(name: \"CapacitorFilesystem\", package: \"CapacitorFilesystem\"),
+                .product(name: \"CapacitorGeolocation\", package: \"CapacitorGeolocation\"),
+                .product(name: \"CapacitorHaptics\", package: \"CapacitorHaptics\"),
+                .product(name: \"CapacitorLocalNotifications\", package: \"CapacitorLocalNotifications\"),
+                .product(name: \"CapacitorPreferences\", package: \"CapacitorPreferences\"),
+                .product(name: \"CapacitorSplashScreen\", package: \"CapacitorSplashScreen\"),
+                .product(name: \"CapacitorStatusBar\", package: \"CapacitorStatusBar\"),
+                .product(name: \"CapacitorTextZoom\", package: \"CapacitorTextZoom\"),
+                .product(name: \"RevenuecatPurchasesCapacitor\", package: \"RevenuecatPurchasesCapacitor\"),
+                .product(name: \"CapacitorHealth\", package: \"CapacitorHealth\"),
+                .product(name: \"CapacitorLiveActivities\", package: \"CapacitorLiveActivities\")
+            ]
+        )
+    ]
+)
+"
+
+ ❯ src/lib/__tests__/iosPrivacyDeclarations.test.ts:357:26
+    355|
+    356|   it("the committed Package.swift is the one cap sync writes from that…
+    357|     expect(packageSwift).toMatch(/^\/\/ swift-tools-version: 6\.1\n/);
+       |                          ^
+    358|     expect(packageSwift).toContain(
+    359|       '.package(name: "CapacitorFirebaseAnalytics", path: "../../../no…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/80]⎯
+
+ FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)
+Error: Command failed: C:\Users\myles\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --import tsx --input-type=module --eval 
+      import { localDateString } from "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\lib\\dateHelpers.ts";
+      // pretend "now" is Sun 2025-01-05 09:00 local Tokyo
+      const now = new Date(2025, 0, 5, 9, 0, 0);
+      const since = new Date(now);
+      since.setDate(since.getDate() - since.getDay()); // already Sunday
+      since.setHours(0, 0, 0, 0);
+      process.stdout.write(JSON.stringify({
+        local: localDateString(since),
+        utc: since.toISOString().split("T")[0],
+      }));
+    
+node:internal/modules/esm/load:193
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)
+    at defaultLoadSync (node:internal/modules/esm/load:146:3)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at loadWithHooks (node:internal/modules/customization_hooks:374:18)
+    at #loadSync (node:internal/modules/esm/loader:825:16)
+    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v24.19.0
+
+ ❯ load node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714
+ ❯ src/lib/__tests__/leaderboard.test.ts:48:17
+     46|       }));
+     47|     `;
+     48|     const out = execFileSync(
+       |                 ^
+     49|       process.execPath,
+     50|       ["--import", "tsx", "--input-type=module", "--eval", script],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/80]⎯
+
+ FAIL  |node| src/lib/__tests__/legalCopyClaims.test.ts > Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\lib\\healthKit.ts",
++ ]
+
+ ❯ src/lib/__tests__/legalCopyClaims.test.ts:265:20
+    263|         )
+    264|     );
+    265|     expect(others).toEqual([]);
+       |                    ^
+    266|   });
+    267|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > still sees the pattern at all
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/__tests__/localDateKeyParsing.test.ts:149:70
+    147|        assertion below has become decorative. */
+    148|     expect(found.length).toBeGreaterThanOrEqual(4);
+    149|     expect(found.some((f) => f.file === "src/utils/weightTrend.ts")).t…
+       |                                                                      ^
+    150|   });
+    151|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site
+AssertionError: SPAN_ONLY entries matching no site: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/utils/weightTrend.ts  new Date(a.date)",
++   "src/utils/weightTrend.ts  new Date(b.date)",
++   "src/components/progress/TrendWeight.tsx  new Date(data[0].date)",
++   "src/components/progress/TrendWeight.tsx  new Date(data[data.length - 1].date)",
++   "src/lib/weeklyReviewViewModel.ts  new Date(series[0].date)",
++   "src/lib/weeklyReviewViewModel.ts  new Date(last.date)",
++ ]
+
+ ❯ src/lib/__tests__/localDateKeyParsing.test.ts:176:57
+    174|       }
+    175|     }
+    176|     expect(stale, `SPAN_ONLY entries matching no site`).toEqual([]);
+       |                                                         ^
+    177|   });
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC
+AssertionError: These parse a "YYYY-MM-DD" key as UTC midnight. Rendered through toLocaleDateString they print the PREVIOUS day for every user at a negative UTC offset — and never for a UK developer, which is why five of these shipped. Use parseLocalDate() from @/lib/dateHelpers, or the + "T12:00:00" noon anchor. If the value is only ever used in a SPAN (later − earlier), classify it in SPAN_ONLY with the reason:
+  src\utils\weightTrend.ts:64  new Date(a.date)
+  src\utils\weightTrend.ts:64  new Date(b.date)
+  src\lib\weeklyReviewViewModel.ts:361  new Date(series[0].date)
+  src\lib\weeklyReviewViewModel.ts:362  new Date(last.date)
+  src\components\progress\TrendWeight.tsx:104  new Date(data[0].date)
+  src\components\progress\TrendWeight.tsx:106  new Date(data[data.length - 1].date): expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\utils\\weightTrend.ts:64  new Date(a.date)",
++   "src\\utils\\weightTrend.ts:64  new Date(b.date)",
++   "src\\lib\\weeklyReviewViewModel.ts:361  new Date(series[0].date)",
++   "src\\lib\\weeklyReviewViewModel.ts:362  new Date(last.date)",
++   "src\\components\\progress\\TrendWeight.tsx:104  new Date(data[0].date)",
++   "src\\components\\progress\\TrendWeight.tsx:106  new Date(data[data.length - 1].date)",
++ ]
+
+ ❯ src/lib/__tests__/localDateKeyParsing.test.ts:192:7
+    190|         `a SPAN (later − earlier), classify it in SPAN_ONLY with the `…
+    191|         `reason:\n  ${offenders.join("\n  ")}`
+    192|     ).toEqual([]);
+       |       ^
+    193|   });
+    194|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localDayKeyGuard.test.ts > a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\components\\food\\FoodTimeline.tsx:52",
++ ]
+
+ ❯ src/lib/__tests__/localDayKeyGuard.test.ts:98:23
+     96|       });
+     97|     }
+     98|     expect(offenders).toEqual([]);
+       |                       ^
+     99|   });
+    100|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)
+AssertionError: expected [ 'src\App.tsx', …(967) ] to include 'src/lib/localStore.ts'
+ ❯ src/lib/__tests__/localStorageGuard.test.ts:76:19
+     74|   it("scans a sane number of files (the walk isn't silently empty)", (…
+     75|     expect(files.length).toBeGreaterThan(300);
+     76|     expect(files).toContain(SINGLE_DOOR);
+       |                   ^
+     77|     expect(files).toContain(BOOT_SCRIPT);
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global
+AssertionError: Raw localStorage reference(s) found. Route through readString / writeString / remove / readJson / writeJson (src/lib/localStore.ts) — the door never throws and reports whether a write landed. There is no allow-list to extend; if the door cannot express the need, extend the door.
+  src\lib\localStore.ts:22
+  public\init.js:22: expected [ 'src\lib\localStore.ts:22', …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\localStore.ts:22",
++   "public\\init.js:22",
++ ]
+
+ ❯ src/lib/__tests__/localStorageGuard.test.ts:99:7
+     97|         `no allow-list to extend; if the door cannot express the need,…
+     98|         `extend the door.\n  ${offenders.join("\n  ")}`
+     99|     ).toEqual([]);
+       |       ^
+    100|   });
+    101|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name
+AssertionError: expected ProgrammeRunSection to still call the storage door: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/lib/__tests__/localStorageUidScoping.test.ts:222:7
+    220|       race,
+    221|       "expected ProgrammeRunSection to still call the storage door"
+    222|     ).toBeTruthy();
+       |       ^
+    223|     /* Resolution chains: the key names `storageUid`, which is itself …
+    224|        assigned from `useUidForStorageKey()`. Asserting on the CHAIN E…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/80]⎯
+
+ FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > no unscoped key holds per-account state
+AssertionError: localStorage is per-DEVICE, so an unscoped key is shared by every account on the phone. Prefer useDismissOnce; use useUidForStorageKey() for raw access. If the state really belongs to the DEVICE, add it to DEVICE_SCOPED with the reason:
+  src\lib\runResumeStorage.ts:211  remove(LEGACY_RUN_RESUME_KEY)
+  src\lib\shareDefaults.ts:121  remove(`${DEVICE_KEY_PREFIX}.${type}`)
+  src\lib\socialPreferenceKeys.ts:31  remove(LEGACY_KEYS[family])
+  src\hooks\useDismissOnce.ts:34  readString(scopedKey)
+  src\hooks\useFeedSubTabFreshness.ts:11  readString(key)
+  src\hooks\useFeedSubTabFreshness.ts:16  writeString(key)
+  src\hooks\useSnoozeDismiss.ts:27  readString(key)
+  src\hooks\useSnoozeDismiss.ts:33  writeString(key)
+  src\hooks\useWorkoutDraft.ts:177  remove(d.key)
+  src\hooks\useWorkoutDraft.ts:185  remove(LEGACY_STORAGE_KEY)
+  src\hooks\useWorkoutDraft.ts:211  remove(LEGACY_STORAGE_KEY): expected [ …(11) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\runResumeStorage.ts:211  remove(LEGACY_RUN_RESUME_KEY)",
++   "src\\lib\\shareDefaults.ts:121  remove(`${DEVICE_KEY_PREFIX}.${type}`)",
++   "src\\lib\\socialPreferenceKeys.ts:31  remove(LEGACY_KEYS[family])",
++   "src\\hooks\\useDismissOnce.ts:34  readString(scopedKey)",
++   "src\\hooks\\useFeedSubTabFreshness.ts:11  readString(key)",
++   "src\\hooks\\useFeedSubTabFreshness.ts:16  writeString(key)",
++   "src\\hooks\\useSnoozeDismiss.ts:27  readString(key)",
++   "src\\hooks\\useSnoozeDismiss.ts:33  writeString(key)",
++   "src\\hooks\\useWorkoutDraft.ts:177  remove(d.key)",
++   "src\\hooks\\useWorkoutDraft.ts:185  remove(LEGACY_STORAGE_KEY)",
++   "src\\hooks\\useWorkoutDraft.ts:211  remove(LEGACY_STORAGE_KEY)",
++ ]
+
+ ❯ src/lib/__tests__/localStorageUidScoping.test.ts:252:7
+    250|         `to the DEVICE, add it to DEVICE_SCOPED with the reason:\n  ` +
+    251|         offenders.join("\n  ")
+    252|     ).toEqual([]);
+       |       ^
+    253|   });
+    254|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/80]⎯
+
+ FAIL  |node| src/lib/__tests__/mealActiveSingleSource.test.ts > HOME-MEALS-01 — one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist
+AssertionError: hand-written soft-delete rule — call isActiveMealDoc / activeMealDocs from @/lib/mealTotals instead. If this site genuinely asks a different question (e.g. the restore archive), add it to ALLOWED_RAW_RULE with the reason:
+src\hooks\useMeals.ts
+src\lib\mealTotals.ts: expected [ 'src\hooks\useMeals.ts', …(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\hooks\\useMeals.ts",
++   "src\\lib\\mealTotals.ts",
++ ]
+
+ ❯ src/lib/__tests__/mealActiveSingleSource.test.ts:93:7
+     91|         "ALLOWED_RAW_RULE with the reason:\n" +
+     92|         offenders.join("\n")
+     93|     ).toEqual([]);
+       |       ^
+     94|   });
+     95|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/80]⎯
+
+ FAIL  |node| src/lib/__tests__/perfDocMirrorGuard.test.ts > the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand
+AssertionError: These read a performance-doc mirror that NO writer emits, so they resolve to undefined forever. Use resolveLoadBand() / resolveDeloadRecommended() from @/lib/performanceDocFields — both are total, and the band derivation reproduces the stored value exactly (computeLoadBand is the same pure function the writers used).
+src\lib\performanceDocFields.ts:93  if (typeof doc?.flags?.deloadRecommended === "boolean") {
+src\lib\performanceDocFields.ts:94  return doc.flags.deloadRecommended;
+src\lib\performanceDocFields.ts:116  asBand(doc?.labels?.loadBand) ??: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\performanceDocFields.ts:93  if (typeof doc?.flags?.deloadRecommended === \"boolean\") {",
++   "src\\lib\\performanceDocFields.ts:94  return doc.flags.deloadRecommended;",
++   "src\\lib\\performanceDocFields.ts:116  asBand(doc?.labels?.loadBand) ??",
++ ]
+
+ ❯ src/lib/__tests__/perfDocMirrorGuard.test.ts:115:7
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/80]⎯
+
+ FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ
+Error: Command failed: C:\Users\myles\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe --import tsx --input-type=module --eval 
+      import { weekKeyMinusN } from "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\lib\\performanceEngine.ts";
+      import { localWeekKey } from "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\lib\\dateHelpers.ts";
+      const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30
+      process.stdout.write(JSON.stringify({
+        weekKey: localWeekKey(d),
+        minus1: weekKeyMinusN(localWeekKey(d), 1),
+      }));
+    
+node:internal/modules/esm/load:193
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)
+    at defaultLoadSync (node:internal/modules/esm/load:146:3)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at loadWithHooks (node:internal/modules/customization_hooks:374:18)
+    at #loadSync (node:internal/modules/esm/loader:825:16)
+    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v24.19.0
+
+ ❯ load node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714
+ ❯ src/lib/__tests__/performanceEngine.test.ts:97:17
+     95|       }));
+     96|     `;
+     97|     const out = execFileSync(
+       |                 ^
+     98|       process.execPath,
+     99|       ["--import", "tsx", "--input-type=module", "--eval", script],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/80]⎯
+
+ FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the app imports only the two non-scoring helpers
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "src/hooks/useWeeklyReview.ts": [
++   "src\\hooks\\useWeeklyReview.ts": [
+      "weekKeyMinusN",
+    ],
+-   "src/lib/performanceDocFields.ts": [
++   "src\\lib\\performanceDocFields.ts": [
+      "computeLoadBand",
+    ],
+  }
+
+ ❯ src/lib/__tests__/performanceEngineConsumers.test.ts:92:56
+     90|        a new scoring import under a name nobody thought to ban would p…
+     91|        negative form. */
+     92|     expect(Object.fromEntries(importsAcross(["src"]))).toEqual({
+       |                                                        ^
+     93|       "src/hooks/useWeeklyReview.ts": ["weekKeyMinusN"],
+     94|       "src/lib/performanceDocFields.ts": ["computeLoadBand"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/80]⎯
+
+ FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "scripts/seed-rich-user.ts": [
++   "scripts\\seed-rich-user.ts": [
+      "computePerformanceIndex",
+    ],
+-   "scripts/seed-season-athlete.ts": [
++   "scripts\\seed-season-athlete.ts": [
+      "computePerformanceIndex",
+    ],
+  }
+
+ ❯ src/lib/__tests__/performanceEngineConsumers.test.ts:131:60
+    129|        go empty — and the reasoning in performanceEngineParity's header
+    130|        needs rewriting, not just this line. */
+    131|     expect(Object.fromEntries(importsAcross(["scripts"]))).toEqual({
+       |                                                            ^
+    132|       "scripts/seed-rich-user.ts": ["computePerformanceIndex"],
+    133|       "scripts/seed-season-athlete.ts": ["computePerformanceIndex"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/80]⎯
+
+ FAIL  |node| src/lib/__tests__/rechartsMockCompleteness.test.ts > a wholesale recharts mock exports what its component imports > is looking at something
+AssertionError: expected [ …(6) ] to include 'src/components/analytics/__tests__/pi…'
+ ❯ src/lib/__tests__/rechartsMockCompleteness.test.ts:184:38
+    182|        stop one level down. */
+    183|     expect(found.length).toBeGreaterThanOrEqual(5);
+    184|     expect(found.map((c) => c.test)).toContain(
+       |                                      ^
+    185|       "src/components/analytics/__tests__/piAxisRoom.test.tsx"
+    186|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/80]⎯
+
+ FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved runs have one reader > no src file outside the allow-list queries the collection
+AssertionError: Read saved runs through src/lib/savedRuns.ts (fetchSavedRuns, SAVED_RUNS) or useSavedRuns. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced.
+  src\lib\runCompletion.ts:277
+  src\lib\savedRuns.ts:282: expected [ Array(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\runCompletion.ts:277",
++   "src\\lib\\savedRuns.ts:282",
++ ]
+
+ ❯ src/lib/__tests__/savedSessionsReaderGuard.test.ts:100:9
+     98|           `started (Lift3) and includes sessions saved on this phone t…
+     99|           `have not synced.\n  ${offenders.join("\n  ")}`
+    100|       ).toEqual([]);
+       |         ^
+    101|     });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/80]⎯
+
+ FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved workouts have one reader > no src file outside the allow-list queries the collection
+AssertionError: Read saved workouts through src/lib/savedWorkouts.ts (fetchSavedWorkouts, SAVED_WORKOUTS) or useSavedSessions. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced.
+  src\lib\savedWorkouts.ts:235: expected [ 'src\lib\savedWorkouts.ts:235' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src\\lib\\savedWorkouts.ts:235",
++ ]
+
+ ❯ src/lib/__tests__/savedSessionsReaderGuard.test.ts:100:9
+     98|           `started (Lift3) and includes sessions saved on this phone t…
+     99|           `have not synced.\n  ${offenders.join("\n  ")}`
+    100|       ).toEqual([]);
+       |         ^
+    101|     });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/80]⎯
+
+ FAIL  |node| src/lib/__tests__/settingsSectionCoverage.test.ts > settings section analytics coverage > no SETTINGS surface emits a section the union does not declare
+AssertionError: expected 0 to be greater than 0
+ ❯ src/lib/__tests__/settingsSectionCoverage.test.ts:128:28
+    126|     // Guard the guard: a directory filter that matched nothing would …
+    127|     // this pass while checking nothing at all.
+    128|     expect(emitted.length).toBeGreaterThan(0);
+       |                            ^
+    129|     expect(emitted.filter((e) => !MEMBERS.includes(e))).toEqual([]);
+    130|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/80]⎯
+
+ FAIL  |node| src/lib/__tests__/stylesUsage.test.ts > src/styles class usage > scans a plausible number of declarations (guards a broken scan)
+AssertionError: expected 'src\styles\animations.css' to match /^src\/styles\//styles\
+
+- Expected:
+/^src\/styles\//
+
++ Received:
+"src\\styles\\animations.css"
+
+ ❯ src/lib/__tests__/stylesUsage.test.ts:124:47
+    122|     // to catch a collapsed scan (a bad root or extension reads as zer…
+    123|     expect(declared?.length ?? 0).toBeGreaterThan(20);
+    124|     expect(relative(repoRoot, styleFiles[0])).toMatch(/^src\/styles\//…
+       |                                               ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/80]⎯
+
+ FAIL  |node| src/lib/__tests__/symbolReachability.test.ts > symbol-level reachability > the pinned list stays honest — no entry that is now reachable
+AssertionError: These are pinned as orphans but are now reachable (or gone). Remove them from KNOWN_ORPHAN_EXPORTS — the list is delete-only.: expected [ …(19) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "src/lib/offlineQueue.ts:safeSave",
++   "src/features/program/volumeModel.ts:weeklyVolumeByFineMuscle",
++   "src/lib/shareCard/instagramShare.ts:setNativeInstagramProvider",
++   "src/lib/backDismiss.ts:useBackDismissController",
++   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
++   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
++   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
++   "src/features/program/run9Migration.ts:migrateRunStateToRun9",
++   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
++   "src/lib/aiFoodIdentification.ts:isEmptyAiFoodResult",
++   "src/lib/analyticsProvider.ts:isAnalyticsActive",
++   "src/lib/dataConfidence.ts:makeSuppressionBatch",
++   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
++   "src/lib/foodTrajectory.ts:computeTrajectory",
++   "src/lib/hrZones.ts:zoneDistribution",
++   "src/lib/performanceInsights.ts:buildPerformanceInsight",
++   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
++   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
++   "src/lib/shareCard/statToggles.ts:isStatVisible",
++ ]
+
+ ❯ src/lib/__tests__/symbolReachability.test.ts:307:7
+    305|       `These are pinned as orphans but are now reachable (or gone). Re…
+    306|         `them from KNOWN_ORPHAN_EXPORTS — the list is delete-only.`
+    307|     ).toEqual([]);
+       |       ^
+    308|   });
+    309| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/80]⎯
+
+ FAIL  |node| src/lib/__tests__/transitionalExpiry.test.ts > deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/
+AssertionError: These files mark code as TRANSITIONAL but name no condition anything checks. Add a DEFERRED row in this file saying what removes the branch and when — or, if the code is not actually transitional, say what it is instead of marking it for a removal nobody will make.: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "functions\\lib\\goalSpaceCheckIn.js",
++   "functions\\lib\\runReschedule.js",
++ ]
+
+ ❯ src/lib/__tests__/transitionalExpiry.test.ts:152:7
+    150|         "branch and when — or, if the code is not actually transitiona…
+    151|         "what it is instead of marking it for a removal nobody will ma…
+    152|     ).toEqual([]);
+       |       ^
+    153|   });
+    154| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/80]⎯
+
+ FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > scans both sides of the mirror, and a non-trivial number of files
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/__tests__/weekAnchorProse.test.ts:77:58
+     75|     // Anti-vacuity: a broken walk would report zero offenders forever.
+     76|     expect(files.length).toBeGreaterThan(200);
+     77|     expect(files.some((f) => f.includes("/functions/"))).toBe(true);
+       |                                                          ^
+     78|     expect(files.some((f) => f.endsWith("programTypes.ts"))).toBe(true…
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/80]⎯
+
+ FAIL  |node| src/lib/__tests__/workoutBurn.test.ts > one run-burn formula > 1.036 appears exactly once in production src/
+AssertionError: The run-burn coefficient must have ONE home (workoutBurn.ts). Call estimateRunBurn — or estimateRunCalories for a distance in metres — rather than repeating it. Sites found:
+  src\lib\workoutBurn.ts:81: expected [ 'src\lib\workoutBurn.ts' ] to deeply equal [ 'src/lib/workoutBurn.ts' ]
+
+- Expected
++ Received
+
+  [
+-   "src/lib/workoutBurn.ts",
++   "src\\lib\\workoutBurn.ts",
+  ]
+
+ ❯ src/lib/__tests__/workoutBurn.test.ts:178:7
+    176|         `estimateRunBurn — or estimateRunCalories for a distance in me…
+    177|         `rather than repeating it. Sites found:\n  ${sites.join("\n  "…
+    178|     ).toEqual(["src/lib/workoutBurn.ts"]);
+       |       ^
+    179|   });
+    180| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/80]⎯
+
+ FAIL  |node| src/lib/__tests__/writeOnlyProfileFields.test.ts > write-only profile fields > scans enough source to mean something
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/__tests__/writeOnlyProfileFields.test.ts:92:65
+     90|     // exactly like success.
+     91|     expect(SOURCES.length).toBeGreaterThan(300);
+     92|     expect(SOURCES.some((s) => s.rel.startsWith("functions/"))).toBe(t…
+       |                                                                 ^
+     93|   });
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/80]⎯
+
+
+ Test Files  50 failed | 1119 passed | 10 skipped (1179)
+      Tests  75 failed | 13152 passed | 409 skipped (13636)
+   Start at  13:50:22
+   Duration  455.39s (environment 41%, import 28%, tests 19%, setup 9%, transform 2%, worker 1%)
+

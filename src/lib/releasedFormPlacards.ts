@@ -17,6 +17,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "face-pulls": placard(
+    "face-pulls",
+    ["Rear Delts"],
+    ["Rhomboids", "Traps", "Rotator Cuff"],
+    [
+      [0, "Reach", "Extend arms toward pulley, palms down."],
+      [0, "Brace", "Stay steady; set your shoulder blades."],
+      [1, "Rotate", "Pull toward face, separating grips past ears."],
+      [1, "Squeeze", "Keep elbows high and knuckles up."],
+      [0, "Return", "Return slowly with your elbows high."],
+      [0, "Reset", "Straighten arms; keep cable tension."],
+    ],
+    [
+      "Set a rope at or slightly above face height and grip the ends with palms down.",
+      "Step back for tension, arms extended straight toward the pulley.",
+    ]
+  ),
   "t-bar-row": placard(
     "t-bar-row",
     ["Mid Back"],

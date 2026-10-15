@@ -1,0 +1,170 @@
+{
+  "status": "exact-candidate-payload-filename-map-not-acceptance",
+  "rows": [
+    {
+      "originalPath": "1-framed.ora",
+      "archivePath": "draft/1-framed.ora",
+      "sha256": "5e6b2c8de98f18fdf0d5dfdcaaed6e9577db670fbc35f76ebcdf571e54ba587f"
+    },
+    {
+      "originalPath": "1-framed.png",
+      "archivePath": "draft/1-framed.png",
+      "sha256": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03"
+    },
+    {
+      "originalPath": "1-full.ora",
+      "archivePath": "draft/1-full.ora",
+      "sha256": "b6a565630b6d769bdf5419bc4c418f315fef9253a859262e9f46acfb9f4b57bc"
+    },
+    {
+      "originalPath": "1-full.png",
+      "archivePath": "draft/1-full.png",
+      "sha256": "a7cbf546022f02d72e09224c73ce3a1d759157911f01f27e70b6de6c14b6a196"
+    },
+    {
+      "originalPath": "4-framed.ora",
+      "archivePath": "draft/4-framed.ora",
+      "sha256": "c1fc69ccffee7eaa1e66e0638d50536762ea2d54dd8bb1742bc71a674b295b6e"
+    },
+    {
+      "originalPath": "4-framed.png",
+      "archivePath": "draft/4-framed.png",
+      "sha256": "3bcead266a6ea14aa625bf67630d1604996a55d4e0635765401d89751a69f137"
+    },
+    {
+      "originalPath": "4-full.ora",
+      "archivePath": "draft/4-full.ora",
+      "sha256": "68140df2754fd2f838c199c948cb397679c0bdebb780f5452934f877bda1922f"
+    },
+    {
+      "originalPath": "4-full.png",
+      "archivePath": "draft/4-full.png",
+      "sha256": "3f740d474423b1ed24855ee766d1b9d8bbba674244e2894b47be387bdeea381e"
+    },
+    {
+      "originalPath": "card-light-dark-480-and160-review.png",
+      "archivePath": "draft/card-light-dark-480-and160-review.png",
+      "sha256": "d5b2dbfd54d2efb6b1b71284aa1bd3720359e0bc48de07498e1e5747a4238249"
+    },
+    {
+      "originalPath": "card-preview-proof.json",
+      "archivePath": "draft/card-preview-proof.json.txt",
+      "sha256": "fe8b3641b6041065c6cc4d7c2f00534456a4015e529936d5b17f39db935fc55b"
+    },
+    {
+      "originalPath": "card.webp",
+      "archivePath": "draft/card.webp",
+      "sha256": "77675e58c4c89ce7f0f69084eab2668f00cbf1790e1a98ade9a65b8a32d0eb04"
+    },
+    {
+      "originalPath": "composition-plan.json",
+      "archivePath": "draft/composition-plan.json.txt",
+      "sha256": "a6a2c283c6178f034bf0053d7e46123ea7c8878b68d7127ea3731e1af8e64253"
+    },
+    {
+      "originalPath": "composition-proof.json",
+      "archivePath": "draft/composition-proof.json.txt",
+      "sha256": "5140713c3b3f0fcbb09f3c2a0952f68aa2ac5c8622e76259c4bacc85032e17bd"
+    },
+    {
+      "originalPath": "reproduce.py",
+      "archivePath": "draft/reproduce.py",
+      "sha256": "67056c02f4cdc02bbbd2050618f08485dc7c02e232ccc7369477926bb196c970"
+    },
+    {
+      "originalPath": "card-preview/production-core-pin.json",
+      "archivePath": "draft/card-preview/production-core-pin.json.txt",
+      "sha256": "989f0eca16dc2b9bfc550ccfe86f720ef6c9671503f7e5f175695ea3fcf12514"
+    },
+    {
+      "originalPath": "card-preview/standard-card-preview.mts",
+      "archivePath": "draft/card-preview/standard-card-preview.mts.txt",
+      "sha256": "c13e079968f4ebc91f0ec599fc367dd6b5b4fa1020c005dc8b051e404597ef46"
+    },
+    {
+      "originalPath": "frames/1.webp",
+      "archivePath": "draft/frames/1.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+    },
+    {
+      "originalPath": "frames/2.webp",
+      "archivePath": "draft/frames/2.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+    },
+    {
+      "originalPath": "frames/3.webp",
+      "archivePath": "draft/frames/3.webp",
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65"
+    },
+    {
+      "originalPath": "frames/4.webp",
+      "archivePath": "draft/frames/4.webp",
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65"
+    },
+    {
+      "originalPath": "frames/5.webp",
+      "archivePath": "draft/frames/5.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+    },
+    {
+      "originalPath": "frames/6.webp",
+      "archivePath": "draft/frames/6.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+    },
+    {
+      "originalPath": "layers/1-colour.png",
+      "archivePath": "draft/layers/1-colour.png",
+      "sha256": "357dc3d003d7553e0feaafc7a0a5073d0a519b5352bd93353744b768abd6037e"
+    },
+    {
+      "originalPath": "layers/1-gear.png",
+      "archivePath": "draft/layers/1-gear.png",
+      "sha256": "ff3e23beecbbac7e9d2093fc881cae70b57db7e428623585fa697d89b4beabef"
+    },
+    {
+      "originalPath": "layers/4-colour.png",
+      "archivePath": "draft/layers/4-colour.png",
+      "sha256": "7a3ba87b6fbc4fad1b9c9354cb970ec0cd3a935be851a1ba7ff53b163348666e"
+    },
+    {
+      "originalPath": "layers/4-gear.png",
+      "archivePath": "draft/layers/4-gear.png",
+      "sha256": "bb0590673f7f806106f2aa101fc30edab8ae21885d44fd91437022e3e127120e"
+    },
+    {
+      "originalPath": "originals/1-master.png",
+      "archivePath": "draft/originals/1-master.png",
+      "sha256": "30c17a6d7c4416cb908d6f87ac5fb754bb45cb86116844a953893b761f48f8aa"
+    },
+    {
+      "originalPath": "originals/4-rope-rejected.png",
+      "archivePath": "draft/originals/4-rope-rejected.png",
+      "sha256": "eb07393aa9a70788874b70bfc48cdab5de143798082cc300d627fd3aeea7c628"
+    },
+    {
+      "originalPath": "provenance/colour-pixel-proof.json",
+      "archivePath": "draft/provenance/colour-pixel-proof.json.txt",
+      "sha256": "2276494e672c11b772634a0ee3d8449482d918bb2e69cc0bef48b65ea00987dd"
+    },
+    {
+      "originalPath": "provenance/colour-recipe.json",
+      "archivePath": "draft/provenance/colour-recipe.json.txt",
+      "sha256": "c57da00dfca26c291a0df847744a542bc3c0b3ff999eb6b338513cd12814bfe0"
+    },
+    {
+      "originalPath": "provenance/equipment-material-proof.json",
+      "archivePath": "draft/provenance/equipment-material-proof.json.txt",
+      "sha256": "a98bcf0579294ea7efadbdc53a5e3ed1198c1acc424d77fc0bc1c9465beeb4a3"
+    },
+    {
+      "originalPath": "provenance/historical-service-hold.md",
+      "archivePath": "draft/provenance/historical-service-hold.md",
+      "sha256": "49bcaed71c1731fed6377878c21883f8a418fecd69282a6768a2f42141b2e9af"
+    },
+    {
+      "originalPath": "asset-hashes.json",
+      "archivePath": "draft/asset-hashes.json.txt",
+      "sha256": "7a3f84cf899e3256ca4027827e80e7bfabc225b7a8bab8c34b0e9d671c48e5f9"
+    }
+  ]
+}

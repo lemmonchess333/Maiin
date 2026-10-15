@@ -1,0 +1,96 @@
+
+> tropos@1.2.0 test
+> node scripts/run-unit-tests.mjs run src/components/__tests__/WorkoutSessionCompletion.test.tsx src/pages/__tests__/Home.firstVisitGuide.test.tsx src/features/program/__tests__/useProgramWriters.test.ts src/lib/__tests__/performanceEngineConsumers.test.ts src/lib/__tests__/weekAnchorProse.test.ts src/lib/__tests__/bodyRig.test.ts src/lib/__tests__/formArtOwnerRelease.test.ts src/lib/__tests__/formArtwork.test.ts src/lib/__tests__/formArtCutouts.test.ts scripts/art/form-art-releases.test.ts
+
+
+ RUN  v5.0.4 C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees
+
+ ❯ |node| src/lib/__tests__/weekAnchorProse.test.ts (2 tests | 1 failed) 624ms
+   ❯ week-anchor prose (2)
+     × scans both sides of the mirror, and a non-trivial number of files 14ms
+ ❯ |node| src/lib/__tests__/performanceEngineConsumers.test.ts (4 tests | 2 failed) 1237ms
+   ❯ client PI engine — production consumers (4)
+     × the app imports only the two non-scoring helpers 1059ms
+     × the seeds are the only non-test callers of the scoring pipeline 60ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the app imports only the two non-scoring helpers
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "src/hooks/useWeeklyReview.ts": [
++   "src\\hooks\\useWeeklyReview.ts": [
+      "weekKeyMinusN",
+    ],
+-   "src/lib/performanceDocFields.ts": [
++   "src\\lib\\performanceDocFields.ts": [
+      "computeLoadBand",
+    ],
+  }
+
+ ❯ src/lib/__tests__/performanceEngineConsumers.test.ts:92:56
+     90|        a new scoring import under a name nobody thought to ban would p…
+     91|        negative form. */
+     92|     expect(Object.fromEntries(importsAcross(["src"]))).toEqual({
+       |                                                        ^
+     93|       "src/hooks/useWeeklyReview.ts": ["weekKeyMinusN"],
+     94|       "src/lib/performanceDocFields.ts": ["computeLoadBand"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "scripts/seed-rich-user.ts": [
++   "scripts\\seed-rich-user.ts": [
+      "computePerformanceIndex",
+    ],
+-   "scripts/seed-season-athlete.ts": [
++   "scripts\\seed-season-athlete.ts": [
+      "computePerformanceIndex",
+    ],
+  }
+
+ ❯ src/lib/__tests__/performanceEngineConsumers.test.ts:131:60
+    129|        go empty — and the reasoning in performanceEngineParity's header
+    130|        needs rewriting, not just this line. */
+    131|     expect(Object.fromEntries(importsAcross(["scripts"]))).toEqual({
+       |                                                            ^
+    132|       "scripts/seed-rich-user.ts": ["computePerformanceIndex"],
+    133|       "scripts/seed-season-athlete.ts": ["computePerformanceIndex"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > scans both sides of the mirror, and a non-trivial number of files
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/lib/__tests__/weekAnchorProse.test.ts:77:58
+     75|     // Anti-vacuity: a broken walk would report zero offenders forever.
+     76|     expect(files.length).toBeGreaterThan(200);
+     77|     expect(files.some((f) => f.includes("/functions/"))).toBe(true);
+       |                                                          ^
+     78|     expect(files.some((f) => f.endsWith("programTypes.ts"))).toBe(true…
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 8 passed (10)
+      Tests  3 failed | 542 passed (545)
+   Start at  14:24:36
+   Duration  25.19s (tests 55%, environment 17%, import 14%, setup 11%, transform 3%)
+

@@ -1,0 +1,67 @@
+"""Apply the exact parent-requested six-cue readability correction only."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+CHECKS = Path(__file__).resolve().parent
+WORK = CHECKS.parents[1]
+REPO = WORK/'Maiin-burpees'
+F = WORK/'face-pulls/ergonomic-rope-production-20261015'
+PROOFS = CHECKS/'face-pulls-cue-correction'
+PROOFS.mkdir(exist_ok=False)
+NODE = 'C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe'
+TS = REPO/'src/lib/releasedFormPlacards.ts'
+PLAN = F/'sequence-plan.json'
+RELEASE = REPO/'docs/exercise-art/releases/2026-10-15/face-pulls.json'
+OLD = [
+    'Begin with arms extended straight toward the pulley, palms down.',
+    'Keep your stance steady and your shoulder blades set.',
+    'Pull toward your face, separating the grips past your ears.',
+    'Hold the finish with elbows high and knuckles up.',
+    'Return slowly, keeping your elbows high.',
+    'Finish with arms extended and keep cable tension.',
+]
+NEW = [
+    'Extend arms toward pulley, palms down.',
+    'Stay steady; set your shoulder blades.',
+    'Pull toward face, separating grips past ears.',
+    'Keep elbows high and knuckles up.',
+    'Return slowly with your elbows high.',
+    'Straighten arms; keep cable tension.',
+]
+def h(data): return hashlib.sha256(data).hexdigest()
+files = {'releasedFormPlacards-before.ts.txt': TS, 'sequence-plan-before.json': PLAN, 'release-before.json': RELEASE}
+before = {name: path.read_bytes() for name, path in files.items()}
+for name, data in before.items():
+    (PROOFS/name).write_bytes(data)
+text = before['releasedFormPlacards-before.ts.txt'].decode('utf-8')
+plan = json.loads(before['sequence-plan-before.json'])
+release = json.loads(before['release-before.json'])
+assert [row['cue'] for row in plan['beats']] == OLD
+assert all(len(cue.split()) <= 7 for cue in NEW)
+for old, new in zip(OLD, NEW):
+    assert text.count(json.dumps(old)) == 1
+    text = text.replace(json.dumps(old), json.dumps(new))
+for row, cue in zip(plan['beats'], NEW):
+    row['cue'] = cue
+TS.write_bytes(text.encode('utf-8'))
+PLAN.write_text(json.dumps(plan, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+code = "import {RELEASED_FORM_PLACARDS as p} from './src/lib/releasedFormPlacards.ts';process.stdout.write(JSON.stringify(p['face-pulls']));"
+export = json.loads(subprocess.check_output([NODE,'--import','tsx','--input-type=module','-e',code],cwd=REPO))
+assert [row['cue'] for row in export['beats']] == NEW
+assert [row['label'] for row in export['beats']] == ['Reach','Brace','Rotate','Squeeze','Return','Reset']
+assert [row['t'] for row in export['beats']] == [0,0,1,1,0,0]
+cue = json.dumps([{'label':row['label'],'cue':row['cue']} for row in export['beats']],separators=(',',':'),ensure_ascii=False).encode('utf-8')
+old_cue_sha = release['cueSha256']
+release['cueSha256'] = h(cue)
+RELEASE.write_text(json.dumps(release, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+report = {'status':'applied-exact-parent-requested-cue-only-change-format-pending',
+          'beforeProofHashes':{name:h(data) for name,data in before.items()},
+          'oldCueSha256':old_cue_sha,'newCueSha256':h(cue),
+          'newCues':[{'label':row['label'],'cue':row['cue'],'words':len(row['cue'].split())} for row in export['beats']],
+          'sequencePlanSha256':h(PLAN.read_bytes()),'labelsPositionsSetupMusclesImagesUnchanged':True,
+          'releaseChange':'cueSha256 scalar only; observations/checks/status untouched',
+          'testsRun':False,'imageChanges':False}
+(PROOFS/'applied-before-format.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+print(json.dumps(report))

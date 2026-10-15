@@ -1,0 +1,532 @@
+
+> tropos@1.2.0 verify
+> npm run lint && npm run check:form-art && npm run check:form-drafts && npm run check:cycles && npm run build && npm run check:dist-size && npm run test
+
+
+> tropos@1.2.0 lint
+> eslint . --max-warnings 0
+
+
+> tropos@1.2.0 check:form-art
+> node --import tsx scripts/audit-form-art.ts
+
+{
+  "catalogue": 152,
+  "inScope": 141,
+  "existingSets": 6,
+  "newlyApproved": 122,
+  "ownerReleasedWithFindings": 6,
+  "releasedBytes": 354441624,
+  "errors": []
+}
+
+> tropos@1.2.0 check:form-drafts
+> node --import tsx scripts/audit-form-drafts.ts
+
+{
+  "draftSets": 29,
+  "selectedFrames": 174,
+  "uniquePoses": 103,
+  "nativeBytes": 172295976,
+  "releaseApproved": false,
+  "errors": []
+}
+
+> tropos@1.2.0 check:cycles
+> madge --circular --extensions ts,tsx --ts-config tsconfig.app.json src
+
+- Finding files
+Processed 2167 files (19.9s) (8 warnings)
+
+√ No circular dependency found!
+
+
+> tropos@1.2.0 build
+> tsc -b && vite build && node scripts/stamp-sw.mjs
+
+vite v7.3.6 building client environment for production...
+<script src="/Maiin/init.js"> in "/index.html" can't be bundled without type="module" attribute
+transforming...
+✓ 4510 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/core/dist/index.js is dynamically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/hooks/useEmailVerificationGate.ts but also statically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/analytics/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/analytics/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/app-check/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/app-check/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/authentication/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor-firebase/authentication/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/app/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/app/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/filesystem/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/filesystem/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/haptics/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/haptics/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/local-notifications/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/local-notifications/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/status-bar/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@capacitor/text-zoom/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@revenuecat/purchases-capacitor/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/@revenuecat/purchases-capacitor/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-health/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-live-activities/dist/esm/index.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/capacitor-live-activities/dist/esm/web.js, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/nativeLocationSettings.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/nativeLocationSource.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/notifications.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/platform.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/purchaseProvider.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/reauth.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/revenuecat.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/pushNotifications.ts is dynamically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/App.tsx but also statically imported by C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/components/settings/AccountSection.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/components/settings/NotificationsSection.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/hooks/usePushTokenRefresh.ts, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/lib/auth.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/pages/SettingsIndex.tsx, C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/src/pages/settings/SettingsNotifications.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/assets/plus-jakarta-sans-cyrillic-ext-wght-normal-lLTsRRxN.woff2    1.72 kB
+dist/assets/plus-jakarta-sans-vietnamese-wght-normal-qRpaaN48.woff2      8.35 kB
+dist/index.html                                                          9.58 kB │ gzip:   3.63 kB
+dist/assets/archivo-vietnamese-wght-normal-XAtsl5Q_.woff2               13.24 kB
+dist/assets/plus-jakarta-sans-latin-ext-wght-normal-DmpS2jIq.woff2      21.73 kB
+dist/assets/space-womens-running-BNTkuui5.webp                          22.86 kB
+dist/assets/plus-jakarta-sans-latin-wght-normal-eXO_dkmS.woff2          27.35 kB
+dist/assets/archivo-latin-ext-wght-normal-C4zznr8T.woff2                32.61 kB
+dist/assets/archivo-latin-wght-normal-E0tuGl4L.woff2                    34.93 kB
+dist/assets/space-runners-CrNtPy8j.webp                                 36.39 kB
+dist/assets/space-brighton-marathon-Cl88645s.webp                       48.91 kB
+dist/assets/space-supernova-forth-5k-H8rUYryS.webp                      57.71 kB
+dist/assets/space-new-to-tropos-CwVD7HAC.webp                           64.08 kB
+dist/assets/space-great-birmingham-run-cj45njRA.webp                    77.68 kB
+dist/assets/space-cardiff-half-BQxTdImT.webp                            82.70 kB
+dist/assets/challenge-hybrid-C6vDtJYf.webp                              85.08 kB
+dist/assets/space-seville-marathon-DPti4-VY.webp                        85.71 kB
+dist/assets/rigatoni-B43J6MH8.webp                                      89.64 kB
+dist/assets/space-travel-racecations-BHIYUQBX.webp                      91.70 kB
+dist/assets/space-leeds-10k-oAZv9VNW.webp                               93.56 kB
+dist/assets/space-oxford-half-Cnvb_CN2.webp                             93.69 kB
+dist/assets/space-bournemouth-5k-CwlLVg1m.webp                         103.62 kB
+dist/assets/space-dublin-marathon-CtJZCvgm.webp                        103.68 kB
+dist/assets/challenge-run-DvZYWRgV.webp                                103.87 kB
+dist/assets/space-tokyo-marathon-BZFCeBPX.webp                         104.86 kB
+dist/assets/space-valencia-half-BQYzNUhd.webp                          106.04 kB
+dist/assets/space-lifters-BKKolXD9.webp                                106.75 kB
+dist/assets/space-sheffield-half-BE1yhXHy.webp                         107.85 kB
+dist/assets/space-chicago-marathon-BjSXh8kk.webp                       108.10 kB
+dist/assets/space-houston-marathon-DtwTB7LC.webp                       108.81 kB
+dist/assets/space-race-to-the-stones-100k-BspNv8lY.webp                108.89 kB
+dist/assets/space-leeds-marathon-CPQ509zh.webp                         109.01 kB
+dist/assets/space-milton-keynes-marathon-DtpWEZnk.webp                 110.17 kB
+dist/assets/space-york-10k-Bia718ZA.webp                               111.17 kB
+dist/assets/space-sydney-marathon-B2akOY_r.webp                        111.31 kB
+dist/assets/space-lincoln-10k-2fyEHAPo.webp                            111.36 kB
+dist/assets/space-paris-marathon-BDGaNQg2.webp                         111.49 kB
+dist/assets/space-bath-half-BlC8LPHE.webp                              113.99 kB
+dist/assets/space-southampton-marathon-C-zBsuNP.webp                   114.24 kB
+dist/assets/space-edinburgh-5k-CGoNWd8S.webp                           114.28 kB
+dist/assets/space-great-manchester-run-BQ_SAMLu.webp                   114.62 kB
+dist/assets/space-brighton-half-B9wDxj4y.webp                          115.07 kB
+dist/assets/space-newport-marathon-C6LHkd2m.webp                       115.08 kB
+dist/assets/space-cambridge-half-BYKW-CnV.webp                         115.62 kB
+dist/assets/space-barcelona-marathon-B4HihaAd.webp                     116.08 kB
+dist/assets/space-triathlon-multisport-CWBug572.webp                   116.23 kB
+dist/assets/space-supernova-kelpies-5k-vjpF_raq.webp                   116.29 kB
+dist/assets/space-great-bristol-10k-B2VsiBe_.webp                      117.17 kB
+dist/assets/space-loch-ness-marathon-ZEruPUU1.webp                     117.25 kB
+dist/assets/space-copenhagen-marathon-lbkN0ECL.webp                    117.26 kB
+dist/assets/space-chiltern-50-BCdJsGsn.webp                            117.32 kB
+dist/assets/space-belfast-marathon-DGWf3m1j.webp                       117.49 kB
+dist/assets/space-chester-marathon-B0SE9pGX.webp                       117.76 kB
+dist/assets/space-river-ness-5k-D7o5r7NS.webp                          118.50 kB
+dist/assets/space-amsterdam-marathon-IWuAZSSf.webp                     118.55 kB
+dist/assets/space-new-york-city-marathon-4qp-8uni.webp                 118.63 kB
+dist/assets/space-manchester-marathon-C5GgVvIw.webp                    118.94 kB
+dist/assets/space-rotterdam-marathon-C7wY-pjk.webp                     119.04 kB
+dist/assets/space-boston-marathon-CwMcALzV.webp                        119.45 kB
+dist/assets/space-race-to-the-king-100k-Bjmx8hti.webp                  119.53 kB
+dist/assets/space-berlin-marathon-CMhIM9cK.webp                        119.83 kB
+dist/assets/space-edinburgh-marathon-xjzEGnA2.webp                     142.29 kB
+dist/assets/space-london-10000-BsnREMRE.webp                           152.43 kB
+dist/assets/space-london-marathon-BgIsVMge.webp                        155.97 kB
+dist/assets/space-the-big-half-C0rS53OJ.webp                           166.76 kB
+dist/assets/space-great-north-run-Dm97jwbT.webp                        169.45 kB
+dist/assets/space-trail-running-DniSacg4.webp                          172.49 kB
+dist/assets/space-royal-parks-half-Cfr6cLUX.webp                       250.32 kB
+dist/assets/maplibre-gl-worker-B8OLt8TZ.js                             468.84 kB
+dist/assets/basemap-C_vZZIuC.css                                         1.64 kB │ gzip:   0.50 kB
+dist/assets/maplibre-JR8eJ17e.css                                       83.02 kB │ gzip:  10.52 kB
+dist/assets/index-CrVxTQUm.css                                         141.62 kB │ gzip:  23.06 kB
+dist/assets/activityPost-CrytWlMR.js                                     0.03 kB │ gzip:   0.05 kB
+dist/assets/resolveProgramGoalMirror-Cnn4Z2Xl.js                         0.06 kB │ gzip:   0.08 kB
+dist/assets/socialAnalytics-DQRpX9hh.js                                  0.09 kB │ gzip:   0.11 kB
+dist/assets/paywallAnalytics-BlkrmK6B.js                                 0.09 kB │ gzip:   0.11 kB
+dist/assets/minus-BDQQcVLE.js                                            0.12 kB │ gzip:   0.13 kB
+dist/assets/sessionSetPolicy-DksYLSYq.js                                 0.12 kB │ gzip:   0.11 kB
+dist/assets/check-CHMkpkOG.js                                            0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-down-Do5vaoln.js                                     0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-up-BCdYa9pC.js                                       0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-right-Cw5pnHbX.js                                    0.13 kB │ gzip:   0.14 kB
+dist/assets/chevron-left-43lUIWq1.js                                     0.13 kB │ gzip:   0.15 kB
+dist/assets/formatNutrition-Bd9iZHFQ.js                                  0.14 kB │ gzip:   0.12 kB
+dist/assets/mountain-B-R5hYGp.js                                         0.14 kB │ gzip:   0.15 kB
+dist/assets/nutritionPhase-B9XwdTGx.js                                   0.14 kB │ gzip:   0.14 kB
+dist/assets/listFormat-DX74318Y.js                                       0.15 kB │ gzip:   0.13 kB
+dist/assets/plus-BuiJNGAi.js                                             0.15 kB │ gzip:   0.15 kB
+dist/assets/x-CIHo6y5s.js                                                0.16 kB │ gzip:   0.15 kB
+dist/assets/arrow-left-CwiExP-x.js                                       0.17 kB │ gzip:   0.16 kB
+dist/assets/useDistanceUnit-DHT1dLXG.js                                  0.17 kB │ gzip:   0.16 kB
+dist/assets/clock-DjaWeJJn.js                                            0.17 kB │ gzip:   0.17 kB
+dist/assets/search-DuAij60M.js                                           0.18 kB │ gzip:   0.17 kB
+dist/assets/trending-up-Cg9-7opZ.js                                      0.18 kB │ gzip:   0.17 kB
+dist/assets/repTarget-CUInAiN8.js                                        0.18 kB │ gzip:   0.18 kB
+dist/assets/circle-check-3a4zUBW5.js                                     0.18 kB │ gzip:   0.17 kB
+dist/assets/trending-down-DHxxfgr-.js                                    0.18 kB │ gzip:   0.17 kB
+dist/assets/ban-rME_jflx.js                                              0.18 kB │ gzip:   0.17 kB
+dist/assets/index-CGlT3WdS.js                                            0.19 kB │ gzip:   0.17 kB
+dist/assets/play-BtSWH-cW.js                                             0.19 kB │ gzip:   0.18 kB
+dist/assets/user-CofOtcSZ.js                                             0.20 kB │ gzip:   0.18 kB
+dist/assets/flame-BvrLkqUu.js                                            0.20 kB │ gzip:   0.18 kB
+dist/assets/rotate-ccw-BmFISdd2.js                                       0.20 kB │ gzip:   0.18 kB
+dist/assets/repUnits-r0H5JM0l.js                                         0.20 kB │ gzip:   0.16 kB
+dist/assets/info-WKoRzs8R.js                                             0.21 kB │ gzip:   0.18 kB
+dist/assets/lock-DE1osXa5.js                                             0.21 kB │ gzip:   0.19 kB
+dist/assets/mail-Bzpb7OtY.js                                             0.21 kB │ gzip:   0.20 kB
+dist/assets/useSavedRuns-gm1a9GTy.js                                     0.22 kB │ gzip:   0.18 kB
+dist/assets/RunTemplateIcon-BHmcHAsN.js                                  0.22 kB │ gzip:   0.19 kB
+dist/assets/target-D2x27cuT.js                                           0.23 kB │ gzip:   0.16 kB
+dist/assets/InlineNumerals-CNh71Q9c.js                                   0.23 kB │ gzip:   0.20 kB
+dist/assets/log-out-B-cpzT79.js                                          0.23 kB │ gzip:   0.19 kB
+dist/assets/download-Csq3QHoP.js                                         0.23 kB │ gzip:   0.19 kB
+dist/assets/timer-Cxjfg-mb.js                                            0.24 kB │ gzip:   0.19 kB
+dist/assets/globe-CwwBxLQc.js                                            0.24 kB │ gzip:   0.19 kB
+dist/assets/circle-alert-BGattJhY.js                                     0.25 kB │ gzip:   0.19 kB
+dist/assets/compass-gaPveIdq.js                                          0.25 kB │ gzip:   0.21 kB
+dist/assets/external-link-Bf-Vp0JU.js                                    0.25 kB │ gzip:   0.20 kB
+dist/assets/flag-TpnIkPhF.js                                             0.26 kB │ gzip:   0.21 kB
+dist/assets/route-BE38Fb6C.js                                            0.26 kB │ gzip:   0.20 kB
+dist/assets/eye-DvBMkYy1.js                                              0.26 kB │ gzip:   0.20 kB
+dist/assets/heart-BvAot9a_.js                                            0.26 kB │ gzip:   0.22 kB
+dist/assets/map-pin-BHNpcWCq.js                                          0.26 kB │ gzip:   0.23 kB
+dist/assets/utensils-D-3FP0iz.js                                         0.26 kB │ gzip:   0.21 kB
+dist/assets/index-D-9G5U5J.js                                            0.26 kB │ gzip:   0.22 kB
+dist/assets/zap-IPY-qqxB.js                                              0.26 kB │ gzip:   0.21 kB
+dist/assets/triangle-alert-B88ZNtY8.js                                   0.27 kB │ gzip:   0.22 kB
+dist/assets/leaf-dtA2AapW.js                                             0.27 kB │ gzip:   0.23 kB
+dist/assets/macroInfeasibility-Fhi8W0NI.js                               0.27 kB │ gzip:   0.23 kB
+dist/assets/shield-DUCD_wr0.js                                           0.27 kB │ gzip:   0.23 kB
+dist/assets/award-DdswNX6p.js                                            0.28 kB │ gzip:   0.23 kB
+dist/assets/pen-line-Do4v_b32.js                                         0.28 kB │ gzip:   0.23 kB
+dist/assets/runDose-z8k_G_9V.js                                          0.29 kB │ gzip:   0.23 kB
+dist/assets/calendar-check-PXKrbInV.js                                   0.31 kB │ gzip:   0.23 kB
+dist/assets/users-BBnu9xKn.js                                            0.31 kB │ gzip:   0.23 kB
+dist/assets/chartStyles-Dg35BsPg.js                                      0.31 kB │ gzip:   0.25 kB
+dist/assets/user-x-m7LOxcKJ.js                                           0.31 kB │ gzip:   0.23 kB
+dist/assets/mealSlots-C3pAD53H.js                                        0.31 kB │ gzip:   0.23 kB
+dist/assets/apple-CpMk-C8R.js                                            0.32 kB │ gzip:   0.23 kB
+dist/assets/BlockAwareAvatar-DsNy90s4.js                                 0.32 kB │ gzip:   0.23 kB
+dist/assets/raceRest-2c3poDio.js                                         0.32 kB │ gzip:   0.26 kB
+dist/assets/mail-warning-CobB0BgI.js                                     0.33 kB │ gzip:   0.24 kB
+dist/assets/activationTracker-B0_gHgnB.js                                0.33 kB │ gzip:   0.27 kB
+dist/assets/trash-2-BpHgPQ7l.js                                          0.33 kB │ gzip:   0.22 kB
+dist/assets/ChartAreaGradient-cpoTTwML.js                                0.33 kB │ gzip:   0.23 kB
+dist/assets/scale-2T0eA9lB.js                                            0.33 kB │ gzip:   0.22 kB
+dist/assets/SectionLabel-DPkvDzWY.js                                     0.33 kB │ gzip:   0.24 kB
+dist/assets/programCommandClient-hvby1tQK.js                             0.33 kB │ gzip:   0.24 kB
+dist/assets/camera-BZ-F8sfH.js                                           0.34 kB │ gzip:   0.25 kB
+dist/assets/shield-alert-DSGI6gfK.js                                     0.35 kB │ gzip:   0.26 kB
+dist/assets/socialPreferenceKeys-1mY5KjXy.js                             0.36 kB │ gzip:   0.22 kB
+dist/assets/share-2-1jG3QuEb.js                                          0.36 kB │ gzip:   0.24 kB
+dist/assets/crown-C13De93i.js                                            0.36 kB │ gzip:   0.26 kB
+dist/assets/utensils-crossed-WnzTo8js.js                                 0.36 kB │ gzip:   0.26 kB
+dist/assets/photoScreen-CacDIZ75.js                                      0.37 kB │ gzip:   0.28 kB
+dist/assets/workoutBurn-B3skpSQ_.js                                      0.37 kB │ gzip:   0.26 kB
+dist/assets/useDismissOnce-CIZtU9c-.js                                   0.37 kB │ gzip:   0.26 kB
+dist/assets/beef-BvHL2hmX.js                                             0.38 kB │ gzip:   0.29 kB
+dist/assets/savedSessions-B0e6LU3n.js                                    0.39 kB │ gzip:   0.27 kB
+dist/assets/clipboard-list-wgvKVvuH.js                                   0.41 kB │ gzip:   0.26 kB
+dist/assets/index-BOgJM4Ph.js                                            0.42 kB │ gzip:   0.29 kB
+dist/assets/scheduledRunStatus-GpSlzkNe.js                               0.43 kB │ gzip:   0.20 kB
+dist/assets/eye-off-BK1jY0Pb.js                                          0.43 kB │ gzip:   0.27 kB
+dist/assets/medal-WNxOYlo1.js                                            0.44 kB │ gzip:   0.28 kB
+dist/assets/footprints-C-hefPx2.js                                       0.45 kB │ gzip:   0.30 kB
+dist/assets/repeat-C9-qU5OM.js                                           0.46 kB │ gzip:   0.30 kB
+dist/assets/wifi-off-D5AEya9j.js                                         0.46 kB │ gzip:   0.27 kB
+dist/assets/raceBrowse-c_ZQm4B0.js                                       0.46 kB │ gzip:   0.28 kB
+dist/assets/RestrictedNotice-B_siC_Zm.js                                 0.47 kB │ gzip:   0.31 kB
+dist/assets/star-CWSZklUP.js                                             0.47 kB │ gzip:   0.29 kB
+dist/assets/sun-CN3J8yjf.js                                              0.47 kB │ gzip:   0.26 kB
+dist/assets/analytics-BCj1N27t.js                                        0.48 kB │ gzip:   0.32 kB
+dist/assets/routeSegments-CfNJfPXD.js                                    0.48 kB │ gzip:   0.31 kB
+dist/assets/startDay-C5OE3fNZ.js                                         0.48 kB │ gzip:   0.32 kB
+dist/assets/settings-CvD0Kj2L.js                                         0.49 kB │ gzip:   0.26 kB
+dist/assets/RangeInput-iMfg58dn.js                                       0.49 kB │ gzip:   0.33 kB
+dist/assets/mealTotals-CqV_7cUI.js                                       0.49 kB │ gzip:   0.29 kB
+dist/assets/sparkles-DhuFV_4n.js                                         0.50 kB │ gzip:   0.28 kB
+dist/assets/calendar-days-Dj17cJ6r.js                                    0.50 kB │ gzip:   0.27 kB
+dist/assets/useOnlineStatus-Db6YVpEV.js                                  0.50 kB │ gzip:   0.29 kB
+dist/assets/callableErrors-CaS6BcJU.js                                   0.50 kB │ gzip:   0.31 kB
+dist/assets/palette-F2IEyyZt.js                                          0.51 kB │ gzip:   0.28 kB
+dist/assets/StatFigure-DV3tFB45.js                                       0.52 kB │ gzip:   0.34 kB
+dist/assets/index-DRul9u1V.js                                            0.52 kB │ gzip:   0.31 kB
+dist/assets/firestoreWrite-BEfOnIul.js                                   0.53 kB │ gzip:   0.31 kB
+dist/assets/AnimatedNumber-CiLgAWNA.js                                   0.54 kB │ gzip:   0.37 kB
+dist/assets/api-ntDx4rJM.js                                              0.55 kB │ gzip:   0.35 kB
+dist/assets/Card-CNHro4e8.js                                             0.55 kB │ gzip:   0.33 kB
+dist/assets/useLocalDateKey-DprzQxlW.js                                  0.55 kB │ gzip:   0.34 kB
+dist/assets/index-DKcf5fcy.js                                            0.56 kB │ gzip:   0.31 kB
+dist/assets/dumbbell-DHAPMXAY.js                                         0.56 kB │ gzip:   0.30 kB
+dist/assets/useInViewOnce-h6-IX80V.js                                    0.56 kB │ gzip:   0.33 kB
+dist/assets/index-CRAM-USd.js                                            0.56 kB │ gzip:   0.32 kB
+dist/assets/chartGranularity-CqisSFRf.js                                 0.58 kB │ gzip:   0.35 kB
+dist/assets/benchmarkEfforts-BVzF1gCm.js                                 0.60 kB │ gzip:   0.36 kB
+dist/assets/useMacroPalette-CGxEijYp.js                                  0.60 kB │ gzip:   0.36 kB
+dist/assets/firebase-BdYQM3Y5.js                                         0.62 kB │ gzip:   0.42 kB
+dist/assets/useCountUp-D9UoX0ec.js                                       0.62 kB │ gzip:   0.42 kB
+dist/assets/SectionHeading-DNO5SErE.js                                   0.63 kB │ gzip:   0.38 kB
+dist/assets/ios-BXqBLL4R.js                                              0.65 kB │ gzip:   0.37 kB
+dist/assets/realignCopy-DitNA1kN.js                                      0.68 kB │ gzip:   0.45 kB
+dist/assets/muscleGroupTaxonomy-CVlQz427.js                              0.68 kB │ gzip:   0.35 kB
+dist/assets/displayName-vO1Gin9t.js                                      0.68 kB │ gzip:   0.42 kB
+dist/assets/web-DgkSJUtS.js                                              0.72 kB │ gzip:   0.26 kB
+dist/assets/Collapse-BqXV1wj1.js                                         0.72 kB │ gzip:   0.44 kB
+dist/assets/aiConsent-DQGtNbq6.js                                        0.73 kB │ gzip:   0.42 kB
+dist/assets/runStatsEligibility-B2SRxGKY.js                              0.73 kB │ gzip:   0.40 kB
+dist/assets/index-BUMprQoV.js                                            0.75 kB │ gzip:   0.45 kB
+dist/assets/screenBand-DECS57zu.js                                       0.76 kB │ gzip:   0.46 kB
+dist/assets/performanceDocFields-CqhoHVUf.js                             0.77 kB │ gzip:   0.43 kB
+dist/assets/BodyMapGlow-C6NCVwj7.js                                      0.78 kB │ gzip:   0.49 kB
+dist/assets/basemap-54TvjztM.js                                          0.81 kB │ gzip:   0.47 kB
+dist/assets/hrZones-MskaJo2G.js                                          0.82 kB │ gzip:   0.51 kB
+dist/assets/useChallengePercentile-DdkBftl4.js                           0.82 kB │ gzip:   0.52 kB
+dist/assets/SustainedOfflineBanner-FilSiDXc.js                           0.86 kB │ gzip:   0.53 kB
+dist/assets/useBlockedUsers-rlABIwme.js                                  0.89 kB │ gzip:   0.48 kB
+dist/assets/ExerciseThumb-BequDbLe.js                                    0.89 kB │ gzip:   0.54 kB
+dist/assets/ConfirmDialog-eto7Mu2-.js                                    0.89 kB │ gzip:   0.45 kB
+dist/assets/volumeTargets-DR0NodSv.js                                    0.90 kB │ gzip:   0.50 kB
+dist/assets/fueling-C_zCQ50q.js                                          0.91 kB │ gzip:   0.57 kB
+dist/assets/useScanUsage-BL7FBdGD.js                                     0.91 kB │ gzip:   0.56 kB
+dist/assets/index-rfWxrVY_.js                                            0.94 kB │ gzip:   0.50 kB
+dist/assets/web-BKwvgCEq.js                                              0.94 kB │ gzip:   0.45 kB
+dist/assets/subscription-Bt0pKbYS.js                                     0.96 kB │ gzip:   0.48 kB
+dist/assets/dateHelpers-CVc5yDdO.js                                      0.97 kB │ gzip:   0.44 kB
+dist/assets/waterUnits-CgazG9a0.js                                       0.97 kB │ gzip:   0.47 kB
+dist/assets/sharePhoto-DAx0A2BN.js                                       0.97 kB │ gzip:   0.56 kB
+dist/assets/runPlanResolver-hDUL-mzE.js                                  0.99 kB │ gzip:   0.46 kB
+dist/assets/useDailyTargetsInRange-C7NoLkQw.js                           1.00 kB │ gzip:   0.59 kB
+dist/assets/RouteScene-B0x89g0g.js                                       1.03 kB │ gzip:   0.63 kB
+dist/assets/routePace-CYA8VS-I.js                                        1.03 kB │ gzip:   0.62 kB
+dist/assets/web-CJc0BXuU.js                                              1.05 kB │ gzip:   0.53 kB
+dist/assets/runGuards-CXfY8xfV.js                                        1.05 kB │ gzip:   0.42 kB
+dist/assets/index-ByjjQVrK.js                                            1.07 kB │ gzip:   0.60 kB
+dist/assets/Avatar-CH7zcGsi.js                                           1.09 kB │ gzip:   0.71 kB
+dist/assets/shareFile-yfD2I6I7.js                                        1.09 kB │ gzip:   0.54 kB
+dist/assets/usePullToRefresh-ufKvJDsu.js                                 1.12 kB │ gzip:   0.61 kB
+dist/assets/MealMacroBar-Dq4JpMCV.js                                     1.16 kB │ gzip:   0.61 kB
+dist/assets/PageShell-BKehEePh.js                                        1.21 kB │ gzip:   0.62 kB
+dist/assets/useRunningStats-e5xsVkJ9.js                                  1.21 kB │ gzip:   0.66 kB
+dist/assets/useHeartRate-DZVy-jgp.js                                     1.22 kB │ gzip:   0.66 kB
+dist/assets/muscleFigureSvg-oN4k4xFz.js                                  1.23 kB │ gzip:   0.68 kB
+dist/assets/useLifetimeRunStats-G_dU2jBz.js                              1.25 kB │ gzip:   0.73 kB
+dist/assets/useTrialReminder-CfyHmCEP.js                                 1.26 kB │ gzip:   0.72 kB
+dist/assets/racePace-SdbF5gV2.js                                         1.28 kB │ gzip:   0.63 kB
+dist/assets/haptic-CGz0kZpa.js                                           1.28 kB │ gzip:   0.65 kB
+dist/assets/liftLayoff-cWfT0RRc.js                                       1.30 kB │ gzip:   0.63 kB
+dist/assets/useHiddenActivities-9NiDLUV4.js                              1.32 kB │ gzip:   0.60 kB
+dist/assets/SectionErrorBoundary-DzoPaaok.js                             1.33 kB │ gzip:   0.69 kB
+dist/assets/useCalorieRingMode-C-x5I_Vl.js                               1.37 kB │ gzip:   0.78 kB
+dist/assets/VerifyEmailNotice-C_VjvSvb.js                                1.38 kB │ gzip:   0.71 kB
+dist/assets/useSavedSessions-Bn5Y3azF.js                                 1.38 kB │ gzip:   0.78 kB
+dist/assets/SettingsSection-Cihodqc-.js                                  1.38 kB │ gzip:   0.71 kB
+dist/assets/Toggle-Bn2VkHaM.js                                           1.39 kB │ gzip:   0.76 kB
+dist/assets/MiniMuscleFigure-DRP2Jso2.js                                 1.42 kB │ gzip:   0.81 kB
+dist/assets/usePrivacyZones-7BcOowxn.js                                  1.43 kB │ gzip:   0.76 kB
+dist/assets/subscriptionTrial-9olX2axF.js                                1.45 kB │ gzip:   0.75 kB
+dist/assets/LiftRulesSheet-NdJqDbRg.js                                   1.50 kB │ gzip:   0.72 kB
+dist/assets/Tooltip-Dn2oP_O7.js                                          1.50 kB │ gzip:   0.90 kB
+dist/assets/authErrors-CabkJlPh.js                                       1.57 kB │ gzip:   0.66 kB
+dist/assets/commandOutbox-XtMduFKY.js                                    1.59 kB │ gzip:   0.74 kB
+dist/assets/tdee-DBedOzLs.js                                             1.60 kB │ gzip:   0.81 kB
+dist/assets/formatters-g_bRutAW.js                                       1.60 kB │ gzip:   0.71 kB
+dist/assets/mealConstants-BeorptSA.js                                    1.61 kB │ gzip:   0.76 kB
+dist/assets/AccordionSection-C6nNUl8-.js                                 1.61 kB │ gzip:   0.77 kB
+dist/assets/IconButton-BbL4vDBq.js                                       1.62 kB │ gzip:   0.73 kB
+dist/assets/muscleTaxonomy-BzyMO5SO.js                                   1.62 kB │ gzip:   0.63 kB
+dist/assets/runReschedule-B0bphL10.js                                    1.68 kB │ gzip:   0.82 kB
+dist/assets/bodyweightLogs-Bn17X0nG.js                                   1.69 kB │ gzip:   0.79 kB
+dist/assets/runProgrammeViewModel-CyWso-xA.js                            1.69 kB │ gzip:   0.95 kB
+dist/assets/useWorkouts-DByVX_6B.js                                      1.70 kB │ gzip:   0.97 kB
+dist/assets/EmptyState-r_qngnWy.js                                       1.70 kB │ gzip:   0.85 kB
+dist/assets/ChoiceArt--kNsReCR.js                                        1.71 kB │ gzip:   0.82 kB
+dist/assets/web-MvpRa9Jg.js                                              1.72 kB │ gzip:   0.69 kB
+dist/assets/useRestrictedStatus-DppKxtAY.js                              1.77 kB │ gzip:   0.91 kB
+dist/assets/savedRoutines-01Vth_qs.js                                    1.81 kB │ gzip:   0.77 kB
+dist/assets/goalWeightPlan-BnkFL09b.js                                   1.82 kB │ gzip:   0.80 kB
+dist/assets/shareComposer-RL_q3JLV.js                                    1.86 kB │ gzip:   0.93 kB
+dist/assets/OneTimeMaintenance-CgpMwa0E.js                               1.89 kB │ gzip:   0.92 kB
+dist/assets/Banner-Cet9P9Lb.js                                           1.92 kB │ gzip:   0.87 kB
+dist/assets/web-Doz4l1fC.js                                              1.93 kB │ gzip:   0.71 kB
+dist/assets/purchaseProvider-DXTXLEdb.js                                 1.93 kB │ gzip:   0.96 kB
+dist/assets/ChoiceSheet-CsgIjtNN.js                                      1.94 kB │ gzip:   1.01 kB
+dist/assets/HomeProgramController-c1uzikgi.js                            1.94 kB │ gzip:   0.95 kB
+dist/assets/performanceLine-DCv-r-cx.js                                  1.99 kB │ gzip:   0.92 kB
+dist/assets/WeekPulseView-C5_30gWo.js                                    2.00 kB │ gzip:   0.74 kB
+dist/assets/polyline-783kDZ4m.js                                         2.05 kB │ gzip:   1.07 kB
+dist/assets/SettingsList-BVIlJd3f.js                                     2.09 kB │ gzip:   0.95 kB
+dist/assets/SegmentedControl-CmivRRkJ.js                                 2.10 kB │ gzip:   1.08 kB
+dist/assets/useDailyNutritionSnapshot-Cx8nxAUF.js                        2.13 kB │ gzip:   1.06 kB
+dist/assets/savedWorkouts-BvnQPODo.js                                    2.15 kB │ gzip:   1.08 kB
+dist/assets/ExerciseProgressChart-DMcCFPva.js                            2.24 kB │ gzip:   1.13 kB
+dist/assets/TabIcons-DGO82HoN.js                                         2.26 kB │ gzip:   0.84 kB
+dist/assets/BadgeHex-BdOt9a6I.js                                         2.31 kB │ gzip:   1.05 kB
+dist/assets/ShoeMileageSection-vx4oNcSP.js                               2.38 kB │ gzip:   1.12 kB
+dist/assets/DailyLogsProvider-DTKMzFL5.js                                2.45 kB │ gzip:   1.05 kB
+dist/assets/usePerformance-DqGVIWWs.js                                   2.47 kB │ gzip:   1.20 kB
+dist/assets/useShoes-Cuwp8246.js                                         2.50 kB │ gzip:   1.16 kB
+dist/assets/liftPost-BhlRblBb.js                                         2.56 kB │ gzip:   1.15 kB
+dist/assets/accountSecurity-ujGgOfbZ.js                                  2.56 kB │ gzip:   1.17 kB
+dist/assets/loadSteps-CoYCDKso.js                                        2.63 kB │ gzip:   1.27 kB
+dist/assets/programTypes-D_ESYA_i.js                                     2.65 kB │ gzip:   1.09 kB
+dist/assets/weekPrescription-1XyBnq5b.js                                 2.67 kB │ gzip:   1.22 kB
+dist/assets/prTracking-DD8Tje2g.js                                       2.77 kB │ gzip:   1.18 kB
+dist/assets/onboardingDraft-DnlIqwiY.js                                  2.92 kB │ gzip:   1.28 kB
+dist/assets/SettingsHealth-DK7YMDIA.js                                   3.01 kB │ gzip:   1.15 kB
+dist/assets/useSteps-Wzd4pM2V.js                                         3.03 kB │ gzip:   1.40 kB
+dist/assets/useSessionDoc-C0qAGjQl.js                                    3.08 kB │ gzip:   1.61 kB
+dist/assets/CircleShareSheet-DxVMHwRc.js                                 3.10 kB │ gzip:   1.48 kB
+dist/assets/Support-BBICqkJf.js                                          3.10 kB │ gzip:   1.27 kB
+dist/assets/SettingsWorkoutPrefs-CDBzsvc8.js                             3.13 kB │ gzip:   1.19 kB
+dist/assets/waterActions-6My4g62C.js                                     3.15 kB │ gzip:   1.51 kB
+dist/assets/Dialog-BL1460yJ.js                                           3.16 kB │ gzip:   1.43 kB
+dist/assets/runLabels-D9i91ZsS.js                                        3.16 kB │ gzip:   1.31 kB
+dist/assets/PaceInsightCard-BAAT_JXa.js                                  3.18 kB │ gzip:   1.58 kB
+dist/assets/GuideHint-LOrnPuuS.js                                        3.21 kB │ gzip:   1.63 kB
+dist/assets/raceEventOverrides-DJGa-zwL.js                               3.30 kB │ gzip:   1.51 kB
+dist/assets/SettingsSubscription-CNAqeWJ6.js                             3.37 kB │ gzip:   1.19 kB
+dist/assets/notifications-CE_-56_S.js                                    3.45 kB │ gzip:   1.32 kB
+dist/assets/sessionDelete-B7eNg0kB.js                                    3.50 kB │ gzip:   1.60 kB
+dist/assets/weightTrend-CrIQek5H.js                                      3.50 kB │ gzip:   1.53 kB
+dist/assets/weeklyReviewViewModel-BtaGP1jR.js                            3.51 kB │ gzip:   1.66 kB
+dist/assets/trainingBlock-cJom8U4m.js                                    3.51 kB │ gzip:   1.55 kB
+dist/assets/web-BbtmuvUI.js                                              3.54 kB │ gzip:   1.16 kB
+dist/assets/SettingsData-CY-PN-Tg.js                                     3.61 kB │ gzip:   1.77 kB
+dist/assets/SettingsSupportLegal-D8XKjJ1G.js                             3.71 kB │ gzip:   1.18 kB
+dist/assets/SettingsTraining-Bv7RUFBH.js                                 3.73 kB │ gzip:   1.73 kB
+dist/assets/liftRules-ChfABEYj.js                                        3.74 kB │ gzip:   1.82 kB
+dist/assets/shareRoute-DGQi4Rwv.js                                       3.89 kB │ gzip:   1.90 kB
+dist/assets/foodPhotoStore-CFKLosqm.js                                   3.89 kB │ gzip:   1.82 kB
+dist/assets/routeQuality-CccILJ19.js                                     3.89 kB │ gzip:   1.83 kB
+dist/assets/SavedRunKudos-CwSQ7pO_.js                                    4.03 kB │ gzip:   1.85 kB
+dist/assets/adaptiveTarget-2EzuO-Il.js                                   4.06 kB │ gzip:   1.60 kB
+dist/assets/MuscleHeatMap-BbAHF4hy.js                                    4.06 kB │ gzip:   1.68 kB
+dist/assets/liftFigures-B_F4Ge_0.js                                      4.11 kB │ gzip:   1.75 kB
+dist/assets/sessionCompletion-BQM5gAlC.js                                4.12 kB │ gzip:   1.72 kB
+dist/assets/SessionLengthLabel-DdUFRRpA.js                               4.15 kB │ gzip:   1.81 kB
+dist/assets/runPaces-BAEtMMxi.js                                         4.19 kB │ gzip:   1.76 kB
+dist/assets/liftCompletion-BzSDp8jj.js                                   4.26 kB │ gzip:   1.88 kB
+dist/assets/weightQueue-COo3hUTt.js                                      4.33 kB │ gzip:   1.94 kB
+dist/assets/firstGuide-DDmDGOGc.js                                       4.54 kB │ gzip:   1.83 kB
+dist/assets/SettingsRecentlyDeleted-CCpXNNrr.js                          4.61 kB │ gzip:   1.91 kB
+dist/assets/CalorieBalanceChart-Cckz6qDS.js                              4.80 kB │ gzip:   2.16 kB
+dist/assets/raceGoalPlanner-BZ3tMcAh.js                                  4.83 kB │ gzip:   2.32 kB
+dist/assets/WeightScaleDial-npNVrOGh.js                                  4.86 kB │ gzip:   2.24 kB
+dist/assets/SettingsUnitsAppearance-CY7j45Fl.js                          4.95 kB │ gzip:   1.85 kB
+dist/assets/SettingsIndex-Bszfhann.js                                    5.05 kB │ gzip:   2.34 kB
+dist/assets/LegacyExerciseRigDemo-DnZNn096.js                            5.25 kB │ gzip:   2.24 kB
+dist/assets/trainingWeek-BBP90u8G.js                                     5.51 kB │ gzip:   2.47 kB
+dist/assets/ShareComposerSheet-DlcWNRgC.js                               5.53 kB │ gzip:   2.40 kB
+dist/assets/useWeeklyReview-MCrlPKtF.js                                  5.73 kB │ gzip:   2.58 kB
+dist/assets/runPlanMetadata-DzEMUfp2.js                                  5.77 kB │ gzip:   1.84 kB
+dist/assets/MacroDistribution-CuWsOehK.js                                5.81 kB │ gzip:   2.67 kB
+dist/assets/Diagnostics-CKZTU_ae.js                                      5.97 kB │ gzip:   1.96 kB
+dist/assets/exerciseMovementCategory-BsdgfGtR.js                         6.15 kB │ gzip:   1.77 kB
+dist/assets/gps-JuNbHGPL.js                                              6.23 kB │ gzip:   2.78 kB
+dist/assets/Routine-B3ZKEg8Q.js                                          6.38 kB │ gzip:   2.99 kB
+dist/assets/runSpacing-D7OaS3KQ.js                                       6.45 kB │ gzip:   2.79 kB
+dist/assets/FullLeaderboard-Ce6AYBBs.js                                  6.55 kB │ gzip:   3.10 kB
+dist/assets/ManualFoodLogger-BfWn_Jx-.js                                 6.59 kB │ gzip:   3.07 kB
+dist/assets/SettingsAvatar-DKaAysx5.js                                   6.65 kB │ gzip:   2.83 kB
+dist/assets/gradeAdjustedPace-NF9IxSTa.js                                6.72 kB │ gzip:   2.52 kB
+dist/assets/GuideWalk-C6_Rw3CE.js                                        6.87 kB │ gzip:   2.90 kB
+dist/assets/SettingsLiftPlan-BFKCPsWt.js                                 6.89 kB │ gzip:   3.10 kB
+dist/assets/useGoalSpaces-CBka3_X2.js                                    6.99 kB │ gzip:   2.84 kB
+dist/assets/SettingsProfile-CxlQ_H0g.js                                  7.06 kB │ gzip:   2.49 kB
+dist/assets/ProModal-BtHRkMCA.js                                         7.19 kB │ gzip:   2.81 kB
+dist/assets/MacroColumn-Cw0ePPtD.js                                      7.24 kB │ gzip:   2.98 kB
+dist/assets/CompletionExtras-BqVhpk0B.js                                 7.35 kB │ gzip:   3.07 kB
+dist/assets/BadgeGrid-BPm4CxnG.js                                        7.38 kB │ gzip:   2.85 kB
+dist/assets/socialApi-1eTRPTKE.js                                        7.43 kB │ gzip:   2.41 kB
+dist/assets/ScheduleLayoutSheet-TuiZLsQS.js                              7.46 kB │ gzip:   2.92 kB
+dist/assets/RoutePlannerSheet-CYQvF60H.js                                7.54 kB │ gzip:   3.13 kB
+dist/assets/LiftPurpose-Drgkabk6.js                                      7.64 kB │ gzip:   3.51 kB
+dist/assets/badges-COQNExiO.js                                           7.93 kB │ gzip:   2.76 kB
+dist/assets/TermsOfService-D1WjSLSk.js                                   8.01 kB │ gzip:   2.71 kB
+dist/assets/useMeals-CqInvWjC.js                                         8.13 kB │ gzip:   3.40 kB
+dist/assets/TrendWeight-DKwaQhae.js                                      8.35 kB │ gzip:   3.60 kB
+dist/assets/planBuilder-D9aiBY3A.js                                      8.65 kB │ gzip:   2.88 kB
+dist/assets/PRsTab-DlkgzlqV.js                                           8.74 kB │ gzip:   3.41 kB
+dist/assets/AdminModeration-CihK5144.js                                  8.79 kB │ gzip:   2.83 kB
+dist/assets/web-BRsRBVnz.js                                              8.81 kB │ gzip:   3.04 kB
+dist/assets/RunMap-CbDZxT37.js                                           9.34 kB │ gzip:   3.43 kB
+dist/assets/offlineQueue-DrAQlV5m.js                                     9.35 kB │ gzip:   3.71 kB
+dist/assets/PerformanceSection-_ahC35PH.js                               9.55 kB │ gzip:   3.29 kB
+dist/assets/bodyModelData-B2QOph28.js                                    9.77 kB │ gzip:   2.81 kB
+dist/assets/AdjustWeekSheet-Cx75FJQr.js                                  9.87 kB │ gzip:   3.75 kB
+dist/assets/scheduleUtils-CYTZAbrK.js                                    9.99 kB │ gzip:   2.57 kB
+dist/assets/ExercisePicker-ld2ZCXZi.js                                  10.23 kB │ gzip:   3.93 kB
+dist/assets/SettingsPrivacy-BRt6q7QV.js                                 10.47 kB │ gzip:   3.70 kB
+dist/assets/RemindersProvider-QRuMajGz.js                               10.51 kB │ gzip:   4.05 kB
+dist/assets/confetti.module-C2jkTI5u.js                                 10.70 kB │ gzip:   4.29 kB
+dist/assets/RunDetail-jeYXX86V.js                                       11.01 kB │ gzip:   4.42 kB
+dist/assets/runTemplateIcons-DwFCvWAH.js                                11.13 kB │ gzip:   4.55 kB
+dist/assets/CommentSheetFrame-BlA-c9n3.js                               11.33 kB │ gzip:   4.15 kB
+dist/assets/SettingsShoes-qyAAX5RX.js                                   11.70 kB │ gzip:   3.83 kB
+dist/assets/ExerciseHistory-7UdkKKWO.js                                 11.84 kB │ gzip:   4.31 kB
+dist/assets/useEffectiveTargets-DoWfiw8y.js                             11.94 kB │ gzip:   4.82 kB
+dist/assets/Login-CZfzc6xN.js                                           11.95 kB │ gzip:   4.09 kB
+dist/assets/web-CL5e4bop.js                                             12.45 kB │ gzip:   2.92 kB
+dist/assets/DayActionSheet-BPIEMNDs.js                                  13.45 kB │ gzip:   4.37 kB
+dist/assets/BadgeEarnedModal-CY3quykj.js                                13.46 kB │ gzip:   4.79 kB
+dist/assets/SettingsNotifications-Bx2FbNhu.js                           13.60 kB │ gzip:   4.62 kB
+dist/assets/index-BeoRn2gJ.js                                           13.73 kB │ gzip:   5.41 kB
+dist/assets/useStreaks-7D2qcZaz.js                                      14.08 kB │ gzip:   5.30 kB
+dist/assets/body-highlighter-DcYDm2uM.js                                14.27 kB │ gzip:   4.54 kB
+dist/assets/ShareCardSheet-DQiGwR2t.js                                  14.42 kB │ gzip:   4.98 kB
+dist/assets/UserProfile-zj2bCSrw.js                                     15.35 kB │ gzip:   6.06 kB
+dist/assets/SettingsNutrition-BUr49P-s.js                               15.52 kB │ gzip:   5.16 kB
+dist/assets/formArtwork-BtgjF3G9.js                                     15.62 kB │ gzip:   2.61 kB
+dist/assets/Upgrade-B5S8Atik.js                                         15.71 kB │ gzip:   5.40 kB
+dist/assets/spaceTypes-D6zZiGhI.js                                      16.02 kB │ gzip:   4.83 kB
+dist/assets/savedRuns-CdXtsuln.js                                       17.47 kB │ gzip:   6.43 kB
+dist/assets/nextUpCursor-_dYNcH4w.js                                    18.68 kB │ gzip:   6.50 kB
+dist/assets/SettingsAccount-CzuWakUd.js                                 19.11 kB │ gzip:   6.39 kB
+dist/assets/WorkoutDetail-CgSadCLy.js                                   19.19 kB │ gzip:   7.38 kB
+dist/assets/PerformanceTab-BKGXXvyM.js                                  19.51 kB │ gzip:   7.20 kB
+dist/assets/Layout-C6IO0JSj.js                                          19.85 kB │ gzip:   8.73 kB
+dist/assets/WeeklyReview-BkND8mI0.js                                    19.86 kB │ gzip:   6.58 kB
+dist/assets/spaceDefs-BAIOn2Ts.js                                       19.96 kB │ gzip:   4.27 kB
+dist/assets/represcribe-B3_Zwhal.js                                     22.12 kB │ gzip:   7.93 kB
+dist/assets/PrivacyPolicy-2i6ynV8j.js                                   22.25 kB │ gzip:   6.56 kB
+dist/assets/ProgrammeSettings-CKhEo1I1.js                               22.34 kB │ gzip:   7.66 kB
+dist/assets/date-fns-C6xP0GBg.js                                        23.86 kB │ gzip:   7.15 kB
+dist/assets/ProgressPhotos-CGELmIP3.js                                  26.11 kB │ gzip:   9.75 kB
+dist/assets/Space-C-sS1mhx.js                                           27.05 kB │ gzip:  10.21 kB
+dist/assets/ChallengeList-ydDoBN9n.js                                   27.88 kB │ gzip:   9.38 kB
+dist/assets/floating-ui.react-D2_BK2-_.js                               31.39 kB │ gzip:  11.96 kB
+dist/assets/ProPreview-4aPK6WRz.js                                      34.49 kB │ gzip:  10.47 kB
+dist/assets/useProgram-DNI9Oby_.js                                      34.72 kB │ gzip:  11.23 kB
+dist/assets/usePartnerStreak-C0FZa17d.js                                35.08 kB │ gzip:  11.12 kB
+dist/assets/RunSummary-DI9GlmTm.js                                      35.38 kB │ gzip:  13.02 kB
+dist/assets/formArtCutouts-5t9XnyWX.js                                  37.65 kB │ gzip:  13.22 kB
+dist/assets/FoodAnalyzer-D4yfRiwU.js                                    39.64 kB │ gzip:  12.75 kB
+dist/assets/Onboarding-hh4rRaVz.js                                      42.97 kB │ gzip:  13.87 kB
+dist/assets/SettingsRunPlan-Bt7M2lat.js                                 44.91 kB │ gzip:  13.61 kB
+dist/assets/BottomSheet-my_2k7ii.js                                     62.62 kB │ gzip:  19.87 kB
+dist/assets/programEngine-DI3s-Z61.js                                   63.12 kB │ gzip:  18.16 kB
+dist/assets/WorkoutSession-Bo3Jh10s.js                                  64.82 kB │ gzip:  21.74 kB
+dist/assets/ExerciseFormContent-CnwjsAp-.js                             78.56 kB │ gzip:  21.39 kB
+dist/assets/Social-D_ncgiUp.js                                          78.85 kB │ gzip:  24.53 kB
+dist/assets/exercises-B7UYZ3tS.js                                       90.23 kB │ gzip:  21.05 kB
+dist/assets/History-BQXSZZGK.js                                         97.57 kB │ gzip:  31.11 kB
+dist/assets/profanityFilter-Dddm7aun.js                                 99.23 kB │ gzip:  25.18 kB
+dist/assets/Home-1e8BO46X.js                                           110.30 kB │ gzip:  34.96 kB
+dist/assets/Run-CZ4YtOOs.js                                            120.72 kB │ gzip:  35.70 kB
+dist/assets/Food-fIQW6px_.js                                           131.75 kB │ gzip:  41.11 kB
+dist/assets/bodyRig-zQB0BmNw.js                                        134.93 kB │ gzip:  30.75 kB
+dist/assets/motion-BIv7XAAr.js                                         135.63 kB │ gzip:  44.90 kB
+dist/assets/Program-DQPOz6_1.js                                        153.47 kB │ gzip:  50.07 kB
+dist/assets/index-BN_5mA0J.js                                          175.22 kB │ gzip:  57.58 kB
+dist/assets/firebase-auth-DY41GLch.js                                  185.53 kB │ gzip:  55.08 kB
+dist/assets/vendor-CsEZWYAx.js                                         237.18 kB │ gzip:  76.18 kB
+dist/assets/firebase-db-BJckLLAA.js                                    378.33 kB │ gzip: 116.00 kB
+dist/assets/charts-D2OnuC-o.js                                         401.24 kB │ gzip: 115.62 kB
+dist/assets/barcode-iPjrJSYw.js                                        415.98 kB │ gzip: 108.68 kB
+dist/assets/maplibre-Ch2Ooc8S.js                                       946.58 kB │ gzip: 248.70 kB
+✓ built in 21.40s
+form frames: 750 of 804 re-saved, 354.4 MB → 34.1 MB
+[stamp-sw] stamped dist/sw.js with build 2efdec417e43
+
+> tropos@1.2.0 check:dist-size
+> node scripts/check-dist-size.mjs
+
+check-dist-size: 369 chunks, 6116.3 kB total (baseline 6100.6 kB).
+  new small chunks (add to the baseline when convenient):
+    loadSteps: new 2.6 kB chunk
+    photoScreen: new 0.4 kB chunk
+  smaller than baseline (lower it to lock in):
+    usePartnerStreak: 37.2 kB → 34.3 kB (-8.0%)
+    weightUnits: gone (was 0.4 kB) — remove it from the baseline
+check-dist-size: FAIL
+    ExerciseFormContent: 73.0 kB → 76.7 kB (+5.1%, allowed +3.6 kB)
+  If the growth is intended, run `node scripts/check-dist-size.mjs --update` in the same PR and say why in its body.

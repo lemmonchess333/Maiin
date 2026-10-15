@@ -1,0 +1,44 @@
+{
+  "status": "terminal-normal-verify-stopped-before-unit-stage",
+  "reviewedAt": "2026-10-15T12:47:04.406024+00:00",
+  "runLabel": "face-pulls-final-2efdec417",
+  "normalCommand": "npm run verify",
+  "exitCode": 1,
+  "fullVerificationPassed": false,
+  "normalStagesObserved": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size"
+  ],
+  "allSevenStagesPresent": false,
+  "unitStageReached": false,
+  "baselineFailureComparisonPerformed": false,
+  "addedRemovedChangedFailures": null,
+  "inputCount": 2656,
+  "inputsPreserved": true,
+  "headStatusPreserved": true,
+  "snapshotRestores": [],
+  "terminalFindings": [
+    {
+      "line": 530,
+      "text": "check-dist-size: FAIL"
+    },
+    {
+      "line": 531,
+      "text": "    ExerciseFormContent: 73.0 kB → 76.7 kB (+5.1%, allowed +3.6 kB)"
+    }
+  ],
+  "evidenceHashes": {
+    "face-pulls-final-2efdec417/verify.log": "86673ed46f9639ccfb879ccb0a3256be7582b9705536ca88c6952004184a89fc",
+    "face-pulls-final-2efdec417/result.json": "306d1e5c06653c86a2fd5f1c551fe5f885a01028452353f6f8cb3bf59591ea90",
+    "face-pulls-final-2efdec417/inputs-before.json": "0b1a89eec5e619f2a8159aa50c27e1cff1c3e78fd51ed9b44a19c66960568b87",
+    "face-pulls-final-2efdec417/inputs-after.json": "0b1a89eec5e619f2a8159aa50c27e1cff1c3e78fd51ed9b44a19c66960568b87",
+    "face-pulls-final-2efdec417/start.json": "9a7bbc8f8286ae97de90aea3ba99f21a85bd8627c31e2cf36dee3467804f2651"
+  },
+  "conclusion": "The actual size gate stopped verification; no unit-failure or pre-existing/regression comparison can be inferred from this incomplete run. Preserve this first result separately from any later corrected full run.",
+  "testsRunByReviewer": false,
+  "repositoryEdited": false
+}

@@ -1,0 +1,78 @@
+{
+  "exerciseId": "face-pulls",
+  "status": "outside-public-plan; equipment proposal awaiting native acceptance; no release or completion credit",
+  "version": "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "preserve": "Same lean bald faceless white-grey anatomy, smooth featureless no-shorts pelvis, white trainers, inherited contours/shading; no anatomical transforms or grafts."
+  },
+  "primary": [
+    "Rear Delts"
+  ],
+  "secondary": [
+    "Rhomboids",
+    "Traps",
+    "Rotator Cuff"
+  ],
+  "sourceOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "physicalPoses": 2,
+  "setup": [
+    "Set a rope at or slightly above face height and grip the ends with palms down.",
+    "Step back for tension, arms extended straight toward the pulley."
+  ],
+  "beats": [
+    {
+      "label": "Reach",
+      "cue": "Begin with arms extended straight toward the pulley, palms down.",
+      "t": 0,
+      "sourcePose": 1
+    },
+    {
+      "label": "Brace",
+      "cue": "Keep your stance steady and your shoulder blades set.",
+      "t": 0,
+      "sourcePose": 1
+    },
+    {
+      "label": "Rotate",
+      "cue": "Pull toward your face, separating the grips past your ears.",
+      "t": 1,
+      "sourcePose": 4
+    },
+    {
+      "label": "Squeeze",
+      "cue": "Hold the finish with elbows high and knuckles up.",
+      "t": 1,
+      "sourcePose": 4
+    },
+    {
+      "label": "Return",
+      "cue": "Return slowly, keeping your elbows high.",
+      "t": 0,
+      "sourcePose": 1
+    },
+    {
+      "label": "Reset",
+      "cue": "Finish with arms extended and keep cable tension.",
+      "t": 0,
+      "sourcePose": 1
+    }
+  ],
+  "sourceScope": "Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.",
+  "equipmentRoute": "Proposed real ergonomic rope handle topology, based on the actually viewed Lifemaxx LMX2315 manufacturer's image. Original grip pixels remain intact. Root must review actual two-pose equipment proposal; model/reference hashes or a real product category do not themselves establish acceptance.",
+  "manufacturerReference": {
+    "url": "https://www.lifemaxx.com/en/lmx2315-lmxr-ergo-tricep-rope.html",
+    "image": "../lifemaxx-lmx2315-manufacturer-reference.png",
+    "use": "Unbranded physical topology reference only, not a claim to reproduce this exact commercial model."
+  },
+  "noProductionChanges": true,
+  "completionCredit": false
+}

@@ -1,0 +1,84 @@
+{
+  "status": "single-material-only-v2-proposal-awaiting-root-native-review",
+  "v1ReviewSha256": "73df99fdfb7087601bfc0e055a4fce1bfcbe8f6da0f4f8dd4acce26dbd21c747",
+  "v1BuilderSha256": "a142ec3ec029003b7f1271247ed44c56bd01a178c1472df12bccc679b8356514",
+  "method": "Shared neutral soft-form rubber shader from the original equipment silhouette Euclidean contour distance with float Gaussian smoothing, top-left diffuse light, restrained broad sheen and soft edge bevel. Form calculated before human occlusion; exact original v1 equipment alpha used at final composition. No body gradient, geometry, position, contour-mask or cable/stack movement. No noise/painterly texture.",
+  "materialDryRunDefect": "First grid-distance render showed diagonal facets on native review. Its script/PNGs/ORAs/proof are preserved in diagnostic-first-grid-distance-faceting. Only the shader distance/normal smoothing was corrected before handoff; exact geometry/alpha retained.",
+  "sourceMaterialSample": {
+    "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\4-rope-rejected.png",
+    "region": [
+      323,
+      252,
+      354,
+      283
+    ],
+    "nativeBallGrayscaleApproxP10P50P90": [
+      12.7,
+      34.7,
+      81.9
+    ],
+    "shaderAllowedNeutralRange": [
+      10,
+      90
+    ]
+  },
+  "poses": [
+    {
+      "pose": "1-start",
+      "sourceSha256": "30c17a6d7c4416cb908d6f87ac5fb754bb45cb86116844a953893b761f48f8aa",
+      "oldFlatSha256": "8c067f5cbec22c1f1c01ba47927f11e3d0478e935b12b673af603ab2c90fced1",
+      "geometryAlphaPixelsExact": true,
+      "geometryMaskFileByteExact": true,
+      "humanBrightPlus4pxGuardChangedPixels": 0,
+      "outsideEquipmentSupportRGBAExact": true,
+      "alphaOriginalExact": true,
+      "RGBMaterialChangesFromFlatPixels": 3813,
+      "totalChangedPixelsFromOriginal": 3870,
+      "visibleRubberToneRange": [
+        10,
+        77
+      ],
+      "oraReopenedMergedRGBAExact": true,
+      "farStartTerminalOcclusionUnresolved": true
+    },
+    {
+      "pose": "4-finish",
+      "sourceSha256": "eb07393aa9a70788874b70bfc48cdab5de143798082cc300d627fd3aeea7c628",
+      "oldFlatSha256": "628f0a3aab70f8a2d07b3cd7acc72240f79a825712eb1f3609fd23d03359c0e6",
+      "geometryAlphaPixelsExact": true,
+      "geometryMaskFileByteExact": true,
+      "humanBrightPlus4pxGuardChangedPixels": 0,
+      "outsideEquipmentSupportRGBAExact": true,
+      "alphaOriginalExact": true,
+      "RGBMaterialChangesFromFlatPixels": 4790,
+      "totalChangedPixelsFromOriginal": 4865,
+      "visibleRubberToneRange": [
+        10,
+        78
+      ],
+      "oraReopenedMergedRGBAExact": true,
+      "farStartTerminalOcclusionUnresolved": false
+    }
+  ],
+  "remainingFindings": [
+    "Far start outer free-end/palm support is omitted as potentially occluded behind the unchanged fist. Hidden rope ordering is plausible but unproven; root must reject any visibly impossible hand/load contact.",
+    "New supports extend into black background and cover original equipment footprints, preserving human pixels. Original dark rubber directly beside fingers within the contour guard remains untouched; inspect for small sphere-outline remnants.",
+    "Projected handle lengths/foreshortening vary with the retained source projections; no calibrated3D/strict invariant-hardware claim.",
+    "Equipment contour/material rendering is a native review draft. No colour normalization, mobile pass, strict approval, owner acceptance, registration, publication or completion claim."
+  ],
+  "noApprovalOrProductionClaim": true,
+  "v1FilesStillExact": true,
+  "files": {
+    "1-start-equipment-mask-exact-v1.png": "7d70c6712afdc3c4ad169058fd480d09f955c435fbaa90fa377f436479a3a711",
+    "1-start-equipment-material-v2-layer.png": "ff3e23beecbbac7e9d2093fc881cae70b57db7e428623585fa697d89b4beabef",
+    "1-start-equipment-material-v2.ora": "7431ce1877a7a6c12ecd11b5620782b785d476437dc237ad78304269bcb95cb5",
+    "1-start-ergonomic-material-v2.png": "025c51e6b6acaca8dd7f38c5101b3cd8390fd7c1804f9e697109c3d683f1d041",
+    "1-start-original-flat-material-rows-2x.png": "d54a7ca7565153254a39f0f7342fedbf64772eb803040f5a050b8e73f96b414f",
+    "4-finish-equipment-mask-exact-v1.png": "20b4bf3661c9f41fd452625e9798bf96850d57574aedb31bb5c8141c138b4ef3",
+    "4-finish-equipment-material-v2-layer.png": "bb0590673f7f806106f2aa101fc30edab8ae21885d44fd91437022e3e127120e",
+    "4-finish-equipment-material-v2.ora": "5d02d961a1b01e5fdc1f6a8ea7d4f6f78b17796438c5b77784a99c88ead7e800",
+    "4-finish-ergonomic-material-v2.png": "57ee48c8b4755cb7c6fa8da0adf6805cff28c2d4d73947f02d351983453d6413",
+    "4-finish-original-flat-material-rows-2x.png": "118bbb8cf3f2697ba571ae4b90d8ab5b30cce08809be14acc8ab116b041bb1c9",
+    "finish-rubber-material-only.py": "d1e474428d3cfed145402575086f2ebb8d0379bacb3bac267013caf69ca3d1f4"
+  }
+}
