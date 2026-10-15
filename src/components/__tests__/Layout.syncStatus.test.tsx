@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   queue: {} as Record<string, number>,
   failed: {} as Record<string, number>,
   failedRuns: {} as Record<string, number>,
+  failedMeals: {} as Record<string, number>,
   outbox: {} as Record<string, number>,
   listeners: new Set<() => void>(),
   flush: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock("@/lib/offlineQueue", () => ({
   getQueueLength: (uid: string) => state.queue[uid] ?? 0,
   getFailedWorkoutCompletionCount: (uid: string) => state.failed[uid] ?? 0,
   getFailedRunSaveCount: (uid: string) => state.failedRuns[uid] ?? 0,
+  getFailedMealSaveCount: (uid: string) => state.failedMeals[uid] ?? 0,
   subscribeQueuedWrites: (listener: () => void) => {
     state.listeners.add(listener);
     return () => state.listeners.delete(listener);
@@ -73,6 +75,7 @@ beforeEach(() => {
   state.queue = {};
   state.failed = {};
   state.failedRuns = {};
+  state.failedMeals = {};
   state.outbox = {};
   state.listeners.clear();
   state.flush.mockReset();
@@ -230,4 +233,27 @@ describe("Layout pending changes", () => {
     expect(banner()).toHaveTextContent("Back online");
     expect(banner()).not.toHaveTextContent("syncing");
   });
+
+  it.each([
+    { meals: 2, runs: 0, workouts: 0, noun: "meals", count: 2 },
+    { meals: 1, runs: 1, workouts: 0, noun: "changes", count: 2 },
+    { meals: 1, runs: 0, workouts: 1, noun: "changes", count: 2 },
+    { meals: 1, runs: 1, workouts: 1, noun: "changes", count: 3 },
+    { meals: 0, runs: 1, workouts: 1, noun: "sessions", count: 2 },
+  ])(
+    "names mixed failures truthfully: $noun",
+    ({ meals, runs, workouts, noun, count }) => {
+      state.queue["account-a"] = count + 1;
+      state.failedMeals["account-a"] = meals;
+      state.failedRuns["account-a"] = runs;
+      state.failed["account-a"] = workouts;
+      render(<App />);
+      expect(banner()).toHaveTextContent(
+        `${count} ${noun} need attention · saved on this phone. 1 other change waiting to sync`
+      );
+      expect(
+        screen.getByRole("button", { name: `Retry syncing ${noun}` })
+      ).toBeEnabled();
+    }
+  );
 });
