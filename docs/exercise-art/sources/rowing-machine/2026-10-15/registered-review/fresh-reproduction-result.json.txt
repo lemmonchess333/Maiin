@@ -1,0 +1,16 @@
+{
+  "command": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\row-rp-20261015\\reproduce.py",
+    "--build",
+    "--output-dir",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\row-rp-20261015"
+  ],
+  "cwd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\row-rp-20261015",
+  "startedAt": "2026-10-15T22:27:37.841721+00:00",
+  "finishedAt": "2026-10-15T22:28:16.561055+00:00",
+  "durationSeconds": 38.71799999999348,
+  "exitCode": 0,
+  "logSha256": "2436b89c9f3eb6b97ac39f4baf5f46ce64fc19d811069979bcfd9bd025237c19"
+}

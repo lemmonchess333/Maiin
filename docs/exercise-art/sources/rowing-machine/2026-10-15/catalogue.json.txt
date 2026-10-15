@@ -1,0 +1,20 @@
+{
+  "id": "rowing-machine",
+  "name": "Rowing Machine",
+  "category": "Cardio",
+  "muscleGroup": "Cardio",
+  "secondaryMuscles": [
+    "Back",
+    "Legs",
+    "Core"
+  ],
+  "equipment": "Machine",
+  "caloriesPerMinute": 9,
+  "instructions": [
+    "Strap in, grip the handle, start compressed with shins vertical.",
+    "Drive with your legs first, then lean back, then pull the handle to your ribs.",
+    "Return in reverse order: arms out, hinge forward, then slide the seat in.",
+    "Keep the stroke rhythm smooth — 2:1 return to drive ratio."
+  ],
+  "tip": "If you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms — in that order."
+}

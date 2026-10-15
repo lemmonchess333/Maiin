@@ -75,12 +75,19 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Eleven
+ * reviewed; they do not claim to pass the new consistency standard. Twelve
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "rowing-machine": {
+    ...existing("rowing-machine", 1416, 830),
+    reference: "form-frames/rowing-machine/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/rowing-machine.json",
+  },
   "pendlay-row": {
     ...existing("pendlay-row", 1180, 892),
     reference: "form-frames/pendlay-row/3.webp",

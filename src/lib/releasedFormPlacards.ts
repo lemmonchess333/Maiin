@@ -17,6 +17,20 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "rowing-machine": placard(
+    "rowing-machine",
+    ["Quads", "Upper back"],
+    ["Hamstrings", "Biceps"],
+    [
+      [0, "Catch", "Compress with straight arms and vertical shins."],
+      [0.5, "Drive", "Push with your legs; keep arms straight."],
+      [1, "Finish", "Lean back slightly; draw handle below ribs."],
+      [1, "Relax", "Stay supported; keep wrists and shoulders relaxed."],
+      [0.5, "Recover", "Arms away, then hinge forward before sliding."],
+      [0, "Reset", "Recover twice as slowly as you drive."],
+    ],
+    ["Strap in, grip the handle, start compressed with shins vertical."]
+  ),
   "pendlay-row": placard(
     "pendlay-row",
     ["Lats"],

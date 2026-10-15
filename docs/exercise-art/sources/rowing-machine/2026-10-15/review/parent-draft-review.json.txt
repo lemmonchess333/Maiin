@@ -1,0 +1,93 @@
+{
+  "exerciseId": "rowing-machine",
+  "version": "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
+  "reviewer": "/root",
+  "reviewedAt": "2026-10-15T22:37:40.8439741Z",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "planSha256": "a30bb7d70a0c37ae81dd348484399b78ae554f68b474079d33ff52037b7df206",
+  "payloadManifestSha256": "e709ab142ae0434177738d90c071283203a27532cb3ad198ddc5b3b0c278c6c8",
+  "cardSha256": "06c0b4a713879eff74fcc5b6f5a9ee8fbfd0047c3a3782dbe4c6fd9ba7019fe5",
+  "approval": {
+    "actor": "User, in this session",
+    "instruction": "Continue new conversions using the approved athlete without shorts, allow the agreed limited findings, preserve the model/colours/equipment, finish and merge; stop routine approval questions.",
+    "context": "Existing user authorization covers colour/equipment finishing, intact whole-source reuse, local registration/checks and merge. Root accepts this specific retained three-state draft with finish knee flexion disclosed; no strict certification inferred."
+  },
+  "findings": [
+    "Visible residual knee flexion at the pulled finish is retained. Modest-versus-moderate projection uncertainty remains; no straight/locked/perfect-leg or strict-certification claim.",
+    "Three real whole retained states are reused as catch/drive/finish/finish/drive/catch. Endpoint cuts are explicit; no invented intermediate motion or calibrated continuous stroke.",
+    "Minor original seated body/seat and leg-contour variation remains. Fixed strapped feet/common rower and original whole anatomy are preserved; no body fitting, pose correction, shoe graft or equipment correction."
+  ],
+  "observations": {
+    "identity": {
+      "evidence": "Root viewed FA56 and all three native originals/framed outputs: same no-shorts athlete, neutral anatomy, trainers, fine contours and proportions retained.",
+      "observed": true
+    },
+    "camera": {
+      "evidence": "One native1536x1024 source layout, identical identity placement and common1416x830 crop; common rower camera/rail/flywheel/footrests observed. No per-limb/camera fitting or exact3D calibration claimed.",
+      "observed": true
+    },
+    "anatomy": {
+      "evidence": "Intact original human pixels and outlines retained outside permitted source colour fields. Visible residual finish knee flexion and modest-versus-moderate projection uncertainty remain explicit findings; no locked/straight/perfect-leg certification.",
+      "observed": true
+    },
+    "equipment": {
+      "evidence": "Native/mobile views show complete common rower, moving seat, rail, flywheel, foot straps, handle and taut cable. No geometry repair or invented equipment motion.",
+      "observed": true
+    },
+    "contact": {
+      "evidence": "Native three sources retain wrapped handle grip, both strapped trainers and seated support. Minor original seat/body/leg-contour variation remains disclosed; no calibrated contact invariance claimed.",
+      "observed": true
+    },
+    "physics": {
+      "evidence": "Real compressed catch progresses to long-leg straight-arm drive then handle-below-ribs/layback; reverse recovery shown with three intact states. Finish knee flexion retained; endpoint cuts and teaching-slot timing are not a calibrated continuous/cadence claim.",
+      "observed": true
+    },
+    "muscles": {
+      "evidence": "Root viewed actual canonical-base palette in all three framed natives: existing quads/upper-back primary and hamstrings/biceps secondary, inherited fine source tones. Neutral core/other fields are not painted; actual Cardio/Back/Legs/Core catalogue snapshot remains unchanged.",
+      "observed": true
+    },
+    "cueAgreement": {
+      "evidence": "Actual manual six-path/cue review in both themes matched Catch/Drive/Finish/Relax/Recover/Reset. Reset reads Recover twice as slowly as you drive.; all cues fit7words. Catalogue setup/technique/rhythm remain preserved.",
+      "observed": true
+    },
+    "sequenceAndLoop": {
+      "evidence": "Actual draft React player decoded all6separate paths and6-to1normal wraps in both themes at approximately1205-1215ms. Physical source order1,2,3,3,2,1 is explicit; no invented middle. Registered selection/slower review remains pending.",
+      "observed": true
+    },
+    "mobileLight": {
+      "evidence": "Actual tab53 viewport390x844 confirmed, art324x360 and source1416x830, document scrollWidth380. Complete human/gear readable, no image clipping. Actual normal480card independently viewed,348/160mobilecards reviewed;480width has deliberate local review scroller only.",
+      "observed": true
+    },
+    "mobileDark": {
+      "evidence": "Actual390x844 dark manual/normal playback and fullpage screenshot reviewed. Complete body/trainers/rower/cable and normal348/160cards remain readable without global overflow; inherited standard card edge fringe needs no edit.",
+      "observed": true
+    }
+  },
+  "actualUiReview": {
+    "tab": 53,
+    "slowerRegisteredReviewPending": true,
+    "viewport": [
+      390,
+      844
+    ],
+    "registeredReviewComplete": false,
+    "url": "http://127.0.0.1:62325/mobile-review.html",
+    "labels": [
+      "rowing-draft-light-manual",
+      "rowing-draft-light-card",
+      "rowing-draft-dark-normal-start",
+      "rowing-draft-dark-normal",
+      "rowing-draft-dark-manual",
+      "rowing-draft-light-normal",
+      "rowing-draft-console"
+    ],
+    "consoleWarningsAndErrors": []
+  },
+  "portableProof": {
+    "sha256": "b3e4628c9ef790c72ee73d222b3dff9baefaa5322f80ef38443266eeec82bacb",
+    "path": "portable-reproduction-verification-20261015/portable-reproduction-proof.json"
+  },
+  "publicationApproved": false
+}
