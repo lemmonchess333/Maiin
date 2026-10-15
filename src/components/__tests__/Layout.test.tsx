@@ -18,6 +18,7 @@ vi.mock("@/lib/offlineQueue", () => ({
   getQueueLength: () => 0,
   getFailedWorkoutCompletionCount: () => 0,
   getFailedRunSaveCount: () => 0,
+  getFailedMealSaveCount: () => 0,
   subscribeQueuedWrites: () => () => {},
   flushQueue: vi.fn(),
 }));

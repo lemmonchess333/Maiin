@@ -1,5 +1,11 @@
 import { useState, useCallback, useMemo } from "react";
 import { isWorkSegment, type SessionSegment } from "@/lib/runSegments";
+import {
+  sessionPlayerSignature,
+  validateSessionPlayerCheckpoint,
+  type SessionDistanceMode,
+  type SessionPlayerCheckpoint,
+} from "@/lib/sessionPlayerCheckpoint";
 
 /**
  * useSessionPlayer — the ONE in-run structure walker (STRUCT-SESS-02).
@@ -47,6 +53,15 @@ export interface SessionPlayer {
   next: SessionSegment | null;
   isComplete: boolean;
   start: () => void;
+  checkpoint: SessionPlayerCheckpoint | null;
+  /** Explicit segments allow restore before Run's config update has rendered. */
+  restore: (
+    checkpoint: unknown,
+    segments: SessionSegment[],
+    elapsed: number,
+    distance: number,
+    distanceMode?: SessionDistanceMode
+  ) => boolean;
   tick: (totalElapsed: number, totalDistance: number) => void;
   skip: (totalElapsed: number, totalDistance: number) => void;
   /**
@@ -102,7 +117,8 @@ function targetMet(
 }
 
 export function useSessionPlayer(
-  segments: SessionSegment[] | null | undefined
+  segments: SessionSegment[] | null | undefined,
+  distanceMode: SessionDistanceMode = "gps"
 ): SessionPlayer {
   // Stable identity for the empty fallback — `?? []` would mint a new
   // array every render and churn every callback below on the hot in-run
@@ -110,6 +126,48 @@ export function useSessionPlayer(
   const segs = useMemo(() => segments ?? [], [segments]);
   const [snapshot, setSnapshot] = useState<PlayerSnapshot>(IDLE);
   const { progress: state, segmentStarts } = snapshot;
+  const checkpoint = useMemo<SessionPlayerCheckpoint | null>(
+    () =>
+      state.index < 0 || !segs.length
+        ? null
+        : {
+            version: 1,
+            signature: sessionPlayerSignature(segs, distanceMode),
+            index: state.index,
+            segmentStarts,
+          },
+    [state.index, segs, distanceMode, segmentStarts]
+  );
+  const restore = useCallback(
+    (
+      value: unknown,
+      restoredSegments: SessionSegment[],
+      elapsed: number,
+      distance: number,
+      restoredMode: SessionDistanceMode = "gps"
+    ): boolean => {
+      const restored = validateSessionPlayerCheckpoint(
+        value,
+        restoredSegments,
+        elapsed,
+        distance,
+        restoredMode
+      );
+      if (!restored) return false;
+      const phaseStart = restored.segmentStarts[restored.index];
+      setSnapshot({
+        progress: {
+          index: restored.index,
+          phaseElapsed: elapsed - phaseStart.elapsed,
+          phaseDistanceCovered: distance - phaseStart.distance,
+        },
+        phaseStart,
+        segmentStarts: restored.segmentStarts,
+      });
+      return true;
+    },
+    []
+  );
 
   const start = useCallback(() => {
     if (segs.length === 0) return;
@@ -231,6 +289,8 @@ export function useSessionPlayer(
     next,
     isComplete: segs.length > 0 && state.index >= segs.length,
     start,
+    checkpoint,
+    restore,
     tick,
     skip,
     workPortion,

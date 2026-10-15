@@ -57,6 +57,7 @@ import {
 } from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
+import { Banner } from "@/components/ui/Banner";
 import {
   readStoredRun,
   writeStoredRun,
@@ -66,6 +67,10 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
+import {
+  validateSessionPlayerCheckpoint,
+  type SessionDistanceMode,
+} from "@/lib/sessionPlayerCheckpoint";
 import {
   judgesPaceNow,
   livePaceTarget,
@@ -124,11 +129,32 @@ import {
   endRunActivity,
 } from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
-import { SPLIT_LAP_IS_METRIC, distanceUnitLabel } from "@/lib/distanceUnits";
+import {
+  SPLIT_LAP_IS_METRIC,
+  distanceUnitLabel,
+  type DistanceUnit,
+} from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+
+function sessionSegmentsFor(
+  config: RunConfig | null,
+  unit: DistanceUnit,
+  seed: number
+) {
+  if (!config) return null;
+  if (config.activityType === "guided") {
+    return config.guidedWorkout
+      ? segmentsFromGuided(config.guidedWorkout)
+      : null;
+  }
+  if (config.segments?.length) return config.segments;
+  return config.activityType === "intervals" && config.intervals
+    ? segmentsFromIntervals(config.intervals, unit, seed)
+    : null;
+}
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -322,11 +348,29 @@ export default function Run() {
   // (Resume / Start new / Discard) flip it back to null and either
   // rehydrate the run or proceed to the normal setup flow.
   const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
-  // Set on Resume. The snapshot doesn't keep the session player's place,
-  // so a resumed session starts again at its first segment and its
-  // segments no longer line up with what was run: the summary judges
-  // such a run by the whole run, as before work segments were kept.
+  // Legacy/unverifiable work history must never become measured work pace.
   const resumedRef = useRef(false);
+  const [snapshotWriteFailed, setSnapshotWriteFailed] = useState(false);
+  const [continuedWithoutCoaching, setContinuedWithoutCoaching] =
+    useState(false);
+  const recoveryNotice = (
+    <>
+      {snapshotWriteFailed && (
+        <Banner
+          variant="neutral"
+          description="Latest progress couldn't be saved for recovery. Recording continues; keep this run open."
+          className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
+        />
+      )}
+      {continuedWithoutCoaching && (
+        <Banner
+          variant="neutral"
+          description="Continuing without coaching. Your recorded progress is kept."
+          className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
+        />
+      )}
+    </>
+  );
   // Fast-launch arc: `forceModal` is the "Customize" / "More options" escape
   // hatch that drops from the launch card / tile picker into the full config
   // modal. `launchShoeId` is the shoe chosen inline on either fast surface.
@@ -445,21 +489,40 @@ export default function Run() {
   // canonical segments from the plan prefill, or derived on the spot for a
   // hand-built interval session. Guided runs keep their own player (and
   // overlay) this slice.
-  const sessionSegments = useMemo(() => {
-    if (!runConfig) return null;
-    // STRUCT-SESS-03: guided workouts are segments like everything else.
-    if (runConfig.activityType === "guided") {
-      return runConfig.guidedWorkout
-        ? segmentsFromGuided(runConfig.guidedWorkout)
-        : null;
-    }
-    if (runConfig.segments?.length) return runConfig.segments;
-    if (runConfig.activityType === "intervals" && runConfig.intervals) {
-      return segmentsFromIntervals(runConfig.intervals, unit, cueSeed);
-    }
-    return null;
-  }, [runConfig, unit, cueSeed]);
-  const player = useSessionPlayer(sessionSegments);
+  const sessionSegments = useMemo(
+    () => sessionSegmentsFor(runConfig, unit, cueSeed),
+    [runConfig, unit, cueSeed]
+  );
+  const player = useSessionPlayer(
+    sessionSegments,
+    requiresManualDistance(runConfig) ? "manual" : "gps"
+  );
+  const resumeCoaching = useMemo(() => {
+    if (!resumePrompt) return null;
+    const segments = sessionSegmentsFor(resumePrompt.config, unit, cueSeed);
+    const mode: SessionDistanceMode = requiresManualDistance(
+      resumePrompt.config
+    )
+      ? "manual"
+      : "gps";
+    const distance = mode === "manual" ? 0 : totalDistance(resumePrompt.points);
+    const checkpoint = segments
+      ? validateSessionPlayerCheckpoint(
+          resumePrompt.playerCheckpoint,
+          segments,
+          resumePrompt.accumulatedSeconds,
+          distance,
+          mode
+        )
+      : null;
+    return {
+      segments,
+      mode,
+      distance,
+      checkpoint,
+      fallback: !!segments?.length && !checkpoint,
+    };
+  }, [resumePrompt, unit, cueSeed]);
   const { start: startSessionPlayer, tick: tickSessionPlayer } = player;
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
@@ -748,9 +811,13 @@ export default function Run() {
       points: gps.getPoints(),
       lastWriteAt: Date.now(),
       phase: phase === "paused" ? "paused" : "active",
+      ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
     };
-    writeStoredRun(uid, snapshot);
-  }, [runConfig, phase, timer, gps, profile?.uid]);
+    const saved = writeStoredRun(uid, snapshot);
+    // A boolean state bails out on repeated failures/successes. Updating a
+    // timestamp here would itself re-render and schedule another write.
+    setSnapshotWriteFailed(!saved);
+  }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
 
   // Periodic write: every 5s while a run is in flight. The interval
   // re-arms whenever the deps change (e.g. pause flips phase) so the
@@ -790,12 +857,62 @@ export default function Run() {
     if (!resumePrompt) return;
     audioCues.prime();
     await wakeLock.request();
-    resumedRef.current = true;
-    setRunConfig(resumePrompt.config);
+    const coachingRestored = !!(
+      resumeCoaching?.checkpoint &&
+      resumeCoaching.segments &&
+      player.restore(
+        resumeCoaching.checkpoint,
+        resumeCoaching.segments,
+        resumePrompt.accumulatedSeconds,
+        resumeCoaching.distance,
+        resumeCoaching.mode
+      )
+    );
+    resumedRef.current = !coachingRestored;
+    const fallback = !!resumeCoaching?.segments?.length && !coachingRestored;
+    setContinuedWithoutCoaching(fallback);
+    if (coachingRestored) {
+      // Restored state arrives on mount; it must not replay its step cue or
+      // completion announcement. A subsequent real transition still speaks.
+      segmentIndexRef.current = resumeCoaching!.checkpoint!.index;
+    }
+    if (fallback) {
+      const activityType =
+        requiresManualDistance(resumePrompt.config) &&
+        !isTreadmillRun(resumePrompt.config)
+          ? "manual"
+          : "freerun";
+      setRunConfig({
+        ...resumePrompt.config,
+        activityType,
+        ...(isTreadmillRun(resumePrompt.config)
+          ? { place: "treadmill" as const }
+          : {}),
+        segments: undefined,
+        intervals: undefined,
+        guidedWorkout: undefined,
+        target: { type: "none" },
+        paceAlerts: false,
+        // Preserve the planned slot; the existing boundary records an
+        // uncoached continuation as modified rather than an exact session.
+        planMetadata: finalisePlanMetadata(
+          resumePrompt.config.planMetadata,
+          activityType
+        ),
+      });
+    } else {
+      setRunConfig(resumePrompt.config);
+    }
     startedAtRef.current = resumePrompt.startedAt;
+    // Auto-pause snapshots kept the active screen phase with a stopped
+    // timer. Restore them as explicitly paused so GPS cannot run alone.
+    const restoredPhase =
+      resumePrompt.phase === "paused" || !resumePrompt.isRunning
+        ? "paused"
+        : "active";
     timer.rehydrate({
       accumulatedSeconds: resumePrompt.accumulatedSeconds,
-      isRunning: resumePrompt.isRunning,
+      isRunning: restoredPhase === "active",
     });
     if (resumePrompt.points.length > 0) {
       gps.appendPoints(resumePrompt.points);
@@ -809,9 +926,7 @@ export default function Run() {
          effect below releases the hold once the run is moving. */
       const last = resumePrompt.points[resumePrompt.points.length - 1];
       gps.pause(
-        resumePrompt.phase === "active"
-          ? resumePrompt.lastWriteAt
-          : last.timestamp
+        restoredPhase === "active" ? resumePrompt.lastWriteAt : last.timestamp
       );
     }
     // 5s suppression window: the cold-start GPS chip won't fire its
@@ -819,21 +934,18 @@ export default function Run() {
     // would otherwise display "GPS recovering · last fix Xs ago"
     // using the stale lastFixAt from the restored trail.
     setGapBannerSuppressUntil(Date.now() + 5000);
-    dispatch({ type: "RESUME_SNAPSHOT", phase: resumePrompt.phase });
+    dispatch({ type: "RESUME_SNAPSHOT", phase: restoredPhase });
     setResumePrompt(null);
     // Restart GPS for outdoor runs that were active. Paused runs
     // get GPS back on user-driven Resume (handleResume below); we
     // only re-arm here when the snapshot itself was active.
     // A run stored before Pgm8 as `activityType: "treadmill"` reads as
     // a treadmill run too (`isTreadmillRun`), so it resumes without GPS.
-    if (
-      isOutdoorGpsRun(resumePrompt.config) &&
-      resumePrompt.phase === "active"
-    ) {
+    if (isOutdoorGpsRun(resumePrompt.config) && restoredPhase === "active") {
       gps.start();
     }
     haptic("medium");
-  }, [resumePrompt, timer, gps, audioCues, wakeLock]);
+  }, [resumePrompt, resumeCoaching, player, timer, gps, audioCues, wakeLock]);
 
   const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
@@ -1168,7 +1280,7 @@ export default function Run() {
         // What the session's work segments covered, which the summary
         // judges the session by. On the distance the player was ticked
         // with, the run's own, not a hand-entered total; none after a
-        // resume (`resumedRef`) or when only the final whole-run distance
+        // unverifiable resume (`resumedRef`) or when only the final whole-run distance
         // is known. Manual step completion is not a measured work distance.
         workPortion:
           resumedRef.current || requiresManualDistance(runConfig)
@@ -1247,6 +1359,11 @@ export default function Run() {
           haptic("light");
         }}
       >
+        {(snapshotWriteFailed || continuedWithoutCoaching) && (
+          <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] space-y-2 px-4">
+            {recoveryNotice}
+          </div>
+        )}
         <div className="size-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-8">
           <svg
             width="24"
@@ -1663,6 +1780,9 @@ export default function Run() {
             className="flex-1 min-h-0 overflow-y-auto text-white"
             style={{ backgroundColor: THEME.bg }}
           >
+            {(snapshotWriteFailed || continuedWithoutCoaching) && (
+              <div className="px-4 pt-3 space-y-2">{recoveryNotice}</div>
+            )}
             <TreadmillMode
               mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
               elapsed={timer.elapsed}
@@ -1784,6 +1904,7 @@ export default function Run() {
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
             <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
+              {recoveryNotice}
               {targetRoute ? (
                 <>
                   <RouteFollowChip
@@ -1945,6 +2066,14 @@ export default function Run() {
           distanceMeters={totalDistance(resumePrompt.points)}
           startedAt={resumePrompt.startedAt}
           onResume={handleResumeFromPrompt}
+          recoveryNote={
+            resumeCoaching?.fallback
+              ? "Your recorded progress is kept. Session guidance couldn't be restored. Continue without coaching."
+              : undefined
+          }
+          resumeLabel={
+            resumeCoaching?.fallback ? "Continue without coaching" : undefined
+          }
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
           onBack={() => navigate("/program?tab=run")}

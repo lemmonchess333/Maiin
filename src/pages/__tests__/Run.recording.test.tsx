@@ -22,11 +22,19 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Run from "../Run";
 import {
   writeStoredRun,
+  readStoredRun,
+  runResumeKey,
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "@/lib/runResumeStorage";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
-import { segmentsFromRunWalk } from "@/lib/runSegments";
+import {
+  segmentsFromRunWalk,
+  segmentsFromIntervals,
+  type SessionSegment,
+} from "@/lib/runSegments";
+import { sessionPlayerSignature } from "@/lib/sessionPlayerCheckpoint";
+import { requiresManualDistance } from "@/lib/runGuards";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { GPSPoint } from "@/lib/gps";
 
@@ -47,6 +55,7 @@ const h = vi.hoisted(() => ({
   timerStart: vi.fn(),
   distanceCue: vi.fn(),
   timeCue: vi.fn(),
+  speak: vi.fn(),
 }));
 
 /* Stable across renders, as the real hook's useCallbacks are: the page's
@@ -121,7 +130,7 @@ vi.mock("@/hooks/useHeartRate", () => ({
 vi.mock("@/hooks/useAudioCues", () => ({
   useAudioCues: () => ({
     prime: () => {},
-    speak: () => {},
+    speak: h.speak,
     checkDistanceCue: h.distanceCue,
     checkTimeCue: h.timeCue,
     checkPaceAlert: () => {},
@@ -150,15 +159,23 @@ vi.mock("@/components/run/RunBottomSheet", () => ({
     onResume,
     onLock,
     onStop,
+    intervalDisplay,
+    isPaused,
   }: {
     onPause: () => void;
     onResume: () => void;
     onLock: () => void;
     onStop: () => void;
+    intervalDisplay?: import("react").ReactNode;
+    isPaused: boolean;
   }) => (
     <>
-      <button onClick={onPause}>Pause</button>
-      <button onClick={onResume}>Carry on</button>
+      {intervalDisplay}
+      {isPaused ? (
+        <button onClick={onResume}>Carry on</button>
+      ) : (
+        <button onClick={onPause}>Pause</button>
+      )}
       <button onClick={onLock}>Lock</button>
       <button onClick={onStop}>Finish</button>
     </>
@@ -209,6 +226,24 @@ function saveInterruptedRun(
     phase,
     points,
   };
+  // These fixtures exercise the real player, not the legacy fallback.
+  // Legacy/invalid coaching checkpoints have their own explicit cases below.
+  const segments = snapshot.config.segments?.length
+    ? snapshot.config.segments
+    : snapshot.config.activityType === "intervals" && snapshot.config.intervals
+      ? segmentsFromIntervals(snapshot.config.intervals, h.unit)
+      : null;
+  if (segments) {
+    snapshot.playerCheckpoint = {
+      version: 1,
+      signature: sessionPlayerSignature(
+        segments,
+        requiresManualDistance(snapshot.config) ? "manual" : "gps"
+      ),
+      index: 0,
+      segmentStarts: [{ elapsed: 0, distance: 0 }],
+    };
+  }
   expect(writeStoredRun("recording-test", snapshot)).toBe(true);
   return snapshot;
 }
@@ -287,11 +322,316 @@ beforeEach(() => {
   });
   h.distanceCue.mockReset();
   h.timeCue.mockReset();
+  h.speak.mockReset();
 });
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   localStorage.clear();
+});
+
+describe("recovering coaching and checkpoint durability", () => {
+  const segments: SessionSegment[] = [
+    {
+      type: "warmup",
+      label: "Warm-up",
+      instruction: "Warm up",
+      target: { kind: "duration", seconds: 60 },
+    },
+    {
+      type: "hard",
+      label: "Rep one",
+      instruction: "Run",
+      cue: "First rep",
+      target: { kind: "distance", meters: 400 },
+      rep: 1,
+      totalReps: 3,
+    },
+    {
+      type: "recovery",
+      label: "Recovery one",
+      instruction: "Recover",
+      target: { kind: "duration", seconds: 30 },
+    },
+    {
+      type: "hard",
+      label: "Rep two",
+      instruction: "Run",
+      cue: "Second rep",
+      target: { kind: "distance", meters: 400 },
+      rep: 2,
+      totalReps: 3,
+    },
+    {
+      type: "recovery",
+      label: "Recovery two",
+      instruction: "Recover",
+      cue: "Second recovery",
+      target: { kind: "duration", seconds: 30 },
+    },
+    {
+      type: "hard",
+      label: "Rep three",
+      instruction: "Run",
+      cue: "Third rep",
+      target: { kind: "distance", meters: 400 },
+      rep: 3,
+      totalReps: 3,
+    },
+    {
+      type: "cooldown",
+      label: "Cool-down",
+      instruction: "Cool down",
+      target: { kind: "duration", seconds: 60 },
+    },
+  ];
+
+  it.each(["active", "paused"] as const)(
+    "restores the second recovery, work accounting and cues after a real %s remount",
+    async (savedPhase) => {
+      const seed = saveInterruptedRun("active", {
+        activityType: "intervals",
+        autoPause: false,
+        segments,
+      });
+      expect(
+        writeStoredRun("recording-test", {
+          ...seed,
+          accumulatedSeconds: 0,
+          points: [point(0, T0)],
+          lastWriteAt: T0,
+        })
+      ).toBe(true);
+      h.timer.elapsed = 0;
+      h.gps.points = [point(0, T0)];
+      const view = render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      expect(
+        screen.getByText("Warm-up", { selector: "p.font-extrabold" })
+      ).toBeInTheDocument();
+      for (const [elapsed, metres] of [
+        [60, 200],
+        [180, 600],
+        [210, 650],
+        [330, 1050],
+        [345, 1100],
+      ]) {
+        vi.setSystemTime(T0 + elapsed * 1000);
+        h.timer.elapsed = elapsed;
+        h.gps.distance = metres;
+        h.gps.points = [point(0, T0), point(metres, T0 + elapsed * 1000)];
+        view.rerender(tree());
+      }
+      expect(
+        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+      ).toBeInTheDocument();
+      expect(screen.getByText("0:15")).toBeInTheDocument();
+      if (savedPhase === "paused")
+        fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+      const saved = readStoredRun("recording-test")!;
+      expect(saved.playerCheckpoint?.index).toBe(4);
+      expect(saved.accumulatedSeconds).toBe(345);
+      const spokenBefore = h.speak.mock.calls.length;
+      view.unmount();
+      const restoredView = render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      expect(
+        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+      ).toBeInTheDocument();
+      expect(screen.getByText("0:15")).toBeInTheDocument();
+      expect(h.speak).toHaveBeenCalledTimes(spokenBefore);
+      expect(h.timer.isRunning).toBe(savedPhase === "active");
+      if (savedPhase === "paused")
+        fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+      h.timer.elapsed = 360;
+      h.gps.distance = 1150;
+      restoredView.rerender(tree());
+      expect(
+        screen.getByText("Rep three", { selector: "p.font-extrabold" })
+      ).toBeInTheDocument();
+      expect(
+        h.speak.mock.calls.filter(([cue]) => cue === "Third rep")
+      ).toHaveLength(1);
+      fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+      const payload = JSON.parse(
+        screen.getByTestId("finish-payload").textContent!
+      );
+      expect(payload.workPortion).toEqual({ seconds: 240, meters: 800 });
+      expect(payload.runConfig.activityType).toBe("intervals");
+    }
+  );
+
+  it.each(["legacy", "invalid", "mismatched"] as const)(
+    "offers an honest uncoached continuation for a %s planned snapshot",
+    async (kind) => {
+      const template = RUN_TEMPLATES.find((t) => t.type === "tempo")!;
+      const seed = saveInterruptedRun("active", {
+        activityType: "tempo",
+        autoPause: false,
+        segments,
+        target: { type: "pace", value: 300 },
+        planMetadata: {
+          ...freeformPlanMetadata("race_prep"),
+          scheduledRunId: "original-planned-slot",
+          plannedTemplateId: template.id,
+          plannedTemplateType: "tempo",
+          actualTemplateId: template.id,
+          matchedPlanExact: true,
+          matchedPlanType: true,
+        },
+      });
+      const checkpoint =
+        kind === "legacy"
+          ? undefined
+          : kind === "invalid"
+            ? null
+            : { ...seed.playerCheckpoint!, signature: "changed structure" };
+      expect(
+        writeStoredRun("recording-test", {
+          ...seed,
+          playerCheckpoint: checkpoint,
+        })
+      ).toBe(true);
+      h.gps.points = seed.points;
+      render(tree());
+      expect(
+        screen.getByText(/Session guidance couldn't be restored/)
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Resume run" })).toBeNull();
+      await act(async () =>
+        fireEvent.click(
+          screen.getByRole("button", { name: "Continue without coaching" })
+        )
+      );
+      expect(
+        screen.getByText(/Continuing without coaching/)
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector("p.font-extrabold.leading-tight")
+      ).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+      const payload = JSON.parse(
+        screen.getByTestId("finish-payload").textContent!
+      );
+      expect(payload.points).toEqual(seed.points);
+      expect(payload.workPortion).toBeNull();
+      expect(payload.runConfig.activityType).toBe("freerun");
+      expect(payload.runConfig.target).toEqual({ type: "none" });
+      expect(payload.runConfig.paceAlerts).toBe(false);
+      expect(payload.runConfig.segments).toBeUndefined();
+      expect(payload.runConfig.planMetadata).toMatchObject({
+        scheduledRunId: "original-planned-slot",
+        plannedTemplateId: template.id,
+        actualTemplateId: null,
+        matchedPlanExact: false,
+        matchedPlanType: false,
+      });
+    }
+  );
+
+  it.each([
+    { activityType: "intervals" as const, place: "treadmill" as const },
+    {
+      activityType:
+        "treadmill" as unknown as StoredRun["config"]["activityType"],
+    },
+    { activityType: "manual" as const },
+  ])(
+    "keeps non-GPS input on an uncoached legacy continuation: %j",
+    async (mode) => {
+      const seed = saveInterruptedRun("active", {
+        ...mode,
+        segments,
+        autoPause: false,
+      });
+      expect(
+        writeStoredRun("recording-test", {
+          ...seed,
+          playerCheckpoint: undefined,
+          points: [],
+        })
+      ).toBe(true);
+      render(tree());
+      await act(async () =>
+        fireEvent.click(
+          screen.getByRole("button", { name: "Continue without coaching" })
+        )
+      );
+      const manual = mode.activityType === "manual";
+      expect(
+        screen.getByRole("spinbutton", {
+          name: manual ? "Distance covered" : "Distance from treadmill",
+        })
+      ).toBeInTheDocument();
+      expect(h.gpsCalls).not.toContain("start");
+      expect(
+        screen.getByRole("button", { name: "Pause run" })
+      ).toBeInTheDocument();
+    }
+  );
+
+  it.each([
+    { activityType: "easy", locked: false },
+    { activityType: "manual", locked: false },
+    { activityType: "easy", locked: true },
+  ] as const)(
+    "reports refused checkpoint writes and clears after a real successful write: %j",
+    async ({ activityType, locked }) => {
+      const { view } = await resumeFromSnapshot("active", {
+        activityType,
+        autoPause: false,
+      });
+      if (locked) fireEvent.click(screen.getByRole("button", { name: "Lock" }));
+      const before = readStoredRun("recording-test")!;
+      const originalSet = Storage.prototype.setItem;
+      const refused = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (this: Storage, key, value) {
+          if (key.startsWith(runResumeKey("recording-test")))
+            throw new DOMException("quota", "QuotaExceededError");
+          return originalSet.call(this, key, value);
+        });
+      try {
+        h.timer.elapsed = 900;
+        view.rerender(tree());
+        const notice = screen.getByText(
+          /Latest progress couldn't be saved for recovery/
+        );
+        expect(notice.closest('[role="status"]')).not.toBeNull();
+        if (locked)
+          expect(
+            screen.getByRole("button", { name: "Unlock run controls" })
+          ).toBeInTheDocument();
+        expect(readStoredRun("recording-test")?.accumulatedSeconds).toBe(
+          before.accumulatedSeconds
+        );
+        const attempts = refused.mock.calls.length;
+        expect(attempts).toBeLessThan(10);
+        refused.mockRestore();
+        h.timer.elapsed = 901;
+        view.rerender(tree());
+        expect(
+          screen.queryByText(/Latest progress couldn't be saved for recovery/)
+        ).toBeNull();
+        expect(readStoredRun("recording-test")?.accumulatedSeconds).toBe(901);
+        if (locked) {
+          fireEvent.click(
+            screen.getByRole("button", { name: "Unlock run controls" }),
+            { detail: 0 }
+          );
+          expect(
+            screen.getByRole("button", { name: "Finish" })
+          ).toBeInTheDocument();
+        }
+      } finally {
+        refused.mockRestore();
+      }
+    }
+  );
 });
 
 describe("a structured run's real player", () => {
@@ -453,6 +793,50 @@ describe("the trace's clock follows the run's", () => {
     expect(h.pauseSince[0]).toBe(snapshot.points[1].timestamp);
     expect(h.gpsCalls).not.toContain("resume");
     fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
+  });
+
+  it("restores an actual auto-paused snapshot as paused until an explicit Resume", async () => {
+    const { view } = await resumeFromSnapshot("active");
+    h.gps.currentPoint = { ...point(3, T0), speed: 0 };
+    view.rerender(tree());
+    act(() => vi.advanceTimersByTime(5000));
+    expect(
+      screen.getByText(/Auto-paused · start moving to resume/)
+    ).toBeInTheDocument();
+    expect(h.timer.isRunning).toBe(false);
+    expect(readStoredRun("recording-test")).toMatchObject({
+      phase: "active",
+      isRunning: false,
+    });
+
+    view.unmount();
+    h.gps.currentPoint = null;
+    h.gpsCalls.length = 0;
+    const restoredView = render(tree());
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+    );
+    expect(h.timer.isRunning).toBe(false);
+    expect(h.gpsCalls).not.toContain("start");
+    expect(h.gpsCalls).not.toContain("resume");
+    expect(
+      screen.getByRole("button", { name: "Carry on" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Pause" })).toBeNull();
+    expect(readStoredRun("recording-test")).toMatchObject({
+      phase: "paused",
+      isRunning: false,
+    });
+
+    // A new moving fix must not silently restart a run restored as paused.
+    h.gps.currentPoint = { ...point(3, T0), speed: 3 };
+    restoredView.rerender(tree());
+    expect(h.timer.isRunning).toBe(false);
+    expect(h.gpsCalls).not.toContain("resume");
+    fireEvent.click(screen.getByRole("button", { name: "Carry on" }));
+    expect(h.timerResume).toHaveBeenCalledOnce();
+    expect(h.timer.isRunning).toBe(true);
     expect(h.gpsCalls.slice(-2)).toEqual(["start", "resume"]);
   });
 

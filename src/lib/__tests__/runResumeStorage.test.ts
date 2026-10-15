@@ -60,6 +60,60 @@ afterEach(() => {
 });
 
 describe("writeStoredRun + readStoredRun — round-trip", () => {
+  it("round-trips optional coaching anchors without changing the base schema", () => {
+    const snapshot = makeSnapshot({
+      playerCheckpoint: {
+        version: 1,
+        signature: "stored execution identity",
+        index: 0,
+        segmentStarts: [{ elapsed: 0, distance: 0 }],
+      },
+    });
+    expect(writeStoredRun(UID, snapshot)).toBe(true);
+    expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+    expect(snapshot.v).toBe(2);
+  });
+
+  it.each([
+    { version: 99 },
+    { version: 1, signature: "broken", index: -1, segmentStarts: [] },
+    {
+      version: 1,
+      signature: "broken",
+      index: 0,
+      segmentStarts: [{ elapsed: "0", distance: 0 }],
+    },
+  ])(
+    "keeps legacy time, route and plan identity when optional coaching is malformed: %j",
+    (playerCheckpoint) => {
+      const snapshot = makeSnapshot({
+        points: [
+          {
+            lat: 51.5,
+            lon: -0.12,
+            timestamp: 1_001_000,
+            altitude: null,
+            accuracy: 5,
+            speed: 3,
+            rawLat: 51.5,
+            rawLon: -0.12,
+          },
+        ],
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      const meta = JSON.parse(localStorage.getItem(RUN_RESUME_KEY)!);
+      localStorage.setItem(
+        RUN_RESUME_KEY,
+        JSON.stringify({ ...meta, playerCheckpoint })
+      );
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual({
+        ...snapshot,
+        playerCheckpoint: null,
+      });
+      expect(localStorage.getItem(RUN_RESUME_KEY)).not.toBeNull();
+    }
+  );
+
   it("writes and reads back an identical snapshot", () => {
     // Bedrock: the JSON serialisation preserves every field the
     // resume flow reads on the way back in.

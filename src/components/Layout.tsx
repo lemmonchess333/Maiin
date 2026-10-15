@@ -15,6 +15,7 @@ import {
   getQueueLength,
   getFailedWorkoutCompletionCount,
   getFailedRunSaveCount,
+  getFailedMealSaveCount,
   subscribeQueuedWrites,
   flushQueue,
 } from "@/lib/offlineQueue";
@@ -59,13 +60,15 @@ function useQueuedChanges(uid: string | null) {
     // external-store read. Both queues and failures belong to THIS account.
     () =>
       uid
-        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}:${getFailedRunSaveCount(uid)}`
-        : "0:0:0",
+        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}:${getFailedRunSaveCount(uid)}:${getFailedMealSaveCount(uid)}`
+        : "0:0:0:0",
     [uid]
   );
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
-  const [count, failedWorkouts, failedRuns] = snapshot.split(":").map(Number);
-  return { count, failedWorkouts, failedRuns };
+  const [count, failedWorkouts, failedRuns, failedMeals] = snapshot
+    .split(":")
+    .map(Number);
+  return { count, failedWorkouts, failedRuns, failedMeals };
 }
 
 const tabs: { to: string; icon: TabIcon; label: string }[] = [
@@ -93,14 +96,19 @@ export default function Layout() {
     count: queueCount,
     failedWorkouts,
     failedRuns,
+    failedMeals,
   } = useQueuedChanges(uid);
   const [retryingUid, setRetryingUid] = useState<string | null>(null);
-  const failedCount = failedWorkouts + failedRuns;
-  const failedNoun = failedRuns
-    ? failedWorkouts
-      ? "session"
-      : "run"
-    : "workout";
+  const failedCount = failedWorkouts + failedRuns + failedMeals;
+  const failedNoun = failedMeals
+    ? failedWorkouts || failedRuns
+      ? "change"
+      : "meal"
+    : failedRuns
+      ? failedWorkouts
+        ? "session"
+        : "run"
+      : "workout";
   const waitingCount = Math.max(0, queueCount - failedCount);
   const pendingText =
     failedCount > 0
@@ -205,7 +213,7 @@ export default function Layout() {
               }
               className="overflow-hidden"
             >
-              <div className="ds-status-banner ds-status-banner--warning">
+              <div className="ds-status-banner ds-status-banner--warning flex-wrap">
                 {isOnline ? (
                   <CloudUpload
                     className="size-3.5 shrink-0"
@@ -214,7 +222,7 @@ export default function Layout() {
                 ) : (
                   <WifiOff className="size-3.5 shrink-0" aria-hidden="true" />
                 )}
-                <span>
+                <span className="min-w-0 flex-1 basis-40 break-words">
                   <InlineNumerals>
                     {queueCount > 0
                       ? `${isOnline ? "" : "You're offline · "}${pendingText}`

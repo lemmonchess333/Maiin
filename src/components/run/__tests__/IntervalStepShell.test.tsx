@@ -21,6 +21,8 @@ function playerAt(segments: SessionSegment[], index: number): SessionPlayer {
     next: segments[index + 1] ?? null,
     isComplete: false,
     start: vi.fn(),
+    checkpoint: null,
+    restore: vi.fn(() => false),
     tick: vi.fn(),
     skip: vi.fn(),
     workPortion: () => null,

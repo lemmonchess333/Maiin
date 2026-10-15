@@ -27,6 +27,85 @@ import {
 // elapsed, so tests drive time by passing it — no fake timers.
 
 describe("useSessionPlayer", () => {
+  it("restores mixed work/recovery anchors even before config segments render", () => {
+    const first = renderHook(() => useSessionPlayer(intervalSegs));
+    act(() => first.result.current.start());
+    for (const [seconds, metres] of [
+      [301, 0],
+      [421, 400],
+      [481, 420],
+      [500, 500],
+    ]) {
+      act(() => first.result.current.tick(seconds, metres));
+    }
+    const checkpoint = first.result.current.checkpoint;
+    const work = first.result.current.workPortion(500, 500);
+    expect(first.result.current.current?.rep).toBe(2);
+    first.unmount();
+    const next = renderHook(
+      ({ supplied }: { supplied: SessionSegment[] | null }) =>
+        useSessionPlayer(supplied),
+      { initialProps: { supplied: null as SessionSegment[] | null } }
+    );
+    act(() =>
+      expect(
+        next.result.current.restore(checkpoint, intervalSegs, 500, 500)
+      ).toBe(true)
+    );
+    next.rerender({ supplied: intervalSegs });
+    expect(next.result.current.current?.rep).toBe(2);
+    expect(next.result.current.state).toMatchObject({
+      phaseElapsed: 19,
+      phaseDistanceCovered: 80,
+    });
+    expect(next.result.current.workPortion(500, 500)).toEqual(work);
+    act(() => next.result.current.start());
+    expect(next.result.current.current?.rep).toBe(2);
+    act(() =>
+      expect(
+        next.result.current.restore(checkpoint, intervalSegs, 480, 500)
+      ).toBe(false)
+    );
+    expect(next.result.current.current?.rep).toBe(2);
+  });
+
+  it("restores completed and immediately skipped segments without inventing work", () => {
+    const supplied: SessionSegment[] = [
+      {
+        type: "hard",
+        label: "Work",
+        instruction: "Run",
+        target: { kind: "duration", seconds: 10 },
+      },
+      {
+        type: "recovery",
+        label: "Rest",
+        instruction: "Recover",
+        target: { kind: "duration", seconds: 5 },
+      },
+    ];
+    const first = renderHook(() => useSessionPlayer(supplied));
+    act(() => first.result.current.start());
+    act(() => first.result.current.skip(0, 0));
+    act(() => first.result.current.tick(5, 10));
+    const checkpoint = first.result.current.checkpoint;
+    expect(checkpoint?.index).toBe(2);
+    expect(checkpoint?.segmentStarts).toHaveLength(3);
+    const next = renderHook(() => useSessionPlayer(supplied));
+    act(() =>
+      expect(next.result.current.restore(checkpoint, supplied, 5, 10)).toBe(
+        true
+      )
+    );
+    expect(next.result.current.isComplete).toBe(true);
+    expect(next.result.current.workPortion(5, 10)).toEqual({
+      seconds: 0,
+      meters: 0,
+    });
+    act(() => next.result.current.start());
+    expect(next.result.current.isComplete).toBe(true);
+  });
+
   it.each([10, 20])(
     "executes the actual Easy %s template through its timed finish",
     (minutes) => {
