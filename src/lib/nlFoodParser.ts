@@ -23,6 +23,12 @@ export interface ParsedFood {
   carbs: number;
   fat: number;
   unrecognized?: boolean;
+  /** The food is known, but its reference cannot measure the typed amount.
+   *  Callers must request correction rather than save one-serving macros. */
+  quantityIssue?: {
+    referencePortion: string;
+    expectedUnit: "g" | "ml" | null;
+  };
   /** Human-readable portion the user typed ("200g", "150ml", "1.5kg",
    *  "1 pint"). Persisted as the diary row's portionSize so the saved
    *  entry reads back what the user wrote instead of a generic "1
@@ -1853,12 +1859,12 @@ function parseServingMl(serving: string): number | null {
   return m ? parseFloat(m[1]) : null;
 }
 
-/** A quantity scales the matched food's own serving, in standalone and
- *  compound inputs alike. Mismatched units retain the one-serving fallback. */
+/** Scale only against a compatible reference. Mass and volume cannot be
+ *  interchanged without food-specific conversion data. */
 function foodMultiplier(
   key: string,
   amount: ReturnType<typeof extractQty>
-): number {
+): number | null {
   const item = FOOD_DB[key];
   let multiplier = amount.qty;
   const piece = amount.counted ? pieceGrams(key, amount.rest) : null;
@@ -1867,10 +1873,12 @@ function foodMultiplier(
     if (servingGrams) multiplier = (amount.qty * piece) / servingGrams;
   } else if (amount.grams !== undefined) {
     const servingGrams = parseServingGrams(item.serving);
-    if (servingGrams) multiplier = amount.grams / servingGrams;
+    if (!servingGrams) return null;
+    multiplier = amount.grams / servingGrams;
   } else if (amount.ml !== undefined) {
     const servingMl = parseServingMl(item.serving);
-    if (servingMl) multiplier = amount.ml / servingMl;
+    if (!servingMl) return null;
+    multiplier = amount.ml / servingMl;
   }
   return multiplier;
 }
@@ -2198,7 +2206,10 @@ function addedShare(baseKey: string | null, key: string): number {
   return ml ? SPLASH_ML / ml : 1;
 }
 
-function unrecognizedFood(text: string): ParsedFood {
+function unresolvedFood(
+  text: string,
+  quantityIssue?: ParsedFood["quantityIssue"]
+): ParsedFood {
   const { qty, grams, ml, portionLabel, namePrefix, rest } = extractQty(text);
   const displayName =
     grams !== undefined || ml !== undefined
@@ -2206,16 +2217,28 @@ function unrecognizedFood(text: string): ParsedFood {
       : qty > 1
         ? `${rest} (x${qty})`
         : rest;
-  logger.warn("[nlFoodParser] Unrecognized food:", rest);
+  if (!quantityIssue) logger.warn("[nlFoodParser] Unrecognized food:", rest);
   return {
     name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
     calories: 0,
     protein: 0,
     carbs: 0,
     fat: 0,
-    unrecognized: true,
+    ...(quantityIssue ? { quantityIssue } : { unrecognized: true }),
     ...(portionLabel ? { portionLabel } : {}),
   };
+}
+
+function unresolvedQuantity(text: string, key: string): ParsedFood {
+  const referencePortion = FOOD_DB[key].serving;
+  return unresolvedFood(text, {
+    referencePortion,
+    expectedUnit: parseServingGrams(referencePortion)
+      ? "g"
+      : parseServingMl(referencePortion)
+        ? "ml"
+        : null,
+  });
 }
 
 export function parseFoodText(input: string): ParsedFood[] {
@@ -2263,6 +2286,13 @@ export function parseFoodText(input: string): ParsedFood[] {
           i === 0 ? { ...extracted, counted, grams, ml } : extracted;
         const key = findBestMatch(amount.rest);
         if (key) {
+          const multiplier = foodMultiplier(key, amount);
+          if (multiplier === null) {
+            unresolved.push(
+              unresolvedQuantity(i === 0 ? typedParts[0] : part, key)
+            );
+            continue;
+          }
           matchedParts.push({ index: i, text: part });
           const item = FOOD_DB[key];
           const assumedShare = i === 0 ? 1 : addedShare(baseKey, key);
@@ -2283,7 +2313,7 @@ export function parseFoodText(input: string): ParsedFood[] {
           // ("a splash of milk") retains the existing cup-sized assumption.
           const portionShare = impliedSplash
             ? assumedShare * amount.qty
-            : foodMultiplier(key, amount);
+            : multiplier;
           // The leading quantity repeats the base and implicit additions.
           // A side's own count, grams or ml is an absolute amount, applied
           // once even when the leading quantity is zero.
@@ -2296,7 +2326,7 @@ export function parseFoodText(input: string): ParsedFood[] {
         } else {
           // Keep the missing ingredient (including its typed portion).
           // A caller must not mistake a known subtotal for the whole meal.
-          unresolved.push(unrecognizedFood(i === 0 ? typedParts[0] : part));
+          unresolved.push(unresolvedFood(i === 0 ? typedParts[0] : part));
         }
       }
 
@@ -2342,15 +2372,11 @@ export function parseFoodText(input: string): ParsedFood[] {
     const key = findBestMatch(rest);
     if (key) {
       const item = FOOD_DB[key];
-      // Compute macro multiplier. Mass/volume prefixes scale against
-      // the FOOD_DB serving's gram/ml count; fall back to count-based
-      // qty otherwise. If the user wrote "200g" on a beverage (or
-      // "150ml" on a solid food), the serving unit won't match — we
-      // conservatively use qty=1 (one-serving macros), but
-      // `portionLabel` still carries the user's wording so the saved
-      // entry stays honest. Better than silently producing the
-      // count-prefix bug (200x macros).
       const multiplier = foodMultiplier(key, { qty, grams, ml, counted, rest });
+      if (multiplier === null) {
+        results.push(unresolvedQuantity(segment, key));
+        continue;
+      }
       // Name preserves the user's wording: typed portion ("200g chicken")
       // rounds out the prefix already, so we just title-case the rest
       // and the portionLabel carries the unit.
@@ -2365,10 +2391,8 @@ export function parseFoodText(input: string): ParsedFood[] {
         protein: Math.round(item.protein * multiplier),
         carbs: Math.round(item.carbs * multiplier),
         fat: Math.round(item.fat * multiplier),
-        // Surface the typed portion so the save path persists it as
-        // the diary row's portionSize. Unit-mismatched rows still
-        // carry the label (it's what the user wrote); the caller
-        // sees qty=1 macros and can decide whether to flag.
+        // Only compatible quantities reach this point. Persist the typed
+        // portion alongside the macros calculated for that same amount.
         ...(portionLabel ? { portionLabel } : {}),
         // Skip canonical-key dedup when an explicit portion was
         // typed — merging "200g chicken" with "100g chicken" loses
@@ -2395,7 +2419,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       continue;
     }
 
-    results.push(unrecognizedFood(segment));
+    results.push(unresolvedFood(segment));
   }
 
   return mergeByCanonicalKey(results);

@@ -298,18 +298,18 @@ function FoodSuggestionsDropdown({
                   userSelect: "none",
                 }}
                 className={cn(
-                  "w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
+                  "flex-1 min-w-0 min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex flex-col items-start gap-2 border-b border-border/30 last:border-0",
                   quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
-                <span className="text-sm font-medium text-foreground truncate min-w-0">
+                <span className="w-full min-w-0 break-words text-sm font-medium text-foreground">
                   {item.name}
                   <span className="block text-micro text-muted-foreground font-normal">
                     {item.portionSize} ·{" "}
                     <RowAction>{item.example ? "Select" : "Log"}</RowAction>
                   </span>
                 </span>
-                <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
                   {item.cal} {CALORIE_UNIT}
                 </span>
               </button>
@@ -344,15 +344,15 @@ function FoodSuggestionsDropdown({
               key={`pantry-${p.id}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectPantry(p)}
-              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex flex-col items-start gap-2 border-b border-border/30 last:border-0"
             >
-              <span className="text-sm font-medium text-foreground truncate min-w-0">
+              <span className="w-full min-w-0 break-words text-sm font-medium text-foreground">
                 {p.name}
                 <span className="block text-micro text-muted-foreground font-normal">
                   {p.servingSize} · <RowAction>Log</RowAction>
                 </span>
               </span>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+              <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
                 {Math.round(p.calories)} {CALORIE_UNIT} · P{" "}
                 {Math.round(p.protein)}g · C {Math.round(p.carbs)}g · F{" "}
                 {Math.round(p.fat)}g
@@ -369,15 +369,15 @@ function FoodSuggestionsDropdown({
               key={`ai-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(s)}
-              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex flex-col items-start gap-2 border-b border-border/30 last:border-0"
             >
-              <span className="text-sm font-medium text-foreground truncate min-w-0">
+              <span className="w-full min-w-0 break-words text-sm font-medium text-foreground">
                 {s.name}
                 <span className="block text-micro text-muted-foreground font-normal">
                   {s.serving} · <RowAction>Select</RowAction>
                 </span>
               </span>
-              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+              <span className="w-full min-w-0 break-words text-xs text-muted-foreground font-mono tabular-nums">
                 {/* Label-space matches the OFF row below ("P 30g") — this
                     row read "P30g" eight lines above its sibling's
                     spaced form. Gram UNIT stays unspaced (house style,

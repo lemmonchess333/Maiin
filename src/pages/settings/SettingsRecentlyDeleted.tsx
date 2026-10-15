@@ -96,7 +96,11 @@ export default function SettingsRecentlyDeleted() {
       toast.success(`${meal.foodName || "Meal"} permanently deleted.`);
     } catch (e) {
       logger.error("[SettingsRecentlyDeleted] hard-delete failed", e);
-      toast.error("Couldn't delete. Try again.");
+      toast.error(
+        e instanceof Error && !("code" in e)
+          ? e.message
+          : "Couldn't delete. Try again."
+      );
     } finally {
       setPendingId(null);
     }

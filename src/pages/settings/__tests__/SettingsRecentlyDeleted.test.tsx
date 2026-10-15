@@ -17,6 +17,8 @@ import type { Meal } from "@/hooks/useMeals";
 
 const restoreMock = vi.fn(async () => undefined);
 const hardDeleteMock = vi.fn(async () => undefined);
+const feedback = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+vi.mock("@/lib/toast", () => ({ toast: feedback }));
 let deletedMealsMock: Meal[] = [];
 
 vi.mock("@/hooks/useMeals", async () => {
@@ -75,6 +77,8 @@ function renderWith(node: React.ReactElement) {
 beforeEach(() => {
   restoreMock.mockClear();
   hardDeleteMock.mockClear();
+  feedback.error.mockClear();
+  feedback.success.mockClear();
   deletedMealsMock = [];
 });
 
@@ -126,6 +130,66 @@ describe("SettingsRecentlyDeleted — listing", () => {
 });
 
 describe("SettingsRecentlyDeleted — actions", () => {
+  it.each([
+    "Connect to permanently delete this meal.",
+    "This meal has changes waiting to sync. Retry before deleting it permanently.",
+  ])("explains a refused permanent deletion: %s", async (message) => {
+    deletedMealsMock = [makeMeal({ id: "m-2", foodName: "Toast" })];
+    hardDeleteMock.mockRejectedValueOnce(new Error(message));
+    renderWith(<SettingsRecentlyDeleted />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Permanently delete Toast" })
+      );
+    });
+    expect(feedback.error).toHaveBeenCalledWith(message);
+    expect(feedback.success).not.toHaveBeenCalled();
+    expect(screen.getByText("Toast")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Permanently delete Toast" })
+    ).toBeEnabled();
+  });
+
+  it("keeps SDK details out of the recovery message", async () => {
+    deletedMealsMock = [makeMeal({ id: "m-2", foodName: "Toast" })];
+    hardDeleteMock.mockRejectedValueOnce(
+      Object.assign(new Error("Raw SDK detail"), { code: "unavailable" })
+    );
+    renderWith(<SettingsRecentlyDeleted />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Permanently delete Toast" })
+      );
+    });
+    expect(feedback.error).toHaveBeenCalledWith("Couldn't delete. Try again.");
+    expect(feedback.success).not.toHaveBeenCalled();
+  });
+
+  it("waits for deletion acknowledgement before reporting success and keeps both actions locked", async () => {
+    deletedMealsMock = [makeMeal({ id: "m-2", foodName: "Toast" })];
+    let finish!: () => void;
+    hardDeleteMock.mockImplementationOnce(
+      () =>
+        new Promise<undefined>((resolve) => {
+          finish = () => resolve(undefined);
+        })
+    );
+    renderWith(<SettingsRecentlyDeleted />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Permanently delete Toast" })
+    );
+    expect(
+      screen.getByRole("button", { name: "Permanently delete Toast" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Restore Toast" })
+    ).toBeDisabled();
+    expect(feedback.success).not.toHaveBeenCalled();
+    await act(async () => finish());
+    expect(feedback.success).toHaveBeenCalledWith("Toast permanently deleted.");
+    expect(feedback.error).not.toHaveBeenCalled();
+  });
+
   it("Restore button calls restoreMeal with the meal id", async () => {
     deletedMealsMock = [
       makeMeal({
