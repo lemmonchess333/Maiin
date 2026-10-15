@@ -604,6 +604,24 @@ describe("RunSummary — the pace verdict leaves a run-walk alone", () => {
     expect(benchmarkEffortOf(handed)).toBeNull();
   });
 
+  it("does not judge manually entered distance against a planned run's pace", async () => {
+    auth.profile = {
+      displayName: "Runner",
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 25 * 60 },
+        vdot: 38.3,
+      },
+    };
+    renderPlanned("easy_30", { activityType: "manual" });
+    expect(await screen.findByText("Easy 30 complete ✓")).toBeVisible();
+    expect(
+      screen.queryByText(/on target|Faster than|Slower than|Quicker than/)
+    ).toBeNull();
+    expect(
+      benchmarkEffortOf(h.paceRuns.find((r) => r.id === "run-1") as EffortRun)
+    ).toBeNull();
+  });
+
   it("hands Pace Insight a tempo with its work, which a benchmark comes from", async () => {
     const block = (pinned: boolean) => [
       { type: "warmup", target: { kind: "duration", seconds: 300 } },

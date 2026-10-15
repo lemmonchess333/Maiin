@@ -808,3 +808,134 @@ describe("parseFoodText — everyday foods", () => {
     expect(parseFoodText("mac and cheese, macaroni cheese")).toHaveLength(1);
   });
 });
+
+describe("quantities inside with phrases", () => {
+  const calories = (text: string) =>
+    parseFoodText(text).reduce((sum, item) => sum + item.calories, 0);
+  const totals = (text: string) =>
+    parseFoodText(text).reduce(
+      (sum, item) => ({
+        calories: sum.calories + item.calories,
+        protein: sum.protein + item.protein,
+        carbs: sum.carbs + item.carbs,
+        fat: sum.fat + item.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+  it.each([
+    ["200g chicken with rice", "200g chicken, rice"],
+    ["200 g chicken with 158g rice", "200 g chicken, 158g rice"],
+    ["150ml milk with 2 eggs", "150ml milk, 2 eggs"],
+    ["0g chicken with rice", "0g chicken, rice"],
+    ["0ml milk with 2 eggs", "0ml milk, 2 eggs"],
+    ["2 eggs with 2 toast", "2 eggs, 2 toast"],
+    ["2 eggs with 200g rice", "2 eggs, 200g rice"],
+    ["2 coffee with 50ml milk", "2 coffee, 50ml milk"],
+    ["2 cereal with 150ml milk", "2 cereal, 150ml milk"],
+    ["0 eggs with 2 toast", "0 eggs, 2 toast"],
+    ["0 eggs with 200g rice", "0 eggs, 200g rice"],
+    ["0 coffee with 50ml milk", "0 coffee, 50ml milk"],
+    ["2 eggs with 0 toast", "2 eggs, 0 toast"],
+    ["2 eggs with 0g rice", "2 eggs, 0g rice"],
+    ["2 coffee with 0ml milk", "2 coffee, 0ml milk"],
+    ["2 coffee with 1 splash of milk", "2 coffee, 30ml milk"],
+    ["2 coffee with 0 splash of milk", "2 coffee, 0ml milk"],
+    ["0 coffee with 1 splash of milk", "0 coffee, 30ml milk"],
+    ["2 coffee with 2 splashes of milk", "2 coffee, 60ml milk"],
+    ["10 almonds with 1 yogurt", "10 almonds, 1 yogurt"],
+    ["2 chicken wings with 1 rice", "2 chicken wings, 1 rice"],
+    ["almonds with 1 yogurt", "almonds, 1 yogurt"],
+    ["2 cans of sardines with 1 rice", "2 cans of sardines, 1 rice"],
+    ["0 almonds with 1 yogurt", "0 almonds, 1 yogurt"],
+  ])("applies each explicit quantity once: %s", (compound, separate) => {
+    expect(totals(compound)).toEqual(totals(separate));
+  });
+  it("keeps explicit quantities in the compound name instead of suggesting the whole meal repeats", () => {
+    expect(parseFoodText("2 eggs with 2 toast")[0].name).toBe(
+      "2 eggs with 2 toast"
+    );
+  });
+  it("keeps a zero base and implicit per-serving additions at zero", () => {
+    expect(totals("0 toast with butter")).toEqual({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+    expect(totals("0 tea with milk")).toEqual({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+  });
+  it("comma and and joins agree on toast plus two eggs", () => {
+    expect(calories("toast, 2 eggs")).toBe(236);
+    expect(calories("toast and 2 eggs")).toBe(236);
+  });
+  it("preserves the explicit egg count inside a with phrase", () => {
+    expect(calories("toast with 2 eggs")).toBe(calories("toast, 2 eggs"));
+  });
+  it("preserves the explicit rice weight inside a with phrase", () => {
+    expect(calories("chicken with 200g rice")).toBe(
+      calories("chicken, 200g rice")
+    );
+  });
+  it("preserves milk explicitly measured in ml without applying the implied splash", () => {
+    expect(calories("coffee with 50ml milk")).toBe(
+      calories("coffee, 50ml milk")
+    );
+    expect(calories("cereal with 150ml milk")).toBe(
+      calories("cereal, 150ml milk")
+    );
+  });
+  it("preserves a counted piece food inside a with phrase", () => {
+    expect(calories("toast with 10 almonds")).toBe(
+      calories("toast, 10 almonds")
+    );
+  });
+  it("preserves outer quantity and implied milk splash semantics", () => {
+    expect(calories("2 cups of tea with milk")).toBe(
+      2 * calories("tea with milk")
+    );
+    expect(calories("2 toast with butter")).toBe(
+      2 * calories("toast with butter")
+    );
+    expect(calories("tea with milk")).toBe(21);
+    expect(calories("tea with a splash of milk")).toBe(
+      calories("tea with milk")
+    );
+    expect(calories("2 cups of tea with a splash of milk")).toBe(
+      calories("2 cups of tea with milk")
+    );
+    expect(calories("coffee with 2 splashes of milk")).toBe(
+      Math.round(calories("coffee") + (calories("milk") * 60) / 240)
+    );
+  });
+});
+
+describe("incomplete with phrases", () => {
+  it.each([
+    ["chicken with tahini", "Tahini"],
+    ["tahini with chicken", "Tahini"],
+    ["200g chicken with 30g tahini", "30g tahini"],
+    ["chicken with tahini with rice", "Tahini"],
+  ])("preserves the unresolved ingredient in %s", (text, missing) => {
+    const rows = parseFoodText(text);
+    expect(rows.find((row) => row.unrecognized)).toMatchObject({
+      name: missing,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+    expect(
+      rows
+        .filter((row) => !row.unrecognized)
+        .every((row) => !row.name.toLowerCase().includes("tahini"))
+    ).toBe(true);
+    expect(rows.some((row) => !row.unrecognized && row.calories > 0)).toBe(
+      true
+    );
+  });
+});

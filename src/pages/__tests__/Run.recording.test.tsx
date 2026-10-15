@@ -16,6 +16,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import Run from "../Run";
@@ -34,12 +35,16 @@ const h = vi.hoisted(() => ({
     points: [] as GPSPoint[],
     currentPoint: null as GPSPoint | null,
     distance: 0,
+    error: null as string | null,
+    permissionState: "granted" as PermissionState,
   },
   gpsCalls: [] as string[],
   pauseSince: [] as (number | undefined)[],
-  timer: { isRunning: false },
+  timer: { isRunning: false, elapsed: 600 },
+  unit: "mi" as "km" | "mi",
   timerPause: vi.fn(),
   timerResume: vi.fn(),
+  timerStart: vi.fn(),
   distanceCue: vi.fn(),
   timeCue: vi.fn(),
 }));
@@ -70,15 +75,22 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => ({ programState: null, loading: false }),
 }));
-vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => "mi" }));
+vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => h.unit }));
+vi.mock("@/lib/weather", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/weather")>()),
+  getCurrentWeather: vi.fn(async () => null),
+}));
+vi.mock("@/components/run/ShoeSelector", () => ({ default: () => null }));
+// Route storage/privacy I/O is unrelated to these setup and coaching flows.
+vi.mock("@/components/run/RouteSetupSection", () => ({ default: () => null }));
 vi.mock("@/hooks/useLastRunType", () => ({ useLastRunType: () => null }));
 vi.mock("@/hooks/useGPS", () => ({
   useGPS: () => ({
     ...h.gps,
     isTracking: true,
-    error: null,
+    error: h.gps.error,
     gpsAccuracy: 5,
-    permissionState: "granted",
+    permissionState: h.gps.permissionState,
     signalQuality: "strong",
     lastFixAt: null,
     ...gpsControls,
@@ -86,9 +98,9 @@ vi.mock("@/hooks/useGPS", () => ({
 }));
 vi.mock("@/hooks/useRunTimer", () => ({
   useRunTimer: () => ({
-    elapsed: 600,
+    elapsed: h.timer.elapsed,
     isRunning: h.timer.isRunning,
-    start: () => {},
+    start: h.timerStart,
     pause: h.timerPause,
     resume: h.timerResume,
     reset: () => {},
@@ -97,7 +109,7 @@ vi.mock("@/hooks/useRunTimer", () => ({
     },
     recalcNow: () => {},
     formatTime: () => "10:00",
-    getAccumulatedSeconds: () => 600,
+    getAccumulatedSeconds: () => h.timer.elapsed,
   }),
 }));
 vi.mock("@/hooks/useWakeLock", () => ({
@@ -117,23 +129,19 @@ vi.mock("@/hooks/useAudioCues", () => ({
     checkFinal500: () => {},
   }),
 }));
-vi.mock("@/hooks/useSessionPlayer", () => ({
-  useSessionPlayer: () => ({
-    state: { index: 0 },
-    segments: [],
-    current: null,
-    next: null,
-    isComplete: false,
-    workPortion: () => null,
-    start: () => {},
-    tick: () => {},
-    skip: () => {},
-  }),
-}));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/run/RunTilePicker", () => ({
-  default: ({ onPickType }: { onPickType: (type: string) => void }) => (
-    <button onClick={() => onPickType("easy")}>Easy run</button>
+  default: ({
+    onPickType,
+    onMoreOptions,
+  }: {
+    onPickType: (type: string) => void;
+    onMoreOptions: () => void;
+  }) => (
+    <>
+      <button onClick={() => onPickType("easy")}>Easy run</button>
+      <button onClick={onMoreOptions}>More options</button>
+    </>
   ),
 }));
 vi.mock("@/components/run/RunBottomSheet", () => ({
@@ -209,11 +217,16 @@ function saveInterruptedRun(
 function Summary() {
   const state = useLocation().state as {
     routeQuality: { gapCount: number; confidence: string } | null;
+    distance: number;
+    points: GPSPoint[];
+    workPortion: { seconds: number; meters: number } | null;
+    runConfig: { activityType: string; segments?: unknown[] };
   };
   return (
-    <p>
-      {`gaps ${state.routeQuality?.gapCount} · ${state.routeQuality?.confidence}`}
-    </p>
+    <>
+      <p>{`gaps ${state.routeQuality?.gapCount} · ${state.routeQuality?.confidence}`}</p>
+      <output data-testid="finish-payload">{JSON.stringify(state)}</output>
+    </>
   );
 }
 
@@ -256,13 +269,20 @@ beforeEach(() => {
   h.gps.points = [];
   h.gps.currentPoint = null;
   h.gps.distance = 0;
+  h.gps.error = null;
+  h.gps.permissionState = "granted";
   h.gpsCalls.length = 0;
   h.pauseSince.length = 0;
   h.timer.isRunning = false;
+  h.timer.elapsed = 600;
+  h.unit = "mi";
   h.timerPause.mockReset().mockImplementation(() => {
     h.timer.isRunning = false;
   });
   h.timerResume.mockReset().mockImplementation(() => {
+    h.timer.isRunning = true;
+  });
+  h.timerStart.mockReset().mockImplementation(() => {
     h.timer.isRunning = true;
   });
   h.distanceCue.mockReset();
@@ -272,6 +292,104 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   localStorage.clear();
+});
+
+describe("a structured run's real player", () => {
+  it("settles between timer ticks instead of repeatedly rendering", async () => {
+    const originalError = console.error;
+    const errors = vi.spyOn(console, "error").mockImplementation((...args) => {
+      // Stop a regression safely instead of allowing an infinite effect loop.
+      if (String(args[0]).includes("Maximum update depth exceeded")) {
+        throw new Error("Structured run exceeded React's update depth");
+      }
+      originalError(...args);
+    });
+    try {
+      await resumeFromSnapshot("active", {
+        segments: [
+          {
+            type: "easy",
+            label: "Easy",
+            instruction: "Run at an easy pace",
+            target: { kind: "duration", seconds: 1200 },
+          },
+        ],
+      });
+      expect(
+        screen.getByRole("button", { name: "Finish" })
+      ).toBeInTheDocument();
+      expect(
+        errors.mock.calls.some(([message]) =>
+          String(message).includes("Maximum update depth exceeded")
+        )
+      ).toBe(false);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+});
+
+describe("GPS acquisition recovery", () => {
+  it.each([
+    ["Permission denied", "denied"],
+    ["Position unavailable", "granted"],
+    ["Geolocation not supported", "granted"],
+  ] as const)(
+    "keeps %s recoverable until the runner chooses manual tracking",
+    async (error, permission) => {
+      h.gps.error = error;
+      h.gps.permissionState = permission;
+      render(tree());
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
+      });
+      expect(h.timerStart).not.toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: "Finish" })).toBeNull();
+      const manual = screen.getByRole("button", { name: "Track without GPS" });
+      act(() => vi.advanceTimersByTime(3000));
+      expect(h.timerStart).not.toHaveBeenCalled();
+      fireEvent.click(manual);
+      expect(h.timerStart).toHaveBeenCalledOnce();
+      expect(
+        screen.getByRole("spinbutton", { name: "Distance covered" })
+      ).toBeInTheDocument();
+    }
+  );
+
+  it("still offers manual tracking after a silent 15-second wait", async () => {
+    render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
+    });
+    expect(
+      screen.queryByRole("button", { name: "Track without GPS" })
+    ).toBeNull();
+    act(() => vi.advanceTimersByTime(15000));
+    expect(
+      screen.getByRole("button", { name: "Track without GPS" })
+    ).toBeInTheDocument();
+    expect(h.timerStart).not.toHaveBeenCalled();
+  });
+
+  it("can acquire a later fix and start normally after an error", async () => {
+    h.gps.error = "Position unavailable";
+    const view = render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Easy run" }));
+    });
+    expect(h.timerStart).not.toHaveBeenCalled();
+    h.gps.error = null;
+    h.gps.points = [point(0, T0)];
+    view.rerender(tree());
+    for (let tick = 0; tick < 3; tick++) {
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    expect(h.timerStart).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("spinbutton", { name: "Distance covered" })
+    ).toBeNull();
+  });
 });
 
 /* Run20 (5): a run-walk's pace is an average over its runs and its walks,
@@ -439,6 +557,25 @@ describe("the figures a pause must not move", () => {
 });
 
 describe("the lock screen", () => {
+  it("offers a focused keyboard unlock without accepting a single pointer tap", async () => {
+    await resumeFromSnapshot("active");
+    fireEvent.click(screen.getByRole("button", { name: "Lock" }));
+    const unlock = screen.getByRole("button", { name: "Unlock run controls" });
+    expect(unlock).toHaveFocus();
+    fireEvent.click(unlock, { detail: 1 });
+    expect(screen.getByText("Double-tap to unlock")).toBeInTheDocument();
+    // Keyboard and assistive-technology button activation have detail zero.
+    fireEvent.click(unlock, { detail: 0 });
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+  });
+
+  it("keeps the existing double-tap unlock gesture", async () => {
+    await resumeFromSnapshot("active");
+    fireEvent.click(screen.getByRole("button", { name: "Lock" }));
+    fireEvent.doubleClick(screen.getByText("Double-tap to unlock"));
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+  });
+
   it("shows the distance in the runner's unit", async () => {
     // It said "km" over a kilometre figure to a runner who reads miles.
     h.gps.distance = 1609.344 * 2.5;
@@ -487,6 +624,7 @@ describe("a run on the treadmill", () => {
   ])(
     "%s resumes without the GPS, on the treadmill screen",
     async (_name, config, handed) => {
+      h.unit = "km";
       const { points: _trace, ...snapshot } = saveInterruptedRun(
         "active",
         config
@@ -521,4 +659,118 @@ describe("a run on the treadmill", () => {
       expect(h.gpsCalls).not.toContain("start");
     }
   );
+});
+
+describe("manual structured coaching through the real player", () => {
+  async function startIntervals(treadmill: boolean) {
+    h.timer.elapsed = 0;
+    const view = render(tree());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    });
+    if (treadmill) {
+      fireEvent.click(screen.getByRole("switch", { name: "On a treadmill" }));
+    }
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Selected run type: Easy Run. Tap to change.",
+      })
+    );
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Choose run type" })).getByRole(
+        "button",
+        { name: /^Intervals/ }
+      )
+    );
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: treadmill ? "Start on the treadmill" : "Start Intervals",
+          hidden: true,
+        })
+      );
+    });
+    return view;
+  }
+
+  it("runs the displayed treadmill repeats, holds distance steps for explicit completion, and times recovery", async () => {
+    h.unit = "km";
+    const view = await startIntervals(true);
+    expect(screen.getByText("HARD · REP 1/5")).toBeInTheDocument();
+    expect(screen.getByText("1.00 km target")).toBeInTheDocument();
+    expect(h.gpsCalls).not.toContain("start");
+    // Time passing cannot invent metres on the machine.
+    h.timer.elapsed = 240;
+    view.rerender(tree());
+    expect(screen.getByText("HARD · REP 1/5")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark distance step complete" })
+    );
+    expect(screen.getByText("1:30")).toBeInTheDocument();
+    h.timer.elapsed = 329;
+    view.rerender(tree());
+    expect(screen.getByText("0:01")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Pause run" }));
+    expect(h.timer.isRunning).toBe(false);
+    // A paused timer is held, so its recovery does not burn off.
+    view.rerender(tree());
+    expect(screen.getByText("0:01")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Resume run" }));
+    h.timer.elapsed = 330;
+    view.rerender(tree());
+    expect(screen.getByText("1K")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mark distance step complete" })
+    ).toBeInTheDocument();
+    // A runner may skip a step without declaring that they covered it.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Skip to the next step" })
+    );
+    expect(screen.getByText("1:30")).toBeInTheDocument();
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Distance from treadmill" }),
+      {
+        target: { value: "2.75" },
+      }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save Treadmill Run" }));
+    const payload = JSON.parse(
+      screen.getByTestId("finish-payload").textContent!
+    );
+    expect(payload).toMatchObject({
+      distance: 2750,
+      points: [],
+      workPortion: null,
+    });
+    expect(h.gpsCalls).not.toContain("start");
+  });
+
+  it("retains an ad-hoc interval session after GPS fallback and saves miles as metres with unknown work distance", async () => {
+    h.gps.error = "Permission denied";
+    h.gps.permissionState = "denied";
+    await startIntervals(false);
+    fireEvent.click(screen.getByRole("button", { name: "Track without GPS" }));
+    expect(screen.getByText("HARD · REP 1/5")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark distance step complete" })
+    );
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: "Distance covered" }),
+      {
+        target: { value: "3.1" },
+      }
+    );
+    expect(screen.getByText("mi")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save Manual Run" }));
+    const payload = JSON.parse(
+      screen.getByTestId("finish-payload").textContent!
+    );
+    expect(payload.distance).toBeCloseTo(4988.9664, 6);
+    expect(payload).toMatchObject({
+      points: [],
+      workPortion: null,
+      runConfig: { activityType: "manual" },
+    });
+    expect(payload.runConfig.segments).toHaveLength(9);
+  });
 });

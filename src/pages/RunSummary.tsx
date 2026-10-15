@@ -805,16 +805,20 @@ export default function RunSummary() {
   // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
   // PLANNED session's pace compared with its target, including the "keep
   // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
-  const paceVerdict = plannedRunVerdict({
-    planMetadata: runConfig?.planMetadata,
-    place: runConfig?.place,
-    avgPaceSeconds,
-    workPaceSeconds: workPaceSeconds(state.workPortion),
-    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
-    distance,
-    runFitness: profile?.runFitness,
-    unit,
-  });
+  // A typed whole-run distance cannot measure the session's work segments
+  // or support a planned pace verdict, including a GPS → manual fallback.
+  const paceVerdict = typedDistance
+    ? null
+    : plannedRunVerdict({
+        planMetadata: runConfig?.planMetadata,
+        place: runConfig?.place,
+        avgPaceSeconds,
+        workPaceSeconds: workPaceSeconds(state.workPortion),
+        pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
+        distance,
+        runFitness: profile?.runFitness,
+        unit,
+      });
 
   // The context-aware primary stat, a card above the stats card of four.
   // Intervals get a work-set summary ("N × distance @ pace") instead of

@@ -125,8 +125,11 @@ test("a planned run, done on a treadmill, is the planned run", async ({
     const distance = page.getByRole("spinbutton", { name: RUN.distance });
     await expect(distance).toBeVisible();
     await passTime(page, minutes);
-    // The screen's clock reads the time on its next tick.
-    await expect(page.getByText(clockAt(minutes))).toBeVisible();
+    // Wait for elapsed time's next tick. A session countdown can still
+    // show the same minutes immediately after the journey moves Date.
+    await expect(page.getByRole("timer", { name: RUN.elapsedTime })).toHaveText(
+      clockAt(minutes)
+    );
     await distance.fill(String(size.km));
     await page
       .getByRole("button", { name: RUN.saveTreadmill, exact: true })

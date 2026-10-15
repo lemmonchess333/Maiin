@@ -162,7 +162,9 @@ describe("one run-burn formula", () => {
     );
 
     const sites: string[] = [];
-    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+      (file) => file.replaceAll("\\", "/")
+    )) {
       if (rel.includes("__tests__") || rel.includes(".test.")) continue;
       const src = readFileSync(resolve(repoRoot, rel), "utf8");
       src.split("\n").forEach((line, i) => {

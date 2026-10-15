@@ -31,7 +31,10 @@ const SCRIPT = "scripts/verify_storage_rules_iam.py";
 const SCRIPT_TESTS = "test_verify_storage_rules_iam.py";
 
 function workflow(file: string): string {
-  return readFileSync(resolve(repoRoot, ".github/workflows", file), "utf8");
+  return readFileSync(
+    resolve(repoRoot, ".github/workflows", file),
+    "utf8"
+  ).replace(/\r\n/g, "\n");
 }
 
 /** One top-level job's body: from its key to the next two-space key. */

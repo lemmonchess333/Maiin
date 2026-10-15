@@ -37,7 +37,7 @@ function sourceFiles(dir: string): string[] {
   const out: string[] = [];
   const walk = (abs: string) => {
     for (const name of readdirSync(abs)) {
-      const path = join(abs, name);
+      const path = join(abs, name).replaceAll("\\", "/");
       if (statSync(path).isDirectory()) {
         if (name !== "__tests__" && name !== "node_modules") walk(path);
       } else if (/\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name)) {

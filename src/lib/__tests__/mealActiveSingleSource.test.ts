@@ -73,7 +73,7 @@ describe("HOME-MEALS-01 — one owner for 'does this meal count?'", () => {
   it("nothing hand-writes the soft-delete rule outside the allowlist", () => {
     const offenders: string[] = [];
     for (const file of walk(srcRoot)) {
-      const rel = relative(repoRoot, file);
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
       if (ALLOWED_RAW_RULE.has(rel)) continue;
       const code = stripComments(readFileSync(file, "utf8"));
       // A truthiness test on the field — `!m.deletedAt`, `m.deletedAt ?`,

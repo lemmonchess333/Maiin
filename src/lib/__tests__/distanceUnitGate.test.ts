@@ -128,7 +128,9 @@ const NOT_PRODUCT = ["src/test/"];
 
 function scanStoredKm(): Hit[] {
   const out: Hit[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
     if (NOT_PRODUCT.some((p) => rel.startsWith(p))) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
@@ -142,7 +144,9 @@ function scanStoredKm(): Hit[] {
 
 function scan(): Hit[] {
   const out: Hit[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
     if (NOT_PRODUCT.some((p) => rel.startsWith(p))) continue;
     if (rel in NOT_DISPLAY) continue;

@@ -77,6 +77,7 @@ import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
+import { RunControlButton } from "@/components/ui/RunControlButton";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
@@ -257,6 +258,10 @@ export default function Run() {
     !runHistory.failed &&
     runHistory.runCount === 0;
   const [locked, setLocked] = useState(false);
+  const unlockButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (locked) unlockButtonRef.current?.focus();
+  }, [locked]);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
@@ -455,6 +460,7 @@ export default function Run() {
     return null;
   }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
+  const { start: startSessionPlayer, tick: tickSessionPlayer } = player;
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
   const judgingPace = judgesPaceNow(
@@ -841,17 +847,6 @@ export default function Run() {
     navigate("/");
   }, [navigate, profileUid]);
 
-  // Auto-start without GPS if permission denied or geolocation unavailable
-  useEffect(() => {
-    if (phase === "acquiring" && gps.error) {
-      const transition = () => {
-        dispatch({ type: "GPS_FAILED" });
-        setCountdown(3);
-      };
-      transition();
-    }
-  }, [phase, gps.error]);
-
   // Count seconds spent in acquiring phase
   useEffect(() => {
     if (phase !== "acquiring") {
@@ -1074,14 +1069,26 @@ export default function Run() {
     else if (clockRunning) releaseTrace();
   }, [clockHeld, clockRunning, holdTrace, releaseTrace]);
 
+  // The player object changes on every render; its callbacks stay stable.
+  // A state update from tick must not trigger another tick on the same totals.
   useEffect(() => {
-    if (phase === "active" && sessionSegments) player.start();
-  }, [phase, sessionSegments, player]);
+    if (phase === "active" && sessionSegments) startSessionPlayer();
+  }, [phase, sessionSegments, startSessionPlayer]);
 
   useEffect(() => {
     if (phase === "active" && sessionSegments)
-      player.tick(timer.elapsed, gps.distance);
-  }, [timer.elapsed, gps.distance, phase, sessionSegments, player]);
+      tickSessionPlayer(
+        timer.elapsed,
+        requiresManualDistance(runConfig) ? 0 : gps.distance
+      );
+  }, [
+    timer.elapsed,
+    gps.distance,
+    phase,
+    sessionSegments,
+    tickSessionPlayer,
+    runConfig,
+  ]);
 
   // STRUCT-SESS-02: the segment announces itself — cue copy is authored by
   // the builders alongside the labels, so tempo blocks and strides speak
@@ -1107,7 +1114,7 @@ export default function Run() {
     wakeLock.release();
     dispatch({ type: "FINISH" });
     const finalDistance = distanceOverride ?? gps.distance;
-    const points = gps.getPoints();
+    const points = requiresManualDistance(runConfig) ? [] : gps.getPoints();
 
     // An outdoor run that never got a usable GPS lock records ≤1 point (the
     // provisional start) and no route/distance. Say so plainly at finish
@@ -1161,10 +1168,12 @@ export default function Run() {
         // What the session's work segments covered, which the summary
         // judges the session by. On the distance the player was ticked
         // with, the run's own, not a hand-entered total; none after a
-        // resume (`resumedRef`).
-        workPortion: resumedRef.current
-          ? null
-          : player.workPortion(timer.elapsed, gps.distance),
+        // resume (`resumedRef`) or when only the final whole-run distance
+        // is known. Manual step completion is not a measured work distance.
+        workPortion:
+          resumedRef.current || requiresManualDistance(runConfig)
+            ? null
+            : player.workPortion(timer.elapsed, gps.distance),
       },
     });
   };
@@ -1194,7 +1203,7 @@ export default function Run() {
   };
 
   const handleSwitchToManual = useCallback(() => {
-    /* User waited 15s+ for a GPS lock that never came. Rather than
+    /* GPS failed, or the user waited 15s+ for a lock that never came. Rather than
        start an outdoor run with zero fixes (the canonical 0km bug),
        transition to manual distance entry: stop the geolocation
        watcher, flip the activity type so TreadmillMode mounts on the
@@ -1212,11 +1221,21 @@ export default function Run() {
        originally entered the acquiring phase and don't need to fire
        again. */
     gps.stop();
-    setRunConfig((prev) => (prev ? { ...prev, activityType: "manual" } : prev));
+    setRunConfig((prev) =>
+      prev
+        ? {
+            ...prev,
+            activityType: "manual",
+            // Preserve the displayed ad-hoc/guided structure when its original
+            // activity type no longer selects the segment builder.
+            ...(sessionSegments ? { segments: sessionSegments } : {}),
+          }
+        : prev
+    );
     dispatch({ type: "MANUAL_FALLBACK" });
     timer.start();
     haptic("heavy");
-  }, [gps, timer]);
+  }, [gps, timer, sessionSegments]);
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -1259,18 +1278,32 @@ export default function Run() {
           {distanceUnitLabel(unit)}
         </p>
         <div className="mt-12 flex flex-col items-center gap-2">
-          <div className="size-8 rounded-full border border-white/20 flex items-center justify-center">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(255,255,255,0.4)"
-              strokeWidth="2"
-            >
-              <path d="M4 12h16M12 4v16" />
-            </svg>
-          </div>
+          <RunControlButton
+            ref={unlockButtonRef}
+            size="sm"
+            aria-label="Unlock run controls"
+            onClick={(event) => {
+              // Keyboard and assistive technology activate a button with
+              // detail zero. Pointer taps still need the double-tap above.
+              if (event.detail === 0) {
+                setLocked(false);
+                haptic("light");
+              }
+            }}
+            icon={
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-white"
+              >
+                <path d="M4 12h16M12 4v16" />
+              </svg>
+            }
+          />
           <p className="text-white/40 text-xs motion-safe:animate-pulse">
             Double-tap to unlock
           </p>
@@ -1571,7 +1604,7 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {acquiringSeconds >= 15 && (
+                {(acquiringSeconds >= 15 || !!gps.error) && (
                   /* Replaces the old "Start without GPS" CTA. That one
                    started an outdoor run with zero GPS fixes \u2014 the
                    canonical 0km production bug. This sends the user
@@ -1627,13 +1660,30 @@ export default function Run() {
       {(phase === "active" || phase === "paused") &&
         requiresManualDistance(runConfig) && (
           <div
-            className="flex-1 flex items-center text-white"
+            className="flex-1 min-h-0 overflow-y-auto text-white"
             style={{ backgroundColor: THEME.bg }}
           >
             <TreadmillMode
               mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
               elapsed={timer.elapsed}
               formatTime={timer.formatTime}
+              isPaused={phase === "paused"}
+              onPause={handlePause}
+              onResume={handleResume}
+              sessionGuidance={
+                sessionSegments ? (
+                  <IntervalStepShell
+                    player={player}
+                    band={intervalBand}
+                    manualDistance
+                    paused={phase === "paused"}
+                    onSkip={() => {
+                      haptic();
+                      player.skip(timer.elapsed, 0);
+                    }}
+                  />
+                ) : undefined
+              }
               onSave={(distance) => {
                 setTreadmillDistance(distance);
                 haptic("success");

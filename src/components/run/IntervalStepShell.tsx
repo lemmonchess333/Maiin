@@ -7,6 +7,8 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 
 /**
  * The in-run step shell (Runna teardown #3), STRUCT-SESS-02 edition:
@@ -73,10 +75,15 @@ export default function IntervalStepShell({
   player,
   band,
   onSkip,
+  manualDistance = false,
+  paused = false,
 }: {
   player: SessionPlayer;
   band?: [number, number];
   onSkip: () => void;
+  /** Typed whole-run distance supplies no live segment odometer. */
+  manualDistance?: boolean;
+  paused?: boolean;
 }) {
   const unit = useDistanceUnit();
   const reduce = useReducedMotion();
@@ -115,7 +122,9 @@ export default function IntervalStepShell({
           All steps complete
         </p>
         <p className="text-xs mt-1" style={{ color: `${THEME.success}B3` }}>
-          Cruise home at whatever feels good — then finish the run to save it.
+          {manualDistance
+            ? "Finish the run and enter the distance covered to save it."
+            : "Cruise home at whatever feels good — then finish the run to save it."}
         </p>
       </div>
     );
@@ -128,7 +137,9 @@ export default function IntervalStepShell({
       ? current.target.meters
       : current.target.seconds;
   const liveProgress = isDistanceBased
-    ? Math.min(1, state.phaseDistanceCovered / Math.max(1, targetValue))
+    ? manualDistance
+      ? 0
+      : Math.min(1, state.phaseDistanceCovered / Math.max(1, targetValue))
     : Math.min(1, state.phaseElapsed / Math.max(1, targetValue));
 
   return (
@@ -166,7 +177,7 @@ export default function IntervalStepShell({
       </div>
 
       <div className="p-4 pt-3 space-y-1">
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
             <p className="text-caption font-bold tracking-wider text-success-strong min-w-0 truncate">
               ✓ {flash.toUpperCase()} DONE
@@ -179,9 +190,13 @@ export default function IntervalStepShell({
               {stepEyebrow(current)}
             </p>
           )}
-          <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
+          <p
+            className={`${manualDistance && isDistanceBased ? "text-lg" : "text-2xl"} font-extrabold font-mono tabular-nums text-white shrink-0 leading-none`}
+          >
             {isDistanceBased
-              ? `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
+              ? manualDistance
+                ? `${distanceIn(targetValue, unit).toFixed(2)} ${distanceUnitLabel(unit)} target`
+                : `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
               : countdownLabel(targetValue - state.phaseElapsed)}
           </p>
         </div>
@@ -190,6 +205,25 @@ export default function IntervalStepShell({
         <p className="text-lg font-extrabold leading-tight text-white">
           {headlineFor(current, unit, band)}
         </p>
+
+        {manualDistance && isDistanceBased && (
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-white/70">
+              Distance isn't tracked live. Mark this step complete when you've
+              covered its target; enter the full run distance below when
+              finished.
+            </p>
+            <Button
+              variant="sport"
+              fullWidth
+              onClick={onSkip}
+              disabled={paused}
+              aria-label="Mark distance step complete"
+            >
+              Complete step
+            </Button>
+          </div>
+        )}
 
         {/* A one-step session (an easy 30) has no next step to name or
             skip to, and its only step is not a closing stretch: "Last
@@ -211,6 +245,7 @@ export default function IntervalStepShell({
             <button
               type="button"
               onClick={onSkip}
+              disabled={manualDistance && paused}
               className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
               aria-label="Skip to the next step"
             >

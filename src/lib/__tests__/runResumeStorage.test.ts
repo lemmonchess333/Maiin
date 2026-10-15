@@ -357,6 +357,73 @@ describe("clearStoredRun", () => {
 });
 
 describe("writeStoredRun — failure modes", () => {
+  it.each(["meta", "next chunk"])(
+    "preserves the committed prefix when %s fails after the partial chunk was extended",
+    (refusedWrite) => {
+      const now = 2_000_000;
+      const before = makeSnapshot({
+        lastWriteAt: now,
+        points: makePoints(200),
+      });
+      expect(writeStoredRun(UID, before)).toBe(true);
+      const real = Storage.prototype.setItem;
+      const refusedKey =
+        refusedWrite === "meta" ? runResumeKey(UID) : runResumeChunkKey(UID, 1);
+      const spy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (this: Storage, k: string, v: string) {
+          if (k === refusedKey)
+            throw new DOMException("quota", "QuotaExceededError");
+          return real.call(this, k, v);
+        });
+      const next = makeSnapshot({
+        lastWriteAt: now + 5_000,
+        accumulatedSeconds: before.accumulatedSeconds + 5,
+        points: makePoints(refusedWrite === "meta" ? 205 : 260),
+      });
+      try {
+        expect(writeStoredRun(UID, next)).toBe(false);
+        expect(readStoredRun(UID, now + 5_000)).toEqual(before);
+      } finally {
+        spy.mockRestore();
+      }
+      expect(writeStoredRun(UID, next)).toBe(true);
+      expect(readStoredRun(UID, now + 5_000)).toEqual(next);
+    }
+  );
+
+  it("rejects a shortened sealed chunk even when an extended tail keeps the total count equal", () => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(300) })
+    );
+    localStorage.setItem(
+      runResumeChunkKey(UID, 0),
+      JSON.stringify(makePoints(249))
+    );
+    localStorage.setItem(
+      runResumeChunkKey(UID, 1),
+      JSON.stringify(makePoints(51))
+    );
+    expect(readStoredRun(UID, now)).toBeNull();
+  });
+
+  it.each([
+    ["null", null],
+    ["non-array", "invalid chunk"],
+    ["short", []],
+    ["oversized", makePoints(251)],
+  ])("rejects a %s final chunk", (_label, chunk) => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(200) })
+    );
+    localStorage.setItem(runResumeChunkKey(UID, 0), JSON.stringify(chunk));
+    expect(readStoredRun(UID, now)).toBeNull();
+  });
+
   it("returns false when localStorage.setItem throws (quota / private mode)", () => {
     // Force setItem to throw. The function must not propagate.
     const original = Storage.prototype.setItem;

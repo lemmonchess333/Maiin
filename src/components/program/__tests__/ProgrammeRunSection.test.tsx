@@ -1375,6 +1375,62 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
   });
 });
 
+describe("ProgrammeRunSection — recovery counts local calendar days", () => {
+  beforeEach(() => {
+    vi.stubEnv("TZ", "Europe/London");
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+  });
+
+  function recoveringUntil(recoveryEndDate: string) {
+    const raceGoal = {
+      distance: "marathon" as const,
+      targetDate: localDateString(addLocalDays(new Date(), -1)),
+    };
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ runMode: "race_prep", raceGoal })}
+        programState={makeProgramState([], {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal,
+            phase: "recovery",
+            recoveryEndDate,
+            totalWeeks: 17,
+            currentWeek: 16,
+          },
+        })}
+      />
+    );
+  }
+
+  it.each([
+    ["2026-10-15T00:30:00+01:00", "2026-11-11"], // BST → GMT adds an hour.
+    ["2026-10-15T02:00:00+01:00", "2026-11-11"],
+    ["2026-03-15T23:30:00+00:00", "2026-04-11"], // GMT → BST removes an hour.
+    ["2026-01-15T00:30:00+00:00", "2026-02-11"], // No clock change.
+  ])("shows 27 calendar days from %s until %s", (now, end) => {
+    vi.setSystemTime(new Date(now));
+    recoveringUntil(end);
+    expect(screen.getByText("Recovering · 27 days left")).toBeInTheDocument();
+  });
+
+  it("updates the count on the next local date while recovery remains active", () => {
+    vi.setSystemTime(new Date("2026-10-14T23:59:00+01:00"));
+    recoveringUntil("2026-11-10");
+    expect(screen.getByText("Recovering · 27 days left")).toBeInTheDocument();
+    act(() => {
+      vi.setSystemTime(new Date("2026-10-15T00:01:00+01:00"));
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(screen.getByText("Recovering · 26 days left")).toBeInTheDocument();
+  });
+});
+
 describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () => {
   // Pin "now" so a race date 2 days ago resolves to the race-recent window
   // (T+1..T+3). Local midday avoids any timezone date-boundary flips.

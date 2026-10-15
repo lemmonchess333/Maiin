@@ -4,7 +4,7 @@
  * mid-session plays the segments it was started with.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import IntervalStepShell from "../IntervalStepShell";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import type { SessionSegment } from "@/lib/runSegments";
@@ -99,6 +99,49 @@ describe("IntervalStepShell — a session of one step", () => {
     expect(screen.getByText("Last step — bring it home.")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Skip to the next step" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("IntervalStepShell — manual distance", () => {
+  it("allows a single distance step to be completed explicitly without claiming live metres", () => {
+    const onSkip = vi.fn();
+    const player = playerAt(
+      [step("hard", { target: { kind: "distance", meters: 400 } })],
+      0
+    );
+    // Even a stale device distance must not read as measured distance remaining.
+    player.state.phaseDistanceCovered = 200;
+    const view = render(
+      <IntervalStepShell
+        player={player}
+        onSkip={onSkip}
+        manualDistance
+        paused
+      />
+    );
+    expect(screen.getByText("0.40 km target")).toBeInTheDocument();
+    expect(screen.queryByText("200 m")).toBeNull();
+    const complete = screen.getByRole("button", {
+      name: "Mark distance step complete",
+    });
+    expect(complete).toBeDisabled();
+    view.rerender(
+      <IntervalStepShell player={player} onSkip={onSkip} manualDistance />
+    );
+    fireEvent.click(complete);
+    expect(onSkip).toHaveBeenCalledOnce();
+    view.rerender(
+      <IntervalStepShell
+        player={{ ...player, isComplete: true }}
+        onSkip={onSkip}
+        manualDistance
+      />
+    );
+    expect(
+      screen.getByText(
+        "Finish the run and enter the distance covered to save it."
+      )
     ).toBeInTheDocument();
   });
 });

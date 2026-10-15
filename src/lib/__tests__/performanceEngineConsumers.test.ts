@@ -77,7 +77,10 @@ function importsAcross(roots: string[]): Map<string, string[]> {
     for (const file of sourceFiles(root)) {
       const names = importedSymbols(file);
       if (names.length) {
-        found.set(file.slice(repoRoot.length + 1), names.sort());
+        found.set(
+          file.slice(repoRoot.length + 1).replaceAll("\\", "/"),
+          names.sort()
+        );
       }
     }
   }

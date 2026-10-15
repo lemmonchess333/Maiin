@@ -460,7 +460,10 @@ describe("CLAUDE.md — the deploy workflows", () => {
 
   /** Trigger keys of a workflow's top-level `on:` block. */
   function triggers(file: string): string[] {
-    const src = readFileSync(join(workflowsDir, file), "utf8");
+    const src = readFileSync(join(workflowsDir, file), "utf8").replace(
+      /\r\n/g,
+      "\n"
+    );
     const block = src.match(/^on:\n((?: {2}.*\n|\s*\n|#.*\n)+)/m)?.[1] ?? "";
     return [...block.matchAll(/^ {2}([a-z_]+):/gm)].map((m) => m[1]);
   }

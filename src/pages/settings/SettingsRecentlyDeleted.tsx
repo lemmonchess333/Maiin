@@ -1,17 +1,13 @@
 /**
- * SettingsRecentlyDeleted — F5c soft-delete archive (24h window).
+ * SettingsRecentlyDeleted — soft-delete archive.
  *
- * Lists meals the user soft-deleted within the last 24 hours so they
+ * Lists meals the user soft-deleted so they
  * can restore or permanently delete. The companion to the in-session
  * 3-second toast undo on the Food page — that surface handles the
  * "I just clicked wrong" case; this page handles the "I need that
  * one back from last night" case.
- *
- * Server-side auto-purge (the `purgeSoftDeletedMeals` cron CF) is
- * deferred. Until that lands, soft-deleted meals accumulate until
- * the user manually purges them or restores them; the per-meal
- * "deleted X ago" label still tells the user which ones are past
- * the spec's 24h window so they can clean up.
+ * Deleted meals stay recoverable until the user restores or permanently
+ * deletes them, or deletes their account. There is no automatic purge.
  */
 import { useState } from "react";
 import { Trash2, RotateCcw, Utensils } from "lucide-react";
@@ -22,6 +18,9 @@ import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import SettingsSection from "@/components/settings/SettingsSection";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 function deletedAtMs(meal: Meal): number {
   const v = meal.deletedAt;
@@ -90,9 +89,6 @@ export default function SettingsRecentlyDeleted() {
 
   async function handleHardDelete(meal: Meal) {
     if (pendingId) return;
-    // No native confirm dialog — keep the flow tight. If accidental
-    // permanent deletes start being reported, a confirmation step can
-    // be added without changing the call shape.
     setPendingId(meal.id);
     haptic("error");
     try {
@@ -109,24 +105,21 @@ export default function SettingsRecentlyDeleted() {
   return (
     <SettingsSection
       title="Recently deleted meals"
-      subtitle="Restore meals you deleted in the last 24 hours."
+      subtitle="Restore deleted meals or remove them permanently."
       backTo="/settings/data"
       backLabel="Your data"
     >
       {loading && sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : sorted.length === 0 ? (
-        <div className="rounded-xl bg-card card-shadow p-4 text-center space-y-1">
-          <Utensils
-            aria-hidden="true"
-            className="size-5 mx-auto text-muted-foreground"
+        <Card>
+          <EmptyState
+            compact
+            icon={Utensils}
+            headline="No recently deleted meals"
+            sub="Deleted meals stay here until you restore or permanently delete them."
           />
-          <p className="text-sm text-foreground">No recently deleted meals</p>
-          <p className="text-xs text-muted-foreground">
-            Meals you delete appear here for 24 hours before being permanently
-            removed.
-          </p>
-        </div>
+        </Card>
       ) : (
         <ul aria-label="Recently deleted meals" className="space-y-2">
           {sorted.map((meal) => {
@@ -148,31 +141,30 @@ export default function SettingsRecentlyDeleted() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
+                <div className="grid gap-2 mt-2 sm:grid-cols-2">
+                  <Button
                     onClick={() => handleRestore(meal)}
-                    disabled={isPending}
+                    disabled={pendingId !== null}
+                    aria-busy={isPending || undefined}
                     aria-label={`Restore ${meal.foodName || "meal"}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary-strong text-primary-foreground text-xs font-semibold transition-transform motion-safe:active:scale-[0.98] disabled:opacity-50"
+                    className="min-w-0"
+                    leftIcon={<RotateCcw className="size-4" />}
                   >
-                    <RotateCcw className="size-3.5" />
                     Restore
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="destructive"
                     onClick={() => handleHardDelete(meal)}
-                    disabled={isPending}
+                    disabled={pendingId !== null}
+                    aria-busy={isPending || undefined}
                     aria-label={`Permanently delete ${meal.foodName || "meal"}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold transition-transform motion-safe:active:scale-[0.98] disabled:opacity-50"
-                    style={{
-                      backgroundColor: "hsl(var(--destructive) / 0.1)",
-                      color: "hsl(var(--destructive))",
-                    }}
+                    className="min-w-0"
+                    leftIcon={<Trash2 className="size-4" />}
                   >
-                    <Trash2 className="size-3.5" />
-                    Delete
-                  </button>
+                    <span className="min-w-0 break-words">
+                      Delete permanently
+                    </span>
+                  </Button>
                 </div>
               </li>
             );

@@ -124,44 +124,67 @@ const longRuns = (weeks: { templateId: string }[][]) =>
   weeks.map((w) => Math.max(0, ...w.map((r) => longKmOf(r.templateId))));
 
 describe("race plans — nothing is scheduled after race day", () => {
-  it("holds across every distance, race date and weekday", () => {
-    let total = 0;
-    let withRunsAfter = 0;
-    const perDistance = new Map<string, { n: number; bad: number }>();
+  // Each independent distance/start-day pair keeps the full date sweep.
+  // Splitting the CPU work also makes a failure name its distance and start.
+  const raceDaysOut = Array.from({ length: 208 }, (_, i) => i + 3);
+  const distanceStarts = RACE_DISTANCES.flatMap((distance) =>
+    Array.from({ length: 7 }, (_, startOffsetDays) => ({
+      distance,
+      startOffsetDays,
+    }))
+  );
 
-    // Every weekday the race can fall on × three weeks out to thirty.
-    for (let startOffsetDays = 0; startOffsetDays < 7; startOffsetDays++) {
-      for (const distance of RACE_DISTANCES) {
-        for (let daysOut = 3; daysOut <= 210; daysOut++) {
-          const { out, raceDate } = plan({
-            distance,
-            daysOut,
-            startOffsetDays,
-          });
-          const after = out.weeks
-            .flat()
-            .filter((r) => r.type !== "race" && r.date && r.date > raceDate);
-          total++;
-          const d = perDistance.get(distance) ?? { n: 0, bad: 0 };
-          d.n++;
-          if (after.length > 0) {
-            withRunsAfter++;
-            d.bad++;
-          }
-          perDistance.set(distance, d);
-        }
-      }
+  it("retains all 5,824 distance, race-date and start-weekday scenarios", () => {
+    expect(raceDaysOut).toHaveLength(208);
+    expect(new Set(raceDaysOut).size).toBe(208);
+    expect(raceDaysOut.every(Number.isInteger)).toBe(true);
+    expect(Math.min(...raceDaysOut)).toBe(3);
+    expect(Math.max(...raceDaysOut)).toBe(210);
+    expect(distanceStarts).toHaveLength(28);
+    expect(
+      new Set(
+        distanceStarts.map(({ distance, startOffsetDays }) =>
+          [distance, startOffsetDays].join(":")
+        )
+      ).size
+    ).toBe(28);
+    for (const distance of RACE_DISTANCES) {
+      const starts = distanceStarts.filter((c) => c.distance === distance);
+      expect(
+        starts.map((c) => c.startOffsetDays),
+        distance
+      ).toEqual([0, 1, 2, 3, 4, 5, 6]);
+      expect(starts.length * raceDaysOut.length, distance).toBe(1456);
     }
-
-    expect(total).toBe(5824);
-    /* Was 1652 (28.4%), and identically 413 per distance — a calendar
-       property, not a distance rule, which is why the marathon case was
-       unguarded. The race week now keeps only the shakeouts BEFORE race day. */
-    expect(withRunsAfter).toBe(0);
-    for (const [distance, d] of perDistance) {
-      expect(d.bad, distance).toBe(0);
-    }
+    expect(distanceStarts.length * raceDaysOut.length).toBe(5824);
   });
+
+  it.each(distanceStarts)(
+    "$distance starting +$startOffsetDays days: nothing follows any race date",
+    ({ distance, startOffsetDays }) => {
+      let total = 0;
+      let withRunsAfter = 0;
+      for (const daysOut of raceDaysOut) {
+        const { out, raceDate } = plan({
+          distance,
+          daysOut,
+          startOffsetDays,
+        });
+        const after = out.weeks
+          .flat()
+          .filter((r) => r.type !== "race" && r.date && r.date > raceDate);
+        total++;
+        if (after.length > 0) withRunsAfter++;
+      }
+      expect(total).toBe(208);
+      /* Was 1652 (28.4%), and identically 413 per distance — a calendar
+         property, not a distance rule, which is why the marathon case was
+         unguarded. The race week now keeps only the shakeouts BEFORE race day.
+         Requiring zero in every pair preserves the whole-matrix and each
+         distance's former zero-bad-plans assertions without shared counters. */
+      expect(withRunsAfter, distance).toBe(0);
+    }
+  );
 
   it("leaves a Sunday marathon week with the race and nothing after it", () => {
     /* The concrete worst case, and the modal one — most road races are on a

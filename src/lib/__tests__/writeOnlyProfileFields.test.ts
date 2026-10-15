@@ -69,7 +69,7 @@ const SOURCES = [
   ...walk(resolve(repoRoot, "src")),
   ...walk(resolve(repoRoot, "functions")),
 ].map((p) => ({
-  rel: p.slice(repoRoot.length + 1),
+  rel: p.slice(repoRoot.length + 1).replaceAll("\\", "/"),
   text: stripInert(readFileSync(p, "utf8")),
 }));
 

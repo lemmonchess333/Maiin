@@ -36,14 +36,16 @@ function walk(dir, out = []) {
 function stripComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .split("\n")
+    .split(/\r?\n/)
     .map((l) => l.replace(/\/\/.*$/, ""))
     .join("\n");
 }
 
 describe("one unit treatment in server-composed copy (spaced: '60 kg', '5.2 km')", () => {
   it("scans the deployed source, not an empty directory", () => {
-    const files = walk(FUNCTIONS_ROOT).map((f) => relative(FUNCTIONS_ROOT, f));
+    const files = walk(FUNCTIONS_ROOT).map((f) =>
+      relative(FUNCTIONS_ROOT, f).replaceAll("\\", "/")
+    );
     expect(files).toContain("index.js");
     expect(files.some((f) => f.startsWith("lib/"))).toBe(true);
   });
@@ -51,7 +53,7 @@ describe("one unit treatment in server-composed copy (spaced: '60 kg', '5.2 km')
   it("no unspaced kg/km value+unit adjacency in functions/", () => {
     const hits = [];
     for (const file of walk(FUNCTIONS_ROOT)) {
-      const rel = relative(FUNCTIONS_ROOT, file);
+      const rel = relative(FUNCTIONS_ROOT, file).replaceAll("\\", "/");
       const lines = stripComments(readFileSync(file, "utf8")).split("\n");
       lines.forEach((line, i) => {
         if (/[\d}](kg|km)\b/.test(line))

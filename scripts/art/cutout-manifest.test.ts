@@ -22,7 +22,7 @@ it("is exactly what the cut-out generator writes", async () => {
     )
   );
   expect(
-    readFileSync(path, "utf8") === expected,
+    readFileSync(path, "utf8").replace(/\r\n/g, "\n") === expected,
     `${CUTOUT_MANIFEST} differs from what npm run art:cutouts writes`
   ).toBe(true);
 });

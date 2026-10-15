@@ -56,19 +56,29 @@ export async function createMealEntry(
   });
 }
 
-export async function undoMealEntries(uid: string, ids: readonly string[]) {
+function queueMealDeletionState(
+  uid: string,
+  ids: readonly string[],
+  deletedAt: Timestamp | null
+) {
   if (auth.currentUser?.uid !== uid)
-    throw new Error("Sign in again before undoing.");
+    throw new Error("Sign in again before changing this meal.");
   for (const id of new Set(ids)) {
-    queueDurableWrite(
-      uid,
-      `users/${uid}/meals`,
-      id,
-      { deletedAt: Timestamp.now() },
-      true
-    );
+    queueDurableWrite(uid, `users/${uid}/meals`, id, { deletedAt }, true);
   }
   void flushQueue(db, uid).catch(() => {});
+}
+
+/** Deletion must follow any queued create, including a diary-row delete.
+ * A direct SDK merge can otherwise create a tombstone before the custom
+ * queue replays its create, whose idempotency check then skips the meal. */
+export async function undoMealEntries(uid: string, ids: readonly string[]) {
+  queueMealDeletionState(uid, ids, Timestamp.now());
+}
+
+/** Restoration follows the deletion in the same queue, even offline. */
+export async function restoreMealEntries(uid: string, ids: readonly string[]) {
+  queueMealDeletionState(uid, ids, null);
 }
 
 export function notifyMealsLogged(

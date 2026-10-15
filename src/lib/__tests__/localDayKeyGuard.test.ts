@@ -88,7 +88,7 @@ describe("a day key is derived locally, never from the UTC clock", () => {
   it("no src/ file slices a day key off new Date().toISOString()", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(srcRoot)) {
-      const rel = relative(repoRoot, file);
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
       if (ALLOWLIST.has(rel)) continue;
       const lines = readFileSync(file, "utf8").split("\n");
       lines.forEach((line, i) => {
