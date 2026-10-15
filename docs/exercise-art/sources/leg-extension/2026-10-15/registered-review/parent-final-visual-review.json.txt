@@ -1,0 +1,38 @@
+{
+  "exerciseId": "leg-extension",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "completionCredit": false,
+  "parentReviewPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension-independent-reproduction-20261015\\parent-registered-review.json",
+  "parentReviewSha256": "b1ea6061f424724dde6d0f296cc9dd673db493d9ac8a945f643e1277c5f704b4",
+  "releaseBeforeRegisteredReviewSha256": "1aca868916d280461112106a786182c77dd1194b1f494b802b49523235721d01",
+  "releaseSha256": "437a56c9df0a73095211742322ff2d48f36092c8dab1c5a59a5e83fd8c2ba4c0",
+  "copiedEvidenceHashes": {
+    "registered-review/review/extension-integrated-cards-dark.json.txt": "675ce0aef9d27b4bc427e3d3088f6589542559cf4c6a0afb35cb09e80d00d6fe",
+    "registered-review/review/extension-integrated-cards-light.json.txt": "342bb93f9b3c049c6349dec268fa9348472a0631ddd69faf10c0751d83bf9119",
+    "registered-review/review/extension-integrated-console.json.txt": "7eaa666ff0325f104316b71993c1e83647e8c0a3ee57f365cf9145997b122140",
+    "registered-review/review/extension-integrated-dark-normal.json.txt": "d6477ae4285c385ded9846479a697c1ea0dca2443f20e9ffc3e6780a62c52d55",
+    "registered-review/review/extension-integrated-initial.json.txt": "d6c0a244b3af1b5317f2540347e3bc99964af396a2e2268fd2b772f2c73ad5aa",
+    "registered-review/review/extension-integrated-light-normal.json.txt": "14f75c00336312a817d5dd6bae963fd203ee8f11e40f2ad4a01368efff3188f2",
+    "registered-review/review/extension-integrated-light-slower.json.txt": "e4d4fced0940e5b9ed3fa8fe81f07d8cc1242005bbf9f0f089ce683703f62dea",
+    "registered-review/review/extension-integrated-manual-dark.json.txt": "ff816e29ea9471230ca5fe2233339939c2a8d36bdbe4003ffc20d99ce8cb92f3",
+    "registered-review/review/extension-integrated-manual-light.json.txt": "6d789e76febef2e0da9600b7bf0daa70351d8a53f458362d7b715963abfa630e",
+    "registered-review/review/extension-integrated-wrap-controls.json.txt": "fb31bb04fffd57a87de5011f444a28b834768a0af06e6aadd2db9f1794913497",
+    "registered-review/review/integrated-dark.jpg": "8677c189e637904ecd4cac430eda265fc426aa4127d7f0898f2dcc6feeb532e1",
+    "registered-review/review/integrated-light.jpg": "4dfdbd31b5f40980504a242afaa2b927cb681cdb6154394bf0d97c69fd69a918",
+    "registered-review/review/tool-return-artifact-index.json.txt": "0d003d06a6adb2e2b90d74dc924f2dea90220fa1b453570e67a4771b404fd92d"
+  },
+  "sourcePayload99AndRawZipUnchanged": true,
+  "slowerObservedIntervalsMs": [
+    2403,
+    2407,
+    2405,
+    2407,
+    2406,
+    2405,
+    2404
+  ],
+  "projectCiMergeRemainPending": true,
+  "preFormatterReleaseSha256": "dba088cca29ecfbb6ea4be38f3e1e64defa40295052f769295e39959be77ddf6",
+  "normalFormattingPreservedReleaseJsonValues": true
+}

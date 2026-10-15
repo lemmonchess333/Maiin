@@ -1,0 +1,274 @@
+{
+  "status": "constructed-rigid-endpoint-working-unit-contact-review-only",
+  "camera": {
+    "type": "orthographic",
+    "projection": "(750*X,750*Y+40)",
+    "pixelsPerMetre": 750.0,
+    "cameraDepthAxis": [
+      0,
+      0,
+      1
+    ],
+    "nearerDepth": "smaller Z",
+    "rotaryAxisWorld": [
+      0.5921134298440842,
+      0.09696229266201666,
+      -0.8
+    ],
+    "rotaryPlaneBasis": [
+      [
+        0.16160382110336113,
+        -0.9868557164068072,
+        0.0
+      ],
+      [
+        0.7894845731254458,
+        0.1292830568826889,
+        0.5999999999999999
+      ]
+    ],
+    "worldUp": [
+      0.0,
+      -0.9927348795805476,
+      -0.12032231241210115
+    ],
+    "worldForward": [
+      -0.8058546309343111,
+      0.07124445708910065,
+      -0.5878116544742921
+    ],
+    "sourceCameraRecoveredFromMetadata": false
+  },
+  "equations": {
+    "rotation": "E(theta)=C+R*(U*cos(theta)+V*sin(theta))",
+    "circleProjection": "v^T Q v=Rpx^2; Q=(d*d^T)/0.8^2+major*major^T",
+    "cylinder": "E+a*N+t*N+r*(U*cos(phi)+V*sin(phi)), with fixed a,L,r per side",
+    "endcapProjection": "true circular caps project at minor/major=0.8, minor direction9.3deg"
+  },
+  "fixedPhysicalDimensionsMetres": {
+    "bothWorkArmRadii": 0.2946666666666667,
+    "bothPadRadii": 0.06666666666666667,
+    "bothPadLengths": 0.15555555555555559
+  },
+  "posesUsed": [
+    1,
+    4
+  ],
+  "middlePose2Delivered": false,
+  "sourcePoseOrderIfLaterAccepted": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "joints": {
+    "far": {
+      "circleCentreNative": [
+        578.1558694002752,
+        459.19337016296214
+      ],
+      "worldCentre": [
+        0.7708744925337002,
+        0.6122578268839495,
+        0.24639826797013065
+      ],
+      "externalPivotNative": [
+        439.99606910332216,
+        436.5688352084915
+      ],
+      "externalPivotWorld": [
+        0.5866614254710962,
+        0.5820917802779887,
+        0.4952871568590196
+      ],
+      "axialWorkArmOffsetMetres": -0.31111111111111117
+    },
+    "near": {
+      "circleCentreNative": [
+        678.5148716395418,
+        481.59150232265006
+      ],
+      "worldCentre": [
+        0.904686495519389,
+        0.6421220030968667,
+        0.0
+      ],
+      "externalPivotNative": [
+        708.1205431317459,
+        486.4396169557509
+      ],
+      "externalPivotWorld": [
+        0.9441607241756612,
+        0.6485861559410012,
+        -0.053333333333333344
+      ],
+      "axialWorkArmOffsetMetres": 0.06666666666666668
+    }
+  },
+  "poses": {
+    "1": {
+      "geometry": {
+        "far": {
+          "thetaRadians": 2.8167216443796765,
+          "thetaDegrees": 161.38626228610462,
+          "endpointWorld": [
+            0.8,
+            0.8999999999999999,
+            0.30283044912350987
+          ],
+          "endpointProjectionErrorPx": 1.1368683772161603e-13,
+          "worldArmRadius": 0.29466666666666663,
+          "padRearWorld": [
+            0.7736838475624852,
+            0.895690564770577,
+            0.33838600467906543
+          ],
+          "padFrontWorld": [
+            0.8657903810937873,
+            0.9107735880735573,
+            0.21394156023462096
+          ],
+          "padRearNative": [
+            580.262885671864,
+            671.7679235779327
+          ],
+          "padFrontNative": [
+            649.3427858203404,
+            683.080191055168
+          ],
+          "worldPadLength": 0.1555555555555556,
+          "padPlanePerpendicularToRotaryAxis": true
+        },
+        "near": {
+          "thetaRadians": 2.762033995464442,
+          "thetaDegrees": 158.2528908117685,
+          "endpointWorld": [
+            0.9466500311850379,
+            0.926333957034092,
+            0.06550626960884597
+          ],
+          "endpointProjectionErrorPx": 1.1368683772161603e-13,
+          "worldArmRadius": 0.29466666666666674,
+          "padRearWorld": [
+            0.8545434976537358,
+            0.9112509337311117,
+            0.18995071405329045
+          ],
+          "padFrontWorld": [
+            0.9466500311850379,
+            0.926333957034092,
+            0.06550626960884597
+          ],
+          "padRearNative": [
+            640.9076232403019,
+            683.4382002983338
+          ],
+          "padFrontNative": [
+            709.9875233887784,
+            694.7504677755691
+          ],
+          "worldPadLength": 0.1555555555555556,
+          "padPlanePerpendicularToRotaryAxis": true
+        }
+      },
+      "sourceBasePixelsOutsideNewGearExact": true,
+      "existingTrainerGuardApplied": false,
+      "unoccludedGearRetainedForIndependentCollisionReview": true,
+      "nativeDraftSha256": "f118ad9e0b75e1a6dba737d55c9237ccf70e21aa830e15288ef41ff445c2d238"
+    },
+    "4": {
+      "geometry": {
+        "far": {
+          "thetaRadians": -1.8185981639419937,
+          "thetaDegrees": -104.19799942411682,
+          "endpointWorld": [
+            0.5336660429659081,
+            0.6466500311850378,
+            0.07499881586656962
+          ],
+          "endpointProjectionErrorPx": 1.2710574864626038e-13,
+          "worldArmRadius": 0.2946666666666667,
+          "padRearWorld": [
+            0.5073498905283933,
+            0.6423405959556149,
+            0.11055437142212518
+          ],
+          "padFrontWorld": [
+            0.5994564240596953,
+            0.6574236192585953,
+            -0.013890073022319288
+          ],
+          "padRearNative": [
+            380.51241789629495,
+            481.75544696671113
+          ],
+          "padFrontNative": [
+            449.5923180447715,
+            493.06771444394644
+          ],
+          "worldPadLength": 0.1555555555555556,
+          "padPlanePerpendicularToRotaryAxis": true
+        },
+        "near": {
+          "thetaRadians": -1.8535338479415784,
+          "thetaDegrees": -106.19966667169574,
+          "endpointWorld": [
+            0.6680033166044805,
+            0.6866663333395832,
+            -0.16978021058534964
+          ],
+          "endpointProjectionErrorPx": 5.684341886080802e-14,
+          "worldArmRadius": 0.2946666666666666,
+          "padRearWorld": [
+            0.5758967830731785,
+            0.6715833100366028,
+            -0.045335766140905176
+          ],
+          "padFrontWorld": [
+            0.6680033166044805,
+            0.6866663333395832,
+            -0.16978021058534964
+          ],
+          "padRearNative": [
+            431.92258730488385,
+            503.68748252745206
+          ],
+          "padFrontNative": [
+            501.0024874533604,
+            514.9997500046874
+          ],
+          "worldPadLength": 0.1555555555555556,
+          "padPlanePerpendicularToRotaryAxis": true
+        }
+      },
+      "sourceBasePixelsOutsideNewGearExact": true,
+      "existingTrainerGuardApplied": true,
+      "unoccludedGearRetainedForIndependentCollisionReview": true,
+      "nativeDraftSha256": "802ffc2b82533709891f3c380948ff5b45383356121398fd57f3f30c8ea0ff90"
+    }
+  },
+  "inputHashes": {
+    "1-source-kept-base.png": "2a9433f61b2a8ab4e272c5252d3d241e4162a38fccc843c51b64de0c753d2b2e",
+    "4-source-kept-base.png": "c16dea5e03c08f94182801e3911f8f5da13d419e95f5fe03e4184b253679a513"
+  },
+  "limitations": [
+    "This is a constructed common-camera model, not a recovered original human mesh or measured camera calibration.",
+    "Native knee-axis proximity, actual shin contact and source-preserving depth/occlusion require independent visual acceptance.",
+    "Fixed posts are a local working-unit support draft. Resistance housings/complete product finishing are not certified.",
+    "Original ownership-cleared source bases are reused byte-exact. No new anatomy, hidden-body reconstruction, garment edit or pose-specific body fitting occurs."
+  ],
+  "newImageRequests": 0,
+  "productionChanges": false,
+  "completionCredit": false,
+  "independentKneeAxisSeparationMetres": {
+    "lateral": 0.2792461974123344,
+    "foreAft": 0.03913040829521186,
+    "height": 4.770134696495728e-18
+  },
+  "rotationAnglesDegrees": {
+    "far": 265.5842617102214,
+    "near": 264.45255748346426
+  }
+}

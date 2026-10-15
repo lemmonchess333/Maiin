@@ -1,0 +1,78 @@
+--- previous/reproduce.py
++++ material/reproduce.py
+@@ -13,6 +13,7 @@
+ import xml.etree.ElementTree as ET
+ import numpy as np
+ from PIL import Image
++from material_finish import colour_finish
+ 
+ HERE=Path(__file__).resolve().parent
+ INPUTS=HERE/'inputs'
+@@ -22,6 +23,7 @@
+ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+ manifest=json.loads((HERE/'input-provenance.json').read_bytes())
+ for rel,row in manifest['inputs'].items():assert sha(HERE/rel)==row['sha256'],rel
++for rel,row in manifest['derivedMaterialInputs'].items():assert sha(HERE/rel)==row['sha256'],rel
+ assert sha(HERE/'construct-working-unit.py')==manifest['portableWorkingUnitSource']['portableSha256']
+ g=runpy.run_path(str(HERE/'construct-working-unit.py'))
+ SIZE,UP,N,F,S,TOP=g['SIZE'],g['UP'],g['N'],g['FORWARD'],g['S'],g['TOP']
+@@ -147,27 +149,22 @@
+     assert np.all(sa[foreground,3]==0)
+     fixed_back=Image.fromarray(sa)
+     fixed_back.save(DRAFT/f'{pose}-fixed-covered-housings-depth.png')
+-    colour=Image.open(INPUTS/f'{pose}-exact-palette-layer.png').convert('RGBA')
++    colour,colour_details=colour_finish(base,Image.open(INPUTS/f'{pose}-exact-palette-layer.png'))
++    colour.save(DRAFT/f'{pose}-source-tonal-colour-layer.png')
+     contour=Image.open(INPUTS/f'{pose}-retained-coloured-contour-layer.png').convert('RGBA')
+     back=Image.open(HERE/f'working-unit/{pose}-equipment-back.png').convert('RGBA')
+     front=Image.open(HERE/f'working-unit/{pose}-equipment-front-with-existing-depth.png').convert('RGBA')
+-    layers=[('Intact native original at integer (0,+40); no body extraction',original),('Positive old-moving-equipment ownership only',erasure),('Existing chromatic fields: exact approved primary and secondary',colour),('Existing coloured contours retained as neutral linework',contour),('Fixed covered resistance columns and chassis, behind retained foreground',fixed_back),('Rigid 3D far work arm and supports, reviewed depth',back),('Rigid 3D short pads and near work arm, reviewed trainer depth',front)]
++    layers=[('Intact native original at integer (0,+40); no body extraction',original),('Positive old-moving-equipment ownership only',erasure),('Existing chromatic fields: canonical palette with original max-channel/chroma shading',colour),('Existing coloured contours retained as neutral linework',contour),('Fixed covered resistance columns and chassis, behind retained foreground',fixed_back),('Rigid 3D far work arm and supports, reviewed depth',back),('Rigid 3D short pads and near work arm, reviewed trainer depth',front)]
+     scene=compose(layers,SIZE)
+     untouched=(np.asarray(colour)[:,:,3]==0)&(np.asarray(contour)[:,:,3]==0)&(np.asarray(fixed_back)[:,:,3]==0)&(np.asarray(back)[:,:,3]==0)&(np.asarray(front)[:,:,3]==0)
+     assert np.array_equal(np.asarray(scene)[untouched],np.asarray(base)[untouched])
+     # Exact gear-only unit bytes are retained from the bounded physical draft.
+-    expected_front=manifest.get('reviewedWorkingUnitFrontRgbaHashes',{}).get(str(pose))
+-    if expected_front is not None:
+-        assert hashlib.sha256(front.tobytes()).hexdigest()==expected_front
++    assert np.array_equal(np.asarray(front)[:,:,3],np.asarray(Image.open(INPUTS/f'prior-{pose}-equipment-front-with-existing-depth-alpha.png')))
+     scene.save(DRAFT/f'{pose}-native.png')
+     images[pose]=scene;layers_by_pose[pose]=layers
+-    poseproof[str(pose)]={'sourceBaseRebuiltPixelExact':True,'nativeOriginalPlacement':[0,TOP],'newColumnFootprintsOverlapExistingForegroundPixels':column_overlap,'newStaticEquipmentNeverOverwritesRetainedForeground':True,'backHousingDepthInterpretation':'Retained source floor frame and, in pose4, far trainer occlude back housing. Raw common-camera equipment is preserved for visual depth review; original human depth is not calibrated.','allPixelsOutsideExistingColourAndEquipmentExact':True,'reviewedColourLayerByteIdentity':sha(INPUTS/f'{pose}-exact-palette-layer.png'),'reviewedContourLayerByteIdentity':sha(INPUTS/f'{pose}-retained-coloured-contour-layer.png'),'workingUnitFrontRgbaSha256':hashlib.sha256(front.tobytes()).hexdigest(),'nativeSha256':sha(DRAFT/f'{pose}-native.png')}
+-
+-bounds=[]
+-for im in images.values():
+-    yy,xx=np.where(np.asarray(im)[:,:,:3].max(2)>14)
+-    bounds.append((int(xx.min()),int(yy.min()),int(xx.max())+1,int(yy.max())+1))
+-crop=(max(0,min(b[0] for b in bounds)-24),max(0,min(b[1] for b in bounds)-24),min(SIZE[0],max(b[2] for b in bounds)+24),min(SIZE[1],max(b[3] for b in bounds)+24))
++    poseproof[str(pose)]={'sourceBaseRebuiltPixelExact':True,'nativeOriginalPlacement':[0,TOP],'newColumnFootprintsOverlapExistingForegroundPixels':column_overlap,'newStaticEquipmentNeverOverwritesRetainedForeground':True,'backHousingDepthInterpretation':'Retained source floor frame and, in pose4, far trainer occlude back housing. Raw common-camera equipment is preserved for visual depth review; original human depth is not calibrated.','allPixelsOutsideExistingColourAndEquipmentExact':True,'sourceColourSupportReferenceSha256':sha(INPUTS/f'{pose}-exact-palette-layer.png'),'sourceTonalColourMapping':colour_details,'newColourLayerSha256':sha(DRAFT/f'{pose}-source-tonal-colour-layer.png'),'reviewedContourLayerByteIdentity':sha(INPUTS/f'{pose}-retained-coloured-contour-layer.png'),'workingUnitFrontRgbaSha256':hashlib.sha256(front.tobytes()).hexdigest(),'nativeSha256':sha(DRAFT/f'{pose}-native.png')}
++
++crop=tuple(json.loads((INPUTS/'prior-sequence-plan.json').read_bytes())['commonCrop'])
+ editables={}
+ for pose in [1,4]:
+     framed=images[pose].crop(crop)
+@@ -186,8 +183,23 @@
+ beats=[{'t':0,'label':'Set','cue':'Keep your back supported and hips seated.'},{'t':0,'label':'Brace','cue':'Brace your torso and grip the handles.'},{'t':1,'label':'Squeeze','cue':'Straighten your legs and squeeze your quads.'},{'t':1,'label':'Hold','cue':'Keep your hips down and hands gripping.'},{'t':0,'label':'Return','cue':'Bend your knees slowly; control the resistance.'},{'t':0,'label':'Reset','cue':'Return to bent knees without losing control.'}]
+ assert all(len(b['cue'].split())<=7 for b in beats)
+ catalogue=json.loads((HERE/'catalogue.json').read_bytes())
+-plan={'exerciseId':'leg-extension','name':catalogue['name'],'version':'anatomy-v3-2026-10-15-common-camera-endpoint-leg-extension-v1','physicalPoses':2,'sourcePoseOrder':order,'positions':[0,0,1,1,0,0],'commonCrop':list(crop),'dimensions':list(images[1].crop(crop).size),'primary':[catalogue['muscleGroup']],'secondary':catalogue.get('secondaryMuscles',[]),'setup':[catalogue['instructions'][0]],'beats':beats,'frameHashes':hashes,'scope':'Unregistered two-endpoint equipment-only candidate. Repeated beat paths hold actual bent/extended states; no intermediate image, smooth trajectory or six unique pose claim.','findings':['Independent generic covered selectorized apparatus, not an exact branded replica.','A constructed common apparatus camera is used, not an original human-camera/depth recovery.','Covered resistance routing and unseen cams/belts/weights are not verified.','Original source body/seat/head/hand variations remain; human pixels are not fitted.','The held middle source2 and earlier long-pad diagnostic are not delivered.'],'releaseApproved':False,'completionCredit':False}
++plan={'exerciseId':'leg-extension','name':catalogue['name'],'version':'anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1','physicalPoses':2,'sourcePoseOrder':order,'positions':[0,0,1,1,0,0],'commonCrop':list(crop),'dimensions':list(images[1].crop(crop).size),'primary':[catalogue['muscleGroup']],'secondary':catalogue.get('secondaryMuscles',[]),'setup':[catalogue['instructions'][0]],'beats':beats,'frameHashes':hashes,'scope':'Unregistered two-endpoint equipment-only candidate. Repeated beat paths hold actual bent/extended states; no intermediate image, smooth trajectory or six unique pose claim.','findings':['Independent generic covered selectorized apparatus, not an exact branded replica.','A constructed common apparatus camera is used, not an original human-camera/depth recovery.','Covered resistance routing and unseen cams/belts/weights are not verified.','Original source body/seat/head/hand variations remain; human pixels are not fitted.','The held middle source2 and earlier long-pad diagnostic are not delivered.'],'releaseApproved':False,'completionCredit':False}
+ (HERE/'sequence-plan.json').write_text(json.dumps(plan,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
+ proof={'status':'unregistered-static-equipment-and-editable-package','exerciseId':'leg-extension','scope':'Two source endpoints only; apparatus geometry and pixel integrity, no parent visual or release acceptance inferred.','camera':g['proof']['camera'],'workingUnitProof':'working-unit/construction-proof.json','workingUnitProofSha256':sha(HERE/'working-unit/construction-proof.json'),'staticGeometry':{'axesWorld':[N.tolist(),UP.tolist(),F.tolist()],'closedBoxEquation':'C + a*N + b*UP + c*FORWARD, fixed dimensions; true common-camera visible faces.','floorBeamEquation':'Rigid cuboid between constant common-height endpoints; worldUp dot beamAxis=0.','housings':static_records,'seatFrameJoinWorld':seat_join.tolist(),'staticRawRgbaSha256':hashlib.sha256(np.asarray(static).tobytes()).hexdigest(),'sameStaticMeshBothStates':True,'coveredRoutingVerified':False},'poses':poseproof,'crop':list(crop),'dimensions':plan['dimensions'],'editables':editables,'frameHashes':hashes,'allSixLosslessPathsDecodeExactly':True,'anatomicalTransforms':0,'newImageRequests':0,'productionChanges':False,'releaseApproved':False,'completionCredit':False}
++
++prior_work=json.loads((INPUTS/'prior-working-unit-proof.json').read_bytes())
++for name in ['camera','equations','fixedPhysicalDimensionsMetres','joints','rotationAnglesDegrees','independentKneeAxisSeparationMetres']:
++    assert g['proof'][name]==prior_work[name],name
++for pose in [1,4]:
++    assert g['proof']['poses'][str(pose)]['geometry']==prior_work['poses'][str(pose)]['geometry']
++    for suffix in ['equipment-back','equipment-front-with-existing-depth','equipment-front-unoccluded']:
++        assert np.array_equal(np.array(Image.open(HERE/f'working-unit/{pose}-{suffix}.png').convert('RGBA'))[:,:,3],np.array(Image.open(INPUTS/f'prior-{pose}-{suffix}-alpha.png'))),(pose,suffix)
++prior_complete=json.loads((INPUTS/'prior-complete-construction-proof.json').read_bytes())
++for name in ['axesWorld','housings','seatFrameJoinWorld']:
++    assert proof['staticGeometry'][name]==prior_complete['staticGeometry'][name],name
++assert np.array_equal(np.array(static)[:,:,3],np.array(Image.open(INPUTS/'prior-static-alpha.png')))
++assert proof['crop']==prior_complete['crop'] and proof['dimensions']==prior_complete['dimensions']
++proof['materialOnlyPreservation']={'allWorkingUnitWorldGeometryExact':True,'allStaticWorldGeometryExact':True,'cameraExact':True,'allWorkingUnitAlphaMasksExact':True,'staticRawAlphaExact':True,'cropAndBodyPlacementExact':True,'equipmentFinish':'Illustration metal reflection/grain/edge normal shader within unchanged raster coverage; no new physical bevel geometry.','bodyFinish':'Original pixel max channel and chroma to canonical bases; no body spatial gradient.'}
++
+ (HERE/'construction-and-preservation-proof.json').write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8',newline='\n')
+ print(json.dumps({'nativePoses':2,'framePaths':6,'orasReopenedExact':4,'crop':crop,'dimensions':plan['dimensions'],'newImageRequests':0,'releaseApproved':False}))

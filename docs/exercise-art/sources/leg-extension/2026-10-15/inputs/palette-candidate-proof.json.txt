@@ -1,0 +1,76 @@
+{
+  "scope": "Unaccepted colour candidate, visual muscle-boundary and final playback review pending",
+  "palette": {
+    "primary": "#7B72E9",
+    "secondary": "#9590E0"
+  },
+  "poses": {
+    "1": {
+      "sourceSha256": "349427ed7cd2bf8bdb74168c6dff657e1ab24e5aa4d973d79af161debc48e631",
+      "fields": {
+        "primary": {
+          "tintedPixels": 15301,
+          "erodedInteriorPixels": 13166,
+          "fullyOpaquePalettePixels": 13215
+        },
+        "secondary": {
+          "tintedPixels": 5990,
+          "erodedInteriorPixels": 5035,
+          "fullyOpaquePalettePixels": 60
+        }
+      },
+      "allOutsideExistingTintByteIdentical": true,
+      "allSelectedTintAccountedFor": true,
+      "originalNeutralPixelsUnchanged": true,
+      "existingDarkColouredContourPixelsRetainedInPlaceAsNeutralLayer": 1413,
+      "faintSecondaryFieldSourceFadeRetained": true,
+      "outputSha256": "e8f0789660d157a1c28ecded82fb9172854e3f5a6e5ebaafb8926c0bb8b3a672"
+    },
+    "2": {
+      "sourceSha256": "088a339a27ca4567e48b69dd78c21d3f776a890559007b4e60ca993a5f7b61bd",
+      "fields": {
+        "primary": {
+          "tintedPixels": 15548,
+          "erodedInteriorPixels": 13323,
+          "fullyOpaquePalettePixels": 13365
+        },
+        "secondary": {
+          "tintedPixels": 6152,
+          "erodedInteriorPixels": 5160,
+          "fullyOpaquePalettePixels": 65
+        }
+      },
+      "allOutsideExistingTintByteIdentical": true,
+      "allSelectedTintAccountedFor": true,
+      "originalNeutralPixelsUnchanged": true,
+      "existingDarkColouredContourPixelsRetainedInPlaceAsNeutralLayer": 1548,
+      "faintSecondaryFieldSourceFadeRetained": true,
+      "outputSha256": "ddde9b4ce39f4540afe23a08e9bb10f655c3a959f1026c430502190a76297cd8"
+    },
+    "4": {
+      "sourceSha256": "cb474524183d373fbf2ad5c93a7b64a2cf5e610a07af405351f43901333e9709",
+      "fields": {
+        "primary": {
+          "tintedPixels": 14810,
+          "erodedInteriorPixels": 12661,
+          "fullyOpaquePalettePixels": 12714
+        },
+        "secondary": {
+          "tintedPixels": 6074,
+          "erodedInteriorPixels": 5076,
+          "fullyOpaquePalettePixels": 44
+        }
+      },
+      "allOutsideExistingTintByteIdentical": true,
+      "allSelectedTintAccountedFor": true,
+      "originalNeutralPixelsUnchanged": true,
+      "existingDarkColouredContourPixelsRetainedInPlaceAsNeutralLayer": 1528,
+      "faintSecondaryFieldSourceFadeRetained": true,
+      "outputSha256": "0eb4ac38863c72a6f45d046b8c600b7609af02d0c6de9373fa40a32ffd6d24f6"
+    }
+  },
+  "anatomicalTransforms": 0,
+  "newImageRequests": 0,
+  "releaseApproved": false,
+  "completionCredit": false
+}

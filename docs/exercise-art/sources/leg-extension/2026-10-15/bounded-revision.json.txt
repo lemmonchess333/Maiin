@@ -1,0 +1,19 @@
+{
+  "status": "single-material-attempt-rendered-independent-review-pending",
+  "priorConstructionPreserved": true,
+  "priorWorkingUnitSourceSha256": "c2e5353598c8c466ff5740c34c73bd39a35e0ae4aaec41d505bb64232b7891c1",
+  "materialWorkingUnitSourceSha256": "e0ecf4587ae3302f4ed80820b8e90a34238d3c140cfaca5d88c0051d30a34749",
+  "priorReproduceSha256": "65a8f5dde186abb861b611423a1389665606ec4a961b651e3785cf918ec75cbf",
+  "materialReproduceSha256": "f1200c44255988b601d253446e9b693678bf18a0700e34706f19118576dbb1e5",
+  "materialShaderSha256": "28d7515113546a7b89878a26327a111deed34753934a28fa8c0243917391df3e",
+  "workingUnitPatchSha256": "33060965ca6a4c79935721f8c434b7e953f3c506eb3e14576ed4bb7760720e8b",
+  "packagePatchSha256": "7d569aa25edfcd784849da14114d6a93f812f036873dd9976bb51849039223a7",
+  "newGeometry": false,
+  "bodyGeometryEdits": 0,
+  "newImageRequests": 0,
+  "productionChanges": false,
+  "releaseApproved": false,
+  "completionCredit": false,
+  "initialPreparedReproduceSha256": "9edf7ee0b40c9d8524b01d17c5a516ed712f03bfb0ae6c5567343143e22a652d",
+  "postPreparationMetadataNote": "One additional fail-closed check pins all derived alpha/geometry/material input hashes before the actual first render. The final patch and code SHA include that check."
+}

@@ -1,0 +1,67 @@
+{
+  "status": "explicit-rigid-endpoint-working-unit-constructed-native-contact-acceptance-pending",
+  "exerciseId": "leg-extension",
+  "scope": "One bounded independent-axis construction, narrowed by the parent to the two intact endpoint sources1and4. This is not the held three-pose SVG route and does not deliver middle pose2.",
+  "camera": {
+    "type": "one orthographic camera for both legs, both states, arms, cylinders and local posts",
+    "projection": "P(X,Y,Z)=(750X,750Y+40)",
+    "worldScalePixelsPerMetre": 750,
+    "projectedRotaryAxisDegrees": 9.3,
+    "normal": "n=(0.6cos(9.3deg),0.6sin(9.3deg),-0.8)",
+    "nearerDepth": "smallerZ",
+    "normalizationMeaning": "Constructed apparatus camera/model; not metadata recovered from the original generated human image. The mirrored depth diagnostic remains preserved separately."
+  },
+  "equations": {
+    "projectedCircle": "v^T Q v=221^2, Q=(d*d^T)/0.8^2+major*major^T, d=(cos9.3,sin9.3), major=(sin9.3,-cos9.3)",
+    "worldCircle": "E(theta)=C+(221/750)*(Ucos(theta)+Vsin(theta)); U,V are fixed orthonormal vectors perpendicular to the same n",
+    "worldCylinder": "E+a*n+t*n+r*(Ucos(phi)+Vsin(phi)); a,L,r are constant per leg and unchanged between endpoint states",
+    "trueEndcaps": "Circular world endcaps are projected by the same camera. Their projected minor/major ratio is0.8 and minor direction9.3deg; no independently fitted ellipse is substituted."
+  },
+  "fixedPhysicalDimensionsMetres": {
+    "bothWorkArmRadii": 0.2946666666666667,
+    "bothPadRadii": 0.06666666666666667,
+    "bothPadLengths": 0.15555555555555559
+  },
+  "nativeJointAxisConstruction": {
+    "farCircleCentre": [578.1558694002752, 459.19337016296214],
+    "nearCircleCentre": [678.5148716395418, 481.59150232265006],
+    "farExternalPivot": [439.99606910332216, 436.5688352084915],
+    "nearExternalPivot": [708.1205431317459, 486.4396169557509],
+    "interpretation": "The external far hub is displaced along its fixed physical knee axis; it is not claimed to be a surface patella. Circle centres lie about22px left and13-16px above the earlier approximate surface-centre guesses. Native distal-femur/knee-axis proximity requires parent review, not automatic acceptance.",
+    "physicalAxisSpacing": {"lateralMetres": 0.2792461974123344, "foreAftMetres": 0.03913040829521186, "heightMetres": 0}
+  },
+  "constraintsActuallyEstablished": [
+    "Both sides use the same camera and same physical arm radius, pad length and pad radius.",
+    "All four endpoint projections match their declared retained contact-placement references within1e-8px, using different rotation angles only.",
+    "Rigid arm lengths are evaluated in world coordinates. No phase-specific shortening, human scaling, limb fitting or changing shaft is used.",
+    "The70px projected short-pad choice has12.58mm positive axial clearance between the independent cylinders in both states, so their world volumes do not interpenetrate.",
+    "The earlier120px projected cylinders would interpenetrate by98.53mm axially, with radial axis distances23.3/39.8mm below the133.3mm diameter. That long-pad diagnostic is preserved and is not the candidate.",
+    "The source-kept body bases are reused unchanged. Original source anatomy is never transformed or reconstructed; pixels outside newly drawn equipment remain exact."
+  ],
+  "nativeContactReview": {
+    "imagesInspected": ["1-native-contact-draft.png", "4-native-contact-draft.png"],
+    "observation": "Both true short rollers overlap the retained anterior lower-shin regions; head, torso, thighs, original hand grip and trainers remain in their native positions. The shorter cylinders retain the endpoint contact placements while removing physical cylinder-cylinder interpenetration.",
+    "footwearDepth": "The extended source's existing whole-trainer foreground guard is retained at identical coordinates. The unoccluded equipment render is separately saved so this assumption is reviewable rather than hidden.",
+    "depthNotMeasured": "No original human depth mesh exists here. Source-consistent footwear/shin occlusion is a visual judgment; image overlap and equipment equations alone do not certify measured skin contact.",
+    "acceptance": null
+  },
+  "deliverables": {
+    "geometryAndWorldCoordinates": "construction-proof.json",
+    "bentNative": "1-native-contact-draft.png",
+    "extendedNative": "4-native-contact-draft.png",
+    "unoccludedEquipment": ["1-equipment-front-unoccluded.png", "4-equipment-front-unoccluded.png"],
+    "editableEquipmentLayers": ["1-equipment-back.png", "1-equipment-front-with-existing-depth.png", "4-equipment-back.png", "4-equipment-front-with-existing-depth.png"],
+    "reproductionSource": "../construct-endpoint-rotary-camera-short-pads.py"
+  },
+  "limits": [
+    "This is a local working-unit mechanical/contact draft. Complete resistance housings, apparatus finishing, palette finishing, editable release set and card/player/mobile review are not supplied or accepted.",
+    "It does not establish the rejected middle pose's mechanics, an original recovered camera or a calibrated original human joint centre.",
+    "No full-scope visual, strict consistency, owner release, production registration, merge or completion claim is made."
+  ],
+  "boundedOutcome": "A genuine constant-dimension endpoint apparatus construction is now available for native parent review. Stop further Leg Extension construction iterations here; acceptance or a concrete native contact rejection should govern the next step.",
+  "newImageRequests": 0,
+  "anatomicalWarpsFitsOrGrafts": 0,
+  "priorFilesModified": false,
+  "productionChanges": false,
+  "completionCredit": false
+}

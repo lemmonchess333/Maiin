@@ -1,0 +1,19 @@
+{
+  "id": "leg-extension",
+  "name": "Leg Extension",
+  "category": "Legs",
+  "muscleGroup": "Quads",
+  "mechanic": "isolation",
+  "secondaryMuscles": [
+    "Hip Flexors"
+  ],
+  "equipment": "Machine",
+  "caloriesPerMinute": 5,
+  "instructions": [
+    "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+    "Grip the side handles and keep your hips pressed into the seat.",
+    "Extend your legs smoothly until they're fully straight, squeeze the quads at the top.",
+    "Lower with control — don't let the stack crash."
+  ],
+  "tip": "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+}
