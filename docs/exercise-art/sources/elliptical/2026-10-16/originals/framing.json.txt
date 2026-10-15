@@ -1,0 +1,17 @@
+{
+  "source": "1-colour-repaired.png",
+  "sourceGeneration": "8d75a89c-b003-4c20-97b6-1ba29af61fd9",
+  "resize": [
+    1382,
+    922
+  ],
+  "offset": [
+    77,
+    51
+  ],
+  "canvas": [
+    1536,
+    1024
+  ],
+  "method": "Authorized whole-scene uniform90% scale, rounded to integer pixels; no anatomy/pose change"
+}

@@ -1,0 +1,5 @@
+{
+  "reviewLabel": "elliptical-integrated-prev-wrap",
+  "selected": "Show frame 6: Reset",
+  "src": "/form-frames/elliptical/6.webp"
+}

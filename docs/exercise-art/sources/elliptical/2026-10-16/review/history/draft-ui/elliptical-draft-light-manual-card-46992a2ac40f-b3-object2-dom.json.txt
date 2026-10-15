@@ -1,0 +1,49 @@
+{
+  "cards": [
+    {
+      "alt": "Elliptical normal card, 480px long-side limit",
+      "complete": true,
+      "display": [
+        469,
+        480
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/candidate/draft/card.webp"
+    },
+    {
+      "alt": "Elliptical normal card, 348px long-side limit",
+      "complete": true,
+      "display": [
+        340.0208435058594,
+        348
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/candidate/draft/card.webp"
+    },
+    {
+      "alt": "Elliptical normal card, 160px long-side limit",
+      "complete": true,
+      "display": [
+        156.33334350585938,
+        160
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/candidate/draft/card.webp"
+    }
+  ],
+  "docWidth": 380,
+  "reviewLabel": "elliptical-draft-light-card-sizes",
+  "viewport": [
+    390,
+    844
+  ]
+}

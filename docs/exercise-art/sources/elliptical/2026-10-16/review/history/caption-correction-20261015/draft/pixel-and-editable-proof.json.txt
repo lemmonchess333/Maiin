@@ -1,0 +1,112 @@
+{
+  "scope": "One palette pass on parent-eligible equipment construction, not final native/mobile/release approval.",
+  "palettePasses": 1,
+  "dependencies": {
+    "pillow": "12.3.0",
+    "numpy": "2.3.5"
+  },
+  "recipeSha256": "d672a76e01fd659b9c52e1ca5164d9c4ad629762220f2a6c49824dc427661235",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "poses": {
+    "1": {
+      "existingSourceChromaPixels": 17153,
+      "primaryPixelsAboveHalf": 11977,
+      "upperSecondaryPixels": 5176,
+      "hamstringSecondaryPixelsAboveHalf": 0,
+      "neutralPixelsNotSelected": true,
+      "noNewFieldOrBodyGradient": true,
+      "sourceTonalCalibration": {
+        "primary": 0.9333333333333333,
+        "upperSecondary": 0.5879684095860567,
+        "hamstringSecondary": 1.0
+      },
+      "roleSelection": "Existing source chroma only. PrimaryQuads+Glutes; secondaryFrontDelts+UpperBack, plus source4Hamstrings selected along the visible white fascia separation.",
+      "exactUncolouredSourceRecovered": false,
+      "acceptedUncolouredConstructionSha256": "05babc1ab49d39b94639ac2c95cf50783147eb181ee744d032e7a33b4154d28f",
+      "allNeutralGuardedBodyRgbaExact": true,
+      "allOutsideSourceColourSupportRgbaExactToAcceptedConstruction": true,
+      "equipmentRenderSha256": "9522c6383a0d4bddb26fd2494dd7f83bb0695e4d074f31a18588b06d039eb319",
+      "equipmentRenderPortableRgbaAndPngExact": true,
+      "meshFaces": 2712,
+      "bodyTransforms": 0,
+      "bodyColourChangedPixels": 17153,
+      "nativePixelSha256": "59d534959fc09a2d13879785be4ecf64fa34ea743bab2f09a1f80ed668793e02",
+      "framedPixelSha256": "b841b1d390f624ca3a5491ed69bce1c6e0caefcf4527b6b9f1b42a816409b546"
+    },
+    "4": {
+      "existingSourceChromaPixels": 19541,
+      "primaryPixelsAboveHalf": 9487,
+      "upperSecondaryPixels": 5621,
+      "hamstringSecondaryPixelsAboveHalf": 4433,
+      "neutralPixelsNotSelected": true,
+      "noNewFieldOrBodyGradient": true,
+      "sourceTonalCalibration": {
+        "primary": 0.9333333333333333,
+        "upperSecondary": 0.5879684095860567,
+        "hamstringSecondary": 1.0
+      },
+      "roleSelection": "Existing source chroma only. PrimaryQuads+Glutes; secondaryFrontDelts+UpperBack, plus source4Hamstrings selected along the visible white fascia separation.",
+      "exactUncolouredSourceRecovered": false,
+      "acceptedUncolouredConstructionSha256": "f50d899dc678c95c3c2f737e05836680c4de14813c9f9e0adb56c2bf8ffd0cbb",
+      "allNeutralGuardedBodyRgbaExact": true,
+      "allOutsideSourceColourSupportRgbaExactToAcceptedConstruction": true,
+      "equipmentRenderSha256": "dd0e227a019599822c2c14fa805e5c67b42cfb2fc0f62c34db51f76894004bdc",
+      "equipmentRenderPortableRgbaAndPngExact": true,
+      "meshFaces": 2712,
+      "bodyTransforms": 0,
+      "bodyColourChangedPixels": 19541,
+      "nativePixelSha256": "bbbd66cfa61fb277197f854dda388c387bf1168d306bf72b4008e734dbefa3a9",
+      "framedPixelSha256": "0de1af8ffdc6a1c6903ca7708b370f8e3ca67cf7a4d07bfc5d8f7a81d29a3c90"
+    }
+  },
+  "oraReadbacks": [
+    {
+      "path": "1-native.ora",
+      "sha256": "662010cce21faac6c91cc6c83efb30a2f419dbcca8bcb38b12b2b096e8cce868",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "59d534959fc09a2d13879785be4ecf64fa34ea743bab2f09a1f80ed668793e02"
+    },
+    {
+      "path": "1-framed.ora",
+      "sha256": "9455f2cae2c4f0742682fe3fb2db2d089befd6b2f96b0d4527bfc9189eb049c3",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "b841b1d390f624ca3a5491ed69bce1c6e0caefcf4527b6b9f1b42a816409b546"
+    },
+    {
+      "path": "4-native.ora",
+      "sha256": "d8d436f38988299eb90f036c19d5aa49209fa4ba205d6c54aaf6817315c91047",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "bbbd66cfa61fb277197f854dda388c387bf1168d306bf72b4008e734dbefa3a9"
+    },
+    {
+      "path": "4-framed.ora",
+      "sha256": "ace2c7822351443d4f57970f821e4af3d02c1d9b437cf30e28b6dcd5e10349b5",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "0de1af8ffdc6a1c6903ca7708b370f8e3ca67cf7a4d07bfc5d8f7a81d29a3c90"
+    }
+  ],
+  "frameOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "allSixFramesLosslessRgbaExact": true,
+  "commonCropContainsAllForegroundWith24pxMargin": true,
+  "originalBodyCoordinatesUnchanged": true,
+  "newSpatialBodyGradients": false,
+  "anatomicalWarpsOrGrafts": false,
+  "newImageRequests": 0,
+  "projectTestsBuildsGitOrRepositoryWrites": 0,
+  "acceptance": false
+}

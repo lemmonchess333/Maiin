@@ -1,0 +1,49 @@
+{
+  "scope": "Rigid offset-grip geometry readback; not native wrap approval or a new optimizer result. Same dimensions and mirrored handedness, two passive orientations. Existing native old gear remains context and conservative guards include old cylinder pixels, so guards alone do not prove final grip wrapping.",
+  "readback": [
+    {
+      "side": "near",
+      "curveAllPairDistancesMaxDifferenceM": 3.885780586188048e-16,
+      "bearingToSleeveCentreDistancePose1M": 0.023323807579381198,
+      "bearingToSleeveCentreDistancePose4M": 0.023323807579381208,
+      "sleeveCentres": {
+        "1": [
+          717.3627166669772,
+          319.75009309119935
+        ],
+        "4": [
+          953.3397152223217,
+          238.58446681711547
+        ]
+      },
+      "bearingPointsUnchanged": true
+    },
+    {
+      "side": "far",
+      "curveAllPairDistancesMaxDifferenceM": 2.42861286636753e-16,
+      "bearingToSleeveCentreDistancePose1M": 0.02332380757938129,
+      "bearingToSleeveCentreDistancePose4M": 0.023323807579381198,
+      "sleeveCentres": {
+        "1": [
+          940.1701080505788,
+          250.84866913489202
+        ],
+        "4": [
+          761.3598012097216,
+          311.69802623806265
+        ]
+      },
+      "bearingPointsUnchanged": true
+    }
+  ],
+  "allBracketPairwiseDistancesUnchanged": true,
+  "geometryPins": {
+    "1-mechanical-geometry.json": "ff478f48a7d3e5382813045ec9831df23514c73b6e9e52840a4c03be248725a6",
+    "4-mechanical-geometry.json": "80573f03c5c27f18cd2db0ae59b70d8c1708a405df50c46c18194e238448847d",
+    "render-offset-bearing-grips.py": "625259b15f27dde29bd0588457dfe70227d6b8f6497489e619b3fc41ad515e97",
+    "native-contact-overlay-proof.json": "2fcc2fce1cbb680bdc0d3aed4ef450341fbf32d3579aa5de0e5a8bd3eb8452fe"
+  },
+  "newOptimizationCalls": 0,
+  "bodyEdits": 0,
+  "acceptance": false
+}

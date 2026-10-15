@@ -1,0 +1,1240 @@
+{
+  "archivedAtUtc": "2026-10-15T23:11:42.557973+00:00",
+  "sinceUtc": "2026-10-15T22:59:00Z",
+  "scopeFilter": "both",
+  "officialLog": "C:\\Users\\myles\\.codex\\sessions\\2026\\10\\04\\rollout-2026-10-04T14-18-53-01a10711-412c-7ce2-8907-eb9f63d462da.jsonl",
+  "logSnapshotBytes": 5450527334,
+  "boundedTailBytes": 120000000,
+  "source": "Only current-turn explicit elliptical-draft-* / elliptical-integrated-* official mcp__cua_repl.js returns",
+  "scope": "Exact screenshot bytes and original tool text are copied. JSON/JSON5 parses contain data only, never code execution. No capture, render, image edit, new image request, app mutation or QA acceptance.",
+  "mobileLimitation": "Earlier1280px traces remain real observations but are not390x844 mobile proof. Viewport values are retained/tagged per object; screenshot pixel dimensions do not independently establish CSS viewport. Only root can accept actual matching review observations.",
+  "helperSha256": "c5a66cf207b022087fc4bf391cfa57828ee8ffa4029e5c2dc997f31a1d66c3be",
+  "artifacts": [
+    {
+      "title": "Inspect actual Elliptical frame controls and rendered image dimensions",
+      "callTimestamp": "2026-10-15T23:01:24.904Z",
+      "declaredKinds": [
+        "elliptical-draft-initial"
+      ],
+      "callRecordSha256": "f6a2d51e05876d3114a1b8fbfcc1b4e939c0f0f9238ad307a64e7479b852b937",
+      "callByteStart": 5448551906,
+      "callByteEndExclusive": 5448553027,
+      "callId": "call_d705f99e48404bb0ab4ce173432d1f0a",
+      "outputTimestamp": "2026-10-15T23:01:27.064Z",
+      "outputRecordSha256": "165b61b2c7598015df36467551efd29ff5b39d5be3aa7470f14673783120095d",
+      "outputByteStart": 5448557446,
+      "outputByteEndExclusive": 5448560037,
+      "file": "review/elliptical-draft-initial-d705f99e4840-b1-tool-text.txt",
+      "sha256": "d0f1fabee124c47572033f2153d1dfc7485e2abf3e1e604657ae2967e3d18d2f",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect actual Elliptical frame controls and rendered image dimensions",
+      "callTimestamp": "2026-10-15T23:01:24.904Z",
+      "declaredKinds": [
+        "elliptical-draft-initial"
+      ],
+      "callRecordSha256": "f6a2d51e05876d3114a1b8fbfcc1b4e939c0f0f9238ad307a64e7479b852b937",
+      "callByteStart": 5448551906,
+      "callByteEndExclusive": 5448553027,
+      "callId": "call_d705f99e48404bb0ab4ce173432d1f0a",
+      "outputTimestamp": "2026-10-15T23:01:27.064Z",
+      "outputRecordSha256": "165b61b2c7598015df36467551efd29ff5b39d5be3aa7470f14673783120095d",
+      "outputByteStart": 5448557446,
+      "outputByteEndExclusive": 5448560037,
+      "file": "review/elliptical-draft-initial-d705f99e4840-b2-tool-text.txt",
+      "sha256": "aea1a99eab37f07f87d967f7af2705cb6daa8f44d44d67920cf6f9411feec0e1",
+      "bytes": 1975,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review all six actual Elliptical draft paths and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:01:39.182Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "callRecordSha256": "74159f08f2dee033ac4ebb0c64f1aab47b43aa2135729a5a8ca600c26b75cb4e",
+      "callByteStart": 5448569584,
+      "callByteEndExclusive": 5448570720,
+      "callId": "call_717d13c683b0465891b2cbc1ba2c80d4",
+      "outputTimestamp": "2026-10-15T23:01:44.001Z",
+      "outputRecordSha256": "95bf6cb4a353701f2f0dbb8352bb4398f846114ba69d041bff381fb54886b622",
+      "outputByteStart": 5448638358,
+      "outputByteEndExclusive": 5448706817,
+      "file": "review/elliptical-draft-dark-manual-717d13c683b0-b1-tool-text.txt",
+      "sha256": "c2360e61eda88e8d8045a814a667a608bf5e8fe7ccd1ea092c04c17b792b8fe5",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review all six actual Elliptical draft paths and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:01:39.182Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "callRecordSha256": "74159f08f2dee033ac4ebb0c64f1aab47b43aa2135729a5a8ca600c26b75cb4e",
+      "callByteStart": 5448569584,
+      "callByteEndExclusive": 5448570720,
+      "callId": "call_717d13c683b0465891b2cbc1ba2c80d4",
+      "outputTimestamp": "2026-10-15T23:01:44.001Z",
+      "outputRecordSha256": "95bf6cb4a353701f2f0dbb8352bb4398f846114ba69d041bff381fb54886b622",
+      "outputByteStart": 5448638358,
+      "outputByteEndExclusive": 5448706817,
+      "file": "review/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt",
+      "sha256": "633055fbefa1aaa2da53b0b02d27ccc532529fde40c14bff0571b16ed2825d44",
+      "bytes": 1616,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review all six actual Elliptical draft paths and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:01:39.182Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "callRecordSha256": "74159f08f2dee033ac4ebb0c64f1aab47b43aa2135729a5a8ca600c26b75cb4e",
+      "callByteStart": 5448569584,
+      "callByteEndExclusive": 5448570720,
+      "callId": "call_717d13c683b0465891b2cbc1ba2c80d4",
+      "outputTimestamp": "2026-10-15T23:01:44.001Z",
+      "outputRecordSha256": "95bf6cb4a353701f2f0dbb8352bb4398f846114ba69d041bff381fb54886b622",
+      "outputByteStart": 5448638358,
+      "outputByteEndExclusive": 5448706817,
+      "file": "review/elliptical-draft-dark-manual-717d13c683b0-b3.jpg",
+      "sha256": "19433ef833906f1849db1fa65fd10a6ace2ba512d6df0cc1ffc648cfa618a0b5",
+      "bytes": 49619,
+      "kind": "elliptical-draft-dark-manual",
+      "sameCallKinds": [
+        "elliptical-draft-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Review light-theme Elliptical steps and standard card sizes",
+      "callTimestamp": "2026-10-15T23:02:36.655Z",
+      "declaredKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "callRecordSha256": "90e6ba4c94712d37353d641773894aa9eaa83eb8975b4e1da5cd21f5f0131311",
+      "callByteStart": 5448807985,
+      "callByteEndExclusive": 5448809807,
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "outputTimestamp": "2026-10-15T23:02:41.867Z",
+      "outputRecordSha256": "ec9b42d593db0dd3625597414d2162074d07ea0bc839679dea843b39ae29771f",
+      "outputByteStart": 5448878131,
+      "outputByteEndExclusive": 5448956777,
+      "file": "review/elliptical-same-call-multiple-46992a2ac40f-b1-tool-text.txt",
+      "sha256": "013c0e8ec0f092e31f0683ebfb8d33036167b2cffa41969fb170ed1a68d963e5",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review light-theme Elliptical steps and standard card sizes",
+      "callTimestamp": "2026-10-15T23:02:36.655Z",
+      "declaredKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "callRecordSha256": "90e6ba4c94712d37353d641773894aa9eaa83eb8975b4e1da5cd21f5f0131311",
+      "callByteStart": 5448807985,
+      "callByteEndExclusive": 5448809807,
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "outputTimestamp": "2026-10-15T23:02:41.867Z",
+      "outputRecordSha256": "ec9b42d593db0dd3625597414d2162074d07ea0bc839679dea843b39ae29771f",
+      "outputByteStart": 5448878131,
+      "outputByteEndExclusive": 5448956777,
+      "file": "review/elliptical-same-call-multiple-46992a2ac40f-b2-tool-text.txt",
+      "sha256": "da6382ff5ebfeda52832ae9143f8424c7d1b7800ec6bfa02aab9c9e178797b43",
+      "bytes": 1111,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review light-theme Elliptical steps and standard card sizes",
+      "callTimestamp": "2026-10-15T23:02:36.655Z",
+      "declaredKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "callRecordSha256": "90e6ba4c94712d37353d641773894aa9eaa83eb8975b4e1da5cd21f5f0131311",
+      "callByteStart": 5448807985,
+      "callByteEndExclusive": 5448809807,
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "outputTimestamp": "2026-10-15T23:02:41.867Z",
+      "outputRecordSha256": "ec9b42d593db0dd3625597414d2162074d07ea0bc839679dea843b39ae29771f",
+      "outputByteStart": 5448878131,
+      "outputByteEndExclusive": 5448956777,
+      "file": "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt",
+      "sha256": "1f037929d75b0c5f432d34fdfb01275ef6969a22aedef445473af2838eb63cb8",
+      "bytes": 2210,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review light-theme Elliptical steps and standard card sizes",
+      "callTimestamp": "2026-10-15T23:02:36.655Z",
+      "declaredKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "callRecordSha256": "90e6ba4c94712d37353d641773894aa9eaa83eb8975b4e1da5cd21f5f0131311",
+      "callByteStart": 5448807985,
+      "callByteEndExclusive": 5448809807,
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "outputTimestamp": "2026-10-15T23:02:41.867Z",
+      "outputRecordSha256": "ec9b42d593db0dd3625597414d2162074d07ea0bc839679dea843b39ae29771f",
+      "outputByteStart": 5448878131,
+      "outputByteEndExclusive": 5448956777,
+      "file": "review/elliptical-same-call-multiple-46992a2ac40f-b4.jpg",
+      "sha256": "70340090170b93425fd2a91756dc1e69650e48e7fefe53111a334bc06514e775",
+      "bytes": 55903,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-card-sizes",
+        "elliptical-draft-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Visually inspect normal Elliptical cards against both themes",
+      "callTimestamp": "2026-10-15T23:02:51.507Z",
+      "declaredKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "callRecordSha256": "a4e2b9c1e1563257e64b7c577479131a942212fa892cce809cb5bc17d1f4dbce",
+      "callByteStart": 5448961710,
+      "callByteEndExclusive": 5448963115,
+      "callId": "call_7af0c8925c1a4f3988d8faa2d8327322",
+      "outputTimestamp": "2026-10-15T23:02:55.151Z",
+      "outputRecordSha256": "e4c2dee21b6c525a3281442b5ce2c2c7399ae14927ff1c5cfd21b8b72a2526fb",
+      "outputByteStart": 5449031027,
+      "outputByteEndExclusive": 5449131762,
+      "file": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b1-tool-text.txt",
+      "sha256": "7b2f5f9012cbdba0c02b38c239d9fa60e4f34d2f806774a0771be57e756c729f",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Visually inspect normal Elliptical cards against both themes",
+      "callTimestamp": "2026-10-15T23:02:51.507Z",
+      "declaredKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "callRecordSha256": "a4e2b9c1e1563257e64b7c577479131a942212fa892cce809cb5bc17d1f4dbce",
+      "callByteStart": 5448961710,
+      "callByteEndExclusive": 5448963115,
+      "callId": "call_7af0c8925c1a4f3988d8faa2d8327322",
+      "outputTimestamp": "2026-10-15T23:02:55.151Z",
+      "outputRecordSha256": "e4c2dee21b6c525a3281442b5ce2c2c7399ae14927ff1c5cfd21b8b72a2526fb",
+      "outputByteStart": 5449031027,
+      "outputByteEndExclusive": 5449131762,
+      "file": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-tool-text.txt",
+      "sha256": "e7c6bd8a92c267766c0a256128adf8dd9a4bc94ab1bf3189307146b584a31c04",
+      "bytes": 587,
+      "kind": "elliptical-draft-card-dark-light-complete",
+      "sameCallKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Visually inspect normal Elliptical cards against both themes",
+      "callTimestamp": "2026-10-15T23:02:51.507Z",
+      "declaredKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "callRecordSha256": "a4e2b9c1e1563257e64b7c577479131a942212fa892cce809cb5bc17d1f4dbce",
+      "callByteStart": 5448961710,
+      "callByteEndExclusive": 5448963115,
+      "callId": "call_7af0c8925c1a4f3988d8faa2d8327322",
+      "outputTimestamp": "2026-10-15T23:02:55.151Z",
+      "outputRecordSha256": "e4c2dee21b6c525a3281442b5ce2c2c7399ae14927ff1c5cfd21b8b72a2526fb",
+      "outputByteStart": 5449031027,
+      "outputByteEndExclusive": 5449131762,
+      "file": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-dom.json",
+      "sha256": "554d32a61f8b64b9745477baf129507bfe934757bb8a00e95759aed56c2638d9",
+      "bytes": 764,
+      "kind": "elliptical-draft-card-dark-light-complete",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-tool-text.txt",
+      "originalTextSha256": "e7c6bd8a92c267766c0a256128adf8dd9a4bc94ab1bf3189307146b584a31c04",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Visually inspect normal Elliptical cards against both themes",
+      "callTimestamp": "2026-10-15T23:02:51.507Z",
+      "declaredKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "callRecordSha256": "a4e2b9c1e1563257e64b7c577479131a942212fa892cce809cb5bc17d1f4dbce",
+      "callByteStart": 5448961710,
+      "callByteEndExclusive": 5448963115,
+      "callId": "call_7af0c8925c1a4f3988d8faa2d8327322",
+      "outputTimestamp": "2026-10-15T23:02:55.151Z",
+      "outputRecordSha256": "e4c2dee21b6c525a3281442b5ce2c2c7399ae14927ff1c5cfd21b8b72a2526fb",
+      "outputByteStart": 5449031027,
+      "outputByteEndExclusive": 5449131762,
+      "file": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b3.jpg",
+      "sha256": "9c8fa51ac4bd12254f3ac6476b4c170a125e4d71aba94363d3d47457bbcd321e",
+      "bytes": 40589,
+      "kind": "elliptical-draft-card-dark-light-complete",
+      "sameCallKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "elliptical-draft-card-dark-light-complete",
+            "viewportScope": {
+              "topLevelViewport": [
+                390,
+                844
+              ],
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Visually inspect normal Elliptical cards against both themes",
+      "callTimestamp": "2026-10-15T23:02:51.507Z",
+      "declaredKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "callRecordSha256": "a4e2b9c1e1563257e64b7c577479131a942212fa892cce809cb5bc17d1f4dbce",
+      "callByteStart": 5448961710,
+      "callByteEndExclusive": 5448963115,
+      "callId": "call_7af0c8925c1a4f3988d8faa2d8327322",
+      "outputTimestamp": "2026-10-15T23:02:55.151Z",
+      "outputRecordSha256": "e4c2dee21b6c525a3281442b5ce2c2c7399ae14927ff1c5cfd21b8b72a2526fb",
+      "outputByteStart": 5449031027,
+      "outputByteEndExclusive": 5449131762,
+      "file": "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b4.jpg",
+      "sha256": "4f66e092a3458593e682e61dd8852f9fe213daf2c0d72cd43754553b57885492",
+      "bytes": 33979,
+      "kind": "elliptical-draft-card-dark-light-complete",
+      "sameCallKinds": [
+        "elliptical-draft-card-dark-light-complete"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "elliptical-draft-card-dark-light-complete",
+            "viewportScope": {
+              "topLevelViewport": [
+                390,
+                844
+              ],
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Verify the normal cycle and start slower light-theme playback",
+      "callTimestamp": "2026-10-15T23:03:20.747Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "callRecordSha256": "24e3accb38ddde10e1e9259683985126a41fc901c38c4747937805dd31868d69",
+      "callByteStart": 5449224225,
+      "callByteEndExclusive": 5449225499,
+      "callId": "call_6b4222e20c47484dbf15b88df7cd3435",
+      "outputTimestamp": "2026-10-15T23:03:24.833Z",
+      "outputRecordSha256": "73c05853ac8363aad3d2b336cbd77b9a7627ab474c91ec41c85e7bc4de28fc93",
+      "outputByteStart": 5449293274,
+      "outputByteEndExclusive": 5449307580,
+      "file": "review/elliptical-draft-dark-normal-6b4222e20c47-b1-tool-text.txt",
+      "sha256": "1f782f6ef3109c4a74dc50e7f74425a970f9fec036da4b3a7ccece334089c122",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify the normal cycle and start slower light-theme playback",
+      "callTimestamp": "2026-10-15T23:03:20.747Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "callRecordSha256": "24e3accb38ddde10e1e9259683985126a41fc901c38c4747937805dd31868d69",
+      "callByteStart": 5449224225,
+      "callByteEndExclusive": 5449225499,
+      "callId": "call_6b4222e20c47484dbf15b88df7cd3435",
+      "outputTimestamp": "2026-10-15T23:03:24.833Z",
+      "outputRecordSha256": "73c05853ac8363aad3d2b336cbd77b9a7627ab474c91ec41c85e7bc4de28fc93",
+      "outputByteStart": 5449293274,
+      "outputByteEndExclusive": 5449307580,
+      "file": "review/elliptical-draft-dark-normal-6b4222e20c47-b2-tool-text.txt",
+      "sha256": "3c5a63794f11d8e0ff39831a0b1779cf9b60a817b4989d916be55fee7768a8f5",
+      "bytes": 1698,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify the normal cycle and start slower light-theme playback",
+      "callTimestamp": "2026-10-15T23:03:20.747Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "callRecordSha256": "24e3accb38ddde10e1e9259683985126a41fc901c38c4747937805dd31868d69",
+      "callByteStart": 5449224225,
+      "callByteEndExclusive": 5449225499,
+      "callId": "call_6b4222e20c47484dbf15b88df7cd3435",
+      "outputTimestamp": "2026-10-15T23:03:24.833Z",
+      "outputRecordSha256": "73c05853ac8363aad3d2b336cbd77b9a7627ab474c91ec41c85e7bc4de28fc93",
+      "outputByteStart": 5449293274,
+      "outputByteEndExclusive": 5449307580,
+      "file": "review/elliptical-draft-dark-normal-6b4222e20c47-b3-tool-text.txt",
+      "sha256": "d5795c3bf1783d282c0a06778fc828acfa3ef8622dd7faa055711f4370e8d6b5",
+      "bytes": 11545,
+      "kind": "elliptical-draft-dark-normal",
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify the normal cycle and start slower light-theme playback",
+      "callTimestamp": "2026-10-15T23:03:20.747Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal"
+      ],
+      "callRecordSha256": "24e3accb38ddde10e1e9259683985126a41fc901c38c4747937805dd31868d69",
+      "callByteStart": 5449224225,
+      "callByteEndExclusive": 5449225499,
+      "callId": "call_6b4222e20c47484dbf15b88df7cd3435",
+      "outputTimestamp": "2026-10-15T23:03:24.833Z",
+      "outputRecordSha256": "73c05853ac8363aad3d2b336cbd77b9a7627ab474c91ec41c85e7bc4de28fc93",
+      "outputByteStart": 5449293274,
+      "outputByteEndExclusive": 5449307580,
+      "file": "review/elliptical-draft-dark-normal-6b4222e20c47-b3-dom.json",
+      "sha256": "027116cd7fd6ad914465fe976e4cdcb00ae70855a8fd650c57d85c3224d524f0",
+      "bytes": 12810,
+      "kind": "elliptical-draft-dark-normal",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-dark-normal-6b4222e20c47-b3-tool-text.txt",
+      "originalTextSha256": "d5795c3bf1783d282c0a06778fc828acfa3ef8622dd7faa055711f4370e8d6b5",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Preserve actual slower-playback observations before correcting the review logger",
+      "callTimestamp": "2026-10-15T23:03:57.404Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-original-observer"
+      ],
+      "callRecordSha256": "25d2b01df9bd611d6d1c4f91bcb23fefbb93aeefedbf723773d9bbcf8a5d1d1b",
+      "callByteStart": 5449333292,
+      "callByteEndExclusive": 5449334413,
+      "callId": "call_189586dab2474ad69c6c07532d903e22",
+      "outputTimestamp": "2026-10-15T23:04:00.709Z",
+      "outputRecordSha256": "ca2e9f18f3b873685944ec99634a0f07a2d3b4e2a7bb1ae14c48aa84e46c5dfc",
+      "outputByteStart": 5449402028,
+      "outputByteEndExclusive": 5449415489,
+      "file": "review/elliptical-draft-light-slower-original-observer-189586dab247-b1-tool-text.txt",
+      "sha256": "51be7b264fa707c3a766e26f1c9a45cce84a6e7cffcaab1e954983cdb4f1be09",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-slower-original-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Preserve actual slower-playback observations before correcting the review logger",
+      "callTimestamp": "2026-10-15T23:03:57.404Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-original-observer"
+      ],
+      "callRecordSha256": "25d2b01df9bd611d6d1c4f91bcb23fefbb93aeefedbf723773d9bbcf8a5d1d1b",
+      "callByteStart": 5449333292,
+      "callByteEndExclusive": 5449334413,
+      "callId": "call_189586dab2474ad69c6c07532d903e22",
+      "outputTimestamp": "2026-10-15T23:04:00.709Z",
+      "outputRecordSha256": "ca2e9f18f3b873685944ec99634a0f07a2d3b4e2a7bb1ae14c48aa84e46c5dfc",
+      "outputByteStart": 5449402028,
+      "outputByteEndExclusive": 5449415489,
+      "file": "review/elliptical-draft-light-slower-original-observer-189586dab247-b2-tool-text.txt",
+      "sha256": "a9a9caf99465cfdf4f61f282e5ea7461ff8ae37cadf72ab97a552a6828fbf87d",
+      "bytes": 12517,
+      "kind": "elliptical-draft-light-slower-original-observer",
+      "sameCallKinds": [
+        "elliptical-draft-light-slower-original-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Preserve actual slower-playback observations before correcting the review logger",
+      "callTimestamp": "2026-10-15T23:03:57.404Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-original-observer"
+      ],
+      "callRecordSha256": "25d2b01df9bd611d6d1c4f91bcb23fefbb93aeefedbf723773d9bbcf8a5d1d1b",
+      "callByteStart": 5449333292,
+      "callByteEndExclusive": 5449334413,
+      "callId": "call_189586dab2474ad69c6c07532d903e22",
+      "outputTimestamp": "2026-10-15T23:04:00.709Z",
+      "outputRecordSha256": "ca2e9f18f3b873685944ec99634a0f07a2d3b4e2a7bb1ae14c48aa84e46c5dfc",
+      "outputByteStart": 5449402028,
+      "outputByteEndExclusive": 5449415489,
+      "file": "review/elliptical-draft-light-slower-original-observer-189586dab247-b2-dom.json",
+      "sha256": "8304e5468309f7d54d0b0e606674778e734bb403b54c2f7469b7cb5be2884c3c",
+      "bytes": 13874,
+      "kind": "elliptical-draft-light-slower-original-observer",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-light-slower-original-observer-189586dab247-b2-tool-text.txt",
+      "originalTextSha256": "a9a9caf99465cfdf4f61f282e5ea7461ff8ae37cadf72ab97a552a6828fbf87d",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Verify settled normal cues and record the slower cycle",
+      "callTimestamp": "2026-10-15T23:05:34.180Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "callRecordSha256": "a5e113f7f22873dd85e2371d4e2d9afe98554ab0e3820f365bd2e03423674cb2",
+      "callByteStart": 5449671486,
+      "callByteEndExclusive": 5449672968,
+      "callId": "call_89a0614192474e60a6dc3854ec35a142",
+      "outputTimestamp": "2026-10-15T23:05:42.812Z",
+      "outputRecordSha256": "b15b6757291676bb0f53b381d6dd275598552479af284dfa416ac09984756ae9",
+      "outputByteStart": 5449740950,
+      "outputByteEndExclusive": 5449760668,
+      "file": "review/elliptical-draft-dark-normal-settled-89a061419247-b1-tool-text.txt",
+      "sha256": "b6e1893772d32175e6d3eb2fd395b059b66a9d238b93fd2c5f98f46473dd37ef",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify settled normal cues and record the slower cycle",
+      "callTimestamp": "2026-10-15T23:05:34.180Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "callRecordSha256": "a5e113f7f22873dd85e2371d4e2d9afe98554ab0e3820f365bd2e03423674cb2",
+      "callByteStart": 5449671486,
+      "callByteEndExclusive": 5449672968,
+      "callId": "call_89a0614192474e60a6dc3854ec35a142",
+      "outputTimestamp": "2026-10-15T23:05:42.812Z",
+      "outputRecordSha256": "b15b6757291676bb0f53b381d6dd275598552479af284dfa416ac09984756ae9",
+      "outputByteStart": 5449740950,
+      "outputByteEndExclusive": 5449760668,
+      "file": "review/elliptical-draft-dark-normal-settled-89a061419247-b2-tool-text.txt",
+      "sha256": "9347e34015e214866880b13006895a2acc51b82e67eb3eb606b044cddc0f7081",
+      "bytes": 879,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify settled normal cues and record the slower cycle",
+      "callTimestamp": "2026-10-15T23:05:34.180Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "callRecordSha256": "a5e113f7f22873dd85e2371d4e2d9afe98554ab0e3820f365bd2e03423674cb2",
+      "callByteStart": 5449671486,
+      "callByteEndExclusive": 5449672968,
+      "callId": "call_89a0614192474e60a6dc3854ec35a142",
+      "outputTimestamp": "2026-10-15T23:05:42.812Z",
+      "outputRecordSha256": "b15b6757291676bb0f53b381d6dd275598552479af284dfa416ac09984756ae9",
+      "outputByteStart": 5449740950,
+      "outputByteEndExclusive": 5449760668,
+      "file": "review/elliptical-draft-dark-normal-settled-89a061419247-b3-tool-text.txt",
+      "sha256": "5707a560fc804a60f25009710d01de98a4f181ce9031cf063cba7cdf1f016318",
+      "bytes": 17669,
+      "kind": "elliptical-draft-dark-normal-settled",
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify settled normal cues and record the slower cycle",
+      "callTimestamp": "2026-10-15T23:05:34.180Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-settled"
+      ],
+      "callRecordSha256": "a5e113f7f22873dd85e2371d4e2d9afe98554ab0e3820f365bd2e03423674cb2",
+      "callByteStart": 5449671486,
+      "callByteEndExclusive": 5449672968,
+      "callId": "call_89a0614192474e60a6dc3854ec35a142",
+      "outputTimestamp": "2026-10-15T23:05:42.812Z",
+      "outputRecordSha256": "b15b6757291676bb0f53b381d6dd275598552479af284dfa416ac09984756ae9",
+      "outputByteStart": 5449740950,
+      "outputByteEndExclusive": 5449760668,
+      "file": "review/elliptical-draft-dark-normal-settled-89a061419247-b3-dom.json",
+      "sha256": "b8c60004c0325982406999f4ba885312daf20c7b68258e688262a5c0ee1f5182",
+      "bytes": 19606,
+      "kind": "elliptical-draft-dark-normal-settled",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-dark-normal-settled-89a061419247-b3-tool-text.txt",
+      "originalTextSha256": "5707a560fc804a60f25009710d01de98a4f181ce9031cf063cba7cdf1f016318",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Preserve slower playback before the final logger correction",
+      "callTimestamp": "2026-10-15T23:06:22.248Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-cue-key-only"
+      ],
+      "callRecordSha256": "5b2014cf3b9f91a3f513fcf27a8b62a32dc383f768ed62f2c7f5951785ce7fb9",
+      "callByteStart": 5449787390,
+      "callByteEndExclusive": 5449788485,
+      "callId": "call_3718588a2a33477fb3ed6370a28d3823",
+      "outputTimestamp": "2026-10-15T23:06:26.206Z",
+      "outputRecordSha256": "060fb34ff3708e1fa8a78220f9bed7dedec3acc7e89c03eef137a3528365502f",
+      "outputByteStart": 5449856075,
+      "outputByteEndExclusive": 5449875819,
+      "file": "review/elliptical-draft-light-slower-cue-key-only-3718588a2a33-b1-tool-text.txt",
+      "sha256": "560ffd9c69e82e47c35905b9ae6fea110b589ba3ae253239f5306f225b7c1f6d",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-light-slower-cue-key-only"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Preserve slower playback before the final logger correction",
+      "callTimestamp": "2026-10-15T23:06:22.248Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-cue-key-only"
+      ],
+      "callRecordSha256": "5b2014cf3b9f91a3f513fcf27a8b62a32dc383f768ed62f2c7f5951785ce7fb9",
+      "callByteStart": 5449787390,
+      "callByteEndExclusive": 5449788485,
+      "callId": "call_3718588a2a33477fb3ed6370a28d3823",
+      "outputTimestamp": "2026-10-15T23:06:26.206Z",
+      "outputRecordSha256": "060fb34ff3708e1fa8a78220f9bed7dedec3acc7e89c03eef137a3528365502f",
+      "outputByteStart": 5449856075,
+      "outputByteEndExclusive": 5449875819,
+      "file": "review/elliptical-draft-light-slower-cue-key-only-3718588a2a33-b2-tool-text.txt",
+      "sha256": "f7c6b93e92e07f64c2412515fa408885f61571cd8cdce3c0e57a0f89c9a2eff3",
+      "bytes": 18603,
+      "kind": "elliptical-draft-light-slower-cue-key-only",
+      "sameCallKinds": [
+        "elliptical-draft-light-slower-cue-key-only"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Preserve slower playback before the final logger correction",
+      "callTimestamp": "2026-10-15T23:06:22.248Z",
+      "declaredKinds": [
+        "elliptical-draft-light-slower-cue-key-only"
+      ],
+      "callRecordSha256": "5b2014cf3b9f91a3f513fcf27a8b62a32dc383f768ed62f2c7f5951785ce7fb9",
+      "callByteStart": 5449787390,
+      "callByteEndExclusive": 5449788485,
+      "callId": "call_3718588a2a33477fb3ed6370a28d3823",
+      "outputTimestamp": "2026-10-15T23:06:26.206Z",
+      "outputRecordSha256": "060fb34ff3708e1fa8a78220f9bed7dedec3acc7e89c03eef137a3528365502f",
+      "outputByteStart": 5449856075,
+      "outputByteEndExclusive": 5449875819,
+      "file": "review/elliptical-draft-light-slower-cue-key-only-3718588a2a33-b2-dom.json",
+      "sha256": "a2378d529cbfbc654e157c7d863703b29361372cc64076dc14ace9e13735680a",
+      "bytes": 20648,
+      "kind": "elliptical-draft-light-slower-cue-key-only",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-light-slower-cue-key-only-3718588a2a33-b2-tool-text.txt",
+      "originalTextSha256": "f7c6b93e92e07f64c2412515fa408885f61571cd8cdce3c0e57a0f89c9a2eff3",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Confirm complete settled captions and begin the final slower cycle",
+      "callTimestamp": "2026-10-15T23:09:51.453Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "callRecordSha256": "18e8b8d27433a2c4ee6667104977522c86b3715d71a906eebf2bde1b887ae3fd",
+      "callByteStart": 5450114144,
+      "callByteEndExclusive": 5450115973,
+      "callId": "call_d08b08b988a8453ca04f99d2e6baa840",
+      "outputTimestamp": "2026-10-15T23:09:58.857Z",
+      "outputRecordSha256": "d4a40c09490fd7c9248c01ae106c3a9dfdbabcd6b8df8dd118d398ea6a352059",
+      "outputByteStart": 5450184300,
+      "outputByteEndExclusive": 5450192158,
+      "file": "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b1-tool-text.txt",
+      "sha256": "659b32da5d12137c9d30af322b240bc9387ae3e5f3e5b3083efdc154bf523c99",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm complete settled captions and begin the final slower cycle",
+      "callTimestamp": "2026-10-15T23:09:51.453Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "callRecordSha256": "18e8b8d27433a2c4ee6667104977522c86b3715d71a906eebf2bde1b887ae3fd",
+      "callByteStart": 5450114144,
+      "callByteEndExclusive": 5450115973,
+      "callId": "call_d08b08b988a8453ca04f99d2e6baa840",
+      "outputTimestamp": "2026-10-15T23:09:58.857Z",
+      "outputRecordSha256": "d4a40c09490fd7c9248c01ae106c3a9dfdbabcd6b8df8dd118d398ea6a352059",
+      "outputByteStart": 5450184300,
+      "outputByteEndExclusive": 5450192158,
+      "file": "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b2-tool-text.txt",
+      "sha256": "cce67ab00d99b77baea323c7fe2f4c1a5e32caf0fdb63f99e5ae5aa813322c5c",
+      "bytes": 856,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm complete settled captions and begin the final slower cycle",
+      "callTimestamp": "2026-10-15T23:09:51.453Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "callRecordSha256": "18e8b8d27433a2c4ee6667104977522c86b3715d71a906eebf2bde1b887ae3fd",
+      "callByteStart": 5450114144,
+      "callByteEndExclusive": 5450115973,
+      "callId": "call_d08b08b988a8453ca04f99d2e6baa840",
+      "outputTimestamp": "2026-10-15T23:09:58.857Z",
+      "outputRecordSha256": "d4a40c09490fd7c9248c01ae106c3a9dfdbabcd6b8df8dd118d398ea6a352059",
+      "outputByteStart": 5450184300,
+      "outputByteEndExclusive": 5450192158,
+      "file": "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-tool-text.txt",
+      "sha256": "e2539604d51c0012bb9b7669efb98eb590d7aa88d5e7c1d351ab8400f87ce026",
+      "bytes": 6186,
+      "kind": "elliptical-draft-dark-normal-final-observer",
+      "sameCallKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm complete settled captions and begin the final slower cycle",
+      "callTimestamp": "2026-10-15T23:09:51.453Z",
+      "declaredKinds": [
+        "elliptical-draft-dark-normal-final-observer"
+      ],
+      "callRecordSha256": "18e8b8d27433a2c4ee6667104977522c86b3715d71a906eebf2bde1b887ae3fd",
+      "callByteStart": 5450114144,
+      "callByteEndExclusive": 5450115973,
+      "callId": "call_d08b08b988a8453ca04f99d2e6baa840",
+      "outputTimestamp": "2026-10-15T23:09:58.857Z",
+      "outputRecordSha256": "d4a40c09490fd7c9248c01ae106c3a9dfdbabcd6b8df8dd118d398ea6a352059",
+      "outputByteStart": 5450184300,
+      "outputByteEndExclusive": 5450192158,
+      "file": "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-dom.json",
+      "sha256": "09938ab79734fec3d8dee55a976af7e9b558459c70584fdaef9a253193e2f3d8",
+      "bytes": 7005,
+      "kind": "elliptical-draft-dark-normal-final-observer",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-tool-text.txt",
+      "originalTextSha256": "e2539604d51c0012bb9b7669efb98eb590d7aa88d5e7c1d351ab8400f87ce026",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Finish the slower cycle, console and light mobile review",
+      "callTimestamp": "2026-10-15T23:10:41.543Z",
+      "declaredKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "callRecordSha256": "c716df9a5534f7a7766390be76c07b9744a6c8be75d523f259e9f27abe84d5b4",
+      "callByteStart": 5450229104,
+      "callByteEndExclusive": 5450230667,
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "outputTimestamp": "2026-10-15T23:10:49.116Z",
+      "outputRecordSha256": "f7b054b180e02bb49c6b583915f671c1b40e8ef779fdb93078ae98b254a14773",
+      "outputByteStart": 5450298724,
+      "outputByteEndExclusive": 5450368465,
+      "file": "review/elliptical-same-call-multiple-e501517eed8d-b1-tool-text.txt",
+      "sha256": "ed9d47cb9bc89c07a4ba377333febe4995230379f2e790d042907e16c5a359a7",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish the slower cycle, console and light mobile review",
+      "callTimestamp": "2026-10-15T23:10:41.543Z",
+      "declaredKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "callRecordSha256": "c716df9a5534f7a7766390be76c07b9744a6c8be75d523f259e9f27abe84d5b4",
+      "callByteStart": 5450229104,
+      "callByteEndExclusive": 5450230667,
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "outputTimestamp": "2026-10-15T23:10:49.116Z",
+      "outputRecordSha256": "f7b054b180e02bb49c6b583915f671c1b40e8ef779fdb93078ae98b254a14773",
+      "outputByteStart": 5450298724,
+      "outputByteEndExclusive": 5450368465,
+      "file": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt",
+      "sha256": "658ab3a1ba84e6a8ebbbba0713881d73b3a500749ecf53984154435c1d867623",
+      "bytes": 6358,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish the slower cycle, console and light mobile review",
+      "callTimestamp": "2026-10-15T23:10:41.543Z",
+      "declaredKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "callRecordSha256": "c716df9a5534f7a7766390be76c07b9744a6c8be75d523f259e9f27abe84d5b4",
+      "callByteStart": 5450229104,
+      "callByteEndExclusive": 5450230667,
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "outputTimestamp": "2026-10-15T23:10:49.116Z",
+      "outputRecordSha256": "f7b054b180e02bb49c6b583915f671c1b40e8ef779fdb93078ae98b254a14773",
+      "outputByteStart": 5450298724,
+      "outputByteEndExclusive": 5450368465,
+      "file": "review/elliptical-same-call-multiple-e501517eed8d-b3.jpg",
+      "sha256": "ea703a2f59035c8d16edcf19250d8546066168df2311ad9e167dcf8301581765",
+      "bytes": 46901,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-console",
+        "elliptical-draft-light-slower-final-observer"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Confirm both manual wrap directions in the Elliptical draft",
+      "callTimestamp": "2026-10-15T23:10:58.976Z",
+      "declaredKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "callRecordSha256": "fe098f1daf602379d58d79f0c205c1b4e87f3760f97d25f11b2e36102ee1c775",
+      "callByteStart": 5450373358,
+      "callByteEndExclusive": 5450374790,
+      "callId": "call_f001b21405cc4c0f9e14a73c08095745",
+      "outputTimestamp": "2026-10-15T23:11:04.734Z",
+      "outputRecordSha256": "f99d014251c9bc000b1c509928f4bce0eb9f5b459a569d649d488c4f74403b9c",
+      "outputByteStart": 5450442713,
+      "outputByteEndExclusive": 5450510593,
+      "file": "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b1-tool-text.txt",
+      "sha256": "d9b5c8da9ecf3db5c6084b1de4acc4049f68c91c0f87b5af3019c8e301f63186",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm both manual wrap directions in the Elliptical draft",
+      "callTimestamp": "2026-10-15T23:10:58.976Z",
+      "declaredKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "callRecordSha256": "fe098f1daf602379d58d79f0c205c1b4e87f3760f97d25f11b2e36102ee1c775",
+      "callByteStart": 5450373358,
+      "callByteEndExclusive": 5450374790,
+      "callId": "call_f001b21405cc4c0f9e14a73c08095745",
+      "outputTimestamp": "2026-10-15T23:11:04.734Z",
+      "outputRecordSha256": "f99d014251c9bc000b1c509928f4bce0eb9f5b459a569d649d488c4f74403b9c",
+      "outputByteStart": 5450442713,
+      "outputByteEndExclusive": 5450510593,
+      "file": "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-tool-text.txt",
+      "sha256": "11ad115ef74372ab59d7cd170e434f95dfb761a9b2c981dd42072272d4d92f27",
+      "bytes": 567,
+      "kind": "elliptical-draft-previous-and-next-wrap",
+      "sameCallKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm both manual wrap directions in the Elliptical draft",
+      "callTimestamp": "2026-10-15T23:10:58.976Z",
+      "declaredKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "callRecordSha256": "fe098f1daf602379d58d79f0c205c1b4e87f3760f97d25f11b2e36102ee1c775",
+      "callByteStart": 5450373358,
+      "callByteEndExclusive": 5450374790,
+      "callId": "call_f001b21405cc4c0f9e14a73c08095745",
+      "outputTimestamp": "2026-10-15T23:11:04.734Z",
+      "outputRecordSha256": "f99d014251c9bc000b1c509928f4bce0eb9f5b459a569d649d488c4f74403b9c",
+      "outputByteStart": 5450442713,
+      "outputByteEndExclusive": 5450510593,
+      "file": "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-dom.json",
+      "sha256": "2c19760d2b6dd49be3a072ecf3bebefd9b59aa6e4055bae6cdeaee0fb8569494",
+      "bytes": 588,
+      "kind": "elliptical-draft-previous-and-next-wrap",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-tool-text.txt",
+      "originalTextSha256": "11ad115ef74372ab59d7cd170e434f95dfb761a9b2c981dd42072272d4d92f27",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Confirm both manual wrap directions in the Elliptical draft",
+      "callTimestamp": "2026-10-15T23:10:58.976Z",
+      "declaredKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "callRecordSha256": "fe098f1daf602379d58d79f0c205c1b4e87f3760f97d25f11b2e36102ee1c775",
+      "callByteStart": 5450373358,
+      "callByteEndExclusive": 5450374790,
+      "callId": "call_f001b21405cc4c0f9e14a73c08095745",
+      "outputTimestamp": "2026-10-15T23:11:04.734Z",
+      "outputRecordSha256": "f99d014251c9bc000b1c509928f4bce0eb9f5b459a569d649d488c4f74403b9c",
+      "outputByteStart": 5450442713,
+      "outputByteEndExclusive": 5450510593,
+      "file": "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b3.jpg",
+      "sha256": "6b5cd08dd7838c5d4077944c9fca37f8f6570dae6e77e9dc3566a37295ac96d3",
+      "bytes": 50009,
+      "kind": "elliptical-draft-previous-and-next-wrap",
+      "sameCallKinds": [
+        "elliptical-draft-previous-and-next-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "elliptical-draft-previous-and-next-wrap",
+            "viewportScope": {
+              "topLevelViewport": null,
+              "explicitViewportPairs": [],
+              "containsNon390x844Viewport": false,
+              "classification": "viewport not established",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "callId": "call_d705f99e48404bb0ab4ce173432d1f0a",
+      "file": "review/elliptical-draft-initial-d705f99e4840-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_717d13c683b0465891b2cbc1ba2c80d4",
+      "file": "review/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "file": "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "file": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    }
+  ],
+  "callsAwaitingOutputWithinSnapshot": [],
+  "qaAcceptance": false
+}

@@ -1,0 +1,82 @@
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../../Maiin-burpees/src/components/ui/Button';
+
+export function ThemeControl() {
+  const [dark, setDark] = useState(true);
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); }, [dark]);
+  return <Button variant="outline" onClick={() => setDark(value => !value)}>{dark ? 'Light theme' : 'Dark theme'}</Button>;
+}
+
+export function CardViews({ src }: { src: string }) {
+  const [open, setOpen] = useState(false);
+  const [natural, setNatural] = useState<[number, number] | null>(null);
+  return <details onToggle={event => setOpen(event.currentTarget.open)}>
+    <summary>Normal card preview: native 480px / 348px / 160px long-side limits</summary>
+    <p>Generate the normal preview before opening this review.</p>
+    {open && <div className="space-y-4 py-3">{[480, 348, 160].map(size => <figure key={size} style={{ width: '100%', margin: 0 }}>
+      <div style={{ maxWidth: '100%', overflowX: 'auto' }}><img src={src}
+        alt={`Elliptical normal card, ${size}px long-side limit`} data-card-long-side-limit={size}
+        onLoad={event => setNatural([event.currentTarget.naturalWidth, event.currentTarget.naturalHeight])}
+        style={{ width: 'auto', height: 'auto', maxWidth: size, maxHeight: size, objectFit: 'contain' }} /></div>
+      <figcaption>{size}px long-side limit; actual asset {natural ? natural.join('×') : 'loading'}.
+        {size === 480 ? ' Horizontal review scroll preserves native size on narrow viewports.' : ''}</figcaption>
+    </figure>)}</div>}
+  </details>;
+}
+
+// Observation only: actual visible/decoded images, DOM controls and instruction
+// selection. No window/app globals, playback driving, QA verdicts or file writes.
+export function PlaybackEvidence() {
+  const [trace, setTrace] = useState<object[]>([]);
+  const last = useRef('');
+  useEffect(() => {
+    const capture = () => {
+      const section = document.querySelector<HTMLElement>('section[aria-label="Elliptical form guide"]');
+      const image = section?.querySelector<HTMLImageElement>('img[aria-hidden="false"]');
+      if (!section || !image?.complete || !image.naturalWidth || getComputedStyle(image).visibility !== 'visible') return;
+      const playing = Array.from(section.querySelectorAll('button')).some(button => button.textContent?.trim() === 'Pause');
+      const slower = section.querySelector<HTMLButtonElement>('button[aria-label="Slower playback"]')?.getAttribute('aria-pressed') ?? null;
+      const selected = document.querySelector<HTMLButtonElement>('button[aria-current="step"][aria-label^="Show frame "]');
+      const selectedInstruction = selected?.getAttribute('aria-label') ?? null;
+      const selectedCue = selected?.getAttribute('aria-describedby');
+      const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      const rect = image.getBoundingClientRect();
+      const src = image.getAttribute('src');
+      const key = [src, image.alt, playing, slower, selectedInstruction, theme, document.hidden, innerWidth, innerHeight, rect.width, rect.height, document.querySelector('[data-testid="draft-selected-cue"]')?.textContent ?? null].join('|');
+      if (key === last.current) return;
+      last.current = key;
+      setTrace(previous => [...previous, {
+        ms: Math.round(performance.now()), observedAt: new Date().toISOString(),
+        src, currentSrc: image.currentSrc, alt: image.alt, playing, slower,
+        selectedInstruction,
+        draftSelectedCue: document.querySelector('[data-testid="draft-selected-cue"]')?.textContent ?? null,
+        selectedInstructionText: selectedCue ? document.getElementById(selectedCue)?.textContent ?? null : null,
+        instructionRows: Array.from(document.querySelectorAll<HTMLButtonElement>('button[aria-label^="Show frame "]')).map(button => ({
+          label: button.getAttribute('aria-label'), current: button.getAttribute('aria-current'),
+        })),
+        theme, documentHidden: document.hidden,
+        naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight,
+        display: [rect.width, rect.height], viewport: [innerWidth, innerHeight],
+        devicePixelRatio, reviewScope: document.querySelector('main')?.getAttribute('data-review-scope'),
+        sectionText: section.innerText,
+      }].slice(-320));
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true,
+      attributeFilter: ['aria-hidden', 'aria-current', 'aria-pressed', 'alt', 'src', 'style', 'class'] });
+    document.addEventListener('load', capture, true);
+    document.addEventListener('visibilitychange', capture);
+    window.addEventListener('resize', capture);
+    capture();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('load', capture, true);
+      document.removeEventListener('visibilitychange', capture);
+      window.removeEventListener('resize', capture);
+    };
+  }, []);
+  return <details><summary>Observed playback evidence</summary>
+    <Button variant="outline" onClick={() => { last.current = ''; setTrace([]); }}>Reset playback evidence</Button>
+    <pre data-testid="review-playback-trace" style={{ maxHeight: 280, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(trace, null, 2)}</pre>
+  </details>;
+}

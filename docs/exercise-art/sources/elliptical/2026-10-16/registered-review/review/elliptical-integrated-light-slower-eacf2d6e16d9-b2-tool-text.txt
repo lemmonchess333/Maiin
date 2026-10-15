@@ -1,0 +1,236 @@
+{
+  docWidth: 380,
+  records: [
+    {
+      alt: 'Elliptical, Reset',
+      cue: 'Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 141868,
+      natural: [ 1047, 1072 ],
+      playing: false,
+      selectedInstruction: 'Show frame 6: Reset',
+      slower: 'true',
+      src: '/form-frames/elliptical/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: 'Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 142419,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 6: Reset',
+      slower: 'true',
+      src: '/form-frames/elliptical/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 144822,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 6: Reset',
+      slower: 'true',
+      src: '/form-frames/elliptical/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 144828,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 1: Stride A',
+      slower: 'true',
+      src: '/form-frames/elliptical/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 147228,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 1: Stride A',
+      slower: 'true',
+      src: '/form-frames/elliptical/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: 'Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 147234,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 2: Hold A',
+      slower: 'true',
+      src: '/form-frames/elliptical/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: 'Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 149634,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 2: Hold A',
+      slower: 'true',
+      src: '/form-frames/elliptical/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: 'Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 149640,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 3: Stride B',
+      slower: 'true',
+      src: '/form-frames/elliptical/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: 'Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 152040,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 3: Stride B',
+      slower: 'true',
+      src: '/form-frames/elliptical/4.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: 'Hold both grips; keep your chest tall.',
+      documentHidden: false,
+      ms: 152046,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 4: Hold B',
+      slower: 'true',
+      src: '/form-frames/elliptical/4.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Return A',
+      cue: 'Hold both grips; keep your chest tall.',
+      documentHidden: false,
+      ms: 154446,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 4: Hold B',
+      slower: 'true',
+      src: '/form-frames/elliptical/5.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Return A',
+      cue: 'Return smoothly to the first shown stride.',
+      documentHidden: false,
+      ms: 154452,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 5: Return A',
+      slower: 'true',
+      src: '/form-frames/elliptical/5.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: 'Return smoothly to the first shown stride.',
+      documentHidden: false,
+      ms: 156850,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 5: Return A',
+      slower: 'true',
+      src: '/form-frames/elliptical/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: 'Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 156854,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 6: Reset',
+      slower: 'true',
+      src: '/form-frames/elliptical/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 159259,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 6: Reset',
+      slower: 'true',
+      src: '/form-frames/elliptical/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 159264,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 1: Stride A',
+      slower: 'true',
+      src: '/form-frames/elliptical/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 161664,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 1: Stride A',
+      slower: 'true',
+      src: '/form-frames/elliptical/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: 'Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 161669,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      selectedInstruction: 'Show frame 2: Hold A',
+      slower: 'true',
+      src: '/form-frames/elliptical/2.webp',
+      theme: 'light'
+    }
+  ],
+  reviewLabel: 'elliptical-integrated-light-slower',
+  viewport: [ 390, 844 ]
+}{
+  docWidth: 380,
+  image: [
+    {
+      alt: 'Elliptical, Stride B',
+      natural: [ 1047, 1072 ],
+      objectFit: 'contain',
+      rect: { height: 360, width: 324, x: 28, y: 242.11459350585935 },
+      src: '/form-frames/elliptical/3.webp'
+    }
+  ],
+  reviewLabel: 'elliptical-integrated-full-figure',
+  viewport: [ 390, 844 ]
+}

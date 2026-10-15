@@ -1,0 +1,15 @@
+{
+  "scope": "Authored index of exact historical prompt text, not an original service response or a new request.",
+  "sourceGenerationId": "ac9f0fc8-2918-4371-bc68-2664d10591af",
+  "historicalPrompts": [
+    {
+      "path": "originals/4-restore-pivot-prompt.txt",
+      "sha256": "cd0f4f6f29a29541cbbd9276c60a6edf5af23b6fb3276df244521cc6096c71be"
+    }
+  ],
+  "sourcePath": "originals/4-original.png",
+  "sourceSha256": "649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be",
+  "sourceHistory": "originals/sequence-candidates.json",
+  "framing": "No new framing; original1536x1024 selected opposite body.",
+  "newImageRequests": 0
+}

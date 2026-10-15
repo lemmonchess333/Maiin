@@ -1,0 +1,254 @@
+{
+  "scope": "Supplemental data-only parsing from saved exact official text; no new capture, image/source edit or QA assertion.",
+  "originalIndex": {
+    "path": "review/elliptical-tool-return-artifact-index-registered-final.json",
+    "sha256": "df3b0ea82cc9fa7a7b6a6514637370aa6055f46e022266deeb6cc4d46ed626ab"
+  },
+  "literalSplitting": "Full-input balanced bracket/quote scanner, followed by finite JSON/JSON5 data parse without evaluation.",
+  "helperSha256": "123acd84b85768261607a89f098a0e1d3f960eacde0402ad443142e26660b824",
+  "archiverSha256": "c5a66cf207b022087fc4bf391cfa57828ee8ffa4029e5c2dc997f31a1d66c3be",
+  "artifacts": [
+    {
+      "callId": "call_bcb43de263e448d6a801e7b5ca6646ef",
+      "callRecordSha256": "7025fdd32707850cd1a249ea2497d03f0e16d83172c48aefa9682481995dcc98",
+      "outputRecordSha256": "8cf237a46742f087f3b1d092ac9ce825c8836a6a23b4ff93c6ed7b877e75fd0a",
+      "callByteStart": 5451754695,
+      "callByteEndExclusive": 5451756666,
+      "outputByteStart": 5451825129,
+      "outputByteEndExclusive": 5451882355,
+      "file": "review/elliptical-integrated-dark-manual-bcb43de263e4-b2-object1-dom.json",
+      "sha256": "86bc9d9a9b7488a4ff176e67bb382b1c354fb17fbf5159e72deacc77c085d6ff",
+      "bytes": 1821,
+      "kind": "elliptical-integrated-dark-manual",
+      "sourceText": "review/elliptical-integrated-dark-manual-bcb43de263e4-b2-tool-text.txt",
+      "sourceTextSha256": "49fa1c55115e59d976665ec42bfe9603967d0776d582f2ce65b1a5116c523958",
+      "objectOrdinal": 1,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "callRecordSha256": "e93d06d46d190cd70d064fcfbeaf8a584d9c7e152c792e7f34ae987553fad1b5",
+      "outputRecordSha256": "ce82b38ea880fd4327fa18a5f6c31799f1f1d09ca0c29af32d795140d6b729a4",
+      "callByteStart": 5451983737,
+      "callByteEndExclusive": 5451985973,
+      "outputByteStart": 5452054703,
+      "outputByteEndExclusive": 5452117581,
+      "file": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-object1-dom.json",
+      "sha256": "392ccd4f52ade728dcd6e7bb1f8115ba133447e832432425e0dbb4e4f746aca1",
+      "bytes": 7734,
+      "kind": "elliptical-integrated-dark-normal",
+      "sourceText": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-tool-text.txt",
+      "sourceTextSha256": "b5d2590649acf889263fe2e6df1b1a44cea3bc39a4e0cb37f21540fa00c4088e",
+      "objectOrdinal": 1,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "callRecordSha256": "e93d06d46d190cd70d064fcfbeaf8a584d9c7e152c792e7f34ae987553fad1b5",
+      "outputRecordSha256": "ce82b38ea880fd4327fa18a5f6c31799f1f1d09ca0c29af32d795140d6b729a4",
+      "callByteStart": 5451983737,
+      "callByteEndExclusive": 5451985973,
+      "outputByteStart": 5452054703,
+      "outputByteEndExclusive": 5452117581,
+      "file": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-object2-dom.json",
+      "sha256": "b02d5d03bdc10965d23b8cfb8dc6d7dfeea9a6db7a1f6dbffcd32d8182c47415",
+      "bytes": 1822,
+      "kind": "elliptical-integrated-light-manual",
+      "sourceText": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-tool-text.txt",
+      "sourceTextSha256": "b5d2590649acf889263fe2e6df1b1a44cea3bc39a4e0cb37f21540fa00c4088e",
+      "objectOrdinal": 2,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-object1-dom.json",
+      "sha256": "1150bd5359db39d160d90dc493508b059c0fec96b709ace68138d9429397cbb1",
+      "bytes": 7020,
+      "kind": "elliptical-integrated-light-slower",
+      "sourceText": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-tool-text.txt",
+      "sourceTextSha256": "73cc7d17dce8aafe17df7ffef2fc6310641fa88417f14142a5c6777b3a12e27b",
+      "objectOrdinal": 1,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-object2-dom.json",
+      "sha256": "8559416e86fb5eb977bdd5b68bdaf8d7fe5556dd97f235c520100219374b19bf",
+      "bytes": 431,
+      "kind": "elliptical-integrated-full-figure",
+      "sourceText": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-tool-text.txt",
+      "sourceTextSha256": "73cc7d17dce8aafe17df7ffef2fc6310641fa88417f14142a5c6777b3a12e27b",
+      "objectOrdinal": 2,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-object1-dom.json",
+      "sha256": "bf09cbed248a38b782fe40230eca666e33c726d1d87f7d27bb0fa04446e43074",
+      "bytes": 1127,
+      "kind": "elliptical-integrated-dark-cards-final",
+      "sourceText": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-tool-text.txt",
+      "sourceTextSha256": "ed034e90cc40db9b15469a84b2e5e209bf7214509e7fc2f01ffcee2300506ae3",
+      "objectOrdinal": 1,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-object2-dom.json",
+      "sha256": "e1e32833756c405f723886e689c40c2883901cbc4644c8cef76a3b1fb7942b05",
+      "bytes": 73,
+      "kind": "elliptical-integrated-console-final",
+      "sourceText": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-tool-text.txt",
+      "sourceTextSha256": "ed034e90cc40db9b15469a84b2e5e209bf7214509e7fc2f01ffcee2300506ae3",
+      "objectOrdinal": 2,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-object3-dom.json",
+      "sha256": "5ce204056304ee029533fd683f9ff63bbdfa70ccca25e00341af8299800aab95",
+      "bytes": 120,
+      "kind": "elliptical-integrated-cleanup",
+      "sourceText": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-tool-text.txt",
+      "sourceTextSha256": "ed034e90cc40db9b15469a84b2e5e209bf7214509e7fc2f01ffcee2300506ae3",
+      "objectOrdinal": 3,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "file": "review/elliptical-integrated-dark-manual-bcb43de263e4-b2-tool-text.txt",
+      "objectOrdinal": 2,
+      "reason": "No complete finite matching-kind data object; raw preserved",
+      "sourceTextSha256": "49fa1c55115e59d976665ec42bfe9603967d0776d582f2ce65b1a5116c523958"
+    }
+  ],
+  "originalIndexAndSourceTextUnchanged": true,
+  "qaAcceptance": false
+}

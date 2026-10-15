@@ -1,0 +1,120 @@
+{
+  "exerciseId": "elliptical",
+  "name": "Elliptical",
+  "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "positions": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+  ],
+  "registeredCanvas": [
+    1536,
+    1120
+  ],
+  "originalSourceCanvas": [
+    1536,
+    1024
+  ],
+  "commonPadding": [
+    0,
+    0,
+    0,
+    96
+  ],
+  "commonCrop": [
+    242,
+    37,
+    1289,
+    1109
+  ],
+  "dimensions": [
+    1047,
+    1072
+  ],
+  "primary": [
+    "Quads",
+    "Glutes"
+  ],
+  "secondary": [
+    "Front Delts",
+    "Upper Back",
+    "Hamstrings"
+  ],
+  "catalogueMuscleGroup": "Cardio",
+  "catalogueSecondaryMuscles": [
+    "Quads",
+    "Glutes"
+  ],
+  "equipment": "Machine",
+  "setup": [
+    "Step on the pedals with feet evenly placed, grip the moving handles.",
+    "Start with a smooth easy pace to find the stride rhythm."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Stride A",
+      "cue": "Stand tall; keep both feet on pedals."
+    },
+    {
+      "t": 0,
+      "label": "Hold A",
+      "cue": "Keep both feet planted in the pedals."
+    },
+    {
+      "t": 1,
+      "label": "Stride B",
+      "cue": "Coordinate your push and pull with legs."
+    },
+    {
+      "t": 1,
+      "label": "Hold B",
+      "cue": "Hold both grips; keep your chest tall."
+    },
+    {
+      "t": 0,
+      "label": "Return A",
+      "cue": "Return smoothly to the first shown stride."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Keep your torso tall without leaning forward."
+    }
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+    "draft/frames/2.webp": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+    "draft/frames/3.webp": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+    "draft/frames/4.webp": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+    "draft/frames/5.webp": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+    "draft/frames/6.webp": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+  },
+  "referenceFrame": 1,
+  "scope": "Two retained whole-athlete stride states with repeated hold beats. Written push/pull/return instructions do not assert anatomical near/far lead identity, a complete opposite human stride, or drawn intermediate poses.",
+  "equipmentScope": "A custom rear-drive cross-trainer, not a claimed E25/95Xi replica. One fixed camera and closing four-bar plus passive pitching trays and swivelling offset grips.",
+  "findings": [
+    "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+    "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+    "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+    "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+    "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+    "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+  ],
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "strictCertified": false,
+  "completionCredit": false
+}

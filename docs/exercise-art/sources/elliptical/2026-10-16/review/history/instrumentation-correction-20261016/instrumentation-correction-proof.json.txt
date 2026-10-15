@@ -1,0 +1,12 @@
+{
+  "scope": "Outside observer key only; original actual traces stay historical unchanged. Root will record fresh settled-cue observations after HMR. No product/candidate/image change.",
+  "file": "review-shared.tsx",
+  "beforeSha256": "129df240e6f3cf7f9fd036be04d97aa80c68610eadbd042fd4a0e61c7e3ce17c",
+  "afterSha256": "fca699f8d68404d8abb912a92feaf74b627a814f6431b5d05f8b7487f1af0d77",
+  "exactBefore": "rect.width, rect.height].join",
+  "exactAfter": "rect.width, rect.height, document.querySelector('[data-testid=\"draft-selected-cue\"]')?.textContent ?? null].join",
+  "replacementCount": 1,
+  "bodyCodeOrPaletteChanges": 0,
+  "candidateMutations": 0,
+  "qaAcceptance": false
+}

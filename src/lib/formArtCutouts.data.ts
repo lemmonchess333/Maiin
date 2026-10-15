@@ -527,6 +527,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
     sha256: "7259622797ef1fc736c92ad1153f800b5b549c91eb8a863bfdd97991dfc7bce4",
   },
+  elliptical: {
+    src: "form-art/elliptical.webp",
+    width: 469,
+    height: 480,
+    keyed: true,
+    source: "form-frames/elliptical/1.webp",
+    sourceSha256:
+      "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+    sha256: "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+  },
   "ez-bar-curl": {
     src: "form-art/ez-bar-curl.webp",
     width: 297,

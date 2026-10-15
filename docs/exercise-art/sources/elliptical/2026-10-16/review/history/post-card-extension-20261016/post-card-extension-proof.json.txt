@@ -1,0 +1,41 @@
+{
+  "scope": "Actual post-reproduction standard-card extension only; no artwork/reproduction rerun. Prior58manifest preserved verbatim. These2newfiles were NOT part of the fresh58build.",
+  "priorManifest": {
+    "path": "candidate-payload-manifest-before-58.json",
+    "sha256": "3f9a0ff88c424774a3e8dd5077b98336c7f6ff0666fc147e9f9e363076538a30",
+    "payloadFiles": 58
+  },
+  "finalManifestSha256": "8d94b0c211a4a69a475893e223fe2cfc6bef917adda0851071f5a876de725ab1",
+  "finalPayloadFiles": 60,
+  "allPrior58CandidateBytesUnchanged": true,
+  "freshReproduction": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\owner-guide-custom-equipment-20261015\\portable-reproduction-verification-20261015\\portable-reproduction-proof.json",
+    "sha256": "8ece18352594fe73d16af9daa6024adb576b33ab792f25daa006a402b33e3645",
+    "exitCode": 0,
+    "totalCompared": 58,
+    "byteExact": 57,
+    "copiedInputsExact": 30,
+    "generatedPayloadsExact": 27,
+    "onlyDifference": "draft/pixel-and-editable-proof.json /recipeSha256 old actual image-build recipe versus current caption-corrected recipe; all artwork/ORAs/frames exact"
+  },
+  "newFiles": {
+    "draft/card.webp": "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+    "card-preview-proof.json": "3257f8d1cf4901516dbbf410ac684a14cdaf1a5d058be97d0957a575ad8c4294"
+  },
+  "normalCard": {
+    "sha256": "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+    "dimensions": [
+      469,
+      480
+    ],
+    "reference": "draft/frames/1.webp",
+    "referenceSha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+    "normalGeneratorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+    "noThresholdOrAlphaOverride": true,
+    "registeredNormalGeneratorMatchStillRequired": true
+  },
+  "sourceImageOrRecipeReruns": 0,
+  "imageEdits": 0,
+  "qaAcceptance": false,
+  "completionCredit": false
+}
