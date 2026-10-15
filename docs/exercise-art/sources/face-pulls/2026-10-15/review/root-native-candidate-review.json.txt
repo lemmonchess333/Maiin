@@ -1,0 +1,55 @@
+{
+  "reviewedAt": "2026-10-15T12:27:21.737Z",
+  "reviewer": "/root",
+  "exerciseId": "face-pulls",
+  "decision": "Native candidate accepted for exact composition, playback and card/mobile review; no release or completion credit.",
+  "scope": "Actual complete native images inspected: original1/4; material-v2 equipment proposals1/4; colour-only native proposals1/4. Final combined frames still require their own playback/card/mobile review.",
+  "inputs": [
+    {
+      "path": "ergonomic-handle-equipment-proposal-v2-20261015/1-start-ergonomic-material-v2.png",
+      "sha256": "025c51e6b6acaca8dd7f38c5101b3cd8390fd7c1804f9e697109c3d683f1d041"
+    },
+    {
+      "path": "ergonomic-handle-equipment-proposal-v2-20261015/4-finish-ergonomic-material-v2.png",
+      "sha256": "57ee48c8b4755cb7c6fa8da0adf6805cff28c2d4d73947f02d351983453d6413"
+    },
+    {
+      "path": "colour-only-proposal-20261015/1-native-colour-proposal.png",
+      "sha256": "99feb6a27ab1feb92723e74f360431e6b7643e886519f5020b55dd999a3b9e00"
+    },
+    {
+      "path": "colour-only-proposal-20261015/4-native-colour-proposal.png",
+      "sha256": "cad8a6136dda074e266b820463046a2c305c9bc6307d0860a8a62f116a30b6b5"
+    }
+  ],
+  "observed": {
+    "identity": "Same lean bald faceless white-grey anatomical adult, no shorts, smooth featureless pelvis and white trainers. Whole head, torso, leg proportions, stance and camera remain consistent. No anatomical warping/grafts or independent limb fitting.",
+    "movement": "Genuine extended-arm start and high-elbow, upward-forearm externally rotated finish with closed grips beside the head.",
+    "equipment": "Two unbranded ergonomic rope handles each use an inner flange and terminal palm support. Actual manufacturer photo supports this physical topology. Material v2 soft neutral rubber shading is usable at native size; source body, rope connector, cable and selected-stack positions remain intact.",
+    "muscleColour": "Existing posterior deltoid fields remapped to prescribed primary, remaining relevant trapezius/rhomboid/visible cuff fields to secondary. Fine source shading/contours retained, neutral anatomy untouched.",
+    "sourcePhysicalPoses": 2
+  },
+  "findings": [
+    "Far-start terminal palm support is naturally occluded or uncertain in the flat source; its hidden free-end ordering is not visually certified.",
+    "Projected cable payout approximately79-83px and selected-stack rise approximately75px are locally consistent in direction and scale, not calibrated3D rope/stack geometry.",
+    "Fine pale source highlight islands become more conspicuous after the prescribed colour remap; judge actual full/card/mobile views before release. No new anatomical edges are drawn.",
+    "Minor equipment surface shading variation remains. No claim of an exact branded product replica.",
+    "Two physical endpoints repeat across six named instruction paths; no six unique drawings or continuous trajectory is claimed."
+  ],
+  "manufacturerReference": {
+    "path": "../lifemaxx-lmx2315-manufacturer-reference.png",
+    "sha256": "0a31e100e140203a2231ce325c5e1ef6de2fbc5d735252cdeef1c9c980f9bb68",
+    "url": "https://www.lifemaxx.com/en/lmx2315-lmxr-ergo-tricep-rope.html",
+    "actuallyViewedInBrowser": true
+  },
+  "basis": "Owner's prior explicit slight-requirements relaxation and instruction to continue, preserving canonical model/palette and rejecting material anatomy/contact failures.",
+  "finalReviewPending": [
+    "Combined frame playback/loop/controls",
+    "Card480/160 in light/dark",
+    "Actual integrated mobile component390x844",
+    "Final project verification and required CI",
+    "Actual merge and preservation readback"
+  ],
+  "completionCredit": false,
+  "unfinishedCountStill": 19
+}

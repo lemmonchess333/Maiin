@@ -1,0 +1,104 @@
+{
+  "exerciseId": "face-pulls",
+  "version": "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+  "dimensions": [
+    982,
+    1258
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "frameHashes": {
+    "form-frames/face-pulls/1.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "form-frames/face-pulls/2.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "form-frames/face-pulls/3.webp": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+    "form-frames/face-pulls/4.webp": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+    "form-frames/face-pulls/5.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "form-frames/face-pulls/6.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+  },
+  "card": {
+    "path": "public/form-art/face-pulls.webp",
+    "sha256": "77675e58c4c89ce7f0f69084eab2668f00cbf1790e1a98ade9a65b8a32d0eb04"
+  },
+  "cueSha256": "465a757d976867ff47bfc9ef01a4a170611124c4a4633dbd071df8358ab068b7",
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent viewed both final complete982x1258 native poses, standard480/160cards, and actual registered390x844 light/dark guide. Existing FA56 lean bald faceless no-shorts model, featureless pelvis, trainers and inherited fine contours/shading remain. This is scoped visual observation, not calibrated identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Both exact source endpoints use common crop[0,72,982,1330], without scaling. Whole head, trainers and complete tower stay visible in native/player/card. No independent limb fitting or camera change."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Parent inspected intact reach and high-elbow external-rotation endpoints. Original human RGBA is unchanged by the equipment layer; colour changes remain within existing tinted fields. No anatomical warps, grafts, invented joints or hidden-hand reconstruction."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Parent reviewed generic ergonomic inner-flange/palm-support grips at native and mobile sizes against actual manufacturer topology. Hands, cable, pulley and stack positions are preserved. Hidden far-start free terminal remains uncertain; minor neutral surface-render variation is disclosed."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Original closed finger/grip pixels and planted trainers remain intact in both endpoints. Visible hands close around their original grip regions. Occluded far-start terminal support is not visually certified."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Actual two-endpoint playback moves reach to high-elbow external-rotation finish and back. Projected cable payout79-83px versus stack rise75px is locally consistent, not calibrated3D routing/world-length proof. No continuous path is claimed."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Actual registered key and prescribed colour fields are Rear Delts primary#7B72E9, Rhomboids/Traps/visible Rotator Cuff secondary#9590E0. Existing fine contours/shading retained. Inherited pale highlight islands remain visible and accepted as a disclosed cosmetic finding."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent selected all six actual registered instruction buttons; correct labels, public URLs and cues observed. Both preparation sentences match the catalogue. Source order[1,1,4,4,1,1], position values[0,0,1,1,0,0]; no illustrated intermediate."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual native and registered player traces show six decoded paths, automatic6-to-1 wraps, pause/manual selection, next6-to-1 and previous1-to-6. Slower cadence approximately2.4s versus normal1.2s. Two physical endpoint drawings are disclosed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Parent viewed actual unchanged ExerciseFormContent at verified390x844 light, after final standard card generation. Full athlete/tower, card, primary/secondary key, preparation, all cues and controls readable. Actual browser warnings/errors empty. Screenshot-watcher server failure retained separately and affected checks repeated after recovery."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Parent viewed actual unchanged ExerciseFormContent at verified390x844 dark, including full athlete/trainers/tower, exact standard card, key, preparation and cues. No horizontal overflow. Actual playback and control evidence retained after server recovery; browser warnings/errors empty."
+    }
+  },
+  "findings": [
+    "The far-start terminal palm support/free-end ordering is naturally occluded or uncertain in the flat source and is not visually certified.",
+    "The generic ergonomic attachment follows an evidenced real topology but is not an exact branded product replica; minor neutral equipment shading variation remains.",
+    "Projected cable payout approximately79-83px and selected-stack rise approximately75px are consistent local observations, not calibrated3D rope/stack geometry or world-length certification.",
+    "Two physical endpoint drawings repeat across six named instruction paths; no separately illustrated intermediate or continuous trajectory is supplied.",
+    "Fine inherited pale muscle-highlight islands remain visible after prescribed colour remap; parent accepted their native/card/mobile appearance as a minor cosmetic finding."
+  ],
+  "browserEvidence": {
+    "native-playback-observed.json.txt": "c0361eb3546c32d6d7fd6834eb630d21738bc9cf1f6412ed70a5590b589c787c",
+    "native-manual-controls.txt": "15e50115d0c95e1459a9f716890dc95a54e16afd95811a31f6fb4d3dac25c814",
+    "native-dark.png": "1dc077a106d298549cbf7e851f955571049a5eda4019b1374686acfb61dd6a3e",
+    "native-light.png": "bc22990949f3868ebb3c5de34a341aed446b8e8ebf9699b23979495a99edbcec",
+    "native-cards-light.png": "31a446465fe3e5bab61f76a863ce9eaa6aa3ca7d829d281b8137e963e648db66",
+    "native-cards-dark.png": "73e99038d2545c9234b96db84a08e99c2d8cfc32e77273caa1526cdec329ac4b",
+    "integrated-playback-after-recovery.json.txt": "a2afe10d3611eb21d944752195404106da2fbebe1efab2fd39de03e4b6f5481a",
+    "integrated-manual-selection-after-recovery.txt": "5305f41c8112bed0b5ba3d53a1d2c3e57fe728250507e29d076702fc0ecbbc28",
+    "integrated-light-after-recovery.png": "6940dfa8d6fd6a74657d77599ac92536564e51c1a444416844900ce88117528e",
+    "integrated-dark-after-recovery.png": "97dbe5f094b1f312051149a6001d009c385b827e6718a6586ce7d1d914936aed",
+    "integrated-console-after-recovery.json.txt": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review-vite.config.mjs.txt": "9b4e856e69d8ffa7976233b8bfd0d9163595666daaf15f9fc45214bd48e2c3ad",
+    "native-review.tsx.txt": "441b78427994f53de4f2e63814cf13efaeccef2133613bc72a2824170bc35e37",
+    "integrated-review.tsx.txt": "65d616251d7a3a346d383733a502f19e32e900b5e09cddee56f3dfe68635a515",
+    "review-shared.tsx.txt": "3f326e3a43c245d4017d3d2c9cce8695e5b90fdfb688bce87ddd6f0230bf0bd5"
+  },
+  "finalReviewCompleted": true,
+  "reviewedAt": "2026-10-15T12:42:22.706894+00:00",
+  "strictCertification": false
+}

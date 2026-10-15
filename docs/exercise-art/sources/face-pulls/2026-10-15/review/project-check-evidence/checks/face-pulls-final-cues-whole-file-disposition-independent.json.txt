@@ -1,0 +1,434 @@
+{
+  "status": "all-eleven-additional-failures-not-reproduced-three-exact-baseline-failures-retained",
+  "reviewedAt": "2026-10-15T13:27:34.534908+00:00",
+  "baselineHead": "2efdec417e43a868bb2ece7a63baff8de6271db3",
+  "comparison": {
+    "path": "face-pulls-final-cues-2efdec417-failure-comparison-independent.json",
+    "sha256": "3242bc1b3b8cc9661a59e952bfccc85edcc351c57f192e63590003bc88d576e2",
+    "counts": {
+      "added": 11,
+      "removed": 0,
+      "changedDiagnostics": 0,
+      "identicalDiagnostics": 82
+    }
+  },
+  "focusedCohort": {
+    "folder": "face-pulls-final-cues-whole-files",
+    "command": [
+      "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\npm\\bin\\npm-cli.js",
+      "test",
+      "--",
+      "src/components/__tests__/WorkoutSessionCompletion.test.tsx",
+      "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "src/features/program/__tests__/useProgramWriters.test.ts",
+      "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "src/lib/__tests__/weekAnchorProse.test.ts",
+      "src/lib/__tests__/bodyRig.test.ts",
+      "src/lib/__tests__/formArtOwnerRelease.test.ts",
+      "src/lib/__tests__/formArtwork.test.ts",
+      "src/lib/__tests__/formArtCutouts.test.ts",
+      "scripts/art/form-art-releases.test.ts"
+    ],
+    "normalCommand": "npm test -- src/components/__tests__/WorkoutSessionCompletion.test.tsx src/pages/__tests__/Home.firstVisitGuide.test.tsx src/features/program/__tests__/useProgramWriters.test.ts src/lib/__tests__/performanceEngineConsumers.test.ts src/lib/__tests__/weekAnchorProse.test.ts src/lib/__tests__/bodyRig.test.ts src/lib/__tests__/formArtOwnerRelease.test.ts src/lib/__tests__/formArtwork.test.ts src/lib/__tests__/formArtCutouts.test.ts scripts/art/form-art-releases.test.ts",
+    "completeFiles": [
+      "src/components/__tests__/WorkoutSessionCompletion.test.tsx",
+      "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "src/features/program/__tests__/useProgramWriters.test.ts",
+      "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "src/lib/__tests__/weekAnchorProse.test.ts",
+      "src/lib/__tests__/bodyRig.test.ts",
+      "src/lib/__tests__/formArtOwnerRelease.test.ts",
+      "src/lib/__tests__/formArtwork.test.ts",
+      "src/lib/__tests__/formArtCutouts.test.ts",
+      "scripts/art/form-art-releases.test.ts"
+    ],
+    "testFiles": {
+      "failed": 2,
+      "passed": 8,
+      "total": 10,
+      "verbatim": "Test Files  2 failed | 8 passed (10)"
+    },
+    "tests": {
+      "failed": 3,
+      "passed": 542,
+      "total": 545,
+      "verbatim": "Tests  3 failed | 542 passed (545)"
+    },
+    "exitCode": 1,
+    "overallGreen": false,
+    "evidenceHashes": {
+      "start.json": "c93a8d3783c899747b8f005afda651194c060d34ac28d7f6f6d9d42d2fe0b897",
+      "result.json": "c033b43c395ed0929a5f40f09f2f977bbdd9d57485cd46918678471ee6d5f869",
+      "test.log": "a89f287dcf67c604b8bfb5c43e83a3ef1e72537338ee7a81ea9b44f46d33d485",
+      "inputs-before.json": "c38cf81978ed89c726491007fd9922f76ed81786345959454ef055f37af0d57b",
+      "inputs-after.json": "c38cf81978ed89c726491007fd9922f76ed81786345959454ef055f37af0d57b",
+      "art-inputs-before.json": "7dc393e1076330e071ae0e2dc8addbe1a1fc912f6661b329d9ddc0e402e9a450",
+      "art-inputs-after.json": "7dc393e1076330e071ae0e2dc8addbe1a1fc912f6661b329d9ddc0e402e9a450"
+    },
+    "snapshotProofHashes": {
+      "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11"
+    }
+  },
+  "perAdditionalCase": [
+    {
+      "canonicalId": "dom|src/components/__tests__/WorkoutSessionCompletion.test.tsx|a reconnect rejection keeps the session and retries the same completion",
+      "file": "src/components/__tests__/WorkoutSessionCompletion.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 909,
+        "endLineInclusive": 922,
+        "byteStart": 74217,
+        "byteEndExclusive": 74666,
+        "rawSha256": "60b40de27fa014303296c45e022011b5effd0c355e7ae18bf96a568594566aa7",
+        "firstOwnLine": "Error: expect(element).toBeVisible()"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "3940a38fb41e9da8dd501981eee2995e9870dfff1607f4f9ee845394d740be53",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-visit walk on Home > Settings' Show me around plays it again, then forgets the request",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 940,
+        "endLineInclusive": 959,
+        "byteStart": 75587,
+        "byteEndExclusive": 76354,
+        "rawSha256": "10e1572c1dd9d21f2c518f2d83c2c472bfc01759080806577d6e0c1c0a8c008b",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find role=\"dialog\" and name \"A rest day\""
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-visit walk on Home > the Health steps prompt waits for the account's saved answer",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 985,
+        "endLineInclusive": 1001,
+        "byteStart": 77573,
+        "byteEndExclusive": 78383,
+        "rawSha256": "c38d23e5557a6d2dd680f5b16faf8aff50f5aa96e132bfa5f0015f15018fc461",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"steps-prompt\"]"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-visit walk on Home > the Health steps prompt waits until the walk is over",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 964,
+        "endLineInclusive": 980,
+        "byteStart": 76584,
+        "byteEndExclusive": 77337,
+        "rawSha256": "e85bbbb97162eddb7e6956e4fd5a6f8ab66775d9cf5792ed2f59d1a0185eabe9",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find an element by: [data-testid=\"steps-prompt\"]"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-visit walk on Home > walks a new account through today's session, its first week and food, once",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 927,
+        "endLineInclusive": 935,
+        "byteStart": 74918,
+        "byteEndExclusive": 75344,
+        "rawSha256": "a2807b3fd49754ad0696213a81e626ca2cb0d3603e5a984753abb269dda5217d",
+        "firstOwnLine": "Error: Test timed out in 5000ms."
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-week card's rows open their step > the first meal opens Food with the composer pointed out",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 1006,
+        "endLineInclusive": 1024,
+        "byteStart": 78628,
+        "byteEndExclusive": 79677,
+        "rawSha256": "d1114ebe3cde05df1bc70efc36c4d5f0075e92ffba65b0d6800250a455293c2c",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/Log your first meal/`"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-week card's rows open their step > the first workout is pointed out on today's card",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 1052,
+        "endLineInclusive": 1070,
+        "byteStart": 81255,
+        "byteEndExclusive": 82307,
+        "rawSha256": "8e3f81d9fa5964b27a3c7ef4bdae6c260599ee272f7a21a78be704b6a5db0aa1",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/Finish your first workout/`"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "dom|src/pages/__tests__/Home.firstVisitGuide.test.tsx|the first-week card's rows open their step > the weigh-ins open the weigh-in sheet",
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "originalFullRunDiagnostic": {
+        "startLine": 1029,
+        "endLineInclusive": 1047,
+        "byteStart": 79904,
+        "byteEndExclusive": 81017,
+        "rawSha256": "2051b18e5133f0fc5d657e37e14fe96b5f7db4311771f085e9b9c166b3b6e3db",
+        "firstOwnLine": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/Weigh in on three mornings/`"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+      "originalFullRunDiagnostic": {
+        "startLine": 3064,
+        "endLineInclusive": 3089,
+        "byteStart": 178182,
+        "byteEndExclusive": 179093,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality"
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "1e29c101faf4322116b57d4eab98b833026c9ada00b3966a6eaebc20b67ae696",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > e2e specs compute no Performance Index of their own",
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "originalFullRunDiagnostic": {
+        "startLine": 2802,
+        "endLineInclusive": 2810,
+        "byteStart": 166129,
+        "byteEndExclusive": 166551,
+        "rawSha256": "b828f233780784a2d06b5011c4324485df463bdad1a57b5b3076f83b9489926a",
+        "firstOwnLine": "Error: Test timed out in 5000ms."
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "17ea73c190164931348a31ef97af6e571774797ff9659ab4749ded51aa3fc755",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/weekAnchorProse.test.ts|week-anchor prose > never tells a reader the week starts on Sunday",
+      "file": "src/lib/__tests__/weekAnchorProse.test.ts",
+      "originalFullRunDiagnostic": {
+        "startLine": 2984,
+        "endLineInclusive": 2992,
+        "byteStart": 174438,
+        "byteEndExclusive": 174837,
+        "rawSha256": "f649dc4c0935c5b2c2bd5378d64551d4a4a5daf05505b9b68ca41fa7007a66db",
+        "firstOwnLine": "Error: Test timed out in 5000ms."
+      },
+      "disposition": "additional full-run failure; not reproduced in ordinary whole-file cohort",
+      "ordinaryWholeFileWasIncluded": true,
+      "presentInCompleteFocusFailureReport": false,
+      "skippedTestsInCohort": 0,
+      "testSourceSha256": "c62dc60240b53ea09dcf12346f440cd332cd6a201f4c7f6558792acf51abeec7",
+      "proofBasis": "Exact ordinary ten-file invocation, ten terminal files, 545 tests with zero skips, complete three-failure accounting; no individually printed PASS line is invented."
+    }
+  ],
+  "retainedFocusedFailures": [
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the app imports only the two non-scoring helpers",
+      "project": "node",
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "case": "client PI engine — production consumers > the app imports only the two non-scoring helpers",
+      "headerLine": 18,
+      "headerRawSha256": "89ea97a59044cbe57c3ba3089f162c293d187e6004c55d8c849d06d490f61d2c",
+      "diagnostic": {
+        "startLine": 19,
+        "endLineInclusive": 41,
+        "byteStart": 1296,
+        "byteEndExclusive": 2074,
+        "rawSha256": "9ea531843a3ee2b08326afb96793f78f1bd289a0d1a193dd0885cdd101b1c2af",
+        "firstOwnLines": [
+          "AssertionError: expected { …(2) } to deeply equal { …(2) }",
+          "",
+          "- Expected"
+        ]
+      },
+      "baselineDiagnosticRawSha256": "9ea531843a3ee2b08326afb96793f78f1bd289a0d1a193dd0885cdd101b1c2af",
+      "baselineIdentityAndOwnDiagnosticBytesExact": true
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline",
+      "project": "node",
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "case": "client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline",
+      "headerLine": 45,
+      "headerRawSha256": "aa1e1d69a167a0afd993020d5ea62665e5fa2553af6de9aec36987e7bad6d042",
+      "diagnostic": {
+        "startLine": 46,
+        "endLineInclusive": 68,
+        "byteStart": 2334,
+        "byteEndExclusive": 3165,
+        "rawSha256": "9a9b1da04db98c4f0c6ce2d2e5cebb623403e2e9c7d4223b9856dc0ea4da92f3",
+        "firstOwnLines": [
+          "AssertionError: expected { …(2) } to deeply equal { …(2) }",
+          "",
+          "- Expected"
+        ]
+      },
+      "baselineDiagnosticRawSha256": "9a9b1da04db98c4f0c6ce2d2e5cebb623403e2e9c7d4223b9856dc0ea4da92f3",
+      "baselineIdentityAndOwnDiagnosticBytesExact": true
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/weekAnchorProse.test.ts|week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+      "project": "node",
+      "file": "src/lib/__tests__/weekAnchorProse.test.ts",
+      "case": "week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+      "headerLine": 72,
+      "headerRawSha256": "af224c8d5fbb65a22019bb309c0e1ed8031d75390a9e998c879654b22b66d597",
+      "diagnostic": {
+        "startLine": 73,
+        "endLineInclusive": 87,
+        "byteStart": 3392,
+        "byteEndExclusive": 3930,
+        "rawSha256": "84227f79e19a6b4ec4f50f146d5b5f0f18f52823809dfa929911bf3e5aeda23c",
+        "firstOwnLines": [
+          "AssertionError: expected false to be true // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      },
+      "baselineDiagnosticRawSha256": "84227f79e19a6b4ec4f50f146d5b5f0f18f52823809dfa929911bf3e5aeda23c",
+      "baselineIdentityAndOwnDiagnosticBytesExact": true
+    }
+  ],
+  "sourceRelationships": [
+    {
+      "file": "src/components/__tests__/WorkoutSessionCompletion.test.tsx",
+      "sourceSha256": "3940a38fb41e9da8dd501981eee2995e9870dfff1607f4f9ee845394d740be53",
+      "exactSameTestSourceAsCleanBaseline": true,
+      "directChangedArtModuleImports": [],
+      "literalFacePullsBranchPresent": false
+    },
+    {
+      "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+      "sourceSha256": "1e29c101faf4322116b57d4eab98b833026c9ada00b3966a6eaebc20b67ae696",
+      "exactSameTestSourceAsCleanBaseline": true,
+      "directChangedArtModuleImports": [],
+      "literalFacePullsBranchPresent": false
+    },
+    {
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "sourceSha256": "17ea73c190164931348a31ef97af6e571774797ff9659ab4749ded51aa3fc755",
+      "exactSameTestSourceAsCleanBaseline": true,
+      "directChangedArtModuleImports": [],
+      "literalFacePullsBranchPresent": false
+    },
+    {
+      "file": "src/lib/__tests__/weekAnchorProse.test.ts",
+      "sourceSha256": "c62dc60240b53ea09dcf12346f440cd332cd6a201f4c7f6558792acf51abeec7",
+      "exactSameTestSourceAsCleanBaseline": true,
+      "directChangedArtModuleImports": [],
+      "literalFacePullsBranchPresent": false
+    },
+    {
+      "file": "src/pages/__tests__/Home.firstVisitGuide.test.tsx",
+      "sourceSha256": "f748c0649db4c9e01e66dde97c88da9c3c697d4aa622d9422d1f2e3c06c8fe63",
+      "exactSameTestSourceAsCleanBaseline": true,
+      "directChangedArtModuleImports": [],
+      "literalFacePullsBranchPresent": false
+    }
+  ],
+  "relationshipScope": [
+    "Reconnect case exercises completion receipt failure/retry UI; Home cases exercise first-visit/steps/first-week UI; race-slot case exercises useProgram scheduling refusal. Their test sources are unchanged and contain no direct Face Pulls branch or changed art-module import.",
+    "The additional performance-engine case scans e2e source imports; the added week-anchor case scans source/functions prose. Their focused remaining failures are different exact baseline path-separator assertions.",
+    "UI production modules can have shared/transitive dependencies. No complete import-graph independence or causal host-load explanation is asserted."
+  ],
+  "allFullRunInputsMatchFocusedInputs": true,
+  "runtimeInputCount": 2656,
+  "artInputCount": 13,
+  "runtimeArtHeadStatusAndSnapshotsPreserved": true,
+  "unresolvedAdditionalFailureIdentities": [],
+  "fullNormalVerificationStillNonGreen": true,
+  "fullRunFailuresNotRelabelledAsGreenOrPreexisting": true,
+  "furtherTestsRunByTriage": false,
+  "sourceOrTestEdits": false
+}

@@ -1,0 +1,150 @@
+"""Index only the completed fresh normal 2efdec417 baseline; never run tests.
+
+Own diagnostics stop at their reporter ordinal separator. Hashes refer to exact
+raw UTF-8 bytes and byte/line ranges in the preserved original verify.log.
+"""
+from pathlib import Path
+from datetime import datetime, timezone
+from collections import Counter
+import hashlib
+import json
+import re
+
+ROOT = Path(__file__).resolve().parent
+BASELINE = ROOT / 'baseline-main-2efdec417'
+HEAD = '2efdec417e43a868bb2ece7a63baff8de6271db3'
+STAGES = ['lint', 'check:form-art', 'check:form-drafts', 'check:cycles', 'build', 'check:dist-size', 'test']
+OUTPUT = ROOT / 'baseline-main-2efdec417-failure-index-independent.json'
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def load(name):
+    return json.loads((BASELINE / name).read_bytes())
+
+raw = (BASELINE / 'verify.log').read_bytes()
+raw.decode('utf-8')  # Fail on a decoding defect; never platform-default decoding.
+raw_lines = raw.splitlines(keepends=True)
+lines = [line.decode('utf-8').rstrip('\r\n') for line in raw_lines]
+offsets = [0]
+for line in raw_lines:
+    offsets.append(offsets[-1] + len(line))
+result = load('result.json')
+before, after = load('inputs-before.json'), load('inputs-after.json')
+assert sha(raw) == result['logSha256']
+assert result['normalCommand'] == 'npm run verify' and result['exitCode'] == 1
+assert result['headBefore'] == result['headAfter'] == HEAD and result['headUnchanged'] is True
+assert result['statusBefore'] == result['statusAfter'] == '' and result['statusRestored'] is True
+assert before == after and len(before) == result['inputCount'] == 2656
+assert result['allInputsUnchanged'] is True and result['changedInputsAfterRestoration'] == []
+
+header_pattern = re.compile(r'^\s*FAIL\s+\|(?P<project>[^|]+)\|\s+(?P<file>\S+?\.test\.[cm]?[jt]sx?)(?P<tail>.*)$')
+separator_pattern = re.compile(r'^\s*⎯+\[\d+/\d+\]⎯*\s*$')
+headers = [i for i, line in enumerate(lines) if re.match(r'^\s*FAIL\s+', line)]
+failures = []
+for ordinal, index in enumerate(headers, 1):
+    match = header_pattern.fullmatch(lines[index])
+    assert match, ('Unparsed failure header', index+1, lines[index])
+    project = match['project']
+    name = match['file'].replace('\\', '/')
+    assert not name.startswith(('/', './')) and '..' not in Path(name).parts
+    tail = match['tail'].strip()
+    if tail.startswith('> '):
+        case = tail[2:]
+        kind = 'test'
+    else:
+        suite = re.fullmatch(r'\[\s*(.*?)\s*\]', tail)
+        assert suite and suite[1].replace('\\', '/') == name
+        case = None
+        kind = 'suite'
+    limit = headers[ordinal] if ordinal < len(headers) else len(lines)
+    end = next((i for i in range(index+1, limit) if separator_pattern.fullmatch(lines[i])), None)
+    assert end is not None, ('Missing diagnostic boundary', lines[index])
+    start = index + 1
+    while start < end and not lines[start].strip():
+        start += 1
+    while end > start and not lines[end-1].strip():
+        end -= 1
+    assert start < end
+    diagnostic = raw[offsets[start]:offsets[end]]
+    failures.append({
+        'canonicalId': f'{project}|{name}|{case if case is not None else "[suite]"}',
+        'project': project,
+        'file': name,
+        'kind': kind,
+        'case': case,
+        'headerLine': index+1,
+        'headerRawSha256': sha(raw_lines[index]),
+        'diagnostic': {
+            'startLine': start+1,
+            'endLineInclusive': end,
+            'byteStart': offsets[start],
+            'byteEndExclusive': offsets[end],
+            'rawSha256': sha(diagnostic),
+            'firstOwnLine': lines[start],
+        },
+    })
+
+def summary(label):
+    matches = [line for line in lines if re.match(r'^\s*'+re.escape(label)+r'\s+\d', line)]
+    assert len(matches) == 1
+    text = matches[0]
+    values = {status: int(count) for count, status in re.findall(r'(\d+)\s+(failed|passed|skipped)', text)}
+    total = re.search(r'\((\d+)\)\s*$', text)
+    assert total and sum(values.values()) == int(total[1])
+    return {**values, 'total': int(total[1]), 'verbatim': text.strip()}
+
+files, tests = summary('Test Files'), summary('Tests')
+assert {k:files[k] for k in ['failed','passed','skipped','total']} == {'failed':52,'passed':1117,'skipped':10,'total':1179}
+assert {k:tests[k] for k in ['failed','passed','skipped','total']} == {'failed':77,'passed':13148,'skipped':409,'total':13634}
+observed = [m[1] for line in lines if (m := re.fullmatch(r'>\s+\S+@\S+\s+(\S+)', line)) and m[1] in STAGES]
+assert observed == STAGES
+assert len(failures) == 82 and len({item['canonicalId'] for item in failures}) == 82
+assert sum(item['kind'] == 'test' for item in failures) == 77
+assert sum(item['kind'] == 'suite' for item in failures) == 5
+assert len({(item['project'],item['file']) for item in failures}) == 52
+
+restores = result['snapshotRestores']
+assert len(restores) == 1 and restores[0]['restoredExact'] is True
+assert restores[0]['path'] == 'src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap'
+saved_snapshots = list(BASELINE.glob('snapshot-before-*.snap'))
+assert any(sha(path.read_bytes()) == restores[0]['originalSha256'] for path in saved_snapshots)
+
+report = {
+    'status': 'indexed-exact-completed-fresh-normal-baseline-only',
+    'indexedAt': datetime.now(timezone.utc).isoformat(),
+    'baselineHead': HEAD,
+    'normalCommand': result['normalCommand'],
+    'startedAt': result['startedAt'],
+    'finishedAt': result['finishedAt'],
+    'exitCode': result['exitCode'],
+    'fullVerificationPassed': False,
+    'normalStagesObserved': observed,
+    'testFiles': files,
+    'tests': tests,
+    'failureHeaderCount': len(failures),
+    'testFailureHeaders': 77,
+    'suiteFailureHeaders': 5,
+    'failedFileHeaderAccountingComplete': True,
+    'summaryTotalsValid': True,
+    'failuresByProject': dict(sorted(Counter(item['project'] for item in failures).items())),
+    'inputCount': len(before),
+    'inputManifestBeforeAfterEqual': True,
+    'headAndCleanStatusRestored': True,
+    'knownSnapshotRestoredExact': restores,
+    'nonFileInputEntries': {name:value for name,value in before.items() if value is None},
+    'sourceProofHashes': {name: sha((BASELINE/name).read_bytes()) for name in ['verify.log','result.json','inputs-before.json','inputs-after.json','start.json']},
+    'diagnosticHashDefinition': 'SHA256 of the exact raw log byte range, first own nonblank line through last own nonblank line plus its original line ending; stops before the case ordinal separator. No path, Unicode or line-ending normalization.',
+    'identityDefinition': 'Vitest project|forward-slash source filename|exact case path, or [suite]. Raw source headers remain in the preserved log at headerLine.',
+    'futureBranchComparisonPerformed': False,
+    'futureFailureOrPreexistingClassification': None,
+    'rawSourceFilesModified': False,
+    'testsRunByIndexer': False,
+    'failures': failures,
+}
+assert not OUTPUT.exists(), 'Refuse to overwrite an independent baseline index'
+OUTPUT.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+assert (BASELINE/'verify.log').read_bytes() == raw
+print(json.dumps({'index': str(OUTPUT), 'indexSha256': sha(OUTPUT.read_bytes()),
+                  'logSha256':sha(raw),'counts':{'files':files,'tests':tests,'headers':82},
+                  'allStagesObserved':observed,'inputsUnchanged':True,'testsRun':False}, ensure_ascii=False))
