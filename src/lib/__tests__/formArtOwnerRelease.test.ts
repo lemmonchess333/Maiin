@@ -9,7 +9,7 @@ import {
   validateArtworkReview,
 } from "../formArtReview";
 
-const ids = ["goblet-squat", "squat", "barbell-curl"];
+const ids = ["goblet-squat", "squat", "barbell-curl", "bike", "t-bar-row"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 /** A set's release record, and what it must say about the set as it ships:
@@ -39,7 +39,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly three owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly five owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(

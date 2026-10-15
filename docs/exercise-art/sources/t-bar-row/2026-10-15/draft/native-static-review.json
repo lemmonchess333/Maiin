@@ -1,0 +1,15 @@
+{
+  "status": "root-native-static-accepted-player-mobile-pending",
+  "reviewedFiles": ["1-framed.png", "2-framed.png"],
+  "sha256": {
+    "1-framed.png": "353e71cb10b0f587123dadb2ff374cc02d7d34dbc69c1ccfc565e7f7f5e49635",
+    "2-framed.png": "0930023d3d5b4ac35969ea5c50471fb33b3c25c1be6e85ce2463d7e166f36e8e"
+  },
+  "rootMessage": "Root viewed both918x1036 1/2framed now, accepts native STATIC identity/anatomy/palette/coherent grips/start-top/full hardware2consistent plates. Preserve these exact bytes.",
+  "physicalPoseCount": 2,
+  "ownerFinding": "Both original endpoints retain two consistent plates, authorized by root as minor departure from later one-plate default.",
+  "nativeLoopAcceptanceAssessed": false,
+  "mobileAcceptanceAssessed": false,
+  "registered": false,
+  "completed": false
+}

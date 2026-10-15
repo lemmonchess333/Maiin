@@ -1,0 +1,42 @@
+{
+  "status": "parent-reviewed-exact-form-guides-migration",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "reviewer": "Parent actual diff review",
+  "reviewedAt": "2026-10-15T08:43:43.6044664Z",
+  "changedFile": "src/lib/formGuides.ts",
+  "scope": "Remove only the exact obsolete imageless placard header and superseded legacy Pull-Ups block; retain RELEASED_FORM_PLACARDS and all application logic unchanged.",
+  "originalSha256": "87a7a6e8d5a9d2804e953d4161b424f6a5b2a24df7a0a5fc0b0f45733b0df820",
+  "currentSha256": "bf9cc5e00c5aec8f95ec7ec2715249f20365a5f65da98eefac6df355c98ed6ec",
+  "removedNormalizedBlockSha256": "296db0033306c0b05b411cd6ba9f675472688d494cec5accf74deaa458c9d898",
+  "originalGuideProof": "checks/form-guides-before-exact.ts.txt",
+  "currentGuideProof": "checks/form-guides-after-exact.ts.txt",
+  "patchProof": "checks/form-guides-exact-removal.patch",
+  "reviewedEvidenceHashes": {
+    "checks/form-guides-before-exact.ts.txt": "87a7a6e8d5a9d2804e953d4161b424f6a5b2a24df7a0a5fc0b0f45733b0df820",
+    "checks/form-guides-after-exact.ts.txt": "bf9cc5e00c5aec8f95ec7ec2715249f20365a5f65da98eefac6df355c98ed6ec",
+    "checks/form-guides-exact-removal.patch": "cbd5d5a948bd402d8f54d72016af865a0ad25115ee1b2be823e611f3921e06a2",
+    "baseline/baseline-input-manifest.json": "350ee09a3948e2287b95534270976405d9bae58f572e6f7f278f65689c628405",
+    "checks/branch-verify-result.json": "7b471ed8db2fef3da13808dca4a76a62c1907566aa26c3a49911585b3a2870ff",
+    "checks/branch-verify.log": "59d31493a2f8d1123198ace58638bad5c9a01638de0faedd27c8aab238e3c80a",
+    "checks/branch-input-manifest.json": "ca7dd055fb027d7a157371437006d4527eed5ee44903e48b232d773876265d0f",
+    "checks/legacy-fix-typecheck.log": "9f4556d8a533e1013f8cb97bdb2554a1557b1848182fb4cfa8a061a3d05ca1ef"
+  },
+  "originalFailedRun": {
+    "result": "checks/branch-verify-result.json",
+    "log": "checks/branch-verify.log",
+    "inputManifest": "checks/branch-input-manifest.json",
+    "exitCode": 2,
+    "unitTestsReached": false,
+    "diagnostic": "TS2783 duplicate legacy Pull-Ups property plus released spread"
+  },
+  "parentObservedNormalTypecheck": {
+    "command": "npm run typecheck",
+    "log": "checks/legacy-fix-typecheck.log",
+    "exitCode": 0
+  },
+  "unchangedSetupRuntimeEqualsCatalogue": true,
+  "setupCorrectionPerformed": false,
+  "rawQaArchivesRewritten": false,
+  "newImageRequests": 0,
+  "completionCredit": false
+}

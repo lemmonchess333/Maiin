@@ -1,0 +1,15 @@
+{
+  "id": "bike",
+  "name": "Stationary Bike",
+  "category": "Cardio",
+  "muscleGroup": "Cardio",
+  "secondaryMuscles": ["Quads", "Hamstrings"],
+  "equipment": "Machine",
+  "caloriesPerMinute": 7.5,
+  "instructions": [
+    "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+    "Sit with a neutral spine, grip the bars loosely.",
+    "Pedal at a steady cadence, adjusting resistance to hit your target effort.",
+    "Keep the cadence smooth — no yanking up on the stroke."
+  ]
+}

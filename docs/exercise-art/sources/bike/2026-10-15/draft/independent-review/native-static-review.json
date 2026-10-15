@@ -1,0 +1,177 @@
+{
+  "status": "passed-native-static-two-position-review-only",
+  "exerciseId": "bike",
+  "allStaticChecksPassed": true,
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "nativeDimensions": [1024, 1536],
+  "framedDimensions": [929, 1432],
+  "poses": [
+    {
+      "pose": 1,
+      "sourceSha256": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+      "nativeFinishedSha256": "d9249e24e9afcd379d278d3bd4761833cbacf2b0ca48dc0b82c1b713bdc952ff",
+      "framedSha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db",
+      "oraSha256": "20763d41ebc97f98240d544af06a972a6a5fdbce084327cd73f942a6e48e5d5c",
+      "nativeDimensions": [1024, 1536],
+      "framedDimensions": [929, 1432],
+      "alphaExact": true,
+      "allPixelsOutsideSourceColourFieldsExact": true,
+      "changedPixels": 57063,
+      "wholeSceneOffset": [0, 0],
+      "commonCrop": [48, 32, 977, 1464],
+      "framingPixelExact": true,
+      "oraReopenedPixelExact": true,
+      "exactPrimaryPixelCount": 320,
+      "exactSecondaryPixelCount": 56,
+      "headProfileRowDiagnostics": [
+        {
+          "nativeRow": 90,
+          "xMin": 546,
+          "xMax": 658,
+          "span": 112
+        },
+        {
+          "nativeRow": 130,
+          "xMin": 532,
+          "xMax": 670,
+          "span": 138
+        },
+        {
+          "nativeRow": 170,
+          "xMin": 531,
+          "xMax": 659,
+          "span": 128
+        }
+      ]
+    },
+    {
+      "pose": 2,
+      "sourceSha256": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda",
+      "nativeFinishedSha256": "1af4c122c8c18c1bcc8c502835f4c845d7c7338f3d757c3e1be0f47863584339",
+      "framedSha256": "d9b542a35796dd50af076bc28521f38a03521dc9aa3a6781278267f19fb763f4",
+      "oraSha256": "323efc4bcf586c490de632136597e5ec2bd8e5a8ebd5e695b916a60915007f95",
+      "nativeDimensions": [1024, 1536],
+      "framedDimensions": [929, 1432],
+      "alphaExact": true,
+      "allPixelsOutsideSourceColourFieldsExact": true,
+      "changedPixels": 42998,
+      "wholeSceneOffset": [-1, 16],
+      "commonCrop": [48, 32, 977, 1464],
+      "framingPixelExact": true,
+      "oraReopenedPixelExact": true,
+      "exactPrimaryPixelCount": 144,
+      "exactSecondaryPixelCount": 153,
+      "headProfileRowDiagnostics": [
+        {
+          "nativeRow": 85,
+          "xMin": 558,
+          "xMax": 672,
+          "span": 114
+        },
+        {
+          "nativeRow": 125,
+          "xMin": 543,
+          "xMax": 683,
+          "span": 140
+        },
+        {
+          "nativeRow": 165,
+          "xMin": 542,
+          "xMax": 672,
+          "span": 130
+        }
+      ]
+    }
+  ],
+  "finalFrames": [
+    {
+      "beat": 1,
+      "pose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 2,
+      "pose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 3,
+      "pose": 2,
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 4,
+      "pose": 2,
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 5,
+      "pose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 6,
+      "pose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "dimensions": [929, 1432],
+      "decodedPixelExact": true
+    }
+  ],
+  "visualChecks": {
+    "canonicalModel": {
+      "passed": true,
+      "evidence": "Actually viewed both 1024x1536 finished scenes, both intact originals, and FA56 native reference. Pale faceless anatomy athlete, smooth neutral pelvis without shorts/waistband, white trainers and fine inherited contours remain coherent. Small source head/body redraw and position differences are disclosed. Corresponding head-row spans112/138/128 vs114/140/130px show a small2px projected chord difference, not the HSPU material profile change; no calibrated3D claim."
+    },
+    "muscleBoundaries": {
+      "passed": true,
+      "evidence": "Actually re-viewed corrected pose1 native and literal far-knee/calf crop. Previously primary-purple far-calf crescent is neutral now. Source thigh boundaries visibly distinguish primary quads from secondary hamstrings, preserving neutral gaps and inherited source shading. Both pose2 calf fields are neutral. A few isolated source fringe flecks in pose1 near calf are below meaningful muscle-field extent and remain disclosed."
+    },
+    "paletteAndContours": {
+      "passed": true,
+      "evidence": "Independent decoded-pixel checks find exact#7B72E9 and#9590E0 pixels in both poses; neutral pixels outside original existing source colour fields and all source alpha are exact. Spatial brightness and neutral contours are inherited; no anatomy replacement or new positional gradient is observed. This is not a claim every shaded field pixel equals a flat palette anchor."
+    },
+    "visiblePhysicalEndpoints": {
+      "passed": true,
+      "evidence": "Two genuine seated positions show near leg lower with slight knee flexion versus raised near knee and descending other thigh/shin. Pelvis visibly supported by saddle, neutral/braced torso, continuous closed bar grip and visible near trainer supported by strapped pedal/platform. No shorted body, floating trainer, unsupported hip or detached visible grip."
+    },
+    "equipmentAppearance": {
+      "passed": true,
+      "evidence": "Both native scenes show the same ordinary stationary-bike type: mast/display, paired bar grips, saddle/post, housing/base and cranks/platforms. Each source gear is untouched by finishing. Small cross-source equipment contour/position changes remain disclosed; this static review does not certify calibrated common shaft/radius or all occluded contact mechanics."
+    },
+    "editableAndFraming": {
+      "passed": true,
+      "evidence": "Both actual ORAs reopened and recomposited pixel-exact to framed PNGs. One common scale1 crop[48,32,977,1464], upper whole-scene offset[-1,+16], no individual body transform. All six929x1432 lossless WebP decodes equal their actual paired framed poses in[1,1,2,2,1,1]."
+    },
+    "honestScope": {
+      "passed": true,
+      "evidence": "Under owner-authorized two-endpoint allowance this is an honest two-position seated pedalling/form guide with actual opposed leg positions. Written original setup/cadence/resistance instructions remain. No intermediate trajectory, forward angular sequence, smooth full revolution or six unique drawings is claimed. This is broader than a one-state hold substitute because two genuine articulated positions are present."
+    }
+  },
+  "limitations": [
+    "Upper far trainer/strap/platform naturally hidden by original opaque housing; no independent visible far-contact certification.",
+    "Two sources do not demonstrate a calibrated forward trajectory, full crank revolution or exact rigid common shaft/radius. Root owns integrated motion acceptance.",
+    "Small source anatomy/gear contours and whole-scene registration differences remain under revised cosmetic tolerance; no pixel-identical cross-pose anatomy claim.",
+    "A few isolated faint near-calf fringe pixels remain; the conspicuous far-calf source-field error was actually corrected and inspected."
+  ],
+  "historicalInitialHeldReview": "native-static-review-initial.json",
+  "reviewedInputHashes": {
+    "static-measurements.json": "ad8651742796799e96a2d5d67ea939ccc81740d32e01f245d4c8c52f02edc7c1",
+    "measure-static.py": "d6095251c47afc2f50d47e4744e057c65e479af2324a91150ed7a3015a62b932",
+    "pose1-far-knee-calf-corrected-native-crop.png": "24461d90afbe871656f32aa0979139a44a67624dc5dde803b8e884e858078eea"
+  },
+  "mobileCardControlsProjectChecks": "Pending separate actual review; this static report supplies no such passes.",
+  "repositoryWrites": false,
+  "newImageRequests": 0,
+  "completionCredit": false
+}

@@ -1,0 +1,280 @@
+{
+  "exerciseId": "pull-ups",
+  "method": "Actual visible circular dark through-holes on the front faces of the original fixed rack uprights. Independent native ROI threshold maxRGB<45 locates each hole interior; bounding-box centre names the hardware feature. Both anchors are equipment features, not crop/canvas points. Span and pitch are actual hole-centre distances.",
+  "nativeFinalSize": [800, 1075],
+  "featureROIs": {
+    "leftTopFrontPostHole": [76, 98, 97, 118],
+    "rightTopFrontPostHole": [700, 98, 721, 118],
+    "leftNextFrontPostHole": [76, 137, 97, 157]
+  },
+  "rootReviewDiagnostics": [
+    "left-hardware-measurement-diagnostic.png",
+    "right-hardware-measurement-diagnostic.png"
+  ],
+  "allSixLosslessHardwarePatchesExact": true,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "form-frames/pull-ups/1.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    },
+    {
+      "frame": 2,
+      "path": "form-frames/pull-ups/2.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    },
+    {
+      "frame": 3,
+      "path": "form-frames/pull-ups/3.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    },
+    {
+      "frame": 4,
+      "path": "form-frames/pull-ups/4.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    },
+    {
+      "frame": 5,
+      "path": "form-frames/pull-ups/5.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    },
+    {
+      "frame": 6,
+      "path": "form-frames/pull-ups/6.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "observedHardwareFeatures": {
+        "leftTopFrontPostHole": {
+          "bounds": [84, 106, 89, 111],
+          "x": 86.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 30
+        },
+        "rightTopFrontPostHole": {
+          "bounds": [707, 106, 712, 111],
+          "x": 709.5,
+          "y": 108.5,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 32
+        },
+        "leftNextFrontPostHole": {
+          "bounds": [84, 144, 89, 150],
+          "x": 86.5,
+          "y": 147.0,
+          "darkThresholdMaxRGB": 45,
+          "darkPixelCount": 33
+        }
+      },
+      "hardwarePatchesByteExactAcrossAllFrames": true
+    }
+  ],
+  "limitations": [
+    "Generated central bar pixels differ slightly between poses; they are not used as invariant anchors/dimensions.",
+    "The full rack is retained from the original Muscle-Up fixed equipment master; source originals contain the generated central output only.",
+    "No moving head, hand, shoe or anatomy coordinate is falsely claimed invariant."
+  ]
+}

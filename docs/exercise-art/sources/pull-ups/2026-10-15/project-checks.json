@@ -1,0 +1,447 @@
+{
+  "exerciseId": "pull-ups",
+  "reviewedAt": "2026-10-15T09:39:49.216083+00:00",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "baselineLogSha256": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24",
+  "testedWorkingTreeHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "normalCommand": "npm run verify",
+  "allNormalVerifyStagesPresent": true,
+  "normalVerifyStages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size",
+    "test"
+  ],
+  "comparisonComplete": true,
+  "comparisonValid": true,
+  "inputStatePreserved": true,
+  "snapshotPreservedExactly": true,
+  "snapshotSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "overallVerifyExitCode": 1,
+  "overallGreen": false,
+  "fullWindowsNonGreen": true,
+  "baselineExitCode": 1,
+  "baselineTestFiles": {
+    "failed": 63,
+    "passed": 1106,
+    "skipped": 10,
+    "total": 1179
+  },
+  "baselineTests": {
+    "failed": 83,
+    "passed": 13116,
+    "skipped": 409,
+    "total": 13608
+  },
+  "branchTestFiles": {
+    "failed": 48,
+    "passed": 1121,
+    "skipped": 10,
+    "total": 1179
+  },
+  "branchTests": {
+    "failed": 78,
+    "passed": 13147,
+    "skipped": 409,
+    "total": 13634
+  },
+  "additionalFullRunFailureIdentities": [
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]"
+  ],
+  "unresolvedAdditionalFailureIdentities": [],
+  "baselineFailuresAbsentFromBranchFullRun": [
+    "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode",
+    "FAIL  |dom| src/components/program/__tests__/ExercisePicker.pickOne.test.tsx > ExercisePicker with one exercise to pick > keeps one choice, and the bar says the action",
+    "FAIL  |dom| src/components/run/__tests__/RoutePlannerSheet.roadReset.test.tsx [ src/components/run/__tests__/RoutePlannerSheet.roadReset.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RoutePlannerSheet.test.tsx [ src/components/run/__tests__/RoutePlannerSheet.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RunMap.credit.test.tsx [ src/components/run/__tests__/RunMap.credit.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RunMap.distanceMarkers.test.tsx [ src/components/run/__tests__/RunMap.distanceMarkers.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RunMap.paceSegments.test.tsx [ src/components/run/__tests__/RunMap.paceSegments.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RunMap.privacy.test.tsx [ src/components/run/__tests__/RunMap.privacy.test.tsx ]",
+    "FAIL  |dom| src/components/run/__tests__/RunMapLazy.test.tsx > optional run map > still mounts and cleans up a supported map",
+    "FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+    "FAIL  |node| src/features/program/__tests__/racePlanSafetySweep.test.ts > race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+    "FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+    "FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists",
+    "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+    "FAIL  |root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes",
+    "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+    "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value"
+  ],
+  "changedDetailsForExistingFailures": [
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "baseline": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "branch": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ]
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "baseline": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "branch": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/94]⎯",
+        "⎯⎯⎯⎯⎯⎯ Failed Tests 83 ⎯⎯⎯⎯⎯⎯⎯"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/83]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/94]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/83]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ]
+    }
+  ],
+  "parentChangedDetailReviews": [
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The displayed command and imports differ only by the isolated baseline checkout versus active repository absolute paths. These exact changed lines are retained; no source fix or resolved failure is inferred."
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The displayed command and imports differ only by the isolated baseline checkout versus active repository absolute paths. These exact changed lines are retained; no source fix or resolved failure is inferred."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/94]⎯",
+        "⎯⎯⎯⎯⎯⎯ Failed Tests 83 ⎯⎯⎯⎯⎯⎯⎯"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/83]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The suite retains the same SyntaxError. The other displayed lines are reporter ordinals and the following section or neighbouring suite, retained as actual changed context; no fix is inferred."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/94]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/83]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The suite retains the same SyntaxError. The other displayed lines are reporter ordinals and the following section or neighbouring suite, retained as actual changed context; no fix is inferred."
+    }
+  ],
+  "parentReviewedFocusedNonReproductions": [
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+      "parentRationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run.",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "result": "checks/focus-branch4-installer-host-result.json",
+      "log": "checks/focus-branch4-installer-host.log",
+      "exitCode": 0,
+      "wholeFilePassed": true,
+      "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+    }
+  ],
+  "parentDecision": {
+    "reviewer": "Root actual terminal logs, metadata changes, restored fallback fixtures, native/mobile reviews and Bash environment diagnosis review",
+    "reviewedAt": "2026-10-15T09:35:11+00:00",
+    "evidencePath": "project-check-evidence/checks/parent-check-decision.json"
+  },
+  "evidenceHashes": {
+    "project-check-evidence/baseline/baseline-checkout-setup.json": "9ab27cc8cfbc1ed369843a420a325a3e0078befe51b7a23d9587677f31ce248c",
+    "project-check-evidence/baseline/baseline-checkout-setup.log": "b364a4c13201f58c63d531e7e8e9a7656e7d4dee1572d684c8755b8d9cd6bc70",
+    "project-check-evidence/baseline/baseline-failure-identities.json": "9e157da492709746a094fa0c7ffa4f45a96a448e5f66aa4b020a9a18dc18a813",
+    "project-check-evidence/baseline/baseline-final-input-manifest.json": "3f7cbacb4fe9859b010e4cf448225d373cd3ece2010a74dd44eafe2e8b853c3d",
+    "project-check-evidence/baseline/baseline-input-manifest.json": "3f7cbacb4fe9859b010e4cf448225d373cd3ece2010a74dd44eafe2e8b853c3d",
+    "project-check-evidence/baseline/baseline-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "project-check-evidence/baseline/baseline-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/baseline/baseline-proof-hashes.json": "94f3af2f06dde22ce5301470990959006346a21cd15ddd095e7a73230cf7f77f",
+    "project-check-evidence/baseline/baseline-verify-result.json": "f12d7d90462901ba10c1c124c5199da39d7bd9d288f2ea5b3ac41bb44390b55e",
+    "project-check-evidence/baseline/baseline-verify.log": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24",
+    "project-check-evidence/baseline/run-isolated-baseline.py": "26fd0ba39cff88554554ae081b7b3a6fcdb1c937ba43bca6b24cb7ca4a01b112",
+    "project-check-evidence/checks/branch-comparison-summary.md": "23a0fbe1966ac7b6155be54374ded85716c0119591fb6a2f35ee538a6f51e4a1",
+    "project-check-evidence/checks/branch-failure-comparison.json": "be3a5c7746cf4800d13626099c4ca231f29568d28187bc47d2b9e63f018bfcd5",
+    "project-check-evidence/checks/branch-failure-identities.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "project-check-evidence/checks/branch-input-manifest.json": "0e00c6dc5e95056efde83eff9ddf8e740b4ca0abec9e4f96122731f9b83e2fb1",
+    "project-check-evidence/checks/branch-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/branch-verify-result.json": "d64f4fb1589ed5c5e88cc95f09fb1e2d294be478362202b531d9294a8d33dbf8",
+    "project-check-evidence/checks/branch-verify-tools.py": "f47eedb381738c70b8babd3c151dea659672fbe58cf5af0c85df757cdf036aef",
+    "project-check-evidence/checks/branch-verify.log": "59d31493a2f8d1123198ace58638bad5c9a01638de0faedd27c8aab238e3c80a",
+    "project-check-evidence/checks/branch2-comparison-summary.md": "b7a10616ae806427f80571b0a3a2dab51c33d2f849f89ae3178f6add15ce7ae6",
+    "project-check-evidence/checks/branch2-failure-comparison.json": "809315d5620f3a7a01e20c67a5b87388d5d4261d43b69475b2230f40fd91b548",
+    "project-check-evidence/checks/branch2-failure-identities.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "project-check-evidence/checks/branch2-input-manifest.json": "7b1d017c226dc2b95272a2e89122bf2271d92bc704e4da8ae8fd55f127b3ac44",
+    "project-check-evidence/checks/branch2-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/branch2-verify-result.json": "1862f9c405511015e0692875e7f7815d9a5134173c9095f6dfbc74aa72d36b8d",
+    "project-check-evidence/checks/branch2-verify.log": "4940d235745994f51ade45d386b6593c7be409aabc04ae74b16a4837e6fa7b55",
+    "project-check-evidence/checks/branch3-added-timeout-and-diagnostic-review.json": "3d2ae06c74fcaed1a4865ddcb458c86638d4e8c65edffa10e00f68f748aa1671",
+    "project-check-evidence/checks/branch3-comparison-summary.md": "a89cfa71f93591bfa54072369ae4fbad71b906075b8c5831ee2c201d00a57b11",
+    "project-check-evidence/checks/branch3-failure-comparison.json": "2e07456c7213a8f602bfbcc718462368b40d83f20ba67cf0e29fcc4a27cec493",
+    "project-check-evidence/checks/branch3-failure-identities.txt": "c354546b15f2c0930466beaf41f7645bac58a05d006820a4f68dbad982cd33fa",
+    "project-check-evidence/checks/branch3-input-manifest.json": "a0d7f828f8ce93a1c2054e632af6afef406079a832611975f9aed7948e306922",
+    "project-check-evidence/checks/branch3-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "project-check-evidence/checks/branch3-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/branch3-verify-result.json": "bfde9ab17fb8a248f6c0121d8b05d0fb2a2398b78673a2445e88d9be322bd5af",
+    "project-check-evidence/checks/branch3-verify.log": "03b61570f019d7ac343f255395b1c4cae82e8f824726b4a1dcd793d4699c0d07",
+    "project-check-evidence/checks/branch4-bash-startup-environment-diagnosis.json": "5305aafd33946e542f4ac6d27e1120d4b5cb6fa833c11b9ff61bad23f4475698",
+    "project-check-evidence/checks/branch4-comparison-summary.md": "39f3a28964e5dd11fc74d5d42de4f8c03dfbe8bcbe693779ef3f2c687cff46fe",
+    "project-check-evidence/checks/branch4-current-input-manifest-for-decision.json": "c845d43e02e93684ff57296ab752c980440e4fab22e1dc0fc27c0f3e37a54a43",
+    "project-check-evidence/checks/branch4-failure-comparison.json": "570c2531ea56430d735468e3d90f753e6bfbff5998fd596c9c998ccd13e13410",
+    "project-check-evidence/checks/branch4-failure-identities.txt": "ffef66a5e5c5b2a0db2bcdc0a79a0b06ee51111ceb773b32ccefbd667ebdaf19",
+    "project-check-evidence/checks/branch4-input-manifest.json": "2694dc3a5b5e1c40763606c314431af441710351b4640850e02c5df8ce42d47f",
+    "project-check-evidence/checks/branch4-parent-copy-ledger-commands.json": "a93efde2a439c9fbe179de42e69d657d7f5d9db2c981fa0133e4fc7493c96d99",
+    "project-check-evidence/checks/branch4-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "project-check-evidence/checks/branch4-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/branch4-verify-result.json": "582b33df783c26a2f615250d9f7db25482c7cb333bc3ac73e4b461d2a9996f1d",
+    "project-check-evidence/checks/branch4-verify.log": "94c9a934d1b49e3c50250c15897e714ba641b04fbf03b716653c0870ee11aac8",
+    "project-check-evidence/checks/caption-and-fixture-correction-review.json": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+    "project-check-evidence/checks/caption-chain-current-binding-review.json": "202e8cade05cd13b859137430d5578b7d3abed12e6a453c92fc39eeae5ea9f5d",
+    "project-check-evidence/checks/caption-correction-preparation.json": "9f689195f4caf46292c277cbc0f35eb589fe74b1667fbb9e88d9b858b016b5a8",
+    "project-check-evidence/checks/card-registry-size-independent-review.json": "153308ddb49b7f7d92ed7bda402b96e5faec8f29339f76cd8a27d362373c001d",
+    "project-check-evidence/checks/card-registry-size-preflight.log": "a3343f922cdf7f6470877c2525c5d4778176ecc89e1cb1a6121746b286f06964",
+    "project-check-evidence/checks/card-registry-size-review.json": "729695a196045ab611dfed75d7658fdcc17d577b209cd15b16a9f8c42c59811f",
+    "project-check-evidence/checks/correction-after-artwork.ts.txt": "10a80a4a2c374b3487bf5f4aac99fdccabce1314d84d8d46076195e898e9e0eb",
+    "project-check-evidence/checks/correction-after-body-rig.ts.txt": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b",
+    "project-check-evidence/checks/correction-after-exercise-row-summary.ts.txt": "d825bdb45b837f05cb2602aa3c19ac19fc69e485252aad32d0782903520f1d28",
+    "project-check-evidence/checks/correction-after-released-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "project-check-evidence/checks/correction-after-t-bar-release.json": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62",
+    "project-check-evidence/checks/correction-before-artwork.ts.txt": "2f536c60f84f71c703a5fd48f5c85c16b2077a09ec693344314c5ed91cc7585b",
+    "project-check-evidence/checks/correction-before-body-rig.ts.txt": "fbf4d29243cb305b1cd4d6d2d2d98c09b16d6011a5335dfcd6f998ae33bfa132",
+    "project-check-evidence/checks/correction-before-exercise-row-summary.ts.txt": "27256b1a9c213893ac2cb15c3610ee72521d226ff2e5e871f779fc9cfb96583c",
+    "project-check-evidence/checks/correction-before-released-placards.ts.txt": "4363d91ae4fb6df081fb5998d7d18d5bb80ce1c6b4653d4c1f75b5077c854843",
+    "project-check-evidence/checks/correction-before-t-bar-release.json": "bb335dfe7eb16143192de93c372a83bccc9f65d87e21b708cb15341abe7030d7",
+    "project-check-evidence/checks/focus-branch4-installer-host-input-manifest.json": "2694dc3a5b5e1c40763606c314431af441710351b4640850e02c5df8ce42d47f",
+    "project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/focus-branch4-installer-host-proof-hashes.json": "19f1113ef5123391680f4f22c3a681b6d4302a458a7b83b1f19bab9e01c28a47",
+    "project-check-evidence/checks/focus-branch4-installer-host-result.json": "474e54dbc173d1fdca23e02bfb5022703a9db4812e9acd54f3855708f7f411f3",
+    "project-check-evidence/checks/focus-branch4-installer-host.log": "b7379c6b59bd4cf8c1c54e4dd5a8d997b677473880b26753e8b8a7d01dc68cc6",
+    "project-check-evidence/checks/focus-branch4-installer-input-manifest.json": "2694dc3a5b5e1c40763606c314431af441710351b4640850e02c5df8ce42d47f",
+    "project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/focus-branch4-installer-proof-hashes.json": "81aed7b23ab040a0f230b3f8a04e3150d33c2cab030efe0c2a6b4e938c9f890e",
+    "project-check-evidence/checks/focus-branch4-installer-result.json": "7ca578a3c33ed64f981b6b4b7274d3236e918797cfc9e2a1f15b0c4fa53a7e5e",
+    "project-check-evidence/checks/focus-branch4-installer.log": "c065d6387eebc5e002e7ed83fa8c0a3d147855954953f59869289890b4c295cc",
+    "project-check-evidence/checks/form-guides-after-exact.ts.txt": "bf9cc5e00c5aec8f95ec7ec2715249f20365a5f65da98eefac6df355c98ed6ec",
+    "project-check-evidence/checks/form-guides-before-exact.ts.txt": "87a7a6e8d5a9d2804e953d4161b424f6a5b2a24df7a0a5fc0b0f45733b0df820",
+    "project-check-evidence/checks/form-guides-exact-removal.patch": "cbd5d5a948bd402d8f54d72016af865a0ad25115ee1b2be823e611f3921e06a2",
+    "project-check-evidence/checks/form-guides-migration-review.json": "bdb71d26c3870b6081927f6b441447e5979452b20ac265129e1800151c5fd354",
+    "project-check-evidence/checks/genuine-fix-preflight-final-input-manifest.json": "2694dc3a5b5e1c40763606c314431af441710351b4640850e02c5df8ce42d47f",
+    "project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/genuine-fix-preflight-final-proof-hashes.json": "5651d09071e92f5db98ed44f4d7a3250f2becd442855ec08a03f811ef516a3c2",
+    "project-check-evidence/checks/genuine-fix-preflight-final-result.json": "9cbd296891650e7b3e9ffd96cb4e39d00d79bb0c7b05413e83eb794d4ecf0174",
+    "project-check-evidence/checks/genuine-fix-preflight-final.log": "9a811503894cc43fa5809fdc4a94f757619cf632ecd4c62ff6d1e8cec2ff8780",
+    "project-check-evidence/checks/genuine-fix-preflight-input-manifest.json": "c62e59b44719013480e8d6f7603895d33e30f573653240fa16806619ff8a6d9f",
+    "project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/genuine-fix-preflight-preparation.json": "c8f8b1af95fc57dec4087eeafb779daa386e0fc4496a46cbd52ea672492ad97f",
+    "project-check-evidence/checks/genuine-fix-preflight-proof-hashes.json": "684c637dc0ca40cd836f287c7859293bffb7c0b84df7476f14bbfda108c2a85b",
+    "project-check-evidence/checks/genuine-fix-preflight-result.json": "f91b9f4809b6e0744d6fce79bf1051f6e385d4bb668427bb013b0707a75b4cb8",
+    "project-check-evidence/checks/genuine-fix-preflight.log": "0fcf8317003167d0b026d566721e30dd85123669eb05a1348e182338d3ce7b7e",
+    "project-check-evidence/checks/host-focus-existing-contract-review.json": "242583dce91aaa632cd48f663b804e3ca6f77e17bf9e7e1b5d1ba262c5336daa",
+    "project-check-evidence/checks/immutable-original-format-ignore-review.json": "b873a42ac242d67a3e69968115adae376a59779c15561516c03d5274ec2871db",
+    "project-check-evidence/checks/immutable-original-prepare-master.cjs.txt": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+    "project-check-evidence/checks/legacy-fix-typecheck.log": "9f4556d8a533e1013f8cb97bdb2554a1557b1848182fb4cfa8a061a3d05ca1ef",
+    "project-check-evidence/checks/parent-check-decision-before-gitlink.json": "3f0d91522c742ade4a61753c836a4b62e198f0079f322c413cb588fa6b9472d3",
+    "project-check-evidence/checks/parent-check-decision.json": "51e0b073726bd26efb923d17e2907e44d83750ce2616f95e38447b737c0a92c7",
+    "project-check-evidence/checks/prepare-root-final-decision-draft.py": "0398f504eb7d85983eed0332369263bb245c3a2f2fa5b3f453c7b5ad68c3e7f7",
+    "project-check-evidence/checks/prettierignore-canonical-lf-after.txt": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+    "project-check-evidence/checks/prettierignore-tested-before.txt": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+    "project-check-evidence/checks/pull-up-caption-correction-preparation.json": "836333cf5bfd3e8dd08ed0bc7564b42b133dbef5f7bab31650291c12ae216158",
+    "project-check-evidence/checks/pull-up-caption-correction-review.json": "e31fa8cd3a08672ad76070fb2d5e46b035bda7d43d3e3d476cfb9aaa954f5018",
+    "project-check-evidence/checks/pull-ups-corrected-beats.json": "93303048fd62d1dd97eb10d06c6ddaa718cf34c41d9ffb2075622efe210957bf",
+    "project-check-evidence/checks/pull-ups-current-placard-proof.json": "b2e89a40ef5baa3cbb395e52705106b78db3877ce18b5315fbe94a1c004e801e",
+    "project-check-evidence/checks/pull-ups-return-caption-dark.png": "af90023820befc7ed442b4c7d419aa3508f2c3e669984160b3cee397e947bc89",
+    "project-check-evidence/checks/pull-ups-return-caption-light.png": "70662e0ad1540d507f6e48e5ba9ab6fd592726bb83ab6685b24a152aaa2f7fb2",
+    "project-check-evidence/checks/pull-ups-return-caption-observation.json": "a8c28db65d59fd2c22dfaefd60f69ae8a44b5f6d799074a8b8f977dafcab415a",
+    "project-check-evidence/checks/pullup-correction-after-placards.ts.txt": "5ff95179e89c9c8360570a0aa51911290af2be54c99c7e1eea748eea744b9ea0",
+    "project-check-evidence/checks/pullup-correction-after-release.json": "039e3c8d3f822be7b05f30f69855100ea806ff45a3f12a5256d9a63ed0d00c8a",
+    "project-check-evidence/checks/pullup-correction-before-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "project-check-evidence/checks/pullup-correction-before-release.json": "9fe13331d4b1a1592c93ea54b46d702da24981189781b712bf045fd76901131d",
+    "project-check-evidence/checks/record-caption-and-fixture-correction.py": "5ee6a1dbc4056a2bafb9b9e18d02e4958209344c81ab5b391202a37668c4e47b",
+    "project-check-evidence/checks/record-immutable-format-preservation.py": "906444981183557b11f98abed5ca236530219bc82dc50f1a9259319bafa8a8b1",
+    "project-check-evidence/checks/record-pull-up-caption-correction.py": "feb316e4b70b7067527abe2323b791e10f39c035f3181245971495969b3068ea",
+    "project-check-evidence/checks/run-focused-whole-files.py": "0e99398736e98ba892330eb2ea956d939f4fd20c885502133b60708ea4e07408",
+    "project-check-evidence/checks/run-genuine-fix-preflight.py": "5f7ff22cb051cf8afd11017648b4e713be1ceaabd52dc709e2ec874d2f52dbec",
+    "project-check-evidence/checks/t-bar-return-caption-dark.png": "e8a899cf3fe878d309d616430668bb6ed9266ec92d0dd66de0e7b2e4e3da27de",
+    "project-check-evidence/checks/t-bar-return-caption-light.png": "d5b9b33806481f9e10f14277b175f89cd9e31fb882ff2c8645307b0c6204528b",
+    "project-check-evidence/checks/t-bar-return-caption-observation.json": "d495e7c5b825179e98912c27b4e971243be432547d707f0b1d8baa0db94c549c",
+    "project-check-evidence/checks/t-bar-row-archive-completion-reproduction-proof.json": "ceb08fe1c6ce8b6da32fa145b6e5c5c0f42a2599ba88a61581b7042f1720a8e6",
+    "project-check-evidence/checks/t-bar-row-corrected-beats.json": "d2a480a9ae6c14e4470bd1424d629282fd457561be69e371c2e41c3bf16efbba",
+    "project-check-evidence/checks/t-bar-row-current-placard-proof.json": "1aee747d57147bbaab33619a17617be4248016691600f295421de539109f5a23",
+    "project-check-evidence/checks/unchanged-gstack-gitlink-proof.json": "8f3c95f5b2dccc76ba351c8f4915bbe2549f1641844a1b4e80d876161a9b5dc6",
+    "project-check-evidence/write-project-checks.py": "86499bb0f5ccd822558f2123572b5808a1409e7f702ff2d3a928153babd19549",
+    "project-check-inputs-exact.zip": "3bdb555eb881e09d9c4f3fd69586b867e68ba252750a64af54581f967f94916b"
+  },
+  "copyThenFormatThenHashOrdering": "Exact raw evidence retained in ZIP; normal-formatted readable JSON semantics and all logs/input maps/snapshots rechecked before these current hashes.",
+  "meaning": "A nonzero normal full Windows run remains non-green. Added cases and changed diagnostics remain disclosed with actual parent dispositions; focused non-reproduction is not a fix or a pre-existing classification. Source seal/current-head required CI/merge remain separate.",
+  "completionCredit": false,
+  "parentReviewedCorrectedPriorRegressions": {
+    "review": "checks/caption-and-fixture-correction-review.json",
+    "priorRunPrefix": "branch3",
+    "priorFullVerifyExitCode": 1,
+    "priorFullTestFiles": {
+      "failed": 51,
+      "passed": 1118,
+      "skipped": 10,
+      "total": 1179
+    },
+    "priorFullTests": {
+      "failed": 78,
+      "passed": 13147,
+      "skipped": 409,
+      "total": 13634
+    },
+    "correctedPriorFailureIdentities": [
+      "FAIL  |dom| src/components/program/__tests__/ExerciseRowSummary.test.tsx > ExerciseThumb — each exercise's picture > shows the muscles its category works when it has no drawing",
+      "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > a placard goes live with its art, not before > an authored placard with no frames is not live",
+      "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > every beat sequence names a real demo and stays inside its range"
+    ],
+    "finalFullRunPrefix": "branch4",
+    "correctedCaptionBeat": 5,
+    "originalLabel": "Stretch",
+    "currentLabel": "Return",
+    "meaning": "Actual reviewed fixture/caption fixes, with original failed branch3 and original acceptance bytes retained. This is separate from unchanged-code focused non-reproduction and from the truthful final full-run outcome.",
+    "secondReview": "checks/pull-up-caption-correction-review.json",
+    "intermediateFailedPreflightRetained": true,
+    "pullUpOriginalLabel": "Hang",
+    "pullUpCurrentLabel": "Return"
+  },
+  "postVerifyConfigurationChanges": [
+    {
+      "path": ".prettierignore",
+      "testedSha256": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+      "currentSha256": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+      "scope": "Canonical LF normalization plus exact comment and one immutable original script path; existing rules and all runtime/checker source unchanged.",
+      "ignoredOriginalPath": "docs/exercise-art/sources/t-bar-row/2026-10-15/draft/originals/prepare-master.cjs",
+      "originalSourceSha256": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+      "meaning": "Normal full-run input preservation remains the historical at-run fact. Current configuration differs only by this explicitly reviewed non-runtime format-preservation delta; normal production/readable-evidence formatting remains required.",
+      "review": "checks/immutable-original-format-ignore-review.json"
+    }
+  ],
+  "unchangedNonFileGitlinkPreservation": {
+    "path": ".claude/skills/gstack",
+    "mode": "160000",
+    "objectType": "commit",
+    "oid": "4a77cc2c34506d9ce57193b3378e48e22b7b9842",
+    "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+    "currentHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+    "baselineManifestDigest": null,
+    "testedManifestDigest": null,
+    "filesystemState": "empty-directory",
+    "baselineTree": "160000 commit 4a77cc2c34506d9ce57193b3378e48e22b7b9842\t.claude/skills/gstack",
+    "headTree": "160000 commit 4a77cc2c34506d9ce57193b3378e48e22b7b9842\t.claude/skills/gstack",
+    "index": "160000 4a77cc2c34506d9ce57193b3378e48e22b7b9842 0\t.claude/skills/gstack",
+    "meaning": "An unchanged uninitialized Git submodule entry is not a regular file and has no file SHA. Only this exact path/mode/OID/null mapping is admitted; other missing inputs still fail."
+  },
+  "inputStatePreservedMeaning": "Exact source/HEAD/status/snapshot preservation during the actual normal run. Any later narrowly reviewed non-runtime configuration delta is disclosed separately in postVerifyConfigurationChanges; no all-current-inputs-identical claim is implied."
+}

@@ -1,0 +1,54 @@
+{
+  "phase": "branch-full-verify-versus-fresh-baseline",
+  "prefix": "branch2",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "branchHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "overallGreen": false,
+  "exitCode": 1,
+  "comparisonComplete": false,
+  "comparisonValid": false,
+  "unitSummariesPresent": false,
+  "summaryTotalsValid": false,
+  "allNormalVerifyStagesPresent": false,
+  "failureHeaderFileAccountingComplete": false,
+  "noAdditionalFailureIdentities": false,
+  "failedCountsMatchBaseline": false,
+  "sameFailureIdentitySet": false,
+  "baselineEquivalentFailures": false,
+  "newFailureIdentities": [],
+  "resolvedFailureIdentities": null,
+  "unchangedFailureIdentities": [],
+  "changedDetailsForExistingFailures": [],
+  "baselineTestFiles": {
+    "failed": 63,
+    "passed": 1106,
+    "skipped": 10,
+    "total": 1179
+  },
+  "baselineTests": {
+    "failed": 83,
+    "passed": 13116,
+    "skipped": 409,
+    "total": 13608
+  },
+  "branchResult": {
+    "testFiles": null,
+    "tests": null,
+    "verbatimSummary": [],
+    "failures": [],
+    "failureHeaderCount": 0,
+    "stagesInvoked": [
+      "lint",
+      "check:form-art",
+      "check:form-drafts",
+      "check:cycles",
+      "build",
+      "check:dist-size"
+    ],
+    "logSha256": "4940d235745994f51ade45d386b6593c7be409aabc04ae74b16a4837e6fa7b55"
+  },
+  "inputBytesUnchanged": true,
+  "inputStatePreserved": true,
+  "snapshotRestoredFromExactCurrentBytes": false,
+  "meaning": "An exit1run remains non-green even with identical baseline failures. No summary means unit comparison incomplete, not resolved baseline failures. Changed error details need review."
+}

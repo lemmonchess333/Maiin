@@ -1,0 +1,46 @@
+import { createRoot } from 'react-dom/client';
+import { useEffect, useRef, useState } from 'react';
+import '../Maiin-burpees/src/index.css';
+import ExerciseFormContent from '../Maiin-burpees/src/components/ExerciseFormContent';
+import { Button } from '../Maiin-burpees/src/components/ui/Button';
+
+const choices = [{ id: 'pull-ups', name: 'Pull-Ups' }, { id: 'bike', name: 'Stationary Bike' }, { id: 't-bar-row', name: 'T-Bar Row' }];
+function Review() {
+  const [index, setIndex] = useState(Math.max(0, choices.findIndex(item => item.id === new URLSearchParams(location.search).get('exercise'))));
+  const [dark, setDark] = useState(true);
+  const [trace, setTrace] = useState<object[]>([]);
+  const last = useRef('');
+  const choice = choices[index];
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); }, [dark]);
+  useEffect(() => {
+    last.current = '';
+    const capture = () => {
+      const section = document.querySelector<HTMLElement>(`section[aria-label="${choice.name} form guide"]`);
+      const image = section?.querySelector<HTMLImageElement>('img[aria-hidden="false"]');
+      if (!section || !image || !image.complete || !image.naturalWidth || image.style.visibility !== 'visible') return;
+      const playing = Array.from(section.querySelectorAll('button')).some(b => b.textContent?.trim() === 'Pause');
+      const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      const key = [choice.id, image.getAttribute('src'), playing, theme, document.hidden].join('|');
+      if (key === last.current) return;
+      last.current = key;
+      setTrace(previous => [...previous, { ms: Math.round(performance.now()), exerciseId: choice.id, src: image.getAttribute('src'), alt: image.alt, playing, theme, documentHidden: document.hidden, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight, viewport: [innerWidth, innerHeight], sectionText: section.innerText }].slice(-250));
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-hidden', 'alt', 'src', 'style', 'class'] });
+    document.addEventListener('load', capture, true);
+    document.addEventListener('visibilitychange', capture);
+    capture();
+    return () => { observer.disconnect(); document.removeEventListener('load', capture, true); document.removeEventListener('visibilitychange', capture); };
+  }, [choice]);
+  return <main className="min-h-screen bg-background text-foreground p-4"><div style={{ maxWidth: 390, margin: '0 auto' }} className="space-y-3">
+    <h1 className="text-h2 font-bold">{choice.name}</h1>
+    <div className="flex gap-2">{choices.map((item, i) => <Button key={item.id} variant="outline" onClick={() => setIndex(i)}>{item.name}</Button>)}</div>
+    <Button variant="outline" onClick={() => setDark(value => !value)}>{dark ? 'Light theme' : 'Dark theme'}</Button>
+    <img src={`/form-art/${choice.id}.webp`} alt={`${choice.name} card cutout`} className="h-40 w-full object-contain" />
+    <ExerciseFormContent key={choice.id} exerciseName={choice.name} />
+    <details><summary>Playback evidence</summary><Button variant="outline" onClick={() => { last.current = ''; setTrace([]); }}>Reset playback evidence</Button><pre data-testid="review-playback-trace" style={{ maxHeight: 240, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }} className="text-micro">{JSON.stringify(trace, null, 2)}</pre></details>
+  </div></main>;
+}
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

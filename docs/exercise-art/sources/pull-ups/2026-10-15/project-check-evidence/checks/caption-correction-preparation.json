@@ -1,0 +1,60 @@
+{
+  "status": "prepared-exact-caption-and-fixture-correction-not-parent-approval",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "priorRunPrefix": "branch3",
+  "files": [
+    {
+      "path": "src/components/program/__tests__/ExerciseRowSummary.test.tsx",
+      "beforeProof": "checks/correction-before-exercise-row-summary.ts.txt",
+      "afterProof": "checks/correction-after-exercise-row-summary.ts.txt",
+      "beforeSha256": "27256b1a9c213893ac2cb15c3610ee72521d226ff2e5e871f779fc9cfb96583c",
+      "afterSha256": "d825bdb45b837f05cb2602aa3c19ac19fc69e485252aad32d0782903520f1d28"
+    },
+    {
+      "path": "src/lib/__tests__/bodyRig.test.ts",
+      "beforeProof": "checks/correction-before-body-rig.ts.txt",
+      "afterProof": "checks/correction-after-body-rig.ts.txt",
+      "beforeSha256": "fbf4d29243cb305b1cd4d6d2d2d98c09b16d6011a5335dfcd6f998ae33bfa132",
+      "afterSha256": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b"
+    },
+    {
+      "path": "src/lib/releasedFormPlacards.ts",
+      "beforeProof": "checks/correction-before-released-placards.ts.txt",
+      "afterProof": "checks/correction-after-released-placards.ts.txt",
+      "beforeSha256": "4363d91ae4fb6df081fb5998d7d18d5bb80ce1c6b4653d4c1f75b5077c854843",
+      "afterSha256": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
+      "beforeProof": "checks/correction-before-t-bar-release.json",
+      "afterProof": "checks/correction-after-t-bar-release.json",
+      "beforeSha256": "bb335dfe7eb16143192de93c372a83bccc9f65d87e21b708cb15341abe7030d7",
+      "afterSha256": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62"
+    },
+    {
+      "path": "src/lib/formArtwork.ts",
+      "beforeProof": "checks/correction-before-artwork.ts.txt",
+      "afterProof": "checks/correction-after-artwork.ts.txt",
+      "beforeSha256": "2f536c60f84f71c703a5fd48f5c85c16b2077a09ec693344314c5ed91cc7585b",
+      "afterSha256": "10a80a4a2c374b3487bf5f4aac99fdccabce1314d84d8d46076195e898e9e0eb"
+    }
+  ],
+  "fixtureBounds": {
+    "src/components/program/__tests__/ExerciseRowSummary.test.tsx": {
+      "beforeBlockSha256": "9d22575f4d8664a40603957cf322dd4a0051ef6cbec541e80efadd1ab9c2954b",
+      "afterBlockSha256": "5a4af26d414390ef0661ddeb23635e6d94a152b14c6c843c060d928ef634f59f"
+    },
+    "src/lib/__tests__/bodyRig.test.ts": {
+      "beforeBlockSha256": "579ccb8f96690045d49187e0769c377551eb2ba0bd976e9b667aa63b25f50950",
+      "afterBlockSha256": "19d11f565f333b30abefb2da75df08965493deb3771e4951529e6cb11b728a01"
+    }
+  },
+  "originalReviewZipSha256": "8c376b867ec35e3d7b322407a1642d5f1814ceb958e5decc57d9639ebecdfb33",
+  "correctedBeatsProof": "checks/t-bar-row-corrected-beats.json",
+  "currentPlacardProof": "checks/t-bar-row-current-placard-proof.json",
+  "beforeCueSha256": "3d410fe6a43c4c3eb89a10cc70af6b2c6b5876ddae8f3e9f0f9d28b9c6277535",
+  "afterCueSha256": "2928161d4adcb9829744c193e75aa84c9836d16a8bd373ba5e2a5dfc3b0f0493",
+  "recordMutation": "Only cueSha256 scalar, explicit parent authorization. No original acceptance/ZIP/source-art changes.",
+  "newImageRequests": 0,
+  "completionCredit": false
+}

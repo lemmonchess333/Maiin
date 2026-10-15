@@ -1,0 +1,48 @@
+{
+  "authoredSetupInstructions": [
+    "Hang from the bar with an overhand grip slightly wider than shoulders."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Hang",
+      "cue": "Start from a full dead hang.",
+      "image": "form-frames/pull-ups/1.webp"
+    },
+    {
+      "t": 0,
+      "label": "Grip",
+      "cue": "Grip overhand, slightly wider than shoulders.",
+      "image": "form-frames/pull-ups/2.webp"
+    },
+    {
+      "t": 1,
+      "label": "Top",
+      "cue": "Your chin clears the bar.",
+      "image": "form-frames/pull-ups/3.webp"
+    },
+    {
+      "t": 1,
+      "label": "Hold",
+      "cue": "Keep legs straight; avoid swinging.",
+      "image": "form-frames/pull-ups/4.webp"
+    },
+    {
+      "t": 0,
+      "label": "Return",
+      "cue": "Return to full elbow extension.",
+      "image": "form-frames/pull-ups/5.webp"
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Finish still in a full hang.",
+      "image": "form-frames/pull-ups/6.webp"
+    }
+  ],
+  "key": {
+    "primary": ["Lats"],
+    "secondary": ["Biceps", "Rear Delts", "Core"],
+    "secondaryFill": "solid"
+  }
+}

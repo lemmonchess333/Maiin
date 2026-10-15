@@ -1,0 +1,54 @@
+{
+  "status": "parent-reviewed-pull-up-caption-correction",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "priorRunPrefix": "genuine-fix-preflight",
+  "files": [
+    {
+      "path": "src/lib/releasedFormPlacards.ts",
+      "beforeProof": "checks/pullup-correction-before-placards.ts.txt",
+      "afterProof": "checks/pullup-correction-after-placards.ts.txt",
+      "beforeSha256": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+      "afterSha256": "5ff95179e89c9c8360570a0aa51911290af2be54c99c7e1eea748eea744b9ea0"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-15/pull-ups.json",
+      "beforeProof": "checks/pullup-correction-before-release.json",
+      "afterProof": "checks/pullup-correction-after-release.json",
+      "beforeSha256": "9fe13331d4b1a1592c93ea54b46d702da24981189781b712bf045fd76901131d",
+      "afterSha256": "039e3c8d3f822be7b05f30f69855100ea806ff45a3f12a5256d9a63ed0d00c8a"
+    }
+  ],
+  "originalReviewZipSha256": "c3ca494dd36886e83a36556738b97fbe24ab99793188c8d31e295bf4edef9696",
+  "correctedBeatsProof": "checks/pull-ups-corrected-beats.json",
+  "currentPlacardProof": "checks/pull-ups-current-placard-proof.json",
+  "beforeCueSha256": "85c6232b5cd43022e1e72fa634d996a122608012d2a5885c3b16bf376993592c",
+  "afterCueSha256": "b5a7c69b44ea7313a68bac2844cc4e0c490deb1ec0d0a094cd93d22ebf34a2d2",
+  "firstCorrectionReview": "checks/caption-and-fixture-correction-review.json",
+  "firstCorrectionReviewSha256": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+  "originalAcceptanceAndZipUnchanged": true,
+  "newImageRequests": 0,
+  "completionCredit": false,
+  "reviewer": "Parent actual Pull-Up Return caption and dark/light review",
+  "reviewedAt": "2026-10-15T09:13:39.802Z",
+  "reviewedEvidenceHashes": {
+    "checks/caption-and-fixture-correction-review.json": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+    "checks/genuine-fix-preflight-input-manifest.json": "e5f1dc4923c2fee5d6e0b3fcbdc6e3c6b70ccee0eac554f37a4c189e1263b51c",
+    "checks/genuine-fix-preflight-proof-hashes.json": "a71a558c5512184efb4b6361d5e46224983aa80b53c25b3c5dc39f6a0f0bbf6a",
+    "checks/genuine-fix-preflight-result.json": "19b252db1171ac306be873665bb29b298b676b62827dfb07355ce3052b1a8229",
+    "checks/genuine-fix-preflight.log": "0fcf8317003167d0b026d566721e30dd85123669eb05a1348e182338d3ce7b7e",
+    "checks/pull-up-caption-correction-preparation.json": "d7f5cd259c0ac8e385a1487dbde5099dc1680de44edfb279434b1f54e1e8d3ae",
+    "checks/pull-ups-corrected-beats.json": "a558dcff8dc4554ba34f2e398523f1209838a92d98f292d7af6401741636c755",
+    "checks/pull-ups-current-placard-proof.json": "83e9fe239f620d413aa6622769cf8d41580b0c52b2286f46f4c5c7336be9d1c2",
+    "checks/pull-ups-return-caption-dark.png": "af90023820befc7ed442b4c7d419aa3508f2c3e669984160b3cee397e947bc89",
+    "checks/pull-ups-return-caption-light.png": "70662e0ad1540d507f6e48e5ba9ab6fd592726bb83ab6685b24a152aaa2f7fb2",
+    "checks/pull-ups-return-caption-observation.json": "f676d29f51b01470671a960e86b505076f8a3d56d002bea6afcab98b0684a8fd",
+    "checks/pullup-correction-after-placards.ts.txt": "5ff95179e89c9c8360570a0aa51911290af2be54c99c7e1eea748eea744b9ea0",
+    "checks/pullup-correction-after-release.json": "039e3c8d3f822be7b05f30f69855100ea806ff45a3f12a5256d9a63ed0d00c8a",
+    "checks/pullup-correction-before-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "checks/pullup-correction-before-release.json": "9fe13331d4b1a1592c93ea54b46d702da24981189781b712bf045fd76901131d",
+    "checks/record-pull-up-caption-correction.py": "feb316e4b70b7067527abe2323b791e10f39c035f3181245971495969b3068ea"
+  },
+  "historicalLabelWasHang": true,
+  "parentObservedCaptionReview": "Actual unchanged ExerciseFormContent frame5 Return at390x844 dark/light; original native/mobile evidence keeps historical Hang. No image/cue/t/setup/muscle change.",
+  "noNewFullVerifyPassClaim": true
+}

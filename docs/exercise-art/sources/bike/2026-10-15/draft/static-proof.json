@@ -1,0 +1,126 @@
+{
+  "status": "static-byte-and-framing-proof-only; semantic/native/mobile acceptance pending",
+  "exerciseId": "bike",
+  "checks": [
+    {
+      "pose": 1,
+      "unchangedNeutralOutsideExistingColourFields": true,
+      "originalAlphaExact": true,
+      "commonCropMatchesWholeSceneOffset": true,
+      "reopenedOraPixelExact": true,
+      "nativeFinalSha256": "d9249e24e9afcd379d278d3bd4761833cbacf2b0ca48dc0b82c1b713bdc952ff",
+      "framedSha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db",
+      "oraSha256": "20763d41ebc97f98240d544af06a972a6a5fdbce084327cd73f942a6e48e5d5c"
+    },
+    {
+      "pose": 2,
+      "unchangedNeutralOutsideExistingColourFields": true,
+      "originalAlphaExact": true,
+      "commonCropMatchesWholeSceneOffset": true,
+      "reopenedOraPixelExact": true,
+      "nativeFinalSha256": "1af4c122c8c18c1bcc8c502835f4c845d7c7338f3d757c3e1be0f47863584339",
+      "framedSha256": "d9b542a35796dd50af076bc28521f38a03521dc9aa3a6781278267f19fb763f4",
+      "oraSha256": "323efc4bcf586c490de632136597e5ec2bd8e5a8ebd5e695b916a60915007f95"
+    }
+  ],
+  "frames": [
+    {
+      "beat": 1,
+      "sourcePose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 2,
+      "sourcePose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 3,
+      "sourcePose": 2,
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 4,
+      "sourcePose": 2,
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 5,
+      "sourcePose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "decodedPixelExact": true
+    },
+    {
+      "beat": 6,
+      "sourcePose": 1,
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "decodedPixelExact": true
+    }
+  ],
+  "proofCrops": {
+    "1-wholeUpperBodyAndGrips-native-source-proof.png": {
+      "sha256": "3ea8c9d92299b441951f6a9cac83d6ca2db55a5a9c6295b17b803acc61ff9c2e",
+      "normalizedSourceROI": [210, 45, 860, 615],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    },
+    "1-saddlePelvisSupport-native-source-proof.png": {
+      "sha256": "e259f68b2c5aafe71dcf3cd80fac97d41ed5737bedc8fe529a5f0d91e6637de4",
+      "normalizedSourceROI": [650, 540, 878, 790],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    },
+    "1-pedalsAndOriginalOcclusion-native-source-proof.png": {
+      "sha256": "8e937397214289ac8996b7bec7d69b75c0717546298d59b20bf83f825b7ad982",
+      "normalizedSourceROI": [350, 840, 755, 1315],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    },
+    "2-wholeUpperBodyAndGrips-native-source-proof.png": {
+      "sha256": "ed4d8ccf37e9d733190fe2a620c8cf66a2d967e02e31a51226c5b29360361098",
+      "normalizedSourceROI": [210, 45, 860, 615],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    },
+    "2-saddlePelvisSupport-native-source-proof.png": {
+      "sha256": "1e2e105e2ce219a299a42201f4199f2f26302343da11d23b182122ada25f647a",
+      "normalizedSourceROI": [650, 540, 878, 790],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    },
+    "2-pedalsAndOriginalOcclusion-native-source-proof.png": {
+      "sha256": "1d196fc5b276bd98d188634944bbb92ce0f4c28e99c57d0b358ec597425b81d5",
+      "normalizedSourceROI": [350, 840, 755, 1315],
+      "diagnosticCropOnly": true,
+      "scale": 1
+    }
+  },
+  "sourceHashes": {
+    "3-lower-direct-original.png": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+    "6-upper-direct-original.png": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda"
+  },
+  "currentFinishingScriptSha256": "e2c9c263236a8b52689d5ed632ccb2d52d8cf73930388913939aa1238e85a2f3",
+  "firstColourDraft": "first-colour-draft/ held; no acceptance",
+  "nativeObservations": [
+    "Both originals were viewed alongside canonicalFA56 at1024x1536. Bald faceless lean pale athlete, neutral featureless pelvis, no shorts and white trainers retained; source head/torso redraws are disclosed.",
+    "Each source has supported pelvis and visible closed bar grips; no gross disconnected limb or unsupported visible pedal found in this bounded prep review. Parent final physical judgment remains separate.",
+    "Lower source shows both original strapped trainers. Upper source shows the near strapped trainer; far calf/shoe/pedal pass behind original opaque housing and are not independently visible/verified.",
+    "One whole-scene upper offset(-1,+16), then identicalcrop[48,32,977,1464] to929x1432. Visible-source pixel threshold>8 is fully retained; no human fitting/resizing or gear redraw.",
+    "First coarse-mask colour attempt had wrong near-quad split and missed calf edges. It is retained and held. Corrected source-component masks and source-brightness palette treatment require parent/independent actual semantic inspection.",
+    "Only two opposed positions are shown. No forward-trajectory, smooth revolution or six-unique physical-pose claim."
+  ],
+  "newImageRequests": 0,
+  "productionRegistered": false,
+  "completionCredit": false,
+  "pending": [
+    "Actual corrected-native colour/muscle boundary judgment",
+    "Equipment/contact/whole-guide native acceptance",
+    "Actual app mobile light/dark/card/controls review",
+    "Release/source/project/current-headCI/actual merge gates"
+  ],
+  "scriptBookkeepingNote": "Only final calf-mask output is current. Later replay-copy portability bookkeeping changed no output pixels; native/frame/ORA hashes remain pinned above."
+}

@@ -75,12 +75,24 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Three
+ * reviewed; they do not claim to pass the new consistency standard. Five
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "t-bar-row": {
+    ...existing("t-bar-row", 918, 1036),
+    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
+  },
+  bike: {
+    ...existing("bike", 929, 1432),
+    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/bike.json",
+  },
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),

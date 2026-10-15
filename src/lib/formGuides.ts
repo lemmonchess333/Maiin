@@ -363,39 +363,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
-  /* ── Authored ahead of the art (2026-09-03) ──────────────────────
-   * Positions only: no `image`, so `getFormBeats` returns null and
-   * these play as ordinary reps until their cards arrive. They exist
-   * so `form-card-prompt.ts` can ask a generator for exactly these six
-   * panels — a prompt built from four catalogue instructions produces
-   * a card the app cannot use.
-   *
-   * This header used to sit above bench-press, and stayed put as three
-   * placards below it were given art — so it went on calling them
-   * imageless long after they stopped being. It belongs immediately
-   * above the first entry it is still true of; move it DOWN again as
-   * the remaining cards arrive.
-   *
-   * `t` runs in each demo's OWN direction, which differs: row locks
-   * out at t=1, squat and deadlift at t=0. The order pins in
-   * bodyRig.test.ts check the labels against that, not against a
-   * convention assumed here. */
-
-  "pull-ups": {
-    beats: [
-      { t: 0, label: "Dead hang", cue: "Arms straight, shoulders active." },
-      {
-        t: 0.3,
-        label: "Initiate",
-        cue: "Pull the shoulder blades down first.",
-      },
-      { t: 0.6, label: "Mid pull", cue: "Elbows drive down toward the ribs." },
-      { t: 1, label: "Top", cue: "Chin over the bar, chest to it." },
-      { t: 0.5, label: "Lower", cue: "Control the descent, no dropping." },
-      { t: 0, label: "Hang", cue: "Back to straight arms, stay tight." },
-    ],
-  },
-
   /* Supplied art, 2026-09-04. The cleanest registration of any set:
      95.8-98.7%, not one shift applied. The shoes are why — a rigid,
      high-contrast ground contact that never moves (L=540, R=762, sole

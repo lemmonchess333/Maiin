@@ -1,0 +1,75 @@
+{
+  "status": "prepared-for-parent-only-not-executed",
+  "prerequisites": [
+    "Root reviews actual terminal full comparison and every added/changed identity.",
+    "Root explicitly authors final checks/parent-check-decision.json; this helper never writes that approval.",
+    "All exact recursive evidence pins and ordered correction chain remain unchanged.",
+    "Copy then ordinary formatting then ledger; seal requires no unresolved added cases and actual required gates."
+  ],
+  "draftPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\checks\\parent-check-decision-branch4-DRAFT.json",
+  "draftSha256": "9932b40ae589a10c2fb9a3416f5231f3a226c50a2da5e683f6603cac4a549e37",
+  "writerSha256AtPreparation": "2d12131277a335215cf55bdbe401fc3e5879d84f8108f5fd84e6f6d56b7f74b2",
+  "commands": [
+    {
+      "step": "copy",
+      "cwd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015",
+      "argv": [
+        "C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+        "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\write-project-checks.py",
+        "copy",
+        "--ids",
+        "pull-ups",
+        "bike",
+        "t-bar-row",
+        "--prefix",
+        "branch4",
+        "--decision",
+        "checks/parent-check-decision.json"
+      ]
+    },
+    {
+      "step": "normal-format-readable-copies-only",
+      "cwd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees",
+      "argv": [
+        "C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+        "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\node_modules\\prettier\\bin\\prettier.cjs",
+        "--write",
+        "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/**/*.{json,mjs,mts,html,md}",
+        "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/**/*.{json,mjs,mts,html,md}",
+        "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/**/*.{json,mjs,mts,html,md}"
+      ],
+      "preserve": "Raw ZIPs/logs/snapshots/exact source-byte copies are never formatter targets."
+    },
+    {
+      "step": "ledger",
+      "cwd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015",
+      "argv": [
+        "C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+        "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\write-project-checks.py",
+        "ledger",
+        "--ids",
+        "pull-ups",
+        "bike",
+        "t-bar-row",
+        "--prefix",
+        "branch4",
+        "--decision",
+        "checks/parent-check-decision.json"
+      ]
+    },
+    {
+      "step": "source-seal-after-parent-checks",
+      "cwd": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015",
+      "argv": [
+        "C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
+        "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\seal-reviewed-sources.py",
+        "--ids",
+        "pull-ups",
+        "bike",
+        "t-bar-row",
+        "--branch-inputs",
+        "project-check-evidence/checks/branch4-input-manifest.json"
+      ]
+    }
+  ]
+}

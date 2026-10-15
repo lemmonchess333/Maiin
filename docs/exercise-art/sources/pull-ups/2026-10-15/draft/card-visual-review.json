@@ -1,0 +1,19 @@
+{
+  "status": "standard-card-static-native-review-passed-pending-parent-actual-mobile",
+  "reference": "form-frames/pull-ups/1.webp",
+  "cardDimensions": [371, 480],
+  "cardSha256": "b0f311604f65a1cedb90bfaf3942f34201677f12ecc45d714dfb8493e195768b",
+  "actualImagesInspectedWithViewImage": [
+    "card-light-full-proof.png",
+    "card-light-160-proof.png",
+    "card-dark-160-proof.png"
+  ],
+  "finding": "Both complete uprights, bases and horizontal bar remain visible with the full suspended athlete including both hands, lower legs and trainers. Standard alpha separates the black stage from both light and dark card backgrounds without a floor slab. Fine neutral anatomical contours remain visible; at160px the full rack necessarily reduces the displayed athlete size.",
+  "algorithm": "Unchanged standard cut-out-form-art.ts core, then standard trim/padding/Lanczos3/quality82 alpha90 WebP export",
+  "preparedSourceNeeded": false,
+  "alphaCorrectionPerformed": false,
+  "sourceRGBChanged": false,
+  "pixelProof": "card-pixel-proof.json",
+  "parentActualMobileReviewRequired": true,
+  "productionRegistration": false
+}

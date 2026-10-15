@@ -1,0 +1,50 @@
+[
+  {
+    "alt": "Pull-Ups, Reset",
+    "cue": "Finish still in a full hang.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/6.webp",
+    "viewport": [1120, 1340]
+  },
+  {
+    "alt": "Pull-Ups, Hang",
+    "cue": "Start from a full dead hang.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/1.webp",
+    "viewport": [1120, 1340]
+  },
+  {
+    "alt": "Pull-Ups, Grip",
+    "cue": "Grip overhand, slightly wider than shoulders.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/2.webp",
+    "viewport": [1120, 1340]
+  },
+  {
+    "alt": "Pull-Ups, Top",
+    "cue": "Your chin clears the bar.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/3.webp",
+    "viewport": [1120, 1340]
+  },
+  {
+    "alt": "Pull-Ups, Hold",
+    "cue": "Keep legs straight; avoid swinging.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/4.webp",
+    "viewport": [1120, 1340]
+  },
+  {
+    "alt": "Pull-Ups, Hang",
+    "cue": "Return to full elbow extension.",
+    "display": [800, 1075],
+    "natural": [800, 1075],
+    "src": "/form-frames/pull-ups/5.webp",
+    "viewport": [1120, 1340]
+  }
+]

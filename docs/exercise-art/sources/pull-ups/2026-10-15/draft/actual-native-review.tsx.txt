@@ -1,0 +1,22 @@
+import {createRoot} from 'react-dom/client';
+import {useEffect,useRef,useState} from 'react';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormFrames from '../../Maiin-burpees/src/components/ExerciseFormFrames';
+import draftBeats from './draft-beats.json';
+
+const beats=draftBeats.map((beat,index)=>({...beat,image:`form-frames/pull-ups/${index+1}.webp`}));
+function Review(){
+ const [index,setIndex]=useState(0),[trace,setTrace]=useState<object[]>([]);const last=useRef('');
+ useEffect(()=>{
+  const capture=()=>{
+   const image=document.querySelector<HTMLImageElement>('section[aria-label="Pull-Ups form guide"] img[aria-hidden="false"]');
+   if(!image?.complete||!image.naturalWidth||image.style.visibility!=='visible')return;
+   const playing=Array.from(image.closest('section')!.querySelectorAll('button')).some(button=>button.textContent?.trim()==='Pause');
+   const key=[image.getAttribute('src'),playing,document.hidden].join('|');if(key===last.current)return;last.current=key;
+   setTrace(previous=>[...previous,{ms:Math.round(performance.now()),src:image.getAttribute('src'),alt:image.alt,playing,documentHidden:document.hidden,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,display:[image.clientWidth,image.clientHeight],viewport:[innerWidth,innerHeight]}].slice(-200));
+  };
+  const observer=new MutationObserver(capture);observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-hidden','alt','src','style']});document.addEventListener('load',capture,true);document.addEventListener('visibilitychange',capture);capture();return()=>{observer.disconnect();document.removeEventListener('load',capture,true);document.removeEventListener('visibilitychange',capture)};
+ },[]);
+ return <main id="native-review" className="dark min-h-screen bg-background text-foreground p-4"><style>{`#native-review section>.bg-stage{width:824px}#native-review section>.bg-stage>div.relative{width:800px!important;height:1075px!important;max-width:800px!important}#native-review section{max-width:824px}`}</style><h1>Pull-Ups: actual ExerciseFormFrames, native800×1075</h1><p>Two intact endpoint poses repeat across six cue files. Scapular initiation and controlled descent remain written instructions; no intermediate or continuous motion is claimed.</p><ExerciseFormFrames beats={beats} name="Pull-Ups" onStep={setIndex}/><p>{beats[index].cue}</p><details><summary>Actual player trace</summary><button onClick={()=>{last.current='';setTrace([])}}>Reset trace</button><pre data-testid="native-playback-trace" style={{maxHeight:300,overflow:'auto'}}>{JSON.stringify(trace,null,2)}</pre></details></main>;
+}
+const root=createRoot(document.getElementById('root')!);root.render(<Review/>);if(import.meta.hot)import.meta.hot.dispose(()=>root.unmount());

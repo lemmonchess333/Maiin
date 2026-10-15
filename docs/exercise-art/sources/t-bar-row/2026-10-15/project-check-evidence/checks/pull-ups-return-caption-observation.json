@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-15T09:13:39.802Z",
+  "frameButtons": [
+    "Show frame 1: Hang",
+    "Show frame 2: Grip",
+    "Show frame 3: Top",
+    "Show frame 4: Hold",
+    "Show frame 5: Return",
+    "Show frame 6: Reset"
+  ],
+  "text": "RETURN 5/6\n\nPlay\nNormal",
+  "theme": "light",
+  "viewport": [390, 844],
+  "visibleImages": [
+    {
+      "alt": "Pull-Ups, Return",
+      "height": 1075,
+      "src": "/form-frames/pull-ups/5.webp",
+      "width": 800
+    }
+  ],
+  "console": []
+}

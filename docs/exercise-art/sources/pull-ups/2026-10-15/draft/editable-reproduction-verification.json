@@ -1,0 +1,10 @@
+{
+  "status": "passed-read-only",
+  "method": "Reopen both native ORA editable stacks independently; rebuild complete central source normalization and fixed rig scene; apply commoncrop112,397,912,1472; compare decodedRGB to all6lossless WebPs",
+  "physicalPoses": 2,
+  "allSixFramesRGBExact": true,
+  "nativeOraMergedPixelsExact": true,
+  "outputsWritten": false,
+  "framesReencoded": false,
+  "script": "reproduce-reviewed-frames.py --verify-only"
+}

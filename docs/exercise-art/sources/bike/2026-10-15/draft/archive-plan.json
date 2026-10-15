@@ -1,0 +1,63 @@
+{
+  "status": "minimal reproducible source archive plan; no production copy",
+  "sourceOriginals": [
+    "3-lower-direct-original.png",
+    "6-upper-direct-original.png"
+  ],
+  "sourceEditables": ["1-framed.ora", "2-framed.ora"],
+  "deliveredFrames": [
+    "final-frames/1.webp",
+    "final-frames/2.webp",
+    "final-frames/3.webp",
+    "final-frames/4.webp",
+    "final-frames/5.webp",
+    "final-frames/6.webp"
+  ],
+  "reference": "1-framed.png",
+  "preparedCardSource": "prepared-card-source.png",
+  "card": "card-cutout.webp",
+  "code": [
+    "prepare-pair.py",
+    "prepare-guide-data.mjs",
+    "prepare-review.py",
+    "stage-card.mts",
+    "record-static-proof.py",
+    "record-hardware-card-provenance.py",
+    "record-housing-context.py"
+  ],
+  "metadata": [
+    "source-provenance.json",
+    "catalogue.json",
+    "draft-beats.json",
+    "plan.json",
+    "framing.json",
+    "finishing-audit.json",
+    "hardware-measurements.json",
+    "static-proof.json",
+    "card-static-proof.json",
+    "staged-card-provenance.json",
+    "housing-context-review.json",
+    "1-housing-native-source-proof.png",
+    "2-housing-native-source-proof.png",
+    "1-fixed-spindle-native-source-proof.png",
+    "2-fixed-spindle-native-source-proof.png",
+    "historical-evidence/lower-photo-prompt.txt",
+    "historical-evidence/upper-photo-prompt.txt",
+    "historical-evidence/provenance.json",
+    "historical-evidence/photographed-source-evidence.json",
+    "historical-evidence/front-service-rejection.json",
+    "historical-evidence/HOLD.md",
+    "historical-evidence/PAIR-REVIEW.md",
+    "historical-evidence/pair-playback-trace.json",
+    "historical-evidence/static-scene-inspection.json"
+  ],
+  "retainHistoricalEvidence": true,
+  "pending": [
+    "Actual root/independent current-native/card signoff",
+    "Actual component/native/mobile light/dark/controls proof",
+    "Honest strict-vs-owner-with-findings decision retaining spindle drift",
+    "Project gates/current-head CI/actual merge before completion"
+  ],
+  "excludeObsoleteDraftAssetsFromProduction": true,
+  "retainHeldDraftsOutsideRepository": true
+}
