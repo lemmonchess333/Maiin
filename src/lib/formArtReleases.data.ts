@@ -607,6 +607,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1360,
     reference: 1,
   },
+  "pull-ups": {
+    folder: "2026-10-15",
+    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+    width: 800,
+    height: 1075,
+    reference: 1,
+  },
   "push-ups": {
     folder: "2026-09-29",
     version: "anatomy-v3-2026-09-29",

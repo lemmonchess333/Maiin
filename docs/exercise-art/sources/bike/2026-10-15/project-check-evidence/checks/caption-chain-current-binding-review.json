@@ -1,0 +1,65 @@
+{
+  "status": "passed-current-caption-chain-and-targeted-preflight-binding-only",
+  "reviewedAt": "2026-10-15T09:18:01.797520+00:00",
+  "reviewedEvidenceHashes": {
+    "checks/caption-and-fixture-correction-review.json": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+    "checks/pull-up-caption-correction-review.json": "e31fa8cd3a08672ad76070fb2d5e46b035bda7d43d3e3d476cfb9aaa954f5018",
+    "checks/record-caption-and-fixture-correction.py": "5ee6a1dbc4056a2bafb9b9e18d02e4958209344c81ab5b391202a37668c4e47b",
+    "checks/record-pull-up-caption-correction.py": "feb316e4b70b7067527abe2323b791e10f39c035f3181245971495969b3068ea",
+    "checks/genuine-fix-preflight-result.json": "19b252db1171ac306be873665bb29b298b676b62827dfb07355ce3052b1a8229",
+    "checks/genuine-fix-preflight.log": "0fcf8317003167d0b026d566721e30dd85123669eb05a1348e182338d3ce7b7e",
+    "checks/genuine-fix-preflight-final-result.json": "0895271eca627f597af0ab0b48080c366ab2eae8403c76f9e5c168d448fc62f7",
+    "checks/genuine-fix-preflight-final.log": "9a811503894cc43fa5809fdc4a94f757619cf632ecd4c62ff6d1e8cec2ff8780",
+    "checks/genuine-fix-preflight-final-proof-hashes.json": "113e8e1a69cdc45ad3bb7ca0e9e3b474041900947a283cba4c96309062033785",
+    "checks/branch4-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/genuine-fix-preflight-final-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13"
+  },
+  "actualFinalPreflight": {
+    "exitCode": 0,
+    "testFiles": {
+      "failed": 0,
+      "passed": 6,
+      "skipped": 0,
+      "total": 6
+    },
+    "tests": {
+      "failed": 0,
+      "passed": 122,
+      "skipped": 0,
+      "total": 122
+    },
+    "inputBytesUnchanged": true,
+    "snapshotExact": true
+  },
+  "validatedAgainstActualBranch4InputManifest": true,
+  "correctedExerciseIds": ["t-bar-row", "pull-ups"],
+  "captionChanges": {
+    "t-bar-row": {
+      "beat": 5,
+      "before": "Stretch",
+      "after": "Return",
+      "cueSha256": "2928161d4adcb9829744c193e75aa84c9836d16a8bd373ba5e2a5dfc3b0f0493"
+    },
+    "pull-ups": {
+      "beat": 5,
+      "before": "Hang",
+      "after": "Return",
+      "cueSha256": "b5a7c69b44ea7313a68bac2844cc4e0c490deb1ec0d0a094cd93d22ebf34a2d2"
+    }
+  },
+  "sourceChangesBounded": "Two reviewed restored missing-art fixtures, exact owner-count comment Three→Five, the two beat5 label tokens and two matching record cueSha256 scalars. First review/helper, failed full branch3, failed intermediate preflight and original raw/draft labels remain unchanged.",
+  "allTAndCueTextAndImageOrderUnchanged": true,
+  "originalRawReviewZipSha256": {
+    "t-bar-row": "8c376b867ec35e3d7b322407a1642d5f1814ceb958e5decc57d9639ebecdfb33",
+    "pull-ups": "c3ca494dd36886e83a36556738b97fbe24ab99793188c8d31e295bf4edef9696"
+  },
+  "newImages": 0,
+  "branch4TerminalStatusNotClaimed": true,
+  "sourceSealingExecuted": false,
+  "testsExecutedByThisReview": false,
+  "repositoryMutationByThisReview": false,
+  "completionCredit": false,
+  "finalPreflightInputManifestEqualsBranch4Exactly": true,
+  "finalPreflightProofMapAllPinsExact": true,
+  "finalPreflightProofFilesVerified": 4
+}

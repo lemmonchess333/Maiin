@@ -17,6 +17,54 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "t-bar-row": placard(
+    "t-bar-row",
+    ["Mid Back"],
+    ["Lats", "Rhomboids", "Biceps"],
+    [
+      [0, "Stretch", "Let your arms reach full extension."],
+      [0, "Hinge", "Keep your back flat and hips still."],
+      [1, "Top", "Draw the handle toward your lower chest."],
+      [1, "Squeeze", "Keep elbows back and both grips closed."],
+      [0, "Return", "Return to straight arms without rounding."],
+      [0, "Reset", "Stay hinged; keep both feet planted."],
+    ],
+    [
+      "Straddle the loaded bar or landmine and grip the handles at your shins.",
+      "Hinge forward to about 45\u00b0, chest up, back flat, core braced.",
+    ]
+  ),
+  bike: placard(
+    "bike",
+    ["Quads"],
+    ["Hamstrings"],
+    [
+      [0, "Lower Pedal", "Keep a slight bend at the bottom."],
+      [0, "Posture", "Sit tall; keep hips supported and level."],
+      [0.5, "Opposed Legs", "Let the other leg take its turn."],
+      [0.5, "Relaxed Grip", "Keep your grip relaxed and shoulders down."],
+      [0, "Cadence", "Pedal steadily without yanking on the upstroke."],
+      [0, "Resistance", "Adjust resistance to match your target effort."],
+    ],
+    [
+      "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+      "Sit with a neutral spine, grip the bars loosely.",
+    ]
+  ),
+  "pull-ups": placard(
+    "pull-ups",
+    ["Lats"],
+    ["Biceps", "Rear Delts", "Core"],
+    [
+      [0, "Hang", "Start from a full dead hang."],
+      [0, "Grip", "Grip overhand, slightly wider than shoulders."],
+      [1, "Top", "Your chin clears the bar."],
+      [1, "Hold", "Keep legs straight; avoid swinging."],
+      [0, "Return", "Return to full elbow extension."],
+      [0, "Reset", "Finish still in a full hang."],
+    ],
+    ["Hang from the bar with an overhand grip slightly wider than shoulders."]
+  ),
   "ab-wheel": placard(
     "ab-wheel",
     ["Core"],

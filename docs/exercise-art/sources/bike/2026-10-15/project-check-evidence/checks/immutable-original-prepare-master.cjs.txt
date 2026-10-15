@@ -1,0 +1,2 @@
+const sharp=require('../Maiin-burpees/node_modules/sharp'),path=require('node:path'),fs=require('node:fs');
+(async()=>{await sharp(path.join(__dirname,'1-generated-master.png')).resize({width:922}).extend({left:51,right:51,top:76,bottom:77,background:'#000'}).png().toFile(path.join(__dirname,'1-master.png'));fs.writeFileSync(path.join(__dirname,'master-framing.json'),JSON.stringify({generationId:'31e3e68c-6d8f-43c3-b8ec-b560e62061e2',method:'Uniform whole-scene resize to922 wide, centred black padding. No local anatomy edits.',plates:2},null,2));})();

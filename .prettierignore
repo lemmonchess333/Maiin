@@ -37,3 +37,6 @@ functions/lib/
 # improve-animations plans quote source verbatim, indentation included, so an
 # executor can match them exactly; prettier would re-indent the quotes.
 plans/
+
+# Preserve the reviewed original authoring script byte-for-byte; format maintained evidence normally.
+docs/exercise-art/sources/t-bar-row/2026-10-15/draft/originals/prepare-master.cjs

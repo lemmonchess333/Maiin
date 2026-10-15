@@ -1,0 +1,17 @@
+{
+  "algorithmSource": "scripts/art/cut-out-form-art.ts",
+  "algorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "reference": "form-frames/t-bar-row/1.webp",
+  "sourceSha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+  "width": 425,
+  "height": 480,
+  "keyed": true,
+  "contentBox": {
+    "left": 0,
+    "top": 0,
+    "width": 918,
+    "height": 1036
+  },
+  "sha256": "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
+  "preparedAlphaCorrection": false
+}

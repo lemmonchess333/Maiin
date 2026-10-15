@@ -1,0 +1,16 @@
+{
+  "source": "reference.png",
+  "keyedSource": "standard-keyed-card-source.png",
+  "sourceSha256": "353e71cb10b0f587123dadb2ff374cc02d7d34dbc69c1ccfc565e7f7f5e49635",
+  "keyedSourceSha256": "c939e98cace5fcc6036ffb70e40214c842199fe8b7bb11d7099f4a1257a863a3",
+  "sourceSize": [918, 1036],
+  "RGBExactBeforeCardResampling": true,
+  "brightThreshold": 48,
+  "brightPixelCount": 235001,
+  "allBrightSourcePixelsRetainOpaqueAlpha": true,
+  "alphaOnlyStandardKeying": true,
+  "preparedAlphaCorrection": false,
+  "cardSha256": "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
+  "cardSize": [425, 480],
+  "noAnatomyEdits": true
+}

@@ -1,0 +1,43 @@
+{
+  "status": "passed-standard-card-static-review-only",
+  "reference": 1,
+  "referenceSha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+  "preparedSource": "prepared-card-source.png",
+  "preparedSourceSha256": "05a373df81bf9c884afc3eacb269dc0964e8a04a2ff7372005439b7f32ea6551",
+  "preparedRGBExactToNativeFrame1": true,
+  "allBrightSourceBodyAndTrainerPixelsOpaque": true,
+  "standardAlgorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "customAlphaEdits": false,
+  "cardDimensions": [311, 480],
+  "cardSha256": "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+  "proofImages": {
+    "card-light-review.png": "323ae1e8f5af17714d30c1f4cd77b1b4ab8011a760db1075bc595f225b10b070",
+    "card-160px-light-review.png": "ea41a2b7f0f9cf230bae690f93157699148f2908c19d415436dfdf5d6ec24310",
+    "card-dark-review.png": "b25b63e69fd2e9eaa3cff6e11d6a714e7ff8d844b8180c6533085a3a7a340d5b",
+    "card-160px-dark-review.png": "5d070d07e7186a5a6c372a45d64f1bacb5f9b3e4b9c4b9d246be1a66846118b7"
+  },
+  "completionCredit": false,
+  "reviewerPerformedStandardCardPreparation": true,
+  "visualChecks": {
+    "light": {
+      "passed": true,
+      "evidence": "Actually viewed: complete head/body/visible trainers and equipment silhouette, preserved thin contours and original dark apparatus; no floor rectangle or clipped body/gear."
+    },
+    "dark": {
+      "passed": true,
+      "evidence": "Actually viewed: complete head/body/visible trainers and equipment silhouette, preserved thin contours and original dark apparatus; no floor rectangle or clipped body/gear."
+    },
+    "card160pxLight": {
+      "passed": true,
+      "evidence": "Actually viewed: complete head/body/visible trainers and equipment silhouette, preserved thin contours and original dark apparatus; no floor rectangle or clipped body/gear."
+    },
+    "card160pxDark": {
+      "passed": true,
+      "evidence": "Actually viewed: complete head/body/visible trainers and equipment silhouette, preserved thin contours and original dark apparatus; no floor rectangle or clipped body/gear."
+    }
+  },
+  "pending": [
+    "Root actual native/card acceptance",
+    "Actual component mobile light/dark/controls acceptance"
+  ]
+}

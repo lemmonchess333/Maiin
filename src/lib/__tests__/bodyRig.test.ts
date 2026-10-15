@@ -5164,17 +5164,28 @@ describe("a placard goes live with its art, not before", () => {
      exercise must play exactly as it did — authoring content is not a
      product change. */
   it("an authored placard with no frames is not live", () => {
-    const authored = FORM_BEAT_IDS.filter(
-      (id) => !getAuthoredBeats(id)!.every((b) => b.image)
-    );
-    expect(
-      authored.length,
-      "expected some positions authored ahead"
-    ).toBeGreaterThan(0);
-    for (const id of authored) {
-      expect(getAuthoredBeats(id), id).not.toBeNull();
+    const id = "bench-press";
+    const authored = getAuthoredBeats(id)!;
+    expect(getFormBeats(id)).not.toBeNull();
+    expect(authored).toHaveLength(6);
+    const images = authored.map((beat) => beat.image);
+    expect(images.every(Boolean)).toBe(true);
+    try {
+      // Use a missing-art fixture; releasing every placard is valid progress.
+      delete authored[0].image;
+      expect(
+        getFormBeats(id),
+        `${id} went live with a partial card`
+      ).toBeNull();
+      for (const beat of authored) delete beat.image;
+      expect(getAuthoredBeats(id)).toBe(authored);
       expect(getFormBeats(id), `${id} went live without its card`).toBeNull();
+    } finally {
+      authored.forEach((beat, i) => {
+        beat.image = images[i];
+      });
     }
+    expect(getFormBeats(id)).not.toBeNull();
   });
 
   it("a placard whose frames are all present IS live", () => {

@@ -1,0 +1,11 @@
+{
+  "baseline-checkout-setup.json": "f6936a0ea03c7f1e036ce6c71c0959813b6324a01a4fa174405ea2cb342ced8c",
+  "baseline-checkout-setup.log": "b364a4c13201f58c63d531e7e8e9a7656e7d4dee1572d684c8755b8d9cd6bc70",
+  "baseline-failure-identities.json": "661c8b78abea3a80b0e13898653d05fdee546f469aae82c5a797a7cb196533a4",
+  "baseline-final-input-manifest.json": "350ee09a3948e2287b95534270976405d9bae58f572e6f7f278f65689c628405",
+  "baseline-input-manifest.json": "350ee09a3948e2287b95534270976405d9bae58f572e6f7f278f65689c628405",
+  "baseline-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+  "baseline-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "baseline-verify-result.json": "c6bb57f6da22b87eab4ac323e24c8050e1d31b45e1d3d5a3d743030b9aa41fcc",
+  "baseline-verify.log": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24"
+}

@@ -1,0 +1,43 @@
+{
+  "status": "passed-bounded-size-baseline-diff-review-only",
+  "reviewedAt": "2026-10-15T08:50:42.224922+00:00",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "reviewedParentRecordSha256": "01127bc73f5e748ba94724c75f293ff4532bc605ce90f3807c0dd022af92bb87",
+  "structuralDiff": [
+    {
+      "path": "/chunks/formArtCutouts",
+      "before": 35200,
+      "after": 37381
+    },
+    {
+      "path": "/total",
+      "before": 6244785,
+      "after": 6246966
+    }
+  ],
+  "normalizedFullTextDiffOnlyTwoScalarTokens": true,
+  "allOtherEntriesUnchanged": true,
+  "oldChunkSumEqualsOldTotal": true,
+  "newChunkSumEqualsNewTotal": true,
+  "chunkAndTotalDeltaBytes": 2181,
+  "checkerByteExactToFreshBaseline": true,
+  "growthTolerance": 0.05,
+  "smallAllowanceBytes": 2048,
+  "largeChunkThresholdBytes": 20480,
+  "thresholdsChanged": false,
+  "currentBuildArtifact": {
+    "path": "work\\Maiin-burpees\\dist\\assets\\formArtCutouts-CmzHA7qT.js",
+    "currentlyPresent": true,
+    "bytes": 37381,
+    "sha256": "50e66784d9b8cf37696db4295aba2dd5ccc197ca68612099ae36462deb986a0c",
+    "matchesMeasuredChunk": true
+  },
+  "parentPreflightEvidencePinsExact": true,
+  "preflightLogContainsOK": true,
+  "preflightExitCodeSource": "Parent actual observed exit zero retained in card-registry-size-review.json; no command executed by this peer review.",
+  "newFullBranch3StillRequired": true,
+  "fullVerifyPassed": false,
+  "repoMutation": false,
+  "testsExecuted": false,
+  "completionCredit": false
+}

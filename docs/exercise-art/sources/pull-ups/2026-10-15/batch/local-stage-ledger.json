@@ -1,0 +1,51 @@
+{
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "exercises": {
+    "pull-ups": {
+      "draft": "pull-ups/intact-two-endpoint-production-20261014",
+      "nativeCardAcceptanceExactSnapshot": "local-acceptance-pull-ups-exact.json",
+      "nativeCardAcceptanceSha256": "9244dff37b6c6483f9f089c90064768751a292db96ab6e1e71bb99a3c283aef6",
+      "acceptedDraftHashes": {
+        "reference.png": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b",
+        "card-cutout.webp": "b0f311604f65a1cedb90bfaf3942f34201677f12ecc45d714dfb8493e195768b",
+        "source-provenance.json": "f0837ed53ee5a812d3c1078bd4ee821ed86d73af31eb61f2e364a3500ea899ac",
+        "hardware-measurements.json": "8eceb49b251dbfb467628ff456744ab055c26783fc5caa3c6d3780165d5d4321",
+        "draft-beats.json": "6c71176c72d620f7f02c8a1d187969102035e92456af9ef33584cb6001ad4f79",
+        "catalogue.json": "31353a879205474f0d1b9f4133e0299f646f1bbfa9fa7eea57e1c58183a4aa64",
+        "frame-package.json": "d3bf7f28cc0500104fe59fb874d821aa506ab8d80cb72c07646c3a133d262df6",
+        "v2/native-quality-review.json": "d01dc8c6aae8bebc152c256213548e5aec9269c3bd4a52297594c0aa5d108420",
+        "v2/normalization-and-preservation.json": "78138c4fba2d9fb06700f3020844515cef2822db7dd7e1cb352007c2ebca0c6b",
+        "v2/colour-finishing-provenance.json": "cef622742f597ef76f62421ce0028a6a32a1d87043e68da33b9cac5e7fff8073",
+        "card-visual-review.json": "fdb59d18c5c825c67c61981decb9828d833a12dbe717e3f51de5a3007c1a937a",
+        "card-pixel-proof.json": "2f0915959b659a7207d400f268e1e6559736331a922ebdc65eb190fcd8c78161",
+        "staged-card-provenance.json": "13401a451616fa4d55c644531d25bb754e2c8c5b9d7439d675b5f18e579bb601",
+        "editable-reproduction-verification.json": "a0c60efde445c3317372a23d5528317bc7944ca828283963aa7099259893dcab",
+        "1-framed.ora": "d2d9d95159bde6ee9d6aa08eba5b85aa1e7faed4fe9eb3878056896587ecad9c",
+        "2-framed.ora": "317ba47d836ef86c79c3b7cf6f418a0b67eed7a34e9680e3fc5399cb345c885e",
+        "v2/1-framed-colour-v2.png": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b",
+        "v2/2-framed-colour-v2.png": "5debe9b544469b7b00973d4b492bce4a5b477c7e685d1ddec3279dbfb02dee54",
+        "originals/1-matching-hang-generated.png": "02aa500bacd5e820c5b0f59b39d9e2a0ea9a83aba0cb4d458f94042663634eea",
+        "originals/2-pull-generated.png": "fd08401e55cc802a003846b3887c9af1a2e2fe48011722eb550df666074a9825",
+        "final-frames/1.webp": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+        "final-frames/2.webp": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+        "final-frames/3.webp": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+        "final-frames/4.webp": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+        "final-frames/5.webp": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+        "final-frames/6.webp": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+        "parent-native-manual-trace.json": "752207f546e8748beeac598ba8af8d784f4010669b295e7eeb63fbb3ee5bddcf",
+        "parent-native-timed-trace.json": "b7b6524bc1a6613415b79de3286cb4054e46651ba9e755f5b5094b1dcfd48aae",
+        "parent-native-top.jpg": "8e7951f2edf62b43469f871b3cf228aec5159644f58eb7feadaeb36743435c17",
+        "card-light-full-proof.png": "c2f369dbed072b0ceb553c344f352f7f5de79c9dce540831f0d84ea73f7c249a",
+        "card-dark-full-proof.png": "042aabb26c340224e690c44d57af8427b598c306f8a43d9a53a2b2c5f5bd8f50",
+        "card-light-160-proof.png": "e0b209b9029619fc92d6322fb967ccc3cadc13e750e8bd3d95c50c43edebe7c9",
+        "card-dark-160-proof.png": "70fc3b1779fd8578414ad5535168c6d51e8cfafa8f30edf4fbf30cecf08eb190",
+        "actual-native-review.tsx": "9c5b43348e664d2c2d4183311f61fc0f6c836c00f4c15ff916c3b7c84c61f614",
+        "actual-native-review.html": "d51b09dcf6963147245921afde290d07fced857eca7749aa3e85d9ca970f127f",
+        "review-vite.config.mjs": "05191f4747c04d444f578b0d7768ae1b48a45490ced02a598331d3183fa3323b"
+      },
+      "state": "existing-needs-review local integration only; no approved release",
+      "expectedGeneratedCardSha256": "b0f311604f65a1cedb90bfaf3942f34201677f12ecc45d714dfb8493e195768b"
+    }
+  },
+  "completionCredit": false
+}

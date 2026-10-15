@@ -1,0 +1,17 @@
+{
+  "exerciseId": "bike",
+  "status": "image-service-blocked-front-phase; two-pose diagnostic only",
+  "canonicalSHA256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "mode": "built-in imagegen",
+  "lowerImagegenId": "fc36f8fe-9d3a-401d-aa4c-1bfaea3d2409",
+  "upperImagegenId": "9f1ce6ac-989e-4b15-834f-9d2c7f2fb93c",
+  "sourceSHA256": {
+    "3-lower-direct-original.png": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+    "6-upper-direct-original.png": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda",
+    "lower-photo-prompt.txt": "778bfc1d869b0ffb483f41a19b798163017b2594540630d04026222fb59d4bbe",
+    "upper-photo-prompt.txt": "83e1d95c5ac022dedea6e78fa256f53843a1f6a41ab0fb2052a737b320c5fff6",
+    "front-photo-prompt.txt": "e186085a3118a8f971f3fec31137896ab3236bc4e7ee898f73167821fed09f21"
+  },
+  "productionRegistered": false,
+  "rejection": "front-service-rejection.json"
+}

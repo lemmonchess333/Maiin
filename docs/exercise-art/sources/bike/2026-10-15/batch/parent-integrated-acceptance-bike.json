@@ -1,0 +1,106 @@
+{
+  "status": "parent-actual-integrated-accepted",
+  "exercises": {
+    "bike": {
+      "reviewedAt": "2026-10-15T07:59:31.115960+00:00",
+      "decision": "owner-released-with-findings",
+      "checks": {
+        "identity": {
+          "passed": true,
+          "evidence": "Parent inspected both intact native929x1432 poses and actual390x844 light/dark content. Same bald faceless lean white anatomical FA56 model without shorts, original trainers, natural contours and shading. No anatomy fitting, part graft or rescaling individual limbs."
+        },
+        "camera": {
+          "passed": true,
+          "evidence": "Two whole original scenes share929x1432 framing after documented whole-output translation(-1,+16). Full athlete and complete bike/base retained; no per-limb/camera fitting."
+        },
+        "anatomy": {
+          "passed": true,
+          "evidence": "Opposed leg endpoints are intact coherent seated riding positions with supported pelvis and original foot/strap geometry. Raised far trainer/platform is naturally hidden by the opaque casing and is not visually certified."
+        },
+        "equipment": {
+          "passed": true,
+          "evidence": "Parent reviewed native and actual mobile playback. Same coherent bike, full base, saddle and grips. Actual spindle16.656px and rear-foot4.031px drift FAIL strict1px; all3anchors retained. At actual mobile object-contain content scale360/1432, spindle displacement is4.19px. Parent judges this a minor render discontinuity under earlier user relaxation, not exact hardware/3D certification. Housing-relative18.769px finding is also retained."
+        },
+        "contact": {
+          "passed": true,
+          "evidence": "Original hand/bar contacts remain closed, pelvis rests on saddle, visible trainer/platform is strapped in each endpoint. Upper far pedal/trainer naturally occluded; no fabricated contact visibility claim."
+        },
+        "physics": {
+          "passed": true,
+          "evidence": "Two opposed seated pedal positions illustrate alternating legs. No calibrated crank centre, forward trajectory, smooth full revolution or six unique poses is claimed. Written cadence instructions remain guidance only."
+        },
+        "muscles": {
+          "passed": true,
+          "evidence": "Actual key matches catalogue Quads primary/Hamstrings secondary. Natural source colour fields preserve source shading; arms/core/calves neutral after bounded1565pixel far-calf residual correction. No new gradient or anatomical outline."
+        },
+        "cueAgreement": {
+          "passed": true,
+          "evidence": "Parent selected all six actual instruction buttons, verified exact public frame URLs and labels, plus both authored preparation sentences. Positions0,0,.5,.5,0,0 match1,1,2,2,1,1; no illustrated intermediate."
+        },
+        "sequenceAndLoop": {
+          "passed": true,
+          "evidence": "Actual foreground component traces show all six decoded public URLs and6-to-1 in both themes and slower mode. Pause,selectall,next6-to-1,previous1-to-6 checked; actual slower cadence about2.4s versus1.2s. Two physical endpoints disclosed."
+        },
+        "mobileLight": {
+          "passed": true,
+          "evidence": "Parent inspected actual unchanged ExerciseFormContent at390x844 light: full athlete/bike, exact prepared standard card, keys/setup/cues/control readability; screenshot/rawtrace retained. Console warnings/errors empty."
+        },
+        "mobileDark": {
+          "passed": true,
+          "evidence": "Parent inspected actual unchanged ExerciseFormContent at390x844 dark: complete silhouette, original trainers/bike base, exact card and keys/setup/cues; screenshot/rawtrace retained. Measured small bearing hop accepted as disclosed minor finding only."
+        }
+      },
+      "controls": {
+        "pause": true,
+        "selectAllSix": true,
+        "nextSixToOne": true,
+        "previousOneToSix": true,
+        "slower": true
+      },
+      "consoleErrors": 0,
+      "traceFiles": {
+        "dark": "bike-dark-trace.json",
+        "light": "bike-light-trace.json",
+        "slower": "bike-slower-trace.json"
+      },
+      "reviewedEvidenceHashes": {
+        "bike-dark-trace.json": "97b44a39ef71cadbea7ab5a7880953427336188aef1282419f2ab760e9388d42",
+        "bike-light-trace.json": "d8cbd0fdc532a1d0901cf0509bc7dc100f98491c9640f7890e4f1b6d8790ac6f",
+        "bike-slower-trace.json": "f317ad59f00ddb3078dbfd6db84f5716a512d2c966c22c1c0bf1e9def4f21cac",
+        "bike-dark-full.jpg": "4a6c11cad9808065d4b80995b39104af8e640321940593261e1475fee1c95588",
+        "bike-light-full.jpg": "94f5b8b43b122eeaf8a38214819fc65c115b2436cc170e96b26f5b1e6a6bd291",
+        "bike-controls.json": "1d9363aa851665f8a3185ef441561b87f5d7c44f77add62db6c914fa04ce265b",
+        "bike-console.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "bike-observed-cadence.json": "f338e87b46d541955a4b78a9d441efc655dc088abfdaf6ce838374f6278e6309"
+      },
+      "reviewedRepositoryHashes": {
+        "public/form-frames/bike/1.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "public/form-frames/bike/2.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "public/form-frames/bike/3.webp": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+        "public/form-frames/bike/4.webp": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+        "public/form-frames/bike/5.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "public/form-frames/bike/6.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "public/form-art/bike.webp": "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+        "masters/bike/1.png": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db",
+        "src/lib/releasedFormPlacards.ts": "bd2bf82fa84f630431ed5c0f881eac67a20611ec6637ea384f0c7080c14ddc1e",
+        "src/lib/formArtwork.ts": "c79e146cc7d7bfb2c0dafdc217b01411e9029dd30e2544716429625684bf16a5",
+        "src/lib/formArtCutouts.data.ts": "e136f12561ffbba5616d86d55d1c2bb7c2b39087754d8c476e704dc6b671c2d0",
+        "docs/exercise-art/cutout-sources/bike.png": "05a373df81bf9c884afc3eacb269dc0964e8a04a2ff7372005439b7f32ea6551",
+        "docs/exercise-art/cutout-sources/bike.json": "4f52b6b00dd5be596407800e6f40b7827790b96b7aaa018c2a2c6f064e886dac"
+      },
+      "minorHardwareFindingAccepted": true,
+      "approval": {
+        "actor": "User, through explicit earlier exercise-specific requirements relaxation and instruction to continue the rest; parent applies that existing authorization after actual native/mobile review.",
+        "instruction": "User asked to lower strict requirements slightly for exercises that cannot pass, approved trial then said \"ok do it then and continue wiht the rest\", and repeatedly authorized continuing and merging without further approval; current model without shorts must remain.",
+        "context": "Parent accepts this coherent intact two-endpoint guide with the specifically measured minor bearing/base rendering drift. This is an owner-with-findings release under the existing contract, not strict approval. Identity/contact failures such as HSPU head-width drift remain held."
+      },
+      "findings": [
+        "Strict hardware consistency fails: fixed spindle centre shifts(+9.4397,-13.7229)px, magnitude16.6561px; rear foot4.031px, front foot0.5px. All3 measured anchors remain in every record frame; no favourable-only selection/contact-phase workaround.",
+        "Bearing shift relative to local recessed casing outline is18.769px; bearing-rim chord65/73px means global shift22.8\u201325.6% of this local feature. At actual mobile360px content height the global shift is4.19px; accepted as a minor rendered hardware discontinuity after native/mobile playback.",
+        "Two physical positions repeat across six paths. Intermediate crank travel, calibrated forward direction, smooth revolution and six unique drawings are not supplied.",
+        "Upper far trainer/platform is naturally fully occluded by the opaque original bike housing; its visible presence/contact is not certified."
+      ]
+    }
+  },
+  "completionCredit": false
+}

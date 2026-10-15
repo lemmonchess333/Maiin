@@ -1,0 +1,19 @@
+{
+  "hashes": {
+    "checks/genuine-fix-preflight-final-result.json": "0895271eca627f597af0ab0b48080c366ab2eae8403c76f9e5c168d448fc62f7",
+    "checks/genuine-fix-preflight-final.log": "9a811503894cc43fa5809fdc4a94f757619cf632ecd4c62ff6d1e8cec2ff8780",
+    "checks/genuine-fix-preflight-final-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/genuine-fix-preflight-final-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11"
+  },
+  "originalFullEvidenceHashes": {
+    "checks/branch3-verify-result.json": "1e50366c8b5717c934c78c3aa79ea723982ceec5a87132a415843b16509a81dd",
+    "checks/branch3-failure-comparison.json": "99330e812c272b5914b41047e70e2cc2685207440a84e56cb3edea35f8f1037a",
+    "checks/branch3-verify.log": "03b61570f019d7ac343f255395b1c4cae82e8f824726b4a1dcd793d4699c0d07",
+    "checks/branch3-input-manifest.json": "93d3fa01ce2e6af801c22475bf8b1059943341ea180ded9a1792af467bc60b12",
+    "baseline/baseline-verify-result.json": "c6bb57f6da22b87eab4ac323e24c8050e1d31b45e1d3d5a3d743030b9aa41fcc",
+    "baseline/baseline-verify.log": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24"
+  },
+  "fullRunRewritten": false,
+  "genuineFixPreflightOnly": true,
+  "replacementForNextFullVerify": false
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "t": 0,
+    "label": "Stretch",
+    "cue": "Let your arms reach full extension."
+  },
+  {
+    "t": 0,
+    "label": "Hinge",
+    "cue": "Keep your back flat and hips still."
+  },
+  {
+    "t": 1,
+    "label": "Top",
+    "cue": "Draw the handle toward your lower chest."
+  },
+  {
+    "t": 1,
+    "label": "Squeeze",
+    "cue": "Keep elbows back and both grips closed."
+  },
+  {
+    "t": 0,
+    "label": "Stretch",
+    "cue": "Return to straight arms without rounding."
+  },
+  {
+    "t": 0,
+    "label": "Reset",
+    "cue": "Stay hinged; keep both feet planted."
+  }
+]

@@ -1,0 +1,255 @@
+{
+  "exerciseId": "pull-ups",
+  "version": "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+  "width": 800,
+  "height": 1075,
+  "decision": "approved",
+  "reviewer": "Actual parent native/card and integrated component review, with independent static evidence",
+  "reviewedAt": "2026-10-15T00:01:39.674473+00:00",
+  "reference": {
+    "path": "form-frames/pull-ups/1.webp",
+    "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5"
+  },
+  "cueSha256": "85c6232b5cd43022e1e72fa634d996a122608012d2a5885c3b16bf376993592c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Parent inspected full native800x1075 actual component and actual390x844 light/dark views. FA56 bald faceless lean white athlete, neutral smooth pelvis without shorts, original trainers/contours/shading retained; no anatomical fitting/grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Both intact source outputs use documented whole-output normalization into the same fixed rack and common800x1075 crop. Full head, trainers, bar, posts and bases remain visible without camera jump."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Full elbow-extension hang and chin-above-bar top are coherent intact physical endpoints with straight suspended legs. Source colour edits retain neutral RGB/alpha and anatomical outlines."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "All six measured rack hole-centre anchors and span/pitch dimensions agree exactly. Parent visually inspected full posts/base/bar and overhand grips in native and mobile playback. Original central-bar shading/thickness has minor rendering variance, disclosed in source review."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Original closed overhand hand/bar contacts are visible in both endpoints, feet suspended, no floor contact or grip substitution."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Two valid intact endpoints represent a hang and chin-above-bar pull-up. Scapular initiation and controlled descent remain written only; no intermediate trajectory or continuous-motion proof is claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue Lats primary/Biceps,RearDelts,Core secondary matches displayed key. Visible lat wings use established primary and biceps/core secondary; chest/legs/forearms neutral. Rear delts are not invented in this anterior view; source shading retained."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Parent selected each actual instruction and read all six labels/cues against the correct public frame, plus exact authored preparation. Position coordinates0,0,1,1,0,0 match physical order1,1,2,2,1,1."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual foreground DOM traces show all six decoded public URLs and sequential6-to-1 in normal and slower modes. Parent checked pause, all six selections, next6-to-1, previous1-to-6; measured slower cadence is about2.4s versus1.2s. Two physical endpoints are explicitly disclosed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at390x844: full athlete/rack/card, key, authored preparation, six instructions and controls visually readable. Actual light screenshot and full trace retained; console warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at390x844: full athlete/rack/card, key, authored preparation and controls visually inspected. Actual dark screenshot and raw mobile suffix retained; earlier desktop initialization remains separately preserved."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pull-ups/1.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "sourcePose": 1,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/1-framed-colour-v2.png",
+        "sha256": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b"
+      }
+    },
+    {
+      "path": "form-frames/pull-ups/2.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "sourcePose": 1,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/1-framed-colour-v2.png",
+        "sha256": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b"
+      }
+    },
+    {
+      "path": "form-frames/pull-ups/3.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "sourcePose": 2,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/2-framed-colour-v2.png",
+        "sha256": "5debe9b544469b7b00973d4b492bce4a5b477c7e685d1ddec3279dbfb02dee54"
+      }
+    },
+    {
+      "path": "form-frames/pull-ups/4.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "sourcePose": 2,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/2-framed-colour-v2.png",
+        "sha256": "5debe9b544469b7b00973d4b492bce4a5b477c7e685d1ddec3279dbfb02dee54"
+      }
+    },
+    {
+      "path": "form-frames/pull-ups/5.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "sourcePose": 1,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/1-framed-colour-v2.png",
+        "sha256": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b"
+      }
+    },
+    {
+      "path": "form-frames/pull-ups/6.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "sourcePose": 1,
+      "anchors": {
+        "leftTopFrontPostHole": {
+          "x": 86.5,
+          "y": 108.5
+        },
+        "rightTopFrontPostHole": {
+          "x": 709.5,
+          "y": 108.5
+        }
+      },
+      "invariantDimensions": {
+        "topFrontPostHoleSpan": 623.0,
+        "leftFrontPostHolePitch": 38.5
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/pull-ups/2026-10-15/draft/v2/1-framed-colour-v2.png",
+        "sha256": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "authoredSetupInstructions": [
+    "Hang from the bar with an overhand grip slightly wider than shoulders."
+  ],
+  "scope": "Two actual intact hang/chin-above-bar endpoints repeat across six paths. Scapular initiation and controlled descent remain written instructions; no illustrated intermediate or smooth continuous motion is claimed.",
+  "newImageRequests": 0,
+  "strictMeasurementFailures": [],
+  "observedQaChecks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Parent inspected full native800x1075 actual component and actual390x844 light/dark views. FA56 bald faceless lean white athlete, neutral smooth pelvis without shorts, original trainers/contours/shading retained; no anatomical fitting/grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Both intact source outputs use documented whole-output normalization into the same fixed rack and common800x1075 crop. Full head, trainers, bar, posts and bases remain visible without camera jump."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Full elbow-extension hang and chin-above-bar top are coherent intact physical endpoints with straight suspended legs. Source colour edits retain neutral RGB/alpha and anatomical outlines."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "All six measured rack hole-centre anchors and span/pitch dimensions agree exactly. Parent visually inspected full posts/base/bar and overhand grips in native and mobile playback. Original central-bar shading/thickness has minor rendering variance, disclosed in source review."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Original closed overhand hand/bar contacts are visible in both endpoints, feet suspended, no floor contact or grip substitution."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Two valid intact endpoints represent a hang and chin-above-bar pull-up. Scapular initiation and controlled descent remain written only; no intermediate trajectory or continuous-motion proof is claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue Lats primary/Biceps,RearDelts,Core secondary matches displayed key. Visible lat wings use established primary and biceps/core secondary; chest/legs/forearms neutral. Rear delts are not invented in this anterior view; source shading retained."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Parent selected each actual instruction and read all six labels/cues against the correct public frame, plus exact authored preparation. Position coordinates0,0,1,1,0,0 match physical order1,1,2,2,1,1."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual foreground DOM traces show all six decoded public URLs and sequential6-to-1 in normal and slower modes. Parent checked pause, all six selections, next6-to-1, previous1-to-6; measured slower cadence is about2.4s versus1.2s. Two physical endpoints are explicitly disclosed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at390x844: full athlete/rack/card, key, authored preparation, six instructions and controls visually readable. Actual light screenshot and full trace retained; console warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual unchanged ExerciseFormContent at390x844: full athlete/rack/card, key, authored preparation and controls visually inspected. Actual dark screenshot and raw mobile suffix retained; earlier desktop initialization remains separately preserved."
+    }
+  },
+  "integrationValidation": "Actual provisional existing-needs-review registry/public/card/placard paths were viewed through unchanged ExerciseFormContent at390x844 in both themes, including all six paths,6-to-1 and controls. Final release registry generation, formatting, normal branch/project checks, source seal, current-head required CI and actual merge remain separate and pending. No completion claim."
+}

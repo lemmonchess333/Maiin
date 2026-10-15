@@ -1,0 +1,72 @@
+{
+  "exerciseId": "pull-ups",
+  "status": "static-native-accepted-pending-actual-player-mobile",
+  "width": 800,
+  "height": 1075,
+  "reference": 1,
+  "physicalPoseCount": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "excursionPositions": [0, 0, 1, 1, 0, 0],
+  "disclosure": "Two intact static endpoint poses repeat across six distinct paths. No illustrated intermediate or continuous motion. Scapular initiation and descent remain written catalogue instructions.",
+  "frames": [
+    {
+      "beat": 1,
+      "sourcePose": 1,
+      "path": "form-frames/pull-ups/1.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    },
+    {
+      "beat": 2,
+      "sourcePose": 1,
+      "path": "form-frames/pull-ups/2.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    },
+    {
+      "beat": 3,
+      "sourcePose": 2,
+      "path": "form-frames/pull-ups/3.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    },
+    {
+      "beat": 4,
+      "sourcePose": 2,
+      "path": "form-frames/pull-ups/4.webp",
+      "sha256": "91ab4a86f2393d50927e6a1d0d9d8fe22e24817196f455e1fe8e33053585641a",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    },
+    {
+      "beat": 5,
+      "sourcePose": 1,
+      "path": "form-frames/pull-ups/5.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    },
+    {
+      "beat": 6,
+      "sourcePose": 1,
+      "path": "form-frames/pull-ups/6.webp",
+      "sha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+      "width": 800,
+      "height": 1075,
+      "decodedRGBExact": true
+    }
+  ],
+  "masterReferenceSha256": "19ea7c9707d6019840c87476071dc5c456693d699288e2f7449c972c97e5c81b",
+  "referenceFrame": 1,
+  "referenceRGBExactToFrame1": true,
+  "registered": false,
+  "completed": false
+}

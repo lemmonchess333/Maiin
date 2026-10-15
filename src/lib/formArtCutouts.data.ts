@@ -147,6 +147,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
     sha256: "0754b36b79cfa413b81c194c38bd79f12e75f01041b3232e1b9aa6b32bd435db",
   },
+  bike: {
+    src: "form-art/bike.webp",
+    width: 311,
+    height: 480,
+    keyed: false,
+    source: "form-frames/bike/1.webp",
+    sourceSha256:
+      "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+    sha256: "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+  },
   "bodyweight-lunge": {
     src: "form-art/bodyweight-lunge.webp",
     width: 443,
@@ -917,6 +927,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "27e7cde6d375ee153e6faa9ad3a65d724b6c404a15bc8e12b96a5b69cd7dbf21",
     sha256: "4b6ef2c7fbc68f2f2ce175cc68b8971a5ba4f2a1e58c87bc5b9c979daf709166",
   },
+  "pull-ups": {
+    src: "form-art/pull-ups.webp",
+    width: 371,
+    height: 480,
+    keyed: true,
+    source: "form-frames/pull-ups/1.webp",
+    sourceSha256:
+      "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+    sha256: "b0f311604f65a1cedb90bfaf3942f34201677f12ecc45d714dfb8493e195768b",
+  },
   "push-ups": {
     src: "form-art/push-ups.webp",
     width: 480,
@@ -1196,6 +1216,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
     sha256: "b9d0f02faf0f20f0b749814f395699fd73586d9ac16ee06b5c76198bdf78717b",
+  },
+  "t-bar-row": {
+    src: "form-art/t-bar-row.webp",
+    width: 425,
+    height: 480,
+    keyed: true,
+    source: "form-frames/t-bar-row/1.webp",
+    sourceSha256:
+      "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+    sha256: "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
   },
   thrusters: {
     src: "form-art/thrusters.webp",

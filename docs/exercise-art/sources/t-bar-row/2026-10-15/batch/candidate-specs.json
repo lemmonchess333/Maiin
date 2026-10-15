@@ -1,0 +1,103 @@
+{
+  "pull-ups": {
+    "directory": "pull-ups/intact-two-endpoint-production-20261014",
+    "name": "Pull-Ups",
+    "size": [800, 1075],
+    "primary": ["Lats"],
+    "secondary": ["Biceps", "Rear Delts", "Core"],
+    "master": "reference.png",
+    "posePngs": ["v2/1-framed-colour-v2.png", "v2/2-framed-colour-v2.png"],
+    "oras": ["1-framed.ora", "2-framed.ora"],
+    "sourceFiles": [
+      "originals/1-matching-hang-generated.png",
+      "originals/2-pull-generated.png"
+    ],
+    "sourceProvenance": "source-provenance.json",
+    "requiredReports": [
+      "frame-package.json",
+      "v2/native-quality-review.json",
+      "v2/normalization-and-preservation.json",
+      "v2/colour-finishing-provenance.json",
+      "card-visual-review.json",
+      "card-pixel-proof.json",
+      "staged-card-provenance.json",
+      "editable-reproduction-verification.json"
+    ],
+    "measurements": "hardware-measurements.json",
+    "card": "card-cutout.webp",
+    "preparedCardSource": null,
+    "setup": [
+      "Hang from the bar with an overhand grip slightly wider than shoulders."
+    ],
+    "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+    "positionCoordinates": [0, 0, 1, 1, 0, 0],
+    "minimalArchivePlan": "minimal-archive-plan.json",
+    "scope": "Two actual intact hang/chin-above-bar endpoints repeat across six paths. Scapular initiation and controlled descent remain written instructions; no illustrated intermediate or smooth continuous motion is claimed."
+  },
+  "bike": {
+    "directory": "bike/retained-opposed-positions-20261015",
+    "name": "Stationary Bike",
+    "size": [929, 1432],
+    "primary": ["Quads"],
+    "secondary": ["Hamstrings"],
+    "master": "1-framed.png",
+    "posePngs": ["1-framed.png", "2-framed.png"],
+    "oras": ["1-framed.ora", "2-framed.ora"],
+    "sourceFiles": [
+      "3-lower-direct-original.png",
+      "6-upper-direct-original.png"
+    ],
+    "sourceProvenance": "source-provenance.json",
+    "requiredReports": [
+      "finishing-audit.json",
+      "static-proof.json",
+      "independent-review/native-static-review.json",
+      "card-static-proof.json",
+      "staged-card-provenance.json"
+    ],
+    "measurements": "hardware-measurements.json",
+    "card": "card-cutout.webp",
+    "preparedCardSource": "prepared-card-source.png",
+    "setup": [
+      "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+      "Sit with a neutral spine, grip the bars loosely."
+    ],
+    "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+    "positionCoordinates": [0, 0, 0.5, 0.5, 0, 0],
+    "minimalArchivePlan": "archive-plan.json",
+    "scope": "Two actual opposed seated positions repeat across six paths. No calibrated forward trajectory, smooth full revolution or six unique drawings is claimed. Far trainer/platform is naturally occluded in the raised state. Measured shaft drift requires explicit parent disposition before any release."
+  },
+  "t-bar-row": {
+    "packageReady": true,
+    "directory": "t-bar-row/retained-two-endpoint-production-20261015",
+    "name": "T-Bar Row",
+    "size": [918, 1036],
+    "primary": ["Mid Back"],
+    "secondary": ["Lats", "Rhomboids", "Biceps"],
+    "master": "reference.png",
+    "posePngs": ["1-framed.png", "2-framed.png"],
+    "oras": ["1-framed.ora", "2-framed.ora"],
+    "sourceFiles": ["originals/1-master.png", "originals/4-peak-candidate.png"],
+    "sourceProvenance": "source-provenance.json",
+    "requiredReports": [
+      "frame-package.json",
+      "native-static-review.json",
+      "colour-finishing-provenance.json",
+      "card-visual-review.json",
+      "card-pixel-proof.json",
+      "staged-card-provenance.json",
+      "editable-reproduction-verification.json"
+    ],
+    "measurements": "hardware-measurements.json",
+    "card": "card-cutout.webp",
+    "preparedCardSource": null,
+    "setup": [
+      "Straddle the loaded bar or landmine and grip the handles at your shins.",
+      "Hinge forward to about 45°, chest up, back flat, core braced."
+    ],
+    "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+    "positionCoordinates": [0, 0, 1, 1, 0, 0],
+    "minimalArchivePlan": "minimal-archive-plan.json",
+    "scope": "Two actual retained lower/upper row endpoints repeat across six paths. No illustrated intermediate or smooth continuous motion is claimed. The consistent two-plate load departs from the one-plate default and requires explicit owner-with-findings authorization; passing numeric measurements do not erase that finding."
+  }
+}
